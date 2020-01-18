@@ -1,21 +1,13 @@
 #!/bin/sh
+
+# If there is a javacc.jar in the base directory, use that. Otherwise use the bootstrap jarfile in the bin directory.
+
 DIR=$(dirname $0)
-BOOTSTRAP_JAVACC_JAR=$DIR/javacc.jar
-JAVACC_JAR=$DIR/../javacc.jar
-FREEMARKER_JAR=$DIR/freemarker.jar
-#FREEMARKER_JAR=$DIR/minimal
-PATH_SEP=":"
+JAVACC_JAR=$DIR/javacc.jar
 
-case $(uname) in CYGWIN*)
-  BOOTSTRAP_JAVACC_JAR=$(cygpath -w $BOOTSTRAP_JAVACC_JAR)
-  JAVACC_JAR=$(cygpath -w $JAVACC_JAR)
-  FREEMARKER_JAR=$(cygpath -w $FREEMARKER_JAR)
-  PATH_SEP=";";;	
-esac
+if test -f "$DIR/../javacc.jar" ; then
+   JAVACC_JAR="$DIR/../javacc.jar"
+fi
 
+java -jar "$JAVACC_JAR" "$@"
 
-# If there is a generated javacc.jar in the base directory, use that, otherwise, use
-# the bootstrap javacc.jar that is in the bin directory.
-
-CLASSPATH="$JAVACC_JAR$PATH_SEP$BOOTSTRAP_JAVACC_JAR$PATH_SEP$FREEMARKER_JAR"
-java -ea -classpath "$CLASSPATH" javacc.Main "$@"
