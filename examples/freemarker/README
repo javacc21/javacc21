@@ -1,0 +1,28 @@
+This directory contains a grammar for the FreeMarker template
+language.  Note that this grammar is not the one used in FreeMarker
+itself. However, the intention is for this grammar to supplant the
+existing (very crufty one) in the coming FreeMarker 2.4.x release
+cycle. Note that there are actually two separate grammars, FEL.javacc
+and FTL.javacc. FEL stands for FreeMarker Expression Language and the
+intention is for this to become a useful standalone component. The
+full FTL grammar simply INCLUDE's the FEL grammar.
+
+To test the FEL grammar, simply cd into the FEL directory, and execute:
+
+javacc FEL.javacc
+
+t the command prompt. After that, do:
+
+javac fel/*.java
+
+and you should be able to test the parser via:
+
+java fel.FELParser
+
+You can then type an expression and it will dump the parse tree that it builds.
+For example, try typing 2+2 and then press ENTER, and then Ctrl-D to indicate the end of your input.
+
+Feel free to experiment with more complex expressions.
+
+
+

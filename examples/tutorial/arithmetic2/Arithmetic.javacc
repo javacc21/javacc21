@@ -1,0 +1,49 @@
+TOKEN : {
+   <PLUS : "+">
+   |
+   <MINUS : "-">
+   |
+   <TIMES : "*">
+   |
+   <DIVIDE : "/">
+   |
+   <OPEN_PAREN : "(">
+   |
+   <CLOSE_PAREN : ")">
+   |
+   <NUMBER :  (["0"-"9"])+ ("."(["0"-"9"])+)?>
+}
+
+SKIP : {
+  " " | "\t" | "\n" | "\r"
+}
+
+void AdditiveExpression() : 
+{}
+{
+    MultiplicativeExpression()
+    (
+      (<PLUS>|<MINUS>)
+      MultiplicativeExpression()
+    )*
+}
+
+void MultiplicativeExpression() :
+{}
+{
+    (<NUMBER> | ParentheticalExpression())
+    (
+       (<TIMES>|<DIVIDE>)
+       (<NUMBER> | ParentheticalExpression())
+    )*
+}
+
+void ParentheticalExpression() :
+{}
+{
+    <OPEN_PAREN>
+    AdditiveExpression()
+    <CLOSE_PAREN>
+}
+
+

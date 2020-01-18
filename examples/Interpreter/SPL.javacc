@@ -1,0 +1,884 @@
+/* Copyright (c) 2006, Sun Microsystems, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notice,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Sun Microsystems, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+options {
+    TREE_BUILDING_ENABLED=true;
+    TOKENS_ARE_NODES=true;
+    BASE_NODE_CLASS="SimpleNode";
+    SMART_NODE_CREATION=false;
+}
+
+INJECT : {
+
+/** Stupid Programming Language parser. */
+public class SPLParser {
+
+  /**
+   * Returns the root node of the Id.  
+   * It only makes sense to call this after a successful parse. 
+   * @return the root node
+   */
+  public SimpleNode root() {
+    return (SimpleNode) rootNode();
+  }
+
+    /** Main entry point. */ 
+    public static void main(String args[]) {
+        SPLParser parser;
+        if (args.length == 1) {
+            System.out.println("Stupid Programming Language Interpreter Version 0.1:  Reading from file " + args[0] + " . . .");
+            try {
+                parser = new SPLParser(new java.io.FileReader(args[0]));
+            } catch (java.io.FileNotFoundException e) {
+                System.out.println("Stupid Programming Language Interpreter Version 0.1:  File " + args[0] + " not found.");
+                return;
+            }
+        } else {
+            System.out.println("Stupid Programming Language Interpreter Version 0.1:  Usage :");
+            System.out.println("         java SPL inputfile");
+            return;
+        }
+        try {
+            parser.CompilationUnit();
+            parser.rootNode().interpret();
+        } catch (ParseException e) {
+            System.out.println("Stupid Programming Language Interpreter Version 0.1:  Encountered errors during parse.");
+            e.printStackTrace();
+        } catch (Exception e1) {
+            System.out.println("Stupid Programming Language Interpreter Version 0.1:  Encountered errors during interpretation/tree building.");
+            e1.printStackTrace();
+        }
+    }
+  
+
+}
+
+}
+
+
+SKIP : /* WHITE SPACE */
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+| "\f"
+}
+
+TOKEN : /* Types */
+{
+   < INT: "int" >
+ |
+   < BOOL: "boolean" >
+}
+
+TOKEN : /* LITERALS */
+{
+  < INTEGER_LITERAL: (<DIGIT>)+ >
+}
+
+INJECT(interface Node) : {}
+{
+    public void interpret();
+}
+
+INJECT(Token) : {}
+{
+    /**
+     * Necessary so that Token can implement Node
+     */
+     public void interpret() {
+         throw new UnsupportedOperationException("Trying to interpret token: " + this + " on line " + getBeginLine() + ", column " + getBeginColumn()); 
+     }
+}
+
+INJECT : {
+    import java.io.*;
+    
+    public class SimpleNode implements Node {  
+        /** Symbol table */ 
+        protected static java.util.Hashtable symtab = new java.util.Hashtable();
+    
+        /** Stack for calculations. */ 
+        protected static Object []stack = new Object [1024];
+        protected static int top = - 1;
+    
+        /** @throws UnsupportedOperationException if called */ 
+        public void interpret() {
+            throw new UnsupportedOperationException();        // It better not come here.
+        }
+    
+        protected static Writer out = new PrintWriter(System.out);
+        protected static Reader in = new InputStreamReader(System.in);
+    
+        /**
+         * @param in the input to set
+         */ 
+        public static void setIn(Reader in) {
+            SimpleNode.in = in;
+        }
+    
+        /**
+         * @param out the output to set
+         */ 
+        public static void setOut(Writer out) {
+            SimpleNode.out = out;
+        }
+    }
+}
+
+/*
+ * Program structuring syntax follows.
+ */
+INJECT(CompilationUnit) : 
+{
+	import java.util.*;
+}
+{ 
+    public void interpret() {
+
+        for (int i = 0; i < getChildCount(); i++) {
+            System.out.print("Executing:");
+            Node child = getChild(i);
+            for (Token t : Nodes.getTokens(child)) {
+                System.out.print(" ");
+                System.out.print(t);
+            }
+            System.out.println();
+            if (!(child instanceof Token)) {
+            	child.interpret();
+            }
+        }
+    }
+}
+
+/** Compilation unit. */
+void CompilationUnit() :
+{
+   String name;
+}
+{
+   (
+       VarDeclaration() ";"
+     |
+       Statement()
+   )*
+   <EOF>
+}
+
+INJECT(VarDeclaration) : {
+    extends SimpleNode
+    implements SPLConstants
+}
+{
+    int type;
+    String name;
+        
+    public void interpret() {
+        if (type == BOOL)
+            symtab.put(name, new Boolean(false));
+        else
+            symtab.put(name, new Integer(0));
+    }
+}
+
+
+/** Variable declaration. */
+void VarDeclaration() :
+{ Token t; }
+{
+  (
+    "boolean" { CURRENT_NODE.type = BOOL; }
+   |
+    "int" { CURRENT_NODE.type = INT; }
+  )
+  t = <IDENTIFIER> 
+  { CURRENT_NODE.name = t.image; }
+}
+
+/*
+ * Expression syntax follows.
+ */
+
+/** Expression. */
+void Expression() #void:
+{}
+{
+  LOOKAHEAD( PrimaryExpression() "=" )
+  Assignment()
+|
+  ConditionalOrExpression()
+}
+
+INJECT(Assignment) : {} 
+{
+    public void interpret() {
+        String name;
+
+        getChild(2).interpret();
+        symtab.put(name = ((Id) getChild(0)).name, stack[top]);
+    }
+}
+
+/** Assignment. */
+void Assignment() #Assignment(3) :
+{}
+{
+  PrimaryExpression() "=" Expression()
+}
+
+/** Conditional or expression. */
+void ConditionalOrExpression() #void :
+{}
+{
+  ConditionalAndExpression()
+  ( "||" ConditionalAndExpression() #OrNode(3) )*
+}
+
+INJECT(OrNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+
+        if (((Boolean) stack[top]).booleanValue()) {
+            stack[top] = new Boolean(true);
+            return;
+        }
+
+        getChild(2).interpret();
+        stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() || ((Boolean) stack[ top + 1]).booleanValue());
+    }
+}
+
+
+/** Conditional and expression. */
+void ConditionalAndExpression() #void :
+{}
+{
+  InclusiveOrExpression()
+  ( "&&" InclusiveOrExpression() #AndNode(3) )*
+}
+
+INJECT(AndNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        
+        if (!((Boolean)stack[top]).booleanValue()) {
+            stack[top] = new Boolean(false);
+            return;
+        }
+        
+        getChild(2).interpret();
+        stack[--top] = new Boolean(((Boolean)stack[top]).booleanValue() &&
+                                ((Boolean)stack[top + 1]).booleanValue());
+    }
+}
+
+/** Inclusive or expression. */
+void InclusiveOrExpression() #void :
+{}
+{
+  ExclusiveOrExpression()
+  ( "|" ExclusiveOrExpression() #BitwiseOrNode(2) )*
+}
+
+INJECT(BitwiseOrNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+
+        if (stack[top] instanceof Boolean) {
+            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() | ((Boolean) stack[ top + 1]).booleanValue());
+        } else{
+            if (stack[top] instanceof Integer) {
+                stack[ --top] = new Integer(((Integer) stack[top]).intValue() | ((Integer) stack[ top + 1]).intValue());
+            }
+
+ 
+        }
+    }
+}
+
+/** Exclusive or expression. */
+void ExclusiveOrExpression() #void :
+{}
+{
+  AndExpression()
+  ( "^" AndExpression() #BitwiseXorNode(2) )*
+}
+
+INJECT(BitwiseXorNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+
+        if (stack[top] instanceof Boolean) {
+            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() ^ ((Boolean) stack[ top + 1]).booleanValue());
+        } else{
+            if (stack[top] instanceof Integer) {
+                stack[ --top] = new Integer(((Integer) stack[top]).intValue() ^ ((Integer) stack[ top + 1]).intValue());
+            }
+
+ 
+        }
+    }
+}
+
+/** And expression. */
+void AndExpression() #void :
+{}
+{
+  EqualityExpression()
+  ( "&" EqualityExpression() #BitwiseAndNode(2) )*
+}
+
+INJECT(BitwiseAndNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+
+        if (stack[top] instanceof Boolean) {
+            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() & ((Boolean) stack[ top + 1]).booleanValue());
+        } else{
+            if (stack[top] instanceof Integer) {
+                stack[ --top] = new Integer(((Integer) stack[top]).intValue() & ((Integer) stack[ top + 1]).intValue());
+            }
+        }
+    }
+}
+
+/** Equality expression. */
+void EqualityExpression() #void :
+{}
+{
+  RelationalExpression()
+  (
+     "==" RelationalExpression() #EQNode(3)
+   |
+     "!=" RelationalExpression() #NENode(3)
+  )*
+}
+
+INJECT(EQNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+
+        if (stack[top] instanceof Boolean) {
+            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() == ((Boolean) stack[ top + 1]).booleanValue());
+        } else {
+            stack[ --top] = new Boolean(((Integer) stack[top]).intValue() == ((Integer) stack[ top + 1]).intValue());
+        }
+    }
+}
+INJECT(NENode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+
+        if (stack[top] instanceof Boolean) {
+            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() != ((Boolean) stack[ top + 1]).booleanValue());
+        } else {
+            stack[ --top] = new Boolean(((Integer) stack[top]).intValue() != ((Integer) stack[ top + 1]).intValue());
+        }
+    }
+}
+
+/** Relational expression. */
+void RelationalExpression() #void :
+{}
+{
+  AdditiveExpression()
+  (
+    "<" AdditiveExpression() #LTNode(3)
+   |
+    ">" AdditiveExpression() #GTNode(3)
+   |
+    "<=" AdditiveExpression() #LENode(3)
+   |
+    ">=" AdditiveExpression() #GENode(3)
+  )*
+}
+
+INJECT(LTNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+
+        stack[ --top] = new Boolean(((Integer) stack[top]).intValue() < ((Integer) stack[ top + 1]).intValue());
+    }
+}
+
+
+INJECT(LENode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+
+        stack[ --top] = new Boolean(((Integer) stack[top]).intValue() <= ((Integer) stack[ top + 1]).intValue());
+    }
+}
+
+INJECT(GENode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+
+        stack[ --top] = new Boolean(((Integer) stack[top]).intValue() >= ((Integer) stack[ top + 1]).intValue());
+    }
+}
+
+INJECT(GTNode) : {}
+{
+  public void interpret()
+  {
+     getChild(0).interpret();
+     getChild(2).interpret();
+
+     stack[--top] = new Boolean(((Integer)stack[top]).intValue() >
+                                ((Integer)stack[top + 1]).intValue());
+  }
+}
+
+
+/** Additive expression. */
+void AdditiveExpression() #void :
+{}
+{
+  MultiplicativeExpression()
+  (
+    "+" MultiplicativeExpression() #AddNode(3)
+   |
+    "-" MultiplicativeExpression() #SubtractNode(3)
+  )*
+}
+
+INJECT(AddNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+        stack[--top] = new Integer(((Integer) stack[top]).intValue() + ((Integer) stack[ top + 1]).intValue());
+    }
+}
+
+INJECT(SubtractNode) : {} {
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+        stack[ --top] = new Integer(((Integer) stack[top]).intValue() - ((Integer) stack[ top + 1]).intValue());
+    }
+}
+
+
+
+/** Multiplicative expression. */
+void MultiplicativeExpression() #void :
+{}
+{
+  UnaryExpression()
+  (
+    "*" UnaryExpression() #MulNode(3)
+   |
+    "/" UnaryExpression() #DivNode(3)
+   |
+    "%" UnaryExpression() #ModNode(3)
+  )*
+}
+
+INJECT(MulNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+        stack[ --top] = new Integer(((Integer) stack[top]).intValue() * ((Integer) stack[ top + 1]).intValue());
+    }
+}
+
+INJECT(ModNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+        stack[ --top] = new Integer(((Integer) stack[top]).intValue() % ((Integer) stack[ top + 1]).intValue());
+    }
+}
+
+
+INJECT(DivNode) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        getChild(2).interpret();
+        stack[ --top] = new Integer(((Integer) stack[top]).intValue() / ((Integer) stack[ top + 1]).intValue());
+    }
+}
+
+/** Unary expression. */
+void UnaryExpression() #void :
+{}
+{
+  "~" UnaryExpression() #BitwiseComplNode(2)
+|
+  "!" UnaryExpression() #NotNode(2)
+|
+  PrimaryExpression()
+}
+
+INJECT(NotNode) : {}
+{
+    public void interpret() {
+        getChild(1).interpret();
+        stack[top] = new Boolean(! ((Boolean) stack[top]).booleanValue());
+    }
+}
+
+
+INJECT(BitwiseComplNode) : {}
+{
+  public void interpret()
+  {
+     getChild(1).interpret();
+     stack[top] = new Integer(~((Integer)stack[top]).intValue());
+  }
+}
+
+/** Primary expression. */
+void PrimaryExpression() #void :
+{
+   String name;
+}
+{
+  Literal()
+|
+  Id() 
+|
+  ParentheticalExpression()
+}
+
+void ParentheticalExpression() : 
+{}
+{
+   "(" Expression() ")"
+}
+
+INJECT(ParentheticalExpression) : 
+{}
+{
+   public void interpret() {
+      getChild(1).interpret();
+   }
+}
+
+INJECT(Id) : {}
+{
+    String name;
+    
+    public void interpret() {
+        stack[++top] = symtab.get(name);
+    }
+}
+
+/** An Id. */
+void Id() :
+{
+   Token t;
+}
+{
+   t = <IDENTIFIER>  { CURRENT_NODE.name = t.image; }
+}
+
+/** A literal. */
+void Literal() #void :
+{
+   Token t;
+}
+{
+ (
+  t=<INTEGER_LITERAL>
+    {
+       CURRENT_NODE.val = Integer.parseInt(t.image);
+    }
+ )#IntConstNode
+|
+  BooleanLiteral()
+}
+
+INJECT(IntConstNode) : {}
+{
+    int val;
+    
+    public void interpret() {
+        stack[++top] = new Integer(val);
+    }
+}
+
+/** A boolean literal. */
+void BooleanLiteral() #void :
+{}
+{
+  "true" #TrueNode
+|
+  "false" #FalseNode
+}
+
+INJECT(TrueNode) : {}
+{
+    public void interpret() {
+        stack[ ++top] = Boolean.TRUE;
+    }
+}
+
+
+INJECT(FalseNode) : {}
+{
+    public void interpret() {
+        stack[ ++top] = Boolean.FALSE;
+    }
+}
+ 
+
+
+/*
+ * Statement syntax follows.
+ */
+
+/** A statement. */
+void Statement() #void :
+{}
+{
+  ";"
+|
+  LOOKAHEAD(2)
+  LabeledStatement()
+|
+  Block()
+|
+  StatementExpression()
+|
+  IfStatement()
+|
+  WhileStatement()
+|
+  IOStatement()
+}
+
+/** A labeled statement. */
+void LabeledStatement() #void :
+{}
+{
+  <IDENTIFIER> ":" Statement()
+}
+
+INJECT(Block) : {}
+{
+    public void interpret() {
+        for (int i = 0; i < getChildCount(); i++) {
+            Node n = getChild(i);
+            if (!(n instanceof Token)) 
+                n.interpret();
+        }
+    }
+}
+
+/** A block. */
+void Block() :
+{}
+{
+  "{" ( Statement() )* "}"
+}
+
+INJECT(StatementExpression) : {}
+{
+    public void interpret() {
+        getChild(0).interpret();
+        top--;        //just throw away the value.
+    }
+}
+
+
+/** A statement expression. */
+void StatementExpression() :
+/*
+ * The last expansion of this production accepts more than the legal
+ * SPL expansions for StatementExpression.
+ */
+{}
+{
+  Assignment() ";"
+}
+
+
+INJECT(IfStatement) : {}
+{
+    public void interpret() {
+        getChild(2).interpret();
+
+        if (((Boolean) stack[top--]).booleanValue()) {
+            getChild(4).interpret();
+        } else{
+            if (getChildCount() == 7) {
+                getChild(6).interpret();
+            }
+        }
+    }
+}
+
+/** An if statement. */
+void IfStatement() :
+/*
+ * The disambiguating algorithm of JavaCC automatically binds dangling
+ * else's to the innermost if statement.  The LOOKAHEAD specification
+ * is to tell JavaCC that we know what we are doing.
+ */
+{}
+{
+  "if" "(" Expression() ")" Statement() [ LOOKAHEAD(1) "else" Statement() ]
+}
+
+
+INJECT(WhileStatement) : {}
+{
+    public void interpret()
+    {
+       do {
+           getChild(2).interpret();
+
+           if (((Boolean)stack[top--]).booleanValue()) {
+               getChild(4).interpret();
+           }
+           else {
+               break;
+           }
+       } while (true);
+    }
+}
+
+
+/** A while statement. */
+void WhileStatement() :
+{}
+{
+  "while" "(" Expression() ")" Statement()
+}
+
+/** An IO statement. */
+void IOStatement() #void :
+{ String name; }
+{
+   ReadStatement()
+ |
+   WriteStatement()
+}
+
+INJECT: {
+    import java.io.IOException;
+   
+
+    public class ReadStatement {
+        
+        String name;
+      
+        public void interpret() {
+            Object o;
+            char []b = new char [64];
+            if ((o = symtab.get(name)) == null) {
+                System.err.println("Undefined variable : " + name);
+            }
+            try {
+                if (o instanceof Boolean) {
+                    out.write("Enter a value for \'" + name + "\' (boolean) : ");
+                    out.flush();
+                    in.read(b);
+                    symtab.put(name, new Boolean((new String(b)).trim()));
+                } else {
+                    if (o instanceof Integer) {
+                        out.write("Enter a value for \'" + name + "\' (int) : ");
+                        out.flush();
+                        in.read(b);
+                        symtab.put(name, new Integer((new String(b)).trim()));
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+    }
+    
+    public class WriteStatement {
+        String name;
+        
+        public void interpret() {
+            if (symtab.get(name) == null)
+                System.err.println("Undefined variable : " + name);
+            else
+                try {
+                    out.write("Value of " + name + " : " + symtab.get(name));
+                    out.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+        }
+    }
+}
+
+/** A read statement. */
+void ReadStatement() :
+{ Token t; }
+{
+   "read" t = <IDENTIFIER>
+   { CURRENT_NODE.name = t.image; }
+}
+
+/** A write statement. */
+void WriteStatement() :
+{ Token t; }
+{
+   "write" t = <IDENTIFIER>
+   { CURRENT_NODE.name = t.image; }
+}
+
+TOKEN : /* IDENTIFIERS */
+{
+  < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+|
+  < #LETTER: [ "a"-"z", "A"-"Z" ] >
+|
+  < #DIGIT: [ "0"-"9"] >
+}

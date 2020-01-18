@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+
+<project name="Java Parser" default="compile" basedir=".">
+
+<target name="clean">
+   <delete dir="javagrammar"/>
+</target>
+
+<target name="init">
+   <uptodate property="javaparser.uptodate" srcfile="../../src/grammars/Java.javacc" targetfile="javagrammar/JavaParser.java"/>
+   <taskdef name="javacc" classname="javacc.JavaCCAntTask" classpath="../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar"/>
+   <mkdir dir="javagrammar"/>
+</target>
+
+<target name="parser-gen" depends="init" unless="javaparser.uptodate">
+    <javacc src="../../src/grammars/Java.javacc" BASE_SRC_DIR="../../examples/java" />
+</target>
+ 
+ 
+<target name="compile" depends="init, parser-gen">
+     <javac srcdir="javagrammar"
+      classpath="." debug="on" optimize="off" includeantruntime="no" />
+</target>
+
+<target name="test" depends="compile">
+     <java fork="true" failonerror="true" classname="javagrammar.JavaParser">
+         <arg value="javagrammar"/>
+     </java>
+     <echo>
+        -------------------
+        Okay, that seems okay. Now let's dump the parse tree for a single source file
+        -------------------
+     </echo>
+     <java fork="true" failonerror="true" classname="javagrammar.JavaParser">
+         <arg value="javagrammar/nodes/CompilationUnit.java"/>
+     </java>
+</target>
+
+</project>

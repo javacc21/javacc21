@@ -1,0 +1,251 @@
+<project name="tests" default="all">
+
+  <property name="classpath" value="${basedir}/build:${basedir}/bin/freemarker.jar"/>
+
+ <target name="all" description="run functional test cases">
+	<taskdef name="javacc" classname="javacc.JavaCCAntTask" classpath="${classpath}"/>
+	    <delete dir="test.tmp" />
+	    <mkdir dir="test.tmp" />
+ 	    <javacc src="examples/CORBA-IDL/IDL.javacc" BASE_SRC_DIR="test.tmp/CORBA-IDL" />
+	    <javac srcdir="test.tmp/CORBA-IDL" includeantruntime="no" />
+	    <copy todir="test.tmp/CORBA-IDL/">
+	      <fileset dir="examples/CORBA-IDL">
+	        <include name="*.idl" />
+	      </fileset>
+	    </copy>
+	    <java failonerror="true" fork="true" classname="IDLParser" classpath="test.tmp/CORBA-IDL:${FREEMARKER_JAR}" outputproperty="test.corba.out">
+	      <arg line="test.tmp/CORBA-IDL/Hello.idl" />
+	                <assertions><enable/></assertions>
+	    </java>
+
+	    <echo>${test.corba.out}</echo>
+
+	    <fail message="CORBA failed">
+	     <condition>
+	      <not>
+	       <contains string="${test.corba.out}" substring="IDL file parsed successfully" />
+	      </not>
+	     </condition>
+	    </fail>
+
+	    <echo />
+	    
+	    <copy todir="test.tmp/GUIParsing/ParserVersion">
+	      <fileset dir="examples/GUIParsing/ParserVersion">
+	        <include name="*.java" />
+	      </fileset>
+	    </copy>
+
+	    <javacc src="examples/GUIParsing/ParserVersion/CalcInput.javacc" BASE_SRC_DIR="test.tmp/GUIParsing/ParserVersion"/> 
+	    <javac srcdir="test.tmp/GUIParsing/ParserVersion" includeantruntime="no" />
+
+	    <echo />
+	    
+	    <copy todir="test.tmp/GUIParsing/LexerVersion">
+	      <fileset dir="examples/GUIParsing/LexerVersion">
+	        <include name="*.java" />
+	      </fileset>
+	    </copy>
+
+	    <javacc src="examples/GUIParsing/LexerVersion/CalcInput.javacc" BASE_SRC_DIR="test.tmp/GUIParsing/LexerVersion" />
+	    <javac srcdir="test.tmp/GUIParsing/LexerVersion" includeantruntime="no" />
+
+	    <echo />
+	    
+	    <copy todir="test.tmp/Interpreter">
+	      <fileset dir="examples/Interpreter">
+	        <include name="*.java" />
+	      </fileset>
+	    </copy>
+
+	    <javacc src="examples/Interpreter/SPL.javacc" BASE_SRC_DIR="test.tmp/Interpreter"/>
+	    <copy todir="test.tmp/Interpreter/">
+	      <fileset dir="examples/Interpreter/">
+	        <include name="*.spl" />
+	      </fileset>
+	    </copy>
+ 	
+ 	    <javac srcdir="test.tmp/Interpreter" debug="on" includeantruntime="no" />
+
+	    <java failonerror="true" fork="true" 
+	          classname="SPLParser" 
+	          classpath="test.tmp/Interpreter/"
+	          inputstring="3"
+	          outputproperty="spl.out1"
+	    >
+	      <arg line="test.tmp/Interpreter/fact.spl" />
+	      	                <assertions><enable/></assertions>
+
+	    </java>
+	    <echo>${spl.out1}</echo>
+	    <fail message="SPLParser fact parse failed">
+	     <condition>
+	      <not>
+	       <contains string="${spl.out1}" substring="Value of fact : 6" />
+	      </not>
+	     </condition>
+	    </fail>
+	    <java failonerror="true" fork="true" 
+	          classname="SPLParser" 
+	          classpath="test.tmp/Interpreter/"
+	          inputstring="3"
+	          outputproperty="spl.out2"
+	    >
+	      <arg line="test.tmp/Interpreter/odd.spl" />
+	      	                <assertions><enable/></assertions>
+	    </java>
+	    <echo>${spl.out2}</echo>
+	    <fail message="SPLParser odd parse failed">
+	     <condition>
+	      <not>
+	       <contains string="${spl.out2}" substring="Value of odd : true" />
+	      </not>
+	     </condition>
+	    </fail>
+	    <java failonerror="true" fork="true" 
+	          classname="SPLParser" 
+	          classpath="test.tmp/Interpreter/"
+	          inputstring="9"
+	          outputproperty="spl.out3"
+	    >
+	      <arg line="test.tmp/Interpreter/sqrt.spl" />
+   	                <assertions><enable/></assertions>
+	    </java>
+	    <echo>${spl.out3}</echo>
+	    <fail message="SPLParser sqrt parse failed">
+	     <condition>
+	      <not>
+	       <contains string="${spl.out3}" substring="Value of sqrt : 3" />
+	      </not>
+	     </condition>
+	    </fail>
+
+	    <echo />
+	    
+	    <javacc src="examples/TreeBuildingExamples/eg1.javacc" BASE_SRC_DIR="test.tmp/TreeBuildingExamples.eg1" />
+	    <javac debug="on" srcdir="test.tmp/TreeBuildingExamples.eg1" includeantruntime="no" />
+	    
+	    <java failonerror="true" fork="true" 
+	          classname="Eg1" 
+	          classpath="test.tmp/TreeBuildingExamples.eg1/"
+	          inputstring="(a + b) * (c + 1);"
+	          outputproperty="jjtree.eg1.out"
+	    >
+	    	                <assertions><enable/></assertions>
+	    </java>
+	    <echo>${jjtree.eg1.out}</echo>
+	    <fail message="JJTree eg1 parse failed">
+	     <condition>
+	      <not>
+	       <contains string="${jjtree.eg1.out}" substring="Thank you." />
+	      </not>
+	     </condition>
+	    </fail>
+
+	    <echo />
+	    
+	    <copy todir="test.tmp/TreeBuildingExamples.eg2">
+	      <fileset dir="examples/TreeBuildingExamples">
+	        <include name="*.java" />
+	        <exclude name="Eg4DumpVisitor.java" />
+	      </fileset>
+	    </copy>
+
+	    <javacc src="examples/TreeBuildingExamples/eg2.javacc" BASE_SRC_DIR="test.tmp/TreeBuildingExamples.eg2"/> 
+	    <javac srcdir="test.tmp/TreeBuildingExamples.eg2" includes="Eg2.java" includeantruntime="no" />
+	    
+	    <java failonerror="true" fork="true" 
+	          classname="Eg2" 
+	          classpath="test.tmp/TreeBuildingExamples.eg2/"
+	          inputstring="(a + b) * (c + 1);"
+	          outputproperty="jjtree.eg2.out"
+	    >
+	    	                <assertions><enable/></assertions>
+	    </java>
+	    <echo>${jjtree.eg2.out}</echo>
+	    <fail message="JJTree eg2 parse failed">
+	     <condition>
+	      <not>
+	       <contains string="${jjtree.eg2.out}" substring="Thank you." />
+	      </not>
+	     </condition>
+	    </fail>
+	    <echo />
+
+	    <copy todir="test.tmp/TreeBuildingExamples.eg3">
+	      <fileset dir="examples/TreeBuildingExamples">
+	        <include name="*.java" />
+	        <exclude name="Eg4DumpVisitor.java" />
+	        <exclude name="ASTMyOtherID.java" />
+	      </fileset>
+	    </copy>
+
+	    <javacc src="examples/TreeBuildingExamples/eg3.javacc" BASE_SRC_DIR="test.tmp/TreeBuildingExamples.eg3" />
+	    <javac srcdir="test.tmp/TreeBuildingExamples.eg3" includeantruntime="no" />
+
+	    <java failonerror="true" fork="true" 
+	          classname="Eg3" 
+	          classpath="test.tmp/TreeBuildingExamples.eg3/"
+	          inputstring="(a + b) * (c + 1);"
+	          outputproperty="jjtree.eg3.out"
+	    >
+	    	      	                <assertions><enable/></assertions>
+	    </java>
+	    <echo>${jjtree.eg3.out}</echo>
+	    <fail message="JJTree eg3 parse failed">
+	     <condition>
+	      <not>
+	       <contains string="${jjtree.eg3.out}" substring="Thank you." />
+	      </not>
+	     </condition>
+	    </fail>
+
+	    
+	    <echo />
+
+	    <copy todir="test.tmp/TreeBuildingExamples.eg4">
+	      <fileset dir="examples/TreeBuildingExamples">
+	        <include name="*.java" />
+	      </fileset>
+	    </copy>
+
+	    <javacc src="examples/TreeBuildingExamples/eg4.javacc" BASE_SRC_DIR="test.tmp/TreeBuildingExamples.eg4"/> 
+	    <javac srcdir="test.tmp/TreeBuildingExamples.eg4" debug="true" includeantruntime="no" />
+
+	    <java failonerror="true" fork="true" 
+	          classname="Eg4" 
+	          classpath="test.tmp/TreeBuildingExamples.eg4/"
+	          inputstring="(a + b) * (c + 1);"
+	          outputproperty="jjtree.eg4.out"
+	    >
+	    	      	                <assertions><enable/></assertions>
+	    </java>
+	    <echo>${jjtree.eg4.out}</echo>
+	    <fail message="JJTree eg4 parse failed">
+	     <condition>
+	      <not>
+	       <contains string="${jjtree.eg4.out}" substring="Thank you." />
+	      </not>
+	     </condition>
+	    </fail>
+
+	    <echo />
+
+	    <javacc src="examples/Lookahead/Example1.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg1"/> 
+	    <javacc src="examples/Lookahead/Example2.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg2"/> 
+        <javacc src="examples/Lookahead/Example4.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg4" />
+        <javacc src="examples/Lookahead/Example5.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg5" />
+        <javacc src="examples/Lookahead/Example6.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg6" />
+        <javacc src="examples/Lookahead/Example7.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg7" />
+        <javacc src="examples/Lookahead/Example8.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg8" />
+        <javacc src="examples/Lookahead/Example9.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg9" />
+        <javacc src="examples/Lookahead/Example10.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg10" />
+
+	    <echo />
+
+	    <javacc src="examples/MailProcessing/Digest.javacc" BASE_SRC_DIR="test.tmp/MailProcessing"  />
+	    <javacc src="examples/MailProcessing/Faq.javacc" BASE_SRC_DIR="test.tmp/MailProcessing" />
+ 	    <javac srcdir="test.tmp/MailProcessing" includeantruntime="no"/>
+	    <echo />
+	  </target>
+</project>
