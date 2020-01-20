@@ -36,6 +36,7 @@ import java.util.*;
 import javacc.JavaCCUtils;
 import javacc.Grammar;
 import javacc.MetaParseException;
+import javacc.Version;
 import javacc.lexgen.RegularExpression;
 
 import javacc.parser.tree.CompilationUnit;
@@ -141,7 +142,7 @@ public class FilesGenerator {
         dataModel.put("grammar", grammar);
         dataModel.put("filename", currentFilename);
         dataModel.put("utils", new Utils());
-        dataModel.put("generated_by", javacc.Main.PROG_NAME);
+        dataModel.put("generated_by", "JavaCC " + Version.version);
         String classname = currentFilename.substring(0, currentFilename.length() - 5);
         if (codeInjector.getExplicitlyDeclaredPackage(classname) != null) {
             dataModel.put("explicitPackageName", codeInjector.getExplicitlyDeclaredPackage(classname));

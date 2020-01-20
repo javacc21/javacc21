@@ -1,12 +1,7 @@
-<project name="javacc" default="jar" basedir=".">
- <property name="compile.class.path"
-      value="bin/freemarker.jar:src/java"/>
- <property name="bootstrap.class.path"
-           value="bin/javacc.jar:bin/freemarker.jar"/>
+<project name="javacc21" default="jar" basedir=".">
 	
-	
-<target name="init">
-	<echo>Please include the following in any bug report.</echo>
+  <target name="init">
+	<echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
     <echo>Ant Version: ${ant.version}</echo>
 	<echo>JDK Version: ${java.version}</echo>
 	<echo>Operating System: ${os.name}</echo>
@@ -14,43 +9,44 @@
                  targetfile="src/java/javacc/parser/JavaCCParser.java">
 	 <srcfiles dir="src/grammars" includes="*.javacc"/>
 	</uptodate>
-	<taskdef name="bootstrap" classname="javacc.JavaCCAntTask" classpath="${bootstrap.class.path}"/>
-</target>
+  </target>
 
-<target name="parser-gen" depends="init" unless="parser.uptodate">
- 	<bootstrap src="src/grammars/JavaCC.javacc"/>
-</target>
+  <target name="clean">
+ 	<delete file="javacc.jar"/>
+ 	<delete dir="test.tmp"/>
+ 	<delete dir="build"/>
+        <delete dir="examples/java/javagrammar"/>
+        <delete dir="examples/freemarker/fel"/>
+        <delete dir="examples/freemarker/ftl"/>
+        <delete dir="src/java/javacc/parser"/>
+  </target>
 
-<!-- Tramsforms DocBook XML to HTML -->
-<target name='docs'>
-    <taskdef name="transform" classname="freemarker.docgen.DocgenTransformTask" classpath="${compile.class.path}"/>
-    <mkdir dir="docs"/>
-    <transform
-            srcFile="src/docs/manual.xml"
-            outputDir="docs"
-    />
-</target>
 
-		
-	
- <target name="compile" depends="parser-gen">
+  <target name="parser-gen" depends="init" unless="parser.uptodate">
+ 	<java jar="bin/javacc.jar" fork="true">
+ 	   <arg value="src/grammars/JavaCC.javacc"/>
+ 	</java>
+  </target>
+
+<target name="compile" depends="parser-gen">
   	<mkdir dir="build"/>
     <javac srcdir="src/java" 
  	       destdir="build"
  	       deprecation="off"
  	       debug="on"
  	       optimize="off"
-               target="1.8"
-               source="1.8"
-    	   classpath="${compile.class.path}"
+           target="1.8"
+           source="1.8"
+    	   classpath="src/java:bin/freemarker.jar"
            includeantruntime="yes"
     />
-    <copy todir="build/javacc/output/java">
-      <fileset dir="src/templates/java">
-         <include name="*.ftl"/>
-      </fileset>
-    </copy>
  </target>
+ 
+
+  <target name='docs'>
+    <ant antfile="build.xml" dir="src/docs"/>
+  </target>
+
 	
  <target name="test" depends="jar">
     <ant antfile="build.xml" dir="examples/java" target="clean"/>
@@ -61,18 +57,14 @@
  </target>
 	
  <target name="jar" depends="compile">
+     <copy todir="build/javacc/output/java">
+      <fileset dir="src/templates/java">
+         <include name="*.ftl"/>
+      </fileset>
+    </copy>
     <jar jarfile="javacc.jar" 
     	 basedir="build" compress="true"
          manifest="src/java/jar-manifest.txt"/>
  </target>
 	
- <target name="clean">
- 	<delete file="javacc.jar"/>
- 	<delete dir="test.tmp"/>
- 	<delete dir="build"/>
-        <delete dir="examples/java/javagrammar"/>
-        <delete dir="examples/freemarker/fel"/>
-        <delete dir="examples/freemarker/ftl"/>
-        <delete dir="src/java/javacc/parser"/>
-      </target>
 </project>

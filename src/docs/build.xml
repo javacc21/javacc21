@@ -1,0 +1,15 @@
+<project name="build-docs" default="docs" basedir=".">
+
+<!-- 
+  Transforms DocBook XML to HTML. Will be getting rid of this soon, and replacing it with something simpler.
+-->
+ <target name='docs'>
+    <taskdef name="transform" classname="freemarker.docgen.DocgenTransformTask" classpath="../../bin/freemarker.jar"/>
+    <mkdir dir="../../docs"/>
+    <transform
+            srcFile="manual.xml"
+            outputDir="../../docs"
+    />
+
+  </target>
+</project>		

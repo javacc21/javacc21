@@ -38,9 +38,6 @@ import javacc.parser.ParseException;
 public final class Main {
     
     public static final String PROG_NAME = "JavaCC 21 Preview 1";
-    public static final String CURRENT_VERSION = "21 Preview 1";
-    public static final String REPORT_BUGS_TO = "bugs@javacc.com";
-  
     
     private Main() {
     }
