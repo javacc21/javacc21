@@ -1,6 +1,11 @@
 <project name="javacc21" default="jar" basedir=".">
-	
-  <target name="init">
+
+    <tstamp>
+        <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
+    </tstamp>
+
+
+    <target name="init">
 	<echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
     <echo>Ant Version: ${ant.version}</echo>
 	<echo>JDK Version: ${java.version}</echo>
@@ -66,6 +71,8 @@
         <manifest>
             <attribute name="Main-Class" value="javacc.Main"/>
             <attribute name="Class-Path" value="freemarker.jar"/>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Build-Date"   value="${timestamp}"/>
         </manifest>
     </jar>
  </target>
