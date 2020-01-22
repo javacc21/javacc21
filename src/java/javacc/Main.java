@@ -124,13 +124,12 @@ public final class Main {
      */
     public static int mainProgram(String args[]) throws Exception {
 
-        JavaCCUtils.bannerLine("Parser Generator", "");
+        JavaCCUtils.bannerLine();
         if (args.length == 0) {
-            System.out.println("");
             usage();
             return 1;
         } else {
-            System.out.println("(type \"javacc\" with no arguments for help)");
+            System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)");
         }
         JavaCCOptions options = new JavaCCOptions(args);
         String filename = args[args.length -1];

@@ -43,13 +43,10 @@ public class JavaCCUtils {
      * This prints the banner line when the various tools are invoked. This
      * takes as argument the tool's full name and its version.
      */
-    static public void bannerLine(String fullName, String ver) {
+    static public void bannerLine() {
         System.out.println(Main.PROG_NAME);
         System.out.println("Send bug reports to: " + Main.REPORT_BUGS_TO);
-        if (!ver.equals("")) {
-            System.out.print(" Version " + ver);
-        }
-        System.out.println(")");
+        System.out.println();
     }
 
 /****/
