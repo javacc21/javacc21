@@ -1,13 +1,15 @@
 #!/bin/sh
 
-# If there is a javacc.jar in the base directory, use that. Otherwise use the bootstrap jarfile in the bin directory.
+pushd $(dirname $0)
+cd ..
+BASE_DIR=$(pwd)
+popd
 
-DIR=$(dirname $0)
-JAVACC_JAR=$DIR/../bootstrap/javacc.jar
+# If there are classfiles in the build directory, use those. Otherwise, use the classes in the bootstrap
+# directory.
 
-if test -f "$DIR/../javacc.jar" ; then
-   JAVACC_JAR="$DIR/../javacc.jar"
-fi
+java -classpath $BASE_DIR/build:$BASE_DIR/bootstrap/javacc.jar/$BASE_DIR/bootstrap/freemarker.jar javacc.Main "$@"
 
-java -jar "$JAVACC_JAR" "$@"
+
+
 
