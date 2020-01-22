@@ -8,12 +8,14 @@
 
 <target name="init">
    <uptodate property="javaparser.uptodate" srcfile="../../src/grammars/Java.javacc" targetfile="javagrammar/JavaParser.java"/>
-   <taskdef name="javacc" classname="javacc.JavaCCAntTask" classpath="../../javacc.jar:../../bootstrap/javacc.jar:../../bootstrap/freemarker.jar"/>
    <mkdir dir="javagrammar"/>
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
-    <javacc src="../../src/grammars/Java.javacc" BASE_SRC_DIR="../../examples/java" />
+  <java classpath="../../build:../../bootstrap.javacc.jar:../../bootstrap/freemarker.jar" classname="javacc.Main">
+    <arg value="-BASE_SRC_DIR=${basedir}/../../examples/java" />
+    <arg value="${basedir}/../../src/grammars/Java.javacc"/>
+  </java>
 </target>
  
  
@@ -32,7 +34,7 @@
         -------------------
      </echo>
      <java fork="true" failonerror="true" classname="javagrammar.JavaParser">
-         <arg value="javagrammar/nodes/CompilationUnit.java"/>
+         <arg value="javagrammar/CompilationUnit.java"/>
      </java>
 </target>
 

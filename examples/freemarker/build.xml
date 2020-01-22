@@ -8,17 +8,18 @@
 </target>
 
 <target name="init">
-     <taskdef name="javacc"
-              classname="javacc.JavaCCAntTask"
-              classpath="../../javacc.jar:../../bootstrap/javacc.jar:../../bootstrap/freemarker.jar"
-     />
    <mkdir dir="fel"/>
    <mkdir dir="ftl"/>
 </target>
 
 <target name="build" depends="init">
-    <javacc src="FEL.javacc"/>
-    <javacc src="FTL.javacc"/>
+    <java classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bootstrap/javacc.jar:${basedir}/../../bootstrap/freemarker.jar">
+      <arg value="${basedir}/FEL.javacc"/>
+    </java>
+    <java classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bootstrap/javacc.jar:${basedir}/../../bootstrap/freemarker.j\
+ar">                                                                                                                                                   <arg value="${basedir}/FTL.javacc"/>     
+    </java>      
+    
     <javac classpath="." debug="on" srcdir="." includeantruntime="no" />
 </target>
 

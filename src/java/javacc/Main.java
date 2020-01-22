@@ -38,7 +38,6 @@ import javacc.parser.ParseException;
 public final class Main {
     
     public static final String PROG_NAME = "JavaCC 21 Preview 1";
-    public static final String CURRENT_VERSION = "21 Preview 1";
     public static final String REPORT_BUGS_TO = "bugs@javacc.com";
   
     
@@ -47,7 +46,7 @@ public final class Main {
 
     static void usage() {
         System.out.println("Usage:");
-        System.out.println("    javacc option-settings inputfile");
+        System.out.println("    java -jar javacc.jar option-settings inputfile");
         System.out.println("");
         System.out.println("\"option-settings\" is a sequence of settings separated by spaces.");
         System.out.println("Each option setting must be of one of the following forms:");

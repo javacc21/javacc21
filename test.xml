@@ -1,20 +1,23 @@
 <project name="tests" default="all">
 
-  <property name="classpath" value="${basedir}/build:${basedir}/bootstrap/freemarker.jar"/>
+    <property name="classpath" value="${basedir}/build:${basedir}/bootstrap/freemarker.jar"/>
+	<property name="outputdir" value="${basedir}/test.tmp"/>
 
  <target name="all" description="run functional test cases">
-	<taskdef name="javacc" classname="javacc.JavaCCAntTask" classpath="${classpath}"/>
 	    <delete dir="test.tmp" />
 	    <mkdir dir="test.tmp" />
- 	    <javacc src="examples/CORBA-IDL/IDL.javacc" BASE_SRC_DIR="test.tmp/CORBA-IDL" />
-	    <javac srcdir="test.tmp/CORBA-IDL" includeantruntime="no" />
-	    <copy todir="test.tmp/CORBA-IDL/">
+	    <java classpath="${classpath}" classname="javacc.Main">
+			<arg value="-BASE_SRC_DIR=${outputdir}/CORBA-IDL"/>
+			<arg value="examples/CORBA-IDL/IDL.javacc"/>
+		</java>
+	    <javac srcdir="${outputdir}/CORBA-IDL" includeantruntime="no" />
+	    <copy todir="${outputdir}/CORBA-IDL/">
 	      <fileset dir="examples/CORBA-IDL">
 	        <include name="*.idl" />
 	      </fileset>
 	    </copy>
 	    <java failonerror="true" fork="true" classname="IDLParser" classpath="test.tmp/CORBA-IDL:${FREEMARKER_JAR}" outputproperty="test.corba.out">
-	      <arg line="test.tmp/CORBA-IDL/Hello.idl" />
+	      <arg line="${outputdir}/CORBA-IDL/Hello.idl" />
 	                <assertions><enable/></assertions>
 	    </java>
 
@@ -36,8 +39,11 @@
 	      </fileset>
 	    </copy>
 
-	    <javacc src="examples/GUIParsing/ParserVersion/CalcInput.javacc" BASE_SRC_DIR="test.tmp/GUIParsing/ParserVersion"/> 
-	    <javac srcdir="test.tmp/GUIParsing/ParserVersion" includeantruntime="no" />
+	    <java classpath="${classpath}" classname="javacc.Main">
+			<arg value="-BASE_SRC_DIR=${outputdir}/GUIParsing/ParserVersion"/>
+			<arg value="examples/GUIParsing/ParserVersion/CalcInput.javacc"/>
+		</java>
+	    <javac srcdir="${outputdir}/GUIParsing/ParserVersion" includeantruntime="no" />
 
 	    <echo />
 	    
@@ -47,25 +53,31 @@
 	      </fileset>
 	    </copy>
 
-	    <javacc src="examples/GUIParsing/LexerVersion/CalcInput.javacc" BASE_SRC_DIR="test.tmp/GUIParsing/LexerVersion" />
-	    <javac srcdir="test.tmp/GUIParsing/LexerVersion" includeantruntime="no" />
+	    <java classpath="${classpath}" classname="javacc.Main">
+			<arg value="-BASE_SRC_DIR=${outputdir}/GUIParsing/LexerVersion"/>
+			<arg value="examples/GUIParsing/LexerVersion/CalcInput.javacc"/>
+		</java>
+	    <javac srcdir="${outputdir}/GUIParsing/LexerVersion" includeantruntime="no" />
 
 	    <echo />
 	    
-	    <copy todir="test.tmp/Interpreter">
+	    <copy todir="${outputdir}/Interpreter">
 	      <fileset dir="examples/Interpreter">
 	        <include name="*.java" />
 	      </fileset>
 	    </copy>
 
-	    <javacc src="examples/Interpreter/SPL.javacc" BASE_SRC_DIR="test.tmp/Interpreter"/>
-	    <copy todir="test.tmp/Interpreter/">
+	    <java classpath="${classpath}" classname="javacc.Main">
+			<arg value="-BASE_SRC_DIR=${outputdir}/Interpreter"/>
+			<arg value="examples/Interpreter/SPL.javacc"/>
+		</java>
+	 <copy todir="${outputdir}/Interpreter/">
 	      <fileset dir="examples/Interpreter/">
 	        <include name="*.spl" />
 	      </fileset>
 	    </copy>
  	
- 	    <javac srcdir="test.tmp/Interpreter" debug="on" includeantruntime="no" />
+ 	    <javac srcdir="${outputdir}/Interpreter" debug="on" includeantruntime="no" />
 
 	    <java failonerror="true" fork="true" 
 	          classname="SPLParser" 
@@ -122,8 +134,11 @@
 
 	    <echo />
 	    
-	    <javacc src="examples/TreeBuildingExamples/eg1.javacc" BASE_SRC_DIR="test.tmp/TreeBuildingExamples.eg1" />
-	    <javac debug="on" srcdir="test.tmp/TreeBuildingExamples.eg1" includeantruntime="no" />
+	    <java classpath="${classpath}" classname="javacc.Main">
+			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg1"/>
+			<arg value="examples/TreeBuildingExamples/eg1.javacc"/>
+		</java>
+	    <javac debug="on" srcdir="${outputdir}/TreeBuildingExamples.eg1" includeantruntime="no" />
 	    
 	    <java failonerror="true" fork="true" 
 	          classname="Eg1" 
@@ -151,8 +166,11 @@
 	      </fileset>
 	    </copy>
 
-	    <javacc src="examples/TreeBuildingExamples/eg2.javacc" BASE_SRC_DIR="test.tmp/TreeBuildingExamples.eg2"/> 
-	    <javac srcdir="test.tmp/TreeBuildingExamples.eg2" includes="Eg2.java" includeantruntime="no" />
+	    <java classpath="${classpath}" classname="javacc.Main">
+			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg2"/>
+			<arg value="examples/TreeBuildingExamples/eg2.javacc"/>
+		</java>
+	    <javac srcdir="${outputdir}/TreeBuildingExamples.eg2" includes="Eg2.java" includeantruntime="no" />
 	    
 	    <java failonerror="true" fork="true" 
 	          classname="Eg2" 
@@ -180,7 +198,10 @@
 	      </fileset>
 	    </copy>
 
-	    <javacc src="examples/TreeBuildingExamples/eg3.javacc" BASE_SRC_DIR="test.tmp/TreeBuildingExamples.eg3" />
+	    <java classpath="${classpath}" classname="javacc.Main">
+			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg3"/>
+			<arg value="examples/TreeBuildingExamples/eg3.javacc"/>
+		</java>
 	    <javac srcdir="test.tmp/TreeBuildingExamples.eg3" includeantruntime="no" />
 
 	    <java failonerror="true" fork="true" 
@@ -209,7 +230,10 @@
 	      </fileset>
 	    </copy>
 
-	    <javacc src="examples/TreeBuildingExamples/eg4.javacc" BASE_SRC_DIR="test.tmp/TreeBuildingExamples.eg4"/> 
+	    <java classpath="${classpath}" classname="javacc.Main">
+			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg4"/>
+			<arg value="examples/TreeBuildingExamples/eg4.javacc"/>
+		</java>
 	    <javac srcdir="test.tmp/TreeBuildingExamples.eg4" debug="true" includeantruntime="no" />
 
 	    <java failonerror="true" fork="true" 
@@ -231,21 +255,67 @@
 
 	    <echo />
 
-	    <javacc src="examples/Lookahead/Example1.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg1"/> 
-	    <javacc src="examples/Lookahead/Example2.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg2"/> 
-        <javacc src="examples/Lookahead/Example4.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg4" />
-        <javacc src="examples/Lookahead/Example5.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg5" />
-        <javacc src="examples/Lookahead/Example6.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg6" />
-        <javacc src="examples/Lookahead/Example7.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg7" />
-        <javacc src="examples/Lookahead/Example8.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg8" />
-        <javacc src="examples/Lookahead/Example9.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg9" />
-        <javacc src="examples/Lookahead/Example10.javacc" BASE_SRC_DIR="test.tmp/Lookahead.eg10" />
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg1"/>
+		 <arg value="examples/Lookahead/Example1.javacc"/>
+	 </java>
 
-	    <echo />
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg2"/>
+		 <arg value="examples/Lookahead/Example2.javacc"/>
+	 </java>
 
-	    <javacc src="examples/MailProcessing/Digest.javacc" BASE_SRC_DIR="test.tmp/MailProcessing"  />
-	    <javacc src="examples/MailProcessing/Faq.javacc" BASE_SRC_DIR="test.tmp/MailProcessing" />
- 	    <javac srcdir="test.tmp/MailProcessing" includeantruntime="no"/>
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg4"/>
+		 <arg value="examples/Lookahead/Example4.javacc"/>
+	 </java>
+
+
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg5"/>
+		 <arg value="examples/Lookahead/Example5.javacc"/>
+	 </java>
+
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg6"/>
+		 <arg value="examples/Lookahead/Example6.javacc"/>
+	 </java>
+
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg7"/>
+		 <arg value="examples/Lookahead/Example7.javacc"/>
+	 </java>
+
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg8"/>
+		 <arg value="examples/Lookahead/Example8.javacc"/>
+	 </java>
+
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg9"/>
+		 <arg value="examples/Lookahead/Example9.javacc"/>
+	 </java>
+
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg10"/>
+		 <arg value="examples/Lookahead/Example10.javacc"/>
+
+	 </java>
+
+
+	 <echo />
+
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/MailProcessing"/>
+		 <arg value="examples/MailProcessing/Digest.javacc"/>
+	 </java>
+
+	 <java classpath="${classpath}" classname="javacc.Main">
+		 <arg value="-BASE_SRC_DIR=${outputdir}/MailProcessing"/>
+		 <arg value="examples/MailProcessing/Faq.javacc"/>
+	 </java>
+
+	 <javac srcdir="test.tmp/MailProcessing" includeantruntime="no"/>
 	    <echo />
 	  </target>
 </project>
