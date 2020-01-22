@@ -1,6 +1,6 @@
 <project name="tests" default="all">
 
-  <property name="classpath" value="${basedir}/build:${basedir}/bin/freemarker.jar"/>
+  <property name="classpath" value="${basedir}/build:${basedir}/bootstrap/freemarker.jar"/>
 
  <target name="all" description="run functional test cases">
 	<taskdef name="javacc" classname="javacc.JavaCCAntTask" classpath="${classpath}"/>

@@ -8,7 +8,7 @@
 
 <target name="init">
    <uptodate property="javaparser.uptodate" srcfile="../../src/grammars/Java.javacc" targetfile="javagrammar/JavaParser.java"/>
-   <taskdef name="javacc" classname="javacc.JavaCCAntTask" classpath="../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar"/>
+   <taskdef name="javacc" classname="javacc.JavaCCAntTask" classpath="../../javacc.jar:../../bootstrap/javacc.jar:../../bootstrap/freemarker.jar"/>
    <mkdir dir="javagrammar"/>
 </target>
 

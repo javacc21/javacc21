@@ -10,7 +10,7 @@
 <target name="init">
      <taskdef name="javacc"
               classname="javacc.JavaCCAntTask"
-              classpath="../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar"
+              classpath="../../javacc.jar:../../bootstrap/javacc.jar:../../bootstrap/freemarker.jar"
      />
    <mkdir dir="fel"/>
    <mkdir dir="ftl"/>
