@@ -5,10 +5,27 @@ cd ..
 BASE_DIR=$(pwd)
 popd
 
+SEP=":"
+
+case "$(uname -s)" in
+    CYGWIN*)
+      SEP=';'
+      BASE_DIR=$(cygpath -w $BASE_DIR)
+    ;;
+    MINGW*)
+      SEP=';'
+      BASE_DIR=$(cygpath -w $BASE_DIR)
+    ;;
+    MSYS*)
+      SEP=';'
+      BASE_DIR=$(cygpath -w $BASE_DIR)
+    ;;
+esac
+
 # If there are classfiles in the build directory, use those. Otherwise, use the classes in the bootstrap
 # directory.
 
-java -classpath $BASE_DIR/build:$BASE_DIR/bootstrap/javacc.jar/$BASE_DIR/bootstrap/freemarker.jar javacc.Main "$@"
+java -classpath $BASE_DIR/build$SEP$BASE_DIR/bootstrap/javacc.jar$SEP$BASE_DIR/bootstrap/freemarker.jar javacc.Main "$@"
 
 
 
