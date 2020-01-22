@@ -7,6 +7,8 @@ popd
 
 SEP=":"
 
+# Let's go the extra 9 yards to get this working on Cygwin and such.
+# I hope people appreciate the effort!
 case "$(uname -s)" in
     CYGWIN*)
       SEP=';'
