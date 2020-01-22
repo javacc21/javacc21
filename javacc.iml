@@ -25,5 +25,6 @@
       </library>
     </orderEntry>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="freemarker" level="project" />
   </component>
 </module>

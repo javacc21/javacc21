@@ -1,3 +1,0 @@
-Main-Class: javacc.Main
-Class-Path: freemarker.jar bin/freemarker.jar
-

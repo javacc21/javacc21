@@ -62,9 +62,12 @@
          <include name="*.ftl"/>
       </fileset>
     </copy>
-    <jar jarfile="javacc.jar" 
-    	 basedir="build" compress="true"
-         manifest="src/java/jar-manifest.txt"/>
+    <jar jarfile="javacc.jar" basedir="build" compress="true">
+        <manifest>
+            <attribute name="Main-Class" value="javacc.Main"/>
+            <attribute name="Class-Path" value="freemarker.jar"/>
+        </manifest>
+    </jar>
  </target>
 	
 </project>

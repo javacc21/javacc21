@@ -3,7 +3,7 @@
 # If there is a javacc.jar in the base directory, use that. Otherwise use the bootstrap jarfile in the bin directory.
 
 DIR=$(dirname $0)
-JAVACC_JAR=$DIR/javacc.jar
+JAVACC_JAR=$DIR/../bootstrap/javacc.jar
 
 if test -f "$DIR/../javacc.jar" ; then
    JAVACC_JAR="$DIR/../javacc.jar"
