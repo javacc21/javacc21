@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# This script is really just for people who are working on the code. If there are classfiles in
+# the build directory, it uses those, since those would be the most up-to-date version.
+# An end user who is not in the code can perfectly well just launch the jarfile directly, as in:
+#
+#    java -jar javacc.jar <args>
+#
+
 pushd $(dirname $0)
 cd ..
 BASE_DIR=$(pwd)
@@ -24,11 +31,8 @@ case "$(uname -s)" in
     ;;
 esac
 
-# If there are classfiles in the build directory, use those. Otherwise, use the classes in the bootstrap
+# If there are classfiles in the build directory, use those. Otherwise, use the javacc.jar in the bootstrap
 # directory.
 
 java -classpath $BASE_DIR/build$SEP$BASE_DIR/bootstrap/javacc.jar$SEP$BASE_DIR/bootstrap/freemarker.jar javacc.Main "$@"
-
-
-
 
