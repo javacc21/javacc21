@@ -45,7 +45,7 @@ public class JavaCCUtils {
      */
     static public void bannerLine() {
         System.out.println(Main.PROG_NAME);
-        System.out.println("Send bug reports to: " + Main.REPORT_BUGS_TO);
+        System.out.println(Main.URL);
         System.out.println();
     }
 

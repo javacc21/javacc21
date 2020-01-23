@@ -12,7 +12,7 @@
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
-  <java classpath="../../build:../../bootstrap.javacc.jar:../../bootstrap/freemarker.jar" classname="javacc.Main">
+  <java classpath="../../build:../../bootstrap/javacc.jar:../../bootstrap/freemarker.jar" classname="javacc.Main">
     <arg value="-BASE_SRC_DIR=${basedir}/../../examples/java" />
     <arg value="${basedir}/../../src/grammars/Java.javacc"/>
   </java>

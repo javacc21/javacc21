@@ -37,8 +37,8 @@ import javacc.parser.ParseException;
  */
 public final class Main {
     
-    public static final String PROG_NAME = "JavaCC 21 Preview 1";
-    public static final String REPORT_BUGS_TO = "bugs@javacc.com";
+    public static final String PROG_NAME = "JavaCC 21 Parser Generator";
+    public static final String URL = "Go to https://javacc.com for more information.";
   
     
     private Main() {
