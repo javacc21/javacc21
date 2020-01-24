@@ -13,10 +13,10 @@
 </target>
 
 <target name="build" depends="init">
-    <java classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bootstrap/javacc.jar:${basedir}/../../bootstrap/freemarker.jar">
+    <java classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bin/javacc.jar:${basedir}/../../bin/freemarker.jar">
       <arg value="${basedir}/FEL.javacc"/>
     </java>
-    <java classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bootstrap/javacc.jar:${basedir}/../../bootstrap/freemarker.j\
+    <java classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bin/javacc.jar:${basedir}/../../bin/freemarker.j\
 ar">                                                                                                                                                   <arg value="${basedir}/FTL.javacc"/>     
     </java>      
     

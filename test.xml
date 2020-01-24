@@ -1,6 +1,6 @@
 <project name="tests" default="all">
 
-    <property name="classpath" value="${basedir}/build:${basedir}/bootstrap/freemarker.jar"/>
+    <property name="classpath" value="${basedir}/build:${basedir}/bin/freemarker.jar"/>
 	<property name="outputdir" value="${basedir}/test.tmp"/>
 
  <target name="all" description="run functional test cases">

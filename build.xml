@@ -30,29 +30,29 @@
   <target name="parser-gen" depends="init" unless="parser.uptodate">
         <get 
             src="https://javacc.com/download/javacc.jar" 
-            dest="bootstrap"
+            dest="bin"
             ignoreerrors="true"
             usetimestamp="true" />
         <get
             src="https://javacc.com/download/freemarker.jar"
-            dest="bootstrap"
+            dest="bin"
             ignoreerrors="true"
             usetimestamp="true" />
          <fail message="Bootstrap javacc.jar not available">
             <condition>
              <not>
-              <available file="bootstrap/javacc.jar"/>
+              <available file="bin/javacc.jar"/>
              </not>
             </condition>
          </fail>
          <fail message="Bootstrap freemarker.jar not available">
             <condition>
              <not>
-              <available file="bootstrap/freemarker.jar"/>
+              <available file="bin/freemarker.jar"/>
              </not>
             </condition>
          </fail>
- 	<java jar="bootstrap/javacc.jar" fork="true">
+ 	<java jar="bin/javacc.jar" fork="true">
  	   <arg value="src/grammars/JavaCC.javacc"/>
  	</java>
   </target>
@@ -66,7 +66,7 @@
  	       optimize="off"
            target="1.8"
            source="1.8"
-    	   classpath="src/java:bootstrap/freemarker.jar"
+    	   classpath="src/java:bin/freemarker.jar"
            includeantruntime="yes"
     />
      <copy todir="build/javacc/output/java">
@@ -94,7 +94,7 @@
     <jar jarfile="javacc.jar" basedir="build" compress="true">
         <manifest>
             <attribute name="Main-Class" value="javacc.Main"/>
-            <attribute name="Class-Path" value="freemarker.jar bootstrap/freemarker.jar"/>
+            <attribute name="Class-Path" value="freemarker.jar bin/freemarker.jar"/>
             <attribute name="Built-By" value="${user.name}"/>
             <attribute name="Build-Date"   value="${timestamp}"/>
         </manifest>
