@@ -1,3 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
-java -jar "$(dirname $0)/javacc.jar" "$@"
+SCRIPT_DIR="$(dirname $0)"
+wget -N -q -P $SCRIPT_DIR https://javacc.com/download/javacc.jar || true 
+wget -N -q -P $SCRIPT_DIR https://javacc.com/download/freemarker.jar || true
+
+java -jar "$SCRIPT_DIR/javacc.jar" "$@"

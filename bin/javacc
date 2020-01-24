@@ -11,10 +11,11 @@
 
 BASE_DIR="$(dirname $0)/.."
 
-# If there is no build directory, then just use the bootstrap jarfile
+# If there is no build directory, then just use the bootstrap script
 
 if [ ! -f "$BASE_DIR/build/javacc/Main.class" ]; then
-    java -jar "$BASE_DIR/bootstrap/javacc.jar" "$@"
+#    java -jar "$BASE_DIR/bootstrap/javacc.jar" "$@"
+    $BASE_DIR/bootstrap/javacc "$@"
     exit $?
 fi
 

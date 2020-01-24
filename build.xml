@@ -1,9 +1,8 @@
-<project name="javacc21" default="jar" basedir=".">
+<project name="javacc21" default="compile" basedir=".">
 
     <tstamp>
         <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
     </tstamp>
-
 
     <target name="init">
         <echo>Join the JavaCC 21 Discussion forum at: https://discuss.parsers.org/</echo>
@@ -29,6 +28,30 @@
 
 
   <target name="parser-gen" depends="init" unless="parser.uptodate">
+        <get 
+            src="https://javacc.com/download/javacc.jar" 
+            dest="bootstrap"
+            ignoreerrors="true"
+            usetimestamp="true" />
+        <get
+            src="https://javacc.com/download/freemarker.jar"
+            dest="bootstrap"
+            ignoreerrors="true"
+            usetimestamp="true" />
+         <fail message="Bootstrap javacc.jar not available">
+            <condition>
+             <not>
+              <available file="bootstrap/javacc.jar"/>
+             </not>
+            </condition>
+         </fail>
+         <fail message="Bootstrap freemarker.jar not available">
+            <condition>
+             <not>
+              <available file="bootstrap/freemarker.jar"/>
+             </not>
+            </condition>
+         </fail>
  	<java jar="bootstrap/javacc.jar" fork="true">
  	   <arg value="src/grammars/JavaCC.javacc"/>
  	</java>
@@ -46,6 +69,11 @@
     	   classpath="src/java:bootstrap/freemarker.jar"
            includeantruntime="yes"
     />
+     <copy todir="build/javacc/output/java">
+      <fileset dir="src/templates/java">
+         <include name="*.ftl"/>
+      </fileset>
+    </copy>
  </target>
  
 
@@ -63,11 +91,6 @@
  </target>
 	
  <target name="jar" depends="compile">
-     <copy todir="build/javacc/output/java">
-      <fileset dir="src/templates/java">
-         <include name="*.ftl"/>
-      </fileset>
-    </copy>
     <jar jarfile="javacc.jar" basedir="build" compress="true">
         <manifest>
             <attribute name="Main-Class" value="javacc.Main"/>
