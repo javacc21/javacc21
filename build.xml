@@ -6,6 +6,7 @@
 
 
     <target name="init">
+        <echo>Join the JavaCC 21 Discussion forum at: https://discuss.parsers.org/</echo>
 	<echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
     <echo>Ant Version: ${ant.version}</echo>
 	<echo>JDK Version: ${java.version}</echo>
@@ -70,7 +71,7 @@
     <jar jarfile="javacc.jar" basedir="build" compress="true">
         <manifest>
             <attribute name="Main-Class" value="javacc.Main"/>
-            <attribute name="Class-Path" value="freemarker.jar"/>
+            <attribute name="Class-Path" value="freemarker.jar bootstrap/freemarker.jar"/>
             <attribute name="Built-By" value="${user.name}"/>
             <attribute name="Build-Date"   value="${timestamp}"/>
         </manifest>
