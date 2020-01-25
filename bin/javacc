@@ -1,12 +1,16 @@
 #!/bin/sh
 
 BIN_DIR="$(dirname $0)"
-BASE_DIR="$SCRIPT_DIR/.."
+BASE_DIR="$BIN_DIR/.."
 
-# Pick up newer jarfiles if they are up on the server
+if [ $(which wget) ]; then
 
-wget -N -q -P $SCRIPT_DIR https://javacc.com/download/javacc.jar || true
-wget -N -q -P $SCRIPT_DIR https://javacc.com/download/freemarker.jar || true
+   # Pick up newer jarfiles if they are up on the server
+   # (Quietly, I'm a sneaky SOB!)
+   bash -c "wget -N -q -P $BIN_DIR https://javacc.com/download/javacc.jar 2>/dev/null || true "
+   bash -c "wget -N -q -P $BIN_DIR https://javacc.com/download/freemarker.jar 2>/dev/null || true "
+
+fi
 
 # If there is no build directory, then just use the bootstrap script
 

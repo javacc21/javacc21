@@ -130,6 +130,7 @@ public class JavaCCOptions {
      */
     public void init() {
         optionValues = new HashMap<String, Object>();
+        optionValues.put("QUIET",  false);
         optionValues.put("LOOKAHEAD", 1);
         optionValues.put("CHOICE_AMBIGUITY_CHECK", 2);
         optionValues.put("OTHER_AMBIGUITY_CHECK", 1);
@@ -152,7 +153,7 @@ public class JavaCCOptions {
         optionValues.put("PARSER_CLASS", "");
         optionValues.put("LEXER_CLASS", "");
         optionValues.put("CONSTANTS_CLASS", "");
-	optionValues.put("BASE_SRC_DIR", ".");
+	    optionValues.put("BASE_SRC_DIR", ".");
         optionValues.put("BASE_NODE_CLASS", "BaseNode");
 
         optionValues.put("OUTPUT_DIRECTORY", "");
@@ -183,6 +184,7 @@ public class JavaCCOptions {
         aliases.put("BUILD_TOKEN_MANAGER", "BUILD_LEXER");
         aliases.put("TOKEN_MANAGER_USES_PARSER", "LEXER_USES_PARSER");
         aliases.put("NODE_CLASS", "BASE_NODE_CLASS");
+        aliases.put("q",  "QUIET");
     }
     
     public void setOption(String name, Object value) {
@@ -336,6 +338,11 @@ public class JavaCCOptions {
             s = arg.substring(1);
         } else {
             s = arg;
+        }
+        
+        if (s.equalsIgnoreCase("quiet")||s.equalsIgnoreCase("Q")) {
+        	this.setOption("QUIET", true);
+        	return;
         }
 
         String name;
@@ -609,6 +616,10 @@ public class JavaCCOptions {
      */
     public String getOutputDirectory() {
         return stringValue("OUTPUT_DIRECTORY");
+    }
+    
+    public boolean getQuiet() {
+    	return booleanValue("QUIET");
     }
 
     /**

@@ -3,6 +3,7 @@
 /build/*
 /test.tmp/*
 /javacc.jar
+\#*
 /src/java/javacc/parser/*
 /examples/freemarker/ftl/*
 /examples/freemarker/fel/*

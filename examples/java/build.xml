@@ -13,6 +13,7 @@
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
   <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="javacc.Main">
+    <arg value="-q"/>
     <arg value="-BASE_SRC_DIR=${basedir}/../../examples/java" />
     <arg value="${basedir}/../../src/grammars/Java.javacc"/>
   </java>

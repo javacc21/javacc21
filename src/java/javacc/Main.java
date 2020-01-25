@@ -113,7 +113,14 @@ public final class Main {
      * A main program that exercises the parser.
      */
     public static void main(String args[]) throws Exception {
-        int errorcode = mainProgram(args);
+    	try {
+    		Class fmClass = Class.forName("freemarker.core.Scope");
+    	}
+    	catch (ClassNotFoundException e) {
+    		System.err.println("You must have an appropriate (V3 or later) freemarker.jar on your classpath to run JavaCC 21");
+    		System.exit(-1);
+    	}
+  		int errorcode = mainProgram(args);
         System.exit(errorcode);
     }
 
@@ -122,15 +129,17 @@ public final class Main {
      * returns an error code. See how the main program above uses this method.
      */
     public static int mainProgram(String args[]) throws Exception {
-
-        JavaCCUtils.bannerLine();
         if (args.length == 0) {
+            JavaCCUtils.bannerLine();
             usage();
             return 1;
-        } else {
-            System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)");
-        }
+        } 
         JavaCCOptions options = new JavaCCOptions(args);
+        boolean quiet = options.getQuiet();
+        if (!quiet) {
+            System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)");
+        	JavaCCUtils.bannerLine();
+        }
         String filename = args[args.length -1];
         Grammar grammar = new Grammar(options);
         grammar.parse(filename);

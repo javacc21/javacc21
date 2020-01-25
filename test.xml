@@ -7,6 +7,7 @@
 	    <delete dir="test.tmp" />
 	    <mkdir dir="test.tmp" />
 	    <java classpath="${classpath}" classname="javacc.Main">
+	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/CORBA-IDL"/>
 			<arg value="examples/CORBA-IDL/IDL.javacc"/>
 		</java>
@@ -40,6 +41,7 @@
 	    </copy>
 
 	    <java classpath="${classpath}" classname="javacc.Main">
+	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/GUIParsing/ParserVersion"/>
 			<arg value="examples/GUIParsing/ParserVersion/CalcInput.javacc"/>
 		</java>
@@ -54,6 +56,7 @@
 	    </copy>
 
 	    <java classpath="${classpath}" classname="javacc.Main">
+	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/GUIParsing/LexerVersion"/>
 			<arg value="examples/GUIParsing/LexerVersion/CalcInput.javacc"/>
 		</java>
@@ -68,6 +71,7 @@
 	    </copy>
 
 	    <java classpath="${classpath}" classname="javacc.Main">
+	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/Interpreter"/>
 			<arg value="examples/Interpreter/SPL.javacc"/>
 		</java>
@@ -135,6 +139,7 @@
 	    <echo />
 	    
 	    <java classpath="${classpath}" classname="javacc.Main">
+	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg1"/>
 			<arg value="examples/TreeBuildingExamples/eg1.javacc"/>
 		</java>
@@ -167,6 +172,7 @@
 	    </copy>
 
 	    <java classpath="${classpath}" classname="javacc.Main">
+	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg2"/>
 			<arg value="examples/TreeBuildingExamples/eg2.javacc"/>
 		</java>
@@ -199,6 +205,7 @@
 	    </copy>
 
 	    <java classpath="${classpath}" classname="javacc.Main">
+	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg3"/>
 			<arg value="examples/TreeBuildingExamples/eg3.javacc"/>
 		</java>
@@ -231,6 +238,7 @@
 	    </copy>
 
 	    <java classpath="${classpath}" classname="javacc.Main">
+	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg4"/>
 			<arg value="examples/TreeBuildingExamples/eg4.javacc"/>
 		</java>
@@ -256,47 +264,56 @@
 	    <echo />
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg1"/>
 		 <arg value="examples/Lookahead/Example1.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg2"/>
 		 <arg value="examples/Lookahead/Example2.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg4"/>
 		 <arg value="examples/Lookahead/Example4.javacc"/>
 	 </java>
 
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg5"/>
 		 <arg value="examples/Lookahead/Example5.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg6"/>
 		 <arg value="examples/Lookahead/Example6.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg7"/>
 		 <arg value="examples/Lookahead/Example7.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg8"/>
 		 <arg value="examples/Lookahead/Example8.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg9"/>
 		 <arg value="examples/Lookahead/Example9.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg10"/>
 		 <arg value="examples/Lookahead/Example10.javacc"/>
 
@@ -306,11 +323,13 @@
 	 <echo />
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/MailProcessing"/>
 		 <arg value="examples/MailProcessing/Digest.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
+    	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/MailProcessing"/>
 		 <arg value="examples/MailProcessing/Faq.javacc"/>
 	 </java>
