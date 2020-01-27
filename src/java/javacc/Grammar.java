@@ -561,14 +561,6 @@ public class Grammar {
         nodeVariableNameStack.remove(nodeVariableNameStack.size() - 1);
     }
     
-    public List<String> getNodeIds() {
-        List<String> result = new ArrayList<String>();
-        for (String nodeName : nodeNames) {
-            result.add(nodeName.toUpperCase());
-        }
-        return result;
-    }
-
     public Set<String> getNodeNames() {
         return nodeNames;
     }

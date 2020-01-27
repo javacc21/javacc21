@@ -52,7 +52,7 @@ public class FilesGenerator {
     private Grammar grammar;
     private String currentFilename;
     private CodeInjector codeInjector;
-    private Set<String> tokenSubclassFileNames = new HashSet<String>();
+    private Set<String> tokenSubclassFileNames = new HashSet<>();
 
     void initializeTemplateEngine() throws IOException {
         fmConfig = new freemarker.template.Configuration();
@@ -272,8 +272,20 @@ public class FilesGenerator {
         }
     }
     
-    boolean regenerate(File file) {
-        if (!file.exists()) return true;
+    boolean regenerate(File file) throws IOException {
+        if (!file.exists()) {
+        	return true;
+        } else  {
+        	String ourName = file.getName();
+        	String canonicalName = file.getCanonicalFile().getName();
+        	if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
+        		String msg = "You cannot have two files that differ only in case, as in " 
+        	                          + ourName + " and "+ canonicalName 
+        	                          + "\nThis does work on a case-sensitive file system but fails on a case-insensitive one (i.e. Mac/Windows)"
+        	                          + " \nYou will need to rename something in your grammar!";
+        		throw new IOException(msg);
+        	}
+        }
         String filename = file.getName();
         if (filename.endsWith(".java")) {
             String typename = filename.substring(0, filename.length() -5);

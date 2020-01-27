@@ -136,11 +136,8 @@ abstract public class Expansion extends BaseNode {
     public boolean getIsRegexp() {
         return (this instanceof RegularExpression);
     }
-
-    //    public Lookahead getLookahead() {
-    //        return null;
-    //    }
-
+    
+    
     public Object getParentObject() {
         return parentObject != null ? parentObject : getParent();
     }
@@ -168,15 +165,11 @@ abstract public class Expansion extends BaseNode {
     }
 
     public void setLookahead(Lookahead lookahead) {
-	this.lookahead = lookahead;
+    	this.lookahead = lookahead;
     }
 
     public Lookahead getLookahead() {
-	//	if (lookahead != null) {
-	//  return lookahead;
-        //}
-	//return (Lookahead) getChild(0);
-	return lookahead;
+    	return lookahead;
     }
     
 }
