@@ -881,6 +881,8 @@ INJECT(TreeBuildingAnnotation) :
 TokenProduction TokenProduction() #TokenProduction :
 {
     Token t = getToken(1);
+    String tokenClassName = null;
+    boolean skip = false;
 }
 {
   [
@@ -891,7 +893,7 @@ TokenProduction TokenProduction() #TokenProduction :
       ("," <IDENTIFIER> {grammar.addLexicalState(current_token.image);})*
     ">"
   ]
-  (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP")
+  (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP"{skip=true;})
   [
     "[" "IGNORE_CASE" "]"
         {
@@ -900,10 +902,11 @@ TokenProduction TokenProduction() #TokenProduction :
           }
         }
   ]
+  [t=<HASH_ID> {tokenClassName=t.image.substring(1);}] 
   ":"
   "{"
-   RegexpSpec(CURRENT_NODE)
-   ( "|" RegexpSpec(CURRENT_NODE) )*
+   RegexpSpec(CURRENT_NODE, tokenClassName)
+   ( "|" RegexpSpec(CURRENT_NODE, tokenClassName) )*
    t="}"
    {
       return CURRENT_NODE;
@@ -1019,7 +1022,7 @@ TokenManagerDecls TokenManagerDecls() :
     }
 }
 
-void RegexpSpec(TokenProduction p) #RegexpSpec :
+void RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
 {
     RegularExpression regexp;
 }
@@ -1029,6 +1032,9 @@ void RegexpSpec(TokenProduction p) #RegexpSpec :
       regexp = (RegularExpression) peekNode();
       CURRENT_NODE.addChild(popNode());
       regexp.tpContext = p;
+      if (tokenClassName != null) {
+          regexp.setGeneratedClassName(tokenClassName);
+      }
   }
   [
      <HASH_ID> {regexp.setGeneratedClassName(current_token.image.substring(1));}
