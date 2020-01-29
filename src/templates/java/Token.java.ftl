@@ -14,12 +14,16 @@ import freemarker.template.*;
 /**
  * Describes the input token stream.
  */
+ 
+ [#var extendsNode = ""]
+ 
+ [#if grammar.options.treeBuildingEnabled]
+    [#set extendsNode =", Node"]
+ [/#if]
 
-public class Token implements Node, ${grammar.constantsClassName} {
+public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
-    private Node parent;
     private String inputSource = "";
-    private java.util.Map<String,Object> attributes; 
 
     /**
      * An integer that describes the kind of this token.  This numbering
@@ -102,27 +106,6 @@ public class Token implements Node, ${grammar.constantsClassName} {
         return getNormalizedText();
     }
     
-    public Object getAttribute(String name) {
-        return attributes == null ? null : attributes.get(name); 
-    }
-     
-    public void setAttribute(String name, Object value) {
-        if (attributes == null) {
-            attributes = new java.util.HashMap<String, Object>();
-        }
-        attributes.put(name, value);
-    }
-     
-    public boolean hasAttribute(String name) {
-        return attributes == null ? false : attributes.containsKey(name);
-    }
-     
-    public java.util.Set<String> getAttributeNames() {
-        if (attributes == null) return java.util.Collections.emptySet();
-        return attributes.keySet();
-    }
-
-
     public static Token newToken(int ofKind, String image) {
        [#if grammar.options.treeBuildingEnabled]
            [#var packagePrefix = ""]
@@ -179,13 +162,11 @@ public class Token implements Node, ${grammar.constantsClassName} {
         return endColumn;
     }
     
-    public int getChildCount() {
-        return 0;
-    }
+    [#if grammar.options.treeBuildingEnabled]
     
-    public Node getChild(int i) {
-        return null;
-    }
+    private Node parent;
+    private java.util.Map<String,Object> attributes; 
+
 
     public void setChild(int i, Node n) {
         throw new UnsupportedOperationException();
@@ -228,12 +209,46 @@ public class Token implements Node, ${grammar.constantsClassName} {
     public void setParent(Node parent) {
         this.parent = parent;
     }
+    
+    public int getChildCount() {
+        return 0;
+    }
+    
+    public Node getChild(int i) {
+        return null;
+    }
+    
+    
 
     public void open() {}
 
     public void close() {}
     
-[#if grammar.options.freemarkerNodes]
+    
+    public Object getAttribute(String name) {
+        return attributes == null ? null : attributes.get(name); 
+    }
+     
+    public void setAttribute(String name, Object value) {
+        if (attributes == null) {
+            attributes = new java.util.HashMap<String, Object>();
+        }
+        attributes.put(name, value);
+    }
+     
+    public boolean hasAttribute(String name) {
+        return attributes == null ? false : attributes.containsKey(name);
+    }
+     
+    public java.util.Set<String> getAttributeNames() {
+        if (attributes == null) return java.util.Collections.emptySet();
+        return attributes.keySet();
+    }
+
+
+
+    
+   [#if grammar.options.freemarkerNodes]
     public TemplateNodeModel getParentNode() {
         return parent;
     }
@@ -257,10 +272,9 @@ public class Token implements Node, ${grammar.constantsClassName} {
     public String getAsString() {
         return getNormalizedText();
     }
-[/#if]    
-    
-    
-[#if grammar.options.visitor]
+[/#if]
+
+ [#if grammar.options.visitor]
     [#var VISITOR_THROWS = ""]
     [#if grammar.options.visitorException?has_content]
        [#set VISITOR_THROWS = "throws " + grammar.options.visitorException + " "]
@@ -281,5 +295,9 @@ public class Token implements Node, ${grammar.constantsClassName} {
     public Object childrenAccept(${VISITOR_CLASS} visitor, ${VISITOR_DATA_TYPE} data) ${VISITOR_THROWS}{
         return data;
     }
-[/#if]
+[/#if]   
+        
+                
+ [/#if]
+
 }

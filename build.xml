@@ -68,7 +68,7 @@
  	       optimize="off"
            target="1.8"
            source="1.8"
-    	   classpath="src/java:bin/freemarker.jar"
+    	   classpath="bin/freemarker.jar"
            includeantruntime="yes"
     />
      <copy todir="build/javacc/output/java">

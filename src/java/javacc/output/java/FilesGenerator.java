@@ -92,8 +92,8 @@ public class FilesGenerator {
         generateConstantsFile();
         generateParser();
         generateDoc();
-        generateNodeFile();
-        generateUtilsFile();
+//        generateNodeFile();
+//        generateUtilsFile();
         if (grammar.getOptions().getTreeBuildingEnabled()) {
             generateTreeBuildingFiles();
         }
@@ -297,6 +297,8 @@ public class FilesGenerator {
     }
     
     void generateTreeBuildingFiles() throws IOException, TemplateException {
+    	generateNodeFile();
+    	generateUtilsFile();
         Set<File> files = new LinkedHashSet<File>();
         files.add(getOutputFile(grammar.getBaseNodeClassName()));
         if (grammar.getOptions().getVisitor()) {
