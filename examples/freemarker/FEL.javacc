@@ -47,12 +47,12 @@ INJECT(FELParser) :
    }
 }
 
-<FTL_EXPRESSION> SKIP :
+SKIP :
 {
     <EXP_WHITE_SPACE : (" "|"\t"|"\n"|"\r")+>
 }
 
-<FTL_EXPRESSION> MORE :
+MORE :
 {
     <"<#--"> : EXPRESSION_COMMENT
     |
@@ -73,7 +73,7 @@ INJECT(FELParser) :
     <"--]"> : FTL_EXPRESSION
 }
 
-<FTL_EXPRESSION> TOKEN :
+TOKEN :
 {
     <OPEN_PAREN : "(">
     |
