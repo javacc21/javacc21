@@ -1,0 +1,112 @@
+/*
+ * Author: Jonathan Revusky revusky@javacc.com
+ * This JSON Grammar is free to use or adapt.
+ * It is (as far as I can tell) an EXACT implementation
+ * of the spec found here: https://www.json.org/json-en.html
+ * That means that you cannot put comments in there.
+ * Also, you cannot put trailing commas inside hashes and lists.
+ * There is an accompanying JSONC (JSON with comments) grammar
+ * in JSONC.javacc. That allows Java-style comments but
+ * still does not allow the trailing commas!
+ */
+
+options {
+  PARSER_PACKAGE="json";
+  NODE_PACKAGE="json.ast";
+  DEFAULT_LEXICAL_STATE="JSON";
+}
+
+SKIP :
+{
+  <WHITESPACE : (" "| "\t"| "\n"| "\r")+> 
+}
+
+// Delimiters
+TOKEN #Delimiter :
+{
+    <COLON : ":">
+    |
+    <COMMA : ",">
+    |
+    <OPEN_BRACKET : "[">
+    |
+    <CLOSE_BRACKET : "]">
+    |
+    <OPEN_BRACE : "{" >
+    |
+    <CLOSE_BRACE : "}">
+}
+
+// Literals
+TOKEN :
+{
+    <TRUE: "true"> #BooleanLiteral
+    |
+    <FALSE: "false"> #BooleanLiteral
+    |
+    <NULL: "null"> #NullLiteral
+    |
+    <#ESCAPE1 : "\\" (["\\", "\"", "/","b","f","n","r","t"])>
+    |
+    <#ESCAPE2 : "\\u" (["0"-"9", "a"-"f", "A"-"F"]) {4}>
+    |
+    <#REGULAR_CHAR : ~["\u0000"-"\u001F","\"","\\"]>
+    |
+    <STRING_LITERAL : "\"" (<REGULAR_CHAR>|<ESCAPE2>|<ESCAPE1>)* "\""> #StringLiteral
+    |
+    <#ZERO : "0">
+    |
+    <#NON_ZERO : (["1"-"9"])(["0"-"9"])*>
+    |
+    <#FRACTION : "." (["0"-"9"])+>
+    |
+    <#EXPONENT : ["E","e"]["+","-"](["1"-"9"])+>
+    |
+    <NUMBER : ("-")?(<ZERO>|<NON_ZERO>)(<FRACTION>)?(<EXPONENT>)?> #NumberLiteral
+}
+
+void Array() : {}
+{
+
+    <OPEN_BRACKET>
+    [
+      Value() 
+      (
+        <COMMA>
+        Value()
+      )*
+    ]
+    <CLOSE_BRACKET>
+}
+
+void Value() : {}
+{
+   (
+    <TRUE>
+    |
+    <FALSE>
+    |
+    <NULL>
+    |
+    <STRING_LITERAL>
+    |
+    <NUMBER>
+    |
+    Array()
+    |
+    JSONObject()
+   )
+}
+
+void JSONObject() : {}
+{
+    <OPEN_BRACE>
+    [
+       <STRING_LITERAL> <COLON> Value()
+       (
+         <COMMA>
+        <STRING_LITERAL><COLON>Value()
+       )*
+    ]
+    <CLOSE_BRACE>
+}

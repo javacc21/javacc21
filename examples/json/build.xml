@@ -1,0 +1,47 @@
+<project name="JSONParser" default="compile" basedir=".">
+   <property name = "BIN_DIR" value="../../bin"/>
+   <uptodate property="parser1.uptodate"
+            srcfile="JSON.javacc"
+            targetfile="json/JSONParser.java"/> 
+   <uptodate property="parser2.uptodate"
+            srcfile="JSONC.javacc"
+            targetfile="jsonc/JSONCParser.java"/>
+   <target name="clean">
+       <delete>
+          <fileset dir="." includes="*.class"/>
+       </delete>
+       <delete dir="json"/>
+       <delete dir="jsonc"/>
+   </target>
+   <target name="parser1-gen" unless="parser1.uptodate">
+        <mkdir dir="../../bin"/>
+        <get 
+            src="https://javacc.com/download/javacc.jar" 
+            dest="${BIN_DIR}"
+            quiet="true"
+            ignoreerrors="true"
+            usetimestamp="true" />
+        <get
+            src="https://javacc.com/download/freemarker.jar"
+            dest="${BIN_DIR}"
+            quiet="true"
+            ignoreerrors="true"
+            usetimestamp="true" />
+
+        <java jar="${BIN_DIR}/javacc.jar" fork="true">
+            <arg value="JSON.javacc"/>
+        </java>
+   </target>
+   <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
+        <java jar="${BIN_DIR}/javacc.jar" fork="true">
+            <arg value="JSONC.javacc"/>
+        </java>
+   </target>
+   <target name="compile" depends="parser2-gen">
+       <javac srcdir="." includeantruntime="off"/>
+       <echo>
+           test harness via: java JSONTest &lt;filename&gt;
+           OR              : java JSONCTest &lt;filename&gt;
+       </echo>
+   </target>
+</project>
