@@ -231,13 +231,17 @@ public class JavaCCOptions {
 
     public void setInputFileOption(Object nameloc, Object valueloc, String name, Object value, boolean inInclude) {
 
+
+        String s = name.toUpperCase();
+        
         if (inInclude) {
-            // For now, we just ignore any options if we are within a INCLUDE_GRAMMAR processing.
+        	if (s.equals("DEFAULT_LEXICAL_STATE")) {
+        		grammar.setDefaultLexicalState((String) value);
+        	}
+            // For now, we just ignore any other options if we are within a INCLUDE processing.
             // This will be revisited later.
             return;
         }
-
-        String s = name.toUpperCase();
 
         if (s.equalsIgnoreCase("STATIC")) {
             Node node = (nameloc instanceof Node) ? (Node) nameloc : null;

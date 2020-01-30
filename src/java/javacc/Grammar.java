@@ -116,10 +116,12 @@ public class Grammar {
             codeInjections.add(cu);
         } else {
             String prevLocation = this.filename;
+            String prevDefaultLexicalState = this.defaultLexicalState;
             includeNesting++;
             parse(location);
             includeNesting--;
             setFilename(prevLocation);
+            this.defaultLexicalState = prevDefaultLexicalState;
         }
     }
     

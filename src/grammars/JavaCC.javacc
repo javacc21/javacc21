@@ -883,14 +883,19 @@ TokenProduction TokenProduction() #TokenProduction :
     Token t = getToken(1);
     String tokenClassName = null;
     boolean skip = false;
+    String firstSpecifiedLexicalState = null;
+    boolean multipleStatesSpecified = false;
 }
 {
   [
-    LOOKAHEAD(2) "<" "*" ">" 
+    LOOKAHEAD(2) "<" "*" ">" {multipleStatesSpecified = true;} 
     |
     "<"
-      <IDENTIFIER>{grammar.addLexicalState(current_token.image);}
-      ("," <IDENTIFIER> {grammar.addLexicalState(current_token.image);})*
+      <IDENTIFIER>{
+          firstSpecifiedLexicalState = current_token.image;
+          grammar.addLexicalState(firstSpecifiedLexicalState);
+      }
+      ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(current_token.image);})*
     ">"
   ]
   (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP"{skip=true;})
@@ -909,6 +914,12 @@ TokenProduction TokenProduction() #TokenProduction :
    ( "|" RegexpSpec(CURRENT_NODE, tokenClassName) )*
    t="}"
    {
+      if (!multipleStatesSpecified) {
+          if (firstSpecifiedLexicalState == null) {
+              firstSpecifiedLexicalState = grammar.getDefaultLexicalState();
+          }
+          CURRENT_NODE.setLexicalState(firstSpecifiedLexicalState);
+      }
       return CURRENT_NODE;
    }
 }
@@ -936,6 +947,12 @@ INJECT(TokenProduction) :
         }
         return false;
     }
+    
+    private String lexicalState;
+    
+    public void setLexicalState(String lexicalState) {
+        this.lexicalState = lexicalState;
+    }
 
     public List<RegexpSpec> getRegexpSpecs() {
         return Collections.unmodifiableList(Nodes.childrenOfType(this,RegexpSpec.class));
@@ -945,6 +962,10 @@ INJECT(TokenProduction) :
      * The states in which this regular expression production exists.
      */
     public String[] getLexStates() {
+    
+        if (lexicalState != null) {
+            return new String[] {lexicalState};
+        }        
         if (!explicit) {
             return new String[] {getGrammar().getDefaultLexicalState()};
         }
@@ -1312,6 +1333,7 @@ Expansion expansion_unit() #dummy :
             TokenProduction p = new TokenProduction();
             p.setGrammar(grammar);
             p.setExplicit(false);
+            p.setLexicalState(grammar.getDefaultLexicalState());
             RegexpSpec res = new RegexpSpec();
             res.addChild(re);
             re.tpContext = p;
