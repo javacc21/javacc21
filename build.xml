@@ -20,10 +20,12 @@
  	<delete file="javacc.jar"/>
  	<delete dir="test.tmp"/>
  	<delete dir="build"/>
+        <delete dir="src/java/javacc/parser"/>
         <delete dir="examples/java/javagrammar"/>
         <delete dir="examples/freemarker/fel"/>
         <delete dir="examples/freemarker/ftl"/>
-        <delete dir="src/java/javacc/parser"/>
+        <delete dir="examples/json/jsonc"/>
+        <delete dir="examples/json/json"/>
   </target>
 
 
