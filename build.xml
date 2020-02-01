@@ -7,9 +7,7 @@
     <target name="init">
         <echo>Join the JavaCC 21 Discussion forum at: https://discuss.parsers.org/</echo>
 	<echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
-    <echo>Ant Version: ${ant.version}</echo>
-	<echo>JDK Version: ${java.version}</echo>
-	<echo>Operating System: ${os.name}</echo>
+	<echo>JDK Version: ${java.version} on ${os.name}</echo>
 	<uptodate property="parser.uptodate"
                  targetfile="src/java/javacc/parser/JavaCCParser.java">
 	 <srcfiles dir="src/grammars" includes="*.javacc"/>

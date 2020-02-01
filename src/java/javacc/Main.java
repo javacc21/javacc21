@@ -91,7 +91,7 @@ public final class Main {
         System.out.println("The string valued options are:");
         System.out.println("");
         System.out.println("    BASE_SRC_DIR           (default same directory as input file)");
-        System.out.println("    DEFAULT_LEXICAL_STATE            (default DEFAULT)");
+        System.out.println("    DEFAULT_LEXICAL_STATE  (default DEFAULT)");
         System.out.println("    LEXER_CLASS            (default XXXLexer based on grammar filename)");
         System.out.println("    NODE_PACKAGE           (default not defined)");
         System.out.println("    NODE_CLASS             (default BaseNode)");
