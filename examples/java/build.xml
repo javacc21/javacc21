@@ -15,18 +15,19 @@
   <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="javacc.Main">
     <arg value="-q"/>
     <arg value="-BASE_SRC_DIR=${basedir}/../../examples/java" />
+    <arg value="-PARSER_PACKAGE=&quot;javagrammar&quot;" />
     <arg value="${basedir}/../../src/grammars/Java.javacc"/>
   </java>
 </target>
  
  
 <target name="compile" depends="init, parser-gen">
-     <javac srcdir="javagrammar"
+     <javac srcdir="."
       classpath="." debug="on" optimize="off" includeantruntime="no" />
 </target>
 
 <target name="test" depends="compile">
-     <java fork="true" failonerror="true" classname="javagrammar.JavaParser">
+     <java fork="true" failonerror="true" classname="JParse">
          <arg value="javagrammar"/>
      </java>
      <echo>
@@ -34,7 +35,7 @@
         Okay, that seems okay. Now let's dump the parse tree for a single source file
         -------------------
      </echo>
-     <java fork="true" failonerror="true" classname="javagrammar.JavaParser">
+     <java fork="true" failonerror="true" classname="JParse">
          <arg value="javagrammar/CompilationUnit.java"/>
      </java>
 </target>
