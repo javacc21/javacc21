@@ -38,7 +38,7 @@ TOKEN #Delimiter :
 }
 
 // Literals
-TOKEN :
+TOKEN #Literal :
 {
     <TRUE: "true"> #BooleanLiteral
     |

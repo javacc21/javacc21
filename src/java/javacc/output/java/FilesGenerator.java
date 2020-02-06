@@ -53,6 +53,7 @@ public class FilesGenerator {
     private String currentFilename;
     private CodeInjector codeInjector;
     private Set<String> tokenSubclassFileNames = new HashSet<>();
+    private HashMap<String, String> superClassLookup = new HashMap<>();
 
     void initializeTemplateEngine() throws IOException {
         fmConfig = new freemarker.template.Configuration();
@@ -143,6 +144,9 @@ public class FilesGenerator {
         dataModel.put("utils", new Utils());
         dataModel.put("generated_by", javacc.Main.PROG_NAME);
         String classname = currentFilename.substring(0, currentFilename.length() - 5);
+        String superClassName = superClassLookup.get(classname);
+        if (superClassName == null) superClassName = "Token";
+        dataModel.put("superclass", superClassName);
         if (codeInjector.getExplicitlyDeclaredPackage(classname) != null) {
             dataModel.put("explicitPackageName", codeInjector.getExplicitlyDeclaredPackage(classname));
         }
@@ -307,9 +311,17 @@ public class FilesGenerator {
 
         for (RegularExpression re : grammar.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;
-            File outputFile = getOutputFile(re.getGeneratedClassName());
+            String tokenClassName = re.getGeneratedClassName();
+            File outputFile = getOutputFile(tokenClassName);
             files.add(outputFile);
             tokenSubclassFileNames.add(outputFile.getName());
+            String superClassName = re.getGeneratedSuperClassName();
+            if (superClassName != null) {
+                outputFile = getOutputFile(superClassName);
+                files.add(outputFile);
+                tokenSubclassFileNames.add(outputFile.getName());
+                superClassLookup.put(tokenClassName, superClassName);
+            }
         }
         for (String nodeName : grammar.getNodeNames()) {
             File outputFile = getOutputFile(nodeName);

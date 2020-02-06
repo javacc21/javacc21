@@ -37,11 +37,21 @@
             <arg value="JSONC.javacc"/>
         </java>
    </target>
-   <target name="compile" depends="parser2-gen">
+   <target name="compile" depends="parser2-gen, parser2-gen">
        <javac srcdir="." includeantruntime="off"/>
        <echo>
            test harness via: java JSONTest &lt;filename&gt;
            OR              : java JSONCTest &lt;filename&gt;
        </echo>
    </target>
+   <target name="test" depends="compile">
+      <java classname="JSONTest" classpath=".">
+          <arg value="${basedir}/testfiles/Mono.WebAssembly.Build.targets.buildschema.json"/>
+          <arg value="${basedir}/testfiles/package.nls.ko.json"/>
+          <arg value="${basedir}/testfiles/package.nls.ru.json"/>
+          <arg value="${basedir}/testfiles/package.nls.zh-cn.json"/>
+      </java>
+   </target>
+
+      
 </project>

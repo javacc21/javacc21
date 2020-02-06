@@ -1058,7 +1058,11 @@ void RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
       }
   }
   [
-     <HASH_ID> {regexp.setGeneratedClassName(current_token.image.substring(1));}
+     <HASH_ID>
+     {
+        regexp.setGeneratedSuperClassName(tokenClassName);
+        regexp.setGeneratedClassName(current_token.image.substring(1));
+     }
   ]
   [
       Action()

@@ -356,6 +356,16 @@ public abstract class RegularExpression extends Expansion {
     public void setGeneratedClassName(String generatedClassName) {
         this.generatedClassName = generatedClassName;
     }
+
+    public String getGeneratedSuperClassName() {
+        return generatedSuperClassName;
+    }
+
+    public void setGeneratedSuperClassName(String generatedSuperClassName) {
+        this.generatedSuperClassName = generatedSuperClassName;
+    }
     
-    private String generatedClassName = "Token";
+    private String generatedClassName = "Token", generatedSuperClassName;
+
+
 }

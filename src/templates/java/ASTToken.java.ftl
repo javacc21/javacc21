@@ -44,7 +44,7 @@ package ${grammar.nodePackage};
 import ${grammar.parserPackage}.*;
 [/#if]
 
-public class ${classname} extends Token {
+public class ${classname} extends ${superclass} {
     public ${classname}(int kind, String image) {
         super(kind, image);
     }
