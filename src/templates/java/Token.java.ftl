@@ -94,6 +94,16 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return kind;
     }
 
+    public boolean isUnparsed() {
+        return unparsed;
+    }
+    
+    public void setUnparsed(boolean unparsed) {
+        this.unparsed = unparsed;
+    }
+    
+    public void clearChildren() {}
+    
     public String getNormalizedText() {
         return image;
     }
@@ -191,16 +201,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public int indexOf(Node n) {
         return -1;
     }
-    
-    public boolean isUnparsed() {
-        return unparsed;
-    }
-    
-    public void setUnparsed(boolean unparsed) {
-        this.unparsed = unparsed;
-    }
-    
-    public void clearChildren() {}
     
     public Node getParent() {
         return parent;

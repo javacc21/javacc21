@@ -96,12 +96,4 @@ public interface CharStream {
    */
   char[] GetSuffix(int len);
 
-  /**
-   * The lexer calls this function to indicate that it is done with the stream
-   * and hence implementations can free any resources held by this class.
-   * Again, the body of this function can be just empty and it will not
-   * affect the lexer's operation.
-   */
-  void Done();
-
 }

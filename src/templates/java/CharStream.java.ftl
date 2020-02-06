@@ -294,16 +294,6 @@ public class ${classname} {
         return ret;
     } 
 
-    /** Reset buffer when finished. */
-    public void Done() {
-        buffer = null;
-        bufline = null;
-        bufcolumn = null;
-[#if options.javaUnicodeEscape]
-        nextCharBuf = null;
-[/#if]        
-    }
-
    /**
     * Method to adjust line and column numbers for the start of a token.
     */
