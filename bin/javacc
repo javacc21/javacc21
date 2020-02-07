@@ -3,7 +3,7 @@
 BIN_DIR="$(dirname $0)"
 BASE_DIR="$BIN_DIR/.."
 
-if [ $(which wget) ]; then
+if [ $(which wget 2>/dev/null) ]; then
 
    # Pick up newer jarfiles if they are up on the server
    # (Quietly, I'm a sneaky SOB!)
