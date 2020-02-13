@@ -8,7 +8,7 @@
  *
  *     * Redistributions of source code must retain the above copyright notices,
  *       this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Redistributions in binary formnt must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
@@ -79,10 +79,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
   Token current_token;
   /** Next token. */
-  private Token jj_nt;
-[#if !grammar.options.cacheTokens]
-  private int jj_ntk;
-[/#if]
+  private Token nextToken;
 [#if hasPhase2] 
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
@@ -131,11 +128,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     token_source = new ${grammar.lexerClassName}(stream);
        [/#if]
     current_token = new Token();
-       [#if grammar.options.cacheTokens]
-    current_token.next = jj_nt = token_source.getNextToken();
-       [#else]
-    jj_ntk = -1;
-       [/#if]
        [#if grammar.options.errorReporting]
     for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
           [#if hasPhase2]
@@ -162,11 +154,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     token_source = new ${grammar.lexerClassName}(jj_input_stream);
     [/#if]
     current_token = new Token();
-    [#if grammar.options.cacheTokens]
-    current_token.next = jj_nt = token_source.getNextToken();
-    [#else]    
-    jj_ntk = -1;
-    [/#if]
     [#if grammar.options.errorReporting]
     for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
         [#if hasPhase2]
@@ -186,11 +173,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [/#if]
     token_source = tm;
     current_token = new Token();
-[#if grammar.options.cacheTokens]
-    current_token.next = jj_nt = token_source.getNextToken();
-[#else]
-    jj_ntk = -1;
-[/#if]
 [#if grammar.options.errorReporting]
     for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
   [#if hasPhase2]
@@ -200,17 +182,9 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   }
   
   private Token jj_consume_token(int kind) throws ParseException {
-[#if grammar.options.cacheTokens]
-    Token oldToken = current_token;
-    current_token = jj_nt;
-    if (current_token.next != null) jj_nt = jj_nt.next;
-    else jj_nt = jj_nt.next = token_source.getNextToken();
-[#else]
     Token oldToken = current_token;
     if (current_token.next != null) current_token = current_token.next;
     else current_token = current_token.next = token_source.getNextToken();
-    jj_ntk = -1;
-[/#if]
     if (current_token.kind == kind) {
 [#if grammar.options.errorReporting]
       jj_gen++;
@@ -254,9 +228,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
       return current_token;
       
     }
-[#if grammar.options.cacheTokens]
-    jj_nt = current_token;
-[/#if]
     current_token = oldToken;
 
 [#if grammar.getOptions().errorReporting]
@@ -301,14 +272,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
 /** Get the next Token. */
   final public Token getNextToken() {
-[#if grammar.options.cacheTokens]
-    if ((current_token = jj_nt).next != null) jj_nt = jj_nt.next;
-    else jj_nt = jj_nt.next = token_source.getNextToken();
-[#else]
     if (current_token.next != null) current_token = current_token.next;
     else current_token = current_token.next = token_source.getNextToken();
-    jj_ntk = -1;
-[/#if]
 [#if grammar.options.errorReporting]
     jj_gen++;
 [/#if]
@@ -332,14 +297,13 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     return t;
   }
 
-[#if !grammar.options.cacheTokens]
-  private int jj_ntk() {
-    if ((jj_nt=current_token.next) == null)
-      return (jj_ntk = (current_token.next=token_source.getNextToken()).kind);
-    else
-      return (jj_ntk = jj_nt.kind);
+  private int nextTokenKind() {
+    if (current_token.next == null) {
+        current_token.next = token_source.getNextToken();
+    }
+    nextToken = current_token.next;
+    return nextToken.kind;
   }
-[/#if]
 
 [#if grammar.options.errorReporting]
   private java.util.ArrayList<int[]> jj_expentries = new java.util.ArrayList<int[]>();

@@ -346,13 +346,8 @@ throw new ParseException();"]
                  [#if lookahead_index != 0]
                  } else {
                  [/#if]
-                 switch (
                  [#set casesHandled = []]
-              [#if grammar.options.cacheTokens]
-                    jj_nt.kind) {
-              [#else]
-                    (jj_ntk==-1)?jj_ntk():jj_ntk) {
-              [/#if]
+                 switch (nextTokenKind()) { 
               [#set indentLevel = indentLevel+1]
           [/#if]
           [#list lookahead.matchingTokens as token]
@@ -416,11 +411,7 @@ throw new ParseException();"]
         [/#if]
       [/#set]
    [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansionOrJavaCode]
-      [#if grammar.options.cacheTokens]
-         [@newVar type="int" init="jj_nt.kind"/]
-      [#else]
-         [@newVar type="int" init="(jj_ntk==-1)?jj_ntk():jj_ntk"/]
-      [/#if]
+      [@newVar type="int" init="nextTokenKind()"/]
       [#set condition]
       [#list lookahead.matchingTokens as token]
              int${newVarIndex} == ${token} [#if token_has_next]|| [/#if]

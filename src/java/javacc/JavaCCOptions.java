@@ -158,7 +158,6 @@ public class JavaCCOptions {
 
         optionValues.put("OUTPUT_DIRECTORY", "");
         optionValues.put("TOKEN_FACTORY", "");
-        optionValues.put("CACHE_TOKENS", false);
         optionValues.put("CSS", "");
 
         optionValues.put("NODE_DEFAULT_VOID", false);
@@ -586,15 +585,6 @@ public class JavaCCOptions {
      */
     public boolean getForceLaCheck() {
         return booleanValue("FORCE_LA_CHECK");
-    }
-
-    /**
-     * Find the cache tokens value.
-     *
-     * @return The requested cache tokens value.
-     */
-    public boolean getCacheTokens() {
-        return booleanValue("CACHE_TOKENS");
     }
 
     /**
