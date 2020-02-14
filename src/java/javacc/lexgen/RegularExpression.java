@@ -36,7 +36,7 @@ import javacc.Grammar;
 import javacc.JavaCCUtils;
 import javacc.parser.tree.Expression;
 import javacc.parsegen.Expansion;
-
+import javacc.parser.LexicalException;
 import javacc.parser.tree.Action;
 import javacc.parser.tree.CharacterList;
 import javacc.parser.tree.CharacterRange;
@@ -261,15 +261,15 @@ public abstract class RegularExpression extends Expansion {
                 if (o.isSingleChar()) {
                     returnString += "\"";
                     char s[] = { o.left };
-                    returnString += JavaCCUtils.add_escapes(new String(s));
+                    returnString += LexicalException.addEscapes(new String(s));
                     returnString += "\"";
                 } else if (o instanceof CharacterRange) {
                     returnString += "\"";
                     char s[] = { ((CharacterRange) o).left };
-                    returnString += JavaCCUtils.add_escapes(new String(s));
+                    returnString += LexicalException.addEscapes(new String(s));
                     returnString += "\"-\"";
                     s[0] = ((CharacterRange) o).right;
-                    returnString += JavaCCUtils.add_escapes(new String(s));
+                    returnString += LexicalException.addEscapes(new String(s));
                     returnString += "\"";
                 } else {
                     throw new RuntimeException("Oops: unknown character list element type.");
@@ -317,7 +317,7 @@ public abstract class RegularExpression extends Expansion {
                         returnString.length() - 1);
         } else if (re instanceof RegexpStringLiteral) {
             RegexpStringLiteral sl = (RegexpStringLiteral) re;
-            returnString += ("\"" + JavaCCUtils.add_escapes(sl.getImage()) + "\"");
+            returnString += ("\"" + LexicalException.addEscapes(sl.getImage()) + "\"");
         } else if (re instanceof ZeroOrMoreRegexp) {
             ZeroOrMoreRegexp zm = (ZeroOrMoreRegexp) re;
             returnString += "(";

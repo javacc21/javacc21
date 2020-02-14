@@ -33,6 +33,7 @@ package javacc.lexgen;
 import java.util.*;
 
 import javacc.Grammar;
+import javacc.parser.LexicalException;
 import javacc.parser.tree.Action;
 import javacc.parser.tree.CharacterList;
 import javacc.parser.tree.RegexpStringLiteral;
@@ -531,7 +532,7 @@ public class LexicalState {
         RegularExpression re = lexerData.getRegularExpression(kind);
 
         if (re instanceof RegexpStringLiteral)
-            return " \"" + add_escapes(((RegexpStringLiteral) re).getImage()) + "\"";
+            return " \"" + LexicalException.addEscapes(((RegexpStringLiteral) re).getImage()) + "\"";
         else if (!re.getLabel().equals(""))
             return " <" + re.getLabel() + ">";
         else
@@ -624,13 +625,13 @@ public class LexicalState {
         if (intermediateKinds != null && intermediateKinds[kind] != null
                 && intermediateKinds[kind][index] < kind && intermediateMatchedPos != null
                 && intermediateMatchedPos[kind][index] == index) {
-            grammar.addWarning(null, " \"" + add_escapes(images[kind])
+            grammar.addWarning(null, " \"" + LexicalException.addEscapes(images[kind])
                     + "\" cannot be matched as a string literal token " + "at line "
                     + getLine(kind) + ", column " + getColumn(kind) + ". It will be matched as "
                     + getLabel(intermediateKinds[kind][index]) + ".");
             return intermediateKinds[kind][index];
         } else if (index == 0 && matchAnyChar != null && matchAnyChar.getOrdinal() < kind) {
-            grammar.addWarning(null, " \"" + add_escapes(images[kind])
+            grammar.addWarning(null, " \"" + LexicalException.addEscapes(images[kind])
                     + "\" cannot be matched as a string literal token " + "at line "
                     + getLine(kind) + ", column " + getColumn(kind) + ". It will be matched as "
                     + matchAnyChar.getLabel() + ".");

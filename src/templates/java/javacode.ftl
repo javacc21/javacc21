@@ -606,8 +606,7 @@ throw new ParseException();"]
    ${type} ${type?lower_case}${newVarIndex}
    [#if init??]
       = ${init};
-   [#else]
-      ;
    [/#if]
+   ;
 [/#macro]   
     
