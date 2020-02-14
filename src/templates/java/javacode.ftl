@@ -220,7 +220,7 @@
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
-       jj_consume_token(${regexp.label});
+       consumeToken(${regexp.label});
 [/#macro]
 
 [#macro BuildPhase1CodeTryBlock tryblock]
@@ -298,7 +298,7 @@
 
 [#macro BuildPhase1CodeChoice choice]
    [#var lookaheads=[] actions=[]]
-   [#var defaultAction="jj_consume_token(-1);
+   [#var defaultAction="consumeToken(-1);
 throw new ParseException();"]
    [#var inPhase1=false]
    [#var indentLevel=0]
@@ -453,7 +453,7 @@ throw new ParseException();"]
    private boolean jj_3${expansion.internalName}() {
         [#if grammar.options.debugLookahead&&expansion.parentObject.class.name?ends_with("Production")]
            [#if grammar.options.errorReporting]
-      if (!jj_rescan) 
+      if (!rescan) 
            [/#if]
       trace_call("${expansion.parentObject.name} (LOOKING AHEAD...)");
             [#set jj3_expansion = expansion]
@@ -591,7 +591,7 @@ throw new ParseException();"]
  trace_return("${jj3_expansion.parentObject.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
        [/#set]
        [#if grammar.options.errorReporting] 
-         [#set tracecode = "if (!jj_rescan) "+tracecode]
+         [#set tracecode = "if (!rescan) "+tracecode]
        [/#if]
   { ${tracecode} return {bool?string("true", "false")};
               return "return " + retval + ";";
