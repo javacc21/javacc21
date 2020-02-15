@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -575,11 +575,10 @@ public class Semanticizer {
                 }
             }
 
-        } // matches "if (grammar.getOptions().getSanityCheck()) {"
-
-        if (grammar.getErrorCount() != 0)
+        } 
+        if (grammar.getErrorCount() != 0) {
             throw new MetaParseException();
-
+        }
     }
 
     private RegularExpression other;

@@ -35,7 +35,6 @@
 [#var parserData=grammar.parserData]
 [#var hasPhase2=parserData.phase2Lookaheads?size != 0]
 [#var tokenCount=grammar.lexerData.tokenCount]
-[#var includeTreeCode=true]
 
 [#if grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
@@ -108,13 +107,13 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
       };
    }
  [/#list]
+ [#if hasPhase2]
+	  final private JJCalls[] jj_2_rtns = new JJCalls[${parserData.phase2Lookaheads?size}];
+	  private boolean rescan = false;
+	  private int jj_gc = 0;
+ [/#if]
 [/#if]
 
-[#if hasPhase2&&grammar.options.errorReporting]
-  final private JJCalls[] jj_2_rtns = new JJCalls[${parserData.phase2Lookaheads?size}];
-  private boolean rescan = false;
-  private int jj_gc = 0;
-[/#if]
 
 [#if !grammar.options.userDefinedLexer]
    [#if grammar.options.userCharStream]
@@ -183,8 +182,14 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     Token oldToken = current_token;
     if (current_token.next != null) current_token = current_token.next;
     else current_token = current_token.next = token_source.getNextToken();
-    if (current_token.kind == kind) {
-[#if grammar.options.errorReporting]
+    if (current_token.kind != kind ) {
+	    current_token = oldToken;
+	[#if grammar.options.errorReporting]
+	    jj_kind = kind;
+	[/#if]
+	    throw generateParseException();
+    }
+   [#if grammar.options.errorReporting]
       jj_gen++;
     [#if hasPhase2]
       if (++jj_gc > 100) {
@@ -224,14 +229,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
       }
 [/#if]
       return current_token;
-      
-    }
-    current_token = oldToken;
-
-[#if grammar.getOptions().errorReporting]
-    jj_kind = kind;
-[/#if]
-    throw generateParseException();
   }
   
 [#if hasPhase2]

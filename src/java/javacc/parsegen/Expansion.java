@@ -51,16 +51,10 @@ abstract public class Expansion extends BaseNode {
     private Lookahead lookahead;
 
     public Expansion(Grammar grammar) {
-	//        super(-1);
         setGrammar(grammar);
     }
-    
-    public Expansion(int id) {
-	//        super(id);
-    }
 
-    public Expansion() {
-    }
+    public Expansion() {}
 
     /**
      * A reimplementing of Object.hashCode() to be deterministic. This uses the

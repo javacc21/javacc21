@@ -169,7 +169,7 @@
 
 
 	/** 
-	 * A conditional node is constructed if its condition is true.  All
+	 * A conditional node is constructed if the condition is true.  All
 	 * the nodes that have been pushed since the node was opened are
 	 * made children of the conditional node, which is then pushed
 	 * on to the stack.  If the condition is false the node is not

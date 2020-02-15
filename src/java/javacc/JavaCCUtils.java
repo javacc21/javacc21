@@ -49,21 +49,6 @@ public class JavaCCUtils {
         System.out.println();
     }
 
-
-    static public String addUnicodeEscapes(String str) {
-        String retval = "";
-        for (int i = 0; i < str.length(); i++) {
-            char ch = str.charAt(i);
-            if (ch < 0x20 || ch > 0x7e) {
-                String s = "0000" + Integer.toString(ch, 16);
-                retval += "\\u" + s.substring(s.length() - 4, s.length());
-            } else {
-                retval += ch;
-            }
-        }
-        return retval;
-    }
-
     static public int ElemOccurs(int elem, int[] arr) {
         for (int i = arr.length; i-- > 0;)
             if (arr[i] == elem)
