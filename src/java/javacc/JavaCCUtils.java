@@ -65,7 +65,7 @@ public class JavaCCUtils {
         return ((int) ch) - ((int) 'a') + 10;
     }
 
-    static public String remove_escapes_and_quotes(Grammar grammar, Token t, String str) {
+    static public String removeEscapesAndQuotes(Grammar grammar, Token t, String str) {
         String retval = "";
         int index = 1;
         char ch, ch1;

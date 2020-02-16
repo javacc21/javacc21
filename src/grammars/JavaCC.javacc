@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -107,8 +107,8 @@ import javacc.parser.tree.*;
         }
     }
 
-    public String remove_escapes_and_quotes(Token t) {
-        return JavaCCUtils.remove_escapes_and_quotes(grammar, t, t.image);
+    private String removeEscapesAndQuotes(Token t) {
+        return JavaCCUtils.removeEscapesAndQuotes(grammar, t, t.image);
     }
 
     static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
@@ -161,6 +161,7 @@ INJECT(LEXER_CLASS) :
    // less-than/greater-than operators.
    int angleBracketNesting;
    boolean inJavaCode;
+   boolean optionsSeen;
 
    private Token tokenHook(Token t) {
        t.setGrammar(parser.getGrammar());
@@ -172,11 +173,13 @@ INJECT(LEXER_CLASS) :
            gt.setGrammar(parser.getGrammar());
            return gt;
        }
-       if (inJavaCode && javaccReservedWords.contains(t.image)) {
-           Token id = Token.newToken(IDENTIFIER, t.image);
-           Nodes.copyLocationInfo(t, id);
-           id.setGrammar(parser.getGrammar());
-           return id;
+       if (javaccReservedWords.contains(t.image)) {
+           if (inJavaCode || (t.kind == _OPTIONS && optionsSeen)) {
+	           Token id = Token.newToken(IDENTIFIER, t.image);
+	           Nodes.copyLocationInfo(t, id);
+	           id.setGrammar(parser.getGrammar());
+	           return id;
+           }
        }
        return t;
    }
@@ -556,6 +559,7 @@ void Options() :
 {
     <_OPTIONS> [":"]
     "{" ( option_binding() )* "}"
+    {token_source.optionsSeen = true;}
 }
 
 void option_binding() #void :
@@ -590,7 +594,7 @@ void option_binding() #void :
         |
         t=<INTEGER_LITERAL> {value = Integer.valueOf(t.image);}
         |
-        t=<STRING_LITERAL> {value = remove_escapes_and_quotes(t);}
+        t=<STRING_LITERAL> {value = removeEscapesAndQuotes(t);}
         |
         t=<IDENTIFIER> {value = t.image;}
      )
@@ -1675,7 +1679,7 @@ RegexpStringLiteral RegexpStringLiteral() #RegexpStringLiteral :
 {
    <STRING_LITERAL>
    {
-      String image = remove_escapes_and_quotes(current_token);
+      String image = removeEscapesAndQuotes(current_token);
       CURRENT_NODE.setImage(image);
       return CURRENT_NODE;
    }
@@ -1973,7 +1977,7 @@ CharacterRange CharacterRange() #CharacterRange :
 {
   imageL=<STRING_LITERAL>
         {
-          String lString = remove_escapes_and_quotes(imageL);
+          String lString = removeEscapesAndQuotes(imageL);
           CURRENT_NODE.left = character_descriptor_assign(current_token, lString);
           CURRENT_NODE.right = CURRENT_NODE.left;
         }
@@ -1981,7 +1985,7 @@ CharacterRange CharacterRange() #CharacterRange :
    "-"
     imageR=<STRING_LITERAL>
         {
-          String rString = remove_escapes_and_quotes(imageR);
+          String rString = removeEscapesAndQuotes(imageR);
           CURRENT_NODE.right = character_descriptor_assign(current_token, rString, lString);
 
         }
