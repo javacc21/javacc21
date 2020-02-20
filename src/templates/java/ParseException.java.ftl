@@ -103,6 +103,7 @@ public class ParseException extends Exception {
     if (!specialConstructor) {
       return super.getMessage();
     }
+    String eol = System.getProperty("line.separator", "\n");
     StringBuilder expected = new StringBuilder();
     int maxSize = 0;
     for (int i = 0; i < expectedTokenSequences.length; i++) {
@@ -127,7 +128,7 @@ public class ParseException extends Exception {
       }
       retval += " " + tokenImage[tok.kind];
       retval += " \"";
-      retval += add_escapes(tok.image);
+      retval += LexicalException.addEscapes(tok.image);
       retval += " \"";
       tok = tok.next; 
     }
@@ -141,59 +142,4 @@ public class ParseException extends Exception {
     retval += expected.toString();
     return retval;
   }
-
-  /**
-   * The end of line string for this machine.
-   */
-  protected String eol = System.getProperty("line.separator", "\n");
- 
-  /**
-   * Used to convert raw characters to their escaped version
-   * when these raw version cannot be used as part of an ASCII
-   * string literal.
-   */
-  protected String add_escapes(String str) {
-      StringBuilder retval = new StringBuilder();
-      char ch;
-      for (int i = 0; i < str.length(); i++) {
-        switch (str.charAt(i))
-        {
-           case 0 :
-              continue;
-           case '\b':
-              retval.append("\\b");
-              continue;
-           case '\t':
-              retval.append("\\t");
-              continue;
-           case '\n':
-              retval.append("\\n");
-              continue;
-           case '\f':
-              retval.append("\\f");
-              continue;
-           case '\r':
-              retval.append("\\r");
-              continue;
-           case '\"':
-              retval.append("\\\"");
-              continue;
-           case '\'':
-              retval.append("\\\'");
-              continue;
-           case '\\':
-              retval.append("\\\\");
-              continue;
-           default:
-              if ((ch = str.charAt(i)) < 0x20 || ch > 0x7e) {
-                 String s = "0000" + java.lang.Integer.toString(ch, 16);
-                 retval.append("\\u" + s.substring(s.length() - 4, s.length()));
-              } else {
-                 retval.append(ch);
-              }
-              continue;
-        }
-      }
-      return retval.toString();
-   }
 }

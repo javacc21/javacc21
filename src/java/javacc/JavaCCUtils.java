@@ -49,53 +49,6 @@ public class JavaCCUtils {
         System.out.println();
     }
 
-/****/
-    static public String add_escapes(String str) {
-        String retval = "";
-        char ch;
-        for (int i = 0; i < str.length(); i++) {
-            ch = str.charAt(i);
-            if (ch == '\b') {
-                retval += "\\b";
-            } else if (ch == '\t') {
-                retval += "\\t";
-            } else if (ch == '\n') {
-                retval += "\\n";
-            } else if (ch == '\f') {
-                retval += "\\f";
-            } else if (ch == '\r') {
-                retval += "\\r";
-            } else if (ch == '\"') {
-                retval += "\\\"";
-            } else if (ch == '\'') {
-                retval += "\\\'";
-            } else if (ch == '\\') {
-                retval += "\\\\";
-            } else if (ch < 0x20 || ch > 0x7e) {
-                String s = "0000" + Integer.toString(ch, 16);
-                retval += "\\u" + s.substring(s.length() - 4, s.length());
-            } else {
-                retval += ch;
-            }
-        }
-        return retval;
-    }
-
-    static public String addUnicodeEscapes(String str) {
-        String retval = "";
-        char ch;
-        for (int i = 0; i < str.length(); i++) {
-            ch = str.charAt(i);
-            if (ch < 0x20 || ch > 0x7e) {
-                String s = "0000" + Integer.toString(ch, 16);
-                retval += "\\u" + s.substring(s.length() - 4, s.length());
-            } else {
-                retval += ch;
-            }
-        }
-        return retval;
-    }
-
     static public int ElemOccurs(int elem, int[] arr) {
         for (int i = arr.length; i-- > 0;)
             if (arr[i] == elem)
@@ -112,7 +65,7 @@ public class JavaCCUtils {
         return ((int) ch) - ((int) 'a') + 10;
     }
 
-    static public String remove_escapes_and_quotes(Grammar grammar, Token t, String str) {
+    static public String removeEscapesAndQuotes(Grammar grammar, Token t, String str) {
         String retval = "";
         int index = 1;
         char ch, ch1;

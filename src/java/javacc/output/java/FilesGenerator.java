@@ -382,7 +382,7 @@ public class FilesGenerator {
         }
         
         public String addEscapes(String input) {
-            return JavaCCUtils.add_escapes(input);
+            return LexicalException.addEscapes(input);
         }
 
         public boolean isBitSet(long num, int bit) {

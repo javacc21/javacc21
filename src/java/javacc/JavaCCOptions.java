@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -146,7 +146,6 @@ public class JavaCCOptions {
         optionValues.put("BUILD_PARSER", true);
         optionValues.put("BUILD_LEXER", true);
         optionValues.put("LEXER_USES_PARSER", false);
-        optionValues.put("SANITY_CHECK", true);
         optionValues.put("FORCE_LA_CHECK", false);
 
         optionValues.put("PARSER_PACKAGE", "");
@@ -158,7 +157,6 @@ public class JavaCCOptions {
 
         optionValues.put("OUTPUT_DIRECTORY", "");
         optionValues.put("TOKEN_FACTORY", "");
-        optionValues.put("CACHE_TOKENS", false);
         optionValues.put("CSS", "");
 
         optionValues.put("NODE_DEFAULT_VOID", false);
@@ -571,12 +569,15 @@ public class JavaCCOptions {
     }
 
     /**
-     * Find the sanity check value.
+     * Find the sanity check value. Currently, this ALWAYS returns true
+     * and will likely just be phased out. Why on earth would anybody 
+     * turn off the sanity checking?
      *
      * @return The requested sanity check value.
      */
     public boolean getSanityCheck() {
-        return booleanValue("SANITY_CHECK");
+ //       return booleanValue("SANITY_CHECK");
+    	return true;
     }
 
     /**
@@ -586,15 +587,6 @@ public class JavaCCOptions {
      */
     public boolean getForceLaCheck() {
         return booleanValue("FORCE_LA_CHECK");
-    }
-
-    /**
-     * Find the cache tokens value.
-     *
-     * @return The requested cache tokens value.
-     */
-    public boolean getCacheTokens() {
-        return booleanValue("CACHE_TOKENS");
     }
 
     /**

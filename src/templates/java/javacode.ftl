@@ -220,7 +220,7 @@
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
-       jj_consume_token(${regexp.label});
+       consumeToken(${regexp.label});
 [/#macro]
 
 [#macro BuildPhase1CodeTryBlock tryblock]
@@ -298,7 +298,7 @@
 
 [#macro BuildPhase1CodeChoice choice]
    [#var lookaheads=[] actions=[]]
-   [#var defaultAction="jj_consume_token(-1);
+   [#var defaultAction="consumeToken(-1);
 throw new ParseException();"]
    [#var inPhase1=false]
    [#var indentLevel=0]
@@ -346,19 +346,17 @@ throw new ParseException();"]
                  [#if lookahead_index != 0]
                  } else {
                  [/#if]
-                 switch (
-                 [#set casesHandled = []]
-              [#if grammar.options.cacheTokens]
-                    jj_nt.kind) {
-              [#else]
-                    (jj_ntk==-1)?jj_ntk():jj_ntk) {
-              [/#if]
+                 [#-- set casesHandled = [] --]
+                 [#set casesHandled = ","]
+                 switch (nextTokenKind()) { 
               [#set indentLevel = indentLevel+1]
           [/#if]
           [#list lookahead.matchingTokens as token]
-               [#if !casesHandled?seq_contains(token)]
-                 case ${token}:
-                 [#set casesHandled = casesHandled+[token]]
+               [#-- if !casesHandled?seq_contains(token) --]
+               [#if !casesHandled?contains(","+token+",")]
+                 case ${token}: 
+                 [#-- set casesHandled = casesHandled+[token] --]
+                 [#set casesHandled = casesHandled+token+","]
                [/#if]
           [/#list]
                     ${actions[lookahead_index]}
@@ -416,11 +414,7 @@ throw new ParseException();"]
         [/#if]
       [/#set]
    [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansionOrJavaCode]
-      [#if grammar.options.cacheTokens]
-         [@newVar type="int" init="jj_nt.kind"/]
-      [#else]
-         [@newVar type="int" init="(jj_ntk==-1)?jj_ntk():jj_ntk"/]
-      [/#if]
+      [@newVar type="int" init="nextTokenKind()"/]
       [#set condition]
       [#list lookahead.matchingTokens as token]
              int${newVarIndex} == ${token} [#if token_has_next]|| [/#if]
@@ -462,7 +456,7 @@ throw new ParseException();"]
    private boolean jj_3${expansion.internalName}() {
         [#if grammar.options.debugLookahead&&expansion.parentObject.class.name?ends_with("Production")]
            [#if grammar.options.errorReporting]
-      if (!jj_rescan) 
+      if (!rescan) 
            [/#if]
       trace_call("${expansion.parentObject.name} (LOOKING AHEAD...)");
             [#set jj3_expansion = expansion]
@@ -600,7 +594,7 @@ throw new ParseException();"]
  trace_return("${jj3_expansion.parentObject.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
        [/#set]
        [#if grammar.options.errorReporting] 
-         [#set tracecode = "if (!jj_rescan) "+tracecode]
+         [#set tracecode = "if (!rescan) "+tracecode]
        [/#if]
   { ${tracecode} return {bool?string("true", "false")};
               return "return " + retval + ";";
@@ -615,8 +609,7 @@ throw new ParseException();"]
    ${type} ${type?lower_case}${newVarIndex}
    [#if init??]
       = ${init};
-   [#else]
-      ;
    [/#if]
+   ;
 [/#macro]   
     
