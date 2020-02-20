@@ -32,6 +32,7 @@ options {
   JAVA_UNICODE_ESCAPE;
   SPECIAL_TOKENS_ARE_NODES;
   PARSER_PACKAGE=javagrammar;
+  DEFAULT_LEXICAL_STATE=JAVA;
 }
 
 INJECT(JavaParser) : 
@@ -137,13 +138,13 @@ MORE :
 <IN_SINGLE_LINE_COMMENT>
 SPECIAL_TOKEN :
 {
-  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #Comment : DEFAULT
+  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #Comment : JAVA
 }
 
 <IN_FORMAL_COMMENT>
 SPECIAL_TOKEN :
 {
-  <FORMAL_COMMENT: "*/" > #JavaDocComment : DEFAULT
+  <FORMAL_COMMENT: "*/" > #JavaDocComment : JAVA
 }
 
 INJECT(JavaDocComment) : {extends Comment}{}
@@ -152,7 +153,7 @@ INJECT(JavaDocComment) : {extends Comment}{}
 <IN_MULTI_LINE_COMMENT>
 SPECIAL_TOKEN :
 {
-  <MULTI_LINE_COMMENT: "*/" > #Comment : DEFAULT
+  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA
 }
 
 <IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>

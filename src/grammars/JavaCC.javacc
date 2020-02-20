@@ -37,6 +37,7 @@ OPTIONS : {
   BASE_SRC_DIR="../java";
   PARSER_PACKAGE="javacc.parser";
   NODE_PACKAGE="javacc.parser.tree";
+  DEFAULT_LEXICAL_STATE=JAVA;
 }
 
 INJECT(PARSER_CLASS) :
