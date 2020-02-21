@@ -1,23 +1,27 @@
-# JavaCC 21 Preview 1
+# JavaCC 21 20.02.20
 
-Tagged and Released, ?? January 2020
+Tagged and Released, 20 February 2020
 
-I (revusky) decided to dust off this old unfinished open source project, abandoned since early 2009. 
+[JavaCC 21](https://javacc.com/) is a continuation of development on the JavaCC codebase released by Sun Microsystems in mid 2003. This development fork was originally released under the name FreeCC in 2008. However, it is really quite clear in retrospect that the FreeCC naming simply created confusion and we have decided on the *JavaCC 21* name to make it quite clear that this is simply a more advanced version of the JavaCC tool originally released by Sun.
 
-There were four publicly released versions of FreeCC back when, on Google Code, which is now defunct. There is an archived version of the site [here](https://code.google.com/archive/p/freecc/).
+The current JavaCC 21 codebase is the result of a massive refactoring/cleanup, mostly carried out in 2008. Code generation has been externalized to [FreeMarker](https://freemarker.es/) templates. The embedded Java grammar has been updated to support comprehensively Java language constructs through Java 8. It provides a much needed [INCLUDE instruction](https://doku.javacc.com/doku.php?id=include) that allows you to break up a large grammar into multiple physical files. 
 
-The last version released in January 2009 was labeled 0.9.3. Therefore I have taken up that naming, and the current release is 0.9.4. Version numbers are quite arbitrary, of course. These version numbers are somewhat misleading as regards the maturity of the tool. FreeCC is based on forking the JavaCC codebase in April of 2008. That version of JavaCC was 4.1, as I recall, and this 0.9.x version of FreeCC is a (vastly) more advanced version of that JavaCC tool. I noticed that the JavaCC people put out more versions since then, labeling it JavaCC 6.0. But a quick comparison of that with the version available in 2008 shows that there is virtually no diffeerence.
+The legacy JavaCC and JJTree tools have been merged into a single application and the generated parser builds an AST by default. (Though tree building can be optionally turned off.) There is a new [INJECT facility](https://doku.javacc.com/doku.php?id=include) that allows you to *inject* Java code into generated files, thus doing away with the unwieldy *antipattern* of post-editing generated files. In general, JavaCC 21 has more sensible default settings and is [much more usable out-of-the-box](https://doku.javacc.com/doku.php?id=convention_over_configuration).
 
-The original intention was not to fork a new project, but to contribute all of these enhancements to JavaCC. However, in their infinite wisdom, the maintainers of the project declined the contribution. Actually, they even declined to look at it!
+Perhaps most importantly, the project is again under active development.  
 
-## Changes in the new resuscitated codebase
+FreeCC had four public releases on the [now defunct Google Code site](https://code.google.com/archive/p/freecc/), the last of which being version 0.9.3, released in January of 2009. Development resumed at the end of 2019 and a 0.9.4 release was [published on Github](https://github.com/revusky/freecc/releases) on 28 December 2019.
 
-I have marked this as a milestone because I finally got the Java grammar updated to support the new constructs, I believe up through Java 8. I have tested this on a huge body of java source, including the thousands of files of Java source code in the JDK and in open source projects such as JRuby, Jython, and FreeMarker, and this java parser can handle all of it. Literally millions of lines of code.
+The project is again being actively developed. Given that code generation has been externalized to template files, the ability to generate parsers in other languages is probably not very far off. Another near-term major goal is to provide support for *fault-tolerant* parsing, where a parser incorporates heuristics for building an AST even when the input is invalid (unbalanced delimiters, missing semicolon and such).
 
-The included Java grammar is useful on it own and also is embedded in the FreeCC grammar, so FreeCC can handle Lambda expressions, which, as far as I know, JavaCC still cannot do.
+To stay up to date with JavaCC 21, you are encouraged to consult [the wiki](https://doku.javacc.com/) and we would encourage people to sign up on our [Discourse forum](https://discuss.parsers.org). 
+
+As described [here](https://javacc.com/) JavaCC 21 is invoked on the command line via:
+
+    java -jar javacc.jar 
 
 FreeCC is not very well documented at the moment. There is some rudimentary information on the [Wiki pages associated with the project on Github](https://github.com/revusky/freecc/wiki). However, I consider that to be a stopgap measure and would like to have something more like real documentation.
 
 It should be possible to check the code out and just do an ant build from the top directory, by just running ant. You should also be able to run a little test suite by running "ant test".
 
-If you are interested in this project, either as a user or as a developer, please do [write me](a href="mailto:revuskyNOSPAM@gmail.com").
+If you are interested in this project, either as a user or as a developer, please do [write me](a href="mailto:revusky@NOSPAMjavacc.com").

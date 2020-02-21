@@ -1,22 +1,12 @@
-This version of JavaCC was originally labelled FreeCC after the people
-in control of the JavaCC.org domain refused to review a FreeCC began as a fork of the JavaCC code of 2008. JavaCC, the software 
-program from which FreeCC is originally derived, had been  
-made available by Sun Microsystems under a BSD-style license. The FreeCC 
-source code is also available under pretty much identical terms. 
+[JavaCC 21](https://javacc.com/) is a continuation of work on the well known JavaCC parser generator released by Sun Microsystems in mid 2003, under a BSD-style open source license. The JavaCC 21 source code is also available under pretty much identical terms. 
 
-Now, to be absolutely clear, these license terms refer to the source code 
-of the tool itself. Any code that users generate using the tool 
-belongs to them alone and is completely unencumbered. Since that is the 
-important part for most users, it bears repeating:
+In the interests of absolute clarity, it behooves us to add that these license terms refer to the *source code of the tool itself*. Any code that users *generate* using the tool belongs to them alone and is completely unencumbered. Since that is the important part for most users, it bears repeating:
 
-ANY CODE THAT USERS GENERATE USING THE TOOL BELONGS TO THEM ALONE AND IS
-COMPETELY UNENCUMBERED.
+ANY CODE THAT USERS GENERATE USING THE TOOL BELONGS TO THEM ALONE AND IS COMPETELY UNENCUMBERED.
 
 The BSD-style open source software license follows:
-
 --------------------------------------
-
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
