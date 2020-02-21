@@ -1,3 +1,8 @@
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.javacc/javacc-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.javacc/javacc-core)
+[![Travis Build Status](https://travis-ci.org/javacc21/javacc21.svg?branch=master)](https://travis-ci.org/javacc21/javacc21)
+[![CI Status](https://github.com/javacc21/javacc21/workflows/CI/badge.svg)](https://github.com/javacc21/javacc21/actions)
+[![Javadocs](https://www.javadoc.io/badge/com.javacc/javacc-core.svg)](https://www.javadoc.io/doc/com.javacc/javacc-core)
+
 # JavaCC 21, 20.02.21 release
 
 *Tagged and Released, 21 February 2020*
@@ -24,6 +29,6 @@ The latest source code can be checked out from Github via:
 
     git clone https://github.com/javacc21/javacc21.git
 
-And then you can do a build by invoking ant from the top-level directory. You should also be able to run test suite by running "ant test".
+And then you can do a build by invoking `./gradlew build` from the top-level directory. You should also be able to run test suite by running `./gradlew test`
 
 If you are interested in this project, either as a user or as a developer, you may [write me]("mailto:revusky@NOSPAMjavacc.com"). Better yet, you can sign up on our[Discourse forum](https://discuss.parsers.org/) and post any questions or suggestions there.

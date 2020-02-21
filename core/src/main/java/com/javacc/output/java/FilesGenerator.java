@@ -75,7 +75,7 @@ public class FilesGenerator {
         fmConfig = new freemarker.template.Configuration();
         String filename = grammar.getFilename();
         File dir = new File(filename).getCanonicalFile().getParentFile();
-        TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir), 
+        TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir),
                                                                 new ClassTemplateLoader(this.getClass(), ""));
         fmConfig.setClassForTemplateLoading(FilesGenerator.class, "");
         fmConfig.setTemplateLoader(templateLoader);
