@@ -4,6 +4,7 @@
 
 <target name="clean">
    <delete dir="javagrammar"/>
+   <delete file="JParse.class"/>
 </target>
 
 <target name="init">

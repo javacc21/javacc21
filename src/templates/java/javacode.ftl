@@ -346,16 +346,13 @@ throw new ParseException();"]
                  [#if lookahead_index != 0]
                  } else {
                  [/#if]
-                 [#-- set casesHandled = [] --]
                  [#set casesHandled = ","]
                  switch (nextTokenKind()) { 
               [#set indentLevel = indentLevel+1]
           [/#if]
           [#list lookahead.matchingTokens as token]
-               [#-- if !casesHandled?seq_contains(token) --]
                [#if !casesHandled?contains(","+token+",")]
                  case ${token}: 
-                 [#-- set casesHandled = casesHandled+[token] --]
                  [#set casesHandled = casesHandled+token+","]
                [/#if]
           [/#list]
