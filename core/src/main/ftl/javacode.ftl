@@ -12,8 +12,8 @@
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
+ *       nor the names of any contributors may be used to endorse
+ *       or promote products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -39,14 +39,14 @@
 [#var currentProduction]
 
 [#macro buildPhase2Routine expansion]
-  private boolean jj_2${expansion.internalName}(int xla) { 
-      jj_la = xla; 
+  private boolean jj_2${expansion.internalName}(int xla) {
+      jj_la = xla;
       jj_lastpos = jj_scanpos = current_token;
-      try { 
-          return !jj_3${expansion.internalName}(); 
+      try {
+          return !jj_3${expansion.internalName}();
       }
       catch(LookaheadSuccess ls) {
-          return true; 
+          return true;
       }
       [#if grammar.options.errorReporting]
       finally {
@@ -59,9 +59,9 @@
 [#macro BNFProduction prod]
     ${prod.leadingComments}
 // ${prod.inputSource}, line ${prod.beginLine}
-    final ${prod.accessMod!"public"} 
+    final ${prod.accessMod!"public"}
     ${prod.returnType}
-    ${prod.name}(${prod.parameterList}) 
+    ${prod.name}(${prod.parameterList})
     throws ParseException
     [#list (prod.throwsList.types)! as throw], ${throw}[/#list] {
     [#if grammar.options.debugParser]
@@ -75,7 +75,7 @@
              trace_return("${prod.name}");
          }
     [/#if]
-    }   
+    }
 [/#macro]
 
 [#macro BuildCode expansion]
@@ -198,7 +198,7 @@
 	     [#if subexp_index != 0]
 	       [@BuildCode subexp/]
 	     [/#if]
-	   [/#list]        
+	   [/#list]
     [#elseif classname = "NonTerminal"]
        [@BuildPhase1CodeNonTerminal expansion/]
     [#elseif expansion.isRegexp]
@@ -218,7 +218,7 @@
 
 [#macro BuildPhase1CodeRegexp regexp]
        [#if regexp.LHS??]
-          ${regexp.LHS} =  
+          ${regexp.LHS} =
        [/#if]
        consumeToken(${regexp.label});
 [/#macro]
@@ -258,7 +258,7 @@
         trace_return("${jprod.name}");
     }
    [/#if]
- } 
+ }
 [/#macro]
 
 
@@ -338,7 +338,7 @@ throw new ParseException();"]
          [#if lookahead.semanticLookaheadA??]
                 && (${lookahead.semanticLookahead})
          [/#if]
-                ) { 
+                ) {
                    ${actions[lookahead_index]}
          [#set inPhase1 = false]
        [#elseif lookahead.amount = 1&& !lookahead.semanticLookahead?? &&!lookahead.possibleEmptyExpansionOrJavaCode]
@@ -347,12 +347,12 @@ throw new ParseException();"]
                  } else {
                  [/#if]
                  [#set casesHandled = ","]
-                 switch (nextTokenKind()) { 
+                 switch (nextTokenKind()) {
               [#set indentLevel = indentLevel+1]
           [/#if]
           [#list lookahead.matchingTokens as token]
                [#if !casesHandled?contains(","+token+",")]
-                 case ${token}: 
+                 case ${token}:
                  [#set casesHandled = casesHandled+token+","]
                [/#if]
           [/#list]
@@ -445,7 +445,7 @@ throw new ParseException();"]
             ${action2}
          }
       [/#if]
-   [/#if] 
+   [/#if]
 [/#macro]
 
 [#macro buildPhase3Routine expansion count]
@@ -453,7 +453,7 @@ throw new ParseException();"]
    private boolean jj_3${expansion.internalName}() {
         [#if grammar.options.debugLookahead&&expansion.parentObject.class.name?ends_with("Production")]
            [#if grammar.options.errorReporting]
-      if (!rescan) 
+      if (!rescan)
            [/#if]
       trace_call("${expansion.parentObject.name} (LOOKING AHEAD...)");
             [#set jj3_expansion = expansion]
@@ -499,7 +499,7 @@ throw new ParseException();"]
 	  [/#if]
 	  if (
 	  [#if lookahead.semanticLookahead??]
-	     !jj_semLA || 
+	     !jj_semLA ||
 	  [/#if]
 	  [#if subseq_has_next]
 	     [@genjj_3Call subseq/]) {
@@ -521,12 +521,12 @@ throw new ParseException();"]
   [#if !label?has_content]
      [#set label = grammar.getTokenName(regexp.ordinal)]
   [/#if]
-    if (jj_scan_token(${label})) [@genReturn true/] 
+    if (jj_scan_token(${label})) [@genReturn true/]
 [/#macro]
 
 [#macro Phase3CodeZeroOrOne zoo]
    [@newVar type="Token" init="jj_scanpos"/]
-   if ([@genjj_3Call zoo.nestedExpansion/]) 
+   if ([@genjj_3Call zoo.nestedExpansion/])
       jj_scanpos = token${newVarIndex};
 [/#macro]
 
@@ -555,7 +555,7 @@ throw new ParseException();"]
    [#var ntprod=grammar.getProductionByLHSName(nt.name)]
    [#if ntprod.class.name?ends_with("ParserProduction")]
      if (true) {
-         jj_la = 0; 
+         jj_la = 0;
          jj_scanpos = jj_lastpos;
          [@genReturn false/]
      }
@@ -574,7 +574,7 @@ throw new ParseException();"]
       [/#if]
    [/#list]
 [/#macro]
-    
+
 [#macro genjj_3Call expansion]
    [#if expansion.internalName?starts_with("jj_scan_token")]
      ${expansion.internalName}
@@ -590,7 +590,7 @@ throw new ParseException();"]
        [#set tracecode]
  trace_return("${jj3_expansion.parentObject.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
        [/#set]
-       [#if grammar.options.errorReporting] 
+       [#if grammar.options.errorReporting]
          [#set tracecode = "if (!rescan) "+tracecode]
        [/#if]
   { ${tracecode} return {bool?string("true", "false")};
@@ -608,5 +608,4 @@ throw new ParseException();"]
       = ${init};
    [/#if]
    ;
-[/#macro]   
-    
+[/#macro]

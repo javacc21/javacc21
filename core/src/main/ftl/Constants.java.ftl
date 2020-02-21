@@ -13,7 +13,7 @@ public interface ${grammar.constantsClassName} {
   [#list grammar.orderedNamedTokens as regexp]
   int ${regexp.label} = ${regexp.ordinal};
   [/#list]
-  
+
 [#if !grammar.options.userDefinedLexer&&grammar.options.buildLexer]
   /**
    * Lexical States
@@ -35,13 +35,13 @@ public interface ${grammar.constantsClassName} {
 
 
    String[] nodeNames = {
-       "EOF", 
+       "EOF",
        [#list grammar.orderedNamedTokens as regexp]
           "${regexp.label}",
        [/#list]
        [#if grammar.options.treeBuildingEnabled]
            [#list grammar.nodeNames as name]
-              "${name}", 
+              "${name}",
            [/#list]
        [/#if]
    };
@@ -52,7 +52,7 @@ public interface ${grammar.constantsClassName} {
 
 [#macro output_regexp regexp]
    [#if regexp.class.name?ends_with("StringLiteral")]
-      "\"${utils.addEscapes(utils.addEscapes(regexp.image))}\""   
+      "\"${utils.addEscapes(utils.addEscapes(regexp.image))}\""
    [#elseif regexp.label != ""]
       "<${regexp.label}>"
    [#else]

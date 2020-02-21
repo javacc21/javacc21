@@ -34,19 +34,19 @@ public class ${classname} {
     Reader inputStream;
     protected char[] buffer;
     protected int maxNextCharInd, inBuf, tabSize=8;
-    
+
     /**
-     * sets the size of a tab for location reporting 
+     * sets the size of a tab for location reporting
      * purposes, default value is 8.
      */
     public void setTabSize(int i) {this.tabSize = i;}
-    
+
     /**
-     * returns the size of a tab for location reporting 
+     * returns the size of a tab for location reporting
      * purposes, default value is 8.
      */
     public int getTabSize() {return tabSize;}
-    
+
     protected void ExpandBuff(boolean wrapAround) {
         char[] newbuffer = new char[bufsize + 2048];
 
@@ -67,7 +67,7 @@ public class ${classname} {
                 bufpos += (bufsize - tokenBegin);
 [#else]
                  maxNextCharInd = (bufpos += (bufsize - tokenBegin));
-[/#if]                 
+[/#if]
             }
             else {
                  System.arraycopy(buffer, tokenBegin, newbuffer, 0, bufsize - tokenBegin);
@@ -78,9 +78,9 @@ public class ${classname} {
                  bufcolumn = newbufcolumn;
 [#if options.javaUnicodeEscape]
                  bufpos -= tokenBegin;
-[#else]				 
+[#else]
                  maxNextCharInd = (bufpos -= tokenBegin);
-[/#if]                 
+[/#if]
             }
         }
         catch (Throwable t) {
@@ -90,7 +90,7 @@ public class ${classname} {
         available = bufsize;
         tokenBegin = 0;
     }
-    
+
     protected void UpdateLineColumn(char c) {
         column++;
         if (prevCharIsLF) {
@@ -107,13 +107,13 @@ public class ${classname} {
             }
         }
         switch(c) {
-            case '\r' : 
+            case '\r' :
                 prevCharIsCR = true;
                 break;
-            case '\n' : 
+            case '\n' :
                 prevCharIsLF = true;
                 break;
-            case '\t' : 
+            case '\t' :
                 column--;
                 column += (tabSize - (column % tabSize));
                 break;
@@ -192,24 +192,24 @@ public class ${classname} {
                 return '\\';
             }
         }
-[#else]        
+[#else]
         if (++bufpos >= maxNextCharInd) {
             FillBuff();
         }
         char c = buffer[bufpos];
-[/#if]        
+[/#if]
         UpdateLineColumn(c);
         return c;
     }
-    
+
     /**
-     * @Deprecated 
+     * @Deprecated
      * @see #getEndColumn
      */
     public int getColumn() {
         return bufcolumn[bufpos];
     }
-    
+
     /**
      * @Deprecated
      * @see #getEndLine
@@ -222,17 +222,17 @@ public class ${classname} {
     public int getEndColumn() {
         return bufcolumn[bufpos];
     }
-    
+
     /** Get token end line number. */
     public int getEndLine() {
         return bufline[bufpos];
     }
-    
+
     /** Get token beginning column number. */
     public int getBeginColumn() {
         return bufcolumn[tokenBegin];
     }
-    
+
     /** Get token beginning line number. */
     public int getBeginLine() {
         return bufline[tokenBegin];
@@ -269,22 +269,22 @@ public class ${classname} {
     public ${classname}(Reader dstream) {
         this(dstream, 1, 1, 4096);
     }
-    
+
     /** Get token literal value. */
     public String GetImage() {
-        if (bufpos >= tokenBegin) { 
+        if (bufpos >= tokenBegin) {
             return new String(buffer, tokenBegin, bufpos - tokenBegin + 1);
         }
-        else { 
+        else {
             return new String(buffer, tokenBegin, bufsize - tokenBegin) +
                 new String(buffer, 0, bufpos + 1);
         }
     }
-    
+
     /** Get the suffix. */
     public char[] GetSuffix(int len) {
         char[] ret = new char[len];
-        if ((bufpos + 1) >= len) { 
+        if ((bufpos + 1) >= len) {
             System.arraycopy(buffer, bufpos - len + 1, ret, 0, len);
         }
         else {
@@ -292,7 +292,7 @@ public class ${classname} {
             System.arraycopy(buffer, 0, ret, len - bufpos - 1, bufpos + 1);
         }
         return ret;
-    } 
+    }
 
    /**
     * Method to adjust line and column numbers for the start of a token.
@@ -308,7 +308,7 @@ public class ${classname} {
          }
          int i = 0, j = 0, k = 0;
          int nextColDiff = 0, columnDiff = 0;
-         while (i < len && 
+         while (i < len &&
              bufline[j = start % bufsize] == bufline[k = ++start % bufsize]) {
              bufline[j] = newLine;
              nextColDiff = columnDiff + bufcolumn[k] - bufcolumn[j];
@@ -322,7 +322,7 @@ public class ${classname} {
              while (i++ < len) {
                  if (bufline[j = start % bufsize] != bufline[++start % bufsize])
                      bufline[j] = newLine++;
-                 else 
+                 else
                      bufline[j] = newLine;
              }
          }
@@ -377,7 +377,7 @@ public class ${classname} {
 
     throw new IOException(); // Should never come here
   }
-  
+
     protected void AdjustBuffSize() {
         if (available == bufsize) {
             if (tokenBegin > 2048) {
@@ -399,7 +399,7 @@ public class ${classname} {
 
         return nextCharBuf[nextCharInd];
     }
-    
+
     protected void FillBuff() throws IOException {
         int i;
         if (maxNextCharInd == 4096)
@@ -424,7 +424,7 @@ public class ${classname} {
             throw e;
         }
     }
-  
+
     public char BeginToken() throws IOException {
         if (inBuf > 0) {
             --inBuf;
@@ -441,7 +441,7 @@ public class ${classname} {
 
         return readChar();
     }
-    
+
     protected char[] nextCharBuf;
     protected int nextCharInd = -1;
 [#else]
@@ -460,7 +460,7 @@ public class ${classname} {
                 }
             }
 	        else if (available > tokenBegin) {
-               available = bufsize; 
+               available = bufsize;
             }
             else if ((tokenBegin - available) < 2048) {
                 ExpandBuff(true);
@@ -489,7 +489,7 @@ public class ${classname} {
             throw e;
         }
     }
-    
+
     public char BeginToken() throws IOException {
         tokenBegin = -1;
         char c = readChar();
@@ -497,6 +497,6 @@ public class ${classname} {
         return c;
     }
 [/#if]
-   
+
 }
 [/#if]

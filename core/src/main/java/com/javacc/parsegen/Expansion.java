@@ -106,7 +106,7 @@ abstract public class Expansion extends BaseNode {
         return name.substring(name.lastIndexOf(".") + 1); // strip the package
                                                             // name
     }
-    
+
     public String toString() {
         return "[" + getBeginLine() + "," + getBeginColumn() + " " + System.identityHashCode(this) + " "
                 + getSimpleName() + "]";
@@ -129,16 +129,16 @@ abstract public class Expansion extends BaseNode {
     public boolean getIsRegexp() {
         return (this instanceof RegularExpression);
     }
-    
-    
+
+
     public Object getParentObject() {
         return parentObject != null ? parentObject : getParent();
     }
-    
+
     public void setParentObject(Object parentObject) {
         this.parentObject = parentObject;
     }
-    
+
     public TreeBuildingAnnotation getTreeNodeBehavior() {
         if (treeNodeBehavior == null) {
             if (this.parentObject instanceof ParserProduction) {
@@ -158,11 +158,11 @@ abstract public class Expansion extends BaseNode {
     }
 
     public void setLookahead(Lookahead lookahead) {
-    	this.lookahead = lookahead;
+        this.lookahead = lookahead;
     }
 
     public Lookahead getLookahead() {
-    	return lookahead;
+        return lookahead;
     }
-    
+
 }

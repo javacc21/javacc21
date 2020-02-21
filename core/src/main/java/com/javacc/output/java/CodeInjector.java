@@ -55,12 +55,12 @@ import java.util.Set;
 
 /**
  * Class to hold the code that comes from the grammar file
- * and is later "injected" into the output source files 
+ * and is later "injected" into the output source files
  */
 class CodeInjector {
-    
+
     private String parserPackage, nodePackage, parserClassName, lexerClassName, constantsClassName, baseNodeClassName;
-    
+
     private Map<String, TypeDeclaration> types = new HashMap<String, TypeDeclaration>();
     private Map<String, Set<ImportDeclaration>> imports = new HashMap<String, Set<ImportDeclaration>>();
     private Map<String, ExtendsList> extendsLists = new HashMap<String, ExtendsList>();
@@ -71,13 +71,13 @@ class CodeInjector {
     private Set<String> typeNames = new HashSet<String>();
     private Map<String, String> explicitPackages = new HashMap<String, String>();
     private Set<String> interfaces = new HashSet<String>();
-    
+
     CodeInjector(String parserClassName,
                  String lexerClassName,
                  String constantsClassName,
                  String baseNodeClassName,
-                 String parserPackage, 
-                 String nodePackage, 
+                 String parserPackage,
+                 String nodePackage,
                  List<Node> codeInjections) {
         this.parserClassName = parserClassName;
         this.lexerClassName = lexerClassName;
@@ -102,14 +102,14 @@ class CodeInjector {
                 for (Iterator<Node> it = Nodes.iterator(n); it.hasNext();) {
                     Node child  = it.next();
                     if (child instanceof ClassOrInterfaceBody) {
-                        ClassOrInterfaceBody body = (ClassOrInterfaceBody) child;       
+                        ClassOrInterfaceBody body = (ClassOrInterfaceBody) child;
                         add(lexerClassName, null, null, null, body, false);
                     }
                 }
             }
-        } 
+        }
     }
-    
+
     void addAll(CodeInjector other) {
         types.putAll(other.types);
         imports.putAll(other.imports);
@@ -120,7 +120,7 @@ class CodeInjector {
         overriddenMethods.addAll(other.overriddenMethods);
         typeNames.addAll(other.typeNames);
     }
-    
+
     private boolean isInNodePackage(String classname) {
         return !classname.equals(parserClassName)
              && !classname.equals(lexerClassName)
@@ -133,12 +133,12 @@ class CodeInjector {
              && !classname.equals("Token")
              && !classname.equals("Node");
     }
-    
+
     String getExplicitlyDeclaredPackage(String className) {
         return explicitPackages.get(className);
     }
 
-    
+
     private void add(CompilationUnit jcu) {
         String explicitPackageName = jcu.getPackageName();
         List<ImportDeclaration> importdecls = new ArrayList<ImportDeclaration>();
@@ -194,7 +194,7 @@ class CodeInjector {
                     injectedList.add(typeParameterList);
                 }
             }
-            List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<ClassOrInterfaceBodyDeclaration>(); 
+            List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<ClassOrInterfaceBodyDeclaration>();
             for (Iterator<Node> it = Nodes.iterator(dec.getBody()); it.hasNext();) {
                 Node n = it.next();
                 if (n instanceof ClassOrInterfaceBodyDeclaration) {
@@ -218,9 +218,9 @@ class CodeInjector {
             }
         }
     }
-    
-    private void add(String name, List<ImportDeclaration> importDeclarations, ExtendsList extendsList, 
-            ImplementsList implementsList, ClassOrInterfaceBody body, boolean isInterface) 
+
+    private void add(String name, List<ImportDeclaration> importDeclarations, ExtendsList extendsList,
+            ImplementsList implementsList, ClassOrInterfaceBody body, boolean isInterface)
     {
         typeNames.add(name);
         if (isInterface) {
@@ -266,9 +266,9 @@ class CodeInjector {
             bodyDeclarations.put(name, existingDecls);
         }
         existingDecls.addAll(Nodes.childrenOfType(body, ClassOrInterfaceBodyDeclaration.class));
-        
+
     }
-    
+
     void injectCode(CompilationUnit jcu) {
         Set<ImportDeclaration> allInjectedImports = new HashSet<ImportDeclaration>();
         for (TypeDeclaration typedecl : jcu.getTypeDeclarations()) {
@@ -289,20 +289,20 @@ class CodeInjector {
                     typedecl.addImplements(type);
                 }
             }
-            
+
             TypeParameterList injectedTypeParameters = typeParameterLists.get(fullName);
             if (injectedTypeParameters != null) {
                 TypeParameterList typeParameters = typedecl.getTypeParameterList();
-		/*                if (typeParameters == null) {
+        /*                if (typeParameters == null) {
                     ListIterator<Node> iterator = typedecl.iterator();
                     Node n = null;
                     while (n.getId() != JavaCCConstants.IDENTIFIER) {
                         n = iterator.next();
                     }
                     iterator.add(typeParameters);
-		    } else {*/
+            } else {*/
                  typeParameters.add(injectedTypeParameters);
-		    //                }
+            //                }
             }
             List<ClassOrInterfaceBodyDeclaration> injectedCode = bodyDeclarations.get(fullName);
             if (injectedCode != null) {
@@ -311,7 +311,7 @@ class CodeInjector {
         }
         injectImportDeclarations(jcu, allInjectedImports);
     }
-    
+
     private void injectImportDeclarations(CompilationUnit jcu, Collection<ImportDeclaration> importdecls) {
         List<ImportDeclaration> importDeclarations = jcu.getImportDeclarations();
         for (ImportDeclaration importdecl : importdecls) {
@@ -320,9 +320,9 @@ class CodeInjector {
             }
         }
     }
-    
+
     boolean hasInjectedCode(String typename) {
         return typeNames.contains(typename);
     }
-    
+
 }

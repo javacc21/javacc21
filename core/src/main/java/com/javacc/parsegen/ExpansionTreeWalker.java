@@ -106,7 +106,7 @@ final class ExpansionTreeWalker {
                 }
             } else if (node instanceof ExpansionSequence) {
                 for (Expansion exp : Nodes.childrenOfType(node, Expansion.class)) {
-                	postOrderWalk(exp, opObj);
+                    postOrderWalk(exp, opObj);
                 }
             } else if (node instanceof OneOrMore) {
                 postOrderWalk(node.getNestedExpansion(), opObj);

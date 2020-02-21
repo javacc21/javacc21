@@ -8,7 +8,7 @@ SKIP : {
   " " | "\t" | "\n" | "\r"
 }
 
-void AdditiveExpression() : 
+void AdditiveExpression() :
 {}
 {
     <NUMBER>
@@ -17,4 +17,3 @@ void AdditiveExpression() :
       <NUMBER>
     )*
 }
-

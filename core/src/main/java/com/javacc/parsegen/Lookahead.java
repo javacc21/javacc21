@@ -57,14 +57,14 @@ import java.util.List;
 public class Lookahead extends Expansion {
 
     private boolean[] firstSet;
-    
+
 
     public Lookahead(Grammar grammar) {
         super(grammar);
     }
-    
+
     protected Lookahead() {}
-    
+
     boolean[] getFirstSet() {
         if (firstSet == null) {
             firstSet = new boolean[getGrammar().getLexerData().getTokenCount()];
@@ -72,7 +72,7 @@ public class Lookahead extends Expansion {
         }
         return firstSet;
     }
-    
+
     public List<String> getMatchingTokens() {
         List<String> result = new ArrayList<String>();
         for (int i=0; i<getFirstSet().length; i++) {
@@ -82,12 +82,12 @@ public class Lookahead extends Expansion {
         }
         return result;
     }
-    
+
     public boolean getPossibleEmptyExpansionOrJavaCode() {
         return Semanticizer.emptyExpansionExists(expansion) || Semanticizer.javaCodeCheck(expansion);
     }
-    
-    
+
+
     /**
      * Sets up the array "firstSet" above based on the Expansion argument passed
      * to it. Since this is a recursive function, it assumes that "firstSet" has
@@ -129,12 +129,12 @@ public class Lookahead extends Expansion {
                     break;
                 }
             }
-        } else if (exp instanceof OneOrMore || exp instanceof ZeroOrMore 
+        } else if (exp instanceof OneOrMore || exp instanceof ZeroOrMore
                    || exp instanceof ZeroOrOne || exp instanceof TryBlock) {
             genFirstSet(exp.getNestedExpansion(), firstSet);
-        } 
+        }
     }
-    
+
 
     public Lookahead(Expansion nestedExpansion) {
         super(nestedExpansion.getGrammar());
@@ -143,7 +143,7 @@ public class Lookahead extends Expansion {
     }
 
     public boolean getAlwaysSucceeds() {
-        if (semanticLookahead != null) 
+        if (semanticLookahead != null)
             return false;
         return getAmount() == 0 || Semanticizer.javaCodeCheck(expansion)
                 || Semanticizer.emptyExpansionExists(expansion);
@@ -220,11 +220,11 @@ public class Lookahead extends Expansion {
      * are ignored.
      */
     private Expression semanticLookahead;
-    
+
     public Expression getSemanticLookahead() {
         return semanticLookahead;
     }
-    
+
     public void setSemanticLookahead(Expression semanticLookahead) {
         this.semanticLookahead = semanticLookahead;
     }
@@ -246,15 +246,15 @@ public class Lookahead extends Expansion {
     public boolean isExplicit() {
         return false;
     }
-    
+
     public Expansion getNestedExpansion() {
         return expansion;
     }
-    
+
     public void setExpansion(Expansion exp){
         this.expansion = exp;
     }
-    
+
     public int getAmount() {
         return amount;
     }

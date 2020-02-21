@@ -56,7 +56,7 @@ public class JavaCCUtils {
 
         return -1;
     }
-    
+
     static int hexval(char ch) {
         if (ch >= '0' && ch <= '9')
             return ((int) ch) - ((int) '0');
@@ -168,7 +168,7 @@ public class JavaCCUtils {
         }
         return retval;
     }
-    
+
     static boolean hexchar(char ch) {
         if (ch >= '0' && ch <= '9')
             return true;

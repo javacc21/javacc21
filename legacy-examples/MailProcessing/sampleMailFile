@@ -1,9 +1,9 @@
 /* Copyright (c) 2006, Sun Microsystems, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the Sun Microsystems, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -79,7 +79,7 @@ X-Lines: 32
 
 
 In the last couple of days, we had seen a couple of users facing problems with
-regular expressions that match "". There is a minor bug in the way it is 
+regular expressions that match "". There is a minor bug in the way it is
 implemented in 0.6.-9. We will fix it.
 
 But the purpose of this mail is to suggest you should be careful when you use
@@ -163,7 +163,7 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Length: 447
 
 Rupert Nagler wrote:
-> 
+>
 > I am very impressed by the Jack-Concept and I am looking for a "HTML.jack".
 > Is there anybody out there who has an example of a Jack-Definition file for
 > HTML 3.2?

@@ -49,9 +49,9 @@ import java.util.List;
  * NFA (Non-deterministic Finite Automaton) code.
  */
 class Nfa {
-    
+
     private NfaState start, end;
-    
+
     private static final char[] diffUpperCaseRanges = { 97, 122, 224, 246, 248, 254, 255, 255, 257, 257, 259, 259, 261, 261,
     263, 263, 265, 265, 267, 267, 269, 269, 271, 271, 273, 273, 275, 275, 277, 277, 279, 279, 281, 281, 283,
     283, 285, 285, 287, 287, 289, 289, 291, 291, 293, 293, 295, 295, 297, 297, 299, 299, 301, 301, 303, 303,
@@ -168,7 +168,7 @@ class Nfa {
     NfaState getEnd() {
         return end;
     }
-    
+
     static Nfa buildNfa(RegularExpression regexp, LexicalState lexicalState, boolean ignoreCase) {
         if (regexp instanceof RegexpRef) {
             return buildNfa(((RegexpRef) regexp).getRegexp(), lexicalState, ignoreCase);
@@ -239,7 +239,7 @@ class Nfa {
         temp.getEnd().addMove(temp.getStart());
         return nfa;
     }
-    
+
     static private Nfa buildNfa(ZeroOrOneRegexp zoo, LexicalState lexState, boolean ignoreCase) {
         Nfa nfa = new Nfa(lexState);
         NfaState startState = nfa.getStart();
@@ -285,7 +285,7 @@ class Nfa {
         startState.setNext(finalState);
         return retVal;
     }
-    
+
     static private Nfa buildNfa(RepetitionRange repRange, LexicalState lexState, boolean ignoreCase) {
         Grammar grammar = repRange.getGrammar();
         List<RegularExpression> units = new ArrayList<RegularExpression>();
@@ -318,8 +318,8 @@ class Nfa {
         }
         return buildNfa(seq, lexState, ignoreCase);
     }
-    
-    
+
+
     static private Nfa buildNfa(RegexpSequence seq, LexicalState lexState, boolean ignoreCase) {
         if (seq.getUnits().size() == 1) {
             return buildNfa(seq.getUnits().get(0), lexState, ignoreCase);
@@ -345,7 +345,7 @@ class Nfa {
 
         return retVal;
     }
-    
+
     static private Nfa buildNfa(RegexpChoice choice, LexicalState lexState, boolean ignoreCase) {
         List<RegularExpression> choices = compressCharLists(choice.getChoices());
 
@@ -365,7 +365,7 @@ class Nfa {
 
         return retVal;
     }
-    
+
     static private List<RegularExpression> compressCharLists(List<RegularExpression> choices) {
         List<RegularExpression> compressedChoices = compressChoices(choices); // Unroll nested choices
         List<RegularExpression> result = new ArrayList<RegularExpression>();
@@ -404,7 +404,7 @@ class Nfa {
     static private List<RegularExpression> compressChoices(List<RegularExpression> choices) {
         List<RegularExpression> result = new ArrayList<RegularExpression>();
         for (RegularExpression curRE : choices) {
-            
+
             while (curRE instanceof RegexpRef) {
                 curRE = ((RegexpRef) curRE).getRegexp();
             }
@@ -412,14 +412,14 @@ class Nfa {
                 for (RegularExpression re : ((RegexpChoice)curRE).getChoices()) {
                     result.add(re);
                 }
-            } 
+            }
             else {
                 result.add(curRE);
             }
         }
         return result;
     }
-    
+
     static private boolean inRange(char c, CharacterRange range) {
         return (c >= range.left && c <= range.right);
     }
@@ -439,16 +439,16 @@ class Nfa {
             char l = range.left;
             char r = range.right;
             int j = 0;
-    
+
             /* Add ranges for which lower case is different. */
             for (;;) {
                 while (l > diffLowerCaseRanges[j])
                     j += 2;
-    
+
                 if (l < diffLowerCaseRanges[j]) {
                     if (r < diffLowerCaseRanges[j])
                         break;
-    
+
                     if (r <= diffLowerCaseRanges[j + 1]) {
                         CharacterRange crc = new CharacterRange();
                         crc.left = Character.toLowerCase(diffLowerCaseRanges[j]);
@@ -473,7 +473,7 @@ class Nfa {
                     crs.right = Character.toLowerCase(diffLowerCaseRanges[j + 1]);
                     result.add(crs);
                 }
-    
+
                 j += 2;
                 while (r > diffLowerCaseRanges[j]) {
                     if (r <= diffLowerCaseRanges[j + 1]) {
@@ -491,16 +491,16 @@ class Nfa {
                 }
                 break;
             }
-    
+
             /* Add ranges for which upper case is different. */
             j = 0;
             while (l > diffUpperCaseRanges[j])
                 j += 2;
-    
+
             if (l < diffUpperCaseRanges[j]) {
                 if (r < diffUpperCaseRanges[j])
                     continue;
-    
+
                 if (r <= diffUpperCaseRanges[j + 1]) {
                     CharacterRange crs = new CharacterRange();
                     crs.left = Character.toUpperCase(diffUpperCaseRanges[j]);
@@ -547,11 +547,11 @@ class Nfa {
     static private List<CharacterRange> removeNegation(List<CharacterRange> descriptors) {
         List<CharacterRange> result = new ArrayList<CharacterRange>();
         int lastRemoved = -1; // One less than the first valid character.
-    
+
         for (CharacterRange obj : descriptors) {
             if (obj.isSingleChar()) {
                 char c = obj.left;
-    
+
                 if (c >= 0 && c <= lastRemoved + 1) {
                     lastRemoved = c;
                     continue;
@@ -563,7 +563,7 @@ class Nfa {
             } else {
                 char l = ((CharacterRange) obj).left;
                 char r = ((CharacterRange) obj).right;
-    
+
                 if (l >= 0 && l <= lastRemoved + 1) {
                     lastRemoved = r;
                     continue;
@@ -575,7 +575,7 @@ class Nfa {
                 lastRemoved = r;
             }
         }
-    
+
         // System.out.println("lastRem : " + (int)lastRemoved);
         if (lastRemoved < (char) 0xffff) {
             CharacterRange crs = new CharacterRange();
@@ -588,16 +588,16 @@ class Nfa {
 
     static private List<CharacterRange> sortDescriptors(List<CharacterRange> descriptors) {
         int j;
-    
+
         List<CharacterRange> result = new ArrayList<CharacterRange>(descriptors.size());
-        int cnt = 0;    
-    
+        int cnt = 0;
+
         Outer: for (int i = 0; i < descriptors.size(); i++) {
             CharacterRange range;
-    
-            if (descriptors.get(i).isSingleChar()) { 
+
+            if (descriptors.get(i).isSingleChar()) {
                 CharacterRange s = descriptors.get(i);
-    
+
                 for (j = 0; j < cnt; j++) {
                     if (result.get(j).isSingleChar()) {
                         if ((result.get(j)).left > s.left)
@@ -606,7 +606,7 @@ class Nfa {
                             continue Outer;
                     } else {
                         char l = ((CharacterRange) result.get(j)).left;
-    
+
                         if (inRange(s.left, result.get(j)))
                             continue Outer;
                         else if (l > s.left)
@@ -641,7 +641,7 @@ class Nfa {
                             break;
                     }
                 }
-    
+
                 result.add(j, range);
                 cnt++;
             }

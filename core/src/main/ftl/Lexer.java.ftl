@@ -18,14 +18,14 @@ public interface Lexer {
   public Token getNextToken();
 
 
-  /** 
-   * This returns a string that says where the 
-   * Tokens are coming from. This will typically be 
+  /**
+   * This returns a string that says where the
+   * Tokens are coming from. This will typically be
    * a filename.
    */
   String getInputSource();
 
 }
 [#else]
-[#embed "LexGen.java.ftl"] 
+[#embed "LexGen.java.ftl"]
 [/#if]

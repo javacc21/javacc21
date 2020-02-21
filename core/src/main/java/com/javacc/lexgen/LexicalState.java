@@ -191,7 +191,7 @@ public class LexicalState {
     NfaState getInitialState() {
         return initialState;
     }
-    
+
     public int getMaxLenForActive(int i) {
         return maxLenForActive[i];
     }
@@ -330,7 +330,7 @@ public class LexicalState {
             nfaState.generateNonAsciiMoves();
         }
         for (Map.Entry<String, Integer> entry : stateIndexFromComposite.entrySet()) {
-//REVISIT: I don't really grok this code. What is going on?            
+//REVISIT: I don't really grok this code. What is going on?
             int state = entry.getValue();
             if (state >= indexedAllStates.size()) {
                 if (state >= statesForState.length) {

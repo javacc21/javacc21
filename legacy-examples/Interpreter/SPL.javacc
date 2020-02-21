@@ -39,15 +39,15 @@ INJECT : {
 public class SPLParser {
 
   /**
-   * Returns the root node of the Id.  
-   * It only makes sense to call this after a successful parse. 
+   * Returns the root node of the Id.
+   * It only makes sense to call this after a successful parse.
    * @return the root node
    */
   public SimpleNode root() {
     return (SimpleNode) rootNode();
   }
 
-    /** Main entry point. */ 
+    /** Main entry point. */
     public static void main(String args[]) {
         SPLParser parser;
         if (args.length == 1) {
@@ -74,7 +74,7 @@ public class SPLParser {
             e1.printStackTrace();
         }
     }
-  
+
 
 }
 
@@ -113,39 +113,39 @@ INJECT(Token) : {}
      * Necessary so that Token can implement Node
      */
      public void interpret() {
-         throw new UnsupportedOperationException("Trying to interpret token: " + this + " on line " + getBeginLine() + ", column " + getBeginColumn()); 
+         throw new UnsupportedOperationException("Trying to interpret token: " + this + " on line " + getBeginLine() + ", column " + getBeginColumn());
      }
 }
 
 INJECT : {
     import java.io.*;
-    
-    public class SimpleNode implements Node {  
-        /** Symbol table */ 
+
+    public class SimpleNode implements Node {
+        /** Symbol table */
         protected static java.util.Hashtable symtab = new java.util.Hashtable();
-    
-        /** Stack for calculations. */ 
+
+        /** Stack for calculations. */
         protected static Object []stack = new Object [1024];
         protected static int top = - 1;
-    
-        /** @throws UnsupportedOperationException if called */ 
+
+        /** @throws UnsupportedOperationException if called */
         public void interpret() {
             throw new UnsupportedOperationException();        // It better not come here.
         }
-    
+
         protected static Writer out = new PrintWriter(System.out);
         protected static Reader in = new InputStreamReader(System.in);
-    
+
         /**
          * @param in the input to set
-         */ 
+         */
         public static void setIn(Reader in) {
             SimpleNode.in = in;
         }
-    
+
         /**
          * @param out the output to set
-         */ 
+         */
         public static void setOut(Writer out) {
             SimpleNode.out = out;
         }
@@ -155,11 +155,11 @@ INJECT : {
 /*
  * Program structuring syntax follows.
  */
-INJECT(CompilationUnit) : 
+INJECT(CompilationUnit) :
 {
 	import java.util.*;
 }
-{ 
+{
     public void interpret() {
 
         for (int i = 0; i < getChildCount(); i++) {
@@ -198,7 +198,7 @@ INJECT(VarDeclaration) : {
 {
     int type;
     String name;
-        
+
     public void interpret() {
         if (type == BOOL)
             symtab.put(name, new Boolean(false));
@@ -217,7 +217,7 @@ void VarDeclaration() :
    |
     "int" { CURRENT_NODE.type = INT; }
   )
-  t = <IDENTIFIER> 
+  t = <IDENTIFIER>
   { CURRENT_NODE.name = t.image; }
 }
 
@@ -235,7 +235,7 @@ void Expression() #void:
   ConditionalOrExpression()
 }
 
-INJECT(Assignment) : {} 
+INJECT(Assignment) : {}
 {
     public void interpret() {
         String name;
@@ -288,12 +288,12 @@ INJECT(AndNode) : {}
 {
     public void interpret() {
         getChild(0).interpret();
-        
+
         if (!((Boolean)stack[top]).booleanValue()) {
             stack[top] = new Boolean(false);
             return;
         }
-        
+
         getChild(2).interpret();
         stack[--top] = new Boolean(((Boolean)stack[top]).booleanValue() &&
                                 ((Boolean)stack[top + 1]).booleanValue());
@@ -321,7 +321,7 @@ INJECT(BitwiseOrNode) : {}
                 stack[ --top] = new Integer(((Integer) stack[top]).intValue() | ((Integer) stack[ top + 1]).intValue());
             }
 
- 
+
         }
     }
 }
@@ -347,7 +347,7 @@ INJECT(BitwiseXorNode) : {}
                 stack[ --top] = new Integer(((Integer) stack[top]).intValue() ^ ((Integer) stack[ top + 1]).intValue());
             }
 
- 
+
         }
     }
 }
@@ -585,18 +585,18 @@ void PrimaryExpression() #void :
 {
   Literal()
 |
-  Id() 
+  Id()
 |
   ParentheticalExpression()
 }
 
-void ParentheticalExpression() : 
+void ParentheticalExpression() :
 {}
 {
    "(" Expression() ")"
 }
 
-INJECT(ParentheticalExpression) : 
+INJECT(ParentheticalExpression) :
 {}
 {
    public void interpret() {
@@ -607,7 +607,7 @@ INJECT(ParentheticalExpression) :
 INJECT(Id) : {}
 {
     String name;
-    
+
     public void interpret() {
         stack[++top] = symtab.get(name);
     }
@@ -641,7 +641,7 @@ void Literal() #void :
 INJECT(IntConstNode) : {}
 {
     int val;
-    
+
     public void interpret() {
         stack[++top] = new Integer(val);
     }
@@ -670,7 +670,7 @@ INJECT(FalseNode) : {}
         stack[ ++top] = Boolean.FALSE;
     }
 }
- 
+
 
 
 /*
@@ -709,7 +709,7 @@ INJECT(Block) : {}
     public void interpret() {
         for (int i = 0; i < getChildCount(); i++) {
             Node n = getChild(i);
-            if (!(n instanceof Token)) 
+            if (!(n instanceof Token))
                 n.interpret();
         }
     }
@@ -807,12 +807,12 @@ void IOStatement() #void :
 
 INJECT: {
     import java.io.IOException;
-   
+
 
     public class ReadStatement {
-        
+
         String name;
-      
+
         public void interpret() {
             Object o;
             char []b = new char [64];
@@ -839,10 +839,10 @@ INJECT: {
             }
         }
     }
-    
+
     public class WriteStatement {
         String name;
-        
+
         public void interpret() {
             if (symtab.get(name) == null)
                 System.err.println("Undefined variable : " + name);

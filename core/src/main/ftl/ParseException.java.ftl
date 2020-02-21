@@ -130,7 +130,7 @@ public class ParseException extends Exception {
       retval += " \"";
       retval += LexicalException.addEscapes(tok.image);
       retval += " \"";
-      tok = tok.next; 
+      tok = tok.next;
     }
     retval += "\" at line " + currentToken.next.beginLine + ", column " + currentToken.next.beginColumn  + " in " + currentToken.getInputSource();
     retval += "." + eol;

@@ -65,12 +65,12 @@ public abstract class RegularExpression extends Expansion {
     public RegularExpression(Grammar grammar) {
         super(grammar);
     }
-    
+
     public RegularExpression() {
     }
-    
+
     private int type;
-    
+
     /**
      * The label of the regular expression (if any). If no label is present,
      * this is set to "".
@@ -145,7 +145,7 @@ public abstract class RegularExpression extends Expansion {
     public boolean hasLabel() {
         return label.length() > 0;
     }
-    
+
     public boolean getIsNamed() {
         return hasLabel() && !Character.isDigit(label.charAt(0));
     }
@@ -161,7 +161,7 @@ public abstract class RegularExpression extends Expansion {
     public Expression getLHS() {
         return lhs;
     }
-    
+
     public void setLHS(Expression lhs) {
         this.lhs = lhs;
     }
@@ -179,9 +179,9 @@ public abstract class RegularExpression extends Expansion {
             }
         }
         return result;
-        
+
     }
-    
+
     void setNewLexicalState(LexicalState newLexicalState) {
         this.newLexicalState = newLexicalState;
     }
@@ -193,39 +193,39 @@ public abstract class RegularExpression extends Expansion {
     public boolean isRegularToken() {
         return type == REGULAR_TOKEN;
     }
-    
+
     public boolean isSpecialToken() {
         return type == SPECIAL_TOKEN;
     }
-    
+
     public boolean isSkip() {
         return type == SKIP || type == SPECIAL_TOKEN;
     }
-    
+
     public boolean isMore() {
         return type == MORE;
     }
-    
+
     void setRegularToken() {
         this.type = REGULAR_TOKEN;
     }
-    
+
     void setSpecialToken() {
         this.type = SPECIAL_TOKEN;
     }
-    
+
     void setMore() {
         this.type = MORE;
     }
-    
+
     void setSkip() {
         this.type = SKIP;
     }
-    
+
     public String getEmit() {
         return emitRE(this);
     }
-    
+
     static public String emitRE(RegularExpression re) {
         String returnString = "";
         boolean hasLabel = !re.label.equals("");
@@ -335,23 +335,23 @@ public abstract class RegularExpression extends Expansion {
         }
         return returnString;
     }
-    
+
     public boolean isPrivate() {
         return this.private_rexp;
     }
-    
+
     public boolean getPrivate() {
         return this.private_rexp;
     }
-    
+
     public void setPrivate(boolean privat) {
         this.private_rexp = privat;
     }
-    
+
     public String getGeneratedClassName() {
         return generatedClassName;
     }
-    
+
     public void setGeneratedClassName(String generatedClassName) {
         this.generatedClassName = generatedClassName;
     }
@@ -363,7 +363,7 @@ public abstract class RegularExpression extends Expansion {
     public void setGeneratedSuperClassName(String generatedSuperClassName) {
         this.generatedSuperClassName = generatedSuperClassName;
     }
-    
+
     private String generatedClassName = "Token", generatedSuperClassName;
 
 

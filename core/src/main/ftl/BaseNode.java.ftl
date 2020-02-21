@@ -12,8 +12,8 @@
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
+ *       nor the names of any contributors may be used to endorse
+ *       or promote products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -38,10 +38,10 @@ package ${grammar.parserPackage};
 [#if grammar.options.freemarkerNodes]
 import freemarker.template.*;
 [/#if]
-   
+
 public class ${grammar.baseNodeClassName} implements Node {
 
-    
+
     @SuppressWarnings("unchecked")
     static private Class listClass = java.util.ArrayList.class;
 
@@ -51,7 +51,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         ${grammar.baseNodeClassName}.listClass = listClass;
     }
 
-    @SuppressWarnings("unchecked")    
+    @SuppressWarnings("unchecked")
     private java.util.List<Node> newList() {
         try {
            return (java.util.List<Node>) listClass.newInstance();
@@ -59,14 +59,14 @@ public class ${grammar.baseNodeClassName} implements Node {
            throw new RuntimeException(e);
         }
     }
-    
+
     protected Node parent;
     protected java.util.List<Node> children = newList();
-    
+
     private int beginLine, beginColumn, endLine, endColumn;
     private String inputSource;
     private java.util.Map<String,Object> attributes;
-[#if grammar.options.nodeUsesParser]    
+[#if grammar.options.nodeUsesParser]
     protected ${grammar.parserClassName} parser;
     public ${grammar.baseNodeClassName}(${grammar.parserClassName} parser) {
         this.parser = parser;
@@ -77,7 +77,7 @@ public class ${grammar.baseNodeClassName} implements Node {
 
 [/#if]
 
-    
+
 [#if grammar.options.visitor]
     [#var VISITOR_THROWS = ""]
     [#if grammar.options.visitorException?has_content]
@@ -94,7 +94,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         return visitor.visit(this, data);
       [/#if]
     }
-           
+
     /** Accept the visitor. **/
     public Object childrenAccept(${VISITOR_CLASS} visitor, ${VISITOR_DATA_TYPE} data) ${VISITOR_THROWS}{
        for (Node child : children) {
@@ -103,7 +103,7 @@ public class ${grammar.baseNodeClassName} implements Node {
        return data;
     }
 [/#if]
- 
+
     public void open() {
     }
 
@@ -121,7 +121,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         children.add(n);
         n.setParent(this);
     }
-    
+
     public void addChild(int i, Node n) {
         children.add(i, n);
         n.setParent(this);
@@ -135,19 +135,19 @@ public class ${grammar.baseNodeClassName} implements Node {
         children.set(i, n);
         n.setParent(this);
     }
-    
+
     public Node removeChild(int i) {
         return children.remove(i);
     }
-    
+
     public boolean  removeChild(Node n) {
         return children.remove(n);
     }
-    
+
     public int indexOf(Node n) {
         return children.indexOf(n);
     }
-    
+
     public void clearChildren() {
         children.clear();
     }
@@ -155,22 +155,22 @@ public class ${grammar.baseNodeClassName} implements Node {
     public int getChildCount() {
         return children.size();
     }
-    
+
     public Object getAttribute(String name) {
-        return attributes == null ? null : attributes.get(name); 
+        return attributes == null ? null : attributes.get(name);
     }
-     
+
     public void setAttribute(String name, Object value) {
         if (attributes == null) {
             attributes = new java.util.HashMap<String, Object>();
         }
         attributes.put(name, value);
     }
-     
+
     public boolean hasAttribute(String name) {
         return attributes == null ? false : attributes.containsKey(name);
     }
-     
+
     public java.util.Set<String> getAttributeNames() {
         if (attributes == null) return java.util.Collections.emptySet();
         return attributes.keySet();
@@ -179,11 +179,11 @@ public class ${grammar.baseNodeClassName} implements Node {
     public void setInputSource(String inputSource) {
         this.inputSource = inputSource;
     }
-    
+
     public String getInputSource() {
         return inputSource;
     }
-    
+
     public int getBeginLine() {
         if (beginLine <= 0) {
             if (!children.isEmpty()) {
@@ -193,7 +193,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         }
         return beginLine;
     }
-     
+
     public int getEndLine() {
         if (endLine <=0) {
             if (!children.isEmpty()) {
@@ -204,7 +204,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         }
         return endLine;
     }
-    
+
     public int getBeginColumn() {
         if (beginColumn <= 0) {
             if (!children.isEmpty()) {
@@ -214,7 +214,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         }
         return beginColumn;
     }
-    
+
     public int getEndColumn() {
         if (endColumn <=0) {
             if (!children.isEmpty()) {
@@ -225,24 +225,24 @@ public class ${grammar.baseNodeClassName} implements Node {
         }
         return endColumn;
     }
-     
+
     public void setBeginLine(int beginLine) {
         this.beginLine = beginLine;
     }
-     
+
     public void setEndLine(int endLine) {
         this.endLine = endLine;
     }
-     
+
     public void setBeginColumn(int beginColumn) {
         this.beginColumn = beginColumn;
     }
-     
+
     public void setEndColumn(int endColumn) {
         this.endColumn = endColumn;
     }
-     
-[#if grammar.options.freemarkerNodes]    
+
+[#if grammar.options.freemarkerNodes]
     public TemplateSequenceModel getChildNodes() {
         SimpleSequence seq = new SimpleSequence();
         for (Node child : children) {
@@ -250,24 +250,24 @@ public class ${grammar.baseNodeClassName} implements Node {
         }
         return seq;
     }
-    
+
     public TemplateNodeModel getParentNode() {
         return this.parent;
     }
-    
+
     public String getNodeName() {
 //        return ${grammar.constantsClassName}.nodeNames[id];
          return this.getClass().getSimpleName();
     }
-    
+
     public String getNodeType() {
         return "";
     }
-    
+
     public String getNodeNamespace() {
         return null;
     }
-    
+
     public String getAsString() throws TemplateModelException {
         StringBuilder buf = new StringBuilder();
         if (children != null) {
@@ -278,8 +278,8 @@ public class ${grammar.baseNodeClassName} implements Node {
 	    }
         return buf.toString();
     }
-[/#if]    
-    
+[/#if]
+
     public String toString() {
         StringBuilder buf=new StringBuilder();
         for(Token t : Nodes.getRealTokens(this)) {

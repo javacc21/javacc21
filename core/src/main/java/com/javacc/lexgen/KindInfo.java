@@ -53,21 +53,20 @@ public final class KindInfo {
       finalKinds[kind / 64] |= (1L << (kind % 64));
       finalKindCnt++;
    }
-   
+
    public long[] getFinalKinds() {
        return finalKinds;
    }
-   
+
    public int getFinalKindCnt() {
        return finalKindCnt;
    }
-   
+
    public int getValidKindCnt() {
        return validKindCnt;
    }
-   
+
    public long[] getValidKinds() {
        return validKinds;
    }
 }
-

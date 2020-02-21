@@ -12,8 +12,8 @@
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
+ *       nor the names of any contributors may be used to endorse
+ *       or promote products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -33,7 +33,7 @@
     private boolean buildTree = true;
 [#else]
     private boolean buildTree = false;
-[/#if]    
+[/#if]
 [#if grammar.options.tokensAreNodes]
     private boolean tokensAreNodes = true;
 [#else]
@@ -49,21 +49,21 @@
 
     private int mark;    // current mark
     private boolean node_created;
-    
-    
-	/** 
+
+
+	/**
      * Determines whether the current node was actually closed and
      * pushed.  This should only be called in the final user action of a
-     * node scope.  
-     */ 
+     * node scope.
+     */
     public boolean nodeCreated() {
         return node_created;
     }
 
-	/** 
+	/**
 	 * Returns the root node of the AST.  It only makes sense to call
-	 * this after a successful parse. 
-	 */ 
+	 * this after a successful parse.
+	 */
     public Node rootNode() {
         return nodes.get(0);
     }
@@ -75,17 +75,17 @@
         nodes.add(n);
     }
 
-    /** 
+    /**
      * Returns the node on the top of the stack, and remove it from the
-     * stack.  
-     */ 
+     * stack.
+     */
     public Node popNode() {
         return nodes.remove(nodes.size() - 1);
     }
 
-    /** 
-     * Returns the node currently on the top of the stack. 
-     */ 
+    /**
+     * Returns the node currently on the top of the stack.
+     */
     public Node peekNode() {
         return nodes.get(nodes.size() - 1);
     }
@@ -115,9 +115,9 @@
     }
 
 	/** Returns the number of children on the stack in the current node
-	 * scope. 
+	 * scope.
 	 */
-	  
+
     public int nodeArity() {
         return nodes.size() - mark;
     }
@@ -128,7 +128,7 @@
             popNode();
         }
     }
-    
+
     public void openNodeScope(Node n) {
         marks.add(mark);
         mark = nodes.size();
@@ -140,7 +140,7 @@
 	 * children.  That number of nodes are popped from the stack and
 	 * made the children of the definite node.  Then the definite node
 	 * is pushed on to the stack. */
-	 
+
     public void closeNodeScope(Node n, int num) {
         mark = marks.remove(marks.size() - 1);
         java.util.ArrayList<Node> nodes = new java.util.ArrayList<Node>();
@@ -168,14 +168,14 @@
     }
 
 
-	/** 
+	/**
 	 * A conditional node is constructed if the condition is true.  All
 	 * the nodes that have been pushed since the node was opened are
 	 * made children of the conditional node, which is then pushed
 	 * on to the stack.  If the condition is false the node is not
-	 * constructed and they are left on the stack. 
+	 * constructed and they are left on the stack.
 	 */
-	 
+
     public void closeNodeScope(Node n, boolean condition) {
         if (condition) {
             int a = nodeArity();
@@ -207,12 +207,12 @@
             node_created = false;
         }
     }
-    
-    
+
+
     public boolean getBuildTree() {
     	return buildTree;
     }
-    
+
     public void setBuildTree(boolean buildTree) {
         this.buildTree = buildTree;
     }
@@ -221,5 +221,5 @@
      * Just a kludge so that existing jjtree-based code that uses
      * parser.jjtree.foo can work without change.
      */
-    
-    ${grammar.parserClassName} jjtree = this; 
+
+    ${grammar.parserClassName} jjtree = this;

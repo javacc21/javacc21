@@ -12,8 +12,8 @@
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
+ *       nor the names of any contributors may be used to endorse
+ *       or promote products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -38,12 +38,12 @@ import java.lang.reflect.*;
 
 /**
  * A set of static utility routines, mostly for working with Node objects.
- * These methods were not added to the Node interface in order to keep it 
- * fairly easy for someone to write their own Node implementation. 
+ * These methods were not added to the Node interface in order to keep it
+ * fairly easy for someone to write their own Node implementation.
  */
 
 abstract public class Nodes {
-    
+
     static public <T extends Node>T firstChildOfType(Node node, Class<T>clazz) {
         for (int i=0; i< node.getChildCount(); i++) {
             Node child = node.getChild(i);
@@ -53,7 +53,7 @@ abstract public class Nodes {
         }
         return null;
     }
-        
+
     static public <T extends Node> List<T> childrenOfType(Node node, Class<T>clazz) {
         List<T> result = new ArrayList<T>();
         for (int i = 0; i < node.getChildCount(); i++) {
@@ -77,8 +77,8 @@ abstract public class Nodes {
         }
         return result;
     }
-        
-        
+
+
     static public List<Token> getRealTokens(Node n) {
         List<Token> result = new ArrayList<Token>();
 		for (Token token : getTokens(n)) {
@@ -89,7 +89,7 @@ abstract public class Nodes {
 	    return result;
     }
 
-    
+
     // NB: This is not thread-safe
     // If the node's children could change out from under you,
     // you could have a problem.
@@ -97,56 +97,56 @@ abstract public class Nodes {
         return new ListIterator<Node>() {
             int current = -1;
             boolean justModified;
-            
+
             public boolean hasNext() {
                 return current+1 < node.getChildCount();
             }
-            
+
             public Node next() {
                 justModified = false;
                 return node.getChild(++current);
             }
-            
+
             public Node previous() {
                 justModified = false;
                 return node.getChild(--current);
             }
-            
+
             public void remove() {
                 if (justModified) throw new IllegalStateException();
                 node.removeChild(current);
                 --current;
                 justModified = true;
             }
-            
+
             public void add(Node n) {
                 if (justModified) throw new IllegalStateException();
                 node.addChild(current+1, n);
                 justModified = true;
             }
-            
+
             public boolean hasPrevious() {
                 return current >0;
             }
-            
+
             public int nextIndex() {
                 return current + 1;
             }
-            
+
             public int previousIndex() {
                 return current;
             }
-            
+
             public void set(Node n) {
                 node.setChild(current, n);
             }
         };
     }
-    
+
     /**
      * Expands (in place) a Node's children to include any comment tokens hanging
      * off the regular tokens.
-     * @param n the Node 
+     * @param n the Node
      * @param recursive whether to recurse into child nodes.
      */
 
@@ -160,10 +160,10 @@ abstract public class Nodes {
             }
         }
     }
-    
+
     /**
      * @return a List containing all the tokens in a Node
-     * @param n The Node 
+     * @param n The Node
      * @param includeCommentTokens Whether to include comment tokens
      * @param recursive Whether to recurse into child Nodes.
      */
@@ -187,14 +187,14 @@ abstract public class Nodes {
 	                }
                 }
                 result.add(token);
-            } 
+            }
             else if (child.getChildCount() >0) {
                result.addAll(getAllTokens(child, includeCommentTokens, recursive));
             }
         }
         return result;
     }
-    
+
     static public void copyLocationInfo(Node from, Node to) {
         to.setInputSource(from.getInputSource());
         to.setBeginLine(from.getBeginLine());
@@ -202,14 +202,14 @@ abstract public class Nodes {
         to.setEndLine(from.getEndLine());
         to.setEndColumn(from.getEndColumn());
     }
-    
+
     static private String stringrep(Node n) {
         if (n instanceof Token) {
             return n.toString().trim();
         }
         return n.getClass().getSimpleName();
     }
-    
+
     static public void dump(Node n, String prefix) {
         String output = stringrep(n);
         if (output.length() >0) {
@@ -220,7 +220,7 @@ abstract public class Nodes {
             dump(child, prefix+"  ");
         }
     }
-    
+
     static public <T extends Node> T getFirstAncestorOfType(Node n, Class<T> clazz) {
         Node parent = n;
         while (parent !=null) {

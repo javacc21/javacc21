@@ -24,14 +24,14 @@ public interface CharStream {
 
   /**
    * Returns the column position of the character last read.
-   * @deprecated 
+   * @deprecated
    * @see #getEndColumn
    */
   int getColumn();
 
   /**
    * Returns the line number of the character last read.
-   * @deprecated 
+   * @deprecated
    * @see #getEndLine
    */
   int getLine();
@@ -76,7 +76,7 @@ public interface CharStream {
   char BeginToken() throws java.io.IOException;
 
   /**
-   * Returns a string made up of characters from the marked token beginning 
+   * Returns a string made up of characters from the marked token beginning
    * to the current buffer position. Implementations have the choice of returning
    * anything that they want to. For example, for efficiency, one might decide
    * to just return null, which is a valid implementation.

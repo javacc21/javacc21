@@ -18,7 +18,7 @@ SKIP : {
   " " | "\t" | "\n" | "\r"
 }
 
-void AdditiveExpression() : 
+void AdditiveExpression() :
 {}
 {
     MultiplicativeExpression()
@@ -45,5 +45,3 @@ void ParentheticalExpression() :
     AdditiveExpression()
     <CLOSE_PAREN>
 }
-
-

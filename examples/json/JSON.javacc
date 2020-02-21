@@ -18,7 +18,7 @@ options {
 
 SKIP :
 {
-  <WHITESPACE : (" "| "\t"| "\n"| "\r")+> 
+  <WHITESPACE : (" "| "\t"| "\n"| "\r")+>
 }
 
 // Delimiters
@@ -70,7 +70,7 @@ void Array() : {}
 
     <OPEN_BRACKET>
     [
-      Value() 
+      Value()
       (
         <COMMA>
         Value()

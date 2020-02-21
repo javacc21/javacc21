@@ -223,11 +223,11 @@ public class LookaheadCalc {
             return false;
         }
         ExpansionSequence seq = (ExpansionSequence) exp;
-	List<Expansion> es = Nodes.childrenOfType(seq,  Expansion.class);
-	if (es.isEmpty()) {
-	    //REVISIT: Look at this case carefully!
-	    return false;
-	}
+    List<Expansion> es = Nodes.childrenOfType(seq,  Expansion.class);
+    if (es.isEmpty()) {
+        //REVISIT: Look at this case carefully!
+        return false;
+    }
         Expansion e = Nodes.firstChildOfType(seq, Expansion.class);
         if (e instanceof Lookahead) {
             return ((Lookahead) e).isExplicit();

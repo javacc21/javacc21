@@ -12,8 +12,8 @@
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
+ *       nor the names of any contributors may be used to endorse
+ *       or promote products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -41,7 +41,7 @@ package ${grammar.parserPackage};
 [/#if]
 
 [#if grammar.nodePackage?has_content && grammar.parserPackage! != grammar.nodePackage]
-import ${grammar.nodePackage}.*;  
+import ${grammar.nodePackage}.*;
 [/#if]
 
 @SuppressWarnings("unused")
@@ -65,11 +65,11 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   SimpleCharStream inputStream;
       [/#if]
   [/#if]
-  
+
   public void setInputSource(String inputSource) {
       token_source.setInputSource(inputSource);
   }
-  
+
 [/#if]
 
   String getInputSource() {
@@ -77,7 +77,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   }
 
   Token current_token;
-[#if hasPhase2] 
+[#if hasPhase2]
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
   /** Whether we are looking ahead. */
@@ -89,7 +89,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   private int jj_gen;
   final private int[] jj_la1 = new int[${parserData.tokenMaskValues?size}];
  [#var tokenMaskSize=(tokenCount-1)/32]
- [#list 0..tokenMaskSize as i] 
+ [#list 0..tokenMaskSize as i]
   static private int[] jj_la1_${i};
  [/#list]
   static {
@@ -97,8 +97,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
       jj_la1_init_${i}();
  [/#list]
   }
-  
- [#list 0..tokenMaskSize as i] 
+
+ [#list 0..tokenMaskSize as i]
    private static void jj_la1_init_${i}() {
       jj_la1_${i} = new int[] {
         [#list parserData.tokenMaskValues as tokenMask]
@@ -177,7 +177,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   [/#if]
 [/#if]
   }
-  
+
   private Token consumeToken(int kind) throws ParseException {
     Token oldToken = current_token;
     if (current_token.next != null) current_token = current_token.next;
@@ -218,7 +218,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   [/#if]
   [#if grammar.usesOpenNodeScopeHook]
           openNodeScopeHook(current_token);
-  [/#if]          
+  [/#if]
           pushNode(current_token);
   [#if grammar.usesjjtreeCloseNodeScope]
    	      jjtreeCloseNodeScope(current_token);
@@ -230,7 +230,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [/#if]
       return current_token;
   }
-  
+
 [#if hasPhase2]
   @SuppressWarnings("serial")
   static private final class LookaheadSuccess extends java.lang.Error { }
@@ -306,7 +306,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   [#if hasPhase2]
   private int[] jj_lasttokens = new int[100];
   private int endPosition;
-  
+
   private void jj_add_error_token(int kind, int pos) {
     if (pos >= 100) return;
     if (pos == endPosition + 1) {
@@ -365,8 +365,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
    [/#if]
     int[][] exptokseq = new int[jj_expentries.size()][];
     for (int i = 0; i < jj_expentries.size(); i++) {
-      exptokseq[i] = (int[])jj_expentries.get(i); 
-    } 
+      exptokseq[i] = (int[])jj_expentries.get(i);
+    }
     return new ParseException(current_token, exptokseq, tokenImage);
   }
   [#else]
@@ -417,7 +417,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
       if (t.kind != 0 && !tokenImage[t.kind].equals("\"" + t.image + "\"")) {
         System.out.print(": \"" + t.image + "\"");
       }
-      System.out.println(" at line " + t.beginLine + 
+      System.out.println(" at line " + t.beginLine +
                 " column " + t.beginColumn + ">" + where);
     }
   }
@@ -454,7 +454,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         if (p.gen > jj_gen) {
           jj_la = p.arg; jj_lastpos = jj_scanpos = p.first;
           switch (i) {
-   [#list 0..(parserData.phase2Lookaheads?size-1) as i] 
+   [#list 0..(parserData.phase2Lookaheads?size-1) as i]
             case ${i} : jj_3_${(i+1)}(); break;
    [/#list]
           }
@@ -503,9 +503,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
 [#list parserData.phase3Table?keys as expansion]
    [@javacode.buildPhase3Routine expansion, parserData.getPhase3ExpansionCount(expansion)/]
-[/#list]   
+[/#list]
 }
 [#list grammar.otherParserCodeDeclarations as decl]
    ${decl}
 [/#list]
-

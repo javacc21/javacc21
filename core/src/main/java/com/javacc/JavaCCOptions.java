@@ -74,7 +74,7 @@ public class JavaCCOptions {
      * values, and the option types can be determined from these values too.
      */
     private Map<String, Object> optionValues = new HashMap<String, Object>();
-    
+
     private Map<String, String> aliases = new HashMap<String, String>();
 
     /**
@@ -156,7 +156,7 @@ public class JavaCCOptions {
         optionValues.put("PARSER_CLASS", "");
         optionValues.put("LEXER_CLASS", "");
         optionValues.put("CONSTANTS_CLASS", "");
-	    optionValues.put("BASE_SRC_DIR", ".");
+        optionValues.put("BASE_SRC_DIR", ".");
         optionValues.put("BASE_NODE_CLASS", "BaseNode");
 
         optionValues.put("OUTPUT_DIRECTORY", "");
@@ -188,7 +188,7 @@ public class JavaCCOptions {
         aliases.put("NODE_CLASS", "BASE_NODE_CLASS");
         aliases.put("q",  "QUIET");
     }
-    
+
     public void setOption(String name, Object value) {
         if (aliases.containsKey(name)) {
             name = aliases.get(name);
@@ -235,11 +235,11 @@ public class JavaCCOptions {
 
 
         String s = name.toUpperCase();
-        
+
         if (inInclude) {
-        	if (s.equals("DEFAULT_LEXICAL_STATE")) {
-        		grammar.setDefaultLexicalState((String) value);
-        	}
+            if (s.equals("DEFAULT_LEXICAL_STATE")) {
+                grammar.setDefaultLexicalState((String) value);
+            }
             // For now, we just ignore any other options if we are within a INCLUDE processing.
             // This will be revisited later.
             return;
@@ -250,12 +250,12 @@ public class JavaCCOptions {
             grammar.addWarning(node, "In JavaCC 21, the STATIC option is superfluous. All parsers are non-static. Option setting will be ignored.");
             return;
         }
-	    else if (s.equalsIgnoreCase("NODE_FACTORY")) {
+        else if (s.equalsIgnoreCase("NODE_FACTORY")) {
             Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, the NODE_FACTORY option from JJTree has been removed. Option setting will be ignored.");
             return;
         }
-	    else if (s.equalsIgnoreCase("MULTI")) {
+        else if (s.equalsIgnoreCase("MULTI")) {
             Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, the MULTI option from JJTree has been removed. Effectively, it is always true. Option setting will be ignored.");
             return;
@@ -274,7 +274,7 @@ public class JavaCCOptions {
         else if (s.equalsIgnoreCase("NODE_SCOPE_HOOK")) {
             Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, the NODE_SCOPE_HOOK option is superfluous. If your Parser class contains either or both of openNodeScopeHook(Node n) and closeNodeScopeHook(Node n)," +
-            		"then calls to those methods will be inserted at the appropriate locations. This option setting will be ignored.");
+                    "then calls to those methods will be inserted at the appropriate locations. This option setting will be ignored.");
             return;
         }
         else if (s.equalsIgnoreCase("UNICODE_INPUT")) {
@@ -345,10 +345,10 @@ public class JavaCCOptions {
         } else {
             s = arg;
         }
-        
+
         if (s.equalsIgnoreCase("quiet")||s.equalsIgnoreCase("Q")) {
-        	this.setOption("QUIET", true);
-        	return;
+            this.setOption("QUIET", true);
+            return;
         }
 
         String name;
@@ -424,7 +424,7 @@ public class JavaCCOptions {
         }
 
         Val = upgradeValue(name, Val);
- 
+
         setOption(name, Val);
         cmdLineSetting.add(name);
     }
@@ -574,14 +574,14 @@ public class JavaCCOptions {
 
     /**
      * Find the sanity check value. Currently, this ALWAYS returns true
-     * and will likely just be phased out. Why on earth would anybody 
+     * and will likely just be phased out. Why on earth would anybody
      * turn off the sanity checking?
      *
      * @return The requested sanity check value.
      */
     public boolean getSanityCheck() {
  //       return booleanValue("SANITY_CHECK");
-    	return true;
+        return true;
     }
 
     /**
@@ -617,9 +617,9 @@ public class JavaCCOptions {
     public String getOutputDirectory() {
         return stringValue("OUTPUT_DIRECTORY");
     }
-    
+
     public boolean getQuiet() {
-    	return booleanValue("QUIET");
+        return booleanValue("QUIET");
     }
 
     /**

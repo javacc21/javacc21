@@ -11,8 +11,8 @@
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
+ *       nor the names of any contributors may be used to endorse
+ *       or promote products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -48,7 +48,7 @@ package ${grammar.parserPackage};
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
   /** Debug output. */
-  
+
   java.io.PrintStream debugStream = System.out;
   /** Set debug output. */
   public void setDebugStream(java.io.PrintStream ds) { debugStream = ds; }
@@ -60,26 +60,26 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   int[] jjemptyLineNo = new int[${numLexicalStates}];
   int[] jjemptyColNo = new int[${numLexicalStates}];
   boolean[] jjbeenHere = new boolean[${numLexicalStates}];
-  
-  
-  int curLexState; 
+
+
+  int curLexState;
   int jjnewStateCnt;
   int jjround;
   int jjmatchedPos;
   int jjmatchedKind;
   private String inputSource = "input";
-  
+
   public String getInputSource() {
       return inputSource;
   }
-  
+
   public void setInputSource(String inputSource) {
       this.inputSource = inputSource;
   }
-  
+
    static final String[] lexStateNames = {
 [#list lexerData.lexicalStates as lexicalState]
-     "${lexicalState.name}", 
+     "${lexicalState.name}",
 [/#list]
    };
 
@@ -89,9 +89,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   public static final int[] jjnewLexState = {
   [#list lexerData.regularExpressions as regexp]
         [#if regexp.newLexicalState?is_null]
-          -1, 
+          -1,
         [#else]
-          ${lexerData.GetIndex(regexp.newLexicalState.name)}, 
+          ${lexerData.GetIndex(regexp.newLexicalState.name)},
         [/#if]
   [/#list]
   };
@@ -101,7 +101,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       // Bit vector for TOKEN
   static final long[] jjtoToken = {
   [#list 0..(tokenCount/64) as i]
-      ${utils.toHexStringL(lexerData.toToken[i])}, 
+      ${utils.toHexStringL(lexerData.toToken[i])},
   [/#list]
   };
 [/#if]
@@ -110,7 +110,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       // Bit vector for SKIP
    static final long[] jjtoSkip = {
    [#list 0..(tokenCount/64) as i]
-       ${utils.toHexStringL(lexerData.toSkip[i])}, 
+       ${utils.toHexStringL(lexerData.toSkip[i])},
    [/#list]
    };
 [/#if]
@@ -119,7 +119,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       // Bit vector for SPECIAL
    static final long[] jjtoSpecial = {
    [#list 0..(tokenCount/64) as i]
-      ${utils.toHexStringL(lexerData.toSpecial[i])}, 
+      ${utils.toHexStringL(lexerData.toSpecial[i])},
    [/#list]
    };
 [/#if]
@@ -128,7 +128,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       // Bit vector for MORE
     static final long[] jjtoMore = {
    [#list 0..(tokenCount/64) as i]
-        ${utils.toHexStringL(lexerData.toMore[i])}, 
+        ${utils.toHexStringL(lexerData.toMore[i])},
    [/#list]
     };
 [/#if]
@@ -156,7 +156,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [/#if]
 
     char curChar;
-    
+
 
 
 [#if options.lexerUsesParser]
@@ -186,7 +186,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     private void ReInitRounds() {
        int i;
        jjround = 0x80000001;
-       for (i = ${lexerData.stateSetSize}; i-- > 0;) 
+       for (i = ${lexerData.stateSetSize}; i-- > 0;)
           jjrounds[i] = 0x80000000;
     }
 
@@ -200,8 +200,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        this.curLexState = lexState;
     }
 
-  
-  
+
+
   /** Get the next Token. */
   public Token getNextToken() {
     Token specialToken = null;
@@ -214,9 +214,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           curChar = input_stream.BeginToken();
        }
        catch(java.io.IOException e) {
-[#if options.debugLexer]			
+[#if options.debugLexer]
             debugStream.println("Returning the <EOF> token.");
-[/#if]            
+[/#if]
 			jjmatchedKind = 0;
             matchedToken = jjFillToken();
 [#if grammar.nextStateForEOF?? || grammar.eofAction??]
@@ -245,24 +245,24 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [#if numLexicalStates>1]
        switch(curLexState) {
 [/#if]
-    
+
 [#list lexerData.lexicalStates as lexicalState]
     [#var singlesToSkip=lexicalState.singlesToSkip]
     [#if numLexicalStates>1]
-            case ${lexicalState_index} : 
+            case ${lexicalState_index} :
     [/#if]
     [#if singlesToSkip.hasTransitions()]
        [#-- added the backup(0) to make JIT happy --]
-              try { 
+              try {
                  input_stream.backup(0);
           [#if singlesToSkip.asciiMoves[0] != 0&&singlesToSkip.asciiMoves[1] != 0]
                  while ((curChar < 64 && (${utils.toHexString(singlesToSkip.asciiMoves[0])}
-                  & (1L <<curChar)) != 0L) || (curChar>>6) == 1 && (${utils.toHexStringL(singlesToSkip.asciiMoves[1])} 
+                  & (1L <<curChar)) != 0L) || (curChar>>6) == 1 && (${utils.toHexStringL(singlesToSkip.asciiMoves[1])}
                   & (1L << (curChar & 077))) != 0L)
           [#elseif singlesToSkip.asciiMoves[1] = 0]
-                 while (curChar <= ${lexerData.maxChar(singlesToSkip.asciiMoves[0])} 
+                 while (curChar <= ${lexerData.maxChar(singlesToSkip.asciiMoves[0])}
                         && (${utils.toHexStringL(singlesToSkip.asciiMoves[0])}
-                        & (1L << curChar)) != 0L) 
+                        & (1L << curChar)) != 0L)
           [#elseif singlesToSkip.asciiMoves[0] = 0]
                  while (curChar > 63 && curChar <= ${lexerData.MaxChar(singlesToSkip.asciiMoves[1])+64}
                         && ${utils.toHexString(singlesToSkip.asciiMoves[1])}L & (1L<< (curChar&077))) != 0L)
@@ -272,11 +272,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                    [#var debugOutput]
                    [#set debugOutput]
                    [#if numLexicalStates>1]
-                   "<" + lexStateNames[curLexState] + ">" + 
+                   "<" + lexStateNames[curLexState] + ">" +
                    [/#if]
                    "Skipping character : " + LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
-                   [/#set] 
-                    debugStream.println(${debugOutput?trim}); 
+                   [/#set]
+                    debugStream.println(${debugOutput?trim});
          [/#if]
                     curChar = input_stream.BeginToken();
          [#if options.debugLexer]
@@ -284,13 +284,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
          [/#if]
              }
              catch (java.io.IOException e1) {continue EOFLoop;}
-    [/#if]    
-             
-             
+    [/#if]
+
+
     [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
          [#if options.debugLexer]
         debugStream.println("   Matched the empty string as " + tokenImage[${lexicalState.initMatch}] + " token.");
-         [/#if] 
+         [/#if]
         jjmatchedKind = ${lexicalState.initMatch};
         jjmatchedPos = -1;
         curPos = 0;
@@ -303,12 +303,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         [#var debugOutput]
         [#set debugOutput]
             [#if numLexicalStates>1]
-               "<" + lexStateNames[curLexState] + ">" + 
+               "<" + lexStateNames[curLexState] + ">" +
             [/#if]
             "Current character : " + LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
             "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
         [/#set]
-        debugStream.println(${debugOutput?trim}); 
+        debugStream.println(${debugOutput?trim});
     [/#if]
         curPos = jjMoveStringLiteralDfa0${lexicalState.suffix}();
     [#if lexicalState.matchAnyChar??]
@@ -319,7 +319,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         [/#if]
         {
         [#if options.debugLexer]
-        debugStream.println("    Current character matched as a " + tokenImage[${lexicalState.canMatchAnyChar}] + " token."); 
+        debugStream.println("    Current character matched as a " + tokenImage[${lexicalState.canMatchAnyChar}] + " token.");
         [/#if]
         jjmatchedKind = ${lexicalState.canMatchAnyChar};
         [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
@@ -338,7 +338,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       jjmatchedKind = 0x7FFFFFFF;
   [/#if]
   [#if numLexicalStates>0]
-      if (jjmatchedKind != 0x7FFFFFFF) { 
+      if (jjmatchedKind != 0x7FFFFFFF) {
           if (jjmatchedPos + 1 < curPos)
      [#if options.debugLexer]
           {
@@ -362,7 +362,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      [#if grammar.usesTokenHook]
           matchedToken = tokenHook(matchedToken);
      [/#if]
-     
+
 
      [#if lexerData.hasSpecial]
              matchedToken.specialToken = specialToken;
@@ -376,7 +376,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           CommonTokenAction(matchedToken);
      [/#if]
      jjmatchedKind = matchedToken.kind;
-     
+
      [#if numLexicalStates>1]
           if (jjnewLexState[jjmatchedKind] != -1) {
               curLexState = jjnewLexState[jjmatchedKind];
@@ -391,7 +391,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
 
          [#if lexerData.hasSkip || lexerData.hasSpecial]
-          
+
             [#if lexerData.hasMore]
           else if ((jjtoSkip[jjmatchedKind >> 6] & (1L << (jjmatchedKind & 077))) != 0L)
             [#else]
@@ -401,7 +401,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           {
 
             [#if lexerData.hasSpecial]
-          
+
             if ((jjtoSpecial[jjmatchedKind >> 6] & (1L << (jjmatchedKind & 077))) != 0L) {
 
               matchedToken = jjFillToken();
@@ -419,9 +419,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
               TokenLexicalActions(matchedToken);
               [/#if]
           }
-      
+
               [#if lexerData.hasSkipActions]
-              else 
+              else
                  TokenLexicalActions(null);
               [/#if]
           [#elseif lexerData.hasSkipActions]
@@ -443,9 +443,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           [#elseif lexerData.hasSkipActions || lexerData.hasTokenActions]
           jjimageLen += jjmatchedPos + 1;
 		  [/#if]
-		  
+
           [#if numLexicalStates>1]
-          if (jjnewLexState[jjmatchedKind] != -1) 
+          if (jjnewLexState[jjmatchedKind] != -1)
             curLexState = jjnewLexState[jjmatchedKind];
           [/#if]
           curPos = 0;
@@ -457,7 +457,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             [#var debugOutput]
             [#set debugOutput]
               [#if numLexicalStates>1]
-                 "<" + lexStateNames[curLexState] + ">" + 
+                 "<" + lexStateNames[curLexState] + ">" +
               [/#if]
               "Current character : " + LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
               "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
@@ -484,13 +484,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       }
       else
          error_column++;
-   }         
+   }
    if (!EOFSeen) {
       input_stream.backup(1);
       error_after = curPos <= 1 ? "" : input_stream.GetImage();
    }
    throw new LexicalException(EOFSeen, curLexState, error_line, error_column, error_after, curChar, inputSource, LexicalException.LEXICAL_ERROR);
-  [/#if]    
+  [/#if]
 [#if lexerData.hasMore]
        }
 [/#if]
@@ -507,13 +507,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         [#var lexicalState=regexp.lexicalState]
         [#set jumpOut = (!act?? || !act.javaCode?has_content)&&!lexicalState.canLoop]
         [#if !jumpOut]
-		  case ${i} : 
+		  case ${i} :
           [#if lexicalState.initMatch = i&&lexicalState.canLoop]
              [#-- Do we ever enter this block? If so, when? (JR) --]
              [#var lexicalStateIndex=lexerData.GetIndex(lexicalState.name)]
               if (jjmatchedPos == -1) {
                  if (jjbeenHere[${lexerData.GetIndex(lexicalState.name)}] &&
-                     jjemptyLineNo[${lexicalStateIndex}] == input_stream.getBeginLine() && 
+                     jjemptyLineNo[${lexicalStateIndex}] == input_stream.getBeginLine() &&
                      jjemptyColNo[${lexicalStateIndex}] == input_stream.getBeginColumn())
                           throw new LexicalException("Error: Bailing out of infinite loop caused by repeated empty string matches " +
                              "at line " + input_stream.getBeginLine() + ", " +
@@ -521,7 +521,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                  jjemptyLineNo[${lexicalStateIndex}] = input_stream.getBeginLine();
                  jjemptyColNo[${lexicalStateIndex}] = input_stream.getBeginColumn();
                  jjbeenHere[${lexicalStateIndex}] = true;
-              }              
+              }
           [/#if]
 		  [#if act??&&act.javaCode?has_content]
             [#if i = 0]
@@ -550,11 +550,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         final int endColumn;
     [#if lexerData.hasEmptyMatch]
         if (jjmatchedPos < 0) {
-          curTokenImage = (image != null) ? image.toString() : ""; 
+          curTokenImage = (image != null) ? image.toString() : "";
           beginLine = endLine = input_stream.getBeginLine();
           beginColumn = endColumn = input_stream.getBeginColumn();
         } else {
-               curTokenImage = input_stream.GetImage(); 
+               curTokenImage = input_stream.GetImage();
                beginLine = input_stream.getBeginLine();
                beginColumn = input_stream.getBeginColumn();
                endLine = input_stream.getEndLine();
@@ -567,7 +567,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         endLine = input_stream.getEndLine();
         endColumn = input_stream.getEndColumn();
     [/#if]
-    [#if options.tokenFactory != ""] 
+    [#if options.tokenFactory != ""]
         t = ${options.tokenFactory}.newToken(jjmatchedKind, curTokenImage);
     [#else]
         t = Token.newToken(jjmatchedKind, curTokenImage);
@@ -586,7 +586,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             jjrounds[state] = jjround;
         }
     }
-    
+
     private void jjAddStates(int start, int end) {
        do {
            jjstateSet[jjnewStateCnt++] = jjnextStates[start];
@@ -597,7 +597,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         jjCheckNAdd(state1);
         jjCheckNAdd(state2);
     }
-    
+
     private void jjCheckNAddStates(int start, int end) {
         do {
             jjCheckNAdd(jjnextStates[start]);
@@ -608,24 +608,24 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         jjCheckNAdd(jjnextStates[start]);
         jjCheckNAdd(jjnextStates[start + 1]);
     }
-    
-    
+
+
 [#list lexerData.nonAsciiTableForMethod as nfaState]
 
 	private static boolean jjCanMove_${nfaState.nonAsciiMethod}
 	   (int hiByte, int i1, int i2, long l1, long l2) {
-	
+
 	[#var allBitVectors=lexerData.allBitVectors]
 	   switch(hiByte) {
 	   [#list nfaState.loByteVec! as kase]
-	       [#if kase_index%2 = 0]       
+	       [#if kase_index%2 = 0]
 	      case ${kase} :
 	          return (jjbitVec${nfaState.loByteVec[kase_index+1]}[i2] &l2) != 0L;
 	       [/#if]
 	   [/#list]
-	   	  default : 
+	   	  default :
 	   [#if nfaState.nonAsciiMoveIndices?has_content]
-	       [#var j=nfaState.nonAsciiMoveIndices?size] 
+	       [#var j=nfaState.nonAsciiMoveIndices?size]
 	       [#list 1..10000 as xxx]
 	   	     if ((jjbitVec${nfaState.nonAsciiMoveIndices[j-2]}[i1] & l1) != 0L) {
 	   	        return (jjbitVec${nfaState.nonAsciiMoveIndices[j-1]}[i2] & l2) != 0L;
@@ -635,14 +635,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 	   	   [/#list]
 	    [/#if]
 	   	       return false;
-	   }		
+	   }
 	}
-		
+
 [/#list]
-    
+
 [#if options.debugLexer]
 
-    protected static final int[][][] statesForState =  
+    protected static final int[][][] statesForState =
     [#if false] null;
     [#else]
     {
@@ -657,19 +657,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 {[#list stateSet as state]${state}, [/#list]},
                [/#if]
             [/#list]
-      }, 
+      },
           [/#if]
        [/#list]
     };
-    
-    
+
+
     protected static final int[][] kindForState =
     {
     [#list lexerData.lexicalStates as lexicalState]
       [#if lexicalState_index != 0], [/#if]
-      [#if lexicalState.kindsForStates?is_null]null 
+      [#if lexicalState.kindsForStates?is_null]null
       [#else]
-       { 
+       {
         [#list lexicalState.kindsForStates as kind]
 		  [#if kind_index%15 = 0]${"
    "}[/#if]
@@ -682,7 +682,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
 
       int kindCnt = 0;
-      
+
       protected final String jjKindsForBitVector(int i, long vec)
       {
         String retVal = "";
@@ -703,7 +703,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       }
 
     protected final String jjKindsForStateVector(
-       int lexState, int[] vec, int start, int end)   
+       int lexState, int[] vec, int start, int end)
     {
         boolean[] kindDone = new boolean[${tokenCount}];
         String retVal = "";
@@ -738,18 +738,18 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
          jjmatchedPos = pos;
 [#if grammar.options.debugLexer]
          debugStream.println("   No more string literal token matches are possible.");
-         debugStream.println("   Currently matched the first " + (jjmatchedPos + 1) 
+         debugStream.println("   Currently matched the first " + (jjmatchedPos + 1)
                             + " characters as a " + tokenImage[jjmatchedKind] + " token.");
-[/#if] 
+[/#if]
          return pos + 1;
     }
-    
 
-    
-    
+
+
+
 [#list lexerData.allBitVectors as bitVec]
     static final long[] jjbitVec${bitVec_index} = ${bitVec};
-[/#list]    
+[/#list]
 
 [#list lexerData.lexicalStates as lexicalState]
   [#if lexicalState.dumpNfaStarts]
@@ -766,10 +766,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   NB. The following must occur after the preceding loop,
   since (and I don't like it) the DumpXXX macros
   build up the lexerData.orderedStateSet structure
---]  
+--]
 
   static final int[] jjnextStates = {
-[#var count=0]    
+[#var count=0]
 [#list lexerData.orderedStateSet as set]
     [#list set as i]
         [#if count%16 = 0]${"
@@ -795,7 +795,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         int seenUpto = curPos+1;
         input_stream.backup(seenUpto);
         try {
-            curChar = input_stream.readChar();   
+            curChar = input_stream.readChar();
         }
         catch (java.io.IOException e) {
             throw new Error("Internal Error");
@@ -808,9 +808,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         jjstateSet[0] = startState;
     [#if grammar.options.debugLexer]
         debugStream.println("   Starting NFA to match one of : " + jjKindsForStateVector(curLexState, jjstateSet, 0, 1));
-        debugStream.println("" + 
+        debugStream.println("" +
         [#if numLexicalStates != 1]
-            "<" + lexStateNames[curLexState] + ">" +  
+            "<" + lexStateNames[curLexState] + ">" +
         [/#if]
             "Current character : " + LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
            + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
@@ -850,7 +850,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                         default : break;
                     }
                 } while(i != startsAt);
-	                
+
             }
             if (kind != 0x7fffffff) {
                 jjmatchedKind = kind;
@@ -860,7 +860,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             ++curPos;
     [#if grammar.options.debugLexer]
             if (jjmatchedKind != 0 && jjmatchedKind != 0x7fffffff) {
-                debugStream.println("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
+                debugStream.println("   Currently matched the first " + (jjmatchedPos +1) + " characters as a "
                                      + tokenImage[jjmatchedKind] + " token.");
             }
     [/#if]
@@ -874,19 +874,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             debugStream.println("   Possible kinds of longer matches : " + jjKindsForStateVector(curLexState, jjstateSet, startsAt, i));
     [/#if]
             try {
-                curChar = input_stream.readChar(); 
+                curChar = input_stream.readChar();
             }
             catch (java.io.IOException e) {
-    [#if lexicalState.mixedCase]            
+    [#if lexicalState.mixedCase]
                 break;
     [#else]
                 return curPos;
     [/#if]
             }
     [#if grammar.options.debugLexer]
-            debugStream.println("" + 
+            debugStream.println("" +
             [#if numLexicalStates != 1]
-               "<" + lexStateNames[curLexState] + ">" + 
+               "<" + lexStateNames[curLexState] + ">" +
             [/#if]
                LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
               + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
@@ -942,7 +942,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                   [#else]
                     [#set toPrint = "case "+stateForCase.index+" : "]
                   [/#if]
-              [/#if] 
+              [/#if]
           [/#if]
           [#if !stateForCaseHandled]
               [#if state.isNeeded(byteNum)]
@@ -1071,7 +1071,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         [#if state.stateForCase.isNeeded(byteNum)]
            case ${index} :
                [@dumpMoveForCompositeState nfaState, byteNum, false/]
-           [#set toPrint = "case "+index+":"] 
+           [#set toPrint = "case "+index+":"]
         [#else]
            [#set toPrint = ""]
         [/#if]
@@ -1090,7 +1090,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
               [@dumpMove toBePrinted, byteNum, statesDumped/]
-      [#return] 
+      [#return]
    [/#if]
               ${toPrint}
               [#var keyState=lexicalState.stateIndexFromComposite(key)]
@@ -1181,7 +1181,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                }
        </#if>
    </#if --]
-   
+
  [/#macro]
 
 
@@ -1196,16 +1196,16 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [#if lexicalState.hasNfa()]
         return jjMoveNfa${lexicalState.suffix}(${initState}, 0);
     [#else]
-        return 1;        
+        return 1;
     [/#if]
     }
     [#return]
   [/#if]
-  
+
   [#list 0..(maxLen-1) as i]
     [#var startNfaNeeded=false]
     [#var table=lexicalState.charPosKind[i]]
-    
+
     private int jjMoveStringLiteralDfa${i}${lexicalState.suffix}
     [@ArgsList]
         [#list 0..maxStrKind/64 as j]
@@ -1247,7 +1247,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             return jjMoveNfa${lexicalState.suffix}(${initState}, ${i-1});
          [#else]
             return ${i};
-         [/#if]   
+         [/#if]
       [/#if]
       [#if grammar.options.debugLexer]
         if (jjmatchedKind !=0 && jjmatchedKind != 0x7fffffff) {
@@ -1256,7 +1256,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         debugStream.println("   Possible string literal matches : { "
         [#list 0..maxStrKind/64 as vecs]
            [#if i<=maxLenForActive[vecs]]
-             + jjKindsForBitVector(${vecs}, active${vecs}) 
+             + jjKindsForBitVector(${vecs}, active${vecs})
            [/#if]
         [/#list]
         + " } ");
@@ -1282,14 +1282,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
            [/#if]
            return ${i};
          [#elseif lexicalState.hasNfa()]
-           return jjMoveNfa${lexicalState.suffix}(${initState}, ${i-1}); 
+           return jjMoveNfa${lexicalState.suffix}(${initState}, ${i-1});
          [#else]
            return ${i};
          [/#if]
        }
     [/#if]
     [#if i != 0&&grammar.options.debugLexer]
-      debugStream.println("" + 
+      debugStream.println("" +
         [#if lexerData.lexicalStates?size != 1]
            "<${lexicalState.name}>" +
         [/#if]
@@ -1308,7 +1308,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 	           case ${utils.firstCharAsInt(c?upper_case)} :
 	         [/#if]
 	         [#if c != c?lower_case]
-	           case ${utils.firstCharAsInt(c?lower_case)} : 
+	           case ${utils.firstCharAsInt(c?lower_case)} :
 	         [/#if]
 	      [/#if]
 	           case ${utils.firstCharAsInt(c)} :
@@ -1317,13 +1317,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 	          [#var matchedKind=info.finalKinds[(j/64)?int]]
               [#if utils.isBitSet(matchedKind, j%64)]
                  [#if ifGenerated]
-                 else if 
+                 else if
                  [#elseif i != 0]
-                 if 
+                 if
                  [/#if]
                  [#set ifGenerated = true]
                  [#if i != 0]
-                   ((active${(j/64)?int} & ${utils.powerOfTwoInHex(j%64)}) != 0L) 
+                   ((active${(j/64)?int} & ${utils.powerOfTwoInHex(j%64)}) != 0L)
                  [/#if]
                  [#var kindToPrint=lexicalState.getKindToPrint(j, i)]
                  [#if !lexicalState.subString[j]]
@@ -1369,11 +1369,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 	           [#set startNfaNeeded = true]
 	        [/#if]
 	      [/#if]
-	   [/#if]       
+	   [/#if]
     [/#list]
     [#-- default means that the current characters is not in any of
     the strings at this position--]
-         default : 
+         default :
     [#if grammar.options.debugLexer]
             debugStream.println("   No string literal matches possible.");
     [/#if]
@@ -1409,13 +1409,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
              return jjMoveNfa${lexicalState.suffix}(${initState}, ${i});
           [#else]
              return ${i+1};
-          [/#if]        
+          [/#if]
        [/#if]
     [/#if]
    }
   [/#list]
-[/#macro] 
-  
+[/#macro]
+
 [#macro DumpStartWithStates lexicalState]
     private int jjStartNfaWithStates${lexicalState.suffix}(int pos, int kind, int state) {
         jjmatchedKind = kind;
@@ -1424,33 +1424,33 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         debugStream.println("   No more string literal token matches are possible.");
         debugStream.println("   Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
   [/#if]
-        try { 
-            curChar = input_stream.readChar(); 
+        try {
+            curChar = input_stream.readChar();
         }
-        catch(java.io.IOException e) { 
-            return pos + 1; 
+        catch(java.io.IOException e) {
+            return pos + 1;
         }
   [#if grammar.options.debugLexer]
-        debugStream.println("" + 
+        debugStream.println("" +
      [#if numLexicalStates != 1]
-            "<${lexicalState.name}>"+  
+            "<${lexicalState.name}>"+
      [/#if]
-            "Current character : " + LexicalException.addEscapes(String.valueOf(curChar)) 
-            + " (" + (int)curChar + ") " + "at line " + input_stream.getEndLine() 
+            "Current character : " + LexicalException.addEscapes(String.valueOf(curChar))
+            + " (" + (int)curChar + ") " + "at line " + input_stream.getEndLine()
             + " column " + input_stream.getEndColumn());
   [/#if]
         return jjMoveNfa${lexicalState.suffix}(state, pos+1);
    }
 [/#macro]
- 
+
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
   [#var statesForPos=lexicalState.statesForPos]
   [#var maxKindsReqd=(1+lexicalState.maxStrKind/64)?int]
   [#var ind=0]
   [#var maxStrKind=lexicalState.maxStrKind]
   [#var maxLen=lexicalState.maxLen]
-  
-    private int jjStartNfa${lexicalState.suffix}(int pos, 
+
+    private int jjStartNfa${lexicalState.suffix}(int pos,
   [#list 0..(maxKindsReqd-1) as i]
        long active${i}[#if i_has_next], [#else]) {[/#if]
   [/#list]
@@ -1462,19 +1462,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [/#if]
     }
   [#else]
-       return jjMoveNfa${lexicalState.suffix}(jjStopStringLiteralDfa${lexicalState.suffix}(pos, 
+       return jjMoveNfa${lexicalState.suffix}(jjStopStringLiteralDfa${lexicalState.suffix}(pos,
      [#list 0..(maxKindsReqd-1) as i]
         active${i}[#if i_has_next], [#else])[/#if]
      [/#list]
         , pos+1);}
    [/#if]
 
-  
-    private final int jjStopStringLiteralDfa${lexicalState.suffix}(int pos, 
+
+    private final int jjStopStringLiteralDfa${lexicalState.suffix}(int pos,
    [#list 0..(maxKindsReqd-1) as i]
     long active${i}[#if i_has_next], [/#if]
    [/#list]
-  ) { 
+  ) {
   [#if grammar.options.debugLexer]
         debugStream.println("   No more string literal token matches are possible.");
   [/#if]
@@ -1493,14 +1493,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                ||
                [/#if]
                [#set condGenerated = true]
-              (active${j} & ${utils.toHexStringL(actives[j])}) != 0L 
+              (active${j} & ${utils.toHexStringL(actives[j])}) != 0L
              [/#if]
            [/#list]
            [#if condGenerated]
-               ) 
+               )
               [#set ind = stateSetString?index_of(", ")]
               [#var kindStr=stateSetString?substring(0, ind)]
-              [#var afterKind=stateSetString?substring(ind+2)] 
+              [#var afterKind=stateSetString?substring(ind+2)]
               [#var jjmatchedPos=afterKind?substring(0, afterKind?index_of(", "))?number]
               [#if kindStr != "2147483647"]
                  {
@@ -1558,10 +1558,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
    Utility macro to output a sequence of args, typically
    to a method. The input can be passed in as an argument,
    or via the macro's nested content. In either case, it
-   is just one argument per line. 
-   is just one argument per line. The macro takes care of 
-   commas and the opening and closing parentheses.  
---]   
+   is just one argument per line.
+   is just one argument per line. The macro takes care of
+   commas and the opening and closing parentheses.
+--]
 
 [#macro ArgsList input="" delimiter=","]
    [#if input?length = 0]
@@ -1577,9 +1577,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       [#if arg?length != 0]
         ${arg}
         [#if arg_has_next]
-           ${delimiter} 
+           ${delimiter}
         [/#if]
       [/#if]
-   [/#list] 
+   [/#list]
    )
 [/#macro]

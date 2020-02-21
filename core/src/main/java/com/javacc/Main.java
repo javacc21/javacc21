@@ -36,12 +36,12 @@ import com.javacc.parser.ParseException;
  * Entry point.
  */
 public final class Main {
-    
+
     public static final String PROG_NAME = "JavaCC 21 Parser Generator";
     public static final String VERSION = "20.02.21";
     public static final String URL = "Go to https://javacc.com for more information.";
-  
-    
+
+
     private Main() {
     }
 
@@ -110,14 +110,14 @@ public final class Main {
      * A main program that exercises the parser.
      */
     public static void main(String args[]) throws Exception {
-    	try {
-    		Class fmClass = Class.forName("freemarker.core.Scope");
-    	}
-    	catch (ClassNotFoundException e) {
-    		System.err.println("You must have an appropriate (V3 or later) freemarker.jar on your classpath to run JavaCC 21");
-    		System.exit(-1);
-    	}
-  		int errorcode = mainProgram(args);
+        try {
+            Class fmClass = Class.forName("freemarker.core.Scope");
+        }
+        catch (ClassNotFoundException e) {
+            System.err.println("You must have an appropriate (V3 or later) freemarker.jar on your classpath to run JavaCC 21");
+            System.exit(-1);
+        }
+          int errorcode = mainProgram(args);
         System.exit(errorcode);
     }
 
@@ -130,12 +130,12 @@ public final class Main {
             JavaCCUtils.bannerLine();
             usage();
             return 1;
-        } 
+        }
         JavaCCOptions options = new JavaCCOptions(args);
         boolean quiet = options.getQuiet();
         if (!quiet) {
             System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)");
-        	JavaCCUtils.bannerLine();
+            JavaCCUtils.bannerLine();
         }
         String filename = args[args.length -1];
         Grammar grammar = new Grammar(options);

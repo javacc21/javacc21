@@ -14,9 +14,9 @@ import freemarker.template.*;
 /**
  * Describes the input token stream.
  */
- 
+
  [#var extendsNode = ""]
- 
+
  [#if grammar.options.treeBuildingEnabled]
     [#set extendsNode =", Node"]
  [/#if]
@@ -67,7 +67,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * is no such token, this field is null.
      */
     Token specialToken;
-    
+
     private boolean unparsed;
 
     /**
@@ -89,7 +89,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.kind = kind;
         this.image = image;
     }
-    
+
     public int getId() {
         return kind;
     }
@@ -97,17 +97,17 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public boolean isUnparsed() {
         return unparsed;
     }
-    
+
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
     }
-    
+
     public void clearChildren() {}
-    
+
     public String getNormalizedText() {
         return image;
     }
-    
+
     public String getRawText() {
         return image;
     }
@@ -115,7 +115,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String toString() {
         return getNormalizedText();
     }
-    
+
     public static Token newToken(int ofKind, String image) {
        [#if grammar.options.treeBuildingEnabled]
            [#var packagePrefix = ""]
@@ -128,54 +128,54 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
            [/#list]
            }
        [/#if]
-       return new Token(ofKind, image); 
+       return new Token(ofKind, image);
     }
 
     public void setInputSource(String inputSource) {
         this.inputSource = inputSource;
     }
-    
+
     public String getInputSource() {
         return inputSource;
     }
-    
-    
+
+
     public void setBeginColumn(int beginColumn) {
         this.beginColumn = beginColumn;
-    }	
-    
+    }
+
     public void setEndColumn(int endColumn) {
         this.endColumn = endColumn;
-    }	
-    
+    }
+
     public void setBeginLine(int beginLine) {
         this.beginLine = beginLine;
-    }	
-    
+    }
+
     public void setEndLine(int endLine) {
         this.endLine = endLine;
-    }	
-    
+    }
+
     public int getBeginLine() {
         return beginLine;
     }
-    
+
     public int getBeginColumn() {
         return beginColumn;
     }
-    
+
     public int getEndLine() {
         return endLine;
     }
-    
+
     public int getEndColumn() {
         return endColumn;
     }
-    
+
     [#if grammar.options.treeBuildingEnabled]
-    
+
     private Node parent;
-    private java.util.Map<String,Object> attributes; 
+    private java.util.Map<String,Object> attributes;
 
 
     public void setChild(int i, Node n) {
@@ -185,23 +185,23 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void addChild(Node n) {
         throw new UnsupportedOperationException();
     }
-    
+
     public void addChild(int i, Node n) {
         throw new UnsupportedOperationException();
     }
-    
+
     public Node removeChild(int i) {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean removeChild(Node n) {
         return false;
     }
-    
+
     public int indexOf(Node n) {
         return -1;
     }
-    
+
     public Node getParent() {
         return parent;
     }
@@ -209,37 +209,37 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void setParent(Node parent) {
         this.parent = parent;
     }
-    
+
     public int getChildCount() {
         return 0;
     }
-    
+
     public Node getChild(int i) {
         return null;
     }
-    
-    
+
+
 
     public void open() {}
 
     public void close() {}
-    
-    
+
+
     public Object getAttribute(String name) {
-        return attributes == null ? null : attributes.get(name); 
+        return attributes == null ? null : attributes.get(name);
     }
-     
+
     public void setAttribute(String name, Object value) {
         if (attributes == null) {
             attributes = new java.util.HashMap<String, Object>();
         }
         attributes.put(name, value);
     }
-     
+
     public boolean hasAttribute(String name) {
         return attributes == null ? false : attributes.containsKey(name);
     }
-     
+
     public java.util.Set<String> getAttributeNames() {
         if (attributes == null) return java.util.Collections.emptySet();
         return attributes.keySet();
@@ -247,28 +247,28 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 
 
-    
+
    [#if grammar.options.freemarkerNodes]
     public TemplateNodeModel getParentNode() {
         return parent;
     }
-  
+
     public TemplateSequenceModel getChildNodes() {
         return null;
     }
-  
+
     public String getNodeName() {
         return ${grammar.constantsClassName}.tokenImage[kind];
     }
-  
+
     public String getNodeType() {
         return getClass().getSimpleName();
     }
-  
+
     public String getNodeNamespace() {
         return null;
     }
-  
+
     public String getAsString() {
         return getNormalizedText();
     }
@@ -290,14 +290,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return visitor.visit(this, data);
       [/#if]
     }
-           
+
     /** Accept the visitor. **/
     public Object childrenAccept(${VISITOR_CLASS} visitor, ${VISITOR_DATA_TYPE} data) ${VISITOR_THROWS}{
         return data;
     }
-[/#if]   
-        
-                
+[/#if]
+
+
  [/#if]
 
 }

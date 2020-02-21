@@ -1,5 +1,5 @@
 /*
- * A JSONC (JSON with comments) grammar 
+ * A JSONC (JSON with comments) grammar
  */
 options {
     PARSER_PACKAGE="jsonc";

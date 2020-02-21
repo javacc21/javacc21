@@ -12,8 +12,8 @@
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
+ *       nor the names of any contributors may be used to endorse
+ *       or promote products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -77,7 +77,7 @@
            [#var needsParen=unit.class.name?ends_with("Sequence") || unit.class.name?ends_with("Choice")]
            [#if needsParen]([#t][/#if]
              [@expansion unit/] [#t]
-           [#if needsParen])[#t][/#if] 
+           [#if needsParen])[#t][/#if]
         [/#list]
      [#elseif classname = "TryBlock"]
        [#if exp.nestedExpansion.class.name?ends_with("Choice")]
@@ -104,7 +104,7 @@
      ${lexState}[#if lexState_has_next], [/#if][#t]
   [/#list]
   &gt;[#t]
-  [#lt] ${tp.kind}[#if tp.ignoreCase][IGNORE_CASE][/#if] : { 
+  [#lt] ${tp.kind}[#if tp.ignoreCase][IGNORE_CASE][/#if] : {
   [#list tp.regexpSpecs as respec]
     [#var re=respec.regexp]
     [#if !re.private]

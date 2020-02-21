@@ -35,14 +35,14 @@ options {
   DEFAULT_LEXICAL_STATE=JAVA;
 }
 
-INJECT(JavaParser) : 
+INJECT(JavaParser) :
 {
     import java.io.*;
     import java.util.*;
 }
 {
    /**
-    * A test harness for parsing Java files from 
+    * A test harness for parsing Java files from
     * the command line.
     */
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
@@ -65,11 +65,11 @@ INJECT(JavaParser) :
            files.add(file);
        }
    }
-   
-   
+
+
    static public void main(String args[]) {
       List<File> failures = new ArrayList<File>();
-      List<File> successes = new ArrayList<File>();    
+      List<File> successes = new ArrayList<File>();
       boolean failureOccurred = false;
       JavaParser parser;
       if (args.length == 0) {
@@ -89,7 +89,7 @@ INJECT(JavaParser) :
           try {
              // A bit screwball, we'll dump the tree if there is only one arg. :-)
               parseFile(file, files.size() == 1);
-          } 
+          }
           catch (Exception e) {
               System.err.println("Error processing file: " + file);
               e.printStackTrace();
@@ -106,7 +106,7 @@ INJECT(JavaParser) :
        System.out.println("Failed on " + failures.size() + " files.");
        System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
     }
-      
+
    static public void usage() {
        System.out.println("Usage: java javagrammar.JavaParser <sourcefiles or directories>");
        System.out.println("If you just pass it one java source file, it dumps the AST");
@@ -118,10 +118,10 @@ INJECT(JavaParser) :
 
 SPECIAL_TOKEN :
 {
-  <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace   
+  <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace
 }
 
-//SKIP : 
+//SKIP :
 //{
 //   <" "| "\t"| "\n"| "\r"| "\f">
 //}
@@ -184,10 +184,10 @@ TOKEN :
 | < ENUM: "enum" > #KeyWord
 | < EXTENDS: "extends" > #KeyWord
 | < FALSE: "false" > #Literal
-| < FINAL: "final" > #KeyWord 
+| < FINAL: "final" > #KeyWord
 | < FINALLY: "finally" > #KeyWord
-| < FLOAT: "float" > #KeyWord 
-| < FOR: "for" > #KeyWord 
+| < FLOAT: "float" > #KeyWord
+| < FOR: "for" > #KeyWord
 | < GOTO: "goto" > #KeyWord
 | < IF: "if" > #KeyWord
 | < IMPLEMENTS: "implements" > #KeyWord
@@ -307,40 +307,40 @@ TOKEN :
 | < SEMICOLON: ";" > #Delimiter
 | < COMMA: "," > #Delimiter
 | < DOT: "." > #Delimiter
-| < ASSIGN: "=" > #Operator 
-| < GT: ">" > #Operator 
-| < LT: "<" > #Operator 
-| < BANG: "!" > #Operator 
-| < TILDE: "~" > #Operator 
-| < HOOK: "?" > #Operator 
+| < ASSIGN: "=" > #Operator
+| < GT: ">" > #Operator
+| < LT: "<" > #Operator
+| < BANG: "!" > #Operator
+| < TILDE: "~" > #Operator
+| < HOOK: "?" > #Operator
 | < COLON: ":" > #Operator
-| < EQ: "==" > #Operator 
-| < LE: "<=" > #Operator 
-| < GE: ">=" > #Operator 
-| < NE: "!=" > #Operator 
-| < SC_OR: "||" > #Operator 
-| < SC_AND: "&&" > #Operator 
-| < INCR: "++" > #Operator 
-| < DECR: "--" > #Operator 
-| < PLUS: "+" > #Operator 
-| < MINUS: "-" > #Operator 
-| < STAR: "*" > #Operator 
-| < SLASH: "/" > #Operator 
-| < BIT_AND: "&" > #Operator 
-| < BIT_OR: "|" > #Operator 
-| < XOR: "^" > #Operator 
-| < REM: "%" > #Operator 
-| < LSHIFT: "<<" > #Operator 
-| < PLUSASSIGN: "+=" > #Operator 
-| < MINUSASSIGN: "-=" > #Operator 
-| < STARASSIGN: "*=" > #Operator 
-| < SLASHASSIGN: "/=" > #Operator 
-| < ANDASSIGN: "&=" > #Operator 
-| < ORASSIGN: "|=" > #Operator 
-| < XORASSIGN: "^=" > #Operator 
-| < REMASSIGN: "%=" > #Operator 
-| < LSHIFTASSIGN: "<<=" > #Operator 
-| < RSIGNEDSHIFTASSIGN: ">>=" > #Operator 
+| < EQ: "==" > #Operator
+| < LE: "<=" > #Operator
+| < GE: ">=" > #Operator
+| < NE: "!=" > #Operator
+| < SC_OR: "||" > #Operator
+| < SC_AND: "&&" > #Operator
+| < INCR: "++" > #Operator
+| < DECR: "--" > #Operator
+| < PLUS: "+" > #Operator
+| < MINUS: "-" > #Operator
+| < STAR: "*" > #Operator
+| < SLASH: "/" > #Operator
+| < BIT_AND: "&" > #Operator
+| < BIT_OR: "|" > #Operator
+| < XOR: "^" > #Operator
+| < REM: "%" > #Operator
+| < LSHIFT: "<<" > #Operator
+| < PLUSASSIGN: "+=" > #Operator
+| < MINUSASSIGN: "-=" > #Operator
+| < STARASSIGN: "*=" > #Operator
+| < SLASHASSIGN: "/=" > #Operator
+| < ANDASSIGN: "&=" > #Operator
+| < ORASSIGN: "|=" > #Operator
+| < XORASSIGN: "^=" > #Operator
+| < REMASSIGN: "%=" > #Operator
+| < LSHIFTASSIGN: "<<=" > #Operator
+| < RSIGNEDSHIFTASSIGN: ">>=" > #Operator
 | < RUNSIGNEDSHIFTASSIGN: ">>>=" > #Operator
 | < LAMBDA : "->" > #Operator
 | < DOUBLE_COLON: "::" > #Delimiter
@@ -352,16 +352,16 @@ TOKEN :
 {
   < RSIGNEDSHIFT: ">>" > #Operator
   |
-  < RUNSIGNEDSHIFT: ">>>" > #Operator 
+  < RUNSIGNEDSHIFT: ">>>" > #Operator
 }
 
-INJECT(BaseNode) : 
+INJECT(BaseNode) :
 {
     import java.util.*;
     implements Node, CONSTANTS_CLASS;
 }
-{    
-    
+{
+
     protected String getLiteralText() {
         StringBuilder buf = new StringBuilder();
         for (Token t : Nodes.getAllTokens(this, true,true)) {
@@ -369,7 +369,7 @@ INJECT(BaseNode) :
         }
         return buf.toString();
     }
-    
+
     protected String getInnerText() {
         StringBuilder buf = new StringBuilder();
         List<Token> tokens = Nodes.getAllTokens(this, true, true);
@@ -384,21 +384,21 @@ INJECT(BaseNode) :
         }
         return buf.toString();
     }
-    
+
     public ListIterator<Node> iterator() {
        return Nodes.iterator(this);
     }
 
-    
+
     public void prepend(Node n) {
         ListIterator<Node> iterator = iterator();
         iterator.add(n);
     }
-    
+
     public String getAsString() {
         return getLiteralText();
     }
-    
+
     public boolean isEmpty() {
         return Nodes.getRealTokens(this).size() == 0;
     }
@@ -420,7 +420,7 @@ CompilationUnit CompilationUnit() #CompilationUnit :
   }
 }
 
-INJECT(CompilationUnit) : 
+INJECT(CompilationUnit) :
 {
     import java.util.*;
 }
@@ -433,20 +433,20 @@ INJECT(CompilationUnit) :
                 null :
                     jpd.getPackageName();
     }
-    
-    
+
+
     public PackageDeclaration getPackageDeclaration() {
         return Nodes.firstChildOfType(this, PackageDeclaration.class);
     }
-    
+
     public List<ImportDeclaration> getImportDeclarations() {
         return Nodes.childrenOfType(this, ImportDeclaration.class);
     }
-    
+
     public List<TypeDeclaration> getTypeDeclarations() {
         return Nodes.childrenOfType(this, TypeDeclaration.class);
     }
-    
+
     public void addImportDeclaration(ImportDeclaration decl) {
         ListIterator<Node> iterator = iterator();
         Node n = null;
@@ -503,7 +503,7 @@ INJECT(ImportDeclaration) : {}
     public String getAsString() {
         return super.getAsString().trim();
     }
-    
+
     public boolean isStaticImport() {
         for (Node n : children) {
             if ((n instanceof KeyWord) && n.toString().equals("static")) {
@@ -512,7 +512,7 @@ INJECT(ImportDeclaration) : {}
         }
         return false;
     }
-    
+
     public String getName() {
         StringBuilder buf = new StringBuilder();
         for (Token tok : Nodes.getRealTokens(this)) {
@@ -523,7 +523,7 @@ INJECT(ImportDeclaration) : {}
         }
         return buf.toString();
     }
-    
+
     public boolean equals(Object obj) {
         if (!(obj instanceof ImportDeclaration)) {
             return false;
@@ -532,7 +532,7 @@ INJECT(ImportDeclaration) : {}
         return other.isStaticImport() == this.isStaticImport()
             && other.getName().equals(this.getName());
     }
-    
+
     public int hashCode() {
         String s = isStaticImport() ? "static " : "";
         s += getName();
@@ -554,25 +554,25 @@ void Modifiers() #void :
   (
    "public"
   |
-   "static" 
+   "static"
   |
    "protected"
   |
-   "private" 
+   "private"
   |
-   "final" 
+   "final"
   |
-   "abstract" 
+   "abstract"
   |
    "synchronized"
   |
-   "native" 
+   "native"
   |
-   "transient" 
+   "transient"
   |
-   "volatile" 
+   "volatile"
   |
-   "strictfp" 
+   "strictfp"
   |
    Annotation()
   )
@@ -588,25 +588,25 @@ void Modifiers2() #void :
   (
    "public"
   |
-   "static" 
+   "static"
   |
    "protected"
   |
-   "private" 
+   "private"
   |
-   "final" 
+   "final"
   |
-   "abstract" 
+   "abstract"
   |
    "synchronized"
   |
-   "native" 
+   "native"
   |
-   "transient" 
+   "transient"
   |
-   "volatile" 
+   "volatile"
   |
-   "strictfp" 
+   "strictfp"
   |
    "default"
   |
@@ -621,7 +621,7 @@ void Modifiers2() #void :
 TypeDeclaration TypeDeclaration() #TypeDeclaration :
 {}
 {
- (      
+ (
   ";"
   |
   Modifiers()
@@ -640,7 +640,7 @@ TypeDeclaration TypeDeclaration() #TypeDeclaration :
  }
 }
 
-INJECT(TypeDeclaration) : 
+INJECT(TypeDeclaration) :
 {
     import java.util.*;
 }
@@ -653,7 +653,7 @@ INJECT(TypeDeclaration) :
         }
         throw new RuntimeException("Should never get here.");
     }
-    
+
     public boolean getInterface() {
        for (Node n : children) {
            if (n instanceof Token) {
@@ -664,17 +664,17 @@ INJECT(TypeDeclaration) :
 	   }
        }
        return false;
-    } 
-    
+    }
+
     public String getPackageName() {
         String packageName = null;
         if (parent instanceof CompilationUnit) {
-            CompilationUnit jcu = (CompilationUnit) parent; 
+            CompilationUnit jcu = (CompilationUnit) parent;
             packageName = jcu.getPackageName();
         }
         return packageName;
     }
-    
+
     public String getFullName() {
         String name = getName();
         String packageName = getPackageName();
@@ -683,7 +683,7 @@ INJECT(TypeDeclaration) :
         }
         return name;
     }
-    
+
     public TypeParameterList getTypeParameterList() {
         ListIterator<Node> iterator = iterator();
         Node n = iterator.next();
@@ -696,19 +696,19 @@ INJECT(TypeDeclaration) :
         }
         return null;
     }
-    
+
     public ClassOrInterfaceBody getBody() {
         return Nodes.firstChildOfType(this, ClassOrInterfaceBody.class);
     }
-    
+
     public ExtendsList getExtendsList() {
         return Nodes.firstChildOfType(this, ExtendsList.class);
     }
-    
+
     public ImplementsList getImplementsList() {
         return Nodes.firstChildOfType(this, ImplementsList.class);
     }
-    
+
     public CompilationUnit getCompilationUnit() {
         Node parent = getParent();
         if (parent instanceof CompilationUnit) {
@@ -716,7 +716,7 @@ INJECT(TypeDeclaration) :
         }
         return null;
     }
-    
+
     public List<ImportDeclaration> getImportDeclarations() {
         CompilationUnit jcu = getCompilationUnit();
         if (jcu == null) {
@@ -724,7 +724,7 @@ INJECT(TypeDeclaration) :
         }
         return jcu.getImportDeclarations();
     }
-    
+
     public void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
         Set<String> keys = new HashSet<String>();
         for (ClassOrInterfaceBodyDeclaration decl : elements) {
@@ -744,7 +744,7 @@ INJECT(TypeDeclaration) :
         }
         getBody().prepend(elements);
     }
-    
+
     public boolean isClass() {
         for (Node n : children) {
 	    if (n instanceof Token) {
@@ -756,7 +756,7 @@ INJECT(TypeDeclaration) :
         }
         return false;
     }
-    
+
     public void addImplements(ObjectType type) {
     	ImplementsList implementsList = getImplementsList();
     	if (implementsList == null) {
@@ -765,14 +765,14 @@ INJECT(TypeDeclaration) :
     	   while (iterator.hasNext()) {
     	      Node node = iterator.next();
     	      if (node instanceof ClassOrInterfaceBody || node instanceof EnumBody)
-    	          break; 
+    	          break;
     	   }
     	   iterator.previous();
     	   iterator.add(implementsList);
     	}
     	implementsList.addType(type);
     }
-    
+
     public void addExtends(ObjectType type) {
         ExtendsList extendsList = getExtendsList();
         if (extendsList == null) {
@@ -809,10 +809,10 @@ void InterfaceDeclaration() #void :
           Token t;
 }
 {
-  "interface" 
+  "interface"
   t=<IDENTIFIER>
   [ TypeParameters() ]
-  [ ExtendsList(true) ] 
+  [ ExtendsList(true) ]
   ClassOrInterfaceBody(true)
 }
 
@@ -830,7 +830,7 @@ ExtendsList ExtendsList(boolean isInterface) :
    }
 }
 
-INJECT(ExtendsList) : 
+INJECT(ExtendsList) :
 {
      import java.util.*;
 }
@@ -838,7 +838,7 @@ INJECT(ExtendsList) :
     public List<ObjectType> getTypes() {
         return Nodes.childrenOfType(this, ObjectType.class);
     }
-    
+
     public void addType(ObjectType type, boolean isInterface) {
         if (!isInterface) {
             children = new java.util.ArrayList<Node>();
@@ -850,7 +850,7 @@ INJECT(ExtendsList) :
             iterator.add(type);
         } else {
             while (iterator.hasNext()) {
-                if (type.equals(iterator.next())) 
+                if (type.equals(iterator.next()))
                     return;
             }
             iterator.add(Token.newToken(COMMA, ","));
@@ -873,15 +873,15 @@ ImplementsList ImplementsList(boolean isInterface) :
    }
 }
 
-INJECT(ImplementsList) : 
+INJECT(ImplementsList) :
 {
    import java.util.*;
 }
-{    
+{
     public List<ObjectType> getTypes() {
         return Nodes.childrenOfType(this, ObjectType.class);
     }
-    
+
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
@@ -890,7 +890,7 @@ INJECT(ImplementsList) :
             iterator.add(type);
         } else {
             while (iterator.hasNext()) {
-                if (type.equals(iterator.next())) 
+                if (type.equals(iterator.next()))
                     return;
             }
             iterator.add(Token.newToken(COMMA, ","));
@@ -904,7 +904,7 @@ void EnumDeclaration() :
 {}
 {
    "enum" <IDENTIFIER>
-   [ImplementsList(false)] 
+   [ImplementsList(false)]
    EnumBody()
 }
 
@@ -928,14 +928,14 @@ TypeParameterList TypeParameters() #TypeParameterList :
 {}
 {
    "<"
-   TypeParameter() ( "," TypeParameter() )* 
+   TypeParameter() ( "," TypeParameter() )*
    ">"
    {
            return CURRENT_NODE;
    }
 }
 
-INJECT(TypeParameterList) : 
+INJECT(TypeParameterList) :
 {
     import java.util.*;
 }
@@ -952,13 +952,13 @@ INJECT(TypeParameterList) :
             iterator.add(param);
         }
     }
-    
+
     public void add(TypeParameterList params) {
         for (TypeParameter param : params.getParameters()) {
             add(param);
         }
     }
-    
+
     public List<TypeParameter> getParameters() {
         return Nodes.childrenOfType(this, TypeParameter.class);
     }
@@ -980,8 +980,8 @@ ClassOrInterfaceBody ClassOrInterfaceBody(boolean isInterface) :
 {}
 {
     "{"
-    ( 
-       ClassOrInterfaceBodyDeclaration(isInterface) 
+    (
+       ClassOrInterfaceBodyDeclaration(isInterface)
     )*
     "}"
     {
@@ -989,7 +989,7 @@ ClassOrInterfaceBody ClassOrInterfaceBody(boolean isInterface) :
     }
 }
 
-INJECT(ClassOrInterfaceBody) : 
+INJECT(ClassOrInterfaceBody) :
 {
     import java.util.*;
 }
@@ -997,7 +997,7 @@ INJECT(ClassOrInterfaceBody) :
     public String getAsString() {
         return getInnerText();
     }
-    
+
     public void prepend(List<ClassOrInterfaceBodyDeclaration> elements) {
         ListIterator<Node> iterator = iterator();
         Node n = null;
@@ -1015,7 +1015,7 @@ INJECT(ClassOrInterfaceBody) :
             iterator.next();
         }
     }
-    
+
     public void removeDuplicateMethods() {
         Set<String> sigs = new HashSet<String>();
         ListIterator<Node> decls = iterator();
@@ -1074,7 +1074,7 @@ INJECT(ClassOrInterfaceBodyDeclaration) : {}
     public boolean isMethod() {
         return Nodes.firstChildOfType(this, MethodDeclaration.class) != null;
     }
-    
+
     public String getFullNameSignatureIfMethod() {
         MethodDeclaration md = Nodes.firstChildOfType(this, MethodDeclaration.class);
         return md == null ? null : md.getFullSignature();
@@ -1134,11 +1134,11 @@ INJECT(MethodDeclaration) : {}
         }
         throw new IllegalStateException();
     }
-    
+
     public FormalParams getFormalParams() {
         return Nodes.firstChildOfType(this, FormalParams.class);
     }
-    
+
     public String getFullSignature() {
         return getName() + getFormalParams();
     }
@@ -1161,7 +1161,7 @@ FormalParams FormalParameters() #FormalParams :
     }
 }
 
-INJECT(FormalParams) : 
+INJECT(FormalParams) :
 {
    import java.util.List;
 }
@@ -1169,7 +1169,7 @@ INJECT(FormalParams) :
     public List<FormalParameter> getParams() {
         return Nodes.childrenOfType(this, FormalParameter.class);
     }
-    
+
     public String getAsString() {
         StringBuilder buf = new StringBuilder();
         List<FormalParameter> params = getParams();
@@ -1183,7 +1183,7 @@ INJECT(FormalParams) :
         }
         return buf.toString();
     }
-    
+
     public String toString() {
         StringBuilder buf = new StringBuilder();
         for (Token tok : Nodes.getRealTokens(this)) {
@@ -1271,7 +1271,7 @@ INJECT(ObjectType) : {}
         }
         return false;
     }
-    
+
     public String toString() {
         StringBuilder buf = new StringBuilder();
         for (Token t : Nodes.getRealTokens(this)) {
@@ -1302,7 +1302,7 @@ void TypeArguments():
 {}
 {
    "<"
-   TypeArgument() ( "," TypeArgument() )* 
+   TypeArgument() ( "," TypeArgument() )*
    ">"
 }
 
@@ -1341,7 +1341,7 @@ void PrimitiveType() #void :
   "double"
 }
 
-void PrimitiveArrayType() : 
+void PrimitiveArrayType() :
 {}
 {
     PrimitiveType() (LOOKAHEAD(2) "[" "]")+
@@ -1369,8 +1369,8 @@ Name Name() :
 {}
 {
     <IDENTIFIER>
-    ( 
-        LOOKAHEAD(2) 
+    (
+        LOOKAHEAD(2)
         "." <IDENTIFIER>
     )*
     {
@@ -1399,7 +1399,7 @@ ThrowsList ThrowsList():
     }
 }
 
-INJECT(ThrowsList) : 
+INJECT(ThrowsList) :
 {
     import java.util.List;
 }
@@ -1459,7 +1459,7 @@ void AssignmentExpression() :
 }
 {
   TernaryExpression()
-  [ 
+  [
         LOOKAHEAD(2)
     AssignmentOperator() Expression()
   ]
@@ -1522,15 +1522,15 @@ void InstanceOfExpression():
 void RelationalExpression():
 {}
 {
-  ShiftExpression() 
+  ShiftExpression()
   (
     LOOKAHEAD(1)
-    ( 
-     "<" 
-     | ">" 
-     | "<=" 
-     | ">=" 
-    ) 
+    (
+     "<"
+     | ">"
+     | "<="
+     | ">="
+    )
     ShiftExpression()
   )*
 }
@@ -1560,7 +1560,7 @@ void ShiftOperator() #void :
 }
 {
    first=">"
-   second=">" 
+   second=">"
    [third=">"]
    {
       Token result = null;
@@ -1671,7 +1671,7 @@ void CastExpression():
 Expression PrimaryExpression() #PrimaryExpression :
 {}
 {
-    PrimaryPrefix() 
+    PrimaryPrefix()
     ( LOOKAHEAD(2) PrimarySuffix() )*
     {
             return CURRENT_NODE;
@@ -1706,7 +1706,7 @@ void PrimaryPrefix():
 |
   LOOKAHEAD(MethodReference())
   MethodReference()
-|  
+|
   Name()
 }
 
@@ -1781,15 +1781,15 @@ InvocationArgs Arguments() #InvocationArgs :
     }
 }
 
-INJECT(InvocationArgs) : 
+INJECT(InvocationArgs) :
 {
     import java.util.*;
-} 
+}
 {
     public List<Expression> getArgs() {
         return Nodes.childrenOfType(this, Expression.class);
     }
-    
+
     public String getAsString() {
         StringBuilder buf = new StringBuilder();
         List<Expression> args = getArgs();
@@ -1895,7 +1895,7 @@ CodeBlock Block() #CodeBlock :
 {
   "{"
   (BlockStatement())*
-  "}" 
+  "}"
    {
        return CURRENT_NODE;
    }
@@ -1906,7 +1906,7 @@ INJECT(CodeBlock) : {}
     public String getAsString() {
         return getInnerText();
     }
-    
+
     /**
      * The block is empty if it only consists of { and }
      */
@@ -2009,7 +2009,7 @@ void ForStatement():
 
   (
       LOOKAHEAD(Modifiers() Type() <IDENTIFIER> ":")
-      Modifiers() Type() <IDENTIFIER> ":" Expression() 
+      Modifiers() Type() <IDENTIFIER> ":" Expression()
     |
      [ ForInit() ] ";" [ Expression() ] ";" [ ForUpdate() ]
   )
@@ -2089,7 +2089,7 @@ ClassicTryStatement ClassicTryStatement():
      FinallyBlock()
      |
      (
-        (CatchBlock())+ 
+        (CatchBlock())+
         [FinallyBlock()]
      )
   )
@@ -2126,10 +2126,10 @@ CatchBlock CatchBlock() :
     ["final"]
     ClassOrInterfaceType() ("|" ClassOrInterfaceType())* VariableDeclaratorId()
     ")"
-    Block() 
+    Block()
     {
         return CURRENT_NODE;
-    } 
+    }
 }
 /*
 CatchBlock CatchBlock() :
@@ -2138,7 +2138,7 @@ CatchBlock CatchBlock() :
     "catch" "(" FormalParameter() ")" Block()
     {
         return CURRENT_NODE;
-    } 
+    }
 }
 */
 INJECT(CatchBlock) : {}
@@ -2151,7 +2151,7 @@ INJECT(CatchBlock) : {}
 FinallyBlock FinallyBlock() :
 {}
 {
-    "finally" Block() 
+    "finally" Block()
     {
         return CURRENT_NODE;
     }
