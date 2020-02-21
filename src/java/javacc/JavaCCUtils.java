@@ -44,7 +44,7 @@ public class JavaCCUtils {
      * takes as argument the tool's full name and its version.
      */
     static public void bannerLine() {
-        System.out.println(Main.PROG_NAME);
+        System.out.println(Main.PROG_NAME + " " + Main.VERSION);
         System.out.println(Main.URL);
         System.out.println();
     }

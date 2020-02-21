@@ -38,6 +38,7 @@ import javacc.parser.ParseException;
 public final class Main {
     
     public static final String PROG_NAME = "JavaCC 21 Parser Generator";
+    public static final String VERSION = "20.02.21";
     public static final String URL = "Go to https://javacc.com for more information.";
   
     

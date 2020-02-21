@@ -1,6 +1,6 @@
-# JavaCC 21 20.02.20
+# JavaCC 21 20.02.21
 
-Tagged and Released, 20 February 2020
+Tagged and Released, 21 February 2020
 
 [JavaCC 21](https://javacc.com/) is a continuation of development on the JavaCC codebase released by Sun Microsystems in mid 2003. This development fork was originally released under the name FreeCC in 2008. However, it is really quite clear in retrospect that the FreeCC naming simply created confusion and we have decided on the *JavaCC 21* name to make it quite clear that this is simply a more advanced version of the JavaCC tool originally released by Sun.
 
@@ -12,16 +12,18 @@ Perhaps most importantly, the project is again under active development.
 
 FreeCC had four public releases on the [now defunct Google Code site](https://code.google.com/archive/p/freecc/), the last of which being version 0.9.3, released in January of 2009. Development resumed at the end of 2019 and a 0.9.4 release was [published on Github](https://github.com/revusky/freecc/releases) on 28 December 2019.
 
-The project is again being actively developed. Given that code generation has been externalized to template files, the ability to generate parsers in other languages is probably not very far off. Another near-term major goal is to provide support for *fault-tolerant* parsing, where a parser incorporates heuristics for building an AST even when the input is invalid (unbalanced delimiters, missing semicolon and such).
+Now that the project is again being actively developed, users can expect significant new features fairly soon. Given that code generation has been externalized to template files, the ability to generate parsers in other languages is probably not very far off. Another near-term major goal is to provide support for *fault-tolerant* parsing, where a parser incorporates heuristics for building an AST even when the input is invalid (unbalanced delimiters, missing semicolon and such).
 
-To stay up to date with JavaCC 21, you are encouraged to consult [the wiki](https://doku.javacc.com/) and we would encourage people to sign up on our [Discourse forum](https://discuss.parsers.org). 
+To stay up to date with JavaCC 21, you are encouraged to occasionally visit [our wiki](https://doku.javacc.com/) and we would especially encourage people to sign up on our [Discourse forum](https://discuss.parsers.org). 
 
-As described [here](https://javacc.com/) JavaCC 21 is invoked on the command line via:
+Usage is really quite simple. As described [here](https://javacc.com/) JavaCC 21 is invoked on the command line via:
 
-    java -jar javacc.jar 
+    java -jar javacc.jar *GrammarFile*
 
-FreeCC is not very well documented at the moment. There is some rudimentary information on the [Wiki pages associated with the project on Github](https://github.com/revusky/freecc/wiki). However, I consider that to be a stopgap measure and would like to have something more like real documentation.
+To get the source code, it is:
 
-It should be possible to check the code out and just do an ant build from the top directory, by just running ant. You should also be able to run a little test suite by running "ant test".
+    git clone https://github.com/javacc21/javacc21.git
+
+And then you can just invoke ant from the top-level directory. You should also be able to run test suite by running "ant test".
 
 If you are interested in this project, either as a user or as a developer, please do [write me](a href="mailto:revusky@NOSPAMjavacc.com").
