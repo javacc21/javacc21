@@ -1,2 +1,0 @@
-cd $(dirname $0)
-./javacc ../src/grammars/JavaCC.javacc
