@@ -1,0 +1,17 @@
+language: java
+install:
+  - skip
+matrix:
+  include:
+    - name: Java 1.8 tests
+      jdk: openjdk8
+      script:
+        - ./gradlew --no-daemon build javadoc
+    - name: Java 11 tests
+      jdk: openjdk11
+      script:
+        - ./gradlew --no-daemon build javadoc
+    - name: Java 13 tests
+      jdk: openjdk13
+      script:
+        - ./gradlew --no-daemon build javadoc

@@ -1,0 +1,25 @@
+# Auto detect text files and perform LF normalization
+*        text=auto
+
+*.java   text
+*.jj     text
+*.jjt    text
+*.html   text
+*.css    text
+*.js     text
+*.sql    text
+*.q      text
+
+# Note: executable is a non-standard attribute, and it is used by the release plugin
+*.sh     text eol=lf executable
+*.cgi    text eol=lf executable
+
+/scripts/javacc executable text eol=lf
+/scripts/jjdoc  executable text eol=lf
+/scripts/jjrun  executable text eol=lf
+/scripts/jjtree executable text eol=lf
+
+*.bat    text eol=crlf
+*.cmd    text eol=crlf
+
+/contributors merge=union

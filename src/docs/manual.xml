@@ -206,9 +206,9 @@ SKIP : {
   " " | "\t" | "\n" | "\r"
 }
 
-void AdditiveExpression() : 
+void AdditiveExpression() :
 {}
-{ 
+{
     &lt;NUMBER&gt;
     (
       &lt;PLUS&gt;
@@ -333,7 +333,7 @@ public class ArithmeticTest {
         Nodes.dump(root, "  ");
         System.out.println("The result is: " + evaluate(root));
     }
-    
+
     static double evaluate(Node node) {
         if (node instanceof NUMBER) {
             return Double.parseDouble(node.toString());
@@ -515,7 +515,7 @@ SKIP : {
   " " | "\t" | "\n" | "\r"
 }
 
-void AdditiveExpression() : 
+void AdditiveExpression() :
 {}
 {
     MultiplicativeExpression()
@@ -573,7 +573,7 @@ public class ArithmeticTest {
        Nodes.dump(root, "  ");
        System.out.println("The result is: " + evaluate(root));
     }
-    
+
     static double evaluate(Node node) {
         if (node instanceof NUMBER) {
             return Double.parseDouble(node.toString());

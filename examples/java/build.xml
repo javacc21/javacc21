@@ -13,15 +13,14 @@
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
-  <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="javacc.Main">
+  <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main">
     <arg value="-q"/>
     <arg value="-BASE_SRC_DIR=${basedir}/../../examples/java" />
     <arg value="-PARSER_PACKAGE=&quot;javagrammar&quot;" />
     <arg value="${basedir}/../../src/grammars/Java.javacc"/>
   </java>
 </target>
- 
- 
+
 <target name="compile" depends="init, parser-gen">
      <javac srcdir="."
       classpath="." debug="on" optimize="off" includeantruntime="no" />

@@ -121,11 +121,11 @@ void UnaryExpression() : {}
   "(" Expression() ")" | Identifier() | Integer()
 }
 
-INJECT(MyID) : 
+INJECT(MyID) :
 {}
 {
    private String name;
-   
+
    /**
     * Set the name.
 	* @param n the name
@@ -133,7 +133,7 @@ INJECT(MyID) :
    public void setName(String name) {
       this.name = name;
    }
-	
+
    /**
     * {@inheritDoc}
 	* @see org.javacc.examples.jjtree.eg2.SimpleNode#toString()

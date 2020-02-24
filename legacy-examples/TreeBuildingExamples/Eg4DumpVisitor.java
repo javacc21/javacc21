@@ -105,7 +105,7 @@ public class Eg4DumpVisitor implements Eg4Visitor
     --indent;
     return data;
   }
-  
+
   public Object visit(Token node, Object data) {
       System.out.println(indentString() + node);
       return data;

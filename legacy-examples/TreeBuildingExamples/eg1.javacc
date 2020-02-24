@@ -31,7 +31,7 @@ options {
     PARSER_CLASS="Eg1";
 }
 
-INJECT(PARSER_CLASS) : 
+INJECT(PARSER_CLASS) :
 {}
 {
   /** Main entry point. */
@@ -114,6 +114,3 @@ void UnaryExpression() : {}
 {
   "(" Expression() ")" | <IDENTIFIER> | <INTEGER_LITERAL>
 }
-
-
-
