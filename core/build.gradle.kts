@@ -12,7 +12,7 @@ dependencies {
 
 val javacc by tasks.registering(JavaCCTask::class) {
     description = "Generate the Java CC Main Parser"
-    mainClass.set("javacc.Main")
+    mainClass.set("com.javacc.Main")
     inputFile.set(file("src/main/javacc/JavaCC.javacc"))
     templateSourceDirectory.set(file("src/main/ftl"))
 }
