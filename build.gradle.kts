@@ -1,9 +1,12 @@
+import com.github.vlsi.gradle.crlf.CrLfSpec
+import com.github.vlsi.gradle.crlf.LineEndings
 import com.github.vlsi.gradle.properties.dsl.props
 
 plugins {
     `java-library`
     id("com.github.autostyle")
     id("com.gradle.plugin-publish") apply false
+    id("com.github.vlsi.crlf")
     id("com.github.vlsi.gradle-extensions")
     id("com.github.vlsi.ide")
     id("com.github.vlsi.stage-vote-release")
@@ -192,6 +195,18 @@ allprojects {
                     attributes["Specification-Title"] = "JavaCC"
                     attributes["Implementation-Vendor"] = "JavaCC"
                     attributes["Implementation-Vendor-Id"] = "com.javacc"
+                }
+                CrLfSpec(LineEndings.LF).run {
+                    into("META-INF") {
+                        filteringCharset = "UTF-8"
+                        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+                        // This includes either project-specific license or a default one
+                        if (file("$projectDir/LICENSE").exists()) {
+                            textFrom("$projectDir/LICENSE")
+                        } else {
+                            textFrom("$rootDir/LICENSE")
+                        }
+                    }
                 }
             }
             withType<Javadoc>().configureEach {
