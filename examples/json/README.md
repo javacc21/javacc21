@@ -23,11 +23,11 @@ For example, consider the following snippet:
 <pre>
     TOKEN #Literal : 
     {
-       <TRUE: "true"> #BooleanLiteral
+       &lt;TRUE: "true"&gt; #BooleanLiteral
        |
-       <FALSE: "false"> #BooleanLiteral
+       &lt;FALSE: "false"&gt; #BooleanLiteral
        |
-       <NULL: "null"> #NullLiteral 
+       &lt;NULL: "null"&gt; #NullLiteral 
 ...
     }   
 </pre>
