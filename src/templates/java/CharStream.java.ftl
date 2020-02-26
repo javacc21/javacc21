@@ -203,7 +203,7 @@ public class ${classname} {
     }
     
     /**
-     * @Deprecated 
+     * @deprecated 
      * @see #getEndColumn
      */
     public int getColumn() {
@@ -211,7 +211,7 @@ public class ${classname} {
     }
     
     /**
-     * @Deprecated
+     * @deprecated
      * @see #getEndLine
      */
     public int getLine() {
