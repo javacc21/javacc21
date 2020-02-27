@@ -14,6 +14,10 @@
 # Compiled class file
 *.class
 
+# We don't check in html files, only generate them
+
+*.html
+
 # Log file
 *.log
 

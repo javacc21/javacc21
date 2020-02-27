@@ -390,7 +390,7 @@ public class JavaCCOptions {
                                 + "\" will be ignored.");
                         return;
                     }
-                    Val = new Integer(i);
+                    Val = Integer.valueOf(i);
                 } catch (NumberFormatException e) {
                     Val = s.substring(index + 1);
                     if (s.length() > index + 2) {
