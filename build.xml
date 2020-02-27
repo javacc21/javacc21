@@ -34,12 +34,6 @@
             quiet="true"
             ignoreerrors="true"
             usetimestamp="true" />
-        <get
-            src="https://javacc.com/download/freemarker.jar"
-            dest="bin"
-            quiet="true"
-            ignoreerrors="true"
-            usetimestamp="true" />
          <fail message="Bootstrap javacc.jar not available">
             <condition>
              <not>
