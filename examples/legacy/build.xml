@@ -1,28 +1,29 @@
-<project name="tests" default="all">
+<project name="Legacy Tests" default="test">
 
-    <property name="classpath" value="${basedir}/build:${basedir}/bin/freemarker.jar"/>
+    <property name="classpath" value="../../build:./../../bin/freemarker.jar"/>
 	<property name="outputdir" value="${basedir}/test.tmp"/>
 
- <target name="all" description="run functional test cases">
+ <target name="test" description="run functional test cases">
 	    <delete dir="test.tmp" />
 	    <mkdir dir="test.tmp" />
 	    <java classpath="${classpath}" classname="javacc.Main">
 	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/CORBA-IDL"/>
-			<arg value="legacy-examples/CORBA-IDL/IDL.javacc"/>
+			<arg value="${basedir}/CORBA-IDL/IDL.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/CORBA-IDL" includeantruntime="no" />
-	    <copy todir="${outputdir}/CORBA-IDL/">
-	      <fileset dir="legacy-examples/CORBA-IDL">
+		<copy todir="${outputdir}/CORBA-IDL/">
+	      <fileset dir="CORBA-IDL">
 	        <include name="*.idl" />
 	      </fileset>
 	    </copy>
+		<echo> KILROY </echo>
 	    <java failonerror="true" fork="true" classname="IDLParser" classpath="test.tmp/CORBA-IDL:${FREEMARKER_JAR}" outputproperty="test.corba.out">
 	      <arg line="${outputdir}/CORBA-IDL/Hello.idl" />
 	                <assertions><enable/></assertions>
 	    </java>
-
 	    <echo>${test.corba.out}</echo>
+		<echo> KILROY 2</echo>
 
 	    <fail message="CORBA failed">
 	     <condition>
@@ -35,7 +36,7 @@
 	    <echo />
 	    
 	    <copy todir="test.tmp/GUIParsing/ParserVersion">
-	      <fileset dir="legacy-examples/GUIParsing/ParserVersion">
+	      <fileset dir="GUIParsing/ParserVersion">
 	        <include name="*.java" />
 	      </fileset>
 	    </copy>
@@ -43,14 +44,15 @@
 	    <java classpath="${classpath}" classname="javacc.Main">
 	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/GUIParsing/ParserVersion"/>
-			<arg value="legacy-examples/GUIParsing/ParserVersion/CalcInput.javacc"/>
+			<arg value="GUIParsing/ParserVersion/CalcInput.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/GUIParsing/ParserVersion" includeantruntime="no" />
 
 	    <echo />
+        <echo>KILROY</echo>
 	    
 	    <copy todir="test.tmp/GUIParsing/LexerVersion">
-	      <fileset dir="legacy-examples/GUIParsing/LexerVersion">
+	      <fileset dir="GUIParsing/LexerVersion">
 	        <include name="*.java" />
 	      </fileset>
 	    </copy>
@@ -58,14 +60,14 @@
 	    <java classpath="${classpath}" classname="javacc.Main">
 	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/GUIParsing/LexerVersion"/>
-			<arg value="legacy-examples/GUIParsing/LexerVersion/CalcInput.javacc"/>
+			<arg value="GUIParsing/LexerVersion/CalcInput.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/GUIParsing/LexerVersion" includeantruntime="no" />
 
 	    <echo />
 	    
 	    <copy todir="${outputdir}/Interpreter">
-	      <fileset dir="legacy-examples/Interpreter">
+	      <fileset dir="Interpreter">
 	        <include name="*.java" />
 	      </fileset>
 	    </copy>
@@ -73,10 +75,10 @@
 	    <java classpath="${classpath}" classname="javacc.Main">
 	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/Interpreter"/>
-			<arg value="legacy-examples/Interpreter/SPL.javacc"/>
+			<arg value="Interpreter/SPL.javacc"/>
 		</java>
 	 <copy todir="${outputdir}/Interpreter/">
-	      <fileset dir="legacy-examples/Interpreter/">
+	      <fileset dir="Interpreter/">
 	        <include name="*.spl" />
 	      </fileset>
 	    </copy>
@@ -141,7 +143,7 @@
 	    <java classpath="${classpath}" classname="javacc.Main">
 	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg1"/>
-			<arg value="legacy-examples/TreeBuildingExamples/eg1.javacc"/>
+			<arg value="TreeBuildingExamples/eg1.javacc"/>
 		</java>
 	    <javac debug="on" srcdir="${outputdir}/TreeBuildingExamples.eg1" includeantruntime="no" />
 	    
@@ -165,7 +167,7 @@
 	    <echo />
 	    
 	    <copy todir="test.tmp/TreeBuildingExamples.eg2">
-	      <fileset dir="legacy-examples/TreeBuildingExamples">
+	      <fileset dir="TreeBuildingExamples">
 	        <include name="*.java" />
 	        <exclude name="Eg4DumpVisitor.java" />
 	      </fileset>
@@ -174,7 +176,7 @@
 	    <java classpath="${classpath}" classname="javacc.Main">
 	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg2"/>
-			<arg value="legacy-examples/TreeBuildingExamples/eg2.javacc"/>
+			<arg value="TreeBuildingExamples/eg2.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/TreeBuildingExamples.eg2" includes="Eg2.java" includeantruntime="no" />
 	    
@@ -197,7 +199,7 @@
 	    <echo />
 
 	    <copy todir="test.tmp/TreeBuildingExamples.eg3">
-	      <fileset dir="legacy-examples/TreeBuildingExamples">
+	      <fileset dir="TreeBuildingExamples">
 	        <include name="*.java" />
 	        <exclude name="Eg4DumpVisitor.java" />
 	        <exclude name="ASTMyOtherID.java" />
@@ -207,7 +209,7 @@
 	    <java classpath="${classpath}" classname="javacc.Main">
 	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg3"/>
-			<arg value="legacy-examples/TreeBuildingExamples/eg3.javacc"/>
+			<arg value="TreeBuildingExamples/eg3.javacc"/>
 		</java>
 	    <javac srcdir="test.tmp/TreeBuildingExamples.eg3" includeantruntime="no" />
 
@@ -232,7 +234,7 @@
 	    <echo />
 
 	    <copy todir="test.tmp/TreeBuildingExamples.eg4">
-	      <fileset dir="legacy-examples/TreeBuildingExamples">
+	      <fileset dir="TreeBuildingExamples">
 	        <include name="*.java" />
 	      </fileset>
 	    </copy>
@@ -240,7 +242,7 @@
 	    <java classpath="${classpath}" classname="javacc.Main">
 	    	<arg value="-q"/>
 			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg4"/>
-			<arg value="legacy-examples/TreeBuildingExamples/eg4.javacc"/>
+			<arg value="TreeBuildingExamples/eg4.javacc"/>
 		</java>
 	    <javac srcdir="test.tmp/TreeBuildingExamples.eg4" debug="true" includeantruntime="no" />
 
@@ -266,56 +268,56 @@
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg1"/>
-		 <arg value="legacy-examples/Lookahead/Example1.javacc"/>
+		 <arg value="Lookahead/Example1.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg2"/>
-		 <arg value="legacy-examples/Lookahead/Example2.javacc"/>
+		 <arg value="Lookahead/Example2.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg4"/>
-		 <arg value="legacy-examples/Lookahead/Example4.javacc"/>
+		 <arg value="Lookahead/Example4.javacc"/>
 	 </java>
 
 
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg5"/>
-		 <arg value="legacy-examples/Lookahead/Example5.javacc"/>
+		 <arg value="Lookahead/Example5.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg6"/>
-		 <arg value="legacy-examples/Lookahead/Example6.javacc"/>
+		 <arg value="Lookahead/Example6.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg7"/>
-		 <arg value="legacy-examples/Lookahead/Example7.javacc"/>
+		 <arg value="Lookahead/Example7.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg8"/>
-		 <arg value="legacy-examples/Lookahead/Example8.javacc"/>
+		 <arg value="Lookahead/Example8.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg9"/>
-		 <arg value="legacy-examples/Lookahead/Example9.javacc"/>
+		 <arg value="Lookahead/Example9.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg10"/>
-		 <arg value="legacy-examples/Lookahead/Example10.javacc"/>
+		 <arg value="Lookahead/Example10.javacc"/>
 
 	 </java>
 
@@ -325,13 +327,13 @@
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/MailProcessing"/>
-		 <arg value="legacy-examples/MailProcessing/Digest.javacc"/>
+		 <arg value="MailProcessing/Digest.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="javacc.Main">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/MailProcessing"/>
-		 <arg value="legacy-examples/MailProcessing/Faq.javacc"/>
+		 <arg value="MailProcessing/Faq.javacc"/>
 	 </java>
 
 	 <javac srcdir="test.tmp/MailProcessing" includeantruntime="no"/>
