@@ -33,7 +33,6 @@ package javacc.parsegen;
 import java.util.*;
 
 import javacc.Grammar;
-import javacc.JavaCCUtils;
 import javacc.lexgen.RegularExpression;
 import javacc.parser.LexicalException;
 import javacc.parser.Nodes;

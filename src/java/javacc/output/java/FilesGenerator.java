@@ -33,7 +33,6 @@ package javacc.output.java;
 import java.io.*;
 import java.util.*;
 
-import javacc.JavaCCUtils;
 import javacc.Grammar;
 import javacc.MetaParseException;
 import javacc.lexgen.RegularExpression;

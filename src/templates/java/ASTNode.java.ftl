@@ -44,6 +44,7 @@ package ${grammar.nodePackage};
 import ${grammar.parserPackage}.*;
 [/#if]
 
+@SuppressWarnings("unused")
 public class ${classname} extends ${grammar.baseNodeClassName} {
 [#if grammar.options.nodeUsesParser]
     public ${classname}(${grammar.parserClassName} p, int id) {

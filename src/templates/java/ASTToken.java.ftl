@@ -44,6 +44,7 @@ package ${grammar.nodePackage};
 import ${grammar.parserPackage}.*;
 [/#if]
 
+@SuppressWarnings("unused")
 public class ${classname} extends ${superclass} {
     public ${classname}(int kind, String image) {
         super(kind, image);

@@ -109,9 +109,10 @@ public final class Main {
     /**
      * A main program that exercises the parser.
      */
-    public static void main(String args[]) throws Exception {
+    @SuppressWarnings("unused")
+	public static void main(String args[]) throws Exception {
     	try {
-    		Class fmClass = Class.forName("freemarker.core.Scope");
+    		Class<?> fmClass = Class.forName("freemarker.core.Scope");
     	}
     	catch (ClassNotFoundException e) {
     		System.err.println("You must have an appropriate (V3 or later) freemarker.jar on your classpath to run JavaCC 21");

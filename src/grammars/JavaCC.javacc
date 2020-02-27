@@ -287,7 +287,6 @@ INJECT(Identifier) :
 INJECT(Token) :
 {
     import javacc.Grammar;
-    import static javacc.parser.JavaCCConstants.*;
 }
 {
     private Grammar grammar;

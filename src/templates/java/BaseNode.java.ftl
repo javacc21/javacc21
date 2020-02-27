@@ -38,16 +38,14 @@ package ${grammar.parserPackage};
 [#if grammar.options.freemarkerNodes]
 import freemarker.template.*;
 [/#if]
-   
+  
+ @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
 
     
-    @SuppressWarnings("unchecked")
     static private Class listClass = java.util.ArrayList.class;
 
-
-    @SuppressWarnings("unchecked")
-    static public void setListClass(Class<? extends java.util.List> listClass) {
+	static public void setListClass(Class<? extends java.util.List> listClass) {
         ${grammar.baseNodeClassName}.listClass = listClass;
     }
 

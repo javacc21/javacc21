@@ -20,7 +20,7 @@ import freemarker.template.*;
  [#if grammar.options.treeBuildingEnabled]
     [#set extendsNode =", Node"]
  [/#if]
-
+ 
 public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     private String inputSource = "";
