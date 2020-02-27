@@ -1,13 +1,15 @@
 *~
 /docs/*
 /build/*
-/test.tmp/*
 /javacc.jar
 \#*
 /src/java/javacc/parser/*
 /examples/freemarker/ftl/*
 /examples/freemarker/fel/*
+/examples/legacy/test.tmp/*
 /examples/java/javagrammar/*
+/examples/json/json/*
+/examples/json/jsonc/*
 
 # Compiled class file
 *.class

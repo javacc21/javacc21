@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='ISO-8859-1' ?>
 
-<project name="Java Parser" default="compile" basedir=".">
+<project name="Java Parser" default="compile">
 
 <target name="clean">
    <delete dir="javagrammar"/>
@@ -8,12 +8,13 @@
 </target>
 
 <target name="init">
-   <uptodate property="javaparser.uptodate" srcfile="../../src/grammars/Java.javacc" targetfile="javagrammar/JavaParser.java"/>
+   <uptodate property="javaparser.uptodate" srcfile="../../src/grammars/Java.javacc" targetfile="javagrammar/JavaParser.java"
+/>
    <mkdir dir="javagrammar"/>
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
-  <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="javacc.Main">
+  <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="javacc.Main" failonerror="true">
     <arg value="-q"/>
     <arg value="-BASE_SRC_DIR=${basedir}/../../examples/java" />
     <arg value="-PARSER_PACKAGE=&quot;javagrammar&quot;" />
@@ -23,7 +24,7 @@
  
  
 <target name="compile" depends="init, parser-gen">
-     <javac srcdir="."
+     <javac srcdir="."  failonerror="true"
       classpath="." debug="on" optimize="off" includeantruntime="no" />
 </target>
 

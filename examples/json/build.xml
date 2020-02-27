@@ -28,24 +28,24 @@
             ignoreerrors="true"
             usetimestamp="true" />
 
-        <java jar="${BIN_DIR}/javacc.jar" fork="true">
+        <java jar="${BIN_DIR}/javacc.jar" fork="true" failonerror="true">
             <arg value="JSON.javacc"/>
         </java>
    </target>
    <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
-        <java jar="${BIN_DIR}/javacc.jar" fork="true">
+        <java jar="${BIN_DIR}/javacc.jar" fork="true"  failonerror="true">
             <arg value="JSONC.javacc"/>
         </java>
    </target>
    <target name="compile" depends="parser2-gen, parser2-gen">
-       <javac srcdir="." includeantruntime="off"/>
+       <javac srcdir="." includeantruntime="off"  failonerror="true"/>
        <echo>
            test harness via: java JSONTest &lt;filename&gt;
            OR              : java JSONCTest &lt;filename&gt;
        </echo>
    </target>
    <target name="test" depends="compile">
-      <java classname="JSONTest" classpath=".">
+      <java classname="JSONTest" classpath="."  failonerror="true">
           <arg value="${basedir}/testfiles/Mono.WebAssembly.Build.targets.buildschema.json"/>
           <arg value="${basedir}/testfiles/package.nls.ko.json"/>
           <arg value="${basedir}/testfiles/package.nls.ru.json"/>

@@ -13,15 +13,15 @@
 </target>
 
 <target name="build" depends="init">
-    <java classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bin/javacc.jar:${basedir}/../../bin/freemarker.jar">
+    <java failonerror="true" classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bin/javacc.jar:${basedir}/../../bin/freemarker.jar">
       <arg value="-q"/>
       <arg value="${basedir}/FEL.javacc"/>
     </java>
-    <java classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bin/javacc.jar:${basedir}/../../bin/freemarker.j\
+    <java failonerror="true" classname="javacc.Main" classpath="${basedir}/../../build:${basedir}/../../bin/javacc.jar:${basedir}/../../bin/freemarker.j\
 ar">                                                                                                                                                   <arg value="${basedir}/FTL.javacc"/>     
     </java>      
     
-    <javac classpath="." debug="on" srcdir="." includeantruntime="no" />
+    <javac classpath="." debug="on" srcdir="." includeantruntime="no"  failonerror="true"/>
 </target>
 
 <target name="test" depends="build">
