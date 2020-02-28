@@ -113,6 +113,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void clearChildren() {}
     
     public String getNormalizedText() {
+[#if grammar.options.faultTolerant]
+        if (virtual) {
+             return "Virtual Token";
+        }
+[/#if]    
         return image;
     }
     
