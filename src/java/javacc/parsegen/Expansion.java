@@ -46,6 +46,8 @@ import javacc.parser.tree.ParserProduction;
 
 abstract public class Expansion extends BaseNode {
 
+    private boolean forced;
+
     private TreeBuildingAnnotation treeNodeBehavior;
 
     private Lookahead lookahead;
@@ -165,5 +167,9 @@ abstract public class Expansion extends BaseNode {
     public Lookahead getLookahead() {
     	return lookahead;
     }
+
+    public void setForced(boolean forced) {this.forced = forced;}
+
+    public boolean isForced() {return this.forced;}
     
 }

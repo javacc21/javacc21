@@ -48,33 +48,34 @@ public final class Main {
     static void usage() {
         System.out.println("Usage:");
         System.out.println("    java -jar javacc.jar option-settings inputfile");
-        System.out.println("");
+        System.out.println();
         System.out.println("\"option-settings\" is a sequence of settings separated by spaces.");
         System.out.println("Each option setting must be of one of the following forms:");
-        System.out.println("");
+        System.out.println();
         System.out.println("    -optionname=value (e.g., -IGNORE_CASE=true)");
         System.out.println("    -optionname:value (e.g., -IGNORE_CASE:true)");
         System.out.println("    -optionname       (equivalent to -optionname=true.  e.g., -TREE_BUILDING_ENABLED)");
         System.out.println("    -NOoptionname     (equivalent to -optionname=false. e.g., -NOTREE_BUILDING_ENABLED)");
-        System.out.println("");
+        System.out.println();
         System.out.println("Option settings are not case-sensitive, so one can say \"-nOsTaTiC\" instead");
         System.out.println("of \"-NOSTATIC\".  Option values must be appropriate for the corresponding");
         System.out.println("option, and must be either an integer, a boolean, or a string value.");
-        System.out.println("");
+        System.out.println();
         System.out.println("The integer valued options are:");
-        System.out.println("");
+        System.out.println();
         System.out.println("    LOOKAHEAD              (default 1)");
         System.out.println("    CHOICE_AMBIGUITY_CHECK (default 2)");
         System.out.println("    OTHER_AMBIGUITY_CHECK  (default 1)");
-        System.out.println("");
+        System.out.println();
         System.out.println("The boolean valued options are:");
-        System.out.println("");
+        System.out.println();
         System.out.println("    BUILD_PARSER           (default true)");
         System.out.println("    BUILD_LEXER            (default true)");
         System.out.println("    DEBUG_PARSER           (default false)");
         System.out.println("    DEBUG_LOOKAHEAD        (default false)");
         System.out.println("    DEBUG_LEXER            (default false)");
         System.out.println("    ERROR_REPORTING        (default true)");
+        System.out.println("    FAULT_TOLERANT         (default false)");
         System.out.println("    FREEMARKER_NODES       (default false)");
         System.out.println("    IGNORE_CASE            (default false)");
         System.out.println("    JAVA_UNICODE_ESCAPE    (default false)");
@@ -89,7 +90,7 @@ public final class Main {
         System.out.println("    USER_DEFINED_LEXER     (default false)");
         System.out.println();
         System.out.println("The string valued options are:");
-        System.out.println("");
+        System.out.println();
         System.out.println("    BASE_SRC_DIR           (default same directory as input file)");
         System.out.println("    DEFAULT_LEXICAL_STATE  (default DEFAULT)");
         System.out.println("    LEXER_CLASS            (default XXXLexer based on grammar filename)");
@@ -100,7 +101,7 @@ public final class Main {
         System.out.println("    PARSER_CLASS           (default XXXParser based on grammar filename)");
         System.out.println("    PARSER_PACKAGE         (default not defined)");
         System.out.println("    TOKEN_FACTORY          (default not defined)");
-        System.out.println("");
+        System.out.println();
         System.out.println("EXAMPLE:");
         System.out.println("    javacc -IGNORE_CASE=true -LOOKAHEAD:2 -debug_parser MyGrammar.javacc");
         System.out.println("");
@@ -110,7 +111,7 @@ public final class Main {
      * A main program that exercises the parser.
      */
     @SuppressWarnings("unused")
-	public static void main(String args[]) throws Exception {
+	public static void main(String[] args) throws Exception {
     	try {
     		Class<?> fmClass = Class.forName("freemarker.core.Scope");
     	}
@@ -126,7 +127,7 @@ public final class Main {
      * The method to call to exercise the parser from other Java programs. It
      * returns an error code. See how the main program above uses this method.
      */
-    public static int mainProgram(String args[]) throws Exception {
+    public static int mainProgram(String[] args) throws Exception {
         if (args.length == 0) {
             JavaCCUtils.bannerLine();
             usage();

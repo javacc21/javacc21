@@ -216,14 +216,11 @@ public class JavaCCOptions {
      * @return The upgraded value.
      */
     public Object upgradeValue(final String name, Object value) {
-        if (name.equalsIgnoreCase("NODE_FACTORY") && value.getClass() == Boolean.class) {
-            if (((Boolean) value).booleanValue()) {
-                value = "*";
-            } else {
-                value = "";
-            }
+        if (name.equalsIgnoreCase("NODE_FACTORY") && value instanceof Boolean) if ((Boolean) value) {
+            value = "*";
+        } else {
+            value = "";
         }
-
         return value;
     }
 
@@ -616,6 +613,10 @@ public class JavaCCOptions {
     
     public boolean getQuiet() {
     	return booleanValue("QUIET");
+    }
+
+    public boolean getFaultTolerant() {
+        return booleanValue("FAULT_TOLERANT");
     }
 
     /**

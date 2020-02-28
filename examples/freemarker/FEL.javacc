@@ -1012,7 +1012,7 @@ void ListLiteral() : {}
 {
     <OPEN_BRACKET>
     [Expression() ([<COMMA>]Expression())*]
-    <CLOSE_BRACKET>
+    <CLOSE_BRACKET>!
 }
 
 void StringLiteral() : {}
@@ -1026,9 +1026,9 @@ void HashLiteral() : {}
     <OPEN_BRACE>
     [
        Expression() <COLON> Expression()
-       (<COMMA>Expression()<COLON>Expression())*
+       (<COMMA>Expression()!<COLON>!Expression()!)*
     ]
-    <CLOSE_BRACE>
+    <CLOSE_BRACE>!
 }
 
 void NumberLiteral() : {}
@@ -1057,7 +1057,7 @@ void ArgsList() #void : {}
         LOOKAHEAD(<IDENTIFIER><EQUALS>)
         NamedArgsList()
         |
-        PositionalArgsList()
+        PositionalArgsList()!
     )
 }
 

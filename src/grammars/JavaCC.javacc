@@ -1157,7 +1157,7 @@ Expansion ExpansionSequence() :
       }
   }
   ( LOOKAHEAD(0, { notTailOfExpansionUnit() } )
-      sub=expansion_unit() 
+      sub=ExpansionUnit()
       {
           pokeNode(sub);
           sub.ordinal = ordinal;
@@ -1274,7 +1274,7 @@ INJECT(ExplicitLookahead) :
    }
 }
 
-Expansion expansion_unit() #dummy :
+Expansion ExpansionUnit() :
 {
     Expression lhs=null;
     InvocationArgs args=null;
@@ -1337,7 +1337,7 @@ Expansion expansion_unit() #dummy :
       RegularExpression re = (RegularExpression) peekNode();
       result = re;
       re.setLHS(lhs);
-        if (!(re instanceof EndOfFile)) {
+      if (!(re instanceof EndOfFile)) {
             TokenProduction p = new TokenProduction();
             p.setGrammar(grammar);
             p.setExplicit(false);
@@ -1347,11 +1347,13 @@ Expansion expansion_unit() #dummy :
             re.tpContext = p;
             p.addChild(res);
             grammar.addTokenProduction(p);
-        }
+      }
   }
+  [<BANG>]
   |
   LOOKAHEAD([PrimaryExpression() "="]<IDENTIFIER>)
   result=NonTerminal()
+  [<BANG>]
   |
   "(" ExpansionChoice() {result=(Expansion)peekNode();} ")"
   [  "+" #OneOrMore(4) { result = (OneOrMore) peekNode();}
@@ -1364,7 +1366,7 @@ Expansion expansion_unit() #dummy :
  ]
  {
         result.setTreeNodeBehavior(tba);
-	result.setLookahead(la);
+	    result.setLookahead(la);
         return result;
  }
 }
@@ -1828,13 +1830,13 @@ int IntegerLiteral() :
 {}
 {
   <INTEGER_LITERAL>
-        {
-          try {
-            return Integer.parseInt(current_token.toString());
-          } catch (NumberFormatException e) {
-            throw new Error();
-          }
-        }
+  {
+      try {
+        return Integer.parseInt(current_token.toString());
+      } catch (NumberFormatException e) {
+        throw new Error();
+      }
+  }
 }
 
 INJECT(RepetitionRange) : 

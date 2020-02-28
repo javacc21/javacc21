@@ -115,6 +115,8 @@ public interface Node
      void setBeginColumn(int beginColumn);
      
      void setEndColumn(int endColumn);
+
+     default boolean isDirty() {return false;}
      
 [#if grammar.options.visitor]
    [#var RETURN_TYPE = grammar.options.visitorReturnType]
