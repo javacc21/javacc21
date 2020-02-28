@@ -139,6 +139,7 @@ public class JavaCCOptions {
         optionValues.put("DEBUG_LOOKAHEAD", false);
         optionValues.put("DEBUG_LEXER", false);
         optionValues.put("ERROR_REPORTING", true);
+        optionValues.put("FAULT_TOLERANT", false);
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
         optionValues.put("IGNORE_CASE", false);
         optionValues.put("USER_DEFINED_LEXER", false);

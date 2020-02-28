@@ -220,7 +220,13 @@
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
+  [#if !grammar.options.faultTolerant]       
        consumeToken(${regexp.label});
+   [#elseif regexp.forced]
+       consumeToken(${regexp.label}, true);
+   [#else]
+        consumeToken(${regexp.label}, false);
+   [/#if]
 [/#macro]
 
 [#macro BuildPhase1CodeTryBlock tryblock]

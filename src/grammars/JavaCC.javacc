@@ -1349,11 +1349,11 @@ Expansion ExpansionUnit() :
             grammar.addTokenProduction(p);
       }
   }
-  [<BANG>]
+  [<BANG>{result.setForced(true);}]
   |
   LOOKAHEAD([PrimaryExpression() "="]<IDENTIFIER>)
   result=NonTerminal()
-  [<BANG>]
+  [<BANG> {result.setForced(true);}]
   |
   "(" ExpansionChoice() {result=(Expansion)peekNode();} ")"
   [  "+" #OneOrMore(4) { result = (OneOrMore) peekNode();}

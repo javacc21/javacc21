@@ -23,6 +23,17 @@ import freemarker.template.*;
  
 public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
+[#if grammar.options.faultTolerant]
+
+   boolean virtual;
+   
+   public void setVirtual(boolean virtual) {this.virtual = virtual;}
+   
+   public boolean isDirty() {return this.virtual;}
+
+
+[/#if]
+
     private String inputSource = "";
 
     /**
@@ -70,9 +81,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
     private boolean unparsed;
 
-    /**
-     * No-argument constructor
-     */
     public Token() {}
 
     /**
@@ -111,7 +119,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getRawText() {
         return image;
     }
-
+    
     public String toString() {
         return getNormalizedText();
     }

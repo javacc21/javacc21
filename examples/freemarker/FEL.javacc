@@ -35,6 +35,7 @@ options {
    TOKENS_ARE_NODES=true;
    SPECIAL_TOKENS_ARE_NODES=true;
    DEFAULT_LEXICAL_STATE="FTL_EXPRESSION";
+   FAULT_TOLERANT=true;
 }
 
 INJECT(FELParser) :
@@ -1048,7 +1049,7 @@ void NullLiteral() : {}
 
 void Parenthesis() : {}
 {
-    <OPEN_PAREN>Expression()<CLOSE_PAREN>
+    <OPEN_PAREN>Expression()<CLOSE_PAREN>!
 }
 
 void ArgsList() #void : {}

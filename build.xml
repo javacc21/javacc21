@@ -79,7 +79,7 @@
 	
  <target name="test" depends="jar">
     <ant antfile="build.xml" dir="examples/java" target="clean"/>
-    <ant antfile="build.xml" dir="examples/java" target="clean"/>
+    <ant antfile="build.xml" dir="examples/java" target="test"/>
     <ant antfile="build.xml" dir="examples/freemarker" target="clean"/>
     <ant antfile="build.xml" dir="examples/freemarker" target="test"/>
     <ant antfile="build.xml" dir="examples/json" target="clean"/>

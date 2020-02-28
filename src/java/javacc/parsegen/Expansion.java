@@ -170,6 +170,6 @@ abstract public class Expansion extends BaseNode {
 
     public void setForced(boolean forced) {this.forced = forced;}
 
-    public boolean isForced() {return this.forced;}
+    public boolean getForced() {return this.forced;}
     
 }

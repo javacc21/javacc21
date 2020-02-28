@@ -47,6 +47,22 @@ import ${grammar.nodePackage}.*;
 @SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
 
+
+[#if grammar.options.faultTolerant]
+   private boolean tolerantParsing= true;
+   
+   /**
+    * Is tolerant parsing turned on?
+    */
+   
+    public boolean isParserTolerant() {return tolerantParsing;}
+    
+    /**
+     * Toggles tolerant parsing
+     */
+     public void setParserTolerant(boolean tolerantParsing) {this.tolerantParsing = tolerantParsing;}
+[/#if]
+
 [#if grammar.options.treeBuildingEnabled]
    [#embed "javatreecode.ftl"]
 [/#if]
@@ -178,17 +194,42 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [/#if]
   }
   
-  private Token consumeToken(int kind) throws ParseException {
-    Token oldToken = current_token;
+ [#if grammar.options.faultTolerant]
+ 
+     private Token consumeToken(int kind) throws ParseException {return consumeToken(kind, false);}
+ 
+      private Token consumeToken(int kind, boolean forced) throws ParseException {
+ [#else]
+      private Token consumeToken(int kind) throws ParseException {
+ [/#if]
+  
+      Token oldToken = current_token;
     if (current_token.next != null) current_token = current_token.next;
     else current_token = current_token.next = token_source.getNextToken();
     if (current_token.kind != kind ) {
+[#if grammar.options.errorReporting]
+	       jj_kind = kind;
+[/#if]
+[#if !grammar.options.faultTolerant]
 	    current_token = oldToken;
-	[#if grammar.options.errorReporting]
-	    jj_kind = kind;
-	[/#if]
 	    throw generateParseException();
-    }
+[#else]
+       if (forced && tolerantParsing) {
+           Token t = Token.newToken(kind, "");
+           t.setVirtual(true);
+           t.setBeginLine(oldToken.getEndLine());
+           t.setBeginColumn(oldToken.getEndColumn());
+           t.setEndLine(current_token.getBeginLine());
+           t.setEndColumn(current_token.getBeginColumn());
+           t.next = current_token;
+           current_token = t;
+       } else {
+	      current_token = oldToken;
+	      throw generateParseException();
+      }
+[/#if]
+     }      
+    
    [#if grammar.options.errorReporting]
       jj_gen++;
     [#if hasPhase2]
