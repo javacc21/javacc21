@@ -45,17 +45,43 @@ public interface Node
     /** Life-cycle hook method called after the node has been made the current
 	 *  node 
 	 */
-     void open();
+    void open();
 
   	/** 
   	 * Life-cycle hook method called after all the child nodes have been
      * added. 
      */
-     void close();
+    void close();
 
-     void setParent(Node n);
+    /**
+     * Returns the first child of this node. If there is no such node, this returns
+     * <code>null</code>.
+     * 
+     * @return the first child of this node. If there is no such node, this returns
+     *         <code>null</code>.
+     */
+    Node getFirstChild();
+
+    /**
+     * Returns the last child of this node. If there is no such node, this returns
+     * <code>null</code>.
+     * 
+     * @return the last child of this node. If there is no such node, this returns
+     *         <code>null</code>.
+     */
+    Node getLastChild();
+    
+    /**
+     * Returns whether this node has any children.
+     * 
+     * @return Returns <code>true</code> if this node has any children,
+     *         <code>false</code> otherwise.
+     */
+    boolean hasChildNodes();
+
+    void setParent(Node n);
      
-     Node getParent();
+    Node getParent();
      
      // The following 9 methods will typically just 
      // delegate straightforwardly to a List object that
@@ -118,6 +144,16 @@ public interface Node
 
      default boolean isDirty() {return false;}
      
+    /**
+     * Returns the node at the given position (line,column) and null otherwise.
+     * 
+     * @param line   the line position
+     * @param column the column position
+     * 
+     * @return the node at the given position (line,column) and null otherwise.
+     */
+    Node findNodeAt(int line, int column);
+
 [#if grammar.options.visitor]
    [#var RETURN_TYPE = grammar.options.visitorReturnType]
    [#if !RETURN_TYPE?has_content][#set RETURN_TYPE = "void"][/#if]
