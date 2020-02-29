@@ -190,6 +190,20 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     private Node parent;
     private java.util.Map<String,Object> attributes; 
 
+    @Override
+    public boolean hasChildNodes() {
+        return getChildCount() > 0;
+    }
+
+    @Override
+    public Node getFirstChild() {
+        return Nodes.getFirstChild(this);
+    }
+    
+    @Override
+    public Node getLastChild() {
+        return Nodes.getLastChild(this);
+    }
 
     public void setChild(int i, Node n) {
         throw new UnsupportedOperationException();
@@ -214,7 +228,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public int indexOf(Node n) {
         return -1;
     }
-    
+
     public Node getParent() {
         return parent;
     }
@@ -258,8 +272,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return attributes.keySet();
     }
 
-
-
+    @Override
+    public Node findNodeAt(int line, int column) {
+        return Nodes.findNodeAt(this, line, column);
+    }
     
    [#if grammar.options.freemarkerNodes]
     public TemplateNodeModel getParentNode() {
