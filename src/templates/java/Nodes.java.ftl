@@ -311,7 +311,7 @@ abstract public class Nodes {
             return null;
         }
         int count = node.getChildCount();
-        return count > 0 ? node.getChild(count) : null;
+        return count > 0 ? node.getChild(count -1) : null;
     }
 
     /**
@@ -357,6 +357,12 @@ abstract public class Nodes {
 
     private static boolean isIncluded(int beginLine, int beginColumn, int endLine, int endColumn, int line,
             int column) {
+        if (beginLine == line && beginColumn == column) {
+            return true;
+        }
+        if (endLine == line && endColumn == column) {
+            return true;
+        }            
         return !isAfter(beginLine, beginColumn, line, column) && isAfter(endLine, endColumn, line, column);
     }
 
