@@ -44,8 +44,8 @@
 [#else]
     private boolean specialTokensAreNodes = false;
 [/#if]
-    private java.util.ArrayList<Node> nodes = new java.util.ArrayList<Node>();
-    private java.util.ArrayList<java.lang.Integer> marks = new java.util.ArrayList<java.lang.Integer>();
+    private ArrayList<Node> nodes = new ArrayList<>();
+    private ArrayList<java.lang.Integer> marks = new ArrayList<>();
 
     private int mark;    // current mark
     private boolean node_created;
@@ -96,7 +96,8 @@
      * This is effectively equivalent to popNode() followed by pushNode(n)
      */
     public void pokeNode(Node n) {
-        pokeNode(n, false);
+      	nodes.set(nodes.size()-1, n);
+
     }
 
     /**

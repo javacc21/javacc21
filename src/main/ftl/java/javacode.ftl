@@ -165,8 +165,7 @@
    [#if treeNodeBehavior??]
       [#set nodeName = NODE_PREFIX + treeNodeBehavior.nodeName]
    [/#if]
-   [#-- var constName = nodeName?substring(NODE_PREFIX?length)?upper_case --]
-         ${nodeName} ${nodeVarName} = null;
+   ${nodeName} ${nodeVarName} = null;
    if (buildTree) {
    [#if NODE_USES_PARSER]
         ${nodeVarName} = new ${nodeName}(this);

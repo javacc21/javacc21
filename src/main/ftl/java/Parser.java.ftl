@@ -43,6 +43,7 @@ package ${grammar.parserPackage};
 [#if grammar.nodePackage?has_content && grammar.parserPackage! != grammar.nodePackage]
 import ${grammar.nodePackage}.*;  
 [/#if]
+import java.util.*;
 
 @SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
