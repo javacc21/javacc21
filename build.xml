@@ -9,7 +9,7 @@
 	<echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
 	<echo>JDK Version: ${java.version} on ${os.name}</echo>
 	<uptodate property="parser.uptodate"
-                 targetfile="src/java/javacc/parser/JavaCCParser.java">
+                 targetfile="src/main/java/javacc/parser/JavaCCParser.java">
 	 <srcfiles dir="src/grammars" includes="*.javacc"/>
 	</uptodate>
   </target>
@@ -17,7 +17,7 @@
   <target name="clean">
  	<delete file="javacc.jar"/>
  	<delete dir="build"/>
-   <delete dir="src/java/javacc/parser"/>
+   <delete dir="src/main/java/javacc/parser"/>
    <delete dir="examples/java/javagrammar"/>
    <delete dir="examples/freemarker/fel"/>
    <delete dir="examples/freemarker/ftl"/>
@@ -54,7 +54,7 @@
 
 <target name="compile" depends="parser-gen">
   	<mkdir dir="build"/>
-    <javac srcdir="src/java" 
+    <javac srcdir="src/main/java" 
  	       destdir="build"
  	       deprecation="off"
  	       debug="on"

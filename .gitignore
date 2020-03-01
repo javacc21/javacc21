@@ -3,7 +3,7 @@
 /build/*
 /javacc.jar
 \#*
-/src/java/javacc/parser/*
+/src/main/java/javacc/parser/*
 /examples/freemarker/ftl/*
 /examples/freemarker/fel/*
 /examples/legacy/test.tmp/*
