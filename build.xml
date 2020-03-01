@@ -96,6 +96,21 @@
             <attribute name="Build-Date"   value="${timestamp}"/>
         </manifest>
     </jar>
+    <chmod file="javacc.jar" perm="+x"/>
  </target>
+
+<target name="full-jar" depends="compile">
+    <jar jarfile="javacc-nodeps.jar" compress="true">
+        <fileset dir="build"/>
+        <zipfileset includes="**/*.class" src="bin/freemarker.jar"/>
+        <manifest>
+            <attribute name="Main-Class" value="javacc.Main"/>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Build-Date"   value="${timestamp}"/>
+        </manifest>
+    </jar>
+    <chmod file="javacc-nodeps.jar" perm="+x"/>
+</target>
+
 	
 </project>

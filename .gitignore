@@ -1,7 +1,8 @@
 *~
 /docs/*
 /build/*
-/javacc.jar
+/classes/*
+/*.jar
 \#*
 /src/main/java/javacc/parser/*
 /examples/freemarker/ftl/*
