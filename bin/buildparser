@@ -1,3 +1,2 @@
 cd $(dirname $0)
-#./javacc ../src/grammars/JavaCC.javacc
-java -jar javacc.jar ../src/grammars/JavaCC.javacc
+java -jar javacc.jar ../src/main/javacc/JavaCC.javacc

@@ -1,6 +1,6 @@
 Use the build.xml in this directory to build a Java source code parser. This is the same Java Parser that is
 used in JavaCC itself to handle embedded java code in JavaCC grammar files. The Java.javacc file is in 
-the src/grammars directory but generates its code relative to this directory, in packages javagrammar
+the src/main/javacc directory but generates its code relative to this directory, in packages javagrammar
 and javagrammar.nodes.
 
 The generated JavaParser class contains a main() routine that can be used as a test harness. Try it as follows:
