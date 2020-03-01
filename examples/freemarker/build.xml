@@ -31,7 +31,7 @@ ar">                                                                            
      <java fork="true" failonerror="true" classname="fel.FELParser" inputstring='x.y.z(foo, "bar")?upper_case'/>
 	 <echo>Now let's try out the full FTL parser on the templates used in JavaCC</echo>
      <java fork="true" failonerror="true" classname="ftl.FTLParser">
-     	 <arg value = "../../src/templates/java"/>
+     	 <arg value = "../../src/main/ftl/java"/>
 	 </java>
 </target>
 
