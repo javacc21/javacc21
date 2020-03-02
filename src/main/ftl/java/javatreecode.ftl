@@ -49,7 +49,7 @@
 
     private int mark;    // current mark
     private boolean node_created;
-    
+    NodeScope currentNodeScope = new NodeScope(null);
     
 	/** 
      * Determines whether the current node was actually closed and
@@ -72,6 +72,7 @@
      * push a node onto the top of the node stack
      */
     public void pushNode(Node n) {
+        currentNodeScope.add(n);
         nodes.add(n);
     }
 
@@ -80,7 +81,8 @@
      * stack.  
      */ 
     public Node popNode() {
-        return nodes.remove(nodes.size() - 1);
+       currentNodeScope.remove(currentNodeScope.size()-1);
+       return nodes.remove(nodes.size() - 1);
     }
 
     /** 
@@ -97,7 +99,7 @@
      */
     public void pokeNode(Node n) {
       	nodes.set(nodes.size()-1, n);
-
+      	currentNodeScope.set(currentNodeScope.size()-1, n);
     }
 
     /**
@@ -109,9 +111,9 @@
     public void pokeNode(Node n, boolean clearNodeScope) {
         if (clearNodeScope) {
             clearNodeScope();
-            nodes.add(n);
+            pushNode(n);
         } else {
-        	nodes.set(nodes.size()-1, n);
+            pokeNode(n);
         }
     }
 
@@ -120,11 +122,13 @@
 	 */
 	  
     public int nodeArity() {
-        return nodes.size() - mark;
+//        return nodes.size() - mark;
+        return currentNodeScope.size();
     }
 
 
     public void clearNodeScope() {
+//        currentNodeScope.clear();
         while (nodes.size() > mark) {
             popNode();
         }
@@ -133,6 +137,7 @@
     public void openNodeScope(Node n) {
         marks.add(mark);
         mark = nodes.size();
+        currentNodeScope = new NodeScope(currentNodeScope);
         n.open();
     }
 
@@ -144,7 +149,9 @@
 	 
     public void closeNodeScope(Node n, int num) {
         mark = marks.remove(marks.size() - 1);
-        java.util.ArrayList<Node> nodes = new java.util.ArrayList<Node>();
+        currentNodeScope.parentScope.addAll(currentNodeScope);
+        currentNodeScope = currentNodeScope.parentScope;
+        ArrayList<Node> nodes = new ArrayList<Node>();
         for (int i=0;i<num;i++) {
            nodes.add(popNode());
         }
@@ -181,7 +188,9 @@
         if (condition) {
             int a = nodeArity();
             mark = marks.remove(marks.size() - 1);
-            java.util.ArrayList<Node> nodes = new java.util.ArrayList<Node>();
+            currentNodeScope.parentScope.addAll(currentNodeScope);
+            currentNodeScope = currentNodeScope.parentScope;
+            ArrayList<Node> nodes = new ArrayList<Node>();
             while (a-- > 0) {
                 nodes.add(popNode());
             }
@@ -205,6 +214,8 @@
             node_created = true;
         } else {
             mark = marks.remove(marks.size() - 1);
+            currentNodeScope.parentScope.addAll(currentNodeScope);
+            currentNodeScope = currentNodeScope.parentScope;
             node_created = false;
         }
     }
@@ -224,3 +235,26 @@
      */
     
     ${grammar.parserClassName} jjtree = this; 
+
+    class NodeScope extends ArrayList<Node> {
+        NodeScope parentScope;
+
+        NodeScope(NodeScope parentScope) {
+            this.parentScope = parentScope;
+        }
+
+        void close() {
+
+        }
+
+        int nestingLevel() {
+            int result = -1;
+            NodeScope ns = this;
+            while (ns !=null) {
+                ns = ns.parentScope;
+                result++;
+            }
+            return result;
+        }
+    }
+
