@@ -16,6 +16,7 @@
 
   <target name="clean">
  	<delete file="javacc.jar"/>
+ 	<delete file="javacc-nodeps.jar"/>
  	<delete dir="build"/>
    <delete dir="src/main/java/javacc/parser"/>
    <delete dir="examples/java/javagrammar"/>

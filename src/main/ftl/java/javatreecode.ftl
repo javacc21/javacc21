@@ -44,7 +44,8 @@
 [#else]
     private boolean specialTokensAreNodes = false;
 [/#if]
-    private ArrayList<Node> nodes = new ArrayList<>();
+//    private ArrayList<Node> nodes = new ArrayList<>();
+    private Node rootNode;
     private boolean node_created;
     NodeScope currentNodeScope = new NodeScope(null);
     
@@ -62,7 +63,8 @@
 	 * this after a successful parse. 
 	 */ 
     public Node rootNode() {
-        return nodes.get(0);
+//        return nodes.get(0);
+        return currentNodeScope.rootNode();
     }
 
     /**
@@ -70,7 +72,7 @@
      */
     public void pushNode(Node n) {
         currentNodeScope.add(n);
-        nodes.add(n);
+//        nodes.add(n);
     }
 
     /** 
@@ -78,15 +80,16 @@
      * stack.  
      */ 
     public Node popNode() {
-       currentNodeScope.remove(currentNodeScope.size()-1);
-       return nodes.remove(nodes.size() - 1);
+       return currentNodeScope.pop();
+//       return nodes.remove(nodes.size() - 1);
     }
 
     /** 
      * Returns the node currently on the top of the stack. 
      */ 
     public Node peekNode() {
-        return nodes.get(nodes.size() - 1);
+        return currentNodeScope.peek();
+//        return nodes.get(nodes.size() - 1);
     }
 
     /**
@@ -95,8 +98,8 @@
      * This is effectively equivalent to popNode() followed by pushNode(n)
      */
     public void pokeNode(Node n) {
-      	nodes.set(nodes.size()-1, n);
-      	currentNodeScope.set(currentNodeScope.size()-1, n);
+//      	nodes.set(nodes.size()-1, n);
+      	currentNodeScope.poke(n);
     }
 
     /**
@@ -232,6 +235,35 @@
 
         NodeScope(NodeScope parentScope) {
             this.parentScope = parentScope;
+        }
+
+        boolean isRootScope() {
+            return parentScope == null;
+        }
+
+
+        Node rootNode() {
+            NodeScope ns = this;
+            while (ns.parentScope != null) {
+                ns = ns. parentScope;
+            }
+            return ns.get(0);
+        }
+
+        Node peek() {
+            return isEmpty() ? parentScope.peek() : get(size()-1);
+        }
+
+        Node pop() {
+            return isEmpty() ? parentScope.pop() : remove(size()-1);
+        }
+
+        void poke(Node n) {
+            if (isEmpty()) {
+                parentScope.poke(n);
+            } else {
+                set(size()-1, n);
+            }
         }
     }
 
