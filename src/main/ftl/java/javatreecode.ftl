@@ -44,26 +44,23 @@
 [#else]
     private boolean specialTokensAreNodes = false;
 [/#if]
-//    private ArrayList<Node> nodes = new ArrayList<>();
-    private Node rootNode;
     private boolean node_created;
-    NodeScope currentNodeScope = new NodeScope(null);
+    NodeScope currentNodeScope = new NodeScope();
     
 	/** 
      * Determines whether the current node was actually closed and
      * pushed.  This should only be called in the final user action of a
      * node scope.  
-     */ 
+     */ /*
     public boolean nodeCreated() {
         return node_created;
-    }
+    }*/
 
 	/** 
 	 * Returns the root node of the AST.  It only makes sense to call
 	 * this after a successful parse. 
 	 */ 
     public Node rootNode() {
-//        return nodes.get(0);
         return currentNodeScope.rootNode();
     }
 
@@ -72,7 +69,6 @@
      */
     public void pushNode(Node n) {
         currentNodeScope.add(n);
-//        nodes.add(n);
     }
 
     /** 
@@ -81,7 +77,6 @@
      */ 
     public Node popNode() {
        return currentNodeScope.pop();
-//       return nodes.remove(nodes.size() - 1);
     }
 
     /** 
@@ -89,7 +84,6 @@
      */ 
     public Node peekNode() {
         return currentNodeScope.peek();
-//        return nodes.get(nodes.size() - 1);
     }
 
     /**
@@ -98,7 +92,6 @@
      * This is effectively equivalent to popNode() followed by pushNode(n)
      */
     public void pokeNode(Node n) {
-//      	nodes.set(nodes.size()-1, n);
       	currentNodeScope.poke(n);
     }
 
@@ -127,14 +120,11 @@
 
 
     public void clearNodeScope() {
-//        currentNodeScope.clear();
-        while (!currentNodeScope.isEmpty()) {
-            popNode();
-        }
+        currentNodeScope.clear();
     }
     
     public void openNodeScope(Node n) {
-        currentNodeScope = new NodeScope(currentNodeScope);
+        new NodeScope();
         n.open();
     }
 
@@ -145,8 +135,7 @@
 	 * is pushed on to the stack. */
 	 
     public void closeNodeScope(Node n, int num) {
-        currentNodeScope.parentScope.addAll(currentNodeScope);
-        currentNodeScope = currentNodeScope.parentScope;
+        currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();
         for (int i=0;i<num;i++) {
            nodes.add(popNode());
@@ -183,8 +172,7 @@
     public void closeNodeScope(Node n, boolean condition) {
         if (condition) {
             int a = nodeArity();
-            currentNodeScope.parentScope.addAll(currentNodeScope);
-            currentNodeScope = currentNodeScope.parentScope;
+            currentNodeScope.close();
             ArrayList<Node> nodes = new ArrayList<Node>();
             while (a-- > 0) {
                 nodes.add(popNode());
@@ -208,8 +196,7 @@
             pushNode(n);
             node_created = true;
         } else {
-            currentNodeScope.parentScope.addAll(currentNodeScope);
-            currentNodeScope = currentNodeScope.parentScope;
+            currentNodeScope.close();
             node_created = false;
         }
     }
@@ -233,8 +220,9 @@
     class NodeScope extends ArrayList<Node> {
         NodeScope parentScope;
 
-        NodeScope(NodeScope parentScope) {
-            this.parentScope = parentScope;
+        NodeScope() {
+            this.parentScope = ${grammar.parserClassName}.this.currentNodeScope;
+            ${grammar.parserClassName}.this.currentNodeScope = this;
         }
 
         boolean isRootScope() {
@@ -264,6 +252,11 @@
             } else {
                 set(size()-1, n);
             }
+        }
+
+        void close() {
+            parentScope.addAll(this);
+            ${grammar.parserClassName}.this.currentNodeScope = parentScope;
         }
     }
 

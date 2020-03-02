@@ -783,6 +783,7 @@ BNFProduction BNFProduction() :
     ReturnType returnType;
     CodeBlock block;
     Token t=getToken(1);
+    Expansion expansion;
 }
 {
     [
@@ -803,10 +804,10 @@ BNFProduction BNFProduction() :
         token_source.inJavaCode = false;
     }
     "{" 
-    ExpansionChoice() 
+    ExpansionChoice() {expansion = (Expansion) peekNode();}
     "}"
      {
-        Expansion expansion = (Expansion) nodes.get(nodes.size() -2);
+//        Expansion expansion = (Expansion) nodes.get(nodes.size() -2);
         CURRENT_NODE.adjustFirstToken(t);
         if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName());
