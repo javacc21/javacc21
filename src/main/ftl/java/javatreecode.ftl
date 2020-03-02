@@ -44,17 +44,9 @@
 [#else]
     private boolean specialTokensAreNodes = false;
 [/#if]
-    private boolean node_created;
+
     NodeScope currentNodeScope = new NodeScope();
     
-	/** 
-     * Determines whether the current node was actually closed and
-     * pushed.  This should only be called in the final user action of a
-     * node scope.  
-     */ /*
-    public boolean nodeCreated() {
-        return node_created;
-    }*/
 
 	/** 
 	 * Returns the root node of the AST.  It only makes sense to call
@@ -95,25 +87,10 @@
       	currentNodeScope.poke(n);
     }
 
-    /**
-     * Puts the node on the top of the stack. If clearNodeScope is true,
-     * it removes all the nodes in the current node scope and pushes
-     * n onto the top. Otherwise, it simply replaces the node at the
-     * top of the stack with n.
-     */
-    public void pokeNode(Node n, boolean clearNodeScope) {
-        if (clearNodeScope) {
-            clearNodeScope();
-            pushNode(n);
-        } else {
-            pokeNode(n);
-        }
-    }
 
 	/** Returns the number of children on the stack in the current node
 	 * scope. 
 	 */
-	  
     public int nodeArity() {
         return currentNodeScope.size();
     }
@@ -132,8 +109,8 @@
 	/* A definite node is constructed from a specified number of
 	 * children.  That number of nodes are popped from the stack and
 	 * made the children of the definite node.  Then the definite node
-	 * is pushed on to the stack. */
-	 
+	 * is pushed on to the stack.
+	 */
     public void closeNodeScope(Node n, int num) {
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();
@@ -157,11 +134,9 @@
         }
         n.close();
         pushNode(n);
-        node_created = true;
     }
 
-
-	/** 
+	/**
 	 * A conditional node is constructed if the condition is true.  All
 	 * the nodes that have been pushed since the node was opened are
 	 * made children of the conditional node, which is then pushed
@@ -194,10 +169,8 @@
             }
             n.close();
             pushNode(n);
-            node_created = true;
         } else {
             currentNodeScope.close();
-            node_created = false;
         }
     }
     
