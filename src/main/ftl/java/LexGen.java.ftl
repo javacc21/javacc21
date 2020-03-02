@@ -459,7 +459,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
               [#if numLexicalStates>1]
                  "<" + lexStateNames[curLexState] + ">" + 
               [/#if]
-              "Current character : " + LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+              "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
               "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
             [/#set]
               debugStream.println(${debugOutput?trim}); //KILROY3
@@ -489,7 +489,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       input_stream.backup(1);
       error_after = curPos <= 1 ? "" : input_stream.GetImage();
    }
-   throw new LexicalException(EOFSeen, curLexState, error_line, error_column, error_after, curChar, inputSource, LexicalException.LEXICAL_ERROR);
+   throw new LexicalException(EOFSeen, curLexState, error_line, error_column, error_after, curChar, inputSource);
   [/#if]    
 [#if lexerData.hasMore]
        }
@@ -517,7 +517,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                      jjemptyColNo[${lexicalStateIndex}] == input_stream.getBeginColumn())
                           throw new LexicalException("Error: Bailing out of infinite loop caused by repeated empty string matches " +
                              "at line " + input_stream.getBeginLine() + ", " +
-                             "column " + input_stream.getBeginColumn() + ".", LexicalException.LOOP_DETECTED);
+                             "column " + input_stream.getBeginColumn());
                  jjemptyLineNo[${lexicalStateIndex}] = input_stream.getBeginLine();
                  jjemptyColNo[${lexicalStateIndex}] = input_stream.getBeginColumn();
                  jjbeenHere[${lexicalStateIndex}] = true;

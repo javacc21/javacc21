@@ -23,17 +23,17 @@ import java.io.*;
 [/#if]
 
 public class ${classname} {
-    int bufsize, available, tokenBegin;
+    private int bufsize, available, tokenBegin;
     /** Position in buffer. */
-    int bufpos = -1;
-    protected int bufline[];
-    protected int bufcolumn[];
-    protected int column = 0;
-    protected int line = 1;
-    protected boolean prevCharIsCR, prevCharIsLF;
-    Reader inputStream;
-    protected char[] buffer;
-    protected int maxNextCharInd, inBuf, tabSize=8;
+    private int bufpos = -1;
+    private int bufline[];
+    private int bufcolumn[];
+    private int column = 0;
+    private int line = 1;
+    private boolean prevCharIsCR, prevCharIsLF;
+    private Reader inputStream;
+    private char[] buffer;
+    private int maxNextCharInd, inBuf, tabSize=8;
     
     /**
      * sets the size of a tab for location reporting 
@@ -47,7 +47,7 @@ public class ${classname} {
      */
     public int getTabSize() {return tabSize;}
     
-    protected void ExpandBuff(boolean wrapAround) {
+    private void ExpandBuff(boolean wrapAround) {
         char[] newbuffer = new char[bufsize + 2048];
 
         int newbufline[] = new int[bufsize + 2048];
@@ -91,7 +91,7 @@ public class ${classname} {
         tokenBegin = 0;
     }
     
-    protected void UpdateLineColumn(char c) {
+    private void UpdateLineColumn(char c) {
         column++;
         if (prevCharIsLF) {
             prevCharIsLF = false;
@@ -138,7 +138,7 @@ public class ${classname} {
             AdjustBuffSize();
 
         char c;
-        if ((buffer[bufpos] = c = ReadByte()) == '\\') {
+        if ((buffer[bufpos] = c = readByte()) == '\\') {
             UpdateLineColumn(c);
             int backSlashCnt = 1;
 
@@ -148,7 +148,7 @@ public class ${classname} {
                     AdjustBuffSize();
 
                 try {
-                    if ((buffer[bufpos] = c = ReadByte()) != '\\') {
+                    if ((buffer[bufpos] = c = readByte()) != '\\') {
                         UpdateLineColumn(c);
                         // found a non-backslash char.
                         if ((c == 'u') && ((backSlashCnt & 1) == 1)) {
@@ -173,11 +173,11 @@ public class ${classname} {
 
             // Here, we have seen an odd number of backslash's followed by a 'u'
             try {
-                while ((c = ReadByte()) == 'u')
+                while ((c = readByte()) == 'u')
                     ++column;
 
                 buffer[bufpos] = c = (char) (hexval(c) << 12
-                        | hexval(ReadByte()) << 8 | hexval(ReadByte()) << 4 | hexval(ReadByte()));
+                        | hexval(readByte()) << 8 | hexval(readByte()) << 4 | hexval(readByte()));
 
                 column += 4;
             } catch (IOException e) {
@@ -202,42 +202,28 @@ public class ${classname} {
         return c;
     }
     
-    /**
-     * @deprecated 
-     * @see #getEndColumn
-     */
-    public int getColumn() {
-        return bufcolumn[bufpos];
-    }
-    
-    /**
-     * @deprecated
-     * @see #getEndLine
-     */
-    public int getLine() {
-        return bufline[bufpos];
-    }
-
-    /** Get token end column number. */
-    public int getEndColumn() {
-        return bufcolumn[bufpos];
-    }
-    
-    /** Get token end line number. */
-    public int getEndLine() {
-        return bufline[bufpos];
-    }
-    
+   
     /** Get token beginning column number. */
-    public int getBeginColumn() {
+    int getBeginColumn() {
         return bufcolumn[tokenBegin];
     }
     
     /** Get token beginning line number. */
-    public int getBeginLine() {
+    int getBeginLine() {
         return bufline[tokenBegin];
     }
-
+   
+    /** Get token end column number. */
+    int getEndColumn() {
+        return bufcolumn[bufpos];
+    }
+    
+    /** Get token end line number. */
+    int getEndLine() {
+        return bufline[bufpos];
+    }
+    
+   
     /** Backup a number of characters. */
     public void backup(int amount) {
         inBuf += amount;
@@ -393,7 +379,7 @@ public class ${classname} {
             available = tokenBegin;
     }
 
-    protected char ReadByte() throws IOException {
+    private char readByte() throws IOException {
         if (++nextCharInd >= maxNextCharInd)
             FillBuff();
 
