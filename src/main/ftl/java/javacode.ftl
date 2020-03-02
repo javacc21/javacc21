@@ -152,7 +152,6 @@
                     ${nodeVarName}.setEndColumn(jjtEndToken.endColumn);
                 } else {
                     clearNodeScope();
-                    mark = marks.remove(marks.size()-1);
                 }
             }
           ${grammar.popNodeVariableName()!}

@@ -13,7 +13,7 @@
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
  *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
+ *       or promote products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -45,9 +45,6 @@
     private boolean specialTokensAreNodes = false;
 [/#if]
     private ArrayList<Node> nodes = new ArrayList<>();
-    private ArrayList<java.lang.Integer> marks = new ArrayList<>();
-
-    private int mark;    // current mark
     private boolean node_created;
     NodeScope currentNodeScope = new NodeScope(null);
     
@@ -122,21 +119,18 @@
 	 */
 	  
     public int nodeArity() {
-//        return nodes.size() - mark;
         return currentNodeScope.size();
     }
 
 
     public void clearNodeScope() {
 //        currentNodeScope.clear();
-        while (nodes.size() > mark) {
+        while (!currentNodeScope.isEmpty()) {
             popNode();
         }
     }
     
     public void openNodeScope(Node n) {
-        marks.add(mark);
-        mark = nodes.size();
         currentNodeScope = new NodeScope(currentNodeScope);
         n.open();
     }
@@ -148,7 +142,6 @@
 	 * is pushed on to the stack. */
 	 
     public void closeNodeScope(Node n, int num) {
-        mark = marks.remove(marks.size() - 1);
         currentNodeScope.parentScope.addAll(currentNodeScope);
         currentNodeScope = currentNodeScope.parentScope;
         ArrayList<Node> nodes = new ArrayList<Node>();
@@ -187,7 +180,6 @@
     public void closeNodeScope(Node n, boolean condition) {
         if (condition) {
             int a = nodeArity();
-            mark = marks.remove(marks.size() - 1);
             currentNodeScope.parentScope.addAll(currentNodeScope);
             currentNodeScope = currentNodeScope.parentScope;
             ArrayList<Node> nodes = new ArrayList<Node>();
@@ -213,7 +205,6 @@
             pushNode(n);
             node_created = true;
         } else {
-            mark = marks.remove(marks.size() - 1);
             currentNodeScope.parentScope.addAll(currentNodeScope);
             currentNodeScope = currentNodeScope.parentScope;
             node_created = false;
@@ -241,20 +232,6 @@
 
         NodeScope(NodeScope parentScope) {
             this.parentScope = parentScope;
-        }
-
-        void close() {
-
-        }
-
-        int nestingLevel() {
-            int result = -1;
-            NodeScope ns = this;
-            while (ns !=null) {
-                ns = ns.parentScope;
-                result++;
-            }
-            return result;
         }
     }
 
