@@ -237,9 +237,7 @@ public class ParserData {
                     tokenMask2.set(i, true);
                 }
             }
-            if (grammar.getOptions().getErrorReporting()) {
-                tokenMasks.add(tokenMask);
-            }
+            tokenMasks.add(tokenMask);
         }
     }
 

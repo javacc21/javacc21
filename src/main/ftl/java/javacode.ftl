@@ -48,11 +48,9 @@
       catch(LookaheadSuccess ls) {
           return true; 
       }
-      [#if grammar.options.errorReporting]
       finally {
           jj_save(${(expansion.internalName?substring(1)?number-1)}, xla);
       }
-      [/#if]
   }
 [/#macro]
 
@@ -331,10 +329,8 @@ throw new ParseException();"]
             } else if (
          [#else]
             default:
-            [#if grammar.options.errorReporting]
                 jj_la1[${tokenMaskIndex}] = jj_gen;
                [#set tokenMaskIndex = tokenMaskIndex+1]
-            [/#if]
                if (
                [#set indentLevel = indentLevel+1]
          [/#if]
@@ -371,10 +367,8 @@ throw new ParseException();"]
              } else if (
           [#else]
              default:
-               [#if grammar.options.errorReporting]
                  jj_la1[${tokenMaskIndex}] = jj_gen;
                  [#set tokenMaskIndex = tokenMaskIndex+1]
-              [/#if]
               if (
                 [#set indentLevel = indentLevel+1]
           [/#if]
@@ -390,10 +384,8 @@ throw new ParseException();"]
              ${defaultAction}
       [#else]
              default:
-          [#if grammar.options.errorReporting]
                 jj_la1[${tokenMaskIndex}] = jj_gen;
                  [#set tokenMaskIndex = tokenMaskIndex+1]
-          [/#if]
                 ${defaultAction}
       [/#if]
       [#if indentLevel != 0]
@@ -421,12 +413,10 @@ throw new ParseException();"]
              int${newVarIndex} == ${token} [#if token_has_next]|| [/#if]
       [/#list]
      [/#set]
-      [#if grammar.options.errorReporting]
-         [#set fallback = "
+      [#set fallback = "
                jj_la1[${tokenMaskIndex}] = jj_gen;
                "+fallback!]
-               [#set tokenMaskIndex = tokenMaskIndex+1]
-      [/#if]
+       [#set tokenMaskIndex = tokenMaskIndex+1]
    [/#if]
   [@ifelse condition, action, fallback/]
 [/#macro]
@@ -456,10 +446,8 @@ throw new ParseException();"]
    [#if expansion.internalName?starts_with("jj_scan_token")][#return][/#if]
    private boolean jj_3${expansion.internalName}() {
         [#if grammar.options.debugLookahead&&expansion.parentObject.class.name?ends_with("Production")]
-           [#if grammar.options.errorReporting]
       if (!rescan) 
-           [/#if]
-      trace_call("${expansion.parentObject.name} (LOOKING AHEAD...)");
+          trace_call("${expansion.parentObject.name} (LOOKING AHEAD...)");
             [#set jj3_expansion = expansion]
        [#else]
             [#set jj3_expansion = null]
@@ -594,9 +582,7 @@ throw new ParseException();"]
        [#set tracecode]
  trace_return("${jj3_expansion.parentObject.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
        [/#set]
-       [#if grammar.options.errorReporting] 
-         [#set tracecode = "if (!rescan) "+tracecode]
-       [/#if]
+       [#set tracecode = "if (!rescan) "+tracecode]
   { ${tracecode} return {bool?string("true", "false")};
               return "return " + retval + ";";
     [#else]

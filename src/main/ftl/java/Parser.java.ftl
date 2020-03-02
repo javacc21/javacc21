@@ -102,7 +102,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   private boolean jj_semLA;
 [/#if]
 
-[#if grammar.options.errorReporting]
   private int jj_gen;
   final private int[] jj_la1 = new int[${parserData.tokenMaskValues?size}];
  [#var tokenMaskSize=(tokenCount-1)/32]
@@ -129,7 +128,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 	  private boolean rescan = false;
 	  private int jj_gc = 0;
  [/#if]
-[/#if]
 
 
 [#if !grammar.options.userDefinedLexer]
@@ -142,12 +140,10 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     token_source = new ${grammar.lexerClassName}(stream);
        [/#if]
     current_token = new Token();
-       [#if grammar.options.errorReporting]
     for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
           [#if hasPhase2]
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
           [/#if]
-       [/#if]
   }
 
   [#else]
@@ -168,13 +164,11 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     token_source = new ${grammar.lexerClassName}(inputStream);
     [/#if]
     current_token = new Token();
-    [#if grammar.options.errorReporting]
-    for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
+        for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
         [#if hasPhase2]
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
         [/#if]
-    [/#if]
-  }
+      }
   [/#if]
 [/#if]
 
@@ -187,12 +181,10 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [/#if]
     token_source = tm;
     current_token = new Token();
-[#if grammar.options.errorReporting]
     for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
   [#if hasPhase2]
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   [/#if]
-[/#if]
   }
   
  [#if grammar.options.faultTolerant]
@@ -208,9 +200,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     if (current_token.next != null) current_token = current_token.next;
     else current_token = current_token.next = token_source.getNextToken();
     if (current_token.kind != kind ) {
-[#if grammar.options.errorReporting]
-	       jj_kind = kind;
-[/#if]
+     jj_kind = kind;
 [#if !grammar.options.faultTolerant]
 	    current_token = oldToken;
 	    throw generateParseException();
@@ -231,7 +221,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [/#if]
      }      
     
-   [#if grammar.options.errorReporting]
       jj_gen++;
     [#if hasPhase2]
       if (++jj_gc > 100) {
@@ -245,7 +234,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         }
       }
     [/#if]
- [/#if]
 
 [#if grammar.options.debugParser]
       trace_token(current_token, "");
@@ -288,8 +276,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     } else {
       jj_scanpos = jj_scanpos.next;
     }
-   [#if grammar.options.errorReporting]
-    if (rescan) {
+       if (rescan) {
       int i = 0; Token tok = current_token;
       while (tok != null && tok != jj_scanpos) { i++; tok = tok.next; }
       if (tok != null) jj_add_error_token(kind, i);
@@ -298,10 +285,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
       trace_scan(jj_scanpos, kind);
       [/#if]
     }
-   [#elseif grammar.options.debugLookahead]
-    trace_scan(jj_scanpos, kind);
-   [/#if]
-    if (jj_scanpos.kind != kind) return true;
+     if (jj_scanpos.kind != kind) return true;
     if (jj_la == 0 && jj_scanpos == jj_lastpos) throw ls;
     return false;
   }
@@ -311,9 +295,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   final public Token getNextToken() {
     if (current_token.next != null) current_token = current_token.next;
     else current_token = current_token.next = token_source.getNextToken();
-[#if grammar.options.errorReporting]
     jj_gen++;
-[/#if]
 [#if grammar.options.debugParser]
       trace_token(current_token, " (in getNextToken)");
 [/#if]
@@ -341,7 +323,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     return current_token.next.kind;
   }
 
-[#if grammar.options.errorReporting]
   private java.util.ArrayList<int[]> jj_expentries = new java.util.ArrayList<int[]>();
   private int[] jj_expentry;
   private int jj_kind = -1;
@@ -411,17 +392,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     } 
     return new ParseException(current_token, exptokseq, tokenImage);
   }
-  [#else]
-  /** Generate ParseException. */
-  public ParseException generateParseException() {
-    Token errortok = current_token.next;
-    int line = errortok.beginLine, column = errortok.beginColumn;
-    String mess = (errortok.kind == 0) ? tokenImage[0] : errortok.image;
-    return new ParseException("Parse error at line " + line + ", column " + column + ".  " +
-               "Encountered: " + mess);
-  }
-  [/#if]
-
+ 
 [#if grammar.options.debugParser]
   private int trace_indent = 0;
   private boolean trace_enabled = true;
@@ -486,7 +457,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
 [/#if]
 
-[#if hasPhase2&&grammar.options.errorReporting]
+[#if hasPhase2]
   private void rescanToken() {
     rescan = true;
     for (int i = 0; i < ${parserData.phase2Lookaheads?size}; i++) {
@@ -517,9 +488,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     p.gen = jj_gen + xla - jj_la; p.first = current_token; p.arg = xla;
   }
 
-[/#if]
 
-[#if hasPhase2&&grammar.options.errorReporting]
   static final class JJCalls {
     int gen;
     Token first;

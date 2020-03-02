@@ -138,7 +138,6 @@ public class JavaCCOptions {
         optionValues.put("DEBUG_PARSER", false);
         optionValues.put("DEBUG_LOOKAHEAD", false);
         optionValues.put("DEBUG_LEXER", false);
-        optionValues.put("ERROR_REPORTING", true);
         optionValues.put("FAULT_TOLERANT", false);
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
         optionValues.put("IGNORE_CASE", false);
@@ -492,15 +491,6 @@ public class JavaCCOptions {
      */
     public boolean getDebugLexer() {
         return booleanValue("DEBUG_LEXER");
-    }
-
-    /**
-     * Find the error reporting value.
-     *
-     * @return The requested error reporting value.
-     */
-    public boolean getErrorReporting() {
-        return booleanValue("ERROR_REPORTING");
     }
 
     /**

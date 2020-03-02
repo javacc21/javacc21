@@ -74,7 +74,6 @@ public final class Main {
         System.out.println("    DEBUG_PARSER           (default false)");
         System.out.println("    DEBUG_LOOKAHEAD        (default false)");
         System.out.println("    DEBUG_LEXER            (default false)");
-        System.out.println("    ERROR_REPORTING        (default true)");
         System.out.println("    FAULT_TOLERANT         (default false)");
         System.out.println("    FREEMARKER_NODES       (default false)");
         System.out.println("    IGNORE_CASE            (default false)");
