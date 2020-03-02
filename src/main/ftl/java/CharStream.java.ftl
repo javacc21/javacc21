@@ -47,7 +47,7 @@ public class ${classname} {
      */
     public int getTabSize() {return tabSize;}
     
-    private void ExpandBuff(boolean wrapAround) {
+    private void expandBuff(boolean wrapAround) {
         char[] newbuffer = new char[bufsize + 2048];
 
         int newbufline[] = new int[bufsize + 2048];
@@ -194,7 +194,7 @@ public class ${classname} {
         }
 [#else]        
         if (++bufpos >= maxNextCharInd) {
-            FillBuff();
+            fillBuff();
         }
         char c = buffer[bufpos];
 [/#if]        
@@ -257,7 +257,7 @@ public class ${classname} {
     }
     
     /** Get token literal value. */
-    public String GetImage() {
+    public String getImage() {
         if (bufpos >= tokenBegin) { 
             return new String(buffer, tokenBegin, bufpos - tokenBegin + 1);
         }
@@ -268,7 +268,7 @@ public class ${classname} {
     }
     
     /** Get the suffix. */
-    public char[] GetSuffix(int len) {
+    public char[] getSuffix(int len) {
         char[] ret = new char[len];
         if ((bufpos + 1) >= len) { 
             System.arraycopy(buffer, bufpos - len + 1, ret, 0, len);
@@ -370,23 +370,23 @@ public class ${classname} {
                 bufpos = 0;
                 available = tokenBegin;
             } else
-                ExpandBuff(false);
+                expandBuff(false);
         } else if (available > tokenBegin)
             available = bufsize;
         else if ((tokenBegin - available) < 2048)
-            ExpandBuff(true);
+            expandBuff(true);
         else
             available = tokenBegin;
     }
 
     private char readByte() throws IOException {
         if (++nextCharInd >= maxNextCharInd)
-            FillBuff();
+            fillBuff();
 
         return nextCharBuf[nextCharInd];
     }
     
-    protected void FillBuff() throws IOException {
+    private void fillBuff() throws IOException {
         int i;
         if (maxNextCharInd == 4096)
             maxNextCharInd = nextCharInd = 0;
@@ -411,7 +411,7 @@ public class ${classname} {
         }
     }
   
-    public char BeginToken() throws IOException {
+    public char beginToken() throws IOException {
         if (inBuf > 0) {
             --inBuf;
 
@@ -431,7 +431,7 @@ public class ${classname} {
     protected char[] nextCharBuf;
     protected int nextCharInd = -1;
 [#else]
-    protected void FillBuff() throws IOException {
+    private void fillBuff() throws IOException {
         if (maxNextCharInd == available) {
             if (available == bufsize) {
                  if (tokenBegin > 2048) {
@@ -442,14 +442,14 @@ public class ${classname} {
                     bufpos = maxNextCharInd = 0;
                 }
                 else {
-                    ExpandBuff(false);
+                    expandBuff(false);
                 }
             }
 	        else if (available > tokenBegin) {
                available = bufsize; 
             }
             else if ((tokenBegin - available) < 2048) {
-                ExpandBuff(true);
+                expandBuff(true);
             }
             else {
                 available = tokenBegin;
@@ -476,7 +476,7 @@ public class ${classname} {
         }
     }
     
-    public char BeginToken() throws IOException {
+    public char beginToken() throws IOException {
         tokenBegin = -1;
         char c = readChar();
         tokenBegin = bufpos;

@@ -272,7 +272,7 @@ public class LexicalState {
 
     void process(List<RegexpChoice> choices) {
         images = new String[lexerData.getTokenCount()];
-        this.index = lexerData.GetIndex(this.name);
+        this.index = lexerData.getIndex(this.name);
         suffix = "_" + name;
         if (suffix.equals("_DEFAULT")) {
             suffix = "";

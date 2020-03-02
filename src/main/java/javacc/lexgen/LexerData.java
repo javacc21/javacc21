@@ -227,7 +227,7 @@ public class LexerData {
         lastIndex = i;
     }
 
-    public int GetIndex(String name) {
+    public int getIndex(String name) {
         for (int i = 0; i < lexicalStates.size(); i++) {
             if (lexicalStates.get(i).getName().equals(name)) {
                 return i;

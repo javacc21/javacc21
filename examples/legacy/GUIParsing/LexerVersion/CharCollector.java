@@ -107,7 +107,7 @@ public class CharCollector implements CharStream {
      notify();
   }
 
-  public char BeginToken() throws java.io.IOException
+  public char beginToken() throws java.io.IOException
   {
      tokenBegin = -1;
      char c = readChar();
@@ -191,7 +191,7 @@ public class CharCollector implements CharStream {
      inBuf = 0;
   }
 
-  public final String GetImage()
+  public final String getImage()
   {
      if (bufpos >= tokenBegin)
         return new String(buffer, tokenBegin, bufpos - tokenBegin + 1);
@@ -200,7 +200,7 @@ public class CharCollector implements CharStream {
                               new String(buffer, 0, bufpos + 1);
   }
 
-  public final char[] GetSuffix(int len)
+  public final char[] getSuffix(int len)
   {
      char[] ret = new char[len];
 

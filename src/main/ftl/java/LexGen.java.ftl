@@ -91,7 +91,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         [#if regexp.newLexicalState?is_null]
           -1, 
         [#else]
-          ${lexerData.GetIndex(regexp.newLexicalState.name)}, 
+          ${lexerData.getIndex(regexp.newLexicalState.name)}, 
         [/#if]
   [/#list]
   };
@@ -211,7 +211,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     EOFLoop :
     while (true) {
        try {
-          curChar = input_stream.BeginToken();
+          curChar = input_stream.beginToken();
        }
        catch(java.io.IOException e) {
 [#if options.debugLexer]			
@@ -278,7 +278,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                    [/#set] 
                     debugStream.println(${debugOutput?trim}); 
          [/#if]
-                    curChar = input_stream.BeginToken();
+                    curChar = input_stream.beginToken();
          [#if options.debugLexer]
                 }
          [/#if]
@@ -351,7 +351,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      [/#if]
      [#if options.debugLexer]
           debugStream.println("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
-              + LexicalException.addEscapes(new String(input_stream.GetSuffix(jjmatchedPos + 1))) + ") ******\n");
+              + ParseException.addEscapes(new String(input_stream.getSuffix(jjmatchedPos + 1))) + ") ******\n");
      [/#if]
 
      [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
@@ -477,7 +477,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
    try { input_stream.readChar(); input_stream.backup(1); }
    catch (java.io.IOException e1) {
       EOFSeen = true;
-      error_after = curPos <= 1 ? "" : input_stream.GetImage();
+      error_after = curPos <= 1 ? "" : input_stream.getImage();
       if (curChar == '\n' || curChar == '\r') {
           error_line++;
           error_column = 0;
@@ -487,7 +487,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
    }         
    if (!EOFSeen) {
       input_stream.backup(1);
-      error_after = curPos <= 1 ? "" : input_stream.GetImage();
+      error_after = curPos <= 1 ? "" : input_stream.getImage();
    }
    throw new LexicalException(EOFSeen, curLexState, error_line, error_column, error_after, curChar, inputSource);
   [/#if]    
@@ -510,9 +510,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 		  case ${i} : 
           [#if lexicalState.initMatch = i&&lexicalState.canLoop]
              [#-- Do we ever enter this block? If so, when? (JR) --]
-             [#var lexicalStateIndex=lexerData.GetIndex(lexicalState.name)]
+             [#var lexicalStateIndex=lexerData.getIndex(lexicalState.name)]
               if (jjmatchedPos == -1) {
-                 if (jjbeenHere[${lexerData.GetIndex(lexicalState.name)}] &&
+                 if (jjbeenHere[${lexerData.getIndex(lexicalState.name)}] &&
                      jjemptyLineNo[${lexicalStateIndex}] == input_stream.getBeginLine() && 
                      jjemptyColNo[${lexicalStateIndex}] == input_stream.getBeginColumn())
                           throw new LexicalException("Error: Bailing out of infinite loop caused by repeated empty string matches " +
@@ -527,7 +527,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             [#if i = 0]
               image.setLength(0); // For EOF no image is there
             [#else]
-              image.append(input_stream.GetSuffix(jjimageLen + jjmatchedPos + 1));
+              image.append(input_stream.getSuffix(jjimageLen + jjmatchedPos + 1));
             [/#if]
 		      ${act.javaCode}
 		  [/#if]
@@ -554,14 +554,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           beginLine = endLine = input_stream.getBeginLine();
           beginColumn = endColumn = input_stream.getBeginColumn();
         } else {
-               curTokenImage = input_stream.GetImage(); 
+               curTokenImage = input_stream.getImage(); 
                beginLine = input_stream.getBeginLine();
                beginColumn = input_stream.getBeginColumn();
                endLine = input_stream.getEndLine();
                endColumn = input_stream.getEndColumn();
         }
     [#else]
-        curTokenImage = input_stream.GetImage();
+        curTokenImage = input_stream.getImage();
         beginLine = input_stream.getBeginLine();
         beginColumn = input_stream.getBeginColumn();
         endLine = input_stream.getEndLine();
