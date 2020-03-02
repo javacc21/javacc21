@@ -66,7 +66,7 @@
            includeantruntime="yes"
     />
      <copy todir="build/javacc/output/java">
-      <fileset dir="src/main/ftl/java">
+      <fileset dir="src/main/resources/templates/java">
          <include name="*.ftl"/>
       </fileset>
     </copy>
