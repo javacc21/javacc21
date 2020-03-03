@@ -91,11 +91,12 @@ public class ${classname} {
         tokenBegin = 0;
     }
     
-    private void UpdateLineColumn(char c) {
+    private void updateLineColumn(char c) {
         column++;
         if (prevCharIsLF) {
             prevCharIsLF = false;
-            line += (column = 1);
+            ++line;
+            column = 1;
         }
         else if (prevCharIsCR) {
             prevCharIsCR = false;
@@ -103,7 +104,8 @@ public class ${classname} {
                 prevCharIsLF = true;
             }
             else {
-                line += (column = 1);
+                ++line;
+                column = 1;
             }
         }
         switch(c) {
@@ -139,7 +141,7 @@ public class ${classname} {
 
         char c;
         if ((buffer[bufpos] = c = readByte()) == '\\') {
-            UpdateLineColumn(c);
+            updateLineColumn(c);
             int backSlashCnt = 1;
 
             for (;;) // Read all the backslashes
@@ -149,7 +151,7 @@ public class ${classname} {
 
                 try {
                     if ((buffer[bufpos] = c = readByte()) != '\\') {
-                        UpdateLineColumn(c);
+                        updateLineColumn(c);
                         // found a non-backslash char.
                         if ((c == 'u') && ((backSlashCnt & 1) == 1)) {
                             if (--bufpos < 0)
@@ -167,7 +169,7 @@ public class ${classname} {
 
                     return '\\';
                 }
-                UpdateLineColumn(c);
+                updateLineColumn(c);
                 backSlashCnt++;
             }
 
@@ -198,7 +200,7 @@ public class ${classname} {
         }
         char c = buffer[bufpos];
 [/#if]        
-        UpdateLineColumn(c);
+        updateLineColumn(c);
         return c;
     }
     
