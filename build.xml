@@ -10,7 +10,7 @@
 	<echo>JDK Version: ${java.version} on ${os.name}</echo>
 	<uptodate property="parser.uptodate"
                  targetfile="src/main/java/javacc/parser/JavaCCParser.java">
-	 <srcfiles dir="src/main/javacc" includes="*.javacc"/>
+	 <srcfiles dir="src/main/grammars" includes="*.javacc"/>
 	</uptodate>
   </target>
 
@@ -49,7 +49,7 @@
             </condition>
          </fail>
  	<java jar="bin/javacc.jar" fork="true">
- 	   <arg value="src/main/javacc/JavaCC.javacc"/>
+ 	   <arg value="src/main/grammars/JavaCC.javacc"/>
  	</java>
   </target>
 

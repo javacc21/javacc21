@@ -8,7 +8,7 @@
 </target>
 
 <target name="init">
-   <uptodate property="javaparser.uptodate" srcfile="../../src/main/javacc/Java.javacc" targetfile="javagrammar/JavaParser.java"
+   <uptodate property="javaparser.uptodate" srcfile="../../src/main/grammars/Java.javacc" targetfile="javagrammar/JavaParser.java"
 />
    <mkdir dir="javagrammar"/>
 </target>
@@ -18,7 +18,7 @@
     <arg value="-q"/>
     <arg value="-BASE_SRC_DIR=${basedir}/../../examples/java" />
     <arg value="-PARSER_PACKAGE=&quot;javagrammar&quot;" />
-    <arg value="${basedir}/../../src/main/javacc/Java.javacc"/>
+    <arg value="${basedir}/../../src/main/grammars/Java.javacc"/>
   </java>
 </target>
  
