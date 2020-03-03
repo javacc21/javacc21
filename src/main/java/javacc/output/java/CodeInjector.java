@@ -43,16 +43,16 @@ class CodeInjector {
     
     private String parserPackage, nodePackage, parserClassName, lexerClassName, constantsClassName, baseNodeClassName;
     
-    private Map<String, TypeDeclaration> types = new HashMap<String, TypeDeclaration>();
-    private Map<String, Set<ImportDeclaration>> imports = new HashMap<String, Set<ImportDeclaration>>();
-    private Map<String, ExtendsList> extendsLists = new HashMap<String, ExtendsList>();
-    private Map<String, ImplementsList> implementsLists = new HashMap<String, ImplementsList>();
-    private Map<String, TypeParameterList> typeParameterLists = new HashMap<String, TypeParameterList>();
-    private Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<String, List<ClassOrInterfaceBodyDeclaration>>();
-    private Set<String> overriddenMethods = new HashSet<String>();
-    private Set<String> typeNames = new HashSet<String>();
-    private Map<String, String> explicitPackages = new HashMap<String, String>();
-    private Set<String> interfaces = new HashSet<String>();
+    private Map<String, TypeDeclaration> types = new HashMap<>();
+    private Map<String, Set<ImportDeclaration>> imports = new HashMap<>();
+    private Map<String, ExtendsList> extendsLists = new HashMap<>();
+    private Map<String, ImplementsList> implementsLists = new HashMap<>();
+    private Map<String, TypeParameterList> typeParameterLists = new HashMap<>();
+    private Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
+    private Set<String> overriddenMethods = new HashSet<>();
+    private Set<String> typeNames = new HashSet<>();
+    private Map<String, String> explicitPackages = new HashMap<>();
+    private Set<String> interfaces = new HashSet<>();
     
     CodeInjector(String parserClassName,
                  String lexerClassName,

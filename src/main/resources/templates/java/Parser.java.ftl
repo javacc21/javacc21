@@ -323,7 +323,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     return current_token.next.kind;
   }
 
-  private java.util.ArrayList<int[]> jj_expentries = new java.util.ArrayList<int[]>();
+  ArrayList<int[]> jj_expentries = new ArrayList<>();
   private int[] jj_expentry;
   private int jj_kind = -1;
   [#if hasPhase2]
@@ -339,7 +339,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
       for (int i = 0; i < endPosition; i++) {
         jj_expentry[i] = jj_lasttokens[i];
       }
-      jj_entries_loop: for (java.util.Iterator<int[]> it = jj_expentries.iterator(); it.hasNext();) {
+      jj_entries_loop: for (Iterator<int[]> it = jj_expentries.iterator(); it.hasNext();) {
         int[] oldentry = (int[])(it.next());
         if (oldentry.length == jj_expentry.length) {
           for (int i = 0; i < jj_expentry.length; i++) {

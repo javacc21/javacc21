@@ -34,7 +34,7 @@ import java.util.*;
 
 import javacc.Grammar;
 import javacc.lexgen.RegularExpression;
-import javacc.parser.LexicalException;
+import javacc.parser.ParseException;
 import javacc.parser.Nodes;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
@@ -93,7 +93,7 @@ public class LookaheadCalc {
             } else {
                 RegularExpression re = grammar.getRegexpForToken(m.match[i]);
                 if (re instanceof RegexpStringLiteral) {
-                    ret += " \"" + LexicalException.addEscapes(((RegexpStringLiteral) re).getImage()) + "\"";
+                    ret += " \"" + ParseException.addEscapes(((RegexpStringLiteral) re).getImage()) + "\"";
                 } else if (re.getLabel() != null && !re.getLabel().equals("")) {
                     ret += " <" + re.getLabel() + ">";
                 } else {

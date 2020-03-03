@@ -35,7 +35,7 @@ import java.util.*;
 import javacc.Grammar;
 import javacc.parser.tree.Expression;
 import javacc.parsegen.Expansion;
-import javacc.parser.LexicalException;
+import javacc.parser.ParseException;
 import javacc.parser.tree.Action;
 import javacc.parser.tree.CharacterList;
 import javacc.parser.tree.CharacterRange;
@@ -260,15 +260,15 @@ public abstract class RegularExpression extends Expansion {
                 if (o.isSingleChar()) {
                     returnString += "\"";
                     char s[] = { o.left };
-                    returnString += LexicalException.addEscapes(new String(s));
+                    returnString += ParseException.addEscapes(new String(s));
                     returnString += "\"";
                 } else if (o instanceof CharacterRange) {
                     returnString += "\"";
                     char s[] = { ((CharacterRange) o).left };
-                    returnString += LexicalException.addEscapes(new String(s));
+                    returnString += ParseException.addEscapes(new String(s));
                     returnString += "\"-\"";
                     s[0] = ((CharacterRange) o).right;
-                    returnString += LexicalException.addEscapes(new String(s));
+                    returnString += ParseException.addEscapes(new String(s));
                     returnString += "\"";
                 } else {
                     throw new RuntimeException("Oops: unknown character list element type.");
@@ -316,7 +316,7 @@ public abstract class RegularExpression extends Expansion {
                         returnString.length() - 1);
         } else if (re instanceof RegexpStringLiteral) {
             RegexpStringLiteral sl = (RegexpStringLiteral) re;
-            returnString += ("\"" + LexicalException.addEscapes(sl.getImage()) + "\"");
+            returnString += ("\"" + ParseException.addEscapes(sl.getImage()) + "\"");
         } else if (re instanceof ZeroOrMoreRegexp) {
             ZeroOrMoreRegexp zm = (ZeroOrMoreRegexp) re;
             returnString += "(";

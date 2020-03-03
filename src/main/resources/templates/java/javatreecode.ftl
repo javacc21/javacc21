@@ -117,7 +117,7 @@
         for (int i=0;i<num;i++) {
            nodes.add(popNode());
         }
-        java.util.Collections.reverse(nodes);
+        Collections.reverse(nodes);
         for (Node child : nodes) {
         	if (specialTokensAreNodes && (child instanceof Token)) {
         	    Token token = (Token) child;
@@ -152,7 +152,7 @@
             while (a-- > 0) {
                 nodes.add(popNode());
             }
-            java.util.Collections.reverse(nodes);
+            Collections.reverse(nodes);
             for (Node child : nodes) {
 	        	if (specialTokensAreNodes && (child instanceof Token)) {
 	        	    Token token = (Token) child;
@@ -189,7 +189,10 @@
      */
     
     ${grammar.parserClassName} jjtree = this; 
-
+    
+    
+    
+    @SuppressWarnings("serial")
     class NodeScope extends ArrayList<Node> {
         NodeScope parentScope;
 
