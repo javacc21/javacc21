@@ -220,7 +220,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 			jjmatchedKind = 0;
             matchedToken = jjFillToken();
 [#if grammar.nextStateForEOF?? || grammar.eofAction??]
-            TokenLexicalActions(matchedToken);
+            tokenLexicalActions(matchedToken);
 [/#if]
 [#if grammar.usesCommonTokenAction]
             CommonTokenAction(matchedToken);
@@ -369,7 +369,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      [/#if]
 
      [#if lexerData.hasTokenActions]
-          TokenLexicalActions(matchedToken);
+          tokenLexicalActions(matchedToken);
      [/#if]
 
      [#if grammar.usesCommonTokenAction]
@@ -416,16 +416,16 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
               }
 
               [#if lexerData.hasSkipActions]
-              TokenLexicalActions(matchedToken);
+              tokenLexicalActions(matchedToken);
               [/#if]
           }
       
               [#if lexerData.hasSkipActions]
               else 
-                 TokenLexicalActions(null);
+                 tokenLexicalActions(null);
               [/#if]
           [#elseif lexerData.hasSkipActions]
-            TokenLexicalActions(null);
+            tokenLexicalActions(null);
           [/#if]
 
           [#if numLexicalStates>1]
@@ -439,7 +439,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
          [#if lexerData.hasMore]
           [#if lexerData.hasMoreActions]
-          TokenLexicalActions(null);
+          tokenLexicalActions(null);
           [#elseif lexerData.hasSkipActions || lexerData.hasTokenActions]
           jjimageLen += jjmatchedPos + 1;
 		  [/#if]
@@ -497,7 +497,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      }
   }
 
-    void TokenLexicalActions(Token matchedToken) {
+    private void tokenLexicalActions(Token matchedToken) {
        switch(jjmatchedKind) {
    [#list 0..(tokenCount-1) as i]
       [#var regexp=lexerData.getRegularExpression(i)]
