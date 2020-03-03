@@ -31,7 +31,7 @@ public class ${classname} {
     private int column = 0;
     private int line = 1;
     private boolean prevCharIsCR, prevCharIsLF;
-    private Reader inputStream;
+    private Reader reader;
     private char[] buffer;
     private int maxNextCharInd, inBuf, tabSize=8;
     
@@ -235,8 +235,8 @@ public class ${classname} {
     }
 
     /** Constructor. */
-    public ${classname}(Reader dstream, int startline, int startcolumn, int buffersize) {
-        inputStream = dstream;
+    public ${classname}(Reader reader, int startline, int startcolumn, int buffersize) {
+        this.reader = reader;
         line = startline;
         column = startcolumn - 1;
         available = bufsize = buffersize;
@@ -249,13 +249,13 @@ public class ${classname} {
      }
 
      /** Constructor. */
-    public ${classname}(Reader dstream, int startline, int startcolumn) {
-        this(dstream, startline, startcolumn, 4096);
+    public ${classname}(Reader reader, int startline, int startcolumn) {
+        this(reader, startline, startcolumn, 4096);
     }
 
     /** Constructor. */
-    public ${classname}(Reader dstream) {
-        this(dstream, 1, 1, 4096);
+    public ${classname}(Reader reader) {
+        this(reader, 1, 1, 4096);
     }
     
     /** Get token literal value. */
@@ -359,9 +359,9 @@ public class ${classname} {
             maxNextCharInd = nextCharInd = 0;
 
         try {
-            if ((i = inputStream.read(nextCharBuf, maxNextCharInd,
+            if ((i = reader.read(nextCharBuf, maxNextCharInd,
                     4096 - maxNextCharInd)) == -1) {
-                inputStream.close();
+                reader.close();
                 throw new IOException();
             } else
                 maxNextCharInd += i;
@@ -424,8 +424,8 @@ public class ${classname} {
         }
         int i;
         try {
-            if ((i = inputStream.read(buffer, maxNextCharInd, available - maxNextCharInd)) == -1) {
-                inputStream.close();
+            if ((i = reader.read(buffer, maxNextCharInd, available - maxNextCharInd)) == -1) {
+                reader.close();
                 throw new IOException();
             }
             else {
