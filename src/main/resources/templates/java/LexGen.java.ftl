@@ -150,9 +150,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
 
 [#if lexerData.hasActions()]
-    private final StringBuilder jjimage = new StringBuilder();
-    private StringBuilder image = jjimage;
-    private int jjimageLen;
+    private final StringBuilder image = new StringBuilder();
+    private int matchedCharsLength;
 [/#if]
 
     char curChar;
@@ -233,9 +232,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        }
 
 [#if lexerData.hasActions()]
-       image = jjimage;
        image.setLength(0);
-       jjimageLen = 0;
+       matchedCharsLength = 0;
 [/#if]
 
 [#if lexerData.hasMore]
@@ -441,7 +439,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           [#if lexerData.hasMoreActions]
           tokenLexicalActions(null);
           [#elseif lexerData.hasSkipActions || lexerData.hasTokenActions]
-          jjimageLen += jjmatchedPos + 1;
+          matchedCharsLength += jjmatchedPos + 1;
 		  [/#if]
 		  
           [#if numLexicalStates>1]
@@ -525,9 +523,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           [/#if]
 		  [#if act??&&act.javaCode?has_content]
             [#if i = 0]
-              image.setLength(0); // For EOF no image is there
+              image.setLength(0); // For EOF no chars are matched
             [#else]
-              image.append(input_stream.getSuffix(jjimageLen + jjmatchedPos + 1));
+              image.append(input_stream.getSuffix(matchedCharsLength + jjmatchedPos + 1));
             [/#if]
 		      ${act.javaCode}
 		  [/#if]
@@ -550,7 +548,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         final int endColumn;
     [#if lexerData.hasEmptyMatch]
         if (jjmatchedPos < 0) {
-          curTokenImage = (image != null) ? image.toString() : ""; 
+          curTokenImage = image.toString();
           beginLine = endLine = input_stream.getBeginLine();
           beginColumn = endColumn = input_stream.getBeginColumn();
         } else {
