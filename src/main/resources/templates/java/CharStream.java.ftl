@@ -23,7 +23,23 @@ import java.io.*;
 [/#if]
 
 public class ${classname} {
-    private int bufsize, available, tokenBegin;
+
+
+    private class LocationInfo {
+         char ch;     
+         int bufferPosition, line, column;
+    }
+   private LocationInfo[] locationInfoBuffer;
+   
+   private LocationInfo getLocationInfo(int i) {
+       if (locationInfoBuffer[i] == null) {
+           locationInfoBuffer[i] = new LocationInfo();
+       }
+       return locationInfoBuffer[i];
+   }
+
+    private final int bufsize = 4096;
+    private int available, tokenBegin;
     /** Position in buffer. */
     private int bufpos = -1;
     private int bufline[];
@@ -32,8 +48,12 @@ public class ${classname} {
     private int line = 1;
     private boolean prevCharIsCR, prevCharIsLF;
     private Reader reader;
-    private char[] buffer;
+//    private char[] buffer;
+    
     private int maxNextCharInd, backupAmount, tabSize=8;
+    
+    
+        
     
     
     /**
@@ -47,51 +67,6 @@ public class ${classname} {
      * purposes, default value is 8.
      */
     public int getTabSize() {return tabSize;}
-    
-    private void expandBuff(boolean wrapAround) {
-    
-    // It's amazing. We never enter this very complicated method!
-    // I suppose it only works (or maybe does) for very long tokens.
-        throw new UnsupportedOperationException();
-/*            
-        char[] newbuffer = new char[bufsize + 2048];
-
-        int newbufline[] = new int[bufsize + 2048];
-        int newbufcolumn[] = new int[bufsize + 2048];
-        if (wrapAround) {
-                 System.arraycopy(buffer, tokenBegin, newbuffer, 0, bufsize - tokenBegin);
-                 System.arraycopy(buffer, 0, newbuffer, bufsize - tokenBegin, bufpos);
-                 buffer = newbuffer;
-                 System.arraycopy(bufline, tokenBegin, newbufline, 0, bufsize - tokenBegin);
-                 System.arraycopy(bufline, 0, newbufline, bufsize - tokenBegin, bufpos);
-                 bufline = newbufline;
-                 System.arraycopy(bufcolumn, tokenBegin, newbufcolumn, 0, bufsize - tokenBegin);
-                 System.arraycopy(bufcolumn, 0, newbufcolumn, bufsize - tokenBegin, bufpos);
-                 bufcolumn = newbufcolumn;
-[#if options.javaUnicodeEscape]
-                bufpos += (bufsize - tokenBegin);
-[#else]
-                 maxNextCharInd = (bufpos += (bufsize - tokenBegin));
-[/#if]                 
-            }
-        else {
-                 System.arraycopy(buffer, tokenBegin, newbuffer, 0, bufsize - tokenBegin);
-                 buffer = newbuffer;
-                 System.arraycopy(bufline, tokenBegin, newbufline, 0, bufsize - tokenBegin);
-                 bufline = newbufline;
-                 System.arraycopy(bufcolumn, tokenBegin, newbufcolumn, 0, bufsize - tokenBegin);
-                 bufcolumn = newbufcolumn;
-[#if options.javaUnicodeEscape]
-                 bufpos -= tokenBegin;
-[#else]				 
-                 maxNextCharInd = (bufpos -= tokenBegin);
-[/#if]                 
-         }
-        bufsize += 2048;
-        available = bufsize;
-        tokenBegin = 0;
-*/        
-    }
     
     private void updateLineColumn(char c) {
         column++;
@@ -126,7 +101,7 @@ public class ${classname} {
         bufline[bufpos] = line;
         bufcolumn[bufpos] = column;
     }
-
+    
     /** Read a character. */
     public char readChar() throws IOException {
         char result;
@@ -136,28 +111,34 @@ public class ${classname} {
            if (bufpos == bufsize) {
                bufpos = 0;
            }
-           result = buffer[bufpos];
+//           result = buffer[bufpos];
+           
+           result = getLocationInfo(bufpos).ch;         
+
            return result;
         }
 [#if options.javaUnicodeEscape]
 
-        if (++bufpos == available)
-            AdjustBuffSize();
+        ++bufpos;
 
         char c;
-        if ((buffer[bufpos] = c = readByte()) == '\\') {
+        
+//        if ((buffer[bufpos] = c = readByte()) == '\\') {
+
+          c = readByte();
+          getLocationInfo(bufpos).ch = c;
+          if (c == '\\') {
+
             updateLineColumn(c);
             int backSlashCnt = 1;
 
             for (;;) // Read all the backslashes
             {
                 ++bufpos;
-                if (bufpos == available)
-                    AdjustBuffSize();
-
                 try {
                     c = readByte();
-                    buffer[bufpos] = c;
+//                    buffer[bufpos] = c;
+                    getLocationInfo(bufpos).ch = c;
                     if (c != '\\') { 
                         updateLineColumn(c);
                         // found a non-backslash char.
@@ -184,8 +165,8 @@ public class ${classname} {
             try {
                 while ((c = readByte()) == 'u')
                     ++column;
-
-                buffer[bufpos] = c = (char) (hexval(c) << 12
+                LocationInfo linfo = getLocationInfo(bufpos);
+                linfo.ch = c = (char) (hexval(c) << 12
                         | hexval(readByte()) << 8 | hexval(readByte()) << 4 | hexval(readByte()));
 
                 column += 4;
@@ -206,7 +187,7 @@ public class ${classname} {
         if (++bufpos >= maxNextCharInd) {
             fillBuff();
         }
-        char c = buffer[bufpos];
+        char c = getLocationInfo(bufpos).ch;
 [/#if]        
         updateLineColumn(c);
         return c;
@@ -237,7 +218,9 @@ public class ${classname} {
     /** Backup a number of characters. */
     public void backup(int amount) {
         backupAmount += amount;
-        if ((bufpos -= amount) < 0) {
+        bufpos -= amount;
+        if (bufpos  < 0) {
+//              bufpos = 0;
             bufpos += bufsize;
         }
     }
@@ -247,8 +230,11 @@ public class ${classname} {
         this.reader = reader;
         line = startline;
         column = startcolumn - 1;
-        available = bufsize = buffersize;
-        buffer = new char[buffersize];
+//        available = bufsize = buffersize;
+        available = buffersize;
+//        buffer = new char[buffersize];
+        locationInfoBuffer = new LocationInfo[buffersize];
+        
         bufline = new int[buffersize];
         bufcolumn = new int[buffersize];
 [#if options.javaUnicodeEscape]
@@ -268,25 +254,53 @@ public class ${classname} {
     
     /** Get token literal value. */
     public String getImage() {
-        String image;
+//        String image;
         if (bufpos >= tokenBegin) { 
-            image = new String(buffer, tokenBegin, bufpos - tokenBegin + 1);
+//            image = new String(buffer, tokenBegin, bufpos - tokenBegin + 1);
+              StringBuilder buf = new StringBuilder();
+              for (int i =tokenBegin; i<= bufpos; i++) {
+                  buf.append(getLocationInfo(i).ch);
+              }
+              return buf.toString();
         }
         else { 
-            image = new String(buffer, tokenBegin, bufsize - tokenBegin) + new String(buffer, 0, bufpos + 1);
+//            image = new String(buffer, tokenBegin, bufsize - tokenBegin) + new String(buffer, 0, bufpos + 1);
+             StringBuilder buf = new StringBuilder();
+             for (int i=tokenBegin; i<bufsize; i++) {
+                  buf.append(getLocationInfo(i).ch);
+             }
+             for (int i=0; i<=bufpos; i++) {
+                  buf.append(getLocationInfo(i).ch);
+             }
+             return buf.toString();
         }
-        return image;
+//        return image;
     }
     
     /** Get the suffix. */
-    public char[] getSuffix(int len) {
+    public char[] getSuffix(final int len) {
         char[] ret = new char[len];
         if ((bufpos + 1) >= len) { 
-            System.arraycopy(buffer, bufpos - len + 1, ret, 0, len);
+//            System.arraycopy(buffer, bufpos - len + 1, ret, 0, len);
+             int startPos = bufpos - len +1;
+             for (int i=0; i<len; i++) {
+                 ret[i] = getLocationInfo(startPos+i).ch;
+             }
         }
         else {
-            System.arraycopy(buffer, bufsize - (len - bufpos - 1), ret, 0, len - bufpos -1);
-            System.arraycopy(buffer, 0, ret, len - bufpos - 1, bufpos + 1);
+            int startPos = bufsize - (len-bufsize-1);
+            int lengthToCopy = len - bufpos -1;
+            for (int i=0; i<lengthToCopy; i++) {
+                ret[i] = getLocationInfo(startPos+i).ch;
+            }
+            lengthToCopy = len - bufpos -1;
+            int destPos = len-bufpos-1;
+            for (int i=0; i<lengthToCopy; i++) {
+                ret[destPos+i] = getLocationInfo(i).ch;
+            }
+            
+//            System.arraycopy(buffer, bufsize - (len - bufpos - 1), ret, 0, len - bufpos -1);
+//            System.arraycopy(buffer, 0, ret, len - bufpos - 1, bufpos + 1);
         }
         return ret;
     } 
@@ -339,45 +353,7 @@ public class ${classname} {
     throw new RuntimeException("Cannot parse escaped unicode char");// REVISIT, currently unhandled
   }
 
-  [#if false]
-    private void AdjustBuffSize() {
-        if (available == bufsize) {
-            if (tokenBegin > 2048) {
-                bufpos = 0;
-                available = tokenBegin;
-            } else {
-                expandBuff(false);
-            }
-        } else if (available > tokenBegin) {
-            available = bufsize;
-        }
-        else if ((tokenBegin - available) < 2048) {
-            expandBuff(true);
-        }
-        else {
-            available = tokenBegin;
-        }
-    }
- [/#if]
  
- 
-    private void AdjustBuffSize() {
-        System.out.println("KILROY!!!"); 
-/*        
-        if (available == bufsize) {
-            if (tokenBegin > 2048) {
-                bufpos = 0;
-                available = tokenBegin;
-            } 
-        } else if (available > tokenBegin) {
-            available = bufsize;
-        }
-        else {
-            available = tokenBegin;
-        }*/
-    }
- 
-
     private char readByte() throws IOException {
         if (++nextCharInd >= maxNextCharInd)
             fillBuff();
@@ -408,7 +384,7 @@ public class ${classname} {
         }
     }
   
-    public char beginToken() { //throws IOException {
+    public char beginToken() { 
         if (backupAmount > 0) {
             --backupAmount;
 
@@ -416,7 +392,8 @@ public class ${classname} {
                 bufpos = 0;
 
             tokenBegin = bufpos;
-            return buffer[bufpos];
+            return getLocationInfo(bufpos).ch;
+//            return buffer[bufpos];
         }
 
         tokenBegin = 0;
@@ -441,29 +418,34 @@ public class ${classname} {
                 else if (tokenBegin < 0) {
                     bufpos = maxNextCharInd = 0;
                 }
-                else {
-                    expandBuff(false);
-                }
             }
 	        else if (available > tokenBegin) {
                available = bufsize; 
             }
-            else if ((tokenBegin - available) < 2048) {
-                expandBuff(true);
-            }
-            else {
+            else if ((tokenBegin - available) >= 2048) {
                 available = tokenBegin;
             }
         }
-        int i;
+//        int i;
         try {
-            if ((i = reader.read(buffer, maxNextCharInd, available - maxNextCharInd)) == -1) {
-                reader.close();
-                throw new IOException();
+            int j = 0;
+//            i = reader.read(buffer, maxNextCharInd, available - maxNextCharInd);
+            int charsToRead = available - maxNextCharInd;
+            for (j = 0; j< charsToRead; j++) {
+                 int ch = reader.read();
+                 if (ch ==-1) {
+                     if (j==0) throw new IOException();
+                     break;
+                 }
+                 getLocationInfo(maxNextCharInd + j).ch = (char) ch;
             }
-            else {
-               maxNextCharInd += i;
-            }
+//            if (i == -1) {
+//                reader.close();
+//                throw new IOException();
+//            }
+//            else {
+                   maxNextCharInd += j;
+//            }
             return;
         }
         catch(IOException e) {
@@ -476,7 +458,7 @@ public class ${classname} {
         }
     }
     
-    public char beginToken() { //throws IOException {
+    public char beginToken() {
         tokenBegin = -1;
         try {
 	        char c = readChar();

@@ -464,7 +464,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
               "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
               "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
             [/#set]
-              debugStream.println(${debugOutput?trim}); //KILROY3
+              debugStream.println(${debugOutput?trim});
           [/#if]
           continue;
       }
