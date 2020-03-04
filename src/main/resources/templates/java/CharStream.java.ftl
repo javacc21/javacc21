@@ -31,11 +31,11 @@ public class ${classname} {
     }
    private LocationInfo[] locationInfoBuffer;
    
-   private LocationInfo getLocationInfo(int i) {
-       if (locationInfoBuffer[i] == null) {
-           locationInfoBuffer[i] = new LocationInfo();
+   private LocationInfo getLocationInfo(int pos) {
+       if (locationInfoBuffer[pos] == null) {
+           locationInfoBuffer[pos] = new LocationInfo();
        }
-       return locationInfoBuffer[i];
+       return locationInfoBuffer[pos];
    }
 
     private final int bufsize = 4096;
@@ -97,21 +97,20 @@ public class ${classname} {
     
     /** Read a character. */
     public char readChar() throws IOException {
-        char result;
         if (backupAmount > 0) {
            --backupAmount;
            ++bufpos;
            if (bufpos == bufsize) {
                bufpos = 0;
            }
-//           result = buffer[bufpos];
-           
-           result = getLocationInfo(bufpos).ch;         
-
-           return result;
+           return getLocationInfo(bufpos).ch;         
         }
-[#if options.javaUnicodeEscape]
-
+[#if !options.javaUnicodeEscape]
+        if (++bufpos >= maxNextCharInd) {
+            fillBuff();
+        }
+        char c = getLocationInfo(bufpos).ch;
+[#else]
         ++bufpos;
 
         char c;
@@ -173,11 +172,6 @@ public class ${classname} {
                 return '\\';
             }
         }
-[#else]        
-        if (++bufpos >= maxNextCharInd) {
-            fillBuff();
-        }
-        char c = getLocationInfo(bufpos).ch;
 [/#if]        
         updateLineColumn(c);
         return c;
@@ -249,7 +243,6 @@ public class ${classname} {
               return buf.toString();
         }
         else { 
-//            image = new String(buffer, tokenBegin, bufsize - tokenBegin) + new String(buffer, 0, bufpos + 1);
              StringBuilder buf = new StringBuilder();
              for (int i=tokenBegin; i<bufsize; i++) {
                   buf.append(getLocationInfo(i).ch);
@@ -259,7 +252,6 @@ public class ${classname} {
              }
              return buf.toString();
         }
-//        return image;
     }
     
     /** Get the suffix. */
@@ -375,7 +367,6 @@ public class ${classname} {
 
             tokenBegin = bufpos;
             return getLocationInfo(bufpos).ch;
-//            return buffer[bufpos];
         }
 
         tokenBegin = 0;
@@ -408,10 +399,8 @@ public class ${classname} {
                 available = tokenBegin;
             }
         }
-//        int i;
         try {
             int j = 0;
-//            i = reader.read(buffer, maxNextCharInd, available - maxNextCharInd);
             int charsToRead = available - maxNextCharInd;
             for (j = 0; j< charsToRead; j++) {
                  int ch = reader.read();
@@ -421,13 +410,7 @@ public class ${classname} {
                  }
                  getLocationInfo(maxNextCharInd + j).ch = (char) ch;
             }
-//            if (i == -1) {
-//                reader.close();
-//                throw new IOException();
-//            }
-//            else {
-                   maxNextCharInd += j;
-//            }
+            maxNextCharInd += j;
             return;
         }
         catch(IOException e) {
