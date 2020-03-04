@@ -35,8 +35,6 @@ public class ${classname} {
     private char[] buffer;
     private int maxNextCharInd, backupAmount, tabSize=8;
     
-//    private StringBuilder imageBuffer = new StringBuilder();
-    
     
     /**
      * sets the size of a tab for location reporting 
@@ -52,8 +50,10 @@ public class ${classname} {
     
     private void expandBuff(boolean wrapAround) {
     
-    // It's amazing. We never enter this method!
-    
+    // It's amazing. We never enter this very complicated method!
+    // I suppose it only works (or maybe does) for very long tokens.
+        throw new UnsupportedOperationException();
+/*            
         char[] newbuffer = new char[bufsize + 2048];
 
         int newbufline[] = new int[bufsize + 2048];
@@ -90,6 +90,7 @@ public class ${classname} {
         bufsize += 2048;
         available = bufsize;
         tokenBegin = 0;
+*/        
     }
     
     private void updateLineColumn(char c) {
@@ -136,7 +137,6 @@ public class ${classname} {
                bufpos = 0;
            }
            result = buffer[bufpos];
-//           imageBuffer.append(result);
            return result;
         }
 [#if options.javaUnicodeEscape]
@@ -169,13 +169,11 @@ public class ${classname} {
                         }
 
                         backup(backSlashCnt);
-//                        imageBuffer.append("\\");
                         return '\\';
                     }
                 } catch (IOException e) {
                     if (backSlashCnt > 1)
                         backup(backSlashCnt - 1);
-//                    imageBuffer.append("\\");
                     return '\\';
                 }
                 updateLineColumn(c);
@@ -197,12 +195,10 @@ public class ${classname} {
             }
 
             if (backSlashCnt == 1) {
-//               imageBuffer.append(c);
                 return c;
             }
             else {
                 backup(backSlashCnt - 1);
-//                imageBuffer.append("\\");
                 return '\\';
             }
         }
@@ -213,7 +209,6 @@ public class ${classname} {
         char c = buffer[bufpos];
 [/#if]        
         updateLineColumn(c);
-//        imageBuffer.append(c);
         return c;
     }
     
@@ -245,7 +240,6 @@ public class ${classname} {
         if ((bufpos -= amount) < 0) {
             bufpos += bufsize;
         }
-//       imageBuffer.setLength(imageBuffer.length() - amount);
     }
 
     /** Constructor. */
@@ -299,7 +293,7 @@ public class ${classname} {
 
   
 [#if grammar.options.javaUnicodeEscape]
-  static int hexval(char c) throws IOException {
+  static int hexval(char c) {
     switch(c)
     {
        case '0' :
@@ -342,10 +336,10 @@ public class ${classname} {
        case 'F' :
           return 15;
     }
-
-    throw new IOException(); // Should never come here
+    throw new RuntimeException("Cannot parse escaped unicode char");// REVISIT, currently unhandled
   }
-  
+
+  [#if false]
     private void AdjustBuffSize() {
         if (available == bufsize) {
             if (tokenBegin > 2048) {
@@ -364,6 +358,25 @@ public class ${classname} {
             available = tokenBegin;
         }
     }
+ [/#if]
+ 
+ 
+    private void AdjustBuffSize() {
+        System.out.println("KILROY!!!"); 
+/*        
+        if (available == bufsize) {
+            if (tokenBegin > 2048) {
+                bufpos = 0;
+                available = tokenBegin;
+            } 
+        } else if (available > tokenBegin) {
+            available = bufsize;
+        }
+        else {
+            available = tokenBegin;
+        }*/
+    }
+ 
 
     private char readByte() throws IOException {
         if (++nextCharInd >= maxNextCharInd)
@@ -395,7 +408,7 @@ public class ${classname} {
         }
     }
   
-    public char beginToken() throws IOException {
+    public char beginToken() { //throws IOException {
         if (backupAmount > 0) {
             --backupAmount;
 
@@ -408,10 +421,11 @@ public class ${classname} {
 
         tokenBegin = 0;
         bufpos = -1;
-        
-//        imageBuffer = new StringBuilder();
-
-        return readChar();
+        try {        
+        	return readChar();
+        } catch (IOException ioe) {
+            return (char) -1;
+        }
     }
     
     protected char[] nextCharBuf;
@@ -462,12 +476,15 @@ public class ${classname} {
         }
     }
     
-    public char beginToken() throws IOException {
+    public char beginToken() { //throws IOException {
         tokenBegin = -1;
-//        imageBuffer = new StringBuilder();        
-        char c = readChar();
-        tokenBegin = bufpos;
-        return c;
+        try {
+	        char c = readChar();
+	        tokenBegin = bufpos;
+	        return c;
+        } catch (IOException ioe) {
+            return (char) -1;
+        }
     }
 [/#if]
    

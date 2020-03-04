@@ -209,10 +209,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
     EOFLoop :
     while (true) {
-       try {
+//       try {
           curChar = input_stream.beginToken();
-       }
-       catch(java.io.IOException e) {
+//       }
+       if (curChar== (char) -1) {
+//       catch(java.io.IOException e) {
 [#if options.debugLexer]			
             debugStream.println("Returning the <EOF> token.");
 [/#if]            
@@ -277,11 +278,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                     debugStream.println(${debugOutput?trim}); 
          [/#if]
                     curChar = input_stream.beginToken();
+                    if (curChar == (char) -1) {
+                        continue EOFLoop;
+                    }
          [#if options.debugLexer]
                 }
          [/#if]
              }
-             catch (java.io.IOException e1) {continue EOFLoop;}
+             catch (Exception e1) {continue EOFLoop;} // REVISIT, not necessary really
     [/#if]    
              
              

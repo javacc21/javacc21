@@ -60,7 +60,7 @@ public interface CharStream {
    * All characters must remain in the buffer between two successive calls
    * to this method to implement backup correctly.
    */
-  char beginToken() throws java.io.IOException;
+  char beginToken(); // throws java.io.IOException;
 
   /**
    * Returns a string made up of characters from the marked token beginning 

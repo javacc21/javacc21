@@ -107,13 +107,16 @@ public class CharCollector implements CharStream {
      notify();
   }
 
-  public char beginToken() throws java.io.IOException
+  public char beginToken() // throws java.io.IOException
   {
      tokenBegin = -1;
-     char c = readChar();
-     tokenBegin = bufpos;
-
-     return c;
+     try {
+    	 char c = readChar();
+         tokenBegin = bufpos;
+         return c;
+     } catch (java.io.IOException ioe) {
+    	 return (char) -1;
+     }
   }
 
   private int inBuf = 0;
@@ -131,24 +134,7 @@ public class CharCollector implements CharStream {
      return buffer[bufpos];
   }
 
-  /**
-   * @deprecated
-   * @see #getEndColumn
-   */
-
-  public final int getColumn() {
-      return 0;
-  }
-
-  /**
-   * @deprecated
-   * @see #getEndLine
-   */
-
-  public final int getLine() {
-      return 0;
-  }
-
+  
   public final int getEndColumn() {
       return 0;
   }
