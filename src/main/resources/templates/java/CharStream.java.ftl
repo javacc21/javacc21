@@ -33,7 +33,10 @@ public class ${classname} {
     private boolean prevCharIsCR, prevCharIsLF;
     private Reader reader;
     private char[] buffer;
-    private int maxNextCharInd, inBuf, tabSize=8;
+    private int maxNextCharInd, backupAmount, tabSize=8;
+    
+//    private StringBuilder imageBuffer = new StringBuilder();
+    
     
     /**
      * sets the size of a tab for location reporting 
@@ -48,12 +51,14 @@ public class ${classname} {
     public int getTabSize() {return tabSize;}
     
     private void expandBuff(boolean wrapAround) {
+    
+    // It's amazing. We never enter this method!
+    
         char[] newbuffer = new char[bufsize + 2048];
 
         int newbufline[] = new int[bufsize + 2048];
         int newbufcolumn[] = new int[bufsize + 2048];
-        try {
-            if (wrapAround) {
+        if (wrapAround) {
                  System.arraycopy(buffer, tokenBegin, newbuffer, 0, bufsize - tokenBegin);
                  System.arraycopy(buffer, 0, newbuffer, bufsize - tokenBegin, bufpos);
                  buffer = newbuffer;
@@ -69,7 +74,7 @@ public class ${classname} {
                  maxNextCharInd = (bufpos += (bufsize - tokenBegin));
 [/#if]                 
             }
-            else {
+        else {
                  System.arraycopy(buffer, tokenBegin, newbuffer, 0, bufsize - tokenBegin);
                  buffer = newbuffer;
                  System.arraycopy(bufline, tokenBegin, newbufline, 0, bufsize - tokenBegin);
@@ -81,11 +86,7 @@ public class ${classname} {
 [#else]				 
                  maxNextCharInd = (bufpos -= tokenBegin);
 [/#if]                 
-            }
-        }
-        catch (Throwable t) {
-            throw new Error(t.getMessage());
-        }
+         }
         bufsize += 2048;
         available = bufsize;
         tokenBegin = 0;
@@ -127,12 +128,16 @@ public class ${classname} {
 
     /** Read a character. */
     public char readChar() throws IOException {
-        if (inBuf > 0) {
-           --inBuf;
-           if (++bufpos == bufsize) {
+        char result;
+        if (backupAmount > 0) {
+           --backupAmount;
+           ++bufpos;
+           if (bufpos == bufsize) {
                bufpos = 0;
            }
-           return buffer[bufpos];
+           result = buffer[bufpos];
+//           imageBuffer.append(result);
+           return result;
         }
 [#if options.javaUnicodeEscape]
 
@@ -146,11 +151,14 @@ public class ${classname} {
 
             for (;;) // Read all the backslashes
             {
-                if (++bufpos == available)
+                ++bufpos;
+                if (bufpos == available)
                     AdjustBuffSize();
 
                 try {
-                    if ((buffer[bufpos] = c = readByte()) != '\\') {
+                    c = readByte();
+                    buffer[bufpos] = c;
+                    if (c != '\\') { 
                         updateLineColumn(c);
                         // found a non-backslash char.
                         if ((c == 'u') && ((backSlashCnt & 1) == 1)) {
@@ -161,12 +169,13 @@ public class ${classname} {
                         }
 
                         backup(backSlashCnt);
+//                        imageBuffer.append("\\");
                         return '\\';
                     }
                 } catch (IOException e) {
                     if (backSlashCnt > 1)
                         backup(backSlashCnt - 1);
-
+//                    imageBuffer.append("\\");
                     return '\\';
                 }
                 updateLineColumn(c);
@@ -187,10 +196,13 @@ public class ${classname} {
                         + " column " + column + ".");
             }
 
-            if (backSlashCnt == 1)
+            if (backSlashCnt == 1) {
+//               imageBuffer.append(c);
                 return c;
+            }
             else {
                 backup(backSlashCnt - 1);
+//                imageBuffer.append("\\");
                 return '\\';
             }
         }
@@ -201,6 +213,7 @@ public class ${classname} {
         char c = buffer[bufpos];
 [/#if]        
         updateLineColumn(c);
+//        imageBuffer.append(c);
         return c;
     }
     
@@ -228,10 +241,11 @@ public class ${classname} {
    
     /** Backup a number of characters. */
     public void backup(int amount) {
-        inBuf += amount;
+        backupAmount += amount;
         if ((bufpos -= amount) < 0) {
             bufpos += bufsize;
         }
+//       imageBuffer.setLength(imageBuffer.length() - amount);
     }
 
     /** Constructor. */
@@ -260,13 +274,14 @@ public class ${classname} {
     
     /** Get token literal value. */
     public String getImage() {
+        String image;
         if (bufpos >= tokenBegin) { 
-            return new String(buffer, tokenBegin, bufpos - tokenBegin + 1);
+            image = new String(buffer, tokenBegin, bufpos - tokenBegin + 1);
         }
         else { 
-            return new String(buffer, tokenBegin, bufsize - tokenBegin) +
-                new String(buffer, 0, bufpos + 1);
+            image = new String(buffer, tokenBegin, bufsize - tokenBegin) + new String(buffer, 0, bufpos + 1);
         }
+        return image;
     }
     
     /** Get the suffix. */
@@ -331,19 +346,23 @@ public class ${classname} {
     throw new IOException(); // Should never come here
   }
   
-    protected void AdjustBuffSize() {
+    private void AdjustBuffSize() {
         if (available == bufsize) {
             if (tokenBegin > 2048) {
                 bufpos = 0;
                 available = tokenBegin;
-            } else
+            } else {
                 expandBuff(false);
-        } else if (available > tokenBegin)
+            }
+        } else if (available > tokenBegin) {
             available = bufsize;
-        else if ((tokenBegin - available) < 2048)
+        }
+        else if ((tokenBegin - available) < 2048) {
             expandBuff(true);
-        else
+        }
+        else {
             available = tokenBegin;
+        }
     }
 
     private char readByte() throws IOException {
@@ -354,17 +373,15 @@ public class ${classname} {
     }
     
     private void fillBuff() throws IOException {
-        int i;
         if (maxNextCharInd == 4096)
             maxNextCharInd = nextCharInd = 0;
 
         try {
-            if ((i = reader.read(nextCharBuf, maxNextCharInd,
-                    4096 - maxNextCharInd)) == -1) {
-                reader.close();
+            int charsRead =   reader.read(nextCharBuf, maxNextCharInd, 4096 - maxNextCharInd);
+            if (charsRead == -1) {
                 throw new IOException();
-            } else
-                maxNextCharInd += i;
+            } 
+            maxNextCharInd += charsRead;
             return;
         } catch (IOException e) {
             if (bufpos != 0) {
@@ -379,8 +396,8 @@ public class ${classname} {
     }
   
     public char beginToken() throws IOException {
-        if (inBuf > 0) {
-            --inBuf;
+        if (backupAmount > 0) {
+            --backupAmount;
 
             if (++bufpos == bufsize)
                 bufpos = 0;
@@ -391,6 +408,8 @@ public class ${classname} {
 
         tokenBegin = 0;
         bufpos = -1;
+        
+//        imageBuffer = new StringBuilder();
 
         return readChar();
     }
@@ -445,6 +464,7 @@ public class ${classname} {
     
     public char beginToken() throws IOException {
         tokenBegin = -1;
+//        imageBuffer = new StringBuilder();        
         char c = readChar();
         tokenBegin = bufpos;
         return c;
