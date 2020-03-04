@@ -40,22 +40,15 @@ public class ${classname} {
 
     private final int bufsize = 4096;
     private int available, tokenBegin;
-    /** Position in buffer. */
     private int bufpos = -1;
-    private int bufline[];
-    private int bufcolumn[];
     private int column = 0;
     private int line = 1;
     private boolean prevCharIsCR, prevCharIsLF;
     private Reader reader;
-//    private char[] buffer;
     
     private int maxNextCharInd, backupAmount, tabSize=8;
     
-    
         
-    
-    
     /**
      * sets the size of a tab for location reporting 
      * purposes, default value is 8.
@@ -98,8 +91,8 @@ public class ${classname} {
                 break;
             default : break;
         }
-        bufline[bufpos] = line;
-        bufcolumn[bufpos] = column;
+        getLocationInfo(bufpos).line = line;
+        getLocationInfo(bufpos).column = column;
     }
     
     /** Read a character. */
@@ -123,8 +116,6 @@ public class ${classname} {
 
         char c;
         
-//        if ((buffer[bufpos] = c = readByte()) == '\\') {
-
           c = readByte();
           getLocationInfo(bufpos).ch = c;
           if (c == '\\') {
@@ -137,7 +128,6 @@ public class ${classname} {
                 ++bufpos;
                 try {
                     c = readByte();
-//                    buffer[bufpos] = c;
                     getLocationInfo(bufpos).ch = c;
                     if (c != '\\') { 
                         updateLineColumn(c);
@@ -196,22 +186,22 @@ public class ${classname} {
    
     /** Get token beginning column number. */
     int getBeginColumn() {
-        return bufcolumn[tokenBegin];
+        return getLocationInfo(tokenBegin).column;
     }
     
     /** Get token beginning line number. */
     int getBeginLine() {
-        return bufline[tokenBegin];
+        return getLocationInfo(tokenBegin).line;
     }
    
     /** Get token end column number. */
     int getEndColumn() {
-        return bufcolumn[bufpos];
+        return getLocationInfo(bufpos).column;
     }
     
     /** Get token end line number. */
     int getEndLine() {
-        return bufline[bufpos];
+        return getLocationInfo(bufpos).line;
     }
     
    
@@ -230,13 +220,9 @@ public class ${classname} {
         this.reader = reader;
         line = startline;
         column = startcolumn - 1;
-//        available = bufsize = buffersize;
         available = buffersize;
-//        buffer = new char[buffersize];
         locationInfoBuffer = new LocationInfo[buffersize];
         
-        bufline = new int[buffersize];
-        bufcolumn = new int[buffersize];
 [#if options.javaUnicodeEscape]
         nextCharBuf = new char[4096];
 [/#if]
@@ -256,7 +242,6 @@ public class ${classname} {
     public String getImage() {
 //        String image;
         if (bufpos >= tokenBegin) { 
-//            image = new String(buffer, tokenBegin, bufpos - tokenBegin + 1);
               StringBuilder buf = new StringBuilder();
               for (int i =tokenBegin; i<= bufpos; i++) {
                   buf.append(getLocationInfo(i).ch);
@@ -281,7 +266,6 @@ public class ${classname} {
     public char[] getSuffix(final int len) {
         char[] ret = new char[len];
         if ((bufpos + 1) >= len) { 
-//            System.arraycopy(buffer, bufpos - len + 1, ret, 0, len);
              int startPos = bufpos - len +1;
              for (int i=0; i<len; i++) {
                  ret[i] = getLocationInfo(startPos+i).ch;
@@ -299,8 +283,6 @@ public class ${classname} {
                 ret[destPos+i] = getLocationInfo(i).ch;
             }
             
-//            System.arraycopy(buffer, bufsize - (len - bufpos - 1), ret, 0, len - bufpos -1);
-//            System.arraycopy(buffer, 0, ret, len - bufpos - 1, bufpos + 1);
         }
         return ret;
     } 
@@ -377,8 +359,8 @@ public class ${classname} {
                 --bufpos;
                 backup(0);
             } else {
-                bufline[bufpos] = line;
-                bufcolumn[bufpos] = column;
+                getLocationInfo(bufpos).line = line;
+                getLocationInfo(bufpos).column = column;
             }
             throw e;
         }
@@ -405,8 +387,8 @@ public class ${classname} {
         }
     }
     
-    protected char[] nextCharBuf;
-    protected int nextCharInd = -1;
+    private char[] nextCharBuf;
+    private int nextCharInd = -1;
 [#else]
     private void fillBuff() throws IOException {
         if (maxNextCharInd == available) {
