@@ -26,7 +26,7 @@ public class ${classname} {
 
 
     private class LocationInfo {
-         char ch;     
+         int ch;     
          int bufferPosition, line, column;
     }
    private LocationInfo[] locationInfoBuffer;
@@ -61,7 +61,7 @@ public class ${classname} {
      */
     public int getTabSize() {return tabSize;}
     
-    private void updateLineColumn(char c) {
+    private void updateLineColumn(int c) {
         column++;
         if (prevCharIsLF) {
             prevCharIsLF = false;
@@ -96,7 +96,7 @@ public class ${classname} {
     }
     
     /** Read a character. */
-    public char readChar() throws IOException {
+    public int readChar() throws IOException {
         if (backupAmount > 0) {
            --backupAmount;
            ++bufpos;
@@ -109,13 +109,13 @@ public class ${classname} {
         if (++bufpos >= maxNextCharInd) {
             fillBuff();
         }
-        char c = getLocationInfo(bufpos).ch;
+        int c = getLocationInfo(bufpos).ch;
 [#else]
         ++bufpos;
 
-        char c;
+        int c;
         
-          c = readByte();
+          c = (int) readByte();
           getLocationInfo(bufpos).ch = c;
           if (c == '\\') {
 
@@ -155,8 +155,9 @@ public class ${classname} {
                 while ((c = readByte()) == 'u')
                     ++column;
                 LocationInfo linfo = getLocationInfo(bufpos);
-                linfo.ch = c = (char) (hexval(c) << 12
+                c = (hexval(c) << 12
                         | hexval(readByte()) << 8 | hexval(readByte()) << 4 | hexval(readByte()));
+                getLocationInfo(bufpos).ch = c;
 
                 column += 4;
             } catch (IOException e) {
@@ -234,21 +235,20 @@ public class ${classname} {
     
     /** Get token literal value. */
     public String getImage() {
-//        String image;
         if (bufpos >= tokenBegin) { 
               StringBuilder buf = new StringBuilder();
               for (int i =tokenBegin; i<= bufpos; i++) {
-                  buf.append(getLocationInfo(i).ch);
+                  buf.append((char) getLocationInfo(i).ch);
               }
               return buf.toString();
         }
         else { 
              StringBuilder buf = new StringBuilder();
              for (int i=tokenBegin; i<bufsize; i++) {
-                  buf.append(getLocationInfo(i).ch);
+                  buf.append((char) getLocationInfo(i).ch);
              }
              for (int i=0; i<=bufpos; i++) {
-                  buf.append(getLocationInfo(i).ch);
+                  buf.append((char) getLocationInfo(i).ch);
              }
              return buf.toString();
         }
@@ -260,19 +260,19 @@ public class ${classname} {
         if ((bufpos + 1) >= len) { 
              int startPos = bufpos - len +1;
              for (int i=0; i<len; i++) {
-                 ret[i] = getLocationInfo(startPos+i).ch;
+                 ret[i] = (char) getLocationInfo(startPos+i).ch;
              }
         }
         else {
             int startPos = bufsize - (len-bufsize-1);
             int lengthToCopy = len - bufpos -1;
             for (int i=0; i<lengthToCopy; i++) {
-                ret[i] = getLocationInfo(startPos+i).ch;
+                ret[i] = (char) getLocationInfo(startPos+i).ch;
             }
             lengthToCopy = len - bufpos -1;
             int destPos = len-bufpos-1;
             for (int i=0; i<lengthToCopy; i++) {
-                ret[destPos+i] = getLocationInfo(i).ch;
+                ret[destPos+i] = (char) getLocationInfo(i).ch;
             }
             
         }
@@ -281,7 +281,7 @@ public class ${classname} {
 
   
 [#if grammar.options.javaUnicodeEscape]
-  static int hexval(char c) {
+  static int hexval(int c) {
     switch(c)
     {
        case '0' :
@@ -328,11 +328,11 @@ public class ${classname} {
   }
 
  
-    private char readByte() throws IOException {
+    private int readByte() throws IOException {
         if (++nextCharInd >= maxNextCharInd)
             fillBuff();
 
-        return nextCharBuf[nextCharInd];
+        return (int) nextCharBuf[nextCharInd];
     }
     
     private void fillBuff() throws IOException {
@@ -358,7 +358,7 @@ public class ${classname} {
         }
     }
   
-    public char beginToken() { 
+    public int beginToken() { 
         if (backupAmount > 0) {
             --backupAmount;
 
@@ -374,7 +374,7 @@ public class ${classname} {
         try {        
         	return readChar();
         } catch (IOException ioe) {
-            return (char) -1;
+            return -1;
         }
     }
     
@@ -408,7 +408,7 @@ public class ${classname} {
                      if (j==0) throw new IOException();
                      break;
                  }
-                 getLocationInfo(maxNextCharInd + j).ch = (char) ch;
+                 getLocationInfo(maxNextCharInd + j).ch = ch;
             }
             maxNextCharInd += j;
             return;
@@ -423,14 +423,14 @@ public class ${classname} {
         }
     }
     
-    public char beginToken() {
+    public int beginToken() {
         tokenBegin = -1;
         try {
-	        char c = readChar();
+	        int c = readChar();
 	        tokenBegin = bufpos;
 	        return c;
         } catch (IOException ioe) {
-            return (char) -1;
+            return -1;
         }
     }
 [/#if]

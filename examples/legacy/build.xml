@@ -49,6 +49,7 @@
 
 	    <echo />
 	    
+	    <!--	    
 	    <copy todir="${outputdir}/GUIParsing/LexerVersion">
 	      <fileset dir="${basedir}/GUIParsing/LexerVersion">
 	        <include name="*.java" />
@@ -61,7 +62,7 @@
 			<arg value="${basedir}/GUIParsing/LexerVersion/CalcInput.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/GUIParsing/LexerVersion" includeantruntime="no" failonerror="true"/>
-
+            -->
 	    <echo />
 	    
 	    <copy todir="${outputdir}/Interpreter">

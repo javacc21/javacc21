@@ -20,7 +20,7 @@ public interface CharStream {
    * of selecting the input is the responsibility of the class
    * implementing this interface.  Can throw any java.io.IOException.
    */
-  char readChar() throws java.io.IOException;
+  int readChar() throws java.io.IOException;
 
   
   /**
@@ -60,7 +60,7 @@ public interface CharStream {
    * All characters must remain in the buffer between two successive calls
    * to this method to implement backup correctly.
    */
-  char beginToken(); // throws java.io.IOException;
+  int beginToken(); // throws java.io.IOException;
 
   /**
    * Returns a string made up of characters from the marked token beginning 
