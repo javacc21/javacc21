@@ -7,6 +7,7 @@ package ${grammar.parserPackage};
 [#set options = grammar.options]
 
 import java.io.*;
+import java.util.ArrayList;
 
 [#if options.javaUnicodeEscape]
 /**
@@ -23,19 +24,29 @@ public class ${classname} {
 
 
     private class LocationInfo {
-         int ch;     
-         int bufferPosition, line, column;
+         int ch=-1, line, column;
     }
-   private LocationInfo[] locationInfoBuffer;
+
+   private ArrayList<LocationInfo> locationInfoBuffer = new ArrayList<>();
    
    private LocationInfo getLocationInfo(int pos) {
-       if (locationInfoBuffer[pos] == null) {
-           locationInfoBuffer[pos] = new LocationInfo();
+   
+       while (pos >= locationInfoBuffer.size()) {
+            locationInfoBuffer.add(null);
        }
-       return locationInfoBuffer[pos];
+       
+       LocationInfo linfo = locationInfoBuffer.get(pos);
+       
+       if (linfo == null) {
+           linfo = new LocationInfo();
+           locationInfoBuffer.set(pos, linfo); 
+       }
+       
+       return linfo;
+   
    }
 
-    private final int bufsize = 4096;
+    private final int bufsize = 0x10000;
     private int available, tokenBegin;
     private int bufpos = -1;
     private int column = 0;
@@ -97,15 +108,21 @@ public class ${classname} {
         if (backupAmount > 0) {
            --backupAmount;
            ++bufpos;
-           if (bufpos == bufsize) {
+           if (bufpos == bufsize) { //REVISIT!
                bufpos = 0;
            }
            return getLocationInfo(bufpos).ch;         
         }
 [#if !options.javaUnicodeEscape]
-        if (++bufpos >= maxNextCharInd) {
+        ++bufpos;
+//        LocationInfo linfo = getLocationInfo(bufpos);
+//        if (linfo.ch == -1) {
+//            linfo.ch = reader.read();
+//        }
+        if (bufpos >= maxNextCharInd) {
             fillBuff();
         }
+//       int c = linfo.ch;
         int c = getLocationInfo(bufpos).ch;
 [#else]
         ++bufpos;
@@ -213,7 +230,6 @@ public class ${classname} {
         line = startline;
         column = startcolumn - 1;
         available = buffersize;
-        locationInfoBuffer = new LocationInfo[buffersize];
         
 [#if options.javaUnicodeEscape]
         nextCharBuf = new char[4096];
@@ -279,59 +295,28 @@ public class ${classname} {
   
 [#if grammar.options.javaUnicodeEscape]
   static int hexval(int c) {
-    switch(c)
-    {
-       case '0' :
-          return 0;
-       case '1' :
-          return 1;
-       case '2' :
-          return 2;
-       case '3' :
-          return 3;
-       case '4' :
-          return 4;
-       case '5' :
-          return 5;
-       case '6' :
-          return 6;
-       case '7' :
-          return 7;
-       case '8' :
-          return 8;
-       case '9' :
-          return 9;
-
-       case 'a' :
-       case 'A' :
-          return 10;
-       case 'b' :
-       case 'B' :
-          return 11;
-       case 'c' :
-       case 'C' :
-          return 12;
-       case 'd' :
-       case 'D' :
-          return 13;
-       case 'e' :
-       case 'E' :
-          return 14;
-       case 'f' :
-       case 'F' :
-          return 15;
+    if (c>= '0' && c<='9') {
+        return c-'0';
+    }
+    if (c>='a' && c<='f') {
+       return 10+c-'a';
+    }
+    if (c>='A' && c<='F') {
+        return 10+c-'A';
     }
     throw new RuntimeException("Cannot parse escaped unicode char");// REVISIT, currently unhandled
   }
 
  
     private int readByte() throws IOException {
-        if (++nextCharInd >= maxNextCharInd)
+        ++nextCharInd;
+        if (nextCharInd >= maxNextCharInd)
             fillBuff();
 
         return (int) nextCharBuf[nextCharInd];
     }
-    
+
+    [#--  JavaCharStream case --]
     private void fillBuff() throws IOException {
         if (maxNextCharInd == 4096)
             maxNextCharInd = nextCharInd = 0;
@@ -378,37 +363,23 @@ public class ${classname} {
     private char[] nextCharBuf;
     private int nextCharInd = -1;
 [#else]
+    [#--  SimpleCharStream case --]
+    [#if true]
     private void fillBuff() throws IOException {
         if (maxNextCharInd == available) {
-            if (available == bufsize) {
-                 if (tokenBegin > 2048) {
-                     bufpos = maxNextCharInd = 0;
-                     available = tokenBegin;
-                }
-                else if (tokenBegin < 0) {
-                    bufpos = maxNextCharInd = 0;
-                }
-            }
-	        else if (available > tokenBegin) {
                available = bufsize; 
-            }
-            else if ((tokenBegin - available) >= 2048) {
-                available = tokenBegin;
-            }
         }
         try {
-            int j = 0;
             int charsToRead = available - maxNextCharInd;
-            for (j = 0; j< charsToRead; j++) {
+            for (int i = 0; i< charsToRead; i++) {
                  int ch = reader.read();
                  if (ch ==-1) {
-                     if (j==0) throw new IOException();
+                     if (i==0) throw new IOException();
                      break;
                  }
-                 getLocationInfo(maxNextCharInd + j).ch = ch;
+                 getLocationInfo(maxNextCharInd).ch = ch;
+                 ++maxNextCharInd;
             }
-            maxNextCharInd += j;
-            return;
         }
         catch(IOException e) {
             --bufpos;
@@ -419,6 +390,7 @@ public class ${classname} {
             throw e;
         }
     }
+    [/#if]
     
     public int beginToken() {
         tokenBegin = -1;
@@ -431,6 +403,5 @@ public class ${classname} {
         }
     }
 [/#if]
-   
 }
 

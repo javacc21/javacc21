@@ -533,18 +533,6 @@ public class JavaCCOptions {
     }
 
     /**
-     * Find the sanity check value. Currently, this ALWAYS returns true
-     * and will likely just be phased out. Why on earth would anybody 
-     * turn off the sanity checking?
-     *
-     * @return The requested sanity check value.
-     */
-    public boolean getSanityCheck() {
- //       return booleanValue("SANITY_CHECK");
-    	return true;
-    }
-
-    /**
      * Find the force lookahead check value.
      *
      * @return The requested force lookahead value.

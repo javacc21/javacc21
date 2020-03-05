@@ -92,12 +92,8 @@ public class Semanticizer {
         if (grammar.getErrorCount() != 0)
             throw new MetaParseException();
 
-        if (grammar.getOptions().getLookahead() > 1
-                && !grammar.getOptions().getForceLaCheck()
-                && grammar.getOptions().getSanityCheck()) {
-            grammar
-                    .addWarning(
-                            null,
+        if (grammar.getOptions().getLookahead() > 1 && !grammar.getOptions().getForceLaCheck()) {
+            grammar.addWarning(null,
                             "Lookahead adequacy checking not being performed since option LOOKAHEAD "
                                     + "is more than 1.  Set option FORCE_LA_CHECK to true to force checking.");
         }
@@ -505,8 +501,7 @@ public class Semanticizer {
             }
         }
 
-        if (grammar.getOptions().getSanityCheck()
-                && grammar.getErrorCount() == 0) {
+        if (grammar.getErrorCount() == 0) {
 
             // The following code checks that all ZeroOrMore, ZeroOrOne, and
             // OneOrMore nodes
