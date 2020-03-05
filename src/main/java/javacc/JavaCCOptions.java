@@ -143,7 +143,6 @@ public class JavaCCOptions {
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
         optionValues.put("IGNORE_CASE", false);
         optionValues.put("USER_DEFINED_LEXER", false);
-        optionValues.put("USER_CHAR_STREAM", false);
         optionValues.put("BUILD_PARSER", true);
         optionValues.put("BUILD_LEXER", true);
         optionValues.put("LEXER_USES_PARSER", false);
@@ -519,15 +518,6 @@ public class JavaCCOptions {
      */
     public boolean getUserDefinedLexer() {
         return booleanValue("USER_DEFINED_LEXER");
-    }
-
-    /**
-     * Find the user charstream value.
-     *
-     * @return The requested user charstream value.
-     */
-    public boolean getUserCharStream() {
-        return booleanValue("USER_CHAR_STREAM");
     }
 
     /**

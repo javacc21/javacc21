@@ -134,15 +134,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [/#if]
 
 [#var charStreamName]
-[#if options.userCharStream]
-   [#set charStreamName = "CharStream"]
-[#else]
-   [#if options.javaUnicodeEscape]
-       [#set charStreamName = "JavaCharStream"]
-   [#else]
-        [#set charStreamName = "SimpleCharStream"]
-   [/#if]
-[/#if]
+ [#if options.javaUnicodeEscape]
+     [#set charStreamName = "JavaCharStream"]
+ [#else]
+      [#set charStreamName = "SimpleCharStream"]
+ [/#if]
 
     ${charStreamName} input_stream;
 

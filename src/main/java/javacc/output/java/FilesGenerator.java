@@ -198,7 +198,7 @@ public class FilesGenerator {
     
     void generateCharStream() throws IOException, TemplateException {
         String filename = "CharStream.java";
-        if (!grammar.getOptions().getUserCharStream() && !grammar.getOptions().getUserDefinedLexer()) {
+        if (!grammar.getOptions().getUserDefinedLexer()) {
             if (grammar.getOptions().getJavaUnicodeEscape()) {
                 filename = "JavaCharStream.java";
             } else {

@@ -75,14 +75,13 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [#else]
   /** Generated Lexer. */
   public ${grammar.lexerClassName} token_source;
-  [#if !grammar.options.userCharStream]
-      [#if grammar.options.javaUnicodeEscape]
+  
+  [#if grammar.options.javaUnicodeEscape]
   JavaCharStream inputStream;
       [#else]
   SimpleCharStream inputStream;
-      [/#if]
   [/#if]
-  
+    
   public void setInputSource(String inputSource) {
       token_source.setInputSource(inputSource);
   }
@@ -131,22 +130,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
 
 [#if !grammar.options.userDefinedLexer]
-   [#if grammar.options.userCharStream]
-  /** Constructor with user supplied CharStream. */
-  public ${grammar.parserClassName}(CharStream stream) {
-       [#if grammar.options.lexerUsesParser]
-    token_source = new ${grammar.lexerClassName}(this, stream);
-       [#else]
-    token_source = new ${grammar.lexerClassName}(stream);
-       [/#if]
-    current_token = new Token();
-    for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
-          [#if hasPhase2]
-    for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
-          [/#if]
-  }
-
-  [#else]
 
   public ${grammar.parserClassName}(java.io.InputStream stream) {
       this(new java.io.InputStreamReader(stream));
@@ -169,7 +152,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
         [/#if]
       }
-  [/#if]
 [/#if]
 
 [#if grammar.options.userDefinedLexer]

@@ -3,9 +3,6 @@
 package ${grammar.parserPackage};
 [/#if]
 
-[#if grammar.options.userCharStream || grammar.options.userDefinedLexer]
-[#include "CharStreamInterface.java.ftl"]
-[#else]
 [#set classname = filename?substring(0, filename?length-5)]
 [#set options = grammar.options]
 
@@ -436,4 +433,4 @@ public class ${classname} {
 [/#if]
    
 }
-[/#if]
+
