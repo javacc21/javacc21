@@ -46,8 +46,8 @@ public class ${classname} {
    
    }
 
-    private final int bufsize = 0x10000;
-    private int available, tokenBegin;
+    private final int bufsize = 4096;
+    private int tokenBegin;
     private int bufpos = -1;
     private int column = 0;
     private int line = 1;
@@ -115,15 +115,24 @@ public class ${classname} {
         }
 [#if !options.javaUnicodeEscape]
         ++bufpos;
-//        LocationInfo linfo = getLocationInfo(bufpos);
-//        if (linfo.ch == -1) {
-//            linfo.ch = reader.read();
+//        if (bufpos >= maxNextCharInd) {
+               int ch = reader.read();
+               if (ch ==-1) {
+                 --bufpos;
+                backup(0);
+                if (tokenBegin == -1) {
+                    tokenBegin = bufpos;
+                }
+                 throw new IOException();
+               }
+               getLocationInfo(bufpos).ch = ch;
+//               ++maxNextCharInd;
 //        }
-        if (bufpos >= maxNextCharInd) {
-            fillBuff();
-        }
-//       int c = linfo.ch;
         int c = getLocationInfo(bufpos).ch;
+        updateLineColumn(c);
+        return c;
+    }
+        
 [#else]
         ++bufpos;
 
@@ -187,10 +196,10 @@ public class ${classname} {
                 return '\\';
             }
         }
-[/#if]        
         updateLineColumn(c);
         return c;
     }
+[/#if]        
     
    
     /** Get token beginning column number. */
@@ -229,7 +238,6 @@ public class ${classname} {
         this.reader = reader;
         line = startline;
         column = startcolumn - 1;
-        available = buffersize;
         
 [#if options.javaUnicodeEscape]
         nextCharBuf = new char[4096];
@@ -364,35 +372,7 @@ public class ${classname} {
     private int nextCharInd = -1;
 [#else]
     [#--  SimpleCharStream case --]
-    [#if true]
-    private void fillBuff() throws IOException {
-        if (maxNextCharInd == available) {
-               available = bufsize; 
-        }
-        try {
-            int charsToRead = available - maxNextCharInd;
-            for (int i = 0; i< charsToRead; i++) {
-                 int ch = reader.read();
-                 if (ch ==-1) {
-                     if (i==0) throw new IOException();
-                     break;
-                 }
-                 getLocationInfo(maxNextCharInd).ch = ch;
-                 ++maxNextCharInd;
-            }
-        }
-        catch(IOException e) {
-            --bufpos;
-            backup(0);
-            if (tokenBegin == -1) {
-                tokenBegin = bufpos;
-            }
-            throw e;
-        }
-    }
-    [/#if]
-    
-    public int beginToken() {
+     public int beginToken() {
         tokenBegin = -1;
         try {
 	        int c = readChar();
