@@ -70,7 +70,6 @@ public final class Main {
         System.out.println("The boolean valued options are:");
         System.out.println();
         System.out.println("    BUILD_PARSER           (default true)");
-        System.out.println("    BUILD_LEXER            (default true)");
         System.out.println("    DEBUG_PARSER           (default false)");
         System.out.println("    DEBUG_LOOKAHEAD        (default false)");
         System.out.println("    DEBUG_LEXER            (default false)");
@@ -145,15 +144,13 @@ public final class Main {
             grammar.createOutputDir();
             grammar.semanticize();
 
-            if (grammar.getOptions().getBuildLexer() && !grammar.getOptions().getUserDefinedLexer()
-                    && grammar.getErrorCount() == 0) {
+            if (!grammar.getOptions().getUserDefinedLexer() && grammar.getErrorCount() == 0) {
                 grammar.generateLexer();
             }
 
             grammar.generateFiles();
 
-            if ((grammar.getErrorCount() == 0)
-                    && (grammar.getOptions().getBuildParser() || grammar.getOptions().getBuildLexer())) {
+            if ((grammar.getErrorCount() == 0) && (grammar.getOptions().getBuildParser())) {
                 if (grammar.getWarningCount() == 0) {
                     System.out.println("Parser generated successfully.");
                 } else {

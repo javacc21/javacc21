@@ -144,7 +144,6 @@ public class JavaCCOptions {
         optionValues.put("IGNORE_CASE", false);
         optionValues.put("USER_DEFINED_LEXER", false);
         optionValues.put("BUILD_PARSER", true);
-        optionValues.put("BUILD_LEXER", true);
         optionValues.put("LEXER_USES_PARSER", false);
         optionValues.put("FORCE_LA_CHECK", false);
 
@@ -179,7 +178,6 @@ public class JavaCCOptions {
         optionValues.put("DEFAULT_LEXICAL_STATE", "DEFAULT");
         aliases.put("DEBUG_TOKEN_MANAGER", "DEBUG_LEXER");
         aliases.put("USER_TOKEN_MANAGER", "USER_DEFINED_LEXER");
-        aliases.put("BUILD_TOKEN_MANAGER", "BUILD_LEXER");
         aliases.put("TOKEN_MANAGER_USES_PARSER", "LEXER_USES_PARSER");
         aliases.put("NODE_CLASS", "BASE_NODE_CLASS");
         aliases.put("q",  "QUIET");
@@ -521,27 +519,14 @@ public class JavaCCOptions {
     }
 
     /**
-     * Find the build parser value.
-     *
-     * @return The requested build parser value.
+     * the BUILD_PARSER setting
      */
     public boolean getBuildParser() {
         return booleanValue("BUILD_PARSER");
     }
 
     /**
-     * Find the build token manager value.
-     *
-     * @return The requested build token manager value.
-     */
-    public boolean getBuildLexer() {
-        return booleanValue("BUILD_LEXER");
-    }
-
-    /**
-     * Find the token manager uses parser value.
-     *
-     * @return The requested token manager uses parser value;
+     * the LEXER_USES_PARSER setting
      */
     public boolean getLexerUsesParser() {
         return booleanValue("LEXER_USES_PARSER");

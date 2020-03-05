@@ -14,7 +14,7 @@ public interface ${grammar.constantsClassName} {
   int ${regexp.label} = ${regexp.ordinal};
   [/#list]
   
-[#if !grammar.options.userDefinedLexer&&grammar.options.buildLexer]
+[#if !grammar.options.userDefinedLexer]
   /**
    * Lexical States
    */
