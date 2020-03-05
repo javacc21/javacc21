@@ -45,6 +45,19 @@ public class ${classname} {
        return linfo;
    
    }
+    private void maybeResizeBuffer() {
+         if (tokenBegin > 2048) {
+         // If we are starting a new token this far into the buffer, we throw away 1024 initial bytes
+         // Totally ad hoc, maybe revisit the numbers, though it may not matter very much.
+              ArrayList<LocationInfo> newBuffer = new ArrayList<>(locationInfoBuffer.size());
+              for (int i=1024; i<locationInfoBuffer.size(); i++) {
+                  newBuffer.add(locationInfoBuffer.get(i));
+              }
+              locationInfoBuffer = newBuffer;
+              bufpos -=1024;
+              tokenBegin -=1024;
+         }
+    }
 
     private final int bufsize = 4096;
     private int tokenBegin;
@@ -54,7 +67,10 @@ public class ${classname} {
     private boolean prevCharIsCR, prevCharIsLF;
     private Reader reader;
     
-    private int maxNextCharInd, backupAmount, tabSize=8;
+    [#if grammar.options.javaUnicodeEscape]
+    private int maxNextCharInd;
+    [/#if]
+    private int backupAmount, tabSize=8;
     
         
     /**
@@ -103,6 +119,10 @@ public class ${classname} {
         getLocationInfo(bufpos).column = column;
     }
     
+    
+    
+    
+    
     /** Read a character. */
     public int readChar() throws IOException {
         if (backupAmount > 0) {
@@ -115,19 +135,16 @@ public class ${classname} {
         }
 [#if !options.javaUnicodeEscape]
         ++bufpos;
-//        if (bufpos >= maxNextCharInd) {
-               int ch = reader.read();
-               if (ch ==-1) {
-                 --bufpos;
-                backup(0);
-                if (tokenBegin == -1) {
-                    tokenBegin = bufpos;
-                }
-                 throw new IOException();
-               }
-               getLocationInfo(bufpos).ch = ch;
-//               ++maxNextCharInd;
-//        }
+         int ch = reader.read();
+         if (ch ==-1) {
+           --bufpos;
+          backup(0);
+          if (tokenBegin <0) {
+              tokenBegin = bufpos;
+          }
+           throw new IOException();
+         }
+       getLocationInfo(bufpos).ch = ch;
         int c = getLocationInfo(bufpos).ch;
         updateLineColumn(c);
         return c;
@@ -233,7 +250,7 @@ public class ${classname} {
         }
     }
 
-    /** Constructor. */
+    /** The buffersize parameter is only there for backward compatibility. It is currently ignored. */
     public ${classname}(Reader reader, int startline, int startcolumn, int buffersize) {
         this.reader = reader;
         line = startline;
@@ -374,6 +391,7 @@ public class ${classname} {
     [#--  SimpleCharStream case --]
      public int beginToken() {
         tokenBegin = -1;
+        maybeResizeBuffer();
         try {
 	        int c = readChar();
 	        tokenBegin = bufpos;
@@ -383,5 +401,25 @@ public class ${classname} {
         }
     }
 [/#if]
+
+    private class JavaUnicodeReader extends Reader {
+    
+        StringBuilder buf;
+        Reader nestedReader;
+        public void close() throws IOException {
+            nestedReader.close();
+        }
+        
+        public int read() throws IOException {
+             int ch = nestedReader.read();
+             return ch;
+        }
+        
+        public int read (char[] cbuf, int off, int len) throws IOException {
+            return nestedReader.read(cbuf, off, len);
+        }
+    }
+
+
 }
 
