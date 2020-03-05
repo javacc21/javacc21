@@ -63,10 +63,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   
   
   int curLexState; 
-  int jjnewStateCnt;
-  int jjround;
-  int jjmatchedPos;
-  int jjmatchedKind;
+  private int jjnewStateCnt;
+  private int jjround;
+  private int jjmatchedPos;
+  private int jjmatchedKind;
   private String inputSource = "input";
   
   public String getInputSource() {
@@ -86,7 +86,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
 [#if numLexicalStates>1]
       /** Lex State array. */
-  public static final int[] jjnewLexState = {
+  private static final int[] jjnewLexState = {
   [#list lexerData.regularExpressions as regexp]
         [#if regexp.newLexicalState?is_null]
           -1, 
@@ -539,7 +539,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       }
     }
 
-    Token jjFillToken() {
+    private Token jjFillToken() {
         final Token t;
         final String curTokenImage;
         final int beginLine;
