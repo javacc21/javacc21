@@ -9,16 +9,6 @@ package ${grammar.parserPackage};
 import java.io.*;
 import java.util.ArrayList;
 
-[#if options.javaUnicodeEscape]
-/**
- * A CharStream that handles unicode escape sequences
- * as in java source files
- */
-[#else]
-/**
- * A simple CharStream that has no special escaping.
- */
-[/#if]
 
 public class ${classname} {
 
@@ -65,12 +55,40 @@ public class ${classname} {
     private int column = 0;
     private int line = 1;
     private boolean prevCharIsCR, prevCharIsLF;
-    private Reader reader;
+    private WrappedReader reader;
     
     [#if grammar.options.javaUnicodeEscape]
     private int maxNextCharInd;
     [/#if]
     private int backupAmount, tabSize=8;
+    
+    
+     int getBeginColumn() {
+        return getLocationInfo(tokenBegin).column;
+    }
+    
+        int getBeginLine() {
+        return getLocationInfo(tokenBegin).line;
+    }
+   
+        int getEndColumn() {
+        return getLocationInfo(bufpos).column;
+    }
+    
+        int getEndLine() {
+        return getLocationInfo(bufpos).line;
+    }
+    
+   
+     public void backup(int amount) {
+        backupAmount += amount;
+        bufpos -= amount;
+        if (bufpos  < 0) {
+//              bufpos = 0;
+            bufpos += bufsize;
+        }
+    }
+
     
         
     /**
@@ -120,11 +138,7 @@ public class ${classname} {
     }
     
     
-    
-    
-    
-    /** Read a character. */
-    public int readChar() throws IOException {
+     public int readChar() throws IOException {
         if (backupAmount > 0) {
            --backupAmount;
            ++bufpos;
@@ -133,8 +147,8 @@ public class ${classname} {
            }
            return getLocationInfo(bufpos).ch;         
         }
-[#if !options.javaUnicodeEscape]
         ++bufpos;
+[#if !options.javaUnicodeEscape]
          int ch = reader.read();
          if (ch ==-1) {
            --bufpos;
@@ -151,12 +165,9 @@ public class ${classname} {
     }
         
 [#else]
-        ++bufpos;
-
-        int c;
-        
-          c = (int) readByte();
+        int c = (int) readByte();
           getLocationInfo(bufpos).ch = c;
+[#if false]          
           if (c == '\\') {
 
             updateLineColumn(c);
@@ -213,46 +224,17 @@ public class ${classname} {
                 return '\\';
             }
         }
+[/#if]        
         updateLineColumn(c);
         return c;
     }
 [/#if]        
     
    
-    /** Get token beginning column number. */
-    int getBeginColumn() {
-        return getLocationInfo(tokenBegin).column;
-    }
-    
-    /** Get token beginning line number. */
-    int getBeginLine() {
-        return getLocationInfo(tokenBegin).line;
-    }
-   
-    /** Get token end column number. */
-    int getEndColumn() {
-        return getLocationInfo(bufpos).column;
-    }
-    
-    /** Get token end line number. */
-    int getEndLine() {
-        return getLocationInfo(bufpos).line;
-    }
-    
-   
-    /** Backup a number of characters. */
-    public void backup(int amount) {
-        backupAmount += amount;
-        bufpos -= amount;
-        if (bufpos  < 0) {
-//              bufpos = 0;
-            bufpos += bufsize;
-        }
-    }
 
     /** The buffersize parameter is only there for backward compatibility. It is currently ignored. */
     public ${classname}(Reader reader, int startline, int startcolumn, int buffersize) {
-        this.reader = reader;
+        this.reader = new WrappedReader(reader);
         line = startline;
         column = startcolumn - 1;
         
@@ -261,12 +243,10 @@ public class ${classname} {
 [/#if]
      }
 
-     /** Constructor. */
     public ${classname}(Reader reader, int startline, int startcolumn) {
         this(reader, startline, startcolumn, 4096);
     }
 
-    /** Constructor. */
     public ${classname}(Reader reader) {
         this(reader, 1, 1, 4096);
     }
@@ -292,7 +272,6 @@ public class ${classname} {
         }
     }
     
-    /** Get the suffix. */
     public char[] getSuffix(final int len) {
         char[] ret = new char[len];
         if ((bufpos + 1) >= len) { 
@@ -319,6 +298,13 @@ public class ${classname} {
 
   
 [#if grammar.options.javaUnicodeEscape]
+
+    static boolean isHexVal(int c) {
+        return (c>= '0' && c<='9') || (c>='a' && c<='f') || (c>='A'&&c<='F');
+    }
+  
+
+
   static int hexval(int c) {
     if (c>= '0' && c<='9') {
         return c-'0';
@@ -366,16 +352,13 @@ public class ${classname} {
     }
   
     public int beginToken() { 
-        if (backupAmount > 0) {
+            if (backupAmount > 0) {
             --backupAmount;
-
-            if (++bufpos == bufsize)
+           if (++bufpos == bufsize)
                 bufpos = 0;
-
-            tokenBegin = bufpos;
+           tokenBegin = bufpos;
             return getLocationInfo(bufpos).ch;
         }
-
         tokenBegin = 0;
         bufpos = -1;
         try {        
@@ -402,22 +385,98 @@ public class ${classname} {
     }
 [/#if]
 
-    private class JavaUnicodeReader extends Reader {
+    private class WrappedReader extends Reader {
     
         StringBuilder buf;
         Reader nestedReader;
+        StringBuilder pushBackBuffer = new StringBuilder();
+        
+        
+        WrappedReader(Reader nestedReader) {
+            this.nestedReader = nestedReader;
+         }
+         
+        private int nextChar() throws IOException {
+            return nestedReader.read();
+        }
+
+        
+        
         public void close() throws IOException {
             nestedReader.close();
         }
         
         public int read() throws IOException {
-             int ch = nestedReader.read();
+        
+             int ch;
+             int pushBack = pushBackBuffer.length();
+             if (pushBack >0) {
+                 ch = pushBackBuffer.charAt(pushBack -1);
+                 pushBackBuffer.setLength(pushBack -1);
+                 return ch;
+             }
+             ch = nextChar();
+[#if grammar.options.javaUnicodeEscape]             
+             if (ch == '\\') {
+                 ch = handleBackSlash();
+             } else {
+                 lastCharWasUnicodeEscape = true;
+             }
+[/#if]             
              return ch;
         }
         
         public int read (char[] cbuf, int off, int len) throws IOException {
-            return nestedReader.read(cbuf, off, len);
+//            return nestedReader.read(cbuf, off, len);
+              int i;
+              for (i=0; i<len; i++) {
+                  int ch = read();
+                  if (ch == -1) {
+                       if (i==0) {
+                           throw new IOException();
+                       }
+                       return i;
+                  }
+                  cbuf[off+i] = (char) ch;
+              }
+              return len;
         }
+        
+        void pushBack(int ch) {
+           pushBackBuffer.append((char) ch);
+        }
+              
+        
+[#if grammar.options.javaUnicodeEscape]
+
+        StringBuilder hexEscapeBuffer = new StringBuilder();
+        boolean lastCharWasUnicodeEscape;
+        
+        private int handleBackSlash() throws IOException {
+//              System.out.println("KILROY WAS HERE");
+               int nextChar = nextChar();
+               if (nextChar != 'u') {
+                   pushBack(nextChar);
+                   lastCharWasUnicodeEscape = false;
+                   return '\\';
+               }
+               hexEscapeBuffer = new StringBuilder("\\u");
+               while (nextChar == 'u') {
+                  nextChar = nextChar();
+                  hexEscapeBuffer.append((char) nextChar);
+               }
+              // NB: There must be 4 chars after the u and 
+              // they must be valid hex chars! REVISIT.
+               for (int i =0;i<3;i++) {
+                   hexEscapeBuffer.append((char) nextChar());
+               }
+               String hexChars = hexEscapeBuffer.substring(hexEscapeBuffer.length() -4);
+//               System.out.println("KILROY: " + hexChars);
+               lastCharWasUnicodeEscape = true;
+               return Integer.parseInt(hexChars, 16);
+        }
+[/#if]        
+        
     }
 
 
