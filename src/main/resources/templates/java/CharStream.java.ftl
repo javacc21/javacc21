@@ -15,9 +15,9 @@ public class ${classname} {
     private int tokenBegin;
     private int bufpos = -1;
     private int backupAmount;
-    Reader nestedReader;
-    StringBuilder pushBackBuffer = new StringBuilder();
-    int column = 0, line = -1, tabSize =8;
+    private Reader nestedReader;
+    private StringBuilder pushBackBuffer = new StringBuilder();
+    private int column = 0, line = -1, tabSize =8;
     private boolean prevCharIsCR, prevCharIsLF;
     private char lookaheadBuffer[] = new char[8192]; // Maybe this should be adjustable but 8K should be fine. Maybe revisit...
     private int lookaheadIndex, charsReadLast;
@@ -58,7 +58,6 @@ public class ${classname} {
         bufpos -= amount;
         if (bufpos  < 0) {
                 throw new RuntimeException("Should never get here, I don't think!");
-//              bufpos = 0;
         } 
     }
 
@@ -94,7 +93,7 @@ public class ${classname} {
     }
 
   
-    public int beginToken() {
+    int beginToken() {
          if (backupAmount > 0) {
               --backupAmount;
             ++bufpos;
@@ -145,53 +144,33 @@ public class ${classname} {
         return lookaheadBuffer[lookaheadIndex++];
     }
 
-        int read()  {
-             int ch;
-             int pushBack = pushBackBuffer.length();
-             if (pushBack >0) {
-                 ch = pushBackBuffer.charAt(pushBack -1);
-                 pushBackBuffer.setLength(pushBack -1);
-                 updateLineColumn(ch);
-                 return ch;
-             }
-             ch = nextChar();
-             if (ch <0) {
-                 return ch;
-             }
-//             if (ch == '\r' || ch == '\n') {
-//                 ch = handleNewLine(ch);
-//             }
+    private int read()  {
+         int ch;
+         int pushBack = pushBackBuffer.length();
+         if (pushBack >0) {
+             ch = pushBackBuffer.charAt(pushBack -1);
+             pushBackBuffer.setLength(pushBack -1);
+             updateLineColumn(ch);
+             return ch;
+         }
+         ch = nextChar();
+         if (ch <0) {
+             return ch;
+         }
              
 [#if grammar.options.javaUnicodeEscape]             
          if (ch == '\\') {
              ch = handleBackSlash();
          } else {
-             lastCharWasUnicodeEscape = true;
+             lastCharWasUnicodeEscape = false;
          }
 [/#if]
      updateLineColumn(ch);
          return ch;
     }
         
-    void pushBack(int ch) {
+    private void pushBack(int ch) {
        pushBackBuffer.append((char) ch);
-    }
-    
-    int addedNewLines;
-    StringBuilder pendingNewLines = new StringBuilder();
-    
-    private int handleNewLine(int ch) {
-        int nextChar = nextChar();
-        if (nextChar != '\n' && nextChar != '\r') {
-            pushBack(nextChar);
-        }
-        return ch;
-    }
-    
-    private int handleTab() {
-         column--;
-         column += (tabSize - (column % tabSize));
-         return '\t';
     }
     
     private void updateLineColumn(int c) {
