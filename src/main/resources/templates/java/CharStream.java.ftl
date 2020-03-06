@@ -112,10 +112,8 @@ public class ${classname} {
         } 
     }
 
-    
-        
-    
-     public int readChar() {// throws IOException {
+
+     public int readChar() {
         ++bufpos;
         if (backupAmount > 0) {
            --backupAmount;
@@ -129,7 +127,6 @@ public class ${classname} {
              if (bufpos < 0) {
                  bufpos +=bufsize; //REVISIT
              }
-//           throw new IOException();
          }
         return ch;
     }
@@ -191,11 +188,6 @@ public class ${classname} {
         tokenBegin = 0;
         bufpos = -1;
         return readChar();
-//        try {        
-//        	return readChar();
-//        } catch (IOException ioe) {
-//            return -1;
-//        }
     }
 
     private class WrappedReader extends Reader {
@@ -251,7 +243,7 @@ public class ${classname} {
              return ch;
         }
         
-        public int read (char[] cbuf, int off, int len) throws IOException {
+        public int read(char[] cbuf, int off, int len) throws IOException {
               throw new UnsupportedOperationException();
         }
         

@@ -448,24 +448,24 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           [/#if]
           curPos = 0;
           jjmatchedKind = 0x7FFFFFFF;
-//		  try {
-              curChar = (char) input_stream.readChar();
-
-          [#if options.debugLexer]
-            [#var debugOutput]
-            [#set debugOutput]
-              [#if numLexicalStates>1]
-                 "<" + lexStateNames[curLexState] + ">" + 
-              [/#if]
-              "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
-              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
-            [/#set]
-              debugStream.println(${debugOutput?trim});
-          [/#if]
-          continue;
-//      }
-//      catch (java.io.IOException e1) { }
-      [/#if]
+          int retval = input_stream.readChar();
+          if (retval >=0) {
+               curChar = (char) retval;
+	
+	          [#if options.debugLexer]
+	            [#var debugOutput]
+	            [#set debugOutput]
+	              [#if numLexicalStates>1]
+	                 "<" + lexStateNames[curLexState] + ">" + 
+	              [/#if]
+	              "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+	              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
+	            [/#set]
+	              debugStream.println(${debugOutput?trim});
+	          [/#if]
+	          continue;
+	      }
+     [/#if]
    [/#if]
    }
    int error_line = input_stream.getEndLine();
@@ -486,19 +486,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
          input_stream.backup(1);
      }
    
-/*   
-   try { input_stream.readChar(); input_stream.backup(1); }
-   catch (java.io.IOException e1) {
-      EOFSeen = true;
-      error_after = curPos <= 1 ? "" : input_stream.getImage();
-      if (curChar == '\n' || curChar == '\r') {
-          error_line++;
-          error_column = 0;
-      }
-      else
-         error_column++;
-   }
-*/            
    if (!EOFSeen) {
       input_stream.backup(1);
       error_after = curPos <= 1 ? "" : input_stream.getImage();
@@ -808,15 +795,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         int strPos = jjmatchedPos;
         int seenUpto = curPos+1;
         input_stream.backup(seenUpto);
-        curChar = (char) input_stream.readChar();
-/*        
-        try {
-            curChar = (char) input_stream.readChar();   
-        }
-        catch (java.io.IOException e) {
-            throw new Error("Internal Error");
-        }
-*/        
+        curChar = (char) input_stream.readChar(); //REVISIT, deal with error return code
         curPos = 0;
     [/#if]
         int startsAt = 0;
@@ -890,12 +869,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [#if grammar.options.debugLexer]
             debugStream.println("   Possible kinds of longer matches : " + jjKindsForStateVector(curLexState, jjstateSet, startsAt, i));
     [/#if]
-            curChar = (char) input_stream.readChar();
-//            try {
-//                curChar = (char) input_stream.readChar(); 
-//            }
-//            catch (java.io.IOException e) {
-            if (curChar == 0xffff) {
+            int retval = input_stream.readChar();
+            if (retval >=0) {
+                 curChar = (char) retval;
+            }
+            else  {
     [#if lexicalState.mixedCase]            
                 break;
     [#else]
@@ -918,12 +896,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         int toRet = Math.max(curPos, seenUpto);
         if (curPos < toRet) {
            for (i = toRet - Math.min(curPos, seenUpto); i-- >0;) {
-//               try {
-                   curChar = (char) input_stream.readChar();
-//               }
-//               catch (java.io.IOException e) {
-//                   throw new Error("Internal Error : Please send a bug report.");
-//               }
+                   curChar = (char) input_stream.readChar(); // REVISIT, not handling error return code
            }
         }
         if (jjmatchedPos < strPos) {
@@ -1280,9 +1253,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         [/#list]
         + " } ");
       [/#if]
-       curChar = (char) input_stream.readChar();
-       if (curChar == 0xffff) {
-//       catch(java.io.IOException e) {
+       int retval = input_stream.readChar();
+       if (retval >=0) {
+           curChar = (char) retval;
+       }
+       else  {
          [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
            jjStopStringLiteralDfa${lexicalState.suffix}[@ArgsList]
               ${i-1}
@@ -1442,11 +1417,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         debugStream.println("   No more string literal token matches are possible.");
         debugStream.println("   Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
   [/#if]
-//        try { 
-            curChar = (char) input_stream.readChar(); 
-//        }
-//        catch(java.io.IOException e) {
-       if (curChar == 0xFFFF) { 
+       int retval = input_stream.readChar();
+       if (retval >=0) {
+           curChar = (char) retval;
+       } 
+       else  { 
             return pos + 1; 
         }
   [#if grammar.options.debugLexer]
