@@ -349,7 +349,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      [/#if]
      [#if options.debugLexer]
           debugStream.println("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
-              + ParseException.addEscapes(new String(input_stream.getSuffix(jjmatchedPos + 1))) + ") ******\n");
+              + ParseException.addEscapes(input_stream.getSuffix(jjmatchedPos + 1)) + ") ******\n");
      [/#if]
 
      [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]

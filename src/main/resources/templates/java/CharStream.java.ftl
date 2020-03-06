@@ -27,15 +27,10 @@ public class ${classname} {
     }
 
     public ${classname}(Reader reader) {
-        this(reader, 1, 1, 4096);
+        this(reader, 1, 1);
     }
 
 
-    private class LocationInfo {
-         int ch=-1, line, column;
-    }
-    
-    
     /**
      * sets the size of a tab for location reporting 
      * purposes, default value is 8.
@@ -49,41 +44,6 @@ public class ${classname} {
     public int getTabSize() {return wrappedReader.tabSize;}
     
 
-   private ArrayList<LocationInfo> locationInfoBuffer = new ArrayList<>();
-   
-   private LocationInfo getLocationInfo(int pos) {
-   
-       while (pos >= locationInfoBuffer.size()) {
-            locationInfoBuffer.add(null);
-       }
-       
-       LocationInfo linfo = locationInfoBuffer.get(pos);
-       
-       if (linfo == null) {
-           linfo = new LocationInfo();
-           locationInfoBuffer.set(pos, linfo); 
-       }
-       
-       return linfo;
-   
-   }
-   
-     int getBeginColumn() {
-        return getLocationInfo(tokenBegin).column;
-    }
-    
-    int getBeginLine() {
-        return getLocationInfo(tokenBegin).line;
-    }
-   
-        int getEndColumn() {
-        return getLocationInfo(bufpos).column;
-    }
-    
-        int getEndLine() {
-        return getLocationInfo(bufpos).line;
-    }
-    
    
      public void backup(int amount) {
         backupAmount += amount;
@@ -99,7 +59,7 @@ public class ${classname} {
         ++bufpos;
         if (backupAmount > 0) {
            --backupAmount;
-           return getLocationInfo(bufpos).ch;         
+           return wrappedReader.getCharAt(bufpos);
         }
          int ch = wrappedReader.read();
          if (ch ==-1) {
@@ -111,18 +71,18 @@ public class ${classname} {
     public String getImage() {
           StringBuilder buf = new StringBuilder();
           for (int i =tokenBegin; i<= bufpos; i++) {
-              buf.append((char) getLocationInfo(i).ch);
+              buf.append(wrappedReader.getCharAt(i));
           }
           return buf.toString();
     }
     
-    public char[] getSuffix(final int len) {
-        char[] ret = new char[len];
+    String getSuffix(final int len) {
+         StringBuilder buf = new StringBuilder();
          int startPos = bufpos - len +1;
          for (int i=0; i<len; i++) {
-             ret[i] = (char) getLocationInfo(startPos+i).ch;
+             buf.append(wrappedReader.getCharAt(startPos +i));
         }
-        return ret;
+        return buf.toString();
     } 
 
   
@@ -131,14 +91,33 @@ public class ${classname} {
               --backupAmount;
             ++bufpos;
             tokenBegin = bufpos;
-            return getLocationInfo(bufpos).ch;
+            return wrappedReader.getCharAt(bufpos);
         }
         tokenBegin = 0;
         bufpos = -1;
         return readChar();
     }
+    
+    
+   
+    int getBeginColumn() {
+        return wrappedReader.getColumn(tokenBegin);
+    }
+    
+    int getBeginLine() {
+        return wrappedReader.getLine(tokenBegin);
+    }
+   
+    int getEndColumn() {
+        return wrappedReader.getColumn(bufpos);
+    }
+    
+    int getEndLine() {
+        return wrappedReader.getLine(bufpos);
+    }
+       
 
-    private class WrappedReader extends Reader {
+    private class WrappedReader {
     
         StringBuilder buf;
         Reader nestedReader;
@@ -175,12 +154,7 @@ public class ${classname} {
             return lookaheadBuffer[lookaheadIndex++];
         }
 
-        public void close() throws IOException {
-            nestedReader.close();
-        }
-        
-        public int read()  {
-        
+        int read()  {
              int ch;
              int pushBack = pushBackBuffer.length();
              if (pushBack >0) {
@@ -208,10 +182,6 @@ public class ${classname} {
              return ch;
         }
         
-        public int read(char[] cbuf, int off, int len) throws IOException {
-              throw new UnsupportedOperationException();
-        }
-        
         void pushBack(int ch) {
            pushBackBuffer.append((char) ch);
         }
@@ -234,8 +204,6 @@ public class ${classname} {
         }
         
 	    private void updateLineColumn(int c) {
-           getLocationInfo(bufpos).ch = c;
-	    
 	        column++;
 	        if (prevCharIsLF) {
 	            prevCharIsLF = false;
@@ -261,8 +229,7 @@ public class ${classname} {
 	                break;
 	            default : break;
 	        }
-	        getLocationInfo(bufpos).line = line;
-	        getLocationInfo(bufpos).column = column;
+            setLocationInfo(bufpos, c, line, column);
 	    }
 
         
@@ -291,7 +258,39 @@ public class ${classname} {
                lastCharWasUnicodeEscape = true;
                return Integer.parseInt(hexChars, 16);
         }
-[/#if]        
+[/#if]
+
+     private int[] locationInfoBuffer = new int[3072];
+   
+     int getLine(int pos) {
+         return locationInfoBuffer[pos*3+1];
+     }
+     
+     int getColumn(int pos) {
+         return locationInfoBuffer[pos*3+2];
+     }
+     
+     char getCharAt(int pos) {
+         return (char) locationInfoBuffer[pos*3];
+     }
+     
+     private void setLocationInfo(int pos, int ch, int line, int column) {
+          pos *=3;
+          if (pos >= locationInfoBuffer.length) {
+              expandBuff();
+          }
+          locationInfoBuffer[pos++] = ch;
+          locationInfoBuffer[pos++] = line;
+          locationInfoBuffer[pos++] = column;
     }
+    
+     private void expandBuff() {
+           int[] newBuf = new int[locationInfoBuffer.length*2];
+           System.arraycopy(locationInfoBuffer, 0, newBuf, 0,  locationInfoBuffer.length);
+           locationInfoBuffer = newBuf;
+     }
+     
+    
+  }
 }
 
