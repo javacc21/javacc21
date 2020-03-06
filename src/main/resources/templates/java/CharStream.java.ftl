@@ -12,6 +12,12 @@ import java.util.ArrayList;
 
 public class ${classname} {
 
+    private final int bufsize = 4096;
+    private int tokenBegin;
+    private int bufpos = -1;
+    private WrappedReader wrappedReader;
+    private int backupAmount;
+
     /** The buffersize parameter is only there for backward compatibility. It is currently ignored. */
     public ${classname}(Reader reader, int startline, int startcolumn, int buffersize) {
         this(reader, startline, startcolumn);
@@ -29,6 +35,20 @@ public class ${classname} {
     private class LocationInfo {
          int ch=-1, line, column;
     }
+    
+    
+    /**
+     * sets the size of a tab for location reporting 
+     * purposes, default value is 8.
+     */
+    public void setTabSize(int i) {wrappedReader.tabSize = i;}
+    
+    /**
+     * returns the size of a tab for location reporting 
+     * purposes, default value is 8.
+     */
+    public int getTabSize() {return wrappedReader.tabSize;}
+    
 
    private ArrayList<LocationInfo> locationInfoBuffer = new ArrayList<>();
    
@@ -48,7 +68,9 @@ public class ${classname} {
        return linfo;
    
    }
-    private void maybeResizeBuffer() {
+   
+     private void maybeResizeBuffer() {
+     //REVISIT: Is this really necessary anyway?
          if (tokenBegin > 2048) {
          // If we are starting a new token this far into the buffer, we throw away 1024 initial bytes
          // Totally ad hoc, maybe revisit the numbers, though it likely doesn't matter very much.
@@ -62,11 +84,6 @@ public class ${classname} {
          }
     }
 
-    private final int bufsize = 4096;
-    private int tokenBegin;
-    private int bufpos = -1;
-    private WrappedReader wrappedReader;
-    private int backupAmount;
     
     
      int getBeginColumn() {
@@ -97,36 +114,22 @@ public class ${classname} {
 
     
         
-    /**
-     * sets the size of a tab for location reporting 
-     * purposes, default value is 8.
-     */
-    public void setTabSize(int i) {wrappedReader.tabSize = i;}
     
-    /**
-     * returns the size of a tab for location reporting 
-     * purposes, default value is 8.
-     */
-    public int getTabSize() {return wrappedReader.tabSize;}
-    
-     public int readChar() throws IOException {
+     public int readChar() {// throws IOException {
+        ++bufpos;
         if (backupAmount > 0) {
            --backupAmount;
-           ++bufpos;
-           if (bufpos == bufsize) { //REVISIT!
-               bufpos = 0;
-           }
            return getLocationInfo(bufpos).ch;         
         }
-        ++bufpos;
-         int ch = wrappedReader.read();
+         int ch;
+         try {ch = wrappedReader.read();} 
+         catch (IOException ioe) {ch = -1;}
          if (ch ==-1) {
            --bufpos;
-          backup(0);
-          if (tokenBegin <0) {
-              tokenBegin = bufpos;
-          }
-           throw new IOException();
+             if (bufpos < 0) {
+                 bufpos +=bufsize; //REVISIT
+             }
+//           throw new IOException();
          }
         return ch;
     }
@@ -177,8 +180,8 @@ public class ${classname} {
     } 
 
   
-    public int beginToken() { 
-            if (backupAmount > 0) {
+    public int beginToken() {
+         if (backupAmount > 0) {
             --backupAmount;
            if (++bufpos == bufsize)
                 bufpos = 0;
@@ -187,11 +190,12 @@ public class ${classname} {
         }
         tokenBegin = 0;
         bufpos = -1;
-        try {        
-        	return readChar();
-        } catch (IOException ioe) {
-            return -1;
-        }
+        return readChar();
+//        try {        
+//        	return readChar();
+//        } catch (IOException ioe) {
+//            return -1;
+//        }
     }
 
     private class WrappedReader extends Reader {
