@@ -12,7 +12,6 @@ import java.util.ArrayList;
 
 public class ${classname} {
 
-    private final int bufsize = 4096;
     private int tokenBegin;
     private int bufpos = -1;
     private WrappedReader wrappedReader;
@@ -69,28 +68,11 @@ public class ${classname} {
    
    }
    
-     private void maybeResizeBuffer() {
-     //REVISIT: Is this really necessary anyway?
-         if (tokenBegin > 2048) {
-         // If we are starting a new token this far into the buffer, we throw away 1024 initial bytes
-         // Totally ad hoc, maybe revisit the numbers, though it likely doesn't matter very much.
-              ArrayList<LocationInfo> newBuffer = new ArrayList<>(locationInfoBuffer.size());
-              for (int i=1024; i<locationInfoBuffer.size(); i++) {
-                  newBuffer.add(locationInfoBuffer.get(i));
-              }
-              locationInfoBuffer = newBuffer;
-              bufpos -=1024;
-              tokenBegin -=1024;
-         }
-    }
-
-    
-    
      int getBeginColumn() {
         return getLocationInfo(tokenBegin).column;
     }
     
-        int getBeginLine() {
+    int getBeginLine() {
         return getLocationInfo(tokenBegin).line;
     }
    
@@ -107,8 +89,8 @@ public class ${classname} {
         backupAmount += amount;
         bufpos -= amount;
         if (bufpos  < 0) {
+                throw new RuntimeException("Should never get here, I don't think!");
 //              bufpos = 0;
-            bufpos += bufsize;
         } 
     }
 
@@ -119,59 +101,26 @@ public class ${classname} {
            --backupAmount;
            return getLocationInfo(bufpos).ch;         
         }
-         int ch;
-         try {ch = wrappedReader.read();} 
-         catch (IOException ioe) {ch = -1;}
+         int ch = wrappedReader.read();
          if (ch ==-1) {
-           --bufpos;
-             if (bufpos < 0) {
-                 bufpos +=bufsize; //REVISIT
-             }
+           if (bufpos >0) --bufpos;
          }
         return ch;
     }
 
-    /** Get token literal value. */
     public String getImage() {
-        if (bufpos >= tokenBegin) { 
-              StringBuilder buf = new StringBuilder();
-              for (int i =tokenBegin; i<= bufpos; i++) {
-                  buf.append((char) getLocationInfo(i).ch);
-              }
-              return buf.toString();
-        }
-        else { 
-             StringBuilder buf = new StringBuilder();
-             for (int i=tokenBegin; i<bufsize; i++) {
-                  buf.append((char) getLocationInfo(i).ch);
-             }
-             for (int i=0; i<=bufpos; i++) {
-                  buf.append((char) getLocationInfo(i).ch);
-             }
-             return buf.toString();
-        }
+          StringBuilder buf = new StringBuilder();
+          for (int i =tokenBegin; i<= bufpos; i++) {
+              buf.append((char) getLocationInfo(i).ch);
+          }
+          return buf.toString();
     }
     
     public char[] getSuffix(final int len) {
         char[] ret = new char[len];
-        if ((bufpos + 1) >= len) { 
-             int startPos = bufpos - len +1;
-             for (int i=0; i<len; i++) {
-                 ret[i] = (char) getLocationInfo(startPos+i).ch;
-             }
-        }
-        else {
-            int startPos = bufsize - (len-bufsize-1);
-            int lengthToCopy = len - bufpos -1;
-            for (int i=0; i<lengthToCopy; i++) {
-                ret[i] = (char) getLocationInfo(startPos+i).ch;
-            }
-            lengthToCopy = len - bufpos -1;
-            int destPos = len-bufpos-1;
-            for (int i=0; i<lengthToCopy; i++) {
-                ret[destPos+i] = (char) getLocationInfo(i).ch;
-            }
-            
+         int startPos = bufpos - len +1;
+         for (int i=0; i<len; i++) {
+             ret[i] = (char) getLocationInfo(startPos+i).ch;
         }
         return ret;
     } 
@@ -179,10 +128,9 @@ public class ${classname} {
   
     public int beginToken() {
          if (backupAmount > 0) {
-            --backupAmount;
-           if (++bufpos == bufsize)
-                bufpos = 0;
-           tokenBegin = bufpos;
+              --backupAmount;
+            ++bufpos;
+            tokenBegin = bufpos;
             return getLocationInfo(bufpos).ch;
         }
         tokenBegin = 0;
@@ -197,25 +145,41 @@ public class ${classname} {
         StringBuilder pushBackBuffer = new StringBuilder();
         int column = 0, line = -1, tabSize =8;
         private boolean prevCharIsCR, prevCharIsLF;
+        private char lookaheadBuffer[] = new char[8192]; // Maybe this should be adjustable but 8K should be fine. Maybe revisit...
+        private int lookaheadIndex, charsReadLast;
         
         
         WrappedReader(Reader nestedReader, int startline, int startcolumn) {
             this.nestedReader = nestedReader;
            line = startline;
-            column = startcolumn - 1;
+           column = startcolumn - 1;
          }
          
-        private int nextChar() throws IOException {
-            return nestedReader.read();
+        private int nextChar()  {
+
+            if (lookaheadIndex<charsReadLast) {
+                return lookaheadBuffer[lookaheadIndex++];
+            }
+            if (charsReadLast >0 && charsReadLast < 8192) {
+                return -1;
+            }
+            try {
+                charsReadLast = nestedReader.read(lookaheadBuffer, 0, 8192);
+                if (charsReadLast <= 0) {
+                     return -1;
+                }
+            } catch (IOException ioe) {
+                 return -1; // Maybe handle this. REVISIT
+            }
+            lookaheadIndex = 0;
+            return lookaheadBuffer[lookaheadIndex++];
         }
 
-        
-        
         public void close() throws IOException {
             nestedReader.close();
         }
         
-        public int read() throws IOException {
+        public int read()  {
         
              int ch;
              int pushBack = pushBackBuffer.length();
@@ -226,8 +190,9 @@ public class ${classname} {
                  return ch;
              }
              ch = nextChar();
-             
-             
+             if (ch <0) {
+                 return ch;
+             }
 //             if (ch == '\r' || ch == '\n') {
 //                 ch = handleNewLine(ch);
 //             }
@@ -254,7 +219,7 @@ public class ${classname} {
         int addedNewLines;
         StringBuilder pendingNewLines = new StringBuilder();
         
-        private int handleNewLine(int ch) throws IOException {
+        private int handleNewLine(int ch) {
             int nextChar = nextChar();
             if (nextChar != '\n' && nextChar != '\r') {
                 pushBack(nextChar);
@@ -305,7 +270,7 @@ public class ${classname} {
         StringBuilder hexEscapeBuffer = new StringBuilder();
         boolean lastCharWasUnicodeEscape;
         
-        private int handleBackSlash() throws IOException {
+        private int handleBackSlash() {
                int nextChar = nextChar();
                if (nextChar != 'u') {
                    pushBack(nextChar);
@@ -327,7 +292,6 @@ public class ${classname} {
                return Integer.parseInt(hexChars, 16);
         }
 [/#if]        
-        
     }
 }
 
