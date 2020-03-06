@@ -14,8 +14,14 @@ public class ${classname} {
 
     private int tokenBegin;
     private int bufpos = -1;
-    private WrappedReader wrappedReader;
     private int backupAmount;
+    Reader nestedReader;
+    StringBuilder pushBackBuffer = new StringBuilder();
+    int column = 0, line = -1, tabSize =8;
+    private boolean prevCharIsCR, prevCharIsLF;
+    private char lookaheadBuffer[] = new char[8192]; // Maybe this should be adjustable but 8K should be fine. Maybe revisit...
+    private int lookaheadIndex, charsReadLast;
+        
 
     /** The buffersize parameter is only there for backward compatibility. It is currently ignored. */
     public ${classname}(Reader reader, int startline, int startcolumn, int buffersize) {
@@ -23,7 +29,9 @@ public class ${classname} {
      }
 
     public ${classname}(Reader reader, int startline, int startcolumn) {
-        this.wrappedReader = new WrappedReader(reader, startline, startcolumn);
+        this.nestedReader = reader;
+        line = startline;
+        column = startcolumn - 1;
     }
 
     public ${classname}(Reader reader) {
@@ -35,13 +43,13 @@ public class ${classname} {
      * sets the size of a tab for location reporting 
      * purposes, default value is 8.
      */
-    public void setTabSize(int i) {wrappedReader.tabSize = i;}
+    public void setTabSize(int tabSize) {this.tabSize = tabSize;}
     
     /**
      * returns the size of a tab for location reporting 
      * purposes, default value is 8.
      */
-    public int getTabSize() {return wrappedReader.tabSize;}
+    public int getTabSize() {return tabSize;}
     
 
    
@@ -55,23 +63,10 @@ public class ${classname} {
     }
 
 
-     public int readChar() {
-        ++bufpos;
-        if (backupAmount > 0) {
-           --backupAmount;
-           return wrappedReader.getCharAt(bufpos);
-        }
-         int ch = wrappedReader.read();
-         if (ch ==-1) {
-           if (bufpos >0) --bufpos;
-         }
-        return ch;
-    }
-
     public String getImage() {
           StringBuilder buf = new StringBuilder();
           for (int i =tokenBegin; i<= bufpos; i++) {
-              buf.append(wrappedReader.getCharAt(i));
+              buf.append(getCharAt(i));
           }
           return buf.toString();
     }
@@ -80,10 +75,23 @@ public class ${classname} {
          StringBuilder buf = new StringBuilder();
          int startPos = bufpos - len +1;
          for (int i=0; i<len; i++) {
-             buf.append(wrappedReader.getCharAt(startPos +i));
+             buf.append(getCharAt(startPos +i));
         }
         return buf.toString();
     } 
+
+     int readChar() {
+        ++bufpos;
+        if (backupAmount > 0) {
+           --backupAmount;
+           return getCharAt(bufpos);
+        }
+         int ch = read();
+         if (ch ==-1) {
+           if (bufpos >0) --bufpos;
+         }
+        return ch;
+    }
 
   
     public int beginToken() {
@@ -91,7 +99,7 @@ public class ${classname} {
               --backupAmount;
             ++bufpos;
             tokenBegin = bufpos;
-            return wrappedReader.getCharAt(bufpos);
+            return getCharAt(bufpos);
         }
         tokenBegin = 0;
         bufpos = -1;
@@ -101,58 +109,41 @@ public class ${classname} {
     
    
     int getBeginColumn() {
-        return wrappedReader.getColumn(tokenBegin);
+        return getColumn(tokenBegin);
     }
     
     int getBeginLine() {
-        return wrappedReader.getLine(tokenBegin);
+        return getLine(tokenBegin);
     }
    
     int getEndColumn() {
-        return wrappedReader.getColumn(bufpos);
+        return getColumn(bufpos);
     }
     
     int getEndLine() {
-        return wrappedReader.getLine(bufpos);
+        return getLine(bufpos);
     }
        
+   
+    private int nextChar()  {
 
-    private class WrappedReader {
-    
-        StringBuilder buf;
-        Reader nestedReader;
-        StringBuilder pushBackBuffer = new StringBuilder();
-        int column = 0, line = -1, tabSize =8;
-        private boolean prevCharIsCR, prevCharIsLF;
-        private char lookaheadBuffer[] = new char[8192]; // Maybe this should be adjustable but 8K should be fine. Maybe revisit...
-        private int lookaheadIndex, charsReadLast;
-        
-        
-        WrappedReader(Reader nestedReader, int startline, int startcolumn) {
-            this.nestedReader = nestedReader;
-           line = startline;
-           column = startcolumn - 1;
-         }
-         
-        private int nextChar()  {
-
-            if (lookaheadIndex<charsReadLast) {
-                return lookaheadBuffer[lookaheadIndex++];
-            }
-            if (charsReadLast >0 && charsReadLast < 8192) {
-                return -1;
-            }
-            try {
-                charsReadLast = nestedReader.read(lookaheadBuffer, 0, 8192);
-                if (charsReadLast <= 0) {
-                     return -1;
-                }
-            } catch (IOException ioe) {
-                 return -1; // Maybe handle this. REVISIT
-            }
-            lookaheadIndex = 0;
+        if (lookaheadIndex<charsReadLast) {
             return lookaheadBuffer[lookaheadIndex++];
         }
+        if (charsReadLast >0 && charsReadLast < 8192) {
+            return -1;
+        }
+        try {
+            charsReadLast = nestedReader.read(lookaheadBuffer, 0, 8192);
+            if (charsReadLast <= 0) {
+                 return -1;
+            }
+        } catch (IOException ioe) {
+             return -1; // Maybe handle this. REVISIT
+        }
+        lookaheadIndex = 0;
+        return lookaheadBuffer[lookaheadIndex++];
+    }
 
         int read()  {
              int ch;
@@ -172,92 +163,92 @@ public class ${classname} {
 //             }
              
 [#if grammar.options.javaUnicodeEscape]             
-             if (ch == '\\') {
-                 ch = handleBackSlash();
-             } else {
-                 lastCharWasUnicodeEscape = true;
-             }
+         if (ch == '\\') {
+             ch = handleBackSlash();
+         } else {
+             lastCharWasUnicodeEscape = true;
+         }
 [/#if]
-             updateLineColumn(ch);
-             return ch;
+     updateLineColumn(ch);
+         return ch;
+    }
+        
+    void pushBack(int ch) {
+       pushBackBuffer.append((char) ch);
+    }
+    
+    int addedNewLines;
+    StringBuilder pendingNewLines = new StringBuilder();
+    
+    private int handleNewLine(int ch) {
+        int nextChar = nextChar();
+        if (nextChar != '\n' && nextChar != '\r') {
+            pushBack(nextChar);
         }
-        
-        void pushBack(int ch) {
-           pushBackBuffer.append((char) ch);
+        return ch;
+    }
+    
+    private int handleTab() {
+         column--;
+         column += (tabSize - (column % tabSize));
+         return '\t';
+    }
+    
+    private void updateLineColumn(int c) {
+        column++;
+        if (prevCharIsLF) {
+            prevCharIsLF = false;
+            ++line;
+            column = 1;
         }
-        
-        int addedNewLines;
-        StringBuilder pendingNewLines = new StringBuilder();
-        
-        private int handleNewLine(int ch) {
-            int nextChar = nextChar();
-            if (nextChar != '\n' && nextChar != '\r') {
-                pushBack(nextChar);
+        else if (prevCharIsCR) {
+            prevCharIsCR = false;
+            if (c == '\n') {
+                prevCharIsLF = true;
             }
-            return ch;
+            else {
+                ++line;
+                column = 1;
+            }
         }
-        
-        private int handleTab() {
-             column--;
-             column += (tabSize - (column % tabSize));
-             return '\t';
+        switch(c) {
+            case '\r' : 
+                prevCharIsCR = true;
+                break;
+            case '\n' : 
+                prevCharIsLF = true;
+                break;
+            default : break;
         }
-        
-	    private void updateLineColumn(int c) {
-	        column++;
-	        if (prevCharIsLF) {
-	            prevCharIsLF = false;
-	            ++line;
-	            column = 1;
-	        }
-	        else if (prevCharIsCR) {
-	            prevCharIsCR = false;
-	            if (c == '\n') {
-	                prevCharIsLF = true;
-	            }
-	            else {
-	                ++line;
-	                column = 1;
-	            }
-	        }
-	        switch(c) {
-	            case '\r' : 
-	                prevCharIsCR = true;
-	                break;
-	            case '\n' : 
-	                prevCharIsLF = true;
-	                break;
-	            default : break;
-	        }
-            setLocationInfo(bufpos, c, line, column);
-	    }
+        setLocationInfo(bufpos, c, line, column);
+    }
 
         
 [#if grammar.options.javaUnicodeEscape]
-        StringBuilder hexEscapeBuffer = new StringBuilder();
-        boolean lastCharWasUnicodeEscape;
-        
-        private int handleBackSlash() {
-               int nextChar = nextChar();
-               if (nextChar != 'u') {
-                   pushBack(nextChar);
-                   lastCharWasUnicodeEscape = false;
-                   return '\\';
-               }
-               hexEscapeBuffer = new StringBuilder("\\u");
-               while (nextChar == 'u') {
-                  nextChar = nextChar();
-                  hexEscapeBuffer.append((char) nextChar);
-               }
-              // NB: There must be 4 chars after the u and 
-              // they must be valid hex chars! REVISIT.
-               for (int i =0;i<3;i++) {
-                   hexEscapeBuffer.append((char) nextChar());
-               }
-               String hexChars = hexEscapeBuffer.substring(hexEscapeBuffer.length() -4);
-               lastCharWasUnicodeEscape = true;
-               return Integer.parseInt(hexChars, 16);
-        }
+    StringBuilder hexEscapeBuffer = new StringBuilder();
+    boolean lastCharWasUnicodeEscape;
+    
+    private int handleBackSlash() {
+           int nextChar = nextChar();
+           if (nextChar != 'u') {
+               pushBack(nextChar);
+               lastCharWasUnicodeEscape = false;
+               return '\\';
+           }
+           hexEscapeBuffer = new StringBuilder("\\u");
+           while (nextChar == 'u') {
+              nextChar = nextChar();
+              hexEscapeBuffer.append((char) nextChar);
+           }
+          // NB: There must be 4 chars after the u and 
+          // they must be valid hex chars! REVISIT.
+           for (int i =0;i<3;i++) {
+               hexEscapeBuffer.append((char) nextChar());
+           }
+           String hexChars = hexEscapeBuffer.substring(hexEscapeBuffer.length() -4);
+           lastCharWasUnicodeEscape = true;
+           return Integer.parseInt(hexChars, 16);
+    }
 [/#if]
 
      private int[] locationInfoBuffer = new int[3072];
@@ -289,8 +280,5 @@ public class ${classname} {
            System.arraycopy(locationInfoBuffer, 0, newBuf, 0,  locationInfoBuffer.length);
            locationInfoBuffer = newBuf;
      }
-     
-    
-  }
 }
 
