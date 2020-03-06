@@ -12,6 +12,19 @@ import java.util.ArrayList;
 
 public class ${classname} {
 
+    /** The buffersize parameter is only there for backward compatibility. It is currently ignored. */
+    public ${classname}(Reader reader, int startline, int startcolumn, int buffersize) {
+        this(reader, startline, startcolumn);
+     }
+
+    public ${classname}(Reader reader, int startline, int startcolumn) {
+        this.wrappedReader = new WrappedReader(reader, startline, startcolumn);
+    }
+
+    public ${classname}(Reader reader) {
+        this(reader, 1, 1, 4096);
+    }
+
 
     private class LocationInfo {
          int ch=-1, line, column;
@@ -52,11 +65,8 @@ public class ${classname} {
     private final int bufsize = 4096;
     private int tokenBegin;
     private int bufpos = -1;
-    private int column = 0;
-    private int line = 1;
-    private boolean prevCharIsCR, prevCharIsLF;
-    private WrappedReader reader;
-    private int backupAmount, tabSize=8;
+    private WrappedReader wrappedReader;
+    private int backupAmount;
     
     
      int getBeginColumn() {
@@ -91,48 +101,13 @@ public class ${classname} {
      * sets the size of a tab for location reporting 
      * purposes, default value is 8.
      */
-    public void setTabSize(int i) {this.tabSize = i;}
+    public void setTabSize(int i) {wrappedReader.tabSize = i;}
     
     /**
      * returns the size of a tab for location reporting 
      * purposes, default value is 8.
      */
-    public int getTabSize() {return tabSize;}
-    
-    private void updateLineColumn(int c) {
-        column++;
-        if (prevCharIsLF) {
-            prevCharIsLF = false;
-            ++line;
-            column = 1;
-        }
-        else if (prevCharIsCR) {
-            prevCharIsCR = false;
-            if (c == '\n') {
-                prevCharIsLF = true;
-            }
-            else {
-                ++line;
-                column = 1;
-            }
-        }
-        switch(c) {
-            case '\r' : 
-                prevCharIsCR = true;
-                break;
-            case '\n' : 
-                prevCharIsLF = true;
-                break;
-            case '\t' : 
-                column--;
-                column += (tabSize - (column % tabSize));
-                break;
-            default : break;
-        }
-        getLocationInfo(bufpos).line = line;
-        getLocationInfo(bufpos).column = column;
-    }
-    
+    public int getTabSize() {return wrappedReader.tabSize;}
     
      public int readChar() throws IOException {
         if (backupAmount > 0) {
@@ -144,7 +119,7 @@ public class ${classname} {
            return getLocationInfo(bufpos).ch;         
         }
         ++bufpos;
-         int ch = reader.read();
+         int ch = wrappedReader.read();
          if (ch ==-1) {
            --bufpos;
           backup(0);
@@ -153,27 +128,9 @@ public class ${classname} {
           }
            throw new IOException();
          }
-       getLocationInfo(bufpos).ch = ch;
-        int c = getLocationInfo(bufpos).ch;
-        updateLineColumn(c);
-        return c;
+        return ch;
     }
 
-    /** The buffersize parameter is only there for backward compatibility. It is currently ignored. */
-    public ${classname}(Reader reader, int startline, int startcolumn, int buffersize) {
-        this.reader = new WrappedReader(reader);
-        line = startline;
-        column = startcolumn - 1;
-     }
-
-    public ${classname}(Reader reader, int startline, int startcolumn) {
-        this(reader, startline, startcolumn, 4096);
-    }
-
-    public ${classname}(Reader reader) {
-        this(reader, 1, 1, 4096);
-    }
-    
     /** Get token literal value. */
     public String getImage() {
         if (bufpos >= tokenBegin) { 
@@ -242,10 +199,14 @@ public class ${classname} {
         StringBuilder buf;
         Reader nestedReader;
         StringBuilder pushBackBuffer = new StringBuilder();
+        int column = 0, line = -1, tabSize =8;
+        private boolean prevCharIsCR, prevCharIsLF;
         
         
-        WrappedReader(Reader nestedReader) {
+        WrappedReader(Reader nestedReader, int startline, int startcolumn) {
             this.nestedReader = nestedReader;
+           line = startline;
+            column = startcolumn - 1;
          }
          
         private int nextChar() throws IOException {
@@ -265,16 +226,24 @@ public class ${classname} {
              if (pushBack >0) {
                  ch = pushBackBuffer.charAt(pushBack -1);
                  pushBackBuffer.setLength(pushBack -1);
+                 updateLineColumn(ch);
                  return ch;
              }
              ch = nextChar();
+             
+             
+//             if (ch == '\r' || ch == '\n') {
+//                 ch = handleNewLine(ch);
+//             }
+             
 [#if grammar.options.javaUnicodeEscape]             
              if (ch == '\\') {
                  ch = handleBackSlash();
              } else {
                  lastCharWasUnicodeEscape = true;
              }
-[/#if]             
+[/#if]
+             updateLineColumn(ch);
              return ch;
         }
         
@@ -285,7 +254,56 @@ public class ${classname} {
         void pushBack(int ch) {
            pushBackBuffer.append((char) ch);
         }
-              
+        
+        int addedNewLines;
+        StringBuilder pendingNewLines = new StringBuilder();
+        
+        private int handleNewLine(int ch) throws IOException {
+            int nextChar = nextChar();
+            if (nextChar != '\n' && nextChar != '\r') {
+                pushBack(nextChar);
+            }
+            return ch;
+        }
+        
+        private int handleTab() {
+             column--;
+             column += (tabSize - (column % tabSize));
+             return '\t';
+        }
+        
+	    private void updateLineColumn(int c) {
+           getLocationInfo(bufpos).ch = c;
+	    
+	        column++;
+	        if (prevCharIsLF) {
+	            prevCharIsLF = false;
+	            ++line;
+	            column = 1;
+	        }
+	        else if (prevCharIsCR) {
+	            prevCharIsCR = false;
+	            if (c == '\n') {
+	                prevCharIsLF = true;
+	            }
+	            else {
+	                ++line;
+	                column = 1;
+	            }
+	        }
+	        switch(c) {
+	            case '\r' : 
+	                prevCharIsCR = true;
+	                break;
+	            case '\n' : 
+	                prevCharIsLF = true;
+	                break;
+	            default : break;
+	        }
+	        getLocationInfo(bufpos).line = line;
+	        getLocationInfo(bufpos).column = column;
+	    }
+
         
 [#if grammar.options.javaUnicodeEscape]
         StringBuilder hexEscapeBuffer = new StringBuilder();
