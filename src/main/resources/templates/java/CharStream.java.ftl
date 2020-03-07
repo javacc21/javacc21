@@ -85,7 +85,7 @@ class ${classname} {
            return getCharAt(bufpos);
         }
          int ch = read();
-         if (ch ==-1) {
+         if (ch < 0) {
            if (bufpos >0) --bufpos;
          }
         return ch;

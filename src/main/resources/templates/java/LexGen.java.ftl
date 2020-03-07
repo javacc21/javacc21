@@ -205,11 +205,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
     EOFLoop :
     while (true) {
-//       try {
-          curChar = (char) input_stream.beginToken();
-//       }
-       if (curChar== (char) -1) {
-//       catch(java.io.IOException e) {
+        int retval1 = input_stream.beginToken();
+        curChar = (char) (retval1);
+         if (retval1 == -1) {
 [#if options.debugLexer]			
             debugStream.println("Returning the <EOF> token.");
 [/#if]            
