@@ -8,7 +8,7 @@ package ${grammar.parserPackage};
  */
 
 public interface ${grammar.constantsClassName} {
-
+  int INVALID = -1; // Used for Lexically invalid input
   int EOF = 0; // End of file
   [#list grammar.orderedNamedTokens as regexp]
   int ${regexp.label} = ${regexp.ordinal};

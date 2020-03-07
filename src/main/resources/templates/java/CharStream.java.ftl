@@ -6,9 +6,10 @@ package ${grammar.parserPackage};
 [#set classname = filename?substring(0, filename?length-5)]
 [#set options = grammar.options]
 
-import java.io.*;
+import java.io.Reader;
+import java.io.IOException;
 
-public class ${classname} {
+class ${classname} {
 
     private int tokenBegin;
     private int bufpos = -1;
@@ -177,6 +178,9 @@ public class ${classname} {
             ++line;
             column = 1;
         }
+        if (lastCharWasUnicodeEscape) {
+            column += (hexEscapeBuffer.length() -1);
+        }
         prevCharIsCR = (c=='\r');
         prevCharIsLF = (c=='\n');
         setLocationInfo(bufpos, c, line, column);
@@ -195,18 +199,52 @@ public class ${classname} {
                return '\\';
            }
            hexEscapeBuffer = new StringBuilder("\\u");
+           boolean invalid = false;
            while (nextChar == 'u') {
               nextChar = nextChar();
-              hexEscapeBuffer.append((char) nextChar);
+              if (nextChar == 'u' || isHexChar(nextChar))  {
+                  hexEscapeBuffer.append((char) nextChar);
+              } else {
+                  invalid = true;
+              }
            }
           // NB: There must be 4 chars after the u and 
-          // they must be valid hex chars! REVISIT.
-           for (int i =0;i<3;i++) {
-               hexEscapeBuffer.append((char) nextChar());
+          // they must be valid hex chars!
+           if (!invalid) for (int i =0;i<3;i++) {
+               nextChar = nextChar();
+               if (isHexChar(nextChar)) {
+	               hexEscapeBuffer.append((char) nextChar);
+               } else {
+                   invalid = true;
+                   break;
+               }
            }
-           String hexChars = hexEscapeBuffer.substring(hexEscapeBuffer.length() -4);
-           lastCharWasUnicodeEscape = true;
-           return Integer.parseInt(hexChars, 16);
+           if (!invalid) {
+               lastCharWasUnicodeEscape = true;
+               String hexString = hexEscapeBuffer.substring(hexEscapeBuffer.length()-4);
+               return hexVal(hexString);
+           }
+           return -2; // REVISIT
+    }
+    
+    private boolean isHexChar(int ch) {
+        return (ch>='0' && ch<='9') || (ch>='a' && ch<='f') || (ch>='A' && ch<='F');
+    }
+    
+    private int hexVal(String fourHexChars) {
+         int result =0;
+         for (int i=0; i<4; i++) {
+              result <<= 4;
+              int ch = fourHexChars.charAt(i);
+              if (ch >= 'a') {
+                  result += (10+ch-'a');
+              }
+              else if (ch >= 'A') {
+                  result += (10+ch - 'A');
+              }
+              else result += (ch - '0'); 
+         }
+         return result;
     }
 [/#if]
 
