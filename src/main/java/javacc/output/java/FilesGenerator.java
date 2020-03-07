@@ -59,7 +59,7 @@ public class FilesGenerator {
         String filename = grammar.getFilename();
         File dir = new File(filename).getCanonicalFile().getParentFile();
         TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir), 
-                                                                new ClassTemplateLoader(this.getClass(), ""));
+                                                                new ClassTemplateLoader(this.getClass(), "/templates/java"));
         fmConfig.setClassForTemplateLoading(FilesGenerator.class, "");
         fmConfig.setTemplateLoader(templateLoader);
         fmConfig.setObjectWrapper(new BeansWrapper());
