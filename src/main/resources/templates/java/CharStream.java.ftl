@@ -14,7 +14,7 @@ class ${classname} {
     private int tokenBegin;
     private int bufpos = -1;
     private int backupAmount;
-    private Reader nestedReader;
+    private Reader reader;
     private StringBuilder pushBackBuffer = new StringBuilder();
     private int column = 0, line = -1, tabSize =8;
     private boolean prevCharIsCR, prevCharIsLF;
@@ -28,7 +28,7 @@ class ${classname} {
      }
 
     public ${classname}(Reader reader, int startline, int startcolumn) {
-        this.nestedReader = reader;
+        this.reader = reader;
         line = startline;
         column = startcolumn - 1;
     }
@@ -132,7 +132,7 @@ class ${classname} {
             return -1;
         }
         try {
-            charsReadLast = nestedReader.read(lookaheadBuffer, 0, 8192);
+            charsReadLast = reader.read(lookaheadBuffer, 0, 8192);
             if (charsReadLast <= 0) {
                  return -1;
             }
@@ -178,9 +178,11 @@ class ${classname} {
             ++line;
             column = 1;
         }
+[#if grammar.options.javaUnicodeEscape]        
         if (lastCharWasUnicodeEscape) {
             column += (hexEscapeBuffer.length() -1);
         }
+[/#if]        
         prevCharIsCR = (c=='\r');
         prevCharIsLF = (c=='\n');
         setLocationInfo(bufpos, c, line, column);
