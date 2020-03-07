@@ -7,8 +7,6 @@ package ${grammar.parserPackage};
 [#set options = grammar.options]
 
 import java.io.*;
-import java.util.ArrayList;
-
 
 public class ${classname} {
 
@@ -165,7 +163,7 @@ public class ${classname} {
              lastCharWasUnicodeEscape = false;
          }
 [/#if]
-     updateLineColumn(ch);
+         updateLineColumn(ch);
          return ch;
     }
         
@@ -175,37 +173,19 @@ public class ${classname} {
     
     private void updateLineColumn(int c) {
         column++;
-        if (prevCharIsLF) {
-            prevCharIsLF = false;
+        if (prevCharIsLF || (prevCharIsCR && c!='\n')) {
             ++line;
             column = 1;
         }
-        else if (prevCharIsCR) {
-            prevCharIsCR = false;
-            if (c == '\n') {
-                prevCharIsLF = true;
-            }
-            else {
-                ++line;
-                column = 1;
-            }
-        }
-        switch(c) {
-            case '\r' : 
-                prevCharIsCR = true;
-                break;
-            case '\n' : 
-                prevCharIsLF = true;
-                break;
-            default : break;
-        }
+        prevCharIsCR = (c=='\r');
+        prevCharIsLF = (c=='\n');
         setLocationInfo(bufpos, c, line, column);
     }
 
         
 [#if grammar.options.javaUnicodeEscape]
-    StringBuilder hexEscapeBuffer = new StringBuilder();
-    boolean lastCharWasUnicodeEscape;
+    private StringBuilder hexEscapeBuffer = new StringBuilder();
+    private boolean lastCharWasUnicodeEscape;
     
     private int handleBackSlash() {
            int nextChar = nextChar();
@@ -232,15 +212,15 @@ public class ${classname} {
 
      private int[] locationInfoBuffer = new int[3072];
    
-     int getLine(int pos) {
+     private int getLine(int pos) {
          return locationInfoBuffer[pos*3+1];
      }
      
-     int getColumn(int pos) {
+     private int getColumn(int pos) {
          return locationInfoBuffer[pos*3+2];
      }
      
-     char getCharAt(int pos) {
+     private char getCharAt(int pos) {
          return (char) locationInfoBuffer[pos*3];
      }
      
