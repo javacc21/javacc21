@@ -168,10 +168,6 @@ class ${classname} {
          return ch;
     }
         
-    private void pushBack(int ch) {
-       pushBackBuffer.append((char) ch);
-    }
-    
     private void updateLineColumn(int c) {
         column++;
         if (prevCharIsLF || (prevCharIsCR && c!='\n')) {
@@ -195,8 +191,11 @@ class ${classname} {
     
     private int handleBackSlash() {
            int nextChar = nextChar();
+           if (nextChar == -1) {
+                return '\\';
+           }
            if (nextChar != 'u') {
-               pushBack(nextChar);
+               pushBackBuffer.append((char) nextChar);
                lastCharWasUnicodeEscape = false;
                return '\\';
            }

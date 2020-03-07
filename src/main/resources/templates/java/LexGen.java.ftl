@@ -42,18 +42,15 @@ package ${grammar.parserPackage};
    ${import}
 [/#list]
 
-/** Token Manager */
-
 @SuppressWarnings("unused")
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
   /** Debug output. */
   
   java.io.PrintStream debugStream = System.out;
-  /** Set debug output. */
   public void setDebugStream(java.io.PrintStream ds) { debugStream = ds; }
 [#if options.lexerUsesParser]
-  /** The parser. */
+
   public ${grammar.parserClassName} parser;
 [/#if]
 
@@ -245,9 +242,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             case ${lexicalState_index} : 
     [/#if]
     [#if singlesToSkip.hasTransitions()]
-       [#-- added the backup(0) to make JIT happy --]
-              try { 
-                 input_stream.backup(0);
           [#if singlesToSkip.asciiMoves[0] != 0&&singlesToSkip.asciiMoves[1] != 0]
                  while ((curChar < 64 && (${utils.toHexString(singlesToSkip.asciiMoves[0])}
                   & (1L <<curChar)) != 0L) || (curChar>>6) == 1 && (${utils.toHexStringL(singlesToSkip.asciiMoves[1])} 
@@ -278,8 +272,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
          [#if options.debugLexer]
                 }
          [/#if]
-             }
-             catch (Exception e1) {continue EOFLoop;} // REVISIT, not necessary really
     [/#if]    
              
              

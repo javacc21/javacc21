@@ -139,7 +139,7 @@ public class JavaCCOptions {
         optionValues.put("DEBUG_LOOKAHEAD", false);
         optionValues.put("DEBUG_LEXER", false);
         optionValues.put("FAULT_TOLERANT", false);
-        optionValues.put("PRESERVE_LINE_ENDINGS",  true); // Will change this to false pretty soon.
+//        optionValues.put("PRESERVE_LINE_ENDINGS",  true); // Will change this to false pretty soon.
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
         optionValues.put("IGNORE_CASE", false);
         optionValues.put("USER_DEFINED_LEXER", false);
@@ -570,9 +570,9 @@ public class JavaCCOptions {
     	return booleanValue("QUIET");
     }
     
-    boolean getPreserverLineEndings() {
-    	return booleanValue("PRESERVE_LINE_ENDINGS");
-    }
+//    boolean getPreserverLineEndings() {
+//    	return booleanValue("PRESERVE_LINE_ENDINGS");
+//    }
 
     public boolean getFaultTolerant() {
         return booleanValue("FAULT_TOLERANT");
