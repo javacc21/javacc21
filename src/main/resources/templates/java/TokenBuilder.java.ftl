@@ -138,8 +138,8 @@ private class TokenBuilder {
          int ch;
          int pushBack = pushBackBuffer.length();
          if (pushBack >0) {
-             ch = pushBackBuffer.charAt(pushBack -1);
-             pushBackBuffer.setLength(pushBack -1);
+             ch = pushBackBuffer.charAt(0);
+             pushBackBuffer.deleteCharAt(0);
              updateLineColumn(ch);
              return ch;
          }

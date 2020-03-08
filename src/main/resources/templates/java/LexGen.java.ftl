@@ -445,29 +445,17 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      [/#if]
    [/#if]
    }
-   int error_line = input_stream.getEndLine();
+    int error_line = input_stream.getEndLine();
    int error_column = input_stream.getEndColumn();
    String error_after = null;
-   boolean EOFSeen = false;
-   
-   if (input_stream.readChar() == -1) {
-       EOFSeen = true;
-      error_after = curPos <= 1 ? "" : input_stream.getImage();
-      if (curChar == '\n' || curChar == '\r') {
-          error_line++;
-          error_column = 0;
-      }
-      else
-         error_column++;
-     } else {
-         input_stream.backup(1);
-     }
-   
-   if (!EOFSeen) {
-      input_stream.backup(1);
-      error_after = curPos <= 1 ? "" : input_stream.getImage();
-   }
-   throw new LexicalException(EOFSeen, curLexState, error_line, error_column, error_after, curChar, inputSource);
+    input_stream.backup(1);
+    error_after = curPos <= 1 ? "" : input_stream.getImage();
+    Token invalidToken = new InvalidToken("" + curChar);
+    invalidToken.setBeginLine(error_line);
+    invalidToken.setEndLine(error_line);
+    invalidToken.setBeginColumn(error_column);
+    invalidToken.setEndColumn(error_column);
+    return invalidToken;
 [#if lexerData.hasMore]
     }
 [/#if]

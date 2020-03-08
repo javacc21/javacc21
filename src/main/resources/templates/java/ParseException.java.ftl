@@ -122,6 +122,10 @@ public class ParseException extends Exception {
     Token tok = currentToken.next;
     for (int i = 0; i < maxSize; i++) {
       if (i != 0) retval += " ";
+      if (tok.kind == -1) {
+         retval += ("INVALID INPUT: " + tok.image);
+         break;
+      }
       if (tok.kind == 0) {
         retval += tokenImage[0];
         break;

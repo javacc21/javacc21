@@ -82,11 +82,9 @@ public class FilesGenerator {
             throw new MetaParseException();
         }
         initializeTemplateEngine();
-        generateLexicalException();
         generateParseException();
         generateToken();
         generateLexer();
-//        generateCharStream();
         generateConstantsFile();
         generateParser();
         generateDoc();
@@ -111,9 +109,6 @@ public class FilesGenerator {
                  || currentFilename.equals(grammar.getLexerClassName() + ".java")) {
             templateName = "Lexer.java.ftl";
         }
-        else if (currentFilename.endsWith("CharStream.java")) {
-            templateName = "CharStream.java.ftl";
-        }
         else if (currentFilename.endsWith(".html")) {
             templateName = "doc.html.ftl";
         }
@@ -127,7 +122,6 @@ public class FilesGenerator {
             if (!(currentFilename.equals("ParseException.java")
                     || currentFilename.equals("Token.java")
                     || currentFilename.equals("Node.java")
-                    || currentFilename.equals("LexicalException.java")
                     || currentFilename.equals("Nodes.java")
             		|| currentFilename.equals("InvalidToken.java")))
             {
@@ -192,21 +186,6 @@ public class FilesGenerator {
             out.close();
         }
     }
-/*    
-    void generateCharStream() throws IOException, TemplateException {
-        String filename = "CharStream.java";
-        if (!grammar.getOptions().getUserDefinedLexer()) {
-            if (grammar.getOptions().getJavaUnicodeEscape()) {
-                filename = "JavaCharStream.java";
-            } else {
-                filename = "SimpleCharStream.java";
-            }
-        }
-        File outputFile = new File(grammar.getParserOutputDirectory(), filename);
-        if (regenerate(outputFile)) {
-            generate(outputFile);
-        }
-    }*/
     
     void generateConstantsFile() throws IOException, TemplateException {
         String filename = grammar.getConstantsClassName() + ".java";
@@ -229,13 +208,6 @@ public class FilesGenerator {
         outputFile = new File(grammar.getParserOutputDirectory(), "InvalidToken.java");
         if (regenerate(outputFile)) {
         	generate(outputFile);
-        }
-    }
-
-    void generateLexicalException() throws IOException, TemplateException {
-        File outputFile = new File(grammar.getParserOutputDirectory(), "LexicalException.java");
-        if (regenerate(outputFile)) {
-            generate(outputFile);
         }
     }
 
@@ -382,7 +354,7 @@ public class FilesGenerator {
         }
         
         public String addEscapes(String input) {
-            return LexicalException.addEscapes(input);
+            return ParseException.addEscapes(input);
         }
 
         public boolean isBitSet(long num, int bit) {
