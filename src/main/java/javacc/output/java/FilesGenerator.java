@@ -59,8 +59,7 @@ public class FilesGenerator {
         String filename = grammar.getFilename();
         File dir = new File(filename).getCanonicalFile().getParentFile();
         TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir), 
-                                                                new ClassTemplateLoader(this.getClass(), ""));
-        fmConfig.setClassForTemplateLoading(FilesGenerator.class, "");
+                                                                new ClassTemplateLoader(this.getClass(), "/templates/java"));
         fmConfig.setTemplateLoader(templateLoader);
         fmConfig.setObjectWrapper(new BeansWrapper());
         fmConfig.setNumberFormat("computer");
@@ -83,7 +82,6 @@ public class FilesGenerator {
             throw new MetaParseException();
         }
         initializeTemplateEngine();
-//        System.out.println("Outputting parser source in directory: " + grammar.getParserOutputDirectory());
         generateLexicalException();
         generateParseException();
         generateToken();
@@ -92,8 +90,6 @@ public class FilesGenerator {
         generateConstantsFile();
         generateParser();
         generateDoc();
-//        generateNodeFile();
-//        generateUtilsFile();
         if (grammar.getOptions().getTreeBuildingEnabled()) {
             generateTreeBuildingFiles();
         }

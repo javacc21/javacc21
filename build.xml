@@ -65,7 +65,7 @@
     	   classpath="bin/freemarker.jar"
            includeantruntime="yes"
     />
-     <copy todir="build/javacc/output/java">
+     <copy todir="build/templates/java">
       <fileset dir="src/main/resources/templates/java">
          <include name="*.ftl"/>
       </fileset>

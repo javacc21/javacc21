@@ -134,12 +134,12 @@ public class JavaCCOptions {
         optionValues.put("LOOKAHEAD", 1);
         optionValues.put("CHOICE_AMBIGUITY_CHECK", 2);
         optionValues.put("OTHER_AMBIGUITY_CHECK", 1);
-
+        optionValues.put("TABS_TO_SPACES",  0);
         optionValues.put("DEBUG_PARSER", false);
         optionValues.put("DEBUG_LOOKAHEAD", false);
         optionValues.put("DEBUG_LEXER", false);
         optionValues.put("FAULT_TOLERANT", false);
-//        optionValues.put("PRESERVE_LINE_ENDINGS",  true); // Will change this to false pretty soon.
+        optionValues.put("PRESERVE_LINE_ENDINGS",  true); // Will change this to false pretty soon.
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
         optionValues.put("IGNORE_CASE", false);
         optionValues.put("USER_DEFINED_LEXER", false);
@@ -570,9 +570,13 @@ public class JavaCCOptions {
     	return booleanValue("QUIET");
     }
     
-//    boolean getPreserverLineEndings() {
-//    	return booleanValue("PRESERVE_LINE_ENDINGS");
-//    }
+    public boolean getPreserveLineEndings() {
+    	return booleanValue("PRESERVE_LINE_ENDINGS");
+    }
+    
+    public int getTabsToSpaces() {
+    	return intValue("TABS_TO_SPACES");
+    }
 
     public boolean getFaultTolerant() {
         return booleanValue("FAULT_TOLERANT");

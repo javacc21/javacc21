@@ -66,6 +66,7 @@ public final class Main {
         System.out.println("    LOOKAHEAD              (default 1)");
         System.out.println("    CHOICE_AMBIGUITY_CHECK (default 2)");
         System.out.println("    OTHER_AMBIGUITY_CHECK  (default 1)");
+        System.out.println("    TABS_TO_SPACES (default not set)");
         System.out.println();
         System.out.println("The boolean valued options are:");
         System.out.println();
@@ -79,7 +80,7 @@ public final class Main {
         System.out.println("    JAVA_UNICODE_ESCAPE    (default false)");
         System.out.println("    LEXER_USES_PARSER      (default false)");
         System.out.println("    NODES_USE_PARSER       (default false)");
-//        System.out.println("    PRESERVE_LINE_ENDINGS       (default true)");
+        System.out.println("    PRESERVE_LINE_ENDINGS       (default true)");
         System.out.println("    SPECIAL_TOKENS_ARE_NODES (default false)");
         System.out.println("    SMART_NODE_CREATION    (default true)");
         System.out.println("    TOKENS_ARE_NODES       (default true)");

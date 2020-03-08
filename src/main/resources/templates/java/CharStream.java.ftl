@@ -9,15 +9,15 @@ package ${grammar.parserPackage};
 import java.io.Reader;
 import java.io.IOException;
 
-class ${classname} {
+public class ${classname} {
 
     private int tokenBegin;
     private int bufpos = -1;
     private int backupAmount;
     private Reader reader;
     private StringBuilder pushBackBuffer = new StringBuilder();
-    private int column = 0, line = -1, tabSize =8;
-    private boolean prevCharIsCR, prevCharIsLF;
+    private int column, line, tabSize =8;
+    private boolean prevCharIsCR, prevCharIsLF, prevCharIsTAB;
     private char lookaheadBuffer[] = new char[8192]; // Maybe this should be adjustable but 8K should be fine. Maybe revisit...
     private int lookaheadIndex, charsReadLast;
         
@@ -37,7 +37,6 @@ class ${classname} {
         this(reader, 1, 1);
     }
 
-
     /**
      * sets the size of a tab for location reporting 
      * purposes, default value is 8.
@@ -50,7 +49,6 @@ class ${classname} {
      */
     public int getTabSize() {return tabSize;}
     
-
    
      public void backup(int amount) {
         backupAmount += amount;
@@ -164,6 +162,26 @@ class ${classname} {
              lastCharWasUnicodeEscape = false;
          }
 [/#if]
+
+[#if options.tabsToSpaces > 0]
+        int tabsToSpaces = ${options.tabsToSpaces};
+        if (ch == '\t') {
+              ch = ' ';
+              int spacesToAdd = tabsToSpaces - (column % tabsToSpaces) - 1; 
+              for (int i = 0; i < spacesToAdd; i++) {
+                  pushBackBuffer.append((char) ' ');
+              }
+        }
+[/#if]
+
+[#if !options.preserveLineEndings]
+     if (ch == '\r') {
+        int nextChar = nextChar();
+        if (nextChar >=0 && nextChar != '\n') {
+            pushBackBuffer.append((char) nextChar);
+        }
+     }
+[/#if]
          updateLineColumn(ch);
          return ch;
     }
@@ -174,6 +192,11 @@ class ${classname} {
             ++line;
             column = 1;
         }
+        else if (prevCharIsTAB) {
+           column--;
+           column += (tabSize - (column % tabSize));        
+        }
+        
 [#if grammar.options.javaUnicodeEscape]        
         if (lastCharWasUnicodeEscape) {
             column += (hexEscapeBuffer.length() -1);
@@ -181,6 +204,7 @@ class ${classname} {
 [/#if]        
         prevCharIsCR = (c=='\r');
         prevCharIsLF = (c=='\n');
+        prevCharIsTAB = (c=='\t');
         setLocationInfo(bufpos, c, line, column);
     }
 
