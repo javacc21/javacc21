@@ -1,28 +1,11 @@
 [#ftl strict_vars = true]
 
-class TokenBuilder {
+[#--  This file used to be used to build a separate class called SimpleCharStream
+      that should never have been exposed as public.
+      Now the contents of this file are an include from LexGen.java.ftl.
+  --]
 
-    private int tokenBegin;
-    private int bufpos = -1;
-    private int backupAmount;
-    private Reader reader;
-    private StringBuilder pushBackBuffer = new StringBuilder();
-    private int column, line, tabSize =8;
-    private boolean prevCharIsCR, prevCharIsLF, prevCharIsTAB;
-    private char lookaheadBuffer[] = new char[8192]; // Maybe this should be adjustable but 8K should be fine. Maybe revisit...
-    private int lookaheadIndex, charsReadLast;
-        
-
-    public TokenBuilder(Reader reader, int startline, int startcolumn) {
-        this.reader = reader;
-        line = startline;
-        column = startcolumn - 1;
-    }
-
-    public TokenBuilder(Reader reader) {
-        this(reader, 1, 1);
-    }
-
+    private int tabSize = 8;
     /**
      * sets the size of a tab for location reporting 
      * purposes, default value is 8.
@@ -35,6 +18,30 @@ class TokenBuilder {
      */
     public int getTabSize() {return tabSize;}
     
+
+private class TokenBuilder {
+
+    private int tokenBegin;
+    private int bufpos = -1;
+    private int backupAmount;
+    private Reader reader;
+    private StringBuilder pushBackBuffer = new StringBuilder();
+    private int column, line;
+    private boolean prevCharIsCR, prevCharIsLF, prevCharIsTAB;
+    private char lookaheadBuffer[] = new char[8192]; // Maybe this should be adjustable but 8K should be fine. Maybe revisit...
+    private int lookaheadIndex, charsReadLast;
+        
+
+    TokenBuilder(Reader reader, int startline, int startcolumn) {
+        this.reader = reader;
+        line = startline;
+        column = startcolumn - 1;
+    }
+
+    TokenBuilder(Reader reader) {
+        this(reader, 1, 1);
+    }
+
    
      public void backup(int amount) {
         backupAmount += amount;

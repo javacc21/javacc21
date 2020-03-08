@@ -134,6 +134,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
            [#var packagePrefix = ""]
            [#if grammar.nodePackage?has_content][#set packagePrefix=grammar.nodePackage+"."][/#if]
            switch(ofKind) {
+//              case -1 : return new InvalidToken(image);
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
               case ${re.label} : return new ${re.generatedClassName}(ofKind, image);

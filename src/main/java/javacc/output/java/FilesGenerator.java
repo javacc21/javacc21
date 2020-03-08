@@ -99,7 +99,7 @@ public class FilesGenerator {
         this.currentFilename = outputFile.getName();
         String templateName = currentFilename + ".ftl";
         if (tokenSubclassFileNames.contains(currentFilename)) {
-            templateName = "ASTToken.java.ftl";
+                templateName = "ASTToken.java.ftl";
         }
         else if (currentFilename.equals(grammar.getParserClassName() + ".java")) {
             templateName = "Parser.java.ftl";
@@ -128,7 +128,8 @@ public class FilesGenerator {
                     || currentFilename.equals("Token.java")
                     || currentFilename.equals("Node.java")
                     || currentFilename.equals("LexicalException.java")
-                    || currentFilename.equals("Nodes.java")))
+                    || currentFilename.equals("Nodes.java")
+            		|| currentFilename.equals("InvalidToken.java")))
             {
                     templateName = "ASTNode.java.ftl";
             }
@@ -224,6 +225,10 @@ public class FilesGenerator {
         File outputFile = new File(grammar.getParserOutputDirectory(), "Token.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
+        }
+        outputFile = new File(grammar.getParserOutputDirectory(), "InvalidToken.java");
+        if (regenerate(outputFile)) {
+        	generate(outputFile);
         }
     }
 
