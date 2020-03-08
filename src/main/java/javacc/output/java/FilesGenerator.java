@@ -86,7 +86,7 @@ public class FilesGenerator {
         generateParseException();
         generateToken();
         generateLexer();
-        generateCharStream();
+//        generateCharStream();
         generateConstantsFile();
         generateParser();
         generateDoc();
@@ -191,7 +191,7 @@ public class FilesGenerator {
             out.close();
         }
     }
-    
+/*    
     void generateCharStream() throws IOException, TemplateException {
         String filename = "CharStream.java";
         if (!grammar.getOptions().getUserDefinedLexer()) {
@@ -205,7 +205,7 @@ public class FilesGenerator {
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
-    }
+    }*/
     
     void generateConstantsFile() throws IOException, TemplateException {
         String filename = grammar.getConstantsClassName() + ".java";

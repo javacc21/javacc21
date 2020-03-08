@@ -44,6 +44,7 @@ package ${grammar.parserPackage};
 import ${grammar.nodePackage}.*;  
 [/#if]
 import java.util.*;
+import java.io.*;
 
 @SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
@@ -76,12 +77,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   /** Generated Lexer. */
   public ${grammar.lexerClassName} token_source;
   
-  [#if grammar.options.javaUnicodeEscape]
-  JavaCharStream inputStream;
-      [#else]
-  SimpleCharStream inputStream;
-  [/#if]
-    
   public void setInputSource(String inputSource) {
       token_source.setInputSource(inputSource);
   }
@@ -132,19 +127,14 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [#if !grammar.options.userDefinedLexer]
 
   public ${grammar.parserClassName}(java.io.InputStream stream) {
-      this(new java.io.InputStreamReader(stream));
+      this(new InputStreamReader(stream));
   }
 
-  public ${grammar.parserClassName}(java.io.Reader stream) {
-     [#if grammar.options.javaUnicodeEscape]
-    inputStream = new JavaCharStream(stream, 1, 1);
-     [#else]
-    inputStream = new SimpleCharStream(stream, 1, 1);
-     [/#if]
+  public ${grammar.parserClassName}(Reader reader) {
     [#if grammar.options.lexerUsesParser]
-    token_source = new ${grammar.lexerClassName}(this, inputStream);
+    token_source = new ${grammar.lexerClassName}(this, reader);
     [#else]
-    token_source = new ${grammar.lexerClassName}(inputStream);
+    token_source = new ${grammar.lexerClassName}(reader);
     [/#if]
     current_token = new Token();
         for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;

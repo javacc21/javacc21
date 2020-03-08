@@ -42,11 +42,12 @@ package ${grammar.parserPackage};
    ${import}
 [/#list]
 
+import java.io.IOException;
+import java.io.Reader;
+
 @SuppressWarnings("unused")
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
-  /** Debug output. */
-  
   java.io.PrintStream debugStream = System.out;
   public void setDebugStream(java.io.PrintStream ds) { debugStream = ds; }
 [#if options.lexerUsesParser]
@@ -130,14 +131,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     };
 [/#if]
 
-[#var charStreamName]
- [#if options.javaUnicodeEscape]
-     [#set charStreamName = "JavaCharStream"]
- [#else]
-      [#set charStreamName = "SimpleCharStream"]
- [/#if]
-
-    ${charStreamName} input_stream;
+    TokenBuilder input_stream;
 
     private final int[] jjrounds = new int[${lexerData.stateSetSize}];
     private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
@@ -152,28 +146,28 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
 
 [#if options.lexerUsesParser]
-    /** Constructor with parser. */
-    public ${grammar.lexerClassName}(${grammar.parserClassName} parserArg, ${charStreamName} stream) {
-       parser = parserArg;
-[#else]
-    /** Constructor. */
-    public ${grammar.lexerClassName}(${charStreamName} stream) {
-[/#if]
-       input_stream = stream;
+    public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader) {
+       this(parser, reader, 0, 1, 1);
+       this.parser = parser;
     }
-
-[#if options.lexerUsesParser]
-    /** Constructor with parser. */
-    public ${grammar.lexerClassName}(${grammar.parserClassName} parserArg, ${charStreamName} stream, int lexState) {
-        this(parserArg, stream);
-[#else]
-    /** Constructor. */
-    public ${grammar.lexerClassName}(${charStreamName} stream, int lexState) {
-        this(stream);
-[/#if]
+    
+    public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader, int lexState, int line, int column) {
+        this.parser = parser;
+        input_stream = new TokenBuilder(reader, line, column);
         SwitchTo(lexState);
     }
+    
+[#else]
+    public ${grammar.lexerClassName}(Reader reader) {
+       this(reader, 0, 1, 1);
+    }
+    public ${grammar.lexerClassName}(Reader reader, int lexState, int line, int column) {
+        input_stream = new TokenBuilder(reader, line, column);
+        SwitchTo(lexState);
+    }
+[/#if]
 
+    
     // Method to reinitialize the jjrounds array.
     private void ReInitRounds() {
        int i;
@@ -322,57 +316,50 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [/#list]
   [#if numLexicalStates>1]
       }
-  [#elseif numLexicalStates = 0]
-      jjmatchedKind = 0x7FFFFFFF;
   [/#if]
-  [#if numLexicalStates>0]
-      if (jjmatchedKind != 0x7FFFFFFF) { 
-          if (jjmatchedPos + 1 < curPos)
-     [#if options.debugLexer]
-          {
-               debugStream.println("   Putting back " + (curPos - jjmatchedPos - 1) + " characters into the input stream.");
-     [/#if]
-          input_stream.backup(curPos - jjmatchedPos - 1);
+  if (jjmatchedKind != 0x7FFFFFFF) { 
+      if (jjmatchedPos + 1 < curPos) {
+ [#if options.debugLexer]
+        debugStream.println("   Putting back " + (curPos - jjmatchedPos - 1) + " characters into the input stream.");
+ [/#if]
+        input_stream.backup(curPos - jjmatchedPos - 1);
 
-     [#if options.debugLexer]
-          }
-     [/#if]
-     [#if options.debugLexer]
-          debugStream.println("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
-              + ParseException.addEscapes(input_stream.getSuffix(jjmatchedPos + 1)) + ") ******\n");
-     [/#if]
+      }
+ [#if options.debugLexer]
+      debugStream.println("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
+          + ParseException.addEscapes(input_stream.getSuffix(jjmatchedPos + 1)) + ") ******\n");
+ [/#if]
 
-     [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
-          if ((jjtoToken[jjmatchedKind >> 6] & (1L << (jjmatchedKind & 077))) != 0L) {
-     [/#if]
+ [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
+      if ((jjtoToken[jjmatchedKind >> 6] & (1L << (jjmatchedKind & 077))) != 0L) {
+ [/#if]
 
-             matchedToken = jjFillToken();
-     [#if grammar.usesTokenHook]
-          matchedToken = tokenHook(matchedToken);
-     [/#if]
-     
+         matchedToken = jjFillToken();
+ [#if grammar.usesTokenHook]
+      matchedToken = tokenHook(matchedToken);
+ [/#if]
+ 
 
-     [#if lexerData.hasSpecial]
-             matchedToken.specialToken = specialToken;
-     [/#if]
+ [#if lexerData.hasSpecial]
+         matchedToken.specialToken = specialToken;
+ [/#if]
 
-     [#if lexerData.hasTokenActions]
-          tokenLexicalActions(matchedToken);
-     [/#if]
+ [#if lexerData.hasTokenActions]
+      tokenLexicalActions(matchedToken);
+ [/#if]
 
-     [#if grammar.usesCommonTokenAction]
-          CommonTokenAction(matchedToken);
-     [/#if]
-     jjmatchedKind = matchedToken.kind;
-     
-     [#if numLexicalStates>1]
-          if (jjnewLexState[jjmatchedKind] != -1) {
-              curLexState = jjnewLexState[jjmatchedKind];
-          }
-     [/#if]
+ [#if grammar.usesCommonTokenAction]
+      CommonTokenAction(matchedToken);
+ [/#if]
+ jjmatchedKind = matchedToken.kind;
+ 
+ [#if numLexicalStates>1]
+      if (jjnewLexState[jjmatchedKind] != -1) {
+          curLexState = jjnewLexState[jjmatchedKind];
+      }
+ [/#if]
 
-
-     return matchedToken;
+ return matchedToken;
 
       [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
      }
@@ -481,9 +468,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       error_after = curPos <= 1 ? "" : input_stream.getImage();
    }
    throw new LexicalException(EOFSeen, curLexState, error_line, error_column, error_after, curChar, inputSource);
-  [/#if]    
 [#if lexerData.hasMore]
-       }
+    }
 [/#if]
      }
   }
@@ -770,6 +756,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [/#list]
 [/#list]
   };
+  
+  [#embed "TokenBuilder.java.ftl"]
+  
 }
 
 
