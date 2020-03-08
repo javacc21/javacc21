@@ -255,7 +255,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                    [#if numLexicalStates>1]
                    "<" + lexStateNames[curLexState] + ">" + 
                    [/#if]
-                   "Skipping character : " + LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
+                   "Skipping character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
                    [/#set] 
                     debugStream.println(${debugOutput?trim}); 
          [/#if]
@@ -287,7 +287,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             [#if numLexicalStates>1]
                "<" + lexStateNames[curLexState] + ">" + 
             [/#if]
-            "Current character : " + LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+            "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
             "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
         [/#set]
         debugStream.println(${debugOutput?trim}); 
@@ -492,7 +492,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                  if (jjbeenHere[${lexerData.getIndex(lexicalState.name)}] &&
                      jjemptyLineNo[${lexicalStateIndex}] == input_stream.getBeginLine() && 
                      jjemptyColNo[${lexicalStateIndex}] == input_stream.getBeginColumn())
-                          throw new LexicalException("Error: Bailing out of infinite loop caused by repeated empty string matches " +
+                          throw new RuntimeException("Error: Bailing out of infinite loop caused by repeated empty string matches " +
                              "at line " + input_stream.getBeginLine() + ", " +
                              "column " + input_stream.getBeginColumn());
                  jjemptyLineNo[${lexicalStateIndex}] = input_stream.getBeginLine();
@@ -787,7 +787,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         [#if numLexicalStates != 1]
             "<" + lexStateNames[curLexState] + ">" +  
         [/#if]
-            "Current character : " + LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
+            "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
            + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
     [/#if]
         int kind = 0x7fffffff;
@@ -864,7 +864,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             [#if numLexicalStates != 1]
                "<" + lexStateNames[curLexState] + ">" + 
             [/#if]
-               LexicalException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
+               ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
               + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
     [/#if]
         }
@@ -1265,7 +1265,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         [#if lexerData.lexicalStates?size != 1]
            "<${lexicalState.name}>" +
         [/#if]
-        "Current character : " + LexicalException.addEscapes(String.valueOf(curChar)) + " ("
+        "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " ("
         + (int) curChar + ") at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
     [/#if]
       switch (curChar) {
@@ -1408,7 +1408,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      [#if numLexicalStates != 1]
             "<${lexicalState.name}>"+  
      [/#if]
-            "Current character : " + LexicalException.addEscapes(String.valueOf(curChar)) 
+            "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) 
             + " (" + (int)curChar + ") " + "at line " + input_stream.getEndLine() 
             + " column " + input_stream.getEndColumn());
   [/#if]
