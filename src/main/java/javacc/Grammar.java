@@ -54,8 +54,8 @@ public class Grammar {
                    baseNodeClassName="BaseNode";
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
-    private Action eofAction;
-    private String nextStateForEOF;
+//    private Action eofAction;
+//    private String nextStateForEOF;
     private String defaultLexicalState = "DEFAULT";
     private Semanticizer semanticizer;
     private long nextGenerationIndex = 1L;
@@ -442,22 +442,6 @@ public class Grammar {
 
     public void addTokenName(int index, String name) {
         tokenNames.put(index, name);
-    }
-
-    public Action getEofAction() {
-        return eofAction;
-    }
-
-    public void setEofAction(Action eofAction) {
-        this.eofAction = eofAction;
-    }
-
-    public String getNextStateForEOF() {
-        return this.nextStateForEOF;
-    }
-
-    public void setNextStateForEOF(String nextStateForEOF) {
-        this.nextStateForEOF = nextStateForEOF;
     }
 
     public int getErrorCount() {

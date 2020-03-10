@@ -204,9 +204,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [/#if]            
 			jjmatchedKind = 0;
             Token eof = jjFillToken();
-[#if grammar.nextStateForEOF?? || grammar.eofAction??]
             tokenLexicalActions(eof);
-[/#if]
 [#if grammar.usesCommonTokenAction]
             CommonTokenAction(eof);
 [/#if]

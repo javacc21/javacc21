@@ -131,7 +131,7 @@ public class Semanticizer {
          * <name> in token productions. After reporting an error, these entries
          * are removed. Also checked are definitions on inline private regular
          * expressions. This loop works slightly differently when
-         * USER_TOKEN_MANAGER is set to true. In this case, <name> occurrences
+         * USER_DEFINED_LEXER is set to true. In this case, <name> occurrences
          * are OK, while regular expression specs generate a warning.
          */
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
@@ -142,32 +142,10 @@ public class Semanticizer {
                                 + res.getNextState() + "\" has not been defined.");
                     }
                 }
-                if (res.getRegexp() instanceof EndOfFile) {
-                    // grammar.addSemanticError(res.rexp, "Badly placed
-                    // <EOF>.");
-                    if (tp.getLexStates() != null)
-                        grammar.addSemanticError(res.getRegexp(),
-                                "EOF action/state change must be specified for all states, "
-                                        + "i.e., <*>TOKEN:.");
-                    if (!tp.getKind().equals("TOKEN"))
-                        grammar.addSemanticError(res.getRegexp(),
-                                "EOF action/state change can be specified only in a "
-                                        + "TOKEN specification.");
-                    if (grammar.getNextStateForEOF() != null
-                            || grammar.getEofAction() != null)
-                        grammar
-                                .addSemanticError(res.getRegexp(),
-                                        "Duplicate action/state change specification for <EOF>.");
-                    grammar.setEofAction(res.getAction());
-                    grammar.setNextStateForEOF(res.getNextState());
-                    prepareToRemove(tp, res);
-                } else if (tp.isExplicit()
-                        && grammar.getOptions().getUserDefinedLexer()) {
-                    grammar
-                            .addWarning(
-                                    res.getRegexp(),
-                                    "Ignoring regular expression specification since "
-                                            + "option USER_TOKEN_MANAGER has been set to true.");
+                if (tp.isExplicit() && grammar.getOptions().getUserDefinedLexer()) {
+                    grammar.addWarning(res.getRegexp(),
+                                       "Ignoring regular expression specification since "
+                                       + "option USER_DEFINED_LEXER has been set to true.");
                 } else if (tp.isExplicit()
                         && !grammar.getOptions().getUserDefinedLexer()
                         && res.getRegexp() instanceof RegexpRef) {

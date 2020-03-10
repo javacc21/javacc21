@@ -69,7 +69,6 @@ public class LexerData {
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
         regularExpressions.add(reof);
-        reof.setNewLexicalState(getLexicalState(grammar.getNextStateForEOF()));
     }
 
     public String getLexicalStateName(int index) {
