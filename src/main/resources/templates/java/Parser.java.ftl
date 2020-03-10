@@ -146,12 +146,12 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
 [#if grammar.options.userDefinedLexer]
   /** Constructor with user supplied Lexer. */
-  public ${grammar.parserClassName}(Lexer tm) {
+  public ${grammar.parserClassName}(Lexer lexer) {
 [#else]
   /** Constructor with generated Token Manager. */
-  public ${grammar.parserClassName}(${grammar.lexerClassName} tm) {
+  public ${grammar.parserClassName}(${grammar.lexerClassName} lexer) {
 [/#if]
-    token_source = tm;
+    token_source = lexer;
     current_token = new Token();
     for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
   [#if hasPhase2]
@@ -161,55 +161,37 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   
  [#if grammar.options.faultTolerant]
  
-     private Token consumeToken(int kind) throws ParseException {return consumeToken(kind, false);}
+     private Token consumeToken(int expectedType) throws ParseException {
+        return consumeToken(expectedType, false);
+     }
  
-      private Token consumeToken(int kind, boolean forced) throws ParseException {
+     private Token consumeToken(int expectedType, boolean forced) throws ParseException {
  [#else]
-      private Token consumeToken(int kind) throws ParseException {
-          boolean forced = false;
+      private Token consumeToken(int expectedType) throws ParseException {
+        boolean forced = false;
  [/#if]
   
-      Token oldToken = current_token;
-    if (current_token.next != null) current_token = current_token.next;
-    else current_token = current_token.next = token_source.getNextToken();
-    if (current_token.kind != kind ) {
-              handleUnexpectedTokenType(kind, forced, oldToken) ;
-[#if false]
-[#if !grammar.options.faultTolerant]
-	    current_token = oldToken;
-	    throw generateParseException();
-[#else]
-       if (forced && tolerantParsing) {
-           Token t = Token.newToken(kind, "");
-           t.setVirtual(true);
-           t.setBeginLine(oldToken.getEndLine());
-           t.setBeginColumn(oldToken.getEndColumn());
-           t.setEndLine(current_token.getBeginLine());
-           t.setEndColumn(current_token.getBeginColumn());
-           t.next = current_token;
-           current_token = t;
-       } else {
-	      current_token = oldToken;
-	      throw generateParseException();
-      }
-[/#if]
-[/#if]
-     }      
-    
-      jj_gen++;
-    [#if hasPhase2]
-      if (++jj_gc > 100) {
-        jj_gc = 0;
-        for (int i = 0; i < jj_2_rtns.length; i++) {
-          JJCalls c = jj_2_rtns[i];
-          while (c != null) {
-            if (c.gen < jj_gen) c.first = null;
-            c = c.next;
-          }
+        Token oldToken = current_token;
+        current_token = current_token.next;
+        if (current_token == null ) {
+           current_token = token_source.getNextToken();
         }
-      }
-    [/#if]
-
+        if (current_token.kind != expectedType) {
+            handleUnexpectedTokenType(expectedType, forced, oldToken) ;
+        }      
+        jj_gen++;
+[#if hasPhase2]
+        if (++jj_gc > 100) {
+            jj_gc = 0;
+            for (int i = 0; i < jj_2_rtns.length; i++) {
+               JJCalls c = jj_2_rtns[i];
+               while (c != null) {
+                   if (c.gen < jj_gen) c.first = null;
+                   c = c.next;
+               }
+            }
+        }
+[/#if]
 [#if grammar.options.debugParser]
       trace_token(current_token, "");
 [/#if]
@@ -236,21 +218,21 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
       return current_token;
   }
   
-  private Token handleUnexpectedTokenType( int expectedType,  boolean forced, Token oldToken) throws ParseException {
+  private void handleUnexpectedTokenType( int expectedType,  boolean forced, Token oldToken) throws ParseException {
          jj_kind = expectedType;
 [#if !grammar.options.faultTolerant]
 	    current_token = oldToken;
 	    throw generateParseException();
 [#else]
        if (forced && tolerantParsing) {
-           Token t = Token.newToken(expectedType, "");
-           t.setVirtual(true);
-           t.setBeginLine(oldToken.getEndLine());
-           t.setBeginColumn(oldToken.getEndColumn());
-           t.setEndLine(current_token.getBeginLine());
-           t.setEndColumn(current_token.getBeginColumn());
-           t.next = current_token;
-           return t;
+           Token virtualToken = Token.newToken(expectedType, "");
+           virtualToken.setVirtual(true);
+           virtualToken.setBeginLine(oldToken.getEndLine());
+           virtualToken.setBeginColumn(oldToken.getEndColumn());
+           virtualToken.setEndLine(current_token.getBeginLine());
+           virtualToken.setEndColumn(current_token.getBeginColumn());
+           virtualToken.next = current_token;
+           current_token = virtualToken;
        } else {
 	      current_token = oldToken;
 	      throw generateParseException();
@@ -314,7 +296,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
     return t;
   }
-
+  
   private int nextTokenKind() {
     if (current_token.next == null) {
         current_token.next = token_source.getNextToken();

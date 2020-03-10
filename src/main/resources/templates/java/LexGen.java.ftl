@@ -188,7 +188,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
   
   
-  /** Get the next Token. */
+  [#--  Need to figure out how to simplify this --]
   public Token getNextToken() {
     Token specialToken = null;
     Token matchedToken;
@@ -198,23 +198,23 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     while (true) {
         int retval1 = input_stream.beginToken();
         curChar = (char) (retval1);
-         if (retval1 == -1) {
+         if (retval1 == -1) { // Handle end of file
 [#if options.debugLexer]			
             debugStream.println("Returning the <EOF> token.");
 [/#if]            
 			jjmatchedKind = 0;
-            matchedToken = jjFillToken();
+            Token eof = jjFillToken();
 [#if grammar.nextStateForEOF?? || grammar.eofAction??]
-            tokenLexicalActions(matchedToken);
+            tokenLexicalActions(eof);
 [/#if]
 [#if grammar.usesCommonTokenAction]
-            CommonTokenAction(matchedToken);
+            CommonTokenAction(eof);
 [/#if]
 [#if grammar.usesTokenHook]
-            matchedToken = tokenHook(matchedToken);
+            eof = tokenHook(eof);
 [/#if]
-		    matchedToken.specialToken = specialToken;
-    		return matchedToken;
+		    eof.specialToken = specialToken;
+    		return eof;
        }
 
 [#if lexerData.hasActions()]
@@ -446,11 +446,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
    [/#if]
    }
     int error_line = input_stream.getEndLine();
-   int error_column = input_stream.getEndColumn();
-   String error_after = null;
+    int error_column = input_stream.getEndColumn();
+    String error_after = null;
     input_stream.backup(1);
     error_after = curPos <= 1 ? "" : input_stream.getImage();
     Token invalidToken = new InvalidToken("" + curChar);
+    invalidToken.specialToken = specialToken;
     invalidToken.setBeginLine(error_line);
     invalidToken.setEndLine(error_line);
     invalidToken.setBeginColumn(error_column);
