@@ -142,6 +142,10 @@ public class JavaFormatter {
             case FOR : 
             	buf.append("for ");
             	break;
+            case AT :
+            	newLine();
+            	buf.append("@");
+            	break;
             default:
                 if (buf.length() > 0) {
                     char lastChar = buf.charAt(buf.length() -1);

@@ -127,7 +127,6 @@ class CodeInjector {
         String explicitPackageName = jcu.getPackageName();
         List<ImportDeclaration> importdecls = new ArrayList<ImportDeclaration>();
         importdecls.addAll(jcu.getImportDeclarations());
-//        List<Annotation> annotations = new ArrayList<>();
         for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
             String name = dec.getName();
             typeNames.add(name);
