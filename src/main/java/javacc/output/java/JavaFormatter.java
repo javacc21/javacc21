@@ -110,11 +110,15 @@ public class JavaFormatter {
                 break;
             case SEMICOLON :
                 buf.append(';');
-                if (parent instanceof ForStatement) {
-                    buf.append(' ');
-                }
                 if (parent instanceof PackageDeclaration) {
                     buf.append("\n\n");
+                }
+                else if (parent instanceof ForStatement) {
+                	if (parent.getChild(parent.getChildCount()-1) != currentToken) {
+                		buf.append(" ");
+                	} else {
+                		newLine();
+                	}
                 }
                 else {
                     newLine();
@@ -135,6 +139,9 @@ public class JavaFormatter {
             case SINGLE_LINE_COMMENT : 
                 handleSingleLineComment();
                 break;
+            case FOR : 
+            	buf.append("for ");
+            	break;
             default:
                 if (buf.length() > 0) {
                     char lastChar = buf.charAt(buf.length() -1);

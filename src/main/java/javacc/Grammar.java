@@ -422,17 +422,7 @@ public class Grammar {
         if (namedTokensTable.get(tokenName).isPrivate()) {
             return null;
         }
-//        StringBuilder buf = new StringBuilder();
-//        StringTokenizer st = new StringTokenizer(tokenName, "_");
-//        while (st.hasMoreTokens()) {
-//            String tok = st.nextToken();
-//            buf.append(tok.substring(0, 1).toUpperCase());
-//            buf.append(tok.substring(1).toLowerCase());
-//        }
-//        String result = buf.toString();
-//        if (tokenName.charAt(0) == '_') result = "_" + result;
         tokenNamesToConstName.put(tokenName, tokenName);
-//        return result;
         return tokenName;
     }
     
