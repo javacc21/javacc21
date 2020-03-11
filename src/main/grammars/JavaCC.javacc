@@ -489,8 +489,10 @@ void CodeInjection() :
         ClassOrInterfaceBody body;
         ExtendsList extendsList = null;
         ImplementsList implementsList = null;
-        List<ImportDeclaration> importDeclarations = new ArrayList<ImportDeclaration>();
+//        List<ImportDeclaration> importDeclarations = new ArrayList<>();
+//        List<Annotation> annotations = new ArrayList<>();
         ImportDeclaration importDecl = null;
+        Annotation annotation = null;
         token_source.inJavaCode=true;
 }
 {
@@ -506,6 +508,9 @@ void CodeInjection() :
         "{"
          (
              importDecl = ImportDeclaration() {CURRENT_NODE.importDeclarations.add(importDecl);}
+         )*
+         (
+             annotation = Annotation() {CURRENT_NODE.annotations.add(annotation);}
          )*
          [
             CURRENT_NODE.extendsList=ExtendsList(isInterface)
@@ -531,6 +536,7 @@ INJECT(CodeInjection) :
 {
    public String name;
    public List<ImportDeclaration> importDeclarations = new ArrayList<ImportDeclaration>();
+   public List<Annotation> annotations = new ArrayList<>();
    public ExtendsList extendsList;
    public ImplementsList implementsList;
    public ClassOrInterfaceBody body;

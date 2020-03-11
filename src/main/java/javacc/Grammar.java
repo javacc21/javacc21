@@ -54,8 +54,6 @@ public class Grammar {
                    baseNodeClassName="BaseNode";
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
-//    private Action eofAction;
-//    private String nextStateForEOF;
     private String defaultLexicalState = "DEFAULT";
     private Semanticizer semanticizer;
     private long nextGenerationIndex = 1L;
@@ -88,7 +86,7 @@ public class Grammar {
     }
 
     public String[] getLexicalStates() {
-	return lexicalStates.toArray(new String[]{});
+    	return lexicalStates.toArray(new String[]{});
     }
     
     void parse(String location) throws IOException, ParseException {

@@ -2090,16 +2090,19 @@ INJECT(FinallyBlock) : {}
 
 /* Annotation syntax follows. */
 
-void Annotation():
+Annotation Annotation() #Annotation :
 {}
 {
-   LOOKAHEAD( "@" Name() "(" ( <IDENTIFIER> "=" | ")" ))
+   (LOOKAHEAD( "@" Name() "(" ( <IDENTIFIER> "=" | ")" ))
    NormalAnnotation()
  |
    LOOKAHEAD( "@" Name() "(" )
    SingleMemberAnnotation()
  |
-   MarkerAnnotation()
+   MarkerAnnotation())
+   {
+      return CURRENT_NODE;
+   }
 }
 
 void NormalAnnotation() #void :
