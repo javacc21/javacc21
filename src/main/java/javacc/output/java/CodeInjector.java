@@ -290,6 +290,10 @@ class CodeInjector {
                 TypeParameterList typeParameters = typedecl.getTypeParameterList();
                 typeParameters.add(injectedTypeParameters);
             }
+            Set<Annotation> annotations = this.injectedAnnotationsMap.get(fullName);
+            if (annotations != null) {
+            	typedecl.addAnnotations(annotations);
+            }
             List<ClassOrInterfaceBodyDeclaration> injectedCode = bodyDeclarations.get(fullName);
             if (injectedCode != null) {
                 typedecl.addElements(injectedCode);

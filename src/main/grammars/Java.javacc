@@ -371,9 +371,17 @@ INJECT(CompilationUnit) :
     }
     
     public void addImportDeclaration(ImportDeclaration decl) {
+/*    
+        Node packageDeclaration = getPackageDeclaration();
+        if (packageDeclaration == null) {
+            addChild(0, decl);
+        } else {
+            addChild(1, decl);
+         }*/
+
         ListIterator<Node> iterator = iterator();
         Node n = null;
-        while (!(n instanceof TypeDeclaration)) {
+        while (!(n instanceof TypeDeclaration) &&!(n instanceof Annotation)) {
             n = iterator.next();
         }
         if (iterator.hasPrevious()) {
@@ -667,6 +675,15 @@ INJECT(TypeDeclaration) :
         }
         getBody().prepend(elements);
     }
+    
+   public void addAnnotations(Set<Annotation> annotations) {
+       Node parent = this.getParent();
+       int index = parent.indexOf(this);
+       for (Annotation annotation : annotations) {
+           parent.addChild(index, annotation);
+       }
+   } 
+   
     
     public boolean isClass() {
         for (Node n : children) {
