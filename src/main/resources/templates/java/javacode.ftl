@@ -128,12 +128,9 @@
           [/#if]
        [/#if]
          }
-         catch (Exception e${nodeNumbering}) {
-            ${hitExceptionVar} = false;
-         [#list ["ParseException", "RuntimeException"] + (currentProduction.throwsList.types)! as etype]
-            if (e${nodeNumbering} instanceof ${etype}) throw (${etype}) e${nodeNumbering};
-         [/#list]
-            throw new RuntimeException(e${nodeNumbering});
+         catch (ParseException e${nodeNumbering}) {
+            ${hitExceptionVar} = true;
+            throw e${nodeNumbering};
          }
          finally {
             if (buildTree) {
@@ -485,9 +482,7 @@ throw new ParseException();"]
   [#list choice.choices as subseq]
 	  [#var lookahead=subseq.units[0]]
 	  [#if lookahead.semanticLookahead??]
-	    jj_lookingAhead = true;
 	    jj_semLA = ${lookahead.semanticLookahead};
-	    jj_lookingAhead = false;
 	  [/#if]
 	  if (
 	  [#if lookahead.semanticLookahead??]

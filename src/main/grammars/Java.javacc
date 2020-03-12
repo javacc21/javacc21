@@ -1342,10 +1342,17 @@ ThrowsList ThrowsList():
 INJECT(ThrowsList) : 
 {
     import java.util.List;
+    import java.util.ArrayList;
 }
 {
-    public List<Name> getTypes() {
-        return Nodes.childrenOfType(this, Name.class);
+    public List<Node> getTypes() {
+        List<Node> result = new ArrayList<Node>();
+        for (Node n : children) {
+           if ((n instanceof Name) || (n instanceof Identifier)) {
+              result.add(n);
+           }
+        }
+        return result; 
     }
 }
 

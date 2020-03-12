@@ -399,7 +399,7 @@ INJECT(BaseNode) :
 }
 
 
-Grammar Root() :
+Grammar Root() throws IOException :
 {
     TokenManagerDecls decls;
 }
@@ -465,7 +465,7 @@ INJECT(ReturnType) :
     }
 }
 
-void GrammarInclusion() :
+void GrammarInclusion() throws IOException :
 {
    Token t;
 }
@@ -489,8 +489,6 @@ void CodeInjection() :
         ClassOrInterfaceBody body;
         ExtendsList extendsList = null;
         ImplementsList implementsList = null;
-//        List<ImportDeclaration> importDeclarations = new ArrayList<>();
-//        List<Annotation> annotations = new ArrayList<>();
         ImportDeclaration importDecl = null;
         Annotation annotation = null;
         token_source.inJavaCode=true;

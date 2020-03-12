@@ -91,8 +91,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [#if hasPhase2] 
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
-  /** Whether we are looking ahead. */
-  private boolean jj_lookingAhead = false;
   private boolean jj_semLA;
 [/#if]
 
@@ -285,11 +283,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
 /** Get the specific Token. */
   final public Token getToken(int index) {
-[#if parserData.lookaheadNeeded]
-    Token t = jj_lookingAhead ? jj_scanpos : current_token;
-[#else]
     Token t = current_token;
-[/#if]
     for (int i = 0; i < index; i++) {
       if (t.next != null) t = t.next;
       else t = t.next = token_source.getNextToken();
