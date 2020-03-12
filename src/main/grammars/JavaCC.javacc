@@ -257,22 +257,6 @@ INJECT(CaseStatement) :
     }
 }
 
-INJECT(KeyWord) : 
-{}
-{
-   public String getNormalizedText() {
-       int kind = getId();
-       if (kind == CONSTANTS_CLASS.THROW) {
-           String image = (kind == CONSTANTS_CLASS.RETURN) ? "return" : "throw";
-           Action action = Nodes.getFirstAncestorOfType(this, Action.class);
-           if (action !=null) {
-               return "if (true) " + image;
-           }
-       }
-       return super.getNormalizedText();
-   }
-}
-
 INJECT(Identifier) : 
 {}
 {

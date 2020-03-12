@@ -32,7 +32,7 @@
         </java>
    </target>
    <target name="compile" depends="parser2-gen, parser2-gen">
-       <javac srcdir="." includeantruntime="off"  failonerror="true"/>
+       <javac srcdir="." includeantruntime="off"  failonerror="true" debug="on"/>
        <echo>
            test harness via: java JSONTest &lt;filename&gt;
            OR              : java JSONCTest &lt;filename&gt;

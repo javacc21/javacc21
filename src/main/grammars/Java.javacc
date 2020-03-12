@@ -1960,7 +1960,6 @@ void ForStatement():
 {}
 {
   "for" "("
-
   (
       LOOKAHEAD(Modifiers() Type() <IDENTIFIER> ":")
       Modifiers() Type() <IDENTIFIER> ":" Expression() 

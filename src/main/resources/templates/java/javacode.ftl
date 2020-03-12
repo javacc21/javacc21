@@ -116,9 +116,6 @@
     [#else]
         [@BuildPhase1Code expansion/]
     [/#if]
-    [#if production?? && expansion?? && production.returnType]
-//         throw new RuntimeException("Missing return statement in function");
-    [/#if]
     [#if buildTreeNode]
        [#var closeCondition = "true"]
        [#if !treeNodeBehavior??]
