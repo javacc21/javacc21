@@ -142,9 +142,8 @@
          [#if grammar.usesCloseNodeScopeHook]
                     closeNodeScopeHook(${nodeVarName});
          [/#if]
-                    Token jjtEndToken = getToken(0);
-                    ${nodeVarName}.setEndLine(jjtEndToken.endLine);
-                    ${nodeVarName}.setEndColumn(jjtEndToken.endColumn);
+                    ${nodeVarName}.setEndLine(current_token.getEndLine());
+                    ${nodeVarName}.setEndColumn(current_token.getEndColumn());
                 } else {
                     clearNodeScope();
                 }
@@ -167,9 +166,9 @@
        ${nodeVarName} = new ${nodeName}();
    [/#if]
 
-       Token jjtStartToken = getToken(1);
-       ${nodeVarName}.setBeginLine(jjtStartToken.beginLine);
-       ${nodeVarName}.setBeginColumn(jjtStartToken.beginColumn);
+       Token start = getToken(1);
+       ${nodeVarName}.setBeginLine(start.beginLine);
+       ${nodeVarName}.setBeginColumn(start.beginColumn);
        ${nodeVarName}.setInputSource(this.getInputSource());
 	    openNodeScope(${nodeVarName});
   [#if grammar.usesjjtreeOpenNodeScope]

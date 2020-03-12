@@ -797,6 +797,9 @@ BNFProduction BNFProduction() :
     <IDENTIFIER> {CURRENT_NODE.setName(current_token.image);}
     FormalParameters()
     [
+       <BANG> {CURRENT_NODE.setForced(true);} 
+    ]
+    [
       ThrowsList()
     ]
     [
@@ -824,7 +827,13 @@ INJECT(BNFProduction) :
 {
     extends ParserProduction;
 }
-{}
+{
+    private boolean forced;
+
+    public boolean getForced() {return forced;}
+    
+    public void setForced(boolean forced) {this.forced = forced;}
+}
 
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 {}
