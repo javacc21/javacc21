@@ -52,18 +52,20 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
 [#if grammar.options.faultTolerant]
    private boolean tolerantParsing= true;
-   
-   /**
-    * Is tolerant parsing turned on?
-    */
-   
+[#else]
+    private final boolean tolerantParsing = false;
+[/#if]
     public boolean isParserTolerant() {return tolerantParsing;}
     
-    /**
-     * Toggles tolerant parsing
-     */
-     public void setParserTolerant(boolean tolerantParsing) {this.tolerantParsing = tolerantParsing;}
-[/#if]
+    public void setParserTolerant(boolean tolerantParsing) {
+      [#if grammar.options.faultTolerant]
+        this.tolerantParsing = tolerantParsing;
+      [#else]
+        if (tolerantParsing) {
+            throw new UnsupportedOperationException("This parser was not built with that feature!");
+        } 
+      [/#if]
+    }
 
 [#if grammar.options.treeBuildingEnabled]
    [#embed "javatreecode.ftl"]

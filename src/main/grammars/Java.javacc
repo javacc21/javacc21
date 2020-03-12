@@ -1910,15 +1910,22 @@ void StatementExpression():
   ]
 }
 
-void SwitchStatement():
+void SwitchStatement() : 
 {}
 {
   "switch" "(" Expression() ")" "{"
-    ( SwitchLabel() ( BlockStatement() )* )*
-  "}"
+  (CaseStatement())*
+  "}"    
 }
 
-void SwitchLabel():
+void CaseStatement():
+{}
+{
+    SwitchLabel() 
+    (BlockStatement())*
+}
+
+void SwitchLabel() #void :
 {}
 {
   "case" Expression() ":"

@@ -241,13 +241,28 @@ CodeBlock Block() #CodeBlock:
    }
 }
 
+INJECT(CaseStatement) :
+{}
+{
+    // If the case statement has an unreachable break statement at the
+    // end, we remove it. This allows us to get rid of this horrid longstanding kludge
+    public void close() {
+        if (getChildCount() >= 2) {
+            Node last = this.getLastChild();
+            Node secondLast = this.getChild(getChildCount() -2);
+            if ((last instanceof BreakStatement) && (secondLast instanceof ReturnStatement)) {
+                removeChild(last);
+            }
+        }
+    }
+}
+
 INJECT(KeyWord) : 
 {}
 {
    public String getNormalizedText() {
        int kind = getId();
-//          if (kind == CONSTANTS_CLASS.THROW) {
-       if (kind == CONSTANTS_CLASS.RETURN || kind == CONSTANTS_CLASS.THROW) {
+       if (kind == CONSTANTS_CLASS.THROW) {
            String image = (kind == CONSTANTS_CLASS.RETURN) ? "return" : "throw";
            Action action = Nodes.getFirstAncestorOfType(this, Action.class);
            if (action !=null) {

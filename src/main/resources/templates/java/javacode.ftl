@@ -56,7 +56,7 @@
 
 [#macro BNFProduction prod]
     ${prod.leadingComments}
-// Macro BNFProduction invoked on ${prod.class.name} specified at: ${prod.inputSource}, line ${prod.beginLine}
+// Macro BNFProduction invoked on ${prod.name} specified at: ${prod.inputSource}, line ${prod.beginLine}
     final ${prod.accessMod!"public"} 
     ${prod.returnType}
     ${prod.name}(${prod.parameterList}) 
@@ -67,7 +67,7 @@
          try {
     [/#if]
          ${prod.javaCode}
-    [@BuildCode prod.expansion/]
+    [@BuildCode prod.expansion prod.forced! /]
     [#if grammar.options.debugParser]
          } finally {
              trace_return("${prod.name}");
@@ -76,9 +76,9 @@
     }   
 [/#macro]
 
-[#macro BuildCode expansion]
-  // Macro BuildCode on ${expansion.class.name} specified at: ${expansion.inputSource}, line ${expansion.beginLine}
-    [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false]
+[#macro BuildCode expansion, forced=false]
+  // Macro BuildCode, Expansion ${expansion.name!} specified at: ${expansion.inputSource}, line ${expansion.beginLine}
+    [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName]
     [#if expansion?is_null]
       [#set production = currentProduction]
       [#set treeNodeBehavior = production.treeBuildingAnnotation]
@@ -99,7 +99,13 @@
     [#if buildTreeNode]
         [#set nodeNumbering = nodeNumbering+1]
         [#set nodeVarName = "node" + nodeNumbering]
+        [#set forcedVarName = "forced" + nodeNumbering]
     	 ${grammar.pushNodeVariableName(nodeVarName)!}
+        [#if grammar.options.faultTolerant && forced]
+        boolean ${forcedVarName} = this.tolerantParsing;
+        [#else]
+        boolean ${forcedVarName} = false;
+        [/#if]
     	[@createNode treeNodeBehavior nodeVarName /]
         [#set parseExceptionVar = "parseException"+nodeNumbering]
          ParseException ${parseExceptionVar} = null;
@@ -111,7 +117,7 @@
         [@BuildPhase1Code expansion/]
     [/#if]
     [#if production?? && expansion?? && production.returnType]
-         throw new RuntimeException("Missing return statement in function");
+//         throw new RuntimeException("Missing return statement in function");
     [/#if]
     [#if buildTreeNode]
        [#var closeCondition = "true"]
@@ -135,7 +141,7 @@
          }
          finally {
             if (buildTree) {
-                if (${parseExceptionVar} == null) {
+                if (${parseExceptionVar} == null || ${forcedVarName}) {
                     closeNodeScope(${nodeVarName}, ${closeCondition});
          [#if grammar.usesjjtreeCloseNodeScope]
                     jjtreeCloseNodeScope(${nodeVarName});
@@ -183,7 +189,7 @@
 
 
 [#macro BuildPhase1Code expansion]
-//  BuildPhase1Code macro with ${expansion.class.name} specified in ${expansion.inputSource} on line ${expansion.beginLine} 
+//  Entering BuildPhase1Code macro, ${expansion.name!} specified in ${expansion.inputSource} on line ${expansion.beginLine} 
     [#var classname=expansion.class.name?split(".")?last]
     [#if classname = "Action"]
        ${expansion.javaCode!"{}"}
@@ -211,7 +217,7 @@
 [/#macro]
 
 [#macro BuildPhase1CodeRegexp regexp]
-//   BuildPhase1CodeRegexp macro with ${regexp.class.name} specified in ${regexp.inputSource} on line ${regexp.beginLine} 
+//   Entering BuildPhase1CodeRegexp macro, ${regexp.name!} specified in ${regexp.inputSource} on line ${regexp.beginLine} 
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
@@ -225,7 +231,7 @@
 [/#macro]
 
 [#macro BuildPhase1CodeTryBlock tryblock]
-//   BuildPhase1CodeTryBlock macro with ${tryblock.class.name} specified in ${tryblock.inputSource} on line ${tryblock.beginLine} 
+//   Entering BuildPhase1CodeTryBlock macro, specified in ${tryblock.inputSource} on line ${tryblock.beginLine} 
    [#var nested=tryblock.nestedExpansion]
        try {
           [@BuildCode nested/]
@@ -237,7 +243,7 @@
 [/#macro]
 
 [#macro BuildPhase1CodeNonTerminal nonterminal]
-// BuildPhase1CodeNonTerminal macro with ${nonterminal.class.name} specified in ${nonterminal.inputSource} on line ${nonterminal.beginLine}
+// BuildPhase1CodeNonTerminal macro for ${nonterminal.name} specified in ${nonterminal.inputSource} on line ${nonterminal.beginLine}
    [#if !nonterminal.LHS??]
        ${nonterminal.name}(${nonterminal.args!});
    [#else]
@@ -246,7 +252,7 @@
 [/#macro]
 
 [#macro JavaCodeProduction jprod]
-// JavaCodeProductionl macro with ${jprod.class.name} specified in ${jprod.inputSource} on line ${jprod.beginLine}
+// JavaCodeProduction specified in ${jprod.inputSource} on line ${jprod.beginLine}
    ${jprod.leadingComments}
    ${jprod.accessMod!} ${jprod.returnType} ${jprod.name}(
    ${jprod.parameterList}) throws ParseException
@@ -267,7 +273,7 @@
 
 
 [#macro BuildPhase1CodeZeroOrOne zoo]
-// BuildPhase1CodeZeroOrOne macro with ${zoo.class.name} specified in ${zoo.inputSource} on line ${zoo.beginLine}
+// BuildPhase1CodeZeroOrOne macro for construct specified in ${zoo.inputSource} on line ${zoo.beginLine}
     [#var nestedExp=zoo.nestedExpansion]
     [#var lookahead=zoo.lookahead]
     [#if lookahead.alwaysSucceeds]
@@ -282,7 +288,7 @@
 [/#macro]
 
 [#macro BuildPhase1CodeZeroOrMore zom]
-// BuildPhase1CodeZeroOrMore macro with ${zom.class.name} specified in ${zom.inputSource} on line ${zom.beginLine}
+// BuildPhase1CodeZeroOrMore macro for construct specified in ${zom.inputSource} on line ${zom.beginLine}
     [#var nestedExp=zom.nestedExpansion]
     [#var lookahead=zom.lookahead]
     ${zom.label}:
@@ -293,7 +299,7 @@
 [/#macro]
 
 [#macro BuildPhase1CodeOneOrMore oom]
-// BuildPhase1CodeOneOrMore macro with ${oom.class.name} specified in ${oom.inputSource} on line ${oom.beginLine}
+// BuildPhase1CodeOneOrMore macro for construct specified in ${oom.inputSource} on line ${oom.beginLine}
    [#var nestedExp=oom.nestedExpansion]
    [#var lookahead=oom.lookahead]
    ${oom.label}:
@@ -304,7 +310,7 @@
 [/#macro]
 
 [#macro BuildPhase1CodeChoice choice]
-// BuildPhase1CodeChoice macro with ${choice.class.name} specified in ${choice.inputSource} on line ${choice.beginLine}
+// BuildPhase1CodeChoice macro for construct specified in ${choice.inputSource} on line ${choice.beginLine}
    [#var lookaheads=[] actions=[]]
    [#var defaultAction="consumeToken(-1);
 throw new ParseException();"]
@@ -402,7 +408,6 @@ throw new ParseException();"]
 [/#macro]
 
 [#macro BuildBinaryChoiceCode lookahead action fallback]
-// BuildBinaryChoiceCode macro
    [#var emptyAction=!action?has_content]
    [#var emptyFallback=!action?has_content]
    [#var condition=lookahead.semanticLookahead!]

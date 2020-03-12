@@ -65,9 +65,8 @@ TOKEN #Literal :
     <NUMBER : ("-")?(<ZERO>|<NON_ZERO>)(<FRACTION>)?(<EXPONENT>)?> #NumberLiteral
 }
 
-void Array() : {}
+void Array()! : {}
 {
-
     <OPEN_BRACKET>
     [
       Value() 
@@ -92,7 +91,7 @@ void Value() : {}
     |
     <NUMBER>
     |
-    Array()
+    Array()!
     |
     JSONObject()
    )
