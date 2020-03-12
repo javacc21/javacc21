@@ -299,6 +299,23 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
     return current_token.next.kind;
   }
+  
+  List<Token> getTokensToEOL() {
+     ArrayList<Token> result = new ArrayList<>();
+     int currentLine = current_token.getBeginLine();
+     Token tok = getToken(1);
+     while (tok.getBeginLine() == currentLine && tok.kind != EOF) {
+         result.add(tok);
+         Token next = tok.next;
+         if (next == null) {
+             next = token_source.getNextToken();
+             tok.next = next;
+         }
+         tok = next;
+     }
+     return result; 
+  }
+  
 
   ArrayList<int[]> jj_expentries = new ArrayList<>();
   private int[] jj_expentry;

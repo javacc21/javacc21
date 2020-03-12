@@ -77,7 +77,7 @@
 [/#macro]
 
 [#macro BuildCode expansion, forced=false]
-  // Macro BuildCode, Expansion ${expansion.name!} specified at: ${expansion.inputSource}, line ${expansion.beginLine}
+  // Macro BuildCode, Expansion ${expansion.name!"expansion"} specified at: ${expansion.inputSource}, line ${expansion.beginLine}
     [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName]
     [#if expansion?is_null]
       [#set production = currentProduction]
@@ -186,7 +186,7 @@
 
 
 [#macro BuildPhase1Code expansion]
-//  Entering BuildPhase1Code macro, ${expansion.name!} specified in ${expansion.inputSource} on line ${expansion.beginLine} 
+//  Entering BuildPhase1Code macro, ${expansion.name!"expansion"} specified in ${expansion.inputSource} on line ${expansion.beginLine} 
     [#var classname=expansion.class.name?split(".")?last]
     [#if classname = "Action"]
        ${expansion.javaCode!"{}"}
@@ -214,7 +214,7 @@
 [/#macro]
 
 [#macro BuildPhase1CodeRegexp regexp]
-//   Entering BuildPhase1CodeRegexp macro, ${regexp.name!} specified in ${regexp.inputSource} on line ${regexp.beginLine} 
+//   Entering BuildPhase1CodeRegexp macro, ${regexp.name!"regexp"} specified in ${regexp.inputSource} on line ${regexp.beginLine} 
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
@@ -240,7 +240,7 @@
 [/#macro]
 
 [#macro BuildPhase1CodeNonTerminal nonterminal]
-// BuildPhase1CodeNonTerminal macro for ${nonterminal.name} specified in ${nonterminal.inputSource} on line ${nonterminal.beginLine}
+// BuildPhase1CodeNonTerminal macro for ${nonterminal.name!"nonterminal"} specified in ${nonterminal.inputSource} on line ${nonterminal.beginLine}
    [#if !nonterminal.LHS??]
        ${nonterminal.name}(${nonterminal.args!});
    [#else]
