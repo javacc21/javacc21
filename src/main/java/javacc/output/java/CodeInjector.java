@@ -110,11 +110,9 @@ class CodeInjector {
              && !classname.equals(lexerClassName)
              && !classname.equals(constantsClassName)
              && !classname.equals(baseNodeClassName)
-             && !classname.equals("JavaCharStream")
-             && !classname.equals("SimpleCharStream")
-             && !classname.equals("LexicalException")
              && !classname.equals("ParseException")
              && !classname.equals("Token")
+             && !classname.equals("InvalidToken")
              && !classname.equals("Node");
     }
     
