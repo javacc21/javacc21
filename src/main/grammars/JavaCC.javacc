@@ -1657,7 +1657,7 @@ void InPlaceRegexp() #void :
     RegularExpression re, choice;
     String image = "";
     Token t;
-    boolean private_rexp = false;
+    boolean isPrivate= false;
 }
 {
   t=<LT>
@@ -1665,7 +1665,7 @@ void InPlaceRegexp() #void :
    (
      t=<IDENTIFIER> {image = t.image;}
      |
-     t=<HASH_ID> {image = t.image.substring(1); private_rexp= true;}
+     t=<HASH_ID> {image = t.image.substring(1); isPrivate= true;}
    )
    ":"
   ]
@@ -1682,7 +1682,7 @@ void InPlaceRegexp() #void :
 	  }
 	  re.setLabel(image);
 	  re.setGeneratedClassName(image);
-	  re.setPrivate(private_rexp);
+	  re.setPrivate(isPrivate); 
 	  re.setBeginLine(t.getBeginLine());
 	  re.setBeginColumn(t.getBeginColumn());
 	  pokeNode(re);
@@ -1750,6 +1750,10 @@ INJECT(RegexpRef) :
 
     public RegularExpression getRegexp() {
         return regexp;
+    }
+    
+    public boolean isPrivate() {
+        return regexp!= null && regexp.isPrivate(); //REVISIT, why do we need a null check?
     }
 }
 
