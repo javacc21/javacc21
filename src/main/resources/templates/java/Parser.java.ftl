@@ -192,9 +192,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
             }
         }
 [/#if]
-[#if grammar.options.debugParser]
       trace_token(current_token, "");
-[/#if]
 [#if grammar.options.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.options.userDefinedLexer]
@@ -277,9 +275,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     if (current_token.next != null) current_token = current_token.next;
     else current_token = current_token.next = token_source.getNextToken();
     jj_gen++;
-[#if grammar.options.debugParser]
-      trace_token(current_token, " (in getNextToken)");
-[/#if]
+    trace_token(current_token, " (in getNextToken)");
     return current_token;
   }
 
@@ -388,32 +384,50 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   }
  
 [#if grammar.options.debugParser]
-  private int trace_indent = 0;
   private boolean trace_enabled = true;
-
-/** Enable tracing. */
+ [#else]
+  private boolean trace_enabled = false;
+ [/#if]
+ 
+  private int trace_indent = 0;
+  
+  public void  setTracingEnabled(boolean tracingEnabled) {this.trace_enabled = tracingEnabled;}
+  
+ /**
+ * @deprecated Use #setTracingEnabled
+ */
+   @Deprecated
   final public void enable_tracing() {
-    trace_enabled = true;
+    setTracingEnabled(true);
   }
 
-/** Disable tracing. */
+/**
+ * @deprecated Use #setTracingEnabled
+ */
+@Deprecated
   final public void disable_tracing() {
-    trace_enabled = false;
+    setTracingEnabled(false);
   }
+  
+  
 
   private void trace_call(String s) {
     if (trace_enabled) {
-      for (int i = 0; i < trace_indent; i++) { System.out.print(" "); }
+      for (int i = 0; i < trace_indent; i++) {
+         System.out.print(" "); 
+      }
       System.out.println("Call:   " + s);
+      trace_indent += 2;
     }
-    trace_indent = trace_indent + 2;
   }
 
   private void trace_return(String s) {
-    trace_indent = trace_indent - 2;
     if (trace_enabled) {
-      for (int i = 0; i < trace_indent; i++) { System.out.print(" "); }
-      System.out.println("Return: " + s);
+      trace_indent -= 2;
+      for (int i = 0; i < trace_indent; i++) { 
+          System.out.print(" "); 
+       }
+       System.out.println("Return: " + s);
     }
   }
 
@@ -440,17 +454,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
                 " column " + t1.beginColumn + ">; Expected token: <" + nodeNames[t2] + ">");
     }
   }
-[#else]
-  /** Enable tracing. */
-  final public void enable_tracing() {
-  }
-
-  /** Disable tracing. */
-  final public void disable_tracing() {
-  }
-
-[/#if]
-
+  
 [#if hasPhase2]
   private void rescanToken() {
     rescan = true;

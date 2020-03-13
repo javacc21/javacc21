@@ -16,7 +16,7 @@
 
   <target name="clean">
  	<delete file="javacc.jar"/>
- 	<delete file="javacc-nodeps.jar"/>
+ 	<delete file="javacc-full.jar"/>
  	<delete dir="build"/>
    <delete dir="src/main/java/javacc/parser"/>
    <delete dir="examples/java/javagrammar"/>
@@ -101,7 +101,7 @@
  </target>
 
 <target name="full-jar" depends="compile">
-    <jar jarfile="javacc-nodeps.jar" compress="true">
+    <jar jarfile="javacc-full.jar" compress="true">
         <fileset dir="build"/>
         <zipfileset includes="**/*.class" src="bin/freemarker.jar"/>
         <manifest>
@@ -110,7 +110,7 @@
             <attribute name="Build-Date"   value="${timestamp}"/>
         </manifest>
     </jar>
-    <chmod file="javacc-nodeps.jar" perm="+x"/>
+    <chmod file="javacc-full.jar" perm="+x"/>
 </target>
 
 	

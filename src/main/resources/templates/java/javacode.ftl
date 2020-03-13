@@ -62,17 +62,13 @@
     ${prod.name}(${prod.parameterList}) 
     throws ParseException
     [#list (prod.throwsList.types)! as throw], ${throw}[/#list] {
-    [#if grammar.options.debugParser]
          trace_call("${prod.name}");
          try {
-    [/#if]
          ${prod.javaCode}
-    [@BuildCode prod.expansion prod.forced! /]
-    [#if grammar.options.debugParser]
+    [@BuildCode prod.expansion prod.forced /]
          } finally {
              trace_return("${prod.name}");
          }
-    [/#if]
     }   
 [/#macro]
 
@@ -254,17 +250,13 @@
    ${jprod.accessMod!} ${jprod.returnType} ${jprod.name}(
    ${jprod.parameterList}) throws ParseException
    [#list (jprod.throwsList.types)! as throw], ${throw}[/#list] {
-   [#if grammar.options.debugParser]
     trace_call("${jprod.name}");
     try {
-   [/#if]
-   [@BuildCode null /]
-   [#if grammar.options.debugParser]
+     [@BuildCode null /]
     }
     finally {
         trace_return("${jprod.name}");
     }
-   [/#if]
  } 
 [/#macro]
 
