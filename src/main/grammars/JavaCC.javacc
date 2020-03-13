@@ -687,7 +687,7 @@ INJECT(ParserProduction) :
         return Nodes.firstChildOfType(this, FormalParams.class);
     }
     
-    public TreeBuildingAnnotation getTreeBuildingAnnotation() {
+    public TreeBuildingAnnotation getTreeNodeBehavior() {
         return Nodes.firstChildOfType(this, TreeBuildingAnnotation.class);
     }
 

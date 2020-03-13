@@ -145,7 +145,7 @@ abstract public class Expansion extends BaseNode {
     public TreeBuildingAnnotation getTreeNodeBehavior() {
         if (treeNodeBehavior == null) {
             if (this.parentObject instanceof ParserProduction) {
-                return ((ParserProduction) parentObject).getTreeBuildingAnnotation();
+                return ((ParserProduction) parentObject).getTreeNodeBehavior();
             }
         }
         return treeNodeBehavior;

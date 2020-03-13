@@ -90,9 +90,10 @@ public class Grammar {
     }
     
     void parse(String location) throws IOException, ParseException {
-        Reader input = new FileReader(location);
+    	File file = new File(location);
+        Reader input = new FileReader(file);
         JavaCCParser parser = new JavaCCParser(this, input);
-        parser.setInputSource(location);
+        parser.setInputSource(file.getCanonicalFile().getName());
         setFilename(location);
         System.out.println("Parsing grammar file " + location + " . . .");
         parser.Root();
