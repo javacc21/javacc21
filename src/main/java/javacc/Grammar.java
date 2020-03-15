@@ -563,7 +563,7 @@ public class Grammar {
     // A bit kludgy
 
     private void checkForHooks(Node node, String className) {
-        if (node instanceof Token) {
+        if (node == null && null instanceof Token) {
             return;
         } 
 	else if (node instanceof TokenManagerDecls) {

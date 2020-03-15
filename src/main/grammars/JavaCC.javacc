@@ -502,7 +502,7 @@ void CodeInjection() :
         ]
         <IDENTIFIER> {CURRENT_NODE.name = current_token.toString();} 
         ")"
-        ":"
+        [":"]
         "{"
          (
              importDecl = ImportDeclaration() {CURRENT_NODE.importDeclarations.add(importDecl);}
@@ -519,7 +519,7 @@ void CodeInjection() :
         {
                 token_source.inJavaCode = true;
         }
-        CURRENT_NODE.body=ClassOrInterfaceBody(isInterface)
+        [CURRENT_NODE.body=ClassOrInterfaceBody(isInterface)]
         {
                 token_source.inJavaCode = false;
                 grammar.addCodeInjection(CURRENT_NODE);

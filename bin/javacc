@@ -5,11 +5,9 @@ BASE_DIR="$BIN_DIR/.."
 
 if [ $(which wget 2>/dev/null) ]; then
 
-   # Pick up newer jarfiles if they are up on the server
+   # Pick up a newer jarfile if it is up on the server
    # (Quietly, I'm a sneaky SOB!)
    bash -c "wget -N -q -P $BIN_DIR https://javacc.com/download/javacc.jar 2>/dev/null || true "
-   bash -c "wget -N -q -P $BIN_DIR https://javacc.com/download/freemarker.jar 2>/dev/null || true "
-
 fi
 
 # If there is no build directory, then just use the bootstrap script

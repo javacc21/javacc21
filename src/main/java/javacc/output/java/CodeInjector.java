@@ -257,7 +257,9 @@ class CodeInjector {
             existingDecls = new ArrayList<ClassOrInterfaceBodyDeclaration>();
             bodyDeclarations.put(name, existingDecls);
         }
-        existingDecls.addAll(Nodes.childrenOfType(body, ClassOrInterfaceBodyDeclaration.class));
+        if (body != null) {
+        	existingDecls.addAll(Nodes.childrenOfType(body, ClassOrInterfaceBodyDeclaration.class));
+        }
         
     }
     
