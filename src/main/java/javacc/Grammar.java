@@ -66,7 +66,7 @@ public class Grammar {
     private int includeNesting;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
-    private Map<String, ParserProduction> bnfProductions = new LinkedHashMap<>();
+    private Map<String, ParserProduction> parserProductions = new LinkedHashMap<>();
     private Map<String, ParserProduction> productionTable = new HashMap<>();
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
@@ -97,7 +97,6 @@ public class Grammar {
         setFilename(location);
         System.out.println("Parsing grammar file " + location + " . . .");
         parser.Root();
-        Collections.emptySet();
     }
     
     public void include(String location) throws IOException, ParseException {
@@ -110,7 +109,7 @@ public class Grammar {
                 }
             }
         }
-        if (location.endsWith(".java") || location.endsWith(".jav")) {
+        if (location.toLowerCase().endsWith(".java") || location.endsWith(".jav")) {
             CompilationUnit cu = JavaCCParser.parseJavaFile(new FileReader(location), location);
             codeInjections.add(cu);
         } else {
@@ -324,12 +323,12 @@ public class Grammar {
      * they appear in the input file. Each entry here will be a subclass of
      * "JavaCodeProduction".
      */
-    public List<ParserProduction> getBNFProductions() {
-        return new ArrayList<ParserProduction>(bnfProductions.values()); 
+    public List<ParserProduction> getParserProductions() {
+        return new ArrayList<ParserProduction>(parserProductions.values()); 
     }
 
-    public void addBNFProduction(ParserProduction production) {
-        bnfProductions.put(production.getName(), production);
+    public void addProduction(ParserProduction production) {
+        parserProductions.put(production.getName(), production);
     }
 
     /**

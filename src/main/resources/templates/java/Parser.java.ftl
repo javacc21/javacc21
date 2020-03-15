@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -496,14 +496,12 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [/#if]
 
 
-[#list grammar.BNFProductions as production]
+[#list grammar.parserProductions as production]
   [#set currentProduction = production in javacode]
-  [#if production.class.name?ends_with("ParserProduction")]
-      [@javacode.JavaCodeProduction production/]
-  [#else]
-      [@javacode.BNFProduction production/]
-  [/#if]
+  [@javacode.ParserProduction production/]
 [/#list]
+
+
 
 [#list parserData.phase2Lookaheads as lookahead]
    [@javacode.buildPhase2Routine lookahead.nestedExpansion/]

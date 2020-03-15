@@ -37,10 +37,10 @@
 [@html.page]
 
 [@html.nonterminals]
- [#list grammar.BNFProductions as production]
+ [#list grammar.parserProductions as production]
   [#var classname=production.class.name?split(".")?last]
   [@html.production production]
-     [#if classname = "ParserProduction"]
+     [#if classname = "JavaCodeProduction"]
        [@html.javacode production/]
      [#else]
        [@expansion production.expansion/]

@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@
   }
 [/#macro]
 
-[#macro BNFProduction prod]
+[#macro ParserProduction prod]
     ${prod.leadingComments}
 // ${prod.inputSource}, line ${prod.beginLine}
     final ${prod.accessMod!"public"} 
@@ -64,8 +64,12 @@
     [#list (prod.throwsList.types)! as throw], ${throw}[/#list] {
          trace_call("${prod.name}");
          try {
-           ${prod.javaCode}
-           [@BuildCode prod.expansion prod.forced /]
+             [#if prod.expansion??]
+                [@BuildCode prod.expansion prod.forced /]
+             [#else]
+                [@BuildCode prod /]
+[#if false]                ${prod.javaCode} [/#if]
+             [/#if]
          } finally {
              trace_return("${prod.name}");
          }
@@ -100,6 +104,7 @@
          ParseException ${parseExceptionVar} = null;
          try {
     [/#if]
+        ${(production.javaCode)!}
         [@BuildPhase1Code expansion/]
     [#if buildTreeNode]
        [#var closeCondition = "true"]
@@ -179,7 +184,8 @@
 
 [#macro BuildPhase1Code expansion]
     [#var classname=expansion.class.name?split(".")?last]
-    [#if classname = "Action" || classname?ends_with("Production")]
+    [#if classname = "JavaCodeProduction"]
+    [#elseif classname = "Action"]
        ${expansion.javaCode!"{}"}
     [#elseif classname = "ExpansionSequence"]
 	   [#list expansion.units as subexp]
@@ -201,8 +207,6 @@
         [@BuildPhase1CodeOneOrMore expansion/]
     [#elseif classname = "ExpansionChoice"]
         [@BuildPhase1CodeChoice expansion/]
-    [#else]
-        ${expansion.javaCode!"{}"}
     [/#if]
 [/#macro]
 

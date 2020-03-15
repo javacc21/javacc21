@@ -104,7 +104,7 @@ public class Semanticizer {
          * converts them to trivial choices. This way, their semantic lookahead
          * specification can be evaluated during other lookahead evaluations.
          */
-        for (ParserProduction np : grammar.getBNFProductions()) {
+        for (ParserProduction np : grammar.getParserProductions()) {
             ExpansionTreeWalker.postOrderWalk(np.getExpansion(),
                     new LookaheadFixer());
         }
@@ -112,7 +112,7 @@ public class Semanticizer {
         /*
          * The following loop populates "production_table"
          */
-        for (ParserProduction p : grammar.getBNFProductions()) {
+        for (ParserProduction p : grammar.getParserProductions()) {
             grammar.getProductionTable().put(p.getName(), p);
         }
 
@@ -120,7 +120,7 @@ public class Semanticizer {
          * The following walks the entire parse tree to make sure that all
          * non-terminals on RHS's are defined on the LHS.
          */
-        for (ParserProduction np : grammar.getBNFProductions()) {
+        for (ParserProduction np : grammar.getParserProductions()) {
             ExpansionTreeWalker.preOrderWalk(np.getExpansion(),
                     new ProductionDefinedChecker());
         }
@@ -470,7 +470,7 @@ public class Semanticizer {
         boolean emptyUpdate = true;
         while (emptyUpdate) {
             emptyUpdate = false;
-            for (ParserProduction prod : grammar.getBNFProductions()) {
+            for (ParserProduction prod : grammar.getParserProductions()) {
                 if (emptyExpansionExists(prod.getExpansion())) {
                     if (!prod.emptyPossible) {
                         emptyUpdate = prod.emptyPossible = true;
@@ -485,7 +485,7 @@ public class Semanticizer {
             // OneOrMore nodes
             // do not contain expansions that can expand to the empty token
             // list.
-            for (ParserProduction np : grammar.getBNFProductions()) {
+            for (ParserProduction np : grammar.getParserProductions()) {
                 ExpansionTreeWalker.preOrderWalk(np.getExpansion(),
                         new EmptyChecker());
             }
@@ -495,7 +495,7 @@ public class Semanticizer {
             // productions that it can expand to without consuming any tokens.
             // Once this is
             // done, a left-recursion check can be performed.
-            for (ParserProduction prod : grammar.getBNFProductions()) {
+            for (ParserProduction prod : grammar.getParserProductions()) {
                 addLeftMost(prod, prod.getExpansion());
             }
 
@@ -506,7 +506,7 @@ public class Semanticizer {
             // been determined to participate in a left recursive loop, it is
             // not tried
             // in any other loop.
-            for (ParserProduction prod : grammar.getBNFProductions()) {
+            for (ParserProduction prod : grammar.getParserProductions()) {
                 if (prod.walkStatus == 0) {
                     prodWalk(prod);
                 }
@@ -542,7 +542,7 @@ public class Semanticizer {
              * The following code performs the lookahead ambiguity checking.
              */
             if (grammar.getErrorCount() == 0) {
-                for (ParserProduction prod : grammar.getBNFProductions()) {
+                for (ParserProduction prod : grammar.getParserProductions()) {
                     ExpansionTreeWalker.preOrderWalk(prod.getExpansion(),
                             new LookaheadChecker());
                 }

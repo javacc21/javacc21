@@ -109,3 +109,7 @@ void JSONObject() : {}
     ]
     <CLOSE_BRACE>
 }
+
+JAVACODE void fuck() {
+    System.out.println("KILROY");
+}

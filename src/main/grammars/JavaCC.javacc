@@ -412,7 +412,7 @@ Grammar Root() throws IOException :
    }
    [ParserCodeDecls()]
    (
-      Production()
+      ParserProduction()
       |
       decls=TokenManagerDecls() {grammar.addCodeInjection(decls);}
       |
@@ -607,20 +607,22 @@ void option_binding() #void :
   {_options.setInputFileOption(name, t, option_name, value, inInclude);}
 }
 
-void Production() #void :
+void ParserProduction()  :
 {
    ParserProduction prod;
    TokenProduction tp;
 }
 {
-  prod=JavaCodeProduction() {grammar.addBNFProduction(prod);} 
+  prod=JavaCodeProduction() {grammar.addProduction(prod);} 
   |
   tp=TokenProduction() {grammar.addTokenProduction(tp);}
   |
-  prod=BNFProduction() {grammar.addBNFProduction(prod);}
+  prod=BNFProduction() {grammar.addProduction(prod);}
 }
 
-ParserProduction JavaCodeProduction() #ParserProduction :
+INJECT(JavaCodeProduction) : {extends ParserProduction;}{}
+
+JavaCodeProduction JavaCodeProduction()   :
 {
       Token t;
       Token name;
@@ -1128,7 +1130,7 @@ void ExpansionChoice() :
 {}
 {
   ExpansionSequence()
-  ( "|" ExpansionSequence())* 
+  ( "|" ExpansionSequence())*
 }
 
 INJECT(ExpansionChoice) : 

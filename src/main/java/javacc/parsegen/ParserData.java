@@ -52,7 +52,7 @@ import javacc.parser.tree.TryBlock;
  */
 public class ParserData {
 
-    private StringBuffer outputBuffer;
+    private StringBuilder outputBuffer;
     private Grammar grammar;
     private int gensymindex = 0;
     private boolean lookaheadNeeded;
@@ -113,7 +113,7 @@ public class ParserData {
         if (grammar.getErrorCount() != 0)
             throw new MetaParseException();
 
-        for (ParserProduction p : grammar.getBNFProductions()) {
+        for (ParserProduction p : grammar.getParserProductions()) {
             if (p instanceof BNFProduction) {
                 visitExpansion(p.getExpansion());
             }
