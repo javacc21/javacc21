@@ -30,6 +30,18 @@
 
 package javacc;
 
+import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.jar.Manifest;
+import java.util.jar.Attributes;
+
+
 import javacc.parser.ParseException;
 
 /**
@@ -38,16 +50,42 @@ import javacc.parser.ParseException;
 public final class Main {
     
     public static final String PROG_NAME = "JavaCC 21 Parser Generator";
-    public static final String VERSION = "20.02.21";
     public static final String URL = "Go to https://javacc.com for more information.";
-  
+    private static String manifestContent = "", jarFileName = "javacc.jar";
     
-    private Main() {
+    static {
+    	try {
+    	   	Enumeration<URL> urls = Main.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
+        	while(urls.hasMoreElements()) {
+        		URL url = urls.nextElement();
+        		InputStream is = url.openStream();
+        		int available = is.available();
+        		byte[] bytes = new byte[available];
+        		is.read(bytes);
+        		is.close();
+        		String content = new String(bytes);
+        		if (content.indexOf("javacc.Main") >=0) {
+            		String path = url.getFile();
+            		if (path.startsWith("file:")) {
+            			path = path.substring(6);
+            		}
+            		int exclamIndex = path.lastIndexOf('!');
+            		if (exclamIndex >0) {
+            			path = path.substring(0, exclamIndex);
+            		}
+            		jarFileName = new File(path).getName();
+        			manifestContent = content;
+        		}
+        	}    		
+    	}
+    	catch (Exception e) {
+    		//Oh well, never mind!
+        }
     }
-
+  
     static void usage() {
         System.out.println("Usage:");
-        System.out.println("    java -jar javacc.jar option-settings inputfile");
+        System.out.println("    java -jar " + jarFileName + " option-settings inputfile");
         System.out.println();
         System.out.println("\"option-settings\" is a sequence of settings separated by spaces.");
         System.out.println("Each option setting must be of one of the following forms:");
@@ -118,6 +156,11 @@ public final class Main {
     		System.err.println("You must have an appropriate (V3 or later) freemarker.jar on your classpath to run JavaCC 21");
     		System.exit(-1);
     	}
+        if (args.length == 0) {
+            bannerLine();
+            usage();
+            System.exit(1);
+        } 
   		int errorcode = mainProgram(args);
         System.exit(errorcode);
     }
@@ -127,16 +170,11 @@ public final class Main {
      * returns an error code. See how the main program above uses this method.
      */
     public static int mainProgram(String[] args) throws Exception {
-        if (args.length == 0) {
-            JavaCCUtils.bannerLine();
-            usage();
-            return 1;
-        } 
         JavaCCOptions options = new JavaCCOptions(args);
         boolean quiet = options.getQuiet();
         if (!quiet) {
-            System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)");
-        	JavaCCUtils.bannerLine();
+        	bannerLine();
+            System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)\n");
         }
         String filename = args[args.length -1];
         Grammar grammar = new Grammar(options);
@@ -175,5 +213,37 @@ public final class Main {
             return 1;
         }
     }
-
+    
+    /**
+     * This prints the banner line when the various tools are invoked. This
+     * takes as argument the tool's full name and its version.
+     */
+    static public void bannerLine() {
+    	System.out.println();
+        System.out.println(Main.PROG_NAME + getBuiltOnString());
+        System.out.println(Main.URL);
+        System.out.println();
+    }
+    
+    
+    static private String getBuiltOnString() {
+    	if (manifestContent == "") {
+    		return "";
+    	}
+    	String buildDate = "unknown date";
+    	String builtBy = "somebody";
+    	StringTokenizer st = new StringTokenizer(manifestContent, ": \t\n\r", false);
+    	while (st.hasMoreTokens()) {
+    		String s = st.nextToken();
+    		if (s.equals("Build-Date")) {
+    			buildDate = st.nextToken();
+    		}
+    		if (s.equals("Built-By")) {
+    			builtBy = st.nextToken();
+    		}
+    	}
+    	return " (" + jarFileName + " built by " + builtBy + " on " + buildDate + ")";
+    }
 }
+    
+

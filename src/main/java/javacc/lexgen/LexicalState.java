@@ -41,8 +41,6 @@ import javacc.parser.tree.RegexpChoice;
 import javacc.parser.tree.RegexpSpec;
 import javacc.parser.tree.TokenProduction;
 
-import static javacc.JavaCCUtils.*;
-
 public class LexicalState {
 
     private Grammar grammar;
@@ -848,12 +846,12 @@ public class LexicalState {
                 int[] other = compositeStateTable.get(s);
 
                 while (toRet < nameSet.length
-                        && (((indexedAllStates.get(nameSet[toRet])).inNextOf > 1) || ElemOccurs(
-                                nameSet[toRet], other) >= 0))
+                        && (((indexedAllStates.get(nameSet[toRet])).inNextOf > 1) || NfaState.arrayContains(other, nameSet[toRet]))) {
                     toRet++;
+                }
             }
         }
-
+        
         int tmp;
 
         if (toRet >= nameSet.length) {
@@ -869,6 +867,8 @@ public class LexicalState {
         compositeStateTable.put(stateSetString, nameSet);
         return tmp;
     }
+    
+    
 
     public int[] getStateSetIndicesForUse(String arrayString) {
         int[] set = allNextStates.get(arrayString);

@@ -34,9 +34,6 @@ import java.util.*;
 
 import javacc.Grammar;
 
-
-import static javacc.JavaCCUtils.*;
-
 /**
  * The state of a Non-deterministic Finite Automaton.
  */
@@ -939,7 +936,17 @@ public class NfaState {
             return false;
 
         int[] set = lexicalState.allNextStates.get(getNext().epsilonMovesString);
-        return ElemOccurs(index, set) >= 0;
+        return arrayContains(set, index);
+    }
+    
+    static boolean arrayContains(int[] arr, int elem) {
+        for (int i = arr.length; i-- > 0;) {
+            if (arr[i] == elem) {
+                return true;
+            }
+        }
+        return false;
+
     }
 
     public boolean getNextIntersects() {

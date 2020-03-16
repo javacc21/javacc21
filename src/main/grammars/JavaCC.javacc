@@ -108,9 +108,125 @@ import javacc.parser.tree.*;
         }
     }
 
+
+
     private String removeEscapesAndQuotes(Token t) {
-        return JavaCCUtils.removeEscapesAndQuotes(grammar, t, t.image);
+        String retval = "";
+        String str = t.image;
+        int index = 1;
+        char ch, ch1;
+        int ordinal;
+        while (index < str.length() - 1) {
+            if (str.charAt(index) != '\\') {
+                retval += str.charAt(index);
+                index++;
+                continue;
+            }
+            index++;
+            ch = str.charAt(index);
+            if (ch == 'b') {
+                retval += '\b';
+                index++;
+                continue;
+            }
+            if (ch == 't') {
+                retval += '\t';
+                index++;
+                continue;
+            }
+            if (ch == 'n') {
+                retval += '\n';
+                index++;
+                continue;
+            }
+            if (ch == 'f') {
+                retval += '\f';
+                index++;
+                continue;
+            }
+            if (ch == 'r') {
+                retval += '\r';
+                index++;
+                continue;
+            }
+            if (ch == '"') {
+                retval += '\"';
+                index++;
+                continue;
+            }
+            if (ch == '\'') {
+                retval += '\'';
+                index++;
+                continue;
+            }
+            if (ch == '\\') {
+                retval += '\\';
+                index++;
+                continue;
+            }
+            if (ch >= '0' && ch <= '7') {
+                ordinal = ((int) ch) - ((int) '0');
+                index++;
+                ch1 = str.charAt(index);
+                if (ch1 >= '0' && ch1 <= '7') {
+                    ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
+                    index++;
+                    ch1 = str.charAt(index);
+                    if (ch <= '3' && ch1 >= '0' && ch1 <= '7') {
+                        ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
+                        index++;
+                    }
+                }
+                retval += (char) ordinal;
+                continue;
+            }
+            if (ch == 'u') {
+                index++;
+                ch = str.charAt(index);
+                if (hexchar(ch)) {
+                    ordinal = hexval(ch);
+                    index++;
+                    ch = str.charAt(index);
+                    if (hexchar(ch)) {
+                        ordinal = ordinal * 16 + hexval(ch);
+                        index++;
+                        ch = str.charAt(index);
+                        if (hexchar(ch)) {
+                            ordinal = ordinal * 16 + hexval(ch);
+                            index++;
+                            ch = str.charAt(index);
+                            if (hexchar(ch)) {
+                                ordinal = ordinal * 16 + hexval(ch);
+                                index++;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                grammar.addParseError(t, "Encountered non-hex character '" + ch
+                        + "' at position " + index + " of string "
+                        + "- Unicode escape must have 4 hex digits after it.");
+                return retval;
+            }
+            grammar.addParseError(t, "Illegal escape sequence '\\" + ch
+                    + "' at position " + index + " of string.");
+            return retval;
+        }
+        return retval;
     }
+    
+    private static boolean hexchar(char ch) {
+    	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+    }
+    
+    
+    static private int hexval(char ch) {
+        if (ch >= '0' && ch <= '9')
+            return ((int) ch) - ((int) '0');
+        if (ch >= 'A' && ch <= 'F')
+            return ((int) ch) - ((int) 'A') + 10;
+        return ((int) ch) - ((int) 'a') + 10;
+    }    
 
     static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
         JavaCCParser parser = new JavaCCParser(input);
