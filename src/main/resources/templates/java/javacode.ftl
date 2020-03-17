@@ -40,12 +40,7 @@
     [#list (prod.throwsList.types)! as throw], ${throw}[/#list] {
          trace_call("${prod.name}");
          try {
-             [#if prod.expansion??]
-                [@BuildCode prod.expansion prod.forced /]
-             [#else]
-                [@BuildCode prod /]
-[#if false]                ${prod.javaCode} [/#if]
-             [/#if]
+            [@BuildCode prod.expansion prod.forced /]
          } finally {
              trace_return("${prod.name}");
          }

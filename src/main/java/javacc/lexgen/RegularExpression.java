@@ -88,14 +88,14 @@ public abstract class RegularExpression extends Expansion {
 
     private LexicalState newLexicalState;
 
-    private CodeBlock action;
+    private CodeBlock codeSnippet;
 
-    public CodeBlock getAction() {
-        return action;
+    public CodeBlock getCodeSnippet() {
+        return codeSnippet;
     }
 
-    public void setAction(CodeBlock action) {
-        this.action = action;
+    public void setCodeSnippet(CodeBlock codeSnippet) {
+        this.codeSnippet = codeSnippet;
     }
 
     void setIgnoreCase(boolean b) {

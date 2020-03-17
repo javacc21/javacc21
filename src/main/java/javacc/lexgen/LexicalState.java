@@ -376,10 +376,10 @@ public class LexicalState {
             if (respec.getNextState() != null && !respec.getNextState().equals(this.name))
                 currentRegexp.setNewLexicalState(lexerData.getLexicalState(respec.getNextState()));
 
-            if (respec.getAction() != null && !respec.getAction().isEmpty()) {
-                currentRegexp.setAction(respec.getAction());
+            if (respec.getCodeSnippet() != null && !respec.getCodeSnippet().isEmpty()) {
+                currentRegexp.setCodeSnippet(respec.getCodeSnippet());
             }
-            CodeBlock tokenAction = currentRegexp.getAction();
+            CodeBlock tokenAction = currentRegexp.getCodeSnippet();
             String kind = tp.getKind();
             if (kind.equals("SPECIAL_TOKEN")) {
                 if (tokenAction != null || currentRegexp.getNewLexicalState() != null) {
@@ -672,7 +672,7 @@ public class LexicalState {
                         break;
                     else if ((lexerData.toSkip[kind / 64] & (1L << (kind % 64))) != 0L
                             && (lexerData.toSpecial[kind / 64] & (1L << (kind % 64))) == 0L
-                            && lexerData.getRegularExpression(kind).getAction() == null
+                            && lexerData.getRegularExpression(kind).getCodeSnippet() == null
                             && lexerData.getRegularExpression(kind).getNewLexicalState() == null) {
                         singlesToSkip.addChar(c);
                         singlesToSkip.kind = kind;

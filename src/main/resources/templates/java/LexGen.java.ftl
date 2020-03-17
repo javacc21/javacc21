@@ -467,7 +467,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       [#var regexp=lexerData.getRegularExpression(i)]
       [#var jumpOut]
       [#if lexerData.hasTokenAction(i) || lexerData.hasMoreAction(i) || lexerData.hasSkipAction(i)]
-        [#var act=regexp.action]
+        [#var act=regexp.codeSnippet]
         [#var lexicalState=regexp.lexicalState]
         [#set jumpOut = (!act?? || !act.javaCode?has_content)&&!lexicalState.canLoop]
         [#if !jumpOut]

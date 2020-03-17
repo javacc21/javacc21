@@ -723,7 +723,7 @@ void option_binding() #void :
   {_options.setInputFileOption(name, t, option_name, value, inInclude);}
 }
 
-void ParserProduction()  :
+void ParserProduction() :
 {
    ParserProduction prod;
    TokenProduction tp;
@@ -736,7 +736,7 @@ void ParserProduction()  :
   prod=BNFProduction() {grammar.addProduction(prod);}
 }
 
-INJECT(JavaCodeProduction) : {extends ParserProduction;}{}
+INJECT(JavaCodeProduction) : {extends ParserProduction}{}
 
 JavaCodeProduction JavaCodeProduction()   :
 {
@@ -764,9 +764,8 @@ JavaCodeProduction JavaCodeProduction()   :
   [
      tba=TreeNodeDescriptor() {grammar.addNodeType(tba.getNodeName());} 
   ]
-  Block()
+  block=CodeSnippet() {CURRENT_NODE.setExpansion(block);}
   {
-      token_source.inJavaCode = false;
       CURRENT_NODE.adjustFirstToken(t);
       if (tba ==null && !grammar.getOptions().getNodeDefaultVoid()) {
           grammar.addNodeType(name.image);
@@ -897,6 +896,12 @@ INJECT(ParserProduction) :
     public CodeBlock getJavaCode() {
        return Nodes.firstChildOfType(this, CodeBlock.class);
     }
+
+    private boolean forced;
+
+    public boolean getForced() {return forced;}
+    
+    public void setForced(boolean forced) {this.forced = forced;}
 }
 
 BNFProduction BNFProduction() :
@@ -946,11 +951,6 @@ INJECT(BNFProduction) :
     extends ParserProduction;
 }
 {
-    private boolean forced;
-
-    public boolean getForced() {return forced;}
-    
-    public void setForced(boolean forced) {this.forced = forced;}
 }
 
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
@@ -1200,13 +1200,13 @@ void RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
      }
   ]
   [
-      Action()
+      CodeSnippet()
         {
             if (grammar.getOptions().getUserDefinedLexer()) {
-                grammar.addWarning(peekNode(), "Ignoring action in regular expression specification since option USER_DEFINED_LEXER has been set to true.");
+                grammar.addWarning(peekNode(), "Ignoring code snippet for regular expression specification since option USER_DEFINED_LEXER has been set to true.");
             }
             if (regexp.isPrivate()) {
-                grammar.addParseError(peekNode(), "Actions are not permitted on private (#) regular expressions.");
+                grammar.addParseError(peekNode(), "Code snippets are not permitted on private (#) regular expressions.");
             }
         }
   ]
@@ -1237,7 +1237,7 @@ INJECT(RegexpSpec) :
          return Nodes.firstChildOfType(this, RegularExpression.class);
     }
 
-    public CodeBlock getAction() {
+    public CodeBlock getCodeSnippet() {
         return Nodes.firstChildOfType(this, CodeBlock.class);
     }
 }
@@ -1424,7 +1424,7 @@ Expansion ExpansionUnit() :
       // Now set the expansion field of la with a dummy
       // expansion (we use EOF).
       la.setExpansion(new EndOfFile());
-      // Create a singleton choice with an empty action.
+      // Create a singleton choice with an empty code snippet.
       ExpansionChoice ch = new ExpansionChoice();
       ch.setGrammar(grammar);
       ExpansionSequence seq = new ExpansionSequence(grammar);
@@ -1451,7 +1451,7 @@ Expansion ExpansionUnit() :
       result= ch;
   }
   |
-  result=Action() 
+  result=CodeSnippet() 
   |
   result=ZeroOrOne()
   |
@@ -1723,15 +1723,16 @@ INJECT(TryBlock) :
     }
 }
 
-CodeBlock Action() #void :
+CodeBlock CodeSnippet() #void :
 {
    CodeBlock block;
+   token_source.inJavaCode = true;
 } 
 {
     block=Block()
     {
        if (inLocalLA != 0) {
-            grammar.addWarning(block, "Action within lookahead specification will be ignored.");
+            grammar.addWarning(block, "Code snippet within lookahead specification will be ignored.");
        } 
        token_source.inJavaCode = false;
        return block;
