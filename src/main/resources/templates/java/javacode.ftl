@@ -30,30 +30,6 @@
  */
  --]
 
-[#var parserData=grammar.parserData]
-[#var tokenMaskIndex=0]
-[#var nodeNumbering = 0]
-[#var jj3_expansion]
-[#var NODE_USES_PARSER = grammar.options.nodeUsesParser]
-[#var NODE_PREFIX = grammar.options.nodePrefix]
-[#var currentProduction]
-
-[#macro buildPhase2Routine expansion]
-  private boolean jj_2${expansion.internalName}(int xla) { 
-      jj_la = xla; 
-      jj_lastpos = jj_scanpos = current_token;
-      try { 
-          return !jj_3${expansion.internalName}(); 
-      }
-      catch(LookaheadSuccess ls) {
-          return true; 
-      }
-      finally {
-          jj_save(${(expansion.internalName?substring(1)?number-1)}, xla);
-      }
-  }
-[/#macro]
-
 [#macro ParserProduction prod]
     ${prod.leadingComments}
 // ${prod.inputSource}, line ${prod.beginLine}
@@ -185,8 +161,8 @@
 [#macro BuildPhase1Code expansion]
     [#var classname=expansion.class.name?split(".")?last]
     [#if classname = "JavaCodeProduction"]
-    [#elseif classname = "Action"]
-       ${expansion.javaCode!"{}"}
+    [#elseif classname = "CodeBlock"]
+       ${expansion}
     [#elseif classname = "ExpansionSequence"]
 	   [#list expansion.units as subexp]
 	     [#if subexp_index != 0]
@@ -435,6 +411,30 @@ throw new ParseException();"]
          }
       [/#if]
    [/#if] 
+[/#macro]
+
+[#var parserData=grammar.parserData]
+[#var tokenMaskIndex=0]
+[#var nodeNumbering = 0]
+[#var jj3_expansion]
+[#var NODE_USES_PARSER = grammar.options.nodeUsesParser]
+[#var NODE_PREFIX = grammar.options.nodePrefix]
+[#var currentProduction]
+
+[#macro buildPhase2Routine expansion]
+  private boolean jj_2${expansion.internalName}(int xla) { 
+      jj_la = xla; 
+      jj_lastpos = jj_scanpos = current_token;
+      try { 
+          return !jj_3${expansion.internalName}(); 
+      }
+      catch(LookaheadSuccess ls) {
+          return true; 
+      }
+      finally {
+          jj_save(${(expansion.internalName?substring(1)?number-1)}, xla);
+      }
+  }
 [/#macro]
 
 [#macro buildPhase3Routine expansion count]

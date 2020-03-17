@@ -39,8 +39,8 @@ import javacc.parser.JavaCCConstants;
 import javacc.parser.Node;
 import javacc.parser.Nodes;
 import javacc.parser.Token;
-import javacc.parser.tree.Action;
 import javacc.parser.tree.BNFProduction;
+import javacc.parser.tree.CodeBlock;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
 import javacc.parser.tree.ParserProduction;
@@ -580,7 +580,7 @@ public class Semanticizer {
     static boolean emptyExpansionExists(Expansion exp) {
         if (exp instanceof NonTerminal) {
             return ((NonTerminal) exp).prod.emptyPossible;
-        } else if (exp instanceof Action) {
+        } else if (exp instanceof CodeBlock) {
             return true;
         } else if (exp instanceof RegularExpression) {
             return false;
@@ -880,7 +880,7 @@ public class Semanticizer {
                 seq1.setParentObject(ch);
                 seq1.addChild(la);
                 la.setParentObject(seq1);
-                Action act = new Action();
+                CodeBlock act = new CodeBlock();
                 act.setBeginLine(la.getBeginLine());
                 act.setBeginColumn(la.getBeginColumn());
                 act.setParentObject(seq1);

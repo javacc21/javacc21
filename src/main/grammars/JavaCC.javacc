@@ -1237,8 +1237,8 @@ INJECT(RegexpSpec) :
          return Nodes.firstChildOfType(this, RegularExpression.class);
     }
 
-    public Action getAction() {
-        return Nodes.firstChildOfType(this, Action.class);
+    public CodeBlock getAction() {
+        return Nodes.firstChildOfType(this, CodeBlock.class);
     }
 }
 
@@ -1411,7 +1411,7 @@ Expansion ExpansionUnit() :
     InvocationArgs args=null;
     CodeBlock block;
     NonTerminal nt;
-    Action act;
+    CodeBlock act;
     Token t=current_token, name;
     Lookahead la=null;
     Expansion result=null;
@@ -1431,7 +1431,7 @@ Expansion ExpansionUnit() :
       seq.setGrammar(grammar);
       seq.addChild(la);
       la.ordinal = 0;
-      act = new Action();
+      act = new CodeBlock();
       act.setGrammar(grammar);
       act.setBeginLine(t.getBeginLine());
       act.setBeginColumn(t.getBeginColumn());
@@ -1723,34 +1723,30 @@ INJECT(TryBlock) :
     }
 }
 
-Action Action() #Action :
-{} 
+CodeBlock Action() #void :
 {
-    Block()
+   CodeBlock block;
+} 
+{
+    block=Block()
     {
        if (inLocalLA != 0) {
-            grammar.addWarning(CURRENT_NODE, "Action within lookahead specification will be ignored.");
+            grammar.addWarning(block, "Action within lookahead specification will be ignored.");
        } 
        token_source.inJavaCode = false;
-       return CURRENT_NODE;
+       return block;
     }
 }
 
 
-INJECT(Action) :
+INJECT(CodeBlock) :
 {
    extends javacc.parsegen.Expansion;
 }
 {
     public CodeBlock getJavaCode() {
-        return Nodes.firstChildOfType(this, CodeBlock.class);
+        return this;
     }
-    
-    public boolean isEmpty() {
-        CodeBlock block = getJavaCode();
-        return block==null || block.isEmpty();
-    }
-     
 }
 
 void RegexpExpansion() #void :

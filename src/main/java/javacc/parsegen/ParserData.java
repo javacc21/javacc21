@@ -38,7 +38,7 @@ import javacc.lexgen.RegularExpression;
 import javacc.parser.Nodes;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
-import javacc.parser.tree.Action;
+import javacc.parser.tree.CodeBlock;
 import javacc.parser.tree.ParserProduction;
 import javacc.parser.tree.BNFProduction;
 import javacc.parser.tree.OneOrMore;
@@ -432,7 +432,7 @@ public class ParserData {
             retval = 0;
         } else if (e instanceof Lookahead) {
             retval = 0;
-        } else if (e instanceof Action) {
+        } else if (e instanceof CodeBlock) {
             retval = 0;
         }
         e.inMinimumSize = false;

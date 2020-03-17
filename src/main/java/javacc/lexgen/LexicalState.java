@@ -34,8 +34,8 @@ import java.util.*;
 
 import javacc.Grammar;
 import javacc.parser.ParseException;
-import javacc.parser.tree.Action;
 import javacc.parser.tree.CharacterList;
+import javacc.parser.tree.CodeBlock;
 import javacc.parser.tree.RegexpStringLiteral;
 import javacc.parser.tree.RegexpChoice;
 import javacc.parser.tree.RegexpSpec;
@@ -379,7 +379,7 @@ public class LexicalState {
             if (respec.getAction() != null && !respec.getAction().isEmpty()) {
                 currentRegexp.setAction(respec.getAction());
             }
-            Action tokenAction = currentRegexp.getAction();
+            CodeBlock tokenAction = currentRegexp.getAction();
             String kind = tp.getKind();
             if (kind.equals("SPECIAL_TOKEN")) {
                 if (tokenAction != null || currentRegexp.getNewLexicalState() != null) {

@@ -36,9 +36,9 @@ import javacc.Grammar;
 import javacc.parser.tree.Expression;
 import javacc.parsegen.Expansion;
 import javacc.parser.ParseException;
-import javacc.parser.tree.Action;
 import javacc.parser.tree.CharacterList;
 import javacc.parser.tree.CharacterRange;
+import javacc.parser.tree.CodeBlock;
 import javacc.parser.tree.EndOfFile;
 import javacc.parser.tree.OneOrMoreRegexp;
 import javacc.parser.tree.ZeroOrMoreRegexp;
@@ -88,13 +88,13 @@ public abstract class RegularExpression extends Expansion {
 
     private LexicalState newLexicalState;
 
-    private Action action;
+    private CodeBlock action;
 
-    public Action getAction() {
+    public CodeBlock getAction() {
         return action;
     }
 
-    public void setAction(Action action) {
+    public void setAction(CodeBlock action) {
         this.action = action;
     }
 

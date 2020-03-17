@@ -61,7 +61,7 @@
 
 [#macro expansion exp]
    [#var classname=exp.class.name?split(".")?last]
-     [#if classname = "Action" || classname?ends_with("Lookahead")]
+     [#if classname = "CodeBlock" || classname?ends_with("Lookahead")]
         [#--Do nothing--]
      [#elseif classname = "ExpansionChoice"]
        [#list exp.choices as choice]
