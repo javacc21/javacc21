@@ -316,10 +316,10 @@ throw new ParseException();"]
                  switch (nextTokenKind()) { 
               [#set indentLevel = indentLevel+1]
           [/#if]
-          [#list lookahead.matchingTokens as token]
-               [#if !casesHandled?contains(","+token+",")]
-                 case ${token}: 
-                 [#set casesHandled = casesHandled+token+","]
+          [#list lookahead.firstSetTokenNames as tokenName]
+               [#if !casesHandled?contains(","+tokenName+",")]
+                 case ${tokenName}: 
+                 [#set casesHandled = casesHandled+tokenName+","]
                [/#if]
           [/#list]
                     ${actions[lookahead_index]}
@@ -375,8 +375,8 @@ throw new ParseException();"]
    [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansionOrJavaCode]
       [@newVar type="int" init="nextTokenKind()"/]
       [#set condition]
-      [#list lookahead.matchingTokens as token]
-             int${newVarIndex} == ${token} [#if token_has_next]|| [/#if]
+      [#list lookahead.firstSetTokenNames as tokenName]
+             int${newVarIndex} == ${tokenName} [#if tokenName_has_next]|| [/#if]
       [/#list]
      [/#set]
       [#set fallback = "
@@ -583,7 +583,7 @@ throw new ParseException();"]
    [#set newVarIndex = newVarIndex+1]
    ${type} ${type?lower_case}${newVarIndex}
    [#if init??]
-      = ${init};
+      = ${init}
    [/#if]
    ;
 [/#macro]   

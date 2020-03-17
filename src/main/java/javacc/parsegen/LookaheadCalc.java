@@ -128,7 +128,7 @@ public class LookaheadCalc {
         MatchInfo[] overlapInfo = new MatchInfo[choices.size() - 1];
         int[] other = new int[choices.size() - 1];
         MatchInfo m;
-        List<MatchInfo> v;
+//        List<MatchInfo> partialMatches;
         boolean overlapDetected;
         LookaheadWalk lookaheadWalk = new LookaheadWalk(grammar);
         for (int la = 1; la <= grammar.getOptions().getChoiceAmbiguityCheck(); la++) {
@@ -138,9 +138,9 @@ public class LookaheadCalc {
                 grammar.setSizeLimitedMatches(new ArrayList<MatchInfo>());
                 m = new MatchInfo(grammar.getLookaheadLimit());
                 m.firstFreeLoc = 0;
-                v = new ArrayList<MatchInfo>();
-                v.add(m);
-                lookaheadWalk.genFirstSet(v, choices.get(i));
+                List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
+                partialMatches.add(m);
+                lookaheadWalk.genFirstSet(partialMatches, choices.get(i));
                 dbl.set(i, grammar.getSizeLimitedMatches());
             }
             grammar.setConsiderSemanticLA(false);
@@ -148,9 +148,9 @@ public class LookaheadCalc {
                 grammar.setSizeLimitedMatches(new ArrayList<MatchInfo>());
                 m = new MatchInfo(grammar.getLookaheadLimit());
                 m.firstFreeLoc = 0;
-                v = new ArrayList<MatchInfo>();
-                v.add(m);
-                lookaheadWalk.genFirstSet(v, choices.get(i));
+                List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
+                partialMatches.add(m);
+                lookaheadWalk.genFirstSet(partialMatches, choices.get(i));
                 dbr.set(i, grammar.getSizeLimitedMatches());
             }
             if (la == 1) {
@@ -260,7 +260,7 @@ public class LookaheadCalc {
     public void ebnfCalc(Expansion exp, Expansion nested, Grammar grammar) {
         // exp is one of OneOrMore, ZeroOrMore, ZeroOrOne
         MatchInfo m, m1 = null;
-        List<MatchInfo> v, first, follow;
+        List<MatchInfo> partialMatches = new ArrayList<>();
         int la;
         LookaheadWalk lookaheadWalk = new LookaheadWalk(grammar);
         for (la = 1; la <= grammar.getOptions().getOtherAmbiguityCheck(); la++) {
@@ -268,15 +268,14 @@ public class LookaheadCalc {
             grammar.setSizeLimitedMatches(new ArrayList<MatchInfo>());
             m = new MatchInfo(la);
             m.firstFreeLoc = 0;
-            v = new ArrayList<MatchInfo>();
-            v.add(m);
+            partialMatches.add(m);
             grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
-            lookaheadWalk.genFirstSet(v, nested);
-            first = grammar.getSizeLimitedMatches();
+            lookaheadWalk.genFirstSet(partialMatches, nested);
+            List<MatchInfo> first = grammar.getSizeLimitedMatches();
             grammar.setSizeLimitedMatches(new ArrayList<MatchInfo>());
             grammar.setConsiderSemanticLA(false);
-            lookaheadWalk.genFollowSet(v, exp, grammar.nextGenerationIndex(), grammar);
-            follow = grammar.getSizeLimitedMatches();
+            lookaheadWalk.genFollowSet(partialMatches, exp, grammar.nextGenerationIndex(), grammar);
+            List<MatchInfo> follow = grammar.getSizeLimitedMatches();
             if (la == 1) {
                 if (javaCodeCheck(first)) {
                     grammar.addWarning(nested, "JAVACODE non-terminal within " + image(exp)

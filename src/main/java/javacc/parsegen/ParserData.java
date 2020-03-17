@@ -52,7 +52,6 @@ import javacc.parser.tree.TryBlock;
  */
 public class ParserData {
 
-    private StringBuilder outputBuffer;
     private Grammar grammar;
     private int gensymindex = 0;
     private boolean lookaheadNeeded;
@@ -81,38 +80,8 @@ public class ParserData {
     private List<Phase3Data> phase3list = new ArrayList<Phase3Data>();
     private Map<Expansion, Integer> phase3table = new LinkedHashMap<Expansion, Integer>();
 
-    public ParserData(Grammar grammar) {
+    public ParserData(Grammar grammar) throws MetaParseException {
         this.grammar = grammar;
-    }
-
-    public String getOutput() {
-        return outputBuffer.toString();
-    }
-    
-    public List<Lookahead> getPhase2Lookaheads() {
-        return phase2list;
-    }
-    
-    public Map<Expansion, Integer> getPhase3Table() {
-        return phase3table;
-    }
-    
-    public int getPhase3ExpansionCount(Expansion exp) {
-        return phase3table.get(exp);
-    }
-    
-    public List<int[]> getTokenMaskValues() {
-        return tokenMasks;
-    }
-    
-    public boolean isLookaheadNeeded() {
-        return lookaheadNeeded;
-    }
-    
-    public void start() throws MetaParseException {
-        if (grammar.getErrorCount() != 0)
-            throw new MetaParseException();
-
         for (ParserProduction p : grammar.getParserProductions()) {
             if (p instanceof BNFProduction) {
                 visitExpansion(p.getExpansion());
@@ -132,6 +101,26 @@ public class ParserData {
                 setupPhase3Builds(p3data.exp, p3data.count);
             }
         }
+    }
+
+    public List<Lookahead> getPhase2Lookaheads() {
+        return phase2list;
+    }
+    
+    public Map<Expansion, Integer> getPhase3Table() {
+        return phase3table;
+    }
+    
+    public int getPhase3ExpansionCount(Expansion exp) {
+        return phase3table.get(exp);
+    }
+    
+    public List<int[]> getTokenMaskValues() {
+        return tokenMasks;
+    }
+    
+    public boolean isLookaheadNeeded() {
+        return lookaheadNeeded;
     }
     
     private void visitChoice(ExpansionChoice choice) {
@@ -438,27 +427,27 @@ public class ParserData {
         e.inMinimumSize = false;
         return retval;
     }
-
-}
-
-/**
- * This class stores information to pass from phase 2 to phase 3.
- */
-class Phase3Data {
-
-    /*
-     * This is the expansion to generate the jj3 method for.
+    
+    
+    /**
+     * This class stores information to pass from phase 2 to phase 3.
      */
-    Expansion exp;
+    private class Phase3Data {
 
-    /*
-     * This is the number of tokens that can still be consumed. This number is
-     * used to limit the number of jj3 methods generated.
-     */
-    int count;
+        /*
+         * This is the expansion to generate the jj3 method for.
+         */
+        Expansion exp;
 
-    Phase3Data(Expansion e, int c) {
-        exp = e;
-        count = c;
+        /*
+         * This is the number of tokens that can still be consumed. This number is
+         * used to limit the number of jj3 methods generated.
+         */
+        int count;
+
+        Phase3Data(Expansion e, int c) {
+            exp = e;
+            count = c;
+        }
     }
 }

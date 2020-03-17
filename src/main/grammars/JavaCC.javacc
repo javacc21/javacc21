@@ -893,10 +893,6 @@ INJECT(ParserProduction) :
         return leadingComments;
     }
 
-    public CodeBlock getJavaCode() {
-       return Nodes.firstChildOfType(this, CodeBlock.class);
-    }
-
     private boolean forced;
 
     public boolean getForced() {return forced;}
@@ -951,6 +947,9 @@ INJECT(BNFProduction) :
     extends ParserProduction;
 }
 {
+    public CodeBlock getJavaCode() {
+       return Nodes.firstChildOfType(this, CodeBlock.class);
+    }
 }
 
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :

@@ -73,7 +73,7 @@ public class Lookahead extends Expansion {
         return firstSet;
     }
     
-    public List<String> getMatchingTokens() {
+    public List<String> getFirstSetTokenNames() {
         List<String> result = new ArrayList<String>();
         for (int i=0; i<getFirstSet().length; i++) {
             if (firstSet[i]) {

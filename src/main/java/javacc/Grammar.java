@@ -174,7 +174,6 @@ public class Grammar {
 
     public void buildParserInfo() throws MetaParseException {
         parserData = new ParserData(this);
-        parserData.start();
     }
 
     public void generateFiles() throws ParseException, IOException, TemplateException {
