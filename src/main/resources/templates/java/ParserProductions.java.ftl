@@ -29,6 +29,27 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
  --]
+ 
+[#macro ProductionsCode] 
+  [#list grammar.parserProductions as production]
+    [#set currentProduction = production]
+    [@ParserProduction production/]
+  [/#list]
+[/#macro]
+
+
+[#macro Phase2Code]
+  [#list parserData.phase2Lookaheads as lookahead]
+     [@buildPhase2Routine lookahead.nestedExpansion/]
+  [/#list]
+[/#macro]
+
+[#macro Phase3Code]
+   [#list parserData.phase3Table?keys as expansion]
+      [@buildPhase3Routine expansion, parserData.getPhase3ExpansionCount(expansion)/]
+   [/#list]
+[/#macro]   
+
 
 [#macro ParserProduction prod]
     ${prod.leadingComments}
@@ -211,22 +232,6 @@
    [#else]
        ${nonterminal.LHS} = ${nonterminal.name}(${nonterminal.args!});
     [/#if]
-[/#macro]
-
-[#macro JavaCodeProduction jprod]
-// JavaCodeProduction specified in ${jprod.inputSource} on line ${jprod.beginLine}
-   ${jprod.leadingComments}
-   ${jprod.accessMod!} ${jprod.returnType} ${jprod.name}(
-   ${jprod.parameterList}) throws ParseException
-   [#list (jprod.throwsList.types)! as throw], ${throw}[/#list] {
-    trace_call("${jprod.name}");
-    try {
-     [@BuildCode jprod /]
-    }
-    finally {
-        trace_return("${jprod.name}");
-    }
- } 
 [/#macro]
 
 
