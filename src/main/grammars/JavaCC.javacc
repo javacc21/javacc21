@@ -334,7 +334,11 @@ TOKEN :
   |
   < _EOF: "EOF" > #JavaCCKeyWord
   |
-  <HASH_ID : "#" <IDENTIFIER>> #HashID
+  <HASH : "#">
+  |
+  <SHEBANG : "#!"> #Shebang
+  |
+  <HASH_ID : "#"<IDENTIFIER>> #HashID
 }
 
 INCLUDE("Java.javacc")
@@ -955,19 +959,27 @@ INJECT(BNFProduction) :
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 {}
 {
-  <HASH_ID>
-  {
-        token_source.inJavaCode = true;
-  }
-  [
-   LOOKAHEAD(1)
-   <LPAREN>
-      [
-        ">"
-      ]
-      Expression()
-   <RPAREN>
-  ]
+  <SHEBANG> {return CURRENT_NODE;}
+  |
+  (
+	  <HASH_ID>
+	  {
+	        token_source.inJavaCode = true;
+	  }
+	  [
+	   LOOKAHEAD(<BANG>|<LPAREN>)
+	   (
+	   <BANG>
+	   |
+	   <LPAREN>
+	      [
+	        ">"
+	      ]
+	      Expression()
+	   <RPAREN>
+	   )
+	  ]
+  )
   {
           token_source.inJavaCode = false;
           return CURRENT_NODE;

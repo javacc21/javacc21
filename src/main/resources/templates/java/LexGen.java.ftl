@@ -743,8 +743,25 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [/#list]
 [/#list]
   };
-  
-  [#embed "TokenBuilder.java.ftl"]
+
+    private int tabSize = 8;
+    /**
+     * sets the size of a tab for location reporting 
+     * purposes, default value is 8.
+     */
+    public void setTabSize(int tabSize) {this.tabSize = tabSize;}
+    
+    /**
+     * returns the size of a tab for location reporting 
+     * purposes, default value is 8.
+     */
+    public int getTabSize() {return tabSize;}
+    
+  [#if options.hugeFileSupport || true]
+  [#embed "LegacyTokenBuilder.java.ftl"]
+  [#else]
+  [#embed "NewTokenBuilder.java.ftl"]
+  [/#if]
   
 }
 

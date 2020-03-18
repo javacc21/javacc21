@@ -5,19 +5,7 @@
       Now the contents of this file are an include from LexGen.java.ftl.
   --]
 
-    private int tabSize = 8;
-    /**
-     * sets the size of a tab for location reporting 
-     * purposes, default value is 8.
-     */
-    public void setTabSize(int tabSize) {this.tabSize = tabSize;}
-    
-    /**
-     * returns the size of a tab for location reporting 
-     * purposes, default value is 8.
-     */
-    public int getTabSize() {return tabSize;}
-    
+   
 
 private class TokenBuilder {
 

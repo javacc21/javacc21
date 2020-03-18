@@ -176,6 +176,7 @@ public class JavaCCOptions {
         optionValues.put("SPECIAL_TOKENS_ARE_NODES", false);
         optionValues.put("FREEMARKER_NODES", false);
         optionValues.put("DEFAULT_LEXICAL_STATE", "DEFAULT");
+        optionValues.put("HUGE_FILE_SUPPORT", false);
         aliases.put("DEBUG_TOKEN_MANAGER", "DEBUG_LEXER");
         aliases.put("USER_TOKEN_MANAGER", "USER_DEFINED_LEXER");
         aliases.put("TOKEN_MANAGER_USES_PARSER", "LEXER_USES_PARSER");
@@ -580,6 +581,10 @@ public class JavaCCOptions {
 
     public boolean getFaultTolerant() {
         return booleanValue("FAULT_TOLERANT");
+    }
+    
+    public boolean getHugeFileSupport() {
+    	return booleanValue("HUGE_FILE_SUPPORT");
     }
 
     /**
