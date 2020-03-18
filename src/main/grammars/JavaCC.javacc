@@ -1483,7 +1483,6 @@ Expansion ExpansionUnit() :
   |
   LOOKAHEAD([PrimaryExpression() "="]<IDENTIFIER>)
   result=NonTerminal()
-  [<BANG> {result.setForced(true);}]
   |
   "(" ExpansionChoice() {result=(Expansion)peekNode();} ")"
   [  "+" #OneOrMore(4) { result = (OneOrMore) peekNode();}
@@ -1513,6 +1512,9 @@ NonTerminal NonTerminal() #NonTerminal :
   [
     LOOKAHEAD("(")
     Arguments()
+  ]
+  [
+     <BANG>  {CURRENT_NODE.setForced(true);}
   ]
   {return CURRENT_NODE;}
 }

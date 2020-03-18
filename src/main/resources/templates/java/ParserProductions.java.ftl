@@ -51,19 +51,20 @@
 [/#macro]   
 
 
-[#macro ParserProduction prod]
-    ${prod.leadingComments}
-// ${prod.inputSource}, line ${prod.beginLine}
-    final ${prod.accessMod!"public"} 
-    ${prod.returnType}
-    ${prod.name}(${prod.parameterList}) 
+[#macro ParserProduction production]
+    ${production.leadingComments}
+// ${production.inputSource}, line ${production.beginLine}
+    final ${production.accessMod!"public"} 
+    ${production.returnType}
+    ${production.name}(${production.parameterList}) 
     throws ParseException
-    [#list (prod.throwsList.types)! as throw], ${throw}[/#list] {
-         trace_call("${prod.name}");
+    [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
+         trace_call("${production.name}");
          try {
-            [@BuildCode prod.expansion prod.forced /]
+             ${(production.javaCode)!}
+             [@BuildCode production.expansion production.forced /]
          } finally {
-             trace_return("${prod.name}");
+             trace_return("${production.name}");
          }
     }   
 [/#macro]
@@ -72,9 +73,7 @@
   // Code for ${expansion.name!"expansion"} specified on line ${expansion.beginLine} of ${expansion.inputSource}
     [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
-    [#if expansion.class.name?ends_with("Production")]
-      [#set production = expansion]
-    [#elseif expansion.parentObject.class.name?ends_with("Production")]
+    [#if expansion.parentObject.class.name?ends_with("Production")]
       [#set production = expansion.parentObject]
     [/#if]
     [#if grammar.options.treeBuildingEnabled]
@@ -96,7 +95,6 @@
          ParseException ${parseExceptionVar} = null;
          try {
     [/#if]
-        ${(production.javaCode)!}
         [@BuildPhase1Code expansion/]
     [#if buildTreeNode]
        [#var closeCondition = "true"]

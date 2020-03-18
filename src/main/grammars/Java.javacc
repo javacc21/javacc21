@@ -2033,11 +2033,12 @@ ClassicTryStatement ClassicTryStatement():
  * Semantic check required here to make sure that at least one
  * finally/catch is present.
  */
-{}
+{
+}
 {
   "try"
 
-  Block()
+  Block() 
   (
      FinallyBlock()
      |
@@ -2084,16 +2085,7 @@ CatchBlock CatchBlock() :
         return CURRENT_NODE;
     } 
 }
-/*
-CatchBlock CatchBlock() :
-{}
-{
-    "catch" "(" FormalParameter() ")" Block()
-    {
-        return CURRENT_NODE;
-    } 
-}
-*/
+
 INJECT(CatchBlock) : {}
 {
     public CodeBlock getBlock() {
