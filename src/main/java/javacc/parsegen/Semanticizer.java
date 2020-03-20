@@ -848,11 +848,7 @@ public class Semanticizer {
     class LookaheadFixer implements TreeWalkerOp {
 
         public boolean goDeeper(Expansion e) {
-            if (e instanceof RegularExpression) {
-                return false;
-            } else {
-                return true;
-            }
+        	return !(e instanceof RegularExpression);
         }
 
         public void action(Expansion e) {
@@ -975,13 +971,7 @@ public class Semanticizer {
         LookaheadCalc lookaheadCalculator = new LookaheadCalc();
 
         public boolean goDeeper(Expansion e) {
-            if (e instanceof RegularExpression) {
-                return false;
-            } else if (e instanceof Lookahead) {
-                return false;
-            } else {
-                return true;
-            }
+        	return !(e instanceof RegularExpression) && !(e instanceof Lookahead);
         }
 
         public void action(Expansion e) {
@@ -990,26 +980,14 @@ public class Semanticizer {
                         || grammar.getOptions().getForceLaCheck()) {
                     lookaheadCalculator.choiceCalc((ExpansionChoice) e, grammar);
                 }
-            } else if (e instanceof OneOrMore) {
+            } 
+            else if ((e instanceof OneOrMore) || (e instanceof ZeroOrMore) || (e instanceof ZeroOrOne)) {
                 if (grammar.getOptions().getForceLaCheck()
                         || (implicitLA(e.getNestedExpansion()) && grammar.getOptions()
                                 .getLookahead() == 1)) {
                     lookaheadCalculator.ebnfCalc(e, e.getNestedExpansion(), grammar);
                 }
-            } else if (e instanceof ZeroOrMore) {
-                if (grammar.getOptions().getForceLaCheck()
-                        || (implicitLA(e.getNestedExpansion()) && grammar.getOptions()
-                                .getLookahead() == 1)) {
-                    lookaheadCalculator.ebnfCalc(e, e.getNestedExpansion(), grammar);
-                }
-            } else if (e instanceof ZeroOrOne) {
-                ZeroOrOne exp = (ZeroOrOne) e;
-                if (grammar.getOptions().getForceLaCheck()
-                        || (implicitLA(exp.getNestedExpansion()) && grammar.getOptions()
-                                .getLookahead() == 1)) {
-                    lookaheadCalculator.ebnfCalc(exp, exp.getNestedExpansion(), grammar);
-                }
-            }
+            } 
         }
 
         boolean implicitLA(Expansion exp) {
