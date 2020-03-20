@@ -33,13 +33,8 @@ package javacc;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
-import java.time.LocalDate;
-import java.util.Date;
 import java.util.Enumeration;
-import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.jar.Manifest;
-import java.util.jar.Attributes;
 
 
 import javacc.parser.ParseException;

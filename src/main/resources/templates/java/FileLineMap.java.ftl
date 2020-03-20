@@ -49,7 +49,10 @@ public class FileLineMap {
 	
 	
 	// File content without any adjustments for unicode escapes or tabs or any of that.
-	private String rawContent, content;
+	private String rawContent;
+	
+// Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.	
+	private String content;
 	
 	// Typically a filename, I suppose.
 	private String inputSource;
@@ -62,11 +65,14 @@ public class FileLineMap {
 	[#var PRESERVE_LINE_ENDINGS = grammar.options.preserveLineEndings?string("true", "false")]
 	[#var JAVA_UNICODE_ESCAPE = grammar.options.javaUnicodeEscape?string("true", "false")]
 	
-	public FileLineMap(String inputSource, String content) {
+	public FileLineMap(String inputSource, CharSequence charSequence) {
 		this.inputSource = inputSource;
-		this.rawContent = content;
+		this.rawContent = charSequence.toString(); // We will likely need this eventually, I suppose.
 		this.content = mungeContent(rawContent, ${grammar.options.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE});
-		initLineOffsets();
+		if (this.content.equals(this.rawContent)) {
+		        this.content = this.rawContent;
+		}
+		this.lineOffsets = createLineOffsetsTable(this.content);
 	}
 	
 	public FileLineMap(String inputSource, Reader reader) {
@@ -83,37 +89,52 @@ public class FileLineMap {
 		this(inputSource, new FileReader(file));
 	}
 	
+	
+	// Icky method to handle annoying stuff. Might make this public later if it is needed elsewhere
     private String mungeContent(String content, int tabsToSpaces, boolean preserveLines, boolean javaUnicodeEscape) {
             if (tabsToSpaces<=0 && preserveLines && !javaUnicodeEscape) return content;
             StringBuilder buf = new StringBuilder();
-            int index =0;
-            while(index< content.length()) {
+            int index =0; 
+            int col = 0; // This is just to handle spaces to tabs. If you don't have that setting set, it is really unused.
+                while(index< content.length()) {
                 char ch = content.charAt(index++);
                 if (ch == '\\' && javaUnicodeEscape && index < content.length()) {
                    ch = content.charAt(index++);
                    if (ch != 'u') {
                       buf.append((char) '\\');
                       buf.append(ch);
+                      if (ch == '\n') col =0; 
+                      else col+=2;
                    }
                    else {
                        String hex = content.substring(index, index+=4);
                        buf.append((char) Integer.parseInt(hex, 16));
+                       col +=6; // REVISIT. Should this increase by six or one? Really just a corner case anyway.
                    }
                 }
                 else if (ch == '\r' && !preserveLines) {
                    buf.append((char)'\n'); 
                    if (index < content.length()) {
                        ch = content.charAt(index++);
-                       if (ch!='\n') buf.append(ch);
+                       if (ch!='\n') {
+                           buf.append(ch);
+                           ++col;
+                        } 
+                        else col = 0;
                    }
                 } 
                 else if (ch == '\t' && tabsToSpaces > 0) {
-                    for (int i=0; i<tabsToSpaces; i++) {
+                    int spacesToAdd = tabsToSpaces - col%tabsToSpaces;
+                    for (int i=0; i<spacesToAdd; i++) {
                         buf.append((char) ' ');
                     }
                 }
                 else {
                     buf.append((char) ch);
+                    if (ch=='\n') {
+                        col = 0;
+                    } 
+                    else col++;
                 }
             }
             return buf.toString();
@@ -128,7 +149,7 @@ public class FileLineMap {
 	    return lineOffsets.length;
 	}
 	
-	public String getRawText(int beginLine, int beginColumn, int endLine, int endColumn) {
+	public String getText(int beginLine, int beginColumn, int endLine, int endColumn) {
 		int startOffset = getOffset(beginLine, beginColumn);
 		int endOffset = getOffset(endLine, endColumn);
 		return content.substring(startOffset, endOffset+1);
@@ -161,26 +182,27 @@ public class FileLineMap {
 		return i + startingLine -1;
 	}
 	
-	private void initLineOffsets() {
-	    if (content.length()==0) {
-	        lineOffsets = new int[0];
-	        return;
-	    }
-	    final char[] chars = content.toCharArray();
-	    int lineCount = 0;
-	    for (int i = 0; i<chars.length; i++) {
-	        if (chars[i] == '\n') lineCount++;
-	    }
-	    if (chars[chars.length-1] != '\n') lineCount++;
-	    this.lineOffsets = new int[lineCount];
-	    lineOffsets[0] = 0;
-	    int index =1;
-	    for (int i=0; i<chars.length; i++) {
-	        if (chars[i] == '\n') {
-	            if (i+1 == chars.length) break;
-	            lineOffsets[index++] = i+1;
-	        }
-	    }
+	
+	static int[] createLineOffsetsTable(CharSequence charSequence) {
+	     if (charSequence.length() == 0) {
+	         return new int[0];
+	     }
+	     final char[] chars = charSequence.toString().toCharArray();
+	     int lineCount = 0;
+	     for (char ch : chars) {
+	         if (ch == '\n') lineCount++;
+	     }
+	     if (chars[chars.length-1] != '\n') lineCount++;
+	     int [] table = new int[lineCount];
+	     table[0] = 0;
+	     int index = 1;
+	     for (int i=0; i < chars.length; i++) {
+	         if (chars[i] == '\n') {
+	             if (i+1 == chars.length) break;
+	             table[index++] = i+1;
+	         }
+	     }
+	     return table;
 	}
 	
 	static private int BUF_SIZE = 0x10000;
