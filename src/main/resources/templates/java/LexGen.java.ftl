@@ -42,8 +42,8 @@ package ${grammar.parserPackage};
    ${import}
 [/#list]
 
-import java.io.IOException;
 import java.io.Reader;
+import java.io.IOException;
 
 @SuppressWarnings("unused")
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
@@ -60,7 +60,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   boolean[] jjbeenHere = new boolean[${numLexicalStates}];
   
   
-  int curLexState; 
+  private int currentLexicalState; 
   private int jjnewStateCnt;
   private int jjround;
   private int jjmatchedPos;
@@ -131,8 +131,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     };
 [/#if]
 
-    TokenBuilder input_stream;
-
     private final int[] jjrounds = new int[${lexerData.stateSetSize}];
     private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
 
@@ -143,7 +141,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
     char curChar;
     
+[#var tokenBuilderClass = options.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
 
+${tokenBuilderClass} input_stream;
 
 [#if options.lexerUsesParser]
     public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader) {
@@ -153,7 +153,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     
     public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader, int lexState, int line, int column) {
         this.parser = parser;
-        input_stream = new TokenBuilder(reader, line, column);
+        input_stream = new ${tokenBuilderClass}(reader, line, column);
         SwitchTo(lexState);
     }
     
@@ -162,7 +162,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        this(reader, 0, 1, 1);
     }
     public ${grammar.lexerClassName}(Reader reader, int lexState, int line, int column) {
-        input_stream = new TokenBuilder(reader, line, column);
+        input_stream = new ${tokenBuilderClass}(reader, line, column);
         SwitchTo(lexState);
     }
 [/#if]
@@ -183,7 +183,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        if (lexState >= ${lexerData.lexicalStates?size} || lexState < 0) {
           throw new RuntimeException("Switch to invalid lexical state: " + lexState);
        }
-       this.curLexState = lexState;
+       this.currentLexicalState = lexState;
     }
 
   
@@ -225,7 +225,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [/#if]
     [#-- this also sets up the start state of the nfa --]
 [#if numLexicalStates>1]
-       switch(curLexState) {
+       switch(currentLexicalState) {
 [/#if]
     
 [#list lexerData.lexicalStates as lexicalState]
@@ -251,7 +251,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                    [#var debugOutput]
                    [#set debugOutput]
                    [#if numLexicalStates>1]
-                   "<" + lexStateNames[curLexState] + ">" + 
+                   "<" + lexStateNames[currentLexicalState] + ">" + 
                    [/#if]
                    "Skipping character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
                    [/#set] 
@@ -283,7 +283,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         [#var debugOutput]
         [#set debugOutput]
             [#if numLexicalStates>1]
-               "<" + lexStateNames[curLexState] + ">" + 
+               "<" + lexStateNames[currentLexicalState] + ">" + 
             [/#if]
             "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
             "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
@@ -353,7 +353,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
  
  [#if numLexicalStates>1]
       if (jjnewLexState[jjmatchedKind] != -1) {
-          curLexState = jjnewLexState[jjmatchedKind];
+          currentLexicalState = jjnewLexState[jjmatchedKind];
       }
  [/#if]
 
@@ -403,7 +403,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
           [#if numLexicalStates>1]
             if (jjnewLexState[jjmatchedKind] != -1)
-            curLexState = jjnewLexState[jjmatchedKind];
+            currentLexicalState = jjnewLexState[jjmatchedKind];
           [/#if]
 
             continue EOFLoop;
@@ -419,7 +419,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 		  
           [#if numLexicalStates>1]
           if (jjnewLexState[jjmatchedKind] != -1) 
-            curLexState = jjnewLexState[jjmatchedKind];
+            currentLexicalState = jjnewLexState[jjmatchedKind];
           [/#if]
           curPos = 0;
           jjmatchedKind = 0x7FFFFFFF;
@@ -431,7 +431,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 	            [#var debugOutput]
 	            [#set debugOutput]
 	              [#if numLexicalStates>1]
-	                 "<" + lexStateNames[curLexState] + ">" + 
+	                 "<" + lexStateNames[currentLexicalState] + ">" + 
 	              [/#if]
 	              "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
 	              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
@@ -676,7 +676,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         {
          if (vec[i] == -1)
            continue;
-         int[] stateSet = statesForState[curLexState][vec[i]];
+         int[] stateSet = statesForState[currentLexicalState][vec[i]];
          for (int j = 0; j < stateSet.length; j++)
          {
            int state = stateSet[j];
@@ -757,11 +757,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      */
     public int getTabSize() {return tabSize;}
     
-  [#if options.hugeFileSupport || true]
-  [#embed "LegacyTokenBuilder.java.ftl"]
-  [#else]
-  [#embed "NewTokenBuilder.java.ftl"]
-  [/#if]
+ [#if options.hugeFileSupport]
+    [#embed "LegacyTokenBuilder.java.ftl"]
+ [/#if]
   
 }
 
@@ -786,10 +784,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         int i=1;
         jjstateSet[0] = startState;
     [#if grammar.options.debugLexer]
-        debugStream.println("   Starting NFA to match one of : " + jjKindsForStateVector(curLexState, jjstateSet, 0, 1));
+        debugStream.println("   Starting NFA to match one of : " + jjKindsForStateVector(currentLexicalState, jjstateSet, 0, 1));
         debugStream.println("" + 
         [#if numLexicalStates != 1]
-            "<" + lexStateNames[curLexState] + ">" +  
+            "<" + lexStateNames[currentLexicalState] + ">" +  
         [/#if]
             "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
            + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
@@ -850,7 +848,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                  return curPos;
     [/#if]
     [#if grammar.options.debugLexer]
-            debugStream.println("   Possible kinds of longer matches : " + jjKindsForStateVector(curLexState, jjstateSet, startsAt, i));
+            debugStream.println("   Possible kinds of longer matches : " + jjKindsForStateVector(currentLexicalState, jjstateSet, startsAt, i));
     [/#if]
             int retval = input_stream.readChar();
             if (retval >=0) {
@@ -866,7 +864,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [#if grammar.options.debugLexer]
             debugStream.println("" + 
             [#if numLexicalStates != 1]
-               "<" + lexStateNames[curLexState] + ">" + 
+               "<" + lexStateNames[currentLexicalState] + ">" + 
             [/#if]
                ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
               + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());

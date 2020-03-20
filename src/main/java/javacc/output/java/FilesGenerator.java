@@ -91,6 +91,10 @@ public class FilesGenerator {
         if (grammar.getOptions().getTreeBuildingEnabled()) {
             generateTreeBuildingFiles();
         }
+    	if (!grammar.getOptions().getHugeFileSupport()) {
+    		generateFileLineMap();
+    	}
+        
     }
     
     public void generate(File outputFile) throws IOException, TemplateException  {
@@ -123,7 +127,8 @@ public class FilesGenerator {
                     || currentFilename.equals("Token.java")
                     || currentFilename.equals("Node.java")
                     || currentFilename.equals("Nodes.java")
-            		|| currentFilename.equals("InvalidToken.java")))
+            		|| currentFilename.equals("InvalidToken.java")
+            		|| currentFilename.equals("FileLineMap.java")))
             {
                     templateName = "ASTNode.java.ftl";
             }
@@ -208,6 +213,13 @@ public class FilesGenerator {
         outputFile = new File(grammar.getParserOutputDirectory(), "InvalidToken.java");
         if (regenerate(outputFile)) {
         	generate(outputFile);
+        }
+    }
+    
+    void generateFileLineMap() throws IOException, TemplateException {
+        File outputFile = new File(grammar.getParserOutputDirectory(), "FileLineMap.java");
+        if (regenerate(outputFile)) {
+            generate(outputFile);
         }
     }
 
