@@ -84,14 +84,6 @@ abstract public class Expansion extends BaseNode {
     boolean phase3done = false;
 
     /**
-     * The parent of this expansion node. In case this is the top level
-     * expansion of the production it is a reference to the production node
-     * otherwise it is a reference to another Expansion node. In case this is
-     * the top level of a lookahead expansion,then the parent is null.
-     */
-    private Object parentObject;
-
-    /**
      * The ordinal of this node with respect to its parent.
      */
     public int ordinal;
@@ -133,19 +125,10 @@ abstract public class Expansion extends BaseNode {
         return (this instanceof RegularExpression);
     }
     
-    
-    public Object getParentObject() {
-        return parentObject != null ? parentObject : getParent();
-    }
-    
-    public void setParentObject(Object parentObject) {
-        this.parentObject = parentObject;
-    }
-    
     public TreeBuildingAnnotation getTreeNodeBehavior() {
         if (treeNodeBehavior == null) {
-            if (this.parentObject instanceof ParserProduction) {
-                return ((ParserProduction) parentObject).getTreeNodeBehavior();
+            if (this.getParent() instanceof ParserProduction) {
+                return ((ParserProduction) getParent()).getTreeNodeBehavior();
             }
         }
         return treeNodeBehavior;

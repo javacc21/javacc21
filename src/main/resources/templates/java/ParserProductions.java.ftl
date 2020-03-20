@@ -73,8 +73,8 @@
   // Code for ${expansion.name!"expansion"} specified on line ${expansion.beginLine} of ${expansion.inputSource}
     [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
-    [#if expansion.parentObject.class.name?ends_with("Production")]
-      [#set production = expansion.parentObject]
+    [#if expansion.parent.class.name?ends_with("Production")]
+      [#set production = expansion.parent]
     [/#if]
     [#if grammar.options.treeBuildingEnabled]
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.options.nodeDefaultVoid)
@@ -438,9 +438,9 @@ throw new ParseException();"]
 [#macro buildPhase3Routine expansion count]
    [#if expansion.internalName?starts_with("jj_scan_token")][#return][/#if]
    private boolean jj_3${expansion.internalName}() {
-        [#if grammar.options.debugLookahead&&expansion.parentObject.class.name?ends_with("Production")]
+        [#if grammar.options.debugLookahead&&expansion.parent.class.name?ends_with("Production")]
       if (!rescan) 
-          trace_call("${expansion.parentObject.name} (LOOKING AHEAD...)");
+          trace_call("${expansion.parent.name} (LOOKING AHEAD...)");
             [#set jj3_expansion = expansion]
        [#else]
             [#set jj3_expansion = null]
@@ -571,7 +571,7 @@ throw new ParseException();"]
     [#if grammar.options.debugLookahead&&!jj3_expansion?is_null]
        [#var tracecode]
        [#set tracecode]
- trace_return("${jj3_expansion.parentObject.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
+ trace_return("${jj3_expansion.parent.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
        [/#set]
        [#set tracecode = "if (!rescan) "+tracecode]
   { ${tracecode} return {bool?string("true", "false")};

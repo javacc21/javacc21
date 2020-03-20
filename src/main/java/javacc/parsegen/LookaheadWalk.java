@@ -154,12 +154,12 @@ final class LookaheadWalk {
 		}
 		// System.out.println("*** Parent: " + exp.parent);
 		exp.myGeneration = generation;
-		if (exp.getParentObject() == null) {
+		if (exp.getParent() == null) {
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			retval.addAll(partialMatches);
 			return retval;
-		} else if (exp.getParentObject() instanceof ParserProduction) {
-			List<Expansion> parents = ((ParserProduction) exp.getParentObject()).parents;
+		} else if (exp.getParent() instanceof ParserProduction) {
+			List<Expansion> parents = ((ParserProduction) exp.getParent()).parents;
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			// System.out.println("1; gen: " + generation + "; exp: " + exp);
 			for (int i = 0; i < parents.size(); i++) {
@@ -168,8 +168,8 @@ final class LookaheadWalk {
 				retval.addAll(v);
 			}
 			return retval;
-		} else if (exp.getParentObject() instanceof ExpansionSequence) {
-			ExpansionSequence seq = (ExpansionSequence) exp.getParentObject();
+		} else if (exp.getParent() instanceof ExpansionSequence) {
+			ExpansionSequence seq = (ExpansionSequence) exp.getParent();
 			List<MatchInfo> v = partialMatches;
 			for (int i = exp.ordinal + 1; i < seq.getChildCount(); i++) {
 				v = genFirstSet(v, (Expansion) seq.getChild(i));
@@ -192,8 +192,8 @@ final class LookaheadWalk {
 			}
 			v2.addAll(v1);
 			return v2;
-		} else if (exp.getParentObject() instanceof OneOrMore
-				|| exp.getParentObject() instanceof ZeroOrMore) {
+		} else if (exp.getParent() instanceof OneOrMore
+				|| exp.getParent() instanceof ZeroOrMore) {
 			List<MatchInfo> moreMatches = new ArrayList<MatchInfo>();
 			moreMatches.addAll(partialMatches);
 			List<MatchInfo> v = partialMatches;
@@ -209,20 +209,20 @@ final class LookaheadWalk {
 			if (v1.size() != 0) {
 				// System.out.println("4; gen: " + generation + "; exp: " +
 				// exp);
-				v1 = generateFollowSet(v1, (Expansion) exp.getParentObject(), generation,
+				v1 = generateFollowSet(v1, (Expansion) exp.getParent(), generation,
 						grammar);
 			}
 			if (v2.size() != 0) {
 				// System.out.println("5; gen: " + generation + "; exp: " +
 				// exp);
-				v2 = generateFollowSet(v2, (Expansion) exp.getParentObject(), grammar
+				v2 = generateFollowSet(v2, (Expansion) exp.getParent(), grammar
 						.nextGenerationIndex(), grammar);
 			}
 			v2.addAll(v1);
 			return v2;
 		} else {
 			// System.out.println("6; gen: " + generation + "; exp: " + exp);
-			return generateFollowSet(partialMatches, (Expansion) exp.getParentObject(),
+			return generateFollowSet(partialMatches, (Expansion) exp.getParent(),
 					generation, grammar);
 		}
 	}

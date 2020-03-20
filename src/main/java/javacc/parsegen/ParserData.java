@@ -116,7 +116,7 @@ public class ParserData {
         return tokenMasks;
     }
     
-    private void visitChoice(ExpansionChoice choice) {
+    private void visitExpansionChoice(ExpansionChoice choice) {
     	List<Lookahead> lookaheads = new ArrayList<Lookahead>();
     	List<ExpansionSequence> choices = Nodes.childrenOfType(choice,  ExpansionSequence.class);
     	for (ExpansionSequence nestedSeq : choices) {
@@ -208,20 +208,20 @@ public class ParserData {
             tokenMasks.add(tokenMask);
         }
     }
-
-    private void visitExpansion(Expansion e) {
-        if (e instanceof ExpansionChoice) {
-            visitChoice((ExpansionChoice)e);
-        } else if (e instanceof ExpansionSequence) {
-            ExpansionSequence e_nrw = (ExpansionSequence) e;
+    
+    private void visitExpansion(Expansion expansion) {
+    	if (expansion instanceof ExpansionChoice) {
+            visitExpansionChoice((ExpansionChoice)expansion);
+        } else if (expansion instanceof ExpansionSequence) {
+            ExpansionSequence expansionSequence = (ExpansionSequence) expansion;
             // We skip the first element in the following iteration since it is
             // the
             // Lookahead object.
-            for (int i = 1; i < e_nrw.getChildCount(); i++) {
-                visitExpansion((Expansion) e_nrw.getChild(i));
+            for (int i = 1; i < expansionSequence.getChildCount(); i++) {
+                visitExpansion((Expansion) expansionSequence.getChild(i));
             }
-        } else if (e instanceof OneOrMore) {
-            OneOrMore oom = (OneOrMore) e;
+        } else if (expansion instanceof OneOrMore) {
+            OneOrMore oom = (OneOrMore) expansion;
             int labelIndex = ++gensymindex;
             oom.setLabel("label_" + labelIndex);
             visitExpansion(oom.getNestedExpansion());
@@ -229,8 +229,8 @@ public class ParserData {
             if (!la.getAlwaysSucceeds()) {
                 visitLookahead(la);
             }
-        } else if (e instanceof ZeroOrMore) {
-            ZeroOrMore zom = (ZeroOrMore) e;
+        } else if (expansion instanceof ZeroOrMore) {
+            ZeroOrMore zom = (ZeroOrMore) expansion;
             int labelIndex = ++gensymindex;
             zom.setLabel("label_" + labelIndex);
             Lookahead la = zom.getLookahead();
@@ -238,14 +238,14 @@ public class ParserData {
                 visitLookahead(la);
             }
             visitExpansion(zom.getNestedExpansion());
-        } else if (e instanceof ZeroOrOne) {
-            visitExpansion(e.getNestedExpansion());
-            Lookahead la = e.getLookahead();
+        } else if (expansion instanceof ZeroOrOne) {
+            visitExpansion(expansion.getNestedExpansion());
+            Lookahead la = expansion.getLookahead();
             if (!la.getAlwaysSucceeds()){
                 visitLookahead(la);
             }
-        } else if (e instanceof TryBlock) {
-            visitExpansion(e.getNestedExpansion());
+        } else if (expansion instanceof TryBlock) {
+            visitExpansion(expansion.getNestedExpansion());
         }
     }
 

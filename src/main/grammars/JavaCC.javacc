@@ -828,7 +828,6 @@ INJECT(ParserProduction) :
     }
     
     public void setExpansion(Expansion expansion) {
-        expansion.setParentObject(this);
         this.expansion = expansion;
     }
 
@@ -1447,10 +1446,8 @@ Expansion ExpansionUnit() :
       act.setBeginLine(t.getBeginLine());
       act.setBeginColumn(t.getBeginColumn());
       seq.addChild(act);
-      act.setParentObject(seq);
       act.ordinal = 1;
       ch.addChild(seq);
-      seq.setParentObject(ch);
       seq.ordinal = 0;
       if (la.getAmount() != 0) {
         if (la.getSemanticLookahead() != null) {
@@ -1602,10 +1599,6 @@ INJECT(ZeroOrOne) :
     public Expansion getNestedExpansion() {
         return Nodes.firstChildOfType(this, Expansion.class);
     }
-    
-    public void close() {
-        getNestedExpansion().setParentObject(this);
-    }
 }
 
 
@@ -1634,10 +1627,6 @@ INJECT(ZeroOrMore) :
 
     public Expansion getNestedExpansion() {
         return Nodes.firstChildOfType(this, Expansion.class);
-    }
-    
-    public void close() {
-        getNestedExpansion().setParentObject(this);
     }
     
     public String getLabel() {
@@ -1674,10 +1663,6 @@ INJECT(OneOrMore) :
 
     public Expansion getNestedExpansion() {
         return Nodes.firstChildOfType(this, Expansion.class);
-    }
-    
-    public void close() {
-        getNestedExpansion().setParentObject(this);
     }
     
     public String getLabel() {
@@ -1729,10 +1714,6 @@ INJECT(TryBlock) :
 
     public FinallyBlock getFinallyBlock() {
         return Nodes.firstChildOfType(this, FinallyBlock.class);
-    }
-    
-    public void close() {
-       getNestedExpansion().setParentObject(this);
     }
 }
 

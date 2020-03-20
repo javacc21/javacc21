@@ -857,10 +857,10 @@ public class Semanticizer {
 
         public void action(Expansion e) {
             if (e instanceof ExpansionSequence) {
-                if (e.getParentObject() instanceof ExpansionChoice
-                        || e.getParentObject() instanceof ZeroOrMore
-                        || e.getParentObject() instanceof OneOrMore
-                        || e.getParentObject() instanceof ZeroOrOne) {
+                if (e.getParent() instanceof ExpansionChoice
+                        || e.getParent() instanceof ZeroOrMore
+                        || e.getParent() instanceof OneOrMore
+                        || e.getParent() instanceof ZeroOrOne) {
                     return;
                 }
                 ExpansionSequence seq = (ExpansionSequence) e;
@@ -873,17 +873,13 @@ public class Semanticizer {
                 ch.setGrammar(grammar);
                 ch.setBeginLine(la.getBeginLine());
                 ch.setBeginColumn(la.getBeginColumn());
-                ch.setParentObject(seq);
                 ExpansionSequence seq1 = new ExpansionSequence(grammar);
                 seq1.setBeginLine(la.getBeginLine());
                 seq1.setBeginColumn(la.getBeginColumn());
-                seq1.setParentObject(ch);
                 seq1.addChild(la);
-                la.setParentObject(seq1);
                 CodeBlock act = new CodeBlock();
                 act.setBeginLine(la.getBeginLine());
                 act.setBeginColumn(la.getBeginColumn());
-                act.setParentObject(seq1);
                 seq1.addChild(act);
                 ch.addChild(seq1);
                 if (la.getAmount() != 0) {
@@ -906,7 +902,6 @@ public class Semanticizer {
                 Lookahead la1 = new Lookahead(grammar);
                 la1.setBeginLine(la.getBeginLine());
                 la1.setBeginColumn(la.getBeginColumn());
-                la1.setParentObject(seq);
                 // Now set the la_expansion field of la and la1 with a dummy
                 // expansion (we use EOF).
                 la.setExpansion(new EndOfFile());
@@ -920,7 +915,6 @@ public class Semanticizer {
                 for (Expansion sub : newUnits) {
                     seq.addChild(sub);
                 }
-//                seq.setUnits(newUnits);
             }
         }
 
