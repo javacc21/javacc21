@@ -145,6 +145,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
 ${tokenBuilderClass} input_stream;
 
+public final void backup(int amount) {
+    input_stream.backup(amount);
+}
+
 [#if options.lexerUsesParser]
     public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader) {
        this(parser, reader, 0, 1, 1);

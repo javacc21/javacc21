@@ -36,8 +36,9 @@ package ${grammar.parserPackage};
 [/#if]
 
 
-import java.util.*;
+import java.io.IOException;
 import java.io.*;
+import java.util.HashMap;
 
 /**
  * Rather bloody-minded implementation of a class to read in a file 
@@ -46,7 +47,13 @@ import java.io.*;
  */
 
 public class FileLineMap {
-	
+
+   static private HashMap<String, FileLineMap> tableLookup = new HashMap<>();
+   
+   static FileLineMap getFileLineMap(String inputSource) {
+        return tableLookup.get(inputSource);
+   }
+   
 	
 	// File content without any adjustments for unicode escapes or tabs or any of that.
 	private String rawContent;
@@ -73,6 +80,9 @@ public class FileLineMap {
 		        this.content = this.rawContent;
 		}
 		this.lineOffsets = createLineOffsetsTable(this.content);
+		if (inputSource != null && inputSource.length() >0) {
+			tableLookup.put(inputSource, this);
+	    }
 	}
 	
 	public FileLineMap(String inputSource, Reader reader) {
@@ -80,7 +90,7 @@ public class FileLineMap {
 	}
 	
 	public FileLineMap(Reader reader, int startingLine, int startingColumn) {
-	    this("input", reader);
+	    this("", reader);
 	    this.startingLine = this.line = startingLine;
 	    this.startingColumn = this.column = startingColumn;
 	}
@@ -127,6 +137,7 @@ public class FileLineMap {
                     int spacesToAdd = tabsToSpaces - col%tabsToSpaces;
                     for (int i=0; i<spacesToAdd; i++) {
                         buf.append((char) ' ');
+                        col++;
                     }
                 }
                 else {
@@ -242,8 +253,8 @@ public class FileLineMap {
 	}
 
 // Now some methods to fulfill the functionality that used to be in that SimpleCharStream class
-// REVISIT: Currently does not handle any of the messiness with column numbers relating to tabs 
-// or unicode escapes
+// REVISIT: Currently the backup() method does not handle any of the messiness with column numbers relating to tabs 
+// or unicode escapes. (Maybe REVISIT)
 
 	private int bufferPosition, tokenBeginOffset, tokenBeginColumn,  tokenBeginLine, line =1, column =1;
 	
@@ -273,7 +284,7 @@ public class FileLineMap {
 	     return ch;
     }
 	
-    public String getImage() {
+    String getImage() {
           return content.substring(tokenBeginOffset, bufferPosition);
     }
     

@@ -54,10 +54,8 @@ public class ParserData {
 
     private Grammar grammar;
     private int gensymindex = 0;
-    private boolean lookaheadNeeded;
     
     private List<int[]> tokenMasks = new ArrayList<int[]>();
-    private List<BitSet> tokenMasks2 = new ArrayList<BitSet>();
 
     /**
      * These lists are used to maintain expansions for which code generation in
@@ -88,7 +86,6 @@ public class ParserData {
             }
         }
         for (Lookahead la : phase2list) {
-            if (la.getSemanticLookahead() != null) lookaheadNeeded = true;
             Expansion e = la.getNestedExpansion();
             Phase3Data p3d = new Phase3Data(e, la.getAmount());
             phase3list.add(p3d);
@@ -119,85 +116,67 @@ public class ParserData {
         return tokenMasks;
     }
     
-    public boolean isLookaheadNeeded() {
-        return lookaheadNeeded;
-    }
-    
     private void visitChoice(ExpansionChoice choice) {
-        List<Lookahead> lookaheads = new ArrayList<Lookahead>();
-        ExpansionSequence nestedSeq;
-        List<Expansion> choices = Nodes.childrenOfType(choice, Expansion.class);
-        for (int i = 0; i < choices.size(); i++) {
-            nestedSeq = (ExpansionSequence) (choices.get(i));
-            visitExpansion(nestedSeq);
-	    if (nestedSeq.isEmpty()) {
-		// TODO: REVISIT
-		break;
-	    }
-            Lookahead l = (Lookahead) nestedSeq.getChild(0);
-            if (!l.getAlwaysSucceeds()) {
-                lookaheads.add(l);
-            } else {
-                break;
-            }
-        }
-        int tokenCount = grammar.getLexerData().getTokenCount();
-        boolean[] casedValues = new boolean[tokenCount];
-        int tokenMaskSize = (tokenCount - 1) / 32 + 1;
-        int[] tokenMask = null;
-        BitSet tokenMask2 = null;
+    	List<Lookahead> lookaheads = new ArrayList<Lookahead>();
+    	List<ExpansionSequence> choices = Nodes.childrenOfType(choice,  ExpansionSequence.class);
+    	for (ExpansionSequence nestedSeq : choices) {
+    		visitExpansion(nestedSeq);
+    		if (nestedSeq.isEmpty()) break; //REVISIT. Is this possible?
+    		Lookahead lookahead = (Lookahead) nestedSeq.getChild(0);
+    		if (lookahead.getAlwaysSucceeds()) break;
+    		lookaheads.add(lookahead);
+    	}
+    	int tokenCount = grammar.getLexerData().getTokenCount();
+    	boolean[] casedValues = new boolean[tokenCount];
+    	int tokenMaskSize = (tokenCount - 1) / 32 + 1;
+    	int[] tokenMask = null;
 
-        boolean inPhase1 = false;
-        for (Lookahead lookahead : lookaheads) {
+    	boolean inPhase1 = false;
+    	for (Lookahead lookahead : lookaheads) {
 
-            if (lookahead.getRequiresPhase2Routine()) {
-                // In this case lookahead is determined by the jj2 methods.
-                phase2list.add(lookahead);
-                lookahead.getNestedExpansion().setInternalName("_" + phase2list.size());
-                if (inPhase1) {
-                    tokenMasks.add(tokenMask);
-                    tokenMasks2.add(tokenMask2);
-                }
-                inPhase1 = false;
-            }
+    		if (lookahead.getRequiresPhase2Routine()) {
+    			// In this case lookahead is determined by the jj2 methods.
+    			phase2list.add(lookahead);
+    			lookahead.getNestedExpansion().setInternalName("_" + phase2list.size());
+    			if (inPhase1) {
+    				tokenMasks.add(tokenMask);
+    			}
+    			inPhase1 = false;
+    		}
 
-            else if (lookahead.getAmount() == 1 && lookahead.getSemanticLookahead() == null
-                    && !Semanticizer.emptyExpansionExists(lookahead.getNestedExpansion())
-                    && !Semanticizer.javaCodeCheck(lookahead.getNestedExpansion())) {
-                
-                if (!inPhase1) {
-                    for (int i = 0; i < grammar.getLexerData().getTokenCount(); i++) {
-                        casedValues[i] = false;
-                    }
-                    tokenMask = new int[tokenMaskSize];
-                    tokenMask2 = new BitSet(tokenMaskSize);
-                }
-                boolean[] firstSet = lookahead.getFirstSet();
-                for (int i = 0; i < grammar.getLexerData().getTokenCount(); i++) {
-                    if (firstSet[i]) {
-                        if (!casedValues[i]) {
-                            casedValues[i] = true;
-                            int j1 = i / 32;
-                            int j2 = i % 32;
-                            tokenMask[j1] |= 1 << j2;
-                            tokenMask2.set(i, true);
-                        }
-                    }
-                }
-                inPhase1 = true;
-            }
-            else {
-                if (inPhase1) {
-                    tokenMasks.add(tokenMask);
-                    tokenMasks2.add(tokenMask2);
-                }
-                inPhase1 = false;
-            } 
-        }
-        if (inPhase1) {
-            tokenMasks.add(tokenMask);
-            tokenMasks2.add(tokenMask2);
-        }
+    		else if (lookahead.getAmount() == 1 && lookahead.getSemanticLookahead() == null
+    				&& !Semanticizer.emptyExpansionExists(lookahead.getNestedExpansion())
+    				&& !Semanticizer.javaCodeCheck(lookahead.getNestedExpansion())) {
+
+    			if (!inPhase1) {
+    				for (int i = 0; i < grammar.getLexerData().getTokenCount(); i++) {
+    					casedValues[i] = false;
+    				}
+    				tokenMask = new int[tokenMaskSize];
+    			}
+    			boolean[] firstSet = lookahead.getFirstSet();
+    			for (int i = 0; i < grammar.getLexerData().getTokenCount(); i++) {
+    				if (firstSet[i]) {
+    					if (!casedValues[i]) {
+    						casedValues[i] = true;
+    						int j1 = i / 32;
+    						int j2 = i % 32;
+    						tokenMask[j1] |= 1 << j2;
+    					}
+    				}
+    			}
+    			inPhase1 = true;
+    		}
+    		else {
+    			if (inPhase1) {
+    				tokenMasks.add(tokenMask);
+    			}
+    			inPhase1 = false;
+    		} 
+    	}
+    	if (inPhase1) {
+    		tokenMasks.add(tokenMask);
+    	}
     }
     
     private void visitLookahead(Lookahead lookahead) {
@@ -316,13 +295,10 @@ public class ParserData {
             // fact, we rely here on the fact that the "name" fields of both
             // these
             // variables are the same.
-            NonTerminal e_nrw = (NonTerminal) e;
-            ParserProduction ntprod = grammar
-                    .getProductionByLHSName(e_nrw.getName());
-            if (!(ntprod instanceof BNFProduction)) {
-                ; // nothing to do here
-            } else {
-                generate3R(ntprod.getExpansion(), amt);
+            NonTerminal nonTerminal = (NonTerminal) e;
+            ParserProduction production = grammar.getProductionByLHSName(nonTerminal.getName());
+            if (production instanceof BNFProduction) {
+            	generate3R(production.getExpansion(), amt);
             }
         } else if (e instanceof ExpansionChoice) {
             for (Expansion sub : Nodes.childrenOfType(e, Expansion.class)) {
@@ -383,27 +359,23 @@ public class ParserData {
             }
         } else if (e instanceof ExpansionChoice) {
             int min = oldMin;
-            Expansion nested_e;
             List<Expansion> choices = Nodes.childrenOfType(e, Expansion.class);
-            for (int i = 0; min > 1 && i < choices.size(); i++) {
-                nested_e = choices.get(i);
-                int min1 = minimumSize(nested_e, min);
-                if (min > min1)
-                    min = min1;
+            for (Expansion nestedExpansion : choices) {
+            	if (min<=1) break;
+            	min = Math.min(min, minimumSize(nestedExpansion, min));
             }
             retval = min;
         } else if (e instanceof ExpansionSequence) {
             int min = 0;
-            ExpansionSequence e_nrw = (ExpansionSequence) e;
+            ExpansionSequence expansionSequence = (ExpansionSequence) e;
             // We skip the first element in the following iteration since it is
             // the
             // Lookahead object.
-            for (int i = 1; i < e_nrw.getChildCount(); i++) {
-                Expansion eseq = (Expansion) e_nrw.getChild(i);
+            for (int i = 1; i < expansionSequence.getChildCount(); i++) {
+                Expansion eseq = (Expansion) expansionSequence.getChild(i);
                 int mineseq = minimumSize(eseq);
                 if (min == Integer.MAX_VALUE || mineseq == Integer.MAX_VALUE) {
-                    min = Integer.MAX_VALUE; // Adding infinity to something
-                                                // results in infinity.
+                    min = Integer.MAX_VALUE; // Adding infinity to something results in infinity.
                 } else {
                     min += mineseq;
                     if (min > oldMin)

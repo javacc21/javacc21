@@ -34,7 +34,7 @@ package javacc.parsegen;
  * Objects of this type are passed to the tree walker routines in
  * ExpansionTreeWalker.
  */
-public interface TreeWalkerOp {
+interface TreeWalkerOp {
 
     /**
      * When called at a particular node, this specifies to the tree walker if it
