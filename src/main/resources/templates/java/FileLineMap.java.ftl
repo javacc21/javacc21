@@ -86,22 +86,18 @@ public class FileLineMap {
     private String mungeContent(String content, int tabsToSpaces, boolean preserveLines, boolean javaUnicodeEscape) {
             if (tabsToSpaces<=0 && preserveLines && !javaUnicodeEscape) return content;
             StringBuilder buf = new StringBuilder();
-            int index =0, col = 0;
+            int index =0;
             while(index< content.length()) {
                 char ch = content.charAt(index++);
                 if (ch == '\\' && javaUnicodeEscape && index < content.length()) {
                    ch = content.charAt(index++);
-                   if (ch == 'u') {
+                   if (ch != 'u') {
+                      buf.append((char) '\\');
+                      buf.append(ch);
+                   }
+                   else {
                        String hex = content.substring(index, index+=4);
                        buf.append((char) Integer.parseInt(hex, 16));
-                       ++col; // Is this right?
-                   }
-                   else if (ch == '\\') {
-                      buf.append("\\\\");
-                      col+=2;
-                   } else {
-                      buf.append((char) '\\');
-                      col++;
                    }
                 }
                 else if (ch == '\r' && !preserveLines) {
@@ -109,19 +105,15 @@ public class FileLineMap {
                    if (index < content.length()) {
                        ch = content.charAt(index++);
                        if (ch!='\n') buf.append(ch);
-                       col =1;
                    }
                 } 
                 else if (ch == '\t' && tabsToSpaces > 0) {
-                    int spacesToAdd = tabsToSpaces - (col % tabsToSpaces) - 1; 
-                    for (int i=0; i<spacesToAdd; i++) {
+                    for (int i=0; i<tabsToSpaces; i++) {
                         buf.append((char) ' ');
                     }
                 }
                 else {
                     buf.append((char) ch);
-                    if (ch == '\n') col = 1;
-                    else ++col;
                 }
             }
             return buf.toString();
