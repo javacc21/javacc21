@@ -249,9 +249,9 @@ public class ParserData {
         }
     }
 
-    private void generate3R(Expansion e, int count) {
-        Expansion seq = e;
-        if (e.getInternalName().equals("")) {
+    private void generate3R(Expansion expansion, int count) {
+        Expansion seq = expansion;
+        if (expansion.getInternalName().equals("")) {
             while (true) {
                 if (seq instanceof ExpansionSequence
                         && ((ExpansionSequence) seq).getChildCount() == 2) {
@@ -270,19 +270,18 @@ public class ParserData {
             }
 
             if (seq instanceof RegularExpression) {
-                e.setInternalName("jj_scan_token("
-                        + ((RegularExpression) seq).getOrdinal() + ")");
+                expansion.setOrdinal(((RegularExpression) seq).getOrdinal());
                 return;
             }
 
             gensymindex++;
-            e.setInternalName("R_" + gensymindex);
+            expansion.setInternalName("R_" + gensymindex);
         }
-        Integer amt = phase3table.get(e);
+        Integer amt = phase3table.get(expansion);
         if (amt == null || amt < count) {
-            Phase3Data p3d = new Phase3Data(e, count);
+            Phase3Data p3d = new Phase3Data(expansion, count);
             phase3list.add(p3d);
-            phase3table.put(e, count);
+            phase3table.put(expansion, count);
         }
     }
 

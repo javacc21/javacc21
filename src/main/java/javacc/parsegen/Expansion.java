@@ -86,7 +86,9 @@ abstract public class Expansion extends BaseNode {
     /**
      * The ordinal of this node with respect to its parent.
      */
-    public int ordinal;
+    public int index;
+    
+    private int ordinal= -1; // REVISIT
 
     public long myGeneration = 0;
 
@@ -115,8 +117,14 @@ abstract public class Expansion extends BaseNode {
 
     public String getInternalName() {
         return internalName;
+//    	String result = getSimpleName();
+//    	result += "_on_line_";
+//    	result += getBeginLine();
+//    	result += "_column_";
+//    	result += getBeginColumn();
+//    	return result;
     }
-
+    
     public void setInternalName(String internalName) {
         this.internalName = internalName;
     }
@@ -154,5 +162,9 @@ abstract public class Expansion extends BaseNode {
     public void setForced(boolean forced) {this.forced = forced;}
 
     public boolean getForced() {return this.forced;}
+    
+    public void setOrdinal(int ordinal) { this.ordinal = ordinal;}
+    
+    public int getOrdinal() {return this.ordinal;}
     
 }

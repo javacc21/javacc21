@@ -418,7 +418,6 @@ throw new ParseException();"]
 [#var parserData=grammar.parserData]
 [#var tokenMaskIndex=0]
 [#var nodeNumbering = 0]
-[#var jj3_expansion]
 [#var NODE_USES_PARSER = grammar.options.nodeUsesParser]
 [#var NODE_PREFIX = grammar.options.nodePrefix]
 [#var currentProduction]
@@ -428,7 +427,7 @@ throw new ParseException();"]
       jj_la = maxLookahead; 
       jj_lastpos = jj_scanpos = current_token;
       try { 
-          return !jj_3${expansion.internalName}(); 
+          return !phase3${expansion.internalName}(); 
       }
       catch(LookaheadSuccess ls) {
           return true; 
@@ -439,15 +438,17 @@ throw new ParseException();"]
   }
 [/#macro]
 
+[#var currentPhase3Expansion]
+
 [#macro buildPhase3Routine expansion count]
    [#if expansion.internalName?starts_with("jj_scan_token")][#return][/#if]
-   private boolean jj_3${expansion.internalName}() {
+   private boolean phase3${expansion.internalName}() {
         [#if grammar.options.debugLookahead&&expansion.parent.class.name?ends_with("Production")]
       if (!rescan) 
           trace_call("${expansion.parent.name} (LOOKING AHEAD...)");
-            [#set jj3_expansion = expansion]
+            [#set currentPhase3Expansion = expansion]
        [#else]
-            [#set jj3_expansion = null]
+            [#set currentPhase3Expansion = null]
         [/#if]
       [@buildPhase3Code expansion, count/]
       [@genReturn false/]
@@ -489,10 +490,10 @@ throw new ParseException();"]
 	     !jj_semLA || 
 	  [/#if]
 	  [#if subseq_has_next]
-	     [@genjj_3Call subseq/]) {
+	     [@InvokePhase3Routine subseq/]) {
 	        jj_scanpos = token${newVarIndex};
 	  [#else]
-	     [@genjj_3Call subseq/]) [@genReturn true/]
+	     [@InvokePhase3Routine subseq/]) [@genReturn true/]
 	  [/#if]
   [/#list]
   [#var numBraces=choice.choices?size-1]
@@ -513,14 +514,14 @@ throw new ParseException();"]
 
 [#macro Phase3CodeZeroOrOne zoo]
    [@newVar type="Token" init="jj_scanpos"/]
-   if ([@genjj_3Call zoo.nestedExpansion/]) 
+   if ([@InvokePhase3Routine zoo.nestedExpansion/]) 
       jj_scanpos = token${newVarIndex};
 [/#macro]
 
 [#macro Phase3CodeZeroOrMore zom]
       while (true) {
          [@newVar type="Token" init="jj_scanpos"/]
-         if ([@genjj_3Call zom.nestedExpansion/]) {
+         if ([@InvokePhase3Routine zom.nestedExpansion/]) {
              jj_scanpos = token${newVarIndex};
              break;
          }
@@ -528,10 +529,10 @@ throw new ParseException();"]
 [/#macro]
 
 [#macro Phase3CodeOneOrMore oom]
-   if ([@genjj_3Call oom.nestedExpansion/]) [@genReturn true/]
+   if ([@InvokePhase3Routine oom.nestedExpansion/]) [@genReturn true/]
    while (true) {
        [@newVar type="Token" init="jj_scanpos"/]
-       if ([@genjj_3Call oom.nestedExpansion/]) {
+       if ([@InvokePhase3Routine oom.nestedExpansion/]) {
            jj_scanpos = token${newVarIndex};
            break;
        }
@@ -547,7 +548,7 @@ throw new ParseException();"]
          [@genReturn false/]
      }
    [#else]
-        if ([@genjj_3Call ntprod.expansion/])
+        if ([@InvokePhase3Routine ntprod.expansion/])
            [@genReturn true/]
    [/#if]
 [/#macro]
@@ -562,20 +563,20 @@ throw new ParseException();"]
    [/#list]
 [/#macro]
     
-[#macro genjj_3Call expansion]
-   [#if expansion.internalName?starts_with("jj_scan_token")]
-     ${expansion.internalName}
+[#macro InvokePhase3Routine expansion]
+   [#if expansion.ordinal >=0]
+       jj_scan_token(${expansion.ordinal})
    [#else]
-     jj_3${expansion.internalName}()
+     phase3${expansion.internalName}()
    [/#if]
 [/#macro]
 
 [#macro genReturn bool]
     [#var retval=bool?string("true", "false")]
-    [#if grammar.options.debugLookahead&&!jj3_expansion?is_null]
+    [#if grammar.options.debugLookahead&&!currentPhase3Expansion?is_null]
        [#var tracecode]
        [#set tracecode]
- trace_return("${jj3_expansion.parent.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
+ trace_return("${currentPhase3Expansion.parent.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
        [/#set]
        [#set tracecode = "if (!rescan) "+tracecode]
   { ${tracecode} return {bool?string("true", "false")};

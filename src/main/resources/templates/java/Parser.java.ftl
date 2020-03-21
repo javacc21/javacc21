@@ -249,7 +249,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [#if hasPhase2]
   @SuppressWarnings("serial")
   static private final class LookaheadSuccess extends java.lang.Error { }
-  final private LookaheadSuccess ls = new LookaheadSuccess();
+  final private LookaheadSuccess LOOKAHEAD_SUCCESS = new LookaheadSuccess();
   private boolean jj_scan_token(int kind) {
     if (jj_scanpos == jj_lastpos) {
       jj_la--;
@@ -271,7 +271,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
       [/#if]
     }
      if (jj_scanpos.kind != kind) return true;
-    if (jj_la == 0 && jj_scanpos == jj_lastpos) throw ls;
+    if (jj_la == 0 && jj_scanpos == jj_lastpos) throw LOOKAHEAD_SUCCESS;
     return false;
   }
 [/#if]
@@ -471,8 +471,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         if (p.gen > jj_gen) {
           jj_la = p.arg; jj_lastpos = jj_scanpos = p.first;
           switch (i) {
-   [#list 0..(parserData.phase2Lookaheads?size-1) as i] 
-            case ${i} : jj_3_${(i+1)}(); break;
+   [#list parserData.phase2Lookaheads as lookahead]
+               case ${lookahead_index} : phase3${lookahead.nestedExpansion.internalName}(); break;
    [/#list]
           }
         }
@@ -483,13 +483,13 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     rescan = false;
   }
 
-  private void jj_save(int index, int xla) {
+  private void jj_save(int index, int maxLookahead) {
     JJCalls p = phase2Returns[index];
     while (p.gen > jj_gen) {
       if (p.next == null) { p = p.next = new JJCalls(); break; }
       p = p.next;
     }
-    p.gen = jj_gen + xla - jj_la; p.first = current_token; p.arg = xla;
+    p.gen = jj_gen + maxLookahead - jj_la; p.first = current_token; p.arg = maxLookahead;
   }
 
 

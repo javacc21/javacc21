@@ -1280,7 +1280,7 @@ Expansion ExpansionSequence() :
   la.setBeginLine(t.getBeginLine());
   la.setBeginColumn(t.getBeginColumn());
   la.setAmount(grammar.getOptions().getLookahead());
-  int ordinal = 1;
+  int index = 1;
 }
 {
   [ 
@@ -1301,8 +1301,8 @@ Expansion ExpansionSequence() :
       sub=ExpansionUnit()
       {
           pokeNode(sub);
-          sub.ordinal = ordinal;
-          ++ordinal;
+          sub.index = index;
+          ++index;
       }
   )+
   {
@@ -1440,15 +1440,15 @@ Expansion ExpansionUnit() :
       ExpansionSequence seq = new ExpansionSequence(grammar);
       seq.setGrammar(grammar);
       seq.addChild(la);
-      la.ordinal = 0;
+      la.index = 0;
       act = new CodeBlock();
       act.setGrammar(grammar);
       act.setBeginLine(t.getBeginLine());
       act.setBeginColumn(t.getBeginColumn());
       seq.addChild(act);
-      act.ordinal = 1;
+      act.index = 1;
       ch.addChild(seq);
-      seq.ordinal = 0;
+      seq.index = 0;
       if (la.getAmount() != 0) {
         if (la.getSemanticLookahead() != null) {
           grammar.addWarning(t, "Encountered LOOKAHEAD(...) at a non-choice location. Only semantic lookahead will be considered here.");

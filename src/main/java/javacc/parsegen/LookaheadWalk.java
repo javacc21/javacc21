@@ -171,7 +171,7 @@ final class LookaheadWalk {
 		} else if (exp.getParent() instanceof ExpansionSequence) {
 			ExpansionSequence seq = (ExpansionSequence) exp.getParent();
 			List<MatchInfo> v = partialMatches;
-			for (int i = exp.ordinal + 1; i < seq.getChildCount(); i++) {
+			for (int i = exp.index + 1; i < seq.getChildCount(); i++) {
 				v = genFirstSet(v, (Expansion) seq.getChild(i));
 				if (v.size() == 0)
 					return v;
