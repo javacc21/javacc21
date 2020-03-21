@@ -869,15 +869,15 @@ public class Semanticizer {
                 ch.setGrammar(grammar);
                 ch.setBeginLine(la.getBeginLine());
                 ch.setBeginColumn(la.getBeginColumn());
-                ExpansionSequence seq1 = new ExpansionSequence(grammar);
-                seq1.setBeginLine(la.getBeginLine());
-                seq1.setBeginColumn(la.getBeginColumn());
-                seq1.addChild(la);
-                CodeBlock act = new CodeBlock();
-                act.setBeginLine(la.getBeginLine());
-                act.setBeginColumn(la.getBeginColumn());
-                seq1.addChild(act);
-                ch.addChild(seq1);
+                ExpansionSequence expansionSequence = new ExpansionSequence(grammar);
+                expansionSequence.setBeginLine(la.getBeginLine());
+                expansionSequence.setBeginColumn(la.getBeginColumn());
+                expansionSequence.addChild(la);
+                CodeBlock codeBlock = new CodeBlock();
+                codeBlock.setBeginLine(la.getBeginLine());
+                codeBlock.setBeginColumn(la.getBeginColumn());
+                expansionSequence.addChild(codeBlock);
+                ch.addChild(expansionSequence);
                 if (la.getAmount() != 0) {
                     if (la.getSemanticLookahead() != null) {
                         grammar
@@ -895,21 +895,21 @@ public class Semanticizer {
                 // Now create
                 // a new dummy lookahead node to replace this one at its
                 // original location.
-                Lookahead la1 = new Lookahead(grammar);
-                la1.setBeginLine(la.getBeginLine());
-                la1.setBeginColumn(la.getBeginColumn());
-                // Now set the la_expansion field of la and la1 with a dummy
+                Lookahead lookahead = new Lookahead(grammar);
+                lookahead.setBeginLine(la.getBeginLine());
+                lookahead.setBeginColumn(la.getBeginColumn());
+                // Now set the la_expansion field of lookahead with a dummy
                 // expansion (we use EOF).
                 la.setExpansion(new EndOfFile());
-                la1.setExpansion(new EndOfFile());
-                seq.setChild(0, la1);
+                lookahead.setExpansion(new EndOfFile());
+                seq.setChild(0, lookahead);
                 List<Expansion> newUnits = new ArrayList<Expansion>();
                 newUnits.add((Expansion) seq.removeChild(0));
                 newUnits.add(ch);
                 newUnits.addAll(Nodes.childrenOfType(seq, Expansion.class));
                 seq.clearChildren();
-                for (Expansion sub : newUnits) {
-                    seq.addChild(sub);
+                for (Expansion exp : newUnits) {
+                    seq.addChild(exp);
                 }
             }
         }
