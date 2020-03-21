@@ -253,7 +253,6 @@ INJECT(LEXER_CLASS) :
    {
         javaccReservedWords.add("options");
         javaccReservedWords.add("OPTIONS");
-        javaccReservedWords.add("INJECT");
         javaccReservedWords.add("INCLUDE");
         javaccReservedWords.add("LOOKAHEAD");
         javaccReservedWords.add("IGNORE_CASE");
@@ -268,6 +267,7 @@ INJECT(LEXER_CLASS) :
         javaccReservedWords.add("SKIP");
         javaccReservedWords.add("TOKEN_MGR_DECLS");
         javaccReservedWords.add("EOF");
+//        javaccReservedWords.add("INJECT"); //REVISIT
 //        javaccReservedWords.add("PARSER_END");
    }
 

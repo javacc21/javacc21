@@ -125,7 +125,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
    }
  [/#list]
  [#if hasPhase2]
-	  final private JJCalls[] jj_2_rtns = new JJCalls[${parserData.phase2Lookaheads?size}];
+	  final private JJCalls[] phase2Returns = new JJCalls[${parserData.phase2Lookaheads?size}];
 	  private boolean rescan = false;
 	  private int jj_gc = 0;
  [/#if]
@@ -146,7 +146,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     current_token = new Token();
         for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
         [#if hasPhase2]
-    for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
+    for (int i = 0; i < phase2Returns.length; i++) phase2Returns[i] = new JJCalls();
         [/#if]
       }
 [/#if]
@@ -162,7 +162,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     current_token = new Token();
     for (int i = 0; i < ${parserData.tokenMaskValues?size}; i++) jj_la1[i] = -1;
   [#if hasPhase2]
-    for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
+    for (int i = 0; i < phase2Returns.length; i++) phase2Returns[i] = new JJCalls();
   [/#if]
   }
   
@@ -190,11 +190,10 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [#if hasPhase2]
         if (++jj_gc > 100) {
             jj_gc = 0;
-            for (int i = 0; i < jj_2_rtns.length; i++) {
-               JJCalls c = jj_2_rtns[i];
-               while (c != null) {
-                   if (c.gen < jj_gen) c.first = null;
-                   c = c.next;
+            for (JJCalls calls : phase2Returns) {
+               while (calls != null) {
+                   if (calls.gen < jj_gen) calls.first = null;
+                   calls = calls.next;
                }
             }
         }
@@ -467,7 +466,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     rescan = true;
     for (int i = 0; i < ${parserData.phase2Lookaheads?size}; i++) {
     try {
-      JJCalls p = jj_2_rtns[i];
+      JJCalls p = phase2Returns[i];
       do {
         if (p.gen > jj_gen) {
           jj_la = p.arg; jj_lastpos = jj_scanpos = p.first;
@@ -485,7 +484,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   }
 
   private void jj_save(int index, int xla) {
-    JJCalls p = jj_2_rtns[index];
+    JJCalls p = phase2Returns[index];
     while (p.gen > jj_gen) {
       if (p.next == null) { p = p.next = new JJCalls(); break; }
       p = p.next;

@@ -31,6 +31,7 @@
  --]
  
 [#macro ProductionsCode] 
+   static private int INFINITY = Integer.MAX_VALUE;
   [#list grammar.parserProductions as production]
     [#set currentProduction = production]
     [@ParserProduction production/]
@@ -303,7 +304,9 @@ throw new ParseException();"]
                if (
                [#set indentLevel = indentLevel+1]
          [/#if]
-                jj_2${lookahead.nestedExpansion.internalName}(${lookahead.amount})
+                [#var lookaheadAmount = lookahead.amount]
+                [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INFINITY"][/#if]
+                phase2${lookahead.nestedExpansion.internalName}(${lookaheadAmount})
          [#if lookahead.semanticLookaheadA??]
                 && (${lookahead.semanticLookahead})
          [/#if]
@@ -370,11 +373,12 @@ throw new ParseException();"]
    [#var condition=lookahead.semanticLookahead!]
    [#if lookahead.requiresPhase2Routine]
       [#set condition]
-        jj_2${lookahead.nestedExpansion.internalName}(${lookahead.amount})
+        phase2${lookahead.nestedExpansion.internalName}(${lookahead.amount})
         [#if lookahead.semanticLookahead??]
           && (${lookahead.semanticLookahead})
         [/#if]
       [/#set]
+      [#set condition = condition?replace("2147483647", "INFINITY")]
    [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansionOrJavaCode]
       [@newVar type="int" init="nextTokenKind()"/]
       [#set condition]
@@ -420,8 +424,8 @@ throw new ParseException();"]
 [#var currentProduction]
 
 [#macro buildPhase2Routine expansion]
-  private boolean jj_2${expansion.internalName}(int xla) { 
-      jj_la = xla; 
+  private boolean phase2${expansion.internalName}(int maxLookahead) { 
+      jj_la = maxLookahead; 
       jj_lastpos = jj_scanpos = current_token;
       try { 
           return !jj_3${expansion.internalName}(); 
@@ -430,7 +434,7 @@ throw new ParseException();"]
           return true; 
       }
       finally {
-          jj_save(${(expansion.internalName?substring(1)?number-1)}, xla);
+          jj_save(${(expansion.internalName?substring(1)?number-1)}, maxLookahead);
       }
   }
 [/#macro]
