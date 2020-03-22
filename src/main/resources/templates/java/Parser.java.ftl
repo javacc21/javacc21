@@ -472,7 +472,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
           jj_la = p.arg; jj_lastpos = jj_scanpos = p.first;
           switch (i) {
    [#list parserData.phase2Lookaheads as lookahead]
-               case ${lookahead_index} : phase3${lookahead.nestedExpansion.internalName}(); break;
+               case ${lookahead_index} : ${lookahead.nestedExpansion.phase3RoutineName}(); break;
    [/#list]
           }
         }

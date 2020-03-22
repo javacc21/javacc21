@@ -72,7 +72,7 @@ abstract public class Expansion extends BaseNode {
      * An internal name for this expansion. This is used to generate parser
      * routines.
      */
-    private String internalName = "";
+//    private String internalName = "";
 
     /**
      * The parser routines are generated in three phases. The generation of the
@@ -90,7 +90,7 @@ abstract public class Expansion extends BaseNode {
     
     private int ordinal= -1; // REVISIT
     
-    private String phase2RoutineName;
+    private String phase2RoutineName, phase3RoutineName;
 
     public long myGeneration = 0;
 
@@ -116,19 +116,19 @@ abstract public class Expansion extends BaseNode {
         return null;
     }
 
-    public String getInternalName() {
-        return internalName;
+//    public String getInternalName() {
+//        return internalName;
 //    	String result = getSimpleName();
 //    	result += "_on_line_";
 //    	result += getBeginLine();
 //    	result += "_column_";
 //    	result += getBeginColumn();
 //    	return result;
-    }
+//    }
     
-    public void setInternalName(String internalName) {
-        this.internalName = internalName;
-    }
+//    public void setInternalName(String internalName) {
+//        this.internalName = internalName;
+//    }
 
     public boolean getIsRegexp() {
         return (this instanceof RegularExpression);
@@ -174,5 +174,13 @@ abstract public class Expansion extends BaseNode {
 
     public String getPhase2RoutineName() {
     	return this.phase2RoutineName;
+    }
+    
+    public void setPhase3RoutineName(String name) {
+    	this.phase3RoutineName = name;
+    }
+
+    public String getPhase3RoutineName() {
+    	return phase3RoutineName != null ? phase3RoutineName : getPhase2RoutineName().replace("phase2", "phase3");
     }
 }

@@ -137,7 +137,6 @@ public class ParserData {
     		if (lookahead.getRequiresPhase2Routine()) {
     			// In this case lookahead is determined by the jj2 methods.
     			phase2list.add(lookahead);
-                lookahead.getNestedExpansion().setInternalName("_" + phase2list.size());
     			lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2list.size());
     			if (inPhase1) {
     				tokenMasks.add(tokenMask);
@@ -189,7 +188,6 @@ public class ParserData {
         if (lookahead.getRequiresPhase2Routine()) {
             // In this case lookahead is determined by the jj2 methods.
             phase2list.add(lookahead);
-            lookahead.getNestedExpansion().setInternalName("_" + phase2list.size());
 		    lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2list.size());
         }
 
@@ -278,7 +276,7 @@ public class ParserData {
             }
 
             gensymindex++;
-            expansion.setInternalName("R_" + gensymindex);
+            expansion.setPhase3RoutineName("phase3R_" + gensymindex);
         }
         Integer amt = phase3table.get(expansion);
         if (amt == null || amt < count) {

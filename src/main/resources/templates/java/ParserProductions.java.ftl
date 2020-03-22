@@ -427,22 +427,28 @@ throw new ParseException();"]
       jj_la = maxLookahead; 
       jj_lastpos = jj_scanpos = current_token;
       try { 
-          return !phase3${expansion.internalName}(); 
+            return !${expansion.phase3RoutineName}();
       }
       catch(LookaheadSuccess ls) {
           return true; 
       }
       finally {
-          jj_save(${(expansion.internalName?substring(1)?number-1)}, maxLookahead); 
+[#--  This is a kludge. FIXME --]
+           jj_save(${getTrailingPart(expansion.phase2RoutineName)?number-1}, maxLookahead);
       }
   }
 [/#macro]
+
+[#function getTrailingPart s]
+    [#var splitStrings = s?split("_")]
+    [#return splitStrings?last]
+[/#function]
 
 [#var currentPhase3Expansion]
 
 [#macro buildPhase3Routine expansion count]
    [#if expansion.ordinal > 0][#return][/#if]
-   private boolean phase3${expansion.internalName}() {
+     private boolean ${expansion.phase3RoutineName}() {
         [#if grammar.options.debugLookahead&&expansion.parent.class.name?ends_with("Production")]
       if (!rescan) 
           trace_call("${expansion.parent.name} (LOOKING AHEAD...)");
@@ -567,7 +573,7 @@ throw new ParseException();"]
    [#if expansion.ordinal >=0]
        jj_scan_token(${expansion.ordinal})
    [#else]
-     phase3${expansion.internalName}()
+      ${expansion.phase3RoutineName}()
    [/#if]
 [/#macro]
 
