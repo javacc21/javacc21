@@ -71,8 +71,7 @@ public class ParserData {
      * routines now are performed in a two step process - the first step gathers
      * the requests (replacing requests with lower lookaheads with those
      * requiring larger lookaheads). The second step then generates these
-     * methods. This optimization and the hashtable makes it look like we do not
-     * need the flag "phase3done" any more. But this has not been removed yet.
+     * methods. 
      */
     private List<Lookahead> phase2list = new ArrayList<Lookahead>();
     private List<Phase3Data> phase3list = new ArrayList<Phase3Data>();

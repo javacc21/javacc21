@@ -449,15 +449,15 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
   }
 
-  private void trace_scan(Token t1, int t2) {
+  private void trace_scan(Token token, int expectedType) {
     if (trace_enabled) {
       for (int i = 0; i < trace_indent; i++) { System.out.print(" "); }
-      System.out.print("Visited token: <" + tokenImage[t1.kind]);
-      if (t1.kind != 0 && !tokenImage[t1.kind].equals("\"" + t1.image + "\"")) {
-        System.out.print(": \"" + t1.image + "\"");
+      System.out.print("Visited token: <" + tokenImage[token.kind]);
+      if (token.kind != 0 && !tokenImage[token.kind].equals("\"" + token.image + "\"")) {
+        System.out.print(": \"" + token.image + "\"");
       }
-      System.out.println(" at line " + t1.beginLine + "" +
-                " column " + t1.beginColumn + ">; Expected token: <" + nodeNames[t2] + ">");
+      System.out.println(" at line " + token.beginLine + "" +
+                " column " + token.beginColumn + ">; Expected token: <" + nodeNames[expectedType] + ">");
     }
   }
   
@@ -486,10 +486,16 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   private void jj_save(int index, int maxLookahead) {
     JJCalls p = phase2Returns[index];
     while (p.gen > jj_gen) {
-      if (p.next == null) { p = p.next = new JJCalls(); break; }
+      if (p.next == null) {
+          p.next = new JJCalls();
+          p = p.next;
+          break;
+      }
       p = p.next;
     }
-    p.gen = jj_gen + maxLookahead - jj_la; p.first = current_token; p.arg = maxLookahead;
+    p.gen = jj_gen + maxLookahead - jj_la; 
+    p.first = current_token;
+    p.arg = maxLookahead;
   }
 
 

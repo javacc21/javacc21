@@ -39,27 +39,7 @@ import javacc.parser.JavaCCConstants;
 import javacc.parser.Node;
 import javacc.parser.Nodes;
 import javacc.parser.Token;
-import javacc.parser.tree.BNFProduction;
-import javacc.parser.tree.CodeBlock;
-import javacc.parser.tree.ExpansionChoice;
-import javacc.parser.tree.ExpansionSequence;
-import javacc.parser.tree.ParserProduction;
-import javacc.parser.tree.EndOfFile;
-import javacc.parser.tree.RepetitionRange;
-import javacc.parser.tree.OneOrMore;
-import javacc.parser.tree.ZeroOrMore;
-import javacc.parser.tree.ZeroOrOne;
-import javacc.parser.tree.NonTerminal;
-import javacc.parser.tree.TryBlock;
-import javacc.parser.tree.OneOrMoreRegexp;
-import javacc.parser.tree.ZeroOrOneRegexp;
-import javacc.parser.tree.ZeroOrMoreRegexp;
-import javacc.parser.tree.RegexpChoice;
-import javacc.parser.tree.RegexpRef;
-import javacc.parser.tree.RegexpSequence;
-import javacc.parser.tree.RegexpSpec;
-import javacc.parser.tree.RegexpStringLiteral;
-import javacc.parser.tree.TokenProduction;
+import javacc.parser.tree.*;
 
 public class Semanticizer {
 
@@ -759,11 +739,7 @@ public class Semanticizer {
             return false;
         } else if (exp instanceof NonTerminal) {
             ParserProduction prod = ((NonTerminal) exp).prod;
-            if (prod instanceof BNFProduction) {
-                return javaCodeCheck(prod.getExpansion());
-            } else {
-                return true;
-            }
+            return (prod instanceof JavaCodeProduction) || javaCodeCheck(prod.getExpansion());
         } else if (exp instanceof ExpansionChoice) {
             for (Expansion sub : Nodes.childrenOfType(exp, Expansion.class)) {
                 if (javaCodeCheck(sub)) {
@@ -772,22 +748,15 @@ public class Semanticizer {
             }
             return false;
         } else if (exp instanceof ExpansionSequence) {
-            ExpansionSequence seq = (ExpansionSequence) exp;
-            for (int i = 0; i < seq.getChildCount(); i++) {
-                Expansion[] units = Nodes.childrenOfType(seq,  Expansion.class)
-                        .toArray(new Expansion[seq.getChildCount()]);
-                if (units[i] instanceof Lookahead
-                        && ((Lookahead) units[i]).isExplicit()) {
-                    // An explicit lookahead (rather than one generated
-                    // implicitly). Assume
-                    // the user knows what he / she is doing, e.g.
-                    // "A" ( "B" | LOOKAHEAD("X") jcode() | "C" )* "D"
-                    return false;
-                } else if (javaCodeCheck((units[i]))) {
-                    return true;
-                } else if (!emptyExpansionExists(units[i])) {
-                    return false;
-                }
+            for (Expansion unit : Nodes.childrenOfType(exp,  Expansion.class)) {
+            	if (unit instanceof Lookahead && ((Lookahead)unit).isExplicit()) {
+            		return false;
+            	}
+            	else if (javaCodeCheck(unit)) {
+            		return true;
+            	} else if (!emptyExpansionExists(unit)) {
+            		return false;
+            	}
             }
             return false;
         } else if (exp instanceof OneOrMore) {

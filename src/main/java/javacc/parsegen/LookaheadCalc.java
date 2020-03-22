@@ -196,8 +196,7 @@ class LookaheadCalc {
 				System.err.println(" respectively.");
 				System.err
 				.println("         A common prefix is: " + image(overlapInfo[i], grammar));
-				System.err.println("         Consider using a lookahead of " + minLA[i]
-						+ " or more for earlier expansion.");
+				System.err.println("         Consider using a lookahead of " + minLA[i] + " or more for earlier expansion.");
 			} else if (minLA[i] > 1) {
 				grammar.addWarning(null, "Choice conflict involving two expansions at");
 				System.err.print("         line " + choices.get(i).getBeginLine());
@@ -205,10 +204,8 @@ class LookaheadCalc {
 				System.err.print(" and line " + (choices.get(other[i])).getBeginLine());
 				System.err.print(", column " + (choices.get(other[i])).getBeginColumn());
 				System.err.println(" respectively.");
-				System.err
-				.println("         A common prefix is: " + image(overlapInfo[i], grammar));
-				System.err.println("         Consider using a lookahead of " + minLA[i]
-						+ " for earlier expansion.");
+				System.err.println("         A common prefix is: " + image(overlapInfo[i], grammar));
+				System.err.println("         Consider using a lookahead of " + minLA[i] + " for earlier expansion.");
 			}
 		}
 	}

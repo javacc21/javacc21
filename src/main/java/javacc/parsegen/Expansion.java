@@ -58,16 +58,6 @@ abstract public class Expansion extends BaseNode {
 
     public Expansion() {}
 
-
-   /**
-     * The parser routines are generated in three phases. The generation of the
-     * second and third phase are on demand only, and the third phase can be
-     * recursive. This variable is used to keep track of the expansions for
-     * which phase 3 generations have been already added to a list so that the
-     * recursion can be terminated.
-     */
-    boolean phase3done = false;
-
     /**
      * The ordinal of this node with respect to its parent.
      */
