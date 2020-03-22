@@ -137,7 +137,8 @@ public class ParserData {
     		if (lookahead.getRequiresPhase2Routine()) {
     			// In this case lookahead is determined by the jj2 methods.
     			phase2list.add(lookahead);
-    			lookahead.getNestedExpansion().setInternalName("_" + phase2list.size());
+                lookahead.getNestedExpansion().setInternalName("_" + phase2list.size());
+    			lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2list.size());
     			if (inPhase1) {
     				tokenMasks.add(tokenMask);
     			}
@@ -189,6 +190,7 @@ public class ParserData {
             // In this case lookahead is determined by the jj2 methods.
             phase2list.add(lookahead);
             lookahead.getNestedExpansion().setInternalName("_" + phase2list.size());
+		    lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2list.size());
         }
 
         else if (lookahead.getAmount() == 1 && lookahead.getSemanticLookahead() == null
@@ -251,7 +253,8 @@ public class ParserData {
 
     private void generate3R(Expansion expansion, int count) {
         Expansion seq = expansion;
-        if (expansion.getInternalName().equals("")) {
+//        if (expansion.getInternalName().equals("")) {
+          if (expansion.getPhase2RoutineName() == null) {
             while (true) {
                 if (seq instanceof ExpansionSequence
                         && ((ExpansionSequence) seq).getChildCount() == 2) {

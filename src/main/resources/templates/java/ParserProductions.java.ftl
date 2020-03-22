@@ -306,7 +306,7 @@ throw new ParseException();"]
          [/#if]
                 [#var lookaheadAmount = lookahead.amount]
                 [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INFINITY"][/#if]
-                phase2${lookahead.nestedExpansion.internalName}(${lookaheadAmount})
+                ${lookahead.nestedExpansion.phase2RoutineName}(${lookaheadAmount})
          [#if lookahead.semanticLookaheadA??]
                 && (${lookahead.semanticLookahead})
          [/#if]
@@ -373,7 +373,7 @@ throw new ParseException();"]
    [#var condition=lookahead.semanticLookahead!]
    [#if lookahead.requiresPhase2Routine]
       [#set condition]
-        phase2${lookahead.nestedExpansion.internalName}(${lookahead.amount})
+        ${lookahead.nestedExpansion.phase2RoutineName}(${lookahead.amount})
         [#if lookahead.semanticLookahead??]
           && (${lookahead.semanticLookahead})
         [/#if]
@@ -423,7 +423,7 @@ throw new ParseException();"]
 [#var currentProduction]
 
 [#macro buildPhase2Routine expansion]
-  private boolean phase2${expansion.internalName}(int maxLookahead) { 
+   private boolean ${expansion.phase2RoutineName}(int maxLookahead) {
       jj_la = maxLookahead; 
       jj_lastpos = jj_scanpos = current_token;
       try { 
@@ -433,7 +433,7 @@ throw new ParseException();"]
           return true; 
       }
       finally {
-          jj_save(${(expansion.internalName?substring(1)?number-1)}, maxLookahead);
+          jj_save(${(expansion.internalName?substring(1)?number-1)}, maxLookahead); 
       }
   }
 [/#macro]
@@ -441,7 +441,7 @@ throw new ParseException();"]
 [#var currentPhase3Expansion]
 
 [#macro buildPhase3Routine expansion count]
-   [#if expansion.internalName?starts_with("jj_scan_token")][#return][/#if]
+   [#if expansion.ordinal > 0][#return][/#if]
    private boolean phase3${expansion.internalName}() {
         [#if grammar.options.debugLookahead&&expansion.parent.class.name?ends_with("Production")]
       if (!rescan) 

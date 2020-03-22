@@ -89,6 +89,8 @@ abstract public class Expansion extends BaseNode {
     public int index;
     
     private int ordinal= -1; // REVISIT
+    
+    private String phase2RoutineName;
 
     public long myGeneration = 0;
 
@@ -100,8 +102,7 @@ abstract public class Expansion extends BaseNode {
 
     private String getSimpleName() {
         String name = getClass().getName();
-        return name.substring(name.lastIndexOf(".") + 1); // strip the package
-                                                            // name
+        return name.substring(name.lastIndexOf(".") + 1); // strip the package name
     }
     
     public String toString() {
@@ -167,4 +168,11 @@ abstract public class Expansion extends BaseNode {
     
     public int getOrdinal() {return this.ordinal;}
     
+    public void setPhase2RoutineName(String name) {
+    	this.phase2RoutineName = name;
+    }
+
+    public String getPhase2RoutineName() {
+    	return this.phase2RoutineName;
+    }
 }
