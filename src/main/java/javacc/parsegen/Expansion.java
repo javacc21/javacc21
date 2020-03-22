@@ -58,23 +58,8 @@ abstract public class Expansion extends BaseNode {
 
     public Expansion() {}
 
-    /**
-     * A reimplementing of Object.hashCode() to be deterministic. This uses the
-     * line and column fields to generate an arbitrary number - we assume that
-     * this method is called only after line and column are set to their actual
-     * values.
-     */
-    public int hashCode() {
-        return getBeginLine() + getBeginColumn();
-    }
 
-    /**
-     * An internal name for this expansion. This is used to generate parser
-     * routines.
-     */
-//    private String internalName = "";
-
-    /**
+   /**
      * The parser routines are generated in three phases. The generation of the
      * second and third phase are on demand only, and the third phase can be
      * recursive. This variable is used to keep track of the expansions for
@@ -106,8 +91,7 @@ abstract public class Expansion extends BaseNode {
     }
     
     public String toString() {
-        return "[" + getBeginLine() + "," + getBeginColumn() + " " + System.identityHashCode(this) + " "
-                + getSimpleName() + "]";
+    	return "[" + getSimpleName() + " expansion on line " + getBeginLine() + ", " + getBeginColumn() + "of " + this.getInputSource() + "]";
     }
 
     protected static final String eol = System.getProperty("line.separator", "\n");

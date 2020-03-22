@@ -463,12 +463,6 @@ INJECT(ImportDeclaration) : {}
         return other.isStaticImport() == this.isStaticImport()
             && other.getName().equals(this.getName());
     }
-    
-    public int hashCode() {
-        String s = isStaticImport() ? "static " : "";
-        s += getName();
-        return s.hashCode();
-    }
 }
 
 /*
