@@ -139,7 +139,6 @@ TOKEN :
 | < TRANSIENT: "transient" > #KeyWord
 | < TRUE: "true" > #Literal
 | < TRY: "try" > #KeyWord
-// | < VAR: "var" > #KeyWord // Currently unused. TODO.
 | < VOID: "void" > #KeyWord
 | < VOLATILE: "volatile" > #KeyWord
 | < WHILE: "while" > #KeyWord
@@ -1633,6 +1632,7 @@ void PrimaryPrefix():
 |
   "this"
 |
+LOOKAHEAD(2)
   "super" "." <IDENTIFIER>
 |
   "(" Expression() ")"
@@ -1654,7 +1654,9 @@ void PrimaryPrefix():
 void MethodReference() :
 {}
 {
-    Type() "::" (<IDENTIFIER>|"new")
+    (Type()|"super")
+     "::" 
+     (<IDENTIFIER>|"new")
 }
 
 void PrimarySuffix():
@@ -2051,11 +2053,19 @@ TryWithResources TryWithResources() :
 {
    "try"
    "("
-//    Expression()
-     LocalVariableDeclaration()
      (
+         LOOKAHEAD(LocalVariableDeclaration())
+         LocalVariableDeclaration()
+         |
+         Name()
+      )
+      (
         ";"
-	[LocalVariableDeclaration()]
+	   [
+	      LOOKAHEAD(LocalVariableDeclaration()) LocalVariableDeclaration()
+	      |
+	      Name()
+	   ]
      )*
     ")"
     Block()
