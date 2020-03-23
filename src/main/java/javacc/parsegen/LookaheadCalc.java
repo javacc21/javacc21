@@ -38,6 +38,7 @@ import javacc.parser.ParseException;
 import javacc.parser.Nodes;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
+import javacc.parser.tree.ExplicitLookahead;
 import javacc.parser.tree.OneOrMore;
 import javacc.parser.tree.ZeroOrMore;
 import javacc.parser.tree.RegexpStringLiteral;
@@ -184,7 +185,7 @@ class LookaheadCalc {
 			}
 		}
 		for (int i = first; i < choices.size() - 1; i++) {
-			if (explicitLA(choices.get(i)) && !grammar.getOptions().getForceLaCheck()) {
+			if (explicitLookahead(choices.get(i)) && !grammar.getOptions().getForceLaCheck()) {
 				continue;
 			}
 			if (minLA[i] > grammar.getOptions().getChoiceAmbiguityCheck()) {
@@ -210,7 +211,7 @@ class LookaheadCalc {
 		}
 	}
 
-	boolean explicitLA(Expansion exp) {
+	boolean explicitLookahead(Expansion exp) {
 		if (!(exp instanceof ExpansionSequence)) {
 			return false;
 		}
@@ -221,10 +222,7 @@ class LookaheadCalc {
 			return false;
 		}
 		Expansion e = Nodes.firstChildOfType(seq, Expansion.class);
-		if (e instanceof Lookahead) {
-			return ((Lookahead) e).isExplicit();
-		}
-		return false;
+		return e instanceof ExplicitLookahead;
 	}
 
 	int firstChoice(ExpansionChoice ch) {
@@ -233,7 +231,7 @@ class LookaheadCalc {
 		}
 		List<Expansion> choices = Nodes.childrenOfType(ch, Expansion.class);
 		for (int i = 0; i < choices.size(); i++) {
-			if (!explicitLA(choices.get(i))) {
+			if (!explicitLookahead(choices.get(i))) {
 				return i;
 			}
 		}

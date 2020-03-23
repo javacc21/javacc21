@@ -42,7 +42,6 @@ import javacc.parser.Token;
 import javacc.parser.tree.*;
 
 public class Semanticizer {
-
     private Grammar grammar;
     private LexerData lexerData;
     private List<TokenProduction> removeList = new ArrayList<TokenProduction>();
@@ -750,7 +749,7 @@ public class Semanticizer {
             return false;
         } else if (exp instanceof ExpansionSequence) {
             for (Expansion unit : Nodes.childrenOfType(exp,  Expansion.class)) {
-            	if (unit instanceof Lookahead && ((Lookahead)unit).isExplicit()) {
+            	if (unit instanceof ExplicitLookahead) {
             		return false;
             	}
             	else if (javaCodeCheck(unit)) {
@@ -827,7 +826,7 @@ public class Semanticizer {
                 }
                 ExpansionSequence seq = (ExpansionSequence) e;
                 Lookahead la = (Lookahead) seq.getChild(0);
-                if (!la.isExplicit()) {
+                if (!(la instanceof ExplicitLookahead)) {
                     return;
                 }
                 // Create a singleton choice with an empty action.
@@ -953,7 +952,8 @@ public class Semanticizer {
                 return true;
             }
             ExpansionSequence seq = (ExpansionSequence) exp;
-            return !seq.getLookahead().isExplicit();
+            return (!(seq.getLookahead()  instanceof ExplicitLookahead));
+//            return !seq.getLookahead().isExplicit();
         }
     }
 }

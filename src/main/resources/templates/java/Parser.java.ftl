@@ -266,9 +266,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   
 
   public ParseException generateParseException() {
-    Token errortok = current_token.next;
-    int line = errortok.beginLine, column = errortok.beginColumn;
-    String mess = (errortok.kind == 0) ? tokenImage[0] : errortok.image;
+    int line = current_token.beginLine, column = current_token.beginColumn;
+    String mess = current_token.image;
     return new ParseException("Parse error at line " + line + ", column " + column + ".  " +
                "Encountered: " + mess);
   }

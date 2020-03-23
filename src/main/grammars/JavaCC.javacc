@@ -1291,7 +1291,7 @@ Expansion ExpansionSequence() :
     }
   ]
   {
-      if (!la.isExplicit()) {
+     if (!(la instanceof ExplicitLookahead)) {
           pushNode(la);
       }
   }
@@ -1431,11 +1431,6 @@ INJECT(ExplicitLookahead) :
    import javacc.parsegen.Lookahead;
    extends Lookahead;
 }
-{
-   public boolean isExplicit() {
-       return true;
-   }
-}
 
 Expansion ExpansionUnit() :
 {
@@ -1457,7 +1452,6 @@ Expansion ExpansionUnit() :
       ExpansionChoice ch = new ExpansionChoice();
       ch.setGrammar(grammar);
       ExpansionSequence seq = new ExpansionSequence(grammar);
-      seq.setGrammar(grammar);
       seq.addChild(la);
       la.index = 0;
       act = new CodeBlock();

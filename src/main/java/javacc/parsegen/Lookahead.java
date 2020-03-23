@@ -34,6 +34,7 @@ import java.util.*;
 
 import javacc.Grammar;
 import javacc.lexgen.RegularExpression;
+import javacc.parser.BaseNode;
 import javacc.parser.Nodes;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
@@ -60,7 +61,7 @@ public class Lookahead extends Expansion {
     
 
     public Lookahead(Grammar grammar) {
-        super(grammar);
+        setGrammar(grammar);
     }
     
     protected Lookahead() {}
@@ -202,10 +203,6 @@ public class Lookahead extends Expansion {
      */
     private Expansion expansion;
 
-    public boolean isExplicit() {
-        return false;
-    }
-    
     public Expansion getNestedExpansion() {
         return expansion;
     }
