@@ -143,11 +143,6 @@ public class ParserData {
     }
     
     private void visitLookahead(Lookahead lookahead) {
-        int tokenCount = grammar.getLexerData().getTokenCount();
-        int tokenMaskSize = (tokenCount - 1) / 32 + 1;
-        int[] tokenMask = null;
-        BitSet tokenMask2 = new BitSet(tokenCount);
-
         if (lookahead.getRequiresPhase2Routine()) {
             // In this case lookahead is determined by the phase2 methods.
             phase2list.add(lookahead);

@@ -453,7 +453,8 @@ public class Semanticizer {
             for (ParserProduction prod : grammar.getParserProductions()) {
                 if (emptyExpansionExists(prod.getExpansion())) {
                     if (!prod.emptyPossible) {
-                        emptyUpdate = prod.emptyPossible = true;
+                    	emptyUpdate = true;
+                        prod.emptyPossible = true;
                     }
                 }
             }
@@ -536,7 +537,7 @@ public class Semanticizer {
 
     private RegularExpression other;
 
-    // Checks to see if the "str" is superceded by another equal (except case)
+    // Checks to see if the "str" is superseded by another equal (except case)
     // string
     // in table.
     private boolean hasIgnoreCase(Map<String, RegularExpression> table,
@@ -557,7 +558,7 @@ public class Semanticizer {
 
     // returns true if "exp" can expand to the empty string, returns false
     // otherwise.
-    static boolean emptyExpansionExists(Expansion exp) {
+    static public boolean emptyExpansionExists(Expansion exp) {
         if (exp instanceof NonTerminal) {
             return ((NonTerminal) exp).prod.emptyPossible;
         } else if (exp instanceof CodeBlock) {

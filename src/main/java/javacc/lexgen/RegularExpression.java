@@ -365,6 +365,9 @@ public abstract class RegularExpression extends Expansion {
     }
     
     private String generatedClassName = "Token", generatedSuperClassName;
-
-
+    
+    
+    public void genFirstSet(boolean[] firstSet) {
+    	firstSet[getOrdinal()] = true;
+    }
 }

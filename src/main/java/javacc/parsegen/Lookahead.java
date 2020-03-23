@@ -68,9 +68,14 @@ public class Lookahead extends Expansion {
     boolean[] getFirstSet() {
         if (firstSet == null) {
             firstSet = new boolean[getGrammar().getLexerData().getTokenCount()];
-            genFirstSet(this.expansion, firstSet);
+            expansion.genFirstSet(firstSet);
         }
         return firstSet;
+    }
+    
+    public void genFirstSet(boolean[] firstSet ) {
+    	//A bit screwy since Lookahead extends Expansion but
+    	// is ignored in the recursive walk to build the first set.
     }
     
     public List<String> getFirstSetTokenNames() {
@@ -88,52 +93,6 @@ public class Lookahead extends Expansion {
     }
     
     
-    /**
-     * Sets up the array "firstSet" above based on the Expansion argument passed
-     * to it. Since this is a recursive function, it assumes that "firstSet" has
-     * been reset before the first call.
-     */
-    private void genFirstSet(Expansion exp, boolean[] firstSet) {
-        if (firstSet == null) {
-            firstSet = new boolean[getGrammar().getLexerData().getTokenCount()];
-        }
-        if (exp instanceof RegularExpression) {
-            firstSet[((RegularExpression) exp).getOrdinal()] = true;
-        } else if (exp instanceof NonTerminal) {
-            if (((NonTerminal) exp).prod instanceof BNFProduction) {
-                genFirstSet(((BNFProduction) (((NonTerminal) exp).prod)).getExpansion(), firstSet);
-            }
-        } else if (exp instanceof ExpansionChoice) {
-            for (Expansion sub : Nodes.childrenOfType(exp, Expansion.class)) {
-                genFirstSet(sub, firstSet);
-            }
-        } else if (exp instanceof ExpansionSequence) {
-            ExpansionSequence seq = (ExpansionSequence) exp;
-            for (int i = 0; i < seq.getChildCount(); i++) {
-                Expansion unit = (Expansion) seq.getChild(i);
-                // Javacode productions can not have FIRST sets. Instead we
-                // generate the FIRST set
-                // for the preceding LOOKAHEAD (the semantic checks should have
-                // made sure that
-                // the LOOKAHEAD is suitable).
-                if (unit instanceof NonTerminal
-                        && !(((NonTerminal) unit).prod instanceof BNFProduction)) {
-                    if (i > 0 && seq.getChild(i - 1) instanceof Lookahead) {
-                        Lookahead la = (Lookahead) seq.getChild(i - 1);
-                        genFirstSet(la.expansion, firstSet);
-                    }
-                } else {
-                    genFirstSet((Expansion)seq.getChild(i), firstSet);
-                }
-                if (!Semanticizer.emptyExpansionExists((Expansion) seq.getChild(i))) {
-                    break;
-                }
-            }
-        } else if (exp instanceof OneOrMore || exp instanceof ZeroOrMore 
-                   || exp instanceof ZeroOrOne || exp instanceof TryBlock) {
-            genFirstSet(exp.getNestedExpansion(), firstSet);
-        } 
-    }
     
 
     public Lookahead(Expansion nestedExpansion) {

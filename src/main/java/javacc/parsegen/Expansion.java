@@ -143,4 +143,12 @@ abstract public class Expansion extends BaseNode {
     public String getPhase3RoutineName() {
     	return phase3RoutineName != null ? phase3RoutineName : getPhase2RoutineName().replace("phase2", "phase3");
     }
+    
+    
+    public void genFirstSet(boolean[] firstSet) {
+    	    Expansion nestedExpansion = getNestedExpansion();
+    	    if (nestedExpansion != null) {
+    	    	nestedExpansion.genFirstSet(firstSet);
+    	    }
+    }
 }

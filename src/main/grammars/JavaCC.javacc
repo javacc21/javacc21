@@ -733,7 +733,10 @@ void ParserProduction() :
   prod=BNFProduction() {grammar.addProduction(prod);}
 }
 
-INJECT(JavaCodeProduction) : {extends ParserProduction}{}
+INJECT(JavaCodeProduction) : {extends ParserProduction}{
+     public void genFirstSet(boolean[] firstSet) { /*Do nothing.*/}
+
+}
 
 JavaCodeProduction JavaCodeProduction()   :
 {
@@ -1259,6 +1262,12 @@ INJECT(ExpansionChoice) :
    public List<Expansion> getChoices() {
        return Collections.unmodifiableList(Nodes.childrenOfType(this, Expansion.class));
    }
+   
+   public void genFirstSet(boolean[] firstSet) {
+          for (Expansion sub : Nodes.childrenOfType(this, Expansion.class)) {
+                sub.genFirstSet(firstSet);
+          }
+   }
 }
 
 Expansion ExpansionSequence() :
@@ -1308,6 +1317,7 @@ INJECT(ExpansionSequence) :
    import javacc.Grammar;
    import javacc.parsegen.Expansion;
    import javacc.parsegen.Lookahead;
+   import javacc.parsegen.Semanticizer;
    import java.util.*;
    extends Expansion;
 }
@@ -1325,7 +1335,30 @@ INJECT(ExpansionSequence) :
    public Lookahead getLookahead() {
        return (Lookahead) getChild(0);
    }
-
+   
+   
+   public void genFirstSet(boolean[] firstSet) {
+             Expansion prevExp = null;
+             for (Expansion unit : Nodes.childrenOfType(this,  Expansion.class)) {
+                // Javacode productions can not have FIRST sets. Instead we
+                // generate the FIRST set
+                // for the preceding LOOKAHEAD (the semantic checks should have
+                // made sure that
+                // the LOOKAHEAD is suitable).
+                if (unit instanceof NonTerminal && !(((NonTerminal) unit).prod instanceof BNFProduction)) {
+                	if (prevExp instanceof Lookahead) {
+                        Lookahead la = (Lookahead) prevExp;
+                        la.getNestedExpansion().genFirstSet(firstSet);
+                    }
+                } else {
+                     unit.genFirstSet(firstSet);
+                }
+                if (!Semanticizer.emptyExpansionExists(unit)) {
+                    break;
+                }
+            }
+   }
+   
 }
 
 
@@ -1545,6 +1578,13 @@ INJECT(NonTerminal) :
         }
         return null;
     }
+    
+    
+    public void genFirstSet(boolean[] firstSet) {
+            if (prod instanceof BNFProduction) {
+            	prod.getExpansion().genFirstSet(firstSet);
+            }
+     }
 }
 
 
