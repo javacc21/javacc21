@@ -33,12 +33,12 @@ package javacc.parsegen;
 /**
  * Describes a match, within a given lookahead.
  */
-public final class MatchInfo {
+ final class MatchInfo {
 
-    public int[] match;
-    public int firstFreeLoc;
+    int[] match;
+    int firstFreeLoc;
 
-    public MatchInfo(int lookaheadLimit) {
+    MatchInfo(int lookaheadLimit) {
         this.match = new int[lookaheadLimit];
     }
 }

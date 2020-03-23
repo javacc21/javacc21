@@ -73,7 +73,7 @@ abstract public class Expansion extends BaseNode {
      * This flag is used for bookkeeping by the minimumSize method in class
      * ParseEngine.
      */
-    public boolean inMinimumSize = false;
+    boolean inMinimumSize = false;
 
     private String getSimpleName() {
         String name = getClass().getName();
@@ -89,20 +89,6 @@ abstract public class Expansion extends BaseNode {
     public Expansion getNestedExpansion() {
         return null;
     }
-
-//    public String getInternalName() {
-//        return internalName;
-//    	String result = getSimpleName();
-//    	result += "_on_line_";
-//    	result += getBeginLine();
-//    	result += "_column_";
-//    	result += getBeginColumn();
-//    	return result;
-//    }
-    
-//    public void setInternalName(String internalName) {
-//        this.internalName = internalName;
-//    }
 
     public boolean getIsRegexp() {
         return (this instanceof RegularExpression);

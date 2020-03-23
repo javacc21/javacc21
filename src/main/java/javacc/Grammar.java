@@ -59,7 +59,6 @@ public class Grammar {
     private long nextGenerationIndex = 1L;
     private int lookaheadLimit;
     private boolean considerSemanticLA;
-    private List<MatchInfo> sizeLimitedMatches;
     private List<String> nodeVariableNameStack = new ArrayList<>();
     private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
@@ -83,6 +82,7 @@ public class Grammar {
     public Grammar(JavaCCOptions options) {
         this.options = options;
         options.setGrammar(this);
+        parserData = new ParserData(this);
     }
 
     public String[] getLexicalStates() {
@@ -173,7 +173,7 @@ public class Grammar {
     }
 
     public void buildParserInfo() throws MetaParseException {
-        parserData = new ParserData(this);
+        parserData.buildInfo();
     }
 
     public void generateFiles() throws ParseException, IOException, TemplateException {
@@ -510,14 +510,6 @@ public class Grammar {
 
     public void setConsiderSemanticLA(boolean b) {
         considerSemanticLA = b;
-    }
-
-    public List<MatchInfo> getSizeLimitedMatches() {
-        return sizeLimitedMatches;
-    }
-
-    public void setSizeLimitedMatches(List<MatchInfo> sizeLimitedMatches) {
-        this.sizeLimitedMatches = sizeLimitedMatches;
     }
 
     public String getCurrentNodeVariableName() {

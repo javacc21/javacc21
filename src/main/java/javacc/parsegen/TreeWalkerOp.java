@@ -30,22 +30,26 @@
 
 package javacc.parsegen;
 
+import javacc.lexgen.RegularExpression;
+
 /**
  * Objects of this type are passed to the tree walker routines in
  * ExpansionTreeWalker.
  */
-interface TreeWalkerOp {
+abstract class TreeWalkerOp {
 
     /**
      * When called at a particular node, this specifies to the tree walker if it
      * should visit more nodes under this node.
      */
-    boolean goDeeper(Expansion e);
+    boolean goDeeper(Expansion e) {
+    	return !(e instanceof RegularExpression);
+    }
 
     /**
      * When a node is visited, this method is invoked with the node as
      * parameter.
      */
-    void action(Expansion e);
+    abstract void action(Expansion e);
 
 }

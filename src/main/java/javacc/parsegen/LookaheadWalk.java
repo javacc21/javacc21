@@ -67,7 +67,7 @@ final class LookaheadWalk {
 				mnew.firstFreeLoc = m.firstFreeLoc;
 				mnew.match[mnew.firstFreeLoc++] = ((RegularExpression) exp).getOrdinal();
 				if (mnew.firstFreeLoc == lookaheadLimit) {
-					grammar.getSizeLimitedMatches().add(mnew);
+					grammar.getParserData().getSizeLimitedMatches().add(mnew);
 				} else {
 					retval.add(mnew);
 				}

@@ -131,23 +131,23 @@ class LookaheadCalc {
 			grammar.setLookaheadLimit(la);
 			grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
 			for (int i = first; i < choices.size() - 1; i++) {
-				grammar.setSizeLimitedMatches(new ArrayList<MatchInfo>());
+				grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
 				m = new MatchInfo(grammar.getLookaheadLimit());
 				m.firstFreeLoc = 0;
 				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
 				partialMatches.add(m);
 				lookaheadWalk.genFirstSet(partialMatches, choices.get(i));
-				dbl.set(i, grammar.getSizeLimitedMatches());
+				dbl.set(i, grammar.getParserData().getSizeLimitedMatches());
 			}
 			grammar.setConsiderSemanticLA(false);
 			for (int i = first + 1; i < choices.size(); i++) {
-				grammar.setSizeLimitedMatches(new ArrayList<MatchInfo>());
+				grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
 				m = new MatchInfo(grammar.getLookaheadLimit());
 				m.firstFreeLoc = 0;
 				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
 				partialMatches.add(m);
 				lookaheadWalk.genFirstSet(partialMatches, choices.get(i));
-				dbr.set(i, grammar.getSizeLimitedMatches());
+				dbr.set(i, grammar.getParserData().getSizeLimitedMatches());
 			}
 			if (la == 1) {
 				for (int i = first; i < choices.size() - 1; i++) {
@@ -258,17 +258,17 @@ class LookaheadCalc {
 		LookaheadWalk lookaheadWalk = new LookaheadWalk(grammar);
 		for (la = 1; la <= grammar.getOptions().getOtherAmbiguityCheck(); la++) {
 			grammar.setLookaheadLimit(la);
-			grammar.setSizeLimitedMatches(new ArrayList<MatchInfo>());
+			grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
 			m = new MatchInfo(la);
 			m.firstFreeLoc = 0;
 			partialMatches.add(m);
 			grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
 			lookaheadWalk.genFirstSet(partialMatches, nested);
-			List<MatchInfo> first = grammar.getSizeLimitedMatches();
-			grammar.setSizeLimitedMatches(new ArrayList<MatchInfo>());
+			List<MatchInfo> first = grammar.getParserData().getSizeLimitedMatches();
+			grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
 			grammar.setConsiderSemanticLA(false);
 			lookaheadWalk.generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex(), grammar);
-			List<MatchInfo> follow = grammar.getSizeLimitedMatches();
+			List<MatchInfo> follow = grammar.getParserData().getSizeLimitedMatches();
 			if (la == 1) {
 				if (javaCodeCheck(first)) {
 					grammar.addWarning(nested, "JAVACODE non-terminal within " + image(exp)

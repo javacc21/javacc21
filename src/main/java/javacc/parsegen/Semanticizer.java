@@ -773,18 +773,18 @@ public class Semanticizer {
     }
 
     /**
-     * Objects of this class are created from class Semanticize to work on
+     * Objects of this class are created from class Semanticizer to work on
      * references to regular expressions from RJustName's.
      */
-    class FixRJustNames implements TreeWalkerOp {
+    class FixRJustNames extends TreeWalkerOp {
 
-        public RegularExpression root;
+        private RegularExpression root;
 
-        public boolean goDeeper(Expansion e) {
+        boolean goDeeper(Expansion e) {
             return true;
         }
 
-        public void action(Expansion e) {
+        void action(Expansion e) {
             if (e instanceof RegexpRef) {
                 RegexpRef jn = (RegexpRef) e;
                 RegularExpression rexp = grammar.getNamedToken(jn.getLabel());
@@ -814,13 +814,9 @@ public class Semanticizer {
 
     }
 
-    class LookaheadFixer implements TreeWalkerOp {
+    class LookaheadFixer extends TreeWalkerOp {
 
-        public boolean goDeeper(Expansion e) {
-        	return !(e instanceof RegularExpression);
-        }
-
-        public void action(Expansion e) {
+        void action(Expansion e) {
             if (e instanceof ExpansionSequence) {
                 if (e.getParent() instanceof ExpansionChoice
                         || e.getParent() instanceof ZeroOrMore
@@ -885,13 +881,9 @@ public class Semanticizer {
 
     }
 
-    class ProductionDefinedChecker implements TreeWalkerOp {
+    class ProductionDefinedChecker extends TreeWalkerOp {
 
-        public boolean goDeeper(Expansion e) {
-            return !(e instanceof RegularExpression);
-        }
-
-        public void action(Expansion e) {
+        void action(Expansion e) {
             if (e instanceof NonTerminal) {
                 NonTerminal nt = (NonTerminal) e;
                 nt.prod = grammar.getProductionByLHSName(nt.getName());
@@ -905,13 +897,9 @@ public class Semanticizer {
 
     }
 
-    class EmptyChecker implements TreeWalkerOp {
+    class EmptyChecker extends TreeWalkerOp {
 
-        public boolean goDeeper(Expansion e) {
-            return !(e instanceof RegularExpression);
-        }
-
-        public void action(Expansion e) {
+         void action(Expansion e) {
             if (e instanceof OneOrMore) {
                 if (emptyExpansionExists(e.getNestedExpansion())) {
                     grammar
@@ -935,15 +923,15 @@ public class Semanticizer {
 
     }
 
-    class LookaheadChecker implements TreeWalkerOp {
+    class LookaheadChecker extends TreeWalkerOp {
 
-        LookaheadCalc lookaheadCalculator = new LookaheadCalc();
+        private LookaheadCalc lookaheadCalculator = new LookaheadCalc();
 
-        public boolean goDeeper(Expansion e) {
+        boolean goDeeper(Expansion e) {
         	return !(e instanceof RegularExpression) && !(e instanceof Lookahead);
         }
 
-        public void action(Expansion e) {
+        void action(Expansion e) {
             if (e instanceof ExpansionChoice) {
                 if (grammar.getOptions().getLookahead() == 1
                         || grammar.getOptions().getForceLaCheck()) {

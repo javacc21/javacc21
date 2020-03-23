@@ -56,7 +56,8 @@ public class ParserData {
     private int gensymindex = 0;
     
     private List<int[]> tokenMasks = new ArrayList<int[]>();
-
+    private List<MatchInfo> sizeLimitedMatches;
+    
     /**
      * These lists are used to maintain expansions for which code generation in
      * phase 2 and phase 3 is required. Whenever a call is generated to a phase
@@ -77,8 +78,11 @@ public class ParserData {
     private List<Phase3Data> phase3list = new ArrayList<Phase3Data>();
     private Map<Expansion, Integer> phase3table = new LinkedHashMap<Expansion, Integer>();
 
-    public ParserData(Grammar grammar) throws MetaParseException {
-        this.grammar = grammar;
+    public ParserData(Grammar grammar) {
+    	this.grammar = grammar;
+    }
+    
+    public void buildInfo() throws MetaParseException {
         for (ParserProduction p : grammar.getParserProductions()) {
             if (p instanceof BNFProduction) {
                 visitExpansion(p.getExpansion());
@@ -114,7 +118,16 @@ public class ParserData {
     public List<int[]> getTokenMaskValues() {
         return tokenMasks;
     }
-    
+
+    List<MatchInfo> getSizeLimitedMatches() {
+        return sizeLimitedMatches;
+    }
+
+    void setSizeLimitedMatches(List<MatchInfo> sizeLimitedMatches) {
+        this.sizeLimitedMatches = sizeLimitedMatches;
+    }
+
+ 
     private void visitExpansionChoice(ExpansionChoice choice) {
     	List<Lookahead> lookaheads = new ArrayList<Lookahead>();
     	List<ExpansionSequence> choices = Nodes.childrenOfType(choice,  ExpansionSequence.class);
