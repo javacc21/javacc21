@@ -150,7 +150,7 @@ public class FilesGenerator {
         Template template = fmConfig.getTemplate(templateName);
         template.process(dataModel, out);
         String code = out.toString();
-        System.out.println("Outputting: " + outputFile);
+        System.out.println("Outputting: " + outputFile.getAbsolutePath());
         if (outputFile.getName().endsWith(".java")) {
             outputJavaFile(code, outputFile);
         } else {

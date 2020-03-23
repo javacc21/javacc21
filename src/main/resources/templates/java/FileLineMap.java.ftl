@@ -117,9 +117,14 @@ public class FileLineMap {
                       else col+=2;
                    }
                    else {
+                       while (content.charAt(index) == 'u') {
+                          index++; 
+                         // col++;
+                       }
                        String hex = content.substring(index, index+=4);
                        buf.append((char) Integer.parseInt(hex, 16));
-                       col +=6; // REVISIT. Should this increase by six or one? Really just a corner case anyway.
+                       //col +=6; 
+                       ++col; // REVISIT. Should this increase by six or one? Really just a corner case anyway.
                    }
                 }
                 else if (ch == '\r' && !preserveLines) {
