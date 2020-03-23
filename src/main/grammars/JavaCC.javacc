@@ -606,9 +606,6 @@ void GrammarInclusion() throws IOException :
 void CodeInjection() :
 {
         boolean isInterface = false;
-        ClassOrInterfaceBody body;
-        ExtendsList extendsList = null;
-        ImplementsList implementsList = null;
         ImportDeclaration importDecl = null;
         Annotation annotation = null;
         token_source.inJavaCode=true;
@@ -689,13 +686,9 @@ void Options() :
 void option_binding() #void :
 {
 	  String option_name;
-	  int int_val;
-	  boolean bool_val;
-	  String string_val;
 	  Token name, t=null;
 	  JavaCCOptions _options = grammar.getOptions();
 	  boolean inInclude = grammar.isInInclude();
-	  Token stringLiteral;
 	  Object value = Boolean.TRUE;
 }
 {
@@ -906,8 +899,6 @@ INJECT(ParserProduction) :
 BNFProduction BNFProduction() :
 {
     TreeBuildingAnnotation tba = null;
-    ReturnType returnType;
-    CodeBlock block;
     Token t=getToken(1);
     Expansion expansion;
 }
@@ -915,7 +906,7 @@ BNFProduction BNFProduction() :
     [
         "public" | "private" | "protected"
     ]
-    returnType=ReturnType()
+    ReturnType()
     <IDENTIFIER> {CURRENT_NODE.setName(current_token.image);}
     FormalParameters()
     [
@@ -928,7 +919,7 @@ BNFProduction BNFProduction() :
         tba=TreeNodeDescriptor() {grammar.addNodeType(tba.getNodeName());}
     ]
     ":"
-    block=Block()
+    Block()
     {
         token_source.inJavaCode = false;
     }
@@ -1027,7 +1018,6 @@ TokenProduction TokenProduction() #TokenProduction :
 {
     Token t = getToken(1);
     String tokenClassName = null;
-    boolean skip = false;
     String firstSpecifiedLexicalState = null;
     boolean multipleStatesSpecified = false;
 }
@@ -1043,7 +1033,7 @@ TokenProduction TokenProduction() #TokenProduction :
       ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(current_token.image);})*
     ">"
   ]
-  (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP"{skip=true;})
+  (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP")
   [
     "[" "IGNORE_CASE" "]"
         {
@@ -1176,11 +1166,10 @@ INJECT(TokenProduction) :
 
 TokenManagerDecls TokenManagerDecls() :
 {
-    Token t;
     token_source.inJavaCode = true;
 }
 {
-    t="TOKEN_MGR_DECLS" ":"
+   "TOKEN_MGR_DECLS" ":"
     ClassOrInterfaceBody(false)
     {
         token_source.inJavaCode = false;
@@ -1418,11 +1407,8 @@ INJECT(ExplicitLookahead) :
 Expansion ExpansionUnit() :
 {
     Expression lhs=null;
-    InvocationArgs args=null;
-    CodeBlock block;
-    NonTerminal nt;
     CodeBlock act;
-    Token t=current_token, name;
+    Token t=current_token;
     Lookahead la=null;
     Expansion result=null;
     TreeBuildingAnnotation tba = null;
@@ -1904,9 +1890,7 @@ INJECT(RegexpChoice) :
 }
 
 void RegexpSequence() :
-{
-    RegularExpression re;
-}
+{ }
 {
    (
 	  RegexpStringLiteral()

@@ -299,8 +299,6 @@ throw new ParseException();"]
             } else if (
          [#else]
             default:
-                jj_la1[${tokenMaskIndex}] = jj_gen;
-               [#set tokenMaskIndex = tokenMaskIndex+1]
                if (
                [#set indentLevel = indentLevel+1]
          [/#if]
@@ -339,8 +337,6 @@ throw new ParseException();"]
              } else if (
           [#else]
              default:
-                 jj_la1[${tokenMaskIndex}] = jj_gen;
-                 [#set tokenMaskIndex = tokenMaskIndex+1]
               if (
                 [#set indentLevel = indentLevel+1]
           [/#if]
@@ -356,8 +352,6 @@ throw new ParseException();"]
              ${defaultAction}
       [#else]
              default:
-                jj_la1[${tokenMaskIndex}] = jj_gen;
-                 [#set tokenMaskIndex = tokenMaskIndex+1]
                 ${defaultAction}
       [/#if]
       [#if indentLevel != 0]
@@ -386,10 +380,6 @@ throw new ParseException();"]
              int${newVarIndex} == ${tokenName} [#if tokenName_has_next]|| [/#if]
       [/#list]
      [/#set]
-      [#set fallback = "
-               jj_la1[${tokenMaskIndex}] = jj_gen;
-               "+fallback!]
-       [#set tokenMaskIndex = tokenMaskIndex+1]
    [/#if]
   [@ifelse condition, action, fallback/]
 [/#macro]
@@ -416,7 +406,6 @@ throw new ParseException();"]
 [/#macro]
 
 [#var parserData=grammar.parserData]
-[#var tokenMaskIndex=0]
 [#var nodeNumbering = 0]
 [#var NODE_USES_PARSER = grammar.options.nodeUsesParser]
 [#var NODE_PREFIX = grammar.options.nodePrefix]
@@ -432,10 +421,6 @@ throw new ParseException();"]
       catch(LookaheadSuccess ls) {
           return true; 
       }
-      finally {
-[#--  This is a kludge. FIXME --]
-           jj_save(${getTrailingPart(expansion.phase2RoutineName)?number-1}, maxLookahead);
-      }
   }
 [/#macro]
 
@@ -450,7 +435,6 @@ throw new ParseException();"]
    [#if expansion.ordinal > 0][#return][/#if]
      private boolean ${expansion.phase3RoutineName}() {
         [#if grammar.options.debugLookahead&&expansion.parent.class.name?ends_with("Production")]
-      if (!rescan) 
           trace_call("${expansion.parent.name} (LOOKING AHEAD...)");
             [#set currentPhase3Expansion = expansion]
        [#else]
@@ -489,11 +473,11 @@ throw new ParseException();"]
   [#list choice.choices as subseq]
 	  [#var lookahead=subseq.units[0]]
 	  [#if lookahead.semanticLookahead??]
-	    jj_semLA = ${lookahead.semanticLookahead};
+	    semanticLookahead = ${lookahead.semanticLookahead};
 	  [/#if]
 	  if (
 	  [#if lookahead.semanticLookahead??]
-	     !jj_semLA || 
+	     !semanticLookahead || 
 	  [/#if]
 	  [#if subseq_has_next]
 	     [@InvokePhase3Routine subseq/]) {
@@ -584,7 +568,6 @@ throw new ParseException();"]
        [#set tracecode]
  trace_return("${currentPhase3Expansion.parent.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
        [/#set]
-       [#set tracecode = "if (!rescan) "+tracecode]
   { ${tracecode} return {bool?string("true", "false")};
               return "return " + retval + ";";
     [#else]

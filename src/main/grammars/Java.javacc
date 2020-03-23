@@ -738,12 +738,10 @@ void ClassDeclaration() #void :
 }
 
 void InterfaceDeclaration() #void :
-{
-          Token t;
-}
+{ }
 {
   "interface" 
-  t=<IDENTIFIER>
+  <IDENTIFIER>
   [ TypeParameters() ]
   [ ExtendsList(true) ] 
   ClassOrInterfaceBody(true)
@@ -1503,7 +1501,6 @@ void ShiftOperator() #void :
    second=">" 
    [third=">"]
    {
-      Token result = null;
       if (second.getBeginColumn() != first.getBeginColumn() + 1) {
             throw new ParseException("Shift operator cannot have spaces or comments inside!\n" + getInputSource() + ":line " + first.beginLine + ":column " + first.beginColumn);
       }
@@ -2010,13 +2007,11 @@ void ReturnStatement() :
 }
 
 void ThrowStatement() :
+{ }
 {
-    Token t;
-}
-{
-  t="throw"
+ "throw"
   Expression()
-  t=";"
+ ";"
 }
 
 void SynchronizedStatement():
