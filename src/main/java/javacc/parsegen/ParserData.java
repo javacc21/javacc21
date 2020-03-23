@@ -48,14 +48,13 @@ import javacc.parser.tree.NonTerminal;
 import javacc.parser.tree.TryBlock;
 
 /**
- * Generate the parser.
+ * Class to build up certain data structures for the parser.
  */
 public class ParserData {
 
     private Grammar grammar;
     private int gensymindex = 0;
     
-    private List<int[]> tokenMasks = new ArrayList<int[]>();
     private List<MatchInfo> sizeLimitedMatches;
     
     /**
@@ -115,10 +114,6 @@ public class ParserData {
         return phase3table.get(exp);
     }
     
-    public List<int[]> getTokenMaskValues() {
-        return tokenMasks;
-    }
-
     List<MatchInfo> getSizeLimitedMatches() {
         return sizeLimitedMatches;
     }
@@ -138,56 +133,12 @@ public class ParserData {
     		if (lookahead.getAlwaysSucceeds()) break;
     		lookaheads.add(lookahead);
     	}
-    	int tokenCount = grammar.getLexerData().getTokenCount();
-    	boolean[] casedValues = new boolean[tokenCount];
-    	int tokenMaskSize = (tokenCount - 1) / 32 + 1;
-    	int[] tokenMask = null;
-
-    	boolean inPhase1 = false;
     	for (Lookahead lookahead : lookaheads) {
-
     		if (lookahead.getRequiresPhase2Routine()) {
     			// In this case lookahead is determined by the jj2 methods.
     			phase2list.add(lookahead);
     			lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2list.size());
-    			if (inPhase1) {
-    				tokenMasks.add(tokenMask);
-    			}
-    			inPhase1 = false;
     		}
-
-    		else if (lookahead.getAmount() == 1 && lookahead.getSemanticLookahead() == null
-    				&& !Semanticizer.emptyExpansionExists(lookahead.getNestedExpansion())
-    				&& !Semanticizer.javaCodeCheck(lookahead.getNestedExpansion())) {
-
-    			if (!inPhase1) {
-    				for (int i = 0; i < grammar.getLexerData().getTokenCount(); i++) {
-    					casedValues[i] = false;
-    				}
-    				tokenMask = new int[tokenMaskSize];
-    			}
-    			boolean[] firstSet = lookahead.getFirstSet();
-    			for (int i = 0; i < grammar.getLexerData().getTokenCount(); i++) {
-    				if (firstSet[i]) {
-    					if (!casedValues[i]) {
-    						casedValues[i] = true;
-    						int j1 = i / 32;
-    						int j2 = i % 32;
-    						tokenMask[j1] |= 1 << j2;
-    					}
-    				}
-    			}
-    			inPhase1 = true;
-    		}
-    		else {
-    			if (inPhase1) {
-    				tokenMasks.add(tokenMask);
-    			}
-    			inPhase1 = false;
-    		} 
-    	}
-    	if (inPhase1) {
-    		tokenMasks.add(tokenMask);
     	}
     }
     
@@ -198,26 +149,9 @@ public class ParserData {
         BitSet tokenMask2 = new BitSet(tokenCount);
 
         if (lookahead.getRequiresPhase2Routine()) {
-            // In this case lookahead is determined by the jj2 methods.
+            // In this case lookahead is determined by the phase2 methods.
             phase2list.add(lookahead);
 		    lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2list.size());
-        }
-
-        else if (lookahead.getAmount() == 1 && lookahead.getSemanticLookahead() == null
-                && !Semanticizer.emptyExpansionExists(lookahead.getNestedExpansion())
-                && !Semanticizer.javaCodeCheck(lookahead.getNestedExpansion())) 
-        {
-            tokenMask = new int[tokenMaskSize];
-            boolean[] firstSet = lookahead.getFirstSet();
-            for (int i = 0; i < grammar.getLexerData().getTokenCount(); i++) {
-                if (firstSet[i]) {
-                    int j1 = i / 32;
-                    int j2 = i % 32;
-                    tokenMask[j1] |= 1 << j2;
-                    tokenMask2.set(i, true);
-                }
-            }
-            tokenMasks.add(tokenMask);
         }
     }
     
