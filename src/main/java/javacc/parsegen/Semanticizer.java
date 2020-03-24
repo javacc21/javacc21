@@ -692,12 +692,6 @@ public class Semanticizer {
         }
         return false;
     }
-    
-    
-    static boolean javaCodeCheckSCK(Expansion exp) {
-    	return exp.javaCodeCheck();
-    }
-
    
     /**
      * Objects of this class are created from class Semanticizer to work on

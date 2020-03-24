@@ -74,11 +74,6 @@ public class Lookahead extends Expansion {
         return firstSet;
     }
     
-    public void genFirstSet(boolean[] firstSet ) {
-    	//A bit screwy since Lookahead extends Expansion but
-    	// is ignored in the recursive walk to build the first set.
-    }
-    
     public List<String> getFirstSetTokenNames() {
         List<String> result = new ArrayList<String>();
         for (int i=0; i<getFirstSet().length; i++) {
@@ -97,7 +92,6 @@ public class Lookahead extends Expansion {
     
 
     public Lookahead(Expansion nestedExpansion) {
-//        super(nestedExpansion.getGrammar());
         this.expansion = nestedExpansion;
         setGrammar(nestedExpansion.getGrammar());
         setAmount(getGrammar().getOptions().getLookahead());
@@ -116,63 +110,13 @@ public class Lookahead extends Expansion {
      */
 
     public boolean getRequiresPhase2Routine() {
-        if (getAmount() == 0)
-            return false;
         if (getAmount() > 1)
             return true;
-        if (expansion.isPossiblyEmpty() || expansion.javaCodeCheck())
+        if (getAmount() == 0 || expansion.isPossiblyEmpty() || expansion.javaCodeCheck())
             return false;
-        if (semanticLookahead != null)
-            return true;
-        return checkSubExpansionsForPhase2(expansion);
+        return semanticLookahead != null || expansion.requiresPhase2Routine();
     }
 
-    private boolean checkSubExpansionsForPhase2(Expansion exp) {
-        if (exp instanceof RegularExpression) {
-            return false;
-        } else if (exp instanceof NonTerminal) {
-            if (((NonTerminal) exp).prod instanceof BNFProduction) {
-                return checkSubExpansionsForPhase2(((BNFProduction) (((NonTerminal) exp).prod)).getExpansion());
-            }
-        } else if (exp instanceof ExpansionChoice) {
-            for (Expansion sub : Nodes.childrenOfType(exp, Expansion.class)) {
-                if (checkSubExpansionsForPhase2(sub))
-                    return true;
-            }
-        } else if (exp instanceof ExpansionSequence) {
-            ExpansionSequence seq = (ExpansionSequence) exp;
-            Object obj = seq.getChild(0);
-            if ((obj instanceof Lookahead)
-                    && (((Lookahead) obj).semanticLookahead != null)) {
-                return true;
-            }
-            Expansion previous = null;
-            for (Expansion unit : Nodes.childrenOfType(seq, Expansion.class)) {
-                // For a Javacode production, we check
-                // the preceding Lookahead object.
-                if (unit instanceof NonTerminal
-                        && !(((NonTerminal) unit).prod instanceof BNFProduction)) {
-                    if (previous instanceof Lookahead) {
-                        Lookahead la = (Lookahead) previous;
-                        if (checkSubExpansionsForPhase2(la.expansion))
-                            return true;
-                    }
-                } else {
-                    if (checkSubExpansionsForPhase2(unit))
-                        return true;
-
-                }
-                if (unit.isPossiblyEmpty()) {
-                    break;
-                }
-                previous = unit;
-            }
-        } else if (exp instanceof OneOrMore || exp instanceof ZeroOrMore || exp instanceof ZeroOrOne
-                   || exp instanceof TryBlock) {
-            return checkSubExpansionsForPhase2(exp.getNestedExpansion());
-        }
-        return false;
-    }
 
     /**
      * Contains the semantic lookahead expression, may be null
@@ -183,6 +127,10 @@ public class Lookahead extends Expansion {
     
     public Expression getSemanticLookahead() {
         return semanticLookahead;
+    }
+    
+    public boolean hasSemanticLookahead() {
+    	return semanticLookahead != null;
     }
     
     public void setSemanticLookahead(Expression semanticLookahead) {
@@ -218,6 +166,9 @@ public class Lookahead extends Expansion {
     public void setAmount(int amount) {
         this.amount = amount;
     }
+
+    // The following 4 little methods should disappear when we 
+    // finally see our way through to having Lookahead not extend Expansion anymore.
     
     public boolean isPossiblyEmpty() {
     	return true;
@@ -226,4 +177,14 @@ public class Lookahead extends Expansion {
     public boolean javaCodeCheck() {
     	return false;
     }
+    
+    public boolean requiresPhase2Routine() {
+    	return false;
+    }
+    
+    public void genFirstSet(boolean[] firstSet ) {
+    	//A bit screwy since Lookahead extends Expansion but
+    	// is ignored in the recursive walk to build the first set.
+    }
+    
 }

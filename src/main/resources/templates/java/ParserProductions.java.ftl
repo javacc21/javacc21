@@ -274,13 +274,11 @@
 throw new ParseException();"]
    [#var inPhase1=false]
    [#var indentLevel=0]
-   [#var casesHandled=[]]
    [#list choice.choices as nested]
       [#var action]
       [#set action]
          [@BuildCode nested/]
       [/#set]
-      [#-- var la=nested.units[0] --]
       [#var la = nested.lookahead]
       [#if !la.alwaysSucceeds]
          [#set lookaheads = lookaheads+[la]]
@@ -316,15 +314,11 @@ throw new ParseException();"]
                  [#if lookahead_index != 0]
                  } else {
                  [/#if]
-                 [#set casesHandled = ","]
                  switch (nextTokenKind()) { 
               [#set indentLevel = indentLevel+1]
           [/#if]
           [#list lookahead.firstSetTokenNames as tokenName]
-               [#if !casesHandled?contains(","+tokenName+",")]
                  case ${tokenName}: 
-                 [#set casesHandled = casesHandled+tokenName+","]
-               [/#if]
           [/#list]
                     ${actions[lookahead_index]}
                     break;

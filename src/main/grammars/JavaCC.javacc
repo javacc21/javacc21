@@ -1286,6 +1286,14 @@ INJECT(ExpansionChoice) :
         }
         return false;
    }
+   
+   public boolean requiresPhase2Routine() {
+        for (Expansion choice : getChoices()) {
+            if (choice.requiresPhase2Routine())
+                return true;
+        }
+        return false;
+   }
 }
 
 Expansion ExpansionSequence() :
@@ -1391,6 +1399,34 @@ INJECT(ExpansionSequence) :
         	}
         }
         return false;
+   }
+   
+   public boolean requiresPhase2Routine() {
+            Lookahead lookahead = getLookahead();
+            if (lookahead.hasSemanticLookahead()) {
+            	return true;
+            }
+            Expansion previous = null;
+            for (Expansion unit : getUnits()) {
+                // For a Javacode production, we check
+                // the preceding Lookahead object.
+                if (unit instanceof NonTerminal
+                        && !(((NonTerminal) unit).prod instanceof BNFProduction)) {
+                    if (previous instanceof Lookahead) {
+                        Lookahead la = (Lookahead) previous;
+                        if (la.getNestedExpansion().requiresPhase2Routine())
+                            return true;
+                    }
+                } else {
+                    if (unit.requiresPhase2Routine())
+                        return true;
+                }
+                if (unit.isPossiblyEmpty()) {
+                    break;
+                }
+                previous = unit;
+            }
+            return false;   
    }
 }
 
@@ -1617,6 +1653,10 @@ INJECT(NonTerminal) :
      public boolean javaCodeCheck() {
      	return (prod instanceof JavaCodeProduction) || prod.getExpansion().javaCodeCheck();
      }
+     
+     public boolean requiresPhase2Routine() {
+         return prod.getExpansion().requiresPhase2Routine();
+     }
 }
 
 
@@ -1669,6 +1709,12 @@ INJECT(ZeroOrOne) :
     public boolean javaCodeCheck() {
          return getNestedExpansion().javaCodeCheck();
     }
+    
+    public boolean requiresPhase2Routine() {
+            return getNestedExpansion().requiresPhase2Routine();
+     }
+    
+    
 }
 
 
@@ -1719,6 +1765,9 @@ INJECT(ZeroOrMore) :
         return getNestedExpansion().javaCodeCheck();
     }
         
+    public boolean requiresPhase2Routine() {
+            return getNestedExpansion().requiresPhase2Routine();
+     }
 }
 
 INJECT(OneOrMore) : 
@@ -1767,6 +1816,10 @@ INJECT(OneOrMore) :
     public boolean javaCodeCheck() {
             return getNestedExpansion().javaCodeCheck();
     }
+    
+    public boolean requiresPhase2Routine() {
+            return getNestedExpansion().requiresPhase2Routine();
+     }
 }
 
 TryBlock TryBlock() : 
@@ -1821,7 +1874,11 @@ INJECT(TryBlock) :
     
     public boolean javaCodeCheck() {
          return getNestedExpansion().javaCodeCheck();
-    }    
+    }
+        
+    public boolean requiresPhase2Routine() {
+            return getNestedExpansion().requiresPhase2Routine();
+     }
 }
 
 CodeBlock CodeSnippet() #void :
@@ -1866,6 +1923,10 @@ INJECT(CodeBlock) :
     }
     
     public boolean javaCodeCheck() {
+        return false;
+    }
+    
+    public boolean requiresPhase2Routine() {
         return false;
     }
 }

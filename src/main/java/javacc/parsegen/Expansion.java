@@ -38,6 +38,7 @@ import javacc.parser.tree.TreeBuildingAnnotation;
 import javacc.parser.tree.TryBlock;
 import javacc.parser.tree.ZeroOrMore;
 import javacc.parser.tree.ZeroOrOne;
+import javacc.parser.tree.BNFProduction;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
 import javacc.parser.tree.ExplicitLookahead;
@@ -74,9 +75,10 @@ abstract public class Expansion extends BaseNode {
 
     private int ordinal= -1; // REVISIT
     
+    public long myGeneration = 0; //REVISIT
+    
     private String phase2RoutineName, phase3RoutineName;
 
-    public long myGeneration = 0;
 
     /**
      * This flag is used for bookkeeping by the minimumSize method in class
@@ -158,4 +160,6 @@ abstract public class Expansion extends BaseNode {
     abstract public boolean isPossiblyEmpty(); 
     
     abstract public boolean javaCodeCheck();
+    
+    abstract public boolean requiresPhase2Routine();
 }
