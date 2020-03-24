@@ -44,26 +44,10 @@ import javacc.parser.tree.*;
 public class Semanticizer {
     private Grammar grammar;
     private LexerData lexerData;
-    private List<TokenProduction> removeList = new ArrayList<TokenProduction>();
-    private List<Object> itemList = new ArrayList<Object>();
 
     public Semanticizer(Grammar grammar) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
-    }
-
-    private void prepareToRemove(TokenProduction tp, Object item) {
-        removeList.add(tp);
-        itemList.add(item);
-    }
-
-    private void removePreparedItems() {
-        for (int i = 0; i < removeList.size(); i++) {
-            TokenProduction tp = removeList.get(i);
-            tp.removeChild((Node) itemList.get(i));
-        }
-        removeList.clear();
-        itemList.clear();
     }
 
     public void start() throws MetaParseException {
@@ -134,7 +118,7 @@ public class Semanticizer {
                                     "Ignoring free-standing regular expression reference.  "
                                             + "If you really want this, you must give it a different label as <NEWLABEL:<"
                                             + res.getRegexp().getLabel() + ">>.");
-                    prepareToRemove(tp, res);
+                    tp.removeChild(res);
                 } else if (!tp.isExplicit() && res.getRegexp().isPrivate()) {
                     grammar.addSemanticError(res.getRegexp(),
                             "Private (#) regular expression cannot be defined within "
@@ -142,8 +126,6 @@ public class Semanticizer {
                 }
             }
         }
-
-        removePreparedItems();
 
         /*
          * The following loop inserts all names of regular expressions into
@@ -331,7 +313,7 @@ public class Semanticizer {
                                 // BNF. Hence, it belongs to only one lexical
                                 // state - namely "DEFAULT".
                                 sl.setOrdinal(re.getOrdinal());
-                                prepareToRemove(tp, res);
+                                tp.removeChild(res);
                             }
                         }
                     }
@@ -348,8 +330,6 @@ public class Semanticizer {
                 }
             }
         }
-
-        removePreparedItems();
 
         /*
          * The following code performs a tree walk on all regular expressions
@@ -370,13 +350,11 @@ public class Semanticizer {
                     frjn.root = res.getRegexp();
                     ExpansionTreeWalker.preOrderWalk(res.getRegexp(), frjn);
                     if (res.getRegexp() instanceof RegexpRef) {
-                        prepareToRemove(tp, res);
+                        tp.removeChild(res);
                     }
                 }
             }
         }
-
-        removePreparedItems();
 
         /*
          * The following code is executed only if
@@ -407,14 +385,12 @@ public class Semanticizer {
                                     jn.getLabel());
                         } else {
                             jn.setOrdinal(rexp.getOrdinal());
-                            prepareToRemove(tp, res);
+                            tp.removeChild(res);
                         }
                     }
                 }
             }
         }
-
-        removePreparedItems();
 
         /*
          * The following code is executed only if

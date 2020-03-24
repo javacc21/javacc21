@@ -1093,7 +1093,7 @@ INJECT(TokenProduction) :
     }
 
     public List<RegexpSpec> getRegexpSpecs() {
-        return Collections.unmodifiableList(Nodes.childrenOfType(this,RegexpSpec.class));
+        return Nodes.childrenOfType(this,RegexpSpec.class);
     }
 
     /**
