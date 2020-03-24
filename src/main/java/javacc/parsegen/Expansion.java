@@ -153,43 +153,14 @@ abstract public class Expansion extends BaseNode {
     }
     
     
-    public void genFirstSet(boolean[] firstSet) {
-    	    Expansion nestedExpansion = getNestedExpansion();
-    	    if (nestedExpansion != null) {
-    	    	nestedExpansion.genFirstSet(firstSet);
-    	    }
-    }
+//    public void genFirstSet(boolean[] firstSet) {
+//    	    Expansion nestedExpansion = getNestedExpansion();
+//    	    if (nestedExpansion != null) {
+//    	    	nestedExpansion.genFirstSet(firstSet);
+//    	    }
+//    }
     
-    public boolean isPossiblyEmpty() {
-        if (this instanceof NonTerminal) {
-            return ((NonTerminal) this).prod.emptyPossible;
-        } else if (this instanceof CodeBlock) {
-            return true;
-        } else if (this instanceof RegularExpression) {
-            return false;
-        } else if (this instanceof OneOrMore) {
-            return getNestedExpansion().isPossiblyEmpty();
-        } else if (this instanceof ZeroOrMore || this instanceof ZeroOrOne) {
-            return true;
-        } else if (this instanceof Lookahead) {
-            return true;
-        } else if (this instanceof ExpansionChoice) {
-            for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
-                if (e.isPossiblyEmpty()) {
-                    return true;
-                }
-            }
-            return false;
-        } else if (this instanceof ExpansionSequence) {
-            for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
-                if (!e.isPossiblyEmpty()) {
-                    return false;
-                }
-            }
-            return true;
-        } else if (this instanceof TryBlock) {
-            return getNestedExpansion().isPossiblyEmpty();
-        }
-    	return false;
-    }
+    abstract public void genFirstSet(boolean[] firstSet);
+    
+    abstract public boolean isPossiblyEmpty(); 
 }

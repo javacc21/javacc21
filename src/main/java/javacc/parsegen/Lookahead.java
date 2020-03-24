@@ -218,4 +218,8 @@ public class Lookahead extends Expansion {
     public void setAmount(int amount) {
         this.amount = amount;
     }
+    
+    public boolean isPossiblyEmpty() {
+    	return true;
+    }
 }

@@ -1268,6 +1268,15 @@ INJECT(ExpansionChoice) :
                 sub.genFirstSet(firstSet);
           }
    }
+   
+   public boolean isPossiblyEmpty() {
+        for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
+            if (e.isPossiblyEmpty()) {
+                return true;
+            }
+        }
+        return false;
+   }
 }
 
 Expansion ExpansionSequence() :
@@ -1356,6 +1365,14 @@ INJECT(ExpansionSequence) :
             }
    }
    
+   public boolean isPossiblyEmpty() {
+        for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
+            if (!e.isPossiblyEmpty()) {
+                return false;
+            }
+        }
+        return true;
+   }
 }
 
 
@@ -1573,6 +1590,10 @@ INJECT(NonTerminal) :
             	prod.getExpansion().genFirstSet(firstSet);
             }
      }
+     
+     public boolean isPossiblyEmpty() {
+         return prod.emptyPossible;
+     }
 }
 
 
@@ -1613,6 +1634,14 @@ INJECT(ZeroOrOne) :
     public Expansion getNestedExpansion() {
         return Nodes.firstChildOfType(this, Expansion.class);
     }
+    
+    public boolean isPossiblyEmpty() {
+        return true;
+    }
+    
+    public void genFirstSet(boolean[] firstSet) {
+        getNestedExpansion().genFirstSet(firstSet);
+    }
 }
 
 
@@ -1649,7 +1678,16 @@ INJECT(ZeroOrMore) :
     
     public void setLabel(String label) {
         this.label = label;
-    }    
+    }
+    
+    public boolean isPossiblyEmpty() {
+        return true;
+    }
+    
+    public void genFirstSet(boolean[] firstSet) {
+       getNestedExpansion().genFirstSet(firstSet);
+    }
+        
 }
 
 INJECT(OneOrMore) : 
@@ -1685,7 +1723,16 @@ INJECT(OneOrMore) :
     
     public void setLabel(String label) {
         this.label = label;
-    }    
+    }
+    
+    public boolean isPossiblyEmpty() {
+        return getNestedExpansion().isPossiblyEmpty();
+    }
+    
+    public void genFirstSet(boolean[] firstSet) {
+        getNestedExpansion().genFirstSet(firstSet);
+    }
+    
 }
 
 TryBlock TryBlock() : 
@@ -1729,6 +1776,14 @@ INJECT(TryBlock) :
     public FinallyBlock getFinallyBlock() {
         return Nodes.firstChildOfType(this, FinallyBlock.class);
     }
+    
+    public boolean isPossiblyEmpty() {
+        return getNestedExpansion().isPossiblyEmpty();
+    }
+    
+    public void genFirstSet(boolean[] firstSet) {
+        getNestedExpansion().genFirstSet(firstSet);
+    }
 }
 
 CodeBlock CodeSnippet() #void :
@@ -1755,6 +1810,21 @@ INJECT(CodeBlock) :
 {
     public CodeBlock getJavaCode() {
         return this;
+    }
+    
+    
+    /**
+     * Always true
+     */
+    public boolean isPossiblyEmpty() {
+       return true;
+    }
+    
+    /**
+     * Does nothing
+     */
+    public void genFirstSet(boolean[] firstSet) {
+       // Does nothing
     }
 }
 

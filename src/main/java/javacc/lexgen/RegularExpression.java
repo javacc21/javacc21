@@ -370,4 +370,8 @@ public abstract class RegularExpression extends Expansion {
     public void genFirstSet(boolean[] firstSet) {
     	firstSet[getOrdinal()] = true;
     }
+    
+    public boolean isPossiblyEmpty() {
+    	return false;
+    }
 }
