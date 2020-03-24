@@ -153,7 +153,7 @@ class LookaheadCalc {
 			if (la == 1) {
 				for (int i = first; i < choices.size() - 1; i++) {
 					Expansion exp = choices.get(i);
-					if (Semanticizer.emptyExpansionExists(exp)) {
+					if (exp.emptyExpansionExists()) {
 						grammar
 						.addWarning(
 								exp,

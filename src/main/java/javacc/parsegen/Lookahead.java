@@ -90,7 +90,7 @@ public class Lookahead extends Expansion {
     }
     
     public boolean getPossibleEmptyExpansionOrJavaCode() {
-        return Semanticizer.emptyExpansionExists(expansion) || Semanticizer.javaCodeCheck(expansion);
+        return expansion.emptyExpansionExists() || Semanticizer.javaCodeCheck(expansion);
     }
     
     
@@ -106,7 +106,7 @@ public class Lookahead extends Expansion {
         if (semanticLookahead != null) 
             return false;
         return getAmount() == 0 || Semanticizer.javaCodeCheck(expansion)
-                || Semanticizer.emptyExpansionExists(expansion);
+                || expansion.emptyExpansionExists();
     }
 
     /**
@@ -119,7 +119,7 @@ public class Lookahead extends Expansion {
             return false;
         if (getAmount() > 1)
             return true;
-        if (Semanticizer.emptyExpansionExists(expansion)
+        if (expansion.emptyExpansionExists()
                 || Semanticizer.javaCodeCheck(expansion))
             return false;
         if (semanticLookahead != null)
@@ -162,7 +162,8 @@ public class Lookahead extends Expansion {
                         return true;
 
                 }
-                if (!Semanticizer.emptyExpansionExists(unit)) {
+//                if (!Semanticizer.emptyExpansionExists(unit)) {
+                if (unit.emptyExpansionExists()) {
                     break;
                 }
                 previous = unit;

@@ -32,8 +32,17 @@ package javacc.parsegen;
 
 import javacc.Grammar;
 import javacc.parser.BaseNode;
+import javacc.parser.Nodes;
 import javacc.lexgen.RegularExpression;
 import javacc.parser.tree.TreeBuildingAnnotation;
+import javacc.parser.tree.TryBlock;
+import javacc.parser.tree.ZeroOrMore;
+import javacc.parser.tree.ZeroOrOne;
+import javacc.parser.tree.CodeBlock;
+import javacc.parser.tree.ExpansionChoice;
+import javacc.parser.tree.ExpansionSequence;
+import javacc.parser.tree.NonTerminal;
+import javacc.parser.tree.OneOrMore;
 import javacc.parser.tree.ParserProduction;
 
 
@@ -149,5 +158,38 @@ abstract public class Expansion extends BaseNode {
     	    if (nestedExpansion != null) {
     	    	nestedExpansion.genFirstSet(firstSet);
     	    }
+    }
+    
+    public boolean emptyExpansionExists() {
+        if (this instanceof NonTerminal) {
+            return ((NonTerminal) this).prod.emptyPossible;
+        } else if (this instanceof CodeBlock) {
+            return true;
+        } else if (this instanceof RegularExpression) {
+            return false;
+        } else if (this instanceof OneOrMore) {
+            return getNestedExpansion().emptyExpansionExists();
+        } else if (this instanceof ZeroOrMore || this instanceof ZeroOrOne) {
+            return true;
+        } else if (this instanceof Lookahead) {
+            return true;
+        } else if (this instanceof ExpansionChoice) {
+            for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
+                if (e.emptyExpansionExists()) {
+                    return true;
+                }
+            }
+            return false;
+        } else if (this instanceof ExpansionSequence) {
+            for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
+                if (!e.emptyExpansionExists()) {
+                    return false;
+                }
+            }
+            return true;
+        } else if (this instanceof TryBlock) {
+            return getNestedExpansion().emptyExpansionExists();
+        }
+    	return false;
     }
 }

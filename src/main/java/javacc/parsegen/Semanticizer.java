@@ -450,7 +450,7 @@ public class Semanticizer {
         while (emptyUpdate) {
             emptyUpdate = false;
             for (ParserProduction prod : grammar.getParserProductions()) {
-                if (emptyExpansionExists(prod.getExpansion())) {
+                if (prod.getExpansion().emptyExpansionExists()) {
                     if (!prod.emptyPossible) {
                     	emptyUpdate = true;
                         prod.emptyPossible = true;
@@ -555,42 +555,6 @@ public class Semanticizer {
         return false;
     }
 
-    // returns true if "exp" can expand to the empty string, returns false
-    // otherwise.
-    static public boolean emptyExpansionExists(Expansion exp) {
-        if (exp instanceof NonTerminal) {
-            return ((NonTerminal) exp).prod.emptyPossible;
-        } else if (exp instanceof CodeBlock) {
-            return true;
-        } else if (exp instanceof RegularExpression) {
-            return false;
-        } else if (exp instanceof OneOrMore) {
-            return emptyExpansionExists(exp.getNestedExpansion());
-        } else if (exp instanceof ZeroOrMore || exp instanceof ZeroOrOne) {
-            return true;
-        } else if (exp instanceof Lookahead) {
-            return true;
-        } else if (exp instanceof ExpansionChoice) {
-            for (Expansion e : Nodes.childrenOfType(exp, Expansion.class)) {
-                if (emptyExpansionExists(e)) {
-                    return true;
-                }
-            }
-            return false;
-        } else if (exp instanceof ExpansionSequence) {
-            for (Expansion e : Nodes.childrenOfType(exp, Expansion.class)) {
-                if (!emptyExpansionExists(e)) {
-                    return false;
-                }
-            }
-            return true;
-        } else if (exp instanceof TryBlock) {
-            return emptyExpansionExists(exp.getNestedExpansion());
-        } else {
-            return false; 
-        }
-    }
-
     // Updates prod.leftExpansions based on a walk of exp.
     static private void addLeftMost(ParserProduction prod, Expansion exp) {
         if (exp instanceof NonTerminal) {
@@ -620,7 +584,7 @@ public class Semanticizer {
         } else if (exp instanceof ExpansionSequence) {
             for (Expansion e : Nodes.childrenOfType(exp, Expansion.class)) {
                 addLeftMost(prod, e);
-                if (!emptyExpansionExists(e)) {
+                if (!exp.emptyExpansionExists()) {
                     break;
                 }
             }
@@ -754,7 +718,7 @@ public class Semanticizer {
             	}
             	else if (javaCodeCheck(unit)) {
             		return true;
-            	} else if (!emptyExpansionExists(unit)) {
+            	} else if (!unit.emptyExpansionExists()) {
             		return false;
             	}
             }
@@ -901,19 +865,19 @@ public class Semanticizer {
 
          void action(Expansion e) {
             if (e instanceof OneOrMore) {
-                if (emptyExpansionExists(e.getNestedExpansion())) {
+                if (e.getNestedExpansion().emptyExpansionExists()) {
                     grammar
                             .addSemanticError(e,
                                     "Expansion within \"(...)+\" can be matched by empty string.");
                 }
             } else if (e instanceof ZeroOrMore) {
-                if (emptyExpansionExists(e.getNestedExpansion())) {
+                if (e.getNestedExpansion().emptyExpansionExists()) {
                     grammar
                             .addSemanticError(e,
                                     "Expansion within \"(...)*\" can be matched by empty string.");
                 }
             } else if (e instanceof ZeroOrOne) {
-                if (emptyExpansionExists(e.getNestedExpansion())) {
+                if (e.getNestedExpansion().emptyExpansionExists()) {
                     grammar
                             .addSemanticError(e,
                                     "Expansion within \"(...)?\" can be matched by empty string.");
@@ -953,7 +917,6 @@ public class Semanticizer {
             }
             ExpansionSequence seq = (ExpansionSequence) exp;
             return (!(seq.getLookahead()  instanceof ExplicitLookahead));
-//            return !seq.getLookahead().isExplicit();
         }
     }
 }
