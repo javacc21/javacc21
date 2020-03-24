@@ -825,7 +825,7 @@ public class Semanticizer {
                     return;
                 }
                 ExpansionSequence seq = (ExpansionSequence) e;
-                Lookahead la = (Lookahead) seq.getChild(0);
+                Lookahead la = seq.getLookahead();
                 if (!(la instanceof ExplicitLookahead)) {
                     return;
                 }

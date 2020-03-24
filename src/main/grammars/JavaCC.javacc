@@ -1278,7 +1278,6 @@ Expansion ExpansionSequence() :
   la.setBeginLine(t.getBeginLine());
   la.setBeginColumn(t.getBeginColumn());
   la.setAmount(grammar.getOptions().getLookahead());
-  int index = 1;
 }
 {
   [ 
@@ -1299,8 +1298,6 @@ Expansion ExpansionSequence() :
       sub=ExpansionUnit()
       {
           pokeNode(sub);
-          sub.index = index;
-          ++index;
       }
   )+
   {
@@ -1447,21 +1444,18 @@ Expansion ExpansionUnit() :
   {
       // Now set the expansion field of la with a dummy
       // expansion (we use EOF).
-      la.setExpansion(new EndOfFile());
+     // la.setExpansion(new EndOfFile());
       // Create a singleton choice with an empty code snippet.
       ExpansionChoice ch = new ExpansionChoice();
       ch.setGrammar(grammar);
       ExpansionSequence seq = new ExpansionSequence(grammar);
       seq.addChild(la);
-      la.index = 0;
       act = new CodeBlock();
       act.setGrammar(grammar);
       act.setBeginLine(t.getBeginLine());
       act.setBeginColumn(t.getBeginColumn());
       seq.addChild(act);
-      act.index = 1;
       ch.addChild(seq);
-      seq.index = 0;
       if (la.getAmount() != 0) {
         if (la.getSemanticLookahead() != null) {
           grammar.addWarning(t, "Encountered LOOKAHEAD(...) at a non-choice location. Only semantic lookahead will be considered here.");

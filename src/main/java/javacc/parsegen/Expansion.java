@@ -52,17 +52,16 @@ abstract public class Expansion extends BaseNode {
 
     private Lookahead lookahead;
 
-    public Expansion(Grammar grammar) {
+    public int getIndex() {
+    	return parent.indexOf(this);
+	}
+
+	public Expansion(Grammar grammar) {
         setGrammar(grammar);
     }
 
     public Expansion() {}
 
-    /**
-     * The ordinal of this node with respect to its parent.
-     */
-    public int index;
-    
     private int ordinal= -1; // REVISIT
     
     private String phase2RoutineName, phase3RoutineName;
