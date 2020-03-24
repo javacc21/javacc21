@@ -450,7 +450,7 @@ public class Semanticizer {
         while (emptyUpdate) {
             emptyUpdate = false;
             for (ParserProduction prod : grammar.getParserProductions()) {
-                if (prod.getExpansion().emptyExpansionExists()) {
+                if (prod.getExpansion().isPossiblyEmpty()) {
                     if (!prod.emptyPossible) {
                     	emptyUpdate = true;
                         prod.emptyPossible = true;
@@ -584,7 +584,7 @@ public class Semanticizer {
         } else if (exp instanceof ExpansionSequence) {
             for (Expansion e : Nodes.childrenOfType(exp, Expansion.class)) {
                 addLeftMost(prod, e);
-                if (!exp.emptyExpansionExists()) {
+                if (!exp.isPossiblyEmpty()) {
                     break;
                 }
             }
@@ -718,7 +718,7 @@ public class Semanticizer {
             	}
             	else if (javaCodeCheck(unit)) {
             		return true;
-            	} else if (!unit.emptyExpansionExists()) {
+            	} else if (!unit.isPossiblyEmpty()) {
             		return false;
             	}
             }
@@ -865,19 +865,19 @@ public class Semanticizer {
 
          void action(Expansion e) {
             if (e instanceof OneOrMore) {
-                if (e.getNestedExpansion().emptyExpansionExists()) {
+                if (e.getNestedExpansion().isPossiblyEmpty()) {
                     grammar
                             .addSemanticError(e,
                                     "Expansion within \"(...)+\" can be matched by empty string.");
                 }
             } else if (e instanceof ZeroOrMore) {
-                if (e.getNestedExpansion().emptyExpansionExists()) {
+                if (e.getNestedExpansion().isPossiblyEmpty()) {
                     grammar
                             .addSemanticError(e,
                                     "Expansion within \"(...)*\" can be matched by empty string.");
                 }
             } else if (e instanceof ZeroOrOne) {
-                if (e.getNestedExpansion().emptyExpansionExists()) {
+                if (e.getNestedExpansion().isPossiblyEmpty()) {
                     grammar
                             .addSemanticError(e,
                                     "Expansion within \"(...)?\" can be matched by empty string.");

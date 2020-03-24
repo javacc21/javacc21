@@ -1350,7 +1350,7 @@ INJECT(ExpansionSequence) :
                 } else {
                      unit.genFirstSet(firstSet);
                 }
-                if (!Semanticizer.emptyExpansionExists(unit)) {
+                if (!unit.isPossiblyEmpty()) {
                     break;
                 }
             }

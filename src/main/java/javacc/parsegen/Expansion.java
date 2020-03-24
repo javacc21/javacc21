@@ -160,7 +160,7 @@ abstract public class Expansion extends BaseNode {
     	    }
     }
     
-    public boolean emptyExpansionExists() {
+    public boolean isPossiblyEmpty() {
         if (this instanceof NonTerminal) {
             return ((NonTerminal) this).prod.emptyPossible;
         } else if (this instanceof CodeBlock) {
@@ -168,27 +168,27 @@ abstract public class Expansion extends BaseNode {
         } else if (this instanceof RegularExpression) {
             return false;
         } else if (this instanceof OneOrMore) {
-            return getNestedExpansion().emptyExpansionExists();
+            return getNestedExpansion().isPossiblyEmpty();
         } else if (this instanceof ZeroOrMore || this instanceof ZeroOrOne) {
             return true;
         } else if (this instanceof Lookahead) {
             return true;
         } else if (this instanceof ExpansionChoice) {
             for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
-                if (e.emptyExpansionExists()) {
+                if (e.isPossiblyEmpty()) {
                     return true;
                 }
             }
             return false;
         } else if (this instanceof ExpansionSequence) {
             for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
-                if (!e.emptyExpansionExists()) {
+                if (!e.isPossiblyEmpty()) {
                     return false;
                 }
             }
             return true;
         } else if (this instanceof TryBlock) {
-            return getNestedExpansion().emptyExpansionExists();
+            return getNestedExpansion().isPossiblyEmpty();
         }
     	return false;
     }
