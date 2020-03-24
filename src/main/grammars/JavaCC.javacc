@@ -1260,7 +1260,7 @@ INJECT(ExpansionChoice) :
 }
 {
    public List<Expansion> getChoices() {
-       return Collections.unmodifiableList(Nodes.childrenOfType(this, Expansion.class));
+       return Nodes.childrenOfType(this, Expansion.class);
    }
    
    public void genFirstSet(boolean[] firstSet) {
@@ -1272,6 +1272,15 @@ INJECT(ExpansionChoice) :
    public boolean isPossiblyEmpty() {
         for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
             if (e.isPossiblyEmpty()) {
+                return true;
+            }
+        }
+        return false;
+   }
+   
+   public boolean javaCodeCheck() {
+           for (Expansion sub : getChoices()) { 
+            if (sub.javaCodeCheck()) {
                 return true;
             }
         }
@@ -1338,11 +1347,7 @@ INJECT(ExpansionSequence) :
        return Nodes.childrenOfType(this, Expansion.class);
    }
 
-   public Lookahead getLookahead() {
-       return (Lookahead) getChild(0);
-   }
-   
-   
+
    public void genFirstSet(boolean[] firstSet) {
              Expansion prevExp = null;
              for (Expansion unit : Nodes.childrenOfType(this,  Expansion.class)) {
@@ -1372,6 +1377,20 @@ INJECT(ExpansionSequence) :
             }
         }
         return true;
+   }
+   
+   public boolean javaCodeCheck() {
+        for (Expansion unit : getUnits()) { 
+        	if (unit instanceof ExplicitLookahead) {
+        		return false;
+        	}
+        	else if (unit.javaCodeCheck()) {
+        		return true;
+        	} else if (!unit.isPossiblyEmpty()) {
+        		return false;
+        	}
+        }
+        return false;
    }
 }
 
@@ -1467,6 +1486,7 @@ Expansion ExpansionUnit() :
       ch.setGrammar(grammar);
       ExpansionSequence seq = new ExpansionSequence(grammar);
       seq.addChild(la);
+      seq.setLookahead(la);
       act = new CodeBlock();
       act.setGrammar(grammar);
       act.setBeginLine(t.getBeginLine());
@@ -1528,7 +1548,6 @@ Expansion ExpansionUnit() :
  ]
  {
         result.setTreeNodeBehavior(tba);
-	    result.setLookahead(la);
         return result;
  }
 }
@@ -1594,6 +1613,10 @@ INJECT(NonTerminal) :
      public boolean isPossiblyEmpty() {
          return prod.emptyPossible;
      }
+     
+     public boolean javaCodeCheck() {
+     	return (prod instanceof JavaCodeProduction) || prod.getExpansion().javaCodeCheck();
+     }
 }
 
 
@@ -1642,6 +1665,10 @@ INJECT(ZeroOrOne) :
     public void genFirstSet(boolean[] firstSet) {
         getNestedExpansion().genFirstSet(firstSet);
     }
+    
+    public boolean javaCodeCheck() {
+         return getNestedExpansion().javaCodeCheck();
+    }
 }
 
 
@@ -1686,6 +1713,10 @@ INJECT(ZeroOrMore) :
     
     public void genFirstSet(boolean[] firstSet) {
        getNestedExpansion().genFirstSet(firstSet);
+    }
+    
+    public boolean javaCodeCheck() {
+        return getNestedExpansion().javaCodeCheck();
     }
         
 }
@@ -1733,6 +1764,9 @@ INJECT(OneOrMore) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
+    public boolean javaCodeCheck() {
+            return getNestedExpansion().javaCodeCheck();
+    }
 }
 
 TryBlock TryBlock() : 
@@ -1784,6 +1818,10 @@ INJECT(TryBlock) :
     public void genFirstSet(boolean[] firstSet) {
         getNestedExpansion().genFirstSet(firstSet);
     }
+    
+    public boolean javaCodeCheck() {
+         return getNestedExpansion().javaCodeCheck();
+    }    
 }
 
 CodeBlock CodeSnippet() #void :
@@ -1825,6 +1863,10 @@ INJECT(CodeBlock) :
      */
     public void genFirstSet(boolean[] firstSet) {
        // Does nothing
+    }
+    
+    public boolean javaCodeCheck() {
+        return false;
     }
 }
 

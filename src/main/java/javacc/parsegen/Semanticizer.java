@@ -692,50 +692,13 @@ public class Semanticizer {
         }
         return false;
     }
-
-    /**
-     * Returns true if there is a JAVACODE production that the argument
-     * expansion may directly expand to (without consuming tokens or
-     * encountering lookahead).
-     */
-    static boolean javaCodeCheck(Expansion exp) {
-        if (exp instanceof RegularExpression) {
-            return false;
-        } else if (exp instanceof NonTerminal) {
-            ParserProduction prod = ((NonTerminal) exp).prod;
-            return (prod instanceof JavaCodeProduction) || javaCodeCheck(prod.getExpansion());
-        } else if (exp instanceof ExpansionChoice) {
-            for (Expansion sub : Nodes.childrenOfType(exp, Expansion.class)) {
-                if (javaCodeCheck(sub)) {
-                    return true;
-                }
-            }
-            return false;
-        } else if (exp instanceof ExpansionSequence) {
-            for (Expansion unit : Nodes.childrenOfType(exp,  Expansion.class)) {
-            	if (unit instanceof ExplicitLookahead) {
-            		return false;
-            	}
-            	else if (javaCodeCheck(unit)) {
-            		return true;
-            	} else if (!unit.isPossiblyEmpty()) {
-            		return false;
-            	}
-            }
-            return false;
-        } else if (exp instanceof OneOrMore) {
-            return javaCodeCheck(exp.getNestedExpansion());
-        } else if (exp instanceof ZeroOrMore) {
-            return javaCodeCheck(exp.getNestedExpansion());
-        } else if (exp instanceof ZeroOrOne) {
-            return javaCodeCheck(exp.getNestedExpansion());
-        } else if (exp instanceof TryBlock) {
-            return javaCodeCheck(exp.getNestedExpansion());
-        } else {
-            return false;
-        }
+    
+    
+    static boolean javaCodeCheckSCK(Expansion exp) {
+    	return exp.javaCodeCheck();
     }
 
+   
     /**
      * Objects of this class are created from class Semanticizer to work on
      * references to regular expressions from RJustName's.
@@ -802,6 +765,7 @@ public class Semanticizer {
                 expansionSequence.setBeginLine(la.getBeginLine());
                 expansionSequence.setBeginColumn(la.getBeginColumn());
                 expansionSequence.addChild(la);
+                expansionSequence.setLookahead(la);
                 CodeBlock codeBlock = new CodeBlock();
                 codeBlock.setBeginLine(la.getBeginLine());
                 codeBlock.setBeginColumn(la.getBeginColumn());

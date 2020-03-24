@@ -374,4 +374,10 @@ public abstract class RegularExpression extends Expansion {
     public boolean isPossiblyEmpty() {
     	return false;
     }
+    
+    public boolean javaCodeCheck() {
+    	return false;
+    }
 }
+
+

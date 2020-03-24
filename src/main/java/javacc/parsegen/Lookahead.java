@@ -66,7 +66,7 @@ public class Lookahead extends Expansion {
     
     protected Lookahead() {}
     
-    boolean[] getFirstSet() {
+    private boolean[] getFirstSet() {
         if (firstSet == null) {
             firstSet = new boolean[getGrammar().getLexerData().getTokenCount()];
             expansion.genFirstSet(firstSet);
@@ -90,22 +90,23 @@ public class Lookahead extends Expansion {
     }
     
     public boolean getPossibleEmptyExpansionOrJavaCode() {
-        return expansion.isPossiblyEmpty() || Semanticizer.javaCodeCheck(expansion);
+        return expansion.isPossiblyEmpty() || expansion.javaCodeCheck();
     }
     
     
     
 
     public Lookahead(Expansion nestedExpansion) {
-        super(nestedExpansion.getGrammar());
+//        super(nestedExpansion.getGrammar());
         this.expansion = nestedExpansion;
+        setGrammar(nestedExpansion.getGrammar());
         setAmount(getGrammar().getOptions().getLookahead());
     }
 
     public boolean getAlwaysSucceeds() {
         if (semanticLookahead != null) 
             return false;
-        return getAmount() == 0 || Semanticizer.javaCodeCheck(expansion)
+        return getAmount() == 0 || expansion.javaCodeCheck()
                 || expansion.isPossiblyEmpty();
     }
 
@@ -119,8 +120,7 @@ public class Lookahead extends Expansion {
             return false;
         if (getAmount() > 1)
             return true;
-        if (expansion.isPossiblyEmpty()
-                || Semanticizer.javaCodeCheck(expansion))
+        if (expansion.isPossiblyEmpty() || expansion.javaCodeCheck())
             return false;
         if (semanticLookahead != null)
             return true;
@@ -221,5 +221,9 @@ public class Lookahead extends Expansion {
     
     public boolean isPossiblyEmpty() {
     	return true;
+    }
+    
+    public boolean javaCodeCheck() {
+    	return false;
     }
 }

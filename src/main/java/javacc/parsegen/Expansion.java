@@ -38,9 +38,10 @@ import javacc.parser.tree.TreeBuildingAnnotation;
 import javacc.parser.tree.TryBlock;
 import javacc.parser.tree.ZeroOrMore;
 import javacc.parser.tree.ZeroOrOne;
-import javacc.parser.tree.CodeBlock;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
+import javacc.parser.tree.ExplicitLookahead;
+import javacc.parser.tree.JavaCodeProduction;
 import javacc.parser.tree.NonTerminal;
 import javacc.parser.tree.OneOrMore;
 import javacc.parser.tree.ParserProduction;
@@ -120,7 +121,7 @@ abstract public class Expansion extends BaseNode {
         }
     }
 
-    public void setLookahead(Lookahead lookahead) {
+    public  void setLookahead(Lookahead lookahead) {
     	this.lookahead = lookahead;
     }
 
@@ -152,15 +153,9 @@ abstract public class Expansion extends BaseNode {
     	return phase3RoutineName != null ? phase3RoutineName : getPhase2RoutineName().replace("phase2", "phase3");
     }
     
-    
-//    public void genFirstSet(boolean[] firstSet) {
-//    	    Expansion nestedExpansion = getNestedExpansion();
-//    	    if (nestedExpansion != null) {
-//    	    	nestedExpansion.genFirstSet(firstSet);
-//    	    }
-//    }
-    
     abstract public void genFirstSet(boolean[] firstSet);
     
     abstract public boolean isPossiblyEmpty(); 
+    
+    abstract public boolean javaCodeCheck();
 }
