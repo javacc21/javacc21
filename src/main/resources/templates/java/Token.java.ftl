@@ -196,16 +196,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return getChildCount() > 0;
     }
 
-    @Override
-    public Node getFirstChild() {
-        return Nodes.getFirstChild(this);
-    }
-    
-    @Override
-    public Node getLastChild() {
-        return Nodes.getLastChild(this);
-    }
-
     public void setChild(int i, Node n) {
         throw new UnsupportedOperationException();
     }
@@ -273,11 +263,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return attributes.keySet();
     }
 
-    @Override
-    public Node findNodeAt(int line, int column) {
-        return Nodes.findNodeAt(this, line, column);
-    }
-    
    [#if grammar.options.freemarkerNodes]
     public TemplateNodeModel getParentNode() {
         return parent;

@@ -112,16 +112,6 @@ public class ${grammar.baseNodeClassName} implements Node {
         return getChildCount() > 0;
     }
 
-    @Override
-    public Node getFirstChild() {
-        return Nodes.getFirstChild(this);
-    }
-    
-    @Override
-    public Node getLastChild() {
-        return Nodes.getLastChild(this);
-    }
-
     public void setParent(Node n) {
         parent = n;
     }
@@ -299,11 +289,6 @@ public class ${grammar.baseNodeClassName} implements Node {
             buf.append(t);
         }
         return buf.toString();
-    }
-    
-    @Override
-    public Node findNodeAt(int line, int column) {
-        return Nodes.findNodeAt(this, line, column);
     }
     
 }
