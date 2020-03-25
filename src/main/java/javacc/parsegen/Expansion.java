@@ -30,22 +30,10 @@
 
 package javacc.parsegen;
 
-import java.util.List;
-
 import javacc.Grammar;
 import javacc.parser.BaseNode;
-import javacc.parser.Nodes;
 import javacc.lexgen.RegularExpression;
 import javacc.parser.tree.TreeBuildingAnnotation;
-import javacc.parser.tree.TryBlock;
-import javacc.parser.tree.ZeroOrMore;
-import javacc.parser.tree.ZeroOrOne;
-import javacc.parser.tree.BNFProduction;
-import javacc.parser.tree.CodeBlock;
-import javacc.parser.tree.ExpansionChoice;
-import javacc.parser.tree.ExpansionSequence;
-import javacc.parser.tree.NonTerminal;
-import javacc.parser.tree.OneOrMore;
 import javacc.parser.tree.ParserProduction;
 
 

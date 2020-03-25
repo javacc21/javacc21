@@ -77,9 +77,6 @@ public class Lookahead extends Expansion {
         return expansion.isPossiblyEmpty() || expansion.javaCodeCheck();
     }
     
-    
-    
-
     public Lookahead(Expansion nestedExpansion) {
         this.expansion = nestedExpansion;
         setGrammar(nestedExpansion.getGrammar());
@@ -156,7 +153,7 @@ public class Lookahead extends Expansion {
         this.amount = amount;
     }
 
-    // The following 4 little methods should disappear when we 
+    // The following 5 little methods should disappear when we 
     // finally see our way through to having Lookahead not extend Expansion anymore.
     
     public boolean isPossiblyEmpty() {

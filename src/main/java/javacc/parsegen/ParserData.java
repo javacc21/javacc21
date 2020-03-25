@@ -38,7 +38,6 @@ import javacc.lexgen.RegularExpression;
 import javacc.parser.Nodes;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
-import javacc.parser.tree.CodeBlock;
 import javacc.parser.tree.ParserProduction;
 import javacc.parser.tree.BNFProduction;
 import javacc.parser.tree.OneOrMore;

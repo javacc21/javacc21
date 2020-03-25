@@ -207,10 +207,8 @@
        [/#if]
   [#if !grammar.options.faultTolerant]       
        consumeToken(${regexp.label});
-   [#elseif regexp.forced]
-       consumeToken(${regexp.label}, true);
    [#else]
-        consumeToken(${regexp.label}, false);
+        consumeToken(${regexp.label}, ${regexp.forced?string("true", "false")});
    [/#if]
 [/#macro]
 
