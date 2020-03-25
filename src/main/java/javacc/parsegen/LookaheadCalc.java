@@ -113,7 +113,7 @@ class LookaheadCalc {
 		// is false), while dbr ignores semantic lookahead.
 		// List<MatchInfo>[] dbl = new List[ch.getChoices().size()];
 		// List<MatchInfo>[] dbr = new List[ch.getChoices().size()];
-		List<Expansion> choices = Nodes.childrenOfType(ch, Expansion.class);
+		List<Expansion> choices = ch.getChoices();
 		int numChoices = choices.size();
 		List<List<MatchInfo>> dbl = new ArrayList<List<MatchInfo>>(numChoices);
 		List<List<MatchInfo>> dbr = new ArrayList<List<MatchInfo>>(numChoices);
@@ -216,12 +216,12 @@ class LookaheadCalc {
 			return false;
 		}
 		ExpansionSequence seq = (ExpansionSequence) exp;
-		List<Expansion> es = Nodes.childrenOfType(seq,  Expansion.class);
+		List<Expansion> es = seq.getUnits();
 		if (es.isEmpty()) {
 			//REVISIT: Look at this case carefully!
 			return false;
 		}
-		Expansion e = Nodes.firstChildOfType(seq, Expansion.class);
+		Expansion e = seq.firstChildOfType(Expansion.class);
 		return e instanceof ExplicitLookahead;
 	}
 
@@ -229,7 +229,7 @@ class LookaheadCalc {
 		if (ch.getGrammar().getOptions().getForceLaCheck()) {
 			return 0;
 		}
-		List<Expansion> choices = Nodes.childrenOfType(ch, Expansion.class);
+		List<Expansion> choices = ch.getChoices();
 		for (int i = 0; i < choices.size(); i++) {
 			if (!explicitLookahead(choices.get(i))) {
 				return i;

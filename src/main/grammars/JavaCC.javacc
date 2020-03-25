@@ -797,15 +797,15 @@ INJECT(ParserProduction) :
     }
     
     public ThrowsList getThrowsList() {
-        return Nodes.firstChildOfType(this, ThrowsList.class);
+        return firstChildOfType(ThrowsList.class);
     }
     
     public FormalParams getParameterList() {
-        return Nodes.firstChildOfType(this, FormalParams.class);
+        return firstChildOfType(FormalParams.class);
     }
     
     public TreeBuildingAnnotation getTreeNodeBehavior() {
-        return Nodes.firstChildOfType(this, TreeBuildingAnnotation.class);
+        return firstChildOfType(TreeBuildingAnnotation.class);
     }
 
 
@@ -865,7 +865,7 @@ INJECT(ParserProduction) :
     }
 
     public String getAccessModifier() {
-        for (Token t : Nodes.childrenOfType(this, Token.class)) {
+        for (Token t : childrenOfType(Token.class)) {
            if (t.getId() == JavaCCConstants.PRIVATE) {
                return "private";
            }
@@ -880,7 +880,7 @@ INJECT(ParserProduction) :
     }
 
     public ReturnType getReturnType() {
-        return Nodes.firstChildOfType(this, ReturnType.class);
+        return firstChildOfType(ReturnType.class);
     }
     
     public void adjustFirstToken(Token t) {
@@ -945,7 +945,7 @@ INJECT(BNFProduction) :
 }
 {
     public CodeBlock getJavaCode() {
-       return Nodes.firstChildOfType(this, CodeBlock.class);
+       return firstChildOfType(CodeBlock.class);
     }
 }
 
@@ -996,7 +996,7 @@ INJECT(TreeBuildingAnnotation) :
     }
 
     public Expression getCondition() {
-        return Nodes.firstChildOfType(this, Expression.class);
+        return firstChildOfType(Expression.class);
     }
     
     public boolean getGtNode() {
@@ -1076,15 +1076,16 @@ INJECT(TokenProduction) :
 
     public boolean getIgnoreCase() {
         for (Node n : children) {
-	   if (n instanceof Token) {
-	      Token t = (Token) n;
+	      if (n instanceof Token) {
+	           Token t = (Token) n;
                if (t.getId() == JavaCCConstants._IGNORE_CASE) {
                    return true;
                }
-	   }
+	       }
         }
         return false;
     }
+    
     
     private String lexicalState;
     
@@ -1093,7 +1094,7 @@ INJECT(TokenProduction) :
     }
 
     public List<RegexpSpec> getRegexpSpecs() {
-        return Nodes.childrenOfType(this,RegexpSpec.class);
+        return childrenOfType(RegexpSpec.class);
     }
 
     /**
@@ -1142,6 +1143,8 @@ INJECT(TokenProduction) :
        return false;
     }
 
+
+
     public void setExplicit(boolean explicit) {
         this.explicit = explicit;
     }
@@ -1155,15 +1158,15 @@ INJECT(TokenProduction) :
     }
 
     public String getKind() {
-        for (Token t : Nodes.childrenOfType(this, Token.class)) {
-           switch (t.getId()) {
-              case JavaCCConstants._MORE : return "MORE";
-              case JavaCCConstants._SPECIAL_TOKEN : return "SPECIAL_TOKEN";
-              case JavaCCConstants._SKIP : return "SKIP";
-              case JavaCCConstants._TOKEN : return "TOKEN";
-           }
-        }
-        return "TOKEN";
+       for (Token t : childrenOfType(Token.class)) {
+	       switch (t.getId()) {
+	          case JavaCCConstants._MORE : return "MORE";
+	          case JavaCCConstants._SPECIAL_TOKEN : return "SPECIAL_TOKEN";
+	          case JavaCCConstants._SKIP : return "SKIP";
+	          case JavaCCConstants._TOKEN : return "TOKEN";
+	       }
+      }
+      return "TOKEN";
     }
 }
 
@@ -1232,15 +1235,15 @@ INJECT(RegexpSpec) :
     }
 
     public Identifier getNsTok() {
-       return Nodes.firstChildOfType(this, Identifier.class);
+       return firstChildOfType(Identifier.class);
     }
 
     public RegularExpression getRegexp() {
-         return Nodes.firstChildOfType(this, RegularExpression.class);
+         return firstChildOfType(RegularExpression.class);
     }
 
     public CodeBlock getCodeSnippet() {
-        return Nodes.firstChildOfType(this, CodeBlock.class);
+        return firstChildOfType(CodeBlock.class);
     }
 }
 
@@ -1260,17 +1263,17 @@ INJECT(ExpansionChoice) :
 }
 {
    public List<Expansion> getChoices() {
-       return Nodes.childrenOfType(this, Expansion.class);
+       return childrenOfType(Expansion.class);
    }
    
    public void genFirstSet(boolean[] firstSet) {
-          for (Expansion sub : Nodes.childrenOfType(this, Expansion.class)) {
+          for (Expansion sub : getChoices()) {
                 sub.genFirstSet(firstSet);
           }
    }
    
    public boolean isPossiblyEmpty() {
-        for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
+        for (Expansion e : getChoices()) {
             if (e.isPossiblyEmpty()) {
                 return true;
             }
@@ -1296,8 +1299,7 @@ INJECT(ExpansionChoice) :
    }
    
    public int minimumSize(int min) {
-      List<Expansion> choices = Nodes.childrenOfType(this, Expansion.class);
-      for (Expansion nestedExpansion : choices) {
+      for (Expansion nestedExpansion : getChoices()) {
        	if (min<=1) break;
         	min = Math.min(min, nestedExpansion.minimumSize(min));
         }
@@ -1361,13 +1363,13 @@ INJECT(ExpansionSequence) :
    public ExpansionSequence() {}
 
    public List<Expansion> getUnits() {
-       return Nodes.childrenOfType(this, Expansion.class);
+       return childrenOfType(Expansion.class);
    }
 
 
    public void genFirstSet(boolean[] firstSet) {
              Expansion prevExp = null;
-             for (Expansion unit : Nodes.childrenOfType(this,  Expansion.class)) {
+             for (Expansion unit : getUnits()) {
                 // Javacode productions can not have FIRST sets. Instead we
                 // generate the FIRST set
                 // for the preceding LOOKAHEAD (the semantic checks should have
@@ -1388,7 +1390,7 @@ INJECT(ExpansionSequence) :
    }
    
    public boolean isPossiblyEmpty() {
-        for (Expansion e : Nodes.childrenOfType(this, Expansion.class)) {
+        for (Expansion e : getUnits()) {
             if (!e.isPossiblyEmpty()) {
                 return false;
             }
@@ -1651,11 +1653,11 @@ INJECT(NonTerminal) :
     }
 
     public InvocationArgs getArgs() {
-        return Nodes.firstChildOfType(this, InvocationArgs.class);
+        return firstChildOfType(InvocationArgs.class);
     }
 
     public Expression getLHS() {
-        return Nodes.firstChildOfType(this, Expression.class);
+        return firstChildOfType(Expression.class);
     }
     
     public String getName() {
@@ -1745,7 +1747,7 @@ INJECT(ZeroOrOne) :
     }
     
     public Expansion getNestedExpansion() {
-        return Nodes.firstChildOfType(this, Expansion.class);
+        return firstChildOfType(Expansion.class);
     }
     
     public boolean isPossiblyEmpty() {
@@ -1796,7 +1798,7 @@ INJECT(ZeroOrMore) :
     }
 
     public Expansion getNestedExpansion() {
-        return Nodes.firstChildOfType(this, Expansion.class);
+        return firstChildOfType(Expansion.class);
     }
     
     public String getLabel() {
@@ -1854,7 +1856,7 @@ INJECT(OneOrMore) :
     }
 
     public Expansion getNestedExpansion() {
-        return Nodes.firstChildOfType(this, Expansion.class);
+        return firstChildOfType(Expansion.class);
     }
     
     public String getLabel() {
@@ -1917,15 +1919,15 @@ INJECT(TryBlock) :
 }
 {
     public Expansion getNestedExpansion() {
-        return Nodes.firstChildOfType(this, Expansion.class);
+        return firstChildOfType(Expansion.class);
     }
     
     public List<CatchBlock> getCatchBlocks() {
-        return Nodes.childrenOfType(this, CatchBlock.class);
+        return childrenOfType(CatchBlock.class);
     }
 
     public FinallyBlock getFinallyBlock() {
-        return Nodes.firstChildOfType(this, FinallyBlock.class);
+        return firstChildOfType(FinallyBlock.class);
     }
     
     public boolean isPossiblyEmpty() {
@@ -2158,7 +2160,7 @@ INJECT(RegexpChoice) :
 }
 {
     public List<RegularExpression> getChoices() {
-        return Nodes.childrenOfType(this, RegularExpression.class);
+        return childrenOfType(RegularExpression.class);
     }
 }
 
@@ -2184,7 +2186,7 @@ INJECT(RegexpSequence) :
 }
 {
    public List<RegularExpression> getUnits() {
-       return Collections.unmodifiableList(Nodes.childrenOfType(this, RegularExpression.class));
+       return childrenOfType(RegularExpression.class);
    }
 }
 
@@ -2258,7 +2260,7 @@ INJECT(RepetitionRange) :
 	}
 
     public RegularExpression getRegexp() { 
-        return Nodes.firstChildOfType(this, RegularExpression.class);
+        return firstChildOfType(RegularExpression.class);
     }
 }
 
@@ -2270,7 +2272,7 @@ INJECT(OneOrMoreRegexp) :
 {
    public RegularExpression getRegexp() 
    {
-      return Nodes.firstChildOfType(this, RegularExpression.class);
+      return firstChildOfType(RegularExpression.class);
    }
 }
 
@@ -2282,7 +2284,7 @@ INJECT(ZeroOrMoreRegexp) :
 {
    public RegularExpression getRegexp() 
    {
-      return Nodes.firstChildOfType(this, RegularExpression.class);
+      return firstChildOfType(RegularExpression.class);
    }
    
    public void setRegexp(RegularExpression regexp) {
@@ -2304,7 +2306,7 @@ INJECT(ZeroOrOneRegexp) :
 {
    public RegularExpression getRegexp() 
    {
-      return Nodes.firstChildOfType(this, RegularExpression.class);
+      return firstChildOfType(RegularExpression.class);
    }
    
    public void setRegexp(RegularExpression regexp) {
@@ -2339,7 +2341,7 @@ INJECT(CharacterList) :
 }
 {
     public List<CharacterRange> getDescriptors() {
-        return Collections.unmodifiableList(Nodes.childrenOfType(this, CharacterRange.class));
+        return childrenOfType(CharacterRange.class);
     }
 
     public boolean isNegated() {

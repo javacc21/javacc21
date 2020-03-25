@@ -110,6 +110,7 @@ void JSONObject() : {}
     <CLOSE_BRACE>
 }
 
-JAVACODE void fuck() {
+// Just put this here for testing purposes
+JAVACODE void foobar() {
     System.out.println("KILROY");
 }

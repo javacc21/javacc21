@@ -83,7 +83,7 @@ final class LookaheadWalk {
 		} else if (exp instanceof ExpansionChoice) {
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			ExpansionChoice ch = (ExpansionChoice) exp;
-			for (Expansion e : Nodes.childrenOfType(ch, Expansion.class)) {
+			for (Expansion e : ch.getChoices()) {
 				List<MatchInfo> v = genFirstSet(partialMatches, e);
 				retval.addAll(v);
 			}
@@ -91,7 +91,7 @@ final class LookaheadWalk {
 		} else if (exp instanceof ExpansionSequence) {
 			List<MatchInfo> v = partialMatches;
 			ExpansionSequence seq = (ExpansionSequence) exp;
-			for (Expansion e : Nodes.childrenOfType(seq,  Expansion.class)) {
+			for (Expansion e : seq.getUnits()) {
 				v = genFirstSet(v, e);
 				if (v.size() == 0)
 					break;

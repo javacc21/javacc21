@@ -124,7 +124,7 @@ public class ParserData {
  
     private void visitExpansionChoice(ExpansionChoice choice) {
     	List<Lookahead> lookaheads = new ArrayList<Lookahead>();
-    	List<ExpansionSequence> choices = Nodes.childrenOfType(choice,  ExpansionSequence.class);
+    	List<ExpansionSequence> choices = choice.childrenOfType(ExpansionSequence.class);
     	for (ExpansionSequence nestedSeq : choices) {
     		visitExpansion(nestedSeq);
     		if (nestedSeq.isEmpty()) break; //REVISIT. Is this possible?
@@ -240,7 +240,7 @@ public class ParserData {
             	generate3R(production.getExpansion(), amt);
             }
         } else if (e instanceof ExpansionChoice) {
-            for (Expansion sub : Nodes.childrenOfType(e, Expansion.class)) {
+            for (Expansion sub : e.childrenOfType(Expansion.class)) {
                 generate3R(sub, amt);
             }
         } else if (e instanceof ExpansionSequence) {

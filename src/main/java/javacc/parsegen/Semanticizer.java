@@ -553,11 +553,11 @@ public class Semanticizer {
         } else if (exp instanceof ZeroOrOne) {
             addLeftMost(prod, exp.getNestedExpansion());
         } else if (exp instanceof ExpansionChoice) {
-            for (Expansion e : Nodes.childrenOfType(exp, Expansion.class)) {
+            for (Expansion e : exp.childrenOfType(Expansion.class)) {
                 addLeftMost(prod, e);
             }
         } else if (exp instanceof ExpansionSequence) {
-            for (Expansion e : Nodes.childrenOfType(exp, Expansion.class)) {
+            for (Expansion e : exp.childrenOfType(Expansion.class)) {
                 addLeftMost(prod, e);
                 if (!exp.isPossiblyEmpty()) {
                     break;
@@ -768,7 +768,7 @@ public class Semanticizer {
                 List<Expansion> newUnits = new ArrayList<Expansion>();
                 newUnits.add((Expansion) seq.removeChild(0));
                 newUnits.add(ch);
-                newUnits.addAll(Nodes.childrenOfType(seq, Expansion.class));
+                newUnits.addAll(seq.getUnits());
                 seq.clearChildren();
                 for (Expansion exp : newUnits) {
                     seq.addChild(exp);
@@ -825,7 +825,6 @@ public class Semanticizer {
 
         boolean goDeeper(Expansion e) {
         	return !(e instanceof RegularExpression) && !(e instanceof Lookahead);
-//        	return !(e instanceof RegularExpression);
         }
 
         void action(Expansion e) {

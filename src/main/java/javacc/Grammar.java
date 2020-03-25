@@ -292,7 +292,7 @@ public class Grammar {
     public List<ImportDeclaration> getParserCodeImports() {
         List<ImportDeclaration> result = new ArrayList<ImportDeclaration>();
         if (parserCode != null) {
-            result.addAll(Nodes.childrenOfType(parserCode, ImportDeclaration.class));
+            result.addAll(parserCode.childrenOfType(ImportDeclaration.class));
         }
         return result;
     }
@@ -558,11 +558,11 @@ public class Grammar {
             return;
         } 
 	else if (node instanceof TokenManagerDecls) {
-	    ClassOrInterfaceBody body = Nodes.childrenOfType(node, ClassOrInterfaceBody.class).get(0);
+	    ClassOrInterfaceBody body = node.childrenOfType(ClassOrInterfaceBody.class).get(0);
 	    checkForHooks(body, getLexerClassName());
 	}
         else if (node instanceof ParserCodeDecls) {
-	    List<CompilationUnit> cus = Nodes.childrenOfType(node, CompilationUnit.class);
+	    List<CompilationUnit> cus = node.childrenOfType(CompilationUnit.class);
 	    if (!cus.isEmpty()) {
 		checkForHooks(cus.get(0), getParserClassName());
 	    }

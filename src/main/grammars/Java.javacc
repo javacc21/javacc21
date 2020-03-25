@@ -358,26 +358,18 @@ INJECT(CompilationUnit) :
     
     
     public PackageDeclaration getPackageDeclaration() {
-        return Nodes.firstChildOfType(this, PackageDeclaration.class);
+        return firstChildOfType(PackageDeclaration.class);
     }
     
     public List<ImportDeclaration> getImportDeclarations() {
-        return Nodes.childrenOfType(this, ImportDeclaration.class);
+        return childrenOfType(ImportDeclaration.class);
     }
     
     public List<TypeDeclaration> getTypeDeclarations() {
-        return Nodes.childrenOfType(this, TypeDeclaration.class);
+        return childrenOfType(TypeDeclaration.class);
     }
     
     public void addImportDeclaration(ImportDeclaration decl) {
-/*    
-        Node packageDeclaration = getPackageDeclaration();
-        if (packageDeclaration == null) {
-            addChild(0, decl);
-        } else {
-            addChild(1, decl);
-         }*/
-
         ListIterator<Node> iterator = iterator();
         Node n = null;
         while (!(n instanceof TypeDeclaration) &&!(n instanceof Annotation)) {
@@ -622,15 +614,15 @@ INJECT(TypeDeclaration) :
     }
     
     public ClassOrInterfaceBody getBody() {
-        return Nodes.firstChildOfType(this, ClassOrInterfaceBody.class);
+        return firstChildOfType(ClassOrInterfaceBody.class);
     }
     
     public ExtendsList getExtendsList() {
-        return Nodes.firstChildOfType(this, ExtendsList.class);
+        return firstChildOfType(ExtendsList.class);
     }
     
     public ImplementsList getImplementsList() {
-        return Nodes.firstChildOfType(this, ImplementsList.class);
+        return firstChildOfType(ImplementsList.class);
     }
     
     public CompilationUnit getCompilationUnit() {
@@ -767,7 +759,7 @@ INJECT(ExtendsList) :
 }
 {
     public List<ObjectType> getTypes() {
-        return Nodes.childrenOfType(this, ObjectType.class);
+        return childrenOfType(ObjectType.class);
     }
     
     public void addType(ObjectType type, boolean isInterface) {
@@ -810,7 +802,7 @@ INJECT(ImplementsList) :
 }
 {    
     public List<ObjectType> getTypes() {
-        return Nodes.childrenOfType(this, ObjectType.class);
+        return childrenOfType(ObjectType.class);
     }
     
     public void addType(ObjectType type) {
@@ -891,7 +883,7 @@ INJECT(TypeParameterList) :
     }
     
     public List<TypeParameter> getParameters() {
-        return Nodes.childrenOfType(this, TypeParameter.class);
+        return childrenOfType(TypeParameter.class);
     }
 }
 
@@ -1003,11 +995,11 @@ void ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyD
 INJECT(ClassOrInterfaceBodyDeclaration) : {}
 {
     public boolean isMethod() {
-        return Nodes.firstChildOfType(this, MethodDeclaration.class) != null;
+        return firstChildOfType(MethodDeclaration.class) != null;
     }
     
     public String getFullNameSignatureIfMethod() {
-        MethodDeclaration md = Nodes.firstChildOfType(this, MethodDeclaration.class);
+        MethodDeclaration md = firstChildOfType(MethodDeclaration.class);
         return md == null ? null : md.getFullSignature();
     }
 }
@@ -1067,7 +1059,7 @@ INJECT(MethodDeclaration) : {}
     }
     
     public FormalParams getFormalParams() {
-        return Nodes.firstChildOfType(this, FormalParams.class);
+        return firstChildOfType(FormalParams.class);
     }
     
     public String getFullSignature() {
@@ -1098,7 +1090,7 @@ INJECT(FormalParams) :
 }
 {
     public List<FormalParameter> getParams() {
-        return Nodes.childrenOfType(this, FormalParameter.class);
+        return childrenOfType(FormalParameter.class);
     }
     
     public String getAsString() {
@@ -1727,7 +1719,7 @@ INJECT(InvocationArgs) :
 } 
 {
     public List<Expression> getArgs() {
-        return Nodes.childrenOfType(this, Expression.class);
+        return childrenOfType(Expression.class);
     }
     
     public String getAsString() {
@@ -2088,7 +2080,7 @@ CatchBlock CatchBlock() :
 INJECT(CatchBlock) : {}
 {
     public CodeBlock getBlock() {
-        return Nodes.firstChildOfType(this, CodeBlock.class);
+        return firstChildOfType(CodeBlock.class);
     }
 }
 
@@ -2104,7 +2096,7 @@ FinallyBlock FinallyBlock() :
 INJECT(FinallyBlock) : {}
 {
     public CodeBlock getBlock() {
-        return Nodes.firstChildOfType(this, CodeBlock.class);
+        return firstChildOfType(CodeBlock.class);
     }
 }
 

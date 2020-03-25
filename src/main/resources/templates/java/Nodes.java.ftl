@@ -44,26 +44,6 @@ import java.lang.reflect.*;
 
 abstract public class Nodes {
     
-    static public <T extends Node>T firstChildOfType(Node node, Class<T>clazz) {
-        for (int i=0; i< node.getChildCount(); i++) {
-            Node child = node.getChild(i);
-            if (clazz.isInstance(child)) {
-                return clazz.cast(child);
-            }
-        }
-        return null;
-    }
-        
-    static public <T extends Node> List<T> childrenOfType(Node node, Class<T>clazz) {
-        List<T> result = new ArrayList<T>();
-        for (int i = 0; i < node.getChildCount(); i++) {
-            Node child = node.getChild(i);
-            if (clazz.isInstance(child)) {
-                result.add(clazz.cast(child));
-            }
-        }
-        return result;
-    }
 
     static public List<Token> getTokens(Node node) {
         List<Token> result = new ArrayList<Token>();

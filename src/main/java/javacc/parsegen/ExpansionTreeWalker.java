@@ -59,11 +59,12 @@ final class ExpansionTreeWalker {
         opObj.action(node);
         if (opObj.goDeeper(node)) {
             if (node instanceof ExpansionChoice) {
-                for (Expansion exp : Nodes.childrenOfType(node, Expansion.class)) {
+                for (Expansion exp : node.childrenOfType(Expansion.class)) {
+
                     preOrderWalk(exp, opObj);
                 }
             } else if (node instanceof ExpansionSequence) {
-                for (Expansion exp : Nodes.childrenOfType(node, Expansion.class)) {
+                for (Expansion exp : node.childrenOfType(Expansion.class)) {
                     preOrderWalk(exp, opObj);
                 }
             } else if (node instanceof OneOrMore || node instanceof ZeroOrMore || node instanceof ZeroOrOne
@@ -101,11 +102,11 @@ final class ExpansionTreeWalker {
     static void postOrderWalk(Expansion node, TreeWalkerOp opObj) {
         if (opObj.goDeeper(node)) {
             if (node instanceof ExpansionChoice) {
-                for (Expansion exp : Nodes.childrenOfType(node, Expansion.class)) {
+                for (Expansion exp : node.childrenOfType(Expansion.class)) {
                     postOrderWalk(exp, opObj);
                 }
             } else if (node instanceof ExpansionSequence) {
-                for (Expansion exp : Nodes.childrenOfType(node, Expansion.class)) {
+                for (Expansion exp : node.childrenOfType(Expansion.class)) {
                 	postOrderWalk(exp, opObj);
                 }
             } else if (node instanceof OneOrMore) {
