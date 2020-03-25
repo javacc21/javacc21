@@ -33,6 +33,7 @@
 [#if grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
 [/#if]
+import java.util.*;
 [#if grammar.options.freemarkerNodes]
 import freemarker.template.*;
 [/#if]
@@ -53,23 +54,6 @@ public interface Node
      */
     void close();
 
-    /**
-     * Returns the first child of this node. If there is no such node, this returns
-     * <code>null</code>.
-     * 
-     * @return the first child of this node. If there is no such node, this returns
-     *         <code>null</code>.
-     */
-    Node getFirstChild();
-
-    /**
-     * Returns the last child of this node. If there is no such node, this returns
-     * <code>null</code>.
-     * 
-     * @return the last child of this node. If there is no such node, this returns
-     *         <code>null</code>.
-     */
-    Node getLastChild();
     
     /**
      * Returns whether this node has any children.
@@ -143,17 +127,7 @@ public interface Node
      void setEndColumn(int endColumn);
 
      default boolean isDirty() {return false;}
-     
-    /**
-     * Returns the node at the given position (line,column) and null otherwise.
-     * 
-     * @param line   the line position
-     * @param column the column position
-     * 
-     * @return the node at the given position (line,column) and null otherwise.
-     */
-    Node findNodeAt(int line, int column);
-
+ 
 [#if grammar.options.visitor]
    [#var RETURN_TYPE = grammar.options.visitorReturnType]
    [#if !RETURN_TYPE?has_content][#set RETURN_TYPE = "void"][/#if]
@@ -164,4 +138,124 @@ public interface Node
 	 ${RETURN_TYPE} jjtAccept(${grammar.parserClassName}Visitor visitor, ${DATA_TYPE} data) ${THROWS};      
 [/#if]
 
+
+
+
+   default <T extends Node>T firstChildOfType(Class<T>clazz) {
+        for (int i=0; i<getChildCount(); i++) {
+            Node child=getChild(i);
+            if (clazz.isInstance(child)) {
+                return clazz.cast(child);
+            }
+        }
+        return null; 
+     }
+     
+     
+    default <T extends Node>List<T>childrenOfType(Class<T>clazz) {
+        List<T>result=new java.util.ArrayList<>();
+        for (int i=0; i<getChildCount(); i++) {
+            Node child=getChild(i);
+            if (clazz.isInstance(child)) {
+                result.add(clazz.cast(child));
+            }
+        }
+        return result;
+   }
+   
+   default <T extends Node> List<T> getDescendantsOfType(Class<T> clazz) {
+        List<T> result = new ArrayList<T>();
+        for (int i=0; i<getChildCount(); i++) {
+            Node child = getChild(i);
+            if (clazz.isInstance(child)) {
+                result.add(clazz.cast(child));
+            } 
+            result.addAll(child.getDescendantsOfType(clazz));
+        }
+        return result;
+    }
+    
+    default Node findNodeAt(int line, int column) {
+        if (!isIncluded(line, column)) {
+            return null;
+        }
+        Node child = this;
+        for (int i = 0; i < getChildCount(); i++) {
+            child = getChild(i);
+            Node match = child.findNodeAt(line, column);
+            if (match != null) {
+                return match;
+            }
+        }
+        return child;
+    }
+    
+    /**
+     * Returns true if the given position (line,column) is included in the given
+     * node and false otherwise.
+     * 
+     * @param line   the line position
+     * @param column the column position
+     * @return true if the given position (line,column) is included in the given
+     *         node and false otherwise.
+     */
+    default boolean isIncluded(int line, int column) {
+        return isIncluded(getBeginLine(), getBeginColumn(),getEndLine(), getEndColumn(), line,
+                column);
+    }
+
+    default boolean isIncluded(int beginLine, int beginColumn, int endLine, int endColumn, int line,
+            int column) {
+        if (beginLine == line && beginColumn == column) {
+            return true;
+        }
+        if (endLine == line && endColumn == column) {
+            return true;
+        }            
+        return !isAfter(beginLine, beginColumn, line, column) && isAfter(endLine, endColumn, line, column);
+    }
+    
+    /**
+     * Returns the first child of this node. If there is no such node, this returns
+     * <code>null</code>.
+     * 
+     * @return the first child of this node. If there is no such node, this returns
+     *         <code>null</code>.
+     */
+    default Node getFirstChild() {
+        return getChildCount() > 0 ? getChild(0) : null;
+    }
+    
+    
+     /**
+     * Returns the last child of the given node. If there is no such node, this
+     * returns <code>null</code>.
+     * 
+     * @return the last child of the given node. If there is no such node, this
+     *         returns <code>null</code>.
+     */ 
+    default Node getLastChild() {
+        int count = getChildCount();
+        return count>0 ? getChild(count-1): null;
+    }
+
+
+    static boolean isAfter(int line1,int column1,int line2,int column2) {
+        if (line1>line2) {
+            return true;
+        }
+        if (line1==line2) {
+            return column1>=column2;
+        }
+        return false;
+    }
+    
+      
+    default Node getRoot() {
+        Node parent = this;
+        while (parent.getParent() != null ) {
+            parent = parent.getParent();
+        }
+        return parent; 
+    }
 }
