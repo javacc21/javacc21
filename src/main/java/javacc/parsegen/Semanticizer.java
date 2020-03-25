@@ -36,7 +36,6 @@ import javacc.Grammar;
 import javacc.MetaParseException;
 import javacc.lexgen.*;
 import javacc.parser.JavaCCConstants;
-import javacc.parser.Node;
 import javacc.parser.Nodes;
 import javacc.parser.Token;
 import javacc.parser.tree.*;
@@ -827,6 +826,7 @@ public class Semanticizer {
 
         boolean goDeeper(Expansion e) {
         	return !(e instanceof RegularExpression) && !(e instanceof Lookahead);
+//        	return !(e instanceof RegularExpression);
         }
 
         void action(Expansion e) {

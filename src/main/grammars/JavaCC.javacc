@@ -1294,6 +1294,15 @@ INJECT(ExpansionChoice) :
         }
         return false;
    }
+   
+   public int minimumSize(int min) {
+      List<Expansion> choices = Nodes.childrenOfType(this, Expansion.class);
+      for (Expansion nestedExpansion : choices) {
+       	if (min<=1) break;
+        	min = Math.min(min, nestedExpansion.minimumSize(min));
+        }
+        return min;
+   }
 }
 
 Expansion ExpansionSequence() :
@@ -1427,6 +1436,25 @@ INJECT(ExpansionSequence) :
                 previous = unit;
             }
             return false;   
+   }
+
+   public int minimumSize(int oldMin) {
+          int min = 0;
+          // We skip the first element in the following iteration since it is
+          // the
+          // Lookahead object.
+          for (Expansion eseq : getUnits()) {
+              if (eseq instanceof Lookahead) continue;
+              int mineseq = eseq.getMinimumSize();
+              if (min == Integer.MAX_VALUE || mineseq == Integer.MAX_VALUE) {
+                  min = Integer.MAX_VALUE; // Adding infinity to something results in infinity.
+              } else {
+                  min += mineseq;
+                  if (min > oldMin)
+                      break;
+              }
+          }
+          return min;
    }
 }
 
@@ -1657,6 +1685,22 @@ INJECT(NonTerminal) :
      public boolean requiresPhase2Routine() {
          return prod.getExpansion().requiresPhase2Routine();
      }
+     
+     // REVISIT. Why is this necessary?
+     private boolean inMinimumSize;
+     
+     public int minimumSize(int oldMin) {
+            if (inMinimumSize) {
+                return Integer.MAX_VALUE;
+            }
+            int retval = Integer.MAX_VALUE;
+            inMinimumSize = true;
+            if (prod instanceof BNFProduction) {
+                retval = prod.getExpansion().getMinimumSize();
+            }
+            inMinimumSize = false;
+            return retval;
+     }
 }
 
 
@@ -1713,6 +1757,10 @@ INJECT(ZeroOrOne) :
     public boolean requiresPhase2Routine() {
             return getNestedExpansion().requiresPhase2Routine();
      }
+     
+     public int minimumSize(int unused) {
+         return 0;
+     }
     
     
 }
@@ -1768,7 +1816,13 @@ INJECT(ZeroOrMore) :
     public boolean requiresPhase2Routine() {
             return getNestedExpansion().requiresPhase2Routine();
      }
+     
+     public int minimumSize(int unused) {
+         return 0;
+     }
+     
 }
+
 
 INJECT(OneOrMore) : 
 {
@@ -1819,6 +1873,10 @@ INJECT(OneOrMore) :
     
     public boolean requiresPhase2Routine() {
             return getNestedExpansion().requiresPhase2Routine();
+     }
+     
+     public int minimumSize(int min) {
+           return getNestedExpansion().getMinimumSize();
      }
 }
 
@@ -1879,6 +1937,10 @@ INJECT(TryBlock) :
     public boolean requiresPhase2Routine() {
             return getNestedExpansion().requiresPhase2Routine();
      }
+     
+     public int minimumSize(int min) {
+           return getNestedExpansion().getMinimumSize();
+     }
 }
 
 CodeBlock CodeSnippet() #void :
@@ -1928,6 +1990,10 @@ INJECT(CodeBlock) :
     
     public boolean requiresPhase2Routine() {
         return false;
+    }
+    
+    public int minimumSize(int unused) {
+        return 0;
     }
 }
 

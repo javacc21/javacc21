@@ -30,6 +30,8 @@
 
 package javacc.parsegen;
 
+import java.util.List;
+
 import javacc.Grammar;
 import javacc.parser.BaseNode;
 import javacc.parser.Nodes;
@@ -39,10 +41,9 @@ import javacc.parser.tree.TryBlock;
 import javacc.parser.tree.ZeroOrMore;
 import javacc.parser.tree.ZeroOrOne;
 import javacc.parser.tree.BNFProduction;
+import javacc.parser.tree.CodeBlock;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
-import javacc.parser.tree.ExplicitLookahead;
-import javacc.parser.tree.JavaCodeProduction;
 import javacc.parser.tree.NonTerminal;
 import javacc.parser.tree.OneOrMore;
 import javacc.parser.tree.ParserProduction;
@@ -79,12 +80,6 @@ abstract public class Expansion extends BaseNode {
     
     private String phase2RoutineName, phase3RoutineName;
 
-
-    /**
-     * This flag is used for bookkeeping by the minimumSize method in class
-     * ParseEngine.
-     */
-    boolean inMinimumSize = false;
 
     private String getSimpleName() {
         String name = getClass().getName();
@@ -162,4 +157,15 @@ abstract public class Expansion extends BaseNode {
     abstract public boolean javaCodeCheck();
     
     abstract public boolean requiresPhase2Routine();
+    
+    /*
+     * Returns the minimum number of tokens that can parse to this expansion.
+     */
+    final public int getMinimumSize() {
+    	return minimumSize(Integer.MAX_VALUE);
+    }
+    
+     abstract public int minimumSize(int oldMin); 
+    
+    
 }

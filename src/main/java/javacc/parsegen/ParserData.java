@@ -192,7 +192,6 @@ public class ParserData {
 
     private void generate3R(Expansion expansion, int count) {
         Expansion seq = expansion;
-//        if (expansion.getInternalName().equals("")) {
           if (expansion.getPhase2RoutineName() == null) {
             while (true) {
                 if (seq instanceof ExpansionSequence
@@ -254,7 +253,7 @@ public class ParserData {
             for (int i = 1; i < e_nrw.getChildCount(); i++) {
                 Expansion eseq = (Expansion) e_nrw.getChild(i);
                 setupPhase3Builds(eseq, cnt);
-                cnt -= minimumSize(eseq);
+                cnt -= eseq.getMinimumSize();
                 if (cnt <= 0)
                     break;
             }
@@ -270,85 +269,13 @@ public class ParserData {
         }
     }
 
-    public int minimumSize(Expansion e) {
-        return minimumSize(e, Integer.MAX_VALUE);
-    }
-
-    /*
-     * Returns the minimum number of tokens that can parse to this expansion.
-     */
-    private int minimumSize(Expansion e, int oldMin) {
-        int retval = 0; // should never be used. Will be bad if it is.
-        if (e.inMinimumSize) {
-            // recursive search for minimum size unnecessary.
-            return Integer.MAX_VALUE;
-        }
-        e.inMinimumSize = true;
-        if (e instanceof RegularExpression) {
-            retval = 1;
-        } else if (e instanceof NonTerminal) {
-            NonTerminal e_nrw = (NonTerminal) e;
-            ParserProduction ntprod = grammar.getProductionByLHSName(e_nrw.getName());
-            if (ntprod instanceof BNFProduction) {
-                Expansion ntexp = ntprod.getExpansion();
-                retval = minimumSize(ntexp);
-            } else {
-                retval = Integer.MAX_VALUE;
-                // Make caller think this is unending (for we do not go beyond
-                // JAVACODE during
-                // phase3 execution).
-            }
-        } else if (e instanceof ExpansionChoice) {
-            int min = oldMin;
-            List<Expansion> choices = Nodes.childrenOfType(e, Expansion.class);
-            for (Expansion nestedExpansion : choices) {
-            	if (min<=1) break;
-            	min = Math.min(min, minimumSize(nestedExpansion, min));
-            }
-            retval = min;
-        } else if (e instanceof ExpansionSequence) {
-            int min = 0;
-            ExpansionSequence expansionSequence = (ExpansionSequence) e;
-            // We skip the first element in the following iteration since it is
-            // the
-            // Lookahead object.
-            for (int i = 1; i < expansionSequence.getChildCount(); i++) {
-                Expansion eseq = (Expansion) expansionSequence.getChild(i);
-                int mineseq = minimumSize(eseq);
-                if (min == Integer.MAX_VALUE || mineseq == Integer.MAX_VALUE) {
-                    min = Integer.MAX_VALUE; // Adding infinity to something results in infinity.
-                } else {
-                    min += mineseq;
-                    if (min > oldMin)
-                        break;
-                }
-            }
-            retval = min;
-        } else if (e instanceof TryBlock) {
-            retval = minimumSize(e.getNestedExpansion());
-        } else if (e instanceof OneOrMore) {
-            retval = minimumSize(e.getNestedExpansion());
-        } else if (e instanceof ZeroOrMore) {
-            retval = 0;
-        } else if (e instanceof ZeroOrOne) {
-            retval = 0;
-        } else if (e instanceof Lookahead) {
-            retval = 0;
-        } else if (e instanceof CodeBlock) {
-            retval = 0;
-        }
-        e.inMinimumSize = false;
-        return retval;
-    }
-    
-    
     /**
      * This class stores information to pass from phase 2 to phase 3.
      */
     private class Phase3Data {
 
         /*
-         * This is the expansion to generate the jj3 method for.
+         * This is the expansion to generate the phase3 method for.
          */
         Expansion exp;
 

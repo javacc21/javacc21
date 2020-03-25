@@ -33,18 +33,7 @@ package javacc.parsegen;
 import java.util.*;
 
 import javacc.Grammar;
-import javacc.lexgen.RegularExpression;
-import javacc.parser.BaseNode;
-import javacc.parser.Nodes;
-import javacc.parser.tree.ExpansionChoice;
-import javacc.parser.tree.ExpansionSequence;
 import javacc.parser.tree.Expression;
-import javacc.parser.tree.BNFProduction;
-import javacc.parser.tree.OneOrMore;
-import javacc.parser.tree.ZeroOrMore;
-import javacc.parser.tree.ZeroOrOne;
-import javacc.parser.tree.NonTerminal;
-import javacc.parser.tree.TryBlock;
 
 
 
@@ -187,4 +176,8 @@ public class Lookahead extends Expansion {
     	// is ignored in the recursive walk to build the first set.
     }
     
+    public int minimumSize(int min) {
+    	return 0;
+    }
 }
+

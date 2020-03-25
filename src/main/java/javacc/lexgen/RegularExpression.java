@@ -382,6 +382,10 @@ public abstract class RegularExpression extends Expansion {
     public boolean requiresPhase2Routine() {
     	return false;
     }
+    
+    public int minimumSize(int oldMin) {
+    	return 1;
+    }
 }
 
 
