@@ -519,7 +519,7 @@ INJECT(BaseNode) :
 }
 
 
-Grammar Root() throws IOException :
+Root Root() throws IOException :
 {
     TokenManagerDecls decls;
 }
@@ -545,7 +545,7 @@ Grammar Root() throws IOException :
   )+
   <EOF>
   {
-        return this.grammar;
+        return CURRENT_NODE;
   }
 }
 
@@ -599,7 +599,8 @@ void GrammarInclusion() throws IOException :
    ]
    {
       String location = t.image.substring(1, t.image.length() -1);
-      grammar.include(location);
+      Node root = grammar.include(location);
+      CURRENT_NODE.addChild(root);
    }
 }
 

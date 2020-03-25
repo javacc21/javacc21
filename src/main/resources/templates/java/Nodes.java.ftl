@@ -44,8 +44,7 @@ import java.lang.reflect.*;
 
 abstract public class Nodes {
     
-
-    static public List<Token> getTokens(Node node) {
+     static public List<Token> getTokens(Node node) {
         List<Token> result = new ArrayList<Token>();
         for (int i=0; i<node.getChildCount(); i++) {
             Node child = node.getChild(i);
@@ -67,12 +66,12 @@ abstract public class Nodes {
 		    }
 		}
 	    return result;
-    }
-
-    
+	}
+     
     // NB: This is not thread-safe
     // If the node's children could change out from under you,
     // you could have a problem.
+
     static public ListIterator<Node> iterator(final Node node) {
         return new ListIterator<Node>() {
             int current = -1;
@@ -122,7 +121,7 @@ abstract public class Nodes {
             }
         };
     }
-    
+ 
     /**
      * Expands (in place) a Node's children to include any comment tokens hanging
      * off the regular tokens.

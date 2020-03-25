@@ -138,6 +138,10 @@ abstract public class Expansion extends BaseNode {
     	return phase3RoutineName != null ? phase3RoutineName : getPhase2RoutineName().replace("phase2", "phase3");
     }
     
+    public int getFinalTokenKind() {
+        return -1;	
+    }
+    
     abstract public void genFirstSet(boolean[] firstSet);
     
     abstract public boolean isPossiblyEmpty(); 

@@ -79,13 +79,18 @@ public class Semanticizer {
         }
 
         /*
-         * The following walks the entire parse tree to make sure that all
-         * non-terminals on RHS's are defined on the LHS.
+         * The following checks that all the non-terminals have productions of the same name.
          */
-        for (ParserProduction np : grammar.getParserProductions()) {
-            ExpansionTreeWalker.preOrderWalk(np.getExpansion(),
-                    new ProductionDefinedChecker());
+        
+        for (NonTerminal nt : grammar.getRootNode().descendantsOfType(NonTerminal.class)) {
+        	ParserProduction prod = nt.getProduction();
+        	if (prod == null) {
+        		grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
+        	} else {
+        		prod.parents.add(nt);
+        	}
         }
+        
 
         /*
          * The following loop ensures that all target lexical states are
@@ -776,21 +781,6 @@ public class Semanticizer {
             }
         }
 
-    }
-
-    class ProductionDefinedChecker extends TreeWalkerOp {
-
-        void action(Expansion e) {
-            if (e instanceof NonTerminal) {
-                NonTerminal nt = (NonTerminal) e;
-                ParserProduction prod = grammar.getProductionByName(nt.getName());
-                if (prod==null) {
-                    grammar.addSemanticError(e, "Non-terminal " + nt.getName() + " has not been defined.");
-                } else {
-                    prod.parents.add(nt);
-                }
-            }
-        }
     }
 
     class EmptyChecker extends TreeWalkerOp {

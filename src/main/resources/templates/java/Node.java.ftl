@@ -163,17 +163,18 @@ public interface Node
         return result;
    }
    
-   default <T extends Node> List<T> getDescendantsOfType(Class<T> clazz) {
+   default <T extends Node> List<T> descendantsOfType(Class<T> clazz) {
         List<T> result = new ArrayList<T>();
         for (int i=0; i<getChildCount(); i++) {
             Node child = getChild(i);
             if (clazz.isInstance(child)) {
                 result.add(clazz.cast(child));
             } 
-            result.addAll(child.getDescendantsOfType(clazz));
+            result.addAll(child.descendantsOfType(clazz));
         }
         return result;
-    }
+   }
+
     
     default Node findNodeAt(int line, int column) {
         if (!isIncluded(line, column)) {
@@ -257,5 +258,29 @@ public interface Node
             parent = parent.getParent();
         }
         return parent; 
+    }
+    
+     static public List<Token> getTokens(Node node) {
+        List<Token> result = new ArrayList<Token>();
+        for (int i=0; i<node.getChildCount(); i++) {
+            Node child = node.getChild(i);
+            if (child instanceof Token) {
+                result.add((Token) child);
+            } else {
+                result.addAll(getTokens(child));
+            }
+        }
+        return result;
+    }
+        
+        
+    static public List<Token> getRealTokens(Node n) {
+        List<Token> result = new ArrayList<Token>();
+		for (Token token : getTokens(n)) {
+		    if (!token.isUnparsed()) {
+		        result.add(token);
+		    }
+		}
+	    return result;
     }
 }

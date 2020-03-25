@@ -52,6 +52,7 @@ public class Grammar {
                    parserPackage,
                    constantsClassName,
                    baseNodeClassName="BaseNode";
+    private Node rootNode;
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
     private String defaultLexicalState = "DEFAULT";
@@ -89,17 +90,21 @@ public class Grammar {
     	return lexicalStates.toArray(new String[]{});
     }
     
-    void parse(String location) throws IOException, ParseException {
+    Node parse(String location) throws IOException, ParseException {
     	File file = new File(location);
         Reader input = new FileReader(file);
         JavaCCParser parser = new JavaCCParser(this, input);
         parser.setInputSource(file.getCanonicalFile().getName());
         setFilename(location);
         System.out.println("Parsing grammar file " + location + " . . .");
-        parser.Root();
+        Node rootNode = parser.Root();
+        if (!isInInclude()) {
+        	this.rootNode = rootNode;
+        }
+        return rootNode;
     }
     
-    public void include(String location) throws IOException, ParseException {
+    public Node include(String location) throws IOException, ParseException {
         File file = new File(location);
         if (!file.exists()) {
             if (!file.isAbsolute()) {
@@ -112,15 +117,21 @@ public class Grammar {
         if (location.toLowerCase().endsWith(".java") || location.endsWith(".jav")) {
             CompilationUnit cu = JavaCCParser.parseJavaFile(new FileReader(location), location);
             codeInjections.add(cu);
+            return cu;
         } else {
             String prevLocation = this.filename;
             String prevDefaultLexicalState = this.defaultLexicalState;
             includeNesting++;
-            parse(location);
+            Node root = parse(location);
             includeNesting--;
             setFilename(prevLocation);
             this.defaultLexicalState = prevDefaultLexicalState;
+            return root;
         }
+    }
+    
+    public Node getRootNode() {
+    	return this.rootNode;
     }
     
     
