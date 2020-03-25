@@ -339,7 +339,7 @@ public class Grammar {
         return productionTable;
     }
 
-    public ParserProduction getProductionByLHSName(String name) {
+    public ParserProduction getProductionByName(String name) {
         return productionTable.get(name);
     }
 

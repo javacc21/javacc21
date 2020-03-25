@@ -534,7 +534,7 @@ public class Semanticizer {
     static private void addLeftMost(ParserProduction prod, Expansion exp) {
         if (exp instanceof NonTerminal) {
             for (int i = 0; i < prod.leIndex; i++) {
-                if (prod.leftExpansions[i] == ((NonTerminal) exp).prod) {
+                if (prod.leftExpansions[i] == ((NonTerminal) exp).getProduction()) {
                     return;
                 }
             }
@@ -545,7 +545,7 @@ public class Semanticizer {
                                 prod.leIndex);
                 prod.leftExpansions = newle;
             }
-            prod.leftExpansions[prod.leIndex++] = ((NonTerminal) exp).prod;
+            prod.leftExpansions[prod.leIndex++] = ((NonTerminal) exp).getProduction();
         } else if (exp instanceof OneOrMore) {
             addLeftMost(prod, (exp.getNestedExpansion()));
         } else if (exp instanceof ZeroOrMore) {
@@ -783,15 +783,14 @@ public class Semanticizer {
         void action(Expansion e) {
             if (e instanceof NonTerminal) {
                 NonTerminal nt = (NonTerminal) e;
-                nt.prod = grammar.getProductionByLHSName(nt.getName());
-                if (nt.prod == null) {
+                ParserProduction prod = grammar.getProductionByName(nt.getName());
+                if (prod==null) {
                     grammar.addSemanticError(e, "Non-terminal " + nt.getName() + " has not been defined.");
                 } else {
-                    nt.prod.parents.add(nt);
+                    prod.parents.add(nt);
                 }
             }
         }
-
     }
 
     class EmptyChecker extends TreeWalkerOp {

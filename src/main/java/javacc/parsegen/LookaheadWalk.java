@@ -74,7 +74,7 @@ final class LookaheadWalk {
 			}
 			return retval;
 		} else if (exp instanceof NonTerminal) {
-			ParserProduction prod = ((NonTerminal) exp).prod;
+			ParserProduction prod = ((NonTerminal) exp).getProduction();
 			if (prod instanceof BNFProduction) {
 				return genFirstSet(partialMatches, prod.getExpansion());
 			} else {

@@ -522,7 +522,7 @@ throw new ParseException();"]
 [/#macro]
 
 [#macro Phase3CodeNonTerminal nt]
-   [#var ntprod=grammar.getProductionByLHSName(nt.name)]
+   [#var ntprod=grammar.getProductionByName(nt.name)]
    [#if ntprod.class.name?ends_with("ParserProduction")]
      if (true) {
          jj_la = 0; 

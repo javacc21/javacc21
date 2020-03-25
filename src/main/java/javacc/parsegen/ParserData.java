@@ -199,7 +199,7 @@ public class ParserData {
                 } else if (seq instanceof NonTerminal) {
                     NonTerminal e_nrw = (NonTerminal) seq;
                     ParserProduction ntprod = grammar
-                            .getProductionByLHSName(e_nrw.getName());
+                            .getProductionByName(e_nrw.getName());
                     if (!(ntprod instanceof BNFProduction)) {
                         break; // nothing to do here
                     } else {
@@ -235,7 +235,7 @@ public class ParserData {
             // these
             // variables are the same.
             NonTerminal nonTerminal = (NonTerminal) e;
-            ParserProduction production = grammar.getProductionByLHSName(nonTerminal.getName());
+            ParserProduction production = grammar.getProductionByName(nonTerminal.getName());
             if (production instanceof BNFProduction) {
             	generate3R(production.getExpansion(), amt);
             }

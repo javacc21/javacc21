@@ -1373,7 +1373,7 @@ INJECT(ExpansionSequence) :
                 // for the preceding LOOKAHEAD (the semantic checks should have
                 // made sure that
                 // the LOOKAHEAD is suitable).
-                if (unit instanceof NonTerminal && !(((NonTerminal) unit).prod instanceof BNFProduction)) {
+                if (unit instanceof NonTerminal && !(((NonTerminal) unit).getProduction() instanceof BNFProduction)) {
                 	if (prevExp instanceof Lookahead) {
                         Lookahead la = (Lookahead) prevExp;
                         la.getNestedExpansion().genFirstSet(firstSet);
@@ -1420,7 +1420,7 @@ INJECT(ExpansionSequence) :
                 // For a Javacode production, we check
                 // the preceding Lookahead object.
                 if (unit instanceof NonTerminal
-                        && !(((NonTerminal) unit).prod instanceof BNFProduction)) {
+                        && !(((NonTerminal) unit).getProduction() instanceof BNFProduction)) {
                     if (previous instanceof Lookahead) {
                         Lookahead la = (Lookahead) previous;
                         if (la.getNestedExpansion().requiresPhase2Routine())
@@ -1639,13 +1639,16 @@ NonTerminal NonTerminal() #NonTerminal :
 INJECT(NonTerminal) : 
 {
     import javacc.parsegen.*;
-    extends Expansion;
+    extends Expansion; 
 }
 {
     /**
      * The production this non-terminal corresponds to.
      */
-    public ParserProduction prod;
+    
+    public ParserProduction getProduction() {
+        return getGrammar().getProductionByName(getName());
+    }
 
     public InvocationArgs getArgs() {
         return Nodes.firstChildOfType(this, InvocationArgs.class);
@@ -1669,21 +1672,23 @@ INJECT(NonTerminal) :
     
     
     public void genFirstSet(boolean[] firstSet) {
-            if (prod instanceof BNFProduction) {
-            	prod.getExpansion().genFirstSet(firstSet);
-            }
+        ParserProduction prod = getProduction();
+        if (prod instanceof BNFProduction) {
+        	prod.getExpansion().genFirstSet(firstSet);
+        }
      }
      
      public boolean isPossiblyEmpty() {
-         return prod.emptyPossible;
+         return getProduction().emptyPossible;
      }
      
      public boolean javaCodeCheck() {
+        ParserProduction prod = getProduction();
      	return (prod instanceof JavaCodeProduction) || prod.getExpansion().javaCodeCheck();
      }
      
      public boolean requiresPhase2Routine() {
-         return prod.getExpansion().requiresPhase2Routine();
+         return getProduction().getExpansion().requiresPhase2Routine();
      }
      
      // REVISIT. Why is this necessary?
@@ -1695,6 +1700,7 @@ INJECT(NonTerminal) :
             }
             int retval = Integer.MAX_VALUE;
             inMinimumSize = true;
+            ParserProduction prod = getProduction();
             if (prod instanceof BNFProduction) {
                 retval = prod.getExpansion().getMinimumSize();
             }
