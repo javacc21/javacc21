@@ -419,27 +419,7 @@ public class Semanticizer {
         if (grammar.getErrorCount() != 0)
             throw new MetaParseException();
         
-        // I don't understand the following comment. REVISIT LATER. (JR)
-        // The following code sets the value of the "emptyPossible" field of productions
-        //  This field is initialized to false, and then the entire list
-        // of
-        // productions is processed. This is repeated as long as at least one
-        // item
-        // got updated from false to true in the pass.
-        boolean emptyUpdate = true;
-        while (emptyUpdate) {
-            emptyUpdate = false;
-            for (ParserProduction prod : grammar.getParserProductions()) {
-                if (prod.getExpansion().isPossiblyEmpty()) {
-                    if (!prod.emptyPossible) {
-                    	emptyUpdate = true;
-                        prod.emptyPossible = true;
-                    }
-                }
-            }
-        }
-
-        if (grammar.getErrorCount() == 0) {
+          if (grammar.getErrorCount() == 0) {
 
             // The following code checks that all ZeroOrMore, ZeroOrOne, and
             // OneOrMore nodes
@@ -780,7 +760,6 @@ public class Semanticizer {
                 }
             }
         }
-
     }
 
     class EmptyChecker extends TreeWalkerOp {

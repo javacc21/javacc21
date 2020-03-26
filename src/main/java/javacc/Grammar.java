@@ -329,9 +329,8 @@ public class Grammar {
     }
 
     /**
-     * A list of all grammar productions - normal and JAVACODE - in the order
-     * they appear in the input file. Each entry here will be a subclass of
-     * "JavaCodeProduction".
+     * A list of all grammar productions in the order
+     * they appear in the input file. 
      */
     public List<ParserProduction> getParserProductions() {
         return new ArrayList<ParserProduction>(parserProductions.values()); 
@@ -342,9 +341,7 @@ public class Grammar {
     }
 
     /**
-     * A symbol table of all grammar productions - normal and JAVACODE. The
-     * symbol table is indexed by the name of the left hand side non-terminal.
-     * Its contents are of type "JavaCodeProduction".
+     * A symbol table of all grammar productions.
      */
     public Map<String, ParserProduction> getProductionTable() {
         return productionTable;

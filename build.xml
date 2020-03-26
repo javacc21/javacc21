@@ -48,7 +48,7 @@
              </not>
             </condition>
          </fail>
- 	<java jar="bin/javacc.jar" fork="true">
+ 	<java jar="bin/javacc.jar" fork="true" failonerror="true">
  	   <arg value="src/main/grammars/JavaCC.javacc"/>
  	</java>
   </target>
@@ -64,6 +64,7 @@
            source="1.8"
     	   classpath="bin/freemarker.jar"
            includeantruntime="yes"
+           failonerror="true"
     />
      <copy todir="build/templates/java">
       <fileset dir="src/main/resources/templates/java">

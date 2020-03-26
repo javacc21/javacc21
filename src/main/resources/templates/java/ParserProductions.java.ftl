@@ -62,7 +62,7 @@
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
          trace_call("${production.name}");
          try {
-             ${(production.javaCode)!}
+             ${production.javaCode}
              [@BuildCode production.expansion production.forced /]
          } finally {
              trace_return("${production.name}");
@@ -113,16 +113,9 @@
           [/#if]
        [/#if]
          }
-         catch (Exception e) { 
-[#-- Annoying kludge --]         
-             if (e instanceof ParseException) {
-                  ${parseExceptionVar} = (ParseException) e;
-                  throw ${parseExceptionVar};
-              }
-              if (e instanceof RuntimeException) {
-                  throw (RuntimeException) e;
-              } 
-              throw new RuntimeException(e);
+         catch (ParseException e) { 
+             ${parseExceptionVar} = e;
+             throw e;
          }
          finally {
             if (buildTree) {
@@ -474,7 +467,9 @@ throw new ParseException();"]
 	     [@InvokePhase3Routine subseq/]) {
 	        jj_scanpos = token${newVarIndex};
 	  [#else]
-	     [@InvokePhase3Routine subseq/]) [@genReturn true/]
+	     [@InvokePhase3Routine subseq/]
+	     ) 
+	     [@genReturn true/]
 	  [/#if]
   [/#list]
   [#var numBraces=choice.choices?size-1]
@@ -521,17 +516,8 @@ throw new ParseException();"]
 [/#macro]
 
 [#macro Phase3CodeNonTerminal nt]
-   [#var ntprod=grammar.getProductionByName(nt.name)]
-   [#if ntprod.class.name?ends_with("ParserProduction")]
-     if (true) {
-         jj_la = 0; 
-         jj_scanpos = jj_lastpos;
-         [@genReturn false/]
-     }
-   [#else]
-        if ([@InvokePhase3Routine ntprod.expansion/])
-           [@genReturn true/]
-   [/#if]
+      if ([@InvokePhase3Routine nt.production.expansion/])
+         [@genReturn true/]
 [/#macro]
 
 [#macro Phase3CodeSequence sequence count]

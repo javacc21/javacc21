@@ -781,9 +781,11 @@ INJECT(ParserProduction) :
     }
 
     /**
-     * This boolean flag is true if this production can expand to empty.
+     * Can this production be matched by an empty string?
      */
-    public boolean emptyPossible = false;
+    public boolean isPossiblyEmpty() {
+         return getExpansion().isPossiblyEmpty();
+    }
 
     /**
      * A list of all non-terminals that this one can expand to without having to
@@ -801,8 +803,6 @@ INJECT(ParserProduction) :
      * processed.
      */
     public int walkStatus = 0;
-
-    protected String eol = System.getProperty("line.separator", "\n");
 
     protected StringBuilder dumpPrefix(int indent) {
         StringBuilder sb = new StringBuilder(128);
@@ -1610,7 +1610,7 @@ INJECT(NonTerminal) :
      }
      
      public boolean isPossiblyEmpty() {
-         return getProduction().emptyPossible;
+         return getProduction().isPossiblyEmpty();
      }
 
      public boolean requiresPhase2Routine() {

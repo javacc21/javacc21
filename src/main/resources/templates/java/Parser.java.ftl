@@ -177,8 +177,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   
   private void handleUnexpectedTokenType( int expectedType,  boolean forced, Token oldToken) throws ParseException {
 [#if !grammar.options.faultTolerant]
-	    current_token = oldToken;
-	    throw generateParseException();
+//	    current_token = oldToken;
+	    throw new ParseException(current_token);
 [#else]
        if (forced && tolerantParsing) {
            Token virtualToken = Token.newToken(expectedType, "");
@@ -190,8 +190,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
            virtualToken.next = current_token;
            current_token = virtualToken;
        } else {
-	      current_token = oldToken;
-	      throw generateParseException();
+//	      current_token = oldToken;
+	      throw new ParseException(current_token);
       }
 [/#if]
   }
@@ -264,14 +264,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
      return result; 
   }
   
-
-  public ParseException generateParseException() {
-    int line = current_token.beginLine, column = current_token.beginColumn;
-    String mess = current_token.image;
-    return new ParseException("Parse error at line " + line + ", column " + column + ".  " +
-               "Encountered: " + mess);
-  }
- 
 [#if grammar.options.debugParser]
   private boolean trace_enabled = true;
  [#else]
