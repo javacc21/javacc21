@@ -765,7 +765,7 @@ INJECT(ParserProduction) :
     /**
      * The NonTerminal nodes which refer to this production.
      */
-    public List<Expansion> parents = new ArrayList<Expansion>();
+    public List<NonTerminal> parents = new ArrayList<>();
 
     /**
      * The name of the non-terminal of this production.

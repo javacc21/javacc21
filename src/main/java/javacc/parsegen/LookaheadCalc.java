@@ -252,7 +252,7 @@ class LookaheadCalc {
 			List<MatchInfo> first = grammar.getParserData().getSizeLimitedMatches();
 			grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
 			grammar.setConsiderSemanticLA(false);
-			lookaheadWalk.generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex(), grammar);
+			lookaheadWalk.generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex());
 			List<MatchInfo> follow = grammar.getParserData().getSizeLimitedMatches();
 			if ((m = overlap(first, follow)) == null) {
 				break;

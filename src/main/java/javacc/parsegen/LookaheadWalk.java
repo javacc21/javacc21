@@ -53,8 +53,7 @@ final class LookaheadWalk {
 		this.grammar = grammar;
 	}
 
-	List<MatchInfo> genFirstSet(List<MatchInfo> partialMatches,
-			Expansion exp) {
+	List<MatchInfo> genFirstSet(List<MatchInfo> partialMatches, Expansion exp) {
 		if (exp instanceof RegularExpression) {
 			int lookaheadLimit = exp.getGrammar().getLookaheadLimit();
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
@@ -148,7 +147,7 @@ final class LookaheadWalk {
 		}
 	}
 
-	List<MatchInfo> generateFollowSet(List<MatchInfo> partialMatches, Expansion exp, long generation, Grammar grammar) {
+	List<MatchInfo> generateFollowSet(List<MatchInfo> partialMatches, Expansion exp, long generation) {
 		if (exp.myGeneration == generation) {
 			return new ArrayList<MatchInfo>();
 		}
@@ -159,12 +158,11 @@ final class LookaheadWalk {
 			retval.addAll(partialMatches);
 			return retval;
 		} else if (exp.getParent() instanceof ParserProduction) {
-			List<Expansion> parents = ((ParserProduction) exp.getParent()).parents;
+			List<NonTerminal> parents = ((ParserProduction) exp.getParent()).parents;
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			// System.out.println("1; gen: " + generation + "; exp: " + exp);
-			for (int i = 0; i < parents.size(); i++) {
-				List<MatchInfo> v = generateFollowSet(partialMatches,
-						parents.get(i), generation, grammar);
+			for (NonTerminal nt : parents) {
+				List<MatchInfo> v = generateFollowSet(partialMatches, nt, generation);
 				retval.addAll(v);
 			}
 			return retval;
@@ -182,13 +180,12 @@ final class LookaheadWalk {
 			if (v1.size() != 0) {
 				// System.out.println("2; gen: " + generation + "; exp: " +
 				// exp);
-				v1 = generateFollowSet(v1, seq, generation, grammar);
+				v1 = generateFollowSet(v1, seq, generation);
 			}
 			if (v2.size() != 0) {
 				// System.out.println("3; gen: " + generation + "; exp: " +
 				// exp);
-				v2 = generateFollowSet(v2, seq, grammar.nextGenerationIndex(),
-						grammar);
+				v2 = generateFollowSet(v2, seq, exp.getGrammar().nextGenerationIndex());
 			}
 			v2.addAll(v1);
 			return v2;
@@ -209,21 +206,18 @@ final class LookaheadWalk {
 			if (v1.size() != 0) {
 				// System.out.println("4; gen: " + generation + "; exp: " +
 				// exp);
-				v1 = generateFollowSet(v1, (Expansion) exp.getParent(), generation,
-						grammar);
+				v1 = generateFollowSet(v1, (Expansion) exp.getParent(), generation);
 			}
 			if (v2.size() != 0) {
 				// System.out.println("5; gen: " + generation + "; exp: " +
 				// exp);
-				v2 = generateFollowSet(v2, (Expansion) exp.getParent(), grammar
-						.nextGenerationIndex(), grammar);
+				v2 = generateFollowSet(v2, (Expansion) exp.getParent(), grammar.nextGenerationIndex());
 			}
 			v2.addAll(v1);
 			return v2;
 		} else {
 			// System.out.println("6; gen: " + generation + "; exp: " + exp);
-			return generateFollowSet(partialMatches, (Expansion) exp.getParent(),
-					generation, grammar);
+			return generateFollowSet(partialMatches, (Expansion) exp.getParent(), generation);
 		}
 	}
 }

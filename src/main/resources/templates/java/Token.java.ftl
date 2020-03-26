@@ -29,7 +29,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
    
    public void setVirtual(boolean virtual) {this.virtual = virtual;}
    
-   public boolean isDirty() {return this.virtual;}
+   public boolean isDirty() {return this.virtual || invalidToken != null;}
+   
+   // The lexically invalid input that precedes this token (if any)
+   InvalidToken invalidToken;
 
 
 [/#if]
@@ -116,6 +119,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#if grammar.options.faultTolerant]
         if (virtual) {
              return "Virtual Token";
+        }
+        if (invalidToken != null) {
+            return "invalid input: " + invalidToken.image + " followed by: " + image;
         }
 [/#if]    
         return image;

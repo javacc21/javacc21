@@ -190,10 +190,31 @@ public final void backup(int amount) {
        this.currentLexicalState = lexState;
     }
 
-  
+ [#if grammar.options.faultTolerant]
+  public Token getNextToken() {
+      Token tok = nextToken();
+      if (!(tok instanceof InvalidToken)) {
+          return tok;
+      }
+      InvalidToken invalidToken = (InvalidToken) tok;
+      StringBuilder invalidChars = new StringBuilder();
+      do {
+          invalidChars.append(tok.image);
+          tok = nextToken();
+      } while (tok instanceof InvalidToken);
+      invalidToken.image = invalidChars.toString();
+      tok.invalidToken = invalidToken;
+      return tok;
+  }
+[/#if]
+ 
   
   [#--  Need to figure out how to simplify this --]
+[#if grammar.options.faultTolerant]  
+  Token nextToken() {
+[#else]
   public Token getNextToken() {
+[/#if]    
     Token specialToken = null;
     Token matchedToken;
     int curPos = 0;
@@ -450,7 +471,7 @@ public final void backup(int amount) {
     int error_line = input_stream.getEndLine();
     int error_column = input_stream.getEndColumn();
     String error_after = null;
-    input_stream.backup(1);
+//    input_stream.backup(1);
     error_after = curPos <= 1 ? "" : input_stream.getImage();
     Token invalidToken = new InvalidToken("" + curChar);
     invalidToken.specialToken = specialToken;

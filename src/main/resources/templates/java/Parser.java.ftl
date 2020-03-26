@@ -148,6 +148,11 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         if (current_token == null ) {
            current_token = token_source.getNextToken();
         }
+[#if grammar.options.faultTolerant]        
+        if (!tolerantParsing && current_token.invalidToken != null) {
+            throw new ParseException(generateErrorMessage(current_token));
+        }
+[/#if]        
         if (current_token.kind != expectedType) {
             handleUnexpectedTokenType(expectedType, forced, oldToken) ;
         }      
@@ -176,10 +181,11 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   }
   
   private void handleUnexpectedTokenType( int expectedType,  boolean forced, Token oldToken) throws ParseException {
-[#if !grammar.options.faultTolerant]
-//	    current_token = oldToken;
-	    throw new ParseException(generateErrorMessage(current_token));
-[#else]
+        if (!tolerantParsing) {
+  //	    current_token = oldToken;
+    	    throw new ParseException(generateErrorMessage(current_token));
+	   } 
+[#if grammar.options.faultTolerant]	   
        if (forced && tolerantParsing) {
            Token virtualToken = Token.newToken(expectedType, "");
            virtualToken.setVirtual(true);
@@ -193,10 +199,17 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 //	      current_token = oldToken;
 	      throw new ParseException(generateErrorMessage(current_token));
       }
-[/#if]
+[/#if]      
   }
   
+  
   private String generateErrorMessage(Token t) {
+[#if grammar.options.faultTolerant]  
+      if (t.invalidToken != null) {
+          Token iv = t.invalidToken;
+          return "Encountered invalid input: " + iv.image + " on line " + iv.getBeginLine() + ", column " + iv.getBeginColumn() + " of " + t.getInputSource();
+      }
+[/#if]      
       return "Encountered an error on (or somewhere around) line "
                 + t.getBeginLine() 
                 + ", column " + t.getBeginColumn() 
@@ -228,7 +241,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   }
 [/#if]
 
-/** Get the next Token. */
   final public Token getNextToken() {
     if (current_token.next != null) current_token = current_token.next;
     else current_token = current_token.next = token_source.getNextToken();
@@ -236,7 +248,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     return current_token;
   }
 
-/** Get the specific Token. */
+/** Get the specific Token index ahead in the stream. */
   final public Token getToken(int index) {
     Token t = current_token;
     for (int i = 0; i < index; i++) {
