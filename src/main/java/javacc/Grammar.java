@@ -746,4 +746,8 @@ public class Grammar {
         }
         return nodePackage;
     }
+    
+    public BitSet newBitSetForTokens() {
+    	return new BitSet(getLexerData().getTokenCount());
+    }
 }

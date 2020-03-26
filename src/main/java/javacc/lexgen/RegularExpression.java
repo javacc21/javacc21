@@ -371,6 +371,10 @@ public abstract class RegularExpression extends Expansion {
     	firstSet[getOrdinal()] = true;
     }
     
+    public void genFirstSet(BitSet bs) {
+    	bs.set(getOrdinal());
+    }
+    
     public boolean isPossiblyEmpty() {
     	return false;
     }
@@ -386,6 +390,7 @@ public abstract class RegularExpression extends Expansion {
     public int minimumSize(int oldMin) {
     	return 1;
     }
+    
 }
 
 

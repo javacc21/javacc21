@@ -155,7 +155,6 @@ public class Lookahead extends Expansion {
 
     // The following 5 little methods should disappear when we 
     // finally see our way through to having Lookahead not extend Expansion anymore.
-    
     public boolean isPossiblyEmpty() {
     	return true;
     }
@@ -172,6 +171,8 @@ public class Lookahead extends Expansion {
     	//A bit screwy since Lookahead extends Expansion but
     	// is ignored in the recursive walk to build the first set.
     }
+    
+    public void genFirstSet(java.util.BitSet bs) {}
     
     public int minimumSize(int min) {
     	return 0;

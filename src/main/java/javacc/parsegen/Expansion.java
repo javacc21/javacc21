@@ -30,6 +30,8 @@
 
 package javacc.parsegen;
 
+import java.util.BitSet;
+
 import javacc.Grammar;
 import javacc.parser.BaseNode;
 import javacc.lexgen.RegularExpression;
@@ -138,11 +140,11 @@ abstract public class Expansion extends BaseNode {
     	return phase3RoutineName != null ? phase3RoutineName : getPhase2RoutineName().replace("phase2", "phase3");
     }
     
-    public int getFinalTokenKind() {
-        return -1;	
-    }
+//    abstract public BitSet getFinalTokenKinds();
     
     abstract public void genFirstSet(boolean[] firstSet);
+    
+    abstract public void genFirstSet(BitSet bs);
     
     abstract public boolean isPossiblyEmpty(); 
     

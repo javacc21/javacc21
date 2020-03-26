@@ -736,6 +736,7 @@ void ParserProduction() :
 
 INJECT(JavaCodeProduction) : {extends ParserProduction}{
      public void genFirstSet(boolean[] firstSet) { /*Do nothing.*/}
+     public void genFirstSet(java.util.BitSet bs) {}
 
 }
 
@@ -1259,7 +1260,7 @@ INJECT(ExpansionChoice) :
 {
    import javacc.parsegen.Expansion;
    import java.util.List;
-   import java.util.Collections;
+   import java.util.BitSet;
    extends Expansion;
 }
 {
@@ -1271,6 +1272,12 @@ INJECT(ExpansionChoice) :
           for (Expansion sub : getChoices()) {
                 sub.genFirstSet(firstSet);
           }
+   }
+   
+   public void genFirstSet(BitSet bs) {
+         for (Expansion sub : getChoices()) {
+              sub.genFirstSet(bs);
+         }
    }
    
    public boolean isPossiblyEmpty() {
@@ -1389,6 +1396,29 @@ INJECT(ExpansionSequence) :
                 }
             }
    }
+   
+   public void genFirstSet(java.util.BitSet firstSet) {
+             Expansion prevExp = null;
+             for (Expansion unit : getUnits()) {
+                // Javacode productions can not have FIRST sets. Instead we
+                // generate the FIRST set
+                // for the preceding LOOKAHEAD (the semantic checks should have
+                // made sure that
+                // the LOOKAHEAD is suitable).
+                if (unit instanceof NonTerminal && !(((NonTerminal) unit).getProduction() instanceof BNFProduction)) {
+                	if (prevExp instanceof Lookahead) {
+                        Lookahead la = (Lookahead) prevExp;
+                        la.getNestedExpansion().genFirstSet(firstSet);
+                    }
+                } else {
+                     unit.genFirstSet(firstSet);
+                }
+                if (!unit.isPossiblyEmpty()) {
+                    break;
+                }
+            }
+   }
+   
    
    public boolean isPossiblyEmpty() {
         for (Expansion e : getUnits()) {
@@ -1681,6 +1711,13 @@ INJECT(NonTerminal) :
         }
      }
      
+     public void genFirstSet(java.util.BitSet bs) {
+        ParserProduction prod = getProduction();
+        if (prod instanceof BNFProduction) {
+        	prod.getExpansion().genFirstSet(bs);
+        }
+     }
+     
      public boolean isPossiblyEmpty() {
          return getProduction().emptyPossible;
      }
@@ -1759,6 +1796,10 @@ INJECT(ZeroOrOne) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
+    public void genFirstSet(java.util.BitSet firstSet) {
+        getNestedExpansion().genFirstSet(firstSet);
+    }
+    
     public boolean javaCodeCheck() {
          return getNestedExpansion().javaCodeCheck();
     }
@@ -1816,6 +1857,10 @@ INJECT(ZeroOrMore) :
     
     public void genFirstSet(boolean[] firstSet) {
        getNestedExpansion().genFirstSet(firstSet);
+    }
+    
+    public void genFirstSet(java.util.BitSet firstSet) {
+        getNestedExpansion().genFirstSet(firstSet);
     }
     
     public boolean javaCodeCheck() {
@@ -1876,6 +1921,10 @@ INJECT(OneOrMore) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
+    public void genFirstSet(java.util. BitSet firstSet) {
+        getNestedExpansion().genFirstSet(firstSet);
+    }
+    
     public boolean javaCodeCheck() {
             return getNestedExpansion().javaCodeCheck();
     }
@@ -1915,6 +1964,7 @@ TryBlock TryBlock() :
 INJECT(TryBlock) : 
 {
     import java.util.List;
+    import java.util.BitSet;
     import javacc.parsegen.Expansion;
     extends Expansion;
 }
@@ -1939,6 +1989,10 @@ INJECT(TryBlock) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
+    public void genFirstSet(BitSet firstSet) {
+        getNestedExpansion().genFirstSet(firstSet);
+    }
+   
     public boolean javaCodeCheck() {
          return getNestedExpansion().javaCodeCheck();
     }
@@ -1992,6 +2046,8 @@ INJECT(CodeBlock) :
     public void genFirstSet(boolean[] firstSet) {
        // Does nothing
     }
+    
+    public void genFirstSet(java.util.BitSet bs) {}
     
     public boolean javaCodeCheck() {
         return false;
