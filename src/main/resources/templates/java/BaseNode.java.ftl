@@ -149,10 +149,6 @@ public class ${grammar.baseNodeClassName} implements Node {
         return children.remove(n);
     }
     
-    public int indexOf(Node n) {
-        return children.indexOf(n);
-    }
-    
     public void clearChildren() {
         children.clear();
     }

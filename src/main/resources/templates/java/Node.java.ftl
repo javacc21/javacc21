@@ -34,6 +34,7 @@
 package ${grammar.parserPackage};
 [/#if]
 import java.util.*;
+import java.lang.reflect.*;
 [#if grammar.options.freemarkerNodes]
 import freemarker.template.*;
 [/#if]
@@ -83,12 +84,23 @@ public interface Node
      
      boolean removeChild(Node n);
      
-     int indexOf(Node child);
+     default int indexOf(Node child) {
+         for (int i=0; i<getChildCount(); i++) {
+             if (child == getChild(i)) {
+                 return i;
+             }
+         }
+         return -1;
+     }
      
      void clearChildren();
        
      int getChildCount();
      
+     /**
+      * Most implementations of this should return a copy or
+      * an immutable wrapper around the list.
+      */
      List<Node> children();
      
      // The following 3 methods will typically delegate
@@ -285,4 +297,67 @@ public interface Node
 		}
 	    return result;
     }
+    
+	static abstract public class Visitor {
+		
+		static private Method baseVisitMethod;
+		private HashMap<Class<? extends Node>, Method> methodCache = new HashMap<>();
+		
+		static private Method getBaseVisitMethod() throws NoSuchMethodException {
+			if (baseVisitMethod == null) {
+				baseVisitMethod = Node.Visitor.class.getMethod("visit", new Class[] {Node.class});
+			} 
+			return baseVisitMethod;
+		}
+		
+		private Method getVisitMethod(Node node) {
+			Class<? extends Node> nodeClass = node.getClass();
+			if (!methodCache.containsKey(nodeClass)) {
+				try {
+					Method method = nodeClass.getMethod("visit", new Class[] {nodeClass});
+					if (method.equals(getBaseVisitMethod())) {
+						method = null; // Have to avoid infinite recursion, no?
+					}
+					methodCache.put(nodeClass, method);
+				}
+				catch (NoSuchMethodException nsme) {
+					methodCache.put(nodeClass, null);
+				}
+			}
+	        return methodCache.get(nodeClass);
+		}
+		
+		/**
+		 * Tries to invoke (via reflection) the appropriate visit(...) method
+		 * defined in a subclass. If there is none, it just calls the fallback() routine. 
+		 */
+		public final void visit(Node node) {
+			Method visitMethod = getVisitMethod(node);
+			if (visitMethod == null) {
+				fallback(node);
+			} else try {
+				visitMethod.invoke(this, new Object[] {node});
+			} catch (InvocationTargetException ite) {
+	    		Throwable cause = ite.getCause();
+	    		if (cause instanceof RuntimeException) {
+	    			throw (RuntimeException) cause;
+	    		}
+	    		throw new RuntimeException(ite);
+	 		} catch (IllegalAccessException iae) {
+	 			throw new RuntimeException(iae);
+	 		}
+		}
+		
+		/**
+		 * If there is no specific method to visit this node type,
+		 * it just uses this method. The default base implementation
+		 * is just to recurse over the nodes.
+		 */
+		public void fallback(Node node) {
+			for (int i=0; i<node.getChildCount();i++) {
+				visit(node.getChild(i));
+			}
+		}
+}
+    
 }
