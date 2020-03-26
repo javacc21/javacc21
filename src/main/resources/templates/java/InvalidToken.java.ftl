@@ -20,4 +20,8 @@ public class InvalidToken extends Token {
     public String getNormalizedText() {
         return "Lexically Invalid Input:" + image;
     }
+    
+    public boolean isDirty() {
+        return true;
+    }
 }

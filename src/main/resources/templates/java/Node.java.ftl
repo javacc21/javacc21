@@ -140,9 +140,14 @@ public interface Node
      
      void setEndColumn(int endColumn);
 
-     default boolean isDirty() {return false;}
+     default boolean isDirty() {
+         for (Node child : children()) {
+            if (child.isDirty()) return true;
+         }
+         return false;
+     }
  
-[#if grammar.options.visitor]
+[#if grammar.options.visitor] [#--  This thing is just from legacy JJTree. I think the Node.Visitor that uses reflection is more elegant and useful. --]
    [#var RETURN_TYPE = grammar.options.visitorReturnType]
    [#if !RETURN_TYPE?has_content][#set RETURN_TYPE = "void"][/#if]
    [#var DATA_TYPE = grammar.options.visitorDataType]
@@ -153,11 +158,8 @@ public interface Node
 [/#if]
 
 
-
-
    default <T extends Node>T firstChildOfType(Class<T>clazz) {
-        for (int i=0; i<getChildCount(); i++) {
-            Node child=getChild(i);
+        for (Node child : children()) {
             if (clazz.isInstance(child)) {
                 return clazz.cast(child);
             }
@@ -168,8 +170,7 @@ public interface Node
      
     default <T extends Node>List<T>childrenOfType(Class<T>clazz) {
         List<T>result=new java.util.ArrayList<>();
-        for (int i=0; i<getChildCount(); i++) {
-            Node child=getChild(i);
+        for (Node child : children()) {
             if (clazz.isInstance(child)) {
                 result.add(clazz.cast(child));
             }
@@ -179,8 +180,7 @@ public interface Node
    
    default <T extends Node> List<T> descendantsOfType(Class<T> clazz) {
         List<T> result = new ArrayList<T>();
-        for (int i=0; i<getChildCount(); i++) {
-            Node child = getChild(i);
+        for (Node child : children()) {
             if (clazz.isInstance(child)) {
                 result.add(clazz.cast(child));
             } 
@@ -188,21 +188,31 @@ public interface Node
         }
         return result;
    }
+   
+   default <T extends Node> T firstAncestorOfType(Class<T> clazz) {
+        Node parent = this;
+        while (parent !=null) {
+           parent = parent.getParent();
+           if (clazz.isInstance(parent)) {
+               return clazz.cast(parent);
+           }
+        }
+        return null;
+    }
+   
 
     
     default Node findNodeAt(int line, int column) {
         if (!isIncluded(line, column)) {
             return null;
         }
-        Node child = this;
-        for (int i = 0; i < getChildCount(); i++) {
-            child = getChild(i);
+        for (Node child : children()) {
             Node match = child.findNodeAt(line, column);
             if (match != null) {
                 return match;
             }
         }
-        return child;
+        return this;
     }
     
     /**
@@ -276,8 +286,7 @@ public interface Node
     
      static public List<Token> getTokens(Node node) {
         List<Token> result = new ArrayList<Token>();
-        for (int i=0; i<node.getChildCount(); i++) {
-            Node child = node.getChild(i);
+        for (Node child : node.children()) {
             if (child instanceof Token) {
                 result.add((Token) child);
             } else {
