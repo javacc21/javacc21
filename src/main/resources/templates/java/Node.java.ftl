@@ -354,9 +354,9 @@ public interface Node
 		 * is just to recurse over the nodes.
 		 */
 		public void fallback(Node node) {
-			for (int i=0; i<node.getChildCount();i++) {
-				visit(node.getChild(i));
-			}
+		    for (Node child : node.children()) {
+		        visit(child);
+		    }
 		}
 }
     
