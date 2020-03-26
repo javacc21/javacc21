@@ -2,7 +2,7 @@
 [#if grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
 [/#if]
-
+import java.util.*;
 [#if grammar.nodePackage?has_content && grammar.nodePackage != grammar.parserPackage]
 import ${grammar.nodePackage}.*;
 [/#if]
@@ -189,7 +189,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     [#if grammar.options.treeBuildingEnabled]
     
     private Node parent;
-    private java.util.Map<String,Object> attributes; 
+    private Map<String,Object> attributes; 
 
     @Override
     public boolean hasChildNodes() {
@@ -236,6 +236,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return null;
     }
     
+    public List<Node> children() {
+        return Collections.emptyList();
+    }
+    
     
 
     public void open() {}
@@ -249,7 +253,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      
     public void setAttribute(String name, Object value) {
         if (attributes == null) {
-            attributes = new java.util.HashMap<String, Object>();
+            attributes = new HashMap<String, Object>();
         }
         attributes.put(name, value);
     }
@@ -258,8 +262,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return attributes == null ? false : attributes.containsKey(name);
     }
      
-    public java.util.Set<String> getAttributeNames() {
-        if (attributes == null) return java.util.Collections.emptySet();
+    public Set<String> getAttributeNames() {
+        if (attributes == null) return Collections.emptySet();
         return attributes.keySet();
     }
 

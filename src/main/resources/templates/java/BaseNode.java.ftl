@@ -38,32 +38,34 @@ package ${grammar.parserPackage};
 [#if grammar.options.freemarkerNodes]
 import freemarker.template.*;
 [/#if]
+
+import java.util.*;
   
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
 
     
-    static private Class listClass = java.util.ArrayList.class;
+    static private Class listClass = ArrayList.class;
 
-	static public void setListClass(Class<? extends java.util.List> listClass) {
+	static public void setListClass(Class<? extends List> listClass) {
         ${grammar.baseNodeClassName}.listClass = listClass;
     }
 
     @SuppressWarnings("unchecked")    
-    private java.util.List<Node> newList() {
+    private List<Node> newList() {
         try {
-           return (java.util.List<Node>) listClass.newInstance();
+           return (List<Node>) listClass.newInstance();
         } catch (Exception e) {
            throw new RuntimeException(e);
         }
     }
     
     protected Node parent;
-    protected java.util.List<Node> children = newList();
+    protected List<Node> children = newList();
     
     private int beginLine, beginColumn, endLine, endColumn;
     private String inputSource;
-    private java.util.Map<String,Object> attributes;
+    private Map<String,Object> attributes;
 [#if grammar.options.nodeUsesParser]    
     protected ${grammar.parserClassName} parser;
     public ${grammar.baseNodeClassName}(${grammar.parserClassName} parser) {
@@ -159,13 +161,17 @@ public class ${grammar.baseNodeClassName} implements Node {
         return children.size();
     }
     
+    public List<Node> children() {
+        return Collections.unmodifiableList(children);
+    }
+    
     public Object getAttribute(String name) {
         return attributes == null ? null : attributes.get(name); 
     }
      
     public void setAttribute(String name, Object value) {
         if (attributes == null) {
-            attributes = new java.util.HashMap<String, Object>();
+            attributes = new HashMap<String, Object>();
         }
         attributes.put(name, value);
     }
@@ -174,8 +180,8 @@ public class ${grammar.baseNodeClassName} implements Node {
         return attributes == null ? false : attributes.containsKey(name);
     }
      
-    public java.util.Set<String> getAttributeNames() {
-        if (attributes == null) return java.util.Collections.emptySet();
+    public Set<String> getAttributeNames() {
+        if (attributes == null) return Collections.emptySet();
         return attributes.keySet();
     }
 

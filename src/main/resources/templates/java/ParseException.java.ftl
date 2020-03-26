@@ -20,28 +20,11 @@ public class ParseException extends Exception {
     super();
   }
 
-  /** Constructor with message. */
   public ParseException(String message) {
     super(message);
   }
   
-  public ParseException(Token token) {
-      this.currentToken = token;
-  }
-  
-  public String getMessage() {
-      if (currentToken == null) {
-          return super.getMessage();
-      }
-      return "Encountered an error on (or somewhere around) line "
-                + currentToken.getBeginLine() 
-                + ", column " + currentToken.getBeginColumn() 
-                + " of " + currentToken.getInputSource();
-  }
-  
-  private Token currentToken;
-
-   static public String addEscapes(String str) {
+ static public String addEscapes(String str) {
       StringBuilder retval = new StringBuilder();
       char ch;
       for (int i = 0; i < str.length(); i++) {

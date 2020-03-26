@@ -89,6 +89,8 @@ public interface Node
        
      int getChildCount();
      
+     List<Node> children();
+     
      // The following 3 methods will typically delegate
      // straightforwardly to a Map<String, Object> object-s get/set/containsKey/keySet methods.
           

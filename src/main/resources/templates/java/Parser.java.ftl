@@ -178,7 +178,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   private void handleUnexpectedTokenType( int expectedType,  boolean forced, Token oldToken) throws ParseException {
 [#if !grammar.options.faultTolerant]
 //	    current_token = oldToken;
-	    throw new ParseException(current_token);
+	    throw new ParseException(generateErrorMessage(current_token));
 [#else]
        if (forced && tolerantParsing) {
            Token virtualToken = Token.newToken(expectedType, "");
@@ -191,12 +191,17 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
            current_token = virtualToken;
        } else {
 //	      current_token = oldToken;
-	      throw new ParseException(current_token);
+	      throw new ParseException(generateErrorMessage(current_token));
       }
 [/#if]
   }
   
-  
+  private String generateErrorMessage(Token t) {
+      return "Encountered an error on (or somewhere around) line "
+                + t.getBeginLine() 
+                + ", column " + t.getBeginColumn() 
+                + " of " + t.getInputSource();
+   }
   
 [#if hasPhase2]
   @SuppressWarnings("serial")
