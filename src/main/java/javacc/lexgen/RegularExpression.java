@@ -379,10 +379,6 @@ public abstract class RegularExpression extends Expansion {
     	return false;
     }
     
-    public boolean javaCodeCheck() {
-    	return false;
-    }
-    
     public boolean requiresPhase2Routine() {
     	return false;
     }

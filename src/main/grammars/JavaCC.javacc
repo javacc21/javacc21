@@ -257,7 +257,6 @@ INJECT(LEXER_CLASS) :
         javaccReservedWords.add("LOOKAHEAD");
         javaccReservedWords.add("IGNORE_CASE");
         javaccReservedWords.add("PARSER_BEGIN");
-        javaccReservedWords.add("JAVACODE");
         javaccReservedWords.add("TOKEN");
         javaccReservedWords.add("REGULAR_TOKEN");
         javaccReservedWords.add("SPECIAL_TOKEN");
@@ -319,8 +318,6 @@ TOKEN :
   < _PARSER_BEGIN: "PARSER_BEGIN" > #JavaCCKeyWord
   |
   < _PARSER_END: "PARSER_END" > #JavaCCKeyWord
-  |
-  < _JAVACODE: "JAVACODE" > #JavaCCKeyWord
   |
   < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #JavaCCKeyWord
   |
@@ -727,53 +724,9 @@ void ParserProduction() :
    TokenProduction tp;
 }
 {
-  prod=JavaCodeProduction() {grammar.addProduction(prod);} 
-  |
   tp=TokenProduction() {grammar.addTokenProduction(tp);}
   |
   prod=BNFProduction() {grammar.addProduction(prod);}
-}
-
-INJECT(JavaCodeProduction) : {extends ParserProduction}{
-     public void genFirstSet(boolean[] firstSet) { /*Do nothing.*/}
-     public void genFirstSet(java.util.BitSet bs) {}
-
-}
-
-JavaCodeProduction JavaCodeProduction()   :
-{
-      Token t;
-      Token name;
-      TreeBuildingAnnotation tba = null;
-      token_source.inJavaCode = true;
-      CodeBlock block;
-}
-{
-  "JAVACODE" {t = current_token;}
-  [
-     "public"
-     |
-     "private"
-     |
-     "protected"
-  ]
-  ReturnType()
-  name=<IDENTIFIER> {CURRENT_NODE.setName(name.image);}
-  FormalParameters()
-  [
-      ThrowsList()
-  ]
-  [
-     tba=TreeNodeDescriptor() {grammar.addNodeType(tba.getNodeName());} 
-  ]
-  block=CodeSnippet() {CURRENT_NODE.setExpansion(block);}
-  {
-      CURRENT_NODE.adjustFirstToken(t);
-      if (tba ==null && !grammar.getOptions().getNodeDefaultVoid()) {
-          grammar.addNodeType(name.image);
-      }
-      return CURRENT_NODE;
-  }
 }
 
 INJECT(ParserProduction) : 
@@ -784,9 +737,7 @@ INJECT(ParserProduction) :
 }
 {
     private String leadingComments;
-    /**
-     * The RHS of this production. Not used for a JAVACODE production.
-     */
+
     private Expansion expansion;
 
 
@@ -1289,15 +1240,6 @@ INJECT(ExpansionChoice) :
         return false;
    }
    
-   public boolean javaCodeCheck() {
-           for (Expansion sub : getChoices()) { 
-            if (sub.javaCodeCheck()) {
-                return true;
-            }
-        }
-        return false;
-   }
-   
    public boolean requiresPhase2Routine() {
         for (Expansion choice : getChoices()) {
             if (choice.requiresPhase2Routine())
@@ -1376,21 +1318,8 @@ INJECT(ExpansionSequence) :
 
 
    public void genFirstSet(boolean[] firstSet) {
-             Expansion prevExp = null;
              for (Expansion unit : getUnits()) {
-                // Javacode productions can not have FIRST sets. Instead we
-                // generate the FIRST set
-                // for the preceding LOOKAHEAD (the semantic checks should have
-                // made sure that
-                // the LOOKAHEAD is suitable).
-                if (unit instanceof NonTerminal && !(((NonTerminal) unit).getProduction() instanceof BNFProduction)) {
-                	if (prevExp instanceof Lookahead) {
-                        Lookahead la = (Lookahead) prevExp;
-                        la.getNestedExpansion().genFirstSet(firstSet);
-                    }
-                } else {
-                     unit.genFirstSet(firstSet);
-                }
+                unit.genFirstSet(firstSet);
                 if (!unit.isPossiblyEmpty()) {
                     break;
                 }
@@ -1400,19 +1329,7 @@ INJECT(ExpansionSequence) :
    public void genFirstSet(java.util.BitSet firstSet) {
              Expansion prevExp = null;
              for (Expansion unit : getUnits()) {
-                // Javacode productions can not have FIRST sets. Instead we
-                // generate the FIRST set
-                // for the preceding LOOKAHEAD (the semantic checks should have
-                // made sure that
-                // the LOOKAHEAD is suitable).
-                if (unit instanceof NonTerminal && !(((NonTerminal) unit).getProduction() instanceof BNFProduction)) {
-                	if (prevExp instanceof Lookahead) {
-                        Lookahead la = (Lookahead) prevExp;
-                        la.getNestedExpansion().genFirstSet(firstSet);
-                    }
-                } else {
-                     unit.genFirstSet(firstSet);
-                }
+                unit.genFirstSet(firstSet);
                 if (!unit.isPossiblyEmpty()) {
                     break;
                 }
@@ -1429,44 +1346,18 @@ INJECT(ExpansionSequence) :
         return true;
    }
    
-   public boolean javaCodeCheck() {
-        for (Expansion unit : getUnits()) { 
-        	if (unit instanceof ExplicitLookahead) {
-        		return false;
-        	}
-        	else if (unit.javaCodeCheck()) {
-        		return true;
-        	} else if (!unit.isPossiblyEmpty()) {
-        		return false;
-        	}
-        }
-        return false;
-   }
-   
    public boolean requiresPhase2Routine() {
             Lookahead lookahead = getLookahead();
             if (lookahead.hasSemanticLookahead()) {
             	return true;
             }
-            Expansion previous = null;
             for (Expansion unit : getUnits()) {
-                // For a Javacode production, we check
-                // the preceding Lookahead object.
-                if (unit instanceof NonTerminal
-                        && !(((NonTerminal) unit).getProduction() instanceof BNFProduction)) {
-                    if (previous instanceof Lookahead) {
-                        Lookahead la = (Lookahead) previous;
-                        if (la.getNestedExpansion().requiresPhase2Routine())
-                            return true;
-                    }
-                } else {
-                    if (unit.requiresPhase2Routine())
+                if (unit.requiresPhase2Routine()) {
                         return true;
                 }
                 if (unit.isPossiblyEmpty()) {
                     break;
                 }
-                previous = unit;
             }
             return false;   
    }
@@ -1721,12 +1612,7 @@ INJECT(NonTerminal) :
      public boolean isPossiblyEmpty() {
          return getProduction().emptyPossible;
      }
-     
-     public boolean javaCodeCheck() {
-        ParserProduction prod = getProduction();
-     	return (prod instanceof JavaCodeProduction) || prod.getExpansion().javaCodeCheck();
-     }
-     
+
      public boolean requiresPhase2Routine() {
          return getProduction().getExpansion().requiresPhase2Routine();
      }
@@ -1800,10 +1686,6 @@ INJECT(ZeroOrOne) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public boolean javaCodeCheck() {
-         return getNestedExpansion().javaCodeCheck();
-    }
-    
     public boolean requiresPhase2Routine() {
             return getNestedExpansion().requiresPhase2Routine();
      }
@@ -1863,10 +1745,6 @@ INJECT(ZeroOrMore) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public boolean javaCodeCheck() {
-        return getNestedExpansion().javaCodeCheck();
-    }
-        
     public boolean requiresPhase2Routine() {
             return getNestedExpansion().requiresPhase2Routine();
      }
@@ -1923,10 +1801,6 @@ INJECT(OneOrMore) :
     
     public void genFirstSet(java.util. BitSet firstSet) {
         getNestedExpansion().genFirstSet(firstSet);
-    }
-    
-    public boolean javaCodeCheck() {
-            return getNestedExpansion().javaCodeCheck();
     }
     
     public boolean requiresPhase2Routine() {
@@ -1993,10 +1867,6 @@ INJECT(TryBlock) :
         getNestedExpansion().genFirstSet(firstSet);
     }
    
-    public boolean javaCodeCheck() {
-         return getNestedExpansion().javaCodeCheck();
-    }
-        
     public boolean requiresPhase2Routine() {
             return getNestedExpansion().requiresPhase2Routine();
      }
@@ -2048,10 +1918,6 @@ INJECT(CodeBlock) :
     }
     
     public void genFirstSet(java.util.BitSet bs) {}
-    
-    public boolean javaCodeCheck() {
-        return false;
-    }
     
     public boolean requiresPhase2Routine() {
         return false;

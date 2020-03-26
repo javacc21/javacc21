@@ -55,6 +55,7 @@ class LookaheadCalc {
 					match3 = match2;
 				}
 				if (size != 0) {
+					// REVISIT. We don't have JAVACODE productions  any more!
 					// we wish to ignore empty expansions and the JAVACODE stuff
 					// here.
 					boolean diffFound = false;
@@ -71,15 +72,6 @@ class LookaheadCalc {
 			}
 		}
 		return null;
-	}
-
-	private boolean javaCodeCheck(List<MatchInfo> matchList) {
-		for (MatchInfo match : matchList) { 
-			if (match.firstFreeLoc == 0) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private String image(MatchInfo m, Grammar grammar) {
@@ -160,12 +152,7 @@ class LookaheadCalc {
 								"This choice can expand to the empty token sequence "
 										+ "and will therefore always be taken in favor of the choices appearing later.");
 						break;
-					} else if (javaCodeCheck(dbl.get(i))) {
-						grammar.addWarning(exp,
-								"JAVACODE non-terminal will force this choice to be taken "
-										+ "in favor of the choices appearing later.");
-						break;
-					}
+					} 
 				}
 			}
 			overlapDetected = false;
@@ -267,13 +254,6 @@ class LookaheadCalc {
 			grammar.setConsiderSemanticLA(false);
 			lookaheadWalk.generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex(), grammar);
 			List<MatchInfo> follow = grammar.getParserData().getSizeLimitedMatches();
-			if (la == 1) {
-				if (javaCodeCheck(first)) {
-					grammar.addWarning(nested, "JAVACODE non-terminal within " + image(exp)
-					+ " construct will force this construct to be entered in favor of "
-					+ "expansions occurring after construct.");
-				}
-			}
 			if ((m = overlap(first, follow)) == null) {
 				break;
 			}

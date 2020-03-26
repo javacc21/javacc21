@@ -110,7 +110,3 @@ void JSONObject() : {}
     <CLOSE_BRACE>
 }
 
-// Just put this here for testing purposes
-JAVACODE void foobar() {
-    System.out.println("KILROY");
-}

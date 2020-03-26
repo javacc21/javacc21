@@ -100,9 +100,4 @@
    <A HREF="#${utils.getID(nt.name)}">${nt.name}</A>
 [/#macro]
 
-
-[#macro javacode prod]
-  <I>java code</I>
-[/#macro]
-
 [/#escape]

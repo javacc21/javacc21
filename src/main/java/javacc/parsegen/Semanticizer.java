@@ -418,10 +418,10 @@ public class Semanticizer {
 
         if (grammar.getErrorCount() != 0)
             throw new MetaParseException();
-
-        // The following code sets the value of the "emptyPossible" field of
-        // JavaCodeProduction
-        // nodes. This field is initialized to false, and then the entire list
+        
+        // I don't understand the following comment. REVISIT LATER. (JR)
+        // The following code sets the value of the "emptyPossible" field of productions
+        //  This field is initialized to false, and then the entire list
         // of
         // productions is processed. This is repeated as long as at least one
         // item

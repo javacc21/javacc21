@@ -73,10 +73,14 @@ public class Lookahead extends Expansion {
         return result;
     }
     
-    public boolean getPossibleEmptyExpansionOrJavaCode() {
-        return expansion.isPossiblyEmpty() || expansion.javaCodeCheck();
+    public boolean getPossibleEmptyExpansion() {
+        return expansion.isPossiblyEmpty();
     }
-    
+
+    public boolean getPossibleEmptyExpansionOrJavaCode() {
+        return expansion.isPossiblyEmpty();
+    }
+  
     public Lookahead(Expansion nestedExpansion) {
         this.expansion = nestedExpansion;
         setGrammar(nestedExpansion.getGrammar());
@@ -86,8 +90,7 @@ public class Lookahead extends Expansion {
     public boolean getAlwaysSucceeds() {
         if (semanticLookahead != null) 
             return false;
-        return getAmount() == 0 || expansion.javaCodeCheck()
-                || expansion.isPossiblyEmpty();
+        return getAmount() == 0 || expansion.isPossiblyEmpty();
     }
 
     /**
@@ -98,7 +101,7 @@ public class Lookahead extends Expansion {
     public boolean getRequiresPhase2Routine() {
         if (getAmount() > 1)
             return true;
-        if (getAmount() == 0 || expansion.isPossiblyEmpty() || expansion.javaCodeCheck())
+        if (getAmount() == 0 || expansion.isPossiblyEmpty())
             return false;
         return semanticLookahead != null || expansion.requiresPhase2Routine();
     }
@@ -157,10 +160,6 @@ public class Lookahead extends Expansion {
     // finally see our way through to having Lookahead not extend Expansion anymore.
     public boolean isPossiblyEmpty() {
     	return true;
-    }
-    
-    public boolean javaCodeCheck() {
-    	return false;
     }
     
     public boolean requiresPhase2Routine() {

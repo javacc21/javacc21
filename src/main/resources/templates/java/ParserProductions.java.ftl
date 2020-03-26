@@ -175,8 +175,7 @@
 
 [#macro BuildPhase1Code expansion]
     [#var classname=expansion.class.name?split(".")?last]
-    [#if classname = "JavaCodeProduction"]
-    [#elseif classname = "CodeBlock"]
+    [#if classname = "CodeBlock"]
        ${expansion}
     [#elseif classname = "ExpansionSequence"]
 	   [#list expansion.units as subexp]
@@ -365,7 +364,7 @@ throw new ParseException();"]
         [/#if]
       [/#set]
       [#set condition = condition?replace("2147483647", "INFINITY")]
-   [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansionOrJavaCode]
+   [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansion]
       [@newVar type="int" init="nextTokenKind()"/]
       [#set condition]
       [#list lookahead.firstSetTokenNames as tokenName]
