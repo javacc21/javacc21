@@ -25,15 +25,21 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 [#if grammar.options.faultTolerant]
 
+   // The token does not correspond to actual characters in the input.
+   // It was inserted to (tolerantly) complete some grammatical production.
    boolean virtual;
+   
+   // The token was not consumed legitimately by any grammatical 
+   // production.
+   boolean ignored;
    
    public void setVirtual(boolean virtual) {this.virtual = virtual;}
    
-   public boolean isDirty() {return this.virtual || invalidToken != null;}
+   public boolean isDirty() {return this.virtual || invalidToken != null || this.ignored;}
    
    // The lexically invalid input that precedes this token (if any)
    InvalidToken invalidToken;
-
+   
 
 [/#if]
 

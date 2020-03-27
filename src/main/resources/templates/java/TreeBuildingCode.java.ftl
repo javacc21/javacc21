@@ -134,6 +134,13 @@
         }
         n.close();
         pushNode(n);
+ [#if grammar.usesjjtreeCloseNodeScope]
+        jjtreeCloseNodeScope(${nodeVarName});
+ [/#if]
+ [#if grammar.usesCloseNodeScopeHook]
+        closeNodeScopeHook(${nodeVarName});
+ [/#if]
+     
     }
 
 	/**
@@ -169,6 +176,12 @@
             }
             n.close();
             pushNode(n);
+ [#if grammar.usesjjtreeCloseNodeScope]
+	        jjtreeCloseNodeScope(${nodeVarName});
+ [/#if]
+ [#if grammar.usesCloseNodeScopeHook]
+    	    closeNodeScopeHook(${nodeVarName});
+ [/#if]
         } else {
             currentNodeScope.close();
         }
@@ -211,7 +224,7 @@
             while (ns.parentScope != null) {
                 ns = ns. parentScope;
             }
-            return ns.get(0);
+            return ns.isEmpty() ? null : ns.get(0);
         }
 
         Node peek() {

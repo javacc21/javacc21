@@ -139,13 +139,15 @@ public interface Node
      void setBeginColumn(int beginColumn);
      
      void setEndColumn(int endColumn);
-
+     
+[#if grammar.options.faultTolerant]
      default boolean isDirty() {
          for (Node child : children()) {
             if (child.isDirty()) return true;
          }
          return false;
      }
+[/#if]     
  
 [#if grammar.options.visitor] [#--  This thing is just from legacy JJTree. I think the Node.Visitor that uses reflection is more elegant and useful. --]
    [#var RETURN_TYPE = grammar.options.visitorReturnType]

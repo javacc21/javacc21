@@ -60,13 +60,8 @@
     ${production.name}(${production.parameterList}) 
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
-         trace_call("${production.name}");
-         try {
-             ${production.javaCode}
-             [@BuildCode production.expansion production.forced /]
-         } finally {
-             trace_return("${production.name}");
-         }
+     ${production.javaCode}
+   [@BuildCode production.expansion production.forced /]
     }   
 [/#macro]
 
@@ -115,32 +110,52 @@
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
+[#if !grammar.options.faultTolerant]
              throw e;
+[/#if]             
          }
          finally {
-            if (buildTree) {
-                if (${parseExceptionVar} == null || ${forcedVarName}) {
-                    closeNodeScope(${nodeVarName}, ${closeCondition});
-         [#if grammar.usesjjtreeCloseNodeScope]
-                    jjtreeCloseNodeScope(${nodeVarName});
-         [/#if]
-         [#if grammar.usesCloseNodeScopeHook]
-                    closeNodeScopeHook(${nodeVarName});
-         [/#if]
-                    ${nodeVarName}.setEndLine(current_token.getEndLine());
-                    ${nodeVarName}.setEndColumn(current_token.getEndColumn());
-                } else {
-                    clearNodeScope();
-                }
-            }
+[#if !grammar.options.faultTolerant]
+             if (buildTree) {
+                 if (${parseExceptionVar} != null) {
+                     clearNodeScope();
+                 } else {
+	                  ${nodeVarName}.setEndLine(current_token.getEndLine());
+		              ${nodeVarName}.setEndColumn(current_token.getEndColumn());
+ 	                 closeNodeScope(${nodeVarName}, ${closeCondition});
+                 }
+             }
+[#else]
+             if (buildTree) {
+	             if (${parseExceptionVar} != null) {
+	                 ${nodeVarName}.setParseException(${parseExceptionVar});
+   [#if expansion.endSetSize ==1]	                 
+                     if (${forcedVarName}) {
+		                attemptRecovery(${nodeVarName}, ${expansion.endTokenName});
+		                closeNodeScope(${nodeVarName}, ${closeCondition});
+		             } else {
+		                throw ${parseExceptionVar};
+		             }
+	[#else]
+	   [#--  Have think what we will do here --]
+	              throw ${parseExceptionVar};
+	[/#if]
+	             }
+	             else {
+	                 ${nodeVarName}.setEndLine(current_token.getEndLine());
+	                 ${nodeVarName}.setEndColumn(current_token.getEndColumn());
+	                 closeNodeScope(${nodeVarName}, ${closeCondition});
+	             }             
+	        }
+[/#if]  
+         }       
           ${grammar.popNodeVariableName()!}
-         }
     [/#if]
 [/#macro]
 
 [#macro createNode treeNodeBehavior nodeVarName]
    [#var nodeName = NODE_PREFIX + currentProduction.name]
-   [#if treeNodeBehavior??]
+   [#if treeNodeBehavior?? && treeNodeBehavior.nodeName??]
       [#set nodeName = NODE_PREFIX + treeNodeBehavior.nodeName]
    [/#if]
    ${nodeName} ${nodeVarName} = null;

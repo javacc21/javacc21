@@ -133,6 +133,42 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   
  [#if grammar.options.faultTolerant]
  
+ 
+    /**
+     * Based on the type of the node and the terminating token, we attempt to scan forward and recover. 
+     */
+    private void attemptRecovery(Node node, int finalTokenType) {
+        List<Token> scanAhead = getTokensToEOL(finalTokenType);
+        boolean foundTerminalType = false;
+        for (Token tok : scanAhead) {
+            if (tok.kind !=finalTokenType) {
+               tok.setUnparsed(true);
+               tok.ignored = true;
+               node.addChild(tok);
+      	       node.setEndLine(tok.getEndLine());
+		       node.setEndColumn(tok.getEndColumn());
+            } else {
+                foundTerminalType = true;
+            }
+        }
+        if (!foundTerminalType) {
+	        Token lastScanned = scanAhead.get(scanAhead.size()-1);
+	        Token virtualToken = null;
+	        if (lastScanned.kind != finalTokenType) {
+	            virtualToken = Token.newToken(finalTokenType, "VIRTUAL " + nodeNames[finalTokenType]);
+	            virtualToken.setUnparsed(true);
+	            virtualToken.setBeginLine(lastScanned.getEndLine());
+	            virtualToken.setBeginColumn(lastScanned.getEndColumn());
+	            virtualToken.setEndLine(lastScanned.getEndLine());
+	            virtualToken.setEndColumn(lastScanned.getEndColumn());
+	        }
+	        node.addChild(virtualToken);
+	        node.setEndLine(virtualToken.getEndLine());
+	        node.setEndColumn(virtualToken.getEndColumn());
+        }
+    }
+
+ 
      private Token consumeToken(int expectedType) throws ParseException {
         return consumeToken(expectedType, false);
      }
@@ -215,6 +251,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
                 + ", column " + t.getBeginColumn() 
                 + " of " + t.getInputSource();
    }
+   
   
 [#if hasPhase2]
   @SuppressWarnings("serial")
@@ -265,20 +302,21 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     return current_token.next.kind;
   }
   
-  List<Token> getTokensToEOL() {
+  private List<Token> getTokensToEOL(int desiredTokenType) {
      ArrayList<Token> result = new ArrayList<>();
      int currentLine = current_token.getBeginLine();
-     Token tok = getToken(1);
-     while (tok.getBeginLine() == currentLine && tok.kind != EOF) {
-         result.add(tok);
-         Token next = tok.next;
-         if (next == null) {
-             next = token_source.getNextToken();
-             tok.next = next;
-         }
-         tok = next;
-     }
-     return result; 
+     Token tok = current_token;
+     do  {
+        Token prevToken = tok;
+        if (tok.next != null) {
+            tok = tok.next;
+        } else {
+        	tok = token_source.getNextToken();
+        	prevToken.next = tok;
+        }
+        result.add(tok);
+     } while (tok.getBeginLine() == currentLine && tok.kind != desiredTokenType && tok.kind != EOF);
+     return result;
   }
   
 [#if grammar.options.debugParser]

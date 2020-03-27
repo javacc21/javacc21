@@ -845,11 +845,11 @@ INJECT(ParserProduction) :
         return leadingComments;
     }
 
-    private boolean forced;
+//    private boolean forced;
 
-    public boolean getForced() {return forced;}
+//    public boolean getForced() {return forced;}
     
-    public void setForced(boolean forced) {this.forced = forced;}
+//    public void setForced(boolean forced) {this.forced = forced;}
 }
 
 BNFProduction BNFProduction() :
@@ -865,14 +865,21 @@ BNFProduction BNFProduction() :
     ReturnType()
     <IDENTIFIER> {CURRENT_NODE.setName(current_token.image);}
     FormalParameters()
-    [
-       <BANG> {CURRENT_NODE.setForced(true);} 
-    ]
+//    [
+//       <BANG> {CURRENT_NODE.setForced(true);} 
+//    ]
     [
       ThrowsList()
     ]
     [
-        tba=TreeNodeDescriptor() {grammar.addNodeType(tba.getNodeName());}
+        tba=TreeNodeDescriptor() 
+        {
+            String nodeName = tba.getNodeName();
+            if (nodeName == null) {
+               nodeName = CURRENT_NODE.getName();
+            }
+            grammar.addNodeType(nodeName);
+        }
     ]
     ":"
     Block()
@@ -900,12 +907,17 @@ INJECT(BNFProduction) :
     public CodeBlock getJavaCode() {
        return firstChildOfType(CodeBlock.class);
     }
+    
+    public boolean getForced() {
+        TreeBuildingAnnotation tba = firstChildOfType(TreeBuildingAnnotation.class);
+        return tba != null && tba.isForced();
+    } 
 }
 
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 {}
 {
-  <SHEBANG> {return CURRENT_NODE;}
+  <SHEBANG> {CURRENT_NODE.setForced(true); return CURRENT_NODE;}
   |
   (
 	  <HASH_ID>
@@ -915,9 +927,9 @@ TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 	  [
 	   LOOKAHEAD(<BANG>|<LPAREN>)
 	   (
-	   <BANG>
+	   <BANG> {CURRENT_NODE.setForced(true);}
 	   |
-	   <LPAREN>
+	   <LPAREN> 
 	      [
 	        ">"
 	      ]
@@ -967,6 +979,17 @@ INJECT(TreeBuildingAnnotation) :
     public boolean getVoid() {
         return "void".equals(getNodeName());
     }
+    
+    private boolean forced;
+    
+    public boolean isForced() {
+       return forced;
+    }
+    
+    public void setForced(boolean forced) {
+        this.forced = forced;
+    }
+    
 }
 
 
