@@ -1219,17 +1219,18 @@ INJECT(ExpansionChoice) :
        return childrenOfType(Expansion.class);
    }
    
-   public void genFirstSet(boolean[] firstSet) {
-          for (Expansion sub : getChoices()) {
-                sub.genFirstSet(firstSet);
-          }
-   }
-   
    public void genFirstSet(BitSet bs) {
-         for (Expansion sub : getChoices()) {
-              sub.genFirstSet(bs);
+         for (Expansion choice : getChoices()) {
+              choice.genFirstSet(bs);
          }
    }
+   
+   public void genFinalSet(BitSet finalSet) {
+         for (Expansion choice : getChoices()) {
+             choice.genFinalSet(finalSet);
+         }
+   }
+   
    
    public boolean isPossiblyEmpty() {
         for (Expansion e : getChoices()) {
@@ -1317,23 +1318,24 @@ INJECT(ExpansionSequence) :
    }
 
 
-   public void genFirstSet(boolean[] firstSet) {
-             for (Expansion unit : getUnits()) {
-                unit.genFirstSet(firstSet);
-                if (!unit.isPossiblyEmpty()) {
-                    break;
-                }
-            }
+   public void genFirstSet(java.util.BitSet firstSet) {
+	    for (Expansion unit : getUnits()) {
+	        unit.genFirstSet(firstSet);
+	        if (!unit.isPossiblyEmpty()) {
+	            break;
+	        }
+	    }
    }
    
-   public void genFirstSet(java.util.BitSet firstSet) {
-             Expansion prevExp = null;
-             for (Expansion unit : getUnits()) {
-                unit.genFirstSet(firstSet);
-                if (!unit.isPossiblyEmpty()) {
-                    break;
-                }
-            }
+   public void genFinalSet(BitSet finalSet) {
+        List<Expansion> children = getUnits();
+        Collections.reverse(children);
+	    for (Expansion child : children) {
+	       child.genFinalSet(finalSet);
+	        if (!child.isPossiblyEmpty()) {
+	            break;
+	        }
+	    }
    }
    
    
@@ -1563,6 +1565,7 @@ NonTerminal NonTerminal() #NonTerminal :
 INJECT(NonTerminal) : 
 {
     import javacc.parsegen.*;
+    import java.util.BitSet;
     extends Expansion; 
 }
 {
@@ -1595,18 +1598,12 @@ INJECT(NonTerminal) :
     }
     
     
-    public void genFirstSet(boolean[] firstSet) {
-        ParserProduction prod = getProduction();
-        if (prod instanceof BNFProduction) {
-        	prod.getExpansion().genFirstSet(firstSet);
-        }
+     public void genFirstSet(BitSet firstSet) {
+       	getProduction().getExpansion().genFirstSet(firstSet);
      }
      
-     public void genFirstSet(java.util.BitSet bs) {
-        ParserProduction prod = getProduction();
-        if (prod instanceof BNFProduction) {
-        	prod.getExpansion().genFirstSet(bs);
-        }
+     public void genFinalSet(BitSet finalSet) {
+       	getProduction().getExpansion().genFinalSet(finalSet);
      }
      
      public boolean isPossiblyEmpty() {
@@ -1652,6 +1649,7 @@ INJECT(ZeroOrOne) :
 {
      import javacc.parsegen.Expansion;
      import javacc.parsegen.Lookahead;
+     import java.util.BitSet;
      extends Expansion;
 }
 {
@@ -1678,14 +1676,14 @@ INJECT(ZeroOrOne) :
         return true;
     }
     
-    public void genFirstSet(boolean[] firstSet) {
+    public void genFirstSet(BitSet firstSet) {
         getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public void genFirstSet(java.util.BitSet firstSet) {
-        getNestedExpansion().genFirstSet(firstSet);
+    public void genFinalSet(BitSet finalSet) {
+        getNestedExpansion().genFinalSet(finalSet);
     }
-    
+
     public boolean requiresPhase2Routine() {
             return getNestedExpansion().requiresPhase2Routine();
      }
@@ -1702,6 +1700,7 @@ INJECT(ZeroOrMore) :
 {
      import javacc.parsegen.Expansion;
      import javacc.parsegen.Lookahead;
+     import java.util.BitSet;
      extends Expansion;
 }
 {
@@ -1737,12 +1736,12 @@ INJECT(ZeroOrMore) :
         return true;
     }
     
-    public void genFirstSet(boolean[] firstSet) {
-       getNestedExpansion().genFirstSet(firstSet);
+    public void genFirstSet(BitSet firstSet) {
+        getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public void genFirstSet(java.util.BitSet firstSet) {
-        getNestedExpansion().genFirstSet(firstSet);
+    public void genFinalSet(BitSet finalSet) {
+        getNestedExpansion().genFinalSet(finalSet);
     }
     
     public boolean requiresPhase2Routine() {
@@ -1795,12 +1794,12 @@ INJECT(OneOrMore) :
         return getNestedExpansion().isPossiblyEmpty();
     }
     
-    public void genFirstSet(boolean[] firstSet) {
+    public void genFirstSet(java.util.BitSet firstSet) {
         getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public void genFirstSet(java.util. BitSet firstSet) {
-        getNestedExpansion().genFirstSet(firstSet);
+    public void genFinalSet(java.util.BitSet finalSet) {
+        getNestedExpansion().genFinalSet(finalSet);
     }
     
     public boolean requiresPhase2Routine() {
@@ -1859,12 +1858,12 @@ INJECT(TryBlock) :
         return getNestedExpansion().isPossiblyEmpty();
     }
     
-    public void genFirstSet(boolean[] firstSet) {
+    public void genFirstSet(BitSet firstSet) {
         getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public void genFirstSet(BitSet firstSet) {
-        getNestedExpansion().genFirstSet(firstSet);
+    public void genFinalSet(BitSet finalSet) {
+        getNestedExpansion().genFinalSet(finalSet);
     }
    
     public boolean requiresPhase2Routine() {
@@ -1911,13 +1910,12 @@ INJECT(CodeBlock) :
     }
     
     /**
-     * Does nothing
+     * These two do nothing but have to fullfil the superclass contract 
      */
-    public void genFirstSet(boolean[] firstSet) {
-       // Does nothing
-    }
-    
+
     public void genFirstSet(java.util.BitSet bs) {}
+
+    public void genFinalSet(java.util.BitSet bs) {}
     
     public boolean requiresPhase2Routine() {
         return false;

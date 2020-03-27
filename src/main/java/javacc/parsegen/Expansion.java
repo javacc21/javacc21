@@ -140,9 +140,9 @@ abstract public class Expansion extends BaseNode {
     	return phase3RoutineName != null ? phase3RoutineName : getPhase2RoutineName().replace("phase2", "phase3");
     }
     
-    abstract public void genFirstSet(boolean[] firstSet);
-    
     abstract public void genFirstSet(BitSet bs);
+    
+    abstract public void genFinalSet(BitSet bs);
     
     abstract public boolean isPossiblyEmpty(); 
     

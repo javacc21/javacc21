@@ -45,9 +45,8 @@ import javacc.parser.tree.Expression;
  */
 
 public class Lookahead extends Expansion {
-
-    private boolean[] firstSet;
-    
+	
+	List<String> firstSetNames, finalSetNames;
 
     public Lookahead(Grammar grammar) {
         setGrammar(grammar);
@@ -55,22 +54,39 @@ public class Lookahead extends Expansion {
     
     protected Lookahead() {}
     
-    private boolean[] getFirstSet() {
-        if (firstSet == null) {
-            firstSet = new boolean[getGrammar().getLexerData().getTokenCount()];
-            expansion.genFirstSet(firstSet);
+    /**
+     * The names of the tokens with which this Lookahead's nested expansion can begin.
+     * @return
+     */
+
+    public List<String> getFirstSetTokenNames() {
+    	if (firstSetNames == null) {
+    		int tokenCount = getGrammar().getLexerData().getTokenCount();
+    		firstSetNames = new ArrayList<>(tokenCount);
+    		BitSet firstSet = new BitSet();
+    		expansion.genFirstSet(firstSet);
+    		for (int i=0; i<tokenCount; i++) {
+    			if (firstSet.get(i)) {
+    				firstSetNames.add(getGrammar().getTokenName(i));
+    			}
+    		}
         }
-        return firstSet;
+        return firstSetNames;
     }
     
-    public List<String> getFirstSetTokenNames() {
-        List<String> result = new ArrayList<String>();
-        for (int i=0; i<getFirstSet().length; i++) {
-            if (firstSet[i]) {
-                result.add(getGrammar().getTokenName(i));
-            }
-        }
-        return result;
+    public List<String> getFinalSetTokenNames() {
+    	if (finalSetNames == null) {
+    		int tokenCount = getGrammar().getLexerData().getTokenCount();
+    		finalSetNames = new ArrayList<>(tokenCount);
+    		BitSet finalSet = new BitSet();
+    		expansion.genFinalSet(finalSet);
+    	    for (int i=0; i<tokenCount; i++) {
+    	    	if (finalSet.get(i)) {
+    	    		finalSetNames.add(getGrammar().getTokenName(i));
+    	    	}
+    	    }
+    	}
+        return finalSetNames;	
     }
     
     public boolean getPossibleEmptyExpansion() {
@@ -166,12 +182,9 @@ public class Lookahead extends Expansion {
     	return false;
     }
     
-    public void genFirstSet(boolean[] firstSet ) {
-    	//A bit screwy since Lookahead extends Expansion but
-    	// is ignored in the recursive walk to build the first set.
-    }
+    public void genFirstSet(BitSet bs) {}
     
-    public void genFirstSet(java.util.BitSet bs) {}
+    public void genFinalSet(BitSet bs) {}
     
     public int minimumSize(int min) {
     	return 0;
