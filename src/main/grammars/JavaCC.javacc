@@ -846,7 +846,14 @@ INJECT(ParserProduction) :
         return leadingComments;
     }
     
-    private BitSet finalSet;
+    private BitSet firstSet, finalSet;
+    
+    public BitSet getFirstSet() {
+        if (firstSet == null) {
+           firstSet = getExpansion().getFirstSet();
+        }
+        return firstSet;
+    }
     
     public BitSet getFinalSet() {
         if (finalSet == null) {
@@ -1267,10 +1274,14 @@ INJECT(ExpansionChoice) :
        return childrenOfType(Expansion.class);
    }
    
-   public void genFirstSet(BitSet bs) {
-         for (Expansion choice : getChoices()) {
-              choice.genFirstSet(bs);
-         }
+   public BitSet getFirstSet() {
+        if (firstSet == null) {
+           firstSet = new BitSet();
+           for (Expansion choice : getChoices()) {
+               firstSet.or(choice.getFirstSet());
+           }
+        }
+        return firstSet;
    }
    
    public BitSet getFinalSet() {
@@ -1370,13 +1381,17 @@ INJECT(ExpansionSequence) :
    }
 
 
-   public void genFirstSet(java.util.BitSet firstSet) {
-	    for (Expansion unit : getUnits()) {
-	        unit.genFirstSet(firstSet);
-	        if (!unit.isPossiblyEmpty()) {
-	            break;
-	        }
-	    }
+   public BitSet getFirstSet() {
+       if (firstSet == null) {
+           firstSet = new BitSet();
+           for (Expansion child : getUnits()) {
+               firstSet.or(child.getFirstSet());
+               if (!child.isPossiblyEmpty()) {
+                  break;
+               }
+           }
+       }
+       return firstSet;
    }
    
    public BitSet getFinalSet() {
@@ -1654,8 +1669,11 @@ INJECT(NonTerminal) :
     }
     
     
-     public void genFirstSet(BitSet firstSet) {
-       	getProduction().getExpansion().genFirstSet(firstSet);
+     public BitSet getFirstSet() {
+        if (firstSet == null) {
+            firstSet = getProduction().getExpansion().getFirstSet();
+        }
+        return firstSet;
      }
      
      public BitSet getFinalSet() {
@@ -1735,15 +1753,11 @@ INJECT(ZeroOrOne) :
         return true;
     }
     
-    public void genFirstSet(BitSet firstSet) {
-        getNestedExpansion().genFirstSet(firstSet);
+    public BitSet getFirstSet() {
+        return getNestedExpansion().getFirstSet();
     }
     
-    public BitSet getFinalSet() {
-        return getNestedExpansion().getFinalSet();
-    }
-    
-    public BitSet getFInalSet() {
+     public BitSet getFinalSet() {
         return getNestedExpansion().getFinalSet();
     }
 
@@ -1799,8 +1813,11 @@ INJECT(ZeroOrMore) :
         return true;
     }
     
-    public void genFirstSet(BitSet firstSet) {
-        getNestedExpansion().genFirstSet(firstSet);
+    public BitSet getFirstSet() {
+         if (firstSet == null) {
+            firstSet = getNestedExpansion().getFirstSet();
+         }
+         return firstSet;
     }
     
     public BitSet getFinalSet() {
@@ -1861,8 +1878,8 @@ INJECT(OneOrMore) :
         return getNestedExpansion().isPossiblyEmpty();
     }
     
-    public void genFirstSet(java.util.BitSet firstSet) {
-        getNestedExpansion().genFirstSet(firstSet);
+    public BitSet getFirstSet() {
+        return getNestedExpansion().getFirstSet();
     }
     
     public BitSet getFinalSet() {
@@ -1925,8 +1942,8 @@ INJECT(TryBlock) :
         return getNestedExpansion().isPossiblyEmpty();
     }
     
-    public void genFirstSet(BitSet firstSet) {
-        getNestedExpansion().genFirstSet(firstSet);
+    public BitSet getFirstSet() {
+        return getNestedExpansion().getFirstSet();
     }
     
     public BitSet getFinalSet() {
@@ -1981,7 +1998,7 @@ INJECT(CodeBlock) :
      * These two do nothing but have to fullfil the superclass contract 
      */
 
-    public void genFirstSet(BitSet bs) {}
+    public BitSet getFirstSet() {return new BitSet();}
 
     public BitSet getFinalSet() {return new BitSet();}
     

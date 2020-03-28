@@ -35,7 +35,6 @@ import java.util.*;
 import javacc.Grammar;
 import javacc.lexgen.RegularExpression;
 import javacc.parser.ParseException;
-import javacc.parser.Nodes;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
 import javacc.parser.tree.ExplicitLookahead;

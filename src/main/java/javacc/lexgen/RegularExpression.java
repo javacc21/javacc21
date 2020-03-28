@@ -367,17 +367,18 @@ public abstract class RegularExpression extends Expansion {
     private String generatedClassName = "Token", generatedSuperClassName;
     
     
-    public void genFirstSet(BitSet bs) {
-    	bs.set(getOrdinal());
+    public BitSet getFirstSet() {
+    	if (firstSet== null) {
+    		firstSet = new BitSet();
+    		firstSet.set(getOrdinal());
+    	}
+        return firstSet;
     }
     
     public BitSet getFinalSet() {
-    	if (finalSet== null) {
-    		finalSet = new BitSet();
-    		finalSet.set(getOrdinal());
-    	}
-        return finalSet;
+        return getFirstSet();	
     }
+    
     
     public boolean isPossiblyEmpty() {
     	return false;

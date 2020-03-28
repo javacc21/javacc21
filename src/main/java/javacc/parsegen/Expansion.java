@@ -54,7 +54,7 @@ abstract public class Expansion extends BaseNode {
 
     private Lookahead lookahead;
     
-    protected BitSet finalSet;
+    protected BitSet firstSet, finalSet;
 
     public int getIndex() {
     	return parent.indexOf(this);
@@ -165,7 +165,9 @@ abstract public class Expansion extends BaseNode {
 	     return getFinalSet().cardinality();
     }
     
-    abstract public void genFirstSet(BitSet firstSet);
+    final public void genFirstSet(BitSet firstSet) {}
+    
+    abstract public BitSet getFirstSet();
     
     abstract public BitSet getFinalSet();
     

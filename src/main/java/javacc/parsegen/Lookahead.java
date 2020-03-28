@@ -63,8 +63,7 @@ public class Lookahead extends Expansion {
     	if (firstSetNames == null) {
     		int tokenCount = getGrammar().getLexerData().getTokenCount();
     		firstSetNames = new ArrayList<>(tokenCount);
-    		BitSet firstSet = new BitSet();
-    		expansion.genFirstSet(firstSet);
+    		BitSet firstSet = expansion.getFirstSet();
     		for (int i=0; i<tokenCount; i++) {
     			if (firstSet.get(i)) {
     				firstSetNames.add(getGrammar().getTokenName(i));
@@ -181,10 +180,9 @@ public class Lookahead extends Expansion {
     	return false;
     }
     
-    public void genFirstSet(BitSet bs) {}
-    
     public void genFinalSet(BitSet bs) {}
-    
+   
+    public BitSet getFirstSet() {return new BitSet();}
     
     public BitSet getFinalSet() {return new BitSet();}
     

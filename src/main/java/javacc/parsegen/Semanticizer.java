@@ -36,7 +36,6 @@ import javacc.Grammar;
 import javacc.MetaParseException;
 import javacc.lexgen.*;
 import javacc.parser.JavaCCConstants;
-import javacc.parser.Nodes;
 import javacc.parser.Token;
 import javacc.parser.tree.*;
 
