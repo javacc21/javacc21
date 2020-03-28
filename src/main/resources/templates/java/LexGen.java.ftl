@@ -193,6 +193,8 @@ public final void backup(int amount) {
        if (lexState >= ${lexerData.lexicalStates?size} || lexState < 0) {
           throw new RuntimeException("Switch to invalid lexical state: " + lexState);
        }
+//       if (currentLexicalState != lexState)
+//       	System.out.println("Switching from lexical state " + currentLexicalState + " to " + lexState);
        this.currentLexicalState = lexState;
     }
 
@@ -384,7 +386,7 @@ public final void backup(int amount) {
  
  [#if numLexicalStates>1]
       if (jjnewLexState[jjmatchedKind] != -1) {
-          currentLexicalState = jjnewLexState[jjmatchedKind];
+          SwitchTo(jjnewLexState[jjmatchedKind]);
       }
  [/#if]
 
@@ -450,7 +452,7 @@ public final void backup(int amount) {
 		  
           [#if numLexicalStates>1]
           if (jjnewLexState[jjmatchedKind] != -1) 
-            currentLexicalState = jjnewLexState[jjmatchedKind];
+               SwitchTo(jjnewLexState[jjmatchedKind]);
           [/#if]
           curPos = 0;
           jjmatchedKind = 0x7FFFFFFF;
