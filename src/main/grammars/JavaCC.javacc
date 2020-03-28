@@ -732,9 +732,9 @@ void ParserProduction() :
 INJECT(ParserProduction) : 
 {
    import javacc.parsegen.Expansion;
+   import javacc.lexgen.TokenSet;
    import java.util.List;
    import java.util.ArrayList;
-   import java.util.BitSet;
 }
 {
     private String leadingComments;
@@ -846,16 +846,16 @@ INJECT(ParserProduction) :
         return leadingComments;
     }
     
-    private BitSet firstSet, finalSet;
+    private TokenSet firstSet, finalSet;
     
-    public BitSet getFirstSet() {
+    public TokenSet getFirstSet() {
         if (firstSet == null) {
            firstSet = getExpansion().getFirstSet();
         }
         return firstSet;
     }
     
-    public BitSet getFinalSet() {
+    public TokenSet getFinalSet() {
         if (finalSet == null) {
             finalSet = getExpansion().getFinalSet();
         }
@@ -1265,8 +1265,8 @@ void ExpansionChoice() :
 INJECT(ExpansionChoice) : 
 {
    import javacc.parsegen.Expansion;
+   import javacc.lexgen.TokenSet;
    import java.util.List;
-   import java.util.BitSet;
    extends Expansion;
 }
 {
@@ -1274,9 +1274,9 @@ INJECT(ExpansionChoice) :
        return childrenOfType(Expansion.class);
    }
    
-   public BitSet getFirstSet() {
+   public TokenSet getFirstSet() {
         if (firstSet == null) {
-           firstSet = new BitSet();
+           firstSet = new TokenSet(getGrammar());
            for (Expansion choice : getChoices()) {
                firstSet.or(choice.getFirstSet());
            }
@@ -1284,9 +1284,9 @@ INJECT(ExpansionChoice) :
         return firstSet;
    }
    
-   public BitSet getFinalSet() {
+   public TokenSet getFinalSet() {
        if (finalSet == null) {
-           finalSet = new BitSet();
+           finalSet = new TokenSet(getGrammar());
            for (Expansion choice : getChoices()) {
                finalSet.or(choice.getFinalSet());
            }
@@ -1366,6 +1366,7 @@ INJECT(ExpansionSequence) :
    import javacc.parsegen.Expansion;
    import javacc.parsegen.Lookahead;
    import javacc.parsegen.Semanticizer;
+   import javacc.lexgen.TokenSet;
    import java.util.*;
    extends Expansion;
 }
@@ -1381,9 +1382,9 @@ INJECT(ExpansionSequence) :
    }
 
 
-   public BitSet getFirstSet() {
+   public TokenSet getFirstSet() {
        if (firstSet == null) {
-           firstSet = new BitSet();
+           firstSet = new TokenSet(getGrammar());
            for (Expansion child : getUnits()) {
                firstSet.or(child.getFirstSet());
                if (!child.isPossiblyEmpty()) {
@@ -1394,9 +1395,9 @@ INJECT(ExpansionSequence) :
        return firstSet;
    }
    
-   public BitSet getFinalSet() {
+   public TokenSet getFinalSet() {
        if (finalSet == null) {
-          finalSet = new BitSet();
+          finalSet = new TokenSet(getGrammar());
           List<Expansion> children = getUnits();
           Collections.reverse(children);
           for (Expansion child : children) {
@@ -1636,7 +1637,7 @@ NonTerminal NonTerminal() #NonTerminal :
 INJECT(NonTerminal) : 
 {
     import javacc.parsegen.*;
-    import java.util.BitSet;
+    import javacc.lexgen.TokenSet;
     extends Expansion; 
 }
 {
@@ -1669,14 +1670,14 @@ INJECT(NonTerminal) :
     }
     
     
-     public BitSet getFirstSet() {
+     public TokenSet getFirstSet() {
         if (firstSet == null) {
             firstSet = getProduction().getExpansion().getFirstSet();
         }
         return firstSet;
      }
      
-     public BitSet getFinalSet() {
+     public TokenSet getFinalSet() {
           if (finalSet == null) {
               finalSet = getProduction().getExpansion().getFinalSet();
           }
@@ -1726,7 +1727,7 @@ INJECT(ZeroOrOne) :
 {
      import javacc.parsegen.Expansion;
      import javacc.parsegen.Lookahead;
-     import java.util.BitSet;
+     import javacc.lexgen.TokenSet;
      extends Expansion;
 }
 {
@@ -1753,11 +1754,11 @@ INJECT(ZeroOrOne) :
         return true;
     }
     
-    public BitSet getFirstSet() {
+    public TokenSet getFirstSet() {
         return getNestedExpansion().getFirstSet();
     }
     
-     public BitSet getFinalSet() {
+     public TokenSet getFinalSet() {
         return getNestedExpansion().getFinalSet();
     }
 
@@ -1777,7 +1778,7 @@ INJECT(ZeroOrMore) :
 {
      import javacc.parsegen.Expansion;
      import javacc.parsegen.Lookahead;
-     import java.util.BitSet;
+     import javacc.lexgen.TokenSet;
      extends Expansion;
 }
 {
@@ -1813,14 +1814,14 @@ INJECT(ZeroOrMore) :
         return true;
     }
     
-    public BitSet getFirstSet() {
+    public TokenSet getFirstSet() {
          if (firstSet == null) {
             firstSet = getNestedExpansion().getFirstSet();
          }
          return firstSet;
     }
     
-    public BitSet getFinalSet() {
+    public TokenSet getFinalSet() {
         if (finalSet == null) {
             finalSet = getNestedExpansion().getFinalSet(); 
         }
@@ -1842,7 +1843,7 @@ INJECT(OneOrMore) :
 {
      import javacc.parsegen.Expansion;
      import javacc.parsegen.Lookahead;
-     import java.util.BitSet;
+     import javacc.lexgen.TokenSet;
      extends Expansion;
 }
 {
@@ -1878,11 +1879,11 @@ INJECT(OneOrMore) :
         return getNestedExpansion().isPossiblyEmpty();
     }
     
-    public BitSet getFirstSet() {
+    public TokenSet getFirstSet() {
         return getNestedExpansion().getFirstSet();
     }
     
-    public BitSet getFinalSet() {
+    public TokenSet getFinalSet() {
          return getNestedExpansion().getFinalSet();
     }
     
@@ -1921,7 +1922,7 @@ TryBlock TryBlock() :
 INJECT(TryBlock) : 
 {
     import java.util.List;
-    import java.util.BitSet;
+    import javacc.lexgen.TokenSet;
     import javacc.parsegen.Expansion;
     extends Expansion;
 }
@@ -1942,11 +1943,11 @@ INJECT(TryBlock) :
         return getNestedExpansion().isPossiblyEmpty();
     }
     
-    public BitSet getFirstSet() {
+    public TokenSet getFirstSet() {
         return getNestedExpansion().getFirstSet();
     }
     
-    public BitSet getFinalSet() {
+    public TokenSet getFinalSet() {
         return getNestedExpansion().getFinalSet();
     }
    
@@ -1978,7 +1979,7 @@ CodeBlock CodeSnippet() #void :
 
 INJECT(CodeBlock) :
 {
-   import java.util.BitSet;
+   import javacc.lexgen.TokenSet;
    extends javacc.parsegen.Expansion;
 }
 {
@@ -1998,9 +1999,9 @@ INJECT(CodeBlock) :
      * These two do nothing but have to fullfil the superclass contract 
      */
 
-    public BitSet getFirstSet() {return new BitSet();}
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
 
-    public BitSet getFinalSet() {return new BitSet();}
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
     
     public boolean requiresPhase2Routine() {
         return false;

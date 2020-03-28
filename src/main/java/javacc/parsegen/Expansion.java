@@ -30,14 +30,12 @@
 
 package javacc.parsegen;
 
-import java.util.BitSet;
-
 import javacc.Grammar;
 import javacc.parser.BaseNode;
 import javacc.lexgen.RegularExpression;
 import javacc.parser.tree.TreeBuildingAnnotation;
 import javacc.parser.tree.ParserProduction;
-
+import javacc.lexgen.TokenSet;
 
 
 /**
@@ -54,7 +52,7 @@ abstract public class Expansion extends BaseNode {
 
     private Lookahead lookahead;
     
-    protected BitSet firstSet, finalSet;
+    protected TokenSet firstSet, finalSet;
 
     public int getIndex() {
     	return parent.indexOf(this);
@@ -148,7 +146,7 @@ abstract public class Expansion extends BaseNode {
      * the expansion has exactly one kind of token that it can end with.
      */
     public String getEndTokenName() {
-         BitSet finalSet = getFinalSet(); 
+         TokenSet finalSet = getFinalSet(); 
     	 if (finalSet.cardinality()>1) {
     		 throw new UnsupportedOperationException("In its current phase, our fault tolerant parser generation only handles expansions that can end in exactly one token type.");
     	 }
@@ -165,11 +163,9 @@ abstract public class Expansion extends BaseNode {
 	     return getFinalSet().cardinality();
     }
     
-    final public void genFirstSet(BitSet firstSet) {}
+    abstract public TokenSet getFirstSet();
     
-    abstract public BitSet getFirstSet();
-    
-    abstract public BitSet getFinalSet();
+    abstract public TokenSet getFinalSet();
     
     abstract public boolean isPossiblyEmpty(); 
     

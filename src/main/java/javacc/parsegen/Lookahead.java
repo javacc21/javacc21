@@ -33,6 +33,7 @@ package javacc.parsegen;
 import java.util.*;
 
 import javacc.Grammar;
+import javacc.lexgen.TokenSet;
 import javacc.parser.tree.Expression;
 
 
@@ -74,17 +75,7 @@ public class Lookahead extends Expansion {
     }
     
     public List<String> getFinalSetTokenNames() {
-    	if (finalSetNames == null) {
-    		int tokenCount = getGrammar().getLexerData().getTokenCount();
-    		finalSetNames = new ArrayList<>(tokenCount);
-    		BitSet finalSet = expansion.getFinalSet();
-    	    for (int i=0; i<tokenCount; i++) {
-    	    	if (finalSet.get(i)) {
-    	    		finalSetNames.add(getGrammar().getTokenName(i));
-    	    	}
-    	    }
-    	}
-        return finalSetNames;	
+    	return expansion.getFinalSet().getTokenNames();
     }
     
     public boolean getPossibleEmptyExpansion() {
@@ -180,11 +171,9 @@ public class Lookahead extends Expansion {
     	return false;
     }
     
-    public void genFinalSet(BitSet bs) {}
-   
-    public BitSet getFirstSet() {return new BitSet();}
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
     
-    public BitSet getFinalSet() {return new BitSet();}
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
     
     public int minimumSize(int min) {
     	return 0;

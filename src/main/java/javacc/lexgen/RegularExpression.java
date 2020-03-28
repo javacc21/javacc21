@@ -35,6 +35,7 @@ import java.util.*;
 import javacc.Grammar;
 import javacc.parser.tree.Expression;
 import javacc.parsegen.Expansion;
+import javacc.lexgen.TokenSet;
 import javacc.parser.ParseException;
 import javacc.parser.tree.CharacterList;
 import javacc.parser.tree.CharacterRange;
@@ -367,15 +368,15 @@ public abstract class RegularExpression extends Expansion {
     private String generatedClassName = "Token", generatedSuperClassName;
     
     
-    public BitSet getFirstSet() {
+    public TokenSet getFirstSet() {
     	if (firstSet== null) {
-    		firstSet = new BitSet();
+    		firstSet = new TokenSet(getGrammar());
     		firstSet.set(getOrdinal());
     	}
         return firstSet;
     }
     
-    public BitSet getFinalSet() {
+    public TokenSet getFinalSet() {
         return getFirstSet();	
     }
     
