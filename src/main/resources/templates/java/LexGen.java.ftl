@@ -86,7 +86,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [#if numLexicalStates>1]
 
    void doLexicalStateSwitch(int tokenType) {
-       SwitchTo(jjnewLexState[tokenType]);
+       int newLexState = jjnewLexState[tokenType];
+       if (newLexState != -1) {
+       	SwitchTo(jjnewLexState[tokenType]);
+       }
    }
 
       /** Lex State array. */
