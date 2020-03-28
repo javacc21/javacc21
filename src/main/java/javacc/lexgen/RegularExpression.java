@@ -371,8 +371,12 @@ public abstract class RegularExpression extends Expansion {
     	bs.set(getOrdinal());
     }
     
-    public void genFinalSet(BitSet bs) {
-    	bs.set(getOrdinal());
+    public BitSet getFinalSet() {
+    	if (finalSet== null) {
+    		finalSet = new BitSet();
+    		finalSet.set(getOrdinal());
+    	}
+        return finalSet;
     }
     
     public boolean isPossiblyEmpty() {

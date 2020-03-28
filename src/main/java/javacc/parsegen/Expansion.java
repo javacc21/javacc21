@@ -53,6 +53,8 @@ abstract public class Expansion extends BaseNode {
     private TreeBuildingAnnotation treeNodeBehavior;
 
     private Lookahead lookahead;
+    
+    protected BitSet finalSet;
 
     public int getIndex() {
     	return parent.indexOf(this);
@@ -146,8 +148,7 @@ abstract public class Expansion extends BaseNode {
      * the expansion has exactly one kind of token that it can end with.
      */
     public String getEndTokenName() {
-    	 BitSet finalSet = new BitSet();
-         genFinalSet(finalSet);
+         BitSet finalSet = getFinalSet(); 
     	 if (finalSet.cardinality()>1) {
     		 throw new UnsupportedOperationException("In its current phase, our fault tolerant parser generation only handles expansions that can end in exactly one token type.");
     	 }
@@ -161,14 +162,12 @@ abstract public class Expansion extends BaseNode {
     }
     
     public int getEndSetSize() {
-	   	 BitSet finalSet = new BitSet();
-	     genFinalSet(finalSet);
-	     return finalSet.cardinality();
+	     return getFinalSet().cardinality();
     }
     
     abstract public void genFirstSet(BitSet firstSet);
     
-    abstract public void genFinalSet(BitSet finalSet);
+    abstract public BitSet getFinalSet();
     
     abstract public boolean isPossiblyEmpty(); 
     

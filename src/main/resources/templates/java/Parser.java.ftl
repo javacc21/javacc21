@@ -166,6 +166,9 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 	        node.setEndLine(virtualToken.getEndLine());
 	        node.setEndColumn(virtualToken.getEndColumn());
         }
+        [#if grammar.lexerData.lexicalStates?size >1]
+             token_source.doLexicalStateSwitch(finalTokenType);
+        [/#if]
     }
 
  

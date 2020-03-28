@@ -112,7 +112,15 @@
              ${parseExceptionVar} = e;
 [#if !grammar.options.faultTolerant]
              throw e;
-[/#if]             
+[#else]             
+	[#if production?? && production.returnType != "void"]
+	       [#if production.returnType == production.nodeName]
+	           return ${nodeVarName};
+	       [#else]
+	           return null;
+	       [/#if]
+	[/#if]
+[/#if]	
          }
          finally {
 [#if !grammar.options.faultTolerant]
@@ -137,7 +145,7 @@
 		                throw ${parseExceptionVar};
 		             }
 	[#else]
-	   [#--  Have think what we will do here --]
+	   [#--  Have to think what we will do here --]
 	              throw ${parseExceptionVar};
 	[/#if]
 	             }

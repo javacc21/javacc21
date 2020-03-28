@@ -80,9 +80,15 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      "${lexicalState.name}", 
 [/#list]
    };
+   
 
 
 [#if numLexicalStates>1]
+
+   void doLexicalStateSwitch(int tokenType) {
+       SwitchTo(jjnewLexState[tokenType]);
+   }
+
       /** Lex State array. */
   private static final int[] jjnewLexState = {
   [#list lexerData.regularExpressions as regexp]
@@ -486,7 +492,9 @@ public final void backup(int amount) {
      }
   }
 
-    private void tokenLexicalActions(Token matchedToken) {
+  void tokenLexicalActions(Token matchedToken) {
+//       int matchedKind = (matchedToken != null) ? matchedToken.kind : jjmatchedKind; // REVISIT
+       matchedToken = null; 
        switch(jjmatchedKind) {
    [#list 0..(tokenCount-1) as i]
       [#var regexp=lexerData.getRegularExpression(i)]

@@ -734,6 +734,7 @@ INJECT(ParserProduction) :
    import javacc.parsegen.Expansion;
    import java.util.List;
    import java.util.ArrayList;
+   import java.util.BitSet;
 }
 {
     private String leadingComments;
@@ -844,13 +845,19 @@ INJECT(ParserProduction) :
     public String getLeadingComments() {
         return leadingComments;
     }
-
-//    private boolean forced;
-
-//    public boolean getForced() {return forced;}
     
-//    public void setForced(boolean forced) {this.forced = forced;}
+    private BitSet finalSet;
+    
+    public BitSet getFinalSet() {
+        if (finalSet == null) {
+            finalSet = getExpansion().getFinalSet();
+        }
+        return finalSet;
+    }
+    
 }
+
+
 
 BNFProduction BNFProduction() :
 {
@@ -908,8 +915,26 @@ INJECT(BNFProduction) :
        return firstChildOfType(CodeBlock.class);
     }
     
+    public TreeBuildingAnnotation getTreeBuildingAnnotation() {
+        return firstChildOfType(TreeBuildingAnnotation.class);
+    }
+    
+    public String getNodeName() {
+        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
+        if (tba != null) {
+             String nodeName = tba.getNodeName();
+             if (nodeName == null) {
+                return nodeName;
+             }
+        }
+        return this.getName();
+    }
+
+    
     public boolean getForced() {
-        TreeBuildingAnnotation tba = firstChildOfType(TreeBuildingAnnotation.class);
+    //Just experimenting right now.
+//         return (getExpansion().getEndSetSize() == 1); 
+        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
         return tba != null && tba.isForced();
     } 
 }
@@ -1248,10 +1273,14 @@ INJECT(ExpansionChoice) :
          }
    }
    
-   public void genFinalSet(BitSet finalSet) {
-         for (Expansion choice : getChoices()) {
-             choice.genFinalSet(finalSet);
-         }
+   public BitSet getFinalSet() {
+       if (finalSet == null) {
+           finalSet = new BitSet();
+           for (Expansion choice : getChoices()) {
+               finalSet.or(choice.getFinalSet());
+           }
+       }
+       return finalSet;
    }
    
    
@@ -1350,15 +1379,19 @@ INJECT(ExpansionSequence) :
 	    }
    }
    
-   public void genFinalSet(BitSet finalSet) {
-        List<Expansion> children = getUnits();
-        Collections.reverse(children);
-	    for (Expansion child : children) {
-	       child.genFinalSet(finalSet);
-	        if (!child.isPossiblyEmpty()) {
-	            break;
-	        }
-	    }
+   public BitSet getFinalSet() {
+       if (finalSet == null) {
+          finalSet = new BitSet();
+          List<Expansion> children = getUnits();
+          Collections.reverse(children);
+          for (Expansion child : children) {
+              finalSet.or(child.getFinalSet());
+              if (!child.isPossiblyEmpty()) {
+                 break;
+              }
+          }
+       }
+       return finalSet;
    }
    
    
@@ -1625,8 +1658,11 @@ INJECT(NonTerminal) :
        	getProduction().getExpansion().genFirstSet(firstSet);
      }
      
-     public void genFinalSet(BitSet finalSet) {
-       	getProduction().getExpansion().genFinalSet(finalSet);
+     public BitSet getFinalSet() {
+          if (finalSet == null) {
+              finalSet = getProduction().getExpansion().getFinalSet();
+          }
+          return finalSet;
      }
      
      public boolean isPossiblyEmpty() {
@@ -1703,8 +1739,12 @@ INJECT(ZeroOrOne) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public void genFinalSet(BitSet finalSet) {
-        getNestedExpansion().genFinalSet(finalSet);
+    public BitSet getFinalSet() {
+        return getNestedExpansion().getFinalSet();
+    }
+    
+    public BitSet getFInalSet() {
+        return getNestedExpansion().getFinalSet();
     }
 
     public boolean requiresPhase2Routine() {
@@ -1763,8 +1803,11 @@ INJECT(ZeroOrMore) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public void genFinalSet(BitSet finalSet) {
-        getNestedExpansion().genFinalSet(finalSet);
+    public BitSet getFinalSet() {
+        if (finalSet == null) {
+            finalSet = getNestedExpansion().getFinalSet(); 
+        }
+        return finalSet;
     }
     
     public boolean requiresPhase2Routine() {
@@ -1782,6 +1825,7 @@ INJECT(OneOrMore) :
 {
      import javacc.parsegen.Expansion;
      import javacc.parsegen.Lookahead;
+     import java.util.BitSet;
      extends Expansion;
 }
 {
@@ -1821,8 +1865,8 @@ INJECT(OneOrMore) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public void genFinalSet(java.util.BitSet finalSet) {
-        getNestedExpansion().genFinalSet(finalSet);
+    public BitSet getFinalSet() {
+         return getNestedExpansion().getFinalSet();
     }
     
     public boolean requiresPhase2Routine() {
@@ -1885,8 +1929,8 @@ INJECT(TryBlock) :
         getNestedExpansion().genFirstSet(firstSet);
     }
     
-    public void genFinalSet(BitSet finalSet) {
-        getNestedExpansion().genFinalSet(finalSet);
+    public BitSet getFinalSet() {
+        return getNestedExpansion().getFinalSet();
     }
    
     public boolean requiresPhase2Routine() {
@@ -1917,6 +1961,7 @@ CodeBlock CodeSnippet() #void :
 
 INJECT(CodeBlock) :
 {
+   import java.util.BitSet;
    extends javacc.parsegen.Expansion;
 }
 {
@@ -1936,9 +1981,9 @@ INJECT(CodeBlock) :
      * These two do nothing but have to fullfil the superclass contract 
      */
 
-    public void genFirstSet(java.util.BitSet bs) {}
+    public void genFirstSet(BitSet bs) {}
 
-    public void genFinalSet(java.util.BitSet bs) {}
+    public BitSet getFinalSet() {return new BitSet();}
     
     public boolean requiresPhase2Routine() {
         return false;
