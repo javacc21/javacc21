@@ -69,7 +69,7 @@
 
 [#macro BuildCode expansion]
   // Code for ${expansion.name!"expansion"} specified on line ${expansion.beginLine} of ${expansion.inputSource}
-    [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName]
+    [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName, closeCondition = "true"]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.class.name?ends_with("Production")]
       [#set production = expansion.parent]
@@ -80,18 +80,14 @@
                         || (treeNodeBehavior?? && !treeNodeBehavior.void)]
     [/#if]
     [#if buildTreeNode]
-        [#set nodeNumbering = nodeNumbering+1]
-        [#set nodeVarName = currentProduction.name + nodeNumbering]
-        [#set forcedVarName = nodeVarName+"forced"]
-    	 ${grammar.pushNodeVariableName(nodeVarName)!}
+        [@setupTreeVariables .scope /]
         [#if grammar.options.faultTolerant && forced]
         boolean ${forcedVarName} = this.tolerantParsing;
         [#else]
         boolean ${forcedVarName} = false;
         [/#if]
-    	[@createNode treeNodeBehavior nodeVarName /]
-        [#set parseExceptionVar = "parseException"+nodeNumbering]
-         ParseException ${parseExceptionVar} = null;
+   	[@createNode treeNodeBehavior nodeVarName /]
+          ParseException ${parseExceptionVar} = null;
          try {
     [/#if]
         [@BuildPhase1Code expansion/]
@@ -99,28 +95,14 @@
         if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");
     [/#if]
     [#if buildTreeNode]
-       [#var closeCondition = "true"]
-       [#if !treeNodeBehavior??]
-         [#if grammar.options.smartNodeCreation]
-            [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false}]
-         [#else]
-            [#set treeNodeBehavior = {"name" : production.name, "condition" : null, "gtNode" : false, "void" : false}]
-         [/#if]
-       [/#if]
-       [#if treeNodeBehavior.condition?has_content]
-          [#set closeCondition = treeNodeBehavior.condition]
-          [#if treeNodeBehavior.gtNode]
-             [#set closeCondition = "nodeArity() > " + closeCondition]
-          [/#if]
-       [/#if]
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
-[#if !grammar.options.faultTolerant]
+      [#if !grammar.options.faultTolerant]
              throw e;
-[#else]             
-    if (trace_enabled) LOGGER.info("We have a parse error but somehow handled it. (Or did we?)");
-	[#if production?? && production.returnType != "void"]
+      [#else]             
+             if (trace_enabled) LOGGER.info("We have a parse error but somehow handled it. (Or did we?)");
+	    [#if production?? && production.returnType != "void"]
 	       [#if production.returnType == production.nodeName]
 	          [#-- We just assume that if the return type is the same as the type of the node, we want to return CURRENT_NODE.
 	                This is not theoretically correct, but will probably be true about 99% of the time. Maybe REVISIT. --]
@@ -129,13 +111,14 @@
 	          [#-- This is a bit screwy will not work if the return type is a primitive type --]
 	           return null;
 	       [/#if]
-	[/#if]
+	  [/#if]
 [/#if]	
          }
          finally {
 [#if !grammar.options.faultTolerant]
              if (buildTree) {
                  if (${parseExceptionVar} != null) {
+                     if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
                      clearNodeScope();
                  } else {
 	                  ${nodeVarName}.setEndLine(current_token.getEndLine());
@@ -146,6 +129,7 @@
 [#else]
              if (buildTree) {
 	             if (${parseExceptionVar} != null) {
+                     if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) {
 		                attemptRecovery(${nodeVarName}, ${expansion.finalSet.commaDelimitedTokens});
@@ -166,6 +150,30 @@
     [/#if]
 [/#macro]
 
+[#--  A helper macro to set up some variables so that the BuildCode macro can be a bit more readable --]
+[#macro setupTreeVariables callingScope]
+    [#set nodeNumbering = nodeNumbering +1]
+    [#set nodeVarName = currentProduction.name + nodeNumbering in callingScope]
+    [#set forcedVarName = callingScope.nodeVarName+"forced" in callingScope]
+    ${grammar.pushNodeVariableName(callingScope.nodeVarName)!}
+    [#set parseExceptionVar = "parseException"+nodeNumbering in callingScope]
+    [#if !callingScope.treeNodeBehavior??]
+        [#if grammar.options.smartNodeCreation]
+           [#set treeNodeBehavior = {"name" : callingScope.production.name, "condition" : "1", "gtNode" : true, "void" :false} in callingScope]
+        [#else]
+           [#set treeNodeBehavior = {"name" : callingScope.production.name, "condition" : null, "gtNode" : false, "void" : false} in callingScope]
+        [/#if]
+     [/#if]
+     [#if callingScope.treeNodeBehavior.condition?has_content]
+       [#set closeCondition = callingScope.treeNodeBehavior.condition in callingScope]
+       [#if callingScope.treeNodeBehavior.gtNode]
+          [#set closeCondition = "nodeArity() > " + callingScope.closeCondition in callingScope]
+       [/#if]
+    [/#if]
+[/#macro]
+
+
+[#--  Boilerplate code to create the node variable --]
 [#macro createNode treeNodeBehavior nodeVarName]
    [#var nodeName = NODE_PREFIX + currentProduction.name]
    [#if treeNodeBehavior?? && treeNodeBehavior.nodeName??]
@@ -178,7 +186,6 @@
    [#else]
        ${nodeVarName} = new ${nodeName}();
    [/#if]
-
        Token start = getToken(1);
        ${nodeVarName}.setBeginLine(start.beginLine);
        ${nodeVarName}.setBeginColumn(start.beginColumn);
@@ -447,7 +454,7 @@ throw new ParseException();"]
    [#if expansion.ordinal > 0][#return][/#if]
      private boolean ${expansion.phase3RoutineName}() {
         [#if grammar.options.debugLookahead&&expansion.parent.class.name?ends_with("Production")]
-          trace_call("${expansion.parent.name} (LOOKING AHEAD...)");
+            if (trace_enabled) LOGGER.info("${expansion.parent.name} (LOOKING AHEAD...)";
             [#set currentPhase3Expansion = expansion]
        [#else]
             [#set currentPhase3Expansion = null]
@@ -572,7 +579,7 @@ throw new ParseException();"]
     [#if grammar.options.debugLookahead&&!currentPhase3Expansion?is_null]
        [#var tracecode]
        [#set tracecode]
- trace_return("${currentPhase3Expansion.parent.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
+         if (trace_enabled) LOGGER.info("${currentPhase3Expansion.parent.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
        [/#set]
   { ${tracecode} return {bool?string("true", "false")};
               return "return " + retval + ";";

@@ -246,7 +246,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   [/#if]
       }
 [/#if]
-      LOGGER.finer("Consumed token of type " + tokenImage[current_token.kind] + " from " + current_token.getLocation());
+      if (trace_enabled) LOGGER.info("Consumed token of type " + tokenImage[current_token.kind] + " from " + current_token.getLocation());
       return current_token;
   }
   
@@ -315,7 +315,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   final public Token getNextToken() {
     if (current_token.next != null) current_token = current_token.next;
     else current_token = current_token.next = token_source.getNextToken();
-    trace_token(current_token, " (in getNextToken)");
     return current_token;
   }
 
@@ -367,8 +366,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   private boolean trace_enabled = false;
  [/#if]
  
-  private int trace_indent = 0;
-  
   public void setTracingEnabled(boolean tracingEnabled) {trace_enabled = tracingEnabled;}
   
  /**
@@ -388,37 +385,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   }
   
   
-
-  private void trace_call(String s) {
-    if (trace_enabled) {
-      for (int i = 0; i < trace_indent; i++) {
-         System.out.print(" "); 
-      }
-      System.out.println("Call:   " + s);
-      trace_indent += 2;
-    }
-  }
-
-  private void trace_return(String s) {
-    if (trace_enabled) {
-      trace_indent -= 2;
-      for (int i = 0; i < trace_indent; i++) { 
-          System.out.print(" "); 
-       }
-       System.out.println("Return: " + s);
-    }
-  }
-
-  private void trace_token(Token t, String where) {
-    if (trace_enabled) {
-      for (int i = 0; i < trace_indent; i++) { System.out.print(" "); }
-      System.out.print("Consumed token: <" + tokenImage[t.kind]);
-      if (t.kind != 0 && !tokenImage[t.kind].equals("\"" + t.image + "\"")) {
-        System.out.print(": \"" + t.image + "\"");
-      }
-      System.out.println(" at line " + t.beginLine + 
-                " column " + t.beginColumn + ">" + where);
-    }
   }
 [#if grammar.options.debugLookahead]
   private void trace_scan(Token token, int expectedType) {
