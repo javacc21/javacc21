@@ -44,11 +44,24 @@ package ${grammar.parserPackage};
 import ${grammar.nodePackage}.*;  
 [/#if]
 import java.util.*;
+import java.util.logging.*;
 import java.io.*;
 
 @SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
 
+    static final java.util.logging.Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
+    
+[#if grammar.options.debugParser]
+     static {
+         LOGGER.setLevel(Level.FINEST);
+     }
+[/#if]    
+
+    static public void setLogLevel(Level level) {
+        LOGGER.setLevel(level);
+        Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
+    }
 
 [#if grammar.options.faultTolerant]
    private boolean tolerantParsing= true;
@@ -89,9 +102,21 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
    [#embed "TreeBuildingCode.java.ftl"]
 [/#if]
 
+//=================================
+ // Start of methods for BNF Productions
+ //=================================
+  
 [@parserCode.ProductionsCode /]
 
+//====================================
+// Start of methods for Phase 2 Lookaheads
+//====================================
+  
 [@parserCode.Phase2Code /]
+
+//==================================
+ // Start of methods for Phase 3 Lookaheads
+ //==================================
 
 [@parserCode.Phase3Code /]
   
@@ -201,7 +226,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         if (current_token.kind != expectedType) {
             handleUnexpectedTokenType(expectedType, forced, oldToken) ;
         }      
-     trace_token(current_token, "");
 [#if grammar.options.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.options.userDefinedLexer]
@@ -222,6 +246,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   [/#if]
       }
 [/#if]
+      LOGGER.finer("Consumed token of type " + tokenImage[current_token.kind] + " from " + current_token.getLocation());
       return current_token;
   }
   
@@ -344,13 +369,13 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
  
   private int trace_indent = 0;
   
-  public void  setTracingEnabled(boolean tracingEnabled) {this.trace_enabled = tracingEnabled;}
+  public void setTracingEnabled(boolean tracingEnabled) {trace_enabled = tracingEnabled;}
   
  /**
  * @deprecated Use #setTracingEnabled
  */
    @Deprecated
-  final public void enable_tracing() {
+  public void enable_tracing() {
     setTracingEnabled(true);
   }
 
@@ -358,7 +383,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
  * @deprecated Use #setTracingEnabled
  */
 @Deprecated
-  final public void disable_tracing() {
+ public void disable_tracing() {
     setTracingEnabled(false);
   }
   
@@ -408,6 +433,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
   }
  [/#if]
+ 
 }
 
 [#list grammar.otherParserCodeDeclarations as decl]

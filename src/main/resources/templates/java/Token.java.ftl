@@ -197,8 +197,13 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public int getEndColumn() {
         return endColumn;
     }
+[#if !grammar.options.treeBuildingEnabled]    
+    public String getLocation() {
+         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
+     }
+[/#if]     
     
-    [#if grammar.options.treeBuildingEnabled]
+[#if grammar.options.treeBuildingEnabled]
     
     private Node parent;
     private Map<String,Object> attributes; 

@@ -31,7 +31,8 @@
  --]
  
 [#macro ProductionsCode] 
-   static private int INFINITY = Integer.MAX_VALUE;
+   static private final int INFINITY = Integer.MAX_VALUE;
+  
   [#list grammar.parserProductions as production]
     [#set currentProduction = production]
     [@ParserProduction production/]
@@ -60,6 +61,7 @@
     ${production.name}(${production.parameterList}) 
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
+     if (trace_enabled) LOGGER.info("Entering production defined on line ${production.beginLine} of ${production.inputSource}");
      ${production.javaCode}
    [@BuildCode production.expansion /]
     }   
@@ -93,6 +95,9 @@
          try {
     [/#if]
         [@BuildPhase1Code expansion/]
+    [#if production?? && production.returnType == "void"]
+        if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");
+    [/#if]
     [#if buildTreeNode]
        [#var closeCondition = "true"]
        [#if !treeNodeBehavior??]
@@ -114,10 +119,14 @@
 [#if !grammar.options.faultTolerant]
              throw e;
 [#else]             
+    if (trace_enabled) LOGGER.info("We have a parse error but somehow handled it. (Or did we?)");
 	[#if production?? && production.returnType != "void"]
 	       [#if production.returnType == production.nodeName]
+	          [#-- We just assume that if the return type is the same as the type of the node, we want to return CURRENT_NODE.
+	                This is not theoretically correct, but will probably be true about 99% of the time. Maybe REVISIT. --]
 	           return ${nodeVarName};
 	       [#else]
+	          [#-- This is a bit screwy will not work if the return type is a primitive type --]
 	           return null;
 	       [/#if]
 	[/#if]

@@ -101,6 +101,7 @@
     }
     
     public void openNodeScope(Node n) {
+        if (trace_enabled) LOGGER.info("Opening node scope for node of type: " + n.getClass().getName());
         new NodeScope();
         n.open();
     }
@@ -112,6 +113,7 @@
 	 * is pushed on to the stack.
 	 */
     public void closeNodeScope(Node n, int num) {
+        if (trace_enabled) LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + num + " nodes off the stack.");
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();
         for (int i=0;i<num;i++) {
@@ -153,6 +155,7 @@
 	 
     public void closeNodeScope(Node n, boolean condition) {
         if (condition) {
+            if (trace_enabled) LOGGER.finer("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + nodeArity() + " nodes off the stack.");
             int a = nodeArity();
             currentNodeScope.close();
             ArrayList<Node> nodes = new ArrayList<Node>();
@@ -183,6 +186,7 @@
     	    closeNodeScopeHook(${nodeVarName});
  [/#if]
         } else {
+            if (trace_enabled) LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", leaving " + nodeArity() + " nodes on the stack.");
             currentNodeScope.close();
         }
     }

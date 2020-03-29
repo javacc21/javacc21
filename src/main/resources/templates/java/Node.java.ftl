@@ -140,6 +140,10 @@ public interface Node
      
      void setEndColumn(int endColumn);
      
+     default String getLocation() {
+         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
+     }
+     
 [#if grammar.options.faultTolerant]
      default boolean isDirty() {
          for (Node child : children()) {
