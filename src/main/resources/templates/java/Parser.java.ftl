@@ -102,21 +102,9 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
    [#embed "TreeBuildingCode.java.ftl"]
 [/#if]
 
-//=================================
- // Start of methods for BNF Productions
- //=================================
-  
 [@parserCode.ProductionsCode /]
 
-//====================================
-// Start of methods for Phase 2 Lookaheads
-//====================================
-  
 [@parserCode.Phase2Code /]
-
-//==================================
- // Start of methods for Phase 3 Lookaheads
- //==================================
 
 [@parserCode.Phase3Code /]
   

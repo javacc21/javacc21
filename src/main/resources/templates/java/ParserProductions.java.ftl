@@ -32,7 +32,9 @@
  
 [#macro ProductionsCode] 
    static private final int INFINITY = Integer.MAX_VALUE;
-  
+  //=================================
+ // Start of methods for BNF Productions
+ //=================================
   [#list grammar.parserProductions as production]
     [#set currentProduction = production]
     [@ParserProduction production/]
@@ -41,12 +43,20 @@
 
 
 [#macro Phase2Code]
+ [#if parserData.phase2Lookaheads?size ==0][#return][/#if]
+//====================================
+// Start of methods for Phase 2 Lookaheads
+//====================================
   [#list parserData.phase2Lookaheads as lookahead]
      [@buildPhase2Routine lookahead.nestedExpansion/]
   [/#list]
 [/#macro]
 
 [#macro Phase3Code]
+ [#if parserData.phase3Table?size ==0][#return][/#if]
+//====================================
+ // Start of methods for Phase 3 Lookaheads
+ //====================================
    [#list parserData.phase3Table?keys as expansion]
       [@buildPhase3Routine expansion, parserData.getPhase3ExpansionCount(expansion)/]
    [/#list]
