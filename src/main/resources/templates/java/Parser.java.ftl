@@ -133,20 +133,32 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   
  [#if grammar.options.faultTolerant]
  
- 
+    static private boolean intArrayContains(int[] array, int elem) {
+        for (int i=0; i<array.length; i++) {
+            if (array[i] == elem) {
+                return true;
+            }
+        }
+        return false;
+    } 
+  
     /**
      * Based on the type of the node and the terminating token, we attempt to scan forward and recover. 
      */
-    private void attemptRecovery(Node node, int finalTokenType) {
+    private void attemptRecovery(Node node, int ...finalTokenTypes) {
+        int finalTokenType = finalTokenTypes[0];
         List<Token> scanAhead = getTokensToEOL(finalTokenType);
         boolean foundTerminalType = false;
         for (Token tok : scanAhead) {
-            if (tok.kind !=finalTokenType) {
+            //if (tok.kind !=finalTokenType) {
+            if (intArrayContains(finalTokenTypes, tok.kind)) {
                tok.setUnparsed(true);
                tok.ignored = true;
-               node.addChild(tok);
       	       node.setEndLine(tok.getEndLine());
 		       node.setEndColumn(tok.getEndColumn());
+		       if (tokensAreNodes) {
+		           currentNodeScope.add(tok);
+		       }
             } else {
                 foundTerminalType = true;
             }
@@ -162,7 +174,9 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 	            virtualToken.setEndLine(lastScanned.getEndLine());
 	            virtualToken.setEndColumn(lastScanned.getEndColumn());
 	        }
-	        node.addChild(virtualToken);
+	        if (tokensAreNodes) {
+	        	currentNodeScope.add(virtualToken);
+	        }
 	        node.setEndLine(virtualToken.getEndLine());
 	        node.setEndColumn(virtualToken.getEndColumn());
         }

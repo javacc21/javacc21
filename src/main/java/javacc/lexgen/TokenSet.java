@@ -59,4 +59,27 @@ public class TokenSet extends BitSet {
 		}
 		return names;
 	}
+	
+	private String getFirstTokenName() {
+		int tokCount = grammar.getLexerData().getTokenCount();
+		for (int i=0; i<tokCount; i++) {
+			if (get(i)) {
+				return grammar.getTokenName(i);
+			}
+		}
+		return null;
+	}
+	
+	public String getCommaDelimitedTokens() {
+		if (cardinality() <=1) {
+			return getFirstTokenName();
+		}
+		StringBuilder result = new StringBuilder();
+		for (String name : getTokenNames()) {
+			result.append(name);
+			result.append(", ");
+		}
+		result.setLength(result.length() -2);
+		return result.toString();
+	}
 }

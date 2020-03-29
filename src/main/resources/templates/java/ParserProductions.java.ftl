@@ -137,17 +137,12 @@
              if (buildTree) {
 	             if (${parseExceptionVar} != null) {
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
-   [#if expansion.endSetSize ==1]	                 
                      if (${forcedVarName}) {
-		                attemptRecovery(${nodeVarName}, ${expansion.endTokenName});
+		                attemptRecovery(${nodeVarName}, ${expansion.finalSet.commaDelimitedTokens});
 		                closeNodeScope(${nodeVarName}, ${closeCondition});
 		             } else {
 		                throw ${parseExceptionVar};
 		             }
-	[#else]
-	   [#--  Have to think what we will do here --]
-	              throw ${parseExceptionVar};
-	[/#if]
 	             }
 	             else {
 	                 ${nodeVarName}.setEndLine(current_token.getEndLine());
