@@ -131,27 +131,19 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     current_token = new Token();
   }
   
- [#if grammar.options.faultTolerant]
  
-    static private boolean intArrayContains(int[] array, int elem) {
-        for (int i=0; i<array.length; i++) {
-            if (array[i] == elem) {
-                return true;
-            }
-        }
-        return false;
-    } 
+[#if grammar.options.faultTolerant]
   
     /**
      * Based on the type of the node and the terminating token, we attempt to scan forward and recover. 
      */
     private void attemptRecovery(Node node, int ...finalTokenTypes) {
         int finalTokenType = finalTokenTypes[0];
-        List<Token> scanAhead = getTokensToEOL(finalTokenType);
+        List<Token> scanAhead = getTokensToEOL(finalTokenTypes);
         boolean foundTerminalType = false;
         for (Token tok : scanAhead) {
             //if (tok.kind !=finalTokenType) {
-            if (intArrayContains(finalTokenTypes, tok.kind)) {
+            if (!intArrayContains(finalTokenTypes, tok.kind)) {
                tok.setUnparsed(true);
                tok.ignored = true;
       	       node.setEndLine(tok.getEndLine());
@@ -319,7 +311,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     return current_token.next.kind;
   }
   
-  private List<Token> getTokensToEOL(int desiredTokenType) {
+  private List<Token> getTokensToEOL(int ...desiredTokenTypes) {
      ArrayList<Token> result = new ArrayList<>();
      int currentLine = current_token.getBeginLine();
      Token tok = current_token;
@@ -332,9 +324,17 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         	prevToken.next = tok;
         }
         result.add(tok);
-     } while (tok.getBeginLine() == currentLine && tok.kind != desiredTokenType && tok.kind != EOF);
+     } while (tok.getBeginLine() == currentLine && !intArrayContains(desiredTokenTypes, tok.kind) && tok.kind != EOF);
      return result;
   }
+     static private boolean intArrayContains(int[] array, int elem) {
+        for (int i=0; i<array.length; i++) {
+            if (array[i] == elem) {
+                return true;
+            }
+        }
+        return false;
+    } 
   
 [#if grammar.options.debugParser]
   private boolean trace_enabled = true;

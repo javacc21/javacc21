@@ -333,8 +333,8 @@ TOKEN :
   |
   <HASH : "#">
   |
-  <SHEBANG : "#!"> #Shebang
-  |
+//  <SHEBANG : "#!"> #Shebang
+//  |
   <HASH_ID : "#"<IDENTIFIER>> #HashID
 }
 
@@ -879,9 +879,9 @@ BNFProduction BNFProduction() :
     ReturnType()
     <IDENTIFIER> {CURRENT_NODE.setName(current_token.image);}
     FormalParameters()
-//    [
-//       <BANG> {CURRENT_NODE.setForced(true);} 
-//    ]
+    [
+       <BANG> {CURRENT_NODE.setForced(true);} 
+    ]
     [
       ThrowsList()
     ]
@@ -937,10 +937,15 @@ INJECT(BNFProduction) :
         return this.getName();
     }
 
+    private boolean forced; 
     
+    public void setForced(boolean forced) {
+        this.forced = forced;
+    }
     public boolean getForced() {
+         return forced;
     //Just experimenting right now.
-         return (getExpansion().getEndSetSize() == 1); 
+         //return (getExpansion().getEndSetSize() == 1); 
 //        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
 //        return tba != null && tba.isForced();
     } 
@@ -949,9 +954,9 @@ INJECT(BNFProduction) :
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 {}
 {
-  <SHEBANG> {CURRENT_NODE.setForced(true); return CURRENT_NODE;}
-  |
-  (
+//  <SHEBANG> {CURRENT_NODE.setForced(true); return CURRENT_NODE;}
+//  |
+//  (
 	  <HASH_ID>
 	  {
 	        token_source.inJavaCode = true;
@@ -969,7 +974,7 @@ TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 	   <RPAREN>
 	   )
 	  ]
-  )
+//  )
   {
           token_source.inJavaCode = false;
           return CURRENT_NODE;
