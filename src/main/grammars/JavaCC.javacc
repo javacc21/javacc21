@@ -954,27 +954,24 @@ INJECT(BNFProduction) :
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 {}
 {
-//  <SHEBANG> {CURRENT_NODE.setForced(true); return CURRENT_NODE;}
-//  |
-//  (
-	  <HASH_ID>
+  <HASH_ID>
 	  {
 	        token_source.inJavaCode = true;
 	  }
-	  [
-	   LOOKAHEAD(<BANG>|<LPAREN>)
-	   (
-	   <BANG> {CURRENT_NODE.setForced(true);}
-	   |
-	   <LPAREN> 
+   [
+	//   LOOKAHEAD(<BANG>|<LPAREN>)
+	   LOOKAHEAD(<LPAREN>)
+	  // (
+	//   <BANG> {CURRENT_NODE.setForced(true);}
+	//   |
+	   <LPAREN>  
 	      [
 	        ">"
 	      ]
 	      Expression()
 	   <RPAREN>
-	   )
-	  ]
-//  )
+ // )
+  ]
   {
           token_source.inJavaCode = false;
           return CURRENT_NODE;
@@ -1605,7 +1602,10 @@ Expansion ExpansionUnit() :
   result=NonTerminal()
   |
   "(" ExpansionChoice() {result=(Expansion)peekNode();} ")"
-  [  "+" #OneOrMore(4) { result = (OneOrMore) peekNode();}
+  [ 
+   <BANG> {result.setForced(true);}
+   | 
+   "+" #OneOrMore(4) { result = (OneOrMore) peekNode();}
    | "*" #ZeroOrMore(4) { result = (ZeroOrMore) peekNode();}
    | "?" #ZeroOrOne(4) { result = (ZeroOrOne) peekNode();}
   ]

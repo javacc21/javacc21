@@ -61,16 +61,17 @@
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
      ${production.javaCode}
-   [@BuildCode production.expansion production.forced /]
+   [@BuildCode production.expansion /]
     }   
 [/#macro]
 
-[#macro BuildCode expansion, forced=false]
+[#macro BuildCode expansion]
   // Code for ${expansion.name!"expansion"} specified on line ${expansion.beginLine} of ${expansion.inputSource}
-    [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName]
+    [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.class.name?ends_with("Production")]
       [#set production = expansion.parent]
+      [#set forced = production.forced || forced]
     [/#if]
     [#if grammar.options.treeBuildingEnabled]
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.options.nodeDefaultVoid)
