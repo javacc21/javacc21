@@ -44,9 +44,12 @@ package ${grammar.parserPackage};
 
 import java.io.Reader;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 @SuppressWarnings("unused")
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
+  private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
+ 
 
   java.io.PrintStream debugStream = System.out;
   public void setDebugStream(java.io.PrintStream ds) { debugStream = ds; }

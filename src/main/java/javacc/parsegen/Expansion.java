@@ -34,7 +34,7 @@ import javacc.Grammar;
 import javacc.parser.BaseNode;
 import javacc.lexgen.RegularExpression;
 import javacc.parser.tree.TreeBuildingAnnotation;
-import javacc.parser.tree.ParserProduction;
+import javacc.parser.tree.BNFProduction;
 import javacc.lexgen.TokenSet;
 
 
@@ -92,8 +92,8 @@ abstract public class Expansion extends BaseNode {
     
     public TreeBuildingAnnotation getTreeNodeBehavior() {
         if (treeNodeBehavior == null) {
-            if (this.getParent() instanceof ParserProduction) {
-                return ((ParserProduction) getParent()).getTreeNodeBehavior();
+            if (this.getParent() instanceof BNFProduction) {
+                return ((BNFProduction) getParent()).getTreeNodeBehavior();
             }
         }
         return treeNodeBehavior;

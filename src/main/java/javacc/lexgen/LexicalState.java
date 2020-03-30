@@ -68,7 +68,7 @@ public class LexicalState {
     private NfaState singlesToSkip;
     private boolean mixed;
     boolean canLoop;
-    boolean canReachOnMore;
+    private boolean canReachOnMore;
     RegularExpression matchAnyChar;
     int initMatch;
     RegularExpression currentRegexp;

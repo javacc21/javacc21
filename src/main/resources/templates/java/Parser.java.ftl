@@ -265,7 +265,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [#if grammar.options.faultTolerant]  
       if (t.invalidToken != null) {
           Token iv = t.invalidToken;
-          return "Encountered invalid input: " + iv.image + " on line " + iv.getBeginLine() + ", column " + iv.getBeginColumn() + " of " + t.getInputSource();
+          return "Encountered invalid input: " + iv.image + " on " + iv.getLocation();
       }
 [/#if]      
       return "Encountered an error on (or somewhere around) line "

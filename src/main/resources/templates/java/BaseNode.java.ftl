@@ -272,7 +272,6 @@ public class ${grammar.baseNodeClassName} implements Node {
     }
     
     public String getNodeName() {
-//        return ${grammar.constantsClassName}.nodeNames[id];
          return this.getClass().getSimpleName();
     }
     

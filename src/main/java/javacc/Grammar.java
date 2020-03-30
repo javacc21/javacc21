@@ -66,8 +66,8 @@ public class Grammar {
     private int includeNesting;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
-    private Map<String, ParserProduction> parserProductions = new LinkedHashMap<>();
-    private Map<String, ParserProduction> productionTable = new HashMap<>();
+    private Map<String, BNFProduction> parserProductions = new LinkedHashMap<>();
+    private Map<String, BNFProduction> productionTable = new HashMap<>();
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
     private List<JavaCCError> errors = new ArrayList<>();
@@ -332,22 +332,22 @@ public class Grammar {
      * A list of all grammar productions in the order
      * they appear in the input file. 
      */
-    public List<ParserProduction> getParserProductions() {
-        return new ArrayList<ParserProduction>(parserProductions.values()); 
+    public List<BNFProduction> getParserProductions() {
+        return new ArrayList<BNFProduction>(parserProductions.values()); 
     }
 
-    public void addProduction(ParserProduction production) {
+    public void addProduction(BNFProduction production) {
         parserProductions.put(production.getName(), production);
     }
 
     /**
      * A symbol table of all grammar productions.
      */
-    public Map<String, ParserProduction> getProductionTable() {
+    public Map<String, BNFProduction> getProductionTable() {
         return productionTable;
     }
 
-    public ParserProduction getProductionByName(String name) {
+    public BNFProduction getProductionByName(String name) {
         return productionTable.get(name);
     }
 

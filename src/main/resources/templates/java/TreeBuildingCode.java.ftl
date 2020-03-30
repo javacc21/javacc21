@@ -212,6 +212,9 @@
     @SuppressWarnings("serial")
     class NodeScope extends ArrayList<Node> {
         NodeScope parentScope;
+[#if grammar.options.faultTolerant]        
+        StringBuilder ignoredInput;
+[/#if]        
 
         NodeScope() {
             this.parentScope = ${grammar.parserClassName}.this.currentNodeScope;

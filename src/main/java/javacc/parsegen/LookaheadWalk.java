@@ -36,7 +36,6 @@ import javacc.Grammar;
 import javacc.lexgen.RegularExpression;
 import javacc.parser.tree.ExpansionSequence;
 import javacc.parser.tree.ExpansionChoice;
-import javacc.parser.tree.ParserProduction;
 import javacc.parser.tree.BNFProduction;
 import javacc.parser.tree.OneOrMore;
 import javacc.parser.tree.ZeroOrMore;
@@ -72,7 +71,7 @@ final class LookaheadWalk {
 			}
 			return retval;
 		} else if (exp instanceof NonTerminal) {
-			ParserProduction prod = ((NonTerminal) exp).getProduction();
+			BNFProduction prod = ((NonTerminal) exp).getProduction();
 			if (prod instanceof BNFProduction) {
 				return genFirstSet(partialMatches, prod.getExpansion());
 			} else {
@@ -156,8 +155,8 @@ final class LookaheadWalk {
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			retval.addAll(partialMatches);
 			return retval;
-		} else if (exp.getParent() instanceof ParserProduction) {
-			List<NonTerminal> parents = ((ParserProduction) exp.getParent()).parents;
+		} else if (exp.getParent() instanceof BNFProduction) {
+			List<NonTerminal> parents = ((BNFProduction) exp.getParent()).parents;
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			// System.out.println("1; gen: " + generation + "; exp: " + exp);
 			for (NonTerminal nt : parents) {

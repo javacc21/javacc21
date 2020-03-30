@@ -65,7 +65,7 @@ public class Semanticizer {
          * converts them to trivial choices. This way, their semantic lookahead
          * specification can be evaluated during other lookahead evaluations.
          */
-        for (ParserProduction np : grammar.getParserProductions()) {
+        for (BNFProduction np : grammar.getParserProductions()) {
             ExpansionTreeWalker.postOrderWalk(np.getExpansion(),
                     new LookaheadFixer());
         }
@@ -73,7 +73,7 @@ public class Semanticizer {
         /*
          * The following loop populates "production_table"
          */
-        for (ParserProduction p : grammar.getParserProductions()) {
+        for (BNFProduction p : grammar.getParserProductions()) {
             grammar.getProductionTable().put(p.getName(), p);
         }
 
@@ -82,7 +82,7 @@ public class Semanticizer {
          */
         
         for (NonTerminal nt : grammar.getRootNode().descendantsOfType(NonTerminal.class)) {
-        	ParserProduction prod = nt.getProduction();
+        	BNFProduction prod = nt.getProduction();
         	if (prod == null) {
         		grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
         	} else {
@@ -424,7 +424,7 @@ public class Semanticizer {
             // OneOrMore nodes
             // do not contain expansions that can expand to the empty token
             // list.
-            for (ParserProduction np : grammar.getParserProductions()) {
+            for (BNFProduction np : grammar.getParserProductions()) {
                 ExpansionTreeWalker.preOrderWalk(np.getExpansion(),
                         new EmptyChecker());
             }
@@ -434,7 +434,7 @@ public class Semanticizer {
             // productions that it can expand to without consuming any tokens.
             // Once this is
             // done, a left-recursion check can be performed.
-            for (ParserProduction prod : grammar.getParserProductions()) {
+            for (BNFProduction prod : grammar.getParserProductions()) {
                 addLeftMost(prod, prod.getExpansion());
             }
 
@@ -445,7 +445,7 @@ public class Semanticizer {
             // been determined to participate in a left recursive loop, it is
             // not tried
             // in any other loop.
-            for (ParserProduction prod : grammar.getParserProductions()) {
+            for (BNFProduction prod : grammar.getParserProductions()) {
                 if (prod.walkStatus == 0) {
                     prodWalk(prod);
                 }
@@ -481,7 +481,7 @@ public class Semanticizer {
              * The following code performs the lookahead ambiguity checking.
              */
             if (grammar.getErrorCount() == 0) {
-                for (ParserProduction prod : grammar.getParserProductions()) {
+                for (BNFProduction prod : grammar.getParserProductions()) {
                     ExpansionTreeWalker.preOrderWalk(prod.getExpansion(),
                             new LookaheadChecker());
                 }
@@ -515,7 +515,7 @@ public class Semanticizer {
     }
 
     // Updates prod.leftExpansions based on a walk of exp.
-    static private void addLeftMost(ParserProduction prod, Expansion exp) {
+    static private void addLeftMost(BNFProduction prod, Expansion exp) {
         if (exp instanceof NonTerminal) {
             for (int i = 0; i < prod.leIndex; i++) {
                 if (prod.leftExpansions[i] == ((NonTerminal) exp).getProduction()) {
@@ -523,7 +523,7 @@ public class Semanticizer {
                 }
             }
             if (prod.leIndex == prod.leftExpansions.length) {
-                ParserProduction[] newle = new ParserProduction[prod.leIndex * 2];
+                BNFProduction[] newle = new BNFProduction[prod.leIndex * 2];
                 System
                         .arraycopy(prod.leftExpansions, 0, newle, 0,
                                 prod.leIndex);
@@ -557,7 +557,7 @@ public class Semanticizer {
 
     // Returns true to indicate an unraveling of a detected left recursion loop,
     // and returns false otherwise.
-    private boolean prodWalk(ParserProduction prod) {
+    private boolean prodWalk(BNFProduction prod) {
         prod.walkStatus = -1;
         for (int i = 0; i < prod.leIndex; i++) {
             if (prod.leftExpansions[i].walkStatus == -1) {

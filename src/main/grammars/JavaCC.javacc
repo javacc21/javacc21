@@ -529,7 +529,7 @@ Root Root() throws IOException :
    }
    [ParserCodeDecls()]
    (
-      ParserProduction()
+      Production()
       |
       decls=TokenManagerDecls() {grammar.addCodeInjection(decls);}
       |
@@ -718,9 +718,9 @@ void option_binding() #void :
   {_options.setInputFileOption(name, t, option_name, value, inInclude);}
 }
 
-void ParserProduction() :
+void Production() #void :
 {
-   ParserProduction prod;
+   BNFProduction prod;
    TokenProduction tp;
 }
 {
@@ -729,14 +729,94 @@ void ParserProduction() :
   prod=BNFProduction() {grammar.addProduction(prod);}
 }
 
-INJECT(ParserProduction) : 
+BNFProduction BNFProduction() :
 {
-   import javacc.parsegen.Expansion;
-   import javacc.lexgen.TokenSet;
-   import java.util.List;
-   import java.util.ArrayList;
+    TreeBuildingAnnotation tba = null;
+    Token t=getToken(1);
+    Expansion expansion;
 }
 {
+    [
+        "public" | "private" | "protected"
+    ]
+    ReturnType()
+    <IDENTIFIER> {CURRENT_NODE.setName(current_token.image);}
+    FormalParameters()
+    [
+       <BANG> {CURRENT_NODE.setForced(true);} 
+    ]
+    [
+      ThrowsList()
+    ]
+    [
+        tba=TreeNodeDescriptor() 
+        {
+            String nodeName = tba.getNodeName();
+            if (nodeName == null) {
+               nodeName = CURRENT_NODE.getName();
+            }
+            grammar.addNodeType(nodeName);
+        }
+    ]
+    ":"
+    Block()
+    {
+        token_source.inJavaCode = false;
+    }
+    "{" 
+    ExpansionChoice() {expansion = (Expansion) peekNode();}
+    "}"
+     {
+        CURRENT_NODE.adjustFirstToken(t);
+        if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
+           grammar.addNodeType(CURRENT_NODE.getName());
+        }
+        CURRENT_NODE.setExpansion(expansion);
+        return CURRENT_NODE;
+     }
+}
+
+INJECT(BNFProduction) : 
+{
+	import java.util.*;
+	import javacc.lexgen.TokenSet;
+	import javacc.parsegen.Expansion;
+}
+{
+    public CodeBlock getJavaCode() {
+       return firstChildOfType(CodeBlock.class);
+    }
+    
+    public TreeBuildingAnnotation getTreeBuildingAnnotation() {
+        return firstChildOfType(TreeBuildingAnnotation.class);
+    }
+    
+    public String getNodeName() {
+        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
+        if (tba != null) {
+             String nodeName = tba.getNodeName();
+             if (nodeName == null) {
+                return nodeName;
+             }
+        }
+        return this.getName();
+    }
+
+    private boolean forced; 
+    
+    public void setForced(boolean forced) {
+        this.forced = forced;
+    }
+    public boolean getForced() {
+         return forced;
+    //Just experimenting right now.
+         //return (getExpansion().getEndSetSize() == 1); 
+//        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
+//        return tba != null && tba.isForced();
+    } 
+    
+    
+    
     private String leadingComments;
 
     private Expansion expansion;
@@ -792,7 +872,7 @@ INJECT(ParserProduction) :
      * A list of all non-terminals that this one can expand to without having to
      * consume any tokens. Also an index that shows how many pointers exist.
      */
-    public ParserProduction[] leftExpansions = new ParserProduction[10];
+    public BNFProduction[] leftExpansions = new BNFProduction[10];
     public int leIndex = 0;
 
     /**
@@ -862,93 +942,7 @@ INJECT(ParserProduction) :
         return finalSet;
     }
     
-}
-
-
-
-BNFProduction BNFProduction() :
-{
-    TreeBuildingAnnotation tba = null;
-    Token t=getToken(1);
-    Expansion expansion;
-}
-{
-    [
-        "public" | "private" | "protected"
-    ]
-    ReturnType()
-    <IDENTIFIER> {CURRENT_NODE.setName(current_token.image);}
-    FormalParameters()
-    [
-       <BANG> {CURRENT_NODE.setForced(true);} 
-    ]
-    [
-      ThrowsList()
-    ]
-    [
-        tba=TreeNodeDescriptor() 
-        {
-            String nodeName = tba.getNodeName();
-            if (nodeName == null) {
-               nodeName = CURRENT_NODE.getName();
-            }
-            grammar.addNodeType(nodeName);
-        }
-    ]
-    ":"
-    Block()
-    {
-        token_source.inJavaCode = false;
-    }
-    "{" 
-    ExpansionChoice() {expansion = (Expansion) peekNode();}
-    "}"
-     {
-        CURRENT_NODE.adjustFirstToken(t);
-        if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
-           grammar.addNodeType(CURRENT_NODE.getName());
-        }
-        CURRENT_NODE.setExpansion(expansion);
-        return CURRENT_NODE;
-     }
-}
-
-INJECT(BNFProduction) : 
-{
-    extends ParserProduction;
-}
-{
-    public CodeBlock getJavaCode() {
-       return firstChildOfType(CodeBlock.class);
-    }
     
-    public TreeBuildingAnnotation getTreeBuildingAnnotation() {
-        return firstChildOfType(TreeBuildingAnnotation.class);
-    }
-    
-    public String getNodeName() {
-        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
-        if (tba != null) {
-             String nodeName = tba.getNodeName();
-             if (nodeName == null) {
-                return nodeName;
-             }
-        }
-        return this.getName();
-    }
-
-    private boolean forced; 
-    
-    public void setForced(boolean forced) {
-        this.forced = forced;
-    }
-    public boolean getForced() {
-         return forced;
-    //Just experimenting right now.
-         //return (getExpansion().getEndSetSize() == 1); 
-//        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
-//        return tba != null && tba.isForced();
-    } 
 }
 
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
@@ -1650,7 +1644,7 @@ INJECT(NonTerminal) :
      * The production this non-terminal corresponds to.
      */
     
-    public ParserProduction getProduction() {
+    public BNFProduction getProduction() {
         return getGrammar().getProductionByName(getName());
     }
 
@@ -1706,7 +1700,7 @@ INJECT(NonTerminal) :
             }
             int retval = Integer.MAX_VALUE;
             inMinimumSize = true;
-            ParserProduction prod = getProduction();
+            BNFProduction prod = getProduction();
             if (prod instanceof BNFProduction) {
                 retval = prod.getExpansion().getMinimumSize();
             }

@@ -37,7 +37,6 @@ import javacc.MetaParseException;
 import javacc.lexgen.RegularExpression;
 import javacc.parser.tree.ExpansionChoice;
 import javacc.parser.tree.ExpansionSequence;
-import javacc.parser.tree.ParserProduction;
 import javacc.parser.tree.BNFProduction;
 import javacc.parser.tree.OneOrMore;
 import javacc.parser.tree.ZeroOrMore;
@@ -80,10 +79,8 @@ public class ParserData {
     }
     
     public void buildInfo() throws MetaParseException {
-        for (ParserProduction p : grammar.getParserProductions()) {
-            if (p instanceof BNFProduction) {
-                visitExpansion(p.getExpansion());
-            }
+        for (BNFProduction p : grammar.getParserProductions()) {
+             visitExpansion(p.getExpansion());
         }
         for (Lookahead la : phase2list) {
             Expansion e = la.getNestedExpansion();
@@ -197,13 +194,8 @@ public class ParserData {
                     seq = (Expansion) seq.getChild(1);
                 } else if (seq instanceof NonTerminal) {
                     NonTerminal e_nrw = (NonTerminal) seq;
-                    ParserProduction ntprod = grammar
-                            .getProductionByName(e_nrw.getName());
-                    if (!(ntprod instanceof BNFProduction)) {
-                        break; // nothing to do here
-                    } else {
+                    BNFProduction ntprod = grammar.getProductionByName(e_nrw.getName());
                         seq = ntprod.getExpansion();
-                    }
                 } else
                     break;
             }
@@ -234,10 +226,8 @@ public class ParserData {
             // these
             // variables are the same.
             NonTerminal nonTerminal = (NonTerminal) e;
-            ParserProduction production = grammar.getProductionByName(nonTerminal.getName());
-            if (production instanceof BNFProduction) {
-            	generate3R(production.getExpansion(), amt);
-            }
+            BNFProduction production = nonTerminal.getProduction();
+            generate3R(production.getExpansion(), amt);
         } else if (e instanceof ExpansionChoice) {
             for (Expansion sub : e.childrenOfType(Expansion.class)) {
                 generate3R(sub, amt);
