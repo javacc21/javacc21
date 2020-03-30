@@ -809,10 +809,6 @@ INJECT(BNFProduction) :
     }
     public boolean getForced() {
          return forced;
-    //Just experimenting right now.
-         //return (getExpansion().getEndSetSize() == 1); 
-//        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
-//        return tba != null && tba.isForced();
     } 
     
     

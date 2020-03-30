@@ -40,6 +40,15 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
    // The lexically invalid input that precedes this token (if any)
    InvalidToken invalidToken;
    
+   // The unparsed tokens that precede this token (if any)
+   
+   List<Token> precedingUnparsedTokens;
+   
+   void addUnparsedToken(Token tok) {
+      if (precedingUnparsedTokens == null) precedingUnparsedTokens = new ArrayList<Token>();
+      precedingUnparsedTokens.add(tok);
+   }
+   
 
 [/#if]
 
@@ -88,7 +97,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      */
     Token specialToken;
     
-    private boolean unparsed;
+    boolean unparsed;
 
     public Token() {}
 

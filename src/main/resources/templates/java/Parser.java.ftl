@@ -153,32 +153,33 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     private void attemptRecovery(Node node, int ...finalTokenTypes) {
         int finalTokenType = finalTokenTypes[0];
         List<Token> scanAhead = getTokensToEOL(finalTokenTypes);
-        boolean foundTerminalType = false;
+        List<Token> unparsedTokens = null;
+        Token terminalTokenFound = null;
         for (Token tok : scanAhead) {
-            //if (tok.kind !=finalTokenType) {
             if (!intArrayContains(finalTokenTypes, tok.kind)) {
                tok.setUnparsed(true);
                tok.ignored = true;
       	       node.setEndLine(tok.getEndLine());
 		       node.setEndColumn(tok.getEndColumn());
-		       if (tokensAreNodes) {
-		           currentNodeScope.add(tok);
-		       }
+		       if (unparsedTokens == null) unparsedTokens = new ArrayList<Token>();
+		       tok.unparsed = true;
+		       unparsedTokens.add(tok);
             } else {
-                foundTerminalType = true;
+                terminalTokenFound = tok;
+                tok.precedingUnparsedTokens = unparsedTokens;
+     [#if grammar.lexerData.lexicalStates?size >1]
+                token_source.doLexicalStateSwitch(tok.kind);
+     [/#if]
             }
         }
-        if (!foundTerminalType) {
+        if (terminalTokenFound != null) { 
 	        Token lastScanned = scanAhead.get(scanAhead.size()-1);
-	        Token virtualToken = null;
-	        if (lastScanned.kind != finalTokenType) {
-	            virtualToken = Token.newToken(finalTokenType, "VIRTUAL " + nodeNames[finalTokenType]);
-	            virtualToken.setUnparsed(true);
-	            virtualToken.setBeginLine(lastScanned.getEndLine());
-	            virtualToken.setBeginColumn(lastScanned.getEndColumn());
-	            virtualToken.setEndLine(lastScanned.getEndLine());
-	            virtualToken.setEndColumn(lastScanned.getEndColumn());
-	        }
+            Token virtualToken = Token.newToken(finalTokenType, "VIRTUAL " + nodeNames[finalTokenType]);
+            virtualToken.setUnparsed(true);
+            virtualToken.setBeginLine(lastScanned.getEndLine());
+            virtualToken.setBeginColumn(lastScanned.getEndColumn());
+            virtualToken.setEndLine(lastScanned.getEndLine());
+            virtualToken.setEndColumn(lastScanned.getEndColumn());
 	        if (tokensAreNodes) {
 	        	currentNodeScope.add(virtualToken);
 	        }

@@ -101,9 +101,10 @@
     }
     
     public void openNodeScope(Node n) {
-        if (trace_enabled) LOGGER.info("Opening node scope for node of type: " + n.getClass().getName());
         new NodeScope();
         n.open();
+        if (trace_enabled) LOGGER.info("Opened node scope for node of type: " + n.getClass().getName());
+        if (trace_enabled) LOGGER.info("Scope nesting level is "  +  currentNodeScope.nestingLevel());
     }
 
 
@@ -178,7 +179,15 @@
                 n.addChild(child);
             }
             n.close();
+            if (trace_enabled) {
+                LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", leaving " + nodeArity() + " nodes on the stack.");
+                LOGGER.info("Nesting level is : " + currentNodeScope.nestingLevel());
+            }
             pushNode(n);
+            if (trace_enabled) {
+                LOGGER.info("Closed node scope for node of type: " + n.getClass().getName() + ", there are now " + nodeArity() + " nodes on the stack.");
+                LOGGER.info("Nesting level is : " + currentNodeScope.nestingLevel());
+            }
  [#if grammar.usesjjtreeCloseNodeScope]
 	        jjtreeCloseNodeScope(${nodeVarName});
  [/#if]
@@ -186,8 +195,11 @@
     	    closeNodeScopeHook(${nodeVarName});
  [/#if]
         } else {
-            if (trace_enabled) LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", leaving " + nodeArity() + " nodes on the stack.");
             currentNodeScope.close();
+            if (trace_enabled) {
+                LOGGER.info("Closed node scope for node of type: " + n.getClass().getName() + ", leaving " + nodeArity() + " nodes on the stack.");
+                LOGGER.info("Nesting level is : " + currentNodeScope.nestingLevel());
+            }
         }
     }
     
@@ -212,10 +224,6 @@
     @SuppressWarnings("serial")
     class NodeScope extends ArrayList<Node> {
         NodeScope parentScope;
-[#if grammar.options.faultTolerant]        
-        StringBuilder ignoredInput;
-[/#if]        
-
         NodeScope() {
             this.parentScope = ${grammar.parserClassName}.this.currentNodeScope;
             ${grammar.parserClassName}.this.currentNodeScope = this;
@@ -254,5 +262,15 @@
             parentScope.addAll(this);
             ${grammar.parserClassName}.this.currentNodeScope = parentScope;
         }
+        
+        int nestingLevel() {
+            int result = 0;
+            NodeScope parent = this;
+            while (parent.parentScope != null) {
+               result++;
+               parent = parent.parentScope;
+            }
+            return result;            
+        } 
     }
 

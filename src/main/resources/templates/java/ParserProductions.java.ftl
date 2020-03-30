@@ -138,22 +138,23 @@
              }
 [#else]
              if (buildTree) {
-	             if (${parseExceptionVar} != null) {
+                 if (${parseExceptionVar} == null) {
+	                  ${nodeVarName}.setEndLine(current_token.getEndLine());
+		              ${nodeVarName}.setEndColumn(current_token.getEndColumn());
+ 	                 closeNodeScope(${nodeVarName}, ${closeCondition});
+                 }
+	             else {
                      if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) {
 		                attemptRecovery(${nodeVarName}, ${expansion.finalSet.commaDelimitedTokens});
 		                closeNodeScope(${nodeVarName}, ${closeCondition});
 		             } else {
-		                throw ${parseExceptionVar};
+//		                throw ${parseExceptionVar};
+                        closeNodeScope(${nodeVarName}, false);
 		             }
 	             }
-	             else {
-	                 ${nodeVarName}.setEndLine(current_token.getEndLine());
-	                 ${nodeVarName}.setEndColumn(current_token.getEndColumn());
-	                 closeNodeScope(${nodeVarName}, ${closeCondition});
-	             }             
-	        }
+        }
 [/#if]  
          }       
           ${grammar.popNodeVariableName()!}
