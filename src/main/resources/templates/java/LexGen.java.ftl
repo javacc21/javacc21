@@ -51,8 +51,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
  
 
-  java.io.PrintStream debugStream = System.out;
-  public void setDebugStream(java.io.PrintStream ds) { debugStream = ds; }
 [#if options.lexerUsesParser]
 
   public ${grammar.parserClassName} parser;
@@ -298,7 +296,6 @@ public final void backup(int amount) {
                  while (curChar > 63 && curChar <= ${lexerData.MaxChar(singlesToSkip.asciiMoves[1])+64}
                         && ${utils.toHexString(singlesToSkip.asciiMoves[1])}L & (1L<< (curChar&077))) != 0L)
           [/#if]
-          [#if options.debugLexer]
                  {
                    [#var debugOutput]
                    [#set debugOutput]
@@ -307,22 +304,17 @@ public final void backup(int amount) {
                    [/#if]
                    "Skipping character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
                    [/#set] 
-                    debugStream.println(${debugOutput?trim}); 
-         [/#if]
+                    if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
                     curChar = (char) input_stream.beginToken();
                     if (curChar == (char) -1) {
                         continue EOFLoop;
                     }
-         [#if options.debugLexer]
                 }
-         [/#if]
     [/#if]    
              
              
     [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
-         [#if options.debugLexer]
-        debugStream.println("   Matched the empty string as " + tokenImage[${lexicalState.initMatch}] + " token.");
-         [/#if] 
+        if (trace_enabled) LOGGER.info("   Matched the empty string as " + tokenImage[${lexicalState.initMatch}] + " token.");
         jjmatchedKind = ${lexicalState.initMatch};
         jjmatchedPos = -1;
         curPos = 0;
@@ -330,8 +322,6 @@ public final void backup(int amount) {
         jjmatchedKind = 0x7FFFFFFF;
         jjmatchedPos = 0;
     [/#if]
-
-    [#if options.debugLexer]
         [#var debugOutput]
         [#set debugOutput]
             [#if numLexicalStates>1]
@@ -340,8 +330,7 @@ public final void backup(int amount) {
             "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
             "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
         [/#set]
-        debugStream.println(${debugOutput?trim}); 
-    [/#if]
+        if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
         curPos = jjMoveStringLiteralDfa0${lexicalState.suffix}();
     [#if lexicalState.matchAnyChar??]
          [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
@@ -369,7 +358,6 @@ public final void backup(int amount) {
       if (jjmatchedPos + 1 < curPos) {
         if (trace_enabled) LOGGER.info("   Putting back " + (curPos - jjmatchedPos - 1) + " characters into the input stream.");
         input_stream.backup(curPos - jjmatchedPos - 1);
-
       }
        if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
           + ParseException.addEscapes(input_stream.getSuffix(jjmatchedPos + 1)) + ") ******\n");
@@ -747,11 +735,9 @@ public final void backup(int amount) {
     private int jjStopAtPos(int pos, int kind) {
          jjmatchedKind = kind;
          jjmatchedPos = pos;
-[#if grammar.options.debugLexer]
-         debugStream.println("   No more string literal token matches are possible.");
-         debugStream.println("   Currently matched the first " + (jjmatchedPos + 1) 
+         if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
+         if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos + 1) 
                             + " characters as a " + tokenImage[jjmatchedKind] + " token.");
-[/#if] 
          return pos + 1;
     }
     
@@ -831,8 +817,8 @@ public final void backup(int amount) {
         int i=1;
         jjstateSet[0] = startState;
     [#if grammar.options.debugLexer]
-        debugStream.println("   Starting NFA to match one of : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, 0, 1));
-        debugStream.println("" + 
+        if (trace_enabled) LOGGER.info("   Starting NFA to match one of : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, 0, 1));
+        if (trace_enabled) LOGGER.info("" + 
         [#if numLexicalStates != 1]
             "<" + lexicalState + ">" +  
         [/#if]
@@ -882,12 +868,10 @@ public final void backup(int amount) {
                 kind = 0x7fffffff;
             }
             ++curPos;
-    [#if grammar.options.debugLexer]
             if (jjmatchedKind != 0 && jjmatchedKind != 0x7fffffff) {
-                debugStream.println("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
+                if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
                                      + tokenImage[jjmatchedKind] + " token.");
             }
-    [/#if]
             if ((i = jjnewStateCnt) == (startsAt = ${lexicalState.indexedAllStates?size} - (jjnewStateCnt = startsAt)))
     [#if lexicalState.mixedCase]
                  break;
@@ -895,7 +879,7 @@ public final void backup(int amount) {
                  return curPos;
     [/#if]
     [#if grammar.options.debugLexer]
-            debugStream.println("   Possible kinds of longer matches : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, startsAt, i));
+            if (trace_enabled) LOGGER.info("   Possible kinds of longer matches : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, startsAt, i));
     [/#if]
             int retval = input_stream.readChar();
             if (retval >=0) {
@@ -908,14 +892,12 @@ public final void backup(int amount) {
                 return curPos;
     [/#if]
             }
-    [#if grammar.options.debugLexer]
-            debugStream.println("" + 
+            if (trace_enabled) LOGGER.info("" + 
             [#if numLexicalStates != 1]
                "<" + lexicalState + ">" + 
             [/#if]
                ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
               + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
-    [/#if]
         }
     [#if lexicalState.mixedCase]
         if (jjmatchedPos > strPos) {
@@ -1270,10 +1252,10 @@ public final void backup(int amount) {
          [/#if]   
       [/#if]
       [#if grammar.options.debugLexer]
-        if (jjmatchedKind !=0 && jjmatchedKind != 0x7fffffff) {
-            debugStream.println("    Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
+        if (trace_enabled && jjmatchedKind !=0 && jjmatchedKind != 0x7fffffff) {
+            LOGGER.info("    Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
         }
-        debugStream.println("   Possible string literal matches : { "
+        if (trace_enabled) LOGGER.info("   Possible string literal matches : { "
         [#list 0..maxStrKind/64 as vecs]
            [#if i<=maxLenForActive[vecs]]
              + jjKindsForBitVector(${vecs}, active${vecs}) 
