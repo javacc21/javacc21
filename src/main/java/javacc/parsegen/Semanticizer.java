@@ -171,11 +171,6 @@ public class Semanticizer {
 
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
             List<RegexpSpec> respecs = tp.getRegexpSpecs();
-            if (tp.getLexStates() == null) {
-                for (LexicalState lexState : lexerData.getLexicalStates()) {
-                    tp.addChild(Token.newToken(JavaCCConstants.IDENTIFIER, lexState.getName()));
-                }
-            }
             List<Map<String, Map<String, RegularExpression>>> table = new ArrayList<Map<String, Map<String, RegularExpression>>>();
             for (int i = 0; i < tp.getLexStates().length; i++) {
                 LexicalState lexState = lexerData.getLexicalState(tp.getLexStates()[i]);
@@ -183,6 +178,7 @@ public class Semanticizer {
             }
             for (RegexpSpec res : respecs) {
                 if (res.getRegexp() instanceof RegexpStringLiteral) {
+                	// TODO: Clean this mess up! (JR)
                     RegexpStringLiteral sl = (RegexpStringLiteral) res.getRegexp();
                     // This loop performs the checks and actions with respect to
                     // each lexical state.

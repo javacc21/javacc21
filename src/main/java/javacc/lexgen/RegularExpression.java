@@ -139,16 +139,12 @@ public abstract class RegularExpression extends Expansion {
      */
     public int walkStatus = 0;
 
-    public String getLabel() {
+    public final String getLabel() {
         return label.length() == 0 ? String.valueOf(id) : label;
     }
 
     public boolean hasLabel() {
         return label.length() > 0;
-    }
-    
-    public boolean getIsNamed() {
-        return hasLabel() && !Character.isDigit(label.charAt(0));
     }
 
     public int getOrdinal() {
