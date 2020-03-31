@@ -16,12 +16,26 @@
 @SuppressWarnings("serial")
 public class ParseException extends Exception {
 
+  // The token we tripped up on.
+  private Token token;
+
   public ParseException() {
     super();
   }
 
   public ParseException(String message) {
     super(message);
+  }
+  
+  public ParseException(Token token) {
+    this.token = token;     
+  }
+  
+  public String getMessage() {
+     if (token == null) {
+        return super.getMessage();
+     }
+     return "Encountered an error on (or somewhere around) " +  token.getLocation();
   }
   
  static public String addEscapes(String str) {

@@ -209,7 +209,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         }
 [#if grammar.options.faultTolerant]        
         if (!tolerantParsing && current_token.invalidToken != null) {
-            throw new ParseException(generateErrorMessage(current_token));
+        	throw new ParseException(current_token);
         }
 [/#if]        
         if (current_token.kind != expectedType) {
@@ -242,7 +242,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   private void handleUnexpectedTokenType( int expectedType,  boolean forced, Token oldToken) throws ParseException {
         if (!tolerantParsing) {
   //	    current_token = oldToken;
-    	    throw new ParseException(generateErrorMessage(current_token));
+  		    throw new ParseException(current_token);
 	   } 
 [#if grammar.options.faultTolerant]	   
        if (forced && tolerantParsing) {
@@ -256,7 +256,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
            current_token = virtualToken;
        } else {
 //	      current_token = oldToken;
-	      throw new ParseException(generateErrorMessage(current_token));
+          throw new ParseException(current_token);
+//	      throw new ParseException(generateErrorMessage(current_token));
       }
 [/#if]      
   }

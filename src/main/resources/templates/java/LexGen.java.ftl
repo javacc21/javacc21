@@ -63,12 +63,21 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   boolean[] jjbeenHere = new boolean[${numLexicalStates}];
   
   
-  private int currentLexicalState; 
   private int jjnewStateCnt;
   private int jjround;
   private int jjmatchedPos;
   private int jjmatchedKind;
   private String inputSource = "input";
+  
+[#if grammar.options.debugLexer]  
+  private boolean trace_enabled = true;
+[#else]  
+  private boolean trace_enabled = false;
+[/#if]
+  
+  private void setTracingEnabled(boolean trace_enabled) {
+     this.trace_enabled = trace_enabled;
+  }
   
   public String getInputSource() {
       return inputSource;
@@ -77,34 +86,35 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   public void setInputSource(String inputSource) {
       this.inputSource = inputSource;
   }
-  
-   static final String[] lexStateNames = {
-[#list lexerData.lexicalStates as lexicalState]
-     "${lexicalState.name}", 
-[/#list]
-   };
    
-
-
+  private LexicalState lexicalState = LexicalState.${lexerData.lexicalStates[0].name};
+  
+  public enum LexicalState {
+  [#list lexerData.lexicalStates as lexicalState]
+     ${lexicalState.name},
+  [/#list]
+   }
+   
 [#if numLexicalStates>1]
 
+
    void doLexicalStateSwitch(int tokenType) {
-       int newLexState = jjnewLexState[tokenType];
-       if (newLexState != -1) {
-       	SwitchTo(jjnewLexState[tokenType]);
+       LexicalState newLexState = newLexicalStates[tokenType];
+       if (newLexState != null) {
+           switchTo(newLexState);
        }
    }
-
-      /** Lex State array. */
-  private static final int[] jjnewLexState = {
-  [#list lexerData.regularExpressions as regexp]
-        [#if regexp.newLexicalState?is_null]
-          -1, 
-        [#else]
-          ${lexerData.getIndex(regexp.newLexicalState.name)}, 
-        [/#if]
-  [/#list]
+  
+  private static final LexicalState[] newLexicalStates = {
+         [#list lexerData.regularExpressions as regexp]
+             [#if regexp.newLexicalState?is_null]
+                null,
+             [#else]
+                LexicalState.${regexp.newLexicalState.name},
+             [/#if]
+          [/#list]
   };
+  
 [/#if]
 
 [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
@@ -193,15 +203,20 @@ public final void backup(int amount) {
     }
 
 
-    /** Switch to specified lex state. */
-    // TODO: Switch this to using enums
+    /** Switch to specified lexical state. */
+    public void switchTo(LexicalState lexState) {
+        if (this.lexicalState != lexState) {
+           if (trace_enabled) LOGGER.info("Switching from lexical state " + this.lexicalState + " to " + lexState);
+        }
+        this.lexicalState = lexState;
+    }
+    
+    /**
+      * @deprecated Use the switchTo method that takes an Enum
+      */
+    @Deprecated
     public void SwitchTo(int lexState) {
-       if (lexState >= ${lexerData.lexicalStates?size} || lexState < 0) {
-          throw new RuntimeException("Switch to invalid lexical state: " + lexState);
-       }
-//       if (currentLexicalState != lexState)
-//       	System.out.println("Switching from lexical state " + currentLexicalState + " to " + lexState);
-       this.currentLexicalState = lexState;
+       switchTo(LexicalState.values()[lexState]);
     }
 
  [#if grammar.options.faultTolerant]
@@ -264,13 +279,14 @@ public final void backup(int amount) {
 [/#if]
     [#-- this also sets up the start state of the nfa --]
 [#if numLexicalStates>1]
-       switch(currentLexicalState) {
+       switch(lexicalState) {
 [/#if]
     
 [#list lexerData.lexicalStates as lexicalState]
     [#var singlesToSkip=lexicalState.singlesToSkip]
     [#if numLexicalStates>1]
-            case ${lexicalState_index} : 
+//            case ${lexicalState_index} :
+            case ${lexicalState.name} : 
     [/#if]
     [#if singlesToSkip.hasTransitions()]
           [#if singlesToSkip.asciiMoves[0] != 0&&singlesToSkip.asciiMoves[1] != 0]
@@ -290,7 +306,7 @@ public final void backup(int amount) {
                    [#var debugOutput]
                    [#set debugOutput]
                    [#if numLexicalStates>1]
-                   "<" + lexStateNames[currentLexicalState] + ">" + 
+                   "<" + lexicalState + ">" + 
                    [/#if]
                    "Skipping character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
                    [/#set] 
@@ -322,7 +338,7 @@ public final void backup(int amount) {
         [#var debugOutput]
         [#set debugOutput]
             [#if numLexicalStates>1]
-               "<" + lexStateNames[currentLexicalState] + ">" + 
+               "<" + lexicalState + ">" + 
             [/#if]
             "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
             "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
@@ -391,8 +407,8 @@ public final void backup(int amount) {
  jjmatchedKind = matchedToken.kind;
  
  [#if numLexicalStates>1]
-      if (jjnewLexState[jjmatchedKind] != -1) {
-          SwitchTo(jjnewLexState[jjmatchedKind]);
+      if (newLexicalStates[jjmatchedKind] != null) {
+          switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
 
@@ -441,8 +457,9 @@ public final void backup(int amount) {
           [/#if]
 
           [#if numLexicalStates>1]
-            if (jjnewLexState[jjmatchedKind] != -1)
-            currentLexicalState = jjnewLexState[jjmatchedKind];
+            if (newLexicalStates[jjmatchedKind] != null) {
+               this.lexicalState = newLexicalStates[jjmatchedKind];
+            }
           [/#if]
 
             continue EOFLoop;
@@ -457,8 +474,7 @@ public final void backup(int amount) {
 		  [/#if]
 		  
           [#if numLexicalStates>1]
-          if (jjnewLexState[jjmatchedKind] != -1) 
-               SwitchTo(jjnewLexState[jjmatchedKind]);
+             doLexicalStateSwitch(jjmatchedKind);
           [/#if]
           curPos = 0;
           jjmatchedKind = 0x7FFFFFFF;
@@ -470,7 +486,7 @@ public final void backup(int amount) {
 	            [#var debugOutput]
 	            [#set debugOutput]
 	              [#if numLexicalStates>1]
-	                 "<" + lexStateNames[currentLexicalState] + ">" + 
+	                 "<" + lexicalState + ">" + 
 	              [/#if]
 	              "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
 	              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
@@ -648,7 +664,8 @@ public final void backup(int amount) {
 [#if options.debugLexer]
 
     protected static final int[][][] statesForState =  
-    [#if false] null;
+    [#if false]
+        null;
     [#else]
     {
     [/#if]
@@ -717,7 +734,7 @@ public final void backup(int amount) {
         {
          if (vec[i] == -1)
            continue;
-         int[] stateSet = statesForState[currentLexicalState][vec[i]];
+         int[] stateSet = statesForState[lexicalState.ordinal()][vec[i]];
          for (int j = 0; j < stateSet.length; j++)
          {
            int state = stateSet[j];
@@ -825,10 +842,10 @@ public final void backup(int amount) {
         int i=1;
         jjstateSet[0] = startState;
     [#if grammar.options.debugLexer]
-        debugStream.println("   Starting NFA to match one of : " + jjKindsForStateVector(currentLexicalState, jjstateSet, 0, 1));
+        debugStream.println("   Starting NFA to match one of : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, 0, 1));
         debugStream.println("" + 
         [#if numLexicalStates != 1]
-            "<" + lexStateNames[currentLexicalState] + ">" +  
+            "<" + lexicalState + ">" +  
         [/#if]
             "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
            + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
@@ -889,7 +906,7 @@ public final void backup(int amount) {
                  return curPos;
     [/#if]
     [#if grammar.options.debugLexer]
-            debugStream.println("   Possible kinds of longer matches : " + jjKindsForStateVector(currentLexicalState, jjstateSet, startsAt, i));
+            debugStream.println("   Possible kinds of longer matches : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, startsAt, i));
     [/#if]
             int retval = input_stream.readChar();
             if (retval >=0) {
@@ -905,7 +922,7 @@ public final void backup(int amount) {
     [#if grammar.options.debugLexer]
             debugStream.println("" + 
             [#if numLexicalStates != 1]
-               "<" + lexStateNames[currentLexicalState] + ">" + 
+               "<" + lexicalState + ">" + 
             [/#if]
                ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
               + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());

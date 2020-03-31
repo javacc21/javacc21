@@ -144,14 +144,15 @@
  	                 closeNodeScope(${nodeVarName}, ${closeCondition});
                  }
 	             else {
-                     if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
+                     if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) {
 		                attemptRecovery(${nodeVarName}, ${expansion.finalSet.commaDelimitedTokens});
-		                closeNodeScope(${nodeVarName}, ${closeCondition});
+		                closeNodeScope(${nodeVarName}, true);
 		             } else {
-//		                throw ${parseExceptionVar};
                         closeNodeScope(${nodeVarName}, false);
+                        if (trace_enabled) LOGGER.info("Rethrowing " + "${parseExceptionVar}");
+		                throw ${parseExceptionVar};
 		             }
 	             }
         }
