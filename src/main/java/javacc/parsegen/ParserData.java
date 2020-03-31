@@ -158,8 +158,8 @@ public class ParserData {
             }
         } else if (expansion instanceof OneOrMore) {
             OneOrMore oom = (OneOrMore) expansion;
-            int labelIndex = ++gensymindex;
-            oom.setLabel("label_" + labelIndex);
+            ++gensymindex;
+            oom.setLabel("label_" + gensymindex);
             visitExpansion(oom.getNestedExpansion());
             Lookahead la = oom.getLookahead();
             if (!la.getAlwaysSucceeds()) {

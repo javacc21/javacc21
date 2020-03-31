@@ -17,7 +17,7 @@
 public class ParseException extends Exception {
 
   // The token we tripped up on.
-  private Token token;
+  Token token;
 
   public ParseException() {
     super();
