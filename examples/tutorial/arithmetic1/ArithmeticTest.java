@@ -15,7 +15,7 @@ public class ArithmeticTest {
         if (node instanceof NUMBER) {
             return Double.parseDouble(node.toString());
         }
-        List<NUMBER> numbers = Nodes.childrenOfType(node, NUMBER.class);
+        List<NUMBER> numbers = node.childrenOfType(NUMBER.class);
         double result = 0.0;
         for (NUMBER num : numbers) {
             result += evaluate(num);
