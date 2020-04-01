@@ -55,7 +55,6 @@ public class Grammar extends BaseNode {
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
     private String defaultLexicalState = "DEFAULT";
-    private Semanticizer semanticizer;
     private long nextGenerationIndex = 1L;
     private int lookaheadLimit;
     private boolean considerSemanticLA;
@@ -171,8 +170,8 @@ public class Grammar extends BaseNode {
         for (String lexicalState : lexicalStates) {
             lexerData.addLexicalState(lexicalState);
         }
-        semanticizer = new Semanticizer(this);
-        semanticizer.start();
+//        semanticizer.start();
+        parserData.semanticize();
     }
 
     public void buildParserInfo() throws MetaParseException {
