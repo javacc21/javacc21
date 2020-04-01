@@ -1405,5 +1405,13 @@ public class ParserData {
 			return generateFollowSet(partialMatches, (Expansion) exp.getParent(), generation);
 		}
 	}
+	static final class MatchInfo {
 
+	    int[] match;
+	    int firstFreeLoc;
+
+	    MatchInfo(int lookaheadLimit) {
+	        this.match = new int[lookaheadLimit];
+	    }
+	}
 }
