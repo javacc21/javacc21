@@ -516,6 +516,14 @@ INJECT(BaseNode) :
 }
 
 
+INJECT(GrammarFile) : 
+{}
+{
+    public String getDefaultLexicalState() {
+       return null; //TODO
+    }
+}
+
 GrammarFile Root() throws IOException #GrammarFile :
 {
     TokenManagerDecls decls;
@@ -1583,6 +1591,7 @@ Expansion ExpansionUnit() :
             res.addChild(re);
             re.tpContext = p;
             p.addChild(res);
+            grammar.addChild(p);
             grammar.addTokenProduction(p);
       }
   }

@@ -41,8 +41,8 @@ import javacc.output.java.FilesGenerator;
 import freemarker.template.TemplateException;
 
 /**
- * This object is basically the root object of a class hierarchy that maintains
- * all the information regarding a JavaCC processing job.
+ * This object is the root Node of the data structure that contains all the 
+ * information regarding a JavaCC processing job.
  */
 public class Grammar extends BaseNode {
 
@@ -52,7 +52,6 @@ public class Grammar extends BaseNode {
                    parserPackage,
                    constantsClassName,
                    baseNodeClassName="BaseNode";
-    private GrammarFile grammarFile;
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
     private String defaultLexicalState = "DEFAULT";
@@ -65,7 +64,6 @@ public class Grammar extends BaseNode {
     private int includeNesting;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
-    private Map<String, BNFProduction> parserProductions = new LinkedHashMap<>();
     private Map<String, BNFProduction> productionTable;
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
@@ -98,7 +96,6 @@ public class Grammar extends BaseNode {
         System.out.println("Parsing grammar file " + location + " . . .");
         GrammarFile rootNode = parser.Root();
         if (!isInInclude()) {
-        	this.grammarFile = rootNode;
         	addChild(rootNode);
         }
         return rootNode;
@@ -129,11 +126,6 @@ public class Grammar extends BaseNode {
             return root;
         }
     }
-    
-    public Node getRootNode() {
-    	return this.grammarFile;
-    }
-    
     
     public void createOutputDir() {
         String outputDirectory = options.getOutputDirectory();
@@ -328,8 +320,8 @@ public class Grammar extends BaseNode {
         this.parserPackage = parserPackage;
     }
 
-    public List<BNFProduction> getParserProductions() {
-    	 return descendantsOfType(BNFProduction.class);
+    public Collection<BNFProduction> getParserProductions() {
+    	return getProductionTable().values();
      }
     
     /**
@@ -337,11 +329,10 @@ public class Grammar extends BaseNode {
      */
     public Map<String, BNFProduction> getProductionTable() {
     	if (productionTable == null) {
-    		productionTable = new HashMap<>();
+    		productionTable = new LinkedHashMap<>();
     		for (BNFProduction production : descendantsOfType(BNFProduction.class )) {
     			productionTable.put(production.getName(), production);
     		}
-    		
     	}
         return productionTable;
     }
@@ -365,6 +356,10 @@ public class Grammar extends BaseNode {
     public List<TokenProduction> getAllTokenProductions() {
         return tokenProductions;
     }
+    
+//    public List<TokenProduction> getAllTokenProductions() {
+//    	return descendantsOfType(TokenProduction.class);
+//    }
 
     public void addTokenProduction(TokenProduction tp) {
         tokenProductions.add(tp);
