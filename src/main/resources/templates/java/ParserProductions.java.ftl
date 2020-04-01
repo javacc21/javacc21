@@ -158,7 +158,7 @@
         }
 [/#if]  
          }       
-          ${grammar.popNodeVariableName()!}
+          ${grammar.utils.popNodeVariableName()!}
     [/#if]
 [/#macro]
 
@@ -167,7 +167,7 @@
     [#set nodeNumbering = nodeNumbering +1]
     [#set nodeVarName = currentProduction.name + nodeNumbering in callingScope]
     [#set forcedVarName = callingScope.nodeVarName+"forced" in callingScope]
-    ${grammar.pushNodeVariableName(callingScope.nodeVarName)!}
+    ${grammar.utils.pushNodeVariableName(callingScope.nodeVarName)!}
     [#set parseExceptionVar = "parseException"+nodeNumbering in callingScope]
     [#if !callingScope.treeNodeBehavior??]
         [#if grammar.options.smartNodeCreation]
@@ -609,3 +609,4 @@ throw new ParseException();"]
    [/#if]
    ;
 [/#macro]   
+

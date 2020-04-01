@@ -516,7 +516,7 @@ INJECT(BaseNode) :
 }
 
 
-Root Root() throws IOException :
+GrammarFile Root() throws IOException #GrammarFile :
 {
     TokenManagerDecls decls;
 }
@@ -726,7 +726,7 @@ void Production() #void :
 {
   tp=TokenProduction() {grammar.addTokenProduction(tp);}
   |
-  prod=BNFProduction() {grammar.addProduction(prod);}
+  prod=BNFProduction()
 }
 
 BNFProduction BNFProduction() :

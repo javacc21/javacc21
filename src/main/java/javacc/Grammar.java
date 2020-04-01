@@ -44,7 +44,7 @@ import freemarker.template.TemplateException;
  * This object is basically the root object of a class hierarchy that maintains
  * all the information regarding a JavaCC processing job.
  */
-public class Grammar {
+public class Grammar extends BaseNode {
 
     private String filename,
                    parserClassName,
@@ -52,7 +52,7 @@ public class Grammar {
                    parserPackage,
                    constantsClassName,
                    baseNodeClassName="BaseNode";
-    private Node rootNode;
+    private GrammarFile grammarFile;
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
     private String defaultLexicalState = "DEFAULT";
@@ -60,14 +60,13 @@ public class Grammar {
     private long nextGenerationIndex = 1L;
     private int lookaheadLimit;
     private boolean considerSemanticLA;
-    private List<String> nodeVariableNameStack = new ArrayList<>();
-    private ParserData parserData;
+   private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
     private Map<String, BNFProduction> parserProductions = new LinkedHashMap<>();
-    private Map<String, BNFProduction> productionTable = new HashMap<>();
+    private Map<String, BNFProduction> productionTable;
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
     private List<JavaCCError> errors = new ArrayList<>();
@@ -97,9 +96,10 @@ public class Grammar {
         parser.setInputSource(file.getCanonicalFile().getName());
         setFilename(location);
         System.out.println("Parsing grammar file " + location + " . . .");
-        Node rootNode = parser.Root();
+        GrammarFile rootNode = parser.Root();
         if (!isInInclude()) {
-        	this.rootNode = rootNode;
+        	this.grammarFile = rootNode;
+        	addChild(rootNode);
         }
         return rootNode;
     }
@@ -131,7 +131,7 @@ public class Grammar {
     }
     
     public Node getRootNode() {
-    	return this.rootNode;
+    	return this.grammarFile;
     }
     
     
@@ -328,27 +328,26 @@ public class Grammar {
         this.parserPackage = parserPackage;
     }
 
-    /**
-     * A list of all grammar productions in the order
-     * they appear in the input file. 
-     */
     public List<BNFProduction> getParserProductions() {
-        return new ArrayList<BNFProduction>(parserProductions.values()); 
-    }
-
-    public void addProduction(BNFProduction production) {
-        parserProductions.put(production.getName(), production);
-    }
-
+    	 return descendantsOfType(BNFProduction.class);
+     }
+    
     /**
      * A symbol table of all grammar productions.
      */
     public Map<String, BNFProduction> getProductionTable() {
+    	if (productionTable == null) {
+    		productionTable = new HashMap<>();
+    		for (BNFProduction production : descendantsOfType(BNFProduction.class )) {
+    			productionTable.put(production.getName(), production);
+    		}
+    		
+    	}
         return productionTable;
     }
 
     public BNFProduction getProductionByName(String name) {
-        return productionTable.get(name);
+        return getProductionTable().get(name);
     }
 
     /**
@@ -520,20 +519,6 @@ public class Grammar {
         considerSemanticLA = b;
     }
 
-    public String getCurrentNodeVariableName() {
-        if (nodeVariableNameStack.isEmpty())
-            return "null";
-        return nodeVariableNameStack.get(nodeVariableNameStack.size() - 1);
-    }
-
-    public void pushNodeVariableName(String jjtThis) {
-        nodeVariableNameStack.add(jjtThis);
-    }
-
-    public void popNodeVariableName() {
-        nodeVariableNameStack.remove(nodeVariableNameStack.size() - 1);
-    }
-    
     public Set<String> getNodeNames() {
         return nodeNames;
     }
@@ -746,5 +731,25 @@ public class Grammar {
     
     public BitSet newBitSetForTokens() {
     	return new BitSet(getLexerData().getTokenCount());
+    }
+    
+    public String getCurrentNodeVariableName() {
+        if (nodeVariableNameStack.isEmpty())
+            return "null";
+        return nodeVariableNameStack.get(nodeVariableNameStack.size() - 1);
+    }
+    
+    private final Utils utils = new Utils();
+    private List<String> nodeVariableNameStack = new ArrayList<>();
+       
+    public Utils getUtils() {return utils;}
+    public class Utils {
+        public void pushNodeVariableName(String jjtThis) {
+            nodeVariableNameStack.add(jjtThis);
+        }
+
+        public void popNodeVariableName() {
+            nodeVariableNameStack.remove(nodeVariableNameStack.size() - 1);
+        }
     }
 }
