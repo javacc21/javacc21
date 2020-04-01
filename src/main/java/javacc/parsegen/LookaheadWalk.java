@@ -55,13 +55,12 @@ final class LookaheadWalk {
 		if (exp instanceof RegularExpression) {
 			int lookaheadLimit = exp.getGrammar().getLookaheadLimit();
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
-			for (int i = 0; i < partialMatches.size(); i++) {
-				MatchInfo m = partialMatches.get(i);
+			for (MatchInfo partialMatch : partialMatches) {
 				MatchInfo mnew = new MatchInfo(lookaheadLimit);
-				for (int j = 0; j < m.firstFreeLoc; j++) {
-					mnew.match[j] = m.match[j];
+				for (int j = 0; j < partialMatch.firstFreeLoc; j++) {
+					mnew.match[j] = partialMatch.match[j];
 				}
-				mnew.firstFreeLoc = m.firstFreeLoc;
+				mnew.firstFreeLoc = partialMatch.firstFreeLoc;
 				mnew.match[mnew.firstFreeLoc++] = ((RegularExpression) exp).getOrdinal();
 				if (mnew.firstFreeLoc == lookaheadLimit) {
 					grammar.getParserData().getSizeLimitedMatches().add(mnew);
@@ -72,11 +71,7 @@ final class LookaheadWalk {
 			return retval;
 		} else if (exp instanceof NonTerminal) {
 			BNFProduction prod = ((NonTerminal) exp).getProduction();
-			if (prod instanceof BNFProduction) {
-				return genFirstSet(partialMatches, prod.getExpansion());
-			} else {
-				return new ArrayList<MatchInfo>();
-			}
+			return genFirstSet(partialMatches, prod.getExpansion());
 		} else if (exp instanceof ExpansionChoice) {
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			ExpansionChoice ch = (ExpansionChoice) exp;
@@ -156,10 +151,10 @@ final class LookaheadWalk {
 			retval.addAll(partialMatches);
 			return retval;
 		} else if (exp.getParent() instanceof BNFProduction) {
-			List<NonTerminal> parents = ((BNFProduction) exp.getParent()).parents;
+			List<NonTerminal> referringNonTerminals = ((BNFProduction) exp.getParent()).referringNonTerminals;
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			// System.out.println("1; gen: " + generation + "; exp: " + exp);
-			for (NonTerminal nt : parents) {
+			for (NonTerminal nt : referringNonTerminals) {
 				List<MatchInfo> v = generateFollowSet(partialMatches, nt, generation);
 				retval.addAll(v);
 			}

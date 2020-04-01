@@ -38,28 +38,8 @@ import javacc.MetaParseException;
 import javacc.lexgen.LexerData;
 import javacc.lexgen.LexicalState;
 import javacc.lexgen.RegularExpression;
-import javacc.parser.tree.ExpansionChoice;
-import javacc.parser.tree.ExpansionSequence;
-import javacc.parser.tree.ExplicitLookahead;
 import javacc.parser.ParseException;
-import javacc.parser.tree.BNFProduction;
-import javacc.parser.tree.CodeBlock;
-import javacc.parser.tree.EndOfFile;
-import javacc.parser.tree.OneOrMore;
-import javacc.parser.tree.OneOrMoreRegexp;
-import javacc.parser.tree.RegexpChoice;
-import javacc.parser.tree.RegexpRef;
-import javacc.parser.tree.RegexpSequence;
-import javacc.parser.tree.RegexpSpec;
-import javacc.parser.tree.RegexpStringLiteral;
-import javacc.parser.tree.RepetitionRange;
-import javacc.parser.tree.TokenProduction;
-import javacc.parser.tree.ZeroOrMore;
-import javacc.parser.tree.ZeroOrMoreRegexp;
-import javacc.parser.tree.ZeroOrOne;
-import javacc.parser.tree.ZeroOrOneRegexp;
-import javacc.parser.tree.NonTerminal;
-import javacc.parser.tree.TryBlock;
+import javacc.parser.tree.*;
 
 /**
  * Class to build up certain data structures for the parser.
@@ -336,7 +316,7 @@ public class ParserData {
          	if (prod == null) {
          		grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
          	} else {
-         		prod.parents.add(nt); // REVISIT
+         		prod.referringNonTerminals.add(nt); // REVISIT
          	}
          }
          

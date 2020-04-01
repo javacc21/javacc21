@@ -850,7 +850,7 @@ INJECT(BNFProduction) :
     /**
      * The NonTerminal nodes which refer to this production.
      */
-    public List<NonTerminal> parents = new ArrayList<>();
+    public List<NonTerminal> referringNonTerminals = new ArrayList<>();
 
     /**
      * The name of the non-terminal of this production.
@@ -1365,7 +1365,6 @@ INJECT(ExpansionSequence) :
    import javacc.Grammar;
    import javacc.parsegen.Expansion;
    import javacc.parsegen.Lookahead;
-   import javacc.parsegen.Semanticizer;
    import javacc.lexgen.TokenSet;
    import java.util.*;
    extends Expansion;
