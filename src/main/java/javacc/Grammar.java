@@ -175,7 +175,7 @@ public class Grammar extends BaseNode {
     }
 
     public void buildParserInfo() throws MetaParseException {
-        parserData.buildInfo();
+        parserData.buildData();
     }
 
     public void generateFiles() throws ParseException, IOException, TemplateException {

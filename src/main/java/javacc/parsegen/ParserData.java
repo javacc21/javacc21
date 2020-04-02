@@ -38,6 +38,7 @@ import javacc.MetaParseException;
 import javacc.lexgen.LexerData;
 import javacc.lexgen.LexicalState;
 import javacc.lexgen.RegularExpression;
+import javacc.parser.Node;
 import javacc.parser.ParseException;
 import javacc.parser.tree.*;
 
@@ -646,15 +647,12 @@ public class ParserData {
          
            if (grammar.getErrorCount() == 0) {
 
-             List<Expansion> itemsToCheck = new ArrayList<>();
-             itemsToCheck.addAll(grammar.descendantsOfType(OneOrMore.class));
-             itemsToCheck.addAll(grammar.descendantsOfType(ZeroOrMore.class));
-             itemsToCheck.addAll(grammar.descendantsOfType(ZeroOrOne.class));
-             for (Expansion exp : itemsToCheck) {
-             	if (exp.getNestedExpansion().isPossiblyEmpty()) {
+        	 for (Node child : filterDescendants(grammar, (n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+        		 Expansion exp = (Expansion) child;
+        		 if (exp.getNestedExpansion().isPossiblyEmpty()) {
                      grammar.addSemanticError(exp, "Expansion can be matched by empty string.");
-             	}
-             }
+        		 }
+        	 }
 
              // The following code goes through the productions and adds pointers
              // to other
@@ -708,23 +706,15 @@ public class ParserData {
               * The following code performs the lookahead ambiguity checking.
               */
              if (grammar.getErrorCount() == 0) {
-//                 for (BNFProduction prod : grammar.getParserProductions()) {
-//                     ExpansionTreeWalker.preOrderWalk(prod.getExpansion(),
-//                             new LookaheadChecker());
-//                 }
-                 
                  if (grammar.getOptions().getLookahead() ==1 || grammar.getOptions().getForceLaCheck()) {
                 	 for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
                 		 choiceCalc(choice);
                 	 }
-                	 itemsToCheck = new ArrayList<Expansion>();
-                	 itemsToCheck.addAll(grammar.descendantsOfType(OneOrMore.class));
-                	 itemsToCheck.addAll(grammar.descendantsOfType(ZeroOrMore.class));
-                	 itemsToCheck.addAll(grammar.descendantsOfType(ZeroOrOne.class));
-                	 for (Expansion exp : itemsToCheck) {
+                	 for (Node node : filterDescendants(grammar, (n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+                		 Expansion exp = (Expansion) node;
                 		 if (hasImplicitLookahead(exp.getNestedExpansion())) {
-                             ebnfCalc(exp, exp.getNestedExpansion());
-                         }
+                			 ebnfCalc(exp, exp.getNestedExpansion());
+                		 }
                 	 }
                  }
              }
@@ -994,25 +984,7 @@ public class ParserData {
              }
          }
      }
-  
-//     class LookaheadChecker extends TreeWalkerOp {
-//
-//         boolean goDeeper(Expansion e) {
-//         	return !(e instanceof RegularExpression) && !(e instanceof Lookahead);
-//         }
-//
-//         void action(Expansion e) {
-//        	 if ((e instanceof OneOrMore) || (e instanceof ZeroOrMore) || (e instanceof ZeroOrOne)) {
-//                 if (grammar.getOptions().getForceLaCheck()
-//                         || (implicitLA(e.getNestedExpansion()) && grammar.getOptions()
-//                                 .getLookahead() == 1)) {
-//                     ebnfCalc(e, e.getNestedExpansion());
-//                 }
-//             } 
-//         }
-//
-//     }
-     
+    
      private boolean hasImplicitLookahead(Expansion exp) {
          if (!(exp instanceof ExpansionSequence)) {
              return true;
@@ -1422,5 +1394,20 @@ public class ParserData {
 	    MatchInfo(int lookaheadLimit) {
 	        this.match = new int[lookaheadLimit];
 	    }
+	}
+	
+	interface NodeFilter {
+		 boolean accept(Node node);
+	}
+	
+	static private List<Node> filterDescendants(Node node, NodeFilter filter) {
+		List<Node> result = new ArrayList<>();
+		for (Node child : node.children()) {
+			if (filter.accept(child)) {
+				result.add(child);
+			}
+			result.addAll(filterDescendants(child, filter));
+		}
+		return result;
 	}
 }

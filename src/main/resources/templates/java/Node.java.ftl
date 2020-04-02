@@ -310,7 +310,7 @@ public interface Node
 		}
 	    return result;
     }
-    
+
     default List<Node> descendants(NodeFilter filter) {
        List<Node> result = new ArrayList<>();
        for (Node child : children()) {
