@@ -78,7 +78,7 @@ public class ParserData {
     	this.lexerData = grammar.getLexerData();
     }
     
-    public void buildInfo() throws MetaParseException {
+    public void buildData() throws MetaParseException {
         for (BNFProduction p : grammar.getParserProductions()) {
              visitExpansion(p.getExpansion());
         }
@@ -708,9 +708,24 @@ public class ParserData {
               * The following code performs the lookahead ambiguity checking.
               */
              if (grammar.getErrorCount() == 0) {
-                 for (BNFProduction prod : grammar.getParserProductions()) {
-                     ExpansionTreeWalker.preOrderWalk(prod.getExpansion(),
-                             new LookaheadChecker());
+//                 for (BNFProduction prod : grammar.getParserProductions()) {
+//                     ExpansionTreeWalker.preOrderWalk(prod.getExpansion(),
+//                             new LookaheadChecker());
+//                 }
+                 
+                 if (grammar.getOptions().getLookahead() ==1 || grammar.getOptions().getForceLaCheck()) {
+                	 for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
+                		 choiceCalc(choice);
+                	 }
+                	 itemsToCheck = new ArrayList<Expansion>();
+                	 itemsToCheck.addAll(grammar.descendantsOfType(OneOrMore.class));
+                	 itemsToCheck.addAll(grammar.descendantsOfType(ZeroOrMore.class));
+                	 itemsToCheck.addAll(grammar.descendantsOfType(ZeroOrOne.class));
+                	 for (Expansion exp : itemsToCheck) {
+                		 if (hasImplicitLookahead(exp.getNestedExpansion())) {
+                             ebnfCalc(exp, exp.getNestedExpansion());
+                         }
+                	 }
                  }
              }
 
@@ -956,7 +971,7 @@ public class ParserData {
                  RegexpRef jn = (RegexpRef) e;
                  RegularExpression rexp = grammar.getNamedToken(jn.getLabel());
                  if (rexp == null && !jn.getLabel().equals("EOF")) {
-                     grammar.addWarning(e, "Undefined lexical token name \""
+                     grammar.addSemanticError(e, "Undefined lexical token name \""
                              + jn.getLabel() + "\".");
                  } else if (jn == root && !jn.tpContext.isExplicit()
                          && rexp.isPrivate()) {
@@ -980,269 +995,263 @@ public class ParserData {
          }
      }
   
-     class LookaheadChecker extends TreeWalkerOp {
-
-         boolean goDeeper(Expansion e) {
-         	return !(e instanceof RegularExpression) && !(e instanceof Lookahead);
+//     class LookaheadChecker extends TreeWalkerOp {
+//
+//         boolean goDeeper(Expansion e) {
+//         	return !(e instanceof RegularExpression) && !(e instanceof Lookahead);
+//         }
+//
+//         void action(Expansion e) {
+//        	 if ((e instanceof OneOrMore) || (e instanceof ZeroOrMore) || (e instanceof ZeroOrOne)) {
+//                 if (grammar.getOptions().getForceLaCheck()
+//                         || (implicitLA(e.getNestedExpansion()) && grammar.getOptions()
+//                                 .getLookahead() == 1)) {
+//                     ebnfCalc(e, e.getNestedExpansion());
+//                 }
+//             } 
+//         }
+//
+//     }
+     
+     private boolean hasImplicitLookahead(Expansion exp) {
+         if (!(exp instanceof ExpansionSequence)) {
+             return true;
          }
-
-         void action(Expansion e) {
-             if (e instanceof ExpansionChoice) {
-                 if (grammar.getOptions().getLookahead() == 1
-                         || grammar.getOptions().getForceLaCheck()) {
-                     choiceCalc((ExpansionChoice) e, grammar);
-                 }
-             } 
-             else if ((e instanceof OneOrMore) || (e instanceof ZeroOrMore) || (e instanceof ZeroOrOne)) {
-                 if (grammar.getOptions().getForceLaCheck()
-                         || (implicitLA(e.getNestedExpansion()) && grammar.getOptions()
-                                 .getLookahead() == 1)) {
-                     ebnfCalc(e, e.getNestedExpansion(), grammar);
-                 }
-             } 
-         }
-
-         boolean implicitLA(Expansion exp) {
-             if (!(exp instanceof ExpansionSequence)) {
-                 return true;
-             }
-             ExpansionSequence seq = (ExpansionSequence) exp;
-             return (!(seq.getLookahead()  instanceof ExplicitLookahead));
-         }
-
-     	private MatchInfo overlap(List<MatchInfo> matchList1, List<MatchInfo> matchList2) {
-     		for (MatchInfo match1 : matchList1) {
-     			for (MatchInfo match2 : matchList2) {
-     				int size = match1.firstFreeLoc;
-     				MatchInfo match3 = match1;
-     				if (size > match2.firstFreeLoc) {
-     					size = match2.firstFreeLoc;
-     					match3 = match2;
-     				}
-     				if (size != 0) {
-     					// REVISIT. We don't have JAVACODE productions  any more!
-     					// we wish to ignore empty expansions and the JAVACODE stuff
-     					// here.
-     					boolean diffFound = false;
-     					for (int k = 0; k < size; k++) {
-     						if (match1.match[k] != match2.match[k]) {
-     							diffFound = true;
-     							break;
-     						}
-     					}
-     					if (!diffFound) {
-     						return match3;
-     					}
-     				}
-     			}
-     		}
-     		return null;
-     	}
-
-     	private String image(MatchInfo m, Grammar grammar) {
-     		String ret = "";
-     		for (int i = 0; i < m.firstFreeLoc; i++) {
-     			if (m.match[i] == 0) {
-     				ret += " <EOF>";
-     			} else {
-     				RegularExpression re = grammar.getRegexpForToken(m.match[i]);
-     				if (re instanceof RegexpStringLiteral) {
-     					ret += " \"" + ParseException.addEscapes(((RegexpStringLiteral) re).getImage()) + "\"";
-     				} else if (re.getLabel() != null && !re.getLabel().equals("")) {
-     					ret += " <" + re.getLabel() + ">";
-     				} else {
-     					ret += " <token of kind " + i + ">";
-     				}
-     			}
-     		}
-     		if (m.firstFreeLoc == 0) {
-     			return "";
-     		} else {
-     			return ret.substring(1);
-     		}
-     	}
-
-     	void choiceCalc(ExpansionChoice ch, Grammar grammar) {
-     		int first = firstChoice(ch);
-     		// dbl[i] and dbr[i] are vectors of size limited matches for choice i
-     		// of ch. dbl ignores matches with semantic lookaheads (when
-     		// force_la_check
-     		// is false), while dbr ignores semantic lookahead.
-     		// List<MatchInfo>[] dbl = new List[ch.getChoices().size()];
-     		// List<MatchInfo>[] dbr = new List[ch.getChoices().size()];
-     		List<Expansion> choices = ch.getChoices();
-     		int numChoices = choices.size();
-     		List<List<MatchInfo>> dbl = new ArrayList<List<MatchInfo>>(numChoices);
-     		List<List<MatchInfo>> dbr = new ArrayList<List<MatchInfo>>(numChoices);
-     		for (int i = 0; i < numChoices; i++) {
-     			dbl.add(null);
-     			dbr.add(null);
-     		}
-     		int[] minLA = new int[choices.size() - 1];
-     		MatchInfo[] overlapInfo = new MatchInfo[choices.size() - 1];
-     		int[] other = new int[choices.size() - 1];
-     		MatchInfo m;
-     		//        List<MatchInfo> partialMatches;
-     		boolean overlapDetected;
-     		for (int la = 1; la <= grammar.getOptions().getChoiceAmbiguityCheck(); la++) {
-     			grammar.setLookaheadLimit(la);
-     			grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
-     			for (int i = first; i < choices.size() - 1; i++) {
-     				grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
-     				m = new MatchInfo(grammar.getLookaheadLimit());
-     				m.firstFreeLoc = 0;
-     				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
-     				partialMatches.add(m);
-     				genFirstSet(partialMatches, choices.get(i));
-     				dbl.set(i, grammar.getParserData().getSizeLimitedMatches());
-     			}
-     			grammar.setConsiderSemanticLA(false);
-     			for (int i = first + 1; i < choices.size(); i++) {
-     				grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
-     				m = new MatchInfo(grammar.getLookaheadLimit());
-     				m.firstFreeLoc = 0;
-     				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
-     				partialMatches.add(m);
-     				genFirstSet(partialMatches, choices.get(i));
-     				dbr.set(i, grammar.getParserData().getSizeLimitedMatches());
-     			}
-     			if (la == 1) {
-     				for (int i = first; i < choices.size() - 1; i++) {
-     					Expansion exp = choices.get(i);
-     					if (exp.isPossiblyEmpty()) {
-     						grammar
-     						.addWarning(
-     								exp,
-     								"This choice can expand to the empty token sequence "
-     										+ "and will therefore always be taken in favor of the choices appearing later.");
-     						break;
-     					} 
-     				}
-     			}
-     			overlapDetected = false;
-     			for (int i = first; i < choices.size() - 1; i++) {
-     				for (int j = i + 1; j < choices.size(); j++) {
-     					if ((m = overlap(dbl.get(i), dbr.get(j))) != null) {
-     						minLA[i] = la + 1;
-     						overlapInfo[i] = m;
-     						other[i] = j;
-     						overlapDetected = true;
-     						break;
-     					}
-     				}
-     			}
-     			if (!overlapDetected) {
-     				break;
-     			}
-     		}
-     		for (int i = first; i < choices.size() - 1; i++) {
-     			if (explicitLookahead(choices.get(i)) && !grammar.getOptions().getForceLaCheck()) {
-     				continue;
-     			}
-     			if (minLA[i] > grammar.getOptions().getChoiceAmbiguityCheck()) {
-     				grammar.addWarning(null, "Choice conflict involving two expansions at");
-     				System.err.print("         line " + (choices.get(i)).getBeginLine());
-     				System.err.print(", column " + (choices.get(i)).getBeginColumn());
-     				System.err.print(" and line " + (choices.get(other[i])).getBeginLine());
-     				System.err.print(", column " + (choices.get(other[i])).getBeginColumn());
-     				System.err.println(" respectively.");
-     				System.err
-     				.println("         A common prefix is: " + image(overlapInfo[i], grammar));
-     				System.err.println("         Consider using a lookahead of " + minLA[i] + " or more for earlier expansion.");
-     			} else if (minLA[i] > 1) {
-     				grammar.addWarning(null, "Choice conflict involving two expansions at");
-     				System.err.print("         line " + choices.get(i).getBeginLine());
-     				System.err.print(", column " + (choices.get(i)).getBeginColumn());
-     				System.err.print(" and line " + (choices.get(other[i])).getBeginLine());
-     				System.err.print(", column " + (choices.get(other[i])).getBeginColumn());
-     				System.err.println(" respectively.");
-     				System.err.println("         A common prefix is: " + image(overlapInfo[i], grammar));
-     				System.err.println("         Consider using a lookahead of " + minLA[i] + " for earlier expansion.");
-     			}
-     		}
-     	}
-
-     	boolean explicitLookahead(Expansion exp) {
-     		if (!(exp instanceof ExpansionSequence)) {
-     			return false;
-     		}
-     		ExpansionSequence seq = (ExpansionSequence) exp;
-     		List<Expansion> es = seq.getUnits();
-     		if (es.isEmpty()) {
-     			//REVISIT: Look at this case carefully!
-     			return false;
-     		}
-     		Expansion e = seq.firstChildOfType(Expansion.class);
-     		return e instanceof ExplicitLookahead;
-     	}
-
-     	int firstChoice(ExpansionChoice ch) {
-     		if (ch.getGrammar().getOptions().getForceLaCheck()) {
-     			return 0;
-     		}
-     		List<Expansion> choices = ch.getChoices();
-     		for (int i = 0; i < choices.size(); i++) {
-     			if (!explicitLookahead(choices.get(i))) {
-     				return i;
-     			}
-     		}
-     		return choices.size();
-     	}
-
-     	private String image(Expansion exp) {
-     		if (exp instanceof OneOrMore) {
-     			return "(...)+";
-     		} else if (exp instanceof ZeroOrMore) {
-     			return "(...)*";
-     		} else /* if (exp instanceof ZeroOrOne) */{
-     			return "[...]";
-     		}
-     	}
-
-     	void ebnfCalc(Expansion exp, Expansion nested, Grammar grammar) {
-     		// exp is one of OneOrMore, ZeroOrMore, ZeroOrOne
-     		MatchInfo m, m1 = null;
-     		List<MatchInfo> partialMatches = new ArrayList<>();
-     		int la;
-     		for (la = 1; la <= grammar.getOptions().getOtherAmbiguityCheck(); la++) {
-     			grammar.setLookaheadLimit(la);
-     			grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
-     			m = new MatchInfo(la);
-     			m.firstFreeLoc = 0;
-     			partialMatches.add(m);
-     			grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
-     			genFirstSet(partialMatches, nested);
-     			List<MatchInfo> first = grammar.getParserData().getSizeLimitedMatches();
-     			grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
-     			grammar.setConsiderSemanticLA(false);
-     			generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex());
-     			List<MatchInfo> follow = grammar.getParserData().getSizeLimitedMatches();
-     			if ((m = overlap(first, follow)) == null) {
-     				break;
-     			}
-     			m1 = m;
-     		}
-     		if (la > grammar.getOptions().getOtherAmbiguityCheck()) {
-     			grammar.addWarning(exp, "Choice conflict in " + image(exp) + " construct " + "at line "
-     					+ exp.getBeginLine() + ", column " + exp.getBeginColumn() + ".");
-     			System.err
-     			.println("         Expansion nested within construct and expansion following construct");
-     			System.err.println("         have common prefixes, one of which is: "
-     					+ image(m1, grammar));
-     			System.err.println("         Consider using a lookahead of " + la
-     					+ " or more for nested expansion.");
-     		} else if (la > 1) {
-     			grammar.addWarning(exp, "Choice conflict in " + image(exp) + " construct " + "at line "
-     					+ exp.getBeginLine() + ", column " + exp.getBeginColumn() + ".");
-     			System.err
-     			.println("         Expansion nested within construct and expansion following construct");
-     			System.err.println("         have common prefixes, one of which is: "
-     					+ image(m1, grammar));
-     			System.err.println("         Consider using a lookahead of " + la
-     					+ " for nested expansion.");
-     		}
-     	}
+         ExpansionSequence seq = (ExpansionSequence) exp;
+         return (!(seq.getLookahead()  instanceof ExplicitLookahead));
      }
+
+ 	private MatchInfo overlap(List<MatchInfo> matchList1, List<MatchInfo> matchList2) {
+ 		for (MatchInfo match1 : matchList1) {
+ 			for (MatchInfo match2 : matchList2) {
+ 				int size = match1.firstFreeLoc;
+ 				MatchInfo match3 = match1;
+ 				if (size > match2.firstFreeLoc) {
+ 					size = match2.firstFreeLoc;
+ 					match3 = match2;
+ 				}
+ 				if (size != 0) {
+ 					// REVISIT. We don't have JAVACODE productions  any more!
+ 					// we wish to ignore empty expansions and the JAVACODE stuff
+ 					// here.
+ 					boolean diffFound = false;
+ 					for (int k = 0; k < size; k++) {
+ 						if (match1.match[k] != match2.match[k]) {
+ 							diffFound = true;
+ 							break;
+ 						}
+ 					}
+ 					if (!diffFound) {
+ 						return match3;
+ 					}
+ 				}
+ 			}
+ 		}
+ 		return null;
+ 	}
+
+ 	private String image(MatchInfo m) {
+ 		String ret = "";
+ 		for (int i = 0; i < m.firstFreeLoc; i++) {
+ 			if (m.match[i] == 0) {
+ 				ret += " <EOF>";
+ 			} else {
+ 				RegularExpression re = grammar.getRegexpForToken(m.match[i]);
+ 				if (re instanceof RegexpStringLiteral) {
+ 					ret += " \"" + ParseException.addEscapes(((RegexpStringLiteral) re).getImage()) + "\"";
+ 				} else if (re.getLabel() != null && !re.getLabel().equals("")) {
+ 					ret += " <" + re.getLabel() + ">";
+ 				} else {
+ 					ret += " <token of kind " + i + ">";
+ 				}
+ 			}
+ 		}
+ 		if (m.firstFreeLoc == 0) {
+ 			return "";
+ 		} else {
+ 			return ret.substring(1);
+ 		}
+ 	}
+
+ 	private void choiceCalc(ExpansionChoice ch) {
+ 		int first = firstChoice(ch);
+ 		// dbl[i] and dbr[i] are vectors of size limited matches for choice i
+ 		// of ch. dbl ignores matches with semantic lookaheads (when
+ 		// force_la_check
+ 		// is false), while dbr ignores semantic lookahead.
+ 		// List<MatchInfo>[] dbl = new List[ch.getChoices().size()];
+ 		// List<MatchInfo>[] dbr = new List[ch.getChoices().size()];
+ 		List<Expansion> choices = ch.getChoices();
+ 		int numChoices = choices.size();
+ 		List<List<MatchInfo>> dbl = new ArrayList<List<MatchInfo>>(numChoices);
+ 		List<List<MatchInfo>> dbr = new ArrayList<List<MatchInfo>>(numChoices);
+ 		for (int i = 0; i < numChoices; i++) {
+ 			dbl.add(null);
+ 			dbr.add(null);
+ 		}
+ 		int[] minLA = new int[choices.size() - 1];
+ 		MatchInfo[] overlapInfo = new MatchInfo[choices.size() - 1];
+ 		int[] other = new int[choices.size() - 1];
+ 		MatchInfo m;
+ 		//        List<MatchInfo> partialMatches;
+ 		boolean overlapDetected;
+ 		for (int la = 1; la <= grammar.getOptions().getChoiceAmbiguityCheck(); la++) {
+ 			grammar.setLookaheadLimit(la);
+ 			grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
+ 			for (int i = first; i < choices.size() - 1; i++) {
+ 				grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
+ 				m = new MatchInfo(grammar.getLookaheadLimit());
+ 				m.firstFreeLoc = 0;
+ 				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
+ 				partialMatches.add(m);
+ 				genFirstSet(partialMatches, choices.get(i));
+ 				dbl.set(i, grammar.getParserData().getSizeLimitedMatches());
+ 			}
+ 			grammar.setConsiderSemanticLA(false);
+ 			for (int i = first + 1; i < choices.size(); i++) {
+ 				grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
+ 				m = new MatchInfo(grammar.getLookaheadLimit());
+ 				m.firstFreeLoc = 0;
+ 				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
+ 				partialMatches.add(m);
+ 				genFirstSet(partialMatches, choices.get(i));
+ 				dbr.set(i, grammar.getParserData().getSizeLimitedMatches());
+ 			}
+ 			if (la == 1) {
+ 				for (int i = first; i < choices.size() - 1; i++) {
+ 					Expansion exp = choices.get(i);
+ 					if (exp.isPossiblyEmpty()) {
+ 						grammar
+ 						.addWarning(
+ 								exp,
+ 								"This choice can expand to the empty token sequence "
+ 										+ "and will therefore always be taken in favor of the choices appearing later.");
+ 						break;
+ 					} 
+ 				}
+ 			}
+ 			overlapDetected = false;
+ 			for (int i = first; i < choices.size() - 1; i++) {
+ 				for (int j = i + 1; j < choices.size(); j++) {
+ 					if ((m = overlap(dbl.get(i), dbr.get(j))) != null) {
+ 						minLA[i] = la + 1;
+ 						overlapInfo[i] = m;
+ 						other[i] = j;
+ 						overlapDetected = true;
+ 						break;
+ 					}
+ 				}
+ 			}
+ 			if (!overlapDetected) {
+ 				break;
+ 			}
+ 		}
+ 		for (int i = first; i < choices.size() - 1; i++) {
+ 			if (explicitLookahead(choices.get(i)) && !grammar.getOptions().getForceLaCheck()) {
+ 				continue;
+ 			}
+ 			if (minLA[i] > grammar.getOptions().getChoiceAmbiguityCheck()) {
+ 				grammar.addWarning(null, "Choice conflict involving two expansions at");
+ 				System.err.print("         line " + (choices.get(i)).getBeginLine());
+ 				System.err.print(", column " + (choices.get(i)).getBeginColumn());
+ 				System.err.print(" and line " + (choices.get(other[i])).getBeginLine());
+ 				System.err.print(", column " + (choices.get(other[i])).getBeginColumn());
+ 				System.err.println(" respectively.");
+ 				System.err
+ 				.println("         A common prefix is: " + image(overlapInfo[i]));
+ 				System.err.println("         Consider using a lookahead of " + minLA[i] + " or more for earlier expansion.");
+ 			} else if (minLA[i] > 1) {
+ 				grammar.addWarning(null, "Choice conflict involving two expansions at");
+ 				System.err.print("         line " + choices.get(i).getBeginLine());
+ 				System.err.print(", column " + (choices.get(i)).getBeginColumn());
+ 				System.err.print(" and line " + (choices.get(other[i])).getBeginLine());
+ 				System.err.print(", column " + (choices.get(other[i])).getBeginColumn());
+ 				System.err.println(" respectively.");
+ 				System.err.println("         A common prefix is: " + image(overlapInfo[i]));
+ 				System.err.println("         Consider using a lookahead of " + minLA[i] + " for earlier expansion.");
+ 			}
+ 		}
+ 	}
+
+ 	boolean explicitLookahead(Expansion exp) {
+ 		if (!(exp instanceof ExpansionSequence)) {
+ 			return false;
+ 		}
+ 		ExpansionSequence seq = (ExpansionSequence) exp;
+ 		List<Expansion> es = seq.getUnits();
+ 		if (es.isEmpty()) {
+ 			//REVISIT: Look at this case carefully!
+ 			return false;
+ 		}
+ 		Expansion e = seq.firstChildOfType(Expansion.class);
+ 		return e instanceof ExplicitLookahead;
+ 	}
+
+ 	int firstChoice(ExpansionChoice ch) {
+ 		if (ch.getGrammar().getOptions().getForceLaCheck()) {
+ 			return 0;
+ 		}
+ 		List<Expansion> choices = ch.getChoices();
+ 		for (int i = 0; i < choices.size(); i++) {
+ 			if (!explicitLookahead(choices.get(i))) {
+ 				return i;
+ 			}
+ 		}
+ 		return choices.size();
+ 	}
+
+ 	private String image(Expansion exp) {
+ 		if (exp instanceof OneOrMore) {
+ 			return "(...)+";
+ 		} else if (exp instanceof ZeroOrMore) {
+ 			return "(...)*";
+ 		} else /* if (exp instanceof ZeroOrOne) */{
+ 			return "[...]";
+ 		}
+ 	}
+
+ 	void ebnfCalc(Expansion exp, Expansion nested) {
+ 		// exp is one of OneOrMore, ZeroOrMore, ZeroOrOne
+ 		MatchInfo m, m1 = null;
+ 		List<MatchInfo> partialMatches = new ArrayList<>();
+ 		int la;
+ 		for (la = 1; la <= grammar.getOptions().getOtherAmbiguityCheck(); la++) {
+ 			grammar.setLookaheadLimit(la);
+ 			grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
+ 			m = new MatchInfo(la);
+ 			m.firstFreeLoc = 0;
+ 			partialMatches.add(m);
+ 			grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
+ 			genFirstSet(partialMatches, nested);
+ 			List<MatchInfo> first = grammar.getParserData().getSizeLimitedMatches();
+ 			grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
+ 			grammar.setConsiderSemanticLA(false);
+ 			generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex());
+ 			List<MatchInfo> follow = grammar.getParserData().getSizeLimitedMatches();
+ 			if ((m = overlap(first, follow)) == null) {
+ 				break;
+ 			}
+ 			m1 = m;
+ 		}
+ 		if (la > grammar.getOptions().getOtherAmbiguityCheck()) {
+ 			grammar.addWarning(exp, "Choice conflict in " + image(exp) + " construct " + "at line "
+ 					+ exp.getBeginLine() + ", column " + exp.getBeginColumn() + ".");
+ 			System.err
+ 			.println("         Expansion nested within construct and expansion following construct");
+ 			System.err.println("         have common prefixes, one of which is: "
+ 					+ image(m1));
+ 			System.err.println("         Consider using a lookahead of " + la
+ 					+ " or more for nested expansion.");
+ 		} else if (la > 1) {
+ 			grammar.addWarning(exp, "Choice conflict in " + image(exp) + " construct " + "at line "
+ 					+ exp.getBeginLine() + ", column " + exp.getBeginColumn() + ".");
+ 			System.err
+ 			.println("         Expansion nested within construct and expansion following construct");
+ 			System.err.println("         have common prefixes, one of which is: " + image(m1));
+ 			System.err.println("         Consider using a lookahead of " + la + " for nested expansion.");
+ 		}
+ 	}
+     
  	List<MatchInfo> genFirstSet(List<MatchInfo> partialMatches, Expansion exp) {
 		if (exp instanceof RegularExpression) {
 			int lookaheadLimit = exp.getGrammar().getLookaheadLimit();

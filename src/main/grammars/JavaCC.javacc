@@ -462,6 +462,16 @@ INJECT(interface Node) :
 {
    Grammar getGrammar();
    void setGrammar(Grammar grammar);
+   default List<Node> descendants(NodeFilter filter) {
+       List<Node> result = new ArrayList<>();
+       for (Node child : children()) {
+          if (filter.accept(child)) {
+              result.add(child);
+          }
+          result.addAll(child.descendants(filter)); 
+       }
+       return result;
+    }
 }
 
 INJECT(BaseNode) :
@@ -537,7 +547,9 @@ GrammarFile Root() throws IOException #GrammarFile :
    }
    [ParserCodeDecls()]
    (
-      Production()
+      TokenProduction() {grammar.addTokenProduction((TokenProduction) peekNode());}
+      |
+      BNFProduction()
       |
       decls=TokenManagerDecls() {grammar.addCodeInjection(decls);}
       |
@@ -724,17 +736,6 @@ void option_binding() #void :
   ]  
   ";"
   {_options.setInputFileOption(name, t, option_name, value, inInclude);}
-}
-
-void Production() #void :
-{
-   BNFProduction prod;
-   TokenProduction tp;
-}
-{
-  tp=TokenProduction() {grammar.addTokenProduction(tp);}
-  |
-  prod=BNFProduction()
 }
 
 BNFProduction BNFProduction() :
@@ -1582,16 +1583,16 @@ Expansion ExpansionUnit() :
       result = re;
       re.setLHS(lhs);
       if (!(re instanceof EndOfFile)) {
-            TokenProduction p = new TokenProduction();
-            p.setGrammar(grammar);
-            p.setExplicit(false);
-            p.setLexicalState(grammar.getDefaultLexicalState());
+            TokenProduction tokenProduction = new TokenProduction();
+            tokenProduction.setGrammar(grammar);
+            tokenProduction.setExplicit(false);
+            tokenProduction.setLexicalState(grammar.getDefaultLexicalState());
             RegexpSpec res = new RegexpSpec();
             res.addChild(re);
-            re.tpContext = p;
-            p.addChild(res);
-            grammar.addChild(p);
-            grammar.addTokenProduction(p);
+            re.tpContext = tokenProduction;
+            tokenProduction.addChild(res);
+//            grammar.addChild(tokenProduction);
+            grammar.addTokenProduction(tokenProduction);
       }
   }
   [<BANG>{result.setForced(true);}]

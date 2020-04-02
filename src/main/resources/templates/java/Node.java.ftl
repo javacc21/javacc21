@@ -205,8 +205,6 @@ public interface Node
         }
         return null;
     }
-   
-
     
     default Node findNodeAt(int line, int column) {
         if (!isIncluded(line, column)) {
@@ -311,6 +309,21 @@ public interface Node
 		    }
 		}
 	    return result;
+    }
+    
+    default List<Node> descendants(NodeFilter filter) {
+       List<Node> result = new ArrayList<>();
+       for (Node child : children()) {
+          if (filter.accept(child)) {
+              result.add(child);
+          }
+          result.addAll(child.descendants(filter)); 
+       }
+       return result;
+    }
+    
+    public interface NodeFilter {
+       boolean accept(Node node);
     }
     
 	static abstract public class Visitor {
