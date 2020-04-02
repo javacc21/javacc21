@@ -573,19 +573,39 @@ public class ParserData {
           */
 
          if (!grammar.getOptions().getUserDefinedLexer()) {
-             FixRJustNames frjn = new FixRJustNames();
+        	 List<RegexpRef> refs = grammar.descendantsOfType(RegexpRef.class);
+        	 for (RegexpRef ref : refs) {
+        		 String label = ref.getLabel();
+        		 RegularExpression referenced = grammar.getNamedToken(label);
+        		 if (referenced == null && !ref.getLabel().equals("EOF")) {
+        			 grammar.addSemanticError(ref,  "Undefined lexical token name \"" + label + "\".");
+        		 } else if (ref.tpContext != null && !ref.tpContext.isExplicit()) {
+        			 if (referenced.isPrivate()) {
+        				 grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
+        			 }   else if (!referenced.tpContext.getKind().equals("TOKEN")) {
+                         grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, IGNORE_IN_BNF) regular expression.");
+        			 } 
+        		 } 
+        	 }
+        	 for (TokenProduction tp : grammar.getAllTokenProductions()) {
+        		 for (RegexpRef ref : tp.descendantsOfType(RegexpRef.class)) {
+        			 RegularExpression rexp = grammar.getNamedToken(ref.getLabel());
+        			 if (rexp != null) {
+	        			 ref.setOrdinal(rexp.getOrdinal());
+	        			 ref.setRegexp(rexp);
+        			 }
+        		 }
+        	 }
              for (TokenProduction tp : grammar.getAllTokenProductions()) {
                  List<RegexpSpec> respecs = tp.getRegexpSpecs();
                  for (RegexpSpec res : respecs) {
-                     frjn.root = res.getRegexp();
-                     ExpansionTreeWalker.preOrderWalk(res.getRegexp(), frjn);
                      if (res.getRegexp() instanceof RegexpRef) {
                          tp.removeChild(res);
                      }
                  }
              }
          }
-
+         
          /*
           * The following code is executed only if
           * grammar.getOptions().getUserDefinedLexer() is set to true. This code
@@ -946,43 +966,6 @@ public class ParserData {
              return rexpWalk(((RepetitionRange) rexp).getRegexp());
          }
          return false;
-     }
-    
-     class FixRJustNames extends TreeWalkerOp {
-
-         private RegularExpression root;
-
-         boolean goDeeper(Expansion e) {
-             return true;
-         }
-
-         void action(Expansion e) {
-             if (e instanceof RegexpRef) {
-                 RegexpRef jn = (RegexpRef) e;
-                 RegularExpression rexp = grammar.getNamedToken(jn.getLabel());
-                 if (rexp == null && !jn.getLabel().equals("EOF")) {
-                     grammar.addSemanticError(e, "Undefined lexical token name \""
-                             + jn.getLabel() + "\".");
-                 } else if (jn == root && !jn.tpContext.isExplicit()
-                         && rexp.isPrivate()) {
-                     grammar.addSemanticError(e, "Token name \"" + jn.getLabel()
-                             + "\" refers to a private "
-                             + "(with a #) regular expression.");
-                 } else if (jn == root && !jn.tpContext.isExplicit()
-                         && !rexp.tpContext.getKind().equals("TOKEN")) {
-                     grammar
-                             .addSemanticError(
-                                     e,
-                                     "Token name \""
-                                             + jn.getLabel()
-                                             + "\" refers to a non-token "
-                                             + "(SKIP, MORE, IGNORE_IN_BNF) regular expression.");
-                 } else {
-                     jn.setOrdinal(rexp.getOrdinal());
-                     jn.setRegexp(rexp);
-                 }
-             }
-         }
      }
     
      private boolean hasImplicitLookahead(Expansion exp) {
