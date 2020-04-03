@@ -43,7 +43,9 @@ import javacc.parser.ParseException;
 import javacc.parser.tree.*;
 
 /**
- * Class to build up certain data structures for the parser.
+ * This class holds the remains of all the most icky legacy code that is used to build up the data
+ * structure for the parser. The near-term (or possibly mid-term) goal is to refactor and clean it 
+ * all up (JR).
  */
 public class ParserData {
 
@@ -70,8 +72,10 @@ public class ParserData {
      * requiring larger lookaheads). The second step then generates these
      * methods. 
      */
-    private List<Lookahead> phase2list = new ArrayList<Lookahead>();
+    private List<Lookahead> phase2lookaheads = new ArrayList<Lookahead>();
     private List<Phase3Data> phase3list = new ArrayList<Phase3Data>();
+    
+   // Should look at factoring out this phase3 stuff, probably storing the information in the Expansion objects themselves. TODO
     private Map<Expansion, Integer> phase3table = new LinkedHashMap<Expansion, Integer>();
 
     public ParserData(Grammar grammar) {
@@ -80,26 +84,23 @@ public class ParserData {
     }
     
     public void buildData() throws MetaParseException {
-        for (BNFProduction p : grammar.getParserProductions()) {
-             visitExpansion(p.getExpansion());
+        for (BNFProduction production : grammar.getParserProductions()) {
+             visitExpansion(production.getExpansion());
         }
-        for (Lookahead la : phase2list) {
-            Expansion e = la.getNestedExpansion();
-            Phase3Data p3d = new Phase3Data(e, la.getAmount());
-            phase3list.add(p3d);
-            phase3table.put(e, la.getAmount());
+        for (Lookahead lookahead : phase2lookaheads) {
+            Expansion expansion= lookahead.getNestedExpansion();
+            Phase3Data phase3data = new Phase3Data(expansion, lookahead.getAmount());
+            phase3list.add(phase3data);
+            phase3table.put(expansion, lookahead.getAmount());
         }
-        int phase3index = 0;
-        while (phase3index < phase3list.size()) {
-            for (; phase3index < phase3list.size(); phase3index++) {
-                Phase3Data p3data = phase3list.get(phase3index);
-                setupPhase3Builds(p3data.exp, p3data.count);
-            }
+        for (int phase3index=0; phase3index < phase3list.size(); phase3index++) {
+            Phase3Data p3data = phase3list.get(phase3index);
+            setupPhase3Builds(p3data.exp, p3data.count);
         }
     }
 
     public List<Lookahead> getPhase2Lookaheads() {
-        return phase2list;
+        return phase2lookaheads;
     }
     
     public Map<Expansion, Integer> getPhase3Table() {
@@ -132,8 +133,8 @@ public class ParserData {
     	for (Lookahead lookahead : lookaheads) {
     		if (lookahead.getRequiresPhase2Routine()) {
     			// In this case lookahead is determined by the jj2 methods.
-    			phase2list.add(lookahead);
-    			lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2list.size());
+    			phase2lookaheads.add(lookahead);
+    			lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
     		}
     	}
     }
@@ -141,8 +142,8 @@ public class ParserData {
     private void visitLookahead(Lookahead lookahead) {
         if (lookahead.getRequiresPhase2Routine()) {
             // In this case lookahead is determined by the phase2 methods.
-            phase2list.add(lookahead);
-		    lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2list.size());
+            phase2lookaheads.add(lookahead);
+		    lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
         }
     }
     
@@ -317,7 +318,7 @@ public class ParserData {
          	if (prod == null) {
          		grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
          	} else {
-         		prod.referringNonTerminals.add(nt); // REVISIT
+//         		prod.referringNonTerminals.add(nt); // REVISIT
          	}
          }
          
@@ -745,7 +746,7 @@ public class ParserData {
          }
      }
 
-     // Really need to REVISIT the logic of this.
+     // Really need to REVISIT the logic of this. It looks utterly kludgy. (JR)
      private void adjustLookahead(ExpansionSequence seq) {
          if (seq.getParent() instanceof ExpansionChoice
                  || seq.getParent() instanceof ZeroOrMore
@@ -1307,10 +1308,10 @@ public class ParserData {
 			retval.addAll(partialMatches);
 			return retval;
 		} else if (exp.getParent() instanceof BNFProduction) {
-			List<NonTerminal> referringNonTerminals = ((BNFProduction) exp.getParent()).referringNonTerminals;
+			BNFProduction production = (BNFProduction) exp.getParent();
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			// System.out.println("1; gen: " + generation + "; exp: " + exp);
-			for (NonTerminal nt : referringNonTerminals) {
+			for (NonTerminal nt : production.getReferringNonTerminals()) {
 				List<MatchInfo> v = generateFollowSet(partialMatches, nt, generation);
 				retval.addAll(v);
 			}

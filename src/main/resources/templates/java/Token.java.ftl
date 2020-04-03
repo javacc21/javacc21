@@ -217,11 +217,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     private Node parent;
     private Map<String,Object> attributes; 
 
-    @Override
-    public boolean hasChildNodes() {
-        return getChildCount() > 0;
-    }
-
     public void setChild(int i, Node n) {
         throw new UnsupportedOperationException();
     }

@@ -861,7 +861,20 @@ INJECT(BNFProduction) :
     /**
      * The NonTerminal nodes which refer to this production.
      */
-    public List<NonTerminal> referringNonTerminals = new ArrayList<>();
+    private List<NonTerminal> referringNonTerminals;
+    
+    public List<NonTerminal> getReferringNonTerminals() {
+        if (referringNonTerminals == null) {
+           
+            referringNonTerminals = new ArrayList<NonTerminal>(); 
+            for (NonTerminal nt : getGrammar().descendantsOfType(NonTerminal.class)) {
+            	if (nt.getName().equals(name)) {
+            	   referringNonTerminals.add(nt);
+            	}
+            }
+        }
+        return referringNonTerminals;
+    }
 
     /**
      * The name of the non-terminal of this production.

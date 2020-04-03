@@ -45,22 +45,13 @@ import java.lang.reflect.*;
 abstract public class Nodes {
     
      static public List<Token> getTokens(Node node) {
-        List<Token> result = new ArrayList<Token>();
-        for (int i=0; i<node.getChildCount(); i++) {
-            Node child = node.getChild(i);
-            if (child instanceof Token) {
-                result.add((Token) child);
-            } else {
-                result.addAll(getTokens(child));
-            }
-        }
-        return result;
+	       return node.descendantsOfType(Token.class);
     }
         
         
-    static public List<Token> getRealTokens(Node n) {
+    static public List<Token> getRealTokens(Node node) {
         List<Token> result = new ArrayList<Token>();
-		for (Token token : getTokens(n)) {
+		for (Token token : getTokens(node)) {
 		    if (!token.isUnparsed()) {
 		        result.add(token);
 		    }

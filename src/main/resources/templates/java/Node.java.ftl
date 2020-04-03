@@ -62,7 +62,9 @@ public interface Node
      * @return Returns <code>true</code> if this node has any children,
      *         <code>false</code> otherwise.
      */
-    boolean hasChildNodes();
+    default boolean hasChildNodes() {
+       return getChildCount() > 0;
+    }
 
     void setParent(Node n);
      
@@ -311,7 +313,7 @@ public interface Node
 	    return result;
     }
 
-    default List<Node> descendants(NodeFilter filter) {
+    default List<Node> descendants(Filter filter) {
        List<Node> result = new ArrayList<>();
        for (Node child : children()) {
           if (filter.accept(child)) {
@@ -322,7 +324,7 @@ public interface Node
        return result;
     }
     
-    public interface NodeFilter {
+    public interface Filter {
        boolean accept(Node node);
     }
     

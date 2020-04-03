@@ -455,11 +455,6 @@ throw new ParseException();"]
   }
 [/#macro]
 
-[#function getTrailingPart s]
-    [#var splitStrings = s?split("_")]
-    [#return splitStrings?last]
-[/#function]
-
 [#var currentPhase3Expansion]
 
 [#macro buildPhase3Routine expansion count]
