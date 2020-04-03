@@ -1828,15 +1828,7 @@ INJECT(ZeroOrMore) :
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
     }
-    
-    public String getLabel() {
-        return label;
-    }
-    
-    public void setLabel(String label) {
-        this.label = label;
-    }
-    
+
     public boolean isPossiblyEmpty() {
         return true;
     }
@@ -1892,14 +1884,6 @@ INJECT(OneOrMore) :
 
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
-    }
-    
-    public String getLabel() {
-        return label;
-    }
-    
-    public void setLabel(String label) {
-        this.label = label;
     }
     
     public boolean isPossiblyEmpty() {

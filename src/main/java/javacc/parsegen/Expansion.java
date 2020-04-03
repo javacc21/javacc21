@@ -52,6 +52,8 @@ abstract public class Expansion extends BaseNode {
 
     private Lookahead lookahead;
     
+    private String label = ""; 
+    
     protected TokenSet firstSet, finalSet;
 
     public int getIndex() {
@@ -69,6 +71,14 @@ abstract public class Expansion extends BaseNode {
     public long myGeneration = 0; //REVISIT
     
     private String phase2RoutineName, phase3RoutineName;
+    
+    public String getLabel() {
+    	return label;
+    }
+    
+    public void setLabel(String label) {
+    	this.label = label;
+    }
 
 
     private String getSimpleName() {
