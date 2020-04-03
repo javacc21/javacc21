@@ -87,7 +87,6 @@ public class FilesGenerator {
         generateLexer();
         generateConstantsFile();
         generateParser();
-        generateDoc();
         if (grammar.getOptions().getTreeBuildingEnabled()) {
             generateTreeBuildingFiles();
         }
@@ -239,12 +238,6 @@ public class FilesGenerator {
         }
         grammar.buildParserInfo();
         String filename = grammar.getParserClassName() + ".java";
-        File outputFile = new File(grammar.getParserOutputDirectory(), filename);
-        generate(outputFile);
-    }
-    
-    void generateDoc() throws IOException, TemplateException {
-        String filename = grammar.getParserClassName() + ".html";
         File outputFile = new File(grammar.getParserOutputDirectory(), filename);
         generate(outputFile);
     }
