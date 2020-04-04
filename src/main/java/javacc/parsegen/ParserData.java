@@ -111,15 +111,6 @@ public class ParserData {
         return phase3table.get(exp);
     }
     
-    List<MatchInfo> getSizeLimitedMatches() {
-        return sizeLimitedMatches;
-    }
-
-    void setSizeLimitedMatches(List<MatchInfo> sizeLimitedMatches) {
-        this.sizeLimitedMatches = sizeLimitedMatches;
-    }
-
- 
     private void visitExpansionChoice(ExpansionChoice choice) {
     	List<Lookahead> lookaheads = new ArrayList<Lookahead>();
     	List<ExpansionSequence> choices = choice.childrenOfType(ExpansionSequence.class);
@@ -294,11 +285,8 @@ public class ParserData {
          
          // Check that non-terminals have all been defined.
          for (NonTerminal nt : grammar.descendantsOfType(NonTerminal.class)) {
-         	BNFProduction prod = nt.getProduction();
-         	if (prod == null) {
+         	if (nt.getProduction() == null) {
          		grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
-         	} else {
-//         		prod.referringNonTerminals.add(nt); // REVISIT
          	}
          }
          
@@ -1035,23 +1023,23 @@ public class ParserData {
  			grammar.setLookaheadLimit(la);
  			grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
  			for (int i = first; i < choices.size() - 1; i++) {
- 				grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
+ 				sizeLimitedMatches = new ArrayList<MatchInfo>();
  				m = new MatchInfo(grammar.getLookaheadLimit());
  				m.firstFreeLoc = 0;
  				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
  				partialMatches.add(m);
  				genFirstSet(partialMatches, choices.get(i));
- 				dbl.set(i, grammar.getParserData().getSizeLimitedMatches());
+ 				dbl.set(i, sizeLimitedMatches);
  			}
  			grammar.setConsiderSemanticLA(false);
  			for (int i = first + 1; i < choices.size(); i++) {
- 				grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
+ 				sizeLimitedMatches = new ArrayList<MatchInfo>();
  				m = new MatchInfo(grammar.getLookaheadLimit());
  				m.firstFreeLoc = 0;
  				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
  				partialMatches.add(m);
  				genFirstSet(partialMatches, choices.get(i));
- 				dbr.set(i, grammar.getParserData().getSizeLimitedMatches());
+ 				dbr.set(i, sizeLimitedMatches);
  			}
  			if (la == 1) {
  				for (int i = first; i < choices.size() - 1; i++) {
@@ -1153,17 +1141,17 @@ public class ParserData {
  		int la;
  		for (la = 1; la <= grammar.getOptions().getOtherAmbiguityCheck(); la++) {
  			grammar.setLookaheadLimit(la);
- 			grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
+ 			sizeLimitedMatches = new ArrayList<>();
  			m = new MatchInfo(la);
  			m.firstFreeLoc = 0;
  			partialMatches.add(m);
  			grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
  			genFirstSet(partialMatches, nested);
- 			List<MatchInfo> first = grammar.getParserData().getSizeLimitedMatches();
- 			grammar.getParserData().setSizeLimitedMatches(new ArrayList<MatchInfo>());
+ 			List<MatchInfo> first = sizeLimitedMatches;
+ 			sizeLimitedMatches = new ArrayList<MatchInfo>();
  			grammar.setConsiderSemanticLA(false);
  			generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex());
- 			List<MatchInfo> follow = grammar.getParserData().getSizeLimitedMatches();
+ 			List<MatchInfo> follow = sizeLimitedMatches;
  			if ((m = overlap(first, follow)) == null) {
  				break;
  			}
@@ -1200,7 +1188,7 @@ public class ParserData {
 				mnew.firstFreeLoc = partialMatch.firstFreeLoc;
 				mnew.match[mnew.firstFreeLoc++] = ((RegularExpression) exp).getOrdinal();
 				if (mnew.firstFreeLoc == lookaheadLimit) {
-					grammar.getParserData().getSizeLimitedMatches().add(mnew);
+					sizeLimitedMatches.add(mnew);
 				} else {
 					retval.add(mnew);
 				}
@@ -1359,5 +1347,4 @@ public class ParserData {
 	        this.match = new int[lookaheadLimit];
 	    }
 	}
-	
 }

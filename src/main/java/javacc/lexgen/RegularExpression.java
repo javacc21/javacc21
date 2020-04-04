@@ -120,7 +120,7 @@ public abstract class RegularExpression extends Expansion {
      */
     public TokenProduction tpContext = null;
 
-    public boolean canMatchAnyChar() {
+    boolean canMatchAnyChar() {
         return false;
     }
 
