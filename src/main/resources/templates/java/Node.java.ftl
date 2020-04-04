@@ -344,7 +344,7 @@ public interface Node
 			Class<? extends Node> nodeClass = node.getClass();
 			if (!methodCache.containsKey(nodeClass)) {
 				try {
-					Method method = nodeClass.getMethod("visit", new Class[] {nodeClass});
+					Method method = this.getClass().getMethod("visit", new Class[] {nodeClass});
 					if (method.equals(getBaseVisitMethod())) {
 						method = null; // Have to avoid infinite recursion, no?
 					}
