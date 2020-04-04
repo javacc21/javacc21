@@ -1170,7 +1170,7 @@ INJECT(TokenProduction) :
               if (t.getId() == JavaCCConstants.STAR) {
                   return true;
               }
-	  }
+	      }
        }
        return false;
     }

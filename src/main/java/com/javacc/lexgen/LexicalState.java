@@ -58,7 +58,6 @@ public class LexicalState {
     Map<String, NfaState> equivStatesTable = new HashMap<>();
     Map<String, int[]> allNextStates = new Hashtable<>();
     private Hashtable<String, int[]> compositeStateTable = new Hashtable<>();
-    private Map<String, String> stateBlockTable = new Hashtable<>();
     private Hashtable<String, Integer> stateIndexFromComposite = new Hashtable<>();
     private Hashtable<String, int[]> stateSetsToFix = new Hashtable<>();
     private List<TokenProduction> tokenProductions = new ArrayList<>();
@@ -88,7 +87,6 @@ public class LexicalState {
     private String[] images;
     private int[] kindsForStates;
     private int[][] statesForState;
-    private boolean createStartNfa = true;
 
     public LexicalState(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -212,7 +210,7 @@ public class LexicalState {
     }
 
     public boolean getCreateStartNfa() {
-        return createStartNfa && !mixed && indexedAllStates.size() != 0;
+        return !mixed && indexedAllStates.size() != 0;
     }
 
     boolean containsRegularExpression(RegularExpression re) {
@@ -242,10 +240,6 @@ public class LexicalState {
 
     public NfaState getNfaState(int index) {
         return allStates.get(index);
-    }
-
-    public boolean hasStateBlock(String key) {
-        return stateBlockTable.containsKey(key);
     }
 
     public List<NfaState> getAllStates() {

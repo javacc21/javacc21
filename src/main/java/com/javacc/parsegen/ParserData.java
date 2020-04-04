@@ -269,7 +269,6 @@ public class ParserData {
 
 
          /*
-          * The following walks the entire parse tree to convert all LOOKAHEAD's
           * Check whether we have any LOOKAHEADs at non-choice points 
           * REVISIT: Why is this not handled in the grammar spec?
           * The legacy code had some kind of very complex munging going on 

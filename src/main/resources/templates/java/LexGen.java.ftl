@@ -1052,7 +1052,6 @@ public final void backup(int amount) {
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
    [#var toBePrinted stateForCase toPrint=""]
-   [#var hasStateBlock=lexicalState.hasStateBlock(key)]
    [#list stateSet as state]
        [#if state.isNeeded(byteNum)]
           [#set neededStates = neededStates+1]
@@ -1087,7 +1086,7 @@ public final void backup(int amount) {
    [#if neededStates = 1]
           ${toPrint}
           case ${lexicalState.stateIndexFromComposite(key)} :
-      [#if !statesDumped.get(toBePrinted.index)&&!hasStateBlock&&toBePrinted.inNextOf>1]
+      [#if !statesDumped.get(toBePrinted.index)&&toBePrinted.inNextOf>1]
           case ${toBePrinted.index} :
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
@@ -1105,9 +1104,6 @@ public final void backup(int amount) {
          [#list partition as subSet]
             [#var atStart=true]
             [#list subSet as state]
-              [#if hasStateBlock]
-                  ${statesDumped.set(state.index)!}
-              [/#if]
               [@dumpMoveForCompositeState state, byteNum, !atStart/]
                [#-- ${state.dumpMoveForCompositeState(byteNum, !atStart)}--]
               [#set atStart = false]
