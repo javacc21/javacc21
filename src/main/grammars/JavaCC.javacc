@@ -35,8 +35,8 @@ OPTIONS : {
   FREEMARKER_NODES;
   SMART_NODE_CREATION;
   BASE_SRC_DIR="../java";
-  PARSER_PACKAGE="javacc.parser";
-  NODE_PACKAGE="javacc.parser.tree";
+  PARSER_PACKAGE="com.javacc.parser";
+  NODE_PACKAGE="com.javacc.parser.tree";
   DEFAULT_LEXICAL_STATE=JAVA;
 }
 

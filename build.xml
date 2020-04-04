@@ -9,7 +9,7 @@
 	<echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
 	<echo>JDK Version: ${java.version} on ${os.name}</echo>
 	<uptodate property="parser.uptodate"
-                 targetfile="src/main/java/javacc/parser/JavaCCParser.java">
+		targetfile="src/main/java/com/javacc/parser/JavaCCParser.java">
 	 <srcfiles dir="src/main/grammars" includes="*.javacc"/>
 	</uptodate>
   </target>
@@ -18,12 +18,11 @@
  	<delete file="javacc.jar"/>
  	<delete file="javacc-full.jar"/>
  	<delete dir="build"/>
-   <delete dir="src/main/java/javacc/parser"/>
-   <delete dir="examples/java/javagrammar"/>
+	<delete dir="src/main/java/com/javacc/parser"/>
+   <delete dir="examples/java/com"/>
    <delete dir="examples/freemarker/fel"/>
    <delete dir="examples/freemarker/ftl"/>
-   <delete dir="examples/json/jsonc"/>
-   <delete dir="examples/json/json"/>
+   <delete dir="examples/json/com"/>
   </target>
 
 
@@ -92,7 +91,7 @@
  <target name="jar" depends="compile">
     <jar jarfile="javacc.jar" basedir="build" compress="true">
         <manifest>
-            <attribute name="Main-Class" value="javacc.Main"/>
+            <attribute name="Main-Class" value="com.javacc.Main"/>
             <attribute name="Class-Path" value="freemarker.jar bin/freemarker.jar"/>
             <attribute name="Built-By" value="${user.name}"/>
             <attribute name="Build-Date"   value="${timestamp}"/>
@@ -106,7 +105,7 @@
         <fileset dir="build"/>
         <zipfileset includes="**/*.class" src="bin/freemarker.jar"/>
         <manifest>
-            <attribute name="Main-Class" value="javacc.Main"/>
+            <attribute name="Main-Class" value="com.javacc.Main"/>
             <attribute name="Built-By" value="${user.name}"/>
             <attribute name="Build-Date"   value="${timestamp}"/>
         </manifest>
