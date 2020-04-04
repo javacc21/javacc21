@@ -1141,11 +1141,7 @@ public class ParserData {
  		int la;
  		for (la = 1; la <= grammar.getOptions().getOtherAmbiguityCheck(); la++) {
  			grammar.setLookaheadLimit(la);
-<<<<<<< HEAD
  			sizeLimitedMatches = new ArrayList<MatchInfo>();
-=======
- 			sizeLimitedMatches = new ArrayList<>();
->>>>>>> f716f680e9f8875207db10e6b910c6cbff828b86
  			m = new MatchInfo(la);
  			m.firstFreeLoc = 0;
  			partialMatches.add(m);
