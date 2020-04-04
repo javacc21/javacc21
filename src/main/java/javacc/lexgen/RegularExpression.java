@@ -72,13 +72,7 @@ public abstract class RegularExpression extends Expansion {
     
     private int type;
     
-    /**
-     * The label of the regular expression (if any). If no label is present,
-     * this is set to "".
-     */
-    private String label = "";
-
-    /**
+   /**
      * The ordinal value assigned to the regular expression. It is used for
      * internal processing and passing information between the parser and the
      * lexical analyzer.
@@ -126,7 +120,7 @@ public abstract class RegularExpression extends Expansion {
      */
     public TokenProduction tpContext = null;
 
-    public boolean canMatchAnyChar() {
+    boolean canMatchAnyChar() {
         return false;
     }
 
@@ -140,11 +134,12 @@ public abstract class RegularExpression extends Expansion {
     public int walkStatus = 0;
 
     public final String getLabel() {
+    	String label = super.getLabel();
         return label.length() == 0 ? String.valueOf(id) : label;
     }
 
     public boolean hasLabel() {
-        return label.length() > 0;
+        return super.getLabel().length() > 0;
     }
 
     public int getOrdinal() {
@@ -161,10 +156,6 @@ public abstract class RegularExpression extends Expansion {
     
     public void setLHS(Expression lhs) {
         this.lhs = lhs;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
     }
 
     public LexicalState getLexicalState() {

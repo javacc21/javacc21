@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020jj Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -123,7 +123,7 @@ public class ParserData {
     	}
     	for (Lookahead lookahead : lookaheads) {
     		if (lookahead.getRequiresPhase2Routine()) {
-    			// In this case lookahead is determined by the jj2 methods.
+    			// In this case lookahead is determined by the phase2 methods.
     			phase2lookaheads.add(lookahead);
     			lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
     		}
@@ -142,38 +142,18 @@ public class ParserData {
     	if (expansion instanceof ExpansionChoice) {
             visitExpansionChoice((ExpansionChoice)expansion);
         } else if (expansion instanceof ExpansionSequence) {
-            ExpansionSequence expansionSequence = (ExpansionSequence) expansion;
-            // We skip the first element in the following iteration since it is
-            // the
-            // Lookahead object.
-            for (int i = 1; i < expansionSequence.getChildCount(); i++) {
-                visitExpansion((Expansion) expansionSequence.getChild(i));
+            for (Expansion sub : expansion.childrenOfType(Expansion.class)) {
+            	visitExpansion(sub);
             }
-        } else if (expansion instanceof OneOrMore) {
-            OneOrMore oom = (OneOrMore) expansion;
+        } else if (expansion instanceof OneOrMore || expansion instanceof ZeroOrMore || expansion instanceof ZeroOrOne) {
             ++gensymindex;
-            oom.setLabel("label_" + gensymindex);
-            visitExpansion(oom.getNestedExpansion());
-            Lookahead la = oom.getLookahead();
-            if (!la.getAlwaysSucceeds()) {
-                visitLookahead(la);
-            }
-        } else if (expansion instanceof ZeroOrMore) {
-            ZeroOrMore zom = (ZeroOrMore) expansion;
-            int labelIndex = ++gensymindex;
-            zom.setLabel("label_" + labelIndex);
-            Lookahead la = zom.getLookahead();
-            if (!la.getAlwaysSucceeds()) {
-                visitLookahead(la);
-            }
-            visitExpansion(zom.getNestedExpansion());
-        } else if (expansion instanceof ZeroOrOne) {
+            expansion.setLabel("label_" + gensymindex);
             visitExpansion(expansion.getNestedExpansion());
             Lookahead la = expansion.getLookahead();
-            if (!la.getAlwaysSucceeds()){
+            if (!la.getAlwaysSucceeds()) {
                 visitLookahead(la);
             }
-        } else if (expansion instanceof TryBlock) {
+        }  else if (expansion instanceof TryBlock) {
             visitExpansion(expansion.getNestedExpansion());
         }
     }
@@ -305,11 +285,8 @@ public class ParserData {
          
          // Check that non-terminals have all been defined.
          for (NonTerminal nt : grammar.descendantsOfType(NonTerminal.class)) {
-         	BNFProduction prod = nt.getProduction();
-         	if (prod == null) {
+         	if (nt.getProduction() == null) {
          		grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
-         	} else {
-//         		prod.referringNonTerminals.add(nt); // REVISIT
          	}
          }
          
@@ -659,7 +636,7 @@ public class ParserData {
          
            if (grammar.getErrorCount() == 0) {
 
-        	 for (Node child : filterDescendants(grammar, (n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+        	 for (Node child : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
         		 Expansion exp = (Expansion) child;
         		 if (exp.getNestedExpansion().isPossiblyEmpty()) {
                      grammar.addSemanticError(exp, "Expansion can be matched by empty string.");
@@ -722,7 +699,7 @@ public class ParserData {
                 	 for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
                 		 choiceCalc(choice);
                 	 }
-                	 for (Node node : filterDescendants(grammar, (n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+                	 for (Node node : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
                 		 Expansion exp = (Expansion) node;
                 		 if (hasImplicitLookahead(exp.getNestedExpansion())) {
                 			 ebnfCalc(exp, exp.getNestedExpansion());
@@ -1164,7 +1141,11 @@ public class ParserData {
  		int la;
  		for (la = 1; la <= grammar.getOptions().getOtherAmbiguityCheck(); la++) {
  			grammar.setLookaheadLimit(la);
+<<<<<<< HEAD
  			sizeLimitedMatches = new ArrayList<MatchInfo>();
+=======
+ 			sizeLimitedMatches = new ArrayList<>();
+>>>>>>> f716f680e9f8875207db10e6b910c6cbff828b86
  			m = new MatchInfo(la);
  			m.firstFreeLoc = 0;
  			partialMatches.add(m);
@@ -1369,20 +1350,5 @@ public class ParserData {
 	    MatchInfo(int lookaheadLimit) {
 	        this.match = new int[lookaheadLimit];
 	    }
-	}
-	
-	interface NodeFilter {
-		 boolean accept(Node node);
-	}
-	
-	static private List<Node> filterDescendants(Node node, NodeFilter filter) {
-		List<Node> result = new ArrayList<>();
-		for (Node child : node.children()) {
-			if (filter.accept(child)) {
-				result.add(child);
-			}
-			result.addAll(filterDescendants(child, filter));
-		}
-		return result;
 	}
 }
