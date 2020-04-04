@@ -43,10 +43,10 @@ OPTIONS : {
 INJECT(PARSER_CLASS) :
 {
 import java.util.*;
-import javacc.*;
-import javacc.lexgen.*;
-import javacc.parsegen.*;
-import javacc.parser.tree.*;
+import com.javacc.*;
+import com.javacc.lexgen.*;
+import com.javacc.parsegen.*;
+import com.javacc.parser.tree.*;
 }
 {
     Grammar grammar;
@@ -403,7 +403,7 @@ INJECT(Identifier) :
 
 INJECT(Token) :
 {
-    import javacc.Grammar;
+    import com.javacc.Grammar;
 }
 {
     private Grammar grammar;
@@ -457,7 +457,7 @@ INJECT(Token) :
 
 INJECT(interface Node) :
 {
-   import javacc.Grammar;
+   import com.javacc.Grammar;
 }
 {
    Grammar getGrammar();
@@ -488,7 +488,7 @@ INJECT(BaseNode) :
 {
     import freemarker.template.*;
     import java.lang.reflect.*;
-    import javacc.Grammar;
+    import com.javacc.Grammar;
     implements Node, TemplateHashModel;
 }
 {
@@ -798,8 +798,8 @@ BNFProduction BNFProduction() :
 INJECT(BNFProduction) : 
 {
 	import java.util.*;
-	import javacc.lexgen.TokenSet;
-	import javacc.parsegen.Expansion;
+	import com.javacc.lexgen.TokenSet;
+	import com.javacc.parsegen.Expansion;
 }
 {
     public CodeBlock getJavaCode() {
@@ -1258,7 +1258,7 @@ void RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
 
 INJECT(RegexpSpec) : 
 {
-   import javacc.lexgen.RegularExpression;
+   import com.javacc.lexgen.RegularExpression;
 }
 {
     public String getNextState() {
@@ -1288,8 +1288,8 @@ void ExpansionChoice() :
 
 INJECT(ExpansionChoice) : 
 {
-   import javacc.parsegen.Expansion;
-   import javacc.lexgen.TokenSet;
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
    import java.util.List;
    extends Expansion;
 }
@@ -1386,10 +1386,10 @@ Expansion ExpansionSequence() :
 
 INJECT(ExpansionSequence) : 
 {
-   import javacc.Grammar;
-   import javacc.parsegen.Expansion;
-   import javacc.parsegen.Lookahead;
-   import javacc.lexgen.TokenSet;
+   import com.javacc.Grammar;
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.parsegen.Lookahead;
+   import com.javacc.lexgen.TokenSet;
    import java.util.*;
    extends Expansion;
 }
@@ -1546,7 +1546,7 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
 
 INJECT(ExplicitLookahead) :
 {
-   import javacc.parsegen.Lookahead;
+   import com.javacc.parsegen.Lookahead;
    extends Lookahead;
 }
 
@@ -1663,8 +1663,8 @@ NonTerminal NonTerminal() #NonTerminal :
 
 INJECT(NonTerminal) : 
 {
-    import javacc.parsegen.*;
-    import javacc.lexgen.TokenSet;
+    import com.javacc.parsegen.*;
+    import com.javacc.lexgen.TokenSet;
     extends Expansion; 
 }
 {
@@ -1752,9 +1752,9 @@ ZeroOrOne ZeroOrOne() #ZeroOrOne :
 
 INJECT(ZeroOrOne) : 
 {
-     import javacc.parsegen.Expansion;
-     import javacc.parsegen.Lookahead;
-     import javacc.lexgen.TokenSet;
+     import com.javacc.parsegen.Expansion;
+     import com.javacc.parsegen.Lookahead;
+     import com.javacc.lexgen.TokenSet;
      extends Expansion;
 }
 {
@@ -1803,9 +1803,9 @@ INJECT(ZeroOrOne) :
 
 INJECT(ZeroOrMore) : 
 {
-     import javacc.parsegen.Expansion;
-     import javacc.parsegen.Lookahead;
-     import javacc.lexgen.TokenSet;
+     import com.javacc.parsegen.Expansion;
+     import com.javacc.parsegen.Lookahead;
+     import com.javacc.lexgen.TokenSet;
      extends Expansion;
 }
 {
@@ -1860,9 +1860,9 @@ INJECT(ZeroOrMore) :
 
 INJECT(OneOrMore) : 
 {
-     import javacc.parsegen.Expansion;
-     import javacc.parsegen.Lookahead;
-     import javacc.lexgen.TokenSet;
+     import com.javacc.parsegen.Expansion;
+     import com.javacc.parsegen.Lookahead;
+     import com.javacc.lexgen.TokenSet;
      extends Expansion;
 }
 {
@@ -1933,8 +1933,8 @@ TryBlock TryBlock() :
 INJECT(TryBlock) : 
 {
     import java.util.List;
-    import javacc.lexgen.TokenSet;
-    import javacc.parsegen.Expansion;
+    import com.javacc.lexgen.TokenSet;
+    import com.javacc.parsegen.Expansion;
     extends Expansion;
 }
 {
@@ -1990,8 +1990,8 @@ CodeBlock CodeSnippet() #void :
 
 INJECT(CodeBlock) :
 {
-   import javacc.lexgen.TokenSet;
-   extends javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
+   extends com.javacc.parsegen.Expansion;
 }
 {
     public CodeBlock getJavaCode() {
@@ -2090,7 +2090,7 @@ RegexpStringLiteral RegexpStringLiteral() #RegexpStringLiteral :
 
 INJECT(RegexpStringLiteral) : 
 {
-   import javacc.lexgen.*;
+   import com.javacc.lexgen.*;
    extends RegularExpression;
 }
 {
@@ -2126,7 +2126,7 @@ RegexpRef RegexpRef() :
 
 INJECT(RegexpRef) : 
 {
-    import javacc.lexgen.*;
+    import com.javacc.lexgen.*;
     extends RegularExpression;
 }
 {
@@ -2153,7 +2153,7 @@ void EndOfFile() :
 
 INJECT(EndOfFile) : 
 {
-   extends javacc.lexgen.RegularExpression;
+   extends com.javacc.lexgen.RegularExpression;
 }
 {}
 
@@ -2173,7 +2173,7 @@ void RegexpChoiceInParen() #RegexpChoice :
 INJECT(RegexpChoice) : 
 {
     import java.util.List;
-    import javacc.lexgen.RegularExpression;
+    import com.javacc.lexgen.RegularExpression;
     extends RegularExpression;
 }
 {
@@ -2199,7 +2199,7 @@ void RegexpSequence() :
 INJECT(RegexpSequence) : 
 {
    import java.util.*;
-   import javacc.lexgen.RegularExpression;
+   import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
 }
 {
@@ -2244,7 +2244,7 @@ int IntegerLiteral() :
 
 INJECT(RepetitionRange) : 
 {
-   import javacc.lexgen.RegularExpression;
+   import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
 }
 {
@@ -2284,7 +2284,7 @@ INJECT(RepetitionRange) :
 
 INJECT(OneOrMoreRegexp) : 
 {
-   import javacc.lexgen.RegularExpression;
+   import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
 }
 {
@@ -2296,7 +2296,7 @@ INJECT(OneOrMoreRegexp) :
 
 INJECT(ZeroOrMoreRegexp) : 
 {
-   import javacc.lexgen.RegularExpression;
+   import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
 }
 {
@@ -2318,7 +2318,7 @@ INJECT(ZeroOrMoreRegexp) :
 
 INJECT(ZeroOrOneRegexp) : 
 {
-   import javacc.lexgen.RegularExpression;
+   import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
 }
 {
@@ -2353,7 +2353,7 @@ CharacterList CharacterList() :
 
 INJECT(CharacterList) : 
 {
-   import javacc.lexgen.*;
+   import com.javacc.lexgen.*;
    import java.util.*;
    extends RegularExpression;
 }

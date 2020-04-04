@@ -4,12 +4,11 @@
 /classes/*
 /*.jar
 \#*
-/src/main/java/javacc/parser/*
+/src/main/java/com/javacc/parser/*
 /examples/freemarker/ftl/*
 /examples/freemarker/fel/*
 /examples/legacy/test.tmp/*
 /examples/java/com/*
-/examples/json/com/*
 /examples/json/com/*
 
 # Compiled class file

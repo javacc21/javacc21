@@ -20,13 +20,13 @@
             quiet="true"
             ignoreerrors="true"
             usetimestamp="true" />
-        <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="javacc.Main" failonerror="true">
+        <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
 
             <arg value="${basedir}/JSON.javacc"/>
         </java>
    </target>
    <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
-         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="javacc.Main" failonerror="true">
+         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
             <arg value="${basedir}/JSONC.javacc"/>
         </java>
    </target>
