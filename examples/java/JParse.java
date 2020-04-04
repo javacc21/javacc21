@@ -1,6 +1,6 @@
 import java.io.*;
 import java.util.*;
-import javagrammar.*;
+import com.javacc.javaparser.*;
 
 /**
  * A test harness for parsing Java files from 

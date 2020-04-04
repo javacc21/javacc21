@@ -31,7 +31,8 @@
 options {
   JAVA_UNICODE_ESCAPE;
   SPECIAL_TOKENS_ARE_NODES;
-  PARSER_PACKAGE=javagrammar;
+  PARSER_PACKAGE="com.javacc.javaparser";
+  NODE_PACKAGE="com.javacc.javaparser.ast";
   DEFAULT_LEXICAL_STATE=JAVA;
   PRESERVE_LINE_ENDINGS=false;
   TABS_TO_SPACES=8;
@@ -330,7 +331,7 @@ INJECT(BaseNode) :
 CompilationUnit CompilationUnit() #CompilationUnit :
 {}
 {
-  [ LOOKAHEAD( ( Annotation() )* "package" ) PackageDeclaration() ]
+  [ LOOKAHEAD( ( Annotation() )* "package",{2+2==4} ) PackageDeclaration() ]
   ( ImportDeclaration() )*
   (
      ( TypeDeclaration() )+

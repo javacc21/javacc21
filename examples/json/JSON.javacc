@@ -11,8 +11,8 @@
  */
 
 options {
-  PARSER_PACKAGE="json";
-  NODE_PACKAGE="json.ast";
+  PARSER_PACKAGE="com.javacc.json";
+  NODE_PACKAGE="com.javacc.json.ast";
   DEFAULT_LEXICAL_STATE="JSON";
 }
 

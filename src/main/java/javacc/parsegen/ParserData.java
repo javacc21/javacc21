@@ -78,8 +78,6 @@ public class ParserData {
    // Should look at factoring out this phase3 stuff, probably storing the information in the Expansion objects themselves. TODO
     private Map<Expansion, Integer> phase3table = new LinkedHashMap<Expansion, Integer>();
     
-    private ExpansionVisitor expansionVisitor = new ExpansionVisitor();
-
     public ParserData(Grammar grammar) {
     	this.grammar = grammar;
     	this.lexerData = grammar.getLexerData();
@@ -125,11 +123,7 @@ public class ParserData {
 				lookaheads.add(lookahead);
 			}
 			for (Lookahead lookahead : lookaheads) {
-				if (lookahead.getRequiresPhase2Routine()) {
-					// In this case lookahead is determined by the phase2 methods.
-					phase2lookaheads.add(lookahead);
-					lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
-				}
+				checkForPhase2Lookahead(lookahead);
 			}
 		}
 
@@ -139,11 +133,14 @@ public class ParserData {
 			visit(exp.getNestedExpansion());
 			Lookahead lookahead = exp.getLookahead();
 			if (!lookahead.getAlwaysSucceeds()) {
-				if (lookahead.getRequiresPhase2Routine()) {
-					// In this case lookahead is determined by the phase2 methods.
-					phase2lookaheads.add(lookahead);
-					lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
-				}
+				checkForPhase2Lookahead(lookahead);
+			}
+		}
+		
+		private void checkForPhase2Lookahead(Lookahead lookahead) {
+			if (lookahead.getRequiresPhase2Routine()) {
+				phase2lookaheads.add(lookahead);
+				lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
 			}
 		}
 
@@ -274,14 +271,23 @@ public class ParserData {
 
          /*
           * The following walks the entire parse tree to convert all LOOKAHEAD's
-          * that are not at choice points (but at beginning of sequences) and
-          * converts them to trivial choices. This way, their semantic lookahead
-          * specification can be evaluated during other lookahead evaluations.
-          * (Legacy code rewritten in a more simple manner, but still should REVISIT)
+          * Check whether we have any LOOKAHEADs at non-choice points 
+          * REVISIT: Why is this not handled in the grammar spec?
+          * The legacy code had some kind of very complex munging going on 
+          * in these cases, but serious analysis seems to show that it was not something
+          * of any real value.
           */
         
          for (ExpansionSequence sequence : grammar.descendantsOfType(ExpansionSequence.class)) {
-         	adjustLookahead(sequence);
+         	Lookahead lookahead = sequence.getLookahead();
+        	 Node parent = sequence.getParent();
+        	 if (!(parent instanceof ExpansionChoice 
+        			 || parent instanceof OneOrMore 
+        			 || parent instanceof ZeroOrOne 
+        			 || parent instanceof ZeroOrMore) 
+        		&& lookahead instanceof ExplicitLookahead) {
+        		 grammar.addSemanticError(lookahead, "Encountered LOOKAHEAD(...) at a non-choice location." );
+        	 }
          }
          
          // Check that non-terminals have all been defined.
@@ -715,69 +721,6 @@ public class ParserData {
          }
      }
 
-     // Really need to REVISIT the logic of this. It looks utterly kludgy. (JR)
-     private void adjustLookahead(ExpansionSequence seq) {
-         if (seq.getParent() instanceof ExpansionChoice
-                 || seq.getParent() instanceof ZeroOrMore
-                 || seq.getParent() instanceof OneOrMore
-                 || seq.getParent() instanceof ZeroOrOne) {
-             return;
-         }
-         Lookahead la = seq.getLookahead();
-         if (!(la instanceof ExplicitLookahead)) {
-             return;
-         }
-         // Create a singleton choice with an empty action.
-         ExpansionChoice ch = new ExpansionChoice();
-         ch.setGrammar(grammar);
-         ch.setBeginLine(la.getBeginLine());
-         ch.setBeginColumn(la.getBeginColumn());
-         ExpansionSequence expansionSequence = new ExpansionSequence(grammar);
-         expansionSequence.setBeginLine(la.getBeginLine());
-         expansionSequence.setBeginColumn(la.getBeginColumn());
-         expansionSequence.addChild(la);
-         expansionSequence.setLookahead(la);
-         CodeBlock codeBlock = new CodeBlock();
-         codeBlock.setBeginLine(la.getBeginLine());
-         codeBlock.setBeginColumn(la.getBeginColumn());
-         expansionSequence.addChild(codeBlock);
-         ch.addChild(expansionSequence);
-         if (la.getAmount() != 0) {
-             if (la.getSemanticLookahead() != null) {
-                 grammar
-                         .addWarning(
-                                 la,
-                                 "Encountered LOOKAHEAD(...) at a non-choice location.  "
-                                         + "Only semantic lookahead will be considered here.");
-             } else {
-                 grammar
-                         .addWarning(la,
-                                 "Encountered LOOKAHEAD(...) at a non-choice location.  This will be ignored.");
-             }
-         }
-         // Now we have moved the lookahead into the singleton choice.
-         // Now create
-         // a new dummy lookahead node to replace this one at its
-         // original location.
-         Lookahead lookahead = new Lookahead(grammar);
-         lookahead.setBeginLine(la.getBeginLine());
-         lookahead.setBeginColumn(la.getBeginColumn());
-         // Now set the la_expansion field of lookahead with a dummy
-         // expansion (we use EOF).
-         la.setExpansion(new EndOfFile());
-         lookahead.setExpansion(new EndOfFile());
-         seq.setChild(0, lookahead);
-         List<Expansion> newUnits = new ArrayList<Expansion>();
-         newUnits.add((Expansion) seq.removeChild(0));
-         newUnits.add(ch);
-         newUnits.addAll(seq.getUnits());
-         seq.clearChildren();
-         for (Expansion exp : newUnits) {
-             seq.addChild(exp);
-         }
-     }
-     
-
      
      private RegularExpression other;
 
@@ -939,11 +882,7 @@ public class ParserData {
      }
     
      private boolean hasImplicitLookahead(Expansion exp) {
-         if (!(exp instanceof ExpansionSequence)) {
-             return true;
-         }
-         ExpansionSequence seq = (ExpansionSequence) exp;
-         return (!(seq.getLookahead()  instanceof ExplicitLookahead));
+         return !(exp instanceof ExpansionSequence) && !(exp.getLookahead() instanceof ExplicitLookahead);
      }
 
  	private MatchInfo overlap(List<MatchInfo> matchList1, List<MatchInfo> matchList2) {
@@ -1029,7 +968,7 @@ public class ParserData {
  				m.firstFreeLoc = 0;
  				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
  				partialMatches.add(m);
- 				genFirstSet(partialMatches, choices.get(i));
+ 				generateFirstSet(partialMatches, choices.get(i));
  				dbl.set(i, sizeLimitedMatches);
  			}
  			grammar.setConsiderSemanticLA(false);
@@ -1039,7 +978,7 @@ public class ParserData {
  				m.firstFreeLoc = 0;
  				List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
  				partialMatches.add(m);
- 				genFirstSet(partialMatches, choices.get(i));
+ 				generateFirstSet(partialMatches, choices.get(i));
  				dbr.set(i, sizeLimitedMatches);
  			}
  			if (la == 1) {
@@ -1113,7 +1052,7 @@ public class ParserData {
  	}
 
  	int firstChoice(ExpansionChoice ch) {
- 		if (ch.getGrammar().getOptions().getForceLaCheck()) {
+ 		if (grammar.getOptions().getForceLaCheck()) {
  			return 0;
  		}
  		List<Expansion> choices = ch.getChoices();
@@ -1147,7 +1086,7 @@ public class ParserData {
  			m.firstFreeLoc = 0;
  			partialMatches.add(m);
  			grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
- 			genFirstSet(partialMatches, nested);
+ 			generateFirstSet(partialMatches, nested);
  			List<MatchInfo> first = sizeLimitedMatches;
  			sizeLimitedMatches = new ArrayList<MatchInfo>();
  			grammar.setConsiderSemanticLA(false);
@@ -1176,10 +1115,13 @@ public class ParserData {
  			System.err.println("         Consider using a lookahead of " + la + " for nested expansion.");
  		}
  	}
-     
- 	List<MatchInfo> genFirstSet(List<MatchInfo> partialMatches, Expansion exp) {
+    
+ 	
+ 	//TODO: Clean this up using a visitor pattern. The algorithm will probably
+ 	// be far easier to understand. (I don't currently understand it.)
+ 	List<MatchInfo> generateFirstSet(List<MatchInfo> partialMatches, Expansion exp) {
 		if (exp instanceof RegularExpression) {
-			int lookaheadLimit = exp.getGrammar().getLookaheadLimit();
+			int lookaheadLimit = grammar.getLookaheadLimit();
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			for (MatchInfo partialMatch : partialMatches) {
 				MatchInfo mnew = new MatchInfo(lookaheadLimit);
@@ -1197,12 +1139,12 @@ public class ParserData {
 			return retval;
 		} else if (exp instanceof NonTerminal) {
 			BNFProduction prod = ((NonTerminal) exp).getProduction();
-			return genFirstSet(partialMatches, prod.getExpansion());
+			return generateFirstSet(partialMatches, prod.getExpansion());
 		} else if (exp instanceof ExpansionChoice) {
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			ExpansionChoice ch = (ExpansionChoice) exp;
 			for (Expansion e : ch.getChoices()) {
-				List<MatchInfo> v = genFirstSet(partialMatches, e);
+				List<MatchInfo> v = generateFirstSet(partialMatches, e);
 				retval.addAll(v);
 			}
 			return retval;
@@ -1210,7 +1152,7 @@ public class ParserData {
 			List<MatchInfo> v = partialMatches;
 			ExpansionSequence seq = (ExpansionSequence) exp;
 			for (Expansion e : seq.getUnits()) {
-				v = genFirstSet(v, e);
+				v = generateFirstSet(v, e);
 				if (v.size() == 0)
 					break;
 			}
@@ -1219,7 +1161,7 @@ public class ParserData {
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			List<MatchInfo> v = partialMatches;
 			while (true) {
-				v = genFirstSet(v, exp.getNestedExpansion());
+				v = generateFirstSet(v, exp.getNestedExpansion());
 				if (v.isEmpty())
 					break;
 				retval.addAll(v);
@@ -1230,7 +1172,7 @@ public class ParserData {
 			retval.addAll(partialMatches);
 			List<MatchInfo> v = partialMatches;
 			while (true) {
-				v = genFirstSet(v, exp.getNestedExpansion());
+				v = generateFirstSet(v, exp.getNestedExpansion());
 				if (v.size() == 0)
 					break;
 				retval.addAll(v);
@@ -1239,10 +1181,10 @@ public class ParserData {
 		} else if (exp instanceof ZeroOrOne) {
 			List<MatchInfo> retval = new ArrayList<MatchInfo>();
 			retval.addAll(partialMatches);
-			retval.addAll(genFirstSet(partialMatches,  exp.getNestedExpansion()));
+			retval.addAll(generateFirstSet(partialMatches,  exp.getNestedExpansion()));
 			return retval;
 		} else if (exp instanceof TryBlock) {
-			return genFirstSet(partialMatches, exp.getNestedExpansion());
+			return generateFirstSet(partialMatches, exp.getNestedExpansion());
 		} else if (grammar.considerSemanticLA() && exp instanceof Lookahead
 				&& ((Lookahead) exp).getSemanticLookahead() != null) {
 			return new ArrayList<MatchInfo>();
@@ -1265,7 +1207,7 @@ public class ParserData {
 			rest.add(toSplit.get(i));
 		}
 	}
-
+   // TODO: Clean up this crap, factor it out to use a visitor pattern as well
 	List<MatchInfo> generateFollowSet(List<MatchInfo> partialMatches, Expansion exp, long generation) {
 		if (exp.myGeneration == generation) {
 			return new ArrayList<MatchInfo>();
@@ -1289,7 +1231,7 @@ public class ParserData {
 			ExpansionSequence seq = (ExpansionSequence) exp.getParent();
 			List<MatchInfo> v = partialMatches;
 			for (int i = exp.getIndex() + 1; i < seq.getChildCount(); i++) {
-				v = genFirstSet(v, (Expansion) seq.getChild(i));
+				v = generateFirstSet(v, (Expansion) seq.getChild(i));
 				if (v.size() == 0)
 					return v;
 			}
@@ -1304,7 +1246,7 @@ public class ParserData {
 			if (v2.size() != 0) {
 				// System.out.println("3; gen: " + generation + "; exp: " +
 				// exp);
-				v2 = generateFollowSet(v2, seq, exp.getGrammar().nextGenerationIndex());
+				v2 = generateFollowSet(v2, seq, grammar.nextGenerationIndex());
 			}
 			v2.addAll(v1);
 			return v2;
@@ -1314,7 +1256,7 @@ public class ParserData {
 			moreMatches.addAll(partialMatches);
 			List<MatchInfo> v = partialMatches;
 			while (true) {
-				v = genFirstSet(v, exp);
+				v = generateFirstSet(v, exp);
 				if (v.size() == 0)
 					break;
 				moreMatches.addAll(v);
@@ -1340,7 +1282,6 @@ public class ParserData {
 		}
 	}
 	static final class MatchInfo {
-
 	    int[] match;
 	    int firstFreeLoc;
 

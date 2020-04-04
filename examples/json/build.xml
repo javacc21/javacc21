@@ -2,16 +2,15 @@
    <property name = "BIN_DIR" value="../../bin"/>
    <uptodate property="parser1.uptodate"
             srcfile="JSON.javacc"
-            targetfile="${basedir}/json/JSONParser.java"/> 
+            targetfile="${basedir}/com/javacc/json/JSONParser.java"/> 
    <uptodate property="parser2.uptodate"
             srcfile="JSONC.javacc"
-            targetfile="${basedir}/jsonc/JSONCParser.java"/>
+            targetfile="${basedir}/com/javacc/jsonc/JSONCParser.java"/>
    <target name="clean">
        <delete>
           <fileset dir="${basedir}" includes="*.class"/>
        </delete>
-       <delete dir="${basedir}/json"/>
-       <delete dir="${basedir}/jsonc"/>
+       <delete dir="${basedir}/com"/>
    </target>
    <target name="parser1-gen" unless="parser1.uptodate">
         <mkdir dir="../../bin"/>
