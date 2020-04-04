@@ -141,24 +141,6 @@ abstract public class Expansion extends BaseNode {
     }
     
     
-    /**
-     * For now, we only will deal with the situation where
-     * the expansion has exactly one kind of token that it can end with.
-     */
-    public String getEndTokenName() {
-         TokenSet finalSet = getFinalSet(); 
-    	 if (finalSet.cardinality()>1) {
-    		 throw new UnsupportedOperationException("In its current phase, our fault tolerant parser generation only handles expansions that can end in exactly one token type.");
-    	 }
- 		int tokenCount = getGrammar().getLexerData().getTokenCount();
-	    for (int i=0; i< tokenCount; i++) {
-   	    	if (finalSet.get(i)) {
-   	    		return getGrammar().getTokenName(i);
-  	    	}
-    	 }
-    	 throw new RuntimeException("This should be impossible."); 
-    }
-    
     public int getEndSetSize() {
 	     return getFinalSet().cardinality();
     }
