@@ -77,6 +77,8 @@ public class ParserData {
     
    // Should look at factoring out this phase3 stuff, probably storing the information in the Expansion objects themselves. TODO
     private Map<Expansion, Integer> phase3table = new LinkedHashMap<Expansion, Integer>();
+    
+    private ExpansionVisitor expansionVisitor = new ExpansionVisitor();
 
     public ParserData(Grammar grammar) {
     	this.grammar = grammar;
@@ -85,7 +87,7 @@ public class ParserData {
     
     public void buildData() throws MetaParseException {
         for (BNFProduction production : grammar.getParserProductions()) {
-             visitExpansion(production.getExpansion());
+             new ExpansionVisitor().visit(production.getExpansion());
         }
         for (Lookahead lookahead : phase2lookaheads) {
             Expansion expansion= lookahead.getNestedExpansion();
@@ -111,53 +113,52 @@ public class ParserData {
         return phase3table.get(exp);
     }
     
-    private void visitExpansionChoice(ExpansionChoice choice) {
-    	List<Lookahead> lookaheads = new ArrayList<Lookahead>();
-    	List<ExpansionSequence> choices = choice.childrenOfType(ExpansionSequence.class);
-    	for (ExpansionSequence nestedSeq : choices) {
-    		visitExpansion(nestedSeq);
-    		if (nestedSeq.isEmpty()) break; //REVISIT. Is this possible?
-    		Lookahead lookahead = (Lookahead) nestedSeq.getChild(0);
-    		if (lookahead.getAlwaysSucceeds()) break;
-    		lookaheads.add(lookahead);
-    	}
-    	for (Lookahead lookahead : lookaheads) {
-    		if (lookahead.getRequiresPhase2Routine()) {
-    			// In this case lookahead is determined by the phase2 methods.
-    			phase2lookaheads.add(lookahead);
-    			lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
-    		}
-    	}
-    }
-    
-    private void visitLookahead(Lookahead lookahead) {
-        if (lookahead.getRequiresPhase2Routine()) {
-            // In this case lookahead is determined by the phase2 methods.
-            phase2lookaheads.add(lookahead);
-		    lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
-        }
-    }
-    
-    private void visitExpansion(Expansion expansion) {
-    	if (expansion instanceof ExpansionChoice) {
-            visitExpansionChoice((ExpansionChoice)expansion);
-        } else if (expansion instanceof ExpansionSequence) {
-            for (Expansion sub : expansion.childrenOfType(Expansion.class)) {
-            	visitExpansion(sub);
-            }
-        } else if (expansion instanceof OneOrMore || expansion instanceof ZeroOrMore || expansion instanceof ZeroOrOne) {
-            ++gensymindex;
-            expansion.setLabel("label_" + gensymindex);
-            visitExpansion(expansion.getNestedExpansion());
-            Lookahead la = expansion.getLookahead();
-            if (!la.getAlwaysSucceeds()) {
-                visitLookahead(la);
-            }
-        }  else if (expansion instanceof TryBlock) {
-            visitExpansion(expansion.getNestedExpansion());
-        }
-    }
+    public class ExpansionVisitor extends Node.Visitor {
+		public void visit(ExpansionChoice choice) {
+			List<Lookahead> lookaheads = new ArrayList<Lookahead>();
+			List<ExpansionSequence> choices = choice.childrenOfType(ExpansionSequence.class);
+			for (ExpansionSequence nestedSeq : choices) {
+				visit(nestedSeq);
+				if (nestedSeq.isEmpty()) break; //REVISIT. Is this possible?
+				Lookahead lookahead = (Lookahead) nestedSeq.getChild(0);
+				if (lookahead.getAlwaysSucceeds()) break;
+				lookaheads.add(lookahead);
+			}
+			for (Lookahead lookahead : lookaheads) {
+				if (lookahead.getRequiresPhase2Routine()) {
+					// In this case lookahead is determined by the phase2 methods.
+					phase2lookaheads.add(lookahead);
+					lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
+				}
+			}
+		}
 
+		private void handleOneOrMoreEtc(Expansion exp) {
+			++gensymindex;
+			exp.setLabel("label_" + gensymindex);
+			visit(exp.getNestedExpansion());
+			Lookahead lookahead = exp.getLookahead();
+			if (!lookahead.getAlwaysSucceeds()) {
+				if (lookahead.getRequiresPhase2Routine()) {
+					// In this case lookahead is determined by the phase2 methods.
+					phase2lookaheads.add(lookahead);
+					lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
+				}
+			}
+		}
+
+		public void visit(OneOrMore exp) {handleOneOrMoreEtc(exp);}
+
+		public void visit(ZeroOrMore exp) {handleOneOrMoreEtc(exp);}
+
+		public void visit(ZeroOrOne exp) {handleOneOrMoreEtc(exp);}
+
+		public void visit(TryBlock exp) {visit(exp.getNestedExpansion());}
+
+		public void visit(Lookahead la) {}
+	}; 
+
+    
     private void generate3R(Expansion expansion, int count) {
         Expansion seq = expansion;
           if (expansion.getPhase2RoutineName() == null) {
