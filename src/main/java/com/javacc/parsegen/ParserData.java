@@ -662,16 +662,8 @@ public class ParserData {
                      grammar.addSemanticError(exp, "Expansion can be matched by empty string.");
         		 }
         	 }
-
-             // The following code goes through the productions and adds pointers
-             // to other
-             // productions that it can expand to without consuming any tokens.
-             // Once this is
-             // done, a left-recursion check can be performed.
-             for (BNFProduction prod : grammar.getParserProductions()) {
-                 addLeftMost(prod, prod.getExpansion());
-             }
-
+        	 // FIXME. I think this is broken at the moment.
+//        	 new LeftRecursionChecker().visit(grammar);
              // Now the following loop calls a recursive walk routine that
              // searches for
              // actual left recursions. The way the algorithm is coded, once a
@@ -679,11 +671,11 @@ public class ParserData {
              // been determined to participate in a left recursive loop, it is
              // not tried
              // in any other loop.
-             for (BNFProduction prod : grammar.getParserProductions()) {
-                 if (prod.walkStatus == 0) {
-                     prodWalk(prod);
-                 }
-             }
+//             for (BNFProduction prod : grammar.getParserProductions()) {
+//                 if (prod.walkStatus == 0) {
+//                     prodWalk(prod);
+//                 }
+//             }
 
              // Now we do a similar, but much simpler walk for the regular
              // expression part of
@@ -755,73 +747,10 @@ public class ParserData {
          }
          return false;
      }
-
-     // Updates prod.leftExpansions based on a walk of exp.
-     static private void addLeftMost(BNFProduction prod, Expansion exp) {
-         if (exp instanceof NonTerminal) {
-                 prod.leftExpansions.add(((NonTerminal) exp).getProduction());
-         } else if (exp instanceof OneOrMore) {
-             addLeftMost(prod, (exp.getNestedExpansion()));
-         } else if (exp instanceof ZeroOrMore) {
-             addLeftMost(prod, exp.getNestedExpansion());
-         } else if (exp instanceof ZeroOrOne) {
-             addLeftMost(prod, exp.getNestedExpansion());
-         } else if (exp instanceof ExpansionChoice) {
-             for (Expansion e : exp.childrenOfType(Expansion.class)) {
-                 addLeftMost(prod, e);
-             }
-         } else if (exp instanceof ExpansionSequence) {
-             for (Expansion e : exp.childrenOfType(Expansion.class)) {
-                 addLeftMost(prod, e);
-                 if (!exp.isPossiblyEmpty()) {
-                     break;
-                 }
-             }
-         } else if (exp instanceof TryBlock) {
-             addLeftMost(prod, exp.getNestedExpansion());
-         }
-     }
-
-     // The string in which the following methods store information.
+     
+         // The string in which the following methods store information.
      private String loopString;
 
-     // Returns true to indicate an unraveling of a detected left recursion loop,
-     // and returns false otherwise.
-     private boolean prodWalk(BNFProduction prod) {
-         prod.walkStatus = -1;
-         for (BNFProduction p : prod.leftExpansions) {
-             if (p.walkStatus == -1) {
-                 p.walkStatus = -2;
-                 loopString = prod.getName() + "... --> "
-                         + p.getName() + "...";
-                 if (prod.walkStatus == -2) {
-                     prod.walkStatus = 1;
-                     grammar.addSemanticError(prod,
-                             "Left recursion detected: \"" + loopString + "\"");
-                     return false;
-                 } else {
-                     prod.walkStatus = 1;
-                     return true;
-                 }
-             } else if (p.walkStatus == 0) {
-                 if (prodWalk(p)) {
-                     loopString = prod.getName() + "... --> " + loopString;
-                     if (prod.walkStatus == -2) {
-                         prod.walkStatus = 1;
-                         grammar.addSemanticError(prod,
-                                 "Left recursion detected: \"" + loopString
-                                         + "\"");
-                         return false;
-                     } else {
-                         prod.walkStatus = 1;
-                         return true;
-                     }
-                 }
-             }
-         }
-         prod.walkStatus = 1;
-         return false;
-     }
 
      // Returns true to indicate an unraveling of a detected loop,
      // and returns false otherwise.
