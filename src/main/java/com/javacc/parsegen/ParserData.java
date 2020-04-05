@@ -51,7 +51,7 @@ public class ParserData {
     private Grammar grammar;
     
     private LexerData lexerData;
-    private int gensymindex = 0;
+    private int gensymindex;
     
     private List<MatchInfo> sizeLimitedMatches;
     
@@ -84,7 +84,7 @@ public class ParserData {
     
     public void buildData() throws MetaParseException {
         for (BNFProduction production : grammar.getParserProductions()) {
-             new ExpansionVisitor().visit(production.getExpansion());
+             new Phase2TableBuilder().visit(production.getExpansion());
         }
         for (Lookahead lookahead : phase2lookaheads) {
             Expansion expansion= lookahead.getNestedExpansion();
@@ -110,13 +110,12 @@ public class ParserData {
         return phase3table.get(exp);
     }
     
-    public class ExpansionVisitor extends Node.Visitor {
+    public class Phase2TableBuilder extends Node.Visitor {
 		public void visit(ExpansionChoice choice) {
 			List<Lookahead> lookaheads = new ArrayList<Lookahead>();
 			List<ExpansionSequence> choices = choice.childrenOfType(ExpansionSequence.class);
 			for (ExpansionSequence nestedSeq : choices) {
 				visit(nestedSeq);
-				if (nestedSeq.isEmpty()) break; //REVISIT. Is this possible?
 				Lookahead lookahead = (Lookahead) nestedSeq.getChild(0);
 				if (lookahead.getAlwaysSucceeds()) break;
 				lookaheads.add(lookahead);
