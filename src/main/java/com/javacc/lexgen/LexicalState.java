@@ -125,10 +125,6 @@ public class LexicalState {
         tokenProductions.add(tokenProduction);
     }
 
-    List<TokenProduction> getTokenProductions() {
-        return tokenProductions;
-    }
-
     public List<Map<String, long[]>> getStatesForPos() {
         return statesForPos;
     }
@@ -262,7 +258,7 @@ public class LexicalState {
         return indexedAllStates.size() != 0 && !mixed && maxStrKind > 0;
     }
 
-    void process(List<RegexpChoice> choices) {
+    List<RegexpChoice> process() {
         images = new String[lexerData.getTokenCount()];
         this.index = lexerData.getIndex(this.name);
         suffix = "_" + name;
@@ -270,9 +266,10 @@ public class LexicalState {
             suffix = "";
         }
 
+    	List<RegexpChoice> choices = new ArrayList<>();
         boolean isFirst = true;
         for (TokenProduction tp : tokenProductions) {
-            processTokenProduction(choices, tp, isFirst);
+            choices.addAll(processTokenProduction(tp, isFirst));
             isFirst = false;
         }
 
@@ -331,14 +328,16 @@ public class LexicalState {
         if (!stateSetsToFix.isEmpty()) {
             fixStateSets();
         }
+        return choices;
     }
 
-    void processTokenProduction(List<RegexpChoice> choices, TokenProduction tp, boolean isFirst) {
+    List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {
         boolean ignoring = false;
         boolean ignore = tp.getIgnoreCase() || grammar.getOptions().getIgnoreCase();
         if (isFirst) {
             ignoring = ignore;
         }
+        List<RegexpChoice> choices = new ArrayList<>();
         for (RegexpSpec respec : tp.getRegexpSpecs()) {
             currentRegexp = respec.getRegexp();
             regularExpressions.add(currentRegexp);
@@ -414,6 +413,7 @@ public class LexicalState {
                 currentRegexp.setRegularToken();
             }
         }
+        return choices;
 
     }
 

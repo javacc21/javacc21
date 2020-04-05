@@ -237,9 +237,8 @@ public class LexerData {
     }
 
     public void start() {
-        List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
 
-        for (TokenProduction tokenProduction : grammar.getAllTokenProductions()) {
+        for (TokenProduction tokenProduction : grammar.descendantsOfType(TokenProduction.class)) {
             for (String lexStateName : tokenProduction.getLexStates()) {
                 LexicalState lexState = getLexicalState(lexStateName);
                 lexState.addTokenProduction(tokenProduction);
@@ -253,10 +252,12 @@ public class LexerData {
         toToken[0] = 1L;
         hasTokenActions = getRegularExpression(0) != null;
 
+        List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
+        
         for (LexicalState lexState : lexicalStates) {
-            lexState.process(choices);
+            choices.addAll(lexState.process());
         }
-
+        
         for (RegexpChoice choice : choices) {
             checkUnmatchability(choice);
         }
@@ -348,7 +349,6 @@ public class LexerData {
         for (RegularExpression curRE : choice.getChoices()) {
             if (!(curRE).isPrivate()
                     &&
-                    // curRE instanceof RJustName &&
                     curRE.getOrdinal() > 0 && curRE.getOrdinal() < choice.getOrdinal()
                     && curRE.getLexicalState() == choice.getLexicalState()) {
                 choice.getGrammar().addWarning(choice,

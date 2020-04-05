@@ -91,6 +91,7 @@ public class ParserData {
             Phase3Data phase3data = new Phase3Data(expansion, lookahead.getAmount());
             phase3list.add(phase3data);
             phase3table.put(expansion, lookahead.getAmount());
+            expansion.setPhase3LookaheadAmount(lookahead.getAmount());
         }
         for (int phase3index=0; phase3index < phase3list.size(); phase3index++) {
             Phase3Data p3data = phase3list.get(phase3index);
@@ -135,10 +136,25 @@ public class ParserData {
 			}
 		}
 		
+		private String removeNonJavaIdentifierPart(String s) {
+			StringBuilder buf = new StringBuilder(s.length());
+			for (char c : s.toCharArray()) {
+				boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(c)) : Character.isJavaIdentifierPart(c);
+				if (addChar) {
+					buf.append(c);
+				} 
+				if (c == '.') buf.append((char) '_');
+			}
+			return buf.toString();
+		}
+		
 		private void checkForPhase2Lookahead(Lookahead lookahead) {
 			if (lookahead.getRequiresPhase2Routine()) {
 				phase2lookaheads.add(lookahead);
-				lookahead.getNestedExpansion().setPhase2RoutineName("phase2_" + phase2lookaheads.size());
+				Expansion exp = lookahead.getNestedExpansion();
+				String phase2name = "phase2_" + phase2lookaheads.size() + "_" + removeNonJavaIdentifierPart(exp.getInputSource()) + "_line_" + exp.getBeginLine();
+				exp.setPhase2RoutineName(phase2name);
+				exp.setPhase3RoutineName(phase2name.replace("phase2",  "phase3"));
 			}
 		}
 
@@ -184,7 +200,7 @@ public class ParserData {
             phase3table.put(expansion, count);
         }
     }
-
+    
     private void setupPhase3Builds(Expansion e, int amt) {
         if (e instanceof RegularExpression) {
             ; // nothing to do here
@@ -304,34 +320,34 @@ public class ParserData {
           * USER_DEFINED_LEXER is set to true. In this case, <name> occurrences
           * are OK, while regular expression specs generate a warning.
           */
-         for (TokenProduction tp : grammar.getAllTokenProductions()) {
-             for (RegexpSpec res : tp.getRegexpSpecs()) {
-                 if (res.getNextState() != null) {
-                     if (lexerData.getLexicalStateIndex(res.getNextState()) == -1) {
-                         grammar.addSemanticError(res.getNsTok(), "Lexical state \""
-                                 + res.getNextState() + "\" has not been defined.");
-                     }
-                 }
-                 if (tp.isExplicit() && grammar.getOptions().getUserDefinedLexer()) {
-                     grammar.addWarning(res.getRegexp(),
-                                        "Ignoring regular expression specification since "
-                                        + "option USER_DEFINED_LEXER has been set to true.");
-                 } else if (tp.isExplicit()
-                         && !grammar.getOptions().getUserDefinedLexer()
-                         && res.getRegexp() instanceof RegexpRef) {
-                     grammar
-                             .addWarning(
-                                     res.getRegexp(),
-                                     "Ignoring free-standing regular expression reference.  "
-                                             + "If you really want this, you must give it a different label as <NEWLABEL:<"
-                                             + res.getRegexp().getLabel() + ">>.");
-                     tp.removeChild(res);
-                 } else if (!tp.isExplicit() && res.getRegexp().isPrivate()) {
-                     grammar.addSemanticError(res.getRegexp(),
-                             "Private (#) regular expression cannot be defined within "
-                                     + "grammar productions.");
-                 }
-             }
+         for (TokenProduction tp: grammar.descendantsOfType(TokenProduction.class)) { 
+        	 for (RegexpSpec res : tp.getRegexpSpecs()) {
+        		 if (res.getNextState() != null) {
+        			 if (lexerData.getLexicalStateIndex(res.getNextState()) == -1) {
+        				 grammar.addSemanticError(res.getNsTok(), "Lexical state \""
+        						 + res.getNextState() + "\" has not been defined.");
+        			 }
+        		 }
+        		 if (tp.isExplicit() && grammar.getOptions().getUserDefinedLexer()) {
+        			 grammar.addWarning(res.getRegexp(),
+        					 "Ignoring regular expression specification since "
+        							 + "option USER_DEFINED_LEXER has been set to true.");
+        		 } else if (tp.isExplicit()
+        				 && !grammar.getOptions().getUserDefinedLexer()
+        				 && res.getRegexp() instanceof RegexpRef) {
+        			 grammar
+        			 .addWarning(
+        					 res.getRegexp(),
+        					 "Ignoring free-standing regular expression reference.  "
+        							 + "If you really want this, you must give it a different label as <NEWLABEL:<"
+        							 + res.getRegexp().getLabel() + ">>.");
+        			 tp.removeChild(res);
+        		 } else if (!tp.isExplicit() && res.getRegexp().isPrivate()) {
+        			 grammar.addSemanticError(res.getRegexp(),
+        					 "Private (#) regular expression cannot be defined within "
+        							 + "grammar productions.");
+        		 }
+        	 }
          }
 
          /*
@@ -339,7 +355,7 @@ public class ParserData {
           * "named_tokens_table" and "ordered_named_tokens". Duplications are
           * flagged as errors.
           */
-         for (TokenProduction tp : grammar.getAllTokenProductions()) {
+             for (TokenProduction tp : grammar.descendantsOfType(TokenProduction.class)) { 
              List<RegexpSpec> respecs = tp.getRegexpSpecs();
              for (RegexpSpec res : respecs) {
                  RegularExpression re = res.getRegexp();
@@ -361,7 +377,7 @@ public class ParserData {
                  }
              }
          }
-
+             
          /*
           * The following code merges multiple uses of the same string in the
           * same lexical state and produces error messages when there are
@@ -372,8 +388,9 @@ public class ParserData {
           * code also numbers all regular expressions (by setting their ordinal
           * values), and populates the table "names_of_tokens".
           */
-
-         for (TokenProduction tp : grammar.getAllTokenProductions()) {
+//        	 for (TokenProduction tp: grammar.descendantsOfType(TokenProduction.class)) { 
+             // Cripes, for some reason this is order dependent!
+          for (TokenProduction tp : grammar.getAllTokenProductions()) {
              List<RegexpSpec> respecs = tp.getRegexpSpecs();
              List<Map<String, Map<String, RegularExpression>>> table = new ArrayList<Map<String, Map<String, RegularExpression>>>();
              for (int i = 0; i < tp.getLexStates().length; i++) {
@@ -383,26 +400,25 @@ public class ParserData {
              for (RegexpSpec res : respecs) {
                  if (res.getRegexp() instanceof RegexpStringLiteral) {
                  	// TODO: Clean this mess up! (JR)
-                     RegexpStringLiteral sl = (RegexpStringLiteral) res.getRegexp();
+                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) res.getRegexp();
                      // This loop performs the checks and actions with respect to
                      // each lexical state.
                      for (int i = 0; i < table.size(); i++) {
                          // Get table of all case variants of "sl.image" into
                          // table2.
-                         Map<String, RegularExpression> table2 = table.get(i)
-                                 .get(sl.getImage().toUpperCase());
+                         Map<String, RegularExpression> table2 = table.get(i).get(stringLiteral.getImage().toUpperCase());
                          if (table2 == null) {
                              // There are no case variants of "sl.image" earlier
                              // than the current one.
                              // So go ahead and insert this item.
-                             if (sl.getOrdinal() == 0) {
-                                 sl.setOrdinal(lexerData.getTokenCount());
-                                 lexerData.addRegularExpression(sl);
+                             if (stringLiteral.getOrdinal() == 0) {
+                                 stringLiteral.setOrdinal(lexerData.getTokenCount());
+                                 lexerData.addRegularExpression(stringLiteral);
                              }
                              table2 = new HashMap<String, RegularExpression>();
-                             table2.put(sl.getImage(), sl);
-                             table.get(i).put(sl.getImage().toUpperCase(), table2);
-                         } else if (hasIgnoreCase(table2, sl.getImage())) { // hasIgnoreCase
+                             table2.put(stringLiteral.getImage(), stringLiteral);
+                             table.get(i).put(stringLiteral.getImage().toUpperCase(), table2);
+                         } else if (hasIgnoreCase(table2, stringLiteral.getImage())) { // hasIgnoreCase
                                                                          // sets
                                                                          // "other"
                                                                          // if it
@@ -410,14 +426,14 @@ public class ParserData {
                                                                          // found.
                              // Since IGNORE_CASE version exists, current one is
                              // useless and bad.
-                             if (!sl.tpContext.isExplicit()) {
+                             if (!stringLiteral.tpContext.isExplicit()) {
                                  // inline BNF string is used earlier with an
                                  // IGNORE_CASE.
                                  grammar
                                          .addSemanticError(
-                                                 sl,
+                                                 stringLiteral,
                                                  "String \""
-                                                         + sl.getImage()
+                                                         + stringLiteral.getImage()
                                                          + "\" can never be matched "
                                                          + "due to presence of more general (IGNORE_CASE) regular expression "
                                                          + "at line "
@@ -427,12 +443,12 @@ public class ParserData {
                                                          + ".");
                              } else {
                                  // give the standard error message.
-                                 grammar.addSemanticError(sl,
-                                         "Duplicate definition of string token \""
-                                                 + sl.getImage() + "\" "
+                                 grammar.addSemanticError(stringLiteral,
+                                         "(1) Duplicate definition of string token \""
+                                                 + stringLiteral.getImage() + "\" "
                                                  + "can never be matched.");
                              }
-                         } else if (sl.tpContext.getIgnoreCase()) {
+                         } else if (stringLiteral.tpContext.getIgnoreCase()) {
                              // This has to be explicit. A warning needs to be
                              // given with respect
                              // to all previous strings.
@@ -445,62 +461,62 @@ public class ParserData {
                                  count++;
                              }
                              if (count == 1) {
-                                 grammar.addWarning(sl,
+                                 grammar.addWarning(stringLiteral,
                                          "String with IGNORE_CASE is partially superseded by string at"
                                                  + pos + ".");
                              } else {
-                                 grammar.addWarning(sl,
+                                 grammar.addWarning(stringLiteral,
                                          "String with IGNORE_CASE is partially superseded by strings at"
                                                  + pos + ".");
                              }
                              // This entry is legitimate. So insert it.
-                             if (sl.getOrdinal() == 0) {
-                                 sl.setOrdinal(lexerData.getTokenCount());
-                                 lexerData.addRegularExpression(sl);
+                             if (stringLiteral.getOrdinal() == 0) {
+                                 stringLiteral.setOrdinal(lexerData.getTokenCount());
+                                 lexerData.addRegularExpression(stringLiteral);
                              }
-                             table2.put(sl.getImage(), sl);
+                             table2.put(stringLiteral.getImage(), stringLiteral);
                              // The above "put" may override an existing entry
                              // (that is not IGNORE_CASE) and that's
                              // the desired behavior.
                          } else {
                              // The rest of the cases do not involve IGNORE_CASE.
                              RegularExpression re = (RegularExpression) table2
-                                     .get(sl.getImage());
+                                     .get(stringLiteral.getImage());
                              if (re == null) {
-                                 if (sl.getOrdinal() == 0) {
-                                     sl.setOrdinal(lexerData.getTokenCount());
-                                     lexerData.addRegularExpression(sl);
+                                 if (stringLiteral.getOrdinal() == 0) {
+                                     stringLiteral.setOrdinal(lexerData.getTokenCount());
+                                     lexerData.addRegularExpression(stringLiteral);
                                  }
-                                 table2.put(sl.getImage(), sl);
+                                 table2.put(stringLiteral.getImage(), stringLiteral);
                              } else if (tp.isExplicit()) {
                                  // This is an error even if the first occurrence
                                  // was implicit.
                                  if (tp.getLexStates()[i].equals(grammar.getDefaultLexicalState())) {
-                                     grammar.addSemanticError(sl,
-                                             "Duplicate definition of string token \""
-                                                     + sl.getImage() + "\".");
+                                     grammar.addSemanticError(stringLiteral,
+                                             "(2) Duplicate definition of string token \""
+                                                     + stringLiteral.getImage() + "\".");
                                  } else {
-                                     grammar.addSemanticError(sl,
-                                             "Duplicate definition of string token \""
-                                                     + sl.getImage()
+                                     grammar.addSemanticError(stringLiteral,
+                                             "(3) Duplicate definition of string token \""
+                                                     + stringLiteral.getImage()
                                                      + "\" in lexical state \""
                                                      + tp.getLexStates()[i] + "\".");
                                  }
                              } else if (!re.tpContext.getKind().equals("TOKEN")) {
                                  grammar
                                          .addSemanticError(
-                                                 sl,
+                                                 stringLiteral,
                                                  "String token \""
-                                                         + sl.getImage()
+                                                         + stringLiteral.getImage()
                                                          + "\" has been defined as a \""
                                                          + re.tpContext.getKind()
                                                          + "\" token.");
                              } else if (re.isPrivate()) {
                                  grammar
                                          .addSemanticError(
-                                                 sl,
+                                                 stringLiteral,
                                                  "String token \""
-                                                         + sl.getImage()
+                                                         + stringLiteral.getImage()
                                                          + "\" has been defined as a private regular expression.");
                              } else {
                                  // This is now a legitimate reference to an
@@ -515,7 +531,7 @@ public class ParserData {
                                  // declared inline within the
                                  // BNF. Hence, it belongs to only one lexical
                                  // state - namely "DEFAULT".
-                                 sl.setOrdinal(re.getOrdinal());
+                                 stringLiteral.setOrdinal(re.getOrdinal());
                                  tp.removeChild(res);
                              }
                          }
@@ -560,7 +576,7 @@ public class ParserData {
         			 } 
         		 } 
         	 }
-        	 for (TokenProduction tp : grammar.getAllTokenProductions()) {
+        	 for (TokenProduction tp : grammar.descendantsOfType(TokenProduction.class)) {
         		 for (RegexpRef ref : tp.descendantsOfType(RegexpRef.class)) {
         			 RegularExpression rexp = grammar.getNamedToken(ref.getLabel());
         			 if (rexp != null) {
@@ -569,7 +585,7 @@ public class ParserData {
         			 }
         		 }
         	 }
-             for (TokenProduction tp : grammar.getAllTokenProductions()) {
+        	 for (TokenProduction tp : grammar.descendantsOfType(TokenProduction.class)) {
                  List<RegexpSpec> respecs = tp.getRegexpSpecs();
                  for (RegexpSpec res : respecs) {
                      if (res.getRegexp() instanceof RegexpRef) {
@@ -743,19 +759,7 @@ public class ParserData {
      // Updates prod.leftExpansions based on a walk of exp.
      static private void addLeftMost(BNFProduction prod, Expansion exp) {
          if (exp instanceof NonTerminal) {
-             for (int i = 0; i < prod.leIndex; i++) {
-                 if (prod.leftExpansions[i] == ((NonTerminal) exp).getProduction()) {
-                     return;
-                 }
-             }
-             if (prod.leIndex == prod.leftExpansions.length) {
-                 BNFProduction[] newle = new BNFProduction[prod.leIndex * 2];
-                 System
-                         .arraycopy(prod.leftExpansions, 0, newle, 0,
-                                 prod.leIndex);
-                 prod.leftExpansions = newle;
-             }
-             prod.leftExpansions[prod.leIndex++] = ((NonTerminal) exp).getProduction();
+                 prod.leftExpansions.add(((NonTerminal) exp).getProduction());
          } else if (exp instanceof OneOrMore) {
              addLeftMost(prod, (exp.getNestedExpansion()));
          } else if (exp instanceof ZeroOrMore) {
@@ -785,11 +789,11 @@ public class ParserData {
      // and returns false otherwise.
      private boolean prodWalk(BNFProduction prod) {
          prod.walkStatus = -1;
-         for (int i = 0; i < prod.leIndex; i++) {
-             if (prod.leftExpansions[i].walkStatus == -1) {
-                 prod.leftExpansions[i].walkStatus = -2;
+         for (BNFProduction p : prod.leftExpansions) {
+             if (p.walkStatus == -1) {
+                 p.walkStatus = -2;
                  loopString = prod.getName() + "... --> "
-                         + prod.leftExpansions[i].getName() + "...";
+                         + p.getName() + "...";
                  if (prod.walkStatus == -2) {
                      prod.walkStatus = 1;
                      grammar.addSemanticError(prod,
@@ -799,8 +803,8 @@ public class ParserData {
                      prod.walkStatus = 1;
                      return true;
                  }
-             } else if (prod.leftExpansions[i].walkStatus == 0) {
-                 if (prodWalk(prod.leftExpansions[i])) {
+             } else if (p.walkStatus == 0) {
+                 if (prodWalk(p)) {
                      loopString = prod.getName() + "... --> " + loopString;
                      if (prod.walkStatus == -2) {
                          prod.walkStatus = 1;

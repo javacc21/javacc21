@@ -71,7 +71,7 @@ SPECIAL_TOKEN :
   <FORMAL_COMMENT: "*/" > #JavaDocComment : JAVA
 }
 
-INJECT(JavaDocComment) : {extends Comment} {}
+INJECT(JavaDocComment) : {extends Comment}
 
 
 <IN_MULTI_LINE_COMMENT>
@@ -1353,28 +1353,28 @@ Expression Expression() #Expression(>1) :
     {return (Expression) peekNode();}
 }
 
-INJECT(AssignmentExpression) : {extends Expression}{}
-INJECT(TernaryExpression) : {extends Expression} {}
-INJECT(ConditionalOrExpression) : {extends Expression} {}
-INJECT(ConditionalAndExpression) : {extends Expression} {}
-INJECT(InclusiveOrExpression) : {extends Expression} {}
-INJECT(InclusiveAndExpression) : {extends Expression} {}
-INJECT(ExclusiveOrExpression) : {extends Expression} {}
-INJECT(AndExpression) : {extends Expression} {}
-INJECT(EqualityExpression) : {extends Expression} {}
-INJECT(InstanceOfExpression) : {extends Expression} {}
-INJECT(RelationalExpression) : {extends Expression} {}
-INJECT(ShiftExpression) : {extends Expression}{}
-INJECT(AdditiveExpression) : {extends Expression}{}
-INJECT(MultiplicativeExpression) : {extends Expression}{}
-INJECT(UnaryExpression) : {extends Expression}{}
-INJECT(PreIncrementExpression) : {extends Expression}{}
-INJECT(PreDecrementExpression) : {extends Expression}{}
-INJECT(UnaryExpressionNotPlusMinus) : {extends Expression}{}
-INJECT(PostfixExpression) : {extends Expression}{}
-INJECT(CastExpression) : {extends Expression}{}
-INJECT(PrimaryExpression) : {extends Expression} {}
-INJECT(LambdaExpression) : {extends Expression} {}
+INJECT(AssignmentExpression) : {extends Expression}
+INJECT(TernaryExpression) : {extends Expression} 
+INJECT(ConditionalOrExpression) : {extends Expression} 
+INJECT(ConditionalAndExpression) : {extends Expression} 
+INJECT(InclusiveOrExpression) : {extends Expression} 
+INJECT(InclusiveAndExpression) : {extends Expression} 
+INJECT(ExclusiveOrExpression) : {extends Expression} 
+INJECT(AndExpression) : {extends Expression} 
+INJECT(EqualityExpression) : {extends Expression} 
+INJECT(InstanceOfExpression) : {extends Expression} 
+INJECT(RelationalExpression) : {extends Expression} 
+INJECT(ShiftExpression) : {extends Expression}
+INJECT(AdditiveExpression) : {extends Expression}
+INJECT(MultiplicativeExpression) : {extends Expression}
+INJECT(UnaryExpression) : {extends Expression}
+INJECT(PreIncrementExpression) : {extends Expression}
+INJECT(PreDecrementExpression) : {extends Expression}
+INJECT(UnaryExpressionNotPlusMinus) : {extends Expression}
+INJECT(PostfixExpression) : {extends Expression}
+INJECT(CastExpression) : {extends Expression}
+INJECT(PrimaryExpression) : {extends Expression} 
+INJECT(LambdaExpression) : {extends Expression} 
 
 /*
  * This expansion has been written this way instead of:

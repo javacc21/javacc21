@@ -64,6 +64,7 @@ public class Grammar extends BaseNode {
     private int includeNesting;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
+
     private Map<String, BNFProduction> productionTable;
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
@@ -77,6 +78,8 @@ public class Grammar extends BaseNode {
     private List<Node> codeInjections = new ArrayList<>();
     private boolean usesCommonTokenAction, usesTokenHook, usesCloseNodeScopeHook, usesOpenNodeScopeHook, usesjjtreeOpenNodeScope, usesjjtreeCloseNodeScope;
     
+    private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
+    
     public Grammar(JavaCCOptions options) {
         this.options = options;
         options.setGrammar(this);
@@ -85,6 +88,14 @@ public class Grammar extends BaseNode {
 
     public String[] getLexicalStates() {
     	return lexicalStates.toArray(new String[]{});
+    }
+    
+    public void addStringLiteralToResolve(RegexpStringLiteral stringLiteral) {
+    	stringLiteralsToResolve.add(stringLiteral);
+    }
+    
+    public Set<RegexpStringLiteral> getStringLiteralsToResolve() {
+    	return stringLiteralsToResolve;
     }
     
     Node parse(String location) throws IOException, ParseException {
@@ -354,7 +365,7 @@ public class Grammar extends BaseNode {
      * expressions within BNF productions.
      */
     public List<TokenProduction> getAllTokenProductions() {
-        return tokenProductions;
+    	return tokenProductions;
     }
     
 //    public List<TokenProduction> getAllTokenProductions() {

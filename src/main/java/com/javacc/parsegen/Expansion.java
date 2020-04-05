@@ -54,7 +54,16 @@ abstract public class Expansion extends BaseNode {
     
     private String label = "";  
     
-    private int phase3count =-1;
+    private int phase3LookaheadAmount; 
+    
+    void setPhase3LookaheadAmount(int phase3LookaheadAmount) {
+    	this.phase3LookaheadAmount = phase3LookaheadAmount;
+    }
+    
+    int getPhase3LokaheadAmount() {
+    	return this.phase3LookaheadAmount;
+    }
+    
     
     protected TokenSet firstSet, finalSet;
 
@@ -82,15 +91,6 @@ abstract public class Expansion extends BaseNode {
     	this.label = label;
     }
     
-    public int getPhase3Count() {
-    	return this.phase3count;
-    }
-    
-    public void setPhase3Count(int count) {
-    	phase3count = count;
-    }
-
-
     private String getSimpleName() {
         String name = getClass().getName();
         return name.substring(name.lastIndexOf(".") + 1); // strip the package name

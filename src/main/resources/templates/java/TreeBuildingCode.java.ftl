@@ -45,6 +45,14 @@
     private boolean specialTokensAreNodes = false;
 [/#if]
 
+    public void setSpecialTokensAreNodes(boolean specialTokensAreNodes) {
+        this.specialTokensAreNodes = specialTokensAreNodes;
+    }
+    
+    public void setTokensAreNodes(boolean tokensAreNodes) {
+        this.tokensAreNodes = tokensAreNodes;
+    }
+
     NodeScope currentNodeScope = new NodeScope();
     
 
