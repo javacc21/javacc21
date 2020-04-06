@@ -34,7 +34,6 @@ import java.util.*;
 
 import com.javacc.Grammar;
 import com.javacc.parser.ParseException;
-import com.javacc.parser.tree.CharacterList;
 import com.javacc.parser.tree.CodeBlock;
 import com.javacc.parser.tree.RegexpChoice;
 import com.javacc.parser.tree.RegexpSpec;
@@ -577,24 +576,10 @@ public class LexicalState {
         }
     }
 
-    static public String[] rearrange(Map<String, KindInfo> tab) {
-        String[] ret = new String[tab.size()];
-        int cnt = 0;
-        for (String s : tab.keySet()) {
-            int i = 0, j;
-            char c = s.charAt(0);
-            while (i < cnt && ret[i].charAt(0) < c) {
-                i++;
-            }
-            if (i < cnt) {
-                for (j = cnt - 1; j >= i; j--) {
-                    ret[j + 1] = ret[j];
-                }
-            }
-            ret[i] = s;
-            cnt++;
-        }
-        return ret;
+    static public List<String> rearrange(Map<String, KindInfo> table) {
+    	List<String> result = new ArrayList<>(table.keySet());
+    	Collections.sort(result);
+    	return result;
     }
 
     public int getKindToPrint(int kind, int index) {
@@ -1071,10 +1056,5 @@ public class LexicalState {
                 }
             }
         }
-    }
-
-    static public boolean canMatchAnyChar(CharacterList cl) {
-        // Return true only if it is ~[]
-        return cl.isNegated() && (cl.getDescriptors().isEmpty());
     }
 }
