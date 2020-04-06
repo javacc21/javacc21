@@ -39,6 +39,8 @@ package ${grammar.parserPackage};
 import java.io.IOException;
 import java.io.*;
 import java.util.HashMap;
+import java.nio.file.Files;
+import java.nio.charset.Charset;
 
 /**
  * Rather bloody-minded implementation of a class to read in a file 
@@ -231,6 +233,14 @@ public class FileLineMap {
 	    } catch (IOException ioe) {
 	        throw new RuntimeException(ioe);
 	    } 
+	} 
+	
+	static String readFully(File file) {
+	    try {
+	        return new String(Files.readAllBytes(file), Charset.forName("UTF-8"));
+	    } catch (IOException ioe) {
+	        throw new RuntimeException(ioe);
+	    }
 	}
 	
 	static String readFully(Reader reader) throws IOException {

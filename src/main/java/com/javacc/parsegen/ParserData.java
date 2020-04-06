@@ -452,8 +452,7 @@ public class ParserData {
                              // the desired behavior.
                          } else {
                              // The rest of the cases do not involve IGNORE_CASE.
-                             RegularExpression re = (RegularExpression) table2
-                                     .get(stringLiteral.getImage());
+                             RegularExpression re = (RegularExpression) table2.get(stringLiteral.getImage());
                              if (re == null) {
                                  if (stringLiteral.getOrdinal() == 0) {
                                      stringLiteral.setOrdinal(lexerData.getTokenCount());
@@ -634,20 +633,7 @@ public class ParserData {
                      grammar.addSemanticError(exp, "Expansion can be matched by empty string.");
         		 }
         	 }
-        	 // FIXME. I think this is broken at the moment.
-//        	 new LeftRecursionChecker().visit(grammar);
-             // Now the following loop calls a recursive walk routine that
-             // searches for
-             // actual left recursions. The way the algorithm is coded, once a
-             // node has
-             // been determined to participate in a left recursive loop, it is
-             // not tried
-             // in any other loop.
-//             for (BNFProduction prod : grammar.getParserProductions()) {
-//                 if (prod.walkStatus == 0) {
-//                     prodWalk(prod);
-//                 }
-//             }
+  
 
              // Now we do a similar, but much simpler walk for the regular
              // expression part of
