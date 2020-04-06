@@ -237,7 +237,7 @@ public class FileLineMap {
 	
 	static String readFully(File file) {
 	    try {
-	        return new String(Files.readAllBytes(file), Charset.forName("UTF-8"));
+	        return new String(Files.readAllBytes(file.toPath()), Charset.forName("UTF-8"));
 	    } catch (IOException ioe) {
 	        throw new RuntimeException(ioe);
 	    }
