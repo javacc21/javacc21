@@ -331,7 +331,7 @@ INJECT(BaseNode) :
 CompilationUnit CompilationUnit() #CompilationUnit :
 {}
 {
-  [ LOOKAHEAD( ( Annotation() )* "package",{2+2==4} ) PackageDeclaration() ]
+  [ LOOKAHEAD( ( Annotation() )* "package") PackageDeclaration() ]
   ( ImportDeclaration() )*
   (
      ( TypeDeclaration() )+

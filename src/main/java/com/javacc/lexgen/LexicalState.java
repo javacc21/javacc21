@@ -145,10 +145,6 @@ public class LexicalState {
         return this.singlesToSkip;
     }
 
-    void setMixedCase(boolean mixedCase) {
-        this.mixed = mixedCase;
-    }
-
     public boolean isMixedCase() {
         return mixed;
     }
@@ -173,24 +169,12 @@ public class LexicalState {
         return subStringAtPos;
     }
 
-    NfaState getInitialState() {
-        return initialState;
-    }
-    
     public int getMaxLenForActive(int i) {
         return maxLenForActive[i];
     }
 
     public boolean[] getSubString() {
         return this.subString;
-    }
-
-    public int[][] getIntermediateKinds() {
-        return intermediateKinds;
-    }
-
-    public int[][] getIntermediateMatchedPos() {
-        return intermediateMatchedPos;
     }
 
     public String getSuffix() {
@@ -447,7 +431,7 @@ public class LexicalState {
                 temp = charPosKind.get(i);
 
             if ((info = (KindInfo) temp.get(s)) == null)
-                temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
+                temp.put(s, info = new KindInfo());
 
             if (i + 1 == imageLength)
                 info.InsertFinalKind(stringLiteral.getOrdinal());
@@ -464,7 +448,7 @@ public class LexicalState {
                     temp = charPosKind.get(i);
 
                 if ((info = (KindInfo) temp.get(s)) == null)
-                    temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
+                    temp.put(s, info = new KindInfo());
 
                 if (i + 1 == imageLength)
                     info.InsertFinalKind(stringLiteral.getOrdinal());
@@ -482,7 +466,7 @@ public class LexicalState {
                     temp = charPosKind.get(i);
 
                 if ((info = (KindInfo) temp.get(s)) == null)
-                    temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
+                    temp.put(s, info = new KindInfo());
 
                 if (i + 1 == imageLength)
                     info.InsertFinalKind(stringLiteral.getOrdinal());
@@ -651,14 +635,14 @@ public class LexicalState {
         int kind;
         int j, k;
         for (j = 0; j < maxLongsReqd; j++)
-            if (info.finalKinds[j] != 0L)
+            if (info.getFinalKinds()[j] != 0L)
                 break;
 
-        if (index == 0 && c < 128 && info.finalKindCnt != 0
+        if (index == 0 && c < 128 && info.getFinalKindCnt() !=0
                 && (indexedAllStates.size() == 0 || !canStartNfaUsingAscii(c))) {
 
             for (k = 0; k < 64; k++) {
-                if ((info.finalKinds[j] & (1L << k)) != 0L && !subString[kind = (j * 64 + k)]) {
+                if ((info.getFinalKinds()[j] & (1L << k)) != 0L && !subString[kind = (j * 64 + k)]) {
                     if ((intermediateKinds != null && intermediateKinds[(j * 64 + k)] != null
                             && intermediateKinds[(j * 64 + k)][index] < (j * 64 + k)
                             && intermediateMatchedPos != null && intermediateMatchedPos[(j * 64 + k)][index] == index)
@@ -1083,9 +1067,9 @@ public class LexicalState {
             for (String key : tab.keySet()) {
                 KindInfo info = (KindInfo) tab.get(key);
                 if (generateDfaCase(key, info, i)) {
-                    if (info.finalKindCnt != 0) {
+                    if (info.getFinalKindCnt() != 0) {
                         for (int j = 0; j < maxStrKind; j++) {
-                            long matchedKind = info.finalKinds[j / 64];
+                            long matchedKind = info.getFinalKinds()[j / 64];
                             if (((matchedKind & (1L << j % 64)) != 0L) && !subString[j]) {
                                 getStateSetForKind(i, j); // <-- needs to be
                                                             // called!

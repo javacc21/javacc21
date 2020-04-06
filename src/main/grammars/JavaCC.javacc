@@ -906,29 +906,6 @@ INJECT(BNFProduction) :
          return getExpansion().isPossiblyEmpty();
     }
 
-    /**
-     * A list of all non-terminals that this one can expand to without having to
-     * consume any tokens. Also an index that shows how many pointers exist.
-     */
-    public Set<BNFProduction> leftExpansions = new HashSet<>();
-
-    /**
-     * The following variable is used to maintain state information for the
-     * left-recursion determination algorithm: It is initialized to 0, and set
-     * to -1 if this node has been visited in a pre-order walk, and then it is
-     * set to 1 if the pre-order walk of the whole graph from this node has been
-     * traversed. i.e., -1 indicates partially processed, and 1 indicates fully
-     * processed.
-     */
-    public int walkStatus = 0;
-
-    protected StringBuilder dumpPrefix(int indent) {
-        StringBuilder sb = new StringBuilder(128);
-        for (int i = 0; i < indent; i++)
-            sb.append("  ");
-        return sb;
-    }
-
     protected String getSimpleName() {
         String name = getClass().getName();
         return name.substring(name.lastIndexOf(".") + 1); // strip the package
@@ -990,18 +967,13 @@ TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 	        token_source.inJavaCode = true;
 	  }
    [
-	//   LOOKAHEAD(<BANG>|<LPAREN>)
 	   LOOKAHEAD(<LPAREN>)
-	  // (
-	//   <BANG> {CURRENT_NODE.setForced(true);}
-	//   |
 	   <LPAREN>  
 	      [
 	        ">"
 	      ]
 	      Expression()
 	   <RPAREN>
- // )
   ]
   {
           token_source.inJavaCode = false;

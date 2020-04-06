@@ -30,44 +30,41 @@
 
 package com.javacc.lexgen;
 
+import java.util.Arrays;
+import java.util.BitSet;
+
 public final class KindInfo {
-   long[] validKinds;
-   long[] finalKinds;
-   int    validKindCnt;
-   int    finalKindCnt;
+   
+  BitSet validKindSet = new BitSet(), finalKindSet = new BitSet();
+   
 
-   KindInfo(int maxKind)
+
+   void InsertValidKind(int kind)
    {
-      validKinds = new long[maxKind / 64 + 1];
-      finalKinds = new long[maxKind / 64 + 1];
+      validKindSet.set(kind);
    }
 
-   public void InsertValidKind(int kind)
+   void InsertFinalKind(int kind)
    {
-      validKinds[kind / 64] |= (1L << (kind % 64));
-      validKindCnt++;
-   }
-
-   public void InsertFinalKind(int kind)
-   {
-      finalKinds[kind / 64] |= (1L << (kind % 64));
-      finalKindCnt++;
+      finalKindSet.set(kind);
    }
    
    public long[] getFinalKinds() {
-       return finalKinds;
+	   long[] ll = finalKindSet.toLongArray();
+	   return Arrays.copyOf(ll, ll.length +2);
    }
    
    public int getFinalKindCnt() {
-       return finalKindCnt;
+	   return finalKindSet.cardinality();
    }
    
    public int getValidKindCnt() {
-       return validKindCnt;
+	   return validKindSet.cardinality();
    }
    
    public long[] getValidKinds() {
-       return validKinds;
+	   long[] ll = validKindSet.toLongArray();
+	   return Arrays.copyOf(ll,  ll.length+2);
    }
 }
 
