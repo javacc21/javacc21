@@ -71,10 +71,9 @@ public class ParserData {
      * requiring larger lookaheads). The second step then generates these
      * methods. 
      */
-    private List<Lookahead> phase2lookaheads = new ArrayList<Lookahead>();
-    private List<Phase3Data> phase3list = new ArrayList<Phase3Data>();
+    private List<Lookahead> phase2lookaheads = new ArrayList<>();
     
-    private Set<Expansion> phase3expansions = new LinkedHashSet<>();
+    private List<Expansion> phase3list = new ArrayList<>();
     
     public ParserData(Grammar grammar) {
     	this.grammar = grammar;
@@ -87,15 +86,15 @@ public class ParserData {
         }
         for (Lookahead lookahead : phase2lookaheads) {
             Expansion expansion= lookahead.getNestedExpansion();
-            Phase3Data phase3data = new Phase3Data(expansion, lookahead.getAmount());
-          	phase3list.add(phase3data);
-            phase3expansions.add(expansion);
+          	phase3list.add(expansion);
             expansion.setPhase3LookaheadAmount(lookahead.getAmount());
         }
         for (int phase3index=0; phase3index < phase3list.size(); phase3index++) {
-            Phase3Data p3data = phase3list.get(phase3index);
-            setupPhase3Builds(p3data.exp, p3data.count);
+            Expansion exp = phase3list.get(phase3index);
+            setupPhase3Builds(exp, exp.getPhase3LookaheadAmount());
         }
+        // Not sure why it's necesssary, but we need to get rid of duplicates
+        this.phase3list = new ArrayList<>(new LinkedHashSet<>(phase3list));
     }
         
 
@@ -103,8 +102,8 @@ public class ParserData {
         return phase2lookaheads;
     }
     
-    public Set<Expansion> getPhase3Expansions() {
-        return phase3expansions;
+    public List<Expansion> getPhase3Expansions() {
+        return phase3list;
     }
     
     public int getPhase3ExpansionCount(Expansion exp) {
@@ -192,9 +191,7 @@ public class ParserData {
             expansion.setPhase3RoutineName("phase3R_" + gensymindex);
         }
           if (expansion.getPhase3LookaheadAmount()< count) {
-            Phase3Data p3d = new Phase3Data(expansion, count);
-            phase3list.add(p3d);
-            phase3expansions.add(expansion);
+            phase3list.add(expansion);
             expansion.setPhase3LookaheadAmount(count);
         }
     }
@@ -240,30 +237,7 @@ public class ParserData {
         }
     }
 
-    /**
-     * This class stores information to pass from phase 2 to phase 3.
-     */
-    private class Phase3Data {
-
-        /*
-         * This is the expansion to generate the phase3 method for.
-         */
-        Expansion exp;
-
-        /*
-         * This is the number of tokens that can still be consumed. This number is
-         * used to limit the number of jj3 methods generated.
-         */
-        int count;
-
-        Phase3Data(Expansion e, int c) {
-            exp = e;
-            count = c;
-        }
-    }
-    
-    
-    
+        
  // This method contains various sanity checks and adjustments
   // that have been in the code forever. There is a general need
   // to clean this up because it presents a significant obstacle

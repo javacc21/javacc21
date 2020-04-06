@@ -59,7 +59,10 @@ abstract public class Expansion extends BaseNode {
     void setPhase3LookaheadAmount(int phase3LookaheadAmount) {
     	this.phase3LookaheadAmount = phase3LookaheadAmount;
     }
-    
+/**
+ * The number of Tokens that can be consumed in a phase3 Lookahed routine    
+ * (assuming that this Expansion needs phase3 lookahead)
+ */
     public int getPhase3LookaheadAmount() {
     	return this.phase3LookaheadAmount;
     }
