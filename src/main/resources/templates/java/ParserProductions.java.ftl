@@ -53,12 +53,12 @@
 [/#macro]
 
 [#macro Phase3Code]
- [#if parserData.phase3Table?size ==0][#return][/#if]
+ [#if parserData.phase3Expansions?size ==0][#return][/#if]
 //====================================
  // Start of methods for Phase 3 Lookaheads
  //====================================
-   [#list parserData.phase3Table?keys as expansion]
-      [@buildPhase3Routine expansion, parserData.getPhase3ExpansionCount(expansion)/]
+   [#list parserData.phase3Expansions as expansion]
+      [@buildPhase3Routine expansion, expansion.phase3LookaheadAmount /]
    [/#list]
 [/#macro]   
 

@@ -60,7 +60,7 @@ abstract public class Expansion extends BaseNode {
     	this.phase3LookaheadAmount = phase3LookaheadAmount;
     }
     
-    int getPhase3LokaheadAmount() {
+    public int getPhase3LookaheadAmount() {
     	return this.phase3LookaheadAmount;
     }
     

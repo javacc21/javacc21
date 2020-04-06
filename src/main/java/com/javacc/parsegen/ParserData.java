@@ -74,8 +74,7 @@ public class ParserData {
     private List<Lookahead> phase2lookaheads = new ArrayList<Lookahead>();
     private List<Phase3Data> phase3list = new ArrayList<Phase3Data>();
     
-   // Should look at factoring out this phase3 stuff, probably storing the information in the Expansion objects themselves. TODO
-    private Map<Expansion, Integer> phase3table = new LinkedHashMap<Expansion, Integer>();
+    private Set<Expansion> phase3expansions = new LinkedHashSet<>();
     
     public ParserData(Grammar grammar) {
     	this.grammar = grammar;
@@ -89,8 +88,8 @@ public class ParserData {
         for (Lookahead lookahead : phase2lookaheads) {
             Expansion expansion= lookahead.getNestedExpansion();
             Phase3Data phase3data = new Phase3Data(expansion, lookahead.getAmount());
-            phase3list.add(phase3data);
-            phase3table.put(expansion, lookahead.getAmount());
+          	phase3list.add(phase3data);
+            phase3expansions.add(expansion);
             expansion.setPhase3LookaheadAmount(lookahead.getAmount());
         }
         for (int phase3index=0; phase3index < phase3list.size(); phase3index++) {
@@ -98,17 +97,18 @@ public class ParserData {
             setupPhase3Builds(p3data.exp, p3data.count);
         }
     }
+        
 
     public List<Lookahead> getPhase2Lookaheads() {
         return phase2lookaheads;
     }
     
-    public Map<Expansion, Integer> getPhase3Table() {
-        return phase3table;
+    public Set<Expansion> getPhase3Expansions() {
+        return phase3expansions;
     }
     
     public int getPhase3ExpansionCount(Expansion exp) {
-        return phase3table.get(exp);
+    	return exp.getPhase3LookaheadAmount();
     }
     
     public class Phase2TableBuilder extends Node.Visitor {
@@ -152,7 +152,7 @@ public class ParserData {
 			if (lookahead.getRequiresPhase2Routine()) {
 				phase2lookaheads.add(lookahead);
 				Expansion exp = lookahead.getNestedExpansion();
-				String phase2name = "phase2_" + phase2lookaheads.size() + "_" + removeNonJavaIdentifierPart(exp.getInputSource()) + "_line_" + exp.getBeginLine();
+				String phase2name = "phase2_"  + (gensymindex++) +  "_" + removeNonJavaIdentifierPart(exp.getInputSource()) + "_line_" + exp.getBeginLine();
 				exp.setPhase2RoutineName(phase2name);
 				exp.setPhase3RoutineName(phase2name.replace("phase2",  "phase3"));
 			}
@@ -184,20 +184,18 @@ public class ParserData {
                 } else
                     break;
             }
-
             if (seq instanceof RegularExpression) {
                 expansion.setOrdinal(((RegularExpression) seq).getOrdinal());
                 return;
             }
-
             gensymindex++;
             expansion.setPhase3RoutineName("phase3R_" + gensymindex);
         }
-        Integer amt = phase3table.get(expansion);
-        if (amt == null || amt < count) {
+          if (expansion.getPhase3LookaheadAmount()< count) {
             Phase3Data p3d = new Phase3Data(expansion, count);
             phase3list.add(p3d);
-            phase3table.put(expansion, count);
+            phase3expansions.add(expansion);
+            expansion.setPhase3LookaheadAmount(count);
         }
     }
     
