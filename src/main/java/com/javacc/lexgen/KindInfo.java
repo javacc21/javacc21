@@ -36,8 +36,11 @@ import java.util.BitSet;
 public final class KindInfo {
    
   BitSet validKindSet = new BitSet(), finalKindSet = new BitSet();
+  int numKinds;
    
-
+  KindInfo(int numKinds) {
+	  this.numKinds = numKinds;
+  }
 
    void InsertValidKind(int kind)
    {
@@ -51,7 +54,7 @@ public final class KindInfo {
    
    public long[] getFinalKinds() {
 	   long[] ll = finalKindSet.toLongArray();
-	   return Arrays.copyOf(ll, ll.length +2);
+	   return Arrays.copyOf(ll, numKinds);
    }
    
    public int getFinalKindCnt() {
@@ -64,7 +67,15 @@ public final class KindInfo {
    
    public long[] getValidKinds() {
 	   long[] ll = validKindSet.toLongArray();
-	   return Arrays.copyOf(ll,  ll.length+2);
+	   return Arrays.copyOf(ll,  numKinds);
+   }
+   
+   boolean isValidKind(int kind) {
+	   return validKindSet.get(kind);
+   }
+   
+   boolean isFinalKind(int kind) {
+	   return finalKindSet.get(kind);
    }
 }
 

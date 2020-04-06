@@ -431,7 +431,7 @@ public class LexicalState {
                 temp = charPosKind.get(i);
 
             if ((info = (KindInfo) temp.get(s)) == null)
-                temp.put(s, info = new KindInfo());
+                temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
 
             if (i + 1 == imageLength)
                 info.InsertFinalKind(stringLiteral.getOrdinal());
@@ -448,7 +448,7 @@ public class LexicalState {
                     temp = charPosKind.get(i);
 
                 if ((info = (KindInfo) temp.get(s)) == null)
-                    temp.put(s, info = new KindInfo());
+                    temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
 
                 if (i + 1 == imageLength)
                     info.InsertFinalKind(stringLiteral.getOrdinal());
@@ -466,7 +466,7 @@ public class LexicalState {
                     temp = charPosKind.get(i);
 
                 if ((info = (KindInfo) temp.get(s)) == null)
-                    temp.put(s, info = new KindInfo());
+                    temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
 
                 if (i + 1 == imageLength)
                     info.InsertFinalKind(stringLiteral.getOrdinal());
@@ -630,46 +630,40 @@ public class LexicalState {
     }
 
     public boolean generateDfaCase(String key, KindInfo info, int index) {
-        int maxLongsReqd = 1 + maxStrKind / 64;
-        char c = key.charAt(0);
-        int kind;
-        int j, k;
-        for (j = 0; j < maxLongsReqd; j++)
-            if (info.getFinalKinds()[j] != 0L)
-                break;
+        int maxLongsReqd = 1+ maxStrKind / 64;
+        char firstChar = key.charAt(0);
+        int j;
+        for (int kind = 0; kind<maxStrKind; kind++) {
+        	if (index == 0 && firstChar < 128 && info.getFinalKindCnt() !=0
+        			&& (indexedAllStates.size() == 0 || !canStartNfaUsingAscii(firstChar))) {
+        			if (info.isFinalKind(kind) && !subString[kind]) {
+        				if ((intermediateKinds != null && intermediateKinds[(kind)] != null
+        						&& intermediateKinds[kind][index] < kind
+        						&& intermediateMatchedPos != null && intermediateMatchedPos[kind][index] == index)
+        						|| (matchAnyChar != null && matchAnyChar.getOrdinal() < kind))
+        					break;
+        				else if ((lexerData.toSkip[kind / 64] & (1L << (kind % 64))) != 0L
+        						&& (lexerData.toSpecial[kind / 64] & (1L << (kind % 64))) == 0L
+        						&& lexerData.getRegularExpression(kind).getCodeSnippet() == null
+        						&& lexerData.getRegularExpression(kind).getNewLexicalState() == null) {
+        					singlesToSkip.addChar(firstChar);
+        					singlesToSkip.kind = kind;
 
-        if (index == 0 && c < 128 && info.getFinalKindCnt() !=0
-                && (indexedAllStates.size() == 0 || !canStartNfaUsingAscii(c))) {
+        					if (grammar.getOptions().getIgnoreCase()) {
+        						if (firstChar != Character.toUpperCase(firstChar)) {
+        							singlesToSkip.addChar(firstChar);
+        							singlesToSkip.kind = kind;
+        						}
 
-            for (k = 0; k < 64; k++) {
-                if ((info.getFinalKinds()[j] & (1L << k)) != 0L && !subString[kind = (j * 64 + k)]) {
-                    if ((intermediateKinds != null && intermediateKinds[(j * 64 + k)] != null
-                            && intermediateKinds[(j * 64 + k)][index] < (j * 64 + k)
-                            && intermediateMatchedPos != null && intermediateMatchedPos[(j * 64 + k)][index] == index)
-                            || (matchAnyChar != null && matchAnyChar.getOrdinal() < (j * 64 + k)))
-                        break;
-                    else if ((lexerData.toSkip[kind / 64] & (1L << (kind % 64))) != 0L
-                            && (lexerData.toSpecial[kind / 64] & (1L << (kind % 64))) == 0L
-                            && lexerData.getRegularExpression(kind).getCodeSnippet() == null
-                            && lexerData.getRegularExpression(kind).getNewLexicalState() == null) {
-                        singlesToSkip.addChar(c);
-                        singlesToSkip.kind = kind;
-
-                        if (grammar.getOptions().getIgnoreCase()) {
-                            if (c != Character.toUpperCase(c)) {
-                                singlesToSkip.addChar(c);
-                                singlesToSkip.kind = kind;
-                            }
-
-                            if (c != Character.toLowerCase(c)) {
-                                singlesToSkip.addChar(c);
-                                singlesToSkip.kind = kind;
-                            }
-                        }
-                        return false;
-                    }
-                }
-            }
+        						if (firstChar != Character.toLowerCase(firstChar)) {
+        							singlesToSkip.addChar(firstChar);
+        							singlesToSkip.kind = kind;
+        						}
+        					}
+        					return false;
+        				}
+        			}
+        	}
         }
         return true;
     }
@@ -1069,11 +1063,9 @@ public class LexicalState {
                 if (generateDfaCase(key, info, i)) {
                     if (info.getFinalKindCnt() != 0) {
                         for (int j = 0; j < maxStrKind; j++) {
-                            long matchedKind = info.getFinalKinds()[j / 64];
-                            if (((matchedKind & (1L << j % 64)) != 0L) && !subString[j]) {
-                                getStateSetForKind(i, j); // <-- needs to be
-                                                            // called!
-                            }
+                        	if (info.isFinalKind(j) && !subString[j]) {
+                        		getStateSetForKind(i, j); // <-- needs to be called!
+                        	}
                         }
                     }
                 }
