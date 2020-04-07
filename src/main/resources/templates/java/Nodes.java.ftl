@@ -34,7 +34,6 @@
 package ${grammar.parserPackage};
 [/#if]
 import java.util.*;
-import java.lang.reflect.*;
 
 /**
  * A set of static utility routines, mostly for working with Node objects.

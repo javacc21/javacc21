@@ -35,20 +35,9 @@ import java.util.*;
 import com.javacc.Grammar;
 import com.javacc.lexgen.TokenSet;
 import com.javacc.parsegen.Expansion;
-import com.javacc.parser.ParseException;
-import com.javacc.parser.tree.CharacterList;
-import com.javacc.parser.tree.CharacterRange;
 import com.javacc.parser.tree.CodeBlock;
-import com.javacc.parser.tree.EndOfFile;
 import com.javacc.parser.tree.Expression;
-import com.javacc.parser.tree.OneOrMoreRegexp;
-import com.javacc.parser.tree.RegexpChoice;
-import com.javacc.parser.tree.RegexpRef;
-import com.javacc.parser.tree.RegexpSequence;
-import com.javacc.parser.tree.RegexpStringLiteral;
 import com.javacc.parser.tree.TokenProduction;
-import com.javacc.parser.tree.ZeroOrMoreRegexp;
-import com.javacc.parser.tree.ZeroOrOneRegexp;
 
 /**
  * An abstract base class from which all the AST nodes that

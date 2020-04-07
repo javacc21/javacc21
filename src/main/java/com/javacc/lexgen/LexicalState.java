@@ -66,7 +66,6 @@ public class LexicalState {
     private NfaState singlesToSkip;
     private boolean mixed;
     boolean canLoop;
-    private boolean canReachOnMore;
     RegularExpression matchAnyChar;
     int initMatch;
     RegularExpression currentRegexp;
@@ -381,13 +380,6 @@ public class LexicalState {
                 lexerData.toMore[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp
                         .getOrdinal() % 64);
                 currentRegexp.setMore();
-
-                if (currentRegexp.getNewLexicalState() != null) {
-                    LexicalState ls = currentRegexp.getNewLexicalState();
-                    ls.canReachOnMore = true;
-                } else {
-                    canReachOnMore = true;
-                }
             }
             else {
                 lexerData.hasTokenActions |= (tokenAction != null);

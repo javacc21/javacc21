@@ -180,7 +180,6 @@ class Nfa {
     static private Nfa buildNfa(RegexpStringLiteral stringLiteral, LexicalState lexState, boolean ignoreCase) {
         String image = stringLiteral.getImage();
         Grammar grammar = stringLiteral.getGrammar();
-
         if (image.length() == 1) {
             CharacterList charList = new CharacterList();
             charList.setGrammar(grammar);
@@ -349,7 +348,7 @@ class Nfa {
         return retVal;
     }
 
-    static private List<RegularExpression> compressCharLists(List<RegularExpression> choices) {
+    static List<RegularExpression> compressCharLists(List<RegularExpression> choices) {
         List<RegularExpression> compressedChoices = compressChoices(choices); // Unroll nested choices
         List<RegularExpression> result = new ArrayList<RegularExpression>();
         CharacterList mergedCharList = new CharacterList();
@@ -402,7 +401,7 @@ class Nfa {
         return result;
     }
 
-    static private List<CharacterRange> toCaseNeutral(List<CharacterRange> descriptors) {
+    static List<CharacterRange> toCaseNeutral(List<CharacterRange> descriptors) {
         List<CharacterRange> result = new ArrayList<CharacterRange>();
         for (CharacterRange range : descriptors) {
             result.add(range);
@@ -514,7 +513,7 @@ class Nfa {
         return result;
     }
 
-    static private List<CharacterRange> removeNegation(List<CharacterRange> descriptors) {
+    static List<CharacterRange> removeNegation(List<CharacterRange> descriptors) {
         List<CharacterRange> result = new ArrayList<CharacterRange>();
         int lastRemoved = -1; // One less than the first valid character.
 
@@ -556,7 +555,7 @@ class Nfa {
         return result;
     }
 
-   static private List<CharacterRange> sortDescriptors(List<CharacterRange> descriptors) {
+   static List<CharacterRange> sortDescriptors(List<CharacterRange> descriptors) {
         Collections.sort(descriptors, (first, second) -> first.left - second.left);
         List<CharacterRange> result = new ArrayList<>();
         CharacterRange previous = null;
