@@ -344,6 +344,7 @@ public class LexicalState {
                     choices.add((RegexpChoice) currentRegexp);
                 }
                 Nfa nfa = Nfa.buildNfa(currentRegexp, this, ignore);
+               // Nfa nfa = new NfaBuilder(currentRegexp, this, ignore).getNfa();
                 nfa.getEnd().isFinal = true;
                 nfa.getEnd().kind = currentRegexp.getOrdinal();
                 initialState.addMove(nfa.getStart());
