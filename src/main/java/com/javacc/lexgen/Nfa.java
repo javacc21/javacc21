@@ -31,6 +31,8 @@
 package com.javacc.lexgen;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import com.javacc.Grammar;
@@ -411,18 +413,6 @@ class Nfa {
         return result;
     }
     
-    static private boolean inRange(char c, CharacterRange range) {
-        return (c >= range.left && c <= range.right);
-    }
-
-    static private boolean subRange(CharacterRange r1, CharacterRange r2) {
-        return (r1.left >= r2.left && r1.right <= r2.right);
-    }
-
-    static private boolean Overlaps(CharacterRange r1, CharacterRange r2) {
-        return (r1.left <= r2.right && r1.right > r2.right);
-    }
-
     static private List<CharacterRange> toCaseNeutral(List<CharacterRange> descriptors) {
         List<CharacterRange> result = new ArrayList<CharacterRange>();
         for (CharacterRange range : descriptors) {
@@ -576,67 +566,26 @@ class Nfa {
         }
         return result;
     }
-
+    
     static private List<CharacterRange> sortDescriptors(List<CharacterRange> descriptors) {
-        int j;
-    
-        List<CharacterRange> result = new ArrayList<CharacterRange>(descriptors.size());
-        int cnt = 0;    
-    
-        Outer: for (int i = 0; i < descriptors.size(); i++) {
-            CharacterRange range;
-    
-            if (descriptors.get(i).isSingleChar()) { 
-                CharacterRange s = descriptors.get(i);
-    
-                for (j = 0; j < cnt; j++) {
-                    if (result.get(j).isSingleChar()) {
-                        if ((result.get(j)).left > s.left)
-                            break;
-                        else if (result.get(j).left == s.left)
-                            continue Outer;
-                    } else {
-                        char l = ((CharacterRange) result.get(j)).left;
-    
-                        if (inRange(s.left, result.get(j)))
-                            continue Outer;
-                        else if (l > s.left)
-                            break;
-                    }
-                }
-                result.add(j, s);
-                cnt++;
-            } else {
-                range = (CharacterRange) descriptors.get(i);
-                for (j = 0; j < cnt; j++) {
-                    if (result.get(j).isSingleChar()) {
-                        if (inRange((result.get(j)).left, range)) {
-                            result.remove(j--);
-                            cnt--;
-                        } else if (result.get(j).left > range.right)
-                            break;
-                    } else {
-                        if (subRange(range, (CharacterRange) result.get(j))) {
-                            continue Outer;
-                        } else if (subRange((CharacterRange) result.get(j), range)) {
-                            result.set(j, range);
-                            continue Outer;
-                        } else if (Overlaps(range, (CharacterRange) result.get(j))) {
-                            range.left = (char) (((CharacterRange) result.get(j)).right + 1);
-                        } else if (Overlaps((CharacterRange) result.get(j), range)) {
-                            CharacterRange tmp = range;
-                            ((CharacterRange) result.get(j)).right = (char) (range.left + 1);
-                            range = (CharacterRange) result.get(j);
-                            result.set(j, tmp);
-                        } else if (((CharacterRange) result.get(j)).left > range.right)
-                            break;
-                    }
-                }
-    
-                result.add(j, range);
-                cnt++;
-            }
-        }
-        return result;
+    	Collections.sort(descriptors, (first, second) -> first.left - second.left);
+    	List<CharacterRange> result = new ArrayList<>();
+    	CharacterRange previous = null;
+    	for (CharacterRange range : descriptors) {
+    		if (previous == null) {
+    			result.add(range);
+    			previous = range;
+    		} else {
+    			if (previous.left == range.left) {
+    				previous.right = (char) Math.max(previous.right, range.right);
+    			} else if (previous.right >= range.left-1) {
+    				previous.right = (char) Math.max(previous.right, range.right);
+    			} else {
+    				result.add(range);
+    				previous = range;
+    			}
+    		}
+    	}
+    	return result;
     }
 }

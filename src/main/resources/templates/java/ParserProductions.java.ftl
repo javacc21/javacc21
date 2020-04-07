@@ -346,7 +346,7 @@ throw new ParseException();"]
                 ) { 
                    ${actions[lookahead_index]}
          [#set inPhase1 = false]
-       [#elseif lookahead.amount = 1&& !lookahead.semanticLookahead?? &&!lookahead.possibleEmptyExpansionOrJavaCode]
+       [#elseif lookahead.amount = 1&& !lookahead.semanticLookahead?? &&!lookahead.possibleEmptyExpansion]
           [#if !inPhase1]
                  [#if lookahead_index != 0]
                  } else {

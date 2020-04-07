@@ -56,20 +56,8 @@ public class ParserData {
     private List<MatchInfo> sizeLimitedMatches;
     
     /**
-     * These lists are used to maintain expansions for which code generation in
-     * phase 2 and phase 3 is required. Whenever a call is generated to a phase
-     * 2 or phase 3 routine, a corresponding entry is added here if it has not
-     * already been added. The phase 3 routines have been optimized in version
-     * 0.7pre2. Essentially only those methods (and only those portions of these
-     * methods) are generated that are required. The lookahead amount is used to
-     * determine this. This change requires the use of a hash table because it
-     * is now possible for the same phase 3 routine to be requested multiple
-     * times with different lookaheads. The hash table provides a easily
-     * searchable capability to determine the previous requests. The phase 3
-     * routines now are performed in a two step process - the first step gathers
-     * the requests (replacing requests with lower lookaheads with those
-     * requiring larger lookaheads). The second step then generates these
-     * methods. 
+     * These lists are used to maintain the lists of lookaheads and expansions 
+     * for which code generation in phase 2 and phase 3 is required. 
      */
     private List<Lookahead> phase2lookaheads = new ArrayList<>();
     
