@@ -757,7 +757,7 @@ public class LexicalState {
         for (int i = 0; i < states.length; i++) {
             NfaState tmp = indexedAllStates.get(states[i]);
 
-            if ((tmp.getAsciiMoves()[c / 64] & (1L << c % 64)) != 0L)
+            if (tmp.hasAsciiMove(c)) 
                 return true;
         }
 

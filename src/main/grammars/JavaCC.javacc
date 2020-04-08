@@ -401,6 +401,16 @@ INJECT(Identifier) :
    }
 }
 
+INJECT(interface Node) :
+{
+   import com.javacc.Grammar;
+}
+{
+   Grammar getGrammar();
+   void setGrammar(Grammar grammar);
+}
+
+
 INJECT(Token) :
 {
     import com.javacc.Grammar;
@@ -453,35 +463,6 @@ INJECT(Token) :
     public void clearSpecialToken() {
         specialToken = null;
     }
-}
-
-INJECT(interface Node) :
-{
-   import com.javacc.Grammar;
-}
-{
-   Grammar getGrammar();
-   void setGrammar(Grammar grammar);
-   /*
-   default List<Node> descendants(NodeFilter filter) {
-       List<Node> result = new ArrayList<>();
-       for (Node child : children()) {
-          if (filter.accept(child)) {
-              result.add(child);
-          }
-          result.addAll(child.descendants(filter)); 
-       }
-       return result;
-    }*/
-    
-    default List<Node> children() {
-        List<Node> result = new ArrayList<>();
-        for (int i = 0; i < getChildCount(); i++) {
-            result.add(getChild(i));
-        }
-        return result;
-    }
-
 }
 
 INJECT(BaseNode) :
@@ -542,16 +523,6 @@ INJECT(GrammarFile) :
     public String getDefaultLexicalState() {
        return null; //TODO
     }
-}
-
-INJECT(GrammarFile) :
-{}
-{
-//   public void close() {
-//      for (TokenProduction tp : descendantsOfType(TokenProduction.class)) {
-//         getGrammar().addTokenProduction(tp);
-//      }
-//   }
 }
 
 GrammarFile Root() throws IOException #GrammarFile :

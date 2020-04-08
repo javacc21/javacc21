@@ -1105,7 +1105,6 @@ public final void backup(int amount) {
             [#var atStart=true]
             [#list subSet as state]
               [@dumpMoveForCompositeState state, byteNum, !atStart/]
-               [#-- ${state.dumpMoveForCompositeState(byteNum, !atStart)}--]
               [#set atStart = false]
             [/#list]
          [/#list]
@@ -1139,7 +1138,6 @@ public final void backup(int amount) {
               if (jjCanMove_${nonAsciiMethod}(hiByte, i1, i2, l1, l2))
    [/#if]
    [#if kindToPrint != MAX_INT] {
-       [#-- if byteNum lt 0 && asciiMoves[byteNum] != -1> {</#if><#lt --]
                   if (kind > ${kindToPrint})
                       kind = ${kindToPrint};
    [/#if]
@@ -1174,12 +1172,6 @@ public final void backup(int amount) {
    [#if kindToPrint != MAX_INT]
          }
    [/#if]
-   [#-- if byteNum < 0 || (byteNum >=0 && asciiMoves[byteNum] != -1)>
-       <#if kindToPrint != MAX_INT>
-               }
-       </#if>
-   </#if --]
-   
  [/#macro]
 
 

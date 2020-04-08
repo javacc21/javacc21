@@ -103,8 +103,14 @@ public interface Node
       * Most implementations of this should return a copy or
       * an immutable wrapper around the list.
       */
-     List<Node> children();
-     
+      default List<Node> children() {
+         List<Node> result = new ArrayList<>();
+         for (int i = 0; i < getChildCount(); i++) {
+             result.add(getChild(i));
+         }
+         return result;
+      }
+
      // The following 3 methods will typically delegate
      // straightforwardly to a Map<String, Object> object-s get/set/containsKey/keySet methods.
           

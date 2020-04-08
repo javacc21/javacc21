@@ -116,6 +116,10 @@ public class NfaState {
         }
         return ll;
     }
+    
+    boolean hasAsciiMove(char c) {
+        return asciiMoves.get(c);
+    }
 
     public int getInNextOf() {
         return inNextOf;
