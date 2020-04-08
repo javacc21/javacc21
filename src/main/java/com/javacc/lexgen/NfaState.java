@@ -54,7 +54,7 @@ public class NfaState {
     private char matchSingleChar;
     private int[] nonAsciiMoveIndices;
 
-    long[] asciiMoves = new long[2];
+    private BitSet asciiMoves = new BitSet();
     private char[] charMoves = null;
     private NfaState next;
     Vector<NfaState> epsilonMoves = new Vector<NfaState>();
@@ -110,7 +110,11 @@ public class NfaState {
     }
 
     public long[] getAsciiMoves() {
-        return asciiMoves;
+        long[] ll = asciiMoves.toLongArray();
+        if (ll.length !=2) {
+            ll = Arrays.copyOf(ll, 2);
+        }
+        return ll;
     }
 
     public int getInNextOf() {
@@ -149,21 +153,23 @@ public class NfaState {
         return usefulEpsilonMoves;
     }
 
-    static private void InsertInOrder(List<NfaState> v, NfaState s) {
-        int j;
-
-        for (j = 0; j < v.size(); j++)
-            if (v.get(j).id > s.id)
-                break;
-            else if (v.get(j).id == s.id)
+    static private void InsertInOrder(List<NfaState> stateList, NfaState stateToInsert) {
+        for (ListIterator<NfaState> it = stateList.listIterator(); it.hasNext();) {
+            NfaState state = it.next();
+            if (state.id == stateToInsert.id) {
                 return;
-
-        v.add(j, s);
+            }
+            if (state.id > stateToInsert.id) {
+                stateList.add(it.previousIndex(), stateToInsert);
+                return;
+            }
+        }
+        stateList.add(stateToInsert);
     }
 
     public boolean isNeeded(int byteNum) {
-        return (byteNum >= 0 && asciiMoves[byteNum] != 0L) || (byteNum < 0 && nonAsciiMethod != -1);
-
+        boolean  hasAsciiMoves = byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
+        return (byteNum >= 0 && hasAsciiMoves) || (byteNum < 0 && nonAsciiMethod != -1);
     }
 
     private static char[] ExpandCharArr(char[] oldArr, int incr) {
@@ -177,7 +183,7 @@ public class NfaState {
     }
 
     private void addASCIIMove(char c) {
-        asciiMoves[c / 64] |= (1L << (c % 64));
+        asciiMoves.set(c);
     }
 
     public void addChar(char c) {
@@ -329,20 +335,13 @@ public class NfaState {
     }
 
     public boolean hasTransitions() {
-        return (asciiMoves[0] != 0L || asciiMoves[1] != 0L
+        return (asciiMoves.cardinality() > 0
                 || (getCharMoves() != null && getCharMoves()[0] != 0) || (rangeMoves != null && rangeMoves[0] != 0));
     }
 
     void mergeMoves(NfaState other) {
         // Warning : This function does not merge epsilon moves
-        if (asciiMoves == other.asciiMoves) {
-            grammar.addSemanticError(null, "Bug in JavaCC : Please send "
-                    + "a report along with the input that caused this. Thank you.");
-            throw new Error();
-        }
-
-        asciiMoves[0] = asciiMoves[0] | other.asciiMoves[0];
-        asciiMoves[1] = asciiMoves[1] | other.asciiMoves[1];
+       asciiMoves.or(other.asciiMoves);
 
         if (other.getCharMoves() != null) {
             if (getCharMoves() == null)
@@ -404,7 +403,7 @@ public class NfaState {
             NfaState other = lexicalState.allStates.get(i);
 
             if (this != other && other.index != -1 && kindToPrint == other.kindToPrint
-                    && asciiMoves[0] == other.asciiMoves[0] && asciiMoves[1] == other.asciiMoves[1]
+                    && asciiMoves.equals(other.asciiMoves)
                     && EqualCharArr(getCharMoves(), other.getCharMoves())
                     && EqualCharArr(rangeMoves, other.rangeMoves)) {
                 if (getNext() == other.getNext())
@@ -490,8 +489,7 @@ public class NfaState {
                 if ((tmp1 = epsilonMoves.get(i)).hasTransitions()) {
                     for (j = i + 1; j < epsilonMoves.size(); j++) {
                         if ((tmp2 = epsilonMoves.get(j)).hasTransitions()
-                                && (tmp1.asciiMoves[0] == tmp2.asciiMoves[0]
-                                        && tmp1.asciiMoves[1] == tmp2.asciiMoves[1]
+                                && (tmp1.asciiMoves.equals(tmp2.asciiMoves)
                                         && EqualCharArr(tmp1.getCharMoves(), tmp2.getCharMoves()) && EqualCharArr(
                                         tmp1.rangeMoves, tmp2.rangeMoves))) {
                             if (equivStates == null) {
@@ -616,8 +614,9 @@ public class NfaState {
         if (onlyChar == 1)
             return c == matchSingleChar;
 
-        if (c < 128)
-            return ((asciiMoves[c / 64] & (1L << c % 64)) != 0L);
+        if (c < 128) {
+            return asciiMoves.get(c);
+        }
 
         // Just check directly if there is a move for this char
         if (getCharMoves() != null && getCharMoves()[0] != 0) {
@@ -975,7 +974,7 @@ public class NfaState {
         if (byteNum < 0 && this.nonAsciiMethod != other.nonAsciiMethod) {
             return false;
         }
-        if (byteNum >= 0 && this.asciiMoves != other.asciiMoves) {
+        if (byteNum >=0 && !this.asciiMoves.equals(other.asciiMoves)) {
             return false;
         }
         if (this.getNext().epsilonMovesString == other.getNext().epsilonMovesString) {
@@ -1005,8 +1004,16 @@ public class NfaState {
 
     public boolean isOnlyState(int byteNum) {
         for (NfaState state : lexicalState.allStates) {
-            if (state.index != -1 && state.index != this.index && state.isNeeded(byteNum)
-                    && ((asciiMoves[byteNum] & state.asciiMoves[byteNum]) != 0L)) {
+            BitSet bs = new BitSet();
+            bs.or(asciiMoves);
+            bs.and(state.asciiMoves);
+            boolean intersects = bs.cardinality() > 0;
+            if (intersects) {
+                intersects = byteNum == 0 ? bs.previousSetBit(63) >=0 : bs.nextSetBit(64) >=0;
+            }
+            long[] ll = asciiMoves.toLongArray();
+            long asciiMoveLong = ll.length > byteNum ? ll[byteNum] : 0L;
+            if (state.index != -1 && state.index != this.index && state.isNeeded(byteNum) && intersects) {
                 return false;
             }
         }

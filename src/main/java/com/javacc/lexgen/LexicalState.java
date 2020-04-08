@@ -757,7 +757,7 @@ public class LexicalState {
         for (int i = 0; i < states.length; i++) {
             NfaState tmp = indexedAllStates.get(states[i]);
 
-            if ((tmp.asciiMoves[c / 64] & (1L << c % 64)) != 0L)
+            if ((tmp.getAsciiMoves()[c / 64] & (1L << c % 64)) != 0L)
                 return true;
         }
 
@@ -961,9 +961,9 @@ public class LexicalState {
         for (int i = 0; i < states.length; i++) {
             tmp = states[i];
 
-            if (tmp.asciiMoves[byteNum] != 0L) {
+            if (tmp.getAsciiMoves()[byteNum] != 0L) {
                 int j;
-                int p = numberOfBitsSet(tmp.asciiMoves[byteNum]);
+                int p = numberOfBitsSet(tmp.getAsciiMoves()[byteNum]);
 
                 for (j = 0; j < i; j++)
                     if (cardinalities[j] <= p)
@@ -985,15 +985,15 @@ public class LexicalState {
             tmp = (NfaState) original.get(0);
             original.removeElement(tmp);
 
-            long bitVec = tmp.asciiMoves[byteNum];
+            long bitVec = tmp.getAsciiMoves()[byteNum];
             List<NfaState> subSet = new Vector<NfaState>();
             subSet.add(tmp);
 
             for (int j = 0; j < original.size(); j++) {
                 NfaState tmp1 = (NfaState) original.get(j);
 
-                if ((tmp1.asciiMoves[byteNum] & bitVec) == 0L) {
-                    bitVec |= tmp1.asciiMoves[byteNum];
+                if ((tmp1.getAsciiMoves()[byteNum] & bitVec) == 0L) {
+                    bitVec |= tmp1.getAsciiMoves()[byteNum];
                     subSet.add(tmp1);
                     original.removeElementAt(j--);
                 }
