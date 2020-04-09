@@ -81,7 +81,7 @@ public class ParserData {
             Expansion exp = phase3list.get(phase3index);
             setupPhase3Builds(exp, exp.getPhase3LookaheadAmount());
         }
-        // Not sure why it's necesssary, but we need to get rid of duplicates
+        // Not sure why it's necessary, but we need to get rid of duplicates
         this.phase3list = new ArrayList<>(new LinkedHashSet<>(phase3list));
     }
         
@@ -154,7 +154,33 @@ public class ParserData {
 		public void visit(TryBlock exp) {visit(exp.getNestedExpansion());}
 
 		public void visit(Lookahead la) {}
-	}; 
+	};
+	
+    /**
+     * A visitor that checks whether there is a self-referential loop in a 
+     * Regexp reference. It is a much more terse, readable replacement
+     * for some ugly legacy code.
+     * @author revusky
+     *
+     */
+    public class RegexpVisitor extends Node.Visitor {
+        
+        private HashSet<RegularExpression> alreadyVisited = new HashSet<>(), currentlyVisiting = new HashSet<>();
+        
+        public void visit(RegexpRef ref) {
+            RegularExpression referredTo = ref.getRegexp();
+            if (!alreadyVisited.contains(referredTo)) {
+                if (!currentlyVisiting.contains(referredTo)) {
+                    currentlyVisiting.add(referredTo);
+                    visit(referredTo);
+                    currentlyVisiting.remove(referredTo);
+                } else {
+                    alreadyVisited.add(referredTo);
+                    grammar.addSemanticError(ref, "Self-referential loop detected");
+                }
+            }
+        }
+    }
 
     
     private void generate3R(Expansion expansion, int count) {
@@ -621,31 +647,12 @@ public class ParserData {
                      grammar.addSemanticError(exp, "Expansion can be matched by empty string.");
         		 }
         	 }
-  
 
-             // Now we do a similar, but much simpler walk for the regular
-             // expression part of
-             // the grammar. Here we are looking for any kind of loop, not just
-             // left recursions,
-             // so we only need to do the equivalent of the above walk.
-             // This is not done if option USER_DEFINED_LEXER is set to true.
-             if (!grammar.getOptions().getUserDefinedLexer()) {
+
+            if (!grammar.getOptions().getUserDefinedLexer()) {
+                 RegexpVisitor reVisitor = new RegexpVisitor();
                  for (TokenProduction tp : grammar.getAllTokenProductions()) {
-                     List<RegexpSpec> respecs = tp.getRegexpSpecs();
-                     for (RegexpSpec res : respecs) {
-                         RegularExpression rexp = res.getRegexp();
-                         if (rexp.walkStatus == 0) {
-                             rexp.walkStatus = -1;
-                             if (rexpWalk(rexp)) {
-                                 loopString = "..." + rexp.getLabel() + "... --> "
-                                         + loopString;
-                                 grammar.addSemanticError(rexp,
-                                         "Loop in regular expression detected: \""
-                                                 + loopString + "\"");
-                             }
-                             rexp.walkStatus = 1;
-                         }
-                     }
+                     reVisitor.visit(tp);
                  }
              }
 
@@ -694,69 +701,6 @@ public class ParserData {
          return false;
      }
      
-         // The string in which the following methods store information.
-     private String loopString;
-
-
-     // Returns true to indicate an unraveling of a detected loop,
-     // and returns false otherwise.
-     private boolean rexpWalk(RegularExpression rexp) {
-         if (rexp instanceof RegexpRef) {
-             RegexpRef jn = (RegexpRef) rexp;
-             if (jn.getRegexp().walkStatus == -1) {
-                 jn.getRegexp().walkStatus = -2;
-                 loopString = "..." + jn.getRegexp().getLabel() + "...";
-                 // Note: Only the regexpr's of RJustName nodes and the top leve
-                 // regexpr's can have labels. Hence it is only in these cases
-                 // that
-                 // the labels are checked for to be added to the loopString.
-                 return true;
-             } else if (jn.getRegexp().walkStatus == 0) {
-                 jn.getRegexp().walkStatus = -1;
-                 if (rexpWalk(jn.getRegexp())) {
-                     loopString = "..." + jn.getRegexp().getLabel() + "... --> "
-                             + loopString;
-                     if (jn.getRegexp().walkStatus == -2) {
-                         jn.getRegexp().walkStatus = 1;
-                         grammar.addSemanticError(jn.getRegexp(),
-                                 "Loop in regular expression detected: \""
-                                         + loopString + "\"");
-                         return false;
-                     } else {
-                         jn.getRegexp().walkStatus = 1;
-                         return true;
-                     }
-                 } else {
-                     jn.getRegexp().walkStatus = 1;
-                     return false;
-                 }
-             }
-         } else if (rexp instanceof RegexpChoice) {
-             for (RegularExpression re : ((RegexpChoice) rexp).getChoices()) {
-                 if (rexpWalk(re)) {
-                     return true;
-                 }
-             }
-             return false;
-         } else if (rexp instanceof RegexpSequence) {
-             for (RegularExpression re : ((RegexpSequence) rexp).getUnits()) {
-                 if (rexpWalk(re)) {
-                     return true;
-                 }
-             }
-             return false;
-         } else if (rexp instanceof OneOrMoreRegexp) {
-             return rexpWalk(((OneOrMoreRegexp) rexp).getRegexp());
-         } else if (rexp instanceof ZeroOrMoreRegexp) {
-             return rexpWalk(((ZeroOrMoreRegexp) rexp).getRegexp());
-         } else if (rexp instanceof ZeroOrOneRegexp) {
-             return rexpWalk(((ZeroOrOneRegexp) rexp).getRegexp());
-         } else if (rexp instanceof RepetitionRange) {
-             return rexpWalk(((RepetitionRange) rexp).getRegexp());
-         }
-         return false;
-     }
-    
      private boolean hasImplicitLookahead(Expansion exp) {
          return !(exp instanceof ExpansionSequence) && !(exp.getLookahead() instanceof ExplicitLookahead);
      }

@@ -113,15 +113,6 @@ public abstract class RegularExpression extends Expansion {
         return false;
     }
 
-    /**
-     * The following variable is used to maintain state information for the loop
-     * determination algorithm: It is initialized to 0, and set to -1 if this
-     * node has been visited in a pre-order walk, and then it is set to 1 if the
-     * pre-order walk of the whole graph from this node has been traversed.
-     * i.e., -1 indicates partially processed, and 1 indicates fully processed.
-     */
-    public int walkStatus = 0;
-
     public final String getLabel() {
     	String label = super.getLabel();
         return label.length() == 0 ? String.valueOf(id) : label;
