@@ -79,7 +79,7 @@ public class ParserData {
         }
         for (int phase3index=0; phase3index < phase3list.size(); phase3index++) {
             Expansion exp = phase3list.get(phase3index);
-            setupPhase3Builds(exp, exp.getPhase3LookaheadAmount());
+            new Phase3TableBuilder(exp.getPhase3LookaheadAmount()).visit(exp);
         }
         // Not sure why it's necessary, but we need to get rid of duplicates
         this.phase3list = new ArrayList<>(new LinkedHashSet<>(phase3list));
@@ -183,75 +183,56 @@ public class ParserData {
     }
 
     
-    private void generate3R(Expansion expansion, int count) {
-        Expansion seq = expansion;
-          if (expansion.getPhase2RoutineName() == null) {
-            while (true) {
-                if (seq instanceof ExpansionSequence
-                        && ((ExpansionSequence) seq).getChildCount() == 2) {
-                    seq = (Expansion) seq.getChild(1);
-                } else if (seq instanceof NonTerminal) {
-                    NonTerminal e_nrw = (NonTerminal) seq;
-                    BNFProduction ntprod = grammar.getProductionByName(e_nrw.getName());
-                        seq = ntprod.getExpansion();
-                } else
-                    break;
-            }
-            if (seq instanceof RegularExpression) {
-                expansion.setOrdinal(((RegularExpression) seq).getOrdinal());
-                return;
-            }
-            gensymindex++;
-            expansion.setPhase3RoutineName("phase3R_" + gensymindex);
-        }
-          if (expansion.getPhase3LookaheadAmount()< count) {
-            phase3list.add(expansion);
-            expansion.setPhase3LookaheadAmount(count);
-        }
-    }
     
-    private void setupPhase3Builds(Expansion e, int amt) {
-        if (e instanceof RegularExpression) {
-            ; // nothing to do here
-        } else if (e instanceof NonTerminal) {
-            // All expansions of non-terminals have the "name" fields set. So
-            // there's no need to check it below for "e_nrw" and "ntexp". In
-            // fact, we rely here on the fact that the "name" fields of both
-            // these
-            // variables are the same.
-            NonTerminal nonTerminal = (NonTerminal) e;
-            BNFProduction production = nonTerminal.getProduction();
-            generate3R(production.getExpansion(), amt);
-        } else if (e instanceof ExpansionChoice) {
-            for (Expansion sub : e.childrenOfType(Expansion.class)) {
-                generate3R(sub, amt);
+    public class Phase3TableBuilder extends Node.Visitor {
+        private int lookaheadAmount;
+        
+        Phase3TableBuilder(int lookaheadAmount) {
+            this.lookaheadAmount = lookaheadAmount;
+        }
+        
+        public void visit(NonTerminal nt) {
+            BNFProduction production = nt.getProduction();
+            generate3R(nt.getProduction().getExpansion());
+        }
+        
+        public void visit(ExpansionChoice choice) {
+            for (Expansion sub: choice.getChoices()) {
+                generate3R(sub);
             }
-        } else if (e instanceof ExpansionSequence) {
-            ExpansionSequence e_nrw = (ExpansionSequence) e;
-            // We skip the first element in the following iteration since it is
-            // the
-            // Lookahead object.
-            int cnt = amt;
-            for (int i = 1; i < e_nrw.getChildCount(); i++) {
-                Expansion eseq = (Expansion) e_nrw.getChild(i);
-                setupPhase3Builds(eseq, cnt);
-                cnt -= eseq.getMinimumSize();
-                if (cnt <= 0)
-                    break;
+        }
+        
+        public void visit(ExpansionSequence sequence) {
+            int prevLookaheadAmount = this.lookaheadAmount;
+            for (Expansion sub: sequence.getUnits()) {
+                visit(sub);
+                lookaheadAmount -= sub.getMinimumSize();
+                if (lookaheadAmount <=0) break;
             }
-        }  
-        else if (e instanceof TryBlock) {
-            setupPhase3Builds(e.getNestedExpansion(), amt);
-        } else if (e instanceof OneOrMore) {
-            generate3R(e.getNestedExpansion(), amt);
-        } else if (e instanceof ZeroOrMore) {
-            generate3R(e.getNestedExpansion(), amt);
-        } else if (e instanceof ZeroOrOne) {
-            generate3R(e.getNestedExpansion(), amt);
+            this.lookaheadAmount = prevLookaheadAmount;
+        }
+        
+        public void visit(RegularExpression re) {}
+        public void visit(Lookahead la) {}
+        
+        public void visit(OneOrMore exp) {generate3R(exp.getNestedExpansion()); }
+        public void visit(ZeroOrMore exp) {generate3R(exp.getNestedExpansion());}
+        public void visit(ZeroOrOne exp) {generate3R(exp.getNestedExpansion());}
+        
+        
+        private void generate3R(Expansion expansion) {
+            // It appears that the only possible Expansion types here are ExpansionChoice and ExpansionSequence
+              if (expansion.getPhase2RoutineName() == null) {
+                gensymindex++;
+                expansion.setPhase3RoutineName("phase3R_" + gensymindex);
+             }
+             if (expansion.getPhase3LookaheadAmount()< lookaheadAmount) {
+                 phase3list.add(expansion);
+                 expansion.setPhase3LookaheadAmount(lookaheadAmount);
+            }
         }
     }
-
-        
+       
  // This method contains various sanity checks and adjustments
   // that have been in the code forever. There is a general need
   // to clean this up because it presents a significant obstacle
