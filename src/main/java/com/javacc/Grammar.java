@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -48,18 +48,18 @@ import freemarker.template.TemplateException;
 public class Grammar extends BaseNode {
 
     private String filename,
-                   parserClassName,
-                   lexerClassName,
-                   parserPackage,
-                   constantsClassName,
-                   baseNodeClassName="BaseNode";
+    parserClassName,
+    lexerClassName,
+    parserPackage,
+    constantsClassName,
+    baseNodeClassName="BaseNode";
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
     private String defaultLexicalState = "DEFAULT";
     private long nextGenerationIndex = 1L;
     private int lookaheadLimit;
     private boolean considerSemanticLA;
-   private ParserData parserData;
+    private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
 
@@ -77,9 +77,9 @@ public class Grammar extends BaseNode {
     private Map<String, String> nodePackageNames = new HashMap<>();
     private List<Node> codeInjections = new ArrayList<>();
     private boolean usesCommonTokenAction, usesTokenHook, usesCloseNodeScopeHook, usesOpenNodeScopeHook, usesjjtreeOpenNodeScope, usesjjtreeCloseNodeScope;
-    
+
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
-    
+
     public Grammar(JavaCCOptions options) {
         this.options = options;
         options.setGrammar(this);
@@ -87,19 +87,19 @@ public class Grammar extends BaseNode {
     }
 
     public String[] getLexicalStates() {
-    	return lexicalStates.toArray(new String[]{});
+        return lexicalStates.toArray(new String[]{});
     }
-    
+
     public void addStringLiteralToResolve(RegexpStringLiteral stringLiteral) {
-    	stringLiteralsToResolve.add(stringLiteral);
+        stringLiteralsToResolve.add(stringLiteral);
     }
-    
+
     public Set<RegexpStringLiteral> getStringLiteralsToResolve() {
-    	return stringLiteralsToResolve;
+        return stringLiteralsToResolve;
     }
-    
+
     Node parse(String location) throws IOException, ParseException {
-    	File file = new File(location);
+        File file = new File(location);
         Reader input = new FileReader(file);
         JavaCCParser parser = new JavaCCParser(this, input);
         parser.setInputSource(file.getCanonicalFile().getName());
@@ -107,11 +107,11 @@ public class Grammar extends BaseNode {
         System.out.println("Parsing grammar file " + location + " . . .");
         GrammarFile rootNode = parser.Root();
         if (!isInInclude()) {
-        	addChild(rootNode);
+            addChild(rootNode);
         }
         return rootNode;
     }
-    
+
     public Node include(String location) throws IOException, ParseException {
         File file = new File(location);
         if (!file.exists()) {
@@ -137,7 +137,7 @@ public class Grammar extends BaseNode {
             return root;
         }
     }
-    
+
     public void createOutputDir() {
         String outputDirectory = options.getOutputDirectory();
         if (outputDirectory.equals("")) {
@@ -182,7 +182,7 @@ public class Grammar extends BaseNode {
         for (String lexicalState : lexicalStates) {
             lexerData.addLexicalState(lexicalState);
         }
-//        semanticizer.start();
+        //        semanticizer.start();
         parserData.semanticize();
     }
 
@@ -205,12 +205,12 @@ public class Grammar extends BaseNode {
     public JavaCCOptions getOptions() {
         return options;
     }
-    
+
     void setOptions(JavaCCOptions options) {
         this.options = options;
         options.setGrammar(this);
     }
-    
+
     public String getConstantsClassName() {
         if (constantsClassName == null || constantsClassName.length() == 0) {
             constantsClassName = getParserClassName();
@@ -224,42 +224,42 @@ public class Grammar extends BaseNode {
 
     public String getParserClassName() {
         if (parserClassName == null || parserClassName.length() ==0) {
-             String name = new File(filename).getName();
-             int lastDot = name.lastIndexOf('.');
-             if (lastDot >0) {
-                 name = name.substring(0, lastDot);
-             }
-             if (!name.toLowerCase().endsWith("parser")) {
-                 name += "Parser";
-             }
-             if (Character.isLowerCase(name.charAt(0))) {
-                 name = name.substring(0, 1).toUpperCase() + name.substring(1);
-             }
-             parserClassName = name;
+            String name = new File(filename).getName();
+            int lastDot = name.lastIndexOf('.');
+            if (lastDot >0) {
+                name = name.substring(0, lastDot);
+            }
+            if (!name.toLowerCase().endsWith("parser")) {
+                name += "Parser";
+            }
+            if (Character.isLowerCase(name.charAt(0))) {
+                name = name.substring(0, 1).toUpperCase() + name.substring(1);
+            }
+            parserClassName = name;
         }
         return parserClassName;
     }
-    
+
     public void setParserClassName(String parserClassName) {
         this.parserClassName = parserClassName;
     }
-    
+
     public void setLexerClassName(String lexerClassName) {
         this.lexerClassName = lexerClassName;
     }
-    
+
     public void setConstantsClassName(String constantsClassName) {
         this.constantsClassName = constantsClassName;
     }
-    
+
     public void setBaseNodeClassName(String baseNodeClassName) {
         this.baseNodeClassName = baseNodeClassName;
     }
-    
+
     public String getBaseNodeClassName() {
         return baseNodeClassName;
     }
-    
+
     public String getLexerClassName() {
         if (lexerClassName == null || lexerClassName.length() == 0) {
             lexerClassName = getParserClassName();
@@ -279,7 +279,7 @@ public class Grammar extends BaseNode {
         this.defaultLexicalState = defaultLexicalState;
         addLexicalState(defaultLexicalState);
     }
-    
+
     public List<Node> getOtherParserCodeDeclarations() {
         List<Node> result = new ArrayList<Node>();
         if (parserCode != null) {
@@ -301,8 +301,8 @@ public class Grammar extends BaseNode {
         }
         return result;
     }
-    
-    
+
+
     public List<ImportDeclaration> getParserCodeImports() {
         List<ImportDeclaration> result = new ArrayList<ImportDeclaration>();
         if (parserCode != null) {
@@ -332,19 +332,19 @@ public class Grammar extends BaseNode {
     }
 
     public Collection<BNFProduction> getParserProductions() {
-    	return getProductionTable().values();
-     }
-    
+        return getProductionTable().values();
+    }
+
     /**
      * A symbol table of all grammar productions.
      */
     public Map<String, BNFProduction> getProductionTable() {
-    	if (productionTable == null) {
-    		productionTable = new LinkedHashMap<>();
-    		for (BNFProduction production : descendantsOfType(BNFProduction.class )) {
-    			productionTable.put(production.getName(), production);
-    		}
-    	}
+        if (productionTable == null) {
+            productionTable = new LinkedHashMap<>();
+            for (BNFProduction production : descendantsOfType(BNFProduction.class )) {
+                productionTable.put(production.getName(), production);
+            }
+        }
         return productionTable;
     }
 
@@ -365,12 +365,12 @@ public class Grammar extends BaseNode {
      * expressions within BNF productions.
      */
     public List<TokenProduction> getAllTokenProductions() {
-    	return tokenProductions;
+        return tokenProductions;
     }
-    
-//    public List<TokenProduction> getAllTokenProductions() {
-//    	return descendantsOfType(TokenProduction.class);
-//    }
+
+    //    public List<TokenProduction> getAllTokenProductions() {
+    //    	return descendantsOfType(TokenProduction.class);
+    //    }
 
     public void addTokenProduction(TokenProduction tp) {
         tokenProductions.add(tp);
@@ -424,7 +424,7 @@ public class Grammar extends BaseNode {
         String tokenName = tokenNames.get(index);
         return tokenName == null ? String.valueOf(index) : tokenName;
     }
-    
+
     public String classNameFromTokenName(String tokenName) {
         if (Character.isDigit(tokenName.charAt(0))) {
             return null;
@@ -435,7 +435,7 @@ public class Grammar extends BaseNode {
         tokenNamesToConstName.put(tokenName, tokenName);
         return tokenName;
     }
-    
+
     public String constNameFromClassName(String className) {
         return this.tokenNamesToConstName.get(className);
     }
@@ -528,7 +528,7 @@ public class Grammar extends BaseNode {
     public Set<String> getNodeNames() {
         return nodeNames;
     }
-    
+
     public void addNodeType(String nodeName) {
         if (nodeName.equals("void")) {
             return;
@@ -537,7 +537,7 @@ public class Grammar extends BaseNode {
         nodeClassNames.put(nodeName, options.getNodePrefix() + nodeName);
         nodePackageNames.put(nodeName, getNodePackage());
     }
-    
+
     public String getNodeClassName(String nodeName) {
         String className = nodeClassNames.get(nodeName);
         if (className ==null) {
@@ -545,7 +545,7 @@ public class Grammar extends BaseNode {
         }
         return className;
     }
-    
+
     public String getNodePackageName(String nodeName) {
         return nodePackageNames.get(nodeName);
     }
@@ -556,16 +556,16 @@ public class Grammar extends BaseNode {
         if (node == null && null instanceof Token) {
             return;
         } 
-	else if (node instanceof TokenManagerDecls) {
-	    ClassOrInterfaceBody body = node.childrenOfType(ClassOrInterfaceBody.class).get(0);
-	    checkForHooks(body, getLexerClassName());
-	}
+        else if (node instanceof TokenManagerDecls) {
+            ClassOrInterfaceBody body = node.childrenOfType(ClassOrInterfaceBody.class).get(0);
+            checkForHooks(body, getLexerClassName());
+        }
         else if (node instanceof ParserCodeDecls) {
-	    List<CompilationUnit> cus = node.childrenOfType(CompilationUnit.class);
-	    if (!cus.isEmpty()) {
-		checkForHooks(cus.get(0), getParserClassName());
-	    }
-	}
+            List<CompilationUnit> cus = node.childrenOfType(CompilationUnit.class);
+            if (!cus.isEmpty()) {
+                checkForHooks(cus.get(0), getParserClassName());
+            }
+        }
         else if (node instanceof CodeInjection) {
             CodeInjection ci = (CodeInjection) node;
             if (ci.name.equals(getLexerClassName())) {
@@ -628,45 +628,45 @@ public class Grammar extends BaseNode {
         checkForHooks(n, null);
         codeInjections.add(n);
     }
-    
+
     public boolean getUsesCommonTokenAction() {
         return usesCommonTokenAction;
     }
-    
+
     public boolean getUsesTokenHook() {
         return usesTokenHook;
     }
-    
+
     public boolean getUsesjjtreeOpenNodeScope() {
         return usesjjtreeOpenNodeScope;
     }
-    
+
     public boolean getUsesjjtreeCloseNodeScope() {
         return usesjjtreeCloseNodeScope;
     }
-    
+
     public boolean getUsesOpenNodeScopeHook() {
         return usesOpenNodeScopeHook;
     }
-    
+
     public boolean getUsesCloseNodeScopeHook() {
         return usesCloseNodeScopeHook;
     }
     public boolean isInInclude() {
         return includeNesting >0;
     }
-    
+
     public String getParserPackage() {
         return parserPackage;
     }
-    
+
     String getNodePackageName() {
         String nodePackage = options.getNodePackage();
         if (nodePackage.equals("")) 
             nodePackage = getParserPackage();
         return nodePackage;
     }
-    
+
     public File getParserOutputDirectory() throws IOException {
         String baseSrcDir = options.getBaseSourceDirectory();
         if (baseSrcDir.equals("")) {
@@ -695,7 +695,7 @@ public class Grammar extends BaseNode {
         }
         return dir;
     }
-    
+
     public File getNodeOutputDirectory(String nodeName) throws IOException {
         String nodePackage = getNodePackageName(nodeName);
         if (nodePackage == null) {
@@ -726,7 +726,7 @@ public class Grammar extends BaseNode {
         }
         return result;
     }
-    
+
     public String getNodePackage() {
         String nodePackage = options.getNodePackage();
         if (nodePackage.equals("")) {
@@ -734,20 +734,20 @@ public class Grammar extends BaseNode {
         }
         return nodePackage;
     }
-    
+
     public BitSet newBitSetForTokens() {
-    	return new BitSet(getLexerData().getTokenCount());
+        return new BitSet(getLexerData().getTokenCount());
     }
-    
+
     public String getCurrentNodeVariableName() {
         if (nodeVariableNameStack.isEmpty())
             return "null";
         return nodeVariableNameStack.get(nodeVariableNameStack.size() - 1);
     }
-    
+
     private final Utils utils = new Utils();
     private List<String> nodeVariableNameStack = new ArrayList<>();
-       
+
     public Utils getUtils() {return utils;}
     public class Utils {
         public void pushNodeVariableName(String jjtThis) {

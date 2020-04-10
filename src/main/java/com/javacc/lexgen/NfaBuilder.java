@@ -1,3 +1,33 @@
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+ * Copyright (c) 2006, Sun Microsystems Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notices,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
+ *       nor the names of any contributors may be used to endorse or promote
+ *       products derived from this software without specific prior written
+ *       permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package com.javacc.lexgen;
 
 import java.util.ArrayList;
@@ -38,11 +68,11 @@ public class NfaBuilder extends Node.Visitor {
     public void visit(CharacterList charList) {
         List<CharacterRange> descriptors = charList.getDescriptors();
         if (ignoreCase) {
-            descriptors = NfaBuilder.toCaseNeutral(descriptors);
+            descriptors = toCaseNeutral(descriptors);
         }
-        descriptors = NfaBuilder.sortDescriptors(descriptors);
+        descriptors = sortDescriptors(descriptors);
         if (charList.isNegated()) {
-            descriptors = NfaBuilder.removeNegation(descriptors);
+            descriptors = removeNegation(descriptors);
         }
         this.nfa = new Nfa(lexicalState);
         NfaState startState = nfa.getStart();
@@ -69,7 +99,7 @@ public class NfaBuilder extends Node.Visitor {
     }
 
     public void visit(RegexpChoice choice) {
-        List<RegularExpression> choices = NfaBuilder.compressCharLists(choice.getChoices());
+        List<RegularExpression> choices = compressCharLists(choice.getChoices());
         if (choices.size() == 1) {
             visit(choices.get(0));
         }
@@ -258,55 +288,55 @@ public class NfaBuilder extends Node.Visitor {
 
             /* Add ranges for which lower case is different. */
             for (;;) {
-                while (l > NfaBuilder.diffLowerCaseRanges[j])
+                while (l > diffLowerCaseRanges[j])
                     j += 2;
 
-                if (l < NfaBuilder.diffLowerCaseRanges[j]) {
-                    if (r < NfaBuilder.diffLowerCaseRanges[j])
+                if (l < diffLowerCaseRanges[j]) {
+                    if (r < diffLowerCaseRanges[j])
                         break;
 
-                    if (r <= NfaBuilder.diffLowerCaseRanges[j + 1]) {
+                    if (r <= diffLowerCaseRanges[j + 1]) {
                         CharacterRange crc = new CharacterRange();
-                        crc.left = Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j]);
-                        crc.right = (char) (Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j]) + r
-                                - NfaBuilder.diffLowerCaseRanges[j]);
+                        crc.left = Character.toLowerCase(diffLowerCaseRanges[j]);
+                        crc.right = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + r
+                                - diffLowerCaseRanges[j]);
                         result.add(crc);
                         break;
                     }
                     CharacterRange cr = new CharacterRange();
-                    cr.left = Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j]);
-                    cr.right = Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j + 1]);
+                    cr.left = Character.toLowerCase(diffLowerCaseRanges[j]);
+                    cr.right = Character.toLowerCase(diffLowerCaseRanges[j + 1]);
                     result.add(cr);
                 } else {
-                    if (r <= NfaBuilder.diffLowerCaseRanges[j + 1]) {
+                    if (r <= diffLowerCaseRanges[j + 1]) {
                         CharacterRange cr = new CharacterRange();
-                        cr.left = (char) (Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j]) + l
-                                - NfaBuilder.diffLowerCaseRanges[j]);
-                        cr.right = (char) (Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j]) + r
-                                - NfaBuilder.diffLowerCaseRanges[j]);
+                        cr.left = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + l
+                                - diffLowerCaseRanges[j]);
+                        cr.right = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + r
+                                - diffLowerCaseRanges[j]);
                         result.add(cr);
                         break;
                     }
                     CharacterRange crs = new CharacterRange();
-                    crs.left = (char) (Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j]) + l
-                            - NfaBuilder.diffLowerCaseRanges[j]);
-                    crs.right = Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j + 1]);
+                    crs.left = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + l
+                            - diffLowerCaseRanges[j]);
+                    crs.right = Character.toLowerCase(diffLowerCaseRanges[j + 1]);
                     result.add(crs);
                 }
 
                 j += 2;
-                while (r > NfaBuilder.diffLowerCaseRanges[j]) {
-                    if (r <= NfaBuilder.diffLowerCaseRanges[j + 1]) {
+                while (r > diffLowerCaseRanges[j]) {
+                    if (r <= diffLowerCaseRanges[j + 1]) {
                         CharacterRange cr = new CharacterRange();
-                        cr.left = Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j]);
-                        cr.right = (char) (Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j]) + r
-                                - NfaBuilder.diffLowerCaseRanges[j]);
+                        cr.left = Character.toLowerCase(diffLowerCaseRanges[j]);
+                        cr.right = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + r
+                                - diffLowerCaseRanges[j]);
                         result.add(cr);
                         break;
                     }
                     CharacterRange crs = new CharacterRange();
-                    crs.left = Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j]);
-                    crs.right = Character.toLowerCase(NfaBuilder.diffLowerCaseRanges[j + 1]);
+                    crs.left = Character.toLowerCase(diffLowerCaseRanges[j]);
+                    crs.right = Character.toLowerCase(diffLowerCaseRanges[j + 1]);
                     result.add(crs);
                     j += 2;
                 }
@@ -315,99 +345,77 @@ public class NfaBuilder extends Node.Visitor {
 
             /* Add ranges for which upper case is different. */
             j = 0;
-            while (l > NfaBuilder.diffUpperCaseRanges[j])
+            while (l > diffUpperCaseRanges[j])
                 j += 2;
 
-            if (l < NfaBuilder.diffUpperCaseRanges[j]) {
-                if (r < NfaBuilder.diffUpperCaseRanges[j])
+            if (l < diffUpperCaseRanges[j]) {
+                if (r < diffUpperCaseRanges[j])
                     continue;
 
-                if (r <= NfaBuilder.diffUpperCaseRanges[j + 1]) {
+                if (r <= diffUpperCaseRanges[j + 1]) {
                     CharacterRange crs = new CharacterRange();
-                    crs.left = Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j]);
-                    crs.right = (char) (Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j]) + r
-                            - NfaBuilder.diffUpperCaseRanges[j]);
+                    crs.left = Character.toUpperCase(diffUpperCaseRanges[j]);
+                    crs.right = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + r
+                            - diffUpperCaseRanges[j]);
                     result.add(crs);
                     continue;
                 }
                 CharacterRange cr = new CharacterRange();
-                cr.left = Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j]);
-                cr.right = Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j + 1]);
+                cr.left = Character.toUpperCase(diffUpperCaseRanges[j]);
+                cr.right = Character.toUpperCase(diffUpperCaseRanges[j + 1]);
                 result.add(cr);
             } else {
-                if (r <= NfaBuilder.diffUpperCaseRanges[j + 1]) {
+                if (r <= diffUpperCaseRanges[j + 1]) {
                     CharacterRange crs = new CharacterRange();
-                    crs.left = (char) (Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j]) + l
-                            - NfaBuilder.diffUpperCaseRanges[j]);
-                    crs.right = (char) (Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j]) + r
-                            - NfaBuilder.diffUpperCaseRanges[j]);
+                    crs.left = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + l
+                            - diffUpperCaseRanges[j]);
+                    crs.right = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + r
+                            - diffUpperCaseRanges[j]);
                     result.add(crs);
                     continue;
                 }
                 CharacterRange cr = new CharacterRange();
-                cr.left = (char) (Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j]) + l
-                        - NfaBuilder.diffUpperCaseRanges[j]);
-                cr.right = Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j + 1]);
+                cr.left = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + l
+                        - diffUpperCaseRanges[j]);
+                cr.right = Character.toUpperCase(diffUpperCaseRanges[j + 1]);
                 result.add(cr);
             }
             j += 2;
-            while (r > NfaBuilder.diffUpperCaseRanges[j]) {
-                if (r <= NfaBuilder.diffUpperCaseRanges[j + 1]) {
+            while (r > diffUpperCaseRanges[j]) {
+                if (r <= diffUpperCaseRanges[j + 1]) {
                     CharacterRange crs = new CharacterRange();
-                    crs.left = Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j]);
-                    crs.right = (char) (Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j]) + r
-                            - NfaBuilder.diffUpperCaseRanges[j]);
+                    crs.left = Character.toUpperCase(diffUpperCaseRanges[j]);
+                    crs.right = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + r
+                            - diffUpperCaseRanges[j]);
                     result.add(crs);
                     break;
                 }
                 CharacterRange cr = new CharacterRange();
-                cr.left = Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j]);
-                cr.right = Character.toUpperCase(NfaBuilder.diffUpperCaseRanges[j + 1]);
+                cr.left = Character.toUpperCase(diffUpperCaseRanges[j]);
+                cr.right = Character.toUpperCase(diffUpperCaseRanges[j + 1]);
                 result.add(cr);
                 j += 2;
             }
         }
         return result;
     }
-
+    
     static private List<CharacterRange> removeNegation(List<CharacterRange> descriptors) {
-        List<CharacterRange> result = new ArrayList<CharacterRange>();
-        int lastRemoved = -1; // One less than the first valid character.
-
-        for (CharacterRange obj : descriptors) {
-            if (obj.isSingleChar()) {
-                char c = obj.left;
-
-                if (c >= 0 && c <= lastRemoved + 1) {
-                    lastRemoved = c;
-                    continue;
-                }
-                CharacterRange crs = new CharacterRange();
-                crs.left = (char) (lastRemoved + 1);
-                crs.right = (char) ((lastRemoved = c) - 1);
-                result.add(crs);
-            } else {
-                char l = ((CharacterRange) obj).left;
-                char r = ((CharacterRange) obj).right;
-
-                if (l >= 0 && l <= lastRemoved + 1) {
-                    lastRemoved = r;
-                    continue;
-                }
-                CharacterRange crs = new CharacterRange();
-                crs.left = (char) (lastRemoved + 1);
-                crs.right = (char) (l - 1);
-                result.add(crs);
-                lastRemoved = r;
+        //NB. This routine depends on the fact that the descriptors list is already sorted by sortDescriptors()
+        List<CharacterRange> result = new ArrayList<>();
+        CharacterRange lastRange = null;
+        for (CharacterRange range : descriptors) {
+            if (range.left >0) {
+                char begin = (lastRange == null) ? 0 : (char) (lastRange.right+1); 
+                result.add(new CharacterRange(begin, (char) (range.left -1)));
             }
+            lastRange = range;
         }
-
-        // System.out.println("lastRem : " + (int)lastRemoved);
-        if (lastRemoved < (char) 0xffff) {
-            CharacterRange crs = new CharacterRange();
-            crs.left = (char) (lastRemoved + 1);
-            crs.right = (char) 0xffff;
-            result.add(crs);
+        if (lastRange !=null && lastRange.right < 0xFFFF) {
+            result.add(new CharacterRange((char) (lastRange.right+1), (char) 0xFFFF));
+        }
+        if (result.isEmpty()) {
+            result.add(new CharacterRange((char) 0, (char) 0xFFFF));
         }
         return result;
     }
@@ -444,8 +452,8 @@ public class NfaBuilder extends Node.Visitor {
             495, 498, 498, 499, 499, 501, 501, 507, 507, 509, 509, 511, 511, 513, 513, 515, 515, 517, 517, 519, 519,
             521, 521, 523, 523, 525, 525, 527, 527, 529, 529, 531, 531, 533, 533, 535, 535, 595, 595, 596, 596, 598,
             /* new for fixing 1.0.2 */598, 599, /* End new */599, /*
-                                                                   * 600, Sreeni fixed for 1.2
-                                                                   */
+             * 600, Sreeni fixed for 1.2
+             */
             601, 601, 603, 603, 608, 608, 611, 611, 616, 616, 617, 617, 623, 623, 626, 626, 643, 643, 648, 648, 650,
             651, 658, 658, 940, 940, 941, 943, 945, 961, /* new for fixing 1.0.2 */962, 962, /* End new */963, 971, 972,
             972, 973, 974, 976, 976, 977, 977, 981, 981, 982, 982, 995, 995, 997, 997, 999, 999, 1001, 1001, 1003, 1003,
@@ -480,44 +488,44 @@ public class NfaBuilder extends Node.Visitor {
             /*
              * new for fixing 1.0 .2
              */304, 304, /*
-                          * End new
-                          */
-            306, 306, 308, 308, 310, 310, 313, 313, 315, 315, 317, 317, 319, 319, 321, 321, 323, 323, 325, 325, 327,
-            327, 330, 330, 332, 332, 334, 334, 336, 336, 338, 338, 340, 340, 342, 342, 344, 344, 346, 346, 348, 348,
-            350, 350, 352, 352, 354, 354, 356, 356, 358, 358, 360, 360, 362, 362, 364, 364, 366, 366, 368, 368, 370,
-            370, 372, 372, 374, 374, 376, 376, 377, 377, 379, 379, 381, 381, 385, 385, 386, 386, 388, 388, 390, 390,
-            391, 391, /* new for fixing 1.0.2 */393, 393, /* End new */394, 394, 395, 395,
-            /* 398, Sreeni fixed for 1.2 */399, 399, 400, 400, 401, 401, 403, 403, 404, 404, 406, 406, 407, 407, 408,
-            408, 412, 412, 413, 413, 416, 416, 418, 418, 420, 420, 423, 423, 425, 425, 428, 428, 430, 430, 431, 431,
-            433, 434, 435, 435, 437, 437, 439, 439, 440, 440, 444, 444, 452, 452, 453, 453, 455, 455, 456, 456, 458,
-            458, 459, 459, 461, 461, 463, 463, 465, 465, 467, 467, 469, 469, 471, 471, 473, 473, 475, 475, 478, 478,
-            480, 480, 482, 482, 484, 484, 486, 486, 488, 488, 490, 490, 492, 492, 494, 494, 497, 497, 498, 498, 500,
-            500, 506, 506, 508, 508, 510, 510, 512, 512, 514, 514, 516, 516, 518, 518, 520, 520, 522, 522, 524, 524,
-            526, 526, 528, 528, 530, 530, 532, 532, 534, 534, 902, 902, 904, 906, 908, 908, 910, 911, 913, 929, 931,
-            939, 994, 994, 996, 996, 998, 998, 1000, 1000, 1002, 1002, 1004, 1004, 1006, 1006, 1025, 1036, 1038, 1039,
-            1040, 1040, 1041, 1041, 1042, 1071, 1120, 1120, 1122, 1122, 1124, 1124, 1126, 1126, 1128, 1128, 1130, 1130,
-            1132, 1132, 1134, 1134, 1136, 1136, 1138, 1138, 1140, 1140, 1142, 1142, 1144, 1144, 1146, 1146, 1148, 1148,
-            1150, 1150, 1152, 1152, 1168, 1168, 1170, 1170, 1172, 1172, 1174, 1174, 1176, 1176, 1178, 1178, 1180, 1180,
-            1182, 1182, 1184, 1184, 1186, 1186, 1188, 1188, 1190, 1190, 1192, 1192, 1194, 1194, 1196, 1196, 1198, 1198,
-            1200, 1200, 1202, 1202, 1204, 1204, 1206, 1206, 1208, 1208, 1210, 1210, 1212, 1212, 1214, 1214, 1217, 1217,
-            1219, 1219, 1223, 1223, 1227, 1227, 1232, 1232, 1234, 1234, 1236, 1236, 1238, 1238, 1240, 1240, 1242, 1242,
-            1244, 1244, 1246, 1246, 1248, 1248, 1250, 1250, 1252, 1252, 1254, 1254, 1256, 1256, 1258, 1258, 1262, 1262,
-            1264, 1264, 1266, 1266, 1268, 1268, 1272, 1272, 1329, 1366, 4256, 4293, 7680, 7680, 7682, 7682, 7684, 7684,
-            7686, 7686, 7688, 7688, 7690, 7690, 7692, 7692, 7694, 7694, 7696, 7696, 7698, 7698, 7700, 7700, 7702, 7702,
-            7704, 7704, 7706, 7706, 7708, 7708, 7710, 7710, 7712, 7712, 7714, 7714, 7716, 7716, 7718, 7718, 7720, 7720,
-            7722, 7722, 7724, 7724, 7726, 7726, 7728, 7728, 7730, 7730, 7732, 7732, 7734, 7734, 7736, 7736, 7738, 7738,
-            7740, 7740, 7742, 7742, 7744, 7744, 7746, 7746, 7748, 7748, 7750, 7750, 7752, 7752, 7754, 7754, 7756, 7756,
-            7758, 7758, 7760, 7760, 7762, 7762, 7764, 7764, 7766, 7766, 7768, 7768, 7770, 7770, 7772, 7772, 7774, 7774,
-            7776, 7776, 7778, 7778, 7780, 7780, 7782, 7782, 7784, 7784, 7786, 7786, 7788, 7788, 7790, 7790, 7792, 7792,
-            7794, 7794, 7796, 7796, 7798, 7798, 7800, 7800, 7802, 7802, 7804, 7804, 7806, 7806, 7808, 7808, 7810, 7810,
-            7812, 7812, 7814, 7814, 7816, 7816, 7818, 7818, 7820, 7820, 7822, 7822, 7824, 7824, 7826, 7826, 7828, 7828,
-            7840, 7840, 7842, 7842, 7844, 7844, 7846, 7846, 7848, 7848, 7850, 7850, 7852, 7852, 7854, 7854, 7856, 7856,
-            7858, 7858, 7860, 7860, 7862, 7862, 7864, 7864, 7866, 7866, 7868, 7868, 7870, 7870, 7872, 7872, 7874, 7874,
-            7876, 7876, 7878, 7878, 7880, 7880, 7882, 7882, 7884, 7884, 7886, 7886, 7888, 7888, 7890, 7890, 7892, 7892,
-            7894, 7894, 7896, 7896, 7898, 7898, 7900, 7900, 7902, 7902, 7904, 7904, 7906, 7906, 7908, 7908, 7910, 7910,
-            7912, 7912, 7914, 7914, 7916, 7916, 7918, 7918, 7920, 7920, 7922, 7922, 7924, 7924, 7926, 7926, 7928, 7928,
-            7944, 7951, 7960, 7965, 7976, 7983, 7992, 7999, 8008, 8013, 8025, 8025, 8027, 8027, 8029, 8029, 8031, 8031,
-            8040, 8047, 8072, 8079, 8088, 8095, 8104, 8111, 8120, 8121, 8122, 8123, 8124, 8124, 8136, 8139, 8140, 8140,
-            8152, 8153, 8154, 8155, 8168, 8169, 8170, 8171, 8172, 8172, 8184, 8185, 8186, 8187, 8188, 8188, 8544, 8559,
-            9398, 9423, 65313, 65338, 65339, 0xfffe, 0xffff, 0xffff };
+             * End new
+             */
+             306, 306, 308, 308, 310, 310, 313, 313, 315, 315, 317, 317, 319, 319, 321, 321, 323, 323, 325, 325, 327,
+             327, 330, 330, 332, 332, 334, 334, 336, 336, 338, 338, 340, 340, 342, 342, 344, 344, 346, 346, 348, 348,
+             350, 350, 352, 352, 354, 354, 356, 356, 358, 358, 360, 360, 362, 362, 364, 364, 366, 366, 368, 368, 370,
+             370, 372, 372, 374, 374, 376, 376, 377, 377, 379, 379, 381, 381, 385, 385, 386, 386, 388, 388, 390, 390,
+             391, 391, /* new for fixing 1.0.2 */393, 393, /* End new */394, 394, 395, 395,
+             /* 398, Sreeni fixed for 1.2 */399, 399, 400, 400, 401, 401, 403, 403, 404, 404, 406, 406, 407, 407, 408,
+             408, 412, 412, 413, 413, 416, 416, 418, 418, 420, 420, 423, 423, 425, 425, 428, 428, 430, 430, 431, 431,
+             433, 434, 435, 435, 437, 437, 439, 439, 440, 440, 444, 444, 452, 452, 453, 453, 455, 455, 456, 456, 458,
+             458, 459, 459, 461, 461, 463, 463, 465, 465, 467, 467, 469, 469, 471, 471, 473, 473, 475, 475, 478, 478,
+             480, 480, 482, 482, 484, 484, 486, 486, 488, 488, 490, 490, 492, 492, 494, 494, 497, 497, 498, 498, 500,
+             500, 506, 506, 508, 508, 510, 510, 512, 512, 514, 514, 516, 516, 518, 518, 520, 520, 522, 522, 524, 524,
+             526, 526, 528, 528, 530, 530, 532, 532, 534, 534, 902, 902, 904, 906, 908, 908, 910, 911, 913, 929, 931,
+             939, 994, 994, 996, 996, 998, 998, 1000, 1000, 1002, 1002, 1004, 1004, 1006, 1006, 1025, 1036, 1038, 1039,
+             1040, 1040, 1041, 1041, 1042, 1071, 1120, 1120, 1122, 1122, 1124, 1124, 1126, 1126, 1128, 1128, 1130, 1130,
+             1132, 1132, 1134, 1134, 1136, 1136, 1138, 1138, 1140, 1140, 1142, 1142, 1144, 1144, 1146, 1146, 1148, 1148,
+             1150, 1150, 1152, 1152, 1168, 1168, 1170, 1170, 1172, 1172, 1174, 1174, 1176, 1176, 1178, 1178, 1180, 1180,
+             1182, 1182, 1184, 1184, 1186, 1186, 1188, 1188, 1190, 1190, 1192, 1192, 1194, 1194, 1196, 1196, 1198, 1198,
+             1200, 1200, 1202, 1202, 1204, 1204, 1206, 1206, 1208, 1208, 1210, 1210, 1212, 1212, 1214, 1214, 1217, 1217,
+             1219, 1219, 1223, 1223, 1227, 1227, 1232, 1232, 1234, 1234, 1236, 1236, 1238, 1238, 1240, 1240, 1242, 1242,
+             1244, 1244, 1246, 1246, 1248, 1248, 1250, 1250, 1252, 1252, 1254, 1254, 1256, 1256, 1258, 1258, 1262, 1262,
+             1264, 1264, 1266, 1266, 1268, 1268, 1272, 1272, 1329, 1366, 4256, 4293, 7680, 7680, 7682, 7682, 7684, 7684,
+             7686, 7686, 7688, 7688, 7690, 7690, 7692, 7692, 7694, 7694, 7696, 7696, 7698, 7698, 7700, 7700, 7702, 7702,
+             7704, 7704, 7706, 7706, 7708, 7708, 7710, 7710, 7712, 7712, 7714, 7714, 7716, 7716, 7718, 7718, 7720, 7720,
+             7722, 7722, 7724, 7724, 7726, 7726, 7728, 7728, 7730, 7730, 7732, 7732, 7734, 7734, 7736, 7736, 7738, 7738,
+             7740, 7740, 7742, 7742, 7744, 7744, 7746, 7746, 7748, 7748, 7750, 7750, 7752, 7752, 7754, 7754, 7756, 7756,
+             7758, 7758, 7760, 7760, 7762, 7762, 7764, 7764, 7766, 7766, 7768, 7768, 7770, 7770, 7772, 7772, 7774, 7774,
+             7776, 7776, 7778, 7778, 7780, 7780, 7782, 7782, 7784, 7784, 7786, 7786, 7788, 7788, 7790, 7790, 7792, 7792,
+             7794, 7794, 7796, 7796, 7798, 7798, 7800, 7800, 7802, 7802, 7804, 7804, 7806, 7806, 7808, 7808, 7810, 7810,
+             7812, 7812, 7814, 7814, 7816, 7816, 7818, 7818, 7820, 7820, 7822, 7822, 7824, 7824, 7826, 7826, 7828, 7828,
+             7840, 7840, 7842, 7842, 7844, 7844, 7846, 7846, 7848, 7848, 7850, 7850, 7852, 7852, 7854, 7854, 7856, 7856,
+             7858, 7858, 7860, 7860, 7862, 7862, 7864, 7864, 7866, 7866, 7868, 7868, 7870, 7870, 7872, 7872, 7874, 7874,
+             7876, 7876, 7878, 7878, 7880, 7880, 7882, 7882, 7884, 7884, 7886, 7886, 7888, 7888, 7890, 7890, 7892, 7892,
+             7894, 7894, 7896, 7896, 7898, 7898, 7900, 7900, 7902, 7902, 7904, 7904, 7906, 7906, 7908, 7908, 7910, 7910,
+             7912, 7912, 7914, 7914, 7916, 7916, 7918, 7918, 7920, 7920, 7922, 7922, 7924, 7924, 7926, 7926, 7928, 7928,
+             7944, 7951, 7960, 7965, 7976, 7983, 7992, 7999, 8008, 8013, 8025, 8025, 8027, 8027, 8029, 8029, 8031, 8031,
+             8040, 8047, 8072, 8079, 8088, 8095, 8104, 8111, 8120, 8121, 8122, 8123, 8124, 8124, 8136, 8139, 8140, 8140,
+             8152, 8153, 8154, 8155, 8168, 8169, 8170, 8171, 8172, 8172, 8184, 8185, 8186, 8187, 8188, 8188, 8544, 8559,
+             9398, 9423, 65313, 65338, 65339, 0xfffe, 0xffff, 0xffff };
 }

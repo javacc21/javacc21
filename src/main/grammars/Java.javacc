@@ -1470,7 +1470,6 @@ void RelationalExpression():
 void ShiftExpression():
 {}
 {
-//  AdditiveExpression()(( "<<" | ">>" | ">>>") AdditiveExpression() )*
    AdditiveExpression()
    (
       LOOKAHEAD(2)
@@ -1501,16 +1500,16 @@ void ShiftOperator() #void :
          if (third.getBeginColumn() != first.getBeginColumn() + 2) {
               throw new ParseException("Shift operator >>> cannot have spaces or comments inside!\n" + getInputSource() + ":line " + first.beginLine +":column " +first.beginColumn);
          }
-	 first.image = ">>>";
-	 first.kind = RUNSIGNEDSHIFT;
-	 first.next = third.next;
-	 popNode();
-	 popNode();
+     	 first.image = ">>>";
+	 	 first.kind = RUNSIGNEDSHIFT;
+	 	 first.next = third.next;
+	 	 popNode();
+	 	 popNode();
       } else {
          first.image = ">>";
-	 first.kind = RSIGNEDSHIFT;
-	 first.next = second.next;
-	 popNode();
+	 	 first.kind = RSIGNEDSHIFT;
+	     first.next = second.next;
+	     popNode();
       }
    }
 }

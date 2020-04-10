@@ -2328,7 +2328,6 @@ CharacterRange CharacterRange() #CharacterRange :
         {
           String rString = removeEscapesAndQuotes(imageR);
           CURRENT_NODE.right = character_descriptor_assign(current_token, rString, lString);
-
         }
    ]
    {return CURRENT_NODE;}
@@ -2338,6 +2337,20 @@ INJECT(CharacterRange) :
 {}
 {
     public char left, right;
+    
+    public CharacterRange() {}
+    
+    public CharacterRange(char left, char right) {
+       setRange(left, right);
+    }
+    
+    public void setRange(char left, char right) {
+        if (left > right) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        this.left = left;
+        this.right = right;
+    }
 
     public boolean isSingleChar() {
        return left == right;
