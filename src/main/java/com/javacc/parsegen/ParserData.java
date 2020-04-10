@@ -844,8 +844,9 @@ public class ParserData {
             //REVISIT: Look at this case carefully!
             return false;
         }
-        Expansion e = seq.firstChildOfType(Expansion.class);
-        return e instanceof ExplicitLookahead;
+        return seq.getLookahead() instanceof ExplicitLookahead;
+//        Expansion e = seq.firstChildOfType(Expansion.class);
+//        return e instanceof ExplicitLookahead;
     }
 
     int firstChoice(ExpansionChoice ch) {
@@ -982,13 +983,11 @@ public class ParserData {
             return retval;
         } else if (exp instanceof TryBlock) {
             return generateFirstSet(partialMatches, exp.getNestedExpansion());
-        } else if (grammar.considerSemanticLA() && exp instanceof Lookahead
+        }   else if (grammar.considerSemanticLA() && exp instanceof Lookahead
                 && ((Lookahead) exp).getSemanticLookahead() != null) {
             return new ArrayList<MatchInfo>();
-        } else {
-            List<MatchInfo> retval = new ArrayList<MatchInfo>();
-            retval.addAll(partialMatches);
-            return retval;
+        }  else {
+            return new ArrayList<>(partialMatches);
         }
     }
 

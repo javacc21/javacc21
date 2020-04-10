@@ -225,12 +225,12 @@ public class NfaBuilder extends Node.Visitor {
         visit(seq);
     }
 
-    static private List<RegularExpression> compressCharLists(List<RegularExpression> choices) {
-        List<RegularExpression> compressedChoices = compressChoices(choices); // Unroll nested choices
+    private List<RegularExpression> compressCharLists(List<RegularExpression> choices) {
+        choices = expandChoices(choices); // Unroll nested choices
         List<RegularExpression> result = new ArrayList<RegularExpression>();
         CharacterList mergedCharList = new CharacterList();
-        mergedCharList.setGrammar(compressedChoices.get(0).getGrammar());
-        for (RegularExpression curRE : compressedChoices) {
+        mergedCharList.setGrammar(grammar);
+        for (RegularExpression curRE : choices) {
             while (curRE instanceof RegexpRef) {
                 curRE = ((RegexpRef) curRE).getRegexp();
             }
@@ -260,10 +260,9 @@ public class NfaBuilder extends Node.Visitor {
         return result;
     }
 
-    static private List<RegularExpression> compressChoices(List<RegularExpression> choices) {
+    static private List<RegularExpression> expandChoices(List<RegularExpression> choices) {
         List<RegularExpression> result = new ArrayList<RegularExpression>();
         for (RegularExpression curRE : choices) {
-
             while (curRE instanceof RegexpRef) {
                 curRE = ((RegexpRef) curRE).getRegexp();
             }
@@ -298,8 +297,7 @@ public class NfaBuilder extends Node.Visitor {
                     if (r <= diffLowerCaseRanges[j + 1]) {
                         CharacterRange crc = new CharacterRange();
                         crc.left = Character.toLowerCase(diffLowerCaseRanges[j]);
-                        crc.right = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + r
-                                - diffLowerCaseRanges[j]);
+                        crc.right = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + r - diffLowerCaseRanges[j]);
                         result.add(crc);
                         break;
                     }
@@ -451,11 +449,8 @@ public class NfaBuilder extends Node.Visitor {
             474, 474, 476, 476, 479, 479, 481, 481, 483, 483, 485, 485, 487, 487, 489, 489, 491, 491, 493, 493, 495,
             495, 498, 498, 499, 499, 501, 501, 507, 507, 509, 509, 511, 511, 513, 513, 515, 515, 517, 517, 519, 519,
             521, 521, 523, 523, 525, 525, 527, 527, 529, 529, 531, 531, 533, 533, 535, 535, 595, 595, 596, 596, 598,
-            /* new for fixing 1.0.2 */598, 599, /* End new */599, /*
-             * 600, Sreeni fixed for 1.2
-             */
-            601, 601, 603, 603, 608, 608, 611, 611, 616, 616, 617, 617, 623, 623, 626, 626, 643, 643, 648, 648, 650,
-            651, 658, 658, 940, 940, 941, 943, 945, 961, /* new for fixing 1.0.2 */962, 962, /* End new */963, 971, 972,
+            598, 599, 599, 601, 601, 603, 603, 608, 608, 611, 611, 616, 616, 617, 617, 623, 623, 626, 626, 643, 643, 648, 648, 650,
+            651, 658, 658, 940, 940, 941, 943, 945, 961, 962, 962, 963, 971, 972,
             972, 973, 974, 976, 976, 977, 977, 981, 981, 982, 982, 995, 995, 997, 997, 999, 999, 1001, 1001, 1003, 1003,
             1005, 1005, 1007, 1007, 1008, 1008, 1009, 1009, 1072, 1103, 1105, 1116, 1118, 1119, 1121, 1121, 1123, 1123,
             1125, 1125, 1127, 1127, 1129, 1129, 1131, 1131, 1133, 1133, 1135, 1135, 1137, 1137, 1139, 1139, 1141, 1141,
@@ -484,18 +479,12 @@ public class NfaBuilder extends Node.Visitor {
             8165, 8165, 8179, 8179, 8560, 8575, 9424, 9449, 65345, 65370, 65371, 0xfffe, 0xffff, 0xffff };
     private static final char[] diffLowerCaseRanges = { 65, 90, 192, 214, 216, 222, 256, 256, 258, 258, 260, 260, 262,
             262, 264, 264, 266, 266, 268, 268, 270, 270, 272, 272, 274, 274, 276, 276, 278, 278, 280, 280, 282, 282,
-            284, 284, 286, 286, 288, 288, 290, 290, 292, 292, 294, 294, 296, 296, 298, 298, 300, 300, 302, 302,
-            /*
-             * new for fixing 1.0 .2
-             */304, 304, /*
-             * End new
-             */
+            284, 284, 286, 286, 288, 288, 290, 290, 292, 292, 294, 294, 296, 296, 298, 298, 300, 300, 302, 302, 304, 304, 
              306, 306, 308, 308, 310, 310, 313, 313, 315, 315, 317, 317, 319, 319, 321, 321, 323, 323, 325, 325, 327,
              327, 330, 330, 332, 332, 334, 334, 336, 336, 338, 338, 340, 340, 342, 342, 344, 344, 346, 346, 348, 348,
              350, 350, 352, 352, 354, 354, 356, 356, 358, 358, 360, 360, 362, 362, 364, 364, 366, 366, 368, 368, 370,
              370, 372, 372, 374, 374, 376, 376, 377, 377, 379, 379, 381, 381, 385, 385, 386, 386, 388, 388, 390, 390,
-             391, 391, /* new for fixing 1.0.2 */393, 393, /* End new */394, 394, 395, 395,
-             /* 398, Sreeni fixed for 1.2 */399, 399, 400, 400, 401, 401, 403, 403, 404, 404, 406, 406, 407, 407, 408,
+             391, 391, 393, 393, 394, 394, 395, 395, 399, 399, 400, 400, 401, 401, 403, 403, 404, 404, 406, 406, 407, 407, 408,
              408, 412, 412, 413, 413, 416, 416, 418, 418, 420, 420, 423, 423, 425, 425, 428, 428, 430, 430, 431, 431,
              433, 434, 435, 435, 437, 437, 439, 439, 440, 440, 444, 444, 452, 452, 453, 453, 455, 455, 456, 456, 458,
              458, 459, 459, 461, 461, 463, 463, 465, 465, 467, 467, 469, 469, 471, 471, 473, 473, 475, 475, 478, 478,

@@ -438,7 +438,7 @@ INJECT(ImportDeclaration) : {}
     
     public String getName() {
         StringBuilder buf = new StringBuilder();
-        for (Token tok : Nodes.getRealTokens(this)) {
+        for (Token tok : descendantsOfType(Token.class)) {
             if (tok.getId() != IMPORT
               && tok.getId() != SEMICOLON) {
                 buf.append(tok);
@@ -542,7 +542,7 @@ TypeDeclaration TypeDeclaration() #TypeDeclaration :
   ";"
   |
   Modifiers()
-  (
+   (
      ClassDeclaration()
      |
      InterfaceDeclaration()
@@ -550,7 +550,7 @@ TypeDeclaration TypeDeclaration() #TypeDeclaration :
      EnumDeclaration()
      |
      AnnotationTypeDeclaration()
-  )
+   )
  )
  {
         return CURRENT_NODE;
@@ -574,7 +574,7 @@ INJECT(TypeDeclaration) :
     public boolean getInterface() {
        for (Node n : children) {
            if (n instanceof Token) {
-	      Token t = (Token) n;
+              Token t = (Token) n;
               if (t.getId() == INTERFACE) {
                   return true;
               }
