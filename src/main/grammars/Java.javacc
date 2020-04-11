@@ -348,13 +348,9 @@ INJECT(CompilationUnit) :
     import java.util.*;
 }
 {
-    public List<ImportDeclaration> importDeclarations = new ArrayList<ImportDeclaration>();
-
     public String getPackageName() {
         PackageDeclaration jpd = getPackageDeclaration();
-        return jpd == null ?
-                null :
-                    jpd.getPackageName();
+        return jpd == null ?  null : jpd.getPackageName();
     }
     
     
@@ -1555,13 +1551,14 @@ void UnaryExpressionNotPlusMinus():
 {}
 {
   ( "~" | "!" ) UnaryExpression()
-|
-//  LOOKAHEAD( CastLookahead() )
-//  LOOKAHEAD("(" Type() ")")
+  |
   LOOKAHEAD(LambdaExpression())
   LambdaExpression()
   |
-  LOOKAHEAD(CastLookahead())
+//  LOOKAHEAD(CastLookahead())
+  LOOKAHEAD(CastExpression())
+//  LOOKAHEAD()
+//  SCAN 
   CastExpression()
   |
   PostfixExpression()
@@ -1591,10 +1588,17 @@ void PostfixExpression():
 void CastExpression():
 {}
 {
-  LOOKAHEAD("(" PrimitiveType() ")")
-  "(" Type() ")" UnaryExpression()
+  LOOKAHEAD("(" PrimitiveType() ")" UnaryExpression())
+//  LOOKAHEAD()
+//  SCAN
+  "(" PrimitiveType() ")" UnaryExpression()
   |
-  "(" Type() ("&" Type())* ")" UnaryExpressionNotPlusMinus()
+  LOOKAHEAD("(" ReferenceType() ")" UnaryExpressionNotPlusMinus())
+//  SCAN 
+  "(" ReferenceType() ")" UnaryExpressionNotPlusMinus()
+  |
+  LOOKAHEAD("(" ClassOrInterfaceType() ("&" ClassOrInterfaceType())+ ")" UnaryExpressionNotPlusMinus()) 
+  "(" ClassOrInterfaceType() ("&" ClassOrInterfaceType())+ ")" UnaryExpressionNotPlusMinus() 
 }
 
 Expression PrimaryExpression() #PrimaryExpression :

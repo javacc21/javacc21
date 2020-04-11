@@ -266,6 +266,7 @@ INJECT(LEXER_CLASS) :
         javaccReservedWords.add("SKIP");
         javaccReservedWords.add("TOKEN_MGR_DECLS");
         javaccReservedWords.add("EOF");
+        javaccReservedWords.add("SCAN");
 //        javaccReservedWords.add("INJECT"); //REVISIT
 //        javaccReservedWords.add("PARSER_END");
    }
@@ -312,6 +313,8 @@ TOKEN :
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
   |
   < _LOOKAHEAD: "LOOKAHEAD" > #JavaCCKeyWord
+  |
+  < _SCAN : "SCAN"> #JavaCCKeyWord
   |
   < _IGNORE_CASE: "IGNORE_CASE" > #JavaCCKeyWord
   |
@@ -1308,7 +1311,7 @@ Expansion ExpansionSequence() :
 }
 {
   [ 
-    LOOKAHEAD("LOOKAHEAD")
+    LOOKAHEAD("LOOKAHEAD"| "SCAN")
     la=Lookahead()
     {
        if (inLocalLA != 0 && la.getAmount() != 0) {
@@ -1436,13 +1439,15 @@ INJECT(ExpansionSequence) :
 ExplicitLookahead Lookahead() #ExplicitLookahead :
 {
     boolean commaAtEnd = false, emptyLA = true;
-    inLocalLA++;
+//    inLocalLA++;
     Expansion expansion;
-    token_source.inJavaCode = true;
+//    token_source.inJavaCode = true;
     Expression semanticLookahead = null;
 }
 {
-  "LOOKAHEAD" "("
+  <_SCAN> {return CURRENT_NODE;} 
+  |
+  "LOOKAHEAD" "(" {token_source.inJavaCode = true; inLocalLA++;}
   [
     /*
      * The lookahead of 1 is to turn off the warning message that lets
@@ -1477,7 +1482,7 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
           commaAtEnd = true;
         }
   ]
-  [ LOOKAHEAD(0, { emptyLA || commaAtEnd } )
+  [// LOOKAHEAD(0, { emptyLA || commaAtEnd } )
     "{"
         semanticLookahead=Expression()
     "}"
@@ -2341,7 +2346,7 @@ INJECT(CharacterRange) :
     public CharacterRange() {}
     
     public CharacterRange(char left, char right) {
-       setRange(left, right);
+        setRange(left, right);
     }
     
     public void setRange(char left, char right) {
