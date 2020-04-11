@@ -910,10 +910,8 @@ public class NfaState {
 
     void generateInitMoves() {
         getEpsilonMovesString();
-
         if (epsilonMovesString == null)
             epsilonMovesString = "null;";
-
         lexicalState.addStartStateSet(epsilonMovesString);
     }
 
@@ -1015,8 +1013,6 @@ public class NfaState {
             if (intersects) {
                 intersects = byteNum == 0 ? bs.previousSetBit(63) >=0 : bs.nextSetBit(64) >=0;
             }
-            long[] ll = asciiMoves.toLongArray();
-            long asciiMoveLong = ll.length > byteNum ? ll[byteNum] : 0L;
             if (state.index != -1 && state.index != this.index && state.isNeeded(byteNum) && intersects) {
                 return false;
             }

@@ -1138,7 +1138,8 @@ void ConstructorDeclaration():
 void ExplicitConstructorInvocation():
 {}
 {
-  LOOKAHEAD("this" Arguments() ";")
+//  LOOKAHEAD("this" Arguments() ";")
+  SCAN
   "this" Arguments() ";"
 |
   [ LOOKAHEAD(2) PrimaryExpression() "." ] "super" Arguments() ";"
@@ -1401,49 +1402,49 @@ void AssignmentOperator() #void :
 void TernaryExpression() :
 {}
 {
-  ConditionalOrExpression() [ LOOKAHEAD("?") "?" Expression() ":" Expression() ]
+  ConditionalOrExpression() [  "?" Expression() ":" Expression() ]
 }
 
 void ConditionalOrExpression() :
 {}
 {
-  ConditionalAndExpression() ( LOOKAHEAD("||") "||" ConditionalAndExpression() )*
+  ConditionalAndExpression() ( "||" ConditionalAndExpression() )*
 }
 
 void ConditionalAndExpression():
 {}
 {
-  InclusiveOrExpression() ( LOOKAHEAD("&&") "&&" InclusiveOrExpression() )*
+  InclusiveOrExpression() ( "&&" InclusiveOrExpression() )*
 }
 
 void InclusiveOrExpression():
 {}
 {
-  ExclusiveOrExpression() ( LOOKAHEAD("|") "|" ExclusiveOrExpression() )*
+  ExclusiveOrExpression() ( "|" ExclusiveOrExpression() )*
 }
 
 void ExclusiveOrExpression():
 {}
 {
-  AndExpression() ( LOOKAHEAD("^") "^" AndExpression() )*
+  AndExpression() ( "^" AndExpression() )*
 }
 
 void AndExpression():
 {}
 {
-  EqualityExpression() ( LOOKAHEAD("&") "&" EqualityExpression() )*
+  EqualityExpression() ( "&" EqualityExpression() )*
 }
 
 void EqualityExpression():
 {}
 {
-  InstanceOfExpression() ( LOOKAHEAD(1) ( "==" | "!=" ) InstanceOfExpression() )*
+  InstanceOfExpression() ( ( "==" | "!=" ) InstanceOfExpression() )*
 }
 
 void InstanceOfExpression():
 {}
 {
-  RelationalExpression() [ LOOKAHEAD(1) "instanceof" Type() ]
+  RelationalExpression() [ "instanceof" Type() ]
 }
 
 void RelationalExpression():
@@ -1451,7 +1452,6 @@ void RelationalExpression():
 {
   ShiftExpression() 
   (
-    LOOKAHEAD(1)
     ( 
      "<" 
      | ">" 
@@ -1514,13 +1514,13 @@ void ShiftOperator() #void :
 void AdditiveExpression():
 {}
 {
-  MultiplicativeExpression() ( LOOKAHEAD(1) ( "+" | "-" ) MultiplicativeExpression() )*
+  MultiplicativeExpression() (  ( "+" | "-" ) MultiplicativeExpression() )*
 }
 
 void MultiplicativeExpression():
 {}
 {
-  UnaryExpression() ( LOOKAHEAD(1) ( "*" | "/" | "%" ) UnaryExpression() )*
+  UnaryExpression() (  ( "*" | "/" | "%" ) UnaryExpression() )*
 }
 
 void UnaryExpression():
@@ -1552,13 +1552,14 @@ void UnaryExpressionNotPlusMinus():
 {
   ( "~" | "!" ) UnaryExpression()
   |
-  LOOKAHEAD(LambdaExpression())
+//  LOOKAHEAD(LambdaExpression())
+  SCAN
   LambdaExpression()
   |
 //  LOOKAHEAD(CastLookahead())
-  LOOKAHEAD(CastExpression())
+//  LOOKAHEAD(CastExpression())
 //  LOOKAHEAD()
-//  SCAN 
+  SCAN 
   CastExpression()
   |
   PostfixExpression()
@@ -1632,13 +1633,16 @@ LOOKAHEAD(2)
 |
   AllocationExpression()
 |
-  LOOKAHEAD( PrimitiveType() "." "class" )
+//  LOOKAHEAD( PrimitiveType() "." "class" )
+  SCAN
   PrimitiveType() "." "class"
 |
-  LOOKAHEAD( ReturnType() "." "class" )
+//  LOOKAHEAD( ReturnType() "." "class" )
+  SCAN
   ReturnType() "." "class"
 |
-  LOOKAHEAD(MethodReference())
+//  LOOKAHEAD(MethodReference())
+  LOOKAHEAD()
   MethodReference()
 |  
   Name()
@@ -1857,7 +1861,8 @@ void BlockStatement() #void :
   LOOKAHEAD( Modifiers() Type() <IDENTIFIER> )
   LocalVariableDeclaration() ";"
   |
-  LOOKAHEAD(Statement()) Statement()
+//  LOOKAHEAD(Statement()) Statement()
+  SCAN Statement()
   |
   LOOKAHEAD( Modifiers() "class")
   Modifiers() ClassDeclaration()
@@ -1923,14 +1928,9 @@ void SwitchLabel() #void :
 }
 
 void IfStatement():
-/*
- * The disambiguating algorithm automatically binds dangling
- * else's to the innermost if statement.  The LOOKAHEAD specification
- * is to tell JavaCC that we know what we are doing.
- */
 {}
 {
-  "if" "(" Expression() ")" Statement() [ LOOKAHEAD(1) "else" Statement() ]
+  "if" "(" Expression() ")" Statement() [ "else" Statement() ]
 }
 
 void WhileStatement():
@@ -2045,8 +2045,8 @@ TryWithResources TryWithResources() :
    "try"
    "("
      (
-         LOOKAHEAD(LocalVariableDeclaration())
-         LocalVariableDeclaration()
+//         LOOKAHEAD(LocalVariableDeclaration())
+         SCAN LocalVariableDeclaration()
          |
          Name()
       )

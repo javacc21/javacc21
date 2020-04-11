@@ -76,11 +76,11 @@ public class LexicalState {
 
     // with single char keys;
     private int[] maxLenForActive = new int[100]; // 6400 tokens
-    int[][] intermediateKinds;
-    int[][] intermediateMatchedPos;
+    private int[][] intermediateKinds;
+    private int[][] intermediateMatchedPos;
 
     private boolean subString[];
-    boolean[] subStringAtPos;
+    private boolean[] subStringAtPos;
     private List<Map<String, long[]>> statesForPos;
     private String[] images;
     private int[] kindsForStates;
@@ -608,9 +608,7 @@ public class LexicalState {
     }
 
     public boolean generateDfaCase(String key, KindInfo info, int index) {
-        int maxLongsReqd = 1+ maxStrKind / 64;
         char firstChar = key.charAt(0);
-        int j;
         for (int kind = 0; kind<maxStrKind; kind++) {
         	if (index == 0 && firstChar < 128 && info.getFinalKindCnt() !=0
         			&& (indexedAllStates.size() == 0 || !canStartNfaUsingAscii(firstChar))) {
@@ -1022,7 +1020,7 @@ public class LexicalState {
         return ret;
     }
 
-    static int MoveFromSet(char c, List<NfaState> states, List<NfaState> newStates) {
+    private static int MoveFromSet(char c, List<NfaState> states, List<NfaState> newStates) {
         int tmp;
         int retVal = Integer.MAX_VALUE;
 
