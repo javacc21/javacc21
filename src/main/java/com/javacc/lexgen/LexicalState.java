@@ -268,7 +268,8 @@ public class LexicalState {
         }
 
         if (initialState.kind != Integer.MAX_VALUE && initialState.kind != 0) {
-            if ((lexerData.toSkip[initialState.kind / 64] & (1L << initialState.kind)) != 0L
+//            if ((lexerData.toSkip[initialState.kind / 64] & (1L << initialState.kind)) != 0L
+            if (lexerData.hasSkipAction(initialState.kind)                
                 || (lexerData.specialSet.get(initialState.kind)))
                 lexerData.hasSkipActions = true;
             else if (lexerData.moreSet.get(initialState.kind))
@@ -363,15 +364,12 @@ public class LexicalState {
                 }
                 lexerData.hasSpecial = true;
                 lexerData.specialSet.set(currentRegexp.getOrdinal());
-                lexerData.toSkip[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp
-                        .getOrdinal() % 64);
+                lexerData.skipSet.set(currentRegexp.getOrdinal());
                 currentRegexp.setSpecialToken();
             }
             else if (kind.equals("SKIP")) {
                 lexerData.hasSkipActions |= (tokenAction != null);
                 lexerData.hasSkip = true;
-                lexerData.toSkip[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp
-                        .getOrdinal() % 64);
                 currentRegexp.setSkip();
             }
             else if (kind.equals("MORE")) {
@@ -382,8 +380,7 @@ public class LexicalState {
             }
             else {
                 lexerData.hasTokenActions |= (tokenAction != null);
-                lexerData.toToken[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp
-                        .getOrdinal() % 64);
+                lexerData.tokenSet.set(currentRegexp.getOrdinal());
                 currentRegexp.setRegularToken();
             }
         }
@@ -616,7 +613,7 @@ public class LexicalState {
         						&& intermediateMatchedPos != null && intermediateMatchedPos[kind][index] == index)
         						|| (matchAnyChar != null && matchAnyChar.getOrdinal() < kind))
         					break;
-        				else if ((lexerData.toSkip[kind / 64] & (1L << (kind % 64))) != 0L
+        				else if (lexerData.hasSkipAction(kind)
         				        && !lexerData.specialSet.get(kind)
         						&& lexerData.getRegularExpression(kind).getCodeSnippet() == null
         						&& lexerData.getRegularExpression(kind).getNewLexicalState() == null) {

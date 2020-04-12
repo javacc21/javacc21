@@ -46,10 +46,7 @@ public class LexerData {
     private List<RegularExpression> regularExpressions = new ArrayList<RegularExpression>();
 
     int stateSetSize;
-    long[] toSkip;
-    BitSet specialSet = new BitSet() ;
-    BitSet moreSet = new BitSet();
-    long[] toToken;
+    BitSet skipSet = new BitSet(), specialSet = new BitSet(), moreSet = new BitSet(), tokenSet = new BitSet();
     int[] maxLongsReqd;
     boolean hasEmptyMatch;
     boolean hasSkipActions, hasMoreActions, hasTokenActions, hasSpecial, hasSkip, hasMore;
@@ -155,19 +152,20 @@ public class LexerData {
     }
 
     public boolean hasTokenAction(int index) {
-        return (toToken[index / 64] & (1L << (index % 64))) != 0L;
+        return tokenSet.get(index);
     }
 
     public boolean hasMoreAction(int index) {
         return moreSet.get(index);
     }
 
-    public boolean hasSkipAction(int index) {
-        return (toSkip[index / 64] & (1L << (index % 64))) != 0L;
+    public boolean hasSkipAction(int index) { 
+        return skipSet.get(index);
     }
 
     public long[] getToSkip() {
-        return toSkip;
+        long[] ll = skipSet.toLongArray();
+        return Arrays.copyOf(ll, 1+getTokenCount()/64);
     }
 
     public long[] getToMore() {
@@ -176,7 +174,8 @@ public class LexerData {
     } 
 
     public long[] getToToken() {
-        return toToken;
+        long[] ll = tokenSet.toLongArray();
+        return Arrays.copyOf(ll,1+getTokenCount()/64);
     }
 
     public long[] getToSpecial() {
@@ -247,9 +246,7 @@ public class LexerData {
             }
         }
         int tokenCount = getTokenCount();
-        toSkip = new long[tokenCount / 64 + 1];
-        toToken = new long[tokenCount / 64 + 1];
-        toToken[0] = 1L;
+        tokenSet.set(0);
         hasTokenActions = getRegularExpression(0) != null;
 
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
