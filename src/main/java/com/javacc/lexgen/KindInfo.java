@@ -35,19 +35,19 @@ import java.util.BitSet;
 
 public final class KindInfo {
    
-  BitSet validKindSet = new BitSet(), finalKindSet = new BitSet();
-  int numKinds;
+  private BitSet validKindSet = new BitSet(), finalKindSet = new BitSet();
+  private int numKinds;
    
   KindInfo(int numKinds) {
 	  this.numKinds = numKinds;
   }
 
-   void InsertValidKind(int kind)
+   void insertValidKind(int kind)
    {
       validKindSet.set(kind);
    }
 
-   void InsertFinalKind(int kind)
+   void insertFinalKind(int kind)
    {
       finalKindSet.set(kind);
    }

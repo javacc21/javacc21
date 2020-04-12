@@ -269,9 +269,9 @@ public class LexicalState {
 
         if (initialState.kind != Integer.MAX_VALUE && initialState.kind != 0) {
             if ((lexerData.toSkip[initialState.kind / 64] & (1L << initialState.kind)) != 0L
-                    || (lexerData.toSpecial[initialState.kind / 64] & (1L << initialState.kind)) != 0L)
+                || (lexerData.specialSet.get(initialState.kind)))
                 lexerData.hasSkipActions = true;
-            else if ((lexerData.toMore[initialState.kind / 64] & (1L << initialState.kind)) != 0L)
+            else if (lexerData.moreSet.get(initialState.kind))
                 lexerData.hasMoreActions = true;
             else
                 lexerData.hasTokenActions = true;
@@ -362,8 +362,7 @@ public class LexicalState {
                     lexerData.hasSkipActions = true;
                 }
                 lexerData.hasSpecial = true;
-                lexerData.toSpecial[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp
-                        .getOrdinal() % 64);
+                lexerData.specialSet.set(currentRegexp.getOrdinal());
                 lexerData.toSkip[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp
                         .getOrdinal() % 64);
                 currentRegexp.setSpecialToken();
@@ -378,8 +377,7 @@ public class LexicalState {
             else if (kind.equals("MORE")) {
                 lexerData.hasMoreActions |= tokenAction != null;
                 lexerData.hasMore = true;
-                lexerData.toMore[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp
-                        .getOrdinal() % 64);
+                lexerData.moreSet.set(currentRegexp.getOrdinal());
                 currentRegexp.setMore();
             }
             else {
@@ -426,9 +424,9 @@ public class LexicalState {
                 temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
 
             if (i + 1 == imageLength)
-                info.InsertFinalKind(stringLiteral.getOrdinal());
+                info.insertFinalKind(stringLiteral.getOrdinal());
             else
-                info.InsertValidKind(stringLiteral.getOrdinal());
+                info.insertValidKind(stringLiteral.getOrdinal());
 
             if (!grammar.getOptions().getIgnoreCase() && stringLiteral.getIgnoreCase()
                     && c != Character.toLowerCase(c)) {
@@ -443,9 +441,9 @@ public class LexicalState {
                     temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
 
                 if (i + 1 == imageLength)
-                    info.InsertFinalKind(stringLiteral.getOrdinal());
+                    info.insertFinalKind(stringLiteral.getOrdinal());
                 else
-                    info.InsertValidKind(stringLiteral.getOrdinal());
+                    info.insertValidKind(stringLiteral.getOrdinal());
             }
 
             if (!grammar.getOptions().getIgnoreCase() && stringLiteral.getIgnoreCase()
@@ -461,9 +459,9 @@ public class LexicalState {
                     temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
 
                 if (i + 1 == imageLength)
-                    info.InsertFinalKind(stringLiteral.getOrdinal());
+                    info.insertFinalKind(stringLiteral.getOrdinal());
                 else
-                    info.InsertValidKind(stringLiteral.getOrdinal());
+                    info.insertValidKind(stringLiteral.getOrdinal());
             }
         }
 
@@ -619,7 +617,7 @@ public class LexicalState {
         						|| (matchAnyChar != null && matchAnyChar.getOrdinal() < kind))
         					break;
         				else if ((lexerData.toSkip[kind / 64] & (1L << (kind % 64))) != 0L
-        						&& (lexerData.toSpecial[kind / 64] & (1L << (kind % 64))) == 0L
+        				        && !lexerData.specialSet.get(kind)
         						&& lexerData.getRegularExpression(kind).getCodeSnippet() == null
         						&& lexerData.getRegularExpression(kind).getNewLexicalState() == null) {
         					singlesToSkip.addChar(firstChar);

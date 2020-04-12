@@ -277,7 +277,6 @@ TOKEN :
   |
   < RUNSIGNEDSHIFT: ">>>" > #Operator 
 }
-
 INJECT(BaseNode) : 
 {
     import java.util.*;
@@ -326,6 +325,8 @@ INJECT(BaseNode) :
         return Nodes.getRealTokens(this).size() == 0;
     }
 }
+
+
 
 
 CompilationUnit CompilationUnit() #CompilationUnit :

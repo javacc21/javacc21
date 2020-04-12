@@ -336,12 +336,63 @@ TOKEN :
   |
   <HASH : "#">
   |
-//  <SHEBANG : "#!"> #Shebang
-//  |
   <HASH_ID : "#"<IDENTIFIER>> #HashID
 }
 
 INCLUDE("Java.javacc")
+
+INJECT(BaseNode) :
+{
+    import freemarker.template.*;
+    import java.lang.reflect.*;
+    import com.javacc.Grammar;
+    implements Node, TemplateHashModel;
+}
+{
+    public TemplateModel get(String key) throws TemplateModelException {
+        Method method = null;
+        String methodName = "get" + key.substring(0, 1).toUpperCase() + key.substring(1);
+        try {
+            method = this.getClass().getMethod(methodName);
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+        try {
+            Object result = method.invoke(this);
+            return Configuration.getCurrentObjectWrapper().wrap(result);
+        } catch (IllegalAccessException e) {
+            throw new TemplateModelException(e);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof TemplateModelException) {
+                throw (TemplateModelException) cause;
+            }
+            if (cause instanceof Exception) {
+                throw new TemplateModelException((Exception) cause);
+            }
+            throw (Error) cause;
+        }
+    }
+    private Grammar grammar;
+
+    public Grammar getGrammar() {
+        if (grammar == null) {
+            if (parent != null) {
+               grammar = parent.getGrammar();
+            }
+            if (grammar==null && !children.isEmpty()) {
+               grammar = children.get(0).getGrammar();
+            }
+        }
+        return grammar;
+    }
+
+    public void setGrammar(Grammar grammar) {
+         this.grammar = grammar;
+    }
+}
+
+
 
 /*
    Overrides the production defined in 
@@ -465,57 +516,6 @@ INJECT(Token) :
 
     public void clearSpecialToken() {
         specialToken = null;
-    }
-}
-
-INJECT(BaseNode) :
-{
-    import freemarker.template.*;
-    import java.lang.reflect.*;
-    import com.javacc.Grammar;
-    implements Node, TemplateHashModel;
-}
-{
-    public TemplateModel get(String key) throws TemplateModelException {
-        Method method = null;
-        String methodName = "get" + key.substring(0, 1).toUpperCase() + key.substring(1);
-        try {
-            method = this.getClass().getMethod(methodName);
-        } catch (NoSuchMethodException e) {
-            return null;
-        }
-        try {
-            Object result = method.invoke(this);
-            return Configuration.getCurrentObjectWrapper().wrap(result);
-        } catch (IllegalAccessException e) {
-            throw new TemplateModelException(e);
-        } catch (InvocationTargetException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof TemplateModelException) {
-                throw (TemplateModelException) cause;
-            }
-            if (cause instanceof Exception) {
-                throw new TemplateModelException((Exception) cause);
-            }
-            throw (Error) cause;
-        }
-    }
-    private Grammar grammar;
-
-    public Grammar getGrammar() {
-        if (grammar == null) {
-            if (parent != null) {
-               grammar = parent.getGrammar();
-            }
-            if (grammar==null && !children.isEmpty()) {
-               grammar = children.get(0).getGrammar();
-            }
-        }
-        return grammar;
-    }
-
-    public void setGrammar(Grammar grammar) {
-         this.grammar = grammar;
     }
 }
 

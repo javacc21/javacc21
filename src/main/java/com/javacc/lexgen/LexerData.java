@@ -47,8 +47,8 @@ public class LexerData {
 
     int stateSetSize;
     long[] toSkip;
-    long[] toSpecial;
-    long[] toMore;
+    BitSet specialSet = new BitSet() ;
+    BitSet moreSet = new BitSet();
     long[] toToken;
     int[] maxLongsReqd;
     boolean hasEmptyMatch;
@@ -82,7 +82,7 @@ public class LexerData {
     public LexicalState getLexicalState(String name) {
         for (LexicalState state : lexicalStates) {
             if (state.getName().equals(name)) {
-                return state; 
+                return state;
             }
         }
         return null;
@@ -123,7 +123,7 @@ public class LexerData {
     }
 
     public boolean hasActions() {
-        return hasMoreActions || hasSkipActions || hasTokenActions;
+        return moreSet.cardinality() >0 || hasSkipActions || hasTokenActions;
     }
 
     public boolean getHasMore() {
@@ -131,7 +131,7 @@ public class LexerData {
     }
 
     public boolean getHasMoreActions() {
-        return hasMoreActions;
+        return moreSet.cardinality() >0;
     }
 
     public boolean getHasSpecial() {
@@ -159,7 +159,7 @@ public class LexerData {
     }
 
     public boolean hasMoreAction(int index) {
-        return (toMore[index / 64] & (1L << (index % 64))) != 0L;
+        return moreSet.get(index);
     }
 
     public boolean hasSkipAction(int index) {
@@ -171,15 +171,17 @@ public class LexerData {
     }
 
     public long[] getToMore() {
-        return toMore;
-    }
+        long[] ll= moreSet.toLongArray();
+        return Arrays.copyOf(ll, 1+this.getTokenCount()/64);
+    } 
 
     public long[] getToToken() {
         return toToken;
     }
 
     public long[] getToSpecial() {
-        return toSpecial;
+        long[] ll = specialSet.toLongArray();
+        return Arrays.copyOf(ll, 1+getTokenCount()/64); 
     }
 
     public int getStateSetSize() {
@@ -246,18 +248,16 @@ public class LexerData {
         }
         int tokenCount = getTokenCount();
         toSkip = new long[tokenCount / 64 + 1];
-        toSpecial = new long[tokenCount / 64 + 1];
-        toMore = new long[tokenCount / 64 + 1];
         toToken = new long[tokenCount / 64 + 1];
         toToken[0] = 1L;
         hasTokenActions = getRegularExpression(0) != null;
 
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
-        
+
         for (LexicalState lexState : lexicalStates) {
             choices.addAll(lexState.process());
         }
-        
+
         for (RegexpChoice choice : choices) {
             checkUnmatchability(choice);
         }
@@ -335,24 +335,23 @@ public class LexerData {
                         + ". This can result in an endless loop of " + "empty string matches.");
             } else {
 
-                grammar.addWarning(re, "Regular expression"
-                        + ((re.getLabel().equals("")) ? "" : (" for " + re.getLabel()))
-                        + " can be matched by the empty string (\"\") in lexical state " + ls.getName()
-                        + ". This regular expression along with the " + "regular expressions at " + reList
-                        + " forms the cycle \n   " + cycle + "\ncontaining regular expressions with empty matches."
-                        + " This can result in an endless loop of empty string matches.");
+                grammar.addWarning(re,
+                        "Regular expression" + ((re.getLabel().equals("")) ? "" : (" for " + re.getLabel()))
+                                + " can be matched by the empty string (\"\") in lexical state " + ls.getName()
+                                + ". This regular expression along with the " + "regular expressions at " + reList
+                                + " forms the cycle \n   " + cycle
+                                + "\ncontaining regular expressions with empty matches."
+                                + " This can result in an endless loop of empty string matches.");
             }
         }
     }
-    
+
     static public void checkUnmatchability(RegexpChoice choice) {
         for (RegularExpression curRE : choice.getChoices()) {
-            if (!(curRE).isPrivate()
-                    &&
-                    curRE.getOrdinal() > 0 && curRE.getOrdinal() < choice.getOrdinal()
+            if (!(curRE).isPrivate() && curRE.getOrdinal() > 0 && curRE.getOrdinal() < choice.getOrdinal()
                     && curRE.getLexicalState() == choice.getLexicalState()) {
-                choice.getGrammar().addWarning(choice,
-                        "Regular Expression choice : " + curRE.getLabel() + " can never be matched as : " + choice.getLabel());
+                choice.getGrammar().addWarning(choice, "Regular Expression choice : " + curRE.getLabel()
+                        + " can never be matched as : " + choice.getLabel());
             }
         }
     }
