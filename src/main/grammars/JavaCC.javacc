@@ -1311,7 +1311,6 @@ Expansion ExpansionSequence() :
 }
 {
   [ 
-    LOOKAHEAD("LOOKAHEAD"| "SCAN")
     la=Lookahead()
     {
        if (inLocalLA != 0 && la.getAmount() != 0) {
@@ -1439,23 +1438,16 @@ INJECT(ExpansionSequence) :
 ExplicitLookahead Lookahead() #ExplicitLookahead :
 {
     boolean commaAtEnd = false, emptyLA = true;
-//    inLocalLA++;
     Expansion expansion;
-//    token_source.inJavaCode = true;
     Expression semanticLookahead = null;
 }
 {
   <_SCAN> {return CURRENT_NODE;} 
   |
-  "LOOKAHEAD" "(" {token_source.inJavaCode = true; inLocalLA++;}
+  <_LOOKAHEAD>
+   "(" 
+   {token_source.inJavaCode = true; inLocalLA++;}
   [
-    /*
-     * The lookahead of 1 is to turn off the warning message that lets
-     * us know that an expansion choice can also start with an integer
-     * literal because a primary expression can do the same.  But we
-     * know that this is what we want.
-     */
-    LOOKAHEAD(1)
     <INTEGER_LITERAL>
     {
        CURRENT_NODE.setAmount(Integer.parseInt(current_token.toString()));
@@ -1482,7 +1474,7 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
           commaAtEnd = true;
         }
   ]
-  [// LOOKAHEAD(0, { emptyLA || commaAtEnd } )
+  [
     "{"
         semanticLookahead=Expression()
     "}"
