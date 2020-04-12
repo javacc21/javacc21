@@ -46,7 +46,7 @@ public class LexerData {
     private List<RegularExpression> regularExpressions = new ArrayList<RegularExpression>();
 
     int stateSetSize;
-    BitSet skipSet = new BitSet(), specialSet = new BitSet(), moreSet = new BitSet(), tokenSet = new BitSet();
+    TokenSet skipSet, specialSet, moreSet, tokenSet;
     boolean hasEmptyMatch;
     boolean hasSkipActions, hasMoreActions, hasTokenActions, hasSpecial, hasSkip, hasMore;
 
@@ -62,6 +62,10 @@ public class LexerData {
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
+        skipSet = new TokenSet(grammar);
+        specialSet = new TokenSet(grammar);
+        moreSet = new TokenSet(grammar);
+        tokenSet = new TokenSet(grammar);
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
         regularExpressions.add(reof);
@@ -163,23 +167,19 @@ public class LexerData {
     }
 
     public long[] getToSkip() {
-        long[] ll = skipSet.toLongArray();
-        return Arrays.copyOf(ll, 1+getTokenCount()/64);
+         return skipSet.toLongArray();
     }
 
     public long[] getToMore() {
-        long[] ll= moreSet.toLongArray();
-        return Arrays.copyOf(ll, 1+this.getTokenCount()/64);
+        return moreSet.toLongArray();
     } 
 
     public long[] getToToken() {
-        long[] ll = tokenSet.toLongArray();
-        return Arrays.copyOf(ll,1+getTokenCount()/64);
+        return tokenSet.toLongArray();
     }
 
     public long[] getToSpecial() {
-        long[] ll = specialSet.toLongArray();
-        return Arrays.copyOf(ll, 1+getTokenCount()/64); 
+        return specialSet.toLongArray();
     }
 
     public int getStateSetSize() {

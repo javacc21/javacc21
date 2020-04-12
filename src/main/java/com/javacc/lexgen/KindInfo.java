@@ -33,28 +33,29 @@ package com.javacc.lexgen;
 import java.util.Arrays;
 import java.util.BitSet;
 
+import com.javacc.Grammar;
+
 public final class KindInfo {
    
   private BitSet validKindSet = new BitSet(), finalKindSet = new BitSet();
-  private int numKinds;
    
-  KindInfo(int numKinds) {
-	  this.numKinds = numKinds;
+  KindInfo(Grammar grammar) {
+	  this.validKindSet = new TokenSet(grammar);
+	  this.finalKindSet = new TokenSet(grammar);
   }
 
-   void insertValidKind(int kind)
-   {
+   void insertValidKind(int kind) {
       validKindSet.set(kind);
    }
 
-   void insertFinalKind(int kind)
-   {
+   void insertFinalKind(int kind)  {
       finalKindSet.set(kind);
    }
    
    public long[] getFinalKinds() {
-	   long[] ll = finalKindSet.toLongArray();
-	   return Arrays.copyOf(ll, numKinds);
+       return finalKindSet.toLongArray();
+//	   long[] ll = finalKindSet.toLongArray();
+//	   return Arrays.copyOf(ll, numKinds);
    }
    
    public int getFinalKindCnt() {
@@ -66,8 +67,9 @@ public final class KindInfo {
    }
    
    public long[] getValidKinds() {
-	   long[] ll = validKindSet.toLongArray();
-	   return Arrays.copyOf(ll,  numKinds);
+       return validKindSet.toLongArray();
+//	   long[] ll = validKindSet.toLongArray();
+//	   return Arrays.copyOf(ll,  numKinds);
    }
    
    boolean isValidKind(int kind) {

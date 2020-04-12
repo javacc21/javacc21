@@ -394,7 +394,7 @@ public class LexicalState {
     private void generateDfa(RegexpStringLiteral stringLiteral) {
         String s;
         Map<String, KindInfo> temp;
-        KindInfo info;
+        KindInfo info =null;
 
         if (maxStrKind <= stringLiteral.getOrdinal()) {
             maxStrKind = stringLiteral.getOrdinal() + 1;
@@ -416,9 +416,11 @@ public class LexicalState {
                 charPosKind.add(temp = new HashMap<String, KindInfo>());
             else
                 temp = charPosKind.get(i);
-
-            if ((info = (KindInfo) temp.get(s)) == null)
-                temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
+            info = temp.get(s);
+            if (info == null) {
+                info = new KindInfo(grammar);
+                temp.put(s, info);
+            }
 
             if (i + 1 == imageLength)
                 info.insertFinalKind(stringLiteral.getOrdinal());
@@ -433,9 +435,11 @@ public class LexicalState {
                     charPosKind.add(temp = new HashMap<String, KindInfo>());
                 else
                     temp = charPosKind.get(i);
-
-                if ((info = (KindInfo) temp.get(s)) == null)
-                    temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
+                info = temp.get(s);
+                if (info == null) {
+                    info = new KindInfo(grammar);
+                    temp.put(s, info);
+                }
 
                 if (i + 1 == imageLength)
                     info.insertFinalKind(stringLiteral.getOrdinal());
@@ -451,9 +455,11 @@ public class LexicalState {
                     charPosKind.add(temp = new HashMap<String, KindInfo>());
                 else
                     temp = charPosKind.get(i);
-
-                if ((info = (KindInfo) temp.get(s)) == null)
-                    temp.put(s, info = new KindInfo(lexerData.getTokenCount()));
+                info=temp.get(s);
+                if (info == null) {
+                    info = new KindInfo(grammar);
+                    temp.put(s, info); 
+                }
 
                 if (i + 1 == imageLength)
                     info.insertFinalKind(stringLiteral.getOrdinal());

@@ -49,6 +49,15 @@ public class TokenSet extends BitSet {
 		this.grammar = grammar;
 	}
 	
+	public long[] toLongArray() {
+	    long[] ll = super.toLongArray();
+	    int numKinds = grammar.getLexerData().getTokenCount();
+	    if (ll.length < 1+numKinds/64) {
+	        ll = Arrays.copyOf(ll, 1 + numKinds/64);
+	    }
+	    return ll; 
+	}
+	
 	public List<String> getTokenNames() {
 		List<String> names = new ArrayList<>();
 		int tokCount = grammar.getLexerData().getTokenCount();
