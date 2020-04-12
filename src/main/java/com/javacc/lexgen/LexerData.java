@@ -47,7 +47,6 @@ public class LexerData {
 
     int stateSetSize;
     BitSet skipSet = new BitSet(), specialSet = new BitSet(), moreSet = new BitSet(), tokenSet = new BitSet();
-    int[] maxLongsReqd;
     boolean hasEmptyMatch;
     boolean hasSkipActions, hasMoreActions, hasTokenActions, hasSpecial, hasSkip, hasMore;
 

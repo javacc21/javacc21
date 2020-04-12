@@ -909,12 +909,10 @@ public class LexicalState {
             if (!state.closureDone)
                 state.optimizeEpsilonMoves(false);
         }
-
-        for (int i = 0; i < allStates.size(); i++) {
-            NfaState tmp = allStates.get(i);
-            tmp.epsilonMoveArray = new NfaState[tmp.epsilonMoves.size()];
-            ((Vector<NfaState>)tmp.epsilonMoves).copyInto(tmp.epsilonMoveArray);
-//            tmp.epsilonMoves.toArray(tmp.epsilonMoveArray);
+        for (NfaState nfaState : allStates) {
+//            nfaState.epsilonMoveArray = nfaState.epsilonMoves.toArray(nfaState.epsilonMoveArray);
+            nfaState.epsilonMoveArray = new NfaState[nfaState.epsilonMoves.size()];
+            nfaState.epsilonMoves.copyInto(nfaState.epsilonMoveArray);
         }
     }
 

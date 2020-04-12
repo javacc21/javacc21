@@ -118,11 +118,19 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
 
 [#if !grammar.options.userDefinedLexer]
-
+ [#if !grammar.options.hugeFileSupport]
+   public ${grammar.parserClassName}(String inputSource, CharSequence chars) {
+      [#if grammar.options.lexerUsesParser]
+       token_source = new ${grammar.lexerClassName}(this, chars);
+      [#else]
+       token_source = new ${grammar.lexerClassName}(inputSource, chars);
+      [/#if]
+   }
+ [/#if]
   public ${grammar.parserClassName}(java.io.InputStream stream) {
       this(new InputStreamReader(stream));
   }
-
+  
   public ${grammar.parserClassName}(Reader reader) {
     [#if grammar.options.lexerUsesParser]
     token_source = new ${grammar.lexerClassName}(this, reader);
@@ -137,7 +145,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   /** Constructor with user supplied Lexer. */
   public ${grammar.parserClassName}(Lexer lexer) {
 [#else]
-  /** Constructor with generated Token Manager. */
+  /** Constructor with user supplied Lexer. */
   public ${grammar.parserClassName}(${grammar.lexerClassName} lexer) {
 [/#if]
     token_source = lexer;

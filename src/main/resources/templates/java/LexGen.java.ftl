@@ -170,24 +170,44 @@ public final void backup(int amount) {
 }
 
 [#if options.lexerUsesParser]
+  [#if !options.hugeFileSupport]
+      public ${grammar.lexerClassName}(${grammar.parserClassName} parser, CharSequence chars) {
+          this(parser, chars, LexicalState.values()[0], 1, 1);
+      }
+      
+      public ${grammar.lexerClassName}(${grammar.parserClassName} parser, CharSequence chars, LexicalState lexState, int line, int column) {
+          this.parser = parser;
+          input_stream = new ${tokenBuilderClass}(parser.getInputSource(), chars, line, column);
+          switchTo(lexState);
+      }
+  [/#if]
+  
     public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader) {
-       this(parser, reader, 0, 1, 1);
-       this.parser = parser;
+       this(parser, reader, LexicalState.values()[0], 1, 1);
     }
     
-    public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader, int lexState, int line, int column) {
+    public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader, LexicalState lexState, int line, int column) {
         this.parser = parser;
         input_stream = new ${tokenBuilderClass}(reader, line, column);
-        SwitchTo(lexState);
+        switchTo(lexState);
     }
     
 [#else]
+  [#if !options.hugeFileSupport]
+     public ${grammar.lexerClassName}(String inputSource, CharSequence chars) {
+        this(inputSource, chars, LexicalState.values()[0], 1, 1);
+     }
+     public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
+        input_stream = new ${tokenBuilderClass}(inputSource, chars, line, column);
+        switchTo(lexState);
+     }
+  [/#if]
     public ${grammar.lexerClassName}(Reader reader) {
-       this(reader, 0, 1, 1);
+       this(reader, LexicalState.values()[0], 1, 1);
     }
-    public ${grammar.lexerClassName}(Reader reader, int lexState, int line, int column) {
+    public ${grammar.lexerClassName}(Reader reader, LexicalState lexState, int line, int column) {
         input_stream = new ${tokenBuilderClass}(reader, line, column);
-        SwitchTo(lexState);
+        switchTo(lexState);
     }
 [/#if]
 

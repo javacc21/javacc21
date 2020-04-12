@@ -74,8 +74,10 @@ public class FileLineMap {
 	[#var PRESERVE_LINE_ENDINGS = grammar.options.preserveLineEndings?string("true", "false")]
 	[#var JAVA_UNICODE_ESCAPE = grammar.options.javaUnicodeEscape?string("true", "false")]
 	
-	public FileLineMap(String inputSource, CharSequence charSequence) {
+	public FileLineMap(String inputSource, CharSequence charSequence, int startingLine, int startingColumn) {
 		this.inputSource = inputSource;
+		this.startingLine = startingLine;
+		this.startingColumn = startingColumn;
 		this.rawContent = charSequence.toString(); // We will likely need this eventually, I suppose.
 		this.content = mungeContent(rawContent, ${grammar.options.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE});
 		if (this.content.equals(this.rawContent)) {
@@ -85,6 +87,10 @@ public class FileLineMap {
 		if (inputSource != null && inputSource.length() >0) {
 			tableLookup.put(inputSource, this);
 	    }
+	}
+	
+	public FileLineMap(String inputSource, CharSequence charSequence) {
+	     this(inputSource, charSequence, 1, 1);
 	}
 	
 	public FileLineMap(String inputSource, Reader reader) {

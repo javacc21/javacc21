@@ -42,7 +42,8 @@ public class NfaState {
     private Grammar grammar;
     private LexerData lexerData;
     private LexicalState lexicalState;
-    private char[] rangeMoves = null;
+    private char[] rangeMoves, charMoves;
+    private StringBuilder charMoveBuffer, rangeMoveBuffer;
     NfaState stateForCase;
     String epsilonMovesString;
     NfaState[] epsilonMoveArray;
@@ -55,7 +56,6 @@ public class NfaState {
     private int[] nonAsciiMoveIndices;
 
     private BitSet asciiMoves = new BitSet();
-    private char[] charMoves = null;
     private NfaState next;
     Vector<NfaState> epsilonMoves = new Vector<NfaState>();
     int index = -1;
@@ -348,8 +348,9 @@ public class NfaState {
        asciiMoves.or(other.asciiMoves);
 
         if (other.getCharMoves() != null) {
-            if (getCharMoves() == null)
+            if (getCharMoves() == null) {
                 setCharMoves(other.getCharMoves());
+            }
             else {
                 char[] tmpCharMoves = new char[getCharMoves().length + other.getCharMoves().length];
                 System.arraycopy(getCharMoves(), 0, tmpCharMoves, 0, getCharMoves().length);
@@ -1021,10 +1022,13 @@ public class NfaState {
     }
 
     public void setCharMoves(char[] charMoves) {
+        charMoveBuffer = new StringBuilder();
+        charMoveBuffer.append(charMoves);
         this.charMoves = charMoves;
     }
 
     char[] getCharMoves() {
+//        return charMoveBuffer.toString().toCharArray();
         return charMoves;
     }
 
