@@ -106,7 +106,7 @@ public class LexerData {
         return -1;
     }
 
-    public int numLexicalStates() {
+    public int getNumLexicalStates() {
         return lexicalStates.size();
     }
 

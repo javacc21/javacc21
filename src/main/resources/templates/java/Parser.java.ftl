@@ -154,6 +154,23 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   
  
 [#if grammar.options.faultTolerant]
+
+    private void insertVirtualToken(int tokenType) {
+        Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenImage[tokenType]);
+        virtualToken.setUnparsed(true);
+        int line = current_token.getEndLine();
+        int column = current_token.getEndColumn();
+        virtualToken.setBeginLine(line);
+        virtualToken.setEndLine(line);
+        virtualToken.setBeginColumn(column);
+        virtualToken.setEndColumn(column);
+     [#if grammar.lexerData.numLexicalStates >1]
+            token_source.doLexicalStateSwitch(tokenType);
+     [/#if]
+        if (tokensAreNodes && buildTree) {
+             currentNodeScope.add(virtualToken);           
+        }
+    }
   
     /**
      * Based on the type of the node and the terminating token, we attempt to scan forward and recover. 
@@ -175,7 +192,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
             } else {
                 terminalTokenFound = tok;
                 tok.precedingUnparsedTokens = unparsedTokens;
-     [#if grammar.lexerData.lexicalStates?size >1]
+    [#if grammar.lexerData.numLexicalStates >1]
                 token_source.doLexicalStateSwitch(tok.kind);
      [/#if]
             }
