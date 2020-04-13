@@ -152,7 +152,7 @@ abstract public class Nodes {
 	                }
 	                while (specialToken != token && specialToken !=null) {
 	                    result.add(specialToken);
-	                    specialToken = specialToken.next;
+	                    specialToken = specialToken.getNext();
 	                }
                 }
                 result.add(token);

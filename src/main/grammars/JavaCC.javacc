@@ -260,6 +260,7 @@ INJECT(LEXER_CLASS) :
         javaccReservedWords.add("TOKEN");
         javaccReservedWords.add("REGULAR_TOKEN");
         javaccReservedWords.add("SPECIAL_TOKEN");
+        javaccReservedWords.add("SPECIAL_TOKEN");
         javaccReservedWords.add("UNPARSED_TOKEN");
         javaccReservedWords.add("MORE");
         javaccReservedWords.add("INCOMPLETE_TOKEN");
@@ -313,8 +314,6 @@ TOKEN :
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
   |
   < _LOOKAHEAD: "LOOKAHEAD"| "SCAN" > #JavaCCKeyWord
-//  |
-//  < _SCAN : "SCAN"> #JavaCCKeyWord
   |
   < _IGNORE_CASE: "IGNORE_CASE" > #JavaCCKeyWord
   |
@@ -324,7 +323,7 @@ TOKEN :
   |
   < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #JavaCCKeyWord
   |
-  < _SPECIAL_TOKEN: "SPECIAL_TOKEN" | "UNPARSED_TOKEN"> #JavaCCKeyWord
+  < _SPECIAL_TOKEN: "SPECIAL_TOKEN" | "UNPARSED"> #JavaCCKeyWord
   |
   < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #JavaCCKeyWord
   |
@@ -496,7 +495,7 @@ INJECT(Token) :
         }
         while (tok != this && tok != null) {
             buf.append(tok);
-            tok = tok.next;
+            tok = tok.getNext();
         }
         return buf.toString();
     }
@@ -516,6 +515,14 @@ INJECT(Token) :
 
     public void clearSpecialToken() {
         specialToken = null;
+    }
+    
+    public void setNext(Token next) {
+       this.next = next;
+    }
+    
+    public Token getNext() {
+        return next;
     }
 }
 

@@ -138,7 +138,7 @@
         	    }
         	    while (specialToken !=null && specialToken != token) {
         	        n.addChild(specialToken);
-        	        specialToken = specialToken.next;
+        	        specialToken = specialToken.getNext();
         	    }
         	}
             n.addChild(child);
@@ -181,7 +181,7 @@
 	        	    }
 	        	    while (specialToken !=null && specialToken != token) {
 	        	        n.addChild(specialToken);
-	        	        specialToken = specialToken.next;
+	        	        specialToken = specialToken.getNext();
 	        	    }
 	        	}
                 n.addChild(child);

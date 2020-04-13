@@ -211,7 +211,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
  [/#if]
   
         Token oldToken = current_token;
-        current_token = current_token.next;
+        current_token = current_token.getNext();
         if (current_token == null ) {
            current_token = token_source.getNextToken();
         }
@@ -260,7 +260,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
            virtualToken.setBeginColumn(oldToken.getEndColumn());
            virtualToken.setEndLine(current_token.getBeginLine());
            virtualToken.setEndColumn(current_token.getBeginColumn());
-           virtualToken.next = current_token;
+           virtualToken.setNext(current_token);
            current_token = virtualToken;
        } else {
 //	      current_token = oldToken;
@@ -292,13 +292,16 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   private boolean jj_scan_token(int kind) {
     if (jj_scanpos == jj_lastpos) {
       jj_la--;
-      if (jj_scanpos.next == null) {
-        jj_lastpos = jj_scanpos = jj_scanpos.next = token_source.getNextToken();
+      if (jj_scanpos.getNext() == null) {
+        Token nextToken = token_source.getNextToken();
+        jj_scanpos.setNext(nextToken);
+        jj_scanpos = nextToken;
+        jj_lastpos = nextToken;
       } else {
-        jj_lastpos = jj_scanpos = jj_scanpos.next;
+        jj_lastpos = jj_scanpos = jj_scanpos.getNext();
       }
     } else {
-      jj_scanpos = jj_scanpos.next;
+      jj_scanpos = jj_scanpos.getNext();
     }
     [#if grammar.options.debugLookahead]
        trace_scan(jj_scanpos, kind);
@@ -311,8 +314,12 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 [/#if]
 
   final public Token getNextToken() {
-    if (current_token.next != null) current_token = current_token.next;
-    else current_token = current_token.next = token_source.getNextToken();
+    if (current_token.getNext() != null) current_token = current_token.getNext();
+    else {
+       Token nextToken = token_source.getNextToken();
+       current_token.setNext(nextToken);
+       current_token = nextToken;
+    }
     return current_token;
   }
 
@@ -320,17 +327,22 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   final public Token getToken(int index) {
     Token t = current_token;
     for (int i = 0; i < index; i++) {
-      if (t.next != null) t = t.next;
-      else t = t.next = token_source.getNextToken();
+      if (t.getNext() != null) t = t.getNext();
+      else {
+         Token nextToken = token_source.getNextToken();
+         t.setNext(nextToken);
+         t = nextToken;
+       }
     }
     return t;
   }
   
   private int nextTokenKind() {
-    if (current_token.next == null) {
-        current_token.next = token_source.getNextToken();
+    if (current_token.getNext() == null) {
+        Token nextToken = token_source.getNextToken();
+        current_token.setNext(nextToken);
     }
-    return current_token.next.kind;
+    return current_token.getNext().kind;
   }
   
   private List<Token> getTokensToEOL(int ...desiredTokenTypes) {
@@ -339,11 +351,11 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
      Token tok = current_token;
      do  {
         Token prevToken = tok;
-        if (tok.next != null) {
-            tok = tok.next;
+        if (tok.getNext() != null) {
+            tok = tok.getNext();
         } else {
         	tok = token_source.getNextToken();
-        	prevToken.next = tok;
+        	prevToken.setNext(tok);
         }
         result.add(tok);
      } while (tok.getBeginLine() == currentLine && !intArrayContains(desiredTokenTypes, tok.kind) && tok.kind != EOF);

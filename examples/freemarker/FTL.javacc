@@ -109,7 +109,7 @@ INJECT(FTLLexer) :
                 copy.specialToken = null;
                 copyFieldsOfToken(tok.specialToken, tok);
                 tok.kind = BLANK;
-                tok.next = copy;
+                tok.setNext(copy);
                 noWhitespaceInExpression = false;
                 lastMatchedTokenType = tok.kind;
                 return;
@@ -220,7 +220,8 @@ INJECT(FTLLexer) :
         dest.kind = src.kind;
         dest.image = src.image;
         dest.specialToken = src.specialToken;
-        dest.next = src.next;
+        Token next = src.getNext();
+        dest.setNext(next);
         dest.beginLine = src.beginLine;
         dest.beginColumn = src.beginColumn;
         dest.endLine = src.endLine;

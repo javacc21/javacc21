@@ -81,7 +81,15 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * token.  Otherwise, see below for a description of the contents of
      * this field.
      */
-    Token next;
+    private Token next;
+    
+    Token getNext() {
+       return next;
+    }
+    
+    void setNext(Token next) {
+        this.next = next;
+    }
 
     /**
      * This field is used to access special tokens that occur prior to this

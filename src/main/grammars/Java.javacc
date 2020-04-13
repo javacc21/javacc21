@@ -1499,13 +1499,15 @@ void ShiftOperator() #void :
          }
      	 first.image = ">>>";
 	 	 first.kind = RUNSIGNEDSHIFT;
-	 	 first.next = third.next;
+	 	 Token next = third.getNext();
+	 	 first.setNext(next);
 	 	 popNode();
 	 	 popNode();
       } else {
          first.image = ">>";
 	 	 first.kind = RSIGNEDSHIFT;
-	     first.next = second.next;
+	 	 Token next = second.getNext();
+	     first.setNext(next);
 	     popNode();
       }
    }

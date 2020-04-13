@@ -54,6 +54,7 @@ public class JavaFormatter {
     
     public String format(Reader input) throws IOException, ParseException {
         JavaCCParser parser = new JavaCCParser(input);
+//        parser.setSpecialTokensAreNodes(true);
         CompilationUnit cu = parser.CompilationUnit();
         input.close();
         return format(cu);

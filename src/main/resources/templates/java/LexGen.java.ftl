@@ -51,13 +51,16 @@ import java.util.*;
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
   private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
   
-[#if grammar.options.faultTolerant]  
+[#if options.faultTolerant]  
   private InvalidToken invalidToken; 
-[/#if]  
-  
- 
+[/#if]
 
-[#if options.lexerUsesParser]
+void addToken(Token token) {
+    [#if !options.hugeFileSupport]
+       input_stream.addToken(token);
+    [/#if]  
+}  
+ [#if options.lexerUsesParser]
 
   public ${grammar.parserClassName} parser;
 [/#if]
@@ -443,7 +446,8 @@ public final void backup(int amount) {
               }
               else {
                  matchedToken.specialToken=specialToken;
-                 specialToken=(specialToken.next=matchedToken);
+                 specialToken.setNext(matchedToken);
+                 specialToken = matchedToken;
                  input_stream.addToken(specialToken);
                }
 
