@@ -63,7 +63,7 @@ import com.javacc.parser.tree.*;
    * are used in syntactic lookahead productions.  This is to prevent
    * typos such as leaving out the comma in LOOKAHEAD( foo(), {check()} ).
    */
-  int inLocalLA;
+  private boolean inLookahead;
 
    /*
     * Returns true if the next token is not in the FOLLOW list of "expansion".
@@ -312,9 +312,9 @@ TOKEN :
   |
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
   |
-  < _LOOKAHEAD: "LOOKAHEAD" > #JavaCCKeyWord
-  |
-  < _SCAN : "SCAN"> #JavaCCKeyWord
+  < _LOOKAHEAD: "LOOKAHEAD"| "SCAN" > #JavaCCKeyWord
+//  |
+//  < _SCAN : "SCAN"> #JavaCCKeyWord
   |
   < _IGNORE_CASE: "IGNORE_CASE" > #JavaCCKeyWord
   |
@@ -707,7 +707,7 @@ void option_binding() #void :
   ( 
      name=<IDENTIFIER> 
      | 
-     name = "LOOKAHEAD" 
+     name = <_LOOKAHEAD>
      |
      name = "IGNORE_CASE"
   )
@@ -1311,12 +1311,8 @@ Expansion ExpansionSequence() :
 }
 {
   [ 
+    LOOKAHEAD(1, {!inLookahead})  
     la=Lookahead()
-    {
-       if (inLocalLA != 0 && la.getAmount() != 0) {
-         grammar.addWarning(t, "Only semantic lookahead specifications within other lookahead specifications is considered.  Syntactic lookahead is ignored.");
-       }
-    }
   ]
   {
      if (!(la instanceof ExplicitLookahead)) {
@@ -1440,55 +1436,54 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
     boolean commaAtEnd = false, emptyLA = true;
     Expansion expansion;
     Expression semanticLookahead = null;
+    this.inLookahead = true;
 }
 {
-  <_SCAN> {return CURRENT_NODE;} 
-  |
   <_LOOKAHEAD>
-   "(" 
-   {token_source.inJavaCode = true; inLocalLA++;}
   [
-    <INTEGER_LITERAL>
-    {
-       CURRENT_NODE.setAmount(Integer.parseInt(current_token.toString()));
-       emptyLA = false;
-    }
-  ]
-  [ LOOKAHEAD(0, { !emptyLA && (getToken(1).kind != RPAREN) } )
-    ","
+   "("  {token_source.inJavaCode = true;}
+      [
+        <INTEGER_LITERAL>
         {
-          commaAtEnd = true;
+           CURRENT_NODE.setAmount(Integer.parseInt(current_token.toString()));
+           emptyLA = false;
         }
-  ]
-  [ LOOKAHEAD(0, { getToken(1).kind != RPAREN && getToken(1).kind != LBRACE } )
-    ExpansionChoice() 
-    {
-       expansion = (Expansion) popNode();
-       emptyLA = false; commaAtEnd = false;
-       CURRENT_NODE.setExpansion(expansion);
-    }
-  ]
-  [ LOOKAHEAD(0, { !emptyLA && !commaAtEnd && (getToken(1).kind != RPAREN) } )
-    ","
+      ]
+      [ LOOKAHEAD(0, { !emptyLA && (getToken(1).kind != RPAREN) } )
+        ","
+            {
+              commaAtEnd = true;
+            }
+      ]
+      [ LOOKAHEAD(0, { getToken(1).kind != RPAREN && getToken(1).kind != LBRACE } )
+        ExpansionChoice() 
         {
-          commaAtEnd = true;
+           expansion = (Expansion) popNode();
+           emptyLA = false; commaAtEnd = false;
+           CURRENT_NODE.setExpansion(expansion);
         }
+      ]
+      [ LOOKAHEAD(0, { !emptyLA && !commaAtEnd && (getToken(1).kind != RPAREN) } )
+        ","
+            {
+              commaAtEnd = true;
+            }
+      ]
+      [
+        "{"
+            semanticLookahead=Expression()
+        "}"
+        {
+           CURRENT_NODE.setSemanticLookahead(semanticLookahead);
+           if (emptyLA) {
+              CURRENT_NODE.setAmount(0);
+           }
+        }
+      ]
+     ")" {token_source.inJavaCode = false;}
   ]
-  [
-    "{"
-        semanticLookahead=Expression()
-    "}"
-    {
-       CURRENT_NODE.setSemanticLookahead(semanticLookahead);
-       if (emptyLA) {
-          CURRENT_NODE.setAmount(0);
-       }
-    }
-  ]
-  ")"
   {
-     inLocalLA--;
-     token_source.inJavaCode = false;
+     this.inLookahead = false;
      return CURRENT_NODE;
   }
 }
@@ -1510,6 +1505,7 @@ Expansion ExpansionUnit() :
 }
 {
  (
+  LOOKAHEAD("{", {!inLookahead})
   result=CodeSnippet() 
   |
   result=ZeroOrOne()
@@ -1904,7 +1900,7 @@ CodeBlock CodeSnippet() #void :
 {
     block=Block()
     {
-       if (inLocalLA != 0) {
+       if (inLookahead) {
             grammar.addWarning(block, "Code snippet within lookahead specification will be ignored.");
        } 
        token_source.inJavaCode = false;

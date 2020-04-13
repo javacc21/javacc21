@@ -84,7 +84,9 @@ public class FilesGenerator {
         generateToken();
         generateLexer();
         generateConstantsFile();
-        generateParser();
+        if (!grammar.getProductionTable().isEmpty()) {
+            generateParser();
+        }
         if (grammar.getOptions().getTreeBuildingEnabled()) {
             generateTreeBuildingFiles();
         }
@@ -254,19 +256,18 @@ public class FilesGenerator {
         }
     }
     
-    boolean regenerate(File file) throws IOException {
+    private boolean regenerate(File file) throws IOException {
         if (!file.exists()) {
         	return true;
-        } else  {
-        	String ourName = file.getName();
-        	String canonicalName = file.getCanonicalFile().getName();
-        	if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
-        		String msg = "You cannot have two files that differ only in case, as in " 
-        	                          + ourName + " and "+ canonicalName 
-        	                          + "\nThis does work on a case-sensitive file system but fails on a case-insensitive one (i.e. Mac/Windows)"
-        	                          + " \nYou will need to rename something in your grammar!";
-        		throw new IOException(msg);
-        	}
+        } 
+        String ourName = file.getName();
+        String canonicalName = file.getCanonicalFile().getName();
+       	if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
+       		String msg = "You cannot have two files that differ only in case, as in " 
+       	                          + ourName + " and "+ canonicalName 
+       	                          + "\nThis does work on a case-sensitive file system but fails on a case-insensitive one (i.e. Mac/Windows)"
+       	                          + " \nYou will need to rename something in your grammar!";
+       		throw new IOException(msg);
         }
         String filename = file.getName();
         if (filename.endsWith(".java")) {

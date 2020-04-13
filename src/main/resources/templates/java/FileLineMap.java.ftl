@@ -39,6 +39,7 @@ package ${grammar.parserPackage};
 import java.io.IOException;
 import java.io.*;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.nio.file.Files;
 import java.nio.charset.Charset;
 
@@ -55,7 +56,6 @@ public class FileLineMap {
    static FileLineMap getFileLineMap(String inputSource) {
         return tableLookup.get(inputSource);
    }
-   
 	
 	// File content without any adjustments for unicode escapes or tabs or any of that.
 	private String rawContent;
@@ -70,6 +70,8 @@ public class FileLineMap {
 	private int[] lineOffsets = new int[1024];
 
 	private int startingLine = 1, startingColumn = 1;
+	
+	private LinkedList<Token> tokenList = new LinkedList<>();
 		
 	[#var PRESERVE_LINE_ENDINGS = grammar.options.preserveLineEndings?string("true", "false")]
 	[#var JAVA_UNICODE_ESCAPE = grammar.options.javaUnicodeEscape?string("true", "false")]
@@ -107,6 +109,9 @@ public class FileLineMap {
 		this(inputSource, new FileReader(file));
 	}
 	
+	void addToken(Token token) {
+	   tokenList.add(token);
+	}
 	
 	// Icky method to handle annoying stuff. Might make this public later if it is needed elsewhere
     private String mungeContent(String content, int tabsToSpaces, boolean preserveLines, boolean javaUnicodeEscape) {

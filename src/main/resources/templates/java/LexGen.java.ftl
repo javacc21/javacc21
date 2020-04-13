@@ -45,10 +45,16 @@ package ${grammar.parserPackage};
 import java.io.Reader;
 import java.io.IOException;
 import java.util.logging.Logger;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
   private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
+  
+[#if grammar.options.faultTolerant]  
+  private InvalidToken invalidToken; 
+[/#if]  
+  
  
 
 [#if options.lexerUsesParser]
@@ -239,20 +245,17 @@ public final void backup(int amount) {
 
  [#if grammar.options.faultTolerant]
   public Token getNextToken() {
-      Token tok = nextToken();
-      if (!(tok instanceof InvalidToken)) {
-          return tok;
-      }
-      InvalidToken invalidToken = (InvalidToken) tok;
-      StringBuilder invalidChars = new StringBuilder();
+      Token tok = null;
       do {
-          invalidChars.append(tok.image);
-          tok = nextToken();
-      } while (tok instanceof InvalidToken);
-      invalidToken.image = invalidChars.toString();
-      tok.invalidToken = invalidToken;
+         tok = nextToken();
+      }  while (tok instanceof InvalidToken);
+      if (invalidToken != null) {
+          input_stream.addToken(invalidToken);
+          invalidToken = null;
+      }
+      input_stream.addToken(tok);
       return tok;
-  }
+ }
 [/#if]
  
   
@@ -274,7 +277,7 @@ public final void backup(int amount) {
             if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
 			jjmatchedKind = 0;
             Token eof = jjFillToken();
-            tokenLexicalActions(eof);
+            tokenLexicalActions();
 [#if grammar.usesCommonTokenAction]
             CommonTokenAction(eof);
 [/#if]
@@ -282,6 +285,7 @@ public final void backup(int amount) {
             eof = tokenHook(eof);
 [/#if]
 		    eof.specialToken = specialToken;
+		    input_stream.addToken(eof);
     		return eof;
        }
 
@@ -397,7 +401,7 @@ public final void backup(int amount) {
  [/#if]
 
  [#if lexerData.hasTokenActions]
-      tokenLexicalActions(matchedToken);
+      tokenLexicalActions();
  [/#if]
 
  [#if grammar.usesCommonTokenAction]
@@ -410,7 +414,7 @@ public final void backup(int amount) {
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
-
+ input_stream.addToken(matchedToken);
  return matchedToken;
 
       [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
@@ -438,21 +442,22 @@ public final void backup(int amount) {
                 specialToken = matchedToken;
               }
               else {
-                matchedToken.specialToken = specialToken;
-                specialToken = (specialToken.next = matchedToken);
-              }
+                 matchedToken.specialToken=specialToken;
+                 specialToken=(specialToken.next=matchedToken);
+                 input_stream.addToken(specialToken);
+               }
 
               [#if lexerData.hasSkipActions]
-              tokenLexicalActions(matchedToken);
+              tokenLexicalActions();
               [/#if]
           }
       
               [#if lexerData.hasSkipActions]
               else 
-                 tokenLexicalActions(null);
+                 tokenLexicalActions();
               [/#if]
           [#elseif lexerData.hasSkipActions]
-            tokenLexicalActions(null);
+            tokenLexicalActions();
           [/#if]
 
           [#if numLexicalStates>1]
@@ -467,7 +472,7 @@ public final void backup(int amount) {
 
          [#if lexerData.hasMore]
           [#if lexerData.hasMoreActions]
-          tokenLexicalActions(null);
+          tokenLexicalActions();
           [#elseif lexerData.hasSkipActions || lexerData.hasTokenActions]
           matchedCharsLength += jjmatchedPos + 1;
 		  [/#if]
@@ -495,16 +500,25 @@ public final void backup(int amount) {
      [/#if]
    [/#if]
    }
-    int error_line = input_stream.getEndLine();
+     int error_line = input_stream.getEndLine();
     int error_column = input_stream.getEndColumn();
     String error_after = null;
-//    input_stream.backup(1);
     error_after = curPos <= 1 ? "" : input_stream.getImage();
+  [#if options.faultTolerant]
+    if (invalidToken == null) {
+       invalidToken = new InvalidToken(""+ curChar);
+       invalidToken.setBeginLine(error_line);
+       invalidToken.setBeginColumn(error_column);
+    } else {
+       invalidToken.image = invalidToken.image + curChar;
+    }
+  [#else]
     Token invalidToken = new InvalidToken("" + curChar);
     invalidToken.specialToken = specialToken;
     invalidToken.setBeginLine(error_line);
-    invalidToken.setEndLine(error_line);
     invalidToken.setBeginColumn(error_column);
+ [/#if]
+    invalidToken.setEndLine(error_line);
     invalidToken.setEndColumn(error_column);
     return invalidToken;
 [#if lexerData.hasMore]
@@ -513,9 +527,7 @@ public final void backup(int amount) {
      }
   }
 
-  void tokenLexicalActions(Token matchedToken) {
-//       int matchedKind = (matchedToken != null) ? matchedToken.kind : jjmatchedKind; // REVISIT
-       matchedToken = null; 
+  private void tokenLexicalActions() {
        switch(jjmatchedKind) {
    [#list 0..(tokenCount-1) as i]
       [#var regexp=lexerData.getRegularExpression(i)]
