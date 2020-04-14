@@ -112,7 +112,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   Token current_token;
 [#if hasPhase2] 
   private Token jj_scanpos, jj_lastpos;
-  private int remainingLookahead;
+  private int jj_la;
   private boolean semanticLookahead; 
 [/#if]
 
@@ -192,7 +192,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
             } else {
                 terminalTokenFound = tok;
                 tok.precedingUnparsedTokens = unparsedTokens;
-    [#if grammar.lexerData.numLexicalStates >1]
+     [#if grammar.lexerData.lexicalStates?size >1]
                 token_source.doLexicalStateSwitch(tok.kind);
      [/#if]
             }
@@ -308,7 +308,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   final private LookaheadSuccess LOOKAHEAD_SUCCESS = new LookaheadSuccess();
   private boolean jj_scan_token(int kind) {
     if (jj_scanpos == jj_lastpos) {
-      --remainingLookahead;
+      jj_la--;
       if (jj_scanpos.getNext() == null) {
         Token nextToken = token_source.getNextToken();
         jj_scanpos.setNext(nextToken);
@@ -325,7 +325,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     [/#if]
 
      if (jj_scanpos.kind != kind) return true;
-    if (remainingLookahead == 0 && jj_scanpos == jj_lastpos) throw LOOKAHEAD_SUCCESS;
+    if (jj_la == 0 && jj_scanpos == jj_lastpos) throw LOOKAHEAD_SUCCESS;
     return false;
   }
 [/#if]

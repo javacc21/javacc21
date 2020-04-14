@@ -27,7 +27,7 @@
 
 
   <target name="parser-gen" depends="init" unless="parser.uptodate">
-        <get 
+        <!-- get 
             src="https://javacc.com/download/javacc.jar" 
             dest="bin"
             quiet="true"
@@ -46,7 +46,7 @@
               <available file="bin/freemarker.jar"/>
              </not>
             </condition>
-         </fail>
+         </fail -->
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
  	   <arg value="src/main/grammars/JavaCC.javacc"/>
  	</java>
