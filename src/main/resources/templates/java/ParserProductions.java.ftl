@@ -147,7 +147,7 @@
                      if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) {
-		                attemptRecovery(${nodeVarName}, ${expansion.finalSet.commaDelimitedTokens});
+                        insertVirtualToken(${expansion.finalSet.firstTokenName});
 		                closeNodeScope(${nodeVarName}, true);
 		             } else {
                         closeNodeScope(${nodeVarName}, false);

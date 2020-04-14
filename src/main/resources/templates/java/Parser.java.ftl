@@ -158,6 +158,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     private void insertVirtualToken(int tokenType) {
         Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenImage[tokenType]);
         virtualToken.setUnparsed(true);
+        virtualToken.setVirtual(true);
         int line = current_token.getEndLine();
         int column = current_token.getEndColumn();
         virtualToken.setBeginLine(line);
@@ -200,6 +201,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         if (terminalTokenFound != null) { 
 	        Token lastScanned = scanAhead.get(scanAhead.size()-1);
             Token virtualToken = Token.newToken(finalTokenType, "VIRTUAL " + nodeNames[finalTokenType]);
+            virtualToken.setVirtual(true);
             virtualToken.setUnparsed(true);
             virtualToken.setBeginLine(lastScanned.getEndLine());
             virtualToken.setBeginColumn(lastScanned.getEndColumn());
