@@ -31,7 +31,7 @@
  --]
  
 [#macro ProductionsCode] 
-   static private final int INFINITY = Integer.MAX_VALUE;
+   static private final int INDEFINITE = Integer.MAX_VALUE;
   //=================================
  // Start of methods for BNF Productions
  //=================================
@@ -147,7 +147,6 @@
                      if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) {
-//		                attemptRecovery(${nodeVarName}, ${expansion.finalSet.commaDelimitedTokens});
                         insertVirtualToken(${expansion.finalSet.firstTokenName});
 		                closeNodeScope(${nodeVarName}, true);
 		             } else {
@@ -328,19 +327,21 @@ throw new ParseException();"]
    [/#list]
    [#list lookaheads as lookahead]
       [#if lookahead.requiresPhase2Routine]
+         [#var lookaheadAmount = lookahead.amount]
+         [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INDEFINITE"][/#if]
          [#if lookahead_index = 0]
+            remainingLookahead = ${lookaheadAmount};
             if (
             [#set indentLevel = indentLevel+1]
          [#elseif !inPhase1]
             } else if (
          [#else]
             default:
+               remainingLookahead = ${lookaheadAmount};
                if (
                [#set indentLevel = indentLevel+1]
          [/#if]
-                [#var lookaheadAmount = lookahead.amount]
-                [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INFINITY"][/#if]
-                ${lookahead.nestedExpansion.phase2RoutineName}(${lookaheadAmount})
+                ${lookahead.nestedExpansion.phase2RoutineName}()
          [#if lookahead.semanticLookaheadA??]
                 && (${lookahead.semanticLookahead})
          [/#if]
@@ -398,13 +399,16 @@ throw new ParseException();"]
    [#var emptyFallback=!action?has_content]
    [#var condition=lookahead.semanticLookahead!]
    [#if lookahead.requiresPhase2Routine]
+      [#var lookaheadAmount = lookahead.amount]
+      [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "INDEFINITE"][/#if]
+      remainingLookahead = ${lookahead.amount};
       [#set condition]
-        ${lookahead.nestedExpansion.phase2RoutineName}(${lookahead.amount})
+        ${lookahead.nestedExpansion.phase2RoutineName}()
         [#if lookahead.semanticLookahead??]
           && (${lookahead.semanticLookahead})
         [/#if]
       [/#set]
-      [#set condition = condition?replace("2147483647", "INFINITY")]
+      [#set condition = condition?replace("2147483647", "INDEFINITE")]
    [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansion]
       [@newVar type="int" init="nextTokenKind()"/]
       [#set condition]
@@ -444,8 +448,8 @@ throw new ParseException();"]
 [#var currentProduction]
 
 [#macro buildPhase2Routine expansion]
-   private boolean ${expansion.phase2RoutineName}(int maxLookahead) {
-      jj_la = maxLookahead; 
+   private boolean ${expansion.phase2RoutineName}() {
+//      remainingLookahead = maxLookahead; 
       jj_lastpos = jj_scanpos = current_token;
       try { 
             return !${expansion.phase3RoutineName}();
@@ -461,7 +465,7 @@ throw new ParseException();"]
 [#macro buildPhase3Routine expansion count]
    [#if expansion.ordinal > 0][#return][/#if]
      private boolean ${expansion.phase3RoutineName}() {
-        [#if grammar.options.debugLookahead&&expansion.parent.class.name?ends_with("Production")]
+        [#if grammar.options.debugLookahead&&expansion.parent.class.name = "BNFProduction"]
             if (trace_enabled) LOGGER.info("${expansion.parent.name} (LOOKING AHEAD...)";
             [#set currentPhase3Expansion = expansion]
        [#else]

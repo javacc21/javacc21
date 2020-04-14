@@ -101,10 +101,10 @@ void JSONObject() ! : {}
 {
     <OPEN_BRACE>
     [
-       <STRING_LITERAL> <COLON> Value()
+       <STRING_LITERAL> <COLON>! Value()
        (
          <COMMA>
-        <STRING_LITERAL><COLON>Value()
+        <STRING_LITERAL><COLON>! Value()
        )*
     ]
     <CLOSE_BRACE>

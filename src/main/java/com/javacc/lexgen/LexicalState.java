@@ -268,7 +268,6 @@ public class LexicalState {
         }
 
         if (initialState.kind != Integer.MAX_VALUE && initialState.kind != 0) {
-//            if ((lexerData.toSkip[initialState.kind / 64] & (1L << initialState.kind)) != 0L
             if (lexerData.hasSkipAction(initialState.kind)                
                 || (lexerData.specialSet.get(initialState.kind)))
                 lexerData.hasSkipActions = true;
@@ -345,7 +344,6 @@ public class LexicalState {
                     choices.add((RegexpChoice) currentRegexp);
                 }
                 Nfa nfa = Nfa.buildNfa(currentRegexp, this, ignore);
-               // Nfa nfa = new NfaBuilder(currentRegexp, this, ignore).getNfa();
                 nfa.getEnd().isFinal = true;
                 nfa.getEnd().kind = currentRegexp.getOrdinal();
                 initialState.addMove(nfa.getStart());
