@@ -444,7 +444,7 @@ throw new ParseException();"]
 
 [#macro buildPhase2Routine expansion]
    private boolean ${expansion.phase2RoutineName}(int maxLookahead) {
-      jj_la = maxLookahead; 
+      remainingLookahead = maxLookahead; 
       jj_lastpos = jj_scanpos = current_token;
       try { 
             return !${expansion.phase3RoutineName}();

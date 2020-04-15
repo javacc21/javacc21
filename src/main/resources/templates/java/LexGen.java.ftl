@@ -126,21 +126,21 @@ void addToken(Token token) {
 
 [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
       // BitSet for TOKEN
-      private BitSet tokenSet = BitSet.valueOf(new long[] {
+      static private BitSet tokenSet = BitSet.valueOf(new long[] {
           [#list lexerData.tokenSet.toLongArray() as long]${long}L,[/#list]
       });
 [/#if]
 
 [#if lexerData.hasSkip || lexerData.hasSpecial]
       // BitSet for SKIP
-      private BitSet skipSet = BitSet.valueOf(new long[] {
+      static private BitSet skipSet = BitSet.valueOf(new long[] {
           [#list lexerData.skipSet.toLongArray() as long]${long}L,[/#list]
       });
 [/#if]
 
 [#if lexerData.hasSpecial]
       // BitSet for SPECIAL
-      private BitSet specialSet = BitSet.valueOf(new long[] {
+      static private BitSet specialSet = BitSet.valueOf(new long[] {
           [#list lexerData.specialSet.toLongArray() as long]${long}L,[/#list]
       });      
 [/#if]
@@ -148,7 +148,7 @@ void addToken(Token token) {
 
 [#if lexerData.hasMore]
       // BitSet for MORE
-      private BitSet moreSet = BitSet.valueOf(new long[] {
+      static private BitSet moreSet = BitSet.valueOf(new long[] {
           [#list lexerData.moreSet.toLongArray() as long]${long}L,[/#list]
       });      
 [/#if]

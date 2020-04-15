@@ -54,8 +54,6 @@ public final class KindInfo {
    
    public long[] getFinalKinds() {
        return finalKindSet.toLongArray();
-//	   long[] ll = finalKindSet.toLongArray();
-//	   return Arrays.copyOf(ll, numKinds);
    }
    
    public int getFinalKindCnt() {
@@ -68,8 +66,6 @@ public final class KindInfo {
    
    public long[] getValidKinds() {
        return validKindSet.toLongArray();
-//	   long[] ll = validKindSet.toLongArray();
-//	   return Arrays.copyOf(ll,  numKinds);
    }
    
    boolean isValidKind(int kind) {

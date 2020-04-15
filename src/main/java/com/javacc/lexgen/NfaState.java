@@ -861,9 +861,9 @@ public class NfaState {
     private void updateDuplicateNonAsciiMoves() {
         List<NfaState> nonAsciiTableForMethod = lexerData.getNonAsciiTableForMethod();
         for (int i = 0; i < nonAsciiTableForMethod.size(); i++) {
-            NfaState tmp = nonAsciiTableForMethod.get(i);
-            if (EqualLoByteVectors(loByteVec, tmp.loByteVec)
-                    && EqualNonAsciiMoveIndices(nonAsciiMoveIndices, tmp.nonAsciiMoveIndices)) {
+            NfaState state = nonAsciiTableForMethod.get(i);
+            if (EqualLoByteVectors(loByteVec, state.loByteVec)
+                    && EqualNonAsciiMoveIndices(nonAsciiMoveIndices, state.nonAsciiMoveIndices)) {
                 nonAsciiMethod = i;
                 return;
             }
