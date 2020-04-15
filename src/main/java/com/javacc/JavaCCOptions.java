@@ -178,6 +178,7 @@ public class JavaCCOptions {
         optionValues.put("FREEMARKER_NODES", false);
         optionValues.put("DEFAULT_LEXICAL_STATE", "DEFAULT");
         optionValues.put("HUGE_FILE_SUPPORT", false);
+        optionValues.put("LEGACY_API", false);
         aliases.put("DEBUG_TOKEN_MANAGER", "DEBUG_LEXER");
         aliases.put("USER_TOKEN_MANAGER", "USER_DEFINED_LEXER");
         aliases.put("TOKEN_MANAGER_USES_PARSER", "LEXER_USES_PARSER");
@@ -525,6 +526,10 @@ public class JavaCCOptions {
      */
     public boolean getBuildParser() {
         return booleanValue("BUILD_PARSER");
+    }
+    
+    public boolean getLegacyAPI() {
+        return booleanValue("LEGACY_API");
     }
 
     /**

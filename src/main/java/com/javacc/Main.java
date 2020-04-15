@@ -110,6 +110,7 @@ public final class Main {
         System.out.println("    FREEMARKER_NODES       (default false)");
         System.out.println("    IGNORE_CASE            (default false)");
         System.out.println("    JAVA_UNICODE_ESCAPE    (default false)");
+        System.out.println("    LEGACY_API                    (default false)");
         System.out.println("    LEXER_USES_PARSER      (default false)");
         System.out.println("    NODES_USE_PARSER       (default false)");
         System.out.println("    PRESERVE_LINE_ENDINGS       (default true)");
