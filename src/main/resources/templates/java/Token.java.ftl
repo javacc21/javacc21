@@ -27,29 +27,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
    // The token does not correspond to actual characters in the input.
    // It was inserted to (tolerantly) complete some grammatical production.
-   boolean virtual;
+   private boolean virtual;
    
-   // The token was not consumed legitimately by any grammatical 
-   // production.
-   boolean ignored;
+   public boolean isVirtual() {
+      return virtual;
+   }
    
    public void setVirtual(boolean virtual) {this.virtual = virtual;}
    
-   public boolean isDirty() {return this.virtual || invalidToken != null || this.ignored;}
-   
-   // The lexically invalid input that precedes this token (if any)
-   InvalidToken invalidToken;
-   
-   // The unparsed tokens that precede this token (if any)
-   
-   List<Token> precedingUnparsedTokens;
-   
-   void addUnparsedToken(Token tok) {
-      if (precedingUnparsedTokens == null) precedingUnparsedTokens = new ArrayList<Token>();
-      precedingUnparsedTokens.add(tok);
-   }
-   
-
 [/#if]
 
     private String inputSource = "";
@@ -141,10 +126,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getNormalizedText() {
 [#if grammar.options.faultTolerant]
         if (virtual) {
-             return "Virtual Token";
-        }
-        if (invalidToken != null) {
-            return "invalid input: " + invalidToken.image + " followed by: " + image;
+             return "Virtual Token of type " + tokenImage[kind];
         }
 [/#if]    
         return image;

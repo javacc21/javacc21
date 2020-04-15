@@ -120,19 +120,7 @@ public class ParserData {
             }
         }
 
-        private String removeNonJavaIdentifierPart(String s) {
-            StringBuilder buf = new StringBuilder(s.length());
-            for (char c : s.toCharArray()) {
-                boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(c)) : Character.isJavaIdentifierPart(c);
-                if (addChar) {
-                    buf.append(c);
-                } 
-                if (c == '.') buf.append((char) '_');
-            }
-            return buf.toString();
-        }
-
-        private void checkForPhase2Lookahead(Lookahead lookahead) {
+       private void checkForPhase2Lookahead(Lookahead lookahead) {
             if (lookahead.getRequiresPhase2Routine()) {
                 phase2lookaheads.add(lookahead);
                 Expansion exp = lookahead.getNestedExpansion();
@@ -219,8 +207,8 @@ public class ParserData {
         private void generate3R(Expansion expansion) {
             // It appears that the only possible Expansion types here are ExpansionChoice and ExpansionSequence
             if (expansion.getPhase2RoutineName() == null) {
-                gensymindex++;
-                expansion.setPhase3RoutineName("phase3R_" + gensymindex);
+                String name = "phase3R_"  + (gensymindex++) +  "_" + removeNonJavaIdentifierPart(expansion.getInputSource()) + "_line_" + expansion.getBeginLine();
+                expansion.setPhase3RoutineName(name);
             }
             if (expansion.getPhase3LookaheadAmount()< lookaheadAmount) {
                 phase3list.add(expansion);
@@ -1085,4 +1073,19 @@ public class ParserData {
             this.match = new int[lookaheadLimit];
         }
     }
+    
+    
+    static String removeNonJavaIdentifierPart(String s) {
+        StringBuilder buf = new StringBuilder(s.length());
+        for (char c : s.toCharArray()) {
+            boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(c)) : Character.isJavaIdentifierPart(c);
+            if (addChar) {
+                buf.append(c);
+            } 
+            if (c == '.') buf.append((char) '_');
+        }
+        return buf.toString();
+    }
+
+    
 }

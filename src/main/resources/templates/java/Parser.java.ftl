@@ -184,7 +184,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         for (Token tok : scanAhead) {
             if (!intArrayContains(finalTokenTypes, tok.kind)) {
                tok.setUnparsed(true);
-               tok.ignored = true;
       	       node.setEndLine(tok.getEndLine());
 		       node.setEndColumn(tok.getEndColumn());
 		       if (unparsedTokens == null) unparsedTokens = new ArrayList<Token>();
@@ -192,7 +191,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 		       unparsedTokens.add(tok);
             } else {
                 terminalTokenFound = tok;
-                tok.precedingUnparsedTokens = unparsedTokens;
      [#if grammar.lexerData.lexicalStates?size >1]
                 token_source.doLexicalStateSwitch(tok.kind);
      [/#if]
@@ -235,7 +233,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
            current_token = token_source.getNextToken();
         }
 [#if grammar.options.faultTolerant]        
-        if (!tolerantParsing && current_token.invalidToken != null) {
+        if (!tolerantParsing) {
         	throw new ParseException(current_token);
         }
 [/#if]        
@@ -291,11 +289,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   
   
   private String generateErrorMessage(Token t) {
-[#if grammar.options.faultTolerant]  
-      if (t.invalidToken != null) {
-          Token iv = t.invalidToken;
-          return "Encountered invalid input: " + iv.image + " on " + iv.getLocation();
-      }
+[#if grammar.options.faultTolerant] 
 [/#if]      
       return "Encountered an error on (or somewhere around) line "
                 + t.getBeginLine() 
