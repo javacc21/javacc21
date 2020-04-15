@@ -125,39 +125,32 @@ void addToken(Token token) {
 [/#if]
 
 [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
-      // Bit vector for TOKEN
-  static final long[] jjtoToken = {
-  [#list 0..(tokenCount/64) as i]
-      ${utils.toHexStringL(lexerData.toToken[i])}, 
-  [/#list]
-  };
+      // BitSet for TOKEN
+      private BitSet tokenSet = BitSet.valueOf(new long[] {
+          [#list lexerData.tokenSet.toLongArray() as long]${long}L,[/#list]
+      });
 [/#if]
 
 [#if lexerData.hasSkip || lexerData.hasSpecial]
-      // Bit vector for SKIP
-   static final long[] jjtoSkip = {
-   [#list 0..(tokenCount/64) as i]
-       ${utils.toHexStringL(lexerData.toSkip[i])}, 
-   [/#list]
-   };
+      // BitSet for SKIP
+      private BitSet skipSet = BitSet.valueOf(new long[] {
+          [#list lexerData.skipSet.toLongArray() as long]${long}L,[/#list]
+      });
 [/#if]
 
 [#if lexerData.hasSpecial]
-      // Bit vector for SPECIAL
-   static final long[] jjtoSpecial = {
-   [#list 0..(tokenCount/64) as i]
-      ${utils.toHexStringL(lexerData.toSpecial[i])}, 
-   [/#list]
-   };
+      // BitSet for SPECIAL
+      private BitSet specialSet = BitSet.valueOf(new long[] {
+          [#list lexerData.specialSet.toLongArray() as long]${long}L,[/#list]
+      });      
 [/#if]
 
+
 [#if lexerData.hasMore]
-      // Bit vector for MORE
-    static final long[] jjtoMore = {
-   [#list 0..(tokenCount/64) as i]
-        ${utils.toHexStringL(lexerData.toMore[i])}, 
-   [/#list]
-    };
+      // BitSet for MORE
+      private BitSet moreSet = BitSet.valueOf(new long[] {
+          [#list lexerData.moreSet.toLongArray() as long]${long}L,[/#list]
+      });      
 [/#if]
 
     private final int[] jjrounds = new int[${lexerData.stateSetSize}];
@@ -390,7 +383,7 @@ public final void backup(int amount) {
           + ParseException.addEscapes(input_stream.getSuffix(jjmatchedPos + 1)) + ") ******\n");
  
  [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
-      if ((jjtoToken[jjmatchedKind >> 6] & (1L << (jjmatchedKind & 077))) != 0L) {
+          if (tokenSet.get(jjmatchedKind)) {
  [/#if]
 
          matchedToken = jjFillToken();
@@ -427,7 +420,7 @@ public final void backup(int amount) {
          [#if lexerData.hasSkip || lexerData.hasSpecial]
           
             [#if lexerData.hasMore]
-          else if ((jjtoSkip[jjmatchedKind >> 6] & (1L << (jjmatchedKind & 077))) != 0L)
+          else if (skipSet.get(jjmatchedKind))
             [#else]
           else
             [/#if]
@@ -436,8 +429,7 @@ public final void backup(int amount) {
 
             [#if lexerData.hasSpecial]
           
-            if ((jjtoSpecial[jjmatchedKind >> 6] & (1L << (jjmatchedKind & 077))) != 0L) {
-
+            if (specialSet.get(jjmatchedKind)) {
               matchedToken = jjFillToken();
               matchedToken.setUnparsed(true);
 

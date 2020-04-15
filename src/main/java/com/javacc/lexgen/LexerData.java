@@ -166,20 +166,20 @@ public class LexerData {
         return skipSet.get(index);
     }
 
-    public long[] getToSkip() {
-         return skipSet.toLongArray();
-    }
-
-    public long[] getToMore() {
-        return moreSet.toLongArray();
+    public BitSet getMoreSet() {
+        return moreSet;
     } 
 
-    public long[] getToToken() {
-        return tokenSet.toLongArray();
+    public BitSet getTokenSet() {
+        return tokenSet;
     }
-
-    public long[] getToSpecial() {
-        return specialSet.toLongArray();
+    
+    public BitSet getSkipSet() {
+        return skipSet;
+    }
+    
+    public BitSet getSpecialSet() {
+        return specialSet;
     }
 
     public int getStateSetSize() {
