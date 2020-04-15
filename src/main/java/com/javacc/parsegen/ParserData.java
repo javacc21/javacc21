@@ -51,7 +51,6 @@ public class ParserData {
     private Grammar grammar;
 
     private LexerData lexerData;
-    private int gensymindex;
 
     private List<MatchInfo> sizeLimitedMatches;
 
@@ -62,6 +61,8 @@ public class ParserData {
     private List<Lookahead> phase2lookaheads = new ArrayList<>();
 
     private List<Expansion> phase3list = new ArrayList<>();
+    
+    private HashSet<String> usedNames = new HashSet<>();
 
     public ParserData(Grammar grammar) {
         this.grammar = grammar;
@@ -111,8 +112,13 @@ public class ParserData {
         }
 
         private void handleOneOrMoreEtc(Expansion exp) {
-            ++gensymindex;
-            exp.setLabel("label_" + gensymindex);
+            String className = exp.getClass().getSimpleName();
+            String name = className + "$" + removeNonJavaIdentifierPart(exp.getInputSource()) + "$line_" + exp.getBeginLine();
+            while (usedNames.contains(name)) {
+                name = name.replace(className, className + "$");
+            }
+            usedNames.add(name);
+            exp.setLabel(name);
             visit(exp.getNestedExpansion());
             Lookahead lookahead = exp.getLookahead();
             if (!lookahead.getAlwaysSucceeds()) {
@@ -124,9 +130,13 @@ public class ParserData {
             if (lookahead.getRequiresPhase2Routine()) {
                 phase2lookaheads.add(lookahead);
                 Expansion exp = lookahead.getNestedExpansion();
-                String phase2name = "phase2_"  + (gensymindex++) +  "_" + removeNonJavaIdentifierPart(exp.getInputSource()) + "_line_" + exp.getBeginLine();
+                String phase2name = "lookahead$"  + removeNonJavaIdentifierPart(exp.getInputSource()) + "$line_" + exp.getBeginLine();
+                while (usedNames.contains(phase2name)) {
+                    phase2name = phase2name.replace("lookahead", "lookahead$");
+                }
+                usedNames.add(phase2name);
                 exp.setPhase2RoutineName(phase2name);
-                exp.setPhase3RoutineName(phase2name.replace("phase2",  "phase3"));
+                exp.setPhase3RoutineName(phase2name.replace("lookahead",  "phase3"));
             }
         }
 
@@ -207,7 +217,11 @@ public class ParserData {
         private void generate3R(Expansion expansion) {
             // It appears that the only possible Expansion types here are ExpansionChoice and ExpansionSequence
             if (expansion.getPhase2RoutineName() == null) {
-                String name = "phase3R_"  + (gensymindex++) +  "_" + removeNonJavaIdentifierPart(expansion.getInputSource()) + "_line_" + expansion.getBeginLine();
+                String name = "phase3R$"  + removeNonJavaIdentifierPart(expansion.getInputSource()) + "$line_" + expansion.getBeginLine();
+                while (usedNames.contains(name)) {
+                    name = name.replace("phase3R", "phase3R$");
+                }
+                usedNames.add(name);
                 expansion.setPhase3RoutineName(name);
             }
             if (expansion.getPhase3LookaheadAmount()< lookaheadAmount) {
@@ -470,7 +484,7 @@ public class ParserData {
                                                 + "\" has been defined as a private regular expression.");
                             } else {
                                 // This is now a legitimate reference to an
-                                // existing RStringLiteral.
+                                // existing StringLiteralRegexp.
                                 // So we assign it a number and take it out of
                                 // "rexprlist".
                                 // Therefore, if all is OK (no errors), then
@@ -495,7 +509,24 @@ public class ParserData {
                     grammar.addTokenName(res.getRegexp().getOrdinal(), res.getRegexp().getLabel());
                 }
                 if (!(res.getRegexp() instanceof RegexpRef)) {
-                    grammar.addRegularExpression(res.getRegexp().getOrdinal(), res.getRegexp());
+                    RegularExpression regexp = res.getRegexp();
+                    int ordinal = regexp.getOrdinal();
+                    grammar.addRegularExpression(ordinal, regexp);
+//                    if (!regexp.hasLabel()) {
+//                        String label = "LABEL_" + ordinal;
+//                        if (regexp instanceof RegexpStringLiteral) {
+//                            label = removeNonJavaIdentifierPart(((RegexpStringLiteral) regexp).getImage()).toUpperCase();
+//                            if (label.length() == 0) {
+//                                label = "LABEL_"+ordinal;
+//                            }
+//                        }
+//                        while (grammar.hasTokenOfName(label)) {
+//                            label = "_" + label;
+//                        }
+//                        regexp.setLabel(label);
+//                        regexp.setGeneratedClassName(label);
+//                        grammar.addNamedToken(label, regexp);
+//                    }
                 }
             }
         }

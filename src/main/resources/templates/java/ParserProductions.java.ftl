@@ -527,7 +527,7 @@ throw new ParseException();"]
   [#if !label?has_content]
      [#set label = grammar.getTokenName(regexp.ordinal)]
   [/#if]
-    if (jj_scan_token(${label})) [@genReturn true/] 
+     if (jj_scan_token(${label})) [@genReturn true/]  
 [/#macro]
 
 [#macro Phase3CodeZeroOrOne zoo]

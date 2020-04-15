@@ -394,10 +394,16 @@ public class Grammar extends BaseNode {
     }
 
     public RegularExpression addNamedToken(String name, RegularExpression regexp) {
-        if (!namedTokensTable.containsKey(name)) {
-            namedTokensTable.put(name, regexp);
+        RegularExpression alreadyThere = namedTokensTable.get(name);
+        if (alreadyThere != null) {
+            return alreadyThere;
         }
+        namedTokensTable.put(name, regexp);
         return null;
+    }
+    
+    public boolean hasTokenOfName(String name) {
+        return namedTokensTable.containsKey(name);
     }
 
     /**
