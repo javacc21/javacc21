@@ -252,6 +252,12 @@ public final void backup(int amount) {
     public void SwitchTo(int lexState) {
        switchTo(LexicalState.values()[lexState]);
     }
+    
+    /**
+     * @deprecated This method actually doesn't do anything!
+     */
+    @Deprecated
+    public void setTabSize(int  size) {}
 [/#if]
 
  [#if grammar.options.faultTolerant]
@@ -820,19 +826,6 @@ public final void backup(int amount) {
 [/#list]
   };
 
-    private int tabSize = 8;
-    /**
-     * sets the size of a tab for location reporting 
-     * purposes, default value is 8.
-     */
-    public void setTabSize(int tabSize) {this.tabSize = tabSize;}
-    
-    /**
-     * returns the size of a tab for location reporting 
-     * purposes, default value is 8.
-     */
-    public int getTabSize() {return tabSize;}
-    
  [#if options.hugeFileSupport]
     [#embed "LegacyTokenBuilder.java.ftl"]
  [/#if]

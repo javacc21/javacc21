@@ -121,7 +121,11 @@ public abstract class RegularExpression extends Expansion {
   	    if (id == 0) {
  	        return "EOF";
  	    }
-        return String.valueOf(id);
+  	    label = getGrammar().getTokenName(id);
+  	    if (label == null) label = String.valueOf(id);
+  	    return label;
+//        return String.valueOf(id);
+//  	    return "LABEL_" + id;
     }
 
     public boolean hasLabel() {
