@@ -115,7 +115,13 @@ public abstract class RegularExpression extends Expansion {
 
     public final String getLabel() {
     	String label = super.getLabel();
-        return label.length() == 0 ? String.valueOf(id) : label;
+    	if (label != null && label.length() != 0) {
+    	    return label;
+    	}
+  	    if (id == 0) {
+ 	        return "EOF";
+ 	    }
+        return String.valueOf(id);
     }
 
     public boolean hasLabel() {

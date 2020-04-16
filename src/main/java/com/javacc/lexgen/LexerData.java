@@ -70,6 +70,10 @@ public class LexerData {
         reof.setGrammar(grammar);
         regularExpressions.add(reof);
     }
+    
+    public String getTokenName(int ordinal) {
+        return regularExpressions.get(ordinal).getLabel();
+    }
 
     public String getLexicalStateName(int index) {
         return lexicalStates.get(index).getName();

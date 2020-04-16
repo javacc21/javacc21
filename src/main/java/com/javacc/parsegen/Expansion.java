@@ -143,7 +143,7 @@ abstract public class Expansion extends BaseNode {
 
     public boolean getForced() {return this.forced;}
     
-    public void setOrdinal(int ordinal) { this.ordinal = ordinal;}
+//    public void setOrdinal(int ordinal) { this.ordinal = ordinal;}
     
     public int getOrdinal() {return this.ordinal;}
     

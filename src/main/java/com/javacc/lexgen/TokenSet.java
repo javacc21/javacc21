@@ -63,7 +63,7 @@ public class TokenSet extends BitSet {
 		int tokCount = grammar.getLexerData().getTokenCount();
 		for (int i = 0; i<tokCount; i++) {
 			if (get(i)) {
-				names.add(grammar.getTokenName(i));
+				names.add(grammar.getLexerData().getTokenName(i));
 			}
 		}
 		return names;
@@ -73,7 +73,7 @@ public class TokenSet extends BitSet {
 		int tokCount = grammar.getLexerData().getTokenCount();
 		for (int i=0; i<tokCount; i++) {
 			if (get(i)) {
-				return grammar.getTokenName(i);
+				return grammar.getLexerData().getTokenName(i);
 			}
 		}
 		return null;

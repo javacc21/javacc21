@@ -50,6 +50,7 @@ import com.javacc.parser.tree.*;
 }
 {
     Grammar grammar;
+    private boolean inBNFProduction;
 
     public JavaCCParser(Grammar grammar, java.io.Reader reader) {
         this(reader);
@@ -760,6 +761,7 @@ BNFProduction BNFProduction() :
     TreeBuildingAnnotation tba = null;
     Token t=getToken(1);
     Expansion expansion;
+    inBNFProduction = true;
 }
 {
     [
@@ -798,6 +800,7 @@ BNFProduction BNFProduction() :
            grammar.addNodeType(CURRENT_NODE.getName());
         }
         CURRENT_NODE.setExpansion(expansion);
+        inBNFProduction = false;
         return CURRENT_NODE;
      }
 }
@@ -2011,6 +2014,9 @@ void InPlaceRegexp() #void :
 	    re = seq;
 	  } else {
 	    re = choice;
+	  }
+	  if (inBNFProduction&& image.length() ==0) {
+	     throw new ParseException("It is mandatory to label an inline regexp in a grammar production.");
 	  }
 	  re.setLabel(image);
 	  re.setGeneratedClassName(image);

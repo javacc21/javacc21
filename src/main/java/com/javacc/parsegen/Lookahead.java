@@ -67,7 +67,8 @@ public class Lookahead extends Expansion {
     		BitSet firstSet = expansion.getFirstSet();
     		for (int i=0; i<tokenCount; i++) {
     			if (firstSet.get(i)) {
-    				firstSetNames.add(getGrammar().getTokenName(i));
+    			    firstSetNames.add(getGrammar().getLexerData().getTokenName(i));
+//    				firstSetNames.add(getGrammar().getTokenName(i));
     			}
     		}
         }

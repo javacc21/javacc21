@@ -577,14 +577,12 @@ public class ParserData {
                     if (res.getRegexp() instanceof RegexpRef) {
 
                         RegexpRef jn = (RegexpRef) res.getRegexp();
-                        RegularExpression rexp = grammar
-                                .getNamedToken(jn.getLabel());
+                        RegularExpression rexp = grammar.getNamedToken(jn.getLabel());
                         if (rexp == null) {
                             jn.setOrdinal(lexerData.getTokenCount());
                             lexerData.addRegularExpression(jn);
                             grammar.addNamedToken(jn.getLabel(), jn);
-                            grammar.addTokenName(jn.getOrdinal(),
-                                    jn.getLabel());
+                            grammar.addTokenName(jn.getOrdinal(), jn.getLabel());
                         } else {
                             jn.setOrdinal(rexp.getOrdinal());
                             tp.removeChild(res);

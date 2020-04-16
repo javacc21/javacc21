@@ -335,15 +335,15 @@ throw new ParseException();"]
          [#else]
             default:
                if (
-               [#set indentLevel = indentLevel+1]
+           [#if lookahead.semanticLookahead??]
+               (${lookahead.semanticLookahead}) &&
+           [/#if]
+                [#set indentLevel = indentLevel+1]
          [/#if]
                 [#var lookaheadAmount = lookahead.amount]
                 [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INFINITY"][/#if]
                 ${lookahead.nestedExpansion.phase2RoutineName}(${lookaheadAmount})
-         [#if lookahead.semanticLookaheadA??]
-                && (${lookahead.semanticLookahead})
-         [/#if]
-                ) { 
+               ) { 
                    ${actions[lookahead_index]}
          [#set inPhase1 = false]
        [#elseif lookahead.amount = 1&& !lookahead.semanticLookahead?? &&!lookahead.possibleEmptyExpansion]
@@ -408,6 +408,8 @@ throw new ParseException();"]
       [@newVar type="int" init="nextTokenKind()"/]
       [#set condition]
       [#list lookahead.firstSetTokenNames as tokenName]
+      //KILROY ${tokenName_index}
+      
              int${newVarIndex} == ${tokenName} [#if tokenName_has_next]|| [/#if]
       [/#list]
      [/#set]
