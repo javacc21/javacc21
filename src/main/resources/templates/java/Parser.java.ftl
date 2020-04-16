@@ -111,7 +111,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
   Token current_token;
 [#if hasPhase2] 
-  private Token jj_scanpos, jj_lastpos;
+  private Token currentLookaheadToken, lastScannedToken;
   private int remainingLookahead;
   private boolean semanticLookahead; 
 [/#if]
@@ -302,26 +302,26 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   @SuppressWarnings("serial")
   static private final class LookaheadSuccess extends java.lang.Error { }
   final private LookaheadSuccess LOOKAHEAD_SUCCESS = new LookaheadSuccess();
-  private boolean jj_scan_token(int kind) {
-    if (jj_scanpos == jj_lastpos) {
+  private boolean scanToken(int kind) {
+    if (currentLookaheadToken == lastScannedToken) {
       --remainingLookahead;
-      if (jj_scanpos.getNext() == null) {
+      if (currentLookaheadToken.getNext() == null) {
         Token nextToken = token_source.getNextToken();
-        jj_scanpos.setNext(nextToken);
-        jj_scanpos = nextToken;
-        jj_lastpos = nextToken;
+        currentLookaheadToken.setNext(nextToken);
+        currentLookaheadToken = nextToken;
+        lastScannedToken = nextToken;
       } else {
-        jj_lastpos = jj_scanpos = jj_scanpos.getNext();
+        lastScannedToken = currentLookaheadToken = currentLookaheadToken.getNext();
       }
     } else {
-      jj_scanpos = jj_scanpos.getNext();
+      currentLookaheadToken = currentLookaheadToken.getNext();
     }
     [#if grammar.options.debugLookahead]
-       trace_scan(jj_scanpos, kind);
+       trace_scan(currentLookaheadToken, kind);
     [/#if]
 
-     if (jj_scanpos.kind != kind) return true;
-    if (remainingLookahead == 0 && jj_scanpos == jj_lastpos) throw LOOKAHEAD_SUCCESS;
+     if (currentLookaheadToken.kind != kind) return true;
+    if (remainingLookahead == 0 && currentLookaheadToken == lastScannedToken) throw LOOKAHEAD_SUCCESS;
    return false;
   }
 [/#if]

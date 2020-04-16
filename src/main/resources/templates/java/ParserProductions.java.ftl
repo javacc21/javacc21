@@ -445,7 +445,7 @@ throw new ParseException();"]
 [#macro buildPhase2Routine expansion]
    private boolean ${expansion.phase2RoutineName}(int maxLookahead) {
       remainingLookahead = maxLookahead; 
-      jj_lastpos = jj_scanpos = current_token;
+      lastScannedToken = currentLookaheadToken = current_token;
       try { 
             return !${expansion.phase3RoutineName}();
       }
@@ -494,7 +494,7 @@ throw new ParseException();"]
 
 [#macro Phase3CodeChoice choice count]
   [#if choice.choices?size != 1]
-    [@newVar "Token", "jj_scanpos"/]
+    [@newVar "Token", "currentLookaheadToken"/]
   [/#if]
   [#list choice.choices as subseq]
 	  [#var lookahead=subseq.units[0]]
@@ -507,7 +507,7 @@ throw new ParseException();"]
 	  [/#if]
 	  [#if subseq_has_next]
 	     [@InvokePhase3Routine subseq/]) {
-	        jj_scanpos = token${newVarIndex};
+	        currentLookaheadToken = token${newVarIndex};
 	  [#else]
 	     [@InvokePhase3Routine subseq/]
 	     ) 
@@ -527,20 +527,20 @@ throw new ParseException();"]
   [#if !label?has_content]
      [#set label = grammar.getTokenName(regexp.ordinal)]
   [/#if]
-     if (jj_scan_token(${label})) [@genReturn true/]  
+     if (scanToken(${label})) [@genReturn true/]  
 [/#macro]
 
 [#macro Phase3CodeZeroOrOne zoo]
-   [@newVar type="Token" init="jj_scanpos"/]
+   [@newVar type="Token" init="currentLookaheadToken"/]
    if ([@InvokePhase3Routine zoo.nestedExpansion/]) 
-      jj_scanpos = token${newVarIndex};
+      currentLookaheadToken = token${newVarIndex};
 [/#macro]
 
 [#macro Phase3CodeZeroOrMore zom]
       while (true) {
-         [@newVar type="Token" init="jj_scanpos"/]
+         [@newVar type="Token" init="currentLookaheadToken"/]
          if ([@InvokePhase3Routine zom.nestedExpansion/]) {
-             jj_scanpos = token${newVarIndex};
+             currentLookaheadToken = token${newVarIndex};
              break;
          }
       }
@@ -549,9 +549,9 @@ throw new ParseException();"]
 [#macro Phase3CodeOneOrMore oom]
    if ([@InvokePhase3Routine oom.nestedExpansion/]) [@genReturn true/]
    while (true) {
-       [@newVar type="Token" init="jj_scanpos"/]
+       [@newVar type="Token" init="currentLookaheadToken"/]
        if ([@InvokePhase3Routine oom.nestedExpansion/]) {
-           jj_scanpos = token${newVarIndex};
+           currentLookaheadToken = token${newVarIndex};
            break;
        }
    }
@@ -574,7 +574,7 @@ throw new ParseException();"]
     
 [#macro InvokePhase3Routine expansion]
    [#if expansion.ordinal >=0]
-       jj_scan_token(${expansion.ordinal})
+       scanToken(${expansion.ordinal})
    [#else]
       ${expansion.phase3RoutineName}()
    [/#if]
