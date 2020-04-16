@@ -528,11 +528,28 @@ INJECT(Token) :
 
 
 INJECT(GrammarFile) : 
-{}
+{
+   import java.util.Iterator;
+}
 {
     public String getDefaultLexicalState() {
-       return null; //TODO
-    }
+       Options options = firstChildOfType(Options.class);
+       if (options != null) {
+          Iterator<Node> it = options.children().iterator();
+          while (it.hasNext()) {
+              Node tok = it.next();
+              if ((tok instanceof Identifier) && tok.toString().equals("DEFAULT_LEXICAL_STATE")) {
+                  if (!it.hasNext()) break;
+                  if (!it.hasNext()) break;}
+                  String defaultState = it.next().toString();
+                  if (defaultState.charAt(0) == '\"') {
+                      defaultState = defaultState.substring(1, defaultState.length() -1);                     
+                  } 
+                  return defaultState;
+             }
+        }
+        return null; 
+    } 
 }
 
 GrammarFile Root() throws IOException #GrammarFile :
@@ -692,7 +709,6 @@ void CodeInjection2() :
 				grammar.addCodeInjection(jcu);
         }
 }
-
 
 void Options() :
 {}

@@ -26,7 +26,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#if grammar.options.faultTolerant]
 
    // The token does not correspond to actual characters in the input.
-   // It was inserted to (tolerantly) complete some grammatical production.
+   // It was typically inserted to (tolerantly) complete some grammatical production.
    private boolean virtual;
    
    public boolean isVirtual() {

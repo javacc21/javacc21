@@ -101,7 +101,6 @@ public class ParserData {
             List<ExpansionSequence> choices = choice.childrenOfType(ExpansionSequence.class);
             for (ExpansionSequence nestedSeq : choices) {
                 visit(nestedSeq);
-                //Lookahead lookahead = (Lookahead) nestedSeq.getChild(0);
                 Lookahead lookahead = nestedSeq.getLookahead();
                 if (lookahead.getAlwaysSucceeds()) break;
                 lookaheads.add(lookahead);
@@ -237,16 +236,6 @@ public class ParserData {
     // to progress, since the original code is written in such an opaque manner that it is
     // hard to understand what it does.
     public void semanticize() throws MetaParseException {
-
-        if (grammar.getErrorCount() != 0)
-            throw new MetaParseException();
-
-        if (grammar.getOptions().getLookahead() > 1 && !grammar.getOptions().getForceLaCheck()) {
-            grammar.addWarning(null,
-                    "Lookahead adequacy checking not being performed since option LOOKAHEAD "
-                            + "is more than 1.  Set option FORCE_LA_CHECK to true to force checking.");
-        }
-
 
         /*
          * Check whether we have any LOOKAHEADs at non-choice points 
@@ -512,21 +501,6 @@ public class ParserData {
                     RegularExpression regexp = res.getRegexp();
                     int ordinal = regexp.getOrdinal();
                     grammar.addRegularExpression(ordinal, regexp);
-//                    if (!regexp.hasLabel()) {
-//                        String label = "LABEL_" + ordinal;
-//                        if (regexp instanceof RegexpStringLiteral) {
-//                            label = removeNonJavaIdentifierPart(((RegexpStringLiteral) regexp).getImage()).toUpperCase();
-//                            if (label.length() == 0) {
-//                                label = "LABEL_"+ordinal;
-//                            }
-//                        }
-//                        while (grammar.hasTokenOfName(label)) {
-//                            label = "_" + label;
-//                        }
-//                        regexp.setLabel(label);
-//                        regexp.setGeneratedClassName(label);
-//                        grammar.addNamedToken(label, regexp);
-//                    }
                 }
             }
         }
@@ -564,8 +538,16 @@ public class ParserData {
                         ref.setOrdinal(rexp.getOrdinal());
                         ref.setRegexp(rexp);
                     }
-                }
+                }/*
+                for (RegexpStringLiteral stringLiteral : tp.descendantsOfType(RegexpStringLiteral.class)) {
+                    if (!stringLiteral.hasLabel()) {
+                        int ordinal = stringLiteral.getOrdinal();
+                        String label = grammar.getTokenName(ordinal);
+                        stringLiteral.setLabel(label);
+                    }
+                }*/
             }
+            
             for (TokenProduction tp : grammar.descendantsOfType(TokenProduction.class)) {
                 List<RegexpSpec> respecs = tp.getRegexpSpecs();
                 for (RegexpSpec res : respecs) {
@@ -581,10 +563,10 @@ public class ParserData {
          * grammar.getOptions().getUserDefinedLexer() is set to true. This code
          * visits all top-level "RJustName"s (ignores "RJustName"s nested within
          * regular expressions). Since regular expressions are optional in this
-         * case, "RJustName"s without corresponding regular expressions are
-         * given ordinal values here. If "RJustName"s refer to a named regular
-         * expression, their ordinal values are set to reflect this. All but one
-         * "RJustName" node is removed from the lists by the end of execution of
+         * case, RegexpRef's"without corresponding regular expressions are
+         * given ordinal values here. If a "RegexpRef" refers to a named regular
+         * expression, its ordinal value is set to reflect this. All but one
+         * RegexpRef node is removed from the lists by the end of execution of
          * this code.
          */
 
@@ -632,46 +614,33 @@ public class ParserData {
             }
         }
 
-        if (grammar.getErrorCount() != 0)
-            throw new MetaParseException();
+        for (Node child : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+            Expansion exp = (Expansion) child;
+            if (exp.getNestedExpansion().isPossiblyEmpty()) {
+                grammar.addSemanticError(exp, "Expansion can be matched by empty string.");
+            }
+        }
 
-        if (grammar.getErrorCount() == 0) {
+        if (!grammar.getOptions().getUserDefinedLexer()) {
+            RegexpVisitor reVisitor = new RegexpVisitor();
+            for (TokenProduction tp : grammar.getAllTokenProductions()) {
+                reVisitor.visit(tp);
+            }
+        }
 
-            for (Node child : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
-                Expansion exp = (Expansion) child;
-                if (exp.getNestedExpansion().isPossiblyEmpty()) {
-                    grammar.addSemanticError(exp, "Expansion can be matched by empty string.");
+        /*
+         * The following code performs the lookahead ambiguity checking.
+         */
+        if (grammar.getOptions().getLookahead() ==1 || grammar.getOptions().getForceLaCheck()) {
+            for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
+                choiceCalc(choice);
+            }
+            for (Node node : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+                Expansion exp = (Expansion) node;
+                if (hasImplicitLookahead(exp.getNestedExpansion())) {
+                    ebnfCalc(exp, exp.getNestedExpansion());
                 }
             }
-
-
-            if (!grammar.getOptions().getUserDefinedLexer()) {
-                RegexpVisitor reVisitor = new RegexpVisitor();
-                for (TokenProduction tp : grammar.getAllTokenProductions()) {
-                    reVisitor.visit(tp);
-                }
-            }
-
-            /*
-             * The following code performs the lookahead ambiguity checking.
-             */
-            if (grammar.getErrorCount() == 0) {
-                if (grammar.getOptions().getLookahead() ==1 || grammar.getOptions().getForceLaCheck()) {
-                    for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
-                        choiceCalc(choice);
-                    }
-                    for (Node node : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
-                        Expansion exp = (Expansion) node;
-                        if (hasImplicitLookahead(exp.getNestedExpansion())) {
-                            ebnfCalc(exp, exp.getNestedExpansion());
-                        }
-                    }
-                }
-            }
-
-        } 
-        if (grammar.getErrorCount() != 0) {
-            throw new MetaParseException();
         }
     }
 
@@ -864,8 +833,6 @@ public class ParserData {
             return false;
         }
         return seq.getLookahead() instanceof ExplicitLookahead;
-//        Expansion e = seq.firstChildOfType(Expansion.class);
-//        return e instanceof ExplicitLookahead;
     }
 
     int firstChoice(ExpansionChoice ch) {
@@ -1117,6 +1084,4 @@ public class ParserData {
         }
         return buf.toString();
     }
-
-    
 }

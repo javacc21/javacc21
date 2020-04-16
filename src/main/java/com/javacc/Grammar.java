@@ -175,15 +175,17 @@ public class Grammar extends BaseNode {
     }
 
     public void generateLexer() {
-        lexerData.start();
+        lexerData.buildData();
     }
 
     public void semanticize() throws MetaParseException {
         for (String lexicalState : lexicalStates) {
             lexerData.addLexicalState(lexicalState);
         }
-        //        semanticizer.start();
         parserData.semanticize();
+        if (getErrorCount() != 0) {
+            throw new MetaParseException();
+        }
     }
 
     public void buildParserInfo() throws MetaParseException {

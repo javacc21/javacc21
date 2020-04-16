@@ -236,7 +236,7 @@ public class LexerData {
         return -1;
     }
 
-    public void start() {
+    public void buildData() {
 
         for (TokenProduction tokenProduction : grammar.descendantsOfType(TokenProduction.class)) {
             for (String lexStateName : tokenProduction.getLexStates()) {
@@ -244,7 +244,6 @@ public class LexerData {
                 lexState.addTokenProduction(tokenProduction);
             }
         }
-        int tokenCount = getTokenCount();
         tokenSet.set(0);
         hasTokenActions = getRegularExpression(0) != null;
 

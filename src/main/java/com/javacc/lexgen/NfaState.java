@@ -854,7 +854,6 @@ public class NfaState {
                 loByteVec.add(ind);
             }
         }
-        // System.out.println("");
         updateDuplicateNonAsciiMoves();
     }
 
@@ -868,7 +867,6 @@ public class NfaState {
                 return;
             }
         }
-
         nonAsciiMethod = nonAsciiTableForMethod.size();
         nonAsciiTableForMethod.add(this);
     }
