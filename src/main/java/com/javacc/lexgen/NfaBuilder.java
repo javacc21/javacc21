@@ -50,11 +50,11 @@ import com.javacc.parser.tree.*;
 public class NfaBuilder extends Node.Visitor {
 
     private boolean ignoreCase;
-    private LexicalState lexicalState;
+    private LexicalStateData lexicalState;
     private Grammar grammar;
     private Nfa nfa = null;
 
-    NfaBuilder(RegularExpression regularExpression, LexicalState lexicalState, boolean ignoreCase) {
+    NfaBuilder(RegularExpression regularExpression, LexicalStateData lexicalState, boolean ignoreCase) {
         this.lexicalState = lexicalState;
         this.grammar = lexicalState.getGrammar();
         this.ignoreCase = ignoreCase;

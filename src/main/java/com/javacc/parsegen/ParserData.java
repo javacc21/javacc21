@@ -35,7 +35,7 @@ import java.util.*;
 import com.javacc.Grammar;
 import com.javacc.MetaParseException;
 import com.javacc.lexgen.LexerData;
-import com.javacc.lexgen.LexicalState;
+import com.javacc.lexgen.LexicalStateData;
 import com.javacc.lexgen.RegularExpression;
 import com.javacc.parser.Node;
 import com.javacc.parser.ParseException;
@@ -359,7 +359,7 @@ public class ParserData {
             List<RegexpSpec> respecs = tp.getRegexpSpecs();
             List<Map<String, Map<String, RegularExpression>>> table = new ArrayList<Map<String, Map<String, RegularExpression>>>();
             for (int i = 0; i < tp.getLexStates().length; i++) {
-                LexicalState lexState = lexerData.getLexicalState(tp.getLexStates()[i]);
+                LexicalStateData lexState = lexerData.getLexicalState(tp.getLexStates()[i]);
                 table.add(lexState.getTokenTable());
             }
             for (RegexpSpec res : respecs) {

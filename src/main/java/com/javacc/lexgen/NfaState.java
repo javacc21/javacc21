@@ -41,7 +41,7 @@ public class NfaState {
 
     private Grammar grammar;
     private LexerData lexerData;
-    private LexicalState lexicalState;
+    private LexicalStateData lexicalState;
     private char[] rangeMoves, charMoves;
     private StringBuilder charMoveBuffer, rangeMoveBuffer;
     NfaState stateForCase;
@@ -69,7 +69,7 @@ public class NfaState {
     private int round = 0;
     int onlyChar = 0;
 
-    public NfaState(LexicalState lexicalState) {
+    public NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
         this.grammar = lexicalState.getGrammar();
         this.lexerData = grammar.getLexerData();
@@ -133,7 +133,7 @@ public class NfaState {
         return usefulEpsilonMoves > 0;
     }
 
-    public LexicalState getLexicalState() {
+    public LexicalStateData getLexicalState() {
         return lexicalState;
     }
 

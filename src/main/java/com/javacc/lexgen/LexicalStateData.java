@@ -40,7 +40,7 @@ import com.javacc.parser.tree.RegexpSpec;
 import com.javacc.parser.tree.RegexpStringLiteral;
 import com.javacc.parser.tree.TokenProduction;
 
-public class LexicalState {
+public class LexicalStateData {
 
     private Grammar grammar;
     private LexerData lexerData;
@@ -86,7 +86,7 @@ public class LexicalState {
     private int[] kindsForStates;
     private int[][] statesForState;
 
-    public LexicalState(Grammar grammar, String name) {
+    public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
         this.name = name;
@@ -268,7 +268,8 @@ public class LexicalState {
         }
 
         if (initialState.kind != Integer.MAX_VALUE && initialState.kind != 0) {
-            if (lexerData.hasSkipAction(initialState.kind)                
+//            if ((lexerData.toSkip[initialState.kind / 64] & (1L << initialState.kind)) != 0L
+            if (lexerData.skipSet.get(initialState.kind)
                 || (lexerData.specialSet.get(initialState.kind)))
                 lexerData.hasSkipActions = true;
             else if (lexerData.moreSet.get(initialState.kind))
@@ -344,6 +345,7 @@ public class LexicalState {
                     choices.add((RegexpChoice) currentRegexp);
                 }
                 Nfa nfa = Nfa.buildNfa(currentRegexp, this, ignore);
+               // Nfa nfa = new NfaBuilder(currentRegexp, this, ignore).getNfa();
                 nfa.getEnd().isFinal = true;
                 nfa.getEnd().kind = currentRegexp.getOrdinal();
                 initialState.addMove(nfa.getStart());
@@ -362,12 +364,15 @@ public class LexicalState {
                 }
                 lexerData.hasSpecial = true;
                 lexerData.specialSet.set(currentRegexp.getOrdinal());
+//                lexerData.toSkip[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp.getOrdinal() % 64);
                 lexerData.skipSet.set(currentRegexp.getOrdinal());
                 currentRegexp.setSpecialToken();
             }
             else if (kind.equals("SKIP")) {
                 lexerData.hasSkipActions |= (tokenAction != null);
                 lexerData.hasSkip = true;
+//                lexerData.toSkip[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp.getOrdinal() % 64);
+                lexerData.skipSet.set(currentRegexp.getOrdinal());
                 currentRegexp.setSkip();
             }
             else if (kind.equals("MORE")) {
@@ -379,6 +384,7 @@ public class LexicalState {
             else {
                 lexerData.hasTokenActions |= (tokenAction != null);
                 lexerData.tokenSet.set(currentRegexp.getOrdinal());
+//                lexerData.toToken[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp.getOrdinal() % 64);
                 currentRegexp.setRegularToken();
             }
         }
@@ -392,7 +398,7 @@ public class LexicalState {
     private void generateDfa(RegexpStringLiteral stringLiteral) {
         String s;
         Map<String, KindInfo> temp;
-        KindInfo info =null;
+        KindInfo info;
 
         if (maxStrKind <= stringLiteral.getOrdinal()) {
             maxStrKind = stringLiteral.getOrdinal() + 1;
@@ -414,11 +420,9 @@ public class LexicalState {
                 charPosKind.add(temp = new HashMap<String, KindInfo>());
             else
                 temp = charPosKind.get(i);
-            info = temp.get(s);
-            if (info == null) {
-                info = new KindInfo(grammar);
-                temp.put(s, info);
-            }
+
+            if ((info = (KindInfo) temp.get(s)) == null)
+                temp.put(s, info = new KindInfo(grammar));
 
             if (i + 1 == imageLength)
                 info.insertFinalKind(stringLiteral.getOrdinal());
@@ -433,11 +437,9 @@ public class LexicalState {
                     charPosKind.add(temp = new HashMap<String, KindInfo>());
                 else
                     temp = charPosKind.get(i);
-                info = temp.get(s);
-                if (info == null) {
-                    info = new KindInfo(grammar);
-                    temp.put(s, info);
-                }
+
+                if ((info = (KindInfo) temp.get(s)) == null)
+                    temp.put(s, info = new KindInfo(grammar));
 
                 if (i + 1 == imageLength)
                     info.insertFinalKind(stringLiteral.getOrdinal());
@@ -453,11 +455,9 @@ public class LexicalState {
                     charPosKind.add(temp = new HashMap<String, KindInfo>());
                 else
                     temp = charPosKind.get(i);
-                info=temp.get(s);
-                if (info == null) {
-                    info = new KindInfo(grammar);
-                    temp.put(s, info); 
-                }
+
+                if ((info = (KindInfo) temp.get(s)) == null)
+                    temp.put(s, info = new KindInfo(grammar));
 
                 if (i + 1 == imageLength)
                     info.insertFinalKind(stringLiteral.getOrdinal());
@@ -617,7 +617,8 @@ public class LexicalState {
         						&& intermediateMatchedPos != null && intermediateMatchedPos[kind][index] == index)
         						|| (matchAnyChar != null && matchAnyChar.getOrdinal() < kind))
         					break;
-        				else if (lexerData.hasSkipAction(kind)
+//        				else if ((lexerData.toSkip[kind / 64] & (1L << (kind % 64))) != 0L
+                        else if (lexerData.skipSet.get(kind)
         				        && !lexerData.specialSet.get(kind)
         						&& lexerData.getRegularExpression(kind).getCodeSnippet() == null
         						&& lexerData.getRegularExpression(kind).getNewLexicalState() == null) {
@@ -913,10 +914,12 @@ public class LexicalState {
             if (!state.closureDone)
                 state.optimizeEpsilonMoves(false);
         }
-        for (NfaState nfaState : allStates) {
-//            nfaState.epsilonMoveArray = nfaState.epsilonMoves.toArray(nfaState.epsilonMoveArray);
-            nfaState.epsilonMoveArray = new NfaState[nfaState.epsilonMoves.size()];
-            nfaState.epsilonMoves.copyInto(nfaState.epsilonMoveArray);
+
+        for (int i = 0; i < allStates.size(); i++) {
+            NfaState tmp = allStates.get(i);
+            tmp.epsilonMoveArray = new NfaState[tmp.epsilonMoves.size()];
+            ((Vector<NfaState>)tmp.epsilonMoves).copyInto(tmp.epsilonMoveArray);
+//            tmp.epsilonMoves.toArray(tmp.epsilonMoveArray);
         }
     }
 

@@ -70,7 +70,7 @@ public abstract class RegularExpression extends Expansion {
 
     private boolean ignoreCase;
 
-    private LexicalState newLexicalState;
+    private LexicalStateData newLexicalState;
 
     private CodeBlock codeSnippet;
 
@@ -138,10 +138,10 @@ public abstract class RegularExpression extends Expansion {
         this.lhs = lhs;
     }
 
-    public LexicalState getLexicalState() {
-        List<LexicalState> states = getGrammar().getLexerData().getLexicalStates();
-        LexicalState result = states.get(0);
-        for (LexicalState ls : states) {
+    public LexicalStateData getLexicalState() {
+        List<LexicalStateData> states = getGrammar().getLexerData().getLexicalStates();
+        LexicalStateData result = states.get(0);
+        for (LexicalStateData ls : states) {
             if (ls.containsRegularExpression(this)) {
                 result = ls;
             }
@@ -150,11 +150,11 @@ public abstract class RegularExpression extends Expansion {
         
     }
     
-    void setNewLexicalState(LexicalState newLexicalState) {
+    void setNewLexicalState(LexicalStateData newLexicalState) {
         this.newLexicalState = newLexicalState;
     }
 
-    public LexicalState getNewLexicalState() {
+    public LexicalStateData getNewLexicalState() {
         return newLexicalState;
     }
 

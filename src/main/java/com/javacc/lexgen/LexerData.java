@@ -42,7 +42,7 @@ import com.javacc.parser.tree.TokenProduction;
  */
 public class LexerData {
     private Grammar grammar;
-    private List<LexicalState> lexicalStates = new ArrayList<LexicalState>();
+    private List<LexicalStateData> lexicalStates = new ArrayList<LexicalStateData>();
     private List<RegularExpression> regularExpressions = new ArrayList<RegularExpression>();
 
     int stateSetSize;
@@ -76,11 +76,11 @@ public class LexerData {
     }
 
     public void addLexicalState(String name) {
-        lexicalStates.add(new LexicalState(grammar, name));
+        lexicalStates.add(new LexicalStateData(grammar, name));
     }
 
-    public LexicalState getLexicalState(String name) {
-        for (LexicalState state : lexicalStates) {
+    public LexicalStateData getLexicalState(String name) {
+        for (LexicalStateData state : lexicalStates) {
             if (state.getName().equals(name)) {
                 return state;
             }
@@ -98,7 +98,7 @@ public class LexerData {
 
     public int getLexicalStateIndex(String lexicalStateName) {
         for (int i = 0; i < lexicalStates.size(); i++) {
-            LexicalState state = lexicalStates.get(i);
+            LexicalStateData state = lexicalStates.get(i);
             if (state.getName().equals(lexicalStateName)) {
                 return i;
             }
@@ -110,7 +110,7 @@ public class LexerData {
         return lexicalStates.size();
     }
 
-    public List<LexicalState> getLexicalStates() {
+    public List<LexicalStateData> getLexicalStates() {
         return lexicalStates;
     }
 
@@ -240,7 +240,7 @@ public class LexerData {
 
         for (TokenProduction tokenProduction : grammar.descendantsOfType(TokenProduction.class)) {
             for (String lexStateName : tokenProduction.getLexStates()) {
-                LexicalState lexState = getLexicalState(lexStateName);
+                LexicalStateData lexState = getLexicalState(lexStateName);
                 lexState.addTokenProduction(tokenProduction);
             }
         }
@@ -250,7 +250,7 @@ public class LexerData {
 
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
 
-        for (LexicalState lexState : lexicalStates) {
+        for (LexicalStateData lexState : lexicalStates) {
             choices.addAll(lexState.process());
         }
 
@@ -269,7 +269,7 @@ public class LexerData {
         String cycle;
         String reList;
 
-        Outer: for (LexicalState ls : lexicalStates) {
+        Outer: for (LexicalStateData ls : lexicalStates) {
             if (done[ls.getIndex()] || ls.initMatch == 0 || ls.initMatch == Integer.MAX_VALUE
                     || ls.matchAnyChar != null) {
                 continue;
@@ -288,7 +288,7 @@ public class LexerData {
             cycle += ls.getName() + "-->";
             int initMatch = lexicalStates.get(j).initMatch;
             while (getRegularExpression(initMatch).getNewLexicalState() != null) {
-                LexicalState newLexState = getRegularExpression(initMatch).getNewLexicalState();
+                LexicalStateData newLexState = getRegularExpression(initMatch).getNewLexicalState();
                 cycle += newLexState.getName();
                 j = newLexState.getIndex();
                 if (seen[j]) {
@@ -316,7 +316,7 @@ public class LexerData {
             }
 
             k = 0;
-            for (LexicalState lexState : lexicalStates) {
+            for (LexicalStateData lexState : lexicalStates) {
                 if (seen[k++]) {
                     lexState.canLoop = true;
                 }

@@ -176,6 +176,11 @@ public final void backup(int amount) {
           input_stream = new ${tokenBuilderClass}(parser.getInputSource(), chars, line, column);
           switchTo(lexState);
       }
+      [#if options.legacyAPI]
+         public ${grammar.lexerClassName}(${grammar.parserClassName} parser, CharSequence chars, int lexState, int line, int column) {
+            this(parser, chars, LexicalState.values()[lexState],  line, column);
+         }
+      [/#if]
   [/#if]
   
     public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader) {
@@ -187,6 +192,11 @@ public final void backup(int amount) {
         input_stream = new ${tokenBuilderClass}(reader, line, column);
         switchTo(lexState);
     }
+      [#if options.legacyAPI]
+         public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader, int lexState, int line, int column) {
+            this(parser, reader, LexicalState.values()[lexState],  line, column);
+         }
+      [/#if]
     
 [#else]
   [#if !options.hugeFileSupport]
@@ -197,6 +207,11 @@ public final void backup(int amount) {
         input_stream = new ${tokenBuilderClass}(inputSource, chars, line, column);
         switchTo(lexState);
      }
+     [#if options.legacyAPI]
+         public ${grammar.lexerClassName}(String inputSource, CharSequence chars, int lexState, int line, int column) {
+            this(inputSource, chars, LexicalState.values()[lexState],  line, column);
+         }
+     [/#if]
   [/#if]
     public ${grammar.lexerClassName}(Reader reader) {
        this(reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
@@ -205,6 +220,11 @@ public final void backup(int amount) {
         input_stream = new ${tokenBuilderClass}(reader, line, column);
         switchTo(lexState);
     }
+     [#if options.legacyAPI]
+         public ${grammar.lexerClassName}(Reader reader, int lexState, int line, int column) {
+            this(reader, LexicalState.values()[lexState],  line, column);
+         }
+     [/#if]
 [/#if]
 
     

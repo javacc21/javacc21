@@ -39,13 +39,13 @@ package com.javacc.lexgen;
  */
 class Nfa {
     
-    static Nfa buildNfa(RegularExpression re, LexicalState lexicalState, boolean ignoreCase) {
+    static Nfa buildNfa(RegularExpression re, LexicalStateData lexicalState, boolean ignoreCase) {
         return new NfaBuilder(re, lexicalState, ignoreCase).getNfa();
     }
 
     private NfaState start, end;
     
-    Nfa(LexicalState lexicalState) {
+    Nfa(LexicalStateData lexicalState) {
         start = new NfaState(lexicalState);
         end = new NfaState(lexicalState);
     }

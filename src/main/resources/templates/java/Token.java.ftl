@@ -58,6 +58,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      */
     String image;
 
+
+[#if grammar.options.legacyAPI]
+
     /**
      * A reference to the next regular (non-special) token from the input
      * stream.  If this is the last token from the input stream, or if the
@@ -66,7 +69,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * token.  Otherwise, see below for a description of the contents of
      * this field.
      */
-    private Token next;
+[#else]
+    private
+[/#if]
+   Token next;
     
     Token getNext() {
        return next;
