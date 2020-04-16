@@ -96,12 +96,6 @@ void addToken(Token token) {
    
   private LexicalState lexicalState = LexicalState.${lexerData.lexicalStates[0].name};
   
-  public enum LexicalState {
-  [#list lexerData.lexicalStates as lexicalState]
-     ${lexicalState.name},
-  [/#list]
-   }
-   
 [#if numLexicalStates>1]
 
 
@@ -174,7 +168,7 @@ public final void backup(int amount) {
 [#if options.lexerUsesParser]
   [#if !options.hugeFileSupport]
       public ${grammar.lexerClassName}(${grammar.parserClassName} parser, CharSequence chars) {
-          this(parser, chars, LexicalState.values()[0], 1, 1);
+          this(parser, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
       }
       
       public ${grammar.lexerClassName}(${grammar.parserClassName} parser, CharSequence chars, LexicalState lexState, int line, int column) {
@@ -185,7 +179,7 @@ public final void backup(int amount) {
   [/#if]
   
     public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader) {
-       this(parser, reader, LexicalState.values()[0], 1, 1);
+       this(parser, reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
     }
     
     public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader, LexicalState lexState, int line, int column) {
@@ -197,7 +191,7 @@ public final void backup(int amount) {
 [#else]
   [#if !options.hugeFileSupport]
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars) {
-        this(inputSource, chars, LexicalState.values()[0], 1, 1);
+        this(inputSource, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
      }
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
         input_stream = new ${tokenBuilderClass}(inputSource, chars, line, column);
@@ -205,7 +199,7 @@ public final void backup(int amount) {
      }
   [/#if]
     public ${grammar.lexerClassName}(Reader reader) {
-       this(reader, LexicalState.values()[0], 1, 1);
+       this(reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
     }
     public ${grammar.lexerClassName}(Reader reader, LexicalState lexState, int line, int column) {
         input_stream = new ${tokenBuilderClass}(reader, line, column);
@@ -230,7 +224,7 @@ public final void backup(int amount) {
         }
         this.lexicalState = lexState;
     }
-    
+[#if    grammar.options.legacyAPI]
     /**
       * @deprecated Use the switchTo method that takes an Enum
       */
@@ -238,6 +232,7 @@ public final void backup(int amount) {
     public void SwitchTo(int lexState) {
        switchTo(LexicalState.values()[lexState]);
     }
+[/#if]
 
  [#if grammar.options.faultTolerant]
   public Token getNextToken() {

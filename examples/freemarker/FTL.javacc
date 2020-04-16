@@ -36,6 +36,7 @@ options
    PARSER_PACKAGE="ftl";
    NODE_PACKAGE="ftl.ast";
    DEFAULT_LEXICAL_STATE="TEMPLATE_TEXT";
+   LEGACY_API;
 }
 
 INJECT(FTLParser) :

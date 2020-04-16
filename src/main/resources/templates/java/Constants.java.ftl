@@ -18,12 +18,20 @@ public interface ${grammar.constantsClassName} {
   /**
    * Lexical States
    */
+[#if grammar.options.legacyAPI]
  [#list grammar.lexerData.lexicalStates as lexicalState]
   int ${lexicalState.name} = ${lexicalState_index};
  [/#list]
 [/#if]
 
-  String[] tokenImage = {
+  public enum LexicalState {
+  [#list grammar.lexerData.lexicalStates as lexicalState]
+     ${lexicalState.name},
+  [/#list]
+   }
+[/#if]
+   
+String[] tokenImage = {
       "<EOF>",
     [#list grammar.allTokenProductions as tokenProduction]
       [#list tokenProduction.regexpSpecs as regexpSpec]
@@ -32,7 +40,6 @@ public interface ${grammar.constantsClassName} {
       [/#list]
     [/#list]
   };
-
 
    String[] nodeNames = {
        "EOF", 
@@ -45,8 +52,8 @@ public interface ${grammar.constantsClassName} {
            [/#list]
        [/#if]
    };
-}
 
+}
 
 
 

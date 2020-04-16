@@ -289,7 +289,7 @@ public class JavaCCOptions {
 
         else if (!optionValues.containsKey(s) && !aliases.containsKey(s)) {
             Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
-            grammar.addWarning(node, "Bad option name \"" + name
+            grammar.addWarning(node, "Unrecognized option name \"" + name
                     + "\".  Option setting will be ignored.");
             return;
         }
