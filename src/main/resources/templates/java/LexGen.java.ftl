@@ -261,10 +261,10 @@ public final void backup(int amount) {
          tok = nextToken();
       }  while (tok instanceof InvalidToken);
       if (invalidToken != null) {
-          input_stream.addToken(invalidToken);
+          addToken(invalidToken);
           invalidToken = null;
       }
-      input_stream.addToken(tok);
+      addToken(tok);
       return tok;
  }
 [/#if]
@@ -296,7 +296,7 @@ public final void backup(int amount) {
             eof = tokenHook(eof);
 [/#if]
 		    eof.specialToken = specialToken;
-		    input_stream.addToken(eof);
+		    addToken(eof);
     		return eof;
        }
 
@@ -425,7 +425,7 @@ public final void backup(int amount) {
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
- input_stream.addToken(matchedToken);
+ addToken(matchedToken);
  return matchedToken;
 
       [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
@@ -455,7 +455,7 @@ public final void backup(int amount) {
                  matchedToken.specialToken=specialToken;
                  specialToken.setNext(matchedToken);
                  specialToken = matchedToken;
-                 input_stream.addToken(specialToken);
+                 addToken(specialToken);
                }
 
               [#if lexerData.hasSkipActions]
