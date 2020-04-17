@@ -72,7 +72,8 @@
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
      if (trace_enabled) LOGGER.info("Entering production defined on line ${production.beginLine} of ${production.inputSource}");
-     ${production.javaCode}
+     if (cancelled) throw new CancellationException();
+     [#-- ${production.javaCode} --]
    [@BuildCode production.expansion /]
     }   
 [/#macro]
@@ -100,6 +101,7 @@
           ParseException ${parseExceptionVar} = null;
          try {
     [/#if]
+        [#if production??]${production.javaCode}[/#if]
         [@BuildPhase1Code expansion/]
     [#if production?? && production.returnType == "void"]
         if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");

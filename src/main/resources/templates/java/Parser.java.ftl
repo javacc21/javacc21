@@ -44,6 +44,7 @@ package ${grammar.parserPackage};
 import ${grammar.nodePackage}.*;  
 [/#if]
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.logging.*;
 import java.io.*;
 
@@ -64,10 +65,6 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
     
 private boolean cancelled;
-/** 
- * Putting this here as a TODO, Intending support
- * java.util.concurrent, currently unimplemented 
- */
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
 [#if grammar.options.faultTolerant]
@@ -88,9 +85,9 @@ public boolean isCancelled() {return cancelled;}
     }
 
 [#if grammar.options.userDefinedLexer]
-  private String inputSource = "input";
   /** User defined Lexer. */
   public Lexer token_source;
+  String inputSource = "input";
 [#else]
   /** Generated Lexer. */
   public ${grammar.lexerClassName} token_source;
@@ -127,23 +124,21 @@ public boolean isCancelled() {return cancelled;}
 [#if !grammar.options.userDefinedLexer]
  [#if !grammar.options.hugeFileSupport]
    public ${grammar.parserClassName}(String inputSource, CharSequence content) {
-      [#if grammar.options.lexerUsesParser]
-       this(new ${grammar.lexerClassName}(this, content));
-      [#else]
        this(new ${grammar.lexerClassName}(inputSource, content));
+      [#if grammar.options.lexerUsesParser]
+      token_source.parser = this;
       [/#if]
-   }
+  }
  [/#if]
   public ${grammar.parserClassName}(java.io.InputStream stream) {
       this(new InputStreamReader(stream));
   }
   
   public ${grammar.parserClassName}(Reader reader) {
-    [#if grammar.options.lexerUsesParser]
-    this(new ${grammar.lexerClassName}(this, reader));
-    [#else]
     this(new ${grammar.lexerClassName}(reader));
-    [/#if]
+      [#if grammar.options.lexerUsesParser]
+      token_source.parser = this;
+      [/#if]
   }
 [/#if]
 
@@ -155,7 +150,10 @@ public boolean isCancelled() {return cancelled;}
   public ${grammar.parserClassName}(${grammar.lexerClassName} lexer) {
 [/#if]
     token_source = lexer;
-    current_token = new Token();
+      [#if grammar.options.lexerUsesParser]
+      token_source.parser = this;
+      [/#if]
+     current_token = new Token();
   }
   
  

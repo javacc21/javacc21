@@ -166,41 +166,7 @@ public final void backup(int amount) {
     input_stream.backup(amount);
 }
 
-[#if options.lexerUsesParser]
-  [#if !options.hugeFileSupport]
-      public ${grammar.lexerClassName}(${grammar.parserClassName} parser, CharSequence chars) {
-          this(parser, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
-      }
-      
-      public ${grammar.lexerClassName}(${grammar.parserClassName} parser, CharSequence chars, LexicalState lexState, int line, int column) {
-          this.parser = parser;
-          input_stream = new ${tokenBuilderClass}(parser.getInputSource(), chars, line, column);
-          switchTo(lexState);
-      }
-      [#if options.legacyAPI]
-         public ${grammar.lexerClassName}(${grammar.parserClassName} parser, CharSequence chars, int lexState, int line, int column) {
-            this(parser, chars, LexicalState.values()[lexState],  line, column);
-         }
-      [/#if]
-  [/#if]
-  
-    public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader) {
-       this(parser, reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
-    }
-    
-    public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader, LexicalState lexState, int line, int column) {
-        this.parser = parser;
-        input_stream = new ${tokenBuilderClass}(reader, line, column);
-        switchTo(lexState);
-    }
-      [#if options.legacyAPI]
-         public ${grammar.lexerClassName}(${grammar.parserClassName} parser, Reader reader, int lexState, int line, int column) {
-            this(parser, reader, LexicalState.values()[lexState],  line, column);
-         }
-      [/#if]
-    
-[#else]
-  [#if !options.hugeFileSupport]
+[#if !options.hugeFileSupport]
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars) {
         this(inputSource, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
      }
@@ -213,7 +179,7 @@ public final void backup(int amount) {
             this(inputSource, chars, LexicalState.values()[lexState],  line, column);
          }
      [/#if]
-  [/#if]
+[/#if]
     public ${grammar.lexerClassName}(Reader reader) {
        this(reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
     }
@@ -226,7 +192,6 @@ public final void backup(int amount) {
             this(reader, LexicalState.values()[lexState],  line, column);
          }
      [/#if]
-[/#if]
 
     
     // Method to reinitialize the jjrounds array.
