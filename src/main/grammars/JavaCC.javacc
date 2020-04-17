@@ -2016,7 +2016,7 @@ void InPlaceRegexp() #void :
 	    re = choice;
 	  }
 	  if (inBNFProduction&& image.length() ==0) {
-	     throw new ParseException("It is mandatory to label an inline regexp in a grammar production.");
+	     grammar.addParseError(t, "It is mandatory to label an inline regexp in a grammar production.");
 	  }
 	  re.setLabel(image);
 	  re.setGeneratedClassName(image);

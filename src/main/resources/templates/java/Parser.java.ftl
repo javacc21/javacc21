@@ -62,7 +62,14 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         LOGGER.setLevel(level);
         Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
     }
-
+    
+private boolean cancelled;
+/** 
+ * Putting this here as a TODO, Intending support
+ * java.util.concurrent, currently unimplemented 
+ */
+public void cancel() {cancelled = true;}
+public boolean isCancelled() {return cancelled;}
 [#if grammar.options.faultTolerant]
    private boolean tolerantParsing= true;
 [#else]
