@@ -244,20 +244,18 @@ public final void backup(int amount) {
         }
         this.lexicalState = lexState;
     }
-[#if    grammar.options.legacyAPI]
+[#if grammar.options.legacyAPI]
     /**
-      * @deprecated Use the switchTo method that takes an Enum
+      * @deprecated Use the switchTo method.. that takes an Enum
       */
     @Deprecated
     public void SwitchTo(int lexState) {
        switchTo(LexicalState.values()[lexState]);
     }
     
-    /**
-     * @deprecated This method actually doesn't do anything!
-     */
+    
     @Deprecated
-    public void setTabSize(int  size) {}
+    public void setTabSize(int  size) {this.tabSize=tabSize;}
 [/#if]
 
  [#if grammar.options.faultTolerant]
@@ -827,6 +825,7 @@ public final void backup(int amount) {
   };
 
  [#if options.hugeFileSupport]
+    int tabSize = 8;
     [#embed "LegacyTokenBuilder.java.ftl"]
  [/#if]
   
