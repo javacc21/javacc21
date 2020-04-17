@@ -758,7 +758,7 @@ public final void backup(int amount) {
     
     
 [#list lexerData.allBitVectors as bitVec]
-    static final long[] jjbitVec${bitVec_index} = ${bitVec};
+    private static final long[] jjbitVec${bitVec_index} = ${bitVec};
 [/#list]    
 
 [#list lexerData.lexicalStates as lexicalState]

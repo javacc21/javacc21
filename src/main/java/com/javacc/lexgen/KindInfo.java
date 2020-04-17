@@ -30,7 +30,6 @@
 
 package com.javacc.lexgen;
 
-import java.util.Arrays;
 import java.util.BitSet;
 
 import com.javacc.Grammar;

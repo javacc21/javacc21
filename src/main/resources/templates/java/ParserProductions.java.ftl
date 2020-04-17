@@ -309,8 +309,7 @@
 
 [#macro BuildPhase1CodeChoice choice]
    [#var lookaheads=[] actions=[]]
-   [#var defaultAction="consumeToken(-1);
-throw new ParseException();"]
+   [#var defaultAction="throw new ParseException();"]
    [#var inPhase1=false]
    [#var indentLevel=0]
    [#list choice.choices as nested]

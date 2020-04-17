@@ -43,7 +43,7 @@ public class NfaState {
     private LexerData lexerData;
     private LexicalStateData lexicalState;
     private char[] rangeMoves, charMoves;
-    private StringBuilder charMoveBuffer, rangeMoveBuffer;
+    private StringBuilder charMoveBuffer;
     NfaState stateForCase;
     String epsilonMovesString;
     NfaState[] epsilonMoveArray;
