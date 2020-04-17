@@ -60,6 +60,7 @@ void addToken(Token token) {
        input_stream.addToken(token);
     [/#if]  
 }  
+    int tabSize = 8;
  [#if options.lexerUsesParser]
 
   public ${grammar.parserClassName} parser;
@@ -825,7 +826,6 @@ public final void backup(int amount) {
   };
 
  [#if options.hugeFileSupport]
-    int tabSize = 8;
     [#embed "LegacyTokenBuilder.java.ftl"]
  [/#if]
   
