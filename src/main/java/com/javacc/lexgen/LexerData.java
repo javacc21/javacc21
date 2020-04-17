@@ -68,6 +68,7 @@ public class LexerData {
         tokenSet = new TokenSet(grammar);
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
+        reof.setLabel("EOF");
         regularExpressions.add(reof);
     }
     

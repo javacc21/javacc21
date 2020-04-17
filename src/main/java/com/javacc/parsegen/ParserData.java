@@ -129,9 +129,9 @@ public class ParserData {
             if (lookahead.getRequiresPhase2Routine()) {
                 phase2lookaheads.add(lookahead);
                 Expansion exp = lookahead.getNestedExpansion();
-                String phase2name = "lookahead$"  + removeNonJavaIdentifierPart(exp.getInputSource()) + "$line_" + exp.getBeginLine();
+                String phase2name = "lookahead$"  + removeNonJavaIdentifierPart(exp.getInputSource()) + "$line_" + exp.getBeginLine()+"$col_"+exp.getBeginColumn();
                 while (usedNames.contains(phase2name)) {
-                    phase2name = phase2name.replace("lookahead", "lookahead$");
+                    phase2name = phase2name + "$";
                 }
                 usedNames.add(phase2name);
                 exp.setPhase2RoutineName(phase2name);
@@ -216,9 +216,10 @@ public class ParserData {
         private void generate3R(Expansion expansion) {
             // It appears that the only possible Expansion types here are ExpansionChoice and ExpansionSequence
             if (expansion.getPhase2RoutineName() == null) {
-                String name = "phase3R$"  + removeNonJavaIdentifierPart(expansion.getInputSource()) + "$line_" + expansion.getBeginLine();
+                String name = "phase3R$"  + removeNonJavaIdentifierPart(expansion.getInputSource()) + "$line_" + expansion.getBeginLine() +"$col_" + expansion.getBeginColumn();
                 while (usedNames.contains(name)) {
-                    name = name.replace("phase3R", "phase3R$");
+//                    name = name.replace("phase3R", "phase3R$");
+                    name = name +"$";
                 }
                 usedNames.add(name);
                 expansion.setPhase3RoutineName(name);
@@ -640,8 +641,54 @@ public class ParserData {
                 }
             }
         }
+        
+        //Final pass to make sure that all regexps have labels
+   /*     for (RegexpStringLiteral stringLiteral : grammar.getStringLiteralsToResolve()) {
+            int ordinal = stringLiteral.getOrdinal();
+            if (grammar.getTokenName(ordinal) == null) {
+                String name = stringLiteral.getImage();
+                name = removeNonJavaIdentifierPart(name).toUpperCase();
+                if (name.length() == 0) {
+                    name = "TOKEN_" + ordinal;
+                } else {
+                    while (usedNames.contains(name)) {
+                        name = "_" + name;
+                    }
+                }  
+                usedNames.add(name);
+                stringLiteral.setLabel(name);
+                grammar.addTokenName(ordinal, name);
+            }
+        }*/
+        for (RegularExpression regexp : lexerData.getRegularExpressions()) {
+            if (!regexp.hasLabel()) {
+                String label;
+                if (regexp instanceof RegexpStringLiteral) {
+                    label = ((RegexpStringLiteral)regexp).getImage().toUpperCase();
+                    label = removeNonJavaIdentifierPart(label);
+                    if (label.length() != 0) {
+                        while (grammar.getNamedToken(label) != null) {
+                            label = "_" + label;
+                        }
+                        grammar.addNamedToken(label, regexp);
+                        regexp.setLabel(label);
+                        continue;
+                    }
+                }
+                label = "TOKEN_" + regexp.getOrdinal();
+                if (regexp.isMore()) {
+                    label= label.replace("TOKEN", "MORE");
+                }
+                else if (regexp.isSkip()) {
+                    label = label.replace("TOKEN", "SKIP");
+                } 
+                else if (regexp.isSpecialToken()) {
+                    label = label.replace("TOKEN", "SPECIAL");
+                }
+                regexp.setLabel(label);
+            }
+        }
     }
-
 
     private RegularExpression other;
 

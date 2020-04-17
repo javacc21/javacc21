@@ -8,11 +8,17 @@ package ${grammar.parserPackage};
  */
 
 public interface ${grammar.constantsClassName} {
-  int INVALID = -1; // Used for Lexically invalid input
-  int EOF = 0; // End of file
-  [#list grammar.orderedNamedTokens as regexp]
+  int INVALID = ${grammar.lexerData.tokenCount}; // Used for Lexically invalid input
+  [#list grammar.lexerData.regularExpressions as regexp]
   int ${regexp.label} = ${regexp.ordinal};
   [/#list]
+  
+  public enum TokenType {
+     [#list grammar.lexerData.regularExpressions as regexp]
+     ${regexp.label},
+     [/#list]
+     INVALID
+  }
   
 [#if !grammar.options.userDefinedLexer]
   /**

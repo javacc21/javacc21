@@ -45,12 +45,18 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * stored in the file ...Constants.java.
      */
     int kind;
+    
+    private TokenType type;
+    
+    private TokenType getType() {
+        return type;
+    }
 
     /**
      * beginLine and beginColumn describe the position of the first character
      * of this token; endLine and endColumn describe the position of the
      * last character of this token.
-     */
+     */ 
     int beginLine, beginColumn, endLine, endColumn;
 
     /**
@@ -105,6 +111,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      */
     public Token(int kind) {
        this(kind, null);
+       this.type = TokenType.values()[kind];
     }
 
     /**
@@ -112,6 +119,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      */
     public Token(int kind, String image) {
         this.kind = kind;
+        this.type = TokenType.values()[kind];
         this.image = image;
     }
     

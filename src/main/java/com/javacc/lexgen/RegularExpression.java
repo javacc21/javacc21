@@ -213,6 +213,9 @@ public abstract class RegularExpression extends Expansion {
     }
     
     public String getGeneratedClassName() {
+        if (generatedClassName.equals("Token")) {
+            generatedClassName = getLabel();
+        }
         return generatedClassName;
     }
     
