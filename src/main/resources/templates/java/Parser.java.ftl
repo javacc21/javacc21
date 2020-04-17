@@ -50,7 +50,7 @@ import java.io.*;
 @SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
 
-    static final java.util.logging.Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
+    private static final java.util.logging.Logger LOGGER = Logger.getLogger(${grammar.parserClassName}.class.getName());
     
 [#if grammar.options.debugParser]
      static {
@@ -58,7 +58,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
      }
 [/#if]    
 
-    static public void setLogLevel(Level level) {
+    public static void setLogLevel(Level level) {
         LOGGER.setLevel(level);
         Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
     }
@@ -119,11 +119,11 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
 [#if !grammar.options.userDefinedLexer]
  [#if !grammar.options.hugeFileSupport]
-   public ${grammar.parserClassName}(String inputSource, CharSequence chars) {
+   public ${grammar.parserClassName}(String inputSource, CharSequence content) {
       [#if grammar.options.lexerUsesParser]
-       token_source = new ${grammar.lexerClassName}(this, chars);
+       this(new ${grammar.lexerClassName}(this, content));
       [#else]
-       token_source = new ${grammar.lexerClassName}(inputSource, chars);
+       this(new ${grammar.lexerClassName}(inputSource, content));
       [/#if]
    }
  [/#if]
@@ -133,11 +133,10 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
   
   public ${grammar.parserClassName}(Reader reader) {
     [#if grammar.options.lexerUsesParser]
-    token_source = new ${grammar.lexerClassName}(this, reader);
+    this(new ${grammar.lexerClassName}(this, reader));
     [#else]
-    token_source = new ${grammar.lexerClassName}(reader);
+    this(new ${grammar.lexerClassName}(reader));
     [/#if]
-    current_token = new Token();
   }
 [/#if]
 
