@@ -408,8 +408,6 @@ throw new ParseException();"]
       [@newVar type="int" init="nextTokenKind()"/]
       [#set condition]
       [#list lookahead.firstSetTokenNames as tokenName]
-      //KILROY ${tokenName_index}
-      
              int${newVarIndex} == ${tokenName} [#if tokenName_has_next]|| [/#if]
       [/#list]
      [/#set]
