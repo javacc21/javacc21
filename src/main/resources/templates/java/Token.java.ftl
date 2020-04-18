@@ -48,8 +48,13 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
     private TokenType type;
     
-    private TokenType getType() {
+    public TokenType getType() {
         return type;
+    }
+    
+    void setType(TokenType type) {
+        this.type=type;
+        this.kind = type.ordinal();
     }
 
     /**
@@ -120,6 +125,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public Token(int kind, String image) {
         this.kind = kind;
         this.type = TokenType.values()[kind];
+        this.image = image;;
+    }
+    
+    public Token(TokenType type, String image) {
+        this.type = type;
+        this.kind = type.ordinal();
         this.image = image;
     }
     
@@ -156,10 +167,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
     public static Token newToken(int ofKind, String image) {
        [#if grammar.options.treeBuildingEnabled]
-           [#var packagePrefix = ""]
-           [#if grammar.nodePackage?has_content][#set packagePrefix=grammar.nodePackage+"."][/#if]
            switch(ofKind) {
-//              case -1 : return new InvalidToken(image);
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
               case ${re.label} : return new ${re.generatedClassName}(ofKind, image);
@@ -169,7 +177,21 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        [/#if]
        return new Token(ofKind, image); 
     }
-
+    
+    
+    public static Token newToken(TokenType type, String image) {
+           [#if grammar.options.treeBuildingEnabled]
+           switch(type) {
+           [#list grammar.orderedNamedTokens as re]
+            [#if re.generatedClassName != "Token" && !re.private]
+              case ${re.label} : return new ${re.generatedClassName}(TokenType.${re.label}, image);
+            [/#if]
+           [/#list]
+           }
+       [/#if]
+       return new Token(type, image);      
+    }
+    
     public void setInputSource(String inputSource) {
         this.inputSource = inputSource;
     }

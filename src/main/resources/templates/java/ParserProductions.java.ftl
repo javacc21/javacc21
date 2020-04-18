@@ -352,7 +352,7 @@
                  [#if lookahead_index != 0]
                  } else {
                  [/#if]
-                 switch (nextTokenKind()) { 
+                 switch (nextTokenType()) { 
               [#set indentLevel = indentLevel+1]
           [/#if]
           [#list lookahead.firstSetTokenNames as tokenName]

@@ -28,6 +28,7 @@
 
 options {
    PARSER_CLASS="Faq";
+   PARSER_PACKAGE="faq";
 }
 
 INJECT(PARSER_CLASS) : 

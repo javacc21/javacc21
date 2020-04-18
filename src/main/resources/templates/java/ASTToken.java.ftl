@@ -49,4 +49,7 @@ public class ${classname} extends ${superclass} {
     public ${classname}(int kind, String image) {
         super(kind, image);
     }
-}
+    public ${classname}(TokenType type, String image) {
+        super(type, image);
+    }
+}}

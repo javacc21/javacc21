@@ -362,6 +362,14 @@ public boolean isCancelled() {return cancelled;}
     return current_token.getNext().kind;
   }
   
+  private TokenType nextTokenType() {
+    if (current_token.getNext() == null) {
+        Token nextToken = token_source.getNextToken();
+        current_token.setNext(nextToken);
+    }
+    return current_token.getNext().getType();
+  }
+   
   private List<Token> getTokensToEOL(int ...desiredTokenTypes) {
      ArrayList<Token> result = new ArrayList<>();
      int currentLine = current_token.getBeginLine();

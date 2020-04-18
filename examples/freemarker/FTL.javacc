@@ -109,7 +109,7 @@ INJECT(FTLLexer) :
                 Token copy = cloneToken(tok);
                 copy.specialToken = null;
                 copyFieldsOfToken(tok.specialToken, tok);
-                tok.kind = BLANK;
+                tok.setType(TokenType.BLANK);
                 tok.setNext(copy);
                 noWhitespaceInExpression = false;
                 lastMatchedTokenType = tok.kind;
@@ -138,7 +138,7 @@ INJECT(FTLLexer) :
              case FTL_DIRECTIVE_OPEN :
              if (syntaxEstablished) {
                  if (hasPointyDelimiter != olderSyntax) {
-                     tok.kind = PRINTABLE_CHARS;
+                     tok.setType(TokenType.PRINTABLE_CHARS);
                  }
                  else {
                      if (tok.kind == FTL_DIRECTIVE_OPEN) SwitchTo(FTL_DIRECTIVE);
@@ -155,23 +155,23 @@ INJECT(FTLLexer) :
 
              case CLOSE_TAG :
              case CLOSE_EMPTY_TAG :
-             if (olderSyntax != hasPointyDelimiter) tok.kind = PRINTABLE_CHARS;
+             if (olderSyntax != hasPointyDelimiter) tok.setType(TokenType.PRINTABLE_CHARS);
              else SwitchTo(TEMPLATE_TEXT);
              break;
 
              case END_DIRECTIVE :
-             if (olderSyntax!=hasPointyDelimiter) tok.kind = PRINTABLE_CHARS;
+             if (olderSyntax!=hasPointyDelimiter) tok.setType(TokenType.PRINTABLE_CHARS);
              else SwitchTo(TEMPLATE_TEXT);
              break;
 
              case END_USER_DIRECTIVE :
-             if (hasPointyDelimiter != olderSyntax) tok.kind = PRINTABLE_CHARS;
+             if (hasPointyDelimiter != olderSyntax) tok.setType(TokenType.PRINTABLE_CHARS);
              break;
 
               case GT :
               case GTE :
               if (parenthesisNesting == 0 && olderSyntax) {
-                 tok.kind = CLOSE_TAG;
+                 tok.setType(TokenType.CLOSE_TAG);
                  if (tok.kind == GTE) {
                       tok.image = ">";
                       tok.endColumn--;
@@ -189,7 +189,7 @@ INJECT(FTLLexer) :
              if (bracketNesting>0) {
                  --bracketNesting;
               } else if (!olderSyntax) {
-                tok.kind = CLOSE_TAG;
+                tok.setType(TokenType.CLOSE_TAG);
                 SwitchTo(TEMPLATE_TEXT);
               }
               break;
@@ -198,12 +198,12 @@ INJECT(FTLLexer) :
               case CLOSE_BRACE : if (braceNesting>0) braceNesting--; else SwitchTo(TEMPLATE_TEXT); break;
 
               case END_COMMENT :
-              if (hasPointyDelimiter != olderSyntax) tok.kind = PRINTABLE_CHARS;
+              if (hasPointyDelimiter != olderSyntax) tok.setType(TokenType.PRINTABLE_CHARS);
               else SwitchTo(TEMPLATE_TEXT);
               break;
               default :
               if (lastMatchedTokenType == DOT && possibleIdentifier(tok.image)) {
-                  tok.kind = IDENTIFIER;
+                  tok.setType(TokenType.IDENTIFIER);
               }
         }
         lastMatchedTokenType = tok.kind;
@@ -218,7 +218,7 @@ INJECT(FTLLexer) :
 
 
     private void copyFieldsOfToken (Token src, Token dest) {
-        dest.kind = src.kind;
+        dest.setType(src.getType());
         dest.image = src.image;
         dest.specialToken = src.specialToken;
         Token next = src.getNext();
@@ -231,7 +231,7 @@ INJECT(FTLLexer) :
     }
 
     private Token cloneToken(Token t) {
-        Token result = Token.newToken(t.kind, t.image);
+        Token result = Token.newToken(t.getType(), t.image);
         copyFieldsOfToken(t, result);
         return result;
     }

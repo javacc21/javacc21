@@ -28,6 +28,7 @@
  
 options {
    PARSER_CLASS="Digest";
+   PARSER_PACKAGE="digest";
 }
 
 INJECT(PARSER_CLASS) : 
