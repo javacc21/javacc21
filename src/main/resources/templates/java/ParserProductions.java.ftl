@@ -148,9 +148,16 @@
 	             else {
                      if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
-                     if (${forcedVarName}) {
-                        insertVirtualToken(${expansion.finalSet.firstTokenName});
-		                closeNodeScope(${nodeVarName}, true);
+                     if (${forcedVarName}) { 
+                        Token virtualToken = insertVirtualToken(${expansion.finalSet.firstTokenName});  
+                        String message = "Inserted virtual token of type " + virtualToken.getType()
+                                                  +"\non line " + virtualToken.getBeginLine()
+                                                  + ", column " + virtualToken.getBeginColumn()
+                                                   + " of " + token_source.getInputSource()
+                                                  +"\n to complete expansion in ${currentProduction.name}\n";
+                        message += ${parseExceptionVar}.getMessage(); 
+                        addParsingProblem(new ParsingProblem(message, ${nodeVarName})); 
+		                closeNodeScope(${nodeVarName}, true); 
 		             } else {
                         closeNodeScope(${nodeVarName}, false);
                         if (trace_enabled) LOGGER.info("Rethrowing " + "${parseExceptionVar}");

@@ -93,6 +93,9 @@ public class FilesGenerator {
     	if (!grammar.getOptions().getHugeFileSupport()) {
     		generateFileLineMap();
     	}
+    	if (grammar.getOptions().getFaultTolerant()) {
+    	    generateParsingProblem();
+    	}
         
     }
     
@@ -122,7 +125,8 @@ public class FilesGenerator {
             templateName = "BaseNode.java.ftl";
         }
         else if (currentFilename.startsWith(grammar.getOptions().getNodePrefix())) {
-            if (!(currentFilename.equals("ParseException.java")
+            if (!(currentFilename.equals("ParseException.java") 
+                    || currentFilename.equals("ParsingProblem.java")
                     || currentFilename.equals("Token.java")
                     || currentFilename.equals("Node.java")
                     || currentFilename.equals("Nodes.java")
@@ -203,7 +207,14 @@ public class FilesGenerator {
             generate(outputFile);
         }
     }
-
+    
+    void generateParsingProblem() throws IOException, TemplateException {
+        File outputFile = new File(grammar.getParserOutputDirectory(), "ParsingProblem.java");
+        if (regenerate(outputFile)) {
+            generate(outputFile);
+        }
+    }
+ 
     void generateToken() throws IOException, TemplateException {
         File outputFile = new File(grammar.getParserOutputDirectory(), "Token.java");
         if (regenerate(outputFile)) {
@@ -289,7 +300,7 @@ public class FilesGenerator {
         }
 
         for (RegularExpression re : grammar.getOrderedNamedTokens()) {
-            if (re.isPrivate()) continue;
+            if (re.isPrivate() || re.isMore()) continue;
             String tokenClassName = re.getGeneratedClassName();
             File outputFile = getOutputFile(tokenClassName);
             files.add(outputFile);

@@ -59,7 +59,7 @@ public class FileLineMap {
     private int startingLine, startingColumn;
     private int bufferPosition, tokenBeginOffset, tokenBeginColumn, tokenBeginLine, line, column;
     private final List<Token> tokenList;
-
+    
 	[#var PRESERVE_LINE_ENDINGS = grammar.options.preserveLineEndings?string("true", "false")]
 	[#var JAVA_UNICODE_ESCAPE = grammar.options.javaUnicodeEscape?string("true", "false")]
     public FileLineMap(Reader reader, int startingLine, int startingColumn) {

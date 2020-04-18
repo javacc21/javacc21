@@ -643,23 +643,7 @@ public class ParserData {
         }
         
         //Final pass to make sure that all regexps have labels
-   /*     for (RegexpStringLiteral stringLiteral : grammar.getStringLiteralsToResolve()) {
-            int ordinal = stringLiteral.getOrdinal();
-            if (grammar.getTokenName(ordinal) == null) {
-                String name = stringLiteral.getImage();
-                name = removeNonJavaIdentifierPart(name).toUpperCase();
-                if (name.length() == 0) {
-                    name = "TOKEN_" + ordinal;
-                } else {
-                    while (usedNames.contains(name)) {
-                        name = "_" + name;
-                    }
-                }  
-                usedNames.add(name);
-                stringLiteral.setLabel(name);
-                grammar.addTokenName(ordinal, name);
-            }
-        }*/
+ 
         for (RegularExpression regexp : lexerData.getRegularExpressions()) {
             if (!regexp.hasLabel()) {
                 String label;

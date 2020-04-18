@@ -68,7 +68,24 @@ private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
 [#if grammar.options.faultTolerant]
-   private boolean tolerantParsing= true;
+    private boolean tolerantParsing= true;
+    private List<ParsingProblem> parsingProblems;
+    
+    public void addParsingProblem(ParsingProblem problem) {
+        if (parsingProblems == null) {
+            parsingProblems = new ArrayList<>();
+        }
+        parsingProblems.add(problem);
+    }
+    
+    public List<ParsingProblem> getParsingProblems() {
+        return parsingProblems;
+    }
+    
+    public boolean hasParsingProblems() {
+        return parsingProblems != null && !parsingProblems.isEmpty();
+    }
+
 [#else]
     private final boolean tolerantParsing = false;
 [/#if]
@@ -159,7 +176,7 @@ public boolean isCancelled() {return cancelled;}
  
 [#if grammar.options.faultTolerant]
 
-    private void insertVirtualToken(int tokenType) {
+    private Token insertVirtualToken(int tokenType) {
         Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenImage[tokenType]);
         virtualToken.setUnparsed(true);
         virtualToken.setVirtual(true);
@@ -175,6 +192,7 @@ public boolean isCancelled() {return cancelled;}
         if (tokensAreNodes && buildTree) {
              currentNodeScope.add(virtualToken);           
         }
+        return virtualToken;
     }
   
     /**
@@ -270,23 +288,20 @@ public boolean isCancelled() {return cancelled;}
   
   private void handleUnexpectedTokenType( int expectedType,  boolean forced, Token oldToken) throws ParseException {
         if (!tolerantParsing) {
-  //	    current_token = oldToken;
   		    throw new ParseException(current_token);
 	   } 
 [#if grammar.options.faultTolerant]	   
        if (forced && tolerantParsing) {
-           Token virtualToken = Token.newToken(expectedType, "");
-           virtualToken.setVirtual(true);
-           virtualToken.setBeginLine(oldToken.getEndLine());
-           virtualToken.setBeginColumn(oldToken.getEndColumn());
-           virtualToken.setEndLine(current_token.getBeginLine());
-           virtualToken.setEndColumn(current_token.getBeginColumn());
-           virtualToken.setNext(current_token);
+           Token nextToken = current_token;
+           current_token = oldToken;
+           Token virtualToken = insertVirtualToken(expectedType);
+           virtualToken.setNext(nextToken);
            current_token = virtualToken;
+           String message = "Expecting token type "+ expectedType + " but encountered " + nextToken.getType();
+           message += "\nInserting virtual token to continue parsing";
+           addParsingProblem(new ParsingProblem(message, virtualToken));
        } else {
-//	      current_token = oldToken;
           throw new ParseException(current_token);
-//	      throw new ParseException(generateErrorMessage(current_token));
       }
 [/#if]      
   }
