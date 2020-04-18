@@ -176,8 +176,8 @@ public boolean isCancelled() {return cancelled;}
  
 [#if grammar.options.faultTolerant]
 
-    private Token insertVirtualToken(int tokenType) {
-        Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenImage[tokenType]);
+    private Token insertVirtualToken(TokenType tokenType) {
+        Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenType);
         virtualToken.setUnparsed(true);
         virtualToken.setVirtual(true);
         int line = current_token.getEndLine();
@@ -196,13 +196,13 @@ public boolean isCancelled() {return cancelled;}
     }
   
 
-     private Token consumeToken(int expectedType) throws ParseException {
+     private Token consumeToken(TokenType expectedType) throws ParseException {
         return consumeToken(expectedType, false);
      }
  
-     private Token consumeToken(int expectedType, boolean forced) throws ParseException {
+     private Token consumeToken(TokenType expectedType, boolean forced) throws ParseException {
  [#else]
-      private Token consumeToken(int expectedType) throws ParseException {
+      private Token consumeToken(TokenType expectedType) throws ParseException {
         boolean forced = false;
  [/#if]
   
@@ -216,7 +216,7 @@ public boolean isCancelled() {return cancelled;}
         	throw new ParseException(current_token);
         }
 [/#if]        
-        if (current_token.getKind() != expectedType) {
+        if (current_token.getType() != expectedType) {
             handleUnexpectedTokenType(expectedType, forced, oldToken) ;
         }      
 [#if grammar.options.treeBuildingEnabled]
@@ -243,7 +243,7 @@ public boolean isCancelled() {return cancelled;}
       return current_token;
   }
   
-  private void handleUnexpectedTokenType( int expectedType,  boolean forced, Token oldToken) throws ParseException {
+  private void handleUnexpectedTokenType(TokenType expectedType,  boolean forced, Token oldToken) throws ParseException {
         if (!tolerantParsing) {
   		    throw new ParseException(current_token);
 	   } 
@@ -292,10 +292,6 @@ public boolean isCancelled() {return cancelled;}
     } else {
       currentLookaheadToken = currentLookaheadToken.getNext();
     }
-    [#if grammar.options.debugLookahead]
-       trace_scan(currentLookaheadToken, kind);
-    [/#if]
-
      if (currentLookaheadToken.getKind() != kind) return true;
     if (remainingLookahead == 0 && currentLookaheadToken == lastScannedToken) throw LOOKAHEAD_SUCCESS;
    return false;
@@ -368,20 +364,6 @@ public boolean isCancelled() {return cancelled;}
   
   
   }
-[#if grammar.options.debugLookahead]
-  private void trace_scan(Token token, int expectedType) {
-    if (trace_enabled) {
-      for (int i = 0; i < trace_indent; i++) { System.out.print(" "); }
-      System.out.print("Visited token: <" + tokenImage[token.kind]);
-      if (token.kind != 0 && !tokenImage[token.kind].equals("\"" + token.image + "\"")) {
-        System.out.print(": \"" + token.image + "\"");
-      }
-      System.out.println(" at line " + token.beginLine + "" +
-                " column " + token.beginColumn + ">; Expected token: <" + nodeNames[expectedType] + ">");
-    }
-  }
- [/#if]
- 
 }
 
 [#list grammar.otherParserCodeDeclarations as decl]

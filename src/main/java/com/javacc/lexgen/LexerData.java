@@ -35,6 +35,7 @@ import java.util.*;
 import com.javacc.Grammar;
 import com.javacc.parser.tree.EndOfFile;
 import com.javacc.parser.tree.RegexpChoice;
+import com.javacc.parser.tree.RegexpStringLiteral;
 import com.javacc.parser.tree.TokenProduction;
 
 /**
@@ -42,8 +43,10 @@ import com.javacc.parser.tree.TokenProduction;
  */
 public class LexerData {
     private Grammar grammar;
-    private List<LexicalStateData> lexicalStates = new ArrayList<LexicalStateData>();
-    private List<RegularExpression> regularExpressions = new ArrayList<RegularExpression>();
+    private List<LexicalStateData> lexicalStates = new ArrayList<>();
+    private List<RegularExpression> regularExpressions = new ArrayList<>();
+    
+    private List<String> regexpLabels = new ArrayList<>();
 
     int stateSetSize;
     TokenSet skipSet, specialSet, moreSet, tokenSet;
@@ -110,7 +113,7 @@ public class LexerData {
         }
         return -1;
     }
-
+    
     public int getNumLexicalStates() {
         return lexicalStates.size();
     }
@@ -121,6 +124,49 @@ public class LexerData {
 
     public void addRegularExpression(RegularExpression regexp) {
         regularExpressions.add(regexp);
+        regexpLabels.add(regexp.getLabel());
+    }
+    
+    public void ensureStringLabels() {
+        for (ListIterator<RegularExpression> it = regularExpressions.listIterator();it.hasNext();) {
+            RegularExpression regexp = it.next();
+            if (!isJavaIdentifier(regexp.getLabel())) {
+                String label = "_TOKEN_" + it.previousIndex();
+                if (regexp instanceof RegexpStringLiteral) {
+                    String s= ((RegexpStringLiteral)regexp).getImage().toUpperCase();
+                    if (isJavaIdentifier(s) && !regexpLabelAlreadyUsed(s)) label = s;
+                }
+                regexp.setLabel(label);
+            }
+        }
+    }
+   
+    static public boolean isJavaIdentifier(String s) {
+        if (s.length() == 0) return false;
+        if (!Character.isJavaIdentifierStart(s.charAt(0))) return false;
+        for (int i=1; i<s.length(); i++) {
+            if (!Character.isJavaIdentifierPart(s.charAt(i))) return false;
+        }
+        return true;
+    }
+   
+    private boolean regexpLabelAlreadyUsed(String label) {
+        for (RegularExpression regexp : regularExpressions) {
+            if (label.contentEquals(regexp.getLabel())) return true;
+        }
+        return false;
+    }
+
+    
+    public String getStringLiteralLabel(String image) {
+        for (RegularExpression regexp : regularExpressions) {
+            if (regexp instanceof RegexpStringLiteral) {
+                if (((RegexpStringLiteral) regexp).getImage().equals(image)) {
+                    return regexp.getLabel();
+                }
+            }
+        }
+        return null;
     }
 
     public int getTokenCount() {

@@ -149,7 +149,7 @@
                      if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) { 
-                        Token virtualToken = insertVirtualToken(${expansion.finalSet.firstTokenName});  
+                        Token virtualToken = insertVirtualToken(TokenType.${expansion.finalSet.firstTokenName});  
                         String message = "Inserted virtual token of type " + virtualToken.getType()
                                                   +"\non line " + virtualToken.getBeginLine()
                                                   + ", column " + virtualToken.getBeginColumn()
@@ -254,9 +254,9 @@
           ${regexp.LHS} =  
        [/#if]
   [#if !grammar.options.faultTolerant]       
-       consumeToken(${regexp.label});
+       consumeToken(TokenType.${regexp.label});
    [#else]
-        consumeToken(${regexp.label}, ${regexp.forced?string("true", "false")});
+        consumeToken(TokenType.${regexp.label}, ${regexp.forced?string("true", "false")});
    [/#if]
 [/#macro]
 
@@ -468,14 +468,8 @@
 [#macro buildPhase3Routine expansion count]
    [#if expansion.ordinal > 0][#return][/#if]
      private boolean ${expansion.phase3RoutineName}() {
-        [#if grammar.options.debugLookahead&&expansion.parent.class.name?ends_with("Production")]
-            if (trace_enabled) LOGGER.info("${expansion.parent.name} (LOOKING AHEAD...)";
-            [#set currentPhase3Expansion = expansion]
-       [#else]
-            [#set currentPhase3Expansion = null]
-        [/#if]
       [@buildPhase3Code expansion, count/]
-      [@genReturn false/]
+      return false;
     }
 [/#macro]
 
@@ -519,7 +513,7 @@
 	  [#else]
 	     [@InvokePhase3Routine subseq/]
 	     ) 
-	     [@genReturn true/]
+	     return true;
 	  [/#if]
   [/#list]
   [#var numBraces=choice.choices?size-1]
@@ -536,7 +530,7 @@
      [#--  set label = grammar.getTokenName(regexp.ordinal)--]
      [#set label = regexp.label]
   [/#if]
-     if (scanToken(${label})) [@genReturn true/]  
+     if (scanToken(${label})) return true;
 [/#macro]
 
 [#macro Phase3CodeZeroOrOne zoo]
@@ -556,7 +550,7 @@
 [/#macro]
 
 [#macro Phase3CodeOneOrMore oom]
-   if ([@InvokePhase3Routine oom.nestedExpansion/]) [@genReturn true/]
+   if ([@InvokePhase3Routine oom.nestedExpansion/]) return true;
    while (true) {
        [@newVar type="Token" init="currentLookaheadToken"/]
        if ([@InvokePhase3Routine oom.nestedExpansion/]) {
@@ -568,7 +562,7 @@
 
 [#macro Phase3CodeNonTerminal nt]
       if ([@InvokePhase3Routine nt.production.expansion/])
-         [@genReturn true/]
+         return true;
 [/#macro]
 
 [#macro Phase3CodeSequence sequence count]
@@ -587,20 +581,6 @@
    [#else]
       ${expansion.phase3RoutineName}()
    [/#if]
-[/#macro]
-
-[#macro genReturn bool]
-    [#var retval=bool?string("true", "false")]
-    [#if grammar.options.debugLookahead&&!currentPhase3Expansion?is_null]
-       [#var tracecode]
-       [#set tracecode]
-         if (trace_enabled) LOGGER.info("${currentPhase3Expansion.parent.name} (LOOKAHEAD ${bool?string("FAILED", "SUCCEEDED")}");
-       [/#set]
-  { ${tracecode} return {bool?string("true", "false")};
-              return "return " + retval + ";";
-    [#else]
-  return ${retval};
-    [/#if]
 [/#macro]
 
 [#var newVarIndex=0]

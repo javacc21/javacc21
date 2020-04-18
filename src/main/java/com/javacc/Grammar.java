@@ -89,13 +89,17 @@ public class Grammar extends BaseNode {
     public String[] getLexicalStates() {
         return lexicalStates.toArray(new String[]{});
     }
-
+    //REVISIT: I don't really like these two methods and the whole disposition. 
+    // It works, but should have something cleaner.
     public void addStringLiteralToResolve(RegexpStringLiteral stringLiteral) {
         stringLiteralsToResolve.add(stringLiteral);
     }
-
-    public Set<RegexpStringLiteral> getStringLiteralsToResolve() {
-        return stringLiteralsToResolve;
+    
+    private void resolveStringLiterals() {
+        for (RegexpStringLiteral stringLiteral : stringLiteralsToResolve) {
+            String label = lexerData.getStringLiteralLabel(stringLiteral.getImage());
+            stringLiteral.setLabel(label);
+        }
     }
 
     Node parse(String location) throws IOException, ParseException {
@@ -186,6 +190,8 @@ public class Grammar extends BaseNode {
         if (getErrorCount() != 0) {
             throw new MetaParseException();
         }
+        lexerData.ensureStringLabels();
+        resolveStringLiterals();
     }
 
     public void buildParserInfo() throws MetaParseException {

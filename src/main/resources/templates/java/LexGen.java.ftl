@@ -106,6 +106,10 @@ void addToken(Token token) {
            switchTo(newLexState);
        }
    }
+   
+   void doLexicalStateSwitch(TokenType tokenType) {
+       doLexicalStateSwitch(tokenType.ordinal());
+   }
   
   private static final LexicalState[] newLexicalStates = {
          [#list lexerData.regularExpressions as regexp]

@@ -641,38 +641,9 @@ public class ParserData {
                 }
             }
         }
-        
-        //Final pass to make sure that all regexps have labels
- 
-        for (RegularExpression regexp : lexerData.getRegularExpressions()) {
-            if (!regexp.hasLabel()) {
-                String label;
-                if (regexp instanceof RegexpStringLiteral) {
-                    label = ((RegexpStringLiteral)regexp).getImage().toUpperCase();
-                    label = removeNonJavaIdentifierPart(label);
-                    if (label.length() != 0) {
-                        while (grammar.getNamedToken(label) != null) {
-                            label = "_" + label;
-                        }
-                        grammar.addNamedToken(label, regexp);
-                        regexp.setLabel(label);
-                        continue;
-                    }
-                }
-                label = "TOKEN_" + regexp.getOrdinal();
-                if (regexp.isMore()) {
-                    label= label.replace("TOKEN", "MORE");
-                }
-                else if (regexp.isSkip()) {
-                    label = label.replace("TOKEN", "SKIP");
-                } 
-                else if (regexp.isSpecialToken()) {
-                    label = label.replace("TOKEN", "SPECIAL");
-                }
-                regexp.setLabel(label);
-            }
-        }
     }
+        
+ 
 
     private RegularExpression other;
 
