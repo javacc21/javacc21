@@ -74,6 +74,7 @@ void addToken(Token token) {
   private int jjnewStateCnt;
   private int jjround;
   private int jjmatchedPos;
+  //FIXME,should be an enum.
   private int jjmatchedKind;
   private String inputSource = "input";
   
@@ -392,7 +393,7 @@ public final void backup(int amount) {
  [#if grammar.usesCommonTokenAction]
       CommonTokenAction(matchedToken);
  [/#if]
- jjmatchedKind = matchedToken.getKind();
+ jjmatchedKind = matchedToken.getType().ordinal();
  
  [#if numLexicalStates>1]
       if (newLexicalStates[jjmatchedKind] != null) {
@@ -583,9 +584,9 @@ public final void backup(int amount) {
         endColumn = input_stream.getEndColumn();
     [/#if]
     [#if options.tokenFactory != ""] 
-        t = ${options.tokenFactory}.newToken(jjmatchedKind, curTokenImage);
+        t = ${options.tokenFactory}.newToken(TokenType.values()[jjmatchedKind], curTokenImage);
     [#else]
-        t = Token.newToken(jjmatchedKind, curTokenImage);
+        t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage);
     [/#if]
         t.beginLine = beginLine;
         t.endLine = endLine;

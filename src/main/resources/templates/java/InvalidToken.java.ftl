@@ -10,11 +10,11 @@ package ${grammar.parserPackage};
 public class InvalidToken extends Token {
 
     public InvalidToken(String image) {
-       super(${grammar.constantsClassName}.INVALID, image);
+       super(TokenType.INVALID, image);
     }
     
     public InvalidToken() {
-       super(${grammar.constantsClassName}.INVALID);
+       super(TokenType.INVALID, null);
     }
     
     public String getNormalizedText() {

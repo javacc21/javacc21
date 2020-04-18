@@ -413,10 +413,10 @@
       [/#set]
       [#set condition = condition?replace("2147483647", "INFINITY")]
    [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansion]
-      [@newVar type="int" init="nextTokenKind()"/]
+      [@newVar type="TokenType" init="nextTokenType()"/]
       [#set condition]
       [#list lookahead.firstSetTokenNames as tokenName]
-             int${newVarIndex} == ${tokenName} [#if tokenName_has_next]|| [/#if]
+             tokentype${newVarIndex} == TokenType.${tokenName} [#if tokenName_has_next]|| [/#if]
       [/#list]
      [/#set]
    [/#if]
@@ -525,12 +525,12 @@
 [/#macro]
 
 [#macro Phase3CodeRegexp regexp]
-  [#var label=regexp.label]
+  [#--  var label=regexp.label]
   [#if !label?has_content]
-     [#--  set label = grammar.getTokenName(regexp.ordinal)--]
+     [#--  set label = grammar.getTokenName(regexp.ordinal)]
      [#set label = regexp.label]
-  [/#if]
-     if (scanToken(${label})) return true;
+  [/#if--]
+     if (scanToken(TokenType.${regexp.label})) return true;
 [/#macro]
 
 [#macro Phase3CodeZeroOrOne zoo]
@@ -577,7 +577,7 @@
     
 [#macro InvokePhase3Routine expansion]
    [#if expansion.ordinal >=0]
-       scanToken(${expansion.ordinal})
+       scanToken(TokenType.${expansion.label})
    [#else]
       ${expansion.phase3RoutineName}()
    [/#if]

@@ -196,11 +196,11 @@ INJECT(VarDeclaration) : {
     implements SPLConstants
 }
 {
-    int type;
+    TokenType type;
     String name;
         
     public void interpret() {
-        if (type == BOOL)
+        if (type == TokenType.BOOL)
             symtab.put(name, new Boolean(false));
         else
             symtab.put(name, new Integer(0));
@@ -213,9 +213,9 @@ void VarDeclaration() :
 { Token t; }
 {
   (
-    "boolean" { CURRENT_NODE.type = BOOL; }
+    "boolean" { CURRENT_NODE.type = TokenType.BOOL; }
    |
-    "int" { CURRENT_NODE.type = INT; }
+    "int" { CURRENT_NODE.type = TokenType.INT; }
   )
   t = <IDENTIFIER> 
   { CURRENT_NODE.name = t.image; }

@@ -8,11 +8,13 @@ package ${grammar.parserPackage};
  */
 
 public interface ${grammar.constantsClassName} {
+
+[#if grammar.options.legacyAPI]
   int INVALID = ${grammar.lexerData.tokenCount}; // Used for Lexically invalid input
   [#list grammar.lexerData.regularExpressions as regexp]
   int ${regexp.label} = ${regexp.ordinal};
   [/#list]
-  
+[/#if]  
   public enum TokenType {
      [#list grammar.lexerData.regularExpressions as regexp]
      ${regexp.label},
@@ -46,7 +48,7 @@ String[] tokenImage = {
       [/#list]
     [/#list]
   };
-
+/*
    String[] nodeNames = {
        "EOF", 
        [#list grammar.orderedNamedTokens as regexp]
@@ -58,7 +60,7 @@ String[] tokenImage = {
            [/#list]
        [/#if]
    };
-
+*/
 }
 
 

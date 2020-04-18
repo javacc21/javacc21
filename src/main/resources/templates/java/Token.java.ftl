@@ -57,14 +57,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 //        this.kind = type.ordinal();
     }
     
-    void setKind(int kind) {
-        this.type = TokenType.values()[kind];
-    }
-    
-    int getKind() {
-        return type.ordinal();
-    }
-
     /**
      * beginLine and beginColumn describe the position of the first character
      * of this token; endLine and endColumn describe the position of the
@@ -79,6 +71,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 
 [#if grammar.options.legacyAPI]
+
+    void setKind(int kind) {
+        this.type = TokenType.values()[kind];
+    }
+    
+    int getKind() {
+        return type.ordinal();
+    }
 
     /**
      * A reference to the next regular (non-special) token from the input
@@ -118,10 +118,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     boolean unparsed;
 
     public Token() {}
-
-    /**
-     * Constructs a new token for the specified Image.
-     */
+[#if grammar.options.legacyAPI]
     public Token(int kind) {
        this(kind, null);
        this.type = TokenType.values()[kind];
@@ -135,15 +132,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.type = TokenType.values()[kind];
         this.image = image;;
     }
-    
+[/#if]    
     public Token(TokenType type, String image) {
         this.type = type;
 //        this.kind = type.ordinal();
         this.image = image;
-    }
-    
-    public int getId() {
-        return getKind();
     }
 
     public boolean isUnparsed() {
@@ -172,7 +165,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String toString() {
         return getNormalizedText();
     }
-    
+[#if grammar.options.legacyAPI]    
     public static Token newToken(int ofKind, String image) {
        [#if grammar.options.treeBuildingEnabled]
            switch(ofKind) {
@@ -185,7 +178,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        [/#if]
        return new Token(ofKind, image); 
     }
-    
+[/#if]    
     
     public static Token newToken(TokenType type, String image) {
            [#if grammar.options.treeBuildingEnabled]
@@ -332,7 +325,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
   
     public String getNodeName() {
-        return ${grammar.constantsClassName}.tokenImage[kind];
+        return getType().toString();
     }
   
     public String getNodeType() {

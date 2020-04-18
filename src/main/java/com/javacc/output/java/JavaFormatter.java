@@ -96,7 +96,7 @@ public class JavaFormatter {
     }
     
     private void handleToken() {
-        switch (currentToken.getId()) {
+        switch (currentToken.getType()) {
             case LBRACE :
                 handleOpenBrace();
                 break;
@@ -159,7 +159,7 @@ public class JavaFormatter {
                     }
                 }
                 buf.append(currentToken);
-                if (currentToken.getId() == IF || currentToken.getId() == WHILE) {
+                if (currentToken.getType() == TokenType.IF || currentToken.getType() == TokenType.WHILE) {
                     buf.append(' ');
                 }
         }

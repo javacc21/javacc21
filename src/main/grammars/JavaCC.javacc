@@ -72,12 +72,12 @@ import com.javacc.parser.tree.*;
     */
    private boolean notTailOfExpansionUnit() {
        Token t = getToken(1);
-       int type = t.getId();
-       return type != BIT_OR
-             && type != COMMA
-             && type != RPAREN
-             && type != RBRACE
-             && type != RBRACKET;
+       TokenType type = t.getType();
+       return type != TokenType.BIT_OR
+             && type != TokenType.COMMA
+             && type != TokenType.RPAREN
+             && type != TokenType.RBRACE
+             && type != TokenType.RBRACKET;
    }
 
     private char character_descriptor_assign(Token t, String s) {
@@ -286,15 +286,15 @@ INJECT(LEXER_CLASS) :
        t.setGrammar(parser.getGrammar());
        if (angleBracketNesting >0 && t.image.length() >1 && t.image.charAt(0) == '>') {
            input_stream.backup(t.image.length() -1);
-           Token gt = Token.newToken(GT, ">");
+           Token gt = Token.newToken(TokenType.GT, ">");
            Nodes.copyLocationInfo(t, gt);
            gt.setEndColumn(gt.getEndColumn() -1);
            gt.setGrammar(parser.getGrammar());
            return gt;
        }
        if (javaccReservedWords.contains(t.image)) {
-           if (inJavaCode || (t.kind == _OPTIONS && optionsSeen)) {
-	           Token id = Token.newToken(IDENTIFIER, t.image);
+           if (inJavaCode || (t.getType() == TokenType._OPTIONS && optionsSeen)) {
+	           Token id = Token.newToken(TokenType.IDENTIFIER, t.image);
 	           Nodes.copyLocationInfo(t, id);
 	           id.setGrammar(parser.getGrammar());
 	           return id;
@@ -486,6 +486,10 @@ INJECT(Token) :
 
     }
     
+    public String getNodeName() {
+        return getType().toString();
+    }
+    
     public String getLeadingComments() {
         if (specialToken == null)
             return "";
@@ -502,7 +506,7 @@ INJECT(Token) :
     }
     
     public String getNormalizedText() {
-        if (kind == IDENTIFIER) {
+        if (getType() == TokenType.IDENTIFIER) {
             if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
                 return getGrammar().getCurrentNodeVariableName();
             }
@@ -617,7 +621,7 @@ INJECT(ReturnType) :
 {
     public boolean getAsBoolean() {
         List<Token> lt = Nodes.getRealTokens(this);
-        return lt.size() != 1 || lt.get(0).getId() != VOID;
+        return lt.size() != 1 || lt.get(0).getType() != TokenType.VOID;
     }
 }
 
@@ -914,13 +918,14 @@ INJECT(BNFProduction) :
 
     public String getAccessModifier() {
         for (Token t : childrenOfType(Token.class)) {
-           if (t.getId() == JavaCCConstants.PRIVATE) {
+           TokenType type = t.getType();
+           if (type == TokenType.PRIVATE) {
                return "private";
            }
-           else if (t.getId() == JavaCCConstants.PROTECTED) {
+           else if (type == TokenType.PROTECTED) {
                return "protected";
            }
-           else if (t.getId() == JavaCCConstants.PUBLIC) {
+           else if (type == TokenType.PUBLIC) {
                return "public";
            }
         }
@@ -989,7 +994,7 @@ INJECT(TreeBuildingAnnotation) :
         for (Node n : children) {
 	   if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getId() == JavaCCConstants.HASH_ID) {
+               if (t.getType() == TokenType.HASH_ID) {
                    image = t.toString().substring(1);
                }
 	   }
@@ -1005,7 +1010,7 @@ INJECT(TreeBuildingAnnotation) :
         for (Node n : children) {
 	   if (n instanceof Token) {
 	      Token t = (Token) n;
-              if (t.getId() == JavaCCConstants.GT) {
+              if (t.getType() == TokenType.GT) {
                   return true;
               }
 	   }
@@ -1091,7 +1096,7 @@ INJECT(TokenProduction) :
         for (Node n : children) {
 	      if (n instanceof Token) {
 	           Token t = (Token) n;
-               if (t.getId() == JavaCCConstants._IGNORE_CASE) {
+               if (t.getType() == TokenType._IGNORE_CASE) {
                    return true;
                }
 	       }
@@ -1128,7 +1133,7 @@ INJECT(TokenProduction) :
         for (Node n : children) {
 	   if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getId() == JavaCCConstants.IDENTIFIER) {
+               if (t.getType() == TokenType.IDENTIFIER) {
                   states.add(n.toString());
                }
 	   }
@@ -1148,7 +1153,7 @@ INJECT(TokenProduction) :
        for (Node n : children) {
           if (n instanceof Token) {
 	      Token t = (Token) n;
-              if (t.getId() == JavaCCConstants.STAR) {
+              if (t.getType() == TokenType.STAR) {
                   return true;
               }
 	      }
@@ -1172,11 +1177,11 @@ INJECT(TokenProduction) :
 
     public String getKind() {
        for (Token t : childrenOfType(Token.class)) {
-	       switch (t.getId()) {
-	          case JavaCCConstants._MORE : return "MORE";
-	          case JavaCCConstants._SPECIAL_TOKEN : return "SPECIAL_TOKEN";
-	          case JavaCCConstants._SKIP : return "SKIP";
-	          case JavaCCConstants._TOKEN : return "TOKEN";
+	       switch (t.getType()) {
+	          case _MORE : return "MORE";
+	          case _SPECIAL_TOKEN : return "SPECIAL_TOKEN";
+	          case _SKIP : return "SKIP";
+	          case _TOKEN : return "TOKEN";
 	       }
       }
       return "TOKEN";
@@ -1475,13 +1480,13 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
            emptyLA = false;
         }
       ]
-      [ LOOKAHEAD(0, { !emptyLA && (getToken(1).kind != RPAREN) } )
+      [ LOOKAHEAD(0, { !emptyLA && (getToken(1).getType() != TokenType.RPAREN) } )
         ","
             {
               commaAtEnd = true;
             }
       ]
-      [ LOOKAHEAD(0, { getToken(1).kind != RPAREN && getToken(1).kind != LBRACE } )
+      [ LOOKAHEAD(0, { getToken(1).getType() != TokenType.RPAREN && getToken(1).getType() != TokenType.LBRACE } )
         ExpansionChoice() 
         {
            expansion = (Expansion) popNode();
@@ -1489,7 +1494,7 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
            CURRENT_NODE.setExpansion(expansion);
         }
       ]
-      [ LOOKAHEAD(0, { !emptyLA && !commaAtEnd && (getToken(1).kind != RPAREN) } )
+      [ LOOKAHEAD(0, { !emptyLA && !commaAtEnd && (getToken(1).getType() != TokenType.RPAREN) } )
         ","
             {
               commaAtEnd = true;
@@ -1635,7 +1640,7 @@ INJECT(NonTerminal) :
         for (Node n : children) {
 	    if (n instanceof Token) {
 	        Token t = (Token) n;
-                if (t.getId() == JavaCCConstants.IDENTIFIER) {
+                if (t.getType() == TokenType.IDENTIFIER) {
                     return n.toString();
                 }
 	    }
@@ -2212,7 +2217,7 @@ INJECT(RepetitionRange) :
         for (Node n : children) {
 	   if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getId() == JavaCCConstants.COMMA) return true;	       
+               if (t.getType() == TokenType.COMMA) return true;	       
 	   }
 
         }
@@ -2324,10 +2329,10 @@ INJECT(CharacterList) :
         for (Node n : children) {
 	    if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getId() == JavaCCConstants.TILDE) {
+               if (t.getType() == TokenType.TILDE) {
                   return true;
                }
-	    }
+	       }
         }
         return false;
     }

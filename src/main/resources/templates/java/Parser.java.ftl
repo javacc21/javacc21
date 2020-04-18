@@ -278,7 +278,7 @@ public boolean isCancelled() {return cancelled;}
   @SuppressWarnings("serial")
   static private final class LookaheadSuccess extends java.lang.Error { }
   final private LookaheadSuccess LOOKAHEAD_SUCCESS = new LookaheadSuccess();
-  private boolean scanToken(int kind) {
+  private boolean scanToken(TokenType type) {
     if (currentLookaheadToken == lastScannedToken) {
       --remainingLookahead;
       if (currentLookaheadToken.getNext() == null) {
@@ -292,7 +292,7 @@ public boolean isCancelled() {return cancelled;}
     } else {
       currentLookaheadToken = currentLookaheadToken.getNext();
     }
-     if (currentLookaheadToken.getKind() != kind) return true;
+     if (currentLookaheadToken.getType() != type) return true;
     if (remainingLookahead == 0 && currentLookaheadToken == lastScannedToken) throw LOOKAHEAD_SUCCESS;
    return false;
   }
@@ -321,14 +321,14 @@ public boolean isCancelled() {return cancelled;}
     }
     return t;
   }
-  
+/*  
   private int nextTokenKind() {
     if (current_token.getNext() == null) {
         Token nextToken = token_source.getNextToken();
         current_token.setNext(nextToken);
     }
     return current_token.getNext().getKind();
-  }
+  }*/
   
   private TokenType nextTokenType() {
     if (current_token.getNext() == null) {

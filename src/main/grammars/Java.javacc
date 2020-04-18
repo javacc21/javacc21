@@ -300,7 +300,7 @@ INJECT(BaseNode) :
             Token t = tokens.get(i);
             if (outputOpeningBrace) {
                 buf.append(t);
-            } else if (t.getId() == LBRACE) {
+            } else if (t.getType() == TokenType.LBRACE) {
                 outputOpeningBrace = true;
             }
         }
@@ -398,10 +398,10 @@ INJECT(PackageDeclaration) : {}
         StringBuilder buf = new StringBuilder();
         boolean seenPackage = false;
         for (Token t : Nodes.getRealTokens(this)) {
-            if (t.getId() == PACKAGE) {
+            if (t.getType() == TokenType.PACKAGE) {
                 seenPackage = true;
             } else if (seenPackage) {
-                if (t.getId() != SEMICOLON)
+                if (t.getType() != TokenType.SEMICOLON)
                     buf.append(t);
             }
         }
@@ -436,8 +436,8 @@ INJECT(ImportDeclaration) : {}
     public String getName() {
         StringBuilder buf = new StringBuilder();
         for (Token tok : descendantsOfType(Token.class)) {
-            if (tok.getId() != IMPORT
-              && tok.getId() != SEMICOLON) {
+            if (tok.getType() != TokenType.IMPORT
+              && tok.getType() != TokenType.SEMICOLON) {
                 buf.append(tok);
             }
         }
@@ -572,7 +572,7 @@ INJECT(TypeDeclaration) :
        for (Node n : children) {
            if (n instanceof Token) {
               Token t = (Token) n;
-              if (t.getId() == INTERFACE) {
+              if (t.getType() == TokenType.INTERFACE) {
                   return true;
               }
 	   }
@@ -672,7 +672,7 @@ INJECT(TypeDeclaration) :
         for (Node n : children) {
 	    if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getId() == CLASS) {
+               if (t.getType() == TokenType.CLASS) {
                   return true;
                }
 	    }
@@ -708,7 +708,7 @@ INJECT(TypeDeclaration) :
                 }
             }
             iterator.previous();
-            iterator.add(Token.newToken(WHITESPACE, " "));
+            iterator.add(Token.newToken(TokenType.WHITESPACE, " "));
             iterator.next();
             iterator.add(extendsList);
         }
@@ -766,7 +766,7 @@ INJECT(ExtendsList) :
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(EXTENDS, "extends"));
+            iterator.add(Token.newToken(TokenType.EXTENDS, "extends"));
             iterator.next();
             iterator.add(type);
         } else {
@@ -774,7 +774,7 @@ INJECT(ExtendsList) :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(COMMA, ","));
+            iterator.add(Token.newToken(TokenType.COMMA, ","));
             iterator.next();
             iterator.add(type);
         }
@@ -806,7 +806,7 @@ INJECT(ImplementsList) :
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(IMPLEMENTS, "implements"));
+            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements"));
             iterator.next();
             iterator.add(type);
         } else {
@@ -814,7 +814,7 @@ INJECT(ImplementsList) :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(COMMA, ","));
+            iterator.add(Token.newToken(TokenType.COMMA, ","));
             iterator.next();
             iterator.add(type);
         }
@@ -868,7 +868,7 @@ INJECT(TypeParameterList) :
                 iterator.next();
             }
             iterator.previous();
-            iterator.add(Token.newToken(COMMA, ","));
+            iterator.add(Token.newToken(TokenType.COMMA, ","));
             iterator.next();
             iterator.add(param);
         }
@@ -926,7 +926,7 @@ INJECT(ClassOrInterfaceBody) :
             n = iterator.next();
 	    if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getId() == LBRACE) {
+               if (t.getType() == TokenType.LBRACE) {
                    break;
                }
 	    }
