@@ -300,7 +300,7 @@ public class FilesGenerator {
         }
 
         for (RegularExpression re : grammar.getOrderedNamedTokens()) {
-            if (re.isPrivate() || re.isMore()) continue;
+            if (re.isPrivate()) continue;
             String tokenClassName = re.getGeneratedClassName();
             File outputFile = getOutputFile(tokenClassName);
             files.add(outputFile);
