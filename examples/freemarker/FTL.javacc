@@ -100,10 +100,10 @@ INJECT(FTLLexer) :
     boolean syntaxEstablished, olderSyntax;
     boolean noWhitespaceInExpression, rightAfterHeader;
     int parenthesisNesting, bracketNesting, braceNesting;
-    int lastMatchedTokenType;
+    TokenType lastMatchedTokenType;
 
     void CommonTokenAction(Token tok) {
-        if (tok.kind == EOF) return;
+        if (tok.getType() == TokenType.EOF) return;
         if (noWhitespaceInExpression && parenthesisNesting ==0 && braceNesting==0 && tok.specialToken != null) {
             if (tok.specialToken.image.trim().length() == 0) {
                 Token copy = cloneToken(tok);
@@ -112,7 +112,7 @@ INJECT(FTLLexer) :
                 tok.setType(TokenType.BLANK);
                 tok.setNext(copy);
                 noWhitespaceInExpression = false;
-                lastMatchedTokenType = tok.kind;
+                lastMatchedTokenType = tok.getType();
                 return;
             }
         }
@@ -122,7 +122,7 @@ INJECT(FTLLexer) :
         if (rightAfterHeader) {
             // chop off the newline after a <#ftl ...> header
             rightAfterHeader = false;
-            if (tok.kind == WHITESPACE) {
+            if (tok.getType() == TokenType.WHITESPACE) {
                 String img = tok.image;
                 int idx = img.indexOf('\n');
                 if (idx <0) idx = img.indexOf('\r');
@@ -133,7 +133,7 @@ INJECT(FTLLexer) :
                 }
             }
         }
-        switch (tok.kind) {
+        switch (tok.getType()) {
              case USER_DIRECTIVE_OPEN :
              case FTL_DIRECTIVE_OPEN :
              if (syntaxEstablished) {
@@ -141,10 +141,10 @@ INJECT(FTLLexer) :
                      tok.setType(TokenType.PRINTABLE_CHARS);
                  }
                  else {
-                     if (tok.kind == FTL_DIRECTIVE_OPEN) SwitchTo(FTL_DIRECTIVE);
+                     if (tok.getType() == TokenType.FTL_DIRECTIVE_OPEN) switchTo(LexicalState.FTL_DIRECTIVE);
                      else {
                          noWhitespaceInExpression = true;
-                         SwitchTo(FTL_EXPRESSION);
+                         switchTo(LexicalState.FTL_EXPRESSION);
                      }
                  }
              } else {
@@ -172,12 +172,12 @@ INJECT(FTLLexer) :
               case GTE :
               if (parenthesisNesting == 0 && olderSyntax) {
                  tok.setType(TokenType.CLOSE_TAG);
-                 if (tok.kind == GTE) {
+                 if (tok.getType() == TokenType.GTE) {
                       tok.image = ">";
                       tok.endColumn--;
                       input_stream.backup(1);
                  }
-                  SwitchTo(TEMPLATE_TEXT);
+                  switchTo(LexicalState.TEMPLATE_TEXT);
              }
              break;
 
@@ -190,23 +190,23 @@ INJECT(FTLLexer) :
                  --bracketNesting;
               } else if (!olderSyntax) {
                 tok.setType(TokenType.CLOSE_TAG);
-                SwitchTo(TEMPLATE_TEXT);
+                switchTo(LexicalState.TEMPLATE_TEXT);
               }
               break;
 
               case OPEN_BRACE : braceNesting++; break;
-              case CLOSE_BRACE : if (braceNesting>0) braceNesting--; else SwitchTo(TEMPLATE_TEXT); break;
+              case CLOSE_BRACE : if (braceNesting>0) braceNesting--; else switchTo(LexicalState.TEMPLATE_TEXT); break;
 
               case END_COMMENT :
               if (hasPointyDelimiter != olderSyntax) tok.setType(TokenType.PRINTABLE_CHARS);
               else SwitchTo(TEMPLATE_TEXT);
               break;
               default :
-              if (lastMatchedTokenType == DOT && possibleIdentifier(tok.image)) {
+              if (lastMatchedTokenType == TokenType.DOT && possibleIdentifier(tok.image)) {
                   tok.setType(TokenType.IDENTIFIER);
               }
         }
-        lastMatchedTokenType = tok.kind;
+        lastMatchedTokenType = tok.getType();
     }
 
     private boolean possibleIdentifier(String s) {

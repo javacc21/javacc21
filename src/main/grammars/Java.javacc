@@ -1498,14 +1498,14 @@ void ShiftOperator() #void :
               throw new ParseException("Shift operator >>> cannot have spaces or comments inside!\n" + getInputSource() + ":line " + first.beginLine +":column " +first.beginColumn);
          }
      	 first.image = ">>>";
-	 	 first.kind = RUNSIGNEDSHIFT;
+	 	 first.setType(TokenType.RUNSIGNEDSHIFT);
 	 	 Token next = third.getNext();
 	 	 first.setNext(next);
 	 	 popNode();
 	 	 popNode();
       } else {
          first.image = ">>";
-	 	 first.kind = RSIGNEDSHIFT;
+	 	 first.setType(TokenType.RSIGNEDSHIFT);
 	 	 Token next = second.getNext();
 	     first.setNext(next);
 	     popNode();

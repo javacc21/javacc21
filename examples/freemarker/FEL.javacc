@@ -932,7 +932,7 @@ void DefaultToExpression() : {}
 {
     PrimaryExpression()
     (
-        LOOKAHEAD(<EXCLAM>BaseExpression(), {getToken(2).kind !=IDENTIFIER || getToken(3).kind != EQUALS})
+        LOOKAHEAD(<EXCLAM>BaseExpression(), {getToken(2).getType() != TokenType.IDENTIFIER || getToken(3).getType() != TokenType.EQUALS})
         <EXCLAM>PrimaryExpression()
     )*
     [

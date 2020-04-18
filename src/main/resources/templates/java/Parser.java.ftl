@@ -195,50 +195,7 @@ public boolean isCancelled() {return cancelled;}
         return virtualToken;
     }
   
-    /**
-     * Based on the type of the node and the terminating token, we attempt to scan forward and recover. 
-     */
-    private void attemptRecovery(Node node, int ...finalTokenTypes) {
-        int finalTokenType = finalTokenTypes[0];
-        List<Token> scanAhead = getTokensToEOL(finalTokenTypes);
-        List<Token> unparsedTokens = null;
-        Token terminalTokenFound = null;
-        for (Token tok : scanAhead) {
-            if (!intArrayContains(finalTokenTypes, tok.kind)) {
-               tok.setUnparsed(true);
-      	       node.setEndLine(tok.getEndLine());
-		       node.setEndColumn(tok.getEndColumn());
-		       if (unparsedTokens == null) unparsedTokens = new ArrayList<Token>();
-		       tok.unparsed = true;
-		       unparsedTokens.add(tok);
-            } else {
-                terminalTokenFound = tok;
-     [#if grammar.lexerData.lexicalStates?size >1]
-                token_source.doLexicalStateSwitch(tok.kind);
-     [/#if]
-            }
-        }
-        if (terminalTokenFound != null) { 
-	        Token lastScanned = scanAhead.get(scanAhead.size()-1);
-            Token virtualToken = Token.newToken(finalTokenType, "VIRTUAL " + nodeNames[finalTokenType]);
-            virtualToken.setVirtual(true);
-            virtualToken.setUnparsed(true);
-            virtualToken.setBeginLine(lastScanned.getEndLine());
-            virtualToken.setBeginColumn(lastScanned.getEndColumn());
-            virtualToken.setEndLine(lastScanned.getEndLine());
-            virtualToken.setEndColumn(lastScanned.getEndColumn());
-	        if (tokensAreNodes) {
-	        	currentNodeScope.add(virtualToken);
-	        }
-	        node.setEndLine(virtualToken.getEndLine());
-	        node.setEndColumn(virtualToken.getEndColumn());
-        }
-        [#if grammar.lexerData.lexicalStates?size >1]
-             token_source.doLexicalStateSwitch(finalTokenType);
-        [/#if]
-    }
 
- 
      private Token consumeToken(int expectedType) throws ParseException {
         return consumeToken(expectedType, false);
      }
@@ -259,7 +216,7 @@ public boolean isCancelled() {return cancelled;}
         	throw new ParseException(current_token);
         }
 [/#if]        
-        if (current_token.kind != expectedType) {
+        if (current_token.getKind() != expectedType) {
             handleUnexpectedTokenType(expectedType, forced, oldToken) ;
         }      
 [#if grammar.options.treeBuildingEnabled]
@@ -282,7 +239,7 @@ public boolean isCancelled() {return cancelled;}
   [/#if]
       }
 [/#if]
-      if (trace_enabled) LOGGER.info("Consumed token of type " + tokenImage[current_token.kind] + " from " + current_token.getLocation());
+      if (trace_enabled) LOGGER.info("Consumed token of type " + current_token.getType() + " from " + current_token.getLocation());
       return current_token;
   }
   
@@ -339,7 +296,7 @@ public boolean isCancelled() {return cancelled;}
        trace_scan(currentLookaheadToken, kind);
     [/#if]
 
-     if (currentLookaheadToken.kind != kind) return true;
+     if (currentLookaheadToken.getKind() != kind) return true;
     if (remainingLookahead == 0 && currentLookaheadToken == lastScannedToken) throw LOOKAHEAD_SUCCESS;
    return false;
   }
@@ -374,7 +331,7 @@ public boolean isCancelled() {return cancelled;}
         Token nextToken = token_source.getNextToken();
         current_token.setNext(nextToken);
     }
-    return current_token.getNext().kind;
+    return current_token.getNext().getKind();
   }
   
   private TokenType nextTokenType() {
@@ -385,31 +342,6 @@ public boolean isCancelled() {return cancelled;}
     return current_token.getNext().getType();
   }
    
-  private List<Token> getTokensToEOL(int ...desiredTokenTypes) {
-     ArrayList<Token> result = new ArrayList<>();
-     int currentLine = current_token.getBeginLine();
-     Token tok = current_token;
-     do  {
-        Token prevToken = tok;
-        if (tok.getNext() != null) {
-            tok = tok.getNext();
-        } else {
-        	tok = token_source.getNextToken();
-        	prevToken.setNext(tok);
-        }
-        result.add(tok);
-     } while (tok.getBeginLine() == currentLine && !intArrayContains(desiredTokenTypes, tok.kind) && tok.kind != EOF);
-     return result;
-  }
-     static private boolean intArrayContains(int[] array, int elem) {
-        for (int i=0; i<array.length; i++) {
-            if (array[i] == elem) {
-                return true;
-            }
-        }
-        return false;
-    } 
-  
 [#if grammar.options.debugParser]
   private boolean trace_enabled = true;
  [#else]

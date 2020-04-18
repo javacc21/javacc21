@@ -44,7 +44,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * system is determined by JavaCCParser, and a table of these numbers is
      * stored in the file ...Constants.java.
      */
-    int kind;
+//    int kind;
     
     private TokenType type;
     
@@ -54,7 +54,15 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
     void setType(TokenType type) {
         this.type=type;
-        this.kind = type.ordinal();
+//        this.kind = type.ordinal();
+    }
+    
+    void setKind(int kind) {
+        this.type = TokenType.values()[kind];
+    }
+    
+    int getKind() {
+        return type.ordinal();
     }
 
     /**
@@ -123,19 +131,19 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * Constructs a new token for the specified Image and Kind.
      */
     public Token(int kind, String image) {
-        this.kind = kind;
+//        this.kind = kind;
         this.type = TokenType.values()[kind];
         this.image = image;;
     }
     
     public Token(TokenType type, String image) {
         this.type = type;
-        this.kind = type.ordinal();
+//        this.kind = type.ordinal();
         this.image = image;
     }
     
     public int getId() {
-        return kind;
+        return getKind();
     }
 
     public boolean isUnparsed() {
@@ -151,7 +159,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getNormalizedText() {
 [#if grammar.options.faultTolerant]
         if (virtual) {
-             return "Virtual Token of type " + tokenImage[kind];
+             return "Virtual Token of type " + getType();
         }
 [/#if]    
         return image;

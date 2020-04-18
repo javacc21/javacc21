@@ -388,7 +388,7 @@ public final void backup(int amount) {
  [#if grammar.usesCommonTokenAction]
       CommonTokenAction(matchedToken);
  [/#if]
- jjmatchedKind = matchedToken.kind;
+ jjmatchedKind = matchedToken.getKind();
  
  [#if numLexicalStates>1]
       if (newLexicalStates[jjmatchedKind] != null) {
