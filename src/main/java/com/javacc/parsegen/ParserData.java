@@ -62,8 +62,6 @@ public class ParserData {
 
     private List<Expansion> phase3list = new ArrayList<>();
     
-    private HashSet<String> usedNames = new HashSet<>();
-
     public ParserData(Grammar grammar) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
@@ -113,13 +111,6 @@ public class ParserData {
         }
 
         private void handleOneOrMoreEtc(Expansion exp) {
-            String className = exp.getClass().getSimpleName();
-            String name = className + "$" + Grammar.removeNonJavaIdentifierPart(exp.getInputSource()) + "$line_" + exp.getBeginLine();
-            while (usedNames.contains(name)) {
-                name = name.replace(className, className + "$");
-            }
-            usedNames.add(name);
-            exp.setLabel(name);
             visit(exp.getNestedExpansion());
             Lookahead lookahead = exp.getLookahead();
             if (!lookahead.getAlwaysSucceeds()&& lookahead.getRequiresPhase2Routine()) {
@@ -163,7 +154,6 @@ public class ParserData {
             }
         }
     }
-
 
 
     public class Phase3TableBuilder extends Node.Visitor {
@@ -518,14 +508,7 @@ public class ParserData {
                         ref.setOrdinal(rexp.getOrdinal());
                         ref.setRegexp(rexp);
                     }
-                }/*
-                for (RegexpStringLiteral stringLiteral : tp.descendantsOfType(RegexpStringLiteral.class)) {
-                    if (!stringLiteral.hasLabel()) {
-                        int ordinal = stringLiteral.getOrdinal();
-                        String label = grammar.getTokenName(ordinal);
-                        stringLiteral.setLabel(label);
-                    }
-                }*/
+                }
             }
             
             for (TokenProduction tp : grammar.descendantsOfType(TokenProduction.class)) {

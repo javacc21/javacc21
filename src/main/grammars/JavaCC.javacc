@@ -1761,7 +1761,15 @@ INJECT(ZeroOrMore) :
      extends Expansion;
 }
 {
-    private String label;
+     private String id;
+     public String getLabel() {
+         if (id == null) {
+             id = getGrammar().generateUniqueIdentifier("ZeroOrMore$", this);
+         }
+         return id;
+     }
+ 
+
 
     public Lookahead getLookahead() {
         Expansion exp = getNestedExpansion();
@@ -1818,14 +1826,14 @@ INJECT(OneOrMore) :
      extends Expansion;
 }
 {
-/*
+
      private String id;
      public String getLabel() {
          if (id == null) {
-             id = getGrammar().generateUniqueIdentifer("OneOrMore$", this);
+             id = getGrammar().generateUniqueIdentifier("OneOrMore$", this);
          }
          return id;
-     }*/
+     }
 
     public Lookahead getLookahead() {
         Expansion exp = getNestedExpansion();
@@ -2271,15 +2279,6 @@ INJECT(ZeroOrMoreRegexp) :
    extends RegularExpression;
 }
 {
-/*
-     private String id;
-     public String getLabel() {
-         if (id == null) {
-             id = getGrammar().generateUniqueIdentifer("ZeroOrMore$", this);
-         }
-         return id;
-     }*/
-
    public RegularExpression getRegexp() 
    {
       return firstChildOfType(RegularExpression.class);
