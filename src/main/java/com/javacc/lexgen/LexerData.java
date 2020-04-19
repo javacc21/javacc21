@@ -46,21 +46,19 @@ public class LexerData {
     private List<LexicalStateData> lexicalStates = new ArrayList<>();
     private List<RegularExpression> regularExpressions = new ArrayList<>();
     
-    private List<String> regexpLabels = new ArrayList<>();
-
     int stateSetSize;
     TokenSet skipSet, specialSet, moreSet, tokenSet;
     boolean hasEmptyMatch;
     boolean hasSkipActions, hasMoreActions, hasTokenActions, hasSpecial, hasSkip, hasMore;
 
     private int lohiByteCount;
-    private List<NfaState> nonAsciiTableForMethod = new ArrayList<NfaState>();
-    private Map<String, Integer> lohiByteTable = new HashMap<String, Integer>();
+    private List<NfaState> nonAsciiTableForMethod = new ArrayList<>();
+    private Map<String, Integer> lohiByteTable = new HashMap<>();
 
-    private List<String> allBitVectors = new ArrayList<String>();
+    private List<String> allBitVectors = new ArrayList<>();
     private int[] tempIndices = new int[512];
-    private Map<String, int[]> tableToDump = new HashMap<String, int[]>();
-    private List<int[]> orderedStateSet = new ArrayList<int[]>();
+    private Map<String, int[]> tableToDump = new HashMap<>();
+    private List<int[]> orderedStateSet = new ArrayList<>();
     private int lastIndex;
 
     public LexerData(Grammar grammar) {
@@ -124,7 +122,6 @@ public class LexerData {
 
     public void addRegularExpression(RegularExpression regexp) {
         regularExpressions.add(regexp);
-        regexpLabels.add(regexp.getLabel());
     }
     
     public void ensureStringLabels() {
@@ -391,7 +388,8 @@ public class LexerData {
             }
         }
     }
-
+    
+    //What about the case of a regexp existing in multiple lexical states? REVISIT (JR)
     static public void checkUnmatchability(RegexpChoice choice) {
         for (RegularExpression curRE : choice.getChoices()) {
             if (!(curRE).isPrivate() && curRE.getOrdinal() > 0 && curRE.getOrdinal() < choice.getOrdinal()

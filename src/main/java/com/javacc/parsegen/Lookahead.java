@@ -55,6 +55,10 @@ public class Lookahead extends Expansion {
     
     protected Lookahead() {}
     
+    public boolean getHasDefiniteLookahead() {
+        return getAmount() != 0 && getAmount() != Integer.MAX_VALUE;
+    }
+    
     /**
      * The names of the tokens with which this Lookahead's nested expansion can begin.
      * @return
@@ -68,7 +72,6 @@ public class Lookahead extends Expansion {
     		for (int i=0; i<tokenCount; i++) {
     			if (firstSet.get(i)) {
     			    firstSetNames.add(getGrammar().getLexerData().getTokenName(i));
-//    				firstSetNames.add(getGrammar().getTokenName(i));
     			}
     		}
         }
@@ -161,7 +164,7 @@ public class Lookahead extends Expansion {
     public void setAmount(int amount) {
         this.amount = amount;
     }
-
+    
     // The following 5 little methods should disappear when we 
     // finally see our way through to having Lookahead not extend Expansion anymore.
     public boolean isPossiblyEmpty() {

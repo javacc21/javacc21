@@ -124,10 +124,6 @@ public abstract class RegularExpression extends Expansion {
   	    return String.valueOf(id);
     }
 
-    public boolean hasLabel() {
-        return super.getLabel().length() > 0;
-    }
-
     public int getOrdinal() {
         return id;
     }

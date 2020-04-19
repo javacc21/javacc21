@@ -31,7 +31,7 @@
  --]
  
 [#macro ProductionsCode] 
-   static private final int INFINITY = Integer.MAX_VALUE;
+   static private final int INDEFINITE = Integer.MAX_VALUE;
   //=================================
  // Start of methods for BNF Productions
  //=================================
@@ -316,7 +316,7 @@
 
 [#macro BuildPhase1CodeChoice choice]
    [#var lookaheads=[] actions=[]]
-   [#var defaultAction="throw new ParseException();"]
+   [#var defaultAction="throw new ParseException(current_token.getNext());"]
    [#var inPhase1=false]
    [#var indentLevel=0]
    [#list choice.choices as nested]
@@ -349,7 +349,7 @@
                 [#set indentLevel = indentLevel+1]
          [/#if]
                 [#var lookaheadAmount = lookahead.amount]
-                [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INFINITY"][/#if]
+                [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INDEFINITE"][/#if]
                 ${lookahead.nestedExpansion.phase2RoutineName}(${lookaheadAmount})
                ) { 
                    ${actions[lookahead_index]}
@@ -411,12 +411,12 @@
           && (${lookahead.semanticLookahead})
         [/#if]
       [/#set]
-      [#set condition = condition?replace("2147483647", "INFINITY")]
+      [#set condition = condition?replace("2147483647", "INDEFINITE")]
    [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansion]
       [@newVar type="TokenType" init="nextTokenType()"/]
       [#set condition]
       [#list lookahead.firstSetTokenNames as tokenName]
-             tokentype${newVarIndex} == TokenType.${tokenName} [#if tokenName_has_next]|| [/#if]
+             tokentype${newVarIndex} == TokenType.${tokenName} [#if tokenName_has_next]||[/#if]
       [/#list]
      [/#set]
    [/#if]
@@ -452,6 +452,7 @@
 
 [#macro buildPhase2Routine expansion]
    private boolean ${expansion.phase2RoutineName}(int maxLookahead) {
+      indefiniteLookahead = (maxLookahead == INDEFINITE);
       remainingLookahead = maxLookahead; 
       lastScannedToken = currentLookaheadToken = current_token;
       try { 

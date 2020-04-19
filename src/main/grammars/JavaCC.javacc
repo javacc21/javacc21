@@ -1818,7 +1818,14 @@ INJECT(OneOrMore) :
      extends Expansion;
 }
 {
-    private String label;
+/*
+     private String id;
+     public String getLabel() {
+         if (id == null) {
+             id = getGrammar().generateUniqueIdentifer("OneOrMore$", this);
+         }
+         return id;
+     }*/
 
     public Lookahead getLookahead() {
         Expansion exp = getNestedExpansion();
@@ -1857,6 +1864,7 @@ INJECT(OneOrMore) :
      public int minimumSize(int min) {
            return getNestedExpansion().getMinimumSize();
      }
+     
 }
 
 TryBlock TryBlock() : 
@@ -2263,6 +2271,15 @@ INJECT(ZeroOrMoreRegexp) :
    extends RegularExpression;
 }
 {
+/*
+     private String id;
+     public String getLabel() {
+         if (id == null) {
+             id = getGrammar().generateUniqueIdentifer("ZeroOrMore$", this);
+         }
+         return id;
+     }*/
+
    public RegularExpression getRegexp() 
    {
       return firstChildOfType(RegularExpression.class);

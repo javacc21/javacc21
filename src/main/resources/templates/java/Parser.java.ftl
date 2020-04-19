@@ -134,6 +134,7 @@ public boolean isCancelled() {return cancelled;}
 [#if hasPhase2] 
   private Token currentLookaheadToken, lastScannedToken;
   private int remainingLookahead;
+  private boolean indefiniteLookahead;
   private boolean semanticLookahead; 
 [/#if]
 
@@ -280,7 +281,9 @@ public boolean isCancelled() {return cancelled;}
   final private LookaheadSuccess LOOKAHEAD_SUCCESS = new LookaheadSuccess();
   private boolean scanToken(TokenType type) {
     if (currentLookaheadToken == lastScannedToken) {
-      --remainingLookahead;
+     if (!indefiniteLookahead) {
+         --remainingLookahead;
+      }
       if (currentLookaheadToken.getNext() == null) {
         Token nextToken = token_source.getNextToken();
         currentLookaheadToken.setNext(nextToken);
@@ -293,8 +296,10 @@ public boolean isCancelled() {return cancelled;}
       currentLookaheadToken = currentLookaheadToken.getNext();
     }
      if (currentLookaheadToken.getType() != type) return true;
-    if (remainingLookahead == 0 && currentLookaheadToken == lastScannedToken) throw LOOKAHEAD_SUCCESS;
-   return false;
+     if (!indefiniteLookahead) {
+         if (remainingLookahead == 0 && currentLookaheadToken == lastScannedToken) throw LOOKAHEAD_SUCCESS;
+     }
+     return false;
   }
 [/#if]
 

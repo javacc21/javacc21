@@ -106,13 +106,15 @@ public class ParserData {
                 lookaheads.add(lookahead);
             }
             for (Lookahead lookahead : lookaheads) {
-                checkForPhase2Lookahead(lookahead);
+                if (lookahead.getRequiresPhase2Routine()) {
+                   phase2lookaheads.add(lookahead);   
+                }
             }
         }
 
         private void handleOneOrMoreEtc(Expansion exp) {
             String className = exp.getClass().getSimpleName();
-            String name = className + "$" + removeNonJavaIdentifierPart(exp.getInputSource()) + "$line_" + exp.getBeginLine();
+            String name = className + "$" + Grammar.removeNonJavaIdentifierPart(exp.getInputSource()) + "$line_" + exp.getBeginLine();
             while (usedNames.contains(name)) {
                 name = name.replace(className, className + "$");
             }
@@ -120,26 +122,12 @@ public class ParserData {
             exp.setLabel(name);
             visit(exp.getNestedExpansion());
             Lookahead lookahead = exp.getLookahead();
-            if (!lookahead.getAlwaysSucceeds()) {
-                checkForPhase2Lookahead(lookahead);
-            }
-        }
-
-       private void checkForPhase2Lookahead(Lookahead lookahead) {
-            if (lookahead.getRequiresPhase2Routine()) {
+            if (!lookahead.getAlwaysSucceeds()&& lookahead.getRequiresPhase2Routine()) {
                 phase2lookaheads.add(lookahead);
-                Expansion exp = lookahead.getNestedExpansion();
-                String phase2name = "lookahead$"  + removeNonJavaIdentifierPart(exp.getInputSource()) + "$line_" + exp.getBeginLine()+"$col_"+exp.getBeginColumn();
-                while (usedNames.contains(phase2name)) {
-                    phase2name = phase2name + "$";
-                }
-                usedNames.add(phase2name);
-                exp.setPhase2RoutineName(phase2name);
-                exp.setPhase3RoutineName(phase2name.replace("lookahead",  "phase3"));
             }
         }
 
-        public void visit(OneOrMore exp) {handleOneOrMoreEtc(exp);}
+       public void visit(OneOrMore exp) {handleOneOrMoreEtc(exp);}
 
         public void visit(ZeroOrMore exp) {handleOneOrMoreEtc(exp);}
 
@@ -215,16 +203,7 @@ public class ParserData {
 
         private void generate3R(Expansion expansion) {
             // It appears that the only possible Expansion types here are ExpansionChoice and ExpansionSequence
-            if (expansion.getPhase2RoutineName() == null) {
-                String name = "phase3R$"  + removeNonJavaIdentifierPart(expansion.getInputSource()) + "$line_" + expansion.getBeginLine() +"$col_" + expansion.getBeginColumn();
-                while (usedNames.contains(name)) {
-//                    name = name.replace("phase3R", "phase3R$");
-                    name = name +"$";
-                }
-                usedNames.add(name);
-                expansion.setPhase3RoutineName(name);
-            }
-            if (expansion.getPhase3LookaheadAmount()< lookaheadAmount) {
+           if (expansion.getPhase3LookaheadAmount()< lookaheadAmount) {
                 phase3list.add(expansion);
                 expansion.setPhase3LookaheadAmount(lookaheadAmount);
             }
@@ -1070,18 +1049,5 @@ public class ParserData {
         MatchInfo(int lookaheadLimit) {
             this.match = new int[lookaheadLimit];
         }
-    }
-    
-    
-    static String removeNonJavaIdentifierPart(String s) {
-        StringBuilder buf = new StringBuilder(s.length());
-        for (char c : s.toCharArray()) {
-            boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(c)) : Character.isJavaIdentifierPart(c);
-            if (addChar) {
-                buf.append(c);
-            } 
-            if (c == '.') buf.append((char) '_');
-        }
-        return buf.toString();
     }
 }

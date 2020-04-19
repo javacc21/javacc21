@@ -90,6 +90,10 @@ abstract public class Expansion extends BaseNode {
     	return label;
     }
     
+    public final boolean hasLabel() {
+        return label.length() > 0;
+    }
+    
     public void setLabel(String label) {
     	this.label = label;
     }
@@ -143,27 +147,23 @@ abstract public class Expansion extends BaseNode {
 
     public boolean getForced() {return this.forced;}
     
-//    public void setOrdinal(int ordinal) { this.ordinal = ordinal;}
-    
     public int getOrdinal() {return this.ordinal;}
     
-    public void setPhase2RoutineName(String name) {
-    	this.phase2RoutineName = name;
-    }
 
     public String getPhase2RoutineName() {
-    	return this.phase2RoutineName;
+        if (phase2RoutineName == null) {
+            phase2RoutineName = getGrammar().generateUniqueIdentifier("lookahead$", this);
+        }
+        return phase2RoutineName;
     }
     
-    public void setPhase3RoutineName(String name) {
-    	this.phase3RoutineName = name;
-    }
-
     public String getPhase3RoutineName() {
-    	return phase3RoutineName != null ? phase3RoutineName : getPhase2RoutineName().replace("phase2", "phase3");
+        if (phase3RoutineName == null) {
+            phase3RoutineName = getGrammar().generateUniqueIdentifier("phase3$", this);
+        }
+        return phase3RoutineName;
     }
-    
-    
+   
     public int getEndSetSize() {
 	     return getFinalSet().cardinality();
     }

@@ -75,6 +75,9 @@ public class Grammar extends BaseNode {
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
+    
+    
+    private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
     private boolean usesCommonTokenAction, usesTokenHook, usesCloseNodeScopeHook, usesOpenNodeScopeHook, usesjjtreeOpenNodeScope, usesjjtreeCloseNodeScope;
 
@@ -100,6 +103,24 @@ public class Grammar extends BaseNode {
             String label = lexerData.getStringLiteralLabel(stringLiteral.getImage());
             stringLiteral.setLabel(label);
         }
+    }
+    
+    public void addToUsedIdentifiers(String id) {
+        usedIdentifiers.add(id);
+    }
+    
+    public boolean isIDUsed(String id) {
+        return usedIdentifiers.contains(id);
+    }
+    
+    public String generateUniqueIdentifier(String prefix, Expansion exp) {
+        String id = prefix + exp.getInputSource() + "$line_" + exp.getBeginLine() + "$column_" + exp.getBeginColumn();
+        id = removeNonJavaIdentifierPart(id);
+        while (usedIdentifiers.contains(id)) {
+            id += "$";
+        }
+        usedIdentifiers.add(id);
+        return id;
     }
 
     Node parse(String location) throws IOException, ParseException {
@@ -763,6 +784,17 @@ public class Grammar extends BaseNode {
     private List<String> nodeVariableNameStack = new ArrayList<>();
 
     public Utils getUtils() {return utils;}
+    static public String removeNonJavaIdentifierPart(String s) {
+        StringBuilder buf = new StringBuilder(s.length());
+        for (char c : s.toCharArray()) {
+            boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(c)) : Character.isJavaIdentifierPart(c);
+            if (addChar) {
+                buf.append(c);
+            } 
+            if (c == '.') buf.append((char) '_');
+        }
+        return buf.toString();
+    }
     public class Utils {
         public void pushNodeVariableName(String jjtThis) {
             nodeVariableNameStack.add(jjtThis);

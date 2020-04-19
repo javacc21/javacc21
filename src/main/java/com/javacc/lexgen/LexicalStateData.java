@@ -268,7 +268,6 @@ public class LexicalStateData {
         }
 
         if (initialState.kind != Integer.MAX_VALUE && initialState.kind != 0) {
-//            if ((lexerData.toSkip[initialState.kind / 64] & (1L << initialState.kind)) != 0L
             if (lexerData.skipSet.get(initialState.kind)
                 || (lexerData.specialSet.get(initialState.kind)))
                 lexerData.hasSkipActions = true;
@@ -364,14 +363,12 @@ public class LexicalStateData {
                 }
                 lexerData.hasSpecial = true;
                 lexerData.specialSet.set(currentRegexp.getOrdinal());
-//                lexerData.toSkip[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp.getOrdinal() % 64);
                 lexerData.skipSet.set(currentRegexp.getOrdinal());
                 currentRegexp.setSpecialToken();
             }
             else if (kind.equals("SKIP")) {
                 lexerData.hasSkipActions |= (tokenAction != null);
                 lexerData.hasSkip = true;
-//                lexerData.toSkip[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp.getOrdinal() % 64);
                 lexerData.skipSet.set(currentRegexp.getOrdinal());
                 currentRegexp.setSkip();
             }
@@ -384,7 +381,6 @@ public class LexicalStateData {
             else {
                 lexerData.hasTokenActions |= (tokenAction != null);
                 lexerData.tokenSet.set(currentRegexp.getOrdinal());
-//                lexerData.toToken[currentRegexp.getOrdinal() / 64] |= 1L << (currentRegexp.getOrdinal() % 64);
                 currentRegexp.setRegularToken();
             }
         }
