@@ -73,7 +73,8 @@ public class ParserData {
         }
         for (Lookahead lookahead : phase2lookaheads) {
             Expansion expansion= lookahead.getNestedExpansion();
-            phase3list.add(expansion);
+// This expansion is either inside the LOOKAHEAD parentheses, or failing that, is the expansion immediately following.
+            phase3list.add(expansion); 
             expansion.setPhase3LookaheadAmount(lookahead.getAmount());
         }
         for (int phase3index=0; phase3index < phase3list.size(); phase3index++) {

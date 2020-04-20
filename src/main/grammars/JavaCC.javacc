@@ -350,8 +350,16 @@ INJECT(BaseNode) :
 }
 {
     public TemplateModel get(String key) throws TemplateModelException {
+        String methodName = "get" + key.substring(0,1).toUpperCase() + key.substring(1);
+        TemplateModel result = invokeMethod(methodName);
+        if (result == null) {
+            result = invokeMethod(methodName.replace("get", "is"));
+        }
+        return result;
+   }
+    
+    private TemplateModel invokeMethod(String methodName) throws TemplateModelException {
         Method method = null;
-        String methodName = "get" + key.substring(0, 1).toUpperCase() + key.substring(1);
         try {
             method = this.getClass().getMethod(methodName);
         } catch (NoSuchMethodException e) {
@@ -359,7 +367,11 @@ INJECT(BaseNode) :
         }
         try {
             Object result = method.invoke(this);
-            return Configuration.getCurrentObjectWrapper().wrap(result);
+            TemplateModel wrappedResult = Configuration.getCurrentObjectWrapper().wrap(result);
+            if (methodName.startsWith("is") && !(wrappedResult instanceof TemplateBooleanModel)) {
+                return null; //Maybe should throw an exception here, or maybe it doesn't matter.
+            }
+            return wrappedResult;
         } catch (IllegalAccessException e) {
             throw new TemplateModelException(e);
         } catch (InvocationTargetException e) {
@@ -372,7 +384,8 @@ INJECT(BaseNode) :
             }
             throw (Error) cause;
         }
-    }
+    } 
+    
     private Grammar grammar;
 
     public Grammar getGrammar() {
@@ -840,7 +853,7 @@ INJECT(BNFProduction) :
     public void setForced(boolean forced) {
         this.forced = forced;
     }
-    public boolean getForced() {
+    public boolean isForced() {
          return forced;
     } 
     
@@ -960,8 +973,6 @@ INJECT(BNFProduction) :
         }
         return finalSet;
     }
-    
-    
 }
 
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
@@ -1275,6 +1286,7 @@ void ExpansionChoice() :
 INJECT(ExpansionChoice) : 
 {
    import com.javacc.parsegen.Expansion;
+   import com.javacc.parsegen.Lookahead;
    import com.javacc.lexgen.TokenSet;
    import java.util.List;
    extends Expansion;
@@ -1428,11 +1440,12 @@ INJECT(ExpansionSequence) :
             if (lookahead.hasSemanticLookahead()) {
             	return true;
             }
+            int index = 1;
             for (Expansion unit : getUnits()) {
                 if (unit.requiresPhase2Routine()) {
                         return true;
                 }
-                if (unit.isPossiblyEmpty()) {
+                if (!unit.isPossiblyEmpty()) {
                     break;
                 }
             }

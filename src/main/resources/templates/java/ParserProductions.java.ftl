@@ -467,7 +467,7 @@
 [#var currentPhase3Expansion]
 
 [#macro buildPhase3Routine expansion count]
-   [#if expansion.ordinal > 0][#return][/#if]
+   [#if expansion.isRegexp][#return][/#if]
      private boolean ${expansion.phase3RoutineName}() {
       [@buildPhase3Code expansion, count/]
       return false;
@@ -496,9 +496,7 @@
 [/#macro]
 
 [#macro Phase3CodeChoice choice count]
-  [#if choice.choices?size != 1]
-    [@newVar "Token", "currentLookaheadToken"/]
-  [/#if]
+   [@newVar "Token", "currentLookaheadToken"/]
   [#list choice.choices as subseq]
 	  [#var lookahead=subseq.units[0]]
 	  [#if lookahead.semanticLookahead??]
@@ -526,11 +524,6 @@
 [/#macro]
 
 [#macro Phase3CodeRegexp regexp]
-  [#--  var label=regexp.label]
-  [#if !label?has_content]
-     [#--  set label = grammar.getTokenName(regexp.ordinal)]
-     [#set label = regexp.label]
-  [/#if--]
      if (scanToken(TokenType.${regexp.label})) return true;
 [/#macro]
 

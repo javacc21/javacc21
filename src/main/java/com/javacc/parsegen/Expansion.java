@@ -104,7 +104,13 @@ abstract public class Expansion extends BaseNode {
     }
     
     public String toString() {
-    	return "[" + getSimpleName() + " expansion on line " + getBeginLine() + ", " + getBeginColumn() + "of " + this.getInputSource() + "]";
+        String result = "[" + getSimpleName() + " on line " + getBeginLine() + ", column " + getBeginColumn();
+        String inputSource = getInputSource();
+        if (inputSource != null) {
+            result += " of ";
+            result += inputSource;
+        }
+        return result + "]";
     }
 
     protected static final String eol = System.getProperty("line.separator", "\n");
@@ -114,7 +120,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean getIsRegexp() {
-        return (this instanceof RegularExpression);
+        return this instanceof RegularExpression;
     }
     
     public TreeBuildingAnnotation getTreeNodeBehavior() {
