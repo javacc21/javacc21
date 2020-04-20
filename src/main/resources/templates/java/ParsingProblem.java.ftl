@@ -34,30 +34,54 @@
 package ${grammar.parserPackage};
 [/#if]
 
-
- public class ParsingProblem {
- 
-    private Node location;
+/**
+ * Problem while parsing.
+ *
+ */
+public class ParsingProblem {
+    private final Node location;
+    private final String description;
     private String inputSource;
-    private String description;
- 
-    public String getInputSource() {
-       if (inputSource != null) {
-           return inputSource;
-       }
-       if (location != null && location.getInputSource() != null) {
-           return location.getInputSource();
-       }
-       return "input";
-    }
-    
+
     public ParsingProblem(String description, Node location) {
         this.description = description;
         this.location = location;
     }
-    
+
+    /**
+     * Returns the input source where the error problem occurs and "input"
+     * otherwise.
+     * 
+     * @return the input source where the error problem occurs and "input"
+     *         otherwise.
+     */
+    public String getInputSource() {
+        if (inputSource != null) {
+            return inputSource;
+        }
+        if (location != null && location.getInputSource() != null) {
+            return location.getInputSource();
+        }
+        return "input";
+    }
+
+    /**
+     * Returns the node where error occurs.
+     * 
+     * @return the node where error occurs.
+     */
     public Node getNode() {
         return location;
     }
- 
- }
+
+    /**
+     * Returns the error message.
+     * 
+     * @return the error message.
+     */
+    public String getDescription() {
+        return description;
+    }
+
+}
+
