@@ -2021,6 +2021,7 @@ void InPlaceRegexp() #void :
    (
      t=<IDENTIFIER> {image = t.image;}
      |
+     LOOKAHEAD({!inBNFProduction})
      t=<HASH_ID> {image = t.image.substring(1); isPrivate= true;}
    )
    ":"

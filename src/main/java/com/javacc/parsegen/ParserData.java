@@ -266,11 +266,7 @@ public class ParserData {
                                     + "If you really want this, you must give it a different label as <NEWLABEL:<"
                                     + res.getRegexp().getLabel() + ">>.");
                     tp.removeChild(res);
-                } else if (!tp.isExplicit() && res.getRegexp().isPrivate()) {
-                    grammar.addSemanticError(res.getRegexp(),
-                            "Private (#) regular expression cannot be defined within "
-                                    + "grammar productions.");
-                }
+                } 
             }
         }
 
@@ -703,28 +699,26 @@ public class ParserData {
         int[] minLA = new int[choices.size() - 1];
         MatchInfo[] overlapInfo = new MatchInfo[choices.size() - 1];
         int[] other = new int[choices.size() - 1];
-        MatchInfo m;
-        //        List<MatchInfo> partialMatches;
+        MatchInfo matchInfo;
         boolean overlapDetected;
         for (int la = 1; la <= grammar.getOptions().getChoiceAmbiguityCheck(); la++) {
             grammar.setLookaheadLimit(la);
             grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
             for (int i = first; i < choices.size() - 1; i++) {
                 sizeLimitedMatches = new ArrayList<MatchInfo>();
-                m = new MatchInfo(grammar.getLookaheadLimit());
-                m.firstFreeLoc = 0;
+                matchInfo = new MatchInfo(grammar.getLookaheadLimit());
+                matchInfo.firstFreeLoc = 0;
                 List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
-                partialMatches.add(m);
+                partialMatches.add(matchInfo);
                 generateFirstSet(partialMatches, choices.get(i));
                 dbl.set(i, sizeLimitedMatches);
             }
             grammar.setConsiderSemanticLA(false);
             for (int i = first + 1; i < choices.size(); i++) {
                 sizeLimitedMatches = new ArrayList<MatchInfo>();
-                m = new MatchInfo(grammar.getLookaheadLimit());
-                m.firstFreeLoc = 0;
+                matchInfo= new MatchInfo(grammar.getLookaheadLimit());
                 List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
-                partialMatches.add(m);
+                partialMatches.add(matchInfo);
                 generateFirstSet(partialMatches, choices.get(i));
                 dbr.set(i, sizeLimitedMatches);
             }
@@ -744,9 +738,9 @@ public class ParserData {
             overlapDetected = false;
             for (int i = first; i < choices.size() - 1; i++) {
                 for (int j = i + 1; j < choices.size(); j++) {
-                    if ((m = overlap(dbl.get(i), dbr.get(j))) != null) {
+                    if ((matchInfo = overlap(dbl.get(i), dbr.get(j))) != null) {
                         minLA[i] = la + 1;
-                        overlapInfo[i] = m;
+                        overlapInfo[i] = matchInfo;
                         other[i] = j;
                         overlapDetected = true;
                         break;
@@ -822,15 +816,14 @@ public class ParserData {
 
     void ebnfCalc(Expansion exp, Expansion nested) {
         // exp is one of OneOrMore, ZeroOrMore, ZeroOrOne
-        MatchInfo m, m1 = null;
+        MatchInfo matchInfo, m1 = null;
         List<MatchInfo> partialMatches = new ArrayList<>();
-        int la;
-        for (la = 1; la <= grammar.getOptions().getOtherAmbiguityCheck(); la++) {
-            grammar.setLookaheadLimit(la);
+        int lookaheadAmount;
+        for (lookaheadAmount = 1; lookaheadAmount <= grammar.getOptions().getOtherAmbiguityCheck(); lookaheadAmount++) {
+            grammar.setLookaheadLimit(lookaheadAmount);
             sizeLimitedMatches = new ArrayList<MatchInfo>();
-            m = new MatchInfo(la);
-            m.firstFreeLoc = 0;
-            partialMatches.add(m);
+            matchInfo = new MatchInfo(lookaheadAmount);
+            partialMatches.add(matchInfo);
             grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
             generateFirstSet(partialMatches, nested);
             List<MatchInfo> first = sizeLimitedMatches;
@@ -838,27 +831,28 @@ public class ParserData {
             grammar.setConsiderSemanticLA(false);
             generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex());
             List<MatchInfo> follow = sizeLimitedMatches;
-            if ((m = overlap(first, follow)) == null) {
+            matchInfo = overlap(first, follow);
+            if (matchInfo  == null) {
                 break;
             }
-            m1 = m;
+            m1 = matchInfo;
         }
-        if (la > grammar.getOptions().getOtherAmbiguityCheck()) {
+        if (lookaheadAmount > grammar.getOptions().getOtherAmbiguityCheck()) {
             grammar.addWarning(exp, "Choice conflict in " + image(exp) + " construct " + "at line "
                     + exp.getBeginLine() + ", column " + exp.getBeginColumn() + ".");
             System.err
             .println("         Expansion nested within construct and expansion following construct");
             System.err.println("         have common prefixes, one of which is: "
                     + image(m1));
-            System.err.println("         Consider using a lookahead of " + la
+            System.err.println("         Consider using a lookahead of " + lookaheadAmount
                     + " or more for nested expansion.");
-        } else if (la > 1) {
+        } else if (lookaheadAmount > 1) {
             grammar.addWarning(exp, "Choice conflict in " + image(exp) + " construct " + "at line "
                     + exp.getBeginLine() + ", column " + exp.getBeginColumn() + ".");
             System.err
             .println("         Expansion nested within construct and expansion following construct");
             System.err.println("         have common prefixes, one of which is: " + image(m1));
-            System.err.println("         Consider using a lookahead of " + la + " for nested expansion.");
+            System.err.println("         Consider using a lookahead of " + lookaheadAmount + " for nested expansion.");
         }
     }
 
@@ -903,26 +897,14 @@ public class ParserData {
                     break;
             }
             return v;
-        } else if (exp instanceof OneOrMore) {
+        } else if (exp instanceof OneOrMore || exp instanceof ZeroOrMore) {
             List<MatchInfo> retval = new ArrayList<MatchInfo>();
+            if (exp instanceof ZeroOrMore) retval.addAll(partialMatches);
             List<MatchInfo> v = partialMatches;
-            while (true) {
+            do {
                 v = generateFirstSet(v, exp.getNestedExpansion());
-                if (v.isEmpty())
-                    break;
                 retval.addAll(v);
-            }
-            return retval;
-        } else if (exp instanceof ZeroOrMore) {
-            List<MatchInfo> retval = new ArrayList<MatchInfo>();
-            retval.addAll(partialMatches);
-            List<MatchInfo> v = partialMatches;
-            while (true) {
-                v = generateFirstSet(v, exp.getNestedExpansion());
-                if (v.size() == 0)
-                    break;
-                retval.addAll(v);
-            }
+            } while (!v.isEmpty());
             return retval;
         } else if (exp instanceof ZeroOrOne) {
             List<MatchInfo> retval = new ArrayList<MatchInfo>();
@@ -934,21 +916,18 @@ public class ParserData {
         }   else if (grammar.considerSemanticLA() && exp instanceof Lookahead
                 && ((Lookahead) exp).getSemanticLookahead() != null) {
             return new ArrayList<MatchInfo>();
-        }  else {
-            return new ArrayList<>(partialMatches);
-        }
+        }  
+        return new ArrayList<>(partialMatches);
     }
 
-    public static <U extends Object> void listSplit(List<U> toSplit,
-            List<U> mask, List<U> partInMask, List<U> rest) {
-        OuterLoop: for (int i = 0; i < toSplit.size(); i++) {
-            for (int j = 0; j < mask.size(); j++) {
-                if (toSplit.get(i) == mask.get(j)) {
-                    partInMask.add(toSplit.get(i));
-                    continue OuterLoop;
-                }
+    public static <U extends Object> void listSplit(Collection<U> toSplit,
+            Collection<U> mask, Collection<U> partInMask, Collection<U> rest) {
+        for (U u : toSplit) {
+            if (mask.contains(u)) {
+                partInMask.add(u);
+            } else {
+                rest.add(u);
             }
-            rest.add(toSplit.get(i));
         }
     }
     // TODO: Clean up this crap, factor it out to use a visitor pattern as well
@@ -956,16 +935,10 @@ public class ParserData {
         if (exp.myGeneration == generation) {
             return new ArrayList<MatchInfo>();
         }
-        // System.out.println("*** Parent: " + exp.parent);
         exp.myGeneration = generation;
-        if (exp.getParent() == null) {
-            List<MatchInfo> retval = new ArrayList<MatchInfo>();
-            retval.addAll(partialMatches);
-            return retval;
-        } else if (exp.getParent() instanceof BNFProduction) {
+        if (exp.getParent() instanceof BNFProduction) {
             BNFProduction production = (BNFProduction) exp.getParent();
             List<MatchInfo> retval = new ArrayList<MatchInfo>();
-            // System.out.println("1; gen: " + generation + "; exp: " + exp);
             for (NonTerminal nt : production.getReferringNonTerminals()) {
                 List<MatchInfo> v = generateFollowSet(partialMatches, nt, generation);
                 retval.addAll(v);
@@ -976,55 +949,42 @@ public class ParserData {
             List<MatchInfo> v = partialMatches;
             for (int i = exp.getIndex() + 1; i < seq.getChildCount(); i++) {
                 v = generateFirstSet(v, (Expansion) seq.getChild(i));
-                if (v.size() == 0)
-                    return v;
+                if (v.isEmpty()) return v;
             }
             List<MatchInfo> v1 = new ArrayList<MatchInfo>();
             List<MatchInfo> v2 = new ArrayList<MatchInfo>();
             listSplit(v, partialMatches, v1, v2);
-            if (v1.size() != 0) {
-                // System.out.println("2; gen: " + generation + "; exp: " +
-                // exp);
+            if (!v1.isEmpty()) {
                 v1 = generateFollowSet(v1, seq, generation);
             }
-            if (v2.size() != 0) {
-                // System.out.println("3; gen: " + generation + "; exp: " +
-                // exp);
+            if (!v2.isEmpty()) {
                 v2 = generateFollowSet(v2, seq, grammar.nextGenerationIndex());
             }
             v2.addAll(v1);
             return v2;
-        } else if (exp.getParent() instanceof OneOrMore
-                || exp.getParent() instanceof ZeroOrMore) {
-            List<MatchInfo> moreMatches = new ArrayList<MatchInfo>();
+        } else if (exp.getParent() instanceof OneOrMore || exp.getParent() instanceof ZeroOrMore) {
+            List<MatchInfo> moreMatches = new ArrayList<>();
             moreMatches.addAll(partialMatches);
             List<MatchInfo> v = partialMatches;
-            while (true) {
+            do {
                 v = generateFirstSet(v, exp);
-                if (v.size() == 0)
-                    break;
                 moreMatches.addAll(v);
-            }
-            List<MatchInfo> v1 = new ArrayList<MatchInfo>();
-            List<MatchInfo> v2 = new ArrayList<MatchInfo>();
+            } while (!v.isEmpty());
+            List<MatchInfo> v1 = new ArrayList<>();
+            List<MatchInfo> v2 = new ArrayList<>();
             listSplit(moreMatches, partialMatches, v1, v2);
             if (v1.size() != 0) {
-                // System.out.println("4; gen: " + generation + "; exp: " +
-                // exp);
                 v1 = generateFollowSet(v1, (Expansion) exp.getParent(), generation);
             }
             if (v2.size() != 0) {
-                // System.out.println("5; gen: " + generation + "; exp: " +
-                // exp);
                 v2 = generateFollowSet(v2, (Expansion) exp.getParent(), grammar.nextGenerationIndex());
             }
             v2.addAll(v1);
             return v2;
-        } else {
-            // System.out.println("6; gen: " + generation + "; exp: " + exp);
-            return generateFollowSet(partialMatches, (Expansion) exp.getParent(), generation);
-        }
+        } 
+        return generateFollowSet(partialMatches, (Expansion) exp.getParent(), generation);
     }
+
     static final class MatchInfo {
         int[] match;
         int firstFreeLoc;
