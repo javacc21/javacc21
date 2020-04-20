@@ -544,10 +544,10 @@ public class JavaCCOptions {
      *
      * @return The requested force lookahead value.
      */
-    public boolean getForceLaCheck() {
-        return booleanValue("FORCE_LA_CHECK");
-    }
-
+//    public boolean getForceLaCheck() {
+//        return booleanValue("FORCE_LA_CHECK");
+//    }
+//
     /**
      * @return a CSS file to use for outputting HTML docs
      */
@@ -726,11 +726,11 @@ public class JavaCCOptions {
     public void sanityCheck() {
         boolean baseSourceDefined = getBaseSourceDirectory().length() >0;
         boolean nodePackageDefined = getNodePackage().length() >0;
-        if (getLookahead() > 1 && !getForceLaCheck()) {
-            grammar.addWarning(null,
-                    "Lookahead adequacy checking not being performed since option LOOKAHEAD "
-                            + "is more than 1.  Set option FORCE_LA_CHECK to true to force checking.");
-        }
+//        if (getLookahead() > 1 && !getForceLaCheck()) {
+//            grammar.addWarning(null,
+//                    "Lookahead adequacy checking not being performed since option LOOKAHEAD "
+//                            + "is more than 1.  Set option FORCE_LA_CHECK to true to force checking.");
+//        }
         if (!baseSourceDefined) {
             if (getNodePackage().length() > 0) {
                 String s = "You have defined the NODE_PACKAGE option but no BASE_SRC_DIR."

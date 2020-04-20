@@ -51,6 +51,7 @@ public class Lookahead extends Expansion {
 
     public Lookahead(Grammar grammar) {
         setGrammar(grammar);
+        setAmount(getGrammar().getOptions().getLookahead());
     }
     
     protected Lookahead() {}
@@ -135,11 +136,7 @@ public class Lookahead extends Expansion {
         this.semanticLookahead = semanticLookahead;
     }
 
-    /**
-     * The lookahead amount. Its default value essentially gives us infinite
-     * lookahead.
-     */
-    private int amount = Integer.MAX_VALUE;
+    private int amount;
 
     /**
      * The expansion used to determine whether or not to choose the

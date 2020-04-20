@@ -1338,7 +1338,6 @@ Expansion ExpansionSequence() :
   Token t = getToken(1);
   la.setBeginLine(t.getBeginLine());
   la.setBeginColumn(t.getBeginColumn());
-  la.setAmount(grammar.getOptions().getLookahead());
 }
 {
   [ 
@@ -1468,6 +1467,7 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
     Expansion expansion;
     Expression semanticLookahead = null;
     this.inLookahead = true;
+    CURRENT_NODE.setAmount(Integer.MAX_VALUE);
 }
 {
   <_LOOKAHEAD>

@@ -588,15 +588,13 @@ public class ParserData {
         /*
          * The following code performs the lookahead ambiguity checking.
          */
-        if (grammar.getOptions().getLookahead() ==1 || grammar.getOptions().getForceLaCheck()) {
-            for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
-                choiceCalc(choice);
-            }
-            for (Node node : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
-                Expansion exp = (Expansion) node;
-                if (hasImplicitLookahead(exp.getNestedExpansion())) {
-                    ebnfCalc(exp, exp.getNestedExpansion());
-                }
+        for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
+            choiceCalc(choice);
+        }
+        for (Node node : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+            Expansion exp = (Expansion) node;
+            if (hasImplicitLookahead(exp.getNestedExpansion())) {
+                ebnfCalc(exp, exp.getNestedExpansion());
             }
         }
     }
@@ -679,7 +677,8 @@ public class ParserData {
             return ret.substring(1);
         }
     }
-
+    private boolean considerSemanticLookahead;
+    private  int lookaheadLimit;
     private void choiceCalc(ExpansionChoice ch) {
         int first = firstChoice(ch);
         // dbl[i] and dbr[i] are vectors of size limited matches for choice i
@@ -702,21 +701,21 @@ public class ParserData {
         MatchInfo matchInfo;
         boolean overlapDetected;
         for (int la = 1; la <= grammar.getOptions().getChoiceAmbiguityCheck(); la++) {
-            grammar.setLookaheadLimit(la);
-            grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
+            lookaheadLimit = la;
+            considerSemanticLookahead = true;
             for (int i = first; i < choices.size() - 1; i++) {
                 sizeLimitedMatches = new ArrayList<MatchInfo>();
-                matchInfo = new MatchInfo(grammar.getLookaheadLimit());
+                matchInfo = new MatchInfo(lookaheadLimit);
                 matchInfo.firstFreeLoc = 0;
                 List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
                 partialMatches.add(matchInfo);
                 generateFirstSet(partialMatches, choices.get(i));
                 dbl.set(i, sizeLimitedMatches);
             }
-            grammar.setConsiderSemanticLA(false);
+            considerSemanticLookahead = false;
             for (int i = first + 1; i < choices.size(); i++) {
                 sizeLimitedMatches = new ArrayList<MatchInfo>();
-                matchInfo= new MatchInfo(grammar.getLookaheadLimit());
+                matchInfo= new MatchInfo(lookaheadLimit);
                 List<MatchInfo> partialMatches = new ArrayList<MatchInfo>();
                 partialMatches.add(matchInfo);
                 generateFirstSet(partialMatches, choices.get(i));
@@ -752,7 +751,7 @@ public class ParserData {
             }
         }
         for (int i = first; i < choices.size() - 1; i++) {
-            if (explicitLookahead(choices.get(i)) && !grammar.getOptions().getForceLaCheck()) {
+            if (explicitLookahead(choices.get(i))) {
                 continue;
             }
             if (minLA[i] > grammar.getOptions().getChoiceAmbiguityCheck()) {
@@ -792,9 +791,6 @@ public class ParserData {
     }
 
     int firstChoice(ExpansionChoice ch) {
-        if (grammar.getOptions().getForceLaCheck()) {
-            return 0;
-        }
         List<Expansion> choices = ch.getChoices();
         for (int i = 0; i < choices.size(); i++) {
             if (!explicitLookahead(choices.get(i))) {
@@ -820,15 +816,15 @@ public class ParserData {
         List<MatchInfo> partialMatches = new ArrayList<>();
         int lookaheadAmount;
         for (lookaheadAmount = 1; lookaheadAmount <= grammar.getOptions().getOtherAmbiguityCheck(); lookaheadAmount++) {
-            grammar.setLookaheadLimit(lookaheadAmount);
+            lookaheadLimit = lookaheadAmount;
             sizeLimitedMatches = new ArrayList<MatchInfo>();
             matchInfo = new MatchInfo(lookaheadAmount);
             partialMatches.add(matchInfo);
-            grammar.setConsiderSemanticLA(!grammar.getOptions().getForceLaCheck());
+            considerSemanticLookahead = true;
             generateFirstSet(partialMatches, nested);
             List<MatchInfo> first = sizeLimitedMatches;
             sizeLimitedMatches = new ArrayList<MatchInfo>();
-            grammar.setConsiderSemanticLA(false);
+            considerSemanticLookahead = false;
             generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex());
             List<MatchInfo> follow = sizeLimitedMatches;
             matchInfo = overlap(first, follow);
@@ -837,16 +833,7 @@ public class ParserData {
             }
             m1 = matchInfo;
         }
-        if (lookaheadAmount > grammar.getOptions().getOtherAmbiguityCheck()) {
-            grammar.addWarning(exp, "Choice conflict in " + image(exp) + " construct " + "at line "
-                    + exp.getBeginLine() + ", column " + exp.getBeginColumn() + ".");
-            System.err
-            .println("         Expansion nested within construct and expansion following construct");
-            System.err.println("         have common prefixes, one of which is: "
-                    + image(m1));
-            System.err.println("         Consider using a lookahead of " + lookaheadAmount
-                    + " or more for nested expansion.");
-        } else if (lookaheadAmount > 1) {
+        if (lookaheadAmount > 1) {
             grammar.addWarning(exp, "Choice conflict in " + image(exp) + " construct " + "at line "
                     + exp.getBeginLine() + ", column " + exp.getBeginColumn() + ".");
             System.err
@@ -861,7 +848,6 @@ public class ParserData {
     // be far easier to understand. (I don't currently understand it.)
     List<MatchInfo> generateFirstSet(List<MatchInfo> partialMatches, Expansion exp) {
         if (exp instanceof RegularExpression) {
-            int lookaheadLimit = grammar.getLookaheadLimit();
             List<MatchInfo> retval = new ArrayList<MatchInfo>();
             for (MatchInfo partialMatch : partialMatches) {
                 MatchInfo mnew = new MatchInfo(lookaheadLimit);
@@ -913,14 +899,14 @@ public class ParserData {
             return retval;
         } else if (exp instanceof TryBlock) {
             return generateFirstSet(partialMatches, exp.getNestedExpansion());
-        }   else if (grammar.considerSemanticLA() && exp instanceof Lookahead
+        }   else if (considerSemanticLookahead && exp instanceof Lookahead
                 && ((Lookahead) exp).getSemanticLookahead() != null) {
             return new ArrayList<MatchInfo>();
         }  
         return new ArrayList<>(partialMatches);
     }
 
-    public static <U extends Object> void listSplit(Collection<U> toSplit,
+    private  static <U extends Object> void listSplit(Collection<U> toSplit,
             Collection<U> mask, Collection<U> partInMask, Collection<U> rest) {
         for (U u : toSplit) {
             if (mask.contains(u)) {
