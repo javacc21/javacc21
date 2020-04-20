@@ -60,6 +60,14 @@ public class Lookahead extends Expansion {
         return getAmount() != 0 && getAmount() != Integer.MAX_VALUE;
     }
     
+    public final boolean isNegated() {
+        return negated;
+    }
+    
+    public final void setNegated(boolean negated) {
+        this.negated = negated;
+    }
+    
     /**
      * The names of the tokens with which this Lookahead's nested expansion can begin.
      * @return
@@ -137,6 +145,8 @@ public class Lookahead extends Expansion {
     }
 
     private int amount;
+    
+    private boolean negated;
 
     /**
      * The expansion used to determine whether or not to choose the

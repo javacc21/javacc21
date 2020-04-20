@@ -1131,7 +1131,7 @@ void ConstructorDeclaration():
   // Modifiers matched in the caller
   <IDENTIFIER> FormalParameters() [ ThrowsList() ]
   "{"
-    [ LOOKAHEAD(ExplicitConstructorInvocation()) ExplicitConstructorInvocation() ]
+    [ SCAN ExplicitConstructorInvocation() ]
     ( BlockStatement() )*
   "}"
 }
@@ -1139,7 +1139,6 @@ void ConstructorDeclaration():
 void ExplicitConstructorInvocation():
 {}
 {
-//  LOOKAHEAD("this" Arguments() ";")
   SCAN
   "this" Arguments() ";"
 |
@@ -1555,15 +1554,9 @@ void UnaryExpressionNotPlusMinus():
 {
   ( "~" | "!" ) UnaryExpression()
   |
-//  LOOKAHEAD(LambdaExpression())
-  SCAN
-  LambdaExpression()
+  SCAN LambdaExpression()
   |
-//  LOOKAHEAD(CastLookahead())
-//  LOOKAHEAD(CastExpression())
-//  LOOKAHEAD()
-  SCAN 
-  CastExpression()
+  SCAN CastExpression()
   |
   PostfixExpression()
 }
@@ -1592,17 +1585,11 @@ void PostfixExpression():
 void CastExpression():
 {}
 {
-  LOOKAHEAD("(" PrimitiveType() ")" UnaryExpression())
-//  LOOKAHEAD()
-//  SCAN
-  "(" PrimitiveType() ")" UnaryExpression()
+  SCAN "(" PrimitiveType() ")" UnaryExpression()
   |
-  LOOKAHEAD("(" ReferenceType() ")" UnaryExpressionNotPlusMinus())
-//  SCAN 
-  "(" ReferenceType() ")" UnaryExpressionNotPlusMinus()
+  SCAN "(" ReferenceType() ")" UnaryExpressionNotPlusMinus()
   |
-  LOOKAHEAD("(" ClassOrInterfaceType() ("&" ClassOrInterfaceType())+ ")" UnaryExpressionNotPlusMinus()) 
-  "(" ClassOrInterfaceType() ("&" ClassOrInterfaceType())+ ")" UnaryExpressionNotPlusMinus() 
+  SCAN  "(" ClassOrInterfaceType() ("&" ClassOrInterfaceType())+ ")" UnaryExpressionNotPlusMinus() 
 }
 
 Expression PrimaryExpression() #PrimaryExpression :
@@ -1636,19 +1623,13 @@ LOOKAHEAD(2)
 |
   AllocationExpression()
 |
-//  LOOKAHEAD( PrimitiveType() "." "class" )
-  SCAN
-  PrimitiveType() "." "class"
+  SCAN PrimitiveType() "." "class"
 |
-//  LOOKAHEAD( ReturnType() "." "class" )
-  SCAN
-  ReturnType() "." "class"
+ SCAN ReturnType() "." "class"
 |
-//  LOOKAHEAD(MethodReference())
-  LOOKAHEAD()
-  MethodReference()
+SCAN MethodReference()
 |  
-  Name()
+ Name()
 }
 
 void MethodReference() :
@@ -1864,7 +1845,6 @@ void BlockStatement() #void :
   LOOKAHEAD( Modifiers() Type() <IDENTIFIER> )
   LocalVariableDeclaration() ";"
   |
-//  LOOKAHEAD(Statement()) Statement()
   SCAN Statement()
   |
   LOOKAHEAD( Modifiers() "class")
@@ -2048,7 +2028,6 @@ TryWithResources TryWithResources() :
    "try"
    "("
      (
-//         LOOKAHEAD(LocalVariableDeclaration())
          SCAN LocalVariableDeclaration()
          |
          Name()
@@ -2056,7 +2035,7 @@ TryWithResources TryWithResources() :
       (
         ";"
 	   [
-	      LOOKAHEAD(LocalVariableDeclaration()) LocalVariableDeclaration()
+	      SCAN LocalVariableDeclaration()
 	      |
 	      Name()
 	   ]

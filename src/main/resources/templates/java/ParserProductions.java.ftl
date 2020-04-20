@@ -406,6 +406,7 @@
    [#var condition=lookahead.semanticLookahead!]
    [#if lookahead.requiresPhase2Routine]
       [#set condition]
+        [#if lookahead.negated]![/#if]
         ${lookahead.nestedExpansion.phase2RoutineName}(${lookahead.amount})
         [#if lookahead.semanticLookahead??]
           && (${lookahead.semanticLookahead})

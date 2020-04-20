@@ -983,7 +983,6 @@ TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 	        token_source.inJavaCode = true;
 	  }
    [
-	   LOOKAHEAD(<LPAREN>)
 	   <LPAREN>  
 	      [
 	        ">"
@@ -1361,7 +1360,8 @@ Expansion ExpansionSequence() :
           pushNode(la);
       }
   }
-  ( LOOKAHEAD(0, { notTailOfExpansionUnit() } )
+  (// LOOKAHEAD(0, { notTailOfExpansionUnit() } )
+     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>))
       sub=ExpansionUnit()
       {
           pokeNode(sub);
@@ -1500,6 +1500,7 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
             }
       ]
       [ LOOKAHEAD(0, { getToken(1).getType() != TokenType.RPAREN && getToken(1).getType() != TokenType.LBRACE } )
+        ["~" {CURRENT_NODE.setNegated(true);}] 
         ExpansionChoice() 
         {
            expansion = (Expansion) popNode();
@@ -1534,8 +1535,7 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
 
 INJECT(ExplicitLookahead) :
 {
-   import com.javacc.parsegen.Lookahead;
-   extends Lookahead;
+   extends com.javacc.parsegen.Lookahead;
 }
 
 Expansion ExpansionUnit() :
