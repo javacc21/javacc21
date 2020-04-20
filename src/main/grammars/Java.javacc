@@ -1561,21 +1561,6 @@ void UnaryExpressionNotPlusMinus():
   PostfixExpression()
 }
 
-// This production is to determine lookahead only.  The LOOKAHEAD specifications
-// below are not used, but they are there just to indicate that we know about
-// this.
-void CastLookahead() #void :
-{}
-{
-  LOOKAHEAD(3)
-  "(" PrimitiveType() ")"
-|
-  LOOKAHEAD("(" Type() "[")
-  "(" Type() "[" "]"
-|
-  "(" Type() ("&" Type())* ")" ( "~" | "!" | "(" | <IDENTIFIER> | "this" | "super" | "new" | Literal() )
-}
-
 void PostfixExpression():
 {}
 {
@@ -1613,22 +1598,21 @@ void PrimaryPrefix():
 {}
 {
   Literal()
-|
+ |
   "this"
-|
-LOOKAHEAD(2)
-  "super" "." <IDENTIFIER>
-|
+ |
+ SCAN "super" "." <IDENTIFIER>
+ |
   "(" Expression() ")"
-|
+ |
   AllocationExpression()
-|
-  SCAN PrimitiveType() "." "class"
-|
+ |
+ SCAN PrimitiveType() "." "class"
+ |
  SCAN ReturnType() "." "class"
-|
-SCAN MethodReference()
-|  
+ |
+ SCAN MethodReference()
+ |  
  Name()
 }
 
@@ -1665,34 +1649,21 @@ void Literal() #void :
 {}
 {
   <INTEGER_LITERAL>
-|
+ |
   <LONG_LITERAL>
-|
+ |
   <FLOATING_POINT_LITERAL>
-|
+ |
   <CHARACTER_LITERAL>
-|
+ |
   <STRING_LITERAL>
-|
-"true"
+ |
+ "true"
 |
 "false"
 |
   "null"
 }
-/*
-int IntegerLiteral() :
-{}
-{
-  <INTEGER_LITERAL>
-        {
-          try {
-            return Integer.parseInt(current_token.toString());
-          } catch (NumberFormatException e) {
-            throw new Error();
-          }
-        }
-}*/
 
 InvocationArgs Arguments() #InvocationArgs :
 {}
