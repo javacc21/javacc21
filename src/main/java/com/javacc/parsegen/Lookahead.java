@@ -37,15 +37,9 @@ import com.javacc.lexgen.TokenSet;
 import com.javacc.parser.BaseNode;
 import com.javacc.parser.tree.Expression;
 
-
-
 /**
- * Describes lookahead rule for a particular expansion or expansion sequence
- * (See Sequence.java). In case this describes the lookahead rule for a single
- * expansion unit, then a sequence is created with this node as the first
- * element, and the expansion unit as the second and last element.
+ * Describes lookahead rule for a particular expansion 
  */
-
 public class Lookahead extends BaseNode {
 	
 	List<String> firstSetNames, finalSetNames;
@@ -68,6 +62,8 @@ public class Lookahead extends BaseNode {
     public final void setNegated(boolean negated) {
         this.negated = negated;
     }
+    
+    public boolean isExplicit() {return false;}
     
     /**
      * The names of the tokens with which this Lookahead's nested expansion can begin.
@@ -165,23 +161,4 @@ public class Lookahead extends BaseNode {
     public void setAmount(int amount) {
         this.amount = amount;
     }
-    
-    // The following 5 little methods should disappear when we 
-    // finally see our way through to having Lookahead not extend Expansion anymore.
-    public boolean isPossiblyEmpty() {
-    	return true;
-    }
-/*    
-    public boolean requiresPhase2Routine() {
-    	return false;
-    }*/
-    
-    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
-    
-    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-    
-    public int minimumSize(int min) {
-    	return 0;
-    }
-}
-
+}   

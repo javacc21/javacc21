@@ -79,7 +79,6 @@
 [/#macro]
 
 [#macro BuildCode expansion]
-   [#if expansion.class.name?ends_with("Lookahead")][#return/][/#if]
   // Code for ${expansion.name!"expansion"} specified on line ${expansion.beginLine} of ${expansion.inputSource}
     [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName, closeCondition = "true"]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
@@ -475,7 +474,6 @@
 [/#macro]
 
 [#macro buildPhase3Code expansion count]
-   [#if expansion.class.name?ends_with("Lookahead")][#return][/#if]
    [#var classname=expansion.class.name?split(".")?last]
    [#if expansion.isRegexp]
       [@Phase3CodeRegexp expansion/]

@@ -1328,11 +1328,11 @@ Expansion ExpansionSequence() :
     la=Lookahead()
   ]
   {
-     if (!(la instanceof ExplicitLookahead)) {
+     if (!(la.isExplicit())) {
           pushNode(la);
       }
   }
-  (// LOOKAHEAD(0, { notTailOfExpansionUnit() } )
+  (
      LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>))
       sub=ExpansionUnit()
       {
@@ -1409,11 +1409,7 @@ INJECT(ExpansionSequence) :
 
    public int minimumSize(int oldMin) {
           int min = 0;
-          // We skip the first element in the following iteration since it is
-          // the
-          // Lookahead object.
           for (Expansion eseq : getUnits()) {
-//              if (eseq instanceof Lookahead) continue;
               int mineseq = eseq.getMinimumSize();
               if (min == Integer.MAX_VALUE || mineseq == Integer.MAX_VALUE) {
                   min = Integer.MAX_VALUE; // Adding infinity to something results in infinity.
@@ -1426,8 +1422,6 @@ INJECT(ExpansionSequence) :
           return min;
    }
 }
-
-
 
 ExplicitLookahead Lookahead() #ExplicitLookahead :
 {
@@ -1491,6 +1485,9 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
 INJECT(ExplicitLookahead) :
 {
    extends com.javacc.parsegen.Lookahead;
+} 
+{
+   public boolean isExplicit() {return true;}
 }
 
 Expansion ExpansionUnit() :
