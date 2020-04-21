@@ -94,10 +94,6 @@ public class Lookahead extends Expansion {
     public boolean getPossibleEmptyExpansion() {
         return expansion.isPossiblyEmpty();
     }
-
-    public boolean getPossibleEmptyExpansionOrJavaCode() {
-        return expansion.isPossiblyEmpty();
-    }
   
     public Lookahead(Expansion nestedExpansion) {
         this.expansion = nestedExpansion;
@@ -105,23 +101,20 @@ public class Lookahead extends Expansion {
         setAmount(getGrammar().getOptions().getLookahead());
     }
 
+    public boolean isAlwaysSuccessful() {
+        return semanticLookahead == null && (getAmount() == 0 || expansion.isPossiblyEmpty()); 
+    }
+    
     public boolean getAlwaysSucceeds() {
-        if (semanticLookahead != null) 
-            return false;
-        return getAmount() == 0 || expansion.isPossiblyEmpty();
+        return isAlwaysSuccessful();
     }
 
     /**
      * Checks whether this lookahead requires a phase2 routine to be generated.
-     * If necessary, it walks the subtree recursively to figure it out.
      */
 
     public boolean getRequiresPhase2Routine() {
-        if (getAmount() > 1)
-            return true;
-        if (getAmount() == 0 || expansion.isPossiblyEmpty())
-            return false;
-        return semanticLookahead != null || expansion.requiresPhase2Routine();
+        return !isAlwaysSuccessful() && getAmount() >1;
     }
 
 
@@ -177,10 +170,10 @@ public class Lookahead extends Expansion {
     public boolean isPossiblyEmpty() {
     	return true;
     }
-    
+/*    
     public boolean requiresPhase2Routine() {
     	return false;
-    }
+    }*/
     
     public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
     

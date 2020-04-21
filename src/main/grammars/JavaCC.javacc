@@ -57,30 +57,10 @@ import com.javacc.parser.tree.*;
         this.grammar = grammar;
     }
 
-  /**
-   * This int variable is incremented while parsing local lookaheads.
-   * Hence it keeps track of *syntactic* lookahead nesting.
-   * This is used to provide warnings when actions and nested lookaheads
-   * are used in syntactic lookahead productions.  This is to prevent
-   * typos such as leaving out the comma in LOOKAHEAD( foo(), {check()} ).
-   */
-  private boolean inLookahead;
+   private boolean inLookahead;
 
-   /*
-    * Returns true if the next token is not in the FOLLOW list of "expansion".
-    * It is used to decide when the end of an "expansion" has been reached.
-    */
-   private boolean notTailOfExpansionUnit() {
-       Token t = getToken(1);
-       TokenType type = t.getType();
-       return type != TokenType.BIT_OR
-             && type != TokenType.COMMA
-             && type != TokenType.RPAREN
-             && type != TokenType.RBRACE
-             && type != TokenType.RBRACKET;
-   }
 
-    private char character_descriptor_assign(Token t, String s) {
+   private char character_descriptor_assign(Token t, String s) {
         if (s.length() != 1) {
             grammar.addParseError(t,
                     "String in character list may contain only one character.");
@@ -1325,14 +1305,6 @@ INJECT(ExpansionChoice) :
         return false;
    }
    
-   public boolean requiresPhase2Routine() {
-        for (Expansion choice : getChoices()) {
-            if (choice.requiresPhase2Routine())
-                return true;
-        }
-        return false;
-   }
-   
    public int minimumSize(int min) {
       for (Expansion nestedExpansion : getChoices()) {
        	if (min<=1) break;
@@ -1433,23 +1405,6 @@ INJECT(ExpansionSequence) :
             }
         }
         return true;
-   }
-   
-   public boolean requiresPhase2Routine() {
-            Lookahead lookahead = getLookahead();
-            if (lookahead.hasSemanticLookahead()) {
-            	return true;
-            }
-            int index = 1;
-            for (Expansion unit : getUnits()) {
-                if (unit.requiresPhase2Routine()) {
-                        return true;
-                }
-                if (!unit.isPossiblyEmpty()) {
-                    break;
-                }
-            }
-            return false;   
    }
 
    public int minimumSize(int oldMin) {
@@ -1679,10 +1634,6 @@ INJECT(NonTerminal) :
      public boolean isPossiblyEmpty() {
          return getProduction().isPossiblyEmpty();
      }
-
-     public boolean requiresPhase2Routine() {
-         return getProduction().getExpansion().requiresPhase2Routine();
-     }
      
      // REVISIT. Why is this necessary?
      private boolean inMinimumSize;
@@ -1753,10 +1704,6 @@ INJECT(ZeroOrOne) :
      public TokenSet getFinalSet() {
         return getNestedExpansion().getFinalSet();
     }
-
-    public boolean requiresPhase2Routine() {
-            return getNestedExpansion().requiresPhase2Routine();
-     }
      
      public int minimumSize(int unused) {
          return 0;
@@ -1819,10 +1766,6 @@ INJECT(ZeroOrMore) :
         }
         return finalSet;
     }
-    
-    public boolean requiresPhase2Routine() {
-            return getNestedExpansion().requiresPhase2Routine();
-     }
      
      public int minimumSize(int unused) {
          return 0;
@@ -1877,10 +1820,6 @@ INJECT(OneOrMore) :
     public TokenSet getFinalSet() {
          return getNestedExpansion().getFinalSet();
     }
-    
-    public boolean requiresPhase2Routine() {
-            return getNestedExpansion().requiresPhase2Routine();
-     }
      
      public int minimumSize(int min) {
            return getNestedExpansion().getMinimumSize();
@@ -1942,10 +1881,6 @@ INJECT(TryBlock) :
     public TokenSet getFinalSet() {
         return getNestedExpansion().getFinalSet();
     }
-   
-    public boolean requiresPhase2Routine() {
-            return getNestedExpansion().requiresPhase2Routine();
-     }
      
      public int minimumSize(int min) {
            return getNestedExpansion().getMinimumSize();
@@ -1994,10 +1929,6 @@ INJECT(CodeBlock) :
     public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
 
     public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-    
-    public boolean requiresPhase2Routine() {
-        return false;
-    }
     
     public int minimumSize(int unused) {
         return 0;

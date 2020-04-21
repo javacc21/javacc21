@@ -180,8 +180,6 @@ abstract public class Expansion extends BaseNode {
     
     abstract public boolean isPossiblyEmpty(); 
     
-    abstract public boolean requiresPhase2Routine();
-    
     /*
      * Returns the minimum number of tokens that can parse to this expansion.
      */

@@ -101,7 +101,7 @@ public class ParserData {
             for (ExpansionSequence nestedSeq : choices) {
                 visit(nestedSeq);
                 Lookahead lookahead = nestedSeq.getLookahead();
-                if (lookahead.getAlwaysSucceeds()) break;
+                if (lookahead.isAlwaysSuccessful()) break;
                 lookaheads.add(lookahead);
             }
             for (Lookahead lookahead : lookaheads) {
@@ -114,7 +114,7 @@ public class ParserData {
         private void handleOneOrMoreEtc(Expansion exp) {
             visit(exp.getNestedExpansion());
             Lookahead lookahead = exp.getLookahead();
-            if (!lookahead.getAlwaysSucceeds()&& lookahead.getRequiresPhase2Routine()) {
+            if (lookahead.getRequiresPhase2Routine()) {
                 phase2lookaheads.add(lookahead);
             }
         }
