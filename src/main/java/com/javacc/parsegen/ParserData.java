@@ -876,6 +876,9 @@ public class ParserData {
             }
             return retval;
         } else if (exp instanceof ExpansionSequence) {
+            if (considerSemanticLookahead && exp.getLookahead().hasSemanticLookahead()) {
+                return new ArrayList<>();
+            }
             List<MatchInfo> v = partialMatches;
             ExpansionSequence seq = (ExpansionSequence) exp;
             for (Expansion e : seq.getUnits()) {
@@ -900,10 +903,11 @@ public class ParserData {
             return retval;
         } else if (exp instanceof TryBlock) {
             return generateFirstSet(partialMatches, exp.getNestedExpansion());
-        }   else if (considerSemanticLookahead && exp instanceof Lookahead
-                && ((Lookahead) exp).getSemanticLookahead() != null) {
-            return new ArrayList<MatchInfo>();
-        }  
+        }   //else if (considerSemanticLookahead && exp instanceof Lookahead
+             //   && ((Lookahead) exp).getSemanticLookahead() != null) {
+            //return new ArrayList<MatchInfo>();
+        //}  
+        //return new ArrayList<>();
         return new ArrayList<>(partialMatches);
     }
 

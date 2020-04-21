@@ -1413,7 +1413,7 @@ INJECT(ExpansionSequence) :
           // the
           // Lookahead object.
           for (Expansion eseq : getUnits()) {
-              if (eseq instanceof Lookahead) continue;
+//              if (eseq instanceof Lookahead) continue;
               int mineseq = eseq.getMinimumSize();
               if (min == Integer.MAX_VALUE || mineseq == Integer.MAX_VALUE) {
                   min = Integer.MAX_VALUE; // Adding infinity to something results in infinity.

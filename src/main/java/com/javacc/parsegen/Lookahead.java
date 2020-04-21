@@ -34,6 +34,7 @@ import java.util.*;
 
 import com.javacc.Grammar;
 import com.javacc.lexgen.TokenSet;
+import com.javacc.parser.BaseNode;
 import com.javacc.parser.tree.Expression;
 
 
@@ -45,7 +46,7 @@ import com.javacc.parser.tree.Expression;
  * element, and the expansion unit as the second and last element.
  */
 
-public class Lookahead extends Expansion {
+public class Lookahead extends BaseNode {
 	
 	List<String> firstSetNames, finalSetNames;
 

@@ -79,6 +79,7 @@
 [/#macro]
 
 [#macro BuildCode expansion]
+   [#if expansion.class.name?ends_with("Lookahead")][#return/][/#if]
   // Code for ${expansion.name!"expansion"} specified on line ${expansion.beginLine} of ${expansion.inputSource}
     [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName, closeCondition = "true"]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
@@ -228,9 +229,7 @@
        ${expansion}
     [#elseif classname = "ExpansionSequence"]
 	   [#list expansion.units as subexp]
-	     [#if subexp_index != 0]
 	       [@BuildCode subexp/]
-	     [/#if]
 	   [/#list]        
     [#elseif classname = "NonTerminal"]
        [@BuildPhase1CodeNonTerminal expansion/]
@@ -476,6 +475,7 @@
 [/#macro]
 
 [#macro buildPhase3Code expansion count]
+   [#if expansion.class.name?ends_with("Lookahead")][#return][/#if]
    [#var classname=expansion.class.name?split(".")?last]
    [#if expansion.isRegexp]
       [@Phase3CodeRegexp expansion/]
@@ -499,7 +499,7 @@
 [#macro Phase3CodeChoice choice count]
    [@newVar "Token", "currentLookaheadToken"/]
   [#list choice.choices as subseq]
-	  [#var lookahead=subseq.units[0]]
+	  [#var lookahead=subseq.lookahead]
 	  [#if lookahead.semanticLookahead??]
 	    semanticLookahead = ${lookahead.semanticLookahead};
 	  [/#if]
@@ -562,11 +562,9 @@
 
 [#macro Phase3CodeSequence sequence count]
    [#list sequence.units as sub]
-      [#if sub_index != 0]
-         [@buildPhase3Code sub, count/]
-         [#set count = count - sub.minimumSize]
-         [#if count<=0][#break][/#if]
-      [/#if]
+       [@buildPhase3Code sub, count/]
+       [#set count = count - sub.minimumSize]
+       [#if count<=0][#break][/#if]
    [/#list]
 [/#macro]
     
