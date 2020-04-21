@@ -35,6 +35,7 @@ import com.javacc.lexgen.RegularExpression;
 import com.javacc.lexgen.TokenSet;
 import com.javacc.parser.BaseNode;
 import com.javacc.parser.tree.BNFProduction;
+import com.javacc.parser.tree.ExplicitLookahead;
 import com.javacc.parser.tree.TreeBuildingAnnotation;
 
 
@@ -80,8 +81,6 @@ abstract public class Expansion extends BaseNode {
 
     public Expansion() {}
 
-    private int ordinal= -1; // REVISIT
-    
     long myGeneration = 0; //REVISIT
     
     private String phase2RoutineName, phase3RoutineName;
@@ -112,8 +111,6 @@ abstract public class Expansion extends BaseNode {
         }
         return result + "]";
     }
-
-    protected static final String eol = System.getProperty("line.separator", "\n");
 
     public Expansion getNestedExpansion() {
         return null;
@@ -148,12 +145,10 @@ abstract public class Expansion extends BaseNode {
     public Lookahead getLookahead() {
     	return lookahead;
     }
-
+    
     public void setForced(boolean forced) {this.forced = forced;}
 
     public boolean getForced() {return this.forced;}
-    
-    public int getOrdinal() {return this.ordinal;}
     
 
     public String getPhase2RoutineName() {
@@ -188,6 +183,4 @@ abstract public class Expansion extends BaseNode {
     }
     
      abstract public int minimumSize(int oldMin); 
-    
-    
 }

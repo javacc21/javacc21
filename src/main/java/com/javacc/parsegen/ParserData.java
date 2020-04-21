@@ -67,7 +67,7 @@ public class ParserData {
         this.lexerData = grammar.getLexerData();
     }
 
-    public void buildData() throws MetaParseException {
+    public void buildData()  {
         for (BNFProduction production : grammar.getParserProductions()) {
             new Phase2TableBuilder().visit(production.getExpansion());
         }
@@ -594,7 +594,7 @@ public class ParserData {
         }
         for (Node node : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
             Expansion exp = (Expansion) node;
-            if (hasImplicitLookahead(exp.getNestedExpansion())) {
+            if (!(exp.getNestedExpansion() instanceof ExpansionSequence)) {
                 ebnfCalc(exp, exp.getNestedExpansion());
             }
         }
@@ -621,10 +621,6 @@ public class ParserData {
             }
         }
         return false;
-    }
-
-    private boolean hasImplicitLookahead(Expansion exp) {
-        return !(exp instanceof ExpansionSequence) && !(exp.getLookahead() instanceof ExplicitLookahead);
     }
 
     private MatchInfo overlap(List<MatchInfo> matchList1, List<MatchInfo> matchList2) {

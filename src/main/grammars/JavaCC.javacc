@@ -1314,7 +1314,7 @@ INJECT(ExpansionChoice) :
    }
 }
 
-Expansion ExpansionSequence() :
+Expansion ExpansionSequence() #ExpansionSequence :
 {
   Expansion sub;
   Lookahead la = new Lookahead(grammar);
@@ -1326,12 +1326,8 @@ Expansion ExpansionSequence() :
   [ 
     LOOKAHEAD(1, {!inLookahead})  
     la=Lookahead()
+    {popNode();}
   ]
-  {
-     if (!(la.isExplicit())) {
-          pushNode(la);
-      }
-  }
   (
      LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>))
       sub=ExpansionUnit()

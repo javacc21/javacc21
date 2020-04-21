@@ -567,7 +567,7 @@
 [/#macro]
     
 [#macro InvokePhase3Routine expansion]
-   [#if expansion.ordinal >=0]
+   [#if expansion.isRegexp]
        scanToken(TokenType.${expansion.label})
    [#else]
       ${expansion.phase3RoutineName}()
