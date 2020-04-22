@@ -317,40 +317,37 @@
 
 [#macro BuildPhase1CodeZeroOrOne zoo]
     [#var nestedExp=zoo.nestedExpansion]
-    [#var lookahead=zoo.lookahead]
-    [#if lookahead.alwaysSucceeds]
+    [#if zoo.alwaysSuccessful]
        [@BuildCode nestedExp/]
     [#else]
        [#var expansionCode]
        [#set expansionCode]
           [@BuildCode nestedExp/]
        [/#set]
-       [@BuildBinaryChoiceCode lookahead, expansionCode, null/]
+       [@BuildBinaryChoiceCode zoo, expansionCode, null/]
     [/#if]
 [/#macro]
 
 [#macro BuildPhase1CodeZeroOrMore zom]
     [#var nestedExp=zom.nestedExpansion]
-    [#var lookahead=zom.lookahead]
     ${zom.label}:
     while (true) {
-       [@BuildBinaryChoiceCode lookahead, null, "break "+zom.label+";"/]
+       [@BuildBinaryChoiceCode zom, null, "break "+zom.label+";"/]
        [@BuildCode nestedExp/]
     }
 [/#macro]
 
 [#macro BuildPhase1CodeOneOrMore oom]
    [#var nestedExp=oom.nestedExpansion]
-   [#var lookahead=oom.lookahead]
    ${oom.label}:
    while (true) {
       [@BuildCode nestedExp/]
-      [@BuildBinaryChoiceCode lookahead, null, "break "+oom.label+";"/]
+      [@BuildBinaryChoiceCode oom, null, "break "+oom.label+";"/]
    }
 [/#macro]
 
 [#macro BuildPhase1CodeChoice choice]
-   [#var lookaheads=[] actions=[]]
+   [#var actions=[], expansions = []]
    [#var defaultAction="throw new ParseException(current_token.getNext());"]
    [#var inPhase1=false]
    [#var indentLevel=0]
@@ -359,18 +356,17 @@
       [#set action]
          [@BuildCode nested/]
       [/#set]
-      [#var la = nested.lookahead]
-      [#if !la.alwaysSucceeds]
-         [#set lookaheads = lookaheads+[la]]
+      [#if !nested.alwaysSuccessful]
+         [#set expansions = expansions +[nested]]
          [#set actions = actions+[action]]
       [#else]
          [#set defaultAction = action]
          [#break]
       [/#if]
    [/#list]
-   [#list lookaheads as lookahead]
-      [#if lookahead.requiresPhase2Routine]
-         [#if lookahead_index = 0]
+   [#list expansions as expansion]
+      [#if expansion.requiresPhase2Routine]
+         [#if expansion_index = 0]
             if (
             [#set indentLevel = indentLevel+1]
          [#elseif !inPhase1]
@@ -378,33 +374,33 @@
          [#else]
             default:
                if (
-           [#if lookahead.semanticLookahead??]
-               (${lookahead.semanticLookahead}) &&
+           [#if expansion.hasSemanticLookahead]
+               (${expansion.semanticLookahead}) &&
            [/#if]
                 [#set indentLevel = indentLevel+1]
          [/#if]
-                [#var lookaheadAmount = lookahead.amount]
+                [#var lookaheadAmount = expansion.lookaheadAmount]
                 [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INDEFINITE"][/#if]
-                ${lookahead.nestedExpansion.phase2RoutineName}(${lookaheadAmount})
+                ${expansion.lookaheadExpansion.phase2RoutineName}(${lookaheadAmount})
                ) { 
-                   ${actions[lookahead_index]}
+                   ${actions[expansion_index]}
          [#set inPhase1 = false]
-       [#elseif lookahead.amount = 1&& !lookahead.semanticLookahead?? &&!lookahead.possibleEmptyExpansion]
+       [#elseif expansion.lookaheadAmount = 1&& !expansion.hasSemanticLookahead &&!expansion.lookaheadExpansion.possiblyEmpty]
           [#if !inPhase1]
-                 [#if lookahead_index != 0]
+                 [#if expansion_index != 0]
                  } else {
                  [/#if]
                  switch (nextTokenType()) { 
               [#set indentLevel = indentLevel+1]
           [/#if]
-          [#list lookahead.firstSetTokenNames as tokenName]
+          [#list expansion.firstSetTokenNames as tokenName]
                  case ${tokenName}: 
           [/#list]
-                    ${actions[lookahead_index]}
+                    ${actions[expansion_index]}
                     break;
           [#set inPhase1 = true]
     [#else]
-          [#if lookahead_index = 0]
+          [#if expansion_index = 0]
              if (
              [#set indentLevel = indentLevel+1]
           [#elseif !inPhase1]
@@ -414,12 +410,12 @@
               if (
                 [#set indentLevel = indentLevel+1]
           [/#if]
-                  ${lookahead.semanticLookahead!}) {
-                      ${actions[lookahead_index]}
+                  ${expansion.semanticLookahead!}) {
+                      ${actions[expansion_index]}
           [#set inPhase1 = false]
       [/#if]
    [/#list]
-      [#if lookaheads?size = 0]
+      [#if expansions?size = 0]
            ${defaultAction}
       [#elseif !inPhase1]
            } else {
@@ -435,23 +431,23 @@
       [/#if]
 [/#macro]
 
-[#macro BuildBinaryChoiceCode lookahead action fallback]
+[#macro BuildBinaryChoiceCode expansion action fallback]
    [#var emptyAction=!action?has_content]
    [#var emptyFallback=!action?has_content]
-   [#var condition=lookahead.semanticLookahead!]
-   [#if lookahead.requiresPhase2Routine]
+   [#var condition=expansion.semanticLookahead!]
+   [#if expansion.requiresPhase2Routine]
       [#set condition]
-        [#if lookahead.negated]![/#if]
-        ${lookahead.nestedExpansion.phase2RoutineName}(${lookahead.amount})
-        [#if lookahead.semanticLookahead??]
-          && (${lookahead.semanticLookahead})
+        [#if expansion.negated]![/#if]
+        ${expansion.lookaheadExpansion.phase2RoutineName}(${expansion.lookaheadAmount})
+        [#if expansion.semanticLookahead??]
+          && (${expansion.semanticLookahead})
         [/#if]
       [/#set]
       [#set condition = condition?replace("2147483647", "INDEFINITE")]
-   [#elseif lookahead.amount = 1&&!lookahead.possibleEmptyExpansion]
+   [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]
       [@newVar type="TokenType" init="nextTokenType()"/]
       [#set condition]
-      [#list lookahead.firstSetTokenNames as tokenName]
+      [#list expansion.firstSetTokenNames as tokenName]
              tokentype${newVarIndex} == TokenType.${tokenName} [#if tokenName_has_next]||[/#if]
       [/#list]
      [/#set]
@@ -534,12 +530,11 @@
 [#macro Phase3CodeChoice choice count]
    [@newVar "Token", "currentLookaheadToken"/]
   [#list choice.choices as subseq]
-	  [#var lookahead=subseq.lookahead]
-	  [#if lookahead.semanticLookahead??]
-	    semanticLookahead = ${lookahead.semanticLookahead};
+	  [#if subseq.hasSemanticLookahead]
+	    semanticLookahead = ${subseq.semanticLookahead};
 	  [/#if]
 	  if (
-	  [#if lookahead.semanticLookahead??]
+	  [#if subseq.hasSemanticLookahead]
 	     !semanticLookahead || 
 	  [/#if]
 	  [#if subseq_has_next]

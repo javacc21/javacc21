@@ -40,6 +40,7 @@ import com.javacc.lexgen.TokenSet;
 import com.javacc.parser.BaseNode;
 import com.javacc.parser.tree.BNFProduction;
 import com.javacc.parser.tree.ExplicitLookahead;
+import com.javacc.parser.tree.Expression;
 import com.javacc.parser.tree.TreeBuildingAnnotation;
 
 
@@ -179,6 +180,10 @@ abstract public class Expansion extends BaseNode {
         return la != null && la.hasSemanticLookahead();
     }
     
+    public Expression getSemanticLookahead() {
+        return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;
+    }
+    
     public List<String> getFirstSetTokenNames() {
         List<String> firstSetNames = null;
         if (firstSetNames == null) {
@@ -194,6 +199,11 @@ abstract public class Expansion extends BaseNode {
         }
         return firstSetNames;
     }
+    
+    public boolean isNegated() {
+        return getLookahead() != null && getLookahead().isNegated();
+    }
+  
     
     
     
