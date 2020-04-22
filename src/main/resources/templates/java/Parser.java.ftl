@@ -127,9 +127,9 @@ public boolean isCancelled() {return cancelled;}
 
 [#if hasPhase2]
    [@parserCode.Phase2Code /]
+   [@parserCode.Phase3Code /]
 [/#if]
 
-[@parserCode.Phase3Code /]
   
 
   Token current_token;
