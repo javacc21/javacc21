@@ -1451,6 +1451,7 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
            expansion = (Expansion) popNode();
            emptyLA = false; commaAtEnd = false;
            CURRENT_NODE.setExpansion(expansion);
+           expansion.setLookahead(CURRENT_NODE);
         }
       ]
       [ LOOKAHEAD(0, { !emptyLA && !commaAtEnd && (getToken(1).getType() != TokenType.RPAREN) } )

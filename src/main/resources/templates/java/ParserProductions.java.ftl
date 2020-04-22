@@ -43,17 +43,15 @@
 
 
 [#macro Phase2Code]
- [#if parserData.phase2Lookaheads?size ==0][#return][/#if]
 //====================================
 // Start of methods for Phase 2 Lookaheads
 //====================================
-  [#list parserData.phase2Lookaheads as lookahead]
-     [@buildPhase2Routine lookahead.nestedExpansion/]
+  [#list parserData.phase2Expansions as expansion]
+     [@buildPhase2Routine expansion/]
   [/#list]
 [/#macro]
 
 [#macro Phase3Code]
- [#if parserData.phase3Expansions?size ==0][#return][/#if]
 //====================================
  // Start of methods for Phase 3 Lookaheads
  //====================================

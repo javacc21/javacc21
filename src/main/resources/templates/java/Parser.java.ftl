@@ -33,7 +33,7 @@
 
 [#import "ParserProductions.java.ftl" as parserCode ]
 [#var parserData=grammar.parserData]
-[#var hasPhase2=parserData.phase2Lookaheads?size != 0]
+[#var hasPhase2=parserData.phase2Expansions?size != 0]
 [#var tokenCount=grammar.lexerData.tokenCount]
 
 [#if grammar.parserPackage?has_content]
@@ -125,7 +125,9 @@ public boolean isCancelled() {return cancelled;}
 
 [@parserCode.ProductionsCode /]
 
-[@parserCode.Phase2Code /]
+[#if hasPhase2]
+   [@parserCode.Phase2Code /]
+[/#if]
 
 [@parserCode.Phase3Code /]
   

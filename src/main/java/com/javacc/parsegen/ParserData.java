@@ -58,9 +58,8 @@ public class ParserData {
      * These lists are used to maintain the lists of lookaheads and expansions 
      * for which code generation in phase 2 and phase 3 is required. 
      */
-    private List<Lookahead> phase2lookaheads = new ArrayList<>();
-
-    private List<Expansion> phase3list = new ArrayList<>();
+    private List<Expansion> phase2list = new ArrayList<>();
+    private List<Expansion> phase3list;
     
     public ParserData(Grammar grammar) {
         this.grammar = grammar;
@@ -71,11 +70,9 @@ public class ParserData {
         for (BNFProduction production : grammar.getParserProductions()) {
             new Phase2TableBuilder().visit(production.getExpansion());
         }
-        for (Lookahead lookahead : phase2lookaheads) {
-            Expansion expansion= lookahead.getNestedExpansion();
-// This expansion is either inside the LOOKAHEAD parentheses, or failing that, is the expansion immediately following.
-            phase3list.add(expansion); 
-            expansion.setPhase3LookaheadAmount(lookahead.getAmount());
+        phase3list = new ArrayList<>(phase2list);
+        for (Expansion expansion : phase3list) {
+            expansion.setPhase3LookaheadAmount(expansion.getLookahead().getAmount());
         }
         for (int phase3index=0; phase3index < phase3list.size(); phase3index++) {
             Expansion exp = phase3list.get(phase3index);
@@ -85,9 +82,8 @@ public class ParserData {
         this.phase3list = new ArrayList<>(new LinkedHashSet<>(phase3list));
     }
 
-
-    public List<Lookahead> getPhase2Lookaheads() {
-        return phase2lookaheads;
+    public List<Expansion> getPhase2Expansions() {
+        return phase2list;
     }
 
     public List<Expansion> getPhase3Expansions() {
@@ -106,7 +102,7 @@ public class ParserData {
             }
             for (Lookahead lookahead : lookaheads) {
                 if (lookahead.getRequiresPhase2Routine()) {
-                   phase2lookaheads.add(lookahead);   
+                   phase2list.add(lookahead.getNestedExpansion());
                 }
             }
         }
@@ -115,7 +111,7 @@ public class ParserData {
             visit(exp.getNestedExpansion());
             Lookahead lookahead = exp.getLookahead();
             if (lookahead.getRequiresPhase2Routine()) {
-                phase2lookaheads.add(lookahead);
+                phase2list.add(lookahead.getNestedExpansion());
             }
         }
 
