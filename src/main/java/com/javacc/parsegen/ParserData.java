@@ -37,8 +37,7 @@ import com.javacc.MetaParseException;
 import com.javacc.lexgen.LexerData;
 import com.javacc.lexgen.LexicalStateData;
 import com.javacc.lexgen.RegularExpression;
-import com.javacc.parser.Node;
-import com.javacc.parser.ParseException;
+import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
 /**
@@ -58,8 +57,7 @@ public class ParserData {
      * These lists are used to maintain the lists of lookaheads and expansions 
      * for which code generation in phase 2 and phase 3 is required. 
      */
-    private List<Expansion> phase2list = new ArrayList<>();
-    private List<Expansion> phase3list;
+    private List<Expansion> phase2list, phase3list;
     
     public ParserData(Grammar grammar) {
         this.grammar = grammar;
@@ -67,6 +65,7 @@ public class ParserData {
     }
 
     public void buildData()  {
+        phase2list = new ArrayList<Expansion>();
         for (BNFProduction production : grammar.getParserProductions()) {
             new Phase2TableBuilder().visit(production.getExpansion());
         }
@@ -744,7 +743,7 @@ public class ParserData {
             }
         }
         for (int i = first; i < choices.size() - 1; i++) {
-            if (explicitLookahead(choices.get(i))) {
+            if (choices.get(i).hasExplicitLookahead()) {
                 continue;
             }
             if (minLA[i] > grammar.getOptions().getChoiceAmbiguityCheck()) {
@@ -770,23 +769,10 @@ public class ParserData {
         }
     }
 
-    boolean explicitLookahead(Expansion exp) {
-        if (!(exp instanceof ExpansionSequence)) {
-            return false;
-        }
-        ExpansionSequence seq = (ExpansionSequence) exp;
-        List<Expansion> es = seq.getUnits();
-        if (es.isEmpty()) {
-            //REVISIT: Look at this case carefully!
-            return false;
-        }
-        return seq.getLookahead() instanceof ExplicitLookahead;
-    }
-
     int firstChoice(ExpansionChoice ch) {
         List<Expansion> choices = ch.getChoices();
         for (int i = 0; i < choices.size(); i++) {
-            if (!explicitLookahead(choices.get(i))) {
+            if (!choices.get(i).hasExplicitLookahead()) {
                 return i;
             }
         }

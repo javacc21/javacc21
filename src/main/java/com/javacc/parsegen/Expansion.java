@@ -146,6 +146,10 @@ abstract public class Expansion extends BaseNode {
     	return lookahead;
     }
     
+    boolean hasExplicitLookahead() {
+        return lookahead != null & lookahead.isExplicit();
+    }
+    
     public void setForced(boolean forced) {this.forced = forced;}
 
     public boolean getForced() {return this.forced;}

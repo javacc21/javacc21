@@ -476,7 +476,7 @@
    [#if expansion.isRegexp]
       [@Phase3CodeRegexp expansion/]
    [#elseif classname = "ExpansionSequence"]
-      [@Phase3CodeSequence expansion, count/]
+      [@Phase3CodeSequence expansion count/]
    [#elseif classname = "ZeroOrOne"]
       [@Phase3CodeZeroOrOne expansion/]
    [#elseif classname = "ZeroOrMore"]
@@ -488,7 +488,7 @@
    [#elseif classname = "TryBlock"]
       [@buildPhase3Code expansion.nestedExpansion, count/]
    [#elseif classname = "ExpansionChoice"]
-      [@Phase3CodeChoice expansion, count/]
+      [@Phase3CodeChoice expansion count/]
   [/#if]
 [/#macro]
 
@@ -556,7 +556,7 @@
          return true;
 [/#macro]
 
-[#macro Phase3CodeSequence sequence count]
+[#macro Phase3CodeSequence sequence, count]
    [#list sequence.units as sub]
        [@buildPhase3Code sub, count/]
        [#set count = count - sub.minimumSize]
