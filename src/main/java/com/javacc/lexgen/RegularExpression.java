@@ -243,7 +243,7 @@ public abstract class RegularExpression extends Expansion {
     	return false;
     }
     
-    public boolean requiresPhase2Routine() {
+    public boolean getRequiresPhase2Routine() {
     	return false;
     }
     

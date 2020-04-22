@@ -1326,7 +1326,6 @@ Expansion ExpansionSequence() #ExpansionSequence :
   [ 
     LOOKAHEAD(1, {!inLookahead})  
     la=Lookahead()
-    {popNode();}
   ]
   (
      LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>))
@@ -1421,7 +1420,7 @@ INJECT(ExpansionSequence) :
 
 ExplicitLookahead Lookahead() #ExplicitLookahead :
 {
-    boolean commaAtEnd = false, emptyLA = true;
+    boolean commaAtEnd = false, empty = true;
     Expansion expansion;
     Expression semanticLookahead = null;
     this.inLookahead = true;
@@ -1435,26 +1434,26 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
         <INTEGER_LITERAL>
         {
            CURRENT_NODE.setAmount(Integer.parseInt(current_token.toString()));
-           emptyLA = false;
+           empty = false;
         }
       ]
-      [ LOOKAHEAD(0, { !emptyLA && (getToken(1).getType() != TokenType.RPAREN) } )
-        ","
-            {
-              commaAtEnd = true;
-            }
+      [ 
+        LOOKAHEAD(~<RPAREN>, {!empty})
+        "," {commaAtEnd = true;}
       ]
-      [ LOOKAHEAD(0, { getToken(1).getType() != TokenType.RPAREN && getToken(1).getType() != TokenType.LBRACE } )
+      [ 
+        LOOKAHEAD(~(<RPAREN>|<LBRACE>))
         ["~" {CURRENT_NODE.setNegated(true);}] 
         ExpansionChoice() 
         {
            expansion = (Expansion) popNode();
-           emptyLA = false; commaAtEnd = false;
+           empty = false; commaAtEnd = false;
            CURRENT_NODE.setExpansion(expansion);
            expansion.setLookahead(CURRENT_NODE);
         }
       ]
-      [ LOOKAHEAD(0, { !emptyLA && !commaAtEnd && (getToken(1).getType() != TokenType.RPAREN) } )
+      [ 
+        LOOKAHEAD(~")", {!empty && !commaAtEnd})
         ","
             {
               commaAtEnd = true;
@@ -1466,7 +1465,7 @@ ExplicitLookahead Lookahead() #ExplicitLookahead :
         "}"
         {
            CURRENT_NODE.setSemanticLookahead(semanticLookahead);
-           if (emptyLA) {
+           if (empty) {
               CURRENT_NODE.setAmount(0);
            }
         }

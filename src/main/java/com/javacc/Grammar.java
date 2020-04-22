@@ -57,8 +57,6 @@ public class Grammar extends BaseNode {
     private JavaCCOptions options = new JavaCCOptions(this);
     private String defaultLexicalState = "DEFAULT";
     private long nextGenerationIndex = 1L;
-    private int lookaheadLimit;
-//    private boolean considerSemanticLA;
     private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
@@ -543,22 +541,6 @@ public class Grammar extends BaseNode {
     public long nextGenerationIndex() {
         return nextGenerationIndex++;
     }
-
-//    public int getLookaheadLimit() {
-//        return lookaheadLimit;
-//    }
-//
-//    public void setLookaheadLimit(int lookaheadLimit) {
-//        this.lookaheadLimit = lookaheadLimit;
-//    }
-//
-//    public boolean considerSemanticLA() {
-//        return considerSemanticLA;
-//    }
-//
-//    public void setConsiderSemanticLA(boolean b) {
-//        considerSemanticLA = b;
-//    }
 
     public Set<String> getNodeNames() {
         return nodeNames;

@@ -71,7 +71,7 @@ public class ParserData {
         }
         phase3list = new ArrayList<>(phase2list);
         for (Expansion expansion : phase3list) {
-            expansion.setPhase3LookaheadAmount(expansion.getLookahead().getAmount());
+            expansion.setPhase3LookaheadAmount(expansion.getLookaheadAmount());
         }
         for (int phase3index=0; phase3index < phase3list.size(); phase3index++) {
             Expansion exp = phase3list.get(phase3index);
@@ -91,26 +91,20 @@ public class ParserData {
 
     public class Phase2TableBuilder extends Node.Visitor {
         public void visit(ExpansionChoice choice) {
-            List<Lookahead> lookaheads = new ArrayList<Lookahead>();
             List<ExpansionSequence> choices = choice.childrenOfType(ExpansionSequence.class);
             for (ExpansionSequence nestedSeq : choices) {
                 visit(nestedSeq);
-                Lookahead lookahead = nestedSeq.getLookahead();
-                if (lookahead.isAlwaysSuccessful()) break;
-                lookaheads.add(lookahead);
-            }
-            for (Lookahead lookahead : lookaheads) {
-                if (lookahead.getRequiresPhase2Routine()) {
-                   phase2list.add(lookahead.getNestedExpansion());
+                if (nestedSeq.isAlwaysSuccessful()) break;
+                if (nestedSeq.getRequiresPhase2Routine()) {
+                    phase2list.add(nestedSeq.getLookaheadExpansion());
                 }
             }
         }
 
         private void handleOneOrMoreEtc(Expansion exp) {
             visit(exp.getNestedExpansion());
-            Lookahead lookahead = exp.getLookahead();
-            if (lookahead.getRequiresPhase2Routine()) {
-                phase2list.add(lookahead.getNestedExpansion());
+            if (exp.getRequiresPhase2Routine()) {
+                phase2list.add(exp.getLookaheadExpansion());
             }
         }
 
@@ -212,14 +206,13 @@ public class ParserData {
          */
 
         for (ExpansionSequence sequence : grammar.descendantsOfType(ExpansionSequence.class)) {
-            Lookahead lookahead = sequence.getLookahead();
             Node parent = sequence.getParent();
             if (!(parent instanceof ExpansionChoice 
                     || parent instanceof OneOrMore 
                     || parent instanceof ZeroOrOne 
                     || parent instanceof ZeroOrMore) 
-                    && lookahead instanceof ExplicitLookahead) {
-                grammar.addSemanticError(lookahead, "Encountered LOOKAHEAD(...) at a non-choice location." );
+                    && sequence.hasExplicitLookahead()) {
+                grammar.addSemanticError(sequence, "Encountered LOOKAHEAD(...) at a non-choice location." );
             }
         }
 
@@ -791,34 +784,27 @@ public class ParserData {
 
     void ebnfCalc(Expansion exp, Expansion nested) {
         // exp is one of OneOrMore, ZeroOrMore, ZeroOrOne
-        MatchInfo matchInfo, m1 = null;
+        MatchInfo matchInfo = null;
         List<MatchInfo> partialMatches = new ArrayList<>();
-        int lookaheadAmount;
-        for (lookaheadAmount = 1; lookaheadAmount <= grammar.getOptions().getOtherAmbiguityCheck(); lookaheadAmount++) {
-            lookaheadLimit = lookaheadAmount;
-            sizeLimitedMatches = new ArrayList<MatchInfo>();
-            matchInfo = new MatchInfo(lookaheadAmount);
-            partialMatches.add(matchInfo);
-            considerSemanticLookahead = true;
-            generateFirstSet(partialMatches, nested);
-            List<MatchInfo> first = sizeLimitedMatches;
-            sizeLimitedMatches = new ArrayList<MatchInfo>();
-            considerSemanticLookahead = false;
-            generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex());
-            List<MatchInfo> follow = sizeLimitedMatches;
-            matchInfo = overlap(first, follow);
-            if (matchInfo  == null) {
-                break;
-            }
-            m1 = matchInfo;
-        }
-        if (lookaheadAmount > 1) {
+        lookaheadLimit = 1;
+        sizeLimitedMatches = new ArrayList<MatchInfo>();
+        matchInfo = new MatchInfo(1);
+        partialMatches.add(matchInfo);
+        considerSemanticLookahead = true;
+        generateFirstSet(partialMatches, nested);
+        List<MatchInfo> first = sizeLimitedMatches;
+        sizeLimitedMatches = new ArrayList<MatchInfo>();
+        considerSemanticLookahead = false;
+        generateFollowSet(partialMatches, exp, grammar.nextGenerationIndex());
+        List<MatchInfo> follow = sizeLimitedMatches;
+        matchInfo = overlap(first, follow);
+        if (matchInfo != null) {
             grammar.addWarning(exp, "Choice conflict in " + image(exp) + " construct " + "at line "
                     + exp.getBeginLine() + ", column " + exp.getBeginColumn() + ".");
             System.err
             .println("         Expansion nested within construct and expansion following construct");
-            System.err.println("         have common prefixes, one of which is: " + image(m1));
-            System.err.println("         Consider using a lookahead of " + lookaheadAmount + " for nested expansion.");
+            System.err.println("         have common prefixes, one of which is: " + image(matchInfo));
+            System.err.println("         Consider using an explicit lookahead for nested expansion.");
         }
     }
 
@@ -854,7 +840,7 @@ public class ParserData {
             }
             return retval;
         } else if (exp instanceof ExpansionSequence) {
-            if (considerSemanticLookahead && exp.getLookahead().hasSemanticLookahead()) {
+            if (considerSemanticLookahead && exp.getHasSemanticLookahead()) {
                 return new ArrayList<>();
             }
             List<MatchInfo> v = partialMatches;

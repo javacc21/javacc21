@@ -132,12 +132,12 @@ public class JavaCCOptions {
     public void init() {
         optionValues = new HashMap<String, Object>();
         optionValues.put("QUIET",  false);
-        optionValues.put("LOOKAHEAD", 1);
+//        optionValues.put("LOOKAHEAD", 1);
         optionValues.put("CHOICE_AMBIGUITY_CHECK", 2);
-        optionValues.put("OTHER_AMBIGUITY_CHECK", 1);
+//        optionValues.put("OTHER_AMBIGUITY_CHECK", 1);
         optionValues.put("TABS_TO_SPACES",  0);
         optionValues.put("DEBUG_PARSER", false);
-        optionValues.put("DEBUG_LOOKAHEAD", false);
+//        optionValues.put("DEBUG_LOOKAHEAD", false);
         optionValues.put("DEBUG_LEXER", false);
         optionValues.put("FAULT_TOLERANT", false);
         optionValues.put("PRESERVE_LINE_ENDINGS",  true); // Will change this to false pretty soon.
@@ -424,14 +424,6 @@ public class JavaCCOptions {
     }
 
     public void normalize() {
-        if (getDebugLookahead() && !getDebugParser()) {
-            if (cmdLineSetting.contains("DEBUG_PARSER")
-                    || inputFileSetting.contains("DEBUG_PARSER")) {
-                grammar.addWarning(null, "True setting of option DEBUG_LOOKAHEAD overrides "
-                        + "false setting of option DEBUG_PARSER.");
-            }
-            setOption("DEBUG_PARSER", Boolean.TRUE);
-        }
         grammar.setParserPackage(stringValue("PARSER_PACKAGE"));
         grammar.setParserClassName(stringValue("PARSER_CLASS"));
         grammar.setLexerClassName(stringValue("LEXER_CLASS"));
@@ -446,7 +438,8 @@ public class JavaCCOptions {
      * @return The requested lookahead value.
      */
     public int getLookahead() {
-        return intValue("LOOKAHEAD");
+        return 1;
+//        return intValue("LOOKAHEAD");
     }
 
     /**
@@ -464,7 +457,8 @@ public class JavaCCOptions {
      * @return The requested other ambiguity check value.
      */
     public int getOtherAmbiguityCheck() {
-        return intValue("OTHER_AMBIGUITY_CHECK");
+//        return intValue("OTHER_AMBIGUITY_CHECK");
+        return 1;
     }
 
     /**
@@ -481,9 +475,9 @@ public class JavaCCOptions {
      *
      * @return The requested debug lookahead value.
      */
-    public boolean getDebugLookahead() {
-        return booleanValue("DEBUG_LOOKAHEAD");
-    }
+//    public boolean getDebugLookahead() {
+//        return booleanValue("DEBUG_LOOKAHEAD");
+//    }
 
     /**
      * Find the debug tokenmanager value.

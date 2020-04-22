@@ -30,6 +30,10 @@
 
 package com.javacc.parsegen;
 
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
+
 import com.javacc.Grammar;
 import com.javacc.lexgen.RegularExpression;
 import com.javacc.lexgen.TokenSet;
@@ -146,9 +150,52 @@ abstract public class Expansion extends BaseNode {
     	return lookahead;
     }
     
-    boolean hasExplicitLookahead() {
-        return lookahead != null & lookahead.isExplicit();
+    public boolean hasExplicitLookahead() {
+        return lookahead != null && lookahead.isExplicit();
     }
+    
+    public boolean getRequiresPhase2Routine() {
+        Lookahead la = getLookahead();
+        return la != null && la.getRequiresPhase2Routine();
+    }
+    
+    public Expansion getLookaheadExpansion() {
+        Lookahead la = getLookahead();
+        return la == null ? this : la.getNestedExpansion();
+    }
+    
+    public boolean isAlwaysSuccessful() {
+        Lookahead la = getLookahead();
+        return la == null ? this.isPossiblyEmpty() : la.isAlwaysSuccessful();
+    }
+    
+    public int getLookaheadAmount() {
+        Lookahead la = getLookahead();
+        return la == null ? 1 : la.getAmount();
+    }
+    
+    public boolean getHasSemanticLookahead() {
+        Lookahead la = getLookahead();
+        return la != null && la.hasSemanticLookahead();
+    }
+    
+    public List<String> getFirstSetTokenNames() {
+        List<String> firstSetNames = null;
+        if (firstSetNames == null) {
+            int tokenCount = getGrammar().getLexerData().getTokenCount();
+            firstSetNames = new ArrayList<>(tokenCount);
+            Expansion expansion = getLookaheadExpansion();
+            BitSet firstSet = expansion.getFirstSet();
+            for (int i=0; i<tokenCount; i++) {
+                if (firstSet.get(i)) {
+                    firstSetNames.add(getGrammar().getLexerData().getTokenName(i));
+                }
+            }
+        }
+        return firstSetNames;
+    }
+    
+    
     
     public void setForced(boolean forced) {this.forced = forced;}
 
