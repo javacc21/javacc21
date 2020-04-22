@@ -211,7 +211,7 @@ abstract public class Expansion extends BaseNode {
     
     public String getPhase3RoutineName() {
         if (phase3RoutineName == null) {
-            phase3RoutineName = getGrammar().generateUniqueIdentifier("phase3$", this);
+            phase3RoutineName = getGrammar().generateUniqueIdentifier("scan$", this);
         }
         return phase3RoutineName;
     }

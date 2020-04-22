@@ -34,22 +34,8 @@
 [#var numLexicalStates=lexerData.lexicalStates?size]
 [#var tokenCount=lexerData.tokenCount]
 [#var MAX_INT=2147483647]
-[#if grammar.parserPackage?has_content]
-package ${grammar.parserPackage};
-[/#if]
 
-[#list grammar.parserCodeImports as import]
-   ${import}
-[/#list]
-
-import java.io.Reader;
-import java.io.IOException;
-import java.util.logging.Logger;
-import java.util.*;
-
-@SuppressWarnings("unused")
-public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
-  private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
+ private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
   
 [#if options.faultTolerant]  
   private InvalidToken invalidToken; 
@@ -799,7 +785,7 @@ public final void backup(int amount) {
     [#embed "LegacyTokenBuilder.java.ftl"]
  [/#if]
   
-}
+
 
 
 [#macro DumpMoveNfa lexicalState]

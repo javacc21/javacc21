@@ -310,8 +310,7 @@ public class Grammar extends BaseNode {
     public List<Node> getOtherParserCodeDeclarations() {
         List<Node> result = new ArrayList<Node>();
         if (parserCode != null) {
-            for (int i = 0; i < parserCode.getChildCount(); i++) {
-                Node child = parserCode.getChild(i);
+            for (Node child : parserCode.children()) {
                 if (child instanceof Token) {
                     continue;
                 }

@@ -326,9 +326,6 @@ INJECT(BaseNode) :
     }
 }
 
-
-
-
 CompilationUnit CompilationUnit() #CompilationUnit :
 {}
 {
