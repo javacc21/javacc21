@@ -39,7 +39,7 @@ import com.javacc.lexgen.RegularExpression;
 import com.javacc.lexgen.TokenSet;
 import com.javacc.parser.BaseNode;
 import com.javacc.parser.tree.BNFProduction;
-import com.javacc.parser.tree.ExplicitLookahead;
+import com.javacc.parser.tree.Lookahead;
 import com.javacc.parser.tree.Expression;
 import com.javacc.parser.tree.TreeBuildingAnnotation;
 
@@ -152,7 +152,7 @@ abstract public class Expansion extends BaseNode {
     }
     
     public boolean hasExplicitLookahead() {
-        return lookahead != null && lookahead.isExplicit();
+        return lookahead != null;
     }
     
     public boolean getRequiresPhase2Routine() {
