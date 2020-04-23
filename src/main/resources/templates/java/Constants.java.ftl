@@ -48,22 +48,7 @@ String[] tokenImage = {
       [/#list]
     [/#list]
   };
-/*
-   String[] nodeNames = {
-       "EOF", 
-       [#list grammar.orderedNamedTokens as regexp]
-          "${regexp.label}",
-       [/#list]
-       [#if grammar.options.treeBuildingEnabled]
-           [#list grammar.nodeNames as name]
-              "${name}", 
-           [/#list]
-       [/#if]
-   };
-*/
 }
-
-
 
 [#macro output_regexp regexp]
    [#if regexp.class.name?ends_with("StringLiteral")]
