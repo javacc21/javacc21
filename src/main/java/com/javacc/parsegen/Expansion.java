@@ -203,14 +203,10 @@ abstract public class Expansion extends BaseNode {
     public boolean isNegated() {
         return getLookahead() != null && getLookahead().isNegated();
     }
-  
-    
-    
     
     public void setForced(boolean forced) {this.forced = forced;}
 
     public boolean getForced() {return this.forced;}
-    
 
     public String getPhase2RoutineName() {
         if (phase2RoutineName == null) {

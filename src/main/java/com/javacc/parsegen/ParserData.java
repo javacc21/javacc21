@@ -33,7 +33,6 @@ package com.javacc.parsegen;
 import java.util.*;
 
 import com.javacc.Grammar;
-import com.javacc.MetaParseException;
 import com.javacc.lexgen.LexerData;
 import com.javacc.lexgen.LexicalStateData;
 import com.javacc.lexgen.RegularExpression;
@@ -91,12 +90,11 @@ public class ParserData {
 
     public class Phase2TableBuilder extends Node.Visitor {
         public void visit(ExpansionChoice choice) {
-            List<ExpansionSequence> choices = choice.childrenOfType(ExpansionSequence.class);
-            for (ExpansionSequence nestedSeq : choices) {
-                visit(nestedSeq);
-                if (nestedSeq.isAlwaysSuccessful()) break;
-                if (nestedSeq.getRequiresPhase2Routine()) {
-                    phase2list.add(nestedSeq.getLookaheadExpansion());
+            for (Expansion exp : choice.getChoices()) {
+                visit(exp);
+                if (exp.isAlwaysSuccessful()) break;
+                if (exp.getRequiresPhase2Routine()) {
+                    phase2list.add(exp.getLookaheadExpansion());
                 }
             }
         }
@@ -195,7 +193,7 @@ public class ParserData {
     // to clean this up because it presents a significant obstacle
     // to progress, since the original code is written in such an opaque manner that it is
     // hard to understand what it does.
-    public void semanticize() throws MetaParseException {
+    public void semanticize() {
 
         /*
          * Check whether we have any LOOKAHEADs at non-choice points 
@@ -867,11 +865,7 @@ public class ParserData {
             return retval;
         } else if (exp instanceof TryBlock) {
             return generateFirstSet(partialMatches, exp.getNestedExpansion());
-        }   //else if (considerSemanticLookahead && exp instanceof Lookahead
-             //   && ((Lookahead) exp).getSemanticLookahead() != null) {
-            //return new ArrayList<MatchInfo>();
-        //}  
-        //return new ArrayList<>();
+        }   
         return new ArrayList<>(partialMatches);
     }
 
