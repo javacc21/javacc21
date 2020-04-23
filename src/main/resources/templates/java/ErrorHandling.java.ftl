@@ -57,6 +57,7 @@
 
 [#if grammar.options.faultTolerant]
     private boolean tolerantParsing= true;
+    private boolean currentNTForced = false;
     private List<ParsingProblem> parsingProblems;
     
     public void addParsingProblem(ParsingProblem problem) {

@@ -102,11 +102,6 @@ abstract public class Expansion extends BaseNode {
     	this.label = label;
     }
     
-    private String getSimpleName() {
-        String name = getClass().getName();
-        return name.substring(name.lastIndexOf(".") + 1); // strip the package name
-    }
-    
     public String toString() {
         String result = "[" + getSimpleName() + " on line " + getBeginLine() + ", column " + getBeginColumn();
         String inputSource = getInputSource();

@@ -383,6 +383,13 @@ INJECT(BaseNode) :
     public void setGrammar(Grammar grammar) {
          this.grammar = grammar;
     }
+    
+    public String getSimpleName() {
+        String name = getClass().getName();
+        return name.substring(name.lastIndexOf(".") + 1); // strip the package name
+    }
+    
+    
 }
 
 
@@ -903,12 +910,6 @@ INJECT(BNFProduction) :
          return getExpansion().isPossiblyEmpty();
     }
 
-    protected String getSimpleName() {
-        String name = getClass().getName();
-        return name.substring(name.lastIndexOf(".") + 1); // strip the package
-                                                            // name
-    }
-
     public String getAccessModifier() {
         for (Token t : childrenOfType(Token.class)) {
            TokenType type = t.getType();
@@ -1316,16 +1317,18 @@ INJECT(ExpansionChoice) :
 Expansion ExpansionSequence() #ExpansionSequence :
 {
   Expansion sub;
-//  Lookahead la = new Lookahead(grammar);
-//  Token t = getToken(1);
-//  la.setBeginLine(t.getBeginLine());
-//  la.setBeginColumn(t.getBeginColumn());
    Lookahead la = null;
 }
 {
   [ 
     LOOKAHEAD(1, {!inLookahead})  
     la=Lookahead()
+    {
+       if (la.getNestedExpansion()==null) {
+          la.setExpansion(CURRENT_NODE);
+       }
+       CURRENT_NODE.setLookahead(la);
+     }
   ]
   (
      LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>))
@@ -1335,12 +1338,6 @@ Expansion ExpansionSequence() #ExpansionSequence :
       }
   )+
   {
-     if (la != null) {
-       if (la.getNestedExpansion()==null) {
-          la.setExpansion(CURRENT_NODE);
-       }
-       CURRENT_NODE.setLookahead(la);
-     }
      return CURRENT_NODE;
   }
 }

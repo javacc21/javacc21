@@ -110,7 +110,6 @@
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
      if (trace_enabled) LOGGER.info("Entering production defined on line ${production.beginLine} of ${production.inputSource}");
      if (cancelled) throw new CancellationException();
-     [#-- ${production.javaCode} --]
    [@BuildCode production.expansion /]
     }   
 [/#macro]
@@ -119,7 +118,7 @@
   // Code for ${expansion.name!"expansion"} specified on line ${expansion.beginLine} of ${expansion.inputSource}
     [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName, closeCondition = "true"]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
-    [#if expansion.parent.class.name?ends_with("Production")]
+    [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
       [#set forced = production.forced || forced]
     [/#if]
@@ -129,8 +128,12 @@
     [/#if]
     [#if buildTreeNode]
         [@setupTreeVariables .scope /]
-        [#if grammar.options.faultTolerant && forced]
-        boolean ${forcedVarName} = this.tolerantParsing;
+        [#if grammar.options.faultTolerant]
+          [#if forced]
+              boolean ${forcedVarName} = this.tolerantParsing;
+          [#else]
+              boolean ${forcedVarName} = this.tolerantParsing && currentNTForced;
+          [/#if]
         [#else]
         boolean ${forcedVarName} = false;
         [/#if]
@@ -260,13 +263,11 @@
 
 
 [#macro BuildPhase1Code expansion]
-    [#var classname=expansion.class.name?split(".")?last]
+    [#var classname=expansion.simpleName]
     [#if classname = "CodeBlock"]
        ${expansion}
     [#elseif classname = "ExpansionSequence"]
-	   [#list expansion.units as subexp]
-	       [@BuildCode subexp/]
-	   [/#list]        
+       [@BuildPhase1CodeSequence expansion/]
     [#elseif classname = "NonTerminal"]
        [@BuildPhase1CodeNonTerminal expansion/]
     [#elseif expansion.isRegexp]
@@ -282,6 +283,12 @@
     [#elseif classname = "ExpansionChoice"]
         [@BuildPhase1CodeChoice expansion/]
     [/#if]
+[/#macro]
+
+[#macro BuildPhase1CodeSequence expansion]
+       [#list expansion.units as subexp]
+           [@BuildCode subexp/]
+       [/#list]        
 [/#macro]
 
 [#macro BuildPhase1CodeRegexp regexp]
@@ -307,10 +314,20 @@
 [/#macro]
 
 [#macro BuildPhase1CodeNonTerminal nonterminal]
+   [#if grammar.options.faultTolerant && !nonterminal.production.forced]
+   [@newVar type="boolean" init="currentNTForced"/]
+   try {
+      currentNTForced = ${nonterminal.forced?string("true", "false")};
+   [/#if]
    [#if !nonterminal.LHS??]
        ${nonterminal.name}(${nonterminal.args!});
    [#else]
        ${nonterminal.LHS} = ${nonterminal.name}(${nonterminal.args!});
+    [/#if]
+    [#if grammar.options.faultTolerant && !nonterminal.production.forced]
+    } finally {
+        currentNTForced = boolean${newVarIndex};
+    }
     [/#if]
 [/#macro]
 
@@ -507,7 +524,7 @@
 [/#macro]
 
 [#macro buildPhase3Code expansion count]
-   [#var classname=expansion.class.name?split(".")?last]
+   [#var classname=expansion.simpleName]
    [#if expansion.isRegexp]
       [@Phase3CodeRegexp expansion/]
    [#elseif classname = "ExpansionSequence"]
