@@ -152,7 +152,7 @@ abstract public class Expansion extends BaseNode {
     }
     
     public boolean hasExplicitLookahead() {
-        return lookahead != null;
+        return getLookahead() != null;
     }
     
     public boolean getRequiresPhase2Routine() {

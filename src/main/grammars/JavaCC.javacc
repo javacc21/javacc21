@@ -1419,7 +1419,6 @@ Lookahead Lookahead() #Lookahead :
 {
     boolean commaAtEnd = false, empty = true;
     Expansion expansion;
-    Expression semanticLookahead = null;
     this.inLookahead = true;
     CURRENT_NODE.setAmount(Integer.MAX_VALUE);
 }
@@ -1452,16 +1451,10 @@ Lookahead Lookahead() #Lookahead :
       [ 
         LOOKAHEAD(~")", {!empty && !commaAtEnd})
         ","
-            {
-              commaAtEnd = true;
-            }
       ]
       [
-        "{"
-            semanticLookahead=Expression()
-        "}"
-        {
-//           CURRENT_NODE.setSemanticLookahead(semanticLookahead);
+        "{"  Expression()  "}"
+         {
            if (empty) {
               CURRENT_NODE.setAmount(0);
            }
