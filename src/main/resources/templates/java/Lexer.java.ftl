@@ -53,9 +53,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
     [#if grammar.options.debugLexer]  
   private boolean trace_enabled = true;
-[#else]  
+    [#else]  
   private boolean trace_enabled = false;
-[/#if]
+    [/#if]
   
   private void setTracingEnabled(boolean trace_enabled) {
      this.trace_enabled = trace_enabled;
@@ -177,9 +177,9 @@ void addToken(Token token) {
       return tok;
  }
 [/#if]
- 
-
-
+ [#if options.hugeFileSupport]
+    [#embed "LegacyTokenBuilder.java.ftl"]
+ [/#if]
     [#embed "LexerCode.java.ftl"] 
 }
 [/#if]

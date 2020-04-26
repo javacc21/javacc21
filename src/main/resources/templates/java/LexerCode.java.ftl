@@ -648,11 +648,6 @@
 [/#list]
   };
 
- [#if options.hugeFileSupport]
-    [#embed "LegacyTokenBuilder.java.ftl"]
- [/#if]
-  
-
 
 
 [#macro DumpMoveNfa lexicalState]
