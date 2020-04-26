@@ -29,30 +29,13 @@
  */
  --]
 
-[#var lexerData=grammar.lexerData]
-[#var options=grammar.options]
-[#var numLexicalStates=lexerData.lexicalStates?size]
-[#var tokenCount=lexerData.tokenCount]
+ [#var options=grammar.options, lexerData=grammar.lexerData]
+ [#var tokenCount=lexerData.tokenCount]
+ [#var numLexicalStates=lexerData.lexicalStates?size]
+
 [#var MAX_INT=2147483647]
 
- private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
-  
-[#if options.faultTolerant]  
-  private InvalidToken invalidToken; 
-[/#if]
-
-void addToken(Token token) {
-    [#if !options.hugeFileSupport]
-       input_stream.addToken(token);
-    [/#if]  
-}  
-    int tabSize = 8;
- [#if options.lexerUsesParser]
-
-  public ${grammar.parserClassName} parser;
-[/#if]
-
-  int[] jjemptyLineNo = new int[${numLexicalStates}];
+   int[] jjemptyLineNo = new int[${numLexicalStates}];
   int[] jjemptyColNo = new int[${numLexicalStates}];
   boolean[] jjbeenHere = new boolean[${numLexicalStates}];
   
@@ -64,52 +47,7 @@ void addToken(Token token) {
   private int jjmatchedKind;
   private String inputSource = "input";
   
-[#if grammar.options.debugLexer]  
-  private boolean trace_enabled = true;
-[#else]  
-  private boolean trace_enabled = false;
-[/#if]
-  
-  private void setTracingEnabled(boolean trace_enabled) {
-     this.trace_enabled = trace_enabled;
-  }
-  
-  public String getInputSource() {
-      return inputSource;
-  }
-  
-  public void setInputSource(String inputSource) {
-      this.inputSource = inputSource;
-  }
-   
-  private LexicalState lexicalState = LexicalState.${lexerData.lexicalStates[0].name};
-  
-[#if numLexicalStates>1]
-
-
-   void doLexicalStateSwitch(int tokenType) {
-       LexicalState newLexState = newLexicalStates[tokenType];
-       if (newLexState != null) {
-           switchTo(newLexState);
-       }
-   }
-   
-   void doLexicalStateSwitch(TokenType tokenType) {
-       doLexicalStateSwitch(tokenType.ordinal());
-   }
-  
-  private static final LexicalState[] newLexicalStates = {
-         [#list lexerData.regularExpressions as regexp]
-             [#if regexp.newLexicalState?is_null]
-                null,
-             [#else]
-                LexicalState.${regexp.newLexicalState.name},
-             [/#if]
-          [/#list]
-  };
-  
-[/#if]
-
+ 
 [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
       // BitSet for TOKEN
       static private BitSet tokenSet = BitSet.valueOf(new long[] {
@@ -149,41 +87,6 @@ void addToken(Token token) {
 
     char curChar;
     
-[#var tokenBuilderClass = options.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
-
-${tokenBuilderClass} input_stream;
-
-public final void backup(int amount) {
-    input_stream.backup(amount);
-}
-
-[#if !options.hugeFileSupport]
-     public ${grammar.lexerClassName}(String inputSource, CharSequence chars) {
-        this(inputSource, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
-     }
-     public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
-        input_stream = new ${tokenBuilderClass}(inputSource, chars, line, column);
-        switchTo(lexState);
-     }
-     [#if options.legacyAPI]
-         public ${grammar.lexerClassName}(String inputSource, CharSequence chars, int lexState, int line, int column) {
-            this(inputSource, chars, LexicalState.values()[lexState],  line, column);
-         }
-     [/#if]
-[/#if]
-    public ${grammar.lexerClassName}(Reader reader) {
-       this(reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
-    }
-    public ${grammar.lexerClassName}(Reader reader, LexicalState lexState, int line, int column) {
-        input_stream = new ${tokenBuilderClass}(reader, line, column);
-        switchTo(lexState);
-    }
-     [#if options.legacyAPI]
-         public ${grammar.lexerClassName}(Reader reader, int lexState, int line, int column) {
-            this(reader, LexicalState.values()[lexState],  line, column);
-         }
-     [/#if]
-
     
     // Method to reinitialize the jjrounds array.
     private void ReInitRounds() {
@@ -194,42 +97,6 @@ public final void backup(int amount) {
     }
 
 
-    /** Switch to specified lexical state. */
-    public void switchTo(LexicalState lexState) {
-        if (this.lexicalState != lexState) {
-           if (trace_enabled) LOGGER.info("Switching from lexical state " + this.lexicalState + " to " + lexState);
-        }
-        this.lexicalState = lexState;
-    }
-[#if grammar.options.legacyAPI]
-    /**
-      * @deprecated Use the switchTo method.. that takes an Enum
-      */
-    @Deprecated
-    public void SwitchTo(int lexState) {
-       switchTo(LexicalState.values()[lexState]);
-    }
-    
-    
-    @Deprecated
-    public void setTabSize(int  size) {this.tabSize=tabSize;}
-[/#if]
-
- [#if grammar.options.faultTolerant]
-  public Token getNextToken() {
-      Token tok = null;
-      do {
-         tok = nextToken();
-      }  while (tok instanceof InvalidToken);
-      if (invalidToken != null) {
-          addToken(invalidToken);
-          invalidToken = null;
-      }
-      addToken(tok);
-      return tok;
- }
-[/#if]
- 
   
   [#--  Need to figure out how to simplify this --]
 [#if grammar.options.faultTolerant]  
