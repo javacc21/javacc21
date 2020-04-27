@@ -365,9 +365,14 @@
 
 [#macro BuildPhase1CodeChoice choice]
    [#var actions=[], expansions = []]
-   [#var defaultAction="throw new ParseException(current_token.getNext());"]
-   [#var inPhase1=false]
-   [#var indentLevel=0]
+   [#var defaultAction, inPhase1 = false, indentLevel = 0]
+   [#set defaultAction]
+       throw new ParseException(current_token.getNext(), EnumSet.of( 
+       [#list choice.firstSetTokenNames as type]
+          [#if type_index>0],[/#if]TokenType.${type}
+        [/#list]
+        ));
+   [/#set]
    [#list choice.choices as nested]
       [#var action]
       [#set action]

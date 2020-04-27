@@ -775,7 +775,7 @@ BNFProduction BNFProduction() :
     <IDENTIFIER> {CURRENT_NODE.setName(current_token.image);}
     FormalParameters()
     [
-       <BANG> {CURRENT_NODE.setForced(true);} 
+      <BANG> {CURRENT_NODE.setForced(true);} 
     ]
     [
       ThrowsList()
@@ -1573,6 +1573,7 @@ Expansion ExpansionUnit() :
   |
   "(" ExpansionChoice() {result=(Expansion)peekNode();} ")"
   [ 
+   LOOKAHEAD(<BANG> TreeNodeDescriptor())
    <BANG> {result.setForced(true);}
    | 
    "+" #OneOrMore(4) { result = (OneOrMore) peekNode();}

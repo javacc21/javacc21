@@ -176,7 +176,7 @@
            addParsingProblem(new ParsingProblem(message, virtualToken));
        } 
 [/#if]      
-       throw new ParseException(current_token);
+       throw new ParseException(current_token, EnumSet.of(expectedType));
   }
   
   

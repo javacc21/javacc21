@@ -3,6 +3,9 @@
    package ${grammar.parserPackage};
 [/#if]
 
+   import java.util.EnumSet;
+
+
 /**
  * This exception is thrown when parse errors are encountered.
  * You can explicitly create objects of this exception type by
@@ -14,28 +17,51 @@
  */
 
 @SuppressWarnings("serial")
-public class ParseException extends Exception {
+public class ParseException extends Exception implements ${grammar.constantsClassName} {
 
   // The token we tripped up on.
-  Token token;
+  private Token token;
+  //We were expecting one of these token types
+  private EnumSet<TokenType> expectedTypes;
 
   public ParseException() {
     super();
   }
-
+  
+  
+  public ParseException(Token token, EnumSet<TokenType> expectedTypes) {
+      this.token = token;
+      this.expectedTypes = expectedTypes;
+  }
+  
   public ParseException(String message) {
     super(message);
   }
   
   public ParseException(Token token) {
-    this.token = token;     
+     this.token = token;
   }
   
+  
   public String getMessage() {
-     if (token == null) {
-        return super.getMessage();
+     String msg = super.getMessage();
+     if (token == null && expectedTypes == null) {
+        return msg;
      }
-     return "Encountered an error on (or somewhere around) " +  token.getLocation();
+     StringBuilder buf = new StringBuilder();
+     if (msg != null) buf.append(msg);
+     buf.append("\nEncountered an error on (or somewhere around) " + token.getLocation());
+     if (expectedTypes != null) {
+         buf.append("\nWas expecting one of the following:\n");
+         boolean isFirst = true;
+         for (TokenType type : expectedTypes) {
+             if (isFirst) buf.append(",");
+             isFirst = false;
+             buf.append(type);
+         }
+     }
+     buf.append("\nFound: " + token + " of type " + token.getType());
+     return buf.toString();
   }
   
  static public String addEscapes(String str) {

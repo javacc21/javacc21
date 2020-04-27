@@ -28,6 +28,14 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
  --]
+ 
+ 
+ [#--  
+        This is the one remaining template file that is still a god-awful mess and, I (JR) have to admit 
+        still quite opaque to me. The corresponding Java code is the stuff in com.javacc.lexgen package
+        that, along with this template, will eventually be cleaned up, probably a more accurate 
+        description is torn up and rewritten. 
+  --]
 
  [#var options=grammar.options, lexerData=grammar.lexerData]
  [#var tokenCount=lexerData.tokenCount]
