@@ -56,7 +56,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
          boolean isFirst = true;
          for (TokenType type : expectedTypes) {
              if (!isFirst) buf.append(", ");
-             isFirst = ;
+             isFirst = false;
              buf.append(type);
          }
      }
