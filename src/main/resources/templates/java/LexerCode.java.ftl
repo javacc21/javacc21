@@ -99,11 +99,7 @@
 
   
   [#--  Need to figure out how to simplify this --]
-[#if grammar.options.faultTolerant]  
-  Token nextToken() {
-[#else]
-  public Token getNextToken() {
-[/#if]    
+  private Token nextToken() {
     Token specialToken = null;
     Token matchedToken;
     int curPos = 0;
@@ -339,24 +335,17 @@
      [/#if]
    [/#if]
    }
-     int error_line = input_stream.getEndLine();
+    int error_line = input_stream.getEndLine();
     int error_column = input_stream.getEndColumn();
     String error_after = null;
     error_after = curPos <= 1 ? "" : input_stream.getImage();
-  [#if options.faultTolerant]
     if (invalidToken == null) {
        invalidToken = new InvalidToken(""+ curChar);
        invalidToken.setBeginLine(error_line);
        invalidToken.setBeginColumn(error_column);
     } else {
-       invalidToken.image = invalidToken.image + curChar;
+       invalidToken.image += curChar;
     }
-  [#else]
-    Token invalidToken = new InvalidToken("" + curChar);
-    invalidToken.specialToken = specialToken;
-    invalidToken.setBeginLine(error_line);
-    invalidToken.setBeginColumn(error_column);
- [/#if]
     invalidToken.setEndLine(error_line);
     invalidToken.setEndColumn(error_column);
     return invalidToken;

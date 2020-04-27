@@ -127,9 +127,6 @@ public final void backup(int amount) {
   };
 [/#if]
   
-[#if options.faultTolerant]  
-  private InvalidToken invalidToken; 
-[/#if]
 
 void addToken(Token token) {
     [#if !options.hugeFileSupport]
@@ -151,32 +148,43 @@ void addToken(Token token) {
     }
 [#if grammar.options.legacyAPI]
     /**
-      * @deprecated Use the switchTo method.. that takes an Enum
+      * @deprecated Use the switchTo method that takes an Enum
       */
     @Deprecated
     public void SwitchTo(int lexState) {
        switchTo(LexicalState.values()[lexState]);
     }
     
-    
     @Deprecated
     public void setTabSize(int  size) {this.tabSize=tabSize;}
 [/#if]
 
- [#if grammar.options.faultTolerant]
+  private InvalidToken invalidToken; 
+  private Token pendingToken;
+  
   public Token getNextToken() {
+      if (pendingToken != null) {
+          Token result = pendingToken;
+          pendingToken = null;
+          return result;
+      }
       Token tok = null;
       do {
          tok = nextToken();
       }  while (tok instanceof InvalidToken);
       if (invalidToken != null) {
           addToken(invalidToken);
-          invalidToken = null;
+          invalidToken.setNext(tok);
+          Token it = invalidToken;
+          pendingToken = tok;
+          this.invalidToken = null;
+          return it;
       }
       addToken(tok);
       return tok;
  }
-[/#if]
+
+
  [#if options.hugeFileSupport]
     [#embed "LegacyTokenBuilder.java.ftl"]
  [/#if]

@@ -78,7 +78,6 @@
 [#else]
     private final boolean tolerantParsing = false;
 [/#if]
-[#if grammar.options.faultTolerant]
     public boolean isParserTolerant() {return tolerantParsing;}
     
     public void setParserTolerant(boolean tolerantParsing) {
@@ -91,6 +90,7 @@
       [/#if]
     }
 
+[#if grammar.options.faultTolerant]
     private Token insertVirtualToken(TokenType tokenType) {
         Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenType);
         virtualToken.setUnparsed(true);
@@ -120,15 +120,17 @@
       private Token consumeToken(TokenType expectedType) throws ParseException {
         boolean forced = false;
  [/#if]
-  
+        InvalidToken invalidToken = null;
         Token oldToken = current_token;
         current_token = current_token.getNext();
         if (current_token == null ) {
-           current_token = token_source.getNextToken();
+            current_token = token_source.getNextToken();
         }
 [#if grammar.options.faultTolerant]        
-        if (!tolerantParsing) {
-            throw new ParseException(current_token);
+        if (tolerantParsing && current_token instanceof InvalidToken) {
+             addParsingProblem(new ParsingProblem("Lexically invalid input", current_token));
+             invalidToken = (InvalidToken) current_token;
+             current_token = token_source.getNextToken();     
         }
 [/#if]        
         if (current_token.getType() != expectedType) {
@@ -144,7 +146,10 @@
   [/#if]
   [#if grammar.usesOpenNodeScopeHook]
           openNodeScopeHook(current_token);
-  [/#if]          
+  [/#if]
+          if (invalidToken != null) {
+             pushNode(invalidToken);
+          }          
           pushNode(current_token);
   [#if grammar.usesjjtreeCloseNodeScope]
           jjtreeCloseNodeScope(current_token);
@@ -159,9 +164,6 @@
   }
  
   private void handleUnexpectedTokenType(TokenType expectedType,  boolean forced, Token oldToken) throws ParseException {
-        if (!tolerantParsing) {
-            throw new ParseException(current_token);
-       } 
 [#if grammar.options.faultTolerant]    
        if (forced && tolerantParsing) {
            Token nextToken = current_token;
@@ -172,10 +174,9 @@
            String message = "Expecting token type "+ expectedType + " but encountered " + nextToken.getType();
            message += "\nInserting virtual token to continue parsing";
            addParsingProblem(new ParsingProblem(message, virtualToken));
-       } else {
-          throw new ParseException(current_token);
-      }
+       } 
 [/#if]      
+       throw new ParseException(current_token);
   }
   
   
