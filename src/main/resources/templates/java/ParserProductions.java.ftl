@@ -141,7 +141,8 @@
           ParseException ${parseExceptionVar} = null;
          try {
     [/#if]
-        [#if production??]${production.javaCode}[/#if]
+        [@pushCall expansion/]
+        ${(production.javaCode)!}
         [@BuildPhase1Code expansion/]
     [#if production?? && production.returnType == "void"]
         if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");
@@ -167,6 +168,7 @@
 [/#if]	
          }
          finally {
+             [@popCall expansion /]
 [#if !grammar.options.faultTolerant]
              if (buildTree) {
                  if (${parseExceptionVar} != null) {
@@ -230,6 +232,18 @@
        [#if callingScope.treeNodeBehavior.gtNode]
           [#set closeCondition = "nodeArity() > " + callingScope.closeCondition in callingScope]
        [/#if]
+    [/#if]
+[/#macro]
+
+[#macro pushCall expansion]
+    [#if expansion.class.simpleName == "NonTerminal"]
+        pushOntoCallStack("${currentProduction.name}", "${expansion.inputSource}", ${expansion.beginLine});
+    [/#if]
+[/#macro]
+
+[#macro popCall expansion]
+    [#if expansion.class.simpleName == "NonTerminal"]
+       popCallStack();
     [/#if]
 [/#macro]
 
@@ -368,11 +382,12 @@
    [#var actions=[], expansions = []]
    [#var defaultAction, inPhase1 = false, indentLevel = 0]
    [#set defaultAction]
+       pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
        throw new ParseException(current_token.getNext(), EnumSet.of( 
        [#list choice.firstSetTokenNames as type]
           [#if type_index>0],[/#if]TokenType.${type}
         [/#list]
-        ));
+        ), callStack);
    [/#set]
    [#list choice.choices as nested]
       [#var action]

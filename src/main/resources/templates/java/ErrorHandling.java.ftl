@@ -53,7 +53,16 @@
     setTracingEnabled(false);
   }
  
+ArrayList<StackTraceElement> callStack = new ArrayList<>();
 
+void pushOntoCallStack(String methodName, String fileName, int line) {
+   StackTraceElement item = new StackTraceElement(this.getClass().getName(), methodName, fileName, line);
+   callStack.add(item);
+}
+
+void popCallStack() {
+    callStack.remove(callStack.size() -1);
+}
 
 [#if grammar.options.faultTolerant]
     private boolean tolerantParsing= true;
@@ -176,7 +185,7 @@
            addParsingProblem(new ParsingProblem(message, virtualToken));
        } 
 [/#if]      
-       throw new ParseException(current_token, EnumSet.of(expectedType));
+       throw new ParseException(current_token, EnumSet.of(expectedType), callStack);
   }
   
   

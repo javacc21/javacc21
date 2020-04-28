@@ -3,7 +3,7 @@
    package ${grammar.parserPackage};
 [/#if]
 
-   import java.util.EnumSet;
+   import java.util.*;
 
 
 /**
@@ -23,15 +23,20 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   private Token token;
   //We were expecting one of these token types
   private EnumSet<TokenType> expectedTypes;
+  
+  private List<StackTraceElement> callStack;
+  
+  private boolean alreadyAdjusted;
 
   public ParseException() {
     super();
   }
   
   
-  public ParseException(Token token, EnumSet<TokenType> expectedTypes) {
+  public ParseException(Token token, EnumSet<TokenType> expectedTypes, List<StackTraceElement> callStack) {
       this.token = token;
       this.expectedTypes = expectedTypes;
+      this.callStack = callStack;
   }
   
   public ParseException(String message) {
@@ -41,6 +46,48 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   public ParseException(Token token) {
      this.token = token;
   }
+  
+  private void adjustStackTrace() {
+      if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;
+      List<StackTraceElement> fullTrace = new LinkedList<>();
+      List<StackTraceElement> ourCallStack = new LinkedList<>(callStack);
+      StackTraceElement[] jvmCallStack = super.getStackTrace();
+      for (StackTraceElement regularEntry : jvmCallStack) {
+           if (ourCallStack.isEmpty()) break;
+           String methodName = regularEntry.getMethodName();
+           StackTraceElement ourEntry = lastElementWithName(ourCallStack, methodName);
+           if (ourEntry!= null) {
+               fullTrace.add(ourEntry);
+           }
+           fullTrace.add(regularEntry);
+      }
+      StackTraceElement[] result = new StackTraceElement[fullTrace.size()];
+      setStackTrace(fullTrace.toArray(result));
+      alreadyAdjusted = true;
+  }
+  
+  private StackTraceElement lastElementWithName(List<StackTraceElement> elements, String methodName) {
+      for (ListIterator<StackTraceElement> it = elements.listIterator(elements.size()); it.hasPrevious();) {
+           StackTraceElement elem = it.previous();
+           if (elem.getMethodName().equals(methodName)) {
+                it.remove();
+                return elem;
+           }
+      }
+      return null;
+  }
+  
+  public StackTraceElement[] getStackTrace() {
+      adjustStackTrace();
+      return super.getStackTrace();
+  }
+  
+  
+  public void printStackTrace(java.io.PrintStream s) {
+        adjustStackTrace();
+        super.printStackTrace(s);
+     }
+   
   
   
   public String getMessage() {
@@ -64,7 +111,9 @@ public class ParseException extends Exception implements ${grammar.constantsClas
              buf.append(type);
          }
      }
-     buf.append("\nFound: " + token + " of type " + token.getType());
+     String content = token.toString();
+     if (content.length() > 32) content = content.substring(0, 32) + "...";
+     buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
      return buf.toString();
   }
   
