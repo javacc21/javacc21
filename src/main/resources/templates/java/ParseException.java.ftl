@@ -36,7 +36,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   public ParseException(Token token, EnumSet<TokenType> expectedTypes, List<StackTraceElement> callStack) {
       this.token = token;
       this.expectedTypes = expectedTypes;
-      this.callStack = callStack;
+      this.callStack = new ArrayList<>(callStack);
   }
   
   public ParseException(String message) {

@@ -116,7 +116,7 @@
 
 [#macro BuildCode expansion]
   // Code for ${expansion.name!"expansion"} specified on line ${expansion.beginLine} of ${expansion.inputSource}
-    [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName, closeCondition = "true"]
+    [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName, closeCondition = "true", callStackSizeVar]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
@@ -129,7 +129,7 @@
     [#if buildTreeNode]
         [@setupTreeVariables .scope /]
         [#if grammar.options.faultTolerant]
-          [#if forced]
+         [#if forced]
               boolean ${forcedVarName} = this.tolerantParsing;
           [#else]
               boolean ${forcedVarName} = this.tolerantParsing && currentNTForced;
@@ -139,6 +139,9 @@
         [/#if]
    	[@createNode treeNodeBehavior nodeVarName /]
           ParseException ${parseExceptionVar} = null;
+          [#set newVarIndex = newVarIndex +1]
+          [#set callStackSizeVar = "callStackSize" + newVarIndex]
+          int ${callStackSizeVar} = callStack.size();
          try {
     [/#if]
         [@pushCall expansion/]
@@ -168,7 +171,9 @@
 [/#if]	
          }
          finally {
-             [@popCall expansion /]
+             if (${parseExceptionVar} == null) {
+                restoreCallStack(${callStackSizeVar});
+             }
 [#if !grammar.options.faultTolerant]
              if (buildTree) {
                  if (${parseExceptionVar} != null) {
@@ -191,6 +196,7 @@
                      if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) { 
+                        restoreCallStack(${callStackSizeVar});
                         Token virtualToken = insertVirtualToken(TokenType.${expansion.finalSet.firstTokenName});  
                         String message = "Inserted virtual token of type " + virtualToken.getType()
                                                   +"\non line " + virtualToken.getBeginLine()

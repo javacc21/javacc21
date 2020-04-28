@@ -64,6 +64,12 @@ void popCallStack() {
     callStack.remove(callStack.size() -1);
 }
 
+void restoreCallStack(int prevSize) {
+    while (callStack.size() > prevSize) {
+       popCallStack();
+    }
+}
+
 [#if grammar.options.faultTolerant]
     private boolean tolerantParsing= true;
     private boolean currentNTForced = false;
