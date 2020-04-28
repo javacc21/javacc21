@@ -364,6 +364,7 @@
 [/#macro]
 
 [#macro BuildPhase1CodeChoice choice]
+   [#-- TODO: This macro is too gnarly, need to break it up and simplify it  --]
    [#var actions=[], expansions = []]
    [#var defaultAction, inPhase1 = false, indentLevel = 0]
    [#set defaultAction]

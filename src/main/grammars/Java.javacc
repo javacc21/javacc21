@@ -1324,7 +1324,7 @@ INJECT(ThrowsList) :
 }
 {
     public List<Node> getTypes() {
-        List<Node> result = new ArrayList<Node>();
+        List<Node> result = new ArrayList<>();
         for (Node n : children) {
            if ((n instanceof Name) || (n instanceof Identifier)) {
               result.add(n);
