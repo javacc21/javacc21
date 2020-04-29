@@ -68,6 +68,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * The string image of the token.
      */
     String image;
+    
+    public String getImage() {
+        return image;
+    }
 
 
 [#if grammar.options.legacyAPI]

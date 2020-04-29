@@ -32,6 +32,7 @@
 
 [#macro Generate]
     [@Productions/]
+    [#-- @firstSetVars/--]
     [#if parserData.phase2Expansions?size !=0]
        [@Phase2 /]
        [@Phase3/]
@@ -99,8 +100,27 @@
    [/#list]
 [/#macro]   
 
+[#macro firstSetVars]
+    //=================================
+     // EnumSets that represent the various expansions' first set (i.e. the set of tokens with which the expansion can begin)
+     //=================================
+    [#list grammar.expansionsForFirstSet as expansion]
+          [@firstSetVar expansion/]
+    [/#list]
+[/#macro]
+
+[#macro firstSetVar expansion]
+    static private final EnumSet<TokenType> ${expansion.firstSetVarName} = EnumSet.of(
+        [#list expansion.firstSetTokenNames as type]
+           [#if type_index >0],[/#if]
+           TokenType.${type}
+        [/#list]
+    );
+[/#macro]
 
 [#macro ParserProduction production]
+    [@firstSetVar production.expansion/]
+
     ${production.leadingComments}
 // ${production.inputSource}, line ${production.beginLine}
     final ${production.accessMod!"public"} 
@@ -157,7 +177,7 @@
       [#if !grammar.options.faultTolerant]
              throw e;
       [#else]             
-             if (trace_enabled) LOGGER.info("We have a parse error but somehow handled it. (Or did we?)");
+             if (trace_enabled) LOGGER.info("We have a parse error but are in in fault-tolerant mode, so we try to handle it.");
 	    [#if production?? && production.returnType != "void"]
 	       [#if production.returnType == production.nodeName]
 	          [#-- We just assume that if the return type is the same as the type of the node, we want to return CURRENT_NODE.
@@ -176,13 +196,13 @@
              }
 [#if !grammar.options.faultTolerant]
              if (buildTree) {
-                 if (${parseExceptionVar} != null) {
+                 if (${parseExceptionVar} == null) {
+                      ${nodeVarName}.setEndLine(current_token.getEndLine());
+                      ${nodeVarName}.setEndColumn(current_token.getEndColumn());
+                     closeNodeScope(${nodeVarName}, ${closeCondition});
+                 } else {
                      if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
                      clearNodeScope();
-                 } else {
-	                  ${nodeVarName}.setEndLine(current_token.getEndLine());
-		              ${nodeVarName}.setEndColumn(current_token.getEndColumn());
- 	                 closeNodeScope(${nodeVarName}, ${closeCondition});
                  }
              }
 [#else]
@@ -193,6 +213,8 @@
  	                 closeNodeScope(${nodeVarName}, ${closeCondition});
                  }
 	             else {
+	                 //See if this fixes things somewhat.
+	                 resetNextToken();
                      if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) { 

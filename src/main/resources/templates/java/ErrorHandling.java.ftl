@@ -88,8 +88,17 @@ private void restoreCallStack(int prevSize) {
     
     public boolean hasParsingProblems() {
         return parsingProblems != null && !parsingProblems.isEmpty();
-    }
+    }    
 
+    private void resetNextToken() {
+       Token nextToken = current_token.getNext();
+       if (nextToken != null) {
+           String image = nextToken.getImage();
+           token_source.backup(image.length());
+           current_token.setNext(null);
+       }
+  }
+  
 [#else]
     private final boolean tolerantParsing = false;
 [/#if]
@@ -193,5 +202,4 @@ private void restoreCallStack(int prevSize) {
 [/#if]      
        throw new ParseException(current_token, EnumSet.of(expectedType), callStack);
   }
-  
   

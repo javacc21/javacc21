@@ -149,6 +149,9 @@ public class JavaFormatter {
             	newLine();
             	buf.append("@");
             	break;
+            case COMMA :
+                buf.append(", ");
+                break;
             default:
                 if (buf.length() > 0) {
                     char lastChar = buf.charAt(buf.length() -1);

@@ -384,6 +384,22 @@ public class Grammar extends BaseNode {
     public void addLexicalState(String name) {
         lexicalStates.add(name);
     }
+    
+    public List<Expansion> getExpansionsForFirstSet() {
+        HashSet<String> usedNames = new HashSet<>();
+        List<Expansion> result = new ArrayList<>();
+        for (Expansion expansion : descendantsOfType(Expansion.class)) {
+            if (expansion.getFirstSet().cardinality() ==0) continue;
+            String varName = expansion.getFirstSetVarName();
+            if (!usedNames.contains(varName)) {
+                result.add(expansion);
+                usedNames.add(varName);
+            }
+        }
+        return result;
+        
+//        return this.descendants((n) -> !(n.getParent() instanceof BNFProduction) && (n instanceof ExpansionSequence));
+    }
 
     /**
      * The list of all TokenProductions from the input file. This list includes

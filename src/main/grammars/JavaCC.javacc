@@ -947,6 +947,10 @@ INJECT(BNFProduction) :
         }
         return firstSet;
     }
+
+    public String getFirstSetVarName() {
+        return getName() + "_FIRST_SET";
+    }
     
     public TokenSet getFinalSet() {
         if (finalSet == null) {
@@ -1414,6 +1418,21 @@ INJECT(ExpansionSequence) :
           }
           return min;
    }
+   
+   public boolean isSingleton() {
+       return getUnits().size() == 1 && getLookahead() == null;
+   }
+   
+   public String getFirstSetVarName() {
+       if (isSingleton()) {
+          NonTerminal nt = firstChildOfType(NonTerminal.class);
+          if (nt != null) {
+              return nt.getFirstSetVarName();
+          }
+       }
+       return super.getFirstSetVarName();
+   }
+   
 }
 
 Lookahead Lookahead() #Lookahead :

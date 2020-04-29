@@ -88,7 +88,7 @@ abstract public class Expansion extends BaseNode {
 
     long myGeneration = 0; //REVISIT
     
-    private String phase2RoutineName, phase3RoutineName;
+    private String phase2RoutineName, phase3RoutineName, firstSetVarName;
     
     public String getLabel() {
     	return label;
@@ -202,6 +202,17 @@ abstract public class Expansion extends BaseNode {
     public void setForced(boolean forced) {this.forced = forced;}
 
     public boolean getForced() {return this.forced;}
+    
+    public String getFirstSetVarName() {
+        if (firstSetVarName == null) {
+            if (this.getParent() instanceof BNFProduction) {
+                firstSetVarName = ((BNFProduction) getParent()).getFirstSetVarName();
+            } else {
+                firstSetVarName = getGrammar().generateUniqueIdentifier("first_set$", this);
+            }
+        }
+        return firstSetVarName;
+    }
 
     public String getPhase2RoutineName() {
         if (phase2RoutineName == null) {
