@@ -53,18 +53,18 @@
     setTracingEnabled(false);
   }
  
-ArrayList<StackTraceElement> callStack = new ArrayList<>();
+private ArrayList<StackTraceElement> callStack = new ArrayList<>();
 
-void pushOntoCallStack(String methodName, String fileName, int line) {
+private void pushOntoCallStack(String methodName, String fileName, int line) {
    StackTraceElement item = new StackTraceElement(this.getClass().getName(), methodName, fileName, line);
    callStack.add(item);
 }
 
-void popCallStack() {
+private void popCallStack() {
     callStack.remove(callStack.size() -1);
 }
 
-void restoreCallStack(int prevSize) {
+private void restoreCallStack(int prevSize) {
     while (callStack.size() > prevSize) {
        popCallStack();
     }

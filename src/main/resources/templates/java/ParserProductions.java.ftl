@@ -144,7 +144,7 @@
           int ${callStackSizeVar} = callStack.size();
          try {
     [/#if]
-        [@pushCall expansion/]
+        [#--  --@pushCall expansion/--]
         ${(production.javaCode)!}
         [@BuildPhase1Code expansion/]
     [#if production?? && production.returnType == "void"]
@@ -334,21 +334,23 @@
 [/#macro]
 
 [#macro BuildPhase1CodeNonTerminal nonterminal]
+   pushOntoCallStack("${currentProduction.name}", "${nonterminal.inputSource}", ${nonterminal.beginLine}); 
    [#if grammar.options.faultTolerant && !nonterminal.production.forced]
-   [@newVar type="boolean" init="currentNTForced"/]
-   try {
-      currentNTForced = ${nonterminal.forced?string("true", "false")};
+     [@newVar type="boolean" init="currentNTForced"/]
+    currentNTForced = ${nonterminal.forced?string("true", "false")};
    [/#if]
+   try {
    [#if !nonterminal.LHS??]
        ${nonterminal.name}(${nonterminal.args!});
    [#else]
        ${nonterminal.LHS} = ${nonterminal.name}(${nonterminal.args!});
     [/#if]
-    [#if grammar.options.faultTolerant && !nonterminal.production.forced]
     } finally {
+        popCallStack();
+    [#if grammar.options.faultTolerant && !nonterminal.production.forced]
         currentNTForced = boolean${newVarIndex};
-    }
     [/#if]
+    }
 [/#macro]
 
 
