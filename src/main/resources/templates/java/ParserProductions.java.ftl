@@ -219,7 +219,10 @@
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) { 
                         restoreCallStack(${callStackSizeVar});
-                        Token virtualToken = insertVirtualToken(TokenType.${expansion.finalSet.firstTokenName});  
+                        Token virtualToken = insertVirtualToken(TokenType.${expansion.finalSet.firstTokenName}); 
+                        if (tokensAreNodes) {
+                            currentNodeScope.add(virtualToken);
+                        } 
                         String message = "Inserted virtual token of type " + virtualToken.getType()
                                                   +"\non line " + virtualToken.getBeginLine()
                                                   + ", column " + virtualToken.getBeginColumn()

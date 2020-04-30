@@ -128,9 +128,9 @@ private void restoreCallStack(int prevSize) {
      [#if grammar.lexerData.numLexicalStates >1]
             token_source.doLexicalStateSwitch(tokenType);
      [/#if]
-        if (tokensAreNodes && buildTree) {
-             currentNodeScope.add(virtualToken);           
-        }
+//        if (tokensAreNodes && buildTree) {
+//             currentNodeScope.add(virtualToken);           
+//        }
         return virtualToken;
     }
   
@@ -198,7 +198,7 @@ private void restoreCallStack(int prevSize) {
            String message = "Expecting token type "+ expectedType + " but encountered " + nextToken.getType();
            message += "\nInserting virtual token to continue parsing";
            addParsingProblem(new ParsingProblem(message, virtualToken));
-       } 
+       } else 
 [/#if]      
        throw new ParseException(current_token, EnumSet.of(expectedType), callStack);
   }

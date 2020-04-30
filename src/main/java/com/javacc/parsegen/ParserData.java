@@ -78,8 +78,6 @@ public class ParserData {
         }
         // Not sure why it's necessary, but we need to get rid of duplicates
         this.phase3list = new ArrayList<>(new LinkedHashSet<>(phase3list));
-//        System.out.println("KILROY 1: " + phase2list.size());
-//        System.out.println("KILROY 2: " + phase3list.size());
     }
 
     public List<Expansion> getPhase2Expansions() {
