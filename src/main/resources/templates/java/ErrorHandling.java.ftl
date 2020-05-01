@@ -74,6 +74,9 @@ private void restoreCallStack(int prevSize) {
     private boolean tolerantParsing= true;
     private boolean currentNTForced = false;
     private List<ParsingProblem> parsingProblems;
+    // This is the last "legit" token consumed by the parsing machinery, not
+    // a virtual or invalid Token inserted to continue parsing.
+    private Token lastParsedToken;
     
     public void addParsingProblem(ParsingProblem problem) {
         if (parsingProblems == null) {
@@ -91,12 +94,8 @@ private void restoreCallStack(int prevSize) {
     }    
 
     private void resetNextToken() {
-       Token nextToken = current_token.getNext();
-       if (nextToken != null) {
-           String image = nextToken.getImage();
-           token_source.backup(image.length());
-           current_token.setNext(null);
-       }
+       current_token.setNext(null);
+       token_source.reset(current_token);
   }
   
 [#else]
@@ -116,7 +115,7 @@ private void restoreCallStack(int prevSize) {
 
 [#if grammar.options.faultTolerant]
     private Token insertVirtualToken(TokenType tokenType) {
-        Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenType);
+        Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenType, getInputSource());
         virtualToken.setLexicalState(token_source.lexicalState);
         virtualToken.setUnparsed(true);
         virtualToken.setVirtual(true);
@@ -127,7 +126,9 @@ private void restoreCallStack(int prevSize) {
         virtualToken.setBeginColumn(column);
         virtualToken.setEndColumn(column);
      [#if grammar.lexerData.numLexicalStates >1]
-            token_source.doLexicalStateSwitch(tokenType);
+            if (token_source.doLexicalStateSwitch(tokenType)); {
+                resetNextToken();
+            }
      [/#if]
         return virtualToken;
     }
@@ -154,10 +155,15 @@ private void restoreCallStack(int prevSize) {
              invalidToken = (InvalidToken) current_token;
              current_token = token_source.getNextToken();     
         }
-[/#if]        
+[/#if]
         if (current_token.getType() != expectedType) {
             handleUnexpectedTokenType(expectedType, forced, oldToken) ;
-        }      
+        }
+[#if grammar.options.faultTolerant]
+        else {
+            this.lastParsedToken = current_token;
+        }
+[/#if]
 [#if grammar.options.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.options.userDefinedLexer]

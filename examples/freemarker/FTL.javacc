@@ -105,7 +105,7 @@ INJECT(FTLLexer) :
     void CommonTokenAction(Token tok) {
         if (tok.getType() == TokenType.EOF) return;
         if (noWhitespaceInExpression && parenthesisNesting ==0 && braceNesting==0 && tok.specialToken != null) {
-            if (tok.specialToken.image.trim().length() == 0) {
+            if (tok.specialToken.getImage().trim().length() == 0) {
                 Token copy = cloneToken(tok);
                 copy.specialToken = null;
                 copyFieldsOfToken(tok.specialToken, tok);
@@ -116,18 +116,18 @@ INJECT(FTLLexer) :
                 return;
             }
         }
-        char firstChar = tok.image.charAt(0);
-        char lastChar = tok.image.charAt(tok.image.length() -1);
+        char firstChar = tok.getImage().charAt(0);
+        char lastChar = tok.getImage().charAt(tok.getImage().length() -1);
         boolean hasPointyDelimiter = firstChar == '<' || lastChar == '>';
         if (rightAfterHeader) {
             // chop off the newline after a <#ftl ...> header
             rightAfterHeader = false;
             if (tok.getType() == TokenType.WHITESPACE) {
-                String img = tok.image;
+                String img = tok.getImage();
                 int idx = img.indexOf('\n');
                 if (idx <0) idx = img.indexOf('\r');
                 if (idx >=0) {
-                    tok.image = img.substring(++idx);
+                    tok.setImage(img.substring(++idx));
                     tok.beginLine++;
                     tok.beginColumn = 1;
                 }
@@ -173,7 +173,7 @@ INJECT(FTLLexer) :
               if (parenthesisNesting == 0 && olderSyntax) {
                  tok.setType(TokenType.CLOSE_TAG);
                  if (tok.getType() == TokenType.GTE) {
-                      tok.image = ">";
+                      tok.setImage(">");
                       tok.endColumn--;
                       input_stream.backup(1);
                  }
@@ -202,7 +202,7 @@ INJECT(FTLLexer) :
               else SwitchTo(TEMPLATE_TEXT);
               break;
               default :
-              if (lastMatchedTokenType == TokenType.DOT && possibleIdentifier(tok.image)) {
+              if (lastMatchedTokenType == TokenType.DOT && possibleIdentifier(tok.getImage())) {
                   tok.setType(TokenType.IDENTIFIER);
               }
         }
@@ -219,7 +219,7 @@ INJECT(FTLLexer) :
 
     private void copyFieldsOfToken (Token src, Token dest) {
         dest.setType(src.getType());
-        dest.image = src.image;
+        dest.setImage(src.getImage());
         dest.specialToken = src.specialToken;
         Token next = src.getNext();
         dest.setNext(next);
@@ -231,7 +231,7 @@ INJECT(FTLLexer) :
     }
 
     private Token cloneToken(Token t) {
-        Token result = Token.newToken(t.getType(), t.image);
+        Token result = Token.newToken(t.getType(), t.getImage(), getInputSource());
         copyFieldsOfToken(t, result);
         return result;
     }
@@ -428,7 +428,7 @@ void Assignment() :
           [<IN> Expression()]
          <CLOSE_TAG>
          Block()
-         DirectiveEnd(t.image)
+         DirectiveEnd(t.getImage())
       )
     )
 }
@@ -748,7 +748,7 @@ void MacroDefinition() :
     [<CLOSE_PAREN>]
     <CLOSE_TAG>
     Block()
-    DirectiveEnd(t.image)
+    DirectiveEnd(t.getImage())
 }
 
 void ParameterList() : {}
@@ -784,7 +784,7 @@ void DirectiveEnd(String name) :
 {
     t=<END_DIRECTIVE>
     {
-        String tag = t.image;
+        String tag = t.getImage();
         tag=tag.substring(3);
         tag=tag.substring(0, tag.length() -1).trim();
         if (tag.length() !=0 && !name.equals(tag)) {

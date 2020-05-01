@@ -352,7 +352,7 @@
        invalidToken.setBeginLine(error_line);
        invalidToken.setBeginColumn(error_column);
     } else {
-       invalidToken.image += curChar;
+       invalidToken.setImage(invalidToken.getImage() + curChar);
     }
     invalidToken.setEndLine(error_line);
     invalidToken.setEndColumn(error_column);
@@ -434,9 +434,9 @@
         endColumn = input_stream.getEndColumn();
     [/#if]
     [#if options.tokenFactory != ""] 
-        t = ${options.tokenFactory}.newToken(TokenType.values()[jjmatchedKind], curTokenImage);
+        t = ${options.tokenFactory}.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
     [#else]
-        t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage);
+        t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
     [/#if]
         t.beginLine = beginLine;
         t.endLine = endLine;

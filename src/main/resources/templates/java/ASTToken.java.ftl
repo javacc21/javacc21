@@ -54,7 +54,10 @@ public class ${classname} extends ${superclass} {
         this(TokenType.values()[kind], image);
     }
 [/#if]    
-    public ${classname}(TokenType type, String image) {
-        super(type, image);
+    public ${classname}(TokenType type, String image, String inputSource) {
+        super(type, image, inputSource);
     }
-}}
+    public ${classname}(TokenType type, String image) {
+        this(type, image, "input");
+    }
+}

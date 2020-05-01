@@ -104,16 +104,17 @@ public final void backup(int amount) {
 
   LexicalState lexicalState = LexicalState.${lexerData.lexicalStates[0].name};
  
-  [#if numLexicalStates>1]
-   void doLexicalStateSwitch(int tokenType) {
+[#if numLexicalStates>1]
+   boolean doLexicalStateSwitch(int tokenType) {
        LexicalState newLexState = newLexicalStates[tokenType];
        if (newLexState != null) {
-           switchTo(newLexState);
+           return switchTo(newLexState);
        }
+       return false;
    }
    
-   void doLexicalStateSwitch(TokenType tokenType) {
-       doLexicalStateSwitch(tokenType.ordinal());
+   boolean doLexicalStateSwitch(TokenType tokenType) {
+       return doLexicalStateSwitch(tokenType.ordinal());
    }
   
   private static final LexicalState[] newLexicalStates = {
@@ -140,19 +141,21 @@ void addToken(Token token) {
 [/#if]
 
     /** Switch to specified lexical state. */
-    public void switchTo(LexicalState lexState) {
+    public boolean switchTo(LexicalState lexState) {
         if (this.lexicalState != lexState) {
            if (trace_enabled) LOGGER.info("Switching from lexical state " + this.lexicalState + " to " + lexState);
+           this.lexicalState = lexState;
+           return true;
         }
-        this.lexicalState = lexState;
+        return false;
     }
 [#if grammar.options.legacyAPI]
     /**
       * @deprecated Use the switchTo method that takes an Enum
       */
     @Deprecated
-    public void SwitchTo(int lexState) {
-       switchTo(LexicalState.values()[lexState]);
+    public boolean SwitchTo(int lexState) {
+       return switchTo(LexicalState.values()[lexState]);
     }
     
     @Deprecated
@@ -187,6 +190,14 @@ void addToken(Token token) {
 
  [#if options.hugeFileSupport]
     [#embed "LegacyTokenBuilder.java.ftl"]
+ [#else]
+        // Reset the token source input
+    // to just after the Token passed in.
+    void reset(Token t) {
+        input_stream.goTo(t.getEndLine(), t.getEndColumn());
+        input_stream.forward(1);
+    }
+
  [/#if]
     [#embed "LexerCode.java.ftl"] 
 }

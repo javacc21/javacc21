@@ -33,6 +33,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
    
 [/#if]
 
+[#if !grammar.options.hugeFileSupport]
+    FileLineMap getFileLineMap() {
+        return FileLineMap.getFileLineMap(getInputSource());
+    }
+[/#if]
+
     private String inputSource = "";
 
     private TokenType type;
@@ -58,8 +64,18 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     String image;
     
     public String getImage() {
+[#if !grammar.options.hugeFileSupport]    
+        if (image == null) {
+            return getFileLineMap().getText(beginLine, beginColumn, endLine, endColumn);
+        }
+[/#if]        
         return image;
     }
+    
+   void setImage(String image) {
+       this.image = image;
+   } 
+    
 [#if !grammar.options.userDefinedLexer && grammar.lexerData.tokenCount>1]
     private LexicalState lexicalState;
         
@@ -134,9 +150,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.image = image;;
     }
 [/#if]    
-    public Token(TokenType type, String image) {
+    public Token(TokenType type, String image, String inputSource) {
         this.type = type;
         this.image = image;
+        this.inputSource = inputSource;
     }
 
     public boolean isUnparsed() {
@@ -158,11 +175,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         if (getType() == TokenType.EOF) {
             return "EOF";
         }
-        return image;
+        return getImage();
     }
     
     public String getRawText() {
-        return image;
+        return getImage();
     }
     
     public String toString() {
@@ -183,17 +200,18 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 [/#if]    
     
-    public static Token newToken(TokenType type, String image) {
+    public static Token newToken(TokenType type, String image, String inputSource) {
+           [#-- if !grammar.options.hugeFileSupport]image = null;[/#if --]
            [#if grammar.options.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${re.generatedClassName}(TokenType.${re.label}, image);
+              case ${re.label} : return new ${re.generatedClassName}(TokenType.${re.label}, image, inputSource);
             [/#if]
            [/#list]
            }
        [/#if]
-       return new Token(type, image);      
+       return new Token(type, image, inputSource);      
     }
     
     public void setInputSource(String inputSource) {

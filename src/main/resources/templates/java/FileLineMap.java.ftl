@@ -37,8 +37,8 @@ package ${grammar.parserPackage};
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+
 
 /**
  * Rather bloody-minded implementation of a class to read in a file 
@@ -47,6 +47,8 @@ import java.util.List;
  */
 
 public class FileLineMap {
+    private static FileLineMap singleton;
+    private static Map<String, FileLineMap> lookup = Collections.synchronizedMap(new HashMap<>());
 
     private static final int[] EMPTY_INT = new int[0];
 
@@ -76,15 +78,32 @@ public class FileLineMap {
         this.lineOffsets = createLineOffsetsTable(this.content);
         this.tokenList = new LinkedList<>();
         this.setStartPosition(startingLine, startingColumn);
+        if (inputSource != null && inputSource.length() >0) {
+            lookup.put(inputSource, this);
+            if (lookup.size() == 1) {
+               singleton = this;
+            } else {
+               singleton = null;
+            }
+        }
     }
-
+    
+    static FileLineMap getFileLineMap(String inputSource) {
+        if (singleton != null) {
+           //KLUDGE! 
+           // If there is only one FileLineMap object, just return it regardless of 
+           // what the key passed in is! REVISIT later probably... 
+             return singleton;
+        }
+        return lookup.get(inputSource);
+    }
+    
     // START API methods
 
     // Now some methods to fulfill the functionality that used to be in that
     // SimpleCharStream class
-    // REVISIT: Currently the backup() method does not handle any of the messiness
-    // with column numbers relating to tabs
-    // or unicode escapes. (Maybe REVISIT)
+    // This backup() method is dead simple by design and does not handle any of the messiness
+    // with column numbers relating to tabs or unicode escapes. 
     public void backup(int amount) {
         for (int i = 0; i < amount; i++) {
             --bufferPosition;
@@ -96,7 +115,19 @@ public class FileLineMap {
             }
         }
     }
-
+    
+    void forward(int amount) {
+        for (int i=0; i<amount; i++) {
+            ++bufferPosition;
+            if (column < getLineLength(line)) {
+                column++;
+            } else {
+                ++line;
+                column =1;
+            }
+        }
+    }
+    
     int readChar() {
         if (bufferPosition >= content.length()) {
             return -1;
@@ -155,6 +186,13 @@ public class FileLineMap {
         tokenList.add(token);
     }
     
+    // But there is no goto in Java!!!
+    void goTo(int line, int column) {
+        this.bufferPosition = getOffset(line, column);
+        this.line = line;
+        this.column = column;
+    }
+    
     // END API methods
 
     private int getLineLength(int lineNumber) {
@@ -182,10 +220,10 @@ public class FileLineMap {
     }
 
     private int getOffset(int line, int column) {
-        int columnAdjustment = (line == startingLine) ? column - startingColumn : 1;
+        int columnAdjustment = (line == startingLine) ? startingColumn : 1;
         return lineOffsets[line - startingLine] + column - columnAdjustment;
     }
-
+    
     // ------------- private utilities method
 
     // Icky method to handle annoying stuff. Might make this public later if it is
@@ -219,8 +257,8 @@ public class FileLineMap {
                     buf.append((char) Integer.parseInt(hex, 16));
                     // col +=6;
                     ++col;
-                    // REVISIT. Should this increase by six or one? Really just a corner case
-                    // anyway.
+                    // We're not going to be trying to track line/column information relative to the original content
+                    // with tabs or unicode escape, so we just increment 1, not 6
                 }
             } else if (ch == '\r' && !preserveLines) {
                 buf.append((char) '\n');
@@ -289,7 +327,7 @@ public class FileLineMap {
         return lineOffsets.length;
     }
 
-    private String getText(int beginLine, int beginColumn, int endLine, int endColumn) {
+    String getText(int beginLine, int beginColumn, int endLine, int endColumn) {
         int startOffset = getOffset(beginLine, beginColumn);
         int endOffset = getOffset(endLine, endColumn);
         return getText(startOffset, endOffset);

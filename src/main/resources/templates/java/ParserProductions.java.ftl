@@ -214,7 +214,7 @@
                  }
 	             else {
 	                 //See if this fixes things somewhat.
-	                 resetNextToken();
+	                 //resetNextToken();
                      if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) { 

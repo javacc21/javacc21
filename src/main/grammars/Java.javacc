@@ -705,7 +705,7 @@ INJECT(TypeDeclaration) :
                 }
             }
             iterator.previous();
-            iterator.add(Token.newToken(TokenType.WHITESPACE, " "));
+            iterator.add(Token.newToken(TokenType.WHITESPACE, " ", getInputSource()));
             iterator.next();
             iterator.add(extendsList);
         }
@@ -763,7 +763,7 @@ INJECT(ExtendsList) :
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(TokenType.EXTENDS, "extends"));
+            iterator.add(Token.newToken(TokenType.EXTENDS, "extends", getInputSource()));
             iterator.next();
             iterator.add(type);
         } else {
@@ -771,7 +771,7 @@ INJECT(ExtendsList) :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(TokenType.COMMA, ","));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", getInputSource()));
             iterator.next();
             iterator.add(type);
         }
@@ -803,7 +803,7 @@ INJECT(ImplementsList) :
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements"));
+            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements", getInputSource()));
             iterator.next();
             iterator.add(type);
         } else {
@@ -811,7 +811,7 @@ INJECT(ImplementsList) :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(TokenType.COMMA, ","));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", getInputSource()));
             iterator.next();
             iterator.add(type);
         }
@@ -865,7 +865,7 @@ INJECT(TypeParameterList) :
                 iterator.next();
             }
             iterator.previous();
-            iterator.add(Token.newToken(TokenType.COMMA, ","));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", getInputSource()));
             iterator.next();
             iterator.add(param);
         }
@@ -1493,14 +1493,14 @@ void ShiftOperator() #void :
          if (third.getBeginColumn() != first.getBeginColumn() + 2) {
               throw new ParseException("Shift operator >>> cannot have spaces or comments inside!\n" + getInputSource() + ":line " + first.beginLine +":column " +first.beginColumn);
          }
-     	 first.image = ">>>";
+     	 first.setImage(">>>");
 	 	 first.setType(TokenType.RUNSIGNEDSHIFT);
 	 	 Token next = third.getNext();
 	 	 first.setNext(next);
 	 	 popNode();
 	 	 popNode();
       } else {
-         first.image = ">>";
+         first.setImage(">>");
 	 	 first.setType(TokenType.RSIGNEDSHIFT);
 	 	 Token next = second.getNext();
 	     first.setNext(next);

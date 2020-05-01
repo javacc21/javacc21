@@ -486,6 +486,10 @@ INJECT(Token) :
 
     }
     
+    void setImage(String image) {
+        this.image = image;
+    }
+    
     public String getNodeName() {
         return getType().toString();
     }
@@ -529,6 +533,11 @@ INJECT(Token) :
     public Token getNext() {
         return next;
     }
+    
+    static public Token newToken(TokenType type, String image, String inputSource) {
+        return newToken(type, image);
+    }
+  
 }
 
 
