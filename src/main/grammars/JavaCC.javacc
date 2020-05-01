@@ -266,7 +266,7 @@ INJECT(LEXER_CLASS) :
        t.setGrammar(parser.getGrammar());
        if (angleBracketNesting >0 && t.image.length() >1 && t.image.charAt(0) == '>') {
            input_stream.backup(t.image.length() -1);
-           Token gt = Token.newToken(TokenType.GT, ">");
+           Token gt = Token.newToken(TokenType.GT, ">", getInputSource());
            Nodes.copyLocationInfo(t, gt);
            gt.setEndColumn(gt.getEndColumn() -1);
            gt.setGrammar(parser.getGrammar());
@@ -274,7 +274,7 @@ INJECT(LEXER_CLASS) :
        }
        if (javaccReservedWords.contains(t.image)) {
            if (inJavaCode || (t.getType() == TokenType._OPTIONS && optionsSeen)) {
-	           Token id = Token.newToken(TokenType.IDENTIFIER, t.image);
+	           Token id = Token.newToken(TokenType.IDENTIFIER, t.image, getInputSource());
 	           Nodes.copyLocationInfo(t, id);
 	           id.setGrammar(parser.getGrammar());
 	           return id;
@@ -534,9 +534,9 @@ INJECT(Token) :
         return next;
     }
     
-    static public Token newToken(TokenType type, String image, String inputSource) {
-        return newToken(type, image);
-    }
+//    static public Token newToken(TokenType type, String image, String inputSource) {
+//        return newToken(type, image);
+//    }
   
 }
 

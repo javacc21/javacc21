@@ -45,6 +45,7 @@ package ${grammar.nodePackage};
 
 [#if package != grammar.parserPackage && grammar.parserPackage != ""]
 import ${grammar.parserPackage}.*;
+import ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType;
 [/#if]
 
 @SuppressWarnings("unused")
