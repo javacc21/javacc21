@@ -443,6 +443,9 @@
         t.beginColumn = beginColumn;
         t.endColumn = endColumn;
         t.setInputSource(this.inputSource);
+     [#if numLexicalStates >1]
+        t.setLexicalState(lexicalState);
+     [/#if]        
         return t;
     }
 

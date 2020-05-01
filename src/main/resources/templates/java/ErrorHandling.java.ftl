@@ -117,6 +117,7 @@ private void restoreCallStack(int prevSize) {
 [#if grammar.options.faultTolerant]
     private Token insertVirtualToken(TokenType tokenType) {
         Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenType);
+        virtualToken.setLexicalState(token_source.lexicalState);
         virtualToken.setUnparsed(true);
         virtualToken.setVirtual(true);
         int line = current_token.getEndLine();
@@ -128,9 +129,6 @@ private void restoreCallStack(int prevSize) {
      [#if grammar.lexerData.numLexicalStates >1]
             token_source.doLexicalStateSwitch(tokenType);
      [/#if]
-//        if (tokensAreNodes && buildTree) {
-//             currentNodeScope.add(virtualToken);           
-//        }
         return virtualToken;
     }
   

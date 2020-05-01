@@ -102,7 +102,7 @@ public final void backup(int amount) {
     input_stream.backup(amount);
 }
 
-  private LexicalState lexicalState = LexicalState.${lexerData.lexicalStates[0].name};
+  LexicalState lexicalState = LexicalState.${lexerData.lexicalStates[0].name};
  
   [#if numLexicalStates>1]
    void doLexicalStateSwitch(int tokenType) {

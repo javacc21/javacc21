@@ -11,10 +11,6 @@ import ${grammar.nodePackage}.*;
 import freemarker.template.*;
 [/#if]
 
-/**
- * Describes the input token stream.
- */
- 
  [#var extendsNode = ""]
  
  [#if grammar.options.treeBuildingEnabled]
@@ -39,13 +35,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     private String inputSource = "";
 
-    /**
-     * An integer that describes the kind of this token.  This numbering
-     * system is determined by JavaCCParser, and a table of these numbers is
-     * stored in the file ...Constants.java.
-     */
-//    int kind;
-    
     private TokenType type;
     
     public TokenType getType() {
@@ -54,7 +43,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
     void setType(TokenType type) {
         this.type=type;
-//        this.kind = type.ordinal();
     }
     
     /**
@@ -72,7 +60,17 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getImage() {
         return image;
     }
-
+[#if !grammar.options.userDefinedLexer && grammar.lexerData.tokenCount>1]
+    private LexicalState lexicalState;
+        
+    void setLexicalState(LexicalState state) {
+        this.lexicalState = state;
+    }
+    
+    LexicalState getLexicalState() {
+        return lexicalState;
+    }
+[/#if]
 
 [#if grammar.options.legacyAPI]
 
@@ -132,14 +130,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * Constructs a new token for the specified Image and Kind.
      */
     public Token(int kind, String image) {
-//        this.kind = kind;
         this.type = TokenType.values()[kind];
         this.image = image;;
     }
 [/#if]    
     public Token(TokenType type, String image) {
         this.type = type;
-//        this.kind = type.ordinal();
         this.image = image;
     }
 
@@ -159,6 +155,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
              return "Virtual Token of type " + getType();
         }
 [/#if]    
+        if (getType() == TokenType.EOF) {
+            return "EOF";
+        }
         return image;
     }
     
