@@ -525,19 +525,6 @@ INJECT(Token) :
     public void clearSpecialToken() {
         specialToken = null;
     }
-    
-    public void setNext(Token next) {
-       this.next = next;
-    }
-    
-    public Token getNext() {
-        return next;
-    }
-    
-//    static public Token newToken(TokenType type, String image, String inputSource) {
-//        return newToken(type, image);
-//    }
-  
 }
 
 

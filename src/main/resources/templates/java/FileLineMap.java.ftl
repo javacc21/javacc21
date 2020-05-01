@@ -98,6 +98,11 @@ public class FileLineMap {
         return lookup.get(inputSource);
     }
     
+    static void clearLineMapLoookup() {
+         singleton = null;
+         lookup.clear();
+    }
+    
     // START API methods
 
     // Now some methods to fulfill the functionality that used to be in that

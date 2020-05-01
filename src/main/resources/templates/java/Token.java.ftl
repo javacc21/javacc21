@@ -66,7 +66,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getImage() {
 [#if !grammar.options.hugeFileSupport]    
         if (image == null) {
-            return getFileLineMap().getText(beginLine, beginColumn, endLine, endColumn);
+            FileLineMap lineMap = getFileLineMap();
+            if (lineMap != null) {
+                return lineMap.getText(beginLine, beginColumn, endLine, endColumn);
+            } else {
+                return "" + getType();
+            }
         }
 [/#if]        
         return image;

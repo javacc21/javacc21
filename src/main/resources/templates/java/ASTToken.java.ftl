@@ -52,13 +52,10 @@ import ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType;
 public class ${classname} extends ${superclass} {
 [#if grammar.options.legacyAPI]
     public ${classname}(int kind, String image) {
-        this(TokenType.values()[kind], image);
+        this(TokenType.values()[kind], image, "input");
     }
 [/#if]    
     public ${classname}(TokenType type, String image, String inputSource) {
         super(type, image, inputSource);
-    }
-    public ${classname}(TokenType type, String image) {
-        this(type, image, "input");
     }
 }
