@@ -131,6 +131,12 @@ public interface Node
      String getInputSource();
      
      void setInputSource(String inputSource);
+     
+[#if !grammar.options.hugeFileSupport]
+     default FileLineMap getFileLineMap() {
+         return FileLineMap.getFileLineMap(getInputSource());
+     }
+[/#if]          
       
      int getBeginLine();
      
@@ -151,6 +157,19 @@ public interface Node
      default String getLocation() {
          return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
      }
+     
+     
+     /**
+      *  A regular node was created by the regular operations of the parsing machinery
+      * applying the rules, consuming tokens and building up the tree.
+      * An unparsed node is typically created as part of error recovery or possibly
+      * some post-parsing tree-walking adjustments maybe.
+      */
+     default boolean isUnparsed() {
+        return false;
+     }
+     
+     void setUnparsed(boolean b);
      
 [#if grammar.options.faultTolerant]
      default boolean isDirty() {

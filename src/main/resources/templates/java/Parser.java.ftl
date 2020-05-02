@@ -64,6 +64,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
     
 Token current_token;
+private Token lastParsedToken;
 //private Token nextToken;
 
 private boolean cancelled;

@@ -318,6 +318,8 @@
        [@BuildPhase1CodeRegexp expansion/]
     [#elseif classname = "TryBlock"]
        [@BuildPhase1CodeTryBlock expansion/]
+    [#elseif classname = "AttemptBlock"]
+       [@BuildPhase1CodeAttemptBlock expansion /]
     [#elseif classname = "ZeroOrOne"]
        [@BuildPhase1CodeZeroOrOne expansion/]
     [#elseif classname = "ZeroOrMore"]
@@ -355,6 +357,27 @@
        ${catchBlock}
    [/#list]
        ${tryblock.finallyBlock!}
+[/#macro]
+
+
+[#macro BuildPhase1CodeAttemptBlock attemptBlock]
+   [#var nested=attemptBlock.nestedExpansion]
+       try {
+          stashParseState();
+          [@BuildCode nested/]
+          popParseState();
+       }
+       catch (ParseException e) {
+           restoreStashedParseState();
+           [#if attemptBlock.recoveryCode??]
+              ${attemptBlock.recoveryCode}
+           [/#if]
+           [#if attemptBlock.recoveryExpansion??]
+               [@BuildCode attemptBlock.recoveryExpansion /]
+           [#else]
+               if (false) throw new ParseException("Never happens!");
+           [/#if]
+       }
 [/#macro]
 
 [#macro BuildPhase1CodeNonTerminal nonterminal]
@@ -590,7 +613,7 @@
       [@Phase3CodeOneOrMore expansion/]
    [#elseif classname = "NonTerminal"]
       [@Phase3CodeNonTerminal expansion/]
-   [#elseif classname = "TryBlock"]
+   [#elseif classname = "TryBlock" || classname="AttemptBlock"]
       [@buildPhase3Code expansion.nestedExpansion, count/]
    [#elseif classname = "ExpansionChoice"]
       [@Phase3CodeChoice expansion count/]

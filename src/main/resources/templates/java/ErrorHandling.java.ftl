@@ -76,7 +76,6 @@ private void restoreCallStack(int prevSize) {
     private List<ParsingProblem> parsingProblems;
     // This is the last "legit" token consumed by the parsing machinery, not
     // a virtual or invalid Token inserted to continue parsing.
-    private Token lastParsedToken;
     
     public void addParsingProblem(ParsingProblem problem) {
         if (parsingProblems == null) {
@@ -158,11 +157,9 @@ private void restoreCallStack(int prevSize) {
         if (current_token.getType() != expectedType) {
             handleUnexpectedTokenType(expectedType, forced, oldToken) ;
         }
-[#if grammar.options.faultTolerant]
         else {
             this.lastParsedToken = current_token;
         }
-[/#if]
 [#if grammar.options.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.options.userDefinedLexer]
@@ -206,3 +203,45 @@ private void restoreCallStack(int prevSize) {
        throw new ParseException(current_token, EnumSet.of(expectedType), callStack);
   }
   
+ [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
+ 
+  private class ParseState {
+       Token lastParsed;
+  [#if grammar.options.treeBuildingEnabled]
+       NodeScope nodeScope;
+ [/#if]       
+       ParseState() {
+           this.lastParsed  = ${grammar.parserClassName}.this.lastParsedToken;
+[#if grammar.options.treeBuildingEnabled]            
+           this.nodeScope = (NodeScope) currentNodeScope.clone();
+[/#if]           
+       } 
+  }
+
+ private ArrayList<ParseState> parseStateStack = new ArrayList<>();
+ 
+  void stashParseState() {
+      parseStateStack.add(new ParseState());
+  }
+  
+  ParseState popParseState() {
+      return parseStateStack.remove(parseStateStack.size() -1);
+  }
+  
+  void restoreStashedParseState() {
+     ParseState state = popParseState();
+[#if grammar.options.treeBuildingEnabled]
+     currentNodeScope = state.nodeScope;
+[/#if]
+    this.lastParsedToken = state.lastParsed;
+    if (lastParsedToken != null) {
+       // REVISIT
+       token_source.reset(lastParsedToken);
+    }
+[#if grammar.lexerData.numLexicalStates > 1]     
+     token_source.switchTo(lastParsedToken.getLexicalState());
+     token_source.doLexicalStateSwitch(lastParsedToken.getType());
+[/#if]          
+  } 
+  
+  [/#if] 

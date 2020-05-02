@@ -66,6 +66,16 @@ public class ${grammar.baseNodeClassName} implements Node {
     private int beginLine, beginColumn, endLine, endColumn;
     private String inputSource;
     private Map<String,Object> attributes;
+    private boolean unparsed;
+    
+    public boolean isUnparsed() {
+       return this.unparsed;
+    }
+    
+    public void setUnparsed(boolean unparsed) {
+        this.unparsed = unparsed;
+    } 
+
 [#if grammar.options.nodeUsesParser]    
     protected ${grammar.parserClassName} parser;
     public ${grammar.baseNodeClassName}(${grammar.parserClassName} parser) {
@@ -84,7 +94,7 @@ public class ${grammar.baseNodeClassName} implements Node {
     public ParseException getParseException() {return parseException;}
     
     public void setParseException(ParseException parseException) {this.parseException = parseException;}
-
+    
 
 [/#if]
 

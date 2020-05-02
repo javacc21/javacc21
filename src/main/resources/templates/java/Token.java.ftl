@@ -33,11 +33,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
    
 [/#if]
 
-[#if !grammar.options.hugeFileSupport]
-    FileLineMap getFileLineMap() {
-        return FileLineMap.getFileLineMap(getInputSource());
-    }
-[/#if]
 
     private String inputSource = "";
 
@@ -263,6 +258,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getLocation() {
          return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
      }
+  [#if !grammar.options.hugeFileSupport]     
+     public FileLineMap getFileLineMap() {
+         return FileLineMap.getFileLineMap(getInputSource());
+     } 
+  [/#if]     
 [/#if]     
     
 [#if grammar.options.treeBuildingEnabled]

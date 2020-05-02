@@ -249,6 +249,8 @@ INJECT(LEXER_CLASS) :
         javaccReservedWords.add("TOKEN_MGR_DECLS");
         javaccReservedWords.add("EOF");
         javaccReservedWords.add("SCAN");
+        javaccReservedWords.add("ATTEMPT");
+        javaccReservedWords.add("RECOVER");
 //        javaccReservedWords.add("INJECT"); //REVISIT
 //        javaccReservedWords.add("PARSER_END");
    }
@@ -313,6 +315,10 @@ TOKEN :
   < _TOKEN_MGR_DECLS: "TOKEN_MGR_DECLS" > #JavaCCKeyWord
   |
   < _EOF: "EOF" > #JavaCCKeyWord
+  |
+  < _ATTEMPT: "ATTEMPT"> #JavaCCKeyWord
+  |
+  < _RECOVER : "RECOVER"> #JavaCCKeyWord
   |
   <HASH : "#">
   |
@@ -1554,6 +1560,8 @@ Expansion ExpansionUnit() :
   |
   result=TryBlock()
   |
+  result=AttemptBlock()
+  |
   LOOKAHEAD([PrimaryExpression() "="] (<STRING_LITERAL>|"<"))
   [
     LOOKAHEAD(PrimaryExpression() "=")
@@ -1862,6 +1870,67 @@ INJECT(OneOrMore) :
            return getNestedExpansion().getMinimumSize();
      }
      
+}
+
+
+AttemptBlock AttemptBlock() : 
+{
+  boolean hasRecoverExpansion = false;
+}
+{
+ "ATTEMPT"
+ "(" ExpansionChoice() ")"
+ "RECOVER"
+ (Block() | "(" ExpansionChoice(){hasRecoverExpansion = true;} ")")
+ [
+    LOOKAHEAD("(", {!hasRecoverExpansion})
+    "(" ExpansionChoice() ")"  
+ ]
+ {
+     return CURRENT_NODE;
+ }
+}
+
+INJECT(AttemptBlock) : 
+{
+   import java.util.List;
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
+   extends com.javacc.parsegen.Expansion;
+}
+{
+   public Expansion getNestedExpansion() {
+       return firstChildOfType(Expansion.class);
+   }
+   
+   public Expansion getRecoveryExpansion() {
+        List<Expansion> expansions = childrenOfType(Expansion.class);
+        if (getRecoveryCode() == null) {
+            return expansions.get(1);
+        }
+        return expansions.size() > 2 ? expansions.get(2) : null;
+   }
+   
+   public CodeBlock getRecoveryCode() {
+        return firstChildOfType(CodeBlock.class); 
+   }
+   
+   
+    public boolean isPossiblyEmpty() {
+        return getNestedExpansion().isPossiblyEmpty();
+    }
+    
+    public TokenSet getFirstSet() {
+        return getNestedExpansion().getFirstSet();
+    }
+    
+    public TokenSet getFinalSet() {
+        return getNestedExpansion().getFinalSet();
+    }
+     
+     public int minimumSize(int min) {
+           return getNestedExpansion().getMinimumSize();
+     }
 }
 
 TryBlock TryBlock() : 

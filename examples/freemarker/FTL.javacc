@@ -340,11 +340,11 @@ TOKEN :
     |
     <_INCLUDE : "include">
     |
-    <ATTEMPT : "attempt">
+    <_ATTEMPT : "attempt">
     |
     <FOREACH : "foreach">
     |
-    <RECOVER : "recover">
+    <_RECOVER : "recover">
     |
     <COMPRESS : "compress">
     |
@@ -451,7 +451,7 @@ void Setting() #SettingInstruction : {}
 
 void Attempt() #AttemptRecover : {}
 {
-    <FTL_DIRECTIVE_OPEN><ATTEMPT><CLOSE_TAG>
+    <FTL_DIRECTIVE_OPEN><_ATTEMPT><CLOSE_TAG>
     Block()
     Recover()
 }
@@ -809,7 +809,7 @@ void Text() :
 
 void Recover() #RecoverBlock : {}
 {
-    <FTL_DIRECTIVE_OPEN><RECOVER><CLOSE_TAG>
+    <FTL_DIRECTIVE_OPEN><_RECOVER><CLOSE_TAG>
     Block()
     DirectiveEnd("attempt")
 }

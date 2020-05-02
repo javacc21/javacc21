@@ -197,6 +197,10 @@ void addToken(Token token) {
         input_stream.goTo(t.getEndLine(), t.getEndColumn());
         input_stream.forward(1);
     }
+    
+    FileLineMap getFileLineMap() {
+        return input_stream;
+    }
 
  [/#if]
     [#embed "LexerCode.java.ftl"] 
