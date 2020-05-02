@@ -213,13 +213,12 @@
  	                 closeNodeScope(${nodeVarName}, ${closeCondition});
                  }
 	             else {
-	                 //See if this fixes things somewhat.
-	                 //resetNextToken();
                      if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
 	                 ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) { 
                         restoreCallStack(${callStackSizeVar});
                         Token virtualToken = insertVirtualToken(TokenType.${expansion.finalSet.firstTokenName}); 
+                        resetNextToken();
                         if (tokensAreNodes) {
                             currentNodeScope.add(virtualToken);
                         } 

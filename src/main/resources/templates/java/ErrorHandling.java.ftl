@@ -95,7 +95,8 @@ private void restoreCallStack(int prevSize) {
 
     private void resetNextToken() {
        current_token.setNext(null);
-       token_source.reset(current_token);
+//       token_source.reset(current_token);
+       token_source.reset(lastParsedToken);
   }
   
 [#else]
@@ -119,16 +120,14 @@ private void restoreCallStack(int prevSize) {
         virtualToken.setLexicalState(token_source.lexicalState);
         virtualToken.setUnparsed(true);
         virtualToken.setVirtual(true);
-        int line = current_token.getEndLine();
-        int column = current_token.getEndColumn();
+        int line = lastParsedToken.getEndLine();
+        int column = lastParsedToken.getEndColumn();
         virtualToken.setBeginLine(line);
         virtualToken.setEndLine(line);
         virtualToken.setBeginColumn(column);
         virtualToken.setEndColumn(column);
      [#if grammar.lexerData.numLexicalStates >1]
-            if (token_source.doLexicalStateSwitch(tokenType)); {
-                resetNextToken();
-            }
+         token_source.doLexicalStateSwitch(tokenType);
      [/#if]
         return virtualToken;
     }
