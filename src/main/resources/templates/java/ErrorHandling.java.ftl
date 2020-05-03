@@ -236,13 +236,12 @@ private void restoreCallStack(int prevSize) {
     if (state.lastParsed != null) {
         //REVISIT
         current_token = lastParsedToken = state.lastParsed;
-//        token_source.reset(lastParsedToken);
-//        lastParsedToken.setNext(null);
     }
 [#if grammar.lexerData.numLexicalStates > 1]     
      token_source.switchTo(lastParsedToken.getLexicalState());
      if (token_source.doLexicalStateSwitch(lastParsedToken.getType())) {
          token_source.reset(lastParsedToken);
+         lastParsedToken.setNext(null);
      }
 [/#if]          
   } 

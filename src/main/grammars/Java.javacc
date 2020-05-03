@@ -456,7 +456,7 @@ INJECT(ImportDeclaration) : {}
  * syntax errors for simple modifier mistakes. It will also enable us to give
  * better error messages.
  */
-
+ 
 void Modifiers() #void :
 {}
 {
@@ -467,7 +467,7 @@ void Modifiers() #void :
   |
    "static" 
   |
-   "protected"
+   "protected" 
   |
    "private" 
   |
@@ -479,11 +479,11 @@ void Modifiers() #void :
   |
    "native" 
   |
-   "transient" 
+   "transient"
   |
    "volatile" 
   |
-   "strictfp" 
+   "strictfp"
   |
    Annotation()
   )
@@ -1136,9 +1136,8 @@ void ConstructorDeclaration():
 void ExplicitConstructorInvocation():
 {}
 {
-  SCAN
-  "this" Arguments() ";"
-|
+  SCAN "this" Arguments() ";"
+ |
   [ LOOKAHEAD(2) PrimaryExpression() "." ] "super" Arguments() ";"
 }
 
@@ -1724,50 +1723,63 @@ void ArrayDimsAndInits():
   ( "[" "]" )+ ArrayInitializer()
 }
 
-
+void Label() :
+{}
+{<IDENTIFIER><COLON>}
 /*
  * Statement syntax follows.
  */
 
-void Statement()  #void :
+void Statement()  :
 {}
 {
-  LOOKAHEAD(2)
-  LabeledStatement()
-|
+  (LOOKAHEAD(2) Label())*
+  UnlabeledStatement()
+}
+
+
+void UnlabeledStatement() #void :
+{}
+{
   AssertStatement()
-|
+ |
   Block()
-|
+ |
   EmptyStatement()
-|
+ |
   StatementExpression() ";"
-|
+ |
   SwitchStatement()
-|
+ |
   IfStatement()
-|
+ |
   WhileStatement()
-|
+ |
   DoStatement()
-|
+ |
   ForStatement()
-|
-  BreakStatement()
-|
-  ContinueStatement()
-|
-  ReturnStatement()
-|
-  ThrowStatement()
-|
-  SynchronizedStatement()
-|
-  LOOKAHEAD("try" "{")
-  ClassicTryStatement()
   |
-  LOOKAHEAD("try" "(")
-  TryWithResources()
+  BreakStatement()
+  |
+  ContinueStatement()
+  |
+  ReturnStatement()
+  |
+  ThrowStatement()
+  |
+  SynchronizedStatement()
+ |
+  TryStatement()
+}
+
+void TryStatement() #void :
+{}
+{
+   LOOKAHEAD("try" "{")
+   ClassicTryStatement()
+   |
+   LOOKAHEAD("try" "(" )
+   TryWithResources()
 }
 
 void AssertStatement():
@@ -1776,11 +1788,11 @@ void AssertStatement():
   "assert" Expression() [ ":" Expression() ] ";"
 }
 
-void LabeledStatement():
+/*void LabeledStatement():
 {}
 {
   <IDENTIFIER> ":" Statement()
-}
+}*/
 
 CodeBlock Block() #CodeBlock :
 {}
@@ -1813,12 +1825,10 @@ void BlockStatement() #void :
   LOOKAHEAD( Modifiers() Type() <IDENTIFIER> )
   LocalVariableDeclaration() ";"
   |
-  SCAN Statement()
-  |
   LOOKAHEAD( Modifiers() "class")
   Modifiers() ClassDeclaration()
   |
-  InterfaceDeclaration()
+  Statement()
 }
 
 void LocalVariableDeclaration():
