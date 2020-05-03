@@ -39,9 +39,9 @@ import java.lang.reflect.*;
 import freemarker.template.*;
 [/#if]
 
-public interface Node 
+public interface Node extends Comparable<Node> 
 [#if grammar.options.freemarkerNodes]
-   extends TemplateNodeModel, TemplateScalarModel
+   , TemplateNodeModel, TemplateScalarModel
 [/#if] {
 
     /** Life-cycle hook method called after the node has been made the current
@@ -93,6 +93,20 @@ public interface Node
              }
          }
          return -1;
+     }
+     /**
+      * Used to order Nodes by location.
+      */
+     default int compareTo(Node n) {
+         if (this == n) return 0;
+         int diff = this.getBeginLine() - n.getBeginLine();
+         if (diff !=0) return diff;
+         diff = this.getBeginColumn() -n.getBeginColumn();
+         if (diff != 0) return diff;
+         // A child node is considered to come after its parent.
+         diff = n.getEndLine() - this.getEndLine();
+         if (diff != 0) return diff;
+         return n.getEndColumn() - this.getEndColumn();
      }
      
      void clearChildren();
@@ -413,6 +427,5 @@ public interface Node
 		        visit(child);
 		    }
 		}
-}
-    
+    }
 }

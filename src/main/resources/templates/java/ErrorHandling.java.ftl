@@ -233,14 +233,17 @@ private void restoreCallStack(int prevSize) {
 [#if grammar.options.treeBuildingEnabled]
      currentNodeScope = state.nodeScope;
 [/#if]
-    this.lastParsedToken = state.lastParsed;
-    if (lastParsedToken != null) {
-       // REVISIT
-       token_source.reset(lastParsedToken);
+    if (state.lastParsed != null) {
+        //REVISIT
+        current_token = lastParsedToken = state.lastParsed;
+//        token_source.reset(lastParsedToken);
+//        lastParsedToken.setNext(null);
     }
 [#if grammar.lexerData.numLexicalStates > 1]     
      token_source.switchTo(lastParsedToken.getLexicalState());
-     token_source.doLexicalStateSwitch(lastParsedToken.getType());
+     if (token_source.doLexicalStateSwitch(lastParsedToken.getType())) {
+         token_source.reset(lastParsedToken);
+     }
 [/#if]          
   } 
   
