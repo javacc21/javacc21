@@ -74,7 +74,7 @@ abstract public class Expansion extends BaseNode {
     }
     
     
-    protected TokenSet firstSet, finalSet;
+    protected TokenSet firstSet;
 
     public int getIndex() {
     	return parent.indexOf(this);
@@ -88,7 +88,7 @@ abstract public class Expansion extends BaseNode {
 
     long myGeneration = 0; //REVISIT
     
-    private String phase2RoutineName, phase3RoutineName, firstSetVarName;
+    private String phase2RoutineName, phase3RoutineName, firstSetVarName, finalSetVarName;
     
     public String getLabel() {
     	return label;
@@ -180,21 +180,30 @@ abstract public class Expansion extends BaseNode {
     }
     
     public List<String> getFirstSetTokenNames() {
-        List<String> firstSetNames = null;
-        if (firstSetNames == null) {
-            int tokenCount = getGrammar().getLexerData().getTokenCount();
-            firstSetNames = new ArrayList<>(tokenCount);
-            Expansion expansion = getLookaheadExpansion();
-            BitSet firstSet = expansion.getFirstSet();
-            for (int i=0; i<tokenCount; i++) {
-                if (firstSet.get(i)) {
-                    firstSetNames.add(getGrammar().getLexerData().getTokenName(i));
-                }
+        int tokenCount = getGrammar().getLexerData().getTokenCount();
+        List<String> firstSetNames = new ArrayList<>(tokenCount);
+        Expansion expansion = getLookaheadExpansion();
+        BitSet firstSet = expansion.getFirstSet();
+        for (int i=0; i<tokenCount; i++) {
+            if (firstSet.get(i)) {
+                firstSetNames.add(getGrammar().getLexerData().getTokenName(i));
             }
         }
         return firstSetNames;
     }
     
+    public List<String> getFinalSetTokenNames() {
+        int tokenCount = getGrammar().getLexerData().getTokenCount();
+        List<String> finalSetNames = new ArrayList<>(tokenCount);
+        BitSet finalSet = getFinalSet();
+        for (int i=0; i<tokenCount; i++) {
+            if (finalSet.get(i)) {
+                finalSetNames.add(getGrammar().getLexerData().getTokenName(i));
+            }
+        }
+        return finalSetNames;
+    }
+     
     public boolean isNegated() {
         return getLookahead() != null && getLookahead().isNegated();
     }
@@ -213,6 +222,18 @@ abstract public class Expansion extends BaseNode {
         }
         return firstSetVarName;
     }
+    
+    public String getFinalSetVarName() {
+         if (finalSetVarName == null) {
+             finalSetVarName = getFirstSetVarName();
+             if (finalSetVarName.startsWith("first_set$")) {
+                 finalSetVarName = finalSetVarName.replaceFirst("first", "final");
+             } else {
+                 finalSetVarName = finalSetVarName.replace("_FIRST_SET", "_FINAL_SET");
+             }
+         }
+         return finalSetVarName;
+    }
 
     public String getPhase2RoutineName() {
         if (phase2RoutineName == null) {
@@ -228,7 +249,7 @@ abstract public class Expansion extends BaseNode {
         return phase3RoutineName;
     }
    
-    public int getEndSetSize() {
+    public int getFinalSetSize() {
 	     return getFinalSet().cardinality();
     }
     

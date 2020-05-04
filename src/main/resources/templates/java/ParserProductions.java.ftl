@@ -118,8 +118,21 @@
     );
 [/#macro]
 
+[#macro finalSetVar expansion]
+    static private final EnumSet<TokenType> ${expansion.finalSetVarName} = EnumSet.of(
+        [#list expansion.finalSetTokenNames as type]
+           [#if type_index >0],[/#if]
+           TokenType.${type}
+        [/#list]
+    );
+[/#macro]            
+
 [#macro ParserProduction production]
     [@firstSetVar production.expansion/]
+    [@finalSetVar production.expansion/]
+    [#--  --if production.name == "IfStatement"][@finalSetVar production.expansion/][/#if]
+    [#if production.name == "WhileStatement"][@finalSetVar production.expansion/][/#if]
+    [#if production.name == "ForStatement"][@finalSetVar production.expansion/][/#if --]
 
     ${production.leadingComments}
 // ${production.inputSource}, line ${production.beginLine}

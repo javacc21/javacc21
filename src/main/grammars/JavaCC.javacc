@@ -955,10 +955,10 @@ INJECT(BNFProduction) :
     }
     
     public TokenSet getFinalSet() {
-        if (finalSet == null) {
-            finalSet = getExpansion().getFinalSet();
-        }
-        return finalSet;
+          if (finalSet == null) {
+              finalSet = getExpansion().getFinalSet();
+          }
+          return finalSet;
     }
 }
 
@@ -1291,6 +1291,8 @@ INJECT(ExpansionChoice) :
         return firstSet;
    }
    
+   private TokenSet finalSet;
+    
    public TokenSet getFinalSet() {
        if (finalSet == null) {
            finalSet = new TokenSet(getGrammar());
@@ -1369,6 +1371,7 @@ INJECT(ExpansionSequence) :
 
 
    public TokenSet getFirstSet() {
+       TokenSet firstSet =null;
        if (firstSet == null) {
            firstSet = new TokenSet(getGrammar());
            for (Expansion child : getUnits()) {
@@ -1382,16 +1385,14 @@ INJECT(ExpansionSequence) :
    }
    
    public TokenSet getFinalSet() {
-       if (finalSet == null) {
-          finalSet = new TokenSet(getGrammar());
-          List<Expansion> children = getUnits();
-          Collections.reverse(children);
-          for (Expansion child : children) {
-              finalSet.or(child.getFinalSet());
-              if (!child.isPossiblyEmpty()) {
-                 break;
-              }
-          }
+       TokenSet finalSet = new TokenSet(getGrammar());
+       List<Expansion> children = getUnits();
+       Collections.reverse(children);
+       for (Expansion child : children) {
+           finalSet.or(child.getFinalSet());
+           if (!child.isPossiblyEmpty()) {
+              break;
+           }
        }
        return finalSet;
    }
@@ -1671,16 +1672,17 @@ INJECT(NonTerminal) :
     
      public TokenSet getFirstSet() {
         if (firstSet == null) {
+            firstSet = new TokenSet(getGrammar());
             firstSet = getProduction().getExpansion().getFirstSet();
         }
         return firstSet;
      }
-     
+     private int reEntries;     
      public TokenSet getFinalSet() {
-          if (finalSet == null) {
-              finalSet = getProduction().getExpansion().getFinalSet();
-          }
-          return finalSet;
+          ++reEntries;
+          TokenSet result = reEntries == 1 ? getProduction().getExpansion().getFinalSet() : new TokenSet(getGrammar());
+          --reEntries;
+          return result;
      }
      
      public boolean isPossiblyEmpty() {
@@ -1752,7 +1754,7 @@ INJECT(ZeroOrOne) :
         return getNestedExpansion().getFirstSet();
     }
     
-     public TokenSet getFinalSet() {
+    public TokenSet getFinalSet() {
         return getNestedExpansion().getFinalSet();
     }
      
@@ -1805,10 +1807,7 @@ INJECT(ZeroOrMore) :
     }
     
     public TokenSet getFinalSet() {
-        if (finalSet == null) {
-            finalSet = getNestedExpansion().getFinalSet(); 
-        }
-        return finalSet;
+        return getNestedExpansion().getFinalSet();
     }
      
      public int minimumSize(int unused) {
@@ -1920,10 +1919,17 @@ INJECT(AttemptBlock) :
         return getNestedExpansion().isPossiblyEmpty();
     }
     
+    //REVISIT: Should this take RECOVER into account? I don't think so,
+    // but I still have to think about it a bit more.
     public TokenSet getFirstSet() {
-        return getNestedExpansion().getFirstSet();
+        if (firstSet == null) {
+           firstSet=getNestedExpansion().getFirstSet();
+        }
+        return firstSet;
     }
-    
+   
+   
+    //REVISIT: Should this take RECOVER into account? 
     public TokenSet getFinalSet() {
         return getNestedExpansion().getFinalSet();
     }
