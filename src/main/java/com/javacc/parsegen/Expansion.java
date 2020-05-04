@@ -38,10 +38,8 @@ import com.javacc.Grammar;
 import com.javacc.lexgen.RegularExpression;
 import com.javacc.lexgen.TokenSet;
 import com.javacc.parser.BaseNode;
-import com.javacc.parser.tree.BNFProduction;
-import com.javacc.parser.tree.Lookahead;
-import com.javacc.parser.tree.Expression;
-import com.javacc.parser.tree.TreeBuildingAnnotation;
+import com.javacc.parser.Node;
+import com.javacc.parser.tree.*;
 
 
 /**
@@ -256,6 +254,43 @@ abstract public class Expansion extends BaseNode {
     abstract public TokenSet getFirstSet();
     
     abstract public TokenSet getFinalSet();
+    
+    public TokenSet getFollowSet() {
+         Node parent = getParent();
+         if (parent instanceof ExpansionChoice) {
+             return ((ExpansionChoice) parent).getFollowSet();
+         }
+         if (parent instanceof ExpansionSequence) {
+             ExpansionSequence sequence = (ExpansionSequence) parent;
+             List<Expansion> siblings = sequence.getUnits();
+             int index = siblings.indexOf(this) +1;
+             TokenSet result = new TokenSet(getGrammar());
+             boolean atEnd = false;
+             for (int i = index; i<siblings.size(); i++) {
+                  result.or(siblings.get(i).getFollowSet());
+                  if (!siblings.get(i).isPossiblyEmpty()) {
+                      atEnd = true; 
+                      break;
+                  }
+             }
+             if (!atEnd) {
+                  result.or(sequence.getFollowSet());
+             }
+             return result;
+         }
+         if (parent instanceof OneOrMore || parent instanceof ZeroOrMore) {
+             TokenSet result = new TokenSet(getGrammar());
+             result.or(this.getFinalSet());
+             result.or(((Expansion)parent).getFollowSet());
+             return result;
+         }
+         if (parent instanceof Expansion) {
+             return ((Expansion) parent).getFollowSet();
+         }
+         // REVISIT.
+         return null;
+    }
+    
     
     abstract public boolean isPossiblyEmpty(); 
     
