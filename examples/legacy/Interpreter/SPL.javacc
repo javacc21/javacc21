@@ -218,7 +218,7 @@ void VarDeclaration() :
     "int" { CURRENT_NODE.type = TokenType.INT; }
   )
   t = <IDENTIFIER> 
-  { CURRENT_NODE.name = t.image; }
+  { CURRENT_NODE.name = t.getImage(); }
 }
 
 /*
@@ -619,7 +619,7 @@ void Id() :
    Token t;
 }
 {
-   t = <IDENTIFIER>  { CURRENT_NODE.name = t.image; }
+   t = <IDENTIFIER>  { CURRENT_NODE.name = t.getImage(); }
 }
 
 /** A literal. */
@@ -631,7 +631,7 @@ void Literal() #void :
  (
   t=<INTEGER_LITERAL>
     {
-       CURRENT_NODE.val = Integer.parseInt(t.image);
+       CURRENT_NODE.val = Integer.parseInt(t.getImage());
     }
  )#IntConstNode
 |
@@ -863,7 +863,7 @@ void ReadStatement() :
 { Token t; }
 {
    "read" t = <IDENTIFIER>
-   { CURRENT_NODE.name = t.image; }
+   { CURRENT_NODE.name = t.getImage(); }
 }
 
 /** A write statement. */
@@ -871,7 +871,7 @@ void WriteStatement() :
 { Token t; }
 {
    "write" t = <IDENTIFIER>
-   { CURRENT_NODE.name = t.image; }
+   { CURRENT_NODE.name = t.getImage(); }
 }
 
 TOKEN : /* IDENTIFIERS */

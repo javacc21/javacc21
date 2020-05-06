@@ -23,6 +23,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
  [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
  
     private FileLineMap fileLineMap; 
+    
+    public FileLineMap getFileLineMap() {
+        return fileLineMap;
+    }
  
     public Token(TokenType type, String image, FileLineMap fileLineMap) {
         this.type = type;
@@ -93,7 +97,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     String image;
     
     public String getImage() {
-[#if false] //!grammar.options.hugeFileSupport]    
+//        image = null;
+[#if !grammar.options.hugeFileSupport]    
         if (image == null) {
             FileLineMap lineMap = getFileLineMap();
             if (lineMap != null) {
@@ -249,7 +254,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#else]
 
     public static Token newToken(TokenType type, String image, FileLineMap fileLineMap) {
-           [#-- if !grammar.options.hugeFileSupport]image = null;[/#if --]
+           [#--  if !grammar.options.hugeFileSupport]image = null;[/#if --]
            [#if grammar.options.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]

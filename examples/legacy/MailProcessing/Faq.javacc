@@ -120,20 +120,20 @@ void MailMessage() :
 	  if (subj == null) {
 	    indstr.println("no subject</a><br>");
 	  } else {
-	    indstr.println(fix(subj.image) + "</a><br>");
+	    indstr.println(fix(subj.getImage()) + "</a><br>");
 	  }
 	  if (count >= beginAt) {
-	    msgstr.println("<title>" + ((subj==null) ? "no subject" : fix(subj.image)) + "</title>");
-	    msgstr.println("Subject: " + ((subj==null) ? "no subject" : fix(subj.image)) + "<br>");
-	    msgstr.println("From: " + ((from==null) ? "" : fix(from.image)) + "<br>");
-	    msgstr.println("Date: " + ((date==null) ? "" : fix(date.image)) + "<br>");
+	    msgstr.println("<title>" + ((subj==null) ? "no subject" : fix(subj.getImage())) + "</title>");
+	    msgstr.println("Subject: " + ((subj==null) ? "no subject" : fix(subj.getImage())) + "<br>");
+	    msgstr.println("From: " + ((from==null) ? "" : fix(from.getImage())) + "<br>");
+	    msgstr.println("Date: " + ((date==null) ? "" : fix(date.getImage())) + "<br>");
             msgstr.println("<br>");
 	  }
 	}
   ( body=<BODY>
 	{
 	  if (count >= beginAt) {
-	    msgstr.print(fix(body.image) + "<br>");
+	    msgstr.print(fix(body.getImage()) + "<br>");
 	  }
 	}
   )*

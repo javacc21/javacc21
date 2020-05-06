@@ -89,8 +89,8 @@ double Number() :
   (
     t=<DIGIT>
 	{
-	  image += t.image;
-	  value = value*10 + Integer.parseInt(t.image);
+	  image += t.getImage();
+	  value = value*10 + Integer.parseInt(t.getImage());
 	  CalcGUI.print(image);
 	}
   )+
@@ -103,9 +103,9 @@ double Number() :
     (
       t=<DIGIT>
 	{
-	  image += t.image;
+	  image += t.getImage();
 	  decimalPlace *= 0.1;
-	  value = value + Integer.parseInt(t.image)*decimalPlace;
+	  value = value + Integer.parseInt(t.getImage())*decimalPlace;
 	  CalcGUI.print(image);
 	}
     )+
@@ -122,9 +122,9 @@ double Number() :
   (
     t=<DIGIT>
 	{
-	  image += t.image;
+	  image += t.getImage();
 	  decimalPlace *= 0.1;
-	  value = value + Integer.parseInt(t.image)*decimalPlace;
+	  value = value + Integer.parseInt(t.getImage())*decimalPlace;
 	  CalcGUI.print(image);
 	}
   )+

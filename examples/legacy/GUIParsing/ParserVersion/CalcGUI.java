@@ -111,112 +111,112 @@ public class CalcGUI extends Frame implements CalcInputConstants {
     if (evt.target == one) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "1";
+      t.setImage("1");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == two) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "2";
+      t.setImage("2");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == three) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "3";
+      t.setImage("3");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == four) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "4";
+      t.setImage("4");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == five) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "5";
+      t.setImage("5");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == six) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "6";
+      t.setImage("6");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == seven) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "7";
+      t.setImage("7");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == eight) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "8";
+      t.setImage("8");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == nine) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "9";
+      t.setImage("9");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == zero) {
       t = new Token();
       t.setType(TokenType.DIGIT);
-      t.image = "0";
+      t.setImage("0");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == dot) {
       t = new Token();
       t.setType(TokenType.DOT);
-      t.image = ".";
+      t.setImage(".");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == equal) {
       t = new Token();
       t.setType(TokenType.EQ);
-      t.image = "=";
+      t.setImage("=");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == add) {
       t = new Token();
       t.setType(TokenType.ADD);
-      t.image = "+";
+      t.setImage("+");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == sub) {
       t = new Token();
       t.setType(TokenType.SUB);
-      t.image = "-";
+      t.setImage("-");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == mul) {
       t = new Token();
       t.setType(TokenType.MUL);
-      t.image = "*";
+      t.setImage("*");
       ProducerConsumer.pc.addToken(t);
       return true;
     }
     if (evt.target == div) {
       t = new Token();
       t.setType(TokenType.DIV);
-      t.image = "/";
+      t.setImage("/");
       ProducerConsumer.pc.addToken(t);
       return true;
     }

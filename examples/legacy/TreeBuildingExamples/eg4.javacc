@@ -156,7 +156,7 @@ void Identifier() #MyOtherID :
 {
   t=<IDENTIFIER>
   {
-    CURRENT_NODE.setName(t.image);
+    CURRENT_NODE.setName(t.getImage());
   }
 }
 

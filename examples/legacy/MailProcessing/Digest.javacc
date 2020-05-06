@@ -86,18 +86,18 @@ void MailMessage() :
 {
   ( subj=<SUBJECT> | from=<FROM> | date=<DATE> )+
 	{
-	  System.out.println(count + ". " + ((subj==null) ? "no subject" : subj.image));
+	  System.out.println(count + ". " + ((subj==null) ? "no subject" : subj.getImage()));
 	  buffer += "\n";
 	  buffer += "Message " + count + ":\n";
 	  buffer += "\n";
-	  buffer += "Subject: " + ((subj==null) ? "no subject" : subj.image) + "\n";
-	  buffer += "From: " + ((from==null) ? "" : from.image) + "\n";
-	  buffer += "Date: " + ((date==null) ? "" : date.image) + "\n";
+	  buffer += "Subject: " + ((subj==null) ? "no subject" : subj.getImage()) + "\n";
+	  buffer += "From: " + ((from==null) ? "" : from.getImage()) + "\n";
+	  buffer += "Date: " + ((date==null) ? "" : date.getImage()) + "\n";
 	  buffer += "\n";
 	}
   ( body=<BODY>
 	{
-	  buffer += body.image;
+	  buffer += body.getImage();
 	}
   )*
   <END>
