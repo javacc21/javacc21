@@ -227,11 +227,11 @@ INJECT(FTLLexer) :
         dest.beginColumn = src.beginColumn;
         dest.endLine = src.endLine;
         dest.endColumn = src.endColumn;
-        dest.setInputSource(src.getInputSource());
+//        dest.setInputSource(src.getInputSource());
     }
 
     private Token cloneToken(Token t) {
-        Token result = Token.newToken(t.getType(), t.getImage(), getInputSource());
+        Token result = Token.newToken(t.getType(), t.getImage(), this);
         copyFieldsOfToken(t, result);
         return result;
     }

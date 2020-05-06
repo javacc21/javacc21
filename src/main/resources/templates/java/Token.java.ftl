@@ -20,7 +20,7 @@ import freemarker.template.*;
 public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 
- [#if !grammar.options.hugeFileSupport]
+ [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
  
     private FileLineMap fileLineMap; 
  
@@ -32,8 +32,23 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
     public void setInputSource(FileLineMap fileLineMap) {
         this.fileLineMap = fileLineMap;
-    } 
+    }
     
+    [#if !grammar.options.treeBuildingEnabled]
+    public String getInputSource() {
+        return inputSource;
+     }
+    [/#if]    
+    
+     
+  [#else]   
+    public void setInputSource(String inputSource) {
+        this.inputSource = inputSource;
+    }
+    
+    public String getInputSource() {
+        return inputSource;
+     }
  [/#if]          
 
  
@@ -216,7 +231,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        return new Token(ofKind, image); 
     }
 [/#if]    
-    
+[#if grammar.options.hugeFileSupport]    
     public static Token newToken(TokenType type, String image, String inputSource) {
            [#-- if !grammar.options.hugeFileSupport]image = null;[/#if --]
            [#if grammar.options.treeBuildingEnabled]
@@ -231,7 +246,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        return new Token(type, image, inputSource);      
     }
     
-[#if !grammar.options.hugeFileSupport]   
+[#else]
 
     public static Token newToken(TokenType type, String image, FileLineMap fileLineMap) {
            [#-- if !grammar.options.hugeFileSupport]image = null;[/#if --]
@@ -246,16 +261,23 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        [/#if]
        return new Token(type, image, fileLineMap);      
     }
+    
+   [#if !grammar.options.userDefinedLexer]    
+    public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
+        return newToken(type, image, parser.token_source);
+    } 
+    public static Token newToken(TokenType type, String image, ${grammar.lexerClassName} lexer) {
+        return newToken(type, image, lexer.input_stream);
+    }
+    [/#if]
+    
+  [#if grammar.options.treeBuildingEnabled]    
+    public static Token newToken(TokenType type, String image, Node node) {
+        return newToken(type, image, node.getFileLineMap());
+    }
+  [/#if]
+     
 [/#if]    
-    
-    
-    public void setInputSource(String inputSource) {
-        this.inputSource = inputSource;
-    }
-    
-    public String getInputSource() {
-        return inputSource;
-    }
     
     
     public void setBeginColumn(int beginColumn) {
@@ -289,6 +311,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public int getEndColumn() {
         return endColumn;
     }
+    
+    
+   
 [#if !grammar.options.treeBuildingEnabled]    
     public String getLocation() {
          return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();

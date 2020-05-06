@@ -115,7 +115,7 @@ private void restoreCallStack(int prevSize) {
 
 [#if grammar.options.faultTolerant]
     private Token insertVirtualToken(TokenType tokenType) {
-        Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenType, getInputSource());
+        Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenType, this);
         virtualToken.setLexicalState(token_source.lexicalState);
         virtualToken.setUnparsed(true);
         virtualToken.setVirtual(true);

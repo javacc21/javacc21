@@ -435,6 +435,8 @@
     [/#if]
     [#if options.tokenFactory != ""] 
         t = ${options.tokenFactory}.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
+    [#elseif !grammar.options.hugeFileSupport]
+        t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, this);
     [#else]
         t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
     [/#if]

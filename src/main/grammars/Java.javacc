@@ -705,7 +705,7 @@ INJECT(TypeDeclaration) :
                 }
             }
             iterator.previous();
-            iterator.add(Token.newToken(TokenType.WHITESPACE, " ", getInputSource()));
+            iterator.add(Token.newToken(TokenType.WHITESPACE, " ", this));
             iterator.next();
             iterator.add(extendsList);
         }
@@ -763,7 +763,7 @@ INJECT(ExtendsList) :
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(TokenType.EXTENDS, "extends", getInputSource()));
+            iterator.add(Token.newToken(TokenType.EXTENDS, "extends", this));
             iterator.next();
             iterator.add(type);
         } else {
@@ -771,7 +771,7 @@ INJECT(ExtendsList) :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(TokenType.COMMA, ",", getInputSource()));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
             iterator.next();
             iterator.add(type);
         }
@@ -803,7 +803,7 @@ INJECT(ImplementsList) :
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements", getInputSource()));
+            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements", this));
             iterator.next();
             iterator.add(type);
         } else {
@@ -811,7 +811,7 @@ INJECT(ImplementsList) :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(TokenType.COMMA, ",", getInputSource()));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", getFileLineMap()));
             iterator.next();
             iterator.add(type);
         }
@@ -865,7 +865,7 @@ INJECT(TypeParameterList) :
                 iterator.next();
             }
             iterator.previous();
-            iterator.add(Token.newToken(TokenType.COMMA, ",", getInputSource()));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
             iterator.next();
             iterator.add(param);
         }

@@ -29,6 +29,7 @@
 
 options {
   USER_DEFINED_LEXER = true;
+  HUGE_FILE_SUPPORT= true;
 }
 
 void Input() :

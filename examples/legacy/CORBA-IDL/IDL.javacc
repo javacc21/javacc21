@@ -29,6 +29,7 @@
 
 options {
    TREE_BUILDING_ENABLED=false;
+   HUGE_FILE_SUPPORT=true;
 }
 
 INJECT(PARSER_CLASS) : 
