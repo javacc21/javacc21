@@ -584,7 +584,7 @@ public class JavaCCOptions {
     }
     
     public boolean getHugeFileSupport() {
-    	return booleanValue("HUGE_FILE_SUPPORT");
+    	return booleanValue("HUGE_FILE_SUPPORT") && !getTreeBuildingEnabled() && !getFaultTolerant();
     }
 
     /**
@@ -758,6 +758,14 @@ public class JavaCCOptions {
             }
             if (getVisitor()) {
                 grammar.addWarning(null, msg.replace("OPTION_NAME", "VISITOR"));
+            }
+        }
+        if (booleanValue("HUGE_FILE_SUPPORT")) {
+            if (booleanValue("TREE_BUILDING_ENABLED")) {
+                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because TREE_BUILDING_ENABLED is set.");
+            }
+            if (booleanValue("FAULT_TOLERANT")) {
+                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is igored because FAULT_TOLERANT is set.");
             }
         }
     }

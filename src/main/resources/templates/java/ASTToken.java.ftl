@@ -59,7 +59,7 @@ public class ${classname} extends ${superclass} {
         super(type, image, inputSource);
     }
     
-[#if !grammar.options.hugeFileSupport]    
+[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]    
     public ${classname}(TokenType type, String image, FileLineMap fileLineMap) {
         super(type, image, fileLineMap);
     }

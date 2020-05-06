@@ -44,7 +44,7 @@ import java.util.*;
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
 
-[#if !grammar.options.hugeFileSupport]
+[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
        private FileLineMap fileLineMap;
        
        public FileLineMap getFileLineMap() {

@@ -137,7 +137,7 @@ public interface Node extends Comparable<Node>
      java.util.Set<String> getAttributeNames();
      
     
-[#if !grammar.options.hugeFileSupport]
+[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
      default FileLineMap getFileLineMap() {
          return null;
      }

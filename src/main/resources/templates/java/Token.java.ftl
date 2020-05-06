@@ -98,7 +98,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
     public String getImage() {
 //        image = null;
-[#if !grammar.options.hugeFileSupport]    
+[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]    
         if (image == null) {
             FileLineMap lineMap = getFileLineMap();
             if (lineMap != null) {
@@ -252,7 +252,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
     
 [#else]
-
+   [#if !grammar.options.userDefinedLexer]    
     public static Token newToken(TokenType type, String image, FileLineMap fileLineMap) {
            [#--  if !grammar.options.hugeFileSupport]image = null;[/#if --]
            [#if grammar.options.treeBuildingEnabled]
@@ -267,8 +267,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        return new Token(type, image, fileLineMap);      
     }
     
-   [#if !grammar.options.userDefinedLexer]    
-    public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
+   public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
         return newToken(type, image, parser.token_source);
     } 
     public static Token newToken(TokenType type, String image, ${grammar.lexerClassName} lexer) {
@@ -276,7 +275,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
     [/#if]
     
-  [#if grammar.options.treeBuildingEnabled]    
+  [#if grammar.options.treeBuildingEnabled && !grammar.options.userDefinedLexer]    
     public static Token newToken(TokenType type, String image, Node node) {
         return newToken(type, image, node.getFileLineMap());
     }
