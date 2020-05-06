@@ -138,19 +138,25 @@ public interface Node extends Comparable<Node>
      
      // The following ten methods are for location info.
      
+    void setInputSource(String inputSource);
+     
+[#if !grammar.options.hugeFileSupport]
+     default FileLineMap getFileLineMap() {
+         return null;
+     }
+     
+     default String getInputSource() {
+         FileLineMap fileLineMap = getFileLineMap();
+         return fileLineMap == null ? "input" : fileLineMap.getInputSource();
+     }
+[#else]     
      /**
       * @return A string that says where the input came from. Typically a file name, though
       *         it could be a URL or something else, of course.  
       */
      String getInputSource();
      
-     void setInputSource(String inputSource);
-     
-[#if !grammar.options.hugeFileSupport]
-     default FileLineMap getFileLineMap() {
-         return FileLineMap.getFileLineMap(getInputSource());
-     }
-[/#if]          
+ [/#if]          
       
      int getBeginLine();
      

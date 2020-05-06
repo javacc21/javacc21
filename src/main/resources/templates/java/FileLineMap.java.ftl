@@ -47,8 +47,6 @@ import java.util.*;
  */
 
 public class FileLineMap {
-    private static FileLineMap singleton;
-    private static Map<String, FileLineMap> lookup = Collections.synchronizedMap(new HashMap<>());
 
     private static final int[] EMPTY_INT = new int[0];
 
@@ -78,31 +76,9 @@ public class FileLineMap {
         this.lineOffsets = createLineOffsetsTable(this.content);
         this.tokenList = new LinkedList<>();
         this.setStartPosition(startingLine, startingColumn);
-        if (inputSource != null && inputSource.length() >0) {
-            lookup.put(inputSource, this);
-            if (lookup.size() == 1) {
-               singleton = this;
-            } else {
-               singleton = null;
-            }
-        }
-    }
+   }
     
-    static FileLineMap getFileLineMap(String inputSource) {
-        if (singleton != null) {
-           //KLUDGE! 
-           // If there is only one FileLineMap object, just return it regardless of 
-           // what the key passed in is! REVISIT later probably... 
-             return singleton;
-        }
-        return lookup.get(inputSource);
-    }
-    
-    static void clearLineMapLoookup() {
-         singleton = null;
-         lookup.clear();
-    }
-    
+   
     // START API methods
 
     // Now some methods to fulfill the functionality that used to be in that
@@ -322,11 +298,11 @@ public class FileLineMap {
         return lineOffsets;
     }
 
-    // ------------- TODO: unused method for the moment....
 
-    private String getInputSource() {
+    public String getInputSource() {
         return inputSource;
     }
+    // ------------- TODO: unused method for the moment....
 
     private int getLineCount() {
         return lineOffsets.length;

@@ -59,7 +59,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     String image;
     
     public String getImage() {
-[#if !grammar.options.hugeFileSupport]    
+[#if false] //!grammar.options.hugeFileSupport]    
         if (image == null) {
             FileLineMap lineMap = getFileLineMap();
             if (lineMap != null) {
@@ -155,6 +155,17 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.image = image;
         this.inputSource = inputSource;
     }
+    
+ [#if !grammar.options.hugeFileSupport]
+ 
+    private FileLineMap fileLineMap; 
+ 
+    public Token(TokenType type, String image, FileLineMap fileLineMap) {
+        this.type = type;
+        this.image = image;
+        this.fileLineMap = fileLineMap;
+    }
+ [/#if]          
 
     public boolean isUnparsed() {
         return unparsed;
@@ -214,6 +225,24 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        return new Token(type, image, inputSource);      
     }
     
+[#if !grammar.options.hugeFileSupport]   
+
+    public static Token newToken(TokenType type, String image, FileLineMap fileLineMap) {
+           [#-- if !grammar.options.hugeFileSupport]image = null;[/#if --]
+           [#if grammar.options.treeBuildingEnabled]
+           switch(type) {
+           [#list grammar.orderedNamedTokens as re]
+            [#if re.generatedClassName != "Token" && !re.private]
+              case ${re.label} : return new ${re.generatedClassName}(TokenType.${re.label}, image, fileLineMap);
+            [/#if]
+           [/#list]
+           }
+       [/#if]
+       return new Token(type, image, fileLineMap);      
+    }
+[/#if]    
+    
+    
     public void setInputSource(String inputSource) {
         this.inputSource = inputSource;
     }
@@ -258,9 +287,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getLocation() {
          return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
      }
-  [#if !grammar.options.hugeFileSupport]     
+     
+  [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer] 
+  
+//     private FileLineMap fileLineMap;    
      public FileLineMap getFileLineMap() {
-         return FileLineMap.getFileLineMap(getInputSource());
+         return fileLineMap;
      } 
   [/#if]     
 [/#if]     
