@@ -44,6 +44,29 @@ import java.util.*;
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
 
+[#if !grammar.options.hugeFileSupport]
+       private FileLineMap fileLineMap;
+       
+       public FileLineMap getFileLineMap() {
+           return fileLineMap; 
+       }
+       
+       public void setInputSource(FileLineMap fileLineMap) {
+          this.fileLineMap = fileLineMap;
+       }
+[#else]
+       private String inputSource;
+       
+       public String getInputSource() {
+           return inputSource;
+       }
+       
+       public void setInputSource(String inputSource) {
+          this.inputSource = inputSource;
+       }
+       
+ [/#if]       
+
     
     static private Class listClass = ArrayList.class;
 
@@ -64,7 +87,6 @@ public class ${grammar.baseNodeClassName} implements Node {
     protected List<Node> children = newList();
     
     private int beginLine, beginColumn, endLine, endColumn;
-    private String inputSource;
     private Map<String,Object> attributes;
     private boolean unparsed;
     
@@ -195,14 +217,6 @@ public class ${grammar.baseNodeClassName} implements Node {
     public Set<String> getAttributeNames() {
         if (attributes == null) return Collections.emptySet();
         return attributes.keySet();
-    }
-
-    public void setInputSource(String inputSource) {
-        this.inputSource = inputSource;
-    }
-    
-    public String getInputSource() {
-        return inputSource;
     }
     
     public int getBeginLine() {

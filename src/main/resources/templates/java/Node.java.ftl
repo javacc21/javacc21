@@ -136,10 +136,7 @@ public interface Node extends Comparable<Node>
      
      java.util.Set<String> getAttributeNames();
      
-     // The following ten methods are for location info.
-     
-    void setInputSource(String inputSource);
-     
+    
 [#if !grammar.options.hugeFileSupport]
      default FileLineMap getFileLineMap() {
          return null;
@@ -149,6 +146,8 @@ public interface Node extends Comparable<Node>
          FileLineMap fileLineMap = getFileLineMap();
          return fileLineMap == null ? "input" : fileLineMap.getInputSource();
      }
+     
+     void setInputSource(FileLineMap fileLineMap);
 [#else]     
      /**
       * @return A string that says where the input came from. Typically a file name, though
@@ -156,7 +155,9 @@ public interface Node extends Comparable<Node>
       */
      String getInputSource();
      
- [/#if]          
+     
+    void setInputSource(String inputSource);
+  [/#if]          
       
      int getBeginLine();
      

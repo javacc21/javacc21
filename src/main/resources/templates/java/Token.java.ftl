@@ -19,6 +19,25 @@ import freemarker.template.*;
  
 public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
+
+ [#if !grammar.options.hugeFileSupport]
+ 
+    private FileLineMap fileLineMap; 
+ 
+    public Token(TokenType type, String image, FileLineMap fileLineMap) {
+        this.type = type;
+        this.image = image;
+        this.fileLineMap = fileLineMap;
+    }
+    
+    public void setInputSource(FileLineMap fileLineMap) {
+        this.fileLineMap = fileLineMap;
+    } 
+    
+ [/#if]          
+
+ 
+
 [#if grammar.options.faultTolerant]
 
    // The token does not correspond to actual characters in the input.
@@ -136,7 +155,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     boolean unparsed;
 
     public Token() {}
-[#if grammar.options.legacyAPI]
     public Token(int kind) {
        this(kind, null);
        this.type = TokenType.values()[kind];
@@ -149,25 +167,13 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.type = TokenType.values()[kind];
         this.image = image;;
     }
-[/#if]    
     public Token(TokenType type, String image, String inputSource) {
         this.type = type;
         this.image = image;
         this.inputSource = inputSource;
     }
     
- [#if !grammar.options.hugeFileSupport]
- 
-    private FileLineMap fileLineMap; 
- 
-    public Token(TokenType type, String image, FileLineMap fileLineMap) {
-        this.type = type;
-        this.image = image;
-        this.fileLineMap = fileLineMap;
-    }
- [/#if]          
-
-    public boolean isUnparsed() {
+   public boolean isUnparsed() {
         return unparsed;
     }
     
@@ -287,14 +293,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getLocation() {
          return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
      }
-     
-  [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer] 
-  
-//     private FileLineMap fileLineMap;    
-     public FileLineMap getFileLineMap() {
-         return fileLineMap;
-     } 
-  [/#if]     
+   
 [/#if]     
     
 [#if grammar.options.treeBuildingEnabled]
@@ -421,7 +420,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return data;
     }
 [/#if]   
-        
                 
  [/#if]
 

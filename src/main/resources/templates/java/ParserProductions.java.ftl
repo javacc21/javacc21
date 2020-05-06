@@ -307,7 +307,11 @@
        Token start = getToken(1);
        ${nodeVarName}.setBeginLine(start.beginLine);
        ${nodeVarName}.setBeginColumn(start.beginColumn);
+[#if grammar.options.hugeFileSupport]       
        ${nodeVarName}.setInputSource(this.getInputSource());
+[#elseif !grammar.options.userDefinedLexer]
+       ${nodeVarName}.setInputSource(token_source.input_stream);
+[/#if]       
 	    openNodeScope(${nodeVarName});
   [#if grammar.usesjjtreeOpenNodeScope]
    	   jjtreeOpenNodeScope(${nodeVarName});

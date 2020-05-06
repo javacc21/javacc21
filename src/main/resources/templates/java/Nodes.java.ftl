@@ -165,7 +165,7 @@ abstract public class Nodes {
     }
     
     static public void copyLocationInfo(Node from, Node to) {
-        to.setInputSource(from.getInputSource());
+//        to.setInputSource(from.getInputSource()); REVISIT
         to.setBeginLine(from.getBeginLine());
         to.setBeginColumn(from.getBeginColumn());
         to.setEndLine(from.getEndLine());
