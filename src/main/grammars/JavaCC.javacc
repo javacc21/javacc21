@@ -438,7 +438,7 @@ INJECT(Identifier) :
 {}
 {
    public String getNormalizedText() {
-        String image = getSource();
+        String image = getImage();
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
             return getGrammar().getCurrentNodeVariableName();
         }
