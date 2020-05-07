@@ -93,7 +93,7 @@ import com.javacc.parser.tree.*;
 
     private String removeEscapesAndQuotes(Token t) {
         String retval = "";
-        String str = t.image;
+        String str = t.getImage();
         int index = 1;
         char ch, ch1;
         int ordinal;
@@ -266,17 +266,17 @@ INJECT(LEXER_CLASS) :
 
    private Token tokenHook(Token t) {
        t.setGrammar(parser.getGrammar());
-       if (angleBracketNesting >0 && t.image.length() >1 && t.image.charAt(0) == '>') {
-           input_stream.backup(t.image.length() -1);
+       if (angleBracketNesting >0 && t.getImage().length() >1 && t.getImage().charAt(0) == '>') {
+           input_stream.backup(t.getImage().length() -1);
            Token gt = Token.newToken(TokenType.GT, ">", this);
            Nodes.copyLocationInfo(t, gt);
            gt.setEndColumn(gt.getEndColumn() -1);
            gt.setGrammar(parser.getGrammar());
            return gt;
        }
-       if (javaccReservedWords.contains(t.image)) {
+       if (javaccReservedWords.contains(t.getImage())) {
            if (inJavaCode || (t.getType() == TokenType._OPTIONS && optionsSeen)) {
-	           Token id = Token.newToken(TokenType.IDENTIFIER, t.image, this);
+	           Token id = Token.newToken(TokenType.IDENTIFIER, t.getImage(), this);
 	           Nodes.copyLocationInfo(t, id);
 	           id.setGrammar(parser.getGrammar());
 	           return id;
@@ -438,7 +438,7 @@ INJECT(Identifier) :
 {}
 {
    public String getNormalizedText() {
-        String image = getRawText();
+        String image = getSource();
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
             return getGrammar().getCurrentNodeVariableName();
         }
@@ -490,10 +490,6 @@ INJECT(Token) :
     public void setGrammar(Grammar grammar) {
          this.grammar = grammar;
 
-    }
-    
-    void setImage(String image) {
-        this.image = image;
     }
     
     public String getNodeName() {
@@ -603,7 +599,7 @@ void ParserCodeDecls() :
    ")"
    {
       if (!grammar.isInInclude())
-          grammar.setParserClassName(id.image);
+          grammar.setParserClassName(id.getImage());
       token_source.inJavaCode = true;
    }
    parserCode=CompilationUnit()
@@ -640,7 +636,7 @@ void GrammarInclusion() throws IOException :
       "}"
    ]
    {
-      String location = t.image.substring(1, t.image.length() -1);
+      String location = t.getImage().substring(1, t.getImage().length() -1);
       Node root = grammar.include(location);
       CURRENT_NODE.addChild(root);
    }
@@ -742,7 +738,7 @@ void option_binding() #void :
      name = "IGNORE_CASE"
   )
   {
-	  option_name = name.image;
+	  option_name = name.getImage();
   }
   [
      "="
@@ -751,11 +747,11 @@ void option_binding() #void :
         |
         t="false" {value=false;}
         |
-        t=<INTEGER_LITERAL> {value = Integer.valueOf(t.image);}
+        t=<INTEGER_LITERAL> {value = Integer.valueOf(t.getImage());}
         |
         t=<STRING_LITERAL> {value = removeEscapesAndQuotes(t);}
         |
-        t=<IDENTIFIER> {value = t.image;}
+        t=<IDENTIFIER> {value = t.getImage();}
      )
   ]  
   ";"
@@ -774,7 +770,7 @@ BNFProduction BNFProduction() :
         "public" | "private" | "protected"
     ]
     ReturnType()
-    <IDENTIFIER> {CURRENT_NODE.setName(current_token.image);}
+    <IDENTIFIER> {CURRENT_NODE.setName(current_token.getImage());}
     FormalParameters()
     [
       <BANG> {CURRENT_NODE.setForced(true);} 
@@ -1045,10 +1041,10 @@ TokenProduction TokenProduction() #TokenProduction :
     |
     "<"
       <IDENTIFIER>{
-          firstSpecifiedLexicalState = current_token.image;
+          firstSpecifiedLexicalState = current_token.getImage();
           grammar.addLexicalState(firstSpecifiedLexicalState);
       }
-      ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(current_token.image);})*
+      ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(current_token.getImage());})*
     ">"
   ]
   (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP")
@@ -1060,7 +1056,7 @@ TokenProduction TokenProduction() #TokenProduction :
           }
         }
   ]
-  [t=<HASH_ID> {tokenClassName=t.image.substring(1);}] 
+  [t=<HASH_ID> {tokenClassName=t.getImage().substring(1);}] 
   ":"
   "{"
    RegexpSpec(CURRENT_NODE, tokenClassName)
@@ -1216,7 +1212,7 @@ void RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
      <HASH_ID>
      {
         regexp.setGeneratedSuperClassName(tokenClassName);
-        regexp.setGeneratedClassName(current_token.image.substring(1));
+        regexp.setGeneratedClassName(current_token.getImage().substring(1));
      }
   ]
   [
@@ -2072,10 +2068,10 @@ void InPlaceRegexp() #void :
   t=<LT>
   [
    (
-     t=<IDENTIFIER> {image = t.image;}
+     t=<IDENTIFIER> {image = t.getImage();}
      |
      LOOKAHEAD({!inBNFProduction})
-     t=<HASH_ID> {image = t.image.substring(1); isPrivate= true;}
+     t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
    )
    ":"
   ]
@@ -2152,7 +2148,7 @@ RegexpRef RegexpRef() :
     t=<IDENTIFIER> 
     ">" {--token_source.angleBracketNesting;}
     {
-       CURRENT_NODE.setLabel(t.image);
+       CURRENT_NODE.setLabel(t.getImage());
        return CURRENT_NODE;
     }
 }
