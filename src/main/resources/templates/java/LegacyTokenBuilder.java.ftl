@@ -25,6 +25,10 @@ private class TokenBuilder {
         line = startline;
         column = startcolumn - 1;
     }
+    
+    TokenBuilder(String inputStream, Reader reader, int startline, int startcolumn) {
+        this(reader, startline, startcolumn);
+    }
 
     TokenBuilder(Reader reader) {
         this(reader, 1, 1);

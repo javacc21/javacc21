@@ -81,22 +81,29 @@ private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName
         switchTo(lexState);
      }
      [#if options.legacyAPI]
-         public ${grammar.lexerClassName}(String inputSource, CharSequence chars, int lexState, int line, int column) {
-            this(inputSource, chars, LexicalState.values()[lexState],  line, column);
-         }
+//         public ${grammar.lexerClassName}(String inputSource, CharSequence chars, int lexState, int line, int column) {
+//            this(inputSource, chars, LexicalState.values()[lexState],  line, column);
+//         }
      [/#if]
 [/#if]
-    public ${grammar.lexerClassName}(Reader reader) {
-       this(reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
+    public ${grammar.lexerClassName}(String inputSource, Reader reader) {
+       this(inputSource, reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
     }
-    public ${grammar.lexerClassName}(Reader reader, LexicalState lexState, int line, int column) {
-        input_stream = new ${tokenBuilderClass}(reader, line, column);
+    /**
+     * @deprecated Use the constructor where you specify an inputSource string so that you can have error messages that make sense!
+     */
+    public ${grammar.lexerClassName}(Reader reader) {
+        this("input" , reader);
+    }
+    public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
+        input_stream = new ${tokenBuilderClass}(inputSource, reader, line, column);
         switchTo(lexState);
     }
+    
 [#if options.legacyAPI]
-         public ${grammar.lexerClassName}(Reader reader, int lexState, int line, int column) {
-            this(reader, LexicalState.values()[lexState],  line, column);
-         }
+//         public ${grammar.lexerClassName}(Reader reader, int lexState, int line, int column) {
+//            this(reader, LexicalState.values()[lexState],  line, column);
+//         }
 [/#if]
 
 ${tokenBuilderClass} input_stream;
