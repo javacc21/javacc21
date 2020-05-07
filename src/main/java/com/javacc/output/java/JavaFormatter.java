@@ -33,6 +33,7 @@ package com.javacc.output.java;
 import static com.javacc.parser.JavaCCConstants.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
@@ -52,15 +53,7 @@ public class JavaFormatter {
     
     public JavaFormatter() {}
     
-    public String format(Reader input) throws IOException, ParseException {
-        JavaCCParser parser = new JavaCCParser(input);
-//        parser.setSpecialTokensAreNodes(true);
-        CompilationUnit cu = parser.CompilationUnit();
-        input.close();
-        return format(cu);
-    }
-    
-    public String format(BaseNode code) {
+   public String format(BaseNode code) {
         buf = new StringBuilder();
         for (Token t :  Nodes.getAllTokens(code, true, true)) {
             if (t instanceof Whitespace) {
@@ -73,6 +66,55 @@ public class JavaFormatter {
         }
         return buf.toString();
     }
+   /**
+    * Runs over the tree and looks for unused variables to remove.
+    * Currently it just handles private class/instance level variables, not local variables
+    * This was necessary because I was hitting the dreaded "Code too large" condition
+    * when I was just generating all the various first/final/follow sets.  
+    * @param jcu
+    */
+   
+   void removeUnusedVariables(CompilationUnit jcu) {
+       Set<Identifier> ids = new HashSet<>();
+       Set<String> names = new HashSet<>();
+       for (FieldDeclaration fd : jcu.descendantsOfType(FieldDeclaration.class)) {
+           if (fd.getParent() instanceof ClassOrInterfaceBodyDeclaration) {
+               if (((ClassOrInterfaceBodyDeclaration) fd.getParent()).isPrivate()) {
+                   List<Identifier> vars = fd.getVariableIds();
+                   ids.addAll(vars);
+                   for (Identifier id : vars) {
+                       names.add(id.getImage());
+                   }
+               }
+           }
+       }
+       Set <String> references = new HashSet<>();
+       for (Identifier id : jcu.descendantsOfType(Identifier.class)) {
+           String name = id.getImage();
+           if (names.contains(name) && !ids.contains(id)) {
+              references.add(id.getImage());
+           }
+       }
+       for (Identifier id : ids) {
+           if (!references.contains(id.getImage())) {
+               removeDeclaration(id);
+               
+           }
+       }
+   }
+   
+   private void removeDeclaration(Identifier id) {
+       FieldDeclaration fd = id.firstAncestorOfType(FieldDeclaration.class);
+       if (fd.getVariableIds().size() >1) {
+            // FIXME, TODO
+       }
+       else  {
+           Node parent = fd.getParent();
+           Node grandparent = parent.getParent();
+           grandparent.removeChild(parent);
+//           System.out.println("KILROY: removing statement: " + parent.getSource());
+       }
+   }
     
     private void startNewLineIfNecessary() {
         if (buf.length() == 0) {

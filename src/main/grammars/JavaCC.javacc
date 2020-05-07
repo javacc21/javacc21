@@ -1425,7 +1425,8 @@ INJECT(ExpansionSequence) :
    public boolean isSingleton() {
        return getUnits().size() == 1 && getLookahead() == null;
    }
-   
+  /* 
+  // need to REVISIT this.
    public String getFirstSetVarName() {
        if (isSingleton()) {
           NonTerminal nt = firstChildOfType(NonTerminal.class);
@@ -1434,7 +1435,7 @@ INJECT(ExpansionSequence) :
           }
        }
        return super.getFirstSetVarName();
-   }
+   }*/
    
 }
 

@@ -27,7 +27,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public FileLineMap getFileLineMap() {
         return fileLineMap;
     }
- 
+    
+
     public Token(TokenType type, String image, FileLineMap fileLineMap) {
         this.type = type;
         this.image = image;
@@ -41,6 +42,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     [#if !grammar.options.treeBuildingEnabled]
     public String getInputSource() {
         return inputSource;
+     }
+     
+     public String getSource() {
+         return getFileLineMap().getText(beginLine, beginColumn, endLine, endColumn);
      }
     [/#if]    
     
@@ -94,18 +99,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     /**
      * The string image of the token.
      */
-    String image;
+    private String image;
     
     public String getImage() {
-//        image = null;
 [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]    
         if (image == null) {
-            FileLineMap lineMap = getFileLineMap();
-            if (lineMap != null) {
-                return lineMap.getText(beginLine, beginColumn, endLine, endColumn);
-            } else {
-                return "" + getType();
-            }
+            return getSource();
         }
 [/#if]        
         return image;
@@ -215,10 +214,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return getImage();
     }
     
-    public String getRawText() {
-        return getImage();
-    }
-    
     public String toString() {
         return getNormalizedText();
     }
@@ -238,7 +233,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [/#if]    
 [#if grammar.options.hugeFileSupport]    
     public static Token newToken(TokenType type, String image, String inputSource) {
-           [#-- if !grammar.options.hugeFileSupport]image = null;[/#if --]
+           [#if !grammar.options.hugeFileSupport]image = null;[/#if]
            [#if grammar.options.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]

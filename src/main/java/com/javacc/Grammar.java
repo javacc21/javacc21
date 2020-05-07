@@ -386,20 +386,43 @@ public class Grammar extends BaseNode {
     }
     
     public List<Expansion> getExpansionsForFirstSet() {
+        return getExpansionsForSet(0);
+    }
+    
+    public List<Expansion> getExpansionsForFinalSet() {
+        return getExpansionsForSet(1);
+    }
+    
+    public List<Expansion> getExpansionsForFollowSet() {
+        return getExpansionsForSet(2);
+    }
+
+    private List<Expansion> getExpansionsForSet(int type) {
         HashSet<String> usedNames = new HashSet<>();
         List<Expansion> result = new ArrayList<>();
         for (Expansion expansion : descendantsOfType(Expansion.class)) {
-            if (expansion.getFirstSet().cardinality() ==0) continue;
-            String varName = expansion.getFirstSetVarName();
+            if (expansion.getParent() instanceof BNFProduction) continue; // Handle these separately
+            BitSet set = null;
+            String varName = null;            
+            if (type==0) {
+                set = expansion.getFirstSet();
+                varName = expansion.getFirstSetVarName();
+            } else if (type ==1) {
+                set = expansion.getFinalSet();
+                varName = expansion.getFinalSetVarName();
+            } else {
+                set = expansion.getFollowSet();
+                varName = expansion.getFollowSetVarName();
+            }
+            if (set == null || set.cardinality() ==0) continue;
             if (!usedNames.contains(varName)) {
                 result.add(expansion);
                 usedNames.add(varName);
             }
         }
         return result;
-        
-//        return this.descendants((n) -> !(n.getParent() instanceof BNFProduction) && (n instanceof ExpansionSequence));
     }
+
 
     /**
      * The list of all TokenProductions from the input file. This list includes

@@ -86,7 +86,7 @@ abstract public class Expansion extends BaseNode {
 
     long myGeneration = 0; //REVISIT
     
-    private String phase2RoutineName, phase3RoutineName, firstSetVarName, finalSetVarName;
+    private String phase2RoutineName, phase3RoutineName, firstSetVarName, finalSetVarName, followSetVarName;
     
     public String getLabel() {
     	return label;
@@ -178,29 +178,47 @@ abstract public class Expansion extends BaseNode {
     }
     
     public List<String> getFirstSetTokenNames() {
-        int tokenCount = getGrammar().getLexerData().getTokenCount();
-        List<String> firstSetNames = new ArrayList<>(tokenCount);
-        Expansion expansion = getLookaheadExpansion();
-        BitSet firstSet = expansion.getFirstSet();
-        for (int i=0; i<tokenCount; i++) {
-            if (firstSet.get(i)) {
-                firstSetNames.add(getGrammar().getLexerData().getTokenName(i));
-            }
-        }
-        return firstSetNames;
+//        int tokenCount = getGrammar().getLexerData().getTokenCount();
+//        List<String> firstSetNames = new ArrayList<>(tokenCount);
+//        Expansion expansion = getLookaheadExpansion();
+//        BitSet firstSet = expansion.getFirstSet();
+//        for (int i=0; i<tokenCount; i++) {
+//            if (firstSet.get(i)) {
+//                firstSetNames.add(getGrammar().getLexerData().getTokenName(i));
+//            }
+//        }
+//        return firstSetNames;
+        return tokenSetNames(getFirstSet());
     }
     
     public List<String> getFinalSetTokenNames() {
+        return tokenSetNames(getFinalSet());
+//        int tokenCount = getGrammar().getLexerData().getTokenCount();
+//        List<String> finalSetNames = new ArrayList<>(tokenCount);
+//        BitSet finalSet = getFinalSet();
+//        for (int i=0; i<tokenCount; i++) {
+//            if (finalSet.get(i)) {
+//                finalSetNames.add(getGrammar().getLexerData().getTokenName(i));
+//            }
+//        }
+//        return finalSetNames;
+    }
+    
+    public List<String> getFollowSetTokenNames() {
+        return tokenSetNames(getFollowSet());
+    }
+    
+    private List<String> tokenSetNames(BitSet set) {
         int tokenCount = getGrammar().getLexerData().getTokenCount();
-        List<String> finalSetNames = new ArrayList<>(tokenCount);
-        BitSet finalSet = getFinalSet();
+        List<String> result = new ArrayList<>(tokenCount);
         for (int i=0; i<tokenCount; i++) {
-            if (finalSet.get(i)) {
-                finalSetNames.add(getGrammar().getLexerData().getTokenName(i));
+            if (set.get(i)) {
+                result.add(getGrammar().getLexerData().getTokenName(i));
             }
         }
-        return finalSetNames;
+        return result;
     }
+    
      
     public boolean isNegated() {
         return getLookahead() != null && getLookahead().isNegated();
@@ -231,6 +249,13 @@ abstract public class Expansion extends BaseNode {
              }
          }
          return finalSetVarName;
+    }
+    
+    public String getFollowSetVarName() {
+        if (followSetVarName == null) {
+            followSetVarName = getGrammar().generateUniqueIdentifier("follow_set$", this);
+        }
+        return followSetVarName;
     }
 
     public String getPhase2RoutineName() {
@@ -288,7 +313,7 @@ abstract public class Expansion extends BaseNode {
              return ((Expansion) parent).getFollowSet();
          }
          // REVISIT.
-         return null;
+         return new TokenSet(getGrammar());
     }
     
     

@@ -67,6 +67,9 @@ private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName
   
   public void setInputSource(String inputSource) {
       this.inputSource = inputSource;
+[#if !grammar.options.hugeFileSupport]
+      input_stream.setInputSource(inputSource);
+[/#if]            
   }
    
 [#if !options.hugeFileSupport]

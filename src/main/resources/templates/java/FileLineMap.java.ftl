@@ -53,7 +53,7 @@ public class FileLineMap {
     // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
     private final CharSequence content;
     // Typically a filename, I suppose.
-    private final String inputSource;
+    private String inputSource;
     // A list of offsets of the beginning of lines
     private final int[] lineOffsets;
     private int startingLine, startingColumn;
@@ -302,6 +302,11 @@ public class FileLineMap {
     public String getInputSource() {
         return inputSource;
     }
+    
+    void setInputSource(String inputSource) {
+        this.inputSource = inputSource;
+    }
+    
     // ------------- TODO: unused method for the moment....
 
     private int getLineCount() {
@@ -315,7 +320,7 @@ public class FileLineMap {
     }
 
     private String getText(int startOffset, int endOffset) {
-        return content.subSequence(startOffset, endOffset).toString();
+        return content.subSequence(startOffset, endOffset+1).toString();
     }
 
     private String getLine(int lineNumber) {

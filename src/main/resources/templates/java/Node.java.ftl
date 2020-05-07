@@ -138,16 +138,21 @@ public interface Node extends Comparable<Node>
      
     
 [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
-     default FileLineMap getFileLineMap() {
-         return null;
-     }
-     
+     FileLineMap getFileLineMap();
+
      default String getInputSource() {
          FileLineMap fileLineMap = getFileLineMap();
          return fileLineMap == null ? "input" : fileLineMap.getInputSource();
      }
      
      void setInputSource(FileLineMap fileLineMap);
+     
+     
+     default String getSource() {
+        return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
+    }
+    
+ 
 [#else]     
      /**
       * @return A string that says where the input came from. Typically a file name, though

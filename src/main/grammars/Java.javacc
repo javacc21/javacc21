@@ -30,6 +30,7 @@
 
 options {
   JAVA_UNICODE_ESCAPE;
+//  TOKENS_ARE_NODES=false;
   SPECIAL_TOKENS_ARE_NODES;
   PARSER_PACKAGE="com.javacc.javaparser";
   NODE_PACKAGE="com.javacc.javaparser.ast";
@@ -954,16 +955,38 @@ INJECT(ClassOrInterfaceBody) :
     }
 }
 
+INJECT(ClassOrInterfaceBodyDeclaration) : {}
+{
+    public boolean isPrivate() {
+        return hasKeyWord("private");
+    }
+    
+    public boolean isStatic() {
+         return hasKeyWord("static");
+    }
+    
+    public boolean isProtected() {
+         return hasKeyWord("protected");
+    }
+    
+    public boolean isPublic() {
+         return hasKeyWord("public");
+    }
+    
+    private boolean hasKeyWord(String keyWord) {
+        for (KeyWord kw: childrenOfType(KeyWord.class)) {
+           if (kw.getImage().equals(keyWord)) return true;
+        }
+        return false;
+    }
+}
+
 void ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
 {}
 {
-  LOOKAHEAD(2)
+  LOOKAHEAD(2) // FIXME {!isInterface})
   Initializer()
-  {
-     if (isInterface)
-        throw new ParseException("An interface cannot have initializers");
-  }
-|
+ |
   Modifiers2() // Just get all the modifiers out of the way. If you want to do
               // more checks, pass the modifiers down to the member
   (
@@ -998,6 +1021,36 @@ INJECT(ClassOrInterfaceBodyDeclaration) : {}
         return md == null ? null : md.getFullSignature();
     }
 }
+
+INJECT(FieldDeclaration) : 
+{
+   import java.util.*;
+}
+{
+   public List<Identifier> getVariableIds() {
+       List<Identifier> result = new ArrayList<>();
+       boolean atBeginning = true;
+       for (Node child : children()) {
+           if (atBeginning) {
+               atBeginning = false;
+               continue;
+           }
+           if (!(child instanceof Delimiter)) {
+              if (child instanceof Identifier) {
+                  result.add((Identifier) child);
+              } else {
+                  if (child.getChild(0) instanceof Identifier) {
+                      result.add((Identifier) child.getChild(0));
+                 } else {
+                       result.add((Identifier) child.getChild(0).getChild(0));
+                 }
+              }
+           }
+       }
+       return result;
+   }
+}
+
 
 void FieldDeclaration() :
 {}
@@ -1120,6 +1173,7 @@ FormalParameter FormalParameter():
         return CURRENT_NODE;
     }
 }
+INJECT(ConstructorDeclaration) : {extends ClassOrInterfaceBodyDeclaration}
 
 void ConstructorDeclaration():
 {}
@@ -1368,6 +1422,7 @@ INJECT(PostfixExpression) : {extends Expression}
 INJECT(CastExpression) : {extends Expression}
 INJECT(PrimaryExpression) : {extends Expression} 
 INJECT(LambdaExpression) : {extends Expression} 
+INJECT(CodeBlock) : {extends Expression} 
 
 /*
  * This expansion has been written this way instead of:

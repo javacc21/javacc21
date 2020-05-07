@@ -61,8 +61,25 @@
 	 * this after a successful parse. 
 	 */ 
     public Node rootNode() {
-        return currentNodeScope.rootNode();
+        Node root = currentNodeScope.rootNode();
+[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
+        recursivelySetInputSource(root, this.token_source.input_stream);
+[/#if]        
+        return root;
     }
+    
+[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]    
+    static private void recursivelySetInputSource(Node n, FileLineMap fileLineMap) {
+        n.setInputSource(fileLineMap);
+        for (Node child : n.children()) {
+//            if (child instanceof Token) {
+//                 ((Token) child).setImage(null);
+//            } 
+            recursivelySetInputSource(child, fileLineMap); 
+        } 
+    }
+[/#if]    
+    
 
     /**
      * push a node onto the top of the node stack

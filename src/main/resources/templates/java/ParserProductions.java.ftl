@@ -32,7 +32,10 @@
 
 [#macro Generate]
     [@Productions/]
-    [#-- @firstSetVars/--]
+    //HELLO WORLD
+    [@firstSetVars/]
+    [@finalSetVars/]
+    [@followSetVars/]
     [#if parserData.phase2Expansions?size !=0]
        [@Phase2 /]
        [@Phase3/]
@@ -109,7 +112,27 @@
     [/#list]
 [/#macro]
 
+[#macro finalSetVars]
+    //=================================
+     // EnumSets that represent the various expansions' final set (i.e. the set of tokens with which the expansion can end)
+     //=================================
+    [#list grammar.expansionsForFinalSet as expansion]
+          [@finalSetVar expansion/]
+    [/#list]
+[/#macro]
+
+
+[#macro followSetVars]
+    //=================================
+     // EnumSets that represent the various expansions' follow set (i.e. the set of tokens that can immediately follow this)
+     //=================================
+    [#list grammar.expansionsForFollowSet as expansion]
+          [@followSetVar expansion/]
+    [/#list]
+[/#macro]
+
 [#macro firstSetVar expansion]
+//KILROY 1
     static private final EnumSet<TokenType> ${expansion.firstSetVarName} = EnumSet.of(
         [#list expansion.firstSetTokenNames as type]
            [#if type_index >0],[/#if]
@@ -119,6 +142,8 @@
 [/#macro]
 
 [#macro finalSetVar expansion]
+
+//KILROY 2
     static private final EnumSet<TokenType> ${expansion.finalSetVarName} = EnumSet.of(
         [#list expansion.finalSetTokenNames as type]
            [#if type_index >0],[/#if]
@@ -127,7 +152,20 @@
     );
 [/#macro]            
 
+[#macro followSetVar expansion]
+    static private final EnumSet<TokenType> ${expansion.followSetVarName} = EnumSet.of(
+        [#list expansion.followSetTokenNames as type]
+           [#if type_index >0],[/#if]
+           TokenType.${type}
+        [/#list]
+    );
+[/#macro]            
+
 [#macro ParserProduction production]
+
+// ${production.expansion.location}
+// ${production.expansion.simpleName}
+// ${production.expansion.parent.simpleName}
     [@firstSetVar production.expansion/]
     [@finalSetVar production.expansion/]
     [#--  --if production.name == "IfStatement"][@finalSetVar production.expansion/][/#if]
