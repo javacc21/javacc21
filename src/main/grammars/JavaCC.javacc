@@ -51,10 +51,15 @@ import com.javacc.parser.tree.*;
 {
     Grammar grammar;
     private boolean inBNFProduction;
-
+/*
     public JavaCCParser(Grammar grammar, java.io.Reader reader) {
         this(reader);
         this.grammar = grammar;
+    }*/
+    
+    public JavaCCParser(Grammar grammar, String inputSource, CharSequence content) {
+         this(inputSource, content);
+         this.grammar = grammar;
     }
 
    private boolean inLookahead;
@@ -212,6 +217,12 @@ import com.javacc.parser.tree.*;
     static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
         JavaCCParser parser = new JavaCCParser(input);
         parser.setInputSource(inputSource);
+        parser.token_source.inJavaCode = true;
+        return parser.CompilationUnit();
+    }
+    
+    static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) throws ParseException {
+        JavaCCParser parser = new JavaCCParser(inputSource, content);
         parser.token_source.inJavaCode = true;
         return parser.CompilationUnit();
     }

@@ -175,7 +175,7 @@ public class FilesGenerator {
         FileWriter out = new FileWriter(outputFile);
         CompilationUnit jcu = null;
         try {
-            jcu = JavaCCParser.parseJavaFile(new StringReader(code), outputFile.getName());
+            jcu = JavaCCParser.parseJavaFile(outputFile.getName(), code);
         } catch (Exception e) {
             e.printStackTrace();
             try {
