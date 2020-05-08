@@ -127,7 +127,7 @@
 [#if grammar.usesTokenHook]
             eof = tokenHook(eof);
 [/#if]
-		    eof.specialToken = specialToken;
+		    eof.setSpecialToken(specialToken);
 		    addToken(eof);
     		return eof;
        }
@@ -240,7 +240,7 @@
  
 
  [#if lexerData.hasSpecial]
-         matchedToken.specialToken = specialToken;
+         matchedToken.setSpecialToken(specialToken);
  [/#if]
 
  [#if lexerData.hasTokenActions]
@@ -284,7 +284,7 @@
                 specialToken = matchedToken;
               }
               else {
-                 matchedToken.specialToken=specialToken;
+                 matchedToken.setSpecialToken(specialToken);
                  specialToken.setNext(matchedToken);
                  specialToken = matchedToken;
                  addToken(specialToken);
@@ -348,7 +348,11 @@
     String error_after = null;
     error_after = curPos <= 1 ? "" : input_stream.getImage();
     if (invalidToken == null) {
-       invalidToken = new InvalidToken(""+ curChar);
+    [#if grammar.options.hugeFileSupport]
+       invalidToken = new InvalidToken(""+ curChar, inputSource);
+    [#else]
+       invalidToken = new InvalidToken(""+ curChar, input_stream);
+    [/#if]       
        invalidToken.setBeginLine(error_line);
        invalidToken.setBeginColumn(error_column);
     } else {
@@ -440,10 +444,10 @@
     [#else]
         t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
     [/#if]
-        t.beginLine = beginLine;
-        t.endLine = endLine;
-        t.beginColumn = beginColumn;
-        t.endColumn = endColumn;
+        t.setBeginLine(beginLine);
+        t.setEndLine(endLine);
+        t.setBeginColumn(beginColumn);
+        t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
      [#if numLexicalStates >1]
         t.setLexicalState(lexicalState);
@@ -962,16 +966,6 @@
               [@dumpMoveForCompositeState state, byteNum, !atStart/]
               [#set atStart = false]
             [/#list]
-         [/#list]
-   [#else]
-         [#list stateSet as state]
-            [#if state.isNeeded(byteNum)]
-               [#if hasStateBlock]
-                  ${statesDumped.set(state.index)!}
-                  [@dumpMoveForCompositeState state, byteNum, false/]
-                  [#-- ${state.dumpMoveForCompositeState(byteNum, false)} --]
-               [/#if]
-            [/#if]
          [/#list]
    [/#if]
                   break;

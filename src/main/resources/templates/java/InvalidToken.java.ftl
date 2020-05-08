@@ -9,14 +9,20 @@ package ${grammar.parserPackage};
  
 public class InvalidToken extends Token {
 
-    public InvalidToken(String image) {
-       super(TokenType.INVALID, image, "input");
+[#if grammar.options.hugeFileSupport || grammar.options.userDefinedLexer]
+    public InvalidToken(String image, String inputSource) {
+       super(TokenType.INVALID, image, inputSource);
     }
-    
+[#else]
+    public InvalidToken(String image, FileLineMap inputSource) {
+       super(TokenType.INVALID, image, inputSource);
+    }
+[/#if]    
+/*    
     public InvalidToken() {
        super(TokenType.INVALID, null, "input");
     }
-    
+*/        
     public String getNormalizedText() {
         return "Lexically Invalid Input:" + getImage();
     }

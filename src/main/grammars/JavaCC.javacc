@@ -999,7 +999,7 @@ INJECT(TreeBuildingAnnotation) :
 	   if (n instanceof Token) {
 	       Token t = (Token) n;
                if (t.getType() == TokenType.HASH_ID) {
-                   image = t.toString().substring(1);
+                   image = t.getImage().substring(1);
                }
 	   }
         }

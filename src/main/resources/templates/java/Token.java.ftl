@@ -25,6 +25,16 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     private FileLineMap fileLineMap; 
     
     public FileLineMap getFileLineMap() {
+        [#if grammar.options.treeBuildingEnabled]
+        if (fileLineMap == null) {
+           Node n = getParent();
+           while (n!= null) {
+               fileLineMap = n.getFileLineMap();
+               if (fileLineMap != null) break;
+               n = n.getParent();
+            }
+        }
+        [/#if]
         return fileLineMap;
     }
     
@@ -93,24 +103,26 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * beginLine and beginColumn describe the position of the first character
      * of this token; endLine and endColumn describe the position of the
      * last character of this token.
-     */ 
+     */
+[#if !grammar.options.legacyAPI]private[/#if]      
     int beginLine, beginColumn, endLine, endColumn;
 
     /**
      * The string image of the token.
      */
-    private String image;
+[#if !grammar.options.legacyAPI]private[/#if]      
+    String image;
     
     public String getImage() {
 [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]    
         if (image == null) {
             return getSource();
-        }
+        } 
 [/#if]        
         return image;
     }
     
-   void setImage(String image) {
+   public void setImage(String image) {
        this.image = image;
    } 
     
@@ -169,11 +181,23 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * immediately follow it (without an intervening regular token).  If there
      * is no such token, this field is null.
      */
+[#if !grammar.options.legacyAPI]private[/#if]     
     Token specialToken;
     
-    boolean unparsed;
+    public Token getSpecialToken() {
+         return specialToken;
+    }
+    
+    public void setSpecialToken(Token specialToken) {
+         this.specialToken = specialToken;
+    }
+    
+    private boolean unparsed;
 
-    public Token() {}
+    //Should find a way to get rid of this.
+    Token() {} 
+    
+    
     public Token(int kind) {
        this(kind, null);
        this.type = TokenType.values()[kind];
@@ -186,6 +210,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.type = TokenType.values()[kind];
         this.image = image;;
     }
+    
     public Token(TokenType type, String image, String inputSource) {
         this.type = type;
         this.image = image;

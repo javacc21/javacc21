@@ -31,11 +31,10 @@
  --]
 
 [#macro Generate]
-    [@Productions/]
-    //HELLO WORLD
+     [@Productions/]
     [@firstSetVars/]
     [@finalSetVars/]
-    [@followSetVars/]
+    [@followSetVars/]  
     [#if parserData.phase2Expansions?size !=0]
        [@Phase2 /]
        [@Phase3/]
@@ -132,7 +131,6 @@
 [/#macro]
 
 [#macro firstSetVar expansion]
-//KILROY 1
     static private final EnumSet<TokenType> ${expansion.firstSetVarName} = EnumSet.of(
         [#list expansion.firstSetTokenNames as type]
            [#if type_index >0],[/#if]
@@ -143,7 +141,6 @@
 
 [#macro finalSetVar expansion]
 
-//KILROY 2
     static private final EnumSet<TokenType> ${expansion.finalSetVarName} = EnumSet.of(
         [#list expansion.finalSetTokenNames as type]
            [#if type_index >0],[/#if]
@@ -343,8 +340,8 @@
        ${nodeVarName} = new ${nodeName}();
    [/#if]
        Token start = getToken(1);
-       ${nodeVarName}.setBeginLine(start.beginLine);
-       ${nodeVarName}.setBeginColumn(start.beginColumn);
+       ${nodeVarName}.setBeginLine(start.getBeginLine());
+       ${nodeVarName}.setBeginColumn(start.getBeginColumn());
 [#if grammar.options.hugeFileSupport]       
        ${nodeVarName}.setInputSource(this.getInputSource());
 [#elseif !grammar.options.userDefinedLexer]
@@ -469,6 +466,14 @@
     [/#if]
 [/#macro]
 
+[#macro BuildPhase1CodeOneOrMore oom]
+   [#var nestedExp=oom.nestedExpansion]
+   while (true) {
+      [@BuildCode nestedExp/]
+      [@BuildBinaryChoiceCode oom, null, "break;"/]
+   }
+[/#macro]
+
 [#macro BuildPhase1CodeZeroOrMore zom]
     [#var nestedExp=zom.nestedExpansion]
     ${zom.label}:
@@ -478,26 +483,18 @@
     }
 [/#macro]
 
-[#macro BuildPhase1CodeOneOrMore oom]
-   [#var nestedExp=oom.nestedExpansion]
-   ${oom.label}:
-   while (true) {
-      [@BuildCode nestedExp/]
-      [@BuildBinaryChoiceCode oom, null, "break "+oom.label+";"/]
-   }
-[/#macro]
-
-[#macro BuildPhase1CodeChoice choice]
+[[#macro BuildPhase1CodeChoice choice]
    [#-- TODO: This macro is too gnarly, need to break it up and simplify it  --]
    [#var actions=[], expansions = []]
    [#var defaultAction, inPhase1 = false, indentLevel = 0]
    [#set defaultAction]
        pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
-       throw new ParseException(current_token.getNext(), EnumSet.of( 
+       throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack); 
+ [#--       EnumSet.of( 
        [#list choice.firstSetTokenNames as type]
           [#if type_index>0],[/#if]TokenType.${type}
         [/#list]
-        ), callStack);
+        ), callStack);--]
    [/#set]
    [#list choice.choices as nested]
       [#var action]
@@ -595,9 +592,13 @@
    [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]
       [@newVar type="TokenType" init="nextTokenType()"/]
       [#set condition]
+      [#if expansion.firstSetTokenNames?size>2]
+      ${expansion.firstSetVarName}.contains(tokentype${newVarIndex})
+      [#else]
       [#list expansion.firstSetTokenNames as tokenName]
              tokentype${newVarIndex} == TokenType.${tokenName} [#if tokenName_has_next]||[/#if]
       [/#list]
+      [/#if]
      [/#set]
    [/#if]
   [@ifelse condition, action, fallback/]

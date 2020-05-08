@@ -1541,11 +1541,11 @@ void ShiftOperator() #void :
    [third=">"]
    {
       if (second.getBeginColumn() != first.getBeginColumn() + 1) {
-            throw new ParseException("Shift operator cannot have spaces or comments inside!\n" + getInputSource() + ":line " + first.beginLine + ":column " + first.beginColumn);
+            throw new ParseException("Shift operator cannot have spaces or comments inside!\n" + first.getLocation());
       }
       if (third!=null) {
          if (third.getBeginColumn() != first.getBeginColumn() + 2) {
-              throw new ParseException("Shift operator >>> cannot have spaces or comments inside!\n" + getInputSource() + ":line " + first.beginLine +":column " +first.beginColumn);
+              throw new ParseException("Shift operator >>> cannot have spaces or comments inside!\n" + first.getLocation());
          }
      	 first.setImage(">>>");
 	 	 first.setType(TokenType.RUNSIGNEDSHIFT);

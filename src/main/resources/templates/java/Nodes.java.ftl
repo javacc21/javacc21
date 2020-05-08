@@ -147,8 +147,8 @@ abstract public class Nodes {
                 }
                 if (includeCommentTokens) {
 	                Token specialToken = token;
-	                while (specialToken.specialToken != null) {
-	                    specialToken = specialToken.specialToken;
+	                while (specialToken.getSpecialToken() != null) {
+	                    specialToken = specialToken.getSpecialToken();
 	                }
 	                while (specialToken != token && specialToken !=null) {
 	                    result.add(specialToken);

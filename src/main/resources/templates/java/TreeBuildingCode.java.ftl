@@ -151,7 +151,7 @@
         	    Token token = (Token) child;
         	    Token specialToken = token;
         	    while (specialToken != null) {
-        	        specialToken = specialToken.specialToken;
+        	        specialToken = specialToken.getSpecialToken();
         	    }
         	    while (specialToken !=null && specialToken != token) {
         	        n.addChild(specialToken);
@@ -193,8 +193,8 @@
 	        	if (specialTokensAreNodes && (child instanceof Token)) {
 	        	    Token token = (Token) child;
 	        	    Token specialToken = token;
-	        	    while (specialToken.specialToken !=null) {
-	        	        specialToken = specialToken.specialToken;
+	        	    while (specialToken.getSpecialToken() !=null) {
+	        	        specialToken = specialToken.getSpecialToken();
 	        	    }
 	        	    while (specialToken !=null && specialToken != token) {
 	        	        n.addChild(specialToken);
