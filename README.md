@@ -8,15 +8,17 @@ A list of the main features (in particular, wrt *legacy JavaCC*) follows:
 
 ## INCLUDE statement and Updated Java Grammar
 
-JavaCC 21 provides a much needed [INCLUDE instruction](https://doku.javacc.com/doku.php?id=include) that allows you to break up a large grammar into multiple physical files. [Here, for example,(https://github.com/javacc21/javacc21/blob/master/examples/json/JSONC.javacc) is what JavaCC21's JSONC (JSON with comments) grammar looks like. It simply INCLUDEs the regular (without comments) [JSON grammar that is here](https://github.com/javacc21/javacc21/blob/master/examples/json/JSON.javacc).
+JavaCC 21 provides a much needed [INCLUDE instruction](https://doku.javacc.com/doku.php?id=include) that allows you to break up a large grammar into multiple physical files. [Here, for example],(https://github.com/javacc21/javacc21/blob/master/examples/json/JSONC.javacc) is what JavaCC21's JSONC (JSON with comments) grammar looks like. It simply INCLUDEs the regular (without comments) [JSON grammar that is here](https://github.com/javacc21/javacc21/blob/master/examples/json/JSON.javacc).
 
-The INCLUDE feature is used to very good effect in the internal code of JavaCC 21 itself. The [embedded Java grammar](https://github.com/javacc21/javacc21/blob/master/src/main/grammars/Java.javacc) is simply INCLUDEd in the [JavaCC grammar](https://github.com/javacc21/javacc21/blob/master/src/main/grammars/JavaCC.javacc#339)
+The INCLUDE feature is used to very good effect in the internal code of JavaCC 21 itself. The [embedded Java grammar](https://github.com/javacc21/javacc21/blob/master/src/main/grammars/Java.javacc) is simply [INCLUDEd in the JavaCC grammar](https://github.com/javacc21/javacc21/blob/master/src/main/grammars/JavaCC.javacc#339)
 
 Since the Java grammar stands alone, it can be used freely in separate projects that require a Java grammar. This Java grammar has been updated to support comprehensively Java language constructs through Java 13. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/) for more information. Note also that, since this is the same Java grammar used internally in JavaCC 21 itself, you can embed Java language constructs up through Java 13 in your grammars. (I noted recently that there are a couple of new things in JDK 14 that currently are unhandled, specifically the new switch expressions, but that will be added fairly soon.)
 
 ## Tree Building
 
-JavaCC 21 is based on the view that building an AST (*Abstract Syntax Tree*) is the *normal* usage of this sort of tool. The legacy JavaCC package contained automatic tree-building functionality but it was actually quite cumbersome to use, since it was implemented as a separate pre-processor, JJTree, seemingly almost as an afterthought. In JavaCC 21, there is no separate pre-processor like JJTree. All of the functionality is simply in the core tool and the generated parser builds an AST by default. (Tree building can be turned off however.)
+JavaCC 21 is based on the view that building an AST (*Abstract Syntax Tree*) is the *normal* usage of this sort of tool. While the legacy JavaCC package does contain automatic tree-building functionality, i.e. the JJTree preprocessor, JJTree has some (very) longstanding usability issues that JavaCC 21 addresses. 
+
+For one thing, a lot of what makes JJTree quite cumbersome to use is precisely that it is a preprocessor! In JavaCC 21, all of the JJTree functionality is simply in the core tool and the generated parser builds an AST by default. (Tree building can be turned off however.)
 
 (*NB. JavaCC 21 uses the same syntax for tree-building annotations as JJTree.*)
 
@@ -24,14 +26,16 @@ One of the most annoying aspects of JJTree was that it had no disposition for *i
 
 Thus, JavaCC 21 has an [INJECT statement](https://doku.javacc.com/doku.php?id=include) that allows you to *inject* Java code into any generated file (including <code>Token.java</code> or <code>ParseException.java</code>) thus doing away with the unwieldy *antipattern* of post-editing generated files.
 
-Aside from the lack of any ability to inject code into generated ASTXXX classes, legacy JJTree has another strangely half-baked aspect: *Tokens are not Nodes!*. Surely, the most natural thing would be to have Tokens implement the Node interface as well, so that you can build a tree in which the terminal nodes are the Token objects themselves. Well, as you might anticipate, JavaCC 21 does allow this. Also, by default, JavaCC 21 generates Token subclasses that represent the various types of Tokens.
+Aside from the lack of any ability to inject code into generated ASTXXX classes, legacy JJTree has another strangely half-baked aspect: *Tokens are not Nodes!*. Surely, the most natural thing would be to have Tokens implement the Node API as well, so that you can build a tree in which the terminal nodes are the Token objects themselves. Well, as you might anticipate, JavaCC 21 does allow this. Also, by default, JavaCC 21 generates subclasses to represent the various Token types. (Again, this is the default, but can be turned off.)
 
 ## Better Generated Code
 
-JavaCC 21 generates more readable code generally. Certain things have been modernized significantly. Consider the Token.kind field in the Token.java generated by the legacy tool. That field is an integer and is also publicly accessible. In the Token.java file that JavaCC 21 generates, the Token.getType() returns a type-safe Enum and all of the code in the generated parser that previously used integers to represent the type of Token, now use 
+JavaCC 21 generates more readable code generally. Certain things have been modernized significantly. Consider the <code>Token.kind</code> field in the <code>Token.java</code> generated by the legacy tool. That field is an integer and is also (contrary to well known best practices) publicly accessible. In the <code>Token.java</code> file that JavaCC 21 generates, the <code>Token.getType()</code> returns a [type-safe Enum](https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html) and all of the code in the generated parser that previously used integers to represent the type of Token, now use 
 type-safe Enums. 
 
 Code generated by legacy JavaCC gave just about zero information about where the generated code originated. Parsers generated by JavaCC 21 have line/column information (*relative to the real source file, the grammar file*) and they also inject information into the stack trace generated by ParseException that contain line/column information relative to the grammar file.
+
+If you want to compare side-by-side code generated by legacy JavaCC with that generated by JavaCC 21, [see this page](https://www.freemarker.es/2020/05/08/generatd-parsers-ymtd/).
 
 The current JavaCC 21 codebase itself is the result of a massive refactoring/cleanup. Code generation has been externalized to [FreeMarker](https://freemarker.es/) templates. To get an idea of what this looks like in practice, here is [the main template that generates Java code for grammatical productions](https://github.com/javacc21/javacc21/blob/master/src/main/resources/templates/java/ParserProductions.java.ftl).
 
@@ -45,7 +49,7 @@ In quite a few cases, there is no longer any need to write overly verbose <code>
 
 Perhaps most importantly, the project is again under active development.  
 
-Now that the project is again being actively developed, users can expect significant new features fairly soon. Given that code generation has been externalized to template files, the ability to generate parsers in other languages is probably not very far off. Another near-term major goal is to provide support for *fault-tolerant* parsing, where a parser incorporates heuristics for building an AST even when the input is invalid (unbalanced delimiters, missing semicolon and such).
+Now that the project is active again, users can expect significant new features fairly soon. Given that code generation has been externalized to template files, the ability to generate parsers in other languages is probably not very far off. Another near-term major goal is to provide support for *fault-tolerant* parsing, where a parser incorporates heuristics for building an AST even when the input is invalid (unbalanced delimiters, missing semicolon and such).
 
 One by-product of the ongoing work on fault-tolerant parsing is a new ATTEMPT/RECOVER statement that is [described here](https://javacc.com/2020/05/03/new-experimental-feature-attempt-recover/).
 
@@ -61,4 +65,4 @@ The latest source code can be checked out from Github via:
 
 And then you can do a build by invoking ant from the top-level directory. You should also be able to run test suite by running "ant test".
 
-If you are interested in this project, either as a user or as a developer, you may [write me]("mailto:revusky@NOSPAMjavacc.com"). Better yet, you can sign up on our[Discourse forum](https://discuss.parsers.org/) and post any questions or suggestions there.
+If you are interested in this project, either as a user or as a developer, you may [write me]("mailto:revusky@NOSPAMjavacc.com"). Better yet, you can sign up on our [Discourse forum](https://discuss.parsers.org/) and post any questions or suggestions there.
