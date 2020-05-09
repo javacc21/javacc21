@@ -33,8 +33,10 @@
 [#macro Generate]
      [@Productions/]
     [@firstSetVars/]
+    [#if grammar.options.faultTolerant]
     [@finalSetVars/]
     [@followSetVars/]  
+    [/#if]
     [#if parserData.phase2Expansions?size !=0]
        [@Phase2 /]
        [@Phase3/]
@@ -161,14 +163,10 @@
 [#macro ParserProduction production]
 
 // ${production.expansion.location}
-// ${production.expansion.simpleName}
-// ${production.expansion.parent.simpleName}
     [@firstSetVar production.expansion/]
-    [@finalSetVar production.expansion/]
-    [#--  --if production.name == "IfStatement"][@finalSetVar production.expansion/][/#if]
-    [#if production.name == "WhileStatement"][@finalSetVar production.expansion/][/#if]
-    [#if production.name == "ForStatement"][@finalSetVar production.expansion/][/#if --]
-
+    [#if grammar.options.faultTolerant]
+      [@finalSetVar production.expansion/]
+    [/#if]
     ${production.leadingComments}
 // ${production.inputSource}, line ${production.beginLine}
     final ${production.accessMod!"public"} 
