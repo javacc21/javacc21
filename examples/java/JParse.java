@@ -1,12 +1,16 @@
 import java.io.*;
+
 import java.util.*;
 import com.javacc.javaparser.*;
+
 
 /**
  * A test harness for parsing Java files from 
  * the command line.
  */
 public class JParse {
+    
+    static public ArrayList<Node> roots= new ArrayList<>();
 
    static public void main(String args[]) {
       List<File> failures = new ArrayList<File>();
@@ -53,6 +57,17 @@ public class JParse {
        JavaParser parser = new JavaParser(fr);
        parser.setInputSource(file.toString());
        Node root=parser.CompilationUnit();
+// Uncomment the following code if you want all the parsed trees 
+//  to remain in memory. This is useful if you want to know how much
+//  memory it takes to parse all the source code in the JDK, for example.
+//  (About 8GB if we're talking about JDK 13)
+//       roots.add(root);
+//       if (roots.size() % 1000 == 0) {
+//            System.out.println("-----------------------------------------------");
+//            System.out.println("Parsed "  +  roots.size() + " files.");
+//            System.out.println("-----------------------------------------------");
+//       }
+       
        if (dumpTree) {
            Nodes.dump(root, "");
        }

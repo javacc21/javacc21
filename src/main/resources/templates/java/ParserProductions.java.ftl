@@ -476,9 +476,8 @@
 
 [#macro BuildPhase1CodeZeroOrMore zom]
     [#var nestedExp=zom.nestedExpansion]
-    ${zom.label}:
     while (true) {
-       [@BuildBinaryChoiceCode zom, null, "break "+zom.label+";"/]
+       [@BuildBinaryChoiceCode zom, null, "break;"/] 
        [@BuildCode nestedExp/]
     }
 [/#macro]
@@ -490,11 +489,6 @@
    [#set defaultAction]
        pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
        throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack); 
- [#--       EnumSet.of( 
-       [#list choice.firstSetTokenNames as type]
-          [#if type_index>0],[/#if]TokenType.${type}
-        [/#list]
-        ), callStack);--]
    [/#set]
    [#list choice.choices as nested]
       [#var action]

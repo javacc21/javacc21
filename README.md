@@ -1,24 +1,59 @@
-# JavaCC 21, 20.02.21 release
+# JavaCC 21
 
-*Tagged and Released, 21 February 2020*
+[JavaCC 21](https://javacc.com/) is a continuation of development on the JavaCC codebase that was open-sourced by Sun Microsystems in mid 2003. It is currently the most advanced version of JavaCC. It has many feature enhancements (with more to come soon) and also generates much more modern, readable code.
 
-[JavaCC 21](https://javacc.com/) is a continuation of development on the JavaCC codebase released by Sun Microsystems in mid 2003. This development fork was originally released under the name FreeCC in 2008. However, it is really quite clear in retrospect that the FreeCC naming simply created confusion and we have decided on the *JavaCC 21* name to make it quite clear that this is simply a more advanced version of the JavaCC tool originally released by Sun.
+The overall history of this project is rather entangled and anybody interested can read [a more detailed history here](https://doku.javacc.com/doku.php?id=ancient_history). This branch of development was originally released under the name FreeCC in 2008. However, it is really quite clear in retrospect that the FreeCC naming simply created confusion and we have decided on the *JavaCC 21* name to make it quite clear that this is simply a more advanced version of the JavaCC tool originally released by Sun. (*NB. The "21" in JavaCC 21 is not a version number. It is simply part of the name and means that this is JavaCC for the 21st century!*)
 
-The current JavaCC 21 codebase is the result of a massive refactoring/cleanup, mostly carried out in 2008. Code generation has been externalized to [FreeMarker](https://freemarker.es/) templates. The embedded Java grammar has been updated to support comprehensively Java language constructs through Java 8. It provides a much needed [INCLUDE instruction](https://doku.javacc.com/doku.php?id=include) that allows you to break up a large grammar into multiple physical files. 
+A list of the main features (in particular, wrt *legacy JavaCC*) follows:
 
-The legacy JavaCC and JJTree tools have been merged into a single application and the generated parser builds an AST by default. (Though tree building can be optionally turned off.) There is a new [INJECT facility](https://doku.javacc.com/doku.php?id=include) that allows you to *inject* Java code into generated files, thus doing away with the unwieldy *antipattern* of post-editing generated files. In general, JavaCC 21 has more sensible default settings and is [much more usable out-of-the-box](https://doku.javacc.com/doku.php?id=convention_over_configuration).
+## INCLUDE statement and Updated Java Grammar
+
+JavaCC 21 provides a much needed [INCLUDE instruction](https://doku.javacc.com/doku.php?id=include) that allows you to break up a large grammar into multiple physical files. [Here, for example,(https://github.com/javacc21/javacc21/blob/master/examples/json/JSONC.javacc) is what JavaCC21's JSONC (JSON with comments) grammar looks like. It simply INCLUDEs the regular (without comments) [JSON grammar that is here](https://github.com/javacc21/javacc21/blob/master/examples/json/JSON.javacc).
+
+The INCLUDE feature is used to very good effect in the internal code of JavaCC 21 itself. The [embedded Java grammar](https://github.com/javacc21/javacc21/blob/master/src/main/grammars/Java.javacc) is simply INCLUDEd in the [JavaCC grammar](https://github.com/javacc21/javacc21/blob/master/src/main/grammars/JavaCC.javacc#339)
+
+Since the Java grammar stands alone, it can be used freely in separate projects that require a Java grammar. This Java grammar has been updated to support comprehensively Java language constructs through Java 13. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/) for more information. Note also that, since this is the same Java grammar used internally in JavaCC 21 itself, you can embed Java language constructs up through Java 13 in your grammars. (I noted recently that there are a couple of new things in JDK 14 that currently are unhandled, specifically the new switch expressions, but that will be added fairly soon.)
+
+## Tree Building
+
+JavaCC 21 is based on the view that building an AST (*Abstract Syntax Tree*) is the *normal* usage of this sort of tool. The legacy JavaCC package contained automatic tree-building functionality but it was actually quite cumbersome to use, since it was implemented as a separate pre-processor, JJTree, seemingly almost as an afterthought. In JavaCC 21, there is no separate pre-processor like JJTree. All of the functionality is simply in the core tool and the generated parser builds an AST by default. (Tree building can be turned off however.)
+
+(*NB. JavaCC 21 uses the same syntax for tree-building annotations as JJTree.*)
+
+One of the most annoying aspects of JJTree was that it had no disposition for *injecting* code into a generated Node subclass. This is actually rather odd, because the core JavaCC tool does allow you to inject code into the generated parser or lexer class (via <code>PARSER_BEGIN...PARSER_END</code> and <code>TOKEN_MGR_DECLS</code> respectively) but whoever implemented JJTree somehow did not understand the need for this. Presumably, you are supposed to generate your <code>ASTXXX.java</code> files and then, if you want to put any functionality into them, to post-edit them. (*Except... then... how do you do a clean rebuild of your project?*) 
+
+Thus, JavaCC 21 has an [INJECT statement](https://doku.javacc.com/doku.php?id=include) that allows you to *inject* Java code into any generated file (including <code>Token.java</code> or <code>ParseException.java</code>) thus doing away with the unwieldy *antipattern* of post-editing generated files.
+
+Aside from the lack of any ability to inject code into generated ASTXXX classes, legacy JJTree has another strangely half-baked aspect: *Tokens are not Nodes!*. Surely, the most natural thing would be to have Tokens implement the Node interface as well, so that you can build a tree in which the terminal nodes are the Token objects themselves. Well, as you might anticipate, JavaCC 21 does allow this. Also, by default, JavaCC 21 generates Token subclasses that represent the various types of Tokens.
+
+## Better Generated Code
+
+JavaCC 21 generates more readable code generally. Certain things have been modernized significantly. Consider the Token.kind field in the Token.java generated by the legacy tool. That field is an integer and is also publicly accessible. In the Token.java file that JavaCC 21 generates, the Token.getType() returns a type-safe Enum and all of the code in the generated parser that previously used integers to represent the type of Token, now use 
+type-safe Enums. 
+
+Code generated by legacy JavaCC gave just about zero information about where the generated code originated. Parsers generated by JavaCC 21 have line/column information (*relative to the real source file, the grammar file*) and they also inject information into the stack trace generated by ParseException that contain line/column information relative to the grammar file.
+
+The current JavaCC 21 codebase itself is the result of a massive refactoring/cleanup. Code generation has been externalized to [FreeMarker](https://freemarker.es/) templates. To get an idea of what this looks like in practice, here is [the main template that generates Java code for grammatical productions](https://github.com/javacc21/javacc21/blob/master/src/main/resources/templates/java/ParserProductions.java.ftl).
+
+## Assorted Usability Enhancements
+
+In general, JavaCC 21 has more sensible default settings and is [much more usable out-of-the-box](https://doku.javacc.com/doku.php?id=convention_over_configuration).
+
+In quite a few cases, there is no longer any need to write overly verbose <code>LOOKAHEAD</code> statements. See [here](https://javacc.com/2020/04/23/straightforward-lookahead-enhancements/) for more information.
+
+## JavaCC 21 is actively developed!
 
 Perhaps most importantly, the project is again under active development.  
 
-FreeCC had four public releases on the [now defunct Google Code site](https://code.google.com/archive/p/freecc/), the last of which being version 0.9.3, released in January of 2009. Development resumed at the end of 2019 and a 0.9.4 release was [published on Github](https://github.com/revusky/freecc/releases) on 28 December 2019.
-
 Now that the project is again being actively developed, users can expect significant new features fairly soon. Given that code generation has been externalized to template files, the ability to generate parsers in other languages is probably not very far off. Another near-term major goal is to provide support for *fault-tolerant* parsing, where a parser incorporates heuristics for building an AST even when the input is invalid (unbalanced delimiters, missing semicolon and such).
+
+One by-product of the ongoing work on fault-tolerant parsing is a new ATTEMPT/RECOVER statement that is [described here](https://javacc.com/2020/05/03/new-experimental-feature-attempt-recover/).
 
 To stay up to date with the JavaCC 21 project, you are encouraged to occasionally visit [our wiki](https://doku.javacc.com/doku.php?id=start).
 
 Usage is really quite simple. As described [here](https://javacc.com/) JavaCC 21 is invoked on the command line via:
 
-    java -jar javacc.jar *GrammarFile*
+    java -jar javacc-full.jar *GrammarFile*
 
 The latest source code can be checked out from Github via:
 

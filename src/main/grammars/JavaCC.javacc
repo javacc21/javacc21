@@ -1378,7 +1378,7 @@ INJECT(ExpansionSequence) :
 
 
    public TokenSet getFirstSet() {
-       TokenSet firstSet =null;
+//       TokenSet firstSet =null;
        if (firstSet == null) {
            firstSet = new TokenSet(getGrammar());
            for (Expansion child : getUnits()) {
@@ -1390,15 +1390,17 @@ INJECT(ExpansionSequence) :
        }
        return firstSet;
    }
-   
+   private TokenSet finalSet;
    public TokenSet getFinalSet() {
-       TokenSet finalSet = new TokenSet(getGrammar());
-       List<Expansion> children = getUnits();
-       Collections.reverse(children);
-       for (Expansion child : children) {
-           finalSet.or(child.getFinalSet());
-           if (!child.isPossiblyEmpty()) {
-              break;
+       if (finalSet == null) {
+           finalSet = new TokenSet(getGrammar());
+           List<Expansion> children = getUnits();
+           Collections.reverse(children);
+           for (Expansion child : children) {
+               finalSet.or(child.getFinalSet());
+               if (!child.isPossiblyEmpty()) {
+                  break;
+               }
            }
        }
        return finalSet;
