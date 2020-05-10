@@ -62,8 +62,14 @@
   private boolean indefiniteLookahead;
   private boolean semanticLookahead; 
   @SuppressWarnings("serial")
-  static private final class LookaheadSuccess extends java.lang.Error { }
+  static private final class LookaheadSuccess extends java.lang.Error {
+      public Throwable fillInStackTrace() {
+          return this;
+      }
+  }
+
   final private LookaheadSuccess LOOKAHEAD_SUCCESS = new LookaheadSuccess();
+
   private boolean scanToken(TokenType type) {
     if (currentLookaheadToken == lastScannedToken) {
      if (!indefiniteLookahead) {

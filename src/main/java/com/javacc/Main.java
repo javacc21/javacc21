@@ -102,7 +102,6 @@ public final class Main {
         System.out.println();
         System.out.println("The boolean valued options are:");
         System.out.println();
-        System.out.println("    BUILD_PARSER           (default true)");
         System.out.println("    DEBUG_PARSER           (default false)");
         System.out.println("    DEBUG_LOOKAHEAD        (default false)");
         System.out.println("    DEBUG_LEXER            (default false)");
@@ -184,7 +183,7 @@ public final class Main {
 
             grammar.generateFiles();
 
-            if ((grammar.getErrorCount() == 0) && (grammar.getOptions().getBuildParser())) {
+            if ((grammar.getErrorCount() == 0)) {
                 if (grammar.getWarningCount() == 0) {
                     System.out.println("Parser generated successfully.");
                 } else {

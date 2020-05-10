@@ -178,30 +178,11 @@ abstract public class Expansion extends BaseNode {
     }
     
     public List<String> getFirstSetTokenNames() {
-//        int tokenCount = getGrammar().getLexerData().getTokenCount();
-//        List<String> firstSetNames = new ArrayList<>(tokenCount);
-//        Expansion expansion = getLookaheadExpansion();
-//        BitSet firstSet = expansion.getFirstSet();
-//        for (int i=0; i<tokenCount; i++) {
-//            if (firstSet.get(i)) {
-//                firstSetNames.add(getGrammar().getLexerData().getTokenName(i));
-//            }
-//        }
-//        return firstSetNames;
         return tokenSetNames(getFirstSet());
     }
     
     public List<String> getFinalSetTokenNames() {
         return tokenSetNames(getFinalSet());
-//        int tokenCount = getGrammar().getLexerData().getTokenCount();
-//        List<String> finalSetNames = new ArrayList<>(tokenCount);
-//        BitSet finalSet = getFinalSet();
-//        for (int i=0; i<tokenCount; i++) {
-//            if (finalSet.get(i)) {
-//                finalSetNames.add(getGrammar().getLexerData().getTokenName(i));
-//            }
-//        }
-//        return finalSetNames;
     }
     
     public List<String> getFollowSetTokenNames() {
@@ -316,7 +297,30 @@ abstract public class Expansion extends BaseNode {
          return new TokenSet(getGrammar());
     }
     
+    /**
+     * @return whether this expansion is (possibly) at the very end of a grammatical production
+     */
+    public boolean isAtProductionEnd() {
+        Node parent = getParent();
+        if (parent instanceof BNFProduction) {
+            return true;
+        }
+        if (parent instanceof ExpansionSequence) {
+            ExpansionSequence seq = (ExpansionSequence) parent;
+            List<Expansion> siblings = seq.getUnits();
+            int index = siblings.indexOf(this) + 1;
+            for (int i= index; i<siblings.size();i++) {
+                if (!siblings.get(i).isPossiblyEmpty()) {
+                    return false;
+                }
+            }
+        }
+        return ((Expansion) parent).isAtProductionEnd();
+    }
     
+    /**
+     * @return Can this expansion be matched by the empty string.
+     */
     abstract public boolean isPossiblyEmpty(); 
     
     /*

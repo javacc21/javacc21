@@ -244,7 +244,6 @@ public class FilesGenerator {
     }
     
     void generateParser() throws MetaParseException, IOException, TemplateException {
-        if (!grammar.getOptions().getBuildParser()) return;
         if (grammar.getErrorCount() !=0) {
         	throw new MetaParseException();
         }

@@ -51,11 +51,6 @@ import com.javacc.parser.tree.*;
 {
     Grammar grammar;
     private boolean inBNFProduction;
-/*
-    public JavaCCParser(Grammar grammar, java.io.Reader reader) {
-        this(reader);
-        this.grammar = grammar;
-    }*/
     
     public JavaCCParser(Grammar grammar, String inputSource, CharSequence content) {
          this(inputSource, content);

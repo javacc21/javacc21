@@ -144,9 +144,9 @@ public class JavaCCOptions {
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
         optionValues.put("IGNORE_CASE", false);
         optionValues.put("USER_DEFINED_LEXER", false);
-        optionValues.put("BUILD_PARSER", true);
+//        optionValues.put("BUILD_PARSER", true);
         optionValues.put("LEXER_USES_PARSER", false);
-        optionValues.put("FORCE_LA_CHECK", false);
+//        optionValues.put("FORCE_LA_CHECK", false);
 
         optionValues.put("PARSER_PACKAGE", "");
         optionValues.put("PARSER_CLASS", "");
@@ -515,13 +515,6 @@ public class JavaCCOptions {
         return booleanValue("USER_DEFINED_LEXER");
     }
 
-    /**
-     * the BUILD_PARSER setting
-     */
-    public boolean getBuildParser() {
-        return booleanValue("BUILD_PARSER");
-    }
-    
     public boolean getLegacyAPI() {
         return booleanValue("LEGACY_API");
     }
@@ -686,7 +679,7 @@ public class JavaCCOptions {
     }
 
     public boolean getTreeBuildingEnabled() {
-        return booleanValue("TREE_BUILDING_ENABLED") && getBuildParser();
+        return booleanValue("TREE_BUILDING_ENABLED");
     }
 
     public boolean getTreeBuildingDefault() {

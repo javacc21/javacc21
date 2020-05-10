@@ -212,7 +212,7 @@ public class JavaCCParserTest {
 
 	private static Node parseJSONCC() throws IOException, ParseException {
 		Grammar grammar = new Grammar(new JavaCCOptions(new String[] { "JSON.javacc" }));
-		JavaCCParser parser = new JavaCCParser(grammar, new StringReader(JSON_JAVACC));
+		JavaCCParser parser = new JavaCCParser(grammar, "JSON.javacc", JSON_JAVACC);
 		parser.Root();
 		Node root = parser.rootNode();
 		return root;
