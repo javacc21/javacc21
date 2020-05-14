@@ -8,7 +8,7 @@ A list of the main features (in particular, wrt *legacy JavaCC*) follows:
 
 ## INCLUDE statement and Updated Java Grammar
 
-JavaCC 21 provides a much needed [INCLUDE instruction](https://doku.javacc.com/doku.php?id=include) that allows you to break up a large grammar into multiple physical files. [Here, for example],(https://github.com/javacc21/javacc21/blob/master/examples/json/JSONC.javacc) is what JavaCC21's JSONC (JSON with comments) grammar looks like. It simply INCLUDEs the regular (without comments) [JSON grammar that is here](https://github.com/javacc21/javacc21/blob/master/examples/json/JSON.javacc).
+JavaCC 21 provides a much needed [INCLUDE instruction](https://doku.javacc.com/doku.php?id=include) that allows you to break up a large grammar into multiple physical files. [Here, for example,](https://github.com/javacc21/javacc21/blob/master/examples/json/JSONC.javacc) is what JavaCC21's JSONC (JSON with comments) grammar looks like. It simply INCLUDEs the regular (without comments) [JSON grammar that is here](https://github.com/javacc21/javacc21/blob/master/examples/json/JSON.javacc).
 
 The INCLUDE feature is used to very good effect in the internal code of JavaCC 21 itself. The [embedded Java grammar](https://github.com/javacc21/javacc21/blob/master/src/main/grammars/Java.javacc) is simply [INCLUDEd in the JavaCC grammar](https://github.com/javacc21/javacc21/blob/master/src/main/grammars/JavaCC.javacc#339)
 
