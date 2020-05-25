@@ -139,36 +139,32 @@
 [/#macro]
 
 [#macro firstSetVar expansion]
-    static private final EnumSet<TokenType> ${expansion.firstSetVarName} = EnumSet.of(
-        [#list expansion.firstSetTokenNames as type]
-           [#if type_index >0],[/#if]
-           TokenType.${type}
-        [/#list]
-    );
+    [@enumSet expansion.firstSetVarName expansion.firstSetTokenNames /]
 [/#macro]
 
 [#macro finalSetVar expansion]
-
-    static private final EnumSet<TokenType> ${expansion.finalSetVarName} = EnumSet.of(
-        [#list expansion.finalSetTokenNames as type]
-           [#if type_index >0],[/#if]
-           TokenType.${type}
-        [/#list]
-    );
+    [@enumSet expansion.finalSetVarName expansion.finalSetTokenNames /]
 [/#macro]            
 
 [#macro followSetVar expansion]
-    static private final EnumSet<TokenType> ${expansion.followSetVarName} = EnumSet.of(
-        [#list expansion.followSetTokenNames as type]
-           [#if type_index >0],[/#if]
-           TokenType.${type}
-        [/#list]
-    );
+    [@enumSet expansion.followSetVarName expansion.followSetTokenNames/]
 [/#macro]            
+
+[#macro enumSet varName tokenNames]
+   [#if tokenNames?size=0]
+       static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
+   [#else]
+       static private final EnumSet<TokenType> ${varName} = EnumSet.of(
+       [#list tokenNames as type]
+          [#if type_index > 0],[/#if]
+          TokenType.${type} 
+       [/#list]
+     );
+   [/#if]
+[/#macro]
 
 [#macro ParserProduction production]
 
-// ${production.expansion.location}
     [@firstSetVar production.expansion/]
     [#if grammar.options.faultTolerant]
       [@finalSetVar production.expansion/]
@@ -216,7 +212,6 @@
           int ${callStackSizeVar} = callStack.size();
          try {
     [/#if]
-        [#--  --@pushCall expansion/--]
         ${(production.javaCode)!}
         [@BuildPhase1Code expansion/]
     [#if production?? && production.returnType == "void"]
@@ -316,19 +311,6 @@
        [/#if]
     [/#if]
 [/#macro]
-
-[#macro pushCall expansion]
-    [#if expansion.class.simpleName == "NonTerminal"]
-        pushOntoCallStack("${currentProduction.name}", "${expansion.inputSource}", ${expansion.beginLine});
-    [/#if]
-[/#macro]
-
-[#macro popCall expansion]
-    [#if expansion.class.simpleName == "NonTerminal"]
-       popCallStack();
-    [/#if]
-[/#macro]
-
 
 [#--  Boilerplate code to create the node variable --]
 [#macro createNode treeNodeBehavior nodeVarName]
