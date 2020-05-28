@@ -1181,6 +1181,7 @@ INJECT(TokenProduction) :
 	          case _SPECIAL_TOKEN : return "SPECIAL_TOKEN";
 	          case _SKIP : return "SKIP";
 	          case _TOKEN : return "TOKEN";
+	          default: 
 	       }
       }
       return "TOKEN";

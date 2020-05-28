@@ -251,9 +251,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
               case ${re.label} : return new ${re.generatedClassName}(ofKind, image);
             [/#if]
            [/#list]
+              default: return new Token(ofKind, image);
            }
-       [/#if]
+       [#else]
        return new Token(ofKind, image); 
+       [/#if]
     }
 [/#if]    
 [#if grammar.options.hugeFileSupport]    
@@ -266,9 +268,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
               case ${re.label} : return new ${re.generatedClassName}(TokenType.${re.label}, image, inputSource);
             [/#if]
            [/#list]
+           default : return new Token(type, image, inputSource);
            }
+       [#else]
+         return new Token(type, image, inputSource);      
        [/#if]
-       return new Token(type, image, inputSource);      
     }
     
 [#else]
@@ -282,9 +286,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
               case ${re.label} : return new ${re.generatedClassName}(TokenType.${re.label}, image, fileLineMap);
             [/#if]
            [/#list]
+              default :        return new Token(type, image, fileLineMap);      
+
            }
+       [#else]
+          return new Token(type, image, fileLineMap);      
        [/#if]
-       return new Token(type, image, fileLineMap);      
     }
     
    public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
