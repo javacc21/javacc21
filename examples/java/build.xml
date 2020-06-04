@@ -8,7 +8,7 @@
 </target>
 
 <target name="init">
-   <uptodate property="javaparser.uptodate" srcfile="../../src/main/grammars/Java.javacc" targetfile="com/javacc/javaparser/JavaParser.java"
+   <uptodate property="javaparser.uptodate" srcfile="../../src/main/grammars/Java.javacc" targetfile="com/javaparser/JavaParser.java"
 />
 </target>
 
@@ -28,7 +28,7 @@
 
 <target name="test" depends="compile">
      <java fork="true" failonerror="true" classname="JParse">
-         <arg value="com/javacc/javaparser"/>
+         <arg value="com/javaparser"/>
      </java>
      <echo>
         -------------------
@@ -36,7 +36,7 @@
         -------------------
      </echo>
      <java fork="true" failonerror="true" classname="JParse">
-         <arg value="com/javacc/javaparser/ast/CompilationUnit.java"/>
+         <arg value="com/javaparser/ast/CompilationUnit.java"/>
      </java>
 </target>
 

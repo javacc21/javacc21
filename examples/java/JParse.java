@@ -1,7 +1,7 @@
 import java.io.*;
 
 import java.util.*;
-import com.javacc.javaparser.*;
+import com.javaparser.*;
 
 
 /**

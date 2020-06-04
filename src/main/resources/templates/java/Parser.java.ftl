@@ -63,9 +63,11 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
     }
     
-Token current_token;
+private Token current_token;
 private Token lastParsedToken;
-//private Token nextToken;
+//private Token nextToken; //REVISIT
+
+//private EnumSet<Token> currentFollowSet;
 
 private boolean cancelled;
 public void cancel() {cancelled = true;}

@@ -1552,9 +1552,7 @@ INJECT(Lookahead) :
 Expansion ExpansionUnit() :
 {
     Expression lhs=null;
-    CodeBlock act;
     Token t=current_token;
-    Lookahead la=null;
     Expansion result=null;
     TreeBuildingAnnotation tba = null;
 }

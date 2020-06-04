@@ -32,8 +32,8 @@ options {
   JAVA_UNICODE_ESCAPE;
 //  TOKENS_ARE_NODES=false;
   SPECIAL_TOKENS_ARE_NODES;
-  PARSER_PACKAGE="com.javacc.javaparser";
-  NODE_PACKAGE="com.javacc.javaparser.ast";
+  PARSER_PACKAGE="com.javaparser";
+  NODE_PACKAGE="com.javaparser.ast";
   DEFAULT_LEXICAL_STATE=JAVA;
   PRESERVE_LINE_ENDINGS=false;
   TABS_TO_SPACES=8;
