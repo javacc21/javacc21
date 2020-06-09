@@ -204,11 +204,298 @@ TOKEN #KeyWord : {
 }
 
 
-public void CompilationUnit() :
+void CompilationUnit() :
 {}
 {
-<EOF>
+   (ExternAliasDirective())*
+   (UsingDirective())*
+   (GlobalAttributeSection())*
+   (
+      NamespaceDeclaration()
+      |
+      TypeDeclaration()
+    )* 
+   <EOF>
+}
 
+void ExternAliasDirective() :
+{}
+{
+   "extern" "alias" <IDENTIFIER> ";"
+}
+
+void UsingDirective() :
+{}
+{
+    LOOKAHEAD("using" "static")
+    UsingStaticDirective()
+    |
+    LOOKAHEAD("using" <IDENTIFIER> "=")
+    UsingAliasDirective()
+    |
+    UsingNamespaceDirective()
+}    
+
+void UsingStaticDirective() : 
+{}
+{
+    "using" "static" Name() ";"
+} 
+
+void UsingAliasDirective() :
+{}
+{
+   "using" <IDENTIFIER> "=" Name() ";"
+}
+
+void UsingNamespaceDirective() :
+{}
+{
+    "using" Name() ";"
+}
+
+void GlobalAttributeSection() :
+{}
+{
+   "["  ("assembly" | "module") ":" AttributeList() [","] "]"
+}
+
+void AttributeSection() :
+{}
+{
+   "["
+   ("field"|"event"|"method"|"param"|"property"|"return"|"type")
+   ":"
+   AttributeList()
+   [","]
+   "]"
+   
+}
+
+void AttributeList() :
+{}
+{
+     Attribute() ("," Attribute())*
+}
+
+void Attribute() :
+{}
+{
+   Name()
+   [AttributeArguments()]
+}
+
+void AttributeArguments() :
+{}
+{
+    "(" 
+    [
+       LOOKAHEAD(~(<IDENTIFIER>"="))
+       Expression()
+       (
+          ","
+          Expression()
+       )*
+    ]
+    [
+       LOOKAHEAD(<IDENTIFIER>"=")
+       NamedArgument()
+       (
+          "," NamedArgument()
+       )*
+    ]
+    ")"  
+}
+
+void NamedArgument() :
+{}
+{
+    <IDENTIFIER> "=" Expression()
+}
+
+
+/** Name of a Type or a Namespace */
+void Name() :
+{}
+{
+   <IDENTIFIER> // TODO
+}
+
+
+void Expression() :
+{}
+{
+    Name() // TODO!
+}
+
+void NamespaceDeclaration() :
+{}
+{
+   "namespace"  QualifiedIdentifier() NamespaceBody()
+}
+
+void QualifiedIdentifier() :
+{}
+{
+    <IDENTIFIER> ("." <IDENTIFIER>)*
+}
+
+void NamespaceBody() :
+{}
+{
+   "{"
+       (ExternAliasDirective())* (UsingDirective())* 
+       (
+          NamespaceDeclaration()
+          |
+          TypeDeclaration()
+       )*
+   "}"
+}
+
+void TypeDeclaration() :
+{}
+{
+   LOOKAHEAD ClassDeclaration()
+   |
+   LOOKAHEAD StructDeclaration()
+   |
+   LOOKAHEAD InterfaceDeclaration()
+   |
+   LOOKAHEAD EnumDeclaration()
+   |
+   DelegateDeclaration()
+}
+
+void ClassDeclaration() :
+{}
+{
+   (AttributeSection())*
+   ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe")*
+   ["partial"]
+   "class"
+   <IDENTIFIER>
+  [TypeParameterList()]
+  [":" (Name() | "object" | "dynamic" | "string") (Name())*]
+  (TypeParameterConstraintsClause())*
+  ClassBody()
+  [";"]
+}
+
+void TypeParameterConstraintsClause() :
+{}
+{
+  "where" <IDENTIFIER> ":" (Name() | "class" | "struct") ["," Name()]
+}
+
+void ClassBody() :
+{}
+{
+   "{"
+//   (ClassMemberDeclaration())* //TODO      
+   "}"
+}
+
+void InterfaceBody() :
+{}
+{
+   "{"
+//  (InterfaceMemberDeclaration())* //TODO
+   "}"
+}
+
+void StructBody() :
+{}
+{
+   "{"
+//      (StructMemberDeclaration())* //TODO
+   "}"
+}
+
+void TypeParameterList() :
+{}
+{
+   "<"
+   (AttributeSection())*
+   ["in"|"out"] // Only with interfaces 
+   Name()
+   ("," (AttributeSection())* Name())*    
+   ">"
+}
+
+void StructDeclaration() :
+{}
+{
+    (AttributeSection())*
+    ("new"|"public"|"protected"|"internal"|"private"|"unsafe")*
+    ["partial"]
+    "struct" 
+    <IDENTIFIER>
+    [":" Name() ("," Name())*]
+    (TypeParameterConstraintsClause())*
+   StructBody()
+   [";"] 
+}
+
+void InterfaceDeclaration() :
+{}
+{
+   (AttributeSection())*
+    ("new"|"public"|"protected"|"internal"|"private"|"unsafe")*
+    ["partial"]
+   "interface"
+   <IDENTIFIER>
+   [TypeParameterList()]
+   [Name()(","Name())*]
+   (TypeParameterConstraintsClause())*
+   InterfaceBody()
+   [";"]
+}
+
+void EnumDeclaration() : 
+{}
+{
+   (AttributeSection())*
+   ("new"|"public"|"protected"|"internal"|"private")*
+   "enum" 
+   <IDENTIFIER>
+   [":" ("sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char")]
+   EnumBody()
+   [";"]
+}
+
+void EnumBody() :
+{}
+{
+   "{"
+// TODO   
+//   [
+//      EnumMemberDeclaration()
+//      ("," EnumMemberDeclaration())*
+//   ]
+   "}"
+}
+
+void DelegateDeclaration() :
+{}
+{
+  (AttributeSection())*
+  ("new"|"public"|"protected"|"internal"|"private"|"unsafe")*
+  "delegate" 
+  ReturnType()
+  <IDENTIFIER>
+  [TypeParameterList()]
+  "("
+//  [FormalParameterList()] //TODO
+  ")"
+  (TypeParameterConstraintsClause())*
+  
+}
+
+void ReturnType() : 
+{}
+{
+   "void" | Name() // TODO
 }
 
 
