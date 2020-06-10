@@ -318,9 +318,36 @@ void NamedArgument() :
 void Name() :
 {}
 {
-   <IDENTIFIER> // TODO
+   LOOKAHEAD(<IDENTIFIER> "::")
+   QualifiedAliasMember()
+   |
+   <IDENTIFIER>[TypeArgumentList()]
+   ("." <IDENTIFIER> [TypeArgumentList()])*
 }
 
+void QualifiedAliasMember() :
+{}
+{
+   <IDENTIFIER> "::" <IDENTIFIER>
+   [TypeArgumentList()]
+}
+
+void TypeArgumentList() :
+{}
+{
+   "<"
+   [
+      Type()
+      ("," Type())* 
+   ]
+   ">"
+}
+
+void Type() :
+{}
+{
+    <IDENTIFIER> // TODO
+}
 
 void Expression() :
 {}
@@ -482,22 +509,32 @@ void DelegateDeclaration() :
   (AttributeSection())*
   ("new"|"public"|"protected"|"internal"|"private"|"unsafe")*
   "delegate" 
-  ReturnType()
+  Type()
   <IDENTIFIER>
   [TypeParameterList()]
   "("
 //  [FormalParameterList()] //TODO
   ")"
   (TypeParameterConstraintsClause())*
-  
 }
 
-void ReturnType() : 
+void Type() :
 {}
 {
-   "void" | Name() // TODO
+    LOOKAHEAD "void" "*"
+    |
+    LOOKAHEAD "void" // REVISIT, lone void is only valid in a return type
+    |
+    (
+       (
+        "object"|"dynamic"|"string"|"decimal"|"sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char"|"float"|"double"|"bool"
+        |
+        Name() ["?"]
+      )
+      [ "[" (",")* "]" ]
+      ["*"]
+   )
 }
-
 
 
 // Definition of Identifiers lifted from Java grammar. REVISIT
