@@ -44,7 +44,7 @@ public class NfaState {
     private LexicalStateData lexicalState;
     private char[] rangeMoves, charMoves;
     private StringBuilder charMoveBuffer;
-    NfaState stateForCase;
+    private NfaState stateForCase;
     String epsilonMovesString;
     NfaState[] epsilonMoveArray;
     private int id;
@@ -67,7 +67,7 @@ public class NfaState {
     boolean isFinal = false;
     private Vector<Integer> loByteVec;
     private int round = 0;
-    int onlyChar = 0;
+    private int onlyChar = 0;
 
     public NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;

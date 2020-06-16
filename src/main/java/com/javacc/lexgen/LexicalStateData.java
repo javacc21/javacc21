@@ -58,7 +58,6 @@ public class LexicalStateData {
     Map<String, int[]> allNextStates = new Hashtable<>();
     private Hashtable<String, int[]> compositeStateTable = new Hashtable<>();
     private Hashtable<String, Integer> stateIndexFromComposite = new Hashtable<>();
-    private Hashtable<String, int[]> stateSetsToFix = new Hashtable<>();
     private List<TokenProduction> tokenProductions = new ArrayList<>();
     private NfaState initialState;
     private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
@@ -306,9 +305,6 @@ public class LexicalStateData {
                 }
                 statesForState[state] = allNextStates.get(entry.getKey());
             }
-        }
-        if (!stateSetsToFix.isEmpty()) {
-            fixStateSets();
         }
         return choices;
     }
@@ -847,30 +843,6 @@ public class LexicalStateData {
         retVal += "};";
         allNextStates.put(retVal, set);
         return retVal;
-    }
-
-    private void fixStateSets() {
-        HashMap<String, int[]> fixedSets = new HashMap<String, int[]>();
-        int[] tmp = new int[indexedAllStates.size()];
-        for (Map.Entry<String, int[]> entry : stateSetsToFix.entrySet()) {
-            int cnt = 0;
-            for (int state : entry.getValue()) {
-                if (state != -1)
-                    tmp[cnt++] = state;
-            }
-            int[] fixed = new int[cnt];
-            System.arraycopy(tmp, 0, fixed, 0, cnt);
-            fixedSets.put(entry.getKey(), fixed);
-            allNextStates.put(entry.getKey(), fixed);
-        }
-        for (NfaState state : allStates) {
-            if (state.getNext() != null && state.getNext().hasEpsilonMoves()) {
-                int[] newSet = fixedSets.get(state.getNext().epsilonMovesString);
-                if (newSet != null) {
-                    state.fixNextStates(newSet);
-                }
-            }
-        }
     }
 
     public boolean intersect(String set1, String set2) {
