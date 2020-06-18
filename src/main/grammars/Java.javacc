@@ -41,15 +41,16 @@ options {
 
 /* WHITE SPACE */
 
-SPECIAL_TOKEN :
+UNPARSED :
 {
   <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace   
 }
 
-//SKIP : 
-//{
-//   <" "| "\t"| "\n"| "\r"| "\f">
-//}
+<IN_MULTI_LINE_COMMENT>
+UNPARSED :
+{
+  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA
+}
 
 MORE :
 {
@@ -61,25 +62,18 @@ MORE :
 }
 
 <IN_SINGLE_LINE_COMMENT>
-SPECIAL_TOKEN :
+UNPARSED :
 {
   <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #Comment : JAVA
 }
 
 <IN_FORMAL_COMMENT>
-SPECIAL_TOKEN :
+UNPARSED :
 {
   <FORMAL_COMMENT: "*/" > #JavaDocComment : JAVA
 }
 
 INJECT(JavaDocComment) : {extends Comment}
-
-
-<IN_MULTI_LINE_COMMENT>
-SPECIAL_TOKEN :
-{
-  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA
-}
 
 <IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
 MORE :
@@ -89,78 +83,78 @@ MORE :
 
 /* JAVA RESERVED WORDS AND LITERALS */
 
-TOKEN :
+TOKEN #KeyWord :
 {
-  < ABSTRACT: "abstract" > #KeyWord
-| < ASSERT: "assert" > #KeyWord
-| < BOOLEAN: "boolean" > #KeyWord
-| < BREAK: "break" > #KeyWord
-| < BYTE: "byte" > #KeyWord
-| < CASE: "case" > #KeyWord
-| < CATCH: "catch" > #KeyWord
-| < CHAR: "char" > #KeyWord
-| < CLASS: "class" > #KeyWord
-| < CONST: "const" > #KeyWord
-| < CONTINUE: "continue" > #KeyWord
-| < _DEFAULT: "default" > #KeyWord
-| < DO: "do" > #KeyWord
-| < DOUBLE: "double" > #KeyWord
-| < ELSE: "else" > #KeyWord
-| < ENUM: "enum" > #KeyWord
-| < EXTENDS: "extends" > #KeyWord
-| < FALSE: "false" > #Literal
-| < FINAL: "final" > #KeyWord 
-| < FINALLY: "finally" > #KeyWord
-| < FLOAT: "float" > #KeyWord 
-| < FOR: "for" > #KeyWord 
-| < GOTO: "goto" > #KeyWord
-| < IF: "if" > #KeyWord
-| < IMPLEMENTS: "implements" > #KeyWord
-| < IMPORT: "import" > #KeyWord
-| < INSTANCEOF: "instanceof" > #KeyWord
-| < INT: "int" > #KeyWord
-| < INTERFACE: "interface" > #KeyWord
-| < LONG: "long" > #KeyWord
-| < NATIVE: "native" > #KeyWord
-| < NEW: "new" > #KeyWord
-| < NULL: "null" > #Literal
-| < PACKAGE: "package"> #KeyWord
-| < PRIVATE: "private" > #KeyWord
-| < PROTECTED: "protected" > #KeyWord
-| < PUBLIC: "public" > #KeyWord
-| < RETURN: "return" > #KeyWord
-| < SHORT: "short" > #KeyWord
-| < STATIC: "static" > #KeyWord
-| < STRICTFP: "strictfp" > #KeyWord
-| < SUPER: "super" > #KeyWord
-| < SWITCH: "switch" > #KeyWord
-| < SYNCHRONIZED: "synchronized" > #KeyWord
-| < THIS: "this" > #KeyWord
-| < THROW: "throw" > #KeyWord
-| < THROWS: "throws" > #KeyWord
-| < TRANSIENT: "transient" > #KeyWord
-| < TRUE: "true" > #Literal
-| < TRY: "try" > #KeyWord
-| < VOID: "void" > #KeyWord
-| < VOLATILE: "volatile" > #KeyWord
-| < WHILE: "while" > #KeyWord
+  < ABSTRACT: "abstract" > 
+| < ASSERT: "assert" > 
+| < BOOLEAN: "boolean" > 
+| < BREAK: "break" > 
+| < BYTE: "byte" > 
+| < CASE: "case" > 
+| < CATCH: "catch" > 
+| < CHAR: "char" > 
+| < CLASS: "class" > 
+| < CONST: "const" > 
+| < CONTINUE: "continue" > 
+| < _DEFAULT: "default" > 
+| < DO: "do" > 
+| < DOUBLE: "double" > 
+| < ELSE: "else" > 
+| < ENUM: "enum" > 
+| < EXTENDS: "extends" > 
+| < FALSE: "false" > 
+| < FINAL: "final" > 
+| < FINALLY: "finally" > 
+| < FLOAT: "float" > 
+| < FOR: "for" > 
+| < GOTO: "goto" > 
+| < IF: "if" > 
+| < IMPLEMENTS: "implements" > 
+| < IMPORT: "import" > 
+| < INSTANCEOF: "instanceof" >
+| < INT: "int" > 
+| < INTERFACE: "interface" > 
+| < LONG: "long" > 
+| < NATIVE: "native" > 
+| < NEW: "new" > 
+| < NULL: "null" > 
+| < PACKAGE: "package"> 
+| < PRIVATE: "private" > 
+| < PROTECTED: "protected" > 
+| < PUBLIC: "public" > 
+| < RETURN: "return" > 
+| < SHORT: "short" > 
+| < STATIC: "static" > 
+| < STRICTFP: "strictfp" > 
+| < SUPER: "super" > 
+| < SWITCH: "switch" >
+| < SYNCHRONIZED: "synchronized" > 
+| < THIS: "this" > 
+| < THROW: "throw" > 
+| < THROWS: "throws" > 
+| < TRANSIENT: "transient" > 
+| < TRUE: "true" > 
+| < TRY: "try" > 
+| < VOID: "void" > 
+| < VOLATILE: "volatile" > 
+| < WHILE: "while" > 
 }
 
-TOKEN :
+TOKEN #Literal :
 {
   < LONG_LITERAL:
         <DECIMAL_LITERAL> (["l","L"])
       | <HEX_LITERAL> (["l","L"])
       | <OCTAL_LITERAL> (["l","L"])
       | <BINARY_LITERAL> (["l","L"])
-  > #Literal
+  >
 |
   < INTEGER_LITERAL:
         <DECIMAL_LITERAL>
       | <HEX_LITERAL>
       | <OCTAL_LITERAL>
       | <BINARY_LITERAL>
-  > #Literal
+  >
 |
   < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
 |
@@ -173,7 +167,7 @@ TOKEN :
   < FLOATING_POINT_LITERAL:
         <DECIMAL_FLOATING_POINT_LITERAL>
       | <HEXADECIMAL_FLOATING_POINT_LITERAL>
-  > #Literal
+  >
 |
   < #DECIMAL_FLOATING_POINT_LITERAL:
         <DECIMAL_LITERAL> "." (<DECIMAL_LITERAL>)? (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
@@ -204,7 +198,7 @@ TOKEN :
           )
       )
       "'"
-  > #Literal
+  >
 |
   < STRING_LITERAL:
       "\""
@@ -217,74 +211,78 @@ TOKEN :
           )
       )*
       "\""
-  > #Literal
+  >
 }
 
-TOKEN :
+TOKEN #Delimiter :
 {
-  < LPAREN: "(" > #Delimiter
-| < RPAREN: ")" > #Delimiter
-| < LBRACE: "{" > #Delimiter
-| < RBRACE: "}" > #Delimiter
-| < LBRACKET: "[" > #Delimiter
-| < RBRACKET: "]" > #Delimiter
-| < SEMICOLON: ";" > #Delimiter
-| < COMMA: "," > #Delimiter
-| < DOT: "." > #Delimiter
-| < ASSIGN: "=" > #Operator 
-| < GT: ">" > #Operator 
-| < LT: "<" > #Operator 
-| < BANG: "!" > #Operator 
-| < TILDE: "~" > #Operator 
-| < HOOK: "?" > #Operator 
-| < COLON: ":" > #Operator
-| < EQ: "==" > #Operator 
-| < LE: "<=" > #Operator 
-| < GE: ">=" > #Operator 
-| < NE: "!=" > #Operator 
-| < SC_OR: "||" > #Operator 
-| < SC_AND: "&&" > #Operator 
-| < INCR: "++" > #Operator 
-| < DECR: "--" > #Operator 
-| < PLUS: "+" > #Operator 
-| < MINUS: "-" > #Operator 
-| < STAR: "*" > #Operator 
-| < SLASH: "/" > #Operator 
-| < BIT_AND: "&" > #Operator 
-| < BIT_OR: "|" > #Operator 
-| < XOR: "^" > #Operator 
-| < REM: "%" > #Operator 
-| < LSHIFT: "<<" > #Operator 
-| < PLUSASSIGN: "+=" > #Operator 
-| < MINUSASSIGN: "-=" > #Operator 
-| < STARASSIGN: "*=" > #Operator 
-| < SLASHASSIGN: "/=" > #Operator 
-| < ANDASSIGN: "&=" > #Operator 
-| < ORASSIGN: "|=" > #Operator 
-| < XORASSIGN: "^=" > #Operator 
-| < REMASSIGN: "%=" > #Operator 
-| < LSHIFTASSIGN: "<<=" > #Operator 
-| < RSIGNEDSHIFTASSIGN: ">>=" > #Operator 
-| < RUNSIGNEDSHIFTASSIGN: ">>>=" > #Operator
-| < LAMBDA : "->" > #Operator
-| < DOUBLE_COLON: "::" > #Delimiter
-| < VAR_ARGS: "..." > #Delimiter
-| < AT : "@"> #Delimiter
+  < LPAREN: "(" > 
+| < RPAREN: ")" >
+| < LBRACE: "{" > 
+| < RBRACE: "}" > 
+| < LBRACKET: "[" > 
+| < RBRACKET: "]" > 
+| < SEMICOLON: ";" > 
+| < COMMA: "," > 
+| < DOT: "." > 
+| < ASSIGN: "=" > 
+| < DOUBLE_COLON: "::" > 
+| < VAR_ARGS: "..." > 
+| < AT : "@"> 
 }
 
-<PHONY> TOKEN:
+TOKEN #Operator : 
 {
-  < RSIGNEDSHIFT: ">>" > #Operator
+ < GT: ">" > 
+| < LT: "<" > 
+| < BANG: "!" > 
+| < TILDE: "~" > 
+| < HOOK: "?" > 
+| < COLON: ":" > 
+| < EQ: "==" > 
+| < LE: "<=" > 
+| < GE: ">=" > 
+| < NE: "!=" > 
+| < SC_OR: "||" > 
+| < SC_AND: "&&" > 
+| < INCR: "++" > 
+| < DECR: "--" > 
+| < PLUS: "+" > 
+| < MINUS: "-" > 
+| < STAR: "*" > 
+| < SLASH: "/" > 
+| < BIT_AND: "&" > 
+| < BIT_OR: "|" > 
+| < XOR: "^" > 
+| < REM: "%" > 
+| < LSHIFT: "<<" > 
+| < PLUSASSIGN: "+=" > 
+| < MINUSASSIGN: "-=" > 
+| < STARASSIGN: "*=" > 
+| < SLASHASSIGN: "/=" > 
+| < ANDASSIGN: "&=" > 
+| < ORASSIGN: "|=" > 
+| < XORASSIGN: "^=" > 
+| < REMASSIGN: "%=" > 
+| < LSHIFTASSIGN: "<<=" > 
+| < RSIGNEDSHIFTASSIGN: ">>=" > 
+| < RUNSIGNEDSHIFTASSIGN: ">>>=" > 
+| < LAMBDA : "->" > 
+}
+
+<PHONY> TOKEN #Operator:
+{
+  < RSIGNEDSHIFT: ">>" > 
   |
-  < RUNSIGNEDSHIFT: ">>>" > #Operator 
+  < RUNSIGNEDSHIFT: ">>>" > 
 }
+
 INJECT(BaseNode) : 
 {
     import java.util.*;
     implements Node, CONSTANTS_CLASS;
 }
 {    
-    
     protected String getLiteralText() {
         StringBuilder buf = new StringBuilder();
         for (Token t : Nodes.getAllTokens(this, true,true)) {

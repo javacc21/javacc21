@@ -33,7 +33,6 @@ package com.javacc.lexgen;
 import java.util.*;
 
 import com.javacc.Grammar;
-import com.javacc.lexgen.TokenSet;
 import com.javacc.parsegen.Expansion;
 import com.javacc.parser.tree.CodeBlock;
 import com.javacc.parser.tree.Expression;
@@ -47,7 +46,7 @@ import com.javacc.parser.tree.TokenProduction;
 public abstract class RegularExpression extends Expansion {
 
     private static final int REGULAR_TOKEN = 0;
-    private static final int SPECIAL_TOKEN = 1;
+    private final int UNPARSED_TOKEN = 1;
     private static final int SKIP = 2;
     private static final int MORE = 3;
 
@@ -101,7 +100,7 @@ public abstract class RegularExpression extends Expansion {
      * symbol - this indicates that the purpose of the regular expression is
      * solely for defining other regular expressions.
      */
-    private boolean private_rexp = false;
+    private boolean _private = false;
 
     /**
      * If this is a top-level regular expression (nested directly within a
@@ -165,11 +164,11 @@ public abstract class RegularExpression extends Expansion {
     }
     
     public boolean isSpecialToken() {
-        return type == SPECIAL_TOKEN;
+        return type == UNPARSED_TOKEN;
     }
     
     public boolean isSkip() {
-        return type == SKIP || type == SPECIAL_TOKEN;
+        return type == SKIP || type == UNPARSED_TOKEN;
     }
     
     public boolean isMore() {
@@ -181,7 +180,7 @@ public abstract class RegularExpression extends Expansion {
     }
     
     void setSpecialToken() {
-        this.type = SPECIAL_TOKEN;
+        this.type = UNPARSED_TOKEN;
     }
     
     void setMore() {
@@ -193,15 +192,15 @@ public abstract class RegularExpression extends Expansion {
     }
  
     public boolean isPrivate() {
-        return this.private_rexp;
+        return this._private;
     }
-    
+   /* 
     public boolean getPrivate() {
-        return this.private_rexp;
-    }
+        return this._private;
+    }*/
     
-    public void setPrivate(boolean privat) {
-        this.private_rexp = privat;
+    public void setPrivate(boolean _private) {
+        this._private = _private;
     }
     
     public String getGeneratedClassName() {
@@ -239,18 +238,21 @@ public abstract class RegularExpression extends Expansion {
     }
     
     
-    public boolean isPossiblyEmpty() {
+    final public boolean isPossiblyEmpty() {
     	return false;
     }
     
-    public boolean getRequiresPhase2Routine() {
+    final public boolean getRequiresPhase2Routine() {
     	return false;
     }
     
-    public int minimumSize(int oldMin) {
+    final public int minimumSize(int oldMin) {
     	return 1;
     }
     
+    final public boolean isConcrete() {
+       return true; 
+    }
 }
 
 

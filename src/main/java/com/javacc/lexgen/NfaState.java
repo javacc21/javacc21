@@ -43,7 +43,7 @@ public class NfaState {
     private LexerData lexerData;
     private LexicalStateData lexicalState;
     private char[] rangeMoves, charMoves;
-    private StringBuilder charMoveBuffer;
+    private StringBuilder charMoveBuffer = new StringBuilder();
     private NfaState stateForCase;
     String epsilonMovesString;
     NfaState[] epsilonMoveArray;
@@ -203,28 +203,29 @@ public class NfaState {
             return;
         }
 
-        if (getCharMoves() == null)
-            setCharMoves(new char[10]);
+        if (charMoves == null) {
+             charMoves = new char[10];
+        }
 
-        int len = getCharMoves().length;
+        int len = charMoves.length; 
 
-        if (getCharMoves()[len - 1] != 0) {
-            setCharMoves(ExpandCharArr(getCharMoves(), 10));
+        if (charMoves[len - 1] != 0) {
+            setCharMoves(ExpandCharArr(charMoves, 10));
             len += 10;
         }
 
         for (i = 0; i < len; i++)
-            if (getCharMoves()[i] == 0 || getCharMoves()[i] > c)
+            if (charMoves[i] == 0 || charMoves[i] > c)
                 break;
-        temp = getCharMoves()[i];
-        getCharMoves()[i] = c;
+        temp = charMoves[i];
+        charMoves[i] = c;
 
         for (i++; i < len; i++) {
             if (temp == 0)
                 break;
 
-            temp1 = getCharMoves()[i];
-            getCharMoves()[i] = temp;
+            temp1 = charMoves[i];
+            charMoves[i] = temp;
             temp = temp1;
         }
     }
@@ -277,22 +278,6 @@ public class NfaState {
             tempRight1 = tempRight2;
         }
     }
-
-    private static boolean EqualCharArr(char[] arr1, char[] arr2) {
-        if (arr1 == arr2)
-            return true;
-
-        if (arr1 != null && arr2 != null && arr1.length == arr2.length) {
-            for (int i = arr1.length; i-- > 0;)
-                if (arr1[i] != arr2[i])
-                    return false;
-
-            return true;
-        }
-
-        return false;
-    }
-
     boolean closureDone = false;
 
     /**
@@ -340,23 +325,23 @@ public class NfaState {
 
     public boolean hasTransitions() {
         return (asciiMoves.cardinality() > 0
-                || (getCharMoves() != null && getCharMoves()[0] != 0) || (rangeMoves != null && rangeMoves[0] != 0));
+                || (charMoves != null && charMoves[0] != 0) || (rangeMoves != null && rangeMoves[0] != 0));
     }
 
     void mergeMoves(NfaState other) {
         // Warning : This function does not merge epsilon moves
        asciiMoves.or(other.asciiMoves);
 
-        if (other.getCharMoves() != null) {
-            if (getCharMoves() == null) {
-                setCharMoves(other.getCharMoves());
+        if (other.charMoves != null) {
+            if (charMoves == null) {
+                setCharMoves(other.charMoves);
             }
             else {
-                char[] tmpCharMoves = new char[getCharMoves().length + other.getCharMoves().length];
-                System.arraycopy(getCharMoves(), 0, tmpCharMoves, 0, getCharMoves().length);
+                char[] tmpCharMoves = new char[charMoves.length + other.charMoves.length];
+                System.arraycopy(charMoves, 0, tmpCharMoves, 0, charMoves.length);
                 setCharMoves(tmpCharMoves);
 
-                for (char charMove : other.getCharMoves())
+                for (char charMove : other.charMoves)
                     addChar(charMove);
             }
         }
@@ -409,8 +394,8 @@ public class NfaState {
 
             if (this != other && other.index != -1 && kindToPrint == other.kindToPrint
                     && asciiMoves.equals(other.asciiMoves)
-                    && EqualCharArr(getCharMoves(), other.getCharMoves())
-                    && EqualCharArr(rangeMoves, other.rangeMoves)) {
+                    && Arrays.equals(charMoves, other.charMoves) 
+                    && Arrays.equals(rangeMoves, other.rangeMoves)) {
                 if (getNext() == other.getNext())
                     return other;
                 else if (getNext() != null && other.getNext() != null) {
@@ -495,8 +480,7 @@ public class NfaState {
                     for (j = i + 1; j < epsilonMoves.size(); j++) {
                         if ((tmp2 = epsilonMoves.get(j)).hasTransitions()
                                 && (tmp1.asciiMoves.equals(tmp2.asciiMoves)
-                                        && EqualCharArr(tmp1.getCharMoves(), tmp2.getCharMoves()) && EqualCharArr(
-                                        tmp1.rangeMoves, tmp2.rangeMoves))) {
+                                        && Arrays.equals(tmp1.charMoves, tmp2.charMoves) && Arrays.equals(tmp1.rangeMoves, tmp2.rangeMoves))) {
                             if (equivStates == null) {
                                 equivStates = new Vector<NfaState>();
                                 equivStates.add(tmp1);
@@ -624,11 +608,11 @@ public class NfaState {
         }
 
         // Just check directly if there is a move for this char
-        if (getCharMoves() != null && getCharMoves()[0] != 0) {
-            for (i = 0; i < getCharMoves().length; i++) {
-                if (c == getCharMoves()[i])
+        if (charMoves != null && charMoves[0] != 0) {
+            for (i = 0; i < charMoves.length; i++) {
+                if (c == charMoves[i])
                     return true;
-                else if (c < getCharMoves()[i] || getCharMoves()[i] == 0)
+                else if (c < charMoves[i] || charMoves[i] == 0)
                     break;
             }
         }
@@ -715,16 +699,16 @@ public class NfaState {
         int cnt = 0;
         long[][] loBytes = new long[256][4];
 
-        if ((getCharMoves() == null || getCharMoves()[0] == 0) && (rangeMoves == null || rangeMoves[0] == 0))
+        if ((charMoves == null || charMoves[0] == 0) && (rangeMoves == null || rangeMoves[0] == 0))
             return;
 
-        if (getCharMoves() != null) {
-            for (i = 0; i < getCharMoves().length; i++) {
-                if (getCharMoves()[i] == 0)
+        if (charMoves != null) {
+            for (i = 0; i < charMoves.length; i++) {
+                if (charMoves[i] == 0)
                     break;
 
-                hiByte = (char) (getCharMoves()[i] >> 8);
-                loBytes[hiByte][(getCharMoves()[i] & 0xff) / 64] |= (1L << ((getCharMoves()[i] & 0xff) % 64));
+                hiByte = (char) (charMoves[i] >> 8);
+                loBytes[hiByte][(charMoves[i] & 0xff) / 64] |= (1L << ((charMoves[i] & 0xff) % 64));
             }
         }
 
@@ -861,8 +845,9 @@ public class NfaState {
         List<NfaState> nonAsciiTableForMethod = lexerData.getNonAsciiTableForMethod();
         for (int i = 0; i < nonAsciiTableForMethod.size(); i++) {
             NfaState state = nonAsciiTableForMethod.get(i);
-            if (EqualLoByteVectors(loByteVec, state.loByteVec)
-                    && EqualNonAsciiMoveIndices(nonAsciiMoveIndices, state.nonAsciiMoveIndices)) {
+            if (loByteVec != null && loByteVec.equals(state.loByteVec) 
+                    && nonAsciiMoveIndices != null 
+                    && Arrays.equals(nonAsciiMoveIndices, state.nonAsciiMoveIndices)) {
                 nonAsciiMethod = i;
                 return;
             }
@@ -871,43 +856,7 @@ public class NfaState {
         nonAsciiTableForMethod.add(this);
     }
 
-    private static boolean EqualLoByteVectors(List<Integer> vec1, List<Integer> vec2) {
-        if (vec1 == null || vec2 == null)
-            return false;
-
-        if (vec1 == vec2)
-            return true;
-
-        if (vec1.size() != vec2.size())
-            return false;
-
-        for (int i = 0; i < vec1.size(); i++) {
-            if (!vec1.get(i).equals(vec2.get(i)))
-                return false;
-        }
-
-        return true;
-    }
-
-    private static boolean EqualNonAsciiMoveIndices(int[] moves1, int[] moves2) {
-        if (moves1 == moves2)
-            return true;
-
-        if (moves1 == null || moves2 == null)
-            return false;
-
-        if (moves1.length != moves2.length)
-            return false;
-
-        for (int i = 0; i < moves1.length; i++) {
-            if (moves1[i] != moves2[i])
-                return false;
-        }
-
-        return true;
-    }
-
-    void generateInitMoves() {
+      void generateInitMoves() {
         getEpsilonMovesString();
         if (epsilonMovesString == null)
             epsilonMovesString = "null;";
@@ -1025,10 +974,10 @@ public class NfaState {
         this.charMoves = charMoves;
     }
 
-    char[] getCharMoves() {
+//    private char[] getCharMoves() {
 //        return charMoveBuffer.toString().toCharArray();
-        return charMoves;
-    }
+//        return charMoves;
+//    }
 
     public void setNext(NfaState next) {
         this.next = next;

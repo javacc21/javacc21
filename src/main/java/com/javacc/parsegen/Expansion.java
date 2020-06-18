@@ -323,7 +323,7 @@ abstract public class Expansion extends BaseNode {
      */
     abstract public boolean isPossiblyEmpty(); 
     
-    /*
+    /**
      * Returns the minimum number of tokens that can parse to this expansion.
      */
     final public int getMinimumSize() {
@@ -331,4 +331,11 @@ abstract public class Expansion extends BaseNode {
     }
     
      abstract public int minimumSize(int oldMin); 
+     
+     /**
+      * @return Does this expansion resolve to a fixed sequence of Tokens?
+      */
+     abstract public boolean isConcrete();
+     
+     
 }

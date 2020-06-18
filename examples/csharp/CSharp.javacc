@@ -343,12 +343,6 @@ void TypeArgumentList() :
    ">"
 }
 
-void Type() :
-{}
-{
-    <IDENTIFIER> // TODO
-}
-
 void Expression() :
 {}
 {
@@ -383,30 +377,78 @@ void NamespaceBody() :
 void TypeDeclaration() :
 {}
 {
-   LOOKAHEAD ClassDeclaration()
-   |
-   LOOKAHEAD StructDeclaration()
-   |
-   LOOKAHEAD InterfaceDeclaration()
-   |
-   LOOKAHEAD EnumDeclaration()
-   |
-   DelegateDeclaration()
+   (AttributeSection())*
+   ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe")*
+   ["partial"]
+   (
+     ClassDeclaration()
+     |
+     StructDeclaration()
+     |
+     InterfaceDeclaration()
+     |
+     EnumDeclaration()
+     |
+     DelegateDeclaration()
+   )
 }
 
 void ClassDeclaration() :
 {}
 {
-   (AttributeSection())*
-   ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe")*
-   ["partial"]
-   "class"
+  "class"
    <IDENTIFIER>
   [TypeParameterList()]
-  [":" (Name() | "object" | "dynamic" | "string") (Name())*]
+  [":" (Name() | "object" | "dynamic" | "string") ("," Name())*]
   (TypeParameterConstraintsClause())*
   ClassBody()
   [";"]
+}
+
+void StructDeclaration() :
+{}
+{
+    "struct" 
+    <IDENTIFIER>
+    [":" Name() ("," Name())*]
+    (TypeParameterConstraintsClause())*
+   StructBody()
+   [";"] 
+}
+
+void InterfaceDeclaration() :
+{}
+{
+   "interface"
+   <IDENTIFIER>
+   [TypeParameterList()]
+   [Name()(","Name())*]
+   (TypeParameterConstraintsClause())*
+   InterfaceBody()
+   [";"]
+}
+
+void EnumDeclaration() : 
+{}
+{
+   "enum" 
+   <IDENTIFIER>
+   [":" ("sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char")]
+   EnumBody()
+   [";"]
+}
+
+void DelegateDeclaration() :
+{}
+{
+  "delegate" 
+  Type()
+  <IDENTIFIER>
+  [TypeParameterList()]
+  "("
+//  [FormalParameterList()] //TODO
+  ")"
+  (TypeParameterConstraintsClause())*
 }
 
 void TypeParameterConstraintsClause() :
@@ -450,46 +492,7 @@ void TypeParameterList() :
    ">"
 }
 
-void StructDeclaration() :
-{}
-{
-    (AttributeSection())*
-    ("new"|"public"|"protected"|"internal"|"private"|"unsafe")*
-    ["partial"]
-    "struct" 
-    <IDENTIFIER>
-    [":" Name() ("," Name())*]
-    (TypeParameterConstraintsClause())*
-   StructBody()
-   [";"] 
-}
 
-void InterfaceDeclaration() :
-{}
-{
-   (AttributeSection())*
-    ("new"|"public"|"protected"|"internal"|"private"|"unsafe")*
-    ["partial"]
-   "interface"
-   <IDENTIFIER>
-   [TypeParameterList()]
-   [Name()(","Name())*]
-   (TypeParameterConstraintsClause())*
-   InterfaceBody()
-   [";"]
-}
-
-void EnumDeclaration() : 
-{}
-{
-   (AttributeSection())*
-   ("new"|"public"|"protected"|"internal"|"private")*
-   "enum" 
-   <IDENTIFIER>
-   [":" ("sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char")]
-   EnumBody()
-   [";"]
-}
 
 void EnumBody() :
 {}
@@ -501,21 +504,6 @@ void EnumBody() :
 //      ("," EnumMemberDeclaration())*
 //   ]
    "}"
-}
-
-void DelegateDeclaration() :
-{}
-{
-  (AttributeSection())*
-  ("new"|"public"|"protected"|"internal"|"private"|"unsafe")*
-  "delegate" 
-  Type()
-  <IDENTIFIER>
-  [TypeParameterList()]
-  "("
-//  [FormalParameterList()] //TODO
-  ")"
-  (TypeParameterConstraintsClause())*
 }
 
 void Type() :

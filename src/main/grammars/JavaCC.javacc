@@ -962,6 +962,10 @@ INJECT(BNFProduction) :
           }
           return finalSet;
     }
+    
+    public boolean isConcrete() {
+       return getExpansion().isConcrete();
+    }
 }
 
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
@@ -1323,6 +1327,9 @@ INJECT(ExpansionChoice) :
         }
         return min;
    }
+   
+   public boolean isConcrete() {return false;} 
+   
 }
 
 Expansion ExpansionSequence() #ExpansionSequence :
@@ -1425,6 +1432,15 @@ INJECT(ExpansionSequence) :
               }
           }
           return min;
+   }
+   
+   public boolean isConcrete() {
+      for (Expansion exp : getUnits()) {
+         if (!exp.isConcrete()) {
+            return false;
+         }
+      }
+      return true;
    }
    
    public boolean isSingleton() {
@@ -1709,6 +1725,10 @@ INJECT(NonTerminal) :
             inMinimumSize = false;
             return retval;
      }
+     
+     public boolean isConcrete() {
+        return getProduction().isConcrete();
+     }
 }
 
 
@@ -1765,6 +1785,8 @@ INJECT(ZeroOrOne) :
      public int minimumSize(int unused) {
          return 0;
      }
+     
+     public boolean isConcrete() {return false;}
     
     
 }
@@ -1818,6 +1840,7 @@ INJECT(ZeroOrMore) :
          return 0;
      }
      
+     public boolean isConcrete() {return false;}
 }
 
 
@@ -1872,7 +1895,8 @@ INJECT(OneOrMore) :
      public int minimumSize(int min) {
            return getNestedExpansion().getMinimumSize();
      }
-     
+
+     public boolean isConcrete() {return false;}
 }
 
 
@@ -1941,6 +1965,10 @@ INJECT(AttemptBlock) :
      public int minimumSize(int min) {
            return getNestedExpansion().getMinimumSize();
      }
+     
+     public boolean isConcrete() {
+           return getNestedExpansion().isConcrete();
+     }
 }
 
 TryBlock TryBlock() : 
@@ -2001,6 +2029,10 @@ INJECT(TryBlock) :
      public int minimumSize(int min) {
            return getNestedExpansion().getMinimumSize();
      }
+     
+     public boolean isConcrete() {
+          return getNestedExpansion().isConcrete();
+     }
 }
 
 CodeBlock CodeSnippet() #void :
@@ -2044,6 +2076,10 @@ INJECT(CodeBlock) :
     
     public int minimumSize(int unused) {
         return 0;
+    }
+    
+    public boolean isConcrete() {
+        return true; //REVISIT.
     }
 }
 
@@ -2350,6 +2386,7 @@ INJECT(ZeroOrMoreRegexp) :
           addChild(1, regexp);
       }
    }
+
 }
 
 INJECT(ZeroOrOneRegexp) : 
