@@ -466,15 +466,15 @@ public class NfaState {
         // Warning : The following piece of code is just an optimization.
         // in case of trouble, just remove this piece.
 
-        boolean sometingOptimized = true;
+        boolean somethingOptimized = true;
 
         NfaState newState = null;
         NfaState tmp1, tmp2;
         int j;
         Vector<NfaState> equivStates = null;
 
-        while (sometingOptimized) {
-            sometingOptimized = false;
+        while (somethingOptimized) {
+            somethingOptimized = false;
             for (i = 0; optReqd && i < epsilonMoves.size(); i++) {
                 if ((tmp1 = epsilonMoves.get(i)).hasTransitions()) {
                     for (j = i + 1; j < epsilonMoves.size(); j++) {
@@ -493,7 +493,7 @@ public class NfaState {
                 }
 
                 if (equivStates != null) {
-                    sometingOptimized = true;
+                    somethingOptimized = true;
                     String tmp = "";
                     for (NfaState equivState : equivStates) {
                         tmp += String.valueOf(equivState.id) + ", ";
@@ -524,7 +524,7 @@ public class NfaState {
                         if (newState == null) {
                             newState = tmp1.createClone();
                             newState.setNext(tmp1.getNext());
-                            sometingOptimized = true;
+                            somethingOptimized = true;
                         }
 
                         newState.mergeMoves(tmp2);
@@ -875,10 +875,6 @@ public class NfaState {
         return oneSeen;
     }
 
-    final void fixNextStates(int[] newSet) {
-        getNext().usefulEpsilonMoves = newSet.length;
-        // next.epsilonMovesString = GetStateSetString(newSet);
-    }
 
     public boolean selfLoops() {
         if (getNext() == null || getNext().epsilonMovesString == null)
@@ -898,7 +894,7 @@ public class NfaState {
 
     }
 
-    public boolean getNextIntersects() {
+    public boolean isNextIntersects() {
         if (selfLoops()) {
             return true;
         }

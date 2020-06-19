@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -194,10 +194,6 @@ public abstract class RegularExpression extends Expansion {
     public boolean isPrivate() {
         return this._private;
     }
-   /* 
-    public boolean getPrivate() {
-        return this._private;
-    }*/
     
     public void setPrivate(boolean _private) {
         this._private = _private;
