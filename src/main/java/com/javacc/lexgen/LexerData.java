@@ -264,7 +264,7 @@ public class LexerData {
 
     public List<int[]> getOrderedStateSet() {
         return orderedStateSet;
-    }
+    }//
 
     int getLastIndex() {
         return lastIndex;

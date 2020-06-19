@@ -157,7 +157,7 @@ public class NfaState {
         return usefulEpsilonMoves;
     }
 
-    static private void InsertInOrder(List<NfaState> stateList, NfaState stateToInsert) {
+    static private void insertInOrder(List<NfaState> stateList, NfaState stateToInsert) {
         for (ListIterator<NfaState> it = stateList.listIterator(); it.hasNext();) {
             NfaState state = it.next();
             if (state.id == stateToInsert.id) {
@@ -183,7 +183,7 @@ public class NfaState {
     }
 
     void addMove(NfaState newState) {
-        InsertInOrder(epsilonMoves, newState);
+        insertInOrder(epsilonMoves, newState);
     }
 
     private void addASCIIMove(char c) {
@@ -306,7 +306,7 @@ public class NfaState {
             for (int i = 0; i < tmp.epsilonMoves.size(); i++) {
                 NfaState tmp1 = tmp.epsilonMoves.get(i);
                 if (tmp1.usefulState() && !epsilonMoves.contains(tmp1)) {
-                    InsertInOrder(epsilonMoves, tmp1);
+                    insertInOrder(epsilonMoves, tmp1);
                     lexicalState.done = false;
                 }
             }
@@ -316,7 +316,7 @@ public class NfaState {
         }
 
         if (hasTransitions() && !epsilonMoves.contains(this))
-            InsertInOrder(epsilonMoves, this);
+            insertInOrder(epsilonMoves, this);
     }
 
     private boolean usefulState() {
@@ -372,7 +372,7 @@ public class NfaState {
 
         newState.setNext(new NfaState(lexicalState));
 
-        InsertInOrder(newState.getNext().epsilonMoves, states.get(0).getNext());
+        insertInOrder(newState.getNext().epsilonMoves, states.get(0).getNext());
 
         for (int i = 1; i < states.size(); i++) {
             NfaState tmp2 = states.get(i);
@@ -382,7 +382,7 @@ public class NfaState {
 
             newState.isFinal |= tmp2.isFinal;
 
-            InsertInOrder(newState.getNext().epsilonMoves, tmp2.getNext());
+            insertInOrder(newState.getNext().epsilonMoves, tmp2.getNext());
         }
 
         return newState;
@@ -486,7 +486,7 @@ public class NfaState {
                                 equivStates.add(tmp1);
                             }
 
-                            InsertInOrder(equivStates, tmp2);
+                            insertInOrder(equivStates, tmp2);
                             epsilonMoves.remove(j--);
                         }
                     }
@@ -647,7 +647,7 @@ public class NfaState {
     int moveFrom(char c, List<NfaState> newStates) {
         if (canMoveUsingChar(c)) {
             for (int i = getNext().epsilonMoves.size(); i-- > 0;)
-                InsertInOrder(newStates, getNext().epsilonMoves.get(i));
+                insertInOrder(newStates, getNext().epsilonMoves.get(i));
 
             return kindToPrint;
         }
@@ -973,11 +973,6 @@ public class NfaState {
         charMoveBuffer.append(charMoves);
         this.charMoves = charMoves;
     }
-
-//    private char[] getCharMoves() {
-//        return charMoveBuffer.toString().toCharArray();
-//        return charMoves;
-//    }
 
     public void setNext(NfaState next) {
         this.next = next;

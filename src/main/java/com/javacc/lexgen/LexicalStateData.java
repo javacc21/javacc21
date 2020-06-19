@@ -891,7 +891,7 @@ public class LexicalStateData {
         }
     }
 
-    void generateNfaStates() {
+    private void generateNfaStates() {
         if (indexedAllStates.isEmpty()) {
             return;
         }
