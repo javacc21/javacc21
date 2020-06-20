@@ -57,7 +57,7 @@
 
 [#macro Phase2]
   static private final int INDEFINITE = Integer.MAX_VALUE;
-  private Token currentLookaheadToken, lastScannedToken;
+  private Token currentLookaheadToken;
   private int remainingLookahead;
   private boolean indefiniteLookahead;
   private boolean semanticLookahead; 
@@ -71,24 +71,15 @@
   final private LookaheadSuccess LOOKAHEAD_SUCCESS = new LookaheadSuccess();
 
   private boolean scanToken(TokenType type) {
-    if (currentLookaheadToken == lastScannedToken) {
-     if (!indefiniteLookahead) {
-         --remainingLookahead;
-      }
-      if (currentLookaheadToken.getNext() == null) {
+     if (currentLookaheadToken.getNext() == null) {
         Token nextToken = token_source.getNextToken();
         currentLookaheadToken.setNext(nextToken);
-        currentLookaheadToken = nextToken;
-        lastScannedToken = nextToken;
-      } else {
-        lastScannedToken = currentLookaheadToken = currentLookaheadToken.getNext();
-      }
-    } else {
-      currentLookaheadToken = currentLookaheadToken.getNext();
-    }
+     } 
+     currentLookaheadToken = currentLookaheadToken.getNext();
      if (currentLookaheadToken.getType() != type) return true;
      if (!indefiniteLookahead) {
-         if (remainingLookahead == 0 && currentLookaheadToken == lastScannedToken) throw LOOKAHEAD_SUCCESS;
+         remainingLookahead--;
+         if (remainingLookahead == 0) throw LOOKAHEAD_SUCCESS;
      }
      return false;
   }
@@ -615,7 +606,7 @@
    private boolean ${expansion.phase2RoutineName}(int maxLookahead) {
       indefiniteLookahead = (maxLookahead == INDEFINITE);
       remainingLookahead = maxLookahead; 
-      lastScannedToken = currentLookaheadToken = current_token;
+      currentLookaheadToken = current_token;
       try { 
             return !${expansion.phase3RoutineName}();
       }
@@ -658,6 +649,7 @@
 
 [#macro Phase3CodeChoice choice count]
    [@newVar "Token", "currentLookaheadToken"/]
+   int remainingLookahead${newVarIndex} = remainingLookahead;
   [#list choice.choices as subseq]
 	  [#if subseq.hasSemanticLookahead]
 	    semanticLookahead = ${subseq.semanticLookahead};
@@ -669,6 +661,7 @@
 	  [#if subseq_has_next]
 	     [@InvokePhase3Routine subseq/]) {
 	        currentLookaheadToken = token${newVarIndex};
+	        remainingLookahead = remainingLookahead${newVarIndex};
 	  [#else]
 	     [@InvokePhase3Routine subseq/]
 	     ) 
