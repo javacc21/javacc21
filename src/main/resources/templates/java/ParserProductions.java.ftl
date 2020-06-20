@@ -161,7 +161,9 @@
 [/#macro]
 
 [#macro BuildCode expansion]
-  // Code for ${expansion.name!"expansion"} specified on line ${expansion.beginLine} of ${expansion.inputSource}
+   [#if expansion.simpleName != "ExpansionSequence"]
+  // Code for ${expansion.simpleName} specified on line ${expansion.beginLine} of ${expansion.inputSource}
+  [/#if]
     [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName, closeCondition = "true", callStackSizeVar]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
