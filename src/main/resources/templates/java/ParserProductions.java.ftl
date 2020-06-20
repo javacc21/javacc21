@@ -629,11 +629,11 @@
    [#elseif classname = "TryBlock" || classname="AttemptBlock"]
       [@buildPhase3Code expansion.nestedExpansion, count/]
    [#elseif classname = "ExpansionChoice"]
-      [@Phase3CodeChoice expansion count/]
+      [@Phase3CodeChoice expansion /]
   [/#if]
 [/#macro]
 
-[#macro Phase3CodeChoice choice count]
+[#macro Phase3CodeChoice choice]
    [@newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${newVarIndex} = remainingLookahead;
   [#list choice.choices as subseq]
