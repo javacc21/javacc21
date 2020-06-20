@@ -66,9 +66,9 @@
         currentLookaheadToken.setNext(nextToken);
      } 
      currentLookaheadToken = currentLookaheadToken.getNext();
-     if (currentLookaheadToken.getType() != type) return true;
+     if (currentLookaheadToken.getType() != type) return false;
      --remainingLookahead;
-     return false;
+     return true;
   }
   
 //====================================
@@ -593,7 +593,7 @@
    private boolean ${expansion.phase2RoutineName}(int maxLookahead) {
       remainingLookahead = maxLookahead; 
       currentLookaheadToken = current_token;
-      return !${expansion.phase3RoutineName}();
+      return ${expansion.phase3RoutineName}();
   }
 [/#macro]
 
@@ -603,14 +603,14 @@
    [#if expansion.isRegexp][#return][/#if]
      private boolean ${expansion.phase3RoutineName}() {
       [@buildPhase3Code expansion, count/]
-      return false;
+      return true;
     }
 [/#macro]
 
 [#macro buildPhase3Code expansion count]
   [#var classname=expansion.simpleName]
    [#if classname != "ExpansionSequence"]
-   if (remainingLookahead ==0) return false;
+   if (remainingLookahead ==0) return true;
    [/#if] 
     [#if expansion.isRegexp]
       [@Phase3CodeRegexp expansion/]
@@ -643,13 +643,13 @@
 	     !semanticLookahead || 
 	  [/#if]
 	  [#if subseq_has_next]
-	     [@InvokePhase3Routine subseq/]) {
+	     ![@InvokePhase3Routine subseq/]) {
 	        currentLookaheadToken = token${newVarIndex};
 	        remainingLookahead = remainingLookahead${newVarIndex};
 	  [#else]
-	     [@InvokePhase3Routine subseq/]
+	     ![@InvokePhase3Routine subseq/]
 	     ) 
-	     return true;
+	     return false;
 	  [/#if]
   [/#list]
   [#var numBraces=choice.choices?size-1]
@@ -661,19 +661,19 @@
 [/#macro]
 
 [#macro Phase3CodeRegexp regexp]
-     if (scanToken(TokenType.${regexp.label})) return true;
+     if (!scanToken(TokenType.${regexp.label})) return false;
 [/#macro]
 
 [#macro Phase3CodeZeroOrOne zoo]
    [@newVar type="Token" init="currentLookaheadToken"/]
-   if ([@InvokePhase3Routine zoo.nestedExpansion/]) 
+   if (![@InvokePhase3Routine zoo.nestedExpansion/]) 
       currentLookaheadToken = token${newVarIndex};
 [/#macro]
 
 [#macro Phase3CodeZeroOrMore zom]
       while (true) {
          [@newVar type="Token" init="currentLookaheadToken"/]
-         if (remainingLookahead == 0 || [@InvokePhase3Routine zom.nestedExpansion/]) {
+         if (remainingLookahead == 0 || ![@InvokePhase3Routine zom.nestedExpansion/]) {
              currentLookaheadToken = token${newVarIndex};
              break;
          }
@@ -681,10 +681,10 @@
 [/#macro]
 
 [#macro Phase3CodeOneOrMore oom]
-   if ([@InvokePhase3Routine oom.nestedExpansion/]) return true;
+   if (![@InvokePhase3Routine oom.nestedExpansion/]) return false;
    while (true) {
        [@newVar type="Token" init="currentLookaheadToken"/]
-       if (remainingLookahead == 0 || [@InvokePhase3Routine oom.nestedExpansion/]) {
+       if (remainingLookahead == 0 || ![@InvokePhase3Routine oom.nestedExpansion/]) {
            currentLookaheadToken = token${newVarIndex};
            break;
        }
@@ -692,8 +692,8 @@
 [/#macro]
 
 [#macro Phase3CodeNonTerminal nt]
-      if ([@InvokePhase3Routine nt.production.expansion/])
-         return true;
+      if (![@InvokePhase3Routine nt.production.expansion/])
+         return false;
 [/#macro]
 
 [#macro Phase3CodeSequence sequence, count]
