@@ -59,28 +59,15 @@
   static private final int INDEFINITE = Integer.MAX_VALUE;
   private Token currentLookaheadToken;
   private int remainingLookahead;
-  private boolean indefiniteLookahead;
   private boolean semanticLookahead; 
-  @SuppressWarnings("serial")
-  static private final class LookaheadSuccess extends java.lang.Error {
-      public Throwable fillInStackTrace() {
-          return this;
-      }
-  }
-
-  final private LookaheadSuccess LOOKAHEAD_SUCCESS = new LookaheadSuccess();
-
   private boolean scanToken(TokenType type) {
-     if (currentLookaheadToken.getNext() == null) {
+       if (currentLookaheadToken.getNext() == null) {
         Token nextToken = token_source.getNextToken();
         currentLookaheadToken.setNext(nextToken);
      } 
      currentLookaheadToken = currentLookaheadToken.getNext();
      if (currentLookaheadToken.getType() != type) return true;
-     if (!indefiniteLookahead) {
-         remainingLookahead--;
-         if (remainingLookahead == 0) throw LOOKAHEAD_SUCCESS;
-     }
+     --remainingLookahead;
      return false;
   }
   
@@ -604,15 +591,9 @@
 
 [#macro buildPhase2Routine expansion]
    private boolean ${expansion.phase2RoutineName}(int maxLookahead) {
-      indefiniteLookahead = (maxLookahead == INDEFINITE);
       remainingLookahead = maxLookahead; 
       currentLookaheadToken = current_token;
-      try { 
-            return !${expansion.phase3RoutineName}();
-      }
-      catch(LookaheadSuccess ls) {
-          return true; 
-      }
+      return !${expansion.phase3RoutineName}();
   }
 [/#macro]
 
@@ -627,8 +608,11 @@
 [/#macro]
 
 [#macro buildPhase3Code expansion count]
-   [#var classname=expansion.simpleName]
-   [#if expansion.isRegexp]
+  [#var classname=expansion.simpleName]
+   [#if classname != "ExpansionSequence"]
+   if (remainingLookahead ==0) return false;
+   [/#if] 
+    [#if expansion.isRegexp]
       [@Phase3CodeRegexp expansion/]
    [#elseif classname = "ExpansionSequence"]
       [@Phase3CodeSequence expansion count/]
@@ -689,7 +673,7 @@
 [#macro Phase3CodeZeroOrMore zom]
       while (true) {
          [@newVar type="Token" init="currentLookaheadToken"/]
-         if ([@InvokePhase3Routine zom.nestedExpansion/]) {
+         if (remainingLookahead == 0 || [@InvokePhase3Routine zom.nestedExpansion/]) {
              currentLookaheadToken = token${newVarIndex};
              break;
          }
@@ -700,7 +684,7 @@
    if ([@InvokePhase3Routine oom.nestedExpansion/]) return true;
    while (true) {
        [@newVar type="Token" init="currentLookaheadToken"/]
-       if ([@InvokePhase3Routine oom.nestedExpansion/]) {
+       if (remainingLookahead == 0 || [@InvokePhase3Routine oom.nestedExpansion/]) {
            currentLookaheadToken = token${newVarIndex};
            break;
        }
