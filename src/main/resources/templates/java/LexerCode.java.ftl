@@ -43,9 +43,9 @@
 
 [#var MAX_INT=2147483647]
 
-   int[] jjemptyLineNo = new int[${numLexicalStates}];
-  int[] jjemptyColNo = new int[${numLexicalStates}];
-  boolean[] jjbeenHere = new boolean[${numLexicalStates}];
+   private int[] jjemptyLineNo = new int[${numLexicalStates}];
+   private int[] jjemptyColNo = new int[${numLexicalStates}];
+   private boolean[] jjbeenHere = new boolean[${numLexicalStates}];
   
   
   private int jjnewStateCnt;
@@ -642,7 +642,7 @@
   build up the lexerData.orderedStateSet structure
 --]  
 
-  static final int[] jjnextStates = {
+  private static final int[] jjnextStates = {
 [#var count=0]    
 [#list lexerData.orderedStateSet as set]
     [#list set as i]

@@ -336,6 +336,4 @@ abstract public class Expansion extends BaseNode {
       * @return Does this expansion resolve to a fixed sequence of Tokens?
       */
      abstract public boolean isConcrete();
-     
-     
 }

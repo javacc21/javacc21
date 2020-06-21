@@ -39,14 +39,14 @@
 [#else]
     private boolean tokensAreNodes = false;
 [/#if]
-[#if grammar.options.specialTokensAreNodes]
-    private boolean specialTokensAreNodes = true;
+[#if grammar.options.unparsedTokensAreNodes]
+    private boolean unparsedTokensAreNodes = true;
 [#else]
-    private boolean specialTokensAreNodes = false;
+    private boolean unparsedTokensAreNodes = false;
 [/#if]
 
-    public void setSpecialTokensAreNodes(boolean specialTokensAreNodes) {
-        this.specialTokensAreNodes = specialTokensAreNodes;
+    public void setUnparsedTokensAreNodes(boolean unparsedTokensAreNodes) {
+        this.unparsedTokensAreNodes = unparsedTokensAreNodes;
     }
     
     public void setTokensAreNodes(boolean tokensAreNodes) {
@@ -147,7 +147,7 @@
         }
         Collections.reverse(nodes);
         for (Node child : nodes) {
-        	if (specialTokensAreNodes && (child instanceof Token)) {
+        	if (unparsedTokensAreNodes && (child instanceof Token)) {
         	    Token token = (Token) child;
         	    Token specialToken = token;
         	    while (specialToken != null) {
@@ -190,7 +190,7 @@
             }
             Collections.reverse(nodes);
             for (Node child : nodes) {
-	        	if (specialTokensAreNodes && (child instanceof Token)) {
+	        	if (unparsedTokensAreNodes && (child instanceof Token)) {
 	        	    Token token = (Token) child;
 	        	    Token specialToken = token;
 	        	    while (specialToken.getSpecialToken() !=null) {

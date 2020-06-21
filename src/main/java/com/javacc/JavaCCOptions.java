@@ -690,8 +690,8 @@ public class JavaCCOptions {
         return booleanValue("TOKENS_ARE_NODES");
     }
 
-    public boolean getSpecialTokensAreNodes() {
-        return booleanValue("SPECIAL_TOKENS_ARE_NODES");
+    public boolean getUnparsedTokensAreNodes() {
+        return booleanValue("UNPARSED_TOKENS_ARE_NODES");
     }
 
     public boolean getFreemarkerNodes() {
@@ -737,8 +737,8 @@ public class JavaCCOptions {
             if (getTokensAreNodes()) {
                 grammar.addWarning(null, msg.replace("OPTION_NAME", "TOKENS_ARE_NODES"));
             }
-            if (getSpecialTokensAreNodes()) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "SPECIAL_TOKENS_ARE_NODES"));
+            if (getUnparsedTokensAreNodes()) {
+                grammar.addWarning(null, msg.replace("OPTION_NAME", "UNPARSED_TOKENS_ARE_NODES"));
             }
             if (getSmartNodeCreation()) {
                 grammar.addWarning(null, msg.replace("OPTION_NAME", "SMART_NODE_CREATION"));
