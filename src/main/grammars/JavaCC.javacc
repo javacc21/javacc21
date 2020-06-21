@@ -775,9 +775,11 @@ BNFProduction BNFProduction() :
     [
         "public" | "private" | "protected"
     ]
-    ReturnType()
+    [
+       LOOKAHEAD(ReturnType <IDENTIFIER>) ReturnType
+    ]
     <IDENTIFIER> {CURRENT_NODE.setName(current_token.getImage());}
-    FormalParameters()
+    [FormalParameters()]
     [
       <BANG> {CURRENT_NODE.setForced(true);} 
     ]
@@ -795,13 +797,13 @@ BNFProduction BNFProduction() :
         }
     ]
     ":"
-    Block()
+    [LOOKAHEAD Block]
     {
         token_source.inJavaCode = false;
     }
-    "{" 
+    ["{"] 
     ExpansionChoice() {expansion = (Expansion) peekNode();}
-    "}"
+    ("}"|";")
      {
         CURRENT_NODE.adjustFirstToken(t);
         if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
@@ -1068,10 +1070,10 @@ TokenProduction TokenProduction() #TokenProduction :
   ]
   [t=<HASH_ID> {tokenClassName=t.getImage().substring(1);}] 
   ":"
-  "{"
+  ["{"]
    RegexpSpec(CURRENT_NODE, tokenClassName)
    ( "|" RegexpSpec(CURRENT_NODE, tokenClassName) )*
-   t="}"
+   ("}" | ";")
    {
       if (!multipleStatesSpecified) {
           if (firstSpecifiedLexicalState == null) {
@@ -1349,7 +1351,7 @@ Expansion ExpansionSequence() #ExpansionSequence :
      }
   ]
   (
-     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>))
+     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>))
       sub=ExpansionUnit()
       {
           pokeNode(sub);
@@ -1579,7 +1581,7 @@ Expansion ExpansionUnit() :
   |
   result=ZeroOrOne()
   |
-  result=TryBlock()
+  result=TryBlock
   |
   result=AttemptBlock()
   |
@@ -1644,8 +1646,7 @@ NonTerminal NonTerminal() #NonTerminal :
   ]
   <IDENTIFIER>
   [
-    LOOKAHEAD("(")
-    Arguments()
+    LOOKAHEAD  Arguments
   ]
   [
      <BANG>  {CURRENT_NODE.setForced(true);}
@@ -2089,11 +2090,9 @@ void RegexpExpansion() #void :
  (
   RegexpStringLiteral() 
   |
-  LOOKAHEAD(3)
-  InPlaceRegexp() 
+  LOOKAHEAD(3) InPlaceRegexp 
   |
-  LOOKAHEAD(2)
-  RegexpRef() 
+  LOOKAHEAD(2) RegexpRef 
   |
   EndOfFile() 
  ) 

@@ -10,6 +10,7 @@
 /examples/legacy/test.tmp/*
 /examples/java/com/*
 /examples/json/com/*
+/examples/csharp/org/*
 
 # Compiled class file
 *.class

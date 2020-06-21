@@ -127,7 +127,7 @@ public class LexicalStateData {
     }
 
     public boolean hasNfa() {
-        return indexedAllStates.size() != 0;
+        return !indexedAllStates.isEmpty();
     }
 
     public int getGeneratedStates() {
@@ -142,6 +142,7 @@ public class LexicalStateData {
         return this.singlesToSkip;
     }
 
+    // FIXME! There is currently no testing in place for mixed case Lexical states!
     public boolean isMixedCase() {
         return mixed;
     }

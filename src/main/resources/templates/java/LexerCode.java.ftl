@@ -1287,8 +1287,8 @@
   [#list 0..(maxKindsReqd-1) as i]
        long active${i}[#if i_has_next], [#else]) {[/#if]
   [/#list]
-  [#if lexicalState.mixedCase]
-    [#if lexicalStates.generatedStates != 0]
+  [#if lexicalState.mixedCase] [#--  FIXME! Currently no test coverage of any sort for this. --]
+    [#if lexicalState.hasNfa()]
        return jjMoveNfa${lexicalState.suffix}(${lexicalState.initStateName()}, pos+1);
     [#else]
        return pos + 1;
