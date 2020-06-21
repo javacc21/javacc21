@@ -1,0 +1,2649 @@
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+ * Copyright (c) 2006, Sun Microsystems Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notices,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
+ *       nor the names of any contributors may be used to endorse or promote
+ *       products derived from this software without specific prior written
+ *       permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+options {
+  JAVA_UNICODE_ESCAPE;
+//  TOKENS_ARE_NODES=false;
+  UNPARSED_TOKENS_ARE_NODES;
+  PARSER_PACKAGE="com.javaparser";
+  NODE_PACKAGE="com.javaparser.ast";
+  PARSER_CLASS="JavaParser";
+  DEFAULT_LEXICAL_STATE=JAVA;
+  PRESERVE_LINE_ENDINGS=false;
+  TABS_TO_SPACES=8;
+}
+
+/* WHITE SPACE */
+
+UNPARSED : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
+
+<IN_MULTI_LINE_COMMENT>
+UNPARSED :  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA;
+
+
+MORE :
+  "//" : IN_SINGLE_LINE_COMMENT
+|
+  <"/**" ~["/"]> { input_stream.backup(1); } : IN_FORMAL_COMMENT
+|
+  "/*" : IN_MULTI_LINE_COMMENT
+;
+
+<IN_SINGLE_LINE_COMMENT>
+UNPARSED :
+  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #Comment : JAVA
+;
+
+<IN_FORMAL_COMMENT>
+UNPARSED :
+  <FORMAL_COMMENT: "*/" > #JavaDocComment : JAVA
+;
+
+INJECT(JavaDocComment) : {extends Comment}
+
+<IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
+MORE : < ~[] >;
+
+/* JAVA RESERVED WORDS AND LITERALS */
+
+TOKEN #KeyWord :
+  < ABSTRACT: "abstract" > 
+| < ASSERT: "assert" > 
+| < BOOLEAN: "boolean" > 
+| < BREAK: "break" > 
+| < BYTE: "byte" > 
+| < CASE: "case" > 
+| < CATCH: "catch" > 
+| < CHAR: "char" > 
+| < CLASS: "class" > 
+| < CONST: "const" > 
+| < CONTINUE: "continue" > 
+| < _DEFAULT: "default" > 
+| < DO: "do" > 
+| < DOUBLE: "double" > 
+| < ELSE: "else" > 
+| < ENUM: "enum" > 
+| < EXTENDS: "extends" > 
+| < FALSE: "false" > 
+| < FINAL: "final" > 
+| < FINALLY: "finally" > 
+| < FLOAT: "float" > 
+| < FOR: "for" > 
+| < GOTO: "goto" > 
+| < IF: "if" > 
+| < IMPLEMENTS: "implements" > 
+| < IMPORT: "import" > 
+| < INSTANCEOF: "instanceof" >
+| < INT: "int" > 
+| < INTERFACE: "interface" > 
+| < LONG: "long" > 
+| < NATIVE: "native" > 
+| < NEW: "new" > 
+| < NULL: "null" > 
+| < PACKAGE: "package"> 
+| < PRIVATE: "private" > 
+| < PROTECTED: "protected" > 
+| < PUBLIC: "public" > 
+| < RETURN: "return" > 
+| < SHORT: "short" > 
+| < STATIC: "static" > 
+| < STRICTFP: "strictfp" > 
+| < SUPER: "super" > 
+| < SWITCH: "switch" >
+| < SYNCHRONIZED: "synchronized" > 
+| < THIS: "this" > 
+| < THROW: "throw" > 
+| < THROWS: "throws" > 
+| < TRANSIENT: "transient" > 
+| < TRUE: "true" > 
+| < TRY: "try" > 
+| < VOID: "void" > 
+| < VOLATILE: "volatile" > 
+| < WHILE: "while" > 
+;
+
+TOKEN #Literal :
+  < LONG_LITERAL:
+        <DECIMAL_LITERAL> (["l","L"])
+      | <HEX_LITERAL> (["l","L"])
+      | <OCTAL_LITERAL> (["l","L"])
+      | <BINARY_LITERAL> (["l","L"])
+  >
+|
+  < INTEGER_LITERAL:
+        <DECIMAL_LITERAL>
+      | <HEX_LITERAL>
+      | <OCTAL_LITERAL>
+      | <BINARY_LITERAL>
+  >
+|
+  < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
+|
+  < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS> >
+|
+  < #OCTAL_LITERAL: "0" ["0"-"7"]((["0"-"7","_"])*["0"-"7"])? >
+|
+  < #BINARY_LITERAL: "0" ["b","B"] ["0","1"]((["0","1","_"])*["0","1"])? >
+|
+  < FLOATING_POINT_LITERAL:
+        <DECIMAL_FLOATING_POINT_LITERAL>
+      | <HEXADECIMAL_FLOATING_POINT_LITERAL>
+  >
+|
+  < #DECIMAL_FLOATING_POINT_LITERAL:
+        <DECIMAL_LITERAL> "." (<DECIMAL_LITERAL>)? (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | "." <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | <DECIMAL_LITERAL> <DECIMAL_EXPONENT> (["f","F","d","D"])?
+      | <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? ["f","F","d","D"]
+  >
+|
+  < #DECIMAL_EXPONENT: ["e","E"] (["+","-"])? (<DECIMAL_LITERAL>)+ >
+|
+  < #HEXADECIMAL_FLOATING_POINT_LITERAL:
+        <HEX_LITERAL> (".")? <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+      | "0" ["x","X"] (<HEX_DIGITS>)? "." <HEX_DIGITS> <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+  >
+|
+  < #HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? <DECIMAL_LITERAL> >
+|
+  < #HEX_DIGITS: ["0"-"9","a"-"f","A"-"F"]((["0"-"9","a"-"f","A"-"F","_"])*["0"-"9","a"-"f","A"-"F"])? >
+|
+  < CHARACTER_LITERAL:
+      "'"
+      (   (~["'","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )
+      "'"
+  >
+|
+  < STRING_LITERAL:
+      "\""
+      (   (~["\"","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )*
+      "\""
+  >
+;
+
+TOKEN #Delimiter :
+  < LPAREN: "(" > 
+| < RPAREN: ")" >
+| < LBRACE: "{" > 
+| < RBRACE: "}" > 
+| < LBRACKET: "[" > 
+| < RBRACKET: "]" > 
+| < SEMICOLON: ";" > 
+| < COMMA: "," > 
+| < DOT: "." > 
+| < ASSIGN: "=" > 
+| < DOUBLE_COLON: "::" > 
+| < VAR_ARGS: "..." > 
+| < AT : "@"> 
+;
+
+TOKEN #Operator : 
+ < GT: ">" > 
+| < LT: "<" > 
+| < BANG: "!" > 
+| < TILDE: "~" > 
+| < HOOK: "?" > 
+| < COLON: ":" > 
+| < EQ: "==" > 
+| < LE: "<=" > 
+| < GE: ">=" > 
+| < NE: "!=" > 
+| < SC_OR: "||" > 
+| < SC_AND: "&&" > 
+| < INCR: "++" > 
+| < DECR: "--" > 
+| < PLUS: "+" > 
+| < MINUS: "-" > 
+| < STAR: "*" > 
+| < SLASH: "/" > 
+| < BIT_AND: "&" > 
+| < BIT_OR: "|" > 
+| < XOR: "^" > 
+| < REM: "%" > 
+| < LSHIFT: "<<" > 
+| < PLUSASSIGN: "+=" > 
+| < MINUSASSIGN: "-=" > 
+| < STARASSIGN: "*=" > 
+| < SLASHASSIGN: "/=" > 
+| < ANDASSIGN: "&=" > 
+| < ORASSIGN: "|=" > 
+| < XORASSIGN: "^=" > 
+| < REMASSIGN: "%=" > 
+| < LSHIFTASSIGN: "<<=" > 
+| < RSIGNEDSHIFTASSIGN: ">>=" > 
+| < RUNSIGNEDSHIFTASSIGN: ">>>=" > 
+| < LAMBDA : "->" > 
+;
+
+<PHONY> TOKEN #Operator:
+  < RSIGNEDSHIFT: ">>" > 
+  |
+  < RUNSIGNEDSHIFT: ">>>" > 
+;
+
+INJECT(BaseNode) : 
+{
+    import java.util.*;
+    implements Node, CONSTANTS_CLASS;
+}
+{    
+    protected String getLiteralText() {
+        StringBuilder buf = new StringBuilder();
+        for (Token t : Nodes.getAllTokens(this, true,true)) {
+            buf.append(t);
+        }
+        return buf.toString();
+    }
+    
+    protected String getInnerText() {
+        StringBuilder buf = new StringBuilder();
+        List<Token> tokens = Nodes.getAllTokens(this, true, true);
+        boolean outputOpeningBrace = false;
+        for (int i=0; i<tokens.size() -1; i++) {
+            Token t = tokens.get(i);
+            if (outputOpeningBrace) {
+                buf.append(t);
+            } else if (t.getType() == TokenType.LBRACE) {
+                outputOpeningBrace = true;
+            }
+        }
+        return buf.toString();
+    }
+    
+    public ListIterator<Node> iterator() {
+       return Nodes.iterator(this);
+    }
+
+    
+    public void prepend(Node n) {
+        ListIterator<Node> iterator = iterator();
+        iterator.add(n);
+    }
+    
+    public String getAsString() {
+        return getLiteralText();
+    }
+    
+    public boolean isEmpty() {
+        return Nodes.getRealTokens(this).size() == 0;
+    }
+}
+
+CompilationUnit CompilationUnit #CompilationUnit :
+  [ LOOKAHEAD( ( Annotation )* "package") PackageDeclaration ]
+  ( ImportDeclaration )*
+  (
+     ( TypeDeclaration() )+
+     |
+     <EOF>
+  )
+  {
+     return CURRENT_NODE;
+  }
+;
+
+INJECT(CompilationUnit) : 
+{
+    import java.util.*;
+}
+{
+    public String getPackageName() {
+        PackageDeclaration jpd = getPackageDeclaration();
+        return jpd == null ?  null : jpd.getPackageName();
+    }
+    
+    
+    public PackageDeclaration getPackageDeclaration() {
+        return firstChildOfType(PackageDeclaration.class);
+    }
+    
+    public List<ImportDeclaration> getImportDeclarations() {
+        return childrenOfType(ImportDeclaration.class);
+    }
+    
+    public List<TypeDeclaration> getTypeDeclarations() {
+        return childrenOfType(TypeDeclaration.class);
+    }
+    
+    public void addImportDeclaration(ImportDeclaration decl) {
+        ListIterator<Node> iterator = iterator();
+        Node n = null;
+        while (!(n instanceof TypeDeclaration) &&!(n instanceof Annotation)) {
+            n = iterator.next();
+        }
+        if (iterator.hasPrevious()) {
+            iterator.previous();
+            iterator.add(decl);
+        } else {
+            prepend(decl);
+        }
+    }
+}
+
+PackageDeclaration : "package" Name ";" ;
+
+INJECT(PackageDeclaration) : {}
+{
+    public String getPackageName() {
+        StringBuilder buf = new StringBuilder();
+        boolean seenPackage = false;
+        for (Token t : Nodes.getRealTokens(this)) {
+            if (t.getType() == TokenType.PACKAGE) {
+                seenPackage = true;
+            } else if (seenPackage) {
+                if (t.getType() != TokenType.SEMICOLON)
+                    buf.append(t);
+            }
+        }
+        return buf.toString();
+    }
+}
+
+ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
+
+INJECT(ImportDeclaration) : {}
+{
+    public String getAsString() {
+        return super.getAsString().trim();
+    }
+    
+    public boolean isStaticImport() {
+        for (Node n : children) {
+            if ((n instanceof KeyWord) && n.toString().equals("static")) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public String getName() {
+        StringBuilder buf = new StringBuilder();
+        for (Token tok : descendantsOfType(Token.class)) {
+            if (tok.getType() != TokenType.IMPORT
+              && tok.getType() != TokenType.SEMICOLON) {
+                buf.append(tok);
+            }
+        }
+        return buf.toString();
+    }
+    
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ImportDeclaration)) {
+            return false;
+        }
+        ImportDeclaration other = (ImportDeclaration) obj;
+        return other.isStaticImport() == this.isStaticImport()
+            && other.getName().equals(this.getName());
+    }
+}
+
+/*
+ * Modifiers. We match all modifiers in a single rule to reduce the chances of
+ * syntax errors for simple modifier mistakes. It will also enable us to give
+ * better error messages.
+ */
+ 
+Modifiers #void :
+ (
+  LOOKAHEAD(2)
+  (
+   "public"
+  |
+   "static" 
+  |
+   "protected" 
+  |
+   "private" 
+  |
+   "final" 
+  |
+   "abstract" 
+  |
+   "synchronized"
+  |
+   "native" 
+  |
+   "transient"
+  |
+   "volatile" 
+  |
+   "strictfp"
+  |
+   Annotation
+  )
+ )*
+;
+
+
+Modifiers2 #void :
+ (
+  LOOKAHEAD(2)
+  (
+   "public"
+  |
+   "static" 
+  |
+   "protected"
+  |
+   "private" 
+  |
+   "final" 
+  |
+   "abstract" 
+  |
+   "synchronized"
+  |
+   "native" 
+  |
+   "transient" 
+  |
+   "volatile" 
+  |
+   "strictfp" 
+  |
+   "default"
+  |
+   Annotation
+  )
+ )*
+;
+
+/*
+ * Declaration syntax follows.
+ */
+
+TypeDeclaration TypeDeclaration #TypeDeclaration :
+ (      
+  ";"
+  |
+  Modifiers() // Tricky case, need the parentheses here. REVISIT
+   (
+     ClassDeclaration
+     |
+     InterfaceDeclaration
+     |
+     EnumDeclaration
+     |
+     AnnotationTypeDeclaration
+   )
+ )
+ {
+        return CURRENT_NODE;
+ }
+;
+
+INJECT(TypeDeclaration) : 
+{
+    import java.util.*;
+}
+{
+    public String getName() {
+        for (Node n : children) {
+            if (n instanceof Identifier) {
+                return n.toString();
+            }
+        }
+        throw new RuntimeException("Should never get here.");
+    }
+    
+    public boolean getInterface() {
+       for (Node n : children) {
+           if (n instanceof Token) {
+              Token t = (Token) n;
+              if (t.getType() == TokenType.INTERFACE) {
+                  return true;
+              }
+	   }
+       }
+       return false;
+    } 
+    
+    public String getPackageName() {
+        String packageName = null;
+        if (parent instanceof CompilationUnit) {
+            CompilationUnit jcu = (CompilationUnit) parent; 
+            packageName = jcu.getPackageName();
+        }
+        return packageName;
+    }
+    
+    public String getFullName() {
+        String name = getName();
+        String packageName = getPackageName();
+        if (packageName != null && packageName.length()>0) {
+            return packageName + "." + name;
+        }
+        return name;
+    }
+    
+    public TypeParameterList getTypeParameterList() {
+        ListIterator<Node> iterator = iterator();
+        Node n = iterator.next();
+        while (n instanceof Identifier) {
+            n = iterator.next();
+        }
+        n = iterator.next();
+        if (n instanceof TypeParameterList) {
+            return (TypeParameterList) n;
+        }
+        return null;
+    }
+    
+    public ClassOrInterfaceBody getBody() {
+        return firstChildOfType(ClassOrInterfaceBody.class);
+    }
+    
+    public ExtendsList getExtendsList() {
+        return firstChildOfType(ExtendsList.class);
+    }
+    
+    public ImplementsList getImplementsList() {
+        return firstChildOfType(ImplementsList.class);
+    }
+    
+    public CompilationUnit getCompilationUnit() {
+        Node parent = getParent();
+        if (parent instanceof CompilationUnit) {
+            return (CompilationUnit) parent;
+        }
+        return null;
+    }
+    
+    public List<ImportDeclaration> getImportDeclarations() {
+        CompilationUnit jcu = getCompilationUnit();
+        if (jcu == null) {
+            return new ArrayList<ImportDeclaration>();
+        }
+        return jcu.getImportDeclarations();
+    }
+    
+    public void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
+        Set<String> keys = new HashSet<String>();
+        for (ClassOrInterfaceBodyDeclaration decl : elements) {
+            String key = decl.getFullNameSignatureIfMethod();
+            if (key != null) {
+                keys.add(key);
+            }
+        }
+        for (Iterator<Node> it = getBody().iterator(); it.hasNext();) {
+            Node n = it.next();
+            if (n instanceof ClassOrInterfaceBodyDeclaration) {
+                String s = ((ClassOrInterfaceBodyDeclaration) n).getFullNameSignatureIfMethod();
+                if (keys.contains(s)) {
+                    it.remove();
+                }
+            }
+        }
+        getBody().prepend(elements);
+    }
+    
+   public void addAnnotations(Set<Annotation> annotations) {
+       Node parent = this.getParent();
+       int index = parent.indexOf(this);
+       for (Annotation annotation : annotations) {
+           parent.addChild(index, annotation);
+       }
+   } 
+   
+    
+    public boolean isClass() {
+        for (Node n : children) {
+	    if (n instanceof Token) {
+	       Token t = (Token) n;
+               if (t.getType() == TokenType.CLASS) {
+                  return true;
+               }
+	    }
+        }
+        return false;
+    }
+    
+    public void addImplements(ObjectType type) {
+    	ImplementsList implementsList = getImplementsList();
+    	if (implementsList == null) {
+    	   implementsList = new ImplementsList();
+    	   ListIterator<Node> iterator = iterator();
+    	   while (iterator.hasNext()) {
+    	      Node node = iterator.next();
+    	      if (node instanceof ClassOrInterfaceBody || node instanceof EnumBody)
+    	          break; 
+    	   }
+    	   iterator.previous();
+    	   iterator.add(implementsList);
+    	}
+    	implementsList.addType(type);
+    }
+    
+    public void addExtends(ObjectType type) {
+        ExtendsList extendsList = getExtendsList();
+        if (extendsList == null) {
+            extendsList = new ExtendsList();
+            ListIterator<Node> iterator = iterator();
+            while (iterator.hasNext()) {
+                Node node = iterator.next();
+                if (node instanceof ImplementsList || node instanceof ClassOrInterfaceBody) {
+                    break;
+                }
+            }
+            iterator.previous();
+            iterator.add(Token.newToken(TokenType.WHITESPACE, " ", this));
+            iterator.next();
+            iterator.add(extendsList);
+        }
+        extendsList.addType(type, getInterface());
+    }
+}
+
+ClassDeclaration #void :
+  "class"
+  <IDENTIFIER>
+  [ TypeParameters ]
+  [ ExtendsList(false) ]
+  [ ImplementsList(false) ]
+  ClassOrInterfaceBody(false)
+;
+
+InterfaceDeclaration #void :
+  "interface" 
+  <IDENTIFIER>
+  [ TypeParameters ]
+  [ ExtendsList(true) ] 
+  ClassOrInterfaceBody(true)
+;
+
+ExtendsList ExtendsList(boolean isInterface) :
+{
+   boolean extendsMoreThanOne = false;
+}
+   "extends" ClassOrInterfaceType
+   ( "," ClassOrInterfaceType { extendsMoreThanOne = true; } )*
+   {
+      if (extendsMoreThanOne && !isInterface)
+         throw new ParseException("A class cannot extend more than one other class");
+      return CURRENT_NODE;
+   }
+;
+
+INJECT(ExtendsList) : 
+{
+     import java.util.*;
+}
+{
+    public List<ObjectType> getTypes() {
+        return childrenOfType(ObjectType.class);
+    }
+    
+    public void addType(ObjectType type, boolean isInterface) {
+        if (!isInterface) {
+            children = new java.util.ArrayList<Node>();
+        }
+        ListIterator<Node> iterator = iterator();
+        if (!iterator.hasNext()) {
+            iterator.add(Token.newToken(TokenType.EXTENDS, "extends", this));
+            iterator.next();
+            iterator.add(type);
+        } else {
+            while (iterator.hasNext()) {
+                if (type.equals(iterator.next())) 
+                    return;
+            }
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
+            iterator.next();
+            iterator.add(type);
+        }
+    }
+}
+
+ImplementsList ImplementsList(boolean isInterface) :
+{}
+{
+   "implements" ClassOrInterfaceType
+   ( "," ClassOrInterfaceType )*
+   {
+      if (isInterface) {
+         throw new ParseException("An interface cannot implement other interfaces");
+      }
+      return CURRENT_NODE;
+   }
+}
+
+INJECT(ImplementsList) : 
+{
+   import java.util.*;
+}
+{    
+    public List<ObjectType> getTypes() {
+        return childrenOfType(ObjectType.class);
+    }
+    
+    public void addType(ObjectType type) {
+        ListIterator<Node> iterator = iterator();
+        if (!iterator.hasNext()) {
+            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements", this));
+            iterator.next();
+            iterator.add(type);
+        } else {
+            while (iterator.hasNext()) {
+                if (type.equals(iterator.next())) 
+                    return;
+            }
+            iterator.add(Token.newToken(TokenType.COMMA, ",", getFileLineMap()));
+            iterator.next();
+            iterator.add(type);
+        }
+    }
+}
+
+EnumDeclaration :
+   "enum" <IDENTIFIER>
+   [ImplementsList(false)] 
+   EnumBody
+;
+
+EnumBody :
+   "{"
+   [ EnumConstant ( LOOKAHEAD(2) "," EnumConstant )* ]
+   [ "," ]
+   [ ";" ( ClassOrInterfaceBodyDeclaration(false) )* ]
+   "}"
+;
+
+EnumConstant:
+  Modifiers <IDENTIFIER> [ Arguments ] [ ClassOrInterfaceBody(false) ]
+;
+
+TypeParameters #TypeParameterList :
+   "<"
+   TypeParameter ( "," TypeParameter )* 
+   ">"
+;
+
+INJECT(TypeParameterList) : 
+{
+    import java.util.*;
+}
+{
+    public void add(TypeParameter param) {
+        if (!getParameters().contains(param)) {
+            ListIterator<Node> iterator = iterator();
+            while(iterator.hasNext()) {
+                iterator.next();
+            }
+            iterator.previous();
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
+            iterator.next();
+            iterator.add(param);
+        }
+    }
+    
+    public void add(TypeParameterList params) {
+        for (TypeParameter param : params.getParameters()) {
+            add(param);
+        }
+    }
+    
+    public List<TypeParameter> getParameters() {
+        return childrenOfType(TypeParameter.class);
+    }
+}
+
+TypeParameter: <IDENTIFIER> [TypeBound];
+
+TypeBound :
+   "extends" ClassOrInterfaceType ( "&" ClassOrInterfaceType )*
+;
+
+ClassOrInterfaceBody ClassOrInterfaceBody(boolean isInterface) :
+    "{"
+    ( 
+       ClassOrInterfaceBodyDeclaration(isInterface) 
+    )*
+    "}"
+    {
+        return CURRENT_NODE;
+    }
+;
+
+INJECT(ClassOrInterfaceBody) : 
+{
+    import java.util.*;
+}
+{
+    public String getAsString() {
+        return getInnerText();
+    }
+    
+    public void prepend(List<ClassOrInterfaceBodyDeclaration> elements) {
+        ListIterator<Node> iterator = iterator();
+        Node n = null;
+        while (iterator.hasNext()) {
+            n = iterator.next();
+	    if (n instanceof Token) {
+	       Token t = (Token) n;
+               if (t.getType() == TokenType.LBRACE) {
+                   break;
+               }
+	    }
+        }
+        for (ClassOrInterfaceBodyDeclaration elem : elements) {
+            iterator.add(elem);
+            iterator.next();
+        }
+    }
+    
+    public void removeDuplicateMethods() {
+        Set<String> sigs = new HashSet<String>();
+        ListIterator<Node> decls = iterator();
+        while (decls.hasNext()) {
+           Node n = decls.next();
+           if (n instanceof ClassOrInterfaceBodyDeclaration) {
+               ClassOrInterfaceBodyDeclaration decl = (ClassOrInterfaceBodyDeclaration) n;
+               String sig = decl.getFullNameSignatureIfMethod();
+               if (sig != null) {
+                    if (sigs.contains(sig)) {
+                        decls.remove();
+                    } else {
+                        sigs.add(sig);
+                    }
+               }
+           }
+        }
+    }
+}
+
+INJECT(ClassOrInterfaceBodyDeclaration) : {}
+{
+    public boolean isPrivate() {
+        return hasKeyWord("private");
+    }
+    
+    public boolean isStatic() {
+         return hasKeyWord("static");
+    }
+    
+    public boolean isProtected() {
+         return hasKeyWord("protected");
+    }
+    
+    public boolean isPublic() {
+         return hasKeyWord("public");
+    }
+    
+    private boolean hasKeyWord(String keyWord) {
+        for (KeyWord kw: childrenOfType(KeyWord.class)) {
+           if (kw.getImage().equals(keyWord)) return true;
+        }
+        return false;
+    }
+}
+
+ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
+  LOOKAHEAD(2) // FIXME {!isInterface})
+  Initializer
+ |
+  Modifiers2 // Just get all the modifiers out of the way. If you want to do
+              // more checks, pass the modifiers down to the member
+  (
+      ClassDeclaration
+      |
+      InterfaceDeclaration
+      |
+      AnnotationTypeDeclaration
+      |
+      EnumDeclaration
+      |
+      LOOKAHEAD( [ TypeParameters ] <IDENTIFIER> "(" )
+      ConstructorDeclaration
+      |
+      LOOKAHEAD( Type <IDENTIFIER> ( "[" "]" )* ( "," | "=" | ";" ) )
+      FieldDeclaration
+      |
+      MethodDeclaration
+  )
+  |
+  ";"
+;
+
+INJECT(ClassOrInterfaceBodyDeclaration) : {}
+{
+    public boolean isMethod() {
+        return firstChildOfType(MethodDeclaration.class) != null;
+    }
+    
+    public String getFullNameSignatureIfMethod() {
+        MethodDeclaration md = firstChildOfType(MethodDeclaration.class);
+        return md == null ? null : md.getFullSignature();
+    }
+}
+
+INJECT(FieldDeclaration) : 
+{
+   import java.util.*;
+}
+{
+   public List<Identifier> getVariableIds() {
+       List<Identifier> result = new ArrayList<>();
+       boolean atBeginning = true;
+       for (Node child : children()) {
+           if (atBeginning) {
+               atBeginning = false;
+               continue;
+           }
+           if (!(child instanceof Delimiter)) {
+              if (child instanceof Identifier) {
+                  result.add((Identifier) child);
+              } else {
+                  if (child.getChild(0) instanceof Identifier) {
+                      result.add((Identifier) child.getChild(0));
+                 } else {
+                       result.add((Identifier) child.getChild(0).getChild(0));
+                 }
+              }
+           }
+       }
+       return result;
+   }
+}
+
+
+FieldDeclaration :
+  // Modifiers are already matched in the caller
+  Type VariableDeclarator ( "," VariableDeclarator )* ";"
+;
+
+VariableDeclarator :
+  VariableDeclaratorId [ "=" VariableInitializer ]
+;
+
+VariableDeclaratorId :
+  <IDENTIFIER> ( "[" "]" )*
+;
+
+VariableInitializer : ArrayInitializer | Expression ;
+
+ArrayInitializer :
+  "{" [ VariableInitializer ( LOOKAHEAD(2) "," VariableInitializer )* ] [ "," ] "}"
+;
+
+MethodDeclaration :
+  // Modifiers already matched in the caller!
+  [ TypeParameters ]
+  ReturnType
+  MethodDeclarator [ ThrowsList ]
+  ( Block | ";" )
+;
+
+INJECT(MethodDeclaration) : {}
+{
+    public String getName() {
+        for (Node n : children) {
+            if (n instanceof Identifier) {
+                return n.toString();
+            }
+        }
+        throw new IllegalStateException();
+    }
+    
+    public FormalParams getFormalParams() {
+        return firstChildOfType(FormalParams.class);
+    }
+    
+    public String getFullSignature() {
+        return getName() + getFormalParams();
+    }
+}
+
+MethodDeclarator #void :
+  <IDENTIFIER> FormalParameters ( "[" "]" )*
+;
+
+FormalParams FormalParameters #FormalParams :
+   "("
+    [ FormalParameter ( "," FormalParameter )* ]
+   ")"
+    {
+        return CURRENT_NODE;
+    }
+;
+
+INJECT(FormalParams) : 
+{
+   import java.util.List;
+}
+{
+    public List<FormalParameter> getParams() {
+        return childrenOfType(FormalParameter.class);
+    }
+    
+    public String getAsString() {
+        StringBuilder buf = new StringBuilder();
+        List<FormalParameter> params = getParams();
+        boolean first = true;
+        for (FormalParameter param : params) {
+            if (!first) {
+                buf.append(", ");
+            }
+            buf.append(param.getAsString());
+            first = false;
+        }
+        return buf.toString();
+    }
+    
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        for (Token tok : Nodes.getRealTokens(this)) {
+            buf.append(" ");
+            buf.append(tok);
+        }
+        return buf.toString();
+    }
+}
+
+FormalParameter FormalParameter :
+    Modifiers Type [ "..." ] VariableDeclaratorId
+    {
+        return CURRENT_NODE;
+    }
+;
+
+INJECT(ConstructorDeclaration) : {extends ClassOrInterfaceBodyDeclaration}
+
+ConstructorDeclaration :
+  [ TypeParameters ]
+  // Modifiers matched in the caller
+  <IDENTIFIER> FormalParameters [ ThrowsList ]
+  "{"
+    [ SCAN ExplicitConstructorInvocation ]
+    ( BlockStatement )*
+  "}"
+;
+
+ExplicitConstructorInvocation :
+  SCAN "this" Arguments ";"
+ |
+  [ LOOKAHEAD(2) PrimaryExpression "." ] "super" Arguments ";"
+}
+
+
+Initializer :
+  [ "static" ] Block
+;
+
+
+/*
+ * Type, name and expression syntax follows.
+ */
+
+Type :
+   LOOKAHEAD(2) ReferenceType
+   |
+   PrimitiveType
+;
+
+ReferenceType :
+   PrimitiveArrayType
+   |
+   ClassOrInterfaceType (LOOKAHEAD(2) "[" "]" )*
+}
+
+ObjectType ClassOrInterfaceType #ObjectType :
+    <IDENTIFIER>
+    [ LOOKAHEAD(2) TypeArguments ]
+    ( LOOKAHEAD(2) "." <IDENTIFIER> [ LOOKAHEAD(2) TypeArguments ] )*
+    {
+        return CURRENT_NODE;
+    }
+;
+
+INJECT(ObjectType) : {}
+{
+    public boolean equals(Object obj) {
+        if (obj instanceof ObjectType) {
+            return ((ObjectType) obj).toString().equals(this.toString());
+        }
+        return false;
+    }
+    
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        for (Token t : Nodes.getRealTokens(this)) {
+            buf.append(t);
+        }
+        return buf.toString();
+    }
+}
+
+DiamondOperator :  "<" ">";
+
+PossiblyEmptyTypeArguments #void :
+   LOOKAHEAD(2)
+   DiamondOperator
+   |
+   TypeArguments
+;
+
+TypeArguments :
+   "<"
+   TypeArgument ( "," TypeArgument )* 
+   ">"
+;
+
+TypeArgument :
+   ReferenceType
+   |
+   "?" [ WildcardBounds ]
+;
+
+WildcardBounds :
+   ("extends" | "super") ReferenceType
+;
+
+
+PrimitiveType #void :
+  "boolean"
+   |
+  "char"
+   |
+  "byte"
+   |
+  "short"
+   |
+  "int"
+   |
+  "long"
+   |
+  "float"
+   |
+  "double"
+;
+
+PrimitiveArrayType : 
+    PrimitiveType (LOOKAHEAD "[" "]")+
+;
+
+ReturnType ReturnType #ReturnType :
+    (
+        "void"
+        |
+        Type
+    )
+    {
+        return CURRENT_NODE;
+    }
+;
+
+Name Name :
+/*
+ * A lookahead of 2 is required below since "Name" can be followed
+ * by a ".*" when used in the context of an "ImportDeclaration".
+ */
+    <IDENTIFIER>
+    ( 
+        LOOKAHEAD(2) 
+        "." <IDENTIFIER>
+    )*
+    {
+        return CURRENT_NODE;
+    }
+;
+
+INJECT(Name) : {}
+{
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        for (Token tok : Nodes.getRealTokens(this)) {
+            buf.append(tok);
+        }
+        return buf.toString();
+    }
+}
+
+
+ThrowsList ThrowsList :
+{}
+{
+    "throws" Name ( "," Name )*
+    {
+        return CURRENT_NODE;
+    }
+}
+
+INJECT(ThrowsList) : 
+{
+    import java.util.List;
+    import java.util.ArrayList;
+}
+{
+    public List<Node> getTypes() {
+        List<Node> result = new ArrayList<>();
+        for (Node n : children) {
+           if ((n instanceof Name) || (n instanceof Identifier)) {
+              result.add(n);
+           }
+        }
+        return result; 
+    }
+}
+
+
+/*
+ * Expression syntax follows.
+ */
+
+
+Expression Expression #Expression(>1) :
+    AssignmentExpression
+    {return (Expression) peekNode();}
+;
+
+INJECT(AssignmentExpression) : {extends Expression}
+INJECT(TernaryExpression) : {extends Expression} 
+INJECT(ConditionalOrExpression) : {extends Expression} 
+INJECT(ConditionalAndExpression) : {extends Expression} 
+INJECT(InclusiveOrExpression) : {extends Expression} 
+INJECT(InclusiveAndExpression) : {extends Expression} 
+INJECT(ExclusiveOrExpression) : {extends Expression} 
+INJECT(AndExpression) : {extends Expression} 
+INJECT(EqualityExpression) : {extends Expression} 
+INJECT(InstanceOfExpression) : {extends Expression} 
+INJECT(RelationalExpression) : {extends Expression} 
+INJECT(ShiftExpression) : {extends Expression}
+INJECT(AdditiveExpression) : {extends Expression}
+INJECT(MultiplicativeExpression) : {extends Expression}
+INJECT(UnaryExpression) : {extends Expression}
+INJECT(PreIncrementExpression) : {extends Expression}
+INJECT(PreDecrementExpression) : {extends Expression}
+INJECT(UnaryExpressionNotPlusMinus) : {extends Expression}
+INJECT(PostfixExpression) : {extends Expression}
+INJECT(CastExpression) : {extends Expression}
+INJECT(PrimaryExpression) : {extends Expression} 
+INJECT(LambdaExpression) : {extends Expression} 
+INJECT(CodeBlock) : {extends Expression} 
+
+/*
+ * This expansion has been written this way instead of:
+ *   Assignment | TernaryExpression
+ * for performance reasons.
+ * However, it is a weakening of the grammar for it allows the LHS of
+ * assignments to be any conditional expression whereas it can only be
+ * a primary expression.  Consider adding a semantic predicate to work
+ * around this.
+ */
+AssignmentExpression :
+  TernaryExpression
+  [ 
+        LOOKAHEAD(2) AssignmentOperator Expression
+  ]
+;
+
+AssignmentOperator #void :
+{
+  "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | ">>>=" | "&=" | "^=" | "|="
+}
+
+TernaryExpression :
+  ConditionalOrExpression [  "?" Expression ":" Expression ]
+;
+
+ConditionalOrExpression :
+  ConditionalAndExpression ( "||" ConditionalAndExpression )*
+;
+
+ConditionalAndExpression :
+  InclusiveOrExpression ( "&&" InclusiveOrExpression )*
+;
+
+InclusiveOrExpression :
+  ExclusiveOrExpression ( "|" ExclusiveOrExpression )*
+;
+
+ExclusiveOrExpression :
+  AndExpression ( "^" AndExpression )*
+;
+
+AndExpression :
+  EqualityExpression ( "&" EqualityExpression )*
+;
+
+EqualityExpression :
+  InstanceOfExpression ( ( "==" | "!=" ) InstanceOfExpression )*
+;
+
+InstanceOfExpression :
+  RelationalExpression [ "instanceof" Type ]
+;
+
+RelationalExpression :
+  ShiftExpression 
+  (
+    ( 
+     "<" 
+     | ">" 
+     | "<=" 
+     | ">=" 
+    ) 
+    ShiftExpression
+  )*
+;
+
+
+ShiftExpression :
+   AdditiveExpression
+   (
+      LOOKAHEAD(2)
+      (
+      "<<"
+      |
+        ShiftOperator
+      )
+      AdditiveExpression
+   )*
+;
+
+//Egad, what a ghastly kludge this is! Consider a REVISIT.
+
+ShiftOperator #void :
+{
+   Token first, second, third=null;
+}
+   first=">"
+   second=">" 
+   [third=">"]
+   {
+      if (second.getBeginColumn() != first.getBeginColumn() + 1) {
+            throw new ParseException("Shift operator cannot have spaces or comments inside!\n" + first.getLocation());
+      }
+      if (third!=null) {
+         if (third.getBeginColumn() != first.getBeginColumn() + 2) {
+              throw new ParseException("Shift operator >>> cannot have spaces or comments inside!\n" + first.getLocation());
+         }
+     	 first.setImage(">>>");
+	 	 first.setType(TokenType.RUNSIGNEDSHIFT);
+	 	 Token next = third.getNext();
+	 	 first.setNext(next);
+	 	 popNode();
+	 	 popNode();
+      } else {
+         first.setImage(">>");
+	 	 first.setType(TokenType.RSIGNEDSHIFT);
+	 	 Token next = second.getNext();
+	     first.setNext(next);
+	     popNode();
+      }
+   }
+;
+
+
+AdditiveExpression :
+  MultiplicativeExpression (  ( "+" | "-" ) MultiplicativeExpression )*
+;
+
+void MultiplicativeExpression :
+  UnaryExpression (  ( "*" | "/" | "%" ) UnaryExpression )*
+;
+
+UnaryExpression :
+  ( "+" | "-" ) UnaryExpression
+|
+  PreIncrementExpression
+|
+  PreDecrementExpression
+|
+  UnaryExpressionNotPlusMinus
+;
+
+PreIncrementExpression :
+  "++" PrimaryExpression
+;
+
+PreDecrementExpression :
+  "--" PrimaryExpression
+;
+
+UnaryExpressionNotPlusMinus :
+  ( "~" | "!" ) UnaryExpression
+  |
+  SCAN LambdaExpression
+  |
+  SCAN CastExpression
+  |
+  PostfixExpression
+;
+
+PostfixExpression :
+  PrimaryExpression [ "++" | "--" ]
+;
+
+CastExpression :
+  SCAN "(" PrimitiveType ")" UnaryExpression
+  |
+  SCAN "(" ReferenceType ")" UnaryExpressionNotPlusMinus
+  |
+  SCAN  "(" ClassOrInterfaceType ("&" ClassOrInterfaceType)+ ")" UnaryExpressionNotPlusMinus 
+;
+
+Expression PrimaryExpression #PrimaryExpression :
+    PrimaryPrefix 
+    ( LOOKAHEAD(2) PrimarySuffix )*
+    {
+            return CURRENT_NODE;
+    }
+;
+
+MemberSelector :
+  "." TypeArguments <IDENTIFIER>
+;
+
+PrimaryPrefix :
+  Literal
+ |
+  "this"
+ |
+ SCAN "super" "." <IDENTIFIER>
+ |
+  "(" Expression ")"
+ |
+  AllocationExpression
+ |
+ SCAN PrimitiveType "." "class"
+ |
+ SCAN ReturnType "." "class"
+ |
+ SCAN MethodReference
+ |  
+ Name
+;
+
+MethodReference :
+    (Type | "super")
+     "::" 
+     (<IDENTIFIER>|"new")
+;
+
+PrimarySuffix :
+  LOOKAHEAD(2)
+   "." ("this"|"super")
+    |
+  LOOKAHEAD(2)
+    "." AllocationExpression
+    |
+  LOOKAHEAD(3)
+    MemberSelector
+    |
+    "[" [Expression] "]"
+    |
+    "." <IDENTIFIER>
+    |
+    "::" (<IDENTIFIER>|"new")
+    |
+    Arguments
+;
+
+Literal #void :
+  <INTEGER_LITERAL>
+ |
+  <LONG_LITERAL>
+ |
+  <FLOATING_POINT_LITERAL>
+ |
+  <CHARACTER_LITERAL>
+ |
+  <STRING_LITERAL>
+ |
+ "true"
+|
+"false"
+|
+  "null"
+;
+
+InvocationArgs Arguments #InvocationArgs :
+    "("
+    [ Expression ("," Expression)* ]
+    ")"
+    {
+        return CURRENT_NODE;
+    }
+;
+
+INJECT(InvocationArgs) : 
+{
+    import java.util.*;
+} 
+{
+    public List<Expression> getArgs() {
+        return childrenOfType(Expression.class);
+    }
+    
+    public String getAsString() {
+        StringBuilder buf = new StringBuilder();
+        List<Expression> args = getArgs();
+        boolean first = true;
+        for (Expression arg : args) {
+            if (!first) {
+                buf.append(", ");
+            }
+            buf.append(arg.getAsString());
+            first = false;
+        }
+        return buf.toString();
+    }
+}
+
+AllocationExpression :
+  LOOKAHEAD(2)
+  "new" PrimitiveType ArrayDimsAndInits
+ |
+  "new" ClassOrInterfaceType [ PossiblyEmptyTypeArguments ]
+    (
+      ArrayDimsAndInits
+    |
+      Arguments [ ClassOrInterfaceBody(false) ]
+    )
+;
+
+/*
+ * The third LOOKAHEAD specification below is to parse to PrimarySuffix
+ * if there is an expression between the "[...]".
+ */
+ArrayDimsAndInits :
+  LOOKAHEAD(2)
+  ( LOOKAHEAD(2) "[" Expression "]" )+ ( LOOKAHEAD(2) "[" "]" )*
+|
+  ( "[" "]" )+ ArrayInitializer
+;
+
+Label : <IDENTIFIER><COLON>;
+
+
+ /*
+ * Statement syntax follows.
+ */
+
+Statement  :
+  (LOOKAHEAD(2) Label)*
+  UnlabeledStatement
+;
+
+
+UnlabeledStatement #void :
+  AssertStatement
+ |
+  Block
+ |
+  EmptyStatement
+ |
+  StatementExpression ";"
+ |
+  SwitchStatement
+ |
+  IfStatement
+ |
+  WhileStatement
+ |
+  DoStatement
+ |
+  ForStatement
+  |
+  BreakStatement
+  |
+  ContinueStatement
+  |
+  ReturnStatement
+  |
+  ThrowStatement
+  |
+  SynchronizedStatement
+ |
+  TryStatement
+;
+
+TryStatement #void :
+   LOOKAHEAD("try" "{")
+   ClassicTryStatement
+   |
+   LOOKAHEAD("try" "(" )
+   TryWithResources
+;
+
+AssertStatement :
+  "assert" Expression [ ":" Expression ] ";"
+}
+
+// LabeledStatement : <IDENTIFIER> ":" Statement;
+
+CodeBlock Block #CodeBlock :
+  "{"
+  (BlockStatement)*
+  "}" 
+   {
+       return CURRENT_NODE;
+   }
+;
+
+INJECT(CodeBlock) : {}
+{
+    public String getAsString() {
+        return getInnerText();
+    }
+    
+    /**
+     * The block is empty if it only consists of { and }
+     */
+    public boolean isEmpty() {
+        return Nodes.getRealTokens(this).size() == 2;
+    }
+}
+
+BlockStatement :
+  LOOKAHEAD( Modifiers Type <IDENTIFIER> )
+  LocalVariableDeclaration ";"
+  |
+  LOOKAHEAD( Modifiers "class")
+  Modifiers ClassDeclaration
+  |
+  Statement
+;
+
+LocalVariableDeclaration :
+  Modifiers Type VariableDeclarator ( "," VariableDeclarator )*
+;
+
+EmptyStatement : ";" ;
+
+StatementExpression :
+/*
+ * The last expansion of this production accepts more than the legal
+ * Java expansions for StatementExpression.  This expansion does not
+ * use PostfixExpression for performance reasons.
+ */
+  PreIncrementExpression
+ |
+  PreDecrementExpression
+  |
+  PrimaryExpression
+  [
+    "++"
+  |
+    "--"
+  |
+    AssignmentOperator Expression
+  ]
+;
+
+SwitchStatement : 
+  "switch" "(" Expression ")" "{"
+  (CaseStatement)*
+  "}"    
+;
+
+CaseStatement :
+    SwitchLabel() // Need the parentheses for now. REVISIT this case. 
+    (BlockStatement)*
+;
+
+SwitchLabel #void :
+  "case" Expression ":"
+ |
+  "default" ":"
+;
+
+IfStatement :
+  "if" "(" Expression ")" Statement [ "else" Statement ]
+;
+
+WhileStatement :
+  "while" "(" Expression ")" Statement
+;
+
+DoStatement :
+  "do" Statement "while" "(" Expression ")" ";"
+;
+
+ForStatement :
+  "for" "("
+  (
+      LOOKAHEAD(Modifiers Type <IDENTIFIER> ":")
+      Modifiers Type <IDENTIFIER> ":" Expression 
+    |
+     [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
+  )
+
+  ")" Statement
+;
+
+ForInit :
+  LOOKAHEAD( Modifiers Type <IDENTIFIER> )
+  LocalVariableDeclaration
+|
+  StatementExpressionList
+;
+
+StatementExpressionList :
+  StatementExpression ( "," StatementExpression )*
+;
+
+ForUpdate :
+  StatementExpressionList
+;
+
+BreakStatement :
+  "break" [ <IDENTIFIER> ] ";"
+;
+
+ContinueStatement :
+  "continue" [ <IDENTIFIER> ] ";"
+;
+
+ReturnStatement :
+  "return"
+  [
+    Expression
+  ]
+  ";"
+;
+
+ThrowStatement :
+ "throw"
+  Expression
+ ";"
+;
+
+SynchronizedStatement :
+  "synchronized" "(" Expression ")" Block
+;
+
+ClassicTryStatement ClassicTryStatement :
+/*
+ * Semantic check required here to make sure that at least one
+ * finally/catch is present.
+ */
+  "try"
+  Block 
+  (
+     FinallyBlock
+     |
+     (
+        (CatchBlock)+ 
+        [FinallyBlock]
+     )
+  )
+  {
+      return CURRENT_NODE;
+  }
+;
+
+TryWithResources TryWithResources :
+   "try"
+   "("
+     (
+         SCAN LocalVariableDeclaration
+         |
+         Name
+      )
+      (
+        ";"
+       [
+          SCAN LocalVariableDeclaration
+          |
+          Name
+       ]
+     )*
+    ")"
+    Block() // Need the parentheses here as well. REVISIT. 
+    (CatchBlock)*
+    [FinallyBlock]
+    {
+       return CURRENT_NODE;
+    }
+;
+
+CatchBlock CatchBlock :
+    "catch"
+    "("
+    ["final"]
+    ClassOrInterfaceType ("|" ClassOrInterfaceType)* VariableDeclaratorId
+    ")"
+    Block 
+    {
+        return CURRENT_NODE;
+    } 
+;
+
+INJECT(CatchBlock) : {}
+{
+    public CodeBlock getBlock() {
+        return firstChildOfType(CodeBlock.class);
+    }
+}
+
+FinallyBlock FinallyBlock :
+    "finally" Block
+    {
+        return CURRENT_NODE;
+    }
+;
+
+INJECT(FinallyBlock) : {}
+{
+    public CodeBlock getBlock() {
+        return firstChildOfType(CodeBlock.class);
+    }
+}
+
+
+/* Annotation syntax follows. */
+
+Annotation Annotation #Annotation :
+   (LOOKAHEAD( "@" Name "(" ( <IDENTIFIER> "=" | ")" ))
+   NormalAnnotation
+ |
+   LOOKAHEAD( "@" Name "(" )
+   SingleMemberAnnotation
+ |
+   MarkerAnnotation)
+   {
+      return CURRENT_NODE;
+   }
+;
+
+NormalAnnotation #void :
+   "@" Name "(" [ MemberValuePairs ] ")"
+;
+
+MarkerAnnotation #void :
+  "@" Name
+;
+
+SingleMemberAnnotation #void :
+  "@" Name "(" MemberValue ")"
+;
+
+MemberValuePairs :
+   MemberValuePair ( "," MemberValuePair )*
+;
+
+MemberValuePair :
+    <IDENTIFIER> "=" MemberValue
+;
+
+MemberValue :
+   Annotation
+  |
+   MemberValueArrayInitializer
+ |
+  TernaryExpression
+;
+
+MemberValueArrayInitializer :
+  LOOKAHEAD(2) "{" "}"
+  |
+  "{" MemberValue ( LOOKAHEAD(2) "," MemberValue )* [ "," ] "}"
+;
+
+
+/* Annotation Types. */
+
+AnnotationTypeDeclaration :
+  "@" "interface" <IDENTIFIER> AnnotationTypeBody
+;
+
+AnnotationTypeBody :
+  "{" ( AnnotationTypeMemberDeclaration )* "}"
+;
+
+AnnotationTypeMemberDeclaration :
+ Modifiers
+ (
+   LOOKAHEAD(Type <IDENTIFIER> "(")
+   Type <IDENTIFIER> "(" ")" [ DefaultValue ] ";"
+  |
+   ClassDeclaration
+  |
+   InterfaceDeclaration
+  |
+   EnumDeclaration
+  |
+   AnnotationTypeDeclaration
+  |
+   FieldDeclaration
+ )
+ |
+  ";" 
+;
+
+DefaultValue :
+  "default" MemberValue
+;
+
+LambdaExpression LambdaExpression :
+  LambdaLHS
+  "->"
+  LambdaRHS
+  {
+     return CURRENT_NODE;
+  }
+;
+
+LambdaLHS :
+   LOOKAHEAD(SimpleLambdaLHS "->")
+   SimpleLambdaLHS
+   |
+   LOOKAHEAD(FormalLambdaLHS "->")
+   FormalLambdaLHS
+;
+
+SimpleLambdaLHS #void :
+   <IDENTIFIER>
+   |
+   (
+     "("
+     [<IDENTIFIER>(","<IDENTIFIER>)*]
+     ")"
+   )
+;
+
+FormalLambdaLHS #FormalParameters : 
+   "("
+       Type VariableDeclaratorId
+       (
+         "," Type VariableDeclaratorId
+       )*
+   ")"
+;
+
+LambdaRHS :
+  Expression
+  |
+  Block
+;
+
+/* IDENTIFIERS */
+
+TOKEN :
+  < IDENTIFIER: <LETTER> (<PART_LETTER>)* > #Identifier
+  |
+  < #LETTER:
+      [  // all chars for which Character.isIdentifierStart is true
+         "$",
+         "A"-"Z",
+         "_",
+         "a"-"z",
+         "\u00a2"-"\u00a5",
+         "\u00aa",
+         "\u00b5",
+         "\u00ba",
+         "\u00c0"-"\u00d6",
+         "\u00d8"-"\u00f6",
+         "\u00f8"-"\u021f",
+         "\u0222"-"\u0233",
+         "\u0250"-"\u02ad",
+         "\u02b0"-"\u02b8",
+         "\u02bb"-"\u02c1",
+         "\u02d0"-"\u02d1",
+         "\u02e0"-"\u02e4",
+         "\u02ee",
+         "\u037a",
+         "\u0386",
+         "\u0388"-"\u038a",
+         "\u038c",
+         "\u038e"-"\u03a1",
+         "\u03a3"-"\u03ce",
+         "\u03d0"-"\u03d7",
+         "\u03da"-"\u03f3",
+         "\u0400"-"\u0481",
+         "\u048c"-"\u04c4",
+         "\u04c7"-"\u04c8",
+         "\u04cb"-"\u04cc",
+         "\u04d0"-"\u04f5",
+         "\u04f8"-"\u04f9",
+         "\u0531"-"\u0556",
+         "\u0559",
+         "\u0561"-"\u0587",
+         "\u05d0"-"\u05ea",
+         "\u05f0"-"\u05f2",
+         "\u0621"-"\u063a",
+         "\u0640"-"\u064a",
+         "\u0671"-"\u06d3",
+         "\u06d5",
+         "\u06e5"-"\u06e6",
+         "\u06fa"-"\u06fc",
+         "\u0710",
+         "\u0712"-"\u072c",
+         "\u0780"-"\u07a5",
+         "\u0905"-"\u0939",
+         "\u093d",
+         "\u0950",
+         "\u0958"-"\u0961",
+         "\u0985"-"\u098c",
+         "\u098f"-"\u0990",
+         "\u0993"-"\u09a8",
+         "\u09aa"-"\u09b0",
+         "\u09b2",
+         "\u09b6"-"\u09b9",
+         "\u09dc"-"\u09dd",
+         "\u09df"-"\u09e1",
+         "\u09f0"-"\u09f3",
+         "\u0a05"-"\u0a0a",
+         "\u0a0f"-"\u0a10",
+         "\u0a13"-"\u0a28",
+         "\u0a2a"-"\u0a30",
+         "\u0a32"-"\u0a33",
+         "\u0a35"-"\u0a36",
+         "\u0a38"-"\u0a39",
+         "\u0a59"-"\u0a5c",
+         "\u0a5e",
+         "\u0a72"-"\u0a74",
+         "\u0a85"-"\u0a8b",
+         "\u0a8d",
+         "\u0a8f"-"\u0a91",
+         "\u0a93"-"\u0aa8",
+         "\u0aaa"-"\u0ab0",
+         "\u0ab2"-"\u0ab3",
+         "\u0ab5"-"\u0ab9",
+         "\u0abd",
+         "\u0ad0",
+         "\u0ae0",
+         "\u0b05"-"\u0b0c",
+         "\u0b0f"-"\u0b10",
+         "\u0b13"-"\u0b28",
+         "\u0b2a"-"\u0b30",
+         "\u0b32"-"\u0b33",
+         "\u0b36"-"\u0b39",
+         "\u0b3d",
+         "\u0b5c"-"\u0b5d",
+         "\u0b5f"-"\u0b61",
+         "\u0b85"-"\u0b8a",
+         "\u0b8e"-"\u0b90",
+         "\u0b92"-"\u0b95",
+         "\u0b99"-"\u0b9a",
+         "\u0b9c",
+         "\u0b9e"-"\u0b9f",
+         "\u0ba3"-"\u0ba4",
+         "\u0ba8"-"\u0baa",
+         "\u0bae"-"\u0bb5",
+         "\u0bb7"-"\u0bb9",
+         "\u0c05"-"\u0c0c",
+         "\u0c0e"-"\u0c10",
+         "\u0c12"-"\u0c28",
+         "\u0c2a"-"\u0c33",
+         "\u0c35"-"\u0c39",
+         "\u0c60"-"\u0c61",
+         "\u0c85"-"\u0c8c",
+         "\u0c8e"-"\u0c90",
+         "\u0c92"-"\u0ca8",
+         "\u0caa"-"\u0cb3",
+         "\u0cb5"-"\u0cb9",
+         "\u0cde",
+         "\u0ce0"-"\u0ce1",
+         "\u0d05"-"\u0d0c",
+         "\u0d0e"-"\u0d10",
+         "\u0d12"-"\u0d28",
+         "\u0d2a"-"\u0d39",
+         "\u0d60"-"\u0d61",
+         "\u0d85"-"\u0d96",
+         "\u0d9a"-"\u0db1",
+         "\u0db3"-"\u0dbb",
+         "\u0dbd",
+         "\u0dc0"-"\u0dc6",
+         "\u0e01"-"\u0e30",
+         "\u0e32"-"\u0e33",
+         "\u0e3f"-"\u0e46",
+         "\u0e81"-"\u0e82",
+         "\u0e84",
+         "\u0e87"-"\u0e88",
+         "\u0e8a",
+         "\u0e8d",
+         "\u0e94"-"\u0e97",
+         "\u0e99"-"\u0e9f",
+         "\u0ea1"-"\u0ea3",
+         "\u0ea5",
+         "\u0ea7",
+         "\u0eaa"-"\u0eab",
+         "\u0ead"-"\u0eb0",
+         "\u0eb2"-"\u0eb3",
+         "\u0ebd",
+         "\u0ec0"-"\u0ec4",
+         "\u0ec6",
+         "\u0edc"-"\u0edd",
+         "\u0f00",
+         "\u0f40"-"\u0f47",
+         "\u0f49"-"\u0f6a",
+         "\u0f88"-"\u0f8b",
+         "\u1000"-"\u1021",
+         "\u1023"-"\u1027",
+         "\u1029"-"\u102a",
+         "\u1050"-"\u1055",
+         "\u10a0"-"\u10c5",
+         "\u10d0"-"\u10f6",
+         "\u1100"-"\u1159",
+         "\u115f"-"\u11a2",
+         "\u11a8"-"\u11f9",
+         "\u1200"-"\u1206",
+         "\u1208"-"\u1246",
+         "\u1248",
+         "\u124a"-"\u124d",
+         "\u1250"-"\u1256",
+         "\u1258",
+         "\u125a"-"\u125d",
+         "\u1260"-"\u1286",
+         "\u1288",
+         "\u128a"-"\u128d",
+         "\u1290"-"\u12ae",
+         "\u12b0",
+         "\u12b2"-"\u12b5",
+         "\u12b8"-"\u12be",
+         "\u12c0",
+         "\u12c2"-"\u12c5",
+         "\u12c8"-"\u12ce",
+         "\u12d0"-"\u12d6",
+         "\u12d8"-"\u12ee",
+         "\u12f0"-"\u130e",
+         "\u1310",
+         "\u1312"-"\u1315",
+         "\u1318"-"\u131e",
+         "\u1320"-"\u1346",
+         "\u1348"-"\u135a",
+         "\u13a0"-"\u13f4",
+         "\u1401"-"\u166c",
+         "\u166f"-"\u1676",
+         "\u1681"-"\u169a",
+         "\u16a0"-"\u16ea",
+         "\u1780"-"\u17b3",
+         "\u17db",
+         "\u1820"-"\u1877",
+         "\u1880"-"\u18a8",
+         "\u1e00"-"\u1e9b",
+         "\u1ea0"-"\u1ef9",
+         "\u1f00"-"\u1f15",
+         "\u1f18"-"\u1f1d",
+         "\u1f20"-"\u1f45",
+         "\u1f48"-"\u1f4d",
+         "\u1f50"-"\u1f57",
+         "\u1f59",
+         "\u1f5b",
+         "\u1f5d",
+         "\u1f5f"-"\u1f7d",
+         "\u1f80"-"\u1fb4",
+         "\u1fb6"-"\u1fbc",
+         "\u1fbe",
+         "\u1fc2"-"\u1fc4",
+         "\u1fc6"-"\u1fcc",
+         "\u1fd0"-"\u1fd3",
+         "\u1fd6"-"\u1fdb",
+         "\u1fe0"-"\u1fec",
+         "\u1ff2"-"\u1ff4",
+         "\u1ff6"-"\u1ffc",
+         "\u203f"-"\u2040",
+         "\u207f",
+         "\u20a0"-"\u20af",
+         "\u2102",
+         "\u2107",
+         "\u210a"-"\u2113",
+         "\u2115",
+         "\u2119"-"\u211d",
+         "\u2124",
+         "\u2126",
+         "\u2128",
+         "\u212a"-"\u212d",
+         "\u212f"-"\u2131",
+         "\u2133"-"\u2139",
+         "\u2160"-"\u2183",
+         "\u3005"-"\u3007",
+         "\u3021"-"\u3029",
+         "\u3031"-"\u3035",
+         "\u3038"-"\u303a",
+         "\u3041"-"\u3094",
+         "\u309d"-"\u309e",
+         "\u30a1"-"\u30fe",
+         "\u3105"-"\u312c",
+         "\u3131"-"\u318e",
+         "\u31a0"-"\u31b7",
+         "\u3400"-"\u4db5",
+         "\u4e00"-"\u9fa5",
+         "\ua000"-"\ua48c",
+         "\uac00"-"\ud7a3",
+         "\uf900"-"\ufa2d",
+         "\ufb00"-"\ufb06",
+         "\ufb13"-"\ufb17",
+         "\ufb1d",
+         "\ufb1f"-"\ufb28",
+         "\ufb2a"-"\ufb36",
+         "\ufb38"-"\ufb3c",
+         "\ufb3e",
+         "\ufb40"-"\ufb41",
+         "\ufb43"-"\ufb44",
+         "\ufb46"-"\ufbb1",
+         "\ufbd3"-"\ufd3d",
+         "\ufd50"-"\ufd8f",
+         "\ufd92"-"\ufdc7",
+         "\ufdf0"-"\ufdfb",
+         "\ufe33"-"\ufe34",
+         "\ufe4d"-"\ufe4f",
+         "\ufe69",
+         "\ufe70"-"\ufe72",
+         "\ufe74",
+         "\ufe76"-"\ufefc",
+         "\uff04",
+         "\uff21"-"\uff3a",
+         "\uff3f",
+         "\uff41"-"\uff5a",
+         "\uff65"-"\uffbe",
+         "\uffc2"-"\uffc7",
+         "\uffca"-"\uffcf",
+         "\uffd2"-"\uffd7",
+         "\uffda"-"\uffdc",
+         "\uffe0"-"\uffe1",
+         "\uffe5"-"\uffe6"
+      ]
+  >
+  |
+  < #PART_LETTER:
+      [  // all chars for which Character.isIdentifierPart is true
+         "\u0000"-"\u0008",
+         "\u000e"-"\u001b",
+         "$",
+         "0"-"9",
+         "A"-"Z",
+         "_",
+         "a"-"z",
+         "\u007f"-"\u009f",
+         "\u00a2"-"\u00a5",
+         "\u00aa",
+         "\u00b5",
+         "\u00ba",
+         "\u00c0"-"\u00d6",
+         "\u00d8"-"\u00f6",
+         "\u00f8"-"\u021f",
+         "\u0222"-"\u0233",
+         "\u0250"-"\u02ad",
+         "\u02b0"-"\u02b8",
+         "\u02bb"-"\u02c1",
+         "\u02d0"-"\u02d1",
+         "\u02e0"-"\u02e4",
+         "\u02ee",
+         "\u0300"-"\u034e",
+         "\u0360"-"\u0362",
+         "\u037a",
+         "\u0386",
+         "\u0388"-"\u038a",
+         "\u038c",
+         "\u038e"-"\u03a1",
+         "\u03a3"-"\u03ce",
+         "\u03d0"-"\u03d7",
+         "\u03da"-"\u03f3",
+         "\u0400"-"\u0481",
+         "\u0483"-"\u0486",
+         "\u048c"-"\u04c4",
+         "\u04c7"-"\u04c8",
+         "\u04cb"-"\u04cc",
+         "\u04d0"-"\u04f5",
+         "\u04f8"-"\u04f9",
+         "\u0531"-"\u0556",
+         "\u0559",
+         "\u0561"-"\u0587",
+         "\u0591"-"\u05a1",
+         "\u05a3"-"\u05b9",
+         "\u05bb"-"\u05bd",
+         "\u05bf",
+         "\u05c1"-"\u05c2",
+         "\u05c4",
+         "\u05d0"-"\u05ea",
+         "\u05f0"-"\u05f2",
+         "\u0621"-"\u063a",
+         "\u0640"-"\u0655",
+         "\u0660"-"\u0669",
+         "\u0670"-"\u06d3",
+         "\u06d5"-"\u06dc",
+         "\u06df"-"\u06e8",
+         "\u06ea"-"\u06ed",
+         "\u06f0"-"\u06fc",
+         "\u070f"-"\u072c",
+         "\u0730"-"\u074a",
+         "\u0780"-"\u07b0",
+         "\u0901"-"\u0903",
+         "\u0905"-"\u0939",
+         "\u093c"-"\u094d",
+         "\u0950"-"\u0954",
+         "\u0958"-"\u0963",
+         "\u0966"-"\u096f",
+         "\u0981"-"\u0983",
+         "\u0985"-"\u098c",
+         "\u098f"-"\u0990",
+         "\u0993"-"\u09a8",
+         "\u09aa"-"\u09b0",
+         "\u09b2",
+         "\u09b6"-"\u09b9",
+         "\u09bc",
+         "\u09be"-"\u09c4",
+         "\u09c7"-"\u09c8",
+         "\u09cb"-"\u09cd",
+         "\u09d7",
+         "\u09dc"-"\u09dd",
+         "\u09df"-"\u09e3",
+         "\u09e6"-"\u09f3",
+         "\u0a02",
+         "\u0a05"-"\u0a0a",
+         "\u0a0f"-"\u0a10",
+         "\u0a13"-"\u0a28",
+         "\u0a2a"-"\u0a30",
+         "\u0a32"-"\u0a33",
+         "\u0a35"-"\u0a36",
+         "\u0a38"-"\u0a39",
+         "\u0a3c",
+         "\u0a3e"-"\u0a42",
+         "\u0a47"-"\u0a48",
+         "\u0a4b"-"\u0a4d",
+         "\u0a59"-"\u0a5c",
+         "\u0a5e",
+         "\u0a66"-"\u0a74",
+         "\u0a81"-"\u0a83",
+         "\u0a85"-"\u0a8b",
+         "\u0a8d",
+         "\u0a8f"-"\u0a91",
+         "\u0a93"-"\u0aa8",
+         "\u0aaa"-"\u0ab0",
+         "\u0ab2"-"\u0ab3",
+         "\u0ab5"-"\u0ab9",
+         "\u0abc"-"\u0ac5",
+         "\u0ac7"-"\u0ac9",
+         "\u0acb"-"\u0acd",
+         "\u0ad0",
+         "\u0ae0",
+         "\u0ae6"-"\u0aef",
+         "\u0b01"-"\u0b03",
+         "\u0b05"-"\u0b0c",
+         "\u0b0f"-"\u0b10",
+         "\u0b13"-"\u0b28",
+         "\u0b2a"-"\u0b30",
+         "\u0b32"-"\u0b33",
+         "\u0b36"-"\u0b39",
+         "\u0b3c"-"\u0b43",
+         "\u0b47"-"\u0b48",
+         "\u0b4b"-"\u0b4d",
+         "\u0b56"-"\u0b57",
+         "\u0b5c"-"\u0b5d",
+         "\u0b5f"-"\u0b61",
+         "\u0b66"-"\u0b6f",
+         "\u0b82"-"\u0b83",
+         "\u0b85"-"\u0b8a",
+         "\u0b8e"-"\u0b90",
+         "\u0b92"-"\u0b95",
+         "\u0b99"-"\u0b9a",
+         "\u0b9c",
+         "\u0b9e"-"\u0b9f",
+         "\u0ba3"-"\u0ba4",
+         "\u0ba8"-"\u0baa",
+         "\u0bae"-"\u0bb5",
+         "\u0bb7"-"\u0bb9",
+         "\u0bbe"-"\u0bc2",
+         "\u0bc6"-"\u0bc8",
+         "\u0bca"-"\u0bcd",
+         "\u0bd7",
+         "\u0be7"-"\u0bef",
+         "\u0c01"-"\u0c03",
+         "\u0c05"-"\u0c0c",
+         "\u0c0e"-"\u0c10",
+         "\u0c12"-"\u0c28",
+         "\u0c2a"-"\u0c33",
+         "\u0c35"-"\u0c39",
+         "\u0c3e"-"\u0c44",
+         "\u0c46"-"\u0c48",
+         "\u0c4a"-"\u0c4d",
+         "\u0c55"-"\u0c56",
+         "\u0c60"-"\u0c61",
+         "\u0c66"-"\u0c6f",
+         "\u0c82"-"\u0c83",
+         "\u0c85"-"\u0c8c",
+         "\u0c8e"-"\u0c90",
+         "\u0c92"-"\u0ca8",
+         "\u0caa"-"\u0cb3",
+         "\u0cb5"-"\u0cb9",
+         "\u0cbe"-"\u0cc4",
+         "\u0cc6"-"\u0cc8",
+         "\u0cca"-"\u0ccd",
+         "\u0cd5"-"\u0cd6",
+         "\u0cde",
+         "\u0ce0"-"\u0ce1",
+         "\u0ce6"-"\u0cef",
+         "\u0d02"-"\u0d03",
+         "\u0d05"-"\u0d0c",
+         "\u0d0e"-"\u0d10",
+         "\u0d12"-"\u0d28",
+         "\u0d2a"-"\u0d39",
+         "\u0d3e"-"\u0d43",
+         "\u0d46"-"\u0d48",
+         "\u0d4a"-"\u0d4d",
+         "\u0d57",
+         "\u0d60"-"\u0d61",
+         "\u0d66"-"\u0d6f",
+         "\u0d82"-"\u0d83",
+         "\u0d85"-"\u0d96",
+         "\u0d9a"-"\u0db1",
+         "\u0db3"-"\u0dbb",
+         "\u0dbd",
+         "\u0dc0"-"\u0dc6",
+         "\u0dca",
+         "\u0dcf"-"\u0dd4",
+         "\u0dd6",
+         "\u0dd8"-"\u0ddf",
+         "\u0df2"-"\u0df3",
+         "\u0e01"-"\u0e3a",
+         "\u0e3f"-"\u0e4e",
+         "\u0e50"-"\u0e59",
+         "\u0e81"-"\u0e82",
+         "\u0e84",
+         "\u0e87"-"\u0e88",
+         "\u0e8a",
+         "\u0e8d",
+         "\u0e94"-"\u0e97",
+         "\u0e99"-"\u0e9f",
+         "\u0ea1"-"\u0ea3",
+         "\u0ea5",
+         "\u0ea7",
+         "\u0eaa"-"\u0eab",
+         "\u0ead"-"\u0eb9",
+         "\u0ebb"-"\u0ebd",
+         "\u0ec0"-"\u0ec4",
+         "\u0ec6",
+         "\u0ec8"-"\u0ecd",
+         "\u0ed0"-"\u0ed9",
+         "\u0edc"-"\u0edd",
+         "\u0f00",
+         "\u0f18"-"\u0f19",
+         "\u0f20"-"\u0f29",
+         "\u0f35",
+         "\u0f37",
+         "\u0f39",
+         "\u0f3e"-"\u0f47",
+         "\u0f49"-"\u0f6a",
+         "\u0f71"-"\u0f84",
+         "\u0f86"-"\u0f8b",
+         "\u0f90"-"\u0f97",
+         "\u0f99"-"\u0fbc",
+         "\u0fc6",
+         "\u1000"-"\u1021",
+         "\u1023"-"\u1027",
+         "\u1029"-"\u102a",
+         "\u102c"-"\u1032",
+         "\u1036"-"\u1039",
+         "\u1040"-"\u1049",
+         "\u1050"-"\u1059",
+         "\u10a0"-"\u10c5",
+         "\u10d0"-"\u10f6",
+         "\u1100"-"\u1159",
+         "\u115f"-"\u11a2",
+         "\u11a8"-"\u11f9",
+         "\u1200"-"\u1206",
+         "\u1208"-"\u1246",
+         "\u1248",
+         "\u124a"-"\u124d",
+         "\u1250"-"\u1256",
+         "\u1258",
+         "\u125a"-"\u125d",
+         "\u1260"-"\u1286",
+         "\u1288",
+         "\u128a"-"\u128d",
+         "\u1290"-"\u12ae",
+         "\u12b0",
+         "\u12b2"-"\u12b5",
+         "\u12b8"-"\u12be",
+         "\u12c0",
+         "\u12c2"-"\u12c5",
+         "\u12c8"-"\u12ce",
+         "\u12d0"-"\u12d6",
+         "\u12d8"-"\u12ee",
+         "\u12f0"-"\u130e",
+         "\u1310",
+         "\u1312"-"\u1315",
+         "\u1318"-"\u131e",
+         "\u1320"-"\u1346",
+         "\u1348"-"\u135a",
+         "\u1369"-"\u1371",
+         "\u13a0"-"\u13f4",
+         "\u1401"-"\u166c",
+         "\u166f"-"\u1676",
+         "\u1681"-"\u169a",
+         "\u16a0"-"\u16ea",
+         "\u1780"-"\u17d3",
+         "\u17db",
+         "\u17e0"-"\u17e9",
+         "\u180b"-"\u180e",
+         "\u1810"-"\u1819",
+         "\u1820"-"\u1877",
+         "\u1880"-"\u18a9",
+         "\u1e00"-"\u1e9b",
+         "\u1ea0"-"\u1ef9",
+         "\u1f00"-"\u1f15",
+         "\u1f18"-"\u1f1d",
+         "\u1f20"-"\u1f45",
+         "\u1f48"-"\u1f4d",
+         "\u1f50"-"\u1f57",
+         "\u1f59",
+         "\u1f5b",
+         "\u1f5d",
+         "\u1f5f"-"\u1f7d",
+         "\u1f80"-"\u1fb4",
+         "\u1fb6"-"\u1fbc",
+         "\u1fbe",
+         "\u1fc2"-"\u1fc4",
+         "\u1fc6"-"\u1fcc",
+         "\u1fd0"-"\u1fd3",
+         "\u1fd6"-"\u1fdb",
+         "\u1fe0"-"\u1fec",
+         "\u1ff2"-"\u1ff4",
+         "\u1ff6"-"\u1ffc",
+         "\u200c"-"\u200f",
+         "\u202a"-"\u202e",
+         "\u203f"-"\u2040",
+         "\u206a"-"\u206f",
+         "\u207f",
+         "\u20a0"-"\u20af",
+         "\u20d0"-"\u20dc",
+         "\u20e1",
+         "\u2102",
+         "\u2107",
+         "\u210a"-"\u2113",
+         "\u2115",
+         "\u2119"-"\u211d",
+         "\u2124",
+         "\u2126",
+         "\u2128",
+         "\u212a"-"\u212d",
+         "\u212f"-"\u2131",
+         "\u2133"-"\u2139",
+         "\u2160"-"\u2183",
+         "\u3005"-"\u3007",
+         "\u3021"-"\u302f",
+         "\u3031"-"\u3035",
+         "\u3038"-"\u303a",
+         "\u3041"-"\u3094",
+         "\u3099"-"\u309a",
+         "\u309d"-"\u309e",
+         "\u30a1"-"\u30fe",
+         "\u3105"-"\u312c",
+         "\u3131"-"\u318e",
+         "\u31a0"-"\u31b7",
+         "\u3400"-"\u4db5",
+         "\u4e00"-"\u9fa5",
+         "\ua000"-"\ua48c",
+         "\uac00"-"\ud7a3",
+         "\uf900"-"\ufa2d",
+         "\ufb00"-"\ufb06",
+         "\ufb13"-"\ufb17",
+         "\ufb1d"-"\ufb28",
+         "\ufb2a"-"\ufb36",
+         "\ufb38"-"\ufb3c",
+         "\ufb3e",
+         "\ufb40"-"\ufb41",
+         "\ufb43"-"\ufb44",
+         "\ufb46"-"\ufbb1",
+         "\ufbd3"-"\ufd3d",
+         "\ufd50"-"\ufd8f",
+         "\ufd92"-"\ufdc7",
+         "\ufdf0"-"\ufdfb",
+         "\ufe20"-"\ufe23",
+         "\ufe33"-"\ufe34",
+         "\ufe4d"-"\ufe4f",
+         "\ufe69",
+         "\ufe70"-"\ufe72",
+         "\ufe74",
+         "\ufe76"-"\ufefc",
+         "\ufeff",
+         "\uff04",
+         "\uff10"-"\uff19",
+         "\uff21"-"\uff3a",
+         "\uff3f",
+         "\uff41"-"\uff5a",
+         "\uff65"-"\uffbe",
+         "\uffc2"-"\uffc7",
+         "\uffca"-"\uffcf",
+         "\uffd2"-"\uffd7",
+         "\uffda"-"\uffdc",
+         "\uffe0"-"\uffe1",
+         "\uffe5"-"\uffe6",
+         "\ufff9"-"\ufffb"
+      ]
+  >
+;
