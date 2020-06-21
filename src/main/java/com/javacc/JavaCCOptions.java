@@ -144,7 +144,6 @@ public class JavaCCOptions {
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
         optionValues.put("IGNORE_CASE", false);
         optionValues.put("USER_DEFINED_LEXER", false);
-//        optionValues.put("BUILD_PARSER", true);
         optionValues.put("LEXER_USES_PARSER", false);
 //        optionValues.put("FORCE_LA_CHECK", false);
 
@@ -174,7 +173,7 @@ public class JavaCCOptions {
         optionValues.put("TREE_BUILDING_DEFAULT", true);
         optionValues.put("TREE_BUILDING_ENABLED", true);
         optionValues.put("TOKENS_ARE_NODES", true);
-        optionValues.put("SPECIAL_TOKENS_ARE_NODES", false);
+        optionValues.put("UNPARSED_TOKENS_ARE_NODES", false);
         optionValues.put("FREEMARKER_NODES", false);
         optionValues.put("DEFAULT_LEXICAL_STATE", "DEFAULT");
         optionValues.put("HUGE_FILE_SUPPORT", false);
@@ -183,6 +182,7 @@ public class JavaCCOptions {
         aliases.put("USER_TOKEN_MANAGER", "USER_DEFINED_LEXER");
         aliases.put("TOKEN_MANAGER_USES_PARSER", "LEXER_USES_PARSER");
         aliases.put("NODE_CLASS", "BASE_NODE_CLASS");
+        aliases.put("SPECIAL_TOKENS_ARE_NODES","UNPARSED_TOKENS_ARE_NODES");
         aliases.put("q",  "QUIET");
     }
     

@@ -113,11 +113,11 @@ public final class Main {
         System.out.println("    LEXER_USES_PARSER      (default false)");
         System.out.println("    NODES_USE_PARSER       (default false)");
         System.out.println("    PRESERVE_LINE_ENDINGS       (default true)");
-        System.out.println("    SPECIAL_TOKENS_ARE_NODES (default false)");
         System.out.println("    SMART_NODE_CREATION    (default true)");
         System.out.println("    TOKENS_ARE_NODES       (default true)");
         System.out.println("    TREE_BUILDING_DEFAULT  (default true)");
         System.out.println("    TREE_BUILDING_ENABLED  (default true)");
+        System.out.println("    UNPARSED_TOKENS_ARE_NODES (default false)");
         System.out.println("    USER_DEFINED_LEXER     (default false)");
         System.out.println();
         System.out.println("The string valued options are:");

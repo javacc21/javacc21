@@ -193,15 +193,13 @@ public class NfaState {
     public void addChar(char c) {
         onlyChar++;
         matchSingleChar = c;
-        int i;
-        char temp;
-        char temp1;
-
-        if ((int) c < 128) // ASCII char
-        {
+        if (c < 128) {// ASCII char
             addASCIIMove(c);
             return;
         }
+        int i;
+        char temp;
+        char temp1;
 
         if (charMoves == null) {
              charMoves = new char[10];

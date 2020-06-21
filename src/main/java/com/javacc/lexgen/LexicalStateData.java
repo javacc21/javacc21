@@ -833,13 +833,12 @@ public class LexicalStateData {
         String retVal = "{ ";
         for (int i = 0; i < states.size();) {
             int k;
-            retVal += (k = ((NfaState) states.get(i)).index) + ", ";
+            retVal += (k = (states.get(i)).index) + ", ";
             set[i] = k;
 
             if (i++ > 0 && i % 16 == 0)
                 retVal += "\n";
         }
-
         retVal += "};";
         allNextStates.put(retVal, set);
         return retVal;
@@ -1003,7 +1002,7 @@ public class LexicalStateData {
         for (int i = 0; i < maxLen; i++) {
             Map<String, KindInfo> tab = charPosKind.get(i);
             for (String key : tab.keySet()) {
-                KindInfo info = (KindInfo) tab.get(key);
+                KindInfo info = tab.get(key);
                 if (generateDfaCase(key, info, i)) {
                     if (info.getFinalKindCnt() != 0) {
                         for (int j = 0; j < maxStrKind; j++) {

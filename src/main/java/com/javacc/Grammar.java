@@ -125,11 +125,8 @@ public class Grammar extends BaseNode {
 
     Node parse(String location) throws IOException, ParseException {
         File file = new File(location);
-//        Reader input = new FileReader(file);
         String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
-//        JavaCCParser parser = new JavaCCParser(this, input);
         JavaCCParser parser = new JavaCCParser(this, file.getCanonicalFile().getName(), content);
-//        parser.setInputSource(file.getCanonicalFile().getName());
         setFilename(location);
         System.out.println("Parsing grammar file " + location + " . . .");
         GrammarFile rootNode = parser.Root();
@@ -152,9 +149,7 @@ public class Grammar extends BaseNode {
         if (location.toLowerCase().endsWith(".java") || location.endsWith(".jav")) {
             File includeFile = new File(location);
             String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
-//            JavaCCParser.parseJavaFile(location, inputSource)
             CompilationUnit cu = JavaCCParser.parseJavaFile(includeFile.getCanonicalFile().getName(), content);
-//            CompilationUnit cu = JavaCCParser.parseJavaFile(new FileReader(location), location);
             codeInjections.add(cu);
             return cu;
         } else {

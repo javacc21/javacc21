@@ -54,6 +54,7 @@
   }
  
 private ArrayList<StackTraceElement> callStack = new ArrayList<>();
+private EnumSet<TokenType> currentFollowSet;
 
 private void pushOntoCallStack(String methodName, String fileName, int line) {
    StackTraceElement item = new StackTraceElement(this.getClass().getName(), methodName, fileName, line);
