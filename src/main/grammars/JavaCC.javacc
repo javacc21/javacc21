@@ -332,6 +332,7 @@ TOKEN :
 }
 
 INCLUDE("Java.javacc")
+//INCLUDE("Java_new_syntax.javacc")
 
 INJECT(BaseNode) :
 {
@@ -651,7 +652,7 @@ void GrammarInclusion() throws IOException :
 void CodeInjection() :
 {
         boolean isInterface = false;
-        ImportDeclaration importDecl = null;
+//        ImportDeclaration importDecl = null;
         Annotation annotation = null;
         token_source.inJavaCode=true;
 }
@@ -667,7 +668,7 @@ void CodeInjection() :
         [":"]
         "{"
          (
-             importDecl = ImportDeclaration() {CURRENT_NODE.importDeclarations.add(importDecl);}
+            ImportDeclaration() {CURRENT_NODE.importDeclarations.add((ImportDeclaration) peekNode());}
          )*
          (
              annotation = Annotation() {CURRENT_NODE.annotations.add(annotation);}

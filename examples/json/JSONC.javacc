@@ -9,11 +9,10 @@ options {
     FAULT_TOLERANT=true;
 }
 
-SPECIAL_TOKEN #Comment :
-{
+UNPARSED_TOKEN #Comment :
     <SINGLE_LINE_COMMENT : "//" (~["\n","\r"])*  ("\n"|"\r"|"\r\n") >
     |
     <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
-}
+;
 
 INCLUDE("JSON.javacc")

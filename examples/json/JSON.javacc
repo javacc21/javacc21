@@ -16,14 +16,10 @@ options {
   DEFAULT_LEXICAL_STATE="JSON";
 }
 
-SKIP :
-{
-  <WHITESPACE : (" "| "\t"| "\n"| "\r")+> 
-}
+SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r")+>; 
 
 // Delimiters
 TOKEN #Delimiter :
-{
     <COLON : ":">
     |
     <COMMA : ",">
@@ -35,11 +31,10 @@ TOKEN #Delimiter :
     <OPEN_BRACE : "{" >
     |
     <CLOSE_BRACE : "}">
-}
+;
 
 // Literals
 TOKEN #Literal :
-{
     <TRUE: "true"> #BooleanLiteral
     |
     <FALSE: "false"> #BooleanLiteral
@@ -63,24 +58,17 @@ TOKEN #Literal :
     <#EXPONENT : ["E","e"]["+","-"](["1"-"9"])+>
     |
     <NUMBER : ("-")?(<ZERO>|<NON_ZERO>)(<FRACTION>)?(<EXPONENT>)?> #NumberLiteral
-}
+;
 
-void Array() ! : {}
-{
+Array ! :
     <OPEN_BRACKET>
     [
-      Value() 
-      (
-        <COMMA>
-        Value()
-      )*
+      Value  (<COMMA>Value)*
     ]
     <CLOSE_BRACKET>
 }
 
-void Value() : {}
-{
-   (
+Value :
     <TRUE>
     |
     <FALSE>
@@ -94,17 +82,18 @@ void Value() : {}
     Array()!
     |
     JSONObject()
-   )
-}
+;
 
-void JSONObject() ! : {}
-{
+JSONObject ! : 
     <OPEN_BRACE>
     [
-       <STRING_LITERAL> <COLON>! Value()
+       <STRING_LITERAL> 
+       <COLON>! 
+       Value
        (
          <COMMA>
-        <STRING_LITERAL><COLON>! Value()
+        <STRING_LITERAL><COLON>! 
+        Value
        )*
     ]
     <CLOSE_BRACE>
