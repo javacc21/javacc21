@@ -457,6 +457,8 @@ public class ParserData {
                 }
             }
         }
+        //Let's jump out here, I guess.
+        if (grammar.getErrorCount() >0) return;
 
         /*
          * The following code performs a tree walk on all regular expressions
@@ -480,7 +482,7 @@ public class ParserData {
                     if (referenced.isPrivate()) {
                         grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
                     }   else if (!referenced.tpContext.getKind().equals("TOKEN")) {
-                        grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, IGNORE_IN_BNF) regular expression.");
+                        grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
                     } 
                 } 
             }
@@ -558,7 +560,7 @@ public class ParserData {
             }
         }
 
-        for (Node child : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+        for (Node child : grammar.descendants(n -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
             Expansion exp = (Expansion) child;
             if (exp.getNestedExpansion().isPossiblyEmpty()) {
                 grammar.addSemanticError(exp, "Expansion can be matched by empty string.");

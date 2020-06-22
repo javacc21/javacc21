@@ -298,7 +298,7 @@ TOKEN :
 {
   < _OPTIONS: "options"| "OPTIONS" > #JavaCCKeyWord
   |
-  < _INJECT: "INJECT" | "INJECT_CODE"> #JavaCCKeyWord
+  < _INJECT: "INJECT" > #JavaCCKeyWord
   |
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
   |
@@ -582,7 +582,7 @@ GrammarFile Root() throws IOException #GrammarFile :
       decls=TokenManagerDecls() {grammar.addCodeInjection(decls);}
       |
       LOOKAHEAD(<_INJECT><LPAREN>)
-         CodeInjection() 
+      CodeInjection() 
       |
       CodeInjection2()
       |
@@ -1708,7 +1708,11 @@ INJECT(NonTerminal) :
      }
      
      public boolean isPossiblyEmpty() {
-         return getProduction().isPossiblyEmpty();
+         BNFProduction prod = this.getProduction();
+         if (prod == null) {
+             return false; // We already handle this case elsewhere, but REVISIT later maybe
+         }
+         return prod.isPossiblyEmpty();
      }
      
      // REVISIT. Why is this necessary?
