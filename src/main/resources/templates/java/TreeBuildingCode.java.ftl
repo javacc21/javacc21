@@ -126,12 +126,26 @@
     }
     
     public void openNodeScope(Node n) {
+        Token start = getToken(1);
+        n.setBeginLine(start.getBeginLine());
+        n.setBeginColumn(start.getBeginColumn());
+[#if grammar.options.hugeFileSupport]       
+        n.setInputSource(this.getInputSource());
+[#elseif !grammar.options.userDefinedLexer]
+       n.setInputSource(token_source.input_stream);
+[/#if]       
         new NodeScope();
         n.open();
+  [#if grammar.usesjjtreeOpenNodeScope]
+       jjtreeOpenNodeScope(n);
+  [/#if]
+  [#if grammar.usesOpenNodeScopeHook]
+       openNodeScopeHook(n);
+  [/#if]
+        
         if (trace_enabled) LOGGER.info("Opened node scope for node of type: " + n.getClass().getName());
         if (trace_enabled) LOGGER.info("Scope nesting level is "  +  currentNodeScope.nestingLevel());
     }
-
 
 	/* A definite node is constructed from a specified number of
 	 * children.  That number of nodes are popped from the stack and
@@ -139,6 +153,8 @@
 	 * is pushed on to the stack.
 	 */
     public void closeNodeScope(Node n, int num) {
+        n.setEndLine(current_token.getEndLine());
+        n.setEndColumn(current_token.getEndColumn());
         if (trace_enabled) LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + num + " nodes off the stack.");
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();
@@ -168,7 +184,6 @@
  [#if grammar.usesCloseNodeScopeHook]
         closeNodeScopeHook(${nodeVarName});
  [/#if]
-     
     }
 
 	/**
@@ -180,6 +195,8 @@
 	 */
 	 
     public void closeNodeScope(Node n, boolean condition) {
+        n.setEndLine(current_token.getEndLine());
+        n.setEndColumn(current_token.getEndColumn());
         if (condition) {
             if (trace_enabled) LOGGER.finer("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + nodeArity() + " nodes off the stack.");
             int a = nodeArity();

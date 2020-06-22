@@ -1121,10 +1121,10 @@ Type :
    PrimitiveType
 ;
 
-ReferenceType :
+ReferenceType : 
    PrimitiveArrayType
    |
-   ClassOrInterfaceType (LOOKAHEAD(2) "[" "]" )*
+   ClassOrInterfaceType (LOOKAHEAD "[" "]" )*
 }
 
 ObjectType ClassOrInterfaceType #ObjectType :
@@ -1157,7 +1157,7 @@ INJECT(ObjectType) : {}
 DiamondOperator :  "<" ">";
 
 PossiblyEmptyTypeArguments #void :
-   LOOKAHEAD(2)
+   LOOKAHEAD
    DiamondOperator
    |
    TypeArguments

@@ -657,7 +657,7 @@ void CodeInjection() :
         token_source.inJavaCode=true;
 }
 {
-        <_INJECT> "("
+        "INJECT" "("
         [
             "class"
             |

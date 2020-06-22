@@ -227,8 +227,6 @@
 [#if !grammar.options.faultTolerant]
              if (buildTree) {
                  if (${parseExceptionVar} == null) {
-                      ${nodeVarName}.setEndLine(current_token.getEndLine());
-                      ${nodeVarName}.setEndColumn(current_token.getEndColumn());
                      closeNodeScope(${nodeVarName}, ${closeCondition});
                  } else {
                      if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
@@ -238,8 +236,6 @@
 [#else]
              if (buildTree) {
                  if (${parseExceptionVar} == null) {
-	                  ${nodeVarName}.setEndLine(current_token.getEndLine());
-		              ${nodeVarName}.setEndColumn(current_token.getEndColumn());
  	                 closeNodeScope(${nodeVarName}, ${closeCondition});
                  }
 	             else {
@@ -308,21 +304,7 @@
    [#else]
        ${nodeVarName} = new ${nodeName}();
    [/#if]
-       Token start = getToken(1);
-       ${nodeVarName}.setBeginLine(start.getBeginLine());
-       ${nodeVarName}.setBeginColumn(start.getBeginColumn());
-[#if grammar.options.hugeFileSupport]       
-       ${nodeVarName}.setInputSource(this.getInputSource());
-[#elseif !grammar.options.userDefinedLexer]
-       ${nodeVarName}.setInputSource(token_source.input_stream);
-[/#if]       
 	    openNodeScope(${nodeVarName});
-  [#if grammar.usesjjtreeOpenNodeScope]
-   	   jjtreeOpenNodeScope(${nodeVarName});
-  [/#if]
-  [#if grammar.usesOpenNodeScopeHook]
-       openNodeScopeHook(${nodeVarName});
-  [/#if]
   }
 [/#macro]
 
