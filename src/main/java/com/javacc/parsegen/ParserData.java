@@ -52,11 +52,7 @@ public class ParserData {
 
     private List<MatchInfo> sizeLimitedMatches;
 
-    /**
-     * These lists are used to maintain the lists of lookaheads and expansions 
-     * for which code generation in phase 2 and phase 3 is required. 
-     */
-    private List<Expansion> phase2list, phase3list;
+    private List<Expansion> scanAheadExpansions = new ArrayList<>();
     
     public ParserData(Grammar grammar) {
         this.grammar = grammar;
@@ -64,45 +60,43 @@ public class ParserData {
     }
 
     public void buildData()  {
-        phase2list = new ArrayList<Expansion>();
         for (BNFProduction production : grammar.getParserProductions()) {
-            new Phase2TableBuilder().visit(production.getExpansion());
+            new LookaheadTableBuilder().visit(production.getExpansion());
         }
-        phase3list = new ArrayList<>(phase2list);
-        for (Expansion expansion : phase3list) {
-            expansion.setPhase3LookaheadAmount(expansion.getLookaheadAmount());
+        for (Expansion expansion : scanAheadExpansions) {
+            expansion.setMaxScanAhead(expansion.getLookaheadAmount());
         }
-        for (int phase3index=0; phase3index < phase3list.size(); phase3index++) {
-            Expansion exp = phase3list.get(phase3index);
-            new Phase3TableBuilder(exp.getPhase3LookaheadAmount()).visit(exp);
+        for (int scanAheadIndex=0; scanAheadIndex < scanAheadExpansions.size(); scanAheadIndex++) {
+            Expansion exp = scanAheadExpansions.get(scanAheadIndex);
+            new ScanAheadTableBuilder(exp.getMaxScanAhead()).visit(exp);
         }
         // Not sure why it's necessary, but we need to get rid of duplicates
-        this.phase3list = new ArrayList<>(new LinkedHashSet<>(phase3list));
+        this.scanAheadExpansions = new ArrayList<>(new LinkedHashSet<>(scanAheadExpansions));
     }
 
-    public List<Expansion> getPhase2Expansions() {
-        return phase2list;
+    /**
+     * The list of Expansions for which we need to generate scanahead routines
+     * @return
+     */
+    public List<Expansion> getScanAheadExpansions() {
+        return scanAheadExpansions;
     }
 
-    public List<Expansion> getPhase3Expansions() {
-        return phase3list;
-    }
-
-    public class Phase2TableBuilder extends Node.Visitor {
+    public class LookaheadTableBuilder extends Node.Visitor {
         public void visit(ExpansionChoice choice) {
             for (Expansion exp : choice.getChoices()) {
                 visit(exp);
                 if (exp.isAlwaysSuccessful()) break;
-                if (exp.getRequiresPhase2Routine()) {
-                    phase2list.add(exp.getLookaheadExpansion());
+                if (exp.getRequiresScanAhead()) {
+                    scanAheadExpansions.add(exp.getLookaheadExpansion());
                 }
             }
         }
 
         private void handleOneOrMoreEtc(Expansion exp) {
             visit(exp.getNestedExpansion());
-            if (exp.getRequiresPhase2Routine()) {
-                phase2list.add(exp.getLookaheadExpansion());
+            if (exp.getRequiresScanAhead()) {
+                scanAheadExpansions.add(exp.getLookaheadExpansion());
             }
         }
 
@@ -144,10 +138,10 @@ public class ParserData {
     }
 
 
-    public class Phase3TableBuilder extends Node.Visitor {
+    public class ScanAheadTableBuilder extends Node.Visitor {
         private int lookaheadAmount;
 
-        Phase3TableBuilder(int lookaheadAmount) {
+        ScanAheadTableBuilder(int lookaheadAmount) {
             this.lookaheadAmount = lookaheadAmount;
         }
 
@@ -181,9 +175,9 @@ public class ParserData {
 
         private void generate3R(Expansion expansion) {
             // It appears that the only possible Expansion types here are ExpansionChoice and ExpansionSequence
-           if (expansion.getPhase3LookaheadAmount()< lookaheadAmount) {
-                phase3list.add(expansion);
-                expansion.setPhase3LookaheadAmount(lookaheadAmount);
+           if (expansion.getMaxScanAhead()< lookaheadAmount) {
+                scanAheadExpansions.add(expansion);
+                expansion.setMaxScanAhead(lookaheadAmount);
             }
         }
     }

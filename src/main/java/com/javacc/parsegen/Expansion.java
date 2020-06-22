@@ -58,17 +58,17 @@ abstract public class Expansion extends BaseNode {
     
     private String label = "";  
     
-    private int phase3LookaheadAmount; 
+    private int maxScanAhead; 
     
-    void setPhase3LookaheadAmount(int phase3LookaheadAmount) {
-    	this.phase3LookaheadAmount = phase3LookaheadAmount;
+    void setMaxScanAhead(int maxScanAhead) {
+    	this.maxScanAhead = maxScanAhead;
     }
 /**
- * The number of Tokens that can be consumed in a phase3 Lookahead routine    
- * (assuming that this Expansion needs phase3 lookahead)
+ * The number of Tokens that can be consumed in a scanahead routine    
+ * (assuming that we need a scanAhead routine for this Expansion)
  */
-    public int getPhase3LookaheadAmount() {
-    	return this.phase3LookaheadAmount;
+    public int getMaxScanAhead() {
+    	return this.maxScanAhead;
     }
     
     
@@ -86,7 +86,7 @@ abstract public class Expansion extends BaseNode {
 
     long myGeneration = 0; //REVISIT
     
-    private String phase2RoutineName, phase3RoutineName, firstSetVarName, finalSetVarName, followSetVarName;
+    private String scanRoutineName, firstSetVarName, finalSetVarName, followSetVarName;
     
     public String getLabel() {
     	return label;
@@ -148,9 +148,9 @@ abstract public class Expansion extends BaseNode {
         return getLookahead() != null;
     }
     
-    public boolean getRequiresPhase2Routine() {
+    public boolean getRequiresScanAhead() {
         Lookahead la = getLookahead();
-        return la != null && la.getRequiresPhase2Routine();
+        return la != null && la.getRequiresScanAhead();
     }
     
     public Expansion getLookaheadExpansion() {
@@ -238,19 +238,12 @@ abstract public class Expansion extends BaseNode {
         }
         return followSetVarName;
     }
-
-    public String getPhase2RoutineName() {
-        if (phase2RoutineName == null) {
-            phase2RoutineName = getGrammar().generateUniqueIdentifier("lookahead$", this);
-        }
-        return phase2RoutineName;
-    }
     
-    public String getPhase3RoutineName() {
-        if (phase3RoutineName == null) {
-            phase3RoutineName = getGrammar().generateUniqueIdentifier("scan$", this);
+    public String getScanRoutineName() {
+        if (scanRoutineName == null) {
+            scanRoutineName = getGrammar().generateUniqueIdentifier("scan$", this);
         }
-        return phase3RoutineName;
+        return scanRoutineName;
     }
    
     public int getFinalSetSize() {

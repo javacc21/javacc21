@@ -238,7 +238,7 @@ public abstract class RegularExpression extends Expansion {
     	return false;
     }
     
-    final public boolean getRequiresPhase2Routine() {
+    final public boolean getRequiresScanAhead() {
     	return false;
     }
     

@@ -1539,7 +1539,7 @@ INJECT(Lookahead) :
         return !hasSemanticLookahead() && (getAmount() == 0 || expansion.isPossiblyEmpty()); 
     }
 
-    public boolean getRequiresPhase2Routine() {
+    public boolean getRequiresScanAhead() {
         return !isAlwaysSuccessful() && getAmount() >1;
     }
 
@@ -1874,12 +1874,12 @@ INJECT(OneOrMore) :
         return la == null ? this.getNestedExpansion() : la.getNestedExpansion();
     }
     
-    public boolean getRequiresPhase2Routine() {
+    public boolean getRequiresScanAhead(){
         Lookahead la = getLookahead();
         if (la != null) {
-           return la.getRequiresPhase2Routine();
+           return la.getRequiresScanAhead();
         }
-        return getNestedExpansion().getRequiresPhase2Routine();
+        return getNestedExpansion().getRequiresScanAhead();
     }
     
     public Expansion getNestedExpansion() {

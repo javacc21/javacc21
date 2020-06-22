@@ -37,9 +37,8 @@
     [@finalSetVars/]
     [@followSetVars/]  
     [/#if]
-    [#if parserData.phase2Expansions?size !=0]
-       [@Phase2 /]
-       [@Phase3/]
+    [#if parserData.scanAheadExpansions?size !=0]
+       [@BuildLookaheads /]
      [/#if]
 [/#macro]
  
@@ -55,7 +54,7 @@
 [/#macro]
 
 
-[#macro Phase2]
+[#macro BuildLookaheads]
   static private final int INDEFINITE = Integer.MAX_VALUE;
   private Token currentLookaheadToken;
   private int remainingLookahead;
@@ -70,21 +69,13 @@
      --remainingLookahead;
      return true;
   }
-  
 //====================================
-// Start of methods for Phase 2 Lookaheads
-//====================================
-  [#list parserData.phase2Expansions as expansion]
-     [@buildPhase2Routine expansion/]
-  [/#list]
-[/#macro]
-
-[#macro Phase3]
-//====================================
- // Start of methods for Phase 3 Routines
+ // Lookahead Routines
+ // If you pass in a positive number to the routine, it resets
+ // the remaining lookahead amount to that number.
  //====================================
-   [#list parserData.phase3Expansions as expansion]
-      [@buildPhase3Routine expansion, expansion.phase3LookaheadAmount /]
+   [#list parserData.scanAheadExpansions as expansion]
+      [@buildScanRoutine expansion, expansion.maxScanAhead /]
    [/#list]
 [/#macro]   
 
@@ -455,7 +446,7 @@
       [/#if]
    [/#list]
    [#list expansions as expansion]
-      [#if expansion.requiresPhase2Routine]
+      [#if expansion.requiresScanAhead]
          [#if expansion_index = 0]
             if (
             [#set indentLevel = indentLevel+1]
@@ -471,7 +462,7 @@
          [/#if]
                 [#var lookaheadAmount = expansion.lookaheadAmount]
                 [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INDEFINITE"][/#if]
-                ${expansion.lookaheadExpansion.phase2RoutineName}(${lookaheadAmount})
+                ${expansion.lookaheadExpansion.scanRoutineName}(${lookaheadAmount})
                ) { 
                    ${actions[expansion_index]}
          [#set inPhase1 = false]
@@ -525,10 +516,10 @@
    [#var emptyAction=!action?has_content]
    [#var emptyFallback=!action?has_content]
    [#var condition=expansion.semanticLookahead!]
-   [#if expansion.requiresPhase2Routine]
+   [#if expansion.requiresScanAhead]
       [#set condition]
         [#if expansion.negated]![/#if]
-        ${expansion.lookaheadExpansion.phase2RoutineName}(${expansion.lookaheadAmount})
+        ${expansion.lookaheadExpansion.scanRoutineName}(${expansion.lookaheadAmount})
         [#if expansion.semanticLookahead??]
           && (${expansion.semanticLookahead})
         [/#if]
@@ -576,49 +567,43 @@
 [#var NODE_PREFIX = grammar.options.nodePrefix]
 [#var currentProduction]
 
-[#macro buildPhase2Routine expansion]
-   private boolean ${expansion.phase2RoutineName}(int maxLookahead) {
-      remainingLookahead = maxLookahead; 
-      currentLookaheadToken = current_token;
-      return ${expansion.phase3RoutineName}();
-  }
-[/#macro]
-
-[#var currentPhase3Expansion]
-
-[#macro buildPhase3Routine expansion count]
+[#macro buildScanRoutine expansion count]
    [#if expansion.isRegexp][#return][/#if]
-     private boolean ${expansion.phase3RoutineName}() {
-      [@buildPhase3Code expansion, count/]
+     private boolean ${expansion.scanRoutineName}(int lookaheadAmount) {
+     if (lookaheadAmount > 0) {
+         remainingLookahead = lookaheadAmount;
+         currentLookaheadToken = current_token;
+     }
+      [@buildScanCode expansion, count/]
       return true;
     }
 [/#macro]
 
-[#macro buildPhase3Code expansion count]
+[#macro buildScanCode expansion count]
   [#var classname=expansion.simpleName]
    [#if classname != "ExpansionSequence"]
    if (remainingLookahead ==0) return true;
    [/#if] 
     [#if expansion.isRegexp]
-      [@Phase3CodeRegexp expansion/]
+      [@ScanCodeRegexp expansion/]
    [#elseif classname = "ExpansionSequence"]
-      [@Phase3CodeSequence expansion count/]
+      [@ScanCodeSequence expansion count/]
    [#elseif classname = "ZeroOrOne"]
-      [@Phase3CodeZeroOrOne expansion/]
+      [@ScanCodeZeroOrOne expansion/]
    [#elseif classname = "ZeroOrMore"]
-      [@Phase3CodeZeroOrMore expansion/]
+      [@ScanCodeZeroOrMore expansion/]
    [#elseif classname = "OneOrMore"]
-      [@Phase3CodeOneOrMore expansion/]
+      [@ScanCodeOneOrMore expansion/]
    [#elseif classname = "NonTerminal"]
-      [@Phase3CodeNonTerminal expansion/]
+      [@ScanCodeNonTerminal expansion/]
    [#elseif classname = "TryBlock" || classname="AttemptBlock"]
-      [@buildPhase3Code expansion.nestedExpansion, count/]
+      [@buildScanCode expansion.nestedExpansion, count/]
    [#elseif classname = "ExpansionChoice"]
-      [@Phase3CodeChoice expansion /]
+      [@ScanCodeChoice expansion /]
   [/#if]
 [/#macro]
 
-[#macro Phase3CodeChoice choice]
+[#macro ScanCodeChoice choice]
    [@newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${newVarIndex} = remainingLookahead;
   [#list choice.choices as subseq]
@@ -630,11 +615,11 @@
 	     !semanticLookahead || 
 	  [/#if]
 	  [#if subseq_has_next]
-	     ![@InvokePhase3Routine subseq/]) {
+	     ![@InvokeScanRoutine subseq/]) {
 	        currentLookaheadToken = token${newVarIndex};
 	        remainingLookahead = remainingLookahead${newVarIndex};
 	  [#else]
-	     ![@InvokePhase3Routine subseq/]
+	     ![@InvokeScanRoutine subseq/]
 	     ) 
 	     return false;
 	  [/#if]
@@ -647,55 +632,55 @@
   [/#if]
 [/#macro]
 
-[#macro Phase3CodeRegexp regexp]
+[#macro ScanCodeRegexp regexp]
      if (!scanToken(TokenType.${regexp.label})) return false;
 [/#macro]
 
-[#macro Phase3CodeZeroOrOne zoo]
+[#macro ScanCodeZeroOrOne zoo]
    [@newVar type="Token" init="currentLookaheadToken"/]
-   if (![@InvokePhase3Routine zoo.nestedExpansion/]) 
+   if (![@InvokeScanRoutine zoo.nestedExpansion/]) 
       currentLookaheadToken = token${newVarIndex};
 [/#macro]
 
-[#macro Phase3CodeZeroOrMore zom]
+[#macro ScanCodeZeroOrMore zom]
       while (true) {
          [@newVar type="Token" init="currentLookaheadToken"/]
-         if (remainingLookahead == 0 || ![@InvokePhase3Routine zom.nestedExpansion/]) {
+         if (remainingLookahead == 0 || ![@InvokeScanRoutine zom.nestedExpansion/]) {
              currentLookaheadToken = token${newVarIndex};
              break;
          }
       }
 [/#macro]
 
-[#macro Phase3CodeOneOrMore oom]
-   if (![@InvokePhase3Routine oom.nestedExpansion/]) return false;
+[#macro ScanCodeOneOrMore oom]
+   if (![@InvokeScanRoutine oom.nestedExpansion/]) return false;
    while (true) {
        [@newVar type="Token" init="currentLookaheadToken"/]
-       if (remainingLookahead == 0 || ![@InvokePhase3Routine oom.nestedExpansion/]) {
+       if (remainingLookahead == 0 || ![@InvokeScanRoutine oom.nestedExpansion/]) {
            currentLookaheadToken = token${newVarIndex};
            break;
        }
    }
 [/#macro]
 
-[#macro Phase3CodeNonTerminal nt]
-      if (![@InvokePhase3Routine nt.production.expansion/])
+[#macro ScanCodeNonTerminal nt]
+      if (![@InvokeScanRoutine nt.production.expansion/])
          return false;
 [/#macro]
 
-[#macro Phase3CodeSequence sequence, count]
+[#macro ScanCodeSequence sequence, count]
    [#list sequence.units as sub]
-       [@buildPhase3Code sub, count/]
+       [@buildScanCode sub, count/]
        [#set count = count - sub.minimumSize]
        [#if count<=0][#break][/#if]
    [/#list]
 [/#macro]
     
-[#macro InvokePhase3Routine expansion]
+[#macro InvokeScanRoutine expansion]
    [#if expansion.isRegexp]
        scanToken(TokenType.${expansion.label})
    [#else]
-      ${expansion.phase3RoutineName}()
+      ${expansion.scanRoutineName}(0)
    [/#if]
 [/#macro]
 
