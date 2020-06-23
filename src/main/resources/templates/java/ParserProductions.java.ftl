@@ -184,9 +184,8 @@
          try {
     [/#if]
         ${(production.javaCode)!}
-        [@BuildPhase1Code expansion/]
+        [@BuildExpansionCode expansion/]
     [#var returnType = (production.returnType)!"void"]
-    [#-- if production?? && (production.returnType?is_null || production.returnType == "void") --]
     [#if production?? && returnType == "void"]
         if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");
     [/#if]
@@ -198,8 +197,6 @@
              throw e;
       [#else]             
              if (trace_enabled) LOGGER.info("We have a parse error but are in in fault-tolerant mode, so we try to handle it.");
-	    [#--  if production?? && (production.returnType?is_null || production.returnType != "void")]
-	       [#if production.returnType!"void" == production.nodeName --]
 	       [#if production?? && returnType == production.nodeName]
 	          [#-- We just assume that if the return type is the same as the type of the node, we want to return CURRENT_NODE.
 	                This is not theoretically correct, but will probably be true about 99% of the time. Maybe REVISIT. --]
@@ -208,7 +205,6 @@
 	          [#-- This is a bit screwy will not work if the return type is a primitive type --]
 	           return null;
 	       [/#if]
-	  [#-- /#if --]
 [/#if]	
          }
          finally {
@@ -300,38 +296,38 @@
 [/#macro]
 
 
-[#macro BuildPhase1Code expansion]
+[#macro BuildExpansionCode expansion]
     [#var classname=expansion.simpleName]
     [#if classname = "CodeBlock"]
        ${expansion}
     [#elseif classname = "ExpansionSequence"]
-       [@BuildPhase1CodeSequence expansion/]
+       [@BuildCodeSequence expansion/]
     [#elseif classname = "NonTerminal"]
-       [@BuildPhase1CodeNonTerminal expansion/]
+       [@BuildCodeNonTerminal expansion/]
     [#elseif expansion.isRegexp]
-       [@BuildPhase1CodeRegexp expansion/]
+       [@BuildCodeRegexp expansion/]
     [#elseif classname = "TryBlock"]
-       [@BuildPhase1CodeTryBlock expansion/]
+       [@BuildCodeTryBlock expansion/]
     [#elseif classname = "AttemptBlock"]
-       [@BuildPhase1CodeAttemptBlock expansion /]
+       [@BuildCodeAttemptBlock expansion /]
     [#elseif classname = "ZeroOrOne"]
-       [@BuildPhase1CodeZeroOrOne expansion/]
+       [@BuildCodeZeroOrOne expansion/]
     [#elseif classname = "ZeroOrMore"]
-       [@BuildPhase1CodeZeroOrMore expansion/]
+       [@BuildCodeZeroOrMore expansion/]
     [#elseif classname = "OneOrMore"]
-        [@BuildPhase1CodeOneOrMore expansion/]
+        [@BuildCodeOneOrMore expansion/]
     [#elseif classname = "ExpansionChoice"]
-        [@BuildPhase1CodeChoice expansion/]
+        [@BuildCodeChoice expansion/]
     [/#if]
 [/#macro]
 
-[#macro BuildPhase1CodeSequence expansion]
+[#macro BuildCodeSequence expansion]
        [#list expansion.units as subexp]
            [@BuildCode subexp/]
        [/#list]        
 [/#macro]
 
-[#macro BuildPhase1CodeRegexp regexp]
+[#macro BuildCodeRegexp regexp]
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
@@ -342,7 +338,7 @@
    [/#if]
 [/#macro]
 
-[#macro BuildPhase1CodeTryBlock tryblock]
+[#macro BuildCodeTryBlock tryblock]
    [#var nested=tryblock.nestedExpansion]
        try {
           [@BuildCode nested/]
@@ -354,7 +350,7 @@
 [/#macro]
 
 
-[#macro BuildPhase1CodeAttemptBlock attemptBlock]
+[#macro BuildCodeAttemptBlock attemptBlock]
    [#var nested=attemptBlock.nestedExpansion]
        try {
           stashParseState();
@@ -374,7 +370,7 @@
        }
 [/#macro]
 
-[#macro BuildPhase1CodeNonTerminal nonterminal]
+[#macro BuildCodeNonTerminal nonterminal]
    pushOntoCallStack("${currentProduction.name}", "${nonterminal.inputSource}", ${nonterminal.beginLine}); 
    [#if grammar.options.faultTolerant && !nonterminal.production.forced]
      [@newVar type="boolean" init="currentNTForced"/]
@@ -395,7 +391,7 @@
 [/#macro]
 
 
-[#macro BuildPhase1CodeZeroOrOne zoo]
+[#macro BuildCodeZeroOrOne zoo]
     [#var nestedExp=zoo.nestedExpansion]
     [#if zoo.alwaysSuccessful]
        [@BuildCode nestedExp/]
@@ -408,7 +404,7 @@
     [/#if]
 [/#macro]
 
-[#macro BuildPhase1CodeOneOrMore oom]
+[#macro BuildCodeOneOrMore oom]
    [#var nestedExp=oom.nestedExpansion]
    while (true) {
       [@BuildCode nestedExp/]
@@ -416,7 +412,7 @@
    }
 [/#macro]
 
-[#macro BuildPhase1CodeZeroOrMore zom]
+[#macro BuildCodeZeroOrMore zom]
     [#var nestedExp=zom.nestedExpansion]
     while (true) {
        [@BuildBinaryChoiceCode zom, null, "break;"/] 
@@ -424,7 +420,7 @@
     }
 [/#macro]
 
-[[#macro BuildPhase1CodeChoice choice]
+[[#macro BuildCodeChoice choice]
    [#-- TODO: This macro is too gnarly, need to break it up and simplify it  --]
    [#var actions=[], expansions = []]
    [#var defaultAction, inPhase1 = false, indentLevel = 0]
