@@ -75,7 +75,7 @@
  // the remaining lookahead amount to that number.
  //====================================
    [#list parserData.scanAheadExpansions as expansion]
-      [@buildScanRoutine expansion, expansion.maxScanAhead /]
+        [@buildScanRoutine expansion, expansion.maxScanAhead /]
    [/#list]
 [/#macro]   
 
@@ -568,7 +568,6 @@
 [#var currentProduction]
 
 [#macro buildScanRoutine expansion count]
-   [#if expansion.isRegexp][#return][/#if]
      private boolean ${expansion.scanRoutineName}(int lookaheadAmount) {
      if (lookaheadAmount > 0) {
          remainingLookahead = lookaheadAmount;
