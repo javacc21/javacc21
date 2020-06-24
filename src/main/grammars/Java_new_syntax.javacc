@@ -1098,8 +1098,9 @@ Initializer :
  */
 
 Type :
-   LOOKAHEAD(2) ReferenceType
+   LOOKAHEAD(2, {2+2==4}) ReferenceType
    |
+   LOOKAHEAD(1)
    PrimitiveType
 ;
 

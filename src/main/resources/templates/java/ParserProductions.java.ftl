@@ -444,13 +444,16 @@
    [#list expansions as expansion]
       [#if expansion.requiresScanAhead]
          [#if expansion_index = 0]
-            if (
+            [#set indentLevel = indentLevel+1]
+             if (
              [#if expansion.hasSemanticLookahead]
                (${expansion.semanticLookahead}) &&
             [/#if]
-            [#set indentLevel = indentLevel+1]
-         [#elseif !inPhase1]
+        [#elseif !inPhase1]
             } else if (
+             [#if expansion.hasSemanticLookahead]
+               (${expansion.semanticLookahead}) &&
+            [/#if]
          [#else]
             default:
                if (
@@ -608,7 +611,7 @@
 	  [#if subseq.hasSemanticLookahead]
 	    semanticLookahead = ${subseq.semanticLookahead};
 	  [/#if]
-	  if (//KILROY!
+	  if (
 	  [#if subseq.hasSemanticLookahead]
 	     !semanticLookahead || 
 	  [/#if]

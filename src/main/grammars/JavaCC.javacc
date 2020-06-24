@@ -682,7 +682,7 @@ void CodeInjection() :
          ]
          [CURRENT_NODE.implementsList=ImplementsList(isInterface) [";"]]
         [
-           LOOKAHEAD("}", {foundOptionalInitialBrace})
+           LOOKAHEAD({foundOptionalInitialBrace})
            "}"
         ]
         [CURRENT_NODE.body=ClassOrInterfaceBody(isInterface)]
@@ -1549,7 +1549,7 @@ INJECT(Lookahead) :
     }
 
     public boolean getRequiresScanAhead() {
-        return !isAlwaysSuccessful() && (getAmount() >1 || hasSemanticLookahead());
+        return !isAlwaysSuccessful() && getAmount() >1;
     }
 
     public Expression getSemanticLookahead() {
