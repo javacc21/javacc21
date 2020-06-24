@@ -774,6 +774,7 @@ BNFProduction BNFProduction() :
     Token t=getToken(1);
     Expansion expansion;
     inBNFProduction = true;
+    boolean hasOptionalOpeningBrace=false;
 }
 {
     [
@@ -805,9 +806,14 @@ BNFProduction BNFProduction() :
     {
         token_source.inJavaCode = false;
     }
-    ["{"] 
+    ["{" {hasOptionalOpeningBrace=true;}] 
     ExpansionChoice() {expansion = (Expansion) peekNode();}
-    ("}"|";")
+    (
+        LOOKAHEAD(1, {hasOptionalOpeningBrace})
+       "}"
+       |
+       ";"
+     )
      {
         CURRENT_NODE.adjustFirstToken(t);
         if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
@@ -1543,7 +1549,7 @@ INJECT(Lookahead) :
     }
 
     public boolean getRequiresScanAhead() {
-        return !isAlwaysSuccessful() && getAmount() >1;
+        return !isAlwaysSuccessful() && (getAmount() >1 || hasSemanticLookahead());
     }
 
     public Expression getSemanticLookahead() {
@@ -2050,9 +2056,6 @@ CodeBlock CodeSnippet() #void :
 {
     block=Block()
     {
-       if (inLookahead) {
-            grammar.addWarning(block, "Code snippet within lookahead specification will be ignored.");
-       } 
        token_source.inJavaCode = false;
        return block;
     }

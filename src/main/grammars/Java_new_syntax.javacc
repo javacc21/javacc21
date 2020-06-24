@@ -1085,7 +1085,7 @@ ExplicitConstructorInvocation :
   SCAN "this" Arguments ";"
  |
   [ LOOKAHEAD(2) PrimaryExpression "." ] "super" Arguments ";"
-}
+;
 
 
 Initializer :
@@ -1104,6 +1104,7 @@ Type :
 ;
 
 ReferenceType : 
+{
    PrimitiveArrayType
    |
    ClassOrInterfaceType (LOOKAHEAD "[" "]" )*
@@ -1626,7 +1627,7 @@ TryStatement #void :
 
 AssertStatement :
   "assert" Expression [ ":" Expression ] ";"
-}
+;
 
 // LabeledStatement : <IDENTIFIER> ":" Statement;
 
