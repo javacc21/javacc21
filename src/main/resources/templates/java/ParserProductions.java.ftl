@@ -514,11 +514,11 @@
    [#var condition=expansion.semanticLookahead!]
    [#if expansion.requiresScanAhead]
       [#set condition]
+        [#if expansion.semanticLookahead??]
+          (${expansion.semanticLookahead}) &&
+        [/#if]  
         [#if expansion.negated]![/#if]
         ${expansion.lookaheadExpansion.scanRoutineName}(${expansion.lookaheadAmount})
-        [#if expansion.semanticLookahead??]
-          && (${expansion.semanticLookahead})
-        [/#if]
       [/#set]
       [#set condition = condition?replace("2147483647", "INDEFINITE")]
    [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]

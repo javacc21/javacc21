@@ -1793,8 +1793,6 @@ INJECT(ZeroOrOne) :
      }
      
      public boolean isConcrete() {return false;}
-    
-    
 }
 
 
