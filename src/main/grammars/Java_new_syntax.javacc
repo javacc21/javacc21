@@ -66,7 +66,7 @@ UNPARSED :
   <FORMAL_COMMENT: "*/" > #JavaDocComment : JAVA
 ;
 
-INJECT(JavaDocComment) : {extends Comment}
+INJECT(JavaDocComment) : extends Comment;
 
 <IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
 MORE : < ~[] >;
@@ -263,10 +263,8 @@ TOKEN #Operator :
 ;
 
 INJECT(BaseNode) : 
-{
     import java.util.*;
-    implements Node, CONSTANTS_CLASS;
-}
+    implements Node, CONSTANTS_CLASS
 {    
     protected String getLiteralText() {
         StringBuilder buf = new StringBuilder();
@@ -324,9 +322,7 @@ CompilationUnit CompilationUnit #CompilationUnit :
 ;
 
 INJECT(CompilationUnit) : 
-{
     import java.util.*;
-}
 {
     public String getPackageName() {
         PackageDeclaration jpd = getPackageDeclaration();
@@ -363,7 +359,7 @@ INJECT(CompilationUnit) :
 
 PackageDeclaration : "package" Name ";" ;
 
-INJECT(PackageDeclaration) : {}
+INJECT(PackageDeclaration) :
 {
     public String getPackageName() {
         StringBuilder buf = new StringBuilder();
@@ -382,7 +378,7 @@ INJECT(PackageDeclaration) : {}
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
-INJECT(ImportDeclaration) : {}
+INJECT(ImportDeclaration) : 
 {
     public String getAsString() {
         return super.getAsString().trim();
@@ -514,9 +510,7 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
 ;
 
 INJECT(TypeDeclaration) : 
-{
     import java.util.*;
-}
 {
     public String getName() {
         for (Node n : children) {
@@ -706,9 +700,7 @@ ExtendsList ExtendsList(boolean isInterface) :
 ;
 
 INJECT(ExtendsList) : 
-{
      import java.util.*;
-}
 {
     public List<ObjectType> getTypes() {
         return childrenOfType(ObjectType.class);
@@ -749,9 +741,7 @@ ImplementsList ImplementsList(boolean isInterface) :
 }
 
 INJECT(ImplementsList) : 
-{
    import java.util.*;
-}
 {    
     public List<ObjectType> getTypes() {
         return childrenOfType(ObjectType.class);
@@ -800,9 +790,7 @@ TypeParameters #TypeParameterList :
 ;
 
 INJECT(TypeParameterList) : 
-{
     import java.util.*;
-}
 {
     public void add(TypeParameter param) {
         if (!getParameters().contains(param)) {
@@ -846,9 +834,7 @@ ClassOrInterfaceBody ClassOrInterfaceBody(boolean isInterface) :
 ;
 
 INJECT(ClassOrInterfaceBody) : 
-{
     import java.util.*;
-}
 {
     public String getAsString() {
         return getInnerText();
@@ -892,7 +878,7 @@ INJECT(ClassOrInterfaceBody) :
     }
 }
 
-INJECT(ClassOrInterfaceBodyDeclaration) : {}
+INJECT(ClassOrInterfaceBodyDeclaration) : 
 {
     public boolean isPrivate() {
         return hasKeyWord("private");
@@ -945,7 +931,7 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   ";"
 ;
 
-INJECT(ClassOrInterfaceBodyDeclaration) : {}
+INJECT(ClassOrInterfaceBodyDeclaration) : 
 {
     public boolean isMethod() {
         return firstChildOfType(MethodDeclaration.class) != null;
@@ -958,9 +944,7 @@ INJECT(ClassOrInterfaceBodyDeclaration) : {}
 }
 
 INJECT(FieldDeclaration) : 
-{
    import java.util.*;
-}
 {
    public List<Identifier> getVariableIds() {
        List<Identifier> result = new ArrayList<>();
@@ -1014,7 +998,7 @@ MethodDeclaration :
   ( Block | ";" )
 ;
 
-INJECT(MethodDeclaration) : {}
+INJECT(MethodDeclaration) : 
 {
     public String getName() {
         for (Node n : children) {
@@ -1048,9 +1032,7 @@ FormalParams FormalParameters #FormalParams :
 ;
 
 INJECT(FormalParams) : 
-{
    import java.util.List;
-}
 {
     public List<FormalParameter> getParams() {
         return childrenOfType(FormalParameter.class);
@@ -1087,7 +1069,7 @@ FormalParameter FormalParameter :
     }
 ;
 
-INJECT(ConstructorDeclaration) : {extends ClassOrInterfaceBodyDeclaration}
+INJECT(ConstructorDeclaration) : extends ClassOrInterfaceBodyDeclaration
 
 ConstructorDeclaration :
   [ TypeParameters ]
@@ -1136,7 +1118,7 @@ ObjectType ClassOrInterfaceType #ObjectType :
     }
 ;
 
-INJECT(ObjectType) : {}
+INJECT(ObjectType) : 
 {
     public boolean equals(Object obj) {
         if (obj instanceof ObjectType) {
@@ -1220,15 +1202,14 @@ Name Name :
  */
     <IDENTIFIER>
     ( 
-        LOOKAHEAD(2) 
-        "." <IDENTIFIER>
+        SCAN "." <IDENTIFIER>
     )*
     {
         return CURRENT_NODE;
     }
 ;
 
-INJECT(Name) : {}
+INJECT(Name) : 
 {
     public String toString() {
         StringBuilder buf = new StringBuilder();
@@ -1241,19 +1222,15 @@ INJECT(Name) : {}
 
 
 ThrowsList ThrowsList :
-{}
-{
     "throws" Name ( "," Name )*
     {
         return CURRENT_NODE;
     }
-}
+;
 
 INJECT(ThrowsList) : 
-{
     import java.util.List;
     import java.util.ArrayList;
-}
 {
     public List<Node> getTypes() {
         List<Node> result = new ArrayList<>();
@@ -1277,29 +1254,29 @@ Expression Expression #Expression(>1) :
     {return (Expression) peekNode();}
 ;
 
-INJECT(AssignmentExpression) : {extends Expression}
-INJECT(TernaryExpression) : {extends Expression} 
-INJECT(ConditionalOrExpression) : {extends Expression} 
-INJECT(ConditionalAndExpression) : {extends Expression} 
-INJECT(InclusiveOrExpression) : {extends Expression} 
-INJECT(InclusiveAndExpression) : {extends Expression} 
-INJECT(ExclusiveOrExpression) : {extends Expression} 
-INJECT(AndExpression) : {extends Expression} 
-INJECT(EqualityExpression) : {extends Expression} 
-INJECT(InstanceOfExpression) : {extends Expression} 
-INJECT(RelationalExpression) : {extends Expression} 
-INJECT(ShiftExpression) : {extends Expression}
-INJECT(AdditiveExpression) : {extends Expression}
-INJECT(MultiplicativeExpression) : {extends Expression}
-INJECT(UnaryExpression) : {extends Expression}
-INJECT(PreIncrementExpression) : {extends Expression}
-INJECT(PreDecrementExpression) : {extends Expression}
-INJECT(UnaryExpressionNotPlusMinus) : {extends Expression}
-INJECT(PostfixExpression) : {extends Expression}
-INJECT(CastExpression) : {extends Expression}
-INJECT(PrimaryExpression) : {extends Expression} 
-INJECT(LambdaExpression) : {extends Expression} 
-INJECT(CodeBlock) : {extends Expression} 
+INJECT(AssignmentExpression) : extends Expression
+INJECT(TernaryExpression) : extends Expression 
+INJECT(ConditionalOrExpression) : extends Expression 
+INJECT(ConditionalAndExpression) : extends Expression 
+INJECT(InclusiveOrExpression) : extends Expression 
+INJECT(InclusiveAndExpression) : extends Expression 
+INJECT(ExclusiveOrExpression) : extends Expression 
+INJECT(AndExpression) : extends Expression 
+INJECT(EqualityExpression) : extends Expression 
+INJECT(InstanceOfExpression) : extends Expression 
+INJECT(RelationalExpression) : extends Expression 
+INJECT(ShiftExpression) : extends Expression
+INJECT(AdditiveExpression) : extends Expression
+INJECT(MultiplicativeExpression) : extends Expression
+INJECT(UnaryExpression) : extends Expression
+INJECT(PreIncrementExpression) : extends Expression
+INJECT(PreDecrementExpression) : extends Expression
+INJECT(UnaryExpressionNotPlusMinus) : extends Expression
+INJECT(PostfixExpression) : extends Expression
+INJECT(CastExpression) : extends Expression
+INJECT(PrimaryExpression) : extends Expression 
+INJECT(LambdaExpression) : extends Expression 
+INJECT(CodeBlock) : extends Expression
 
 /*
  * This expansion has been written this way instead of:

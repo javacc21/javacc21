@@ -331,8 +331,6 @@ TOKEN :
   <HASH_ID : "#"<IDENTIFIER>> #HashID
 }
 
-INCLUDE("Java.javacc")
-//INCLUDE("Java_new_syntax.javacc")
 
 INJECT(BaseNode) :
 {
@@ -401,11 +399,9 @@ INJECT(BaseNode) :
         String name = getClass().getName();
         return name.substring(name.lastIndexOf(".") + 1); // strip the package name
     }
-    
-    
 }
 
-
+INCLUDE("Java.javacc")
 
 /*
    Overrides the production defined in 
@@ -654,10 +650,14 @@ void CodeInjection() :
         boolean isInterface = false;
 //        ImportDeclaration importDecl = null;
         Annotation annotation = null;
+        boolean foundOptionalInitialBrace = false;
         token_source.inJavaCode=true;
 }
 {
         "INJECT" "("
+        {
+                token_source.inJavaCode = true;
+        }
         [
             "class"
             |
@@ -665,8 +665,11 @@ void CodeInjection() :
         ]
         <IDENTIFIER> {CURRENT_NODE.name = current_token.toString();} 
         ")"
-        [":"]
-        "{"
+        ":"
+        [
+          LOOKAHEAD("{"("import"|"@"|"extends"|"implements"|"}"))
+        "{" {foundOptionalInitialBrace=true;}
+        ]
          (
             ImportDeclaration() {CURRENT_NODE.importDeclarations.add((ImportDeclaration) peekNode());}
          )*
@@ -678,10 +681,10 @@ void CodeInjection() :
             [";"]
          ]
          [CURRENT_NODE.implementsList=ImplementsList(isInterface) [";"]]
-        "}"
-        {
-                token_source.inJavaCode = true;
-        }
+        [
+           LOOKAHEAD("}", {foundOptionalInitialBrace})
+           "}"
+        ]
         [CURRENT_NODE.body=ClassOrInterfaceBody(isInterface)]
         {
                 token_source.inJavaCode = false;
