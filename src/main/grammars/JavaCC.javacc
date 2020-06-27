@@ -2391,7 +2391,7 @@ INJECT(ZeroOrMoreRegexp) :
           addChild(indexOf(current), regexp);
           removeChild(current);
       } else {
-          addChild(1, regexp);
+          addChild(0, regexp);
       }
    }
 
@@ -2414,7 +2414,7 @@ INJECT(ZeroOrOneRegexp) :
           addChild(indexOf(current), regexp);
           removeChild(current);
       } else {
-          addChild(1, regexp);
+          addChild(0, regexp);
       }
    }
 }

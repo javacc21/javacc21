@@ -472,7 +472,7 @@ public class ParserData {
                 RegularExpression referenced = grammar.getNamedToken(label);
                 if (referenced == null && !ref.getLabel().equals("EOF")) {
                     grammar.addSemanticError(ref,  "Undefined lexical token name \"" + label + "\".");
-                } else if (ref.tpContext != null && !ref.tpContext.isExplicit()) {
+                } else if (referenced != null && ref.tpContext != null && !ref.tpContext.isExplicit()) {
                     if (referenced.isPrivate()) {
                         grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
                     }   else if (!referenced.tpContext.getKind().equals("TOKEN")) {
