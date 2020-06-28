@@ -30,11 +30,16 @@
 
 package com.javacc;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
+import java.util.Scanner;
 
 import com.javacc.parser.ParseException;
 
@@ -46,6 +51,7 @@ public final class Main {
     public static final String PROG_NAME = "JavaCC 21 Parser Generator";
     public static final String URL = "Go to https://javacc.com for more information.";
     private static String manifestContent = "", jarFileName = "javacc.jar";
+    private static File jarFile;
     
     static {
     	try {
@@ -61,14 +67,16 @@ public final class Main {
         		if (content.indexOf("javacc.Main") >=0) {
             		String path = url.getFile();
             		if (path.startsWith("file:")) {
-            			path = path.substring(6);
+            			path = path.substring(5);
             		}
             		int exclamIndex = path.lastIndexOf('!');
             		if (exclamIndex >0) {
             			path = path.substring(0, exclamIndex);
             		}
-            		jarFileName = new File(path).getName();
+            		jarFile = new File(path);
+            		jarFileName = jarFile.getName();
         			manifestContent = content;
+         		    break;
         		}
         	}    		
     	}
@@ -76,7 +84,36 @@ public final class Main {
     		//Oh well, never mind!
         }
     }
-  
+    
+    static void checkForNewer() {
+        if (jarFile !=null && jarFile.exists()) try {
+            long jarLastModified = jarFile.lastModified();
+            URL url = new URL("https://javacc.com/download/" + jarFile.getName());
+            long lastUpdate = url.openConnection().getLastModified();
+            if (lastUpdate > jarLastModified) {
+                System.out.println("Found newer version of JavaCC 21 at " + url);
+                System.out.println("Download it? (y/N)");
+                Scanner scanner = new Scanner(System.in);
+                String response = scanner.nextLine().trim().toLowerCase();
+                if (response.equals("y") || response.equals("yes")) {
+                    System.out.println("Updating jarfile...");
+                    InputStream inputStream = url.openStream();
+                    FileOutputStream fileOS = new FileOutputStream(jarFile);
+                    byte data[] = new byte[1024];
+                    int byteContent;
+                    while ((byteContent = inputStream.read(data, 0, 1024)) != -1) {
+                        fileOS.write(data, 0, byteContent);
+                    }            
+                    System.out.println("Fetched newer jarfile from server. Exiting...");
+                    System.exit(-1);
+                }
+            }
+        }
+        catch (Exception e) {
+            //Never mind.
+        }
+    }
+    
     static void usage() {
         System.out.println("Usage:");
         System.out.println("    java -jar " + jarFileName + " option-settings inputfile");
@@ -150,6 +187,7 @@ public final class Main {
     		System.err.println("You must have an appropriate (V3 or later) freemarker.jar on your classpath to run JavaCC 21");
     		System.exit(-1);
     	}
+    	checkForNewer();   
         if (args.length == 0) {
             bannerLine();
             usage();
