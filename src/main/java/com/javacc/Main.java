@@ -96,6 +96,7 @@ public final class Main {
                 Scanner scanner = new Scanner(System.in);
                 String response = scanner.nextLine().trim().toLowerCase();
                 if (response.equals("y") || response.equals("yes")) {
+                    jarFile.renameTo(new File(jarFile.getName().replace("javacc",  "javacc-prev")));
                     System.out.println("Updating jarfile...");
                     InputStream inputStream = url.openStream();
                     FileOutputStream fileOS = new FileOutputStream(jarFile);
