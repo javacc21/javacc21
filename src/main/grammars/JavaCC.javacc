@@ -1656,9 +1656,11 @@ NonTerminal NonTerminal() #NonTerminal :
   ]
   <IDENTIFIER>
   (
+    LOOKAHEAD("(" ExpansionSequence "|") {}
+    |
     LOOKAHEAD("(" ExpansionChoice ")" ("*"|"+"|"?")) {}
     |
-    LOOKAHEAD Arguments
+    LOOKAHEAD (Arguments()) Arguments
     |
     {}
   )

@@ -493,7 +493,7 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
  (      
   ";"
   |
-  Modifiers() // Tricky case, need the parentheses here. REVISIT
+  Modifiers
    (
      ClassDeclaration
      |
@@ -1810,7 +1810,7 @@ TryWithResources TryWithResources :
        ]
      )*
     ")"
-    Block // Need the parentheses here as well. REVISIT. 
+    Block
     (CatchBlock)*
     [FinallyBlock]
     {
