@@ -312,7 +312,7 @@ CompilationUnit CompilationUnit #CompilationUnit :
   [ LOOKAHEAD( ( Annotation )* "package") PackageDeclaration ]
   ( ImportDeclaration )*
   (
-     ( TypeDeclaration() )+
+     ( TypeDeclaration )+
      |
      <EOF>
   )
@@ -1698,7 +1698,7 @@ SwitchStatement :
 ;
 
 CaseStatement :
-    SwitchLabel() // Need the parentheses for now. REVISIT this case. 
+    SwitchLabel 
     (BlockStatement)*
 ;
 
@@ -1810,7 +1810,7 @@ TryWithResources TryWithResources :
        ]
      )*
     ")"
-    Block() // Need the parentheses here as well. REVISIT. 
+    Block // Need the parentheses here as well. REVISIT. 
     (CatchBlock)*
     [FinallyBlock]
     {

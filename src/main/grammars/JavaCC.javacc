@@ -1655,9 +1655,13 @@ NonTerminal NonTerminal() #NonTerminal :
     "="
   ]
   <IDENTIFIER>
-  [
-    LOOKAHEAD  Arguments
-  ]
+  (
+    LOOKAHEAD("(" ExpansionChoice ")" ("*"|"+"|"?")) {}
+    |
+    LOOKAHEAD Arguments
+    |
+    {}
+  )
   [
      <BANG>  {CURRENT_NODE.setForced(true);}
   ]
