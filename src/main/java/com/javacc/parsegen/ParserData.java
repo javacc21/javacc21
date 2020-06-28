@@ -554,7 +554,7 @@ public class ParserData {
             }
         }
 
-        for (Node child : grammar.descendants(n -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+        for (Node child : grammar.descendants(n -> n instanceof OneOrMore || n instanceof ZeroOrMore)) {
             Expansion exp = (Expansion) child;
             if (exp.getNestedExpansion().isPossiblyEmpty()) {
                 grammar.addSemanticError(exp, "Expansion can be matched by empty string.");
@@ -574,7 +574,7 @@ public class ParserData {
         for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
             choiceCalc(choice);
         }
-        for (Node node : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore || n instanceof ZeroOrOne)) {
+        for (Node node : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore)) {
             Expansion exp = (Expansion) node;
             if (!(exp.getNestedExpansion() instanceof ExpansionSequence)) {
                 ebnfCalc(exp);
