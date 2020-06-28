@@ -241,7 +241,12 @@ abstract public class Expansion extends BaseNode {
     
     public String getScanRoutineName() {
         if (scanRoutineName == null) {
-            scanRoutineName = getGrammar().generateUniqueIdentifier("scan$", this);
+            if (this.getParent() instanceof BNFProduction) {
+                BNFProduction prod = (BNFProduction) getParent();
+                scanRoutineName = "scan$" + prod.getName();
+            } else {
+                scanRoutineName = getGrammar().generateUniqueIdentifier("scan$", this);
+            }
         }
         return scanRoutineName;
     }

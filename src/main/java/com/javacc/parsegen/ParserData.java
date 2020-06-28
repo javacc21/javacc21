@@ -70,7 +70,7 @@ public class ParserData {
             Expansion exp = scanAheadExpansions.get(scanAheadIndex);
             new ScanAheadTableBuilder(exp.getMaxScanAhead()).visit(exp);
         }
-        // Not sure why it's necessary, but we need to get rid of duplicates
+        // Need to get rid of duplicates
         this.scanAheadExpansions = new ArrayList<>(new LinkedHashSet<>(scanAheadExpansions));
     }
 

@@ -1344,7 +1344,7 @@ INJECT(ExpansionChoice) :
    
 }
 
-Expansion ExpansionSequence() #ExpansionSequence :
+ExpansionSequence() : // #ExpansionSequence :
 {
    Expansion sub;
    Lookahead la = null;
@@ -1367,9 +1367,6 @@ Expansion ExpansionSequence() #ExpansionSequence :
           pokeNode(sub);
       }
   )+
-  {
-     return CURRENT_NODE;
-  }
 }
 
 INJECT(ExpansionSequence) : 

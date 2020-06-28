@@ -53,13 +53,14 @@
   [/#list]
 [/#macro]
 
-
+;
 [#macro BuildLookaheads]
   static private final int INDEFINITE = Integer.MAX_VALUE;
   private Token currentLookaheadToken;
   private int remainingLookahead;
   private boolean semanticLookahead; 
   private boolean scanToken(TokenType type) {
+       if (remainingLookahead <=0) return true;
        if (currentLookaheadToken.getNext() == null) {
         Token nextToken = token_source.getNextToken();
         currentLookaheadToken.setNext(nextToken);
@@ -572,9 +573,10 @@
 [#macro buildScanRoutine expansion count]
      private boolean ${expansion.scanRoutineName}(int lookaheadAmount) {
      if (lookaheadAmount > 0) {
-         remainingLookahead = lookaheadAmount;
+         remainingLookahead = lookaheadAmount; 
          currentLookaheadToken = current_token;
      }
+     if (remainingLookahead <=0) return true;
       [@buildScanCode expansion, count/]
       return true;
     }
@@ -582,9 +584,9 @@
 
 [#macro buildScanCode expansion count]
   [#var classname=expansion.simpleName]
-   [#if classname != "ExpansionSequence"]
+   [#--  --if classname != "ExpansionSequence"]
    if (remainingLookahead ==0) return true;
-   [/#if] 
+   [/#if--] 
     [#if expansion.isRegexp]
       [@ScanCodeRegexp expansion/]
    [#elseif classname = "ExpansionSequence"]
@@ -695,3 +697,11 @@
    ;
 [/#macro]   
 
+[#macro comment]
+[#var content, lines]
+[#set content][#nested/][/#set]
+[#set lines = content?split("\n")]
+[#list lines as line]
+//${line}
+[/#list]
+[/#macro]
