@@ -31,9 +31,10 @@
 options {
   JAVA_UNICODE_ESCAPE;
 //  TOKENS_ARE_NODES=false;
-  SPECIAL_TOKENS_ARE_NODES;
+  UNPARSED_TOKENS_ARE_NODES;
   PARSER_PACKAGE="com.javaparser";
   NODE_PACKAGE="com.javaparser.ast";
+  PARSER_CLASS="JavaParser";
   DEFAULT_LEXICAL_STATE=JAVA;
   PRESERVE_LINE_ENDINGS=false;
   TABS_TO_SPACES=8;
@@ -41,50 +42,38 @@ options {
 
 /* WHITE SPACE */
 
-UNPARSED :
-{
-  <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace   
-}
+UNPARSED : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
 
 <IN_MULTI_LINE_COMMENT>
-UNPARSED :
-{
-  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA
-}
+UNPARSED :  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA;
+
 
 MORE :
-{
   "//" : IN_SINGLE_LINE_COMMENT
 |
   <"/**" ~["/"]> { input_stream.backup(1); } : IN_FORMAL_COMMENT
 |
   "/*" : IN_MULTI_LINE_COMMENT
-}
+;
 
 <IN_SINGLE_LINE_COMMENT>
 UNPARSED :
-{
   <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #Comment : JAVA
-}
+;
 
 <IN_FORMAL_COMMENT>
 UNPARSED :
-{
   <FORMAL_COMMENT: "*/" > #JavaDocComment : JAVA
-}
+;
 
-INJECT(JavaDocComment) : {extends Comment}
+INJECT(JavaDocComment) : extends Comment;
 
 <IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
-MORE :
-{
-  < ~[] >
-}
+MORE : < ~[] >;
 
 /* JAVA RESERVED WORDS AND LITERALS */
 
 TOKEN #KeyWord :
-{
   < ABSTRACT: "abstract" > 
 | < ASSERT: "assert" > 
 | < BOOLEAN: "boolean" > 
@@ -138,10 +127,9 @@ TOKEN #KeyWord :
 | < VOID: "void" > 
 | < VOLATILE: "volatile" > 
 | < WHILE: "while" > 
-}
+;
 
 TOKEN #Literal :
-{
   < LONG_LITERAL:
         <DECIMAL_LITERAL> (["l","L"])
       | <HEX_LITERAL> (["l","L"])
@@ -212,10 +200,9 @@ TOKEN #Literal :
       )*
       "\""
   >
-}
+;
 
 TOKEN #Delimiter :
-{
   < LPAREN: "(" > 
 | < RPAREN: ")" >
 | < LBRACE: "{" > 
@@ -229,10 +216,9 @@ TOKEN #Delimiter :
 | < DOUBLE_COLON: "::" > 
 | < VAR_ARGS: "..." > 
 | < AT : "@"> 
-}
+;
 
 TOKEN #Operator : 
-{
  < GT: ">" > 
 | < LT: "<" > 
 | < BANG: "!" > 
@@ -268,20 +254,17 @@ TOKEN #Operator :
 | < RSIGNEDSHIFTASSIGN: ">>=" > 
 | < RUNSIGNEDSHIFTASSIGN: ">>>=" > 
 | < LAMBDA : "->" > 
-}
+;
 
 <PHONY> TOKEN #Operator:
-{
   < RSIGNEDSHIFT: ">>" > 
   |
   < RUNSIGNEDSHIFT: ">>>" > 
-}
+;
 
 INJECT(BaseNode) : 
-{
     import java.util.*;
-    implements Node, CONSTANTS_CLASS;
-}
+    implements Node, CONSTANTS_CLASS
 {    
     protected String getLiteralText() {
         StringBuilder buf = new StringBuilder();
@@ -325,25 +308,21 @@ INJECT(BaseNode) :
     }
 }
 
-CompilationUnit CompilationUnit() #CompilationUnit :
-{}
-{
-  [ LOOKAHEAD( ( Annotation() )* "package") PackageDeclaration() ]
-  ( ImportDeclaration() )*
+CompilationUnit CompilationUnit #CompilationUnit :
+  [ LOOKAHEAD( ( Annotation )* "package") PackageDeclaration ]
+  ( ImportDeclaration )*
   (
-     ( TypeDeclaration() )+
+     ( TypeDeclaration )+
      |
      <EOF>
   )
   {
      return CURRENT_NODE;
   }
-}
+;
 
 INJECT(CompilationUnit) : 
-{
     import java.util.*;
-}
 {
     public String getPackageName() {
         PackageDeclaration jpd = getPackageDeclaration();
@@ -378,17 +357,9 @@ INJECT(CompilationUnit) :
     }
 }
 
-PackageDeclaration PackageDeclaration() :
-{}
-{
-  //Modifiers() // WTF?
-  "package" Name() ";"
-  {
-      return CURRENT_NODE;
-  }
-}
+PackageDeclaration : "package" Name ";" ;
 
-INJECT(PackageDeclaration) : {}
+INJECT(PackageDeclaration) :
 {
     public String getPackageName() {
         StringBuilder buf = new StringBuilder();
@@ -405,16 +376,9 @@ INJECT(PackageDeclaration) : {}
     }
 }
 
-ImportDeclaration ImportDeclaration() :
-{}
-{
-    "import" [ "static" ] Name() [ "." "*" ] ";"
-    {
-        return CURRENT_NODE;
-    }
-}
+ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
-INJECT(ImportDeclaration) : {}
+INJECT(ImportDeclaration) : 
 {
     public String getAsString() {
         return super.getAsString().trim();
@@ -456,9 +420,7 @@ INJECT(ImportDeclaration) : {}
  * better error messages.
  */
  
-void Modifiers() #void :
-{}
-{
+Modifiers #void :
  (
   LOOKAHEAD(2)
   (
@@ -484,15 +446,13 @@ void Modifiers() #void :
   |
    "strictfp"
   |
-   Annotation()
+   Annotation
   )
  )*
-}
+;
 
 
-void Modifiers2() #void :
-{}
-{
+Modifiers2 #void :
  (
   LOOKAHEAD(2)
   (
@@ -520,40 +480,37 @@ void Modifiers2() #void :
   |
    "default"
   |
-   Annotation()
+   Annotation
   )
  )*
-}
+;
 
 /*
  * Declaration syntax follows.
  */
-TypeDeclaration TypeDeclaration() #TypeDeclaration :
-{}
-{
+
+TypeDeclaration TypeDeclaration #TypeDeclaration :
  (      
   ";"
   |
-  Modifiers()
+  Modifiers
    (
-     ClassDeclaration()
+     ClassDeclaration
      |
-     InterfaceDeclaration()
+     InterfaceDeclaration
      |
-     EnumDeclaration()
+     EnumDeclaration
      |
-     AnnotationTypeDeclaration()
+     AnnotationTypeDeclaration
    )
  )
  {
         return CURRENT_NODE;
  }
-}
+;
 
 INJECT(TypeDeclaration) : 
-{
     import java.util.*;
-}
 {
     public String getName() {
         for (Node n : children) {
@@ -712,45 +669,38 @@ INJECT(TypeDeclaration) :
     }
 }
 
-void ClassDeclaration() #void :
-{}
-{
+ClassDeclaration #void :
   "class"
   <IDENTIFIER>
-  [ TypeParameters() ]
+  [ TypeParameters ]
   [ ExtendsList(false) ]
   [ ImplementsList(false) ]
   ClassOrInterfaceBody(false)
-}
+;
 
-void InterfaceDeclaration() #void :
-{ }
-{
+InterfaceDeclaration #void :
   "interface" 
   <IDENTIFIER>
-  [ TypeParameters() ]
+  [ TypeParameters ]
   [ ExtendsList(true) ] 
   ClassOrInterfaceBody(true)
-}
+;
 
 ExtendsList ExtendsList(boolean isInterface) :
 {
    boolean extendsMoreThanOne = false;
 }
-{
-   "extends" ClassOrInterfaceType()
-   ( "," ClassOrInterfaceType() { extendsMoreThanOne = true; } )*
+   "extends" ClassOrInterfaceType
+   ( "," ClassOrInterfaceType { extendsMoreThanOne = true; } )*
    {
       if (extendsMoreThanOne && !isInterface)
          throw new ParseException("A class cannot extend more than one other class");
       return CURRENT_NODE;
    }
-}
+;
 
 INJECT(ExtendsList) : 
-{
      import java.util.*;
-}
 {
     public List<ObjectType> getTypes() {
         return childrenOfType(ObjectType.class);
@@ -780,8 +730,8 @@ INJECT(ExtendsList) :
 ImplementsList ImplementsList(boolean isInterface) :
 {}
 {
-   "implements" ClassOrInterfaceType()
-   ( "," ClassOrInterfaceType() )*
+   "implements" ClassOrInterfaceType
+   ( "," ClassOrInterfaceType )*
    {
       if (isInterface) {
          throw new ParseException("An interface cannot implement other interfaces");
@@ -791,9 +741,7 @@ ImplementsList ImplementsList(boolean isInterface) :
 }
 
 INJECT(ImplementsList) : 
-{
    import java.util.*;
-}
 {    
     public List<ObjectType> getTypes() {
         return childrenOfType(ObjectType.class);
@@ -817,45 +765,32 @@ INJECT(ImplementsList) :
     }
 }
 
-void EnumDeclaration() :
-{}
-{
+EnumDeclaration :
    "enum" <IDENTIFIER>
    [ImplementsList(false)] 
-   EnumBody()
-}
+   EnumBody
+;
 
-void EnumBody():
-{}
-{
+EnumBody :
    "{"
-   [ EnumConstant() ( LOOKAHEAD(2) "," EnumConstant() )* ]
+   [ EnumConstant ( LOOKAHEAD(2) "," EnumConstant )* ]
    [ "," ]
    [ ";" ( ClassOrInterfaceBodyDeclaration(false) )* ]
    "}"
-}
+;
 
-void EnumConstant():
-{}
-{
-  Modifiers() <IDENTIFIER> [ Arguments() ] [ ClassOrInterfaceBody(false) ]
-}
+EnumConstant:
+  Modifiers <IDENTIFIER> [ Arguments ] [ ClassOrInterfaceBody(false) ]
+;
 
-TypeParameterList TypeParameters() #TypeParameterList :
-{}
-{
+TypeParameters #TypeParameterList :
    "<"
-   TypeParameter() ( "," TypeParameter() )* 
+   TypeParameter ( "," TypeParameter )* 
    ">"
-   {
-           return CURRENT_NODE;
-   }
-}
+;
 
 INJECT(TypeParameterList) : 
-{
     import java.util.*;
-}
 {
     public void add(TypeParameter param) {
         if (!getParameters().contains(param)) {
@@ -881,21 +816,13 @@ INJECT(TypeParameterList) :
     }
 }
 
-void TypeParameter():
-{}
-{
-   <IDENTIFIER> [ TypeBound() ]
-}
+TypeParameter: <IDENTIFIER> [TypeBound];
 
-void TypeBound():
-{}
-{
-   "extends" ClassOrInterfaceType() ( "&" ClassOrInterfaceType() )*
-}
+TypeBound :
+   "extends" ClassOrInterfaceType ( "&" ClassOrInterfaceType )*
+;
 
 ClassOrInterfaceBody ClassOrInterfaceBody(boolean isInterface) :
-{}
-{
     "{"
     ( 
        ClassOrInterfaceBodyDeclaration(isInterface) 
@@ -904,12 +831,10 @@ ClassOrInterfaceBody ClassOrInterfaceBody(boolean isInterface) :
     {
         return CURRENT_NODE;
     }
-}
+;
 
 INJECT(ClassOrInterfaceBody) : 
-{
     import java.util.*;
-}
 {
     public String getAsString() {
         return getInnerText();
@@ -953,7 +878,7 @@ INJECT(ClassOrInterfaceBody) :
     }
 }
 
-INJECT(ClassOrInterfaceBodyDeclaration) : {}
+INJECT(ClassOrInterfaceBodyDeclaration) : 
 {
     public boolean isPrivate() {
         return hasKeyWord("private");
@@ -979,36 +904,34 @@ INJECT(ClassOrInterfaceBodyDeclaration) : {}
     }
 }
 
-void ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
-{}
-{
+ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
   LOOKAHEAD(2) // FIXME {!isInterface})
-  Initializer()
+  Initializer
  |
-  Modifiers2() // Just get all the modifiers out of the way. If you want to do
+  Modifiers2 // Just get all the modifiers out of the way. If you want to do
               // more checks, pass the modifiers down to the member
   (
-      ClassDeclaration()
+      ClassDeclaration
       |
-      InterfaceDeclaration()
+      InterfaceDeclaration
       |
-      AnnotationTypeDeclaration()
+      AnnotationTypeDeclaration
       |
-      EnumDeclaration()
+      EnumDeclaration
       |
-      LOOKAHEAD( [ TypeParameters() ] <IDENTIFIER> "(" )
-      ConstructorDeclaration()
+      LOOKAHEAD( [ TypeParameters ] <IDENTIFIER> "(" )
+      ConstructorDeclaration
       |
-      LOOKAHEAD( Type() <IDENTIFIER> ( "[" "]" )* ( "," | "=" | ";" ) )
-      FieldDeclaration()
+      LOOKAHEAD( Type <IDENTIFIER> ( "[" "]" )* ( "," | "=" | ";" ) )
+      FieldDeclaration
       |
-      MethodDeclaration()
+      MethodDeclaration
   )
   |
   ";"
-}
+;
 
-INJECT(ClassOrInterfaceBodyDeclaration) : {}
+INJECT(ClassOrInterfaceBodyDeclaration) : 
 {
     public boolean isMethod() {
         return firstChildOfType(MethodDeclaration.class) != null;
@@ -1021,9 +944,7 @@ INJECT(ClassOrInterfaceBodyDeclaration) : {}
 }
 
 INJECT(FieldDeclaration) : 
-{
    import java.util.*;
-}
 {
    public List<Identifier> getVariableIds() {
        List<Identifier> result = new ArrayList<>();
@@ -1050,50 +971,34 @@ INJECT(FieldDeclaration) :
 }
 
 
-void FieldDeclaration() :
-{}
-{
+FieldDeclaration :
   // Modifiers are already matched in the caller
-  Type() VariableDeclarator() ( "," VariableDeclarator() )* ";"
-}
+  Type VariableDeclarator ( "," VariableDeclarator )* ";"
+;
 
-void VariableDeclarator():
-{}
-{
-  VariableDeclaratorId() [ "=" VariableInitializer() ]
-}
+VariableDeclarator :
+  VariableDeclaratorId [ "=" VariableInitializer ]
+;
 
-void VariableDeclaratorId():
-{}
-{
+VariableDeclaratorId :
   <IDENTIFIER> ( "[" "]" )*
-}
+;
 
-void VariableInitializer():
-{}
-{
-  ArrayInitializer()
-|
-  Expression()
-}
+VariableInitializer : ArrayInitializer | Expression ;
 
-void ArrayInitializer():
-{}
-{
-  "{" [ VariableInitializer() ( LOOKAHEAD(2) "," VariableInitializer() )* ] [ "," ] "}"
-}
+ArrayInitializer :
+  "{" [ VariableInitializer ( LOOKAHEAD(2) "," VariableInitializer )* ] [ "," ] "}"
+;
 
-void MethodDeclaration() :
-{}
-{
+MethodDeclaration :
   // Modifiers already matched in the caller!
-  [ TypeParameters() ]
-  ReturnType()
-  MethodDeclarator() [ ThrowsList() ]
-  ( Block() | ";" )
-}
+  [ TypeParameters ]
+  ReturnType
+  MethodDeclarator [ ThrowsList ]
+  ( Block | ";" )
+;
 
-INJECT(MethodDeclaration) : {}
+INJECT(MethodDeclaration) : 
 {
     public String getName() {
         for (Node n : children) {
@@ -1113,27 +1018,21 @@ INJECT(MethodDeclaration) : {}
     }
 }
 
-void MethodDeclarator() #void :
-{}
-{
-  <IDENTIFIER> FormalParameters() ( "[" "]" )*
-}
+MethodDeclarator #void :
+  <IDENTIFIER> FormalParameters ( "[" "]" )*
+;
 
-FormalParams FormalParameters() #FormalParams :
-{}
-{
+FormalParams FormalParameters #FormalParams :
    "("
-    [ FormalParameter() ( "," FormalParameter() )* ]
+    [ FormalParameter ( "," FormalParameter )* ]
    ")"
     {
         return CURRENT_NODE;
     }
-}
+;
 
 INJECT(FormalParams) : 
-{
    import java.util.List;
-}
 {
     public List<FormalParameter> getParams() {
         return childrenOfType(FormalParameter.class);
@@ -1163,76 +1062,65 @@ INJECT(FormalParams) :
     }
 }
 
-FormalParameter FormalParameter():
-{}
-{
-    Modifiers() Type() [ "..." ] VariableDeclaratorId()
+FormalParameter FormalParameter :
+    Modifiers Type [ "..." ] VariableDeclaratorId
     {
         return CURRENT_NODE;
     }
-}
-INJECT(ConstructorDeclaration) : {extends ClassOrInterfaceBodyDeclaration}
+;
 
-void ConstructorDeclaration():
-{}
-{
-  [ TypeParameters() ]
+INJECT(ConstructorDeclaration) : extends ClassOrInterfaceBodyDeclaration
+
+ConstructorDeclaration :
+  [ TypeParameters ]
   // Modifiers matched in the caller
-  <IDENTIFIER> FormalParameters() [ ThrowsList() ]
+  <IDENTIFIER> FormalParameters [ ThrowsList ]
   "{"
-    [ SCAN ExplicitConstructorInvocation() ]
-    ( BlockStatement() )*
+    [ SCAN ExplicitConstructorInvocation ]
+    ( BlockStatement )*
   "}"
-}
+;
 
-void ExplicitConstructorInvocation():
-{}
-{
-  SCAN "this" Arguments() ";"
+ExplicitConstructorInvocation :
+  SCAN "this" Arguments ";"
  |
-  [ LOOKAHEAD(2) PrimaryExpression() "." ] "super" Arguments() ";"
-}
+  [ LOOKAHEAD(2) PrimaryExpression "." ] "super" Arguments ";"
+;
 
 
-void Initializer():
-{}
-{
-  [ "static" ] Block()
-}
+Initializer :
+  [ "static" ] Block
+;
 
 
 /*
  * Type, name and expression syntax follows.
  */
 
-void Type():
-{}
-{
-   LOOKAHEAD(2) ReferenceType()
- |
-   PrimitiveType()
-}
-
-void ReferenceType():
-{}
-{
-   PrimitiveArrayType()
+Type :
+   LOOKAHEAD(2, {2+2==4}) ReferenceType
    |
-   ( ClassOrInterfaceType() ) ( LOOKAHEAD(2) "[" "]" )*
+   LOOKAHEAD(1)
+   PrimitiveType
+;
+
+ReferenceType : 
+{
+   PrimitiveArrayType
+   |
+   ClassOrInterfaceType (LOOKAHEAD "[" "]" )*
 }
 
-ObjectType ClassOrInterfaceType() #ObjectType :
-{}
-{
+ObjectType ClassOrInterfaceType #ObjectType :
     <IDENTIFIER>
-    [ LOOKAHEAD(2) TypeArguments() ]
-    ( LOOKAHEAD(2) "." <IDENTIFIER> [ LOOKAHEAD(2) TypeArguments() ] )*
+    [ LOOKAHEAD(2) TypeArguments ]
+    ( LOOKAHEAD(2) "." <IDENTIFIER> [ LOOKAHEAD(2) TypeArguments ] )*
     {
         return CURRENT_NODE;
     }
-}
+;
 
-INJECT(ObjectType) : {}
+INJECT(ObjectType) : 
 {
     public boolean equals(Object obj) {
         if (obj instanceof ObjectType) {
@@ -1250,49 +1138,33 @@ INJECT(ObjectType) : {}
     }
 }
 
-void DiamondOperator() :
-{}
-{
-   "<"
-   ">"
-}
+DiamondOperator :  "<" ">";
 
-void PossiblyEmptyTypeArguments() #void :
-{
-}
-{
-   LOOKAHEAD(2)
-   DiamondOperator()
+PossiblyEmptyTypeArguments #void :
+   LOOKAHEAD
+   DiamondOperator
    |
-   TypeArguments()
-}
+   TypeArguments
+;
 
-void TypeArguments():
-{}
-{
+TypeArguments :
    "<"
-   TypeArgument() ( "," TypeArgument() )* 
+   TypeArgument ( "," TypeArgument )* 
    ">"
-}
+;
 
-void TypeArgument():
-{}
-{
-   ReferenceType()
+TypeArgument :
+   ReferenceType
    |
-   "?" [ WildcardBounds() ]
-}
+   "?" [ WildcardBounds ]
+;
 
-void WildcardBounds():
-{}
-{
-   ("extends" | "super") ReferenceType()
-}
+WildcardBounds :
+   ("extends" | "super") ReferenceType
+;
 
 
-void PrimitiveType() #void :
-{}
-{
+PrimitiveType #void :
   "boolean"
    |
   "char"
@@ -1308,46 +1180,38 @@ void PrimitiveType() #void :
   "float"
    |
   "double"
-}
+;
 
-void PrimitiveArrayType() : 
-{}
-{
-    PrimitiveType() (LOOKAHEAD(2) "[" "]")+
-}
+PrimitiveArrayType : 
+    PrimitiveType (LOOKAHEAD "[" "]")+
+;
 
-
-ReturnType ReturnType() #ReturnType :
-{}
-{
+ReturnType ReturnType #ReturnType :
     (
         "void"
         |
-        Type()
+        Type
     )
     {
         return CURRENT_NODE;
     }
-}
+;
 
-Name Name() :
+Name Name :
 /*
  * A lookahead of 2 is required below since "Name" can be followed
  * by a ".*" when used in the context of an "ImportDeclaration".
  */
-{}
-{
     <IDENTIFIER>
     ( 
-        LOOKAHEAD(2) 
-        "." <IDENTIFIER>
+        SCAN "." <IDENTIFIER>
     )*
     {
         return CURRENT_NODE;
     }
-}
+;
 
-INJECT(Name) : {}
+INJECT(Name) : 
 {
     public String toString() {
         StringBuilder buf = new StringBuilder();
@@ -1359,20 +1223,16 @@ INJECT(Name) : {}
 }
 
 
-ThrowsList ThrowsList():
-{}
-{
-    "throws" Name() ( "," Name() )*
+ThrowsList ThrowsList :
+    "throws" Name ( "," Name )*
     {
         return CURRENT_NODE;
     }
-}
+;
 
 INJECT(ThrowsList) : 
-{
     import java.util.List;
     import java.util.ArrayList;
-}
 {
     public List<Node> getTypes() {
         List<Node> result = new ArrayList<>();
@@ -1391,115 +1251,90 @@ INJECT(ThrowsList) :
  */
 
 
-Expression Expression() #Expression(>1) :
-{}
-{
-    AssignmentExpression()
+Expression Expression #Expression(>1) :
+    AssignmentExpression
     {return (Expression) peekNode();}
-}
+;
 
-INJECT(AssignmentExpression) : {extends Expression}
-INJECT(TernaryExpression) : {extends Expression} 
-INJECT(ConditionalOrExpression) : {extends Expression} 
-INJECT(ConditionalAndExpression) : {extends Expression} 
-INJECT(InclusiveOrExpression) : {extends Expression} 
-INJECT(InclusiveAndExpression) : {extends Expression} 
-INJECT(ExclusiveOrExpression) : {extends Expression} 
-INJECT(AndExpression) : {extends Expression} 
-INJECT(EqualityExpression) : {extends Expression} 
-INJECT(InstanceOfExpression) : {extends Expression} 
-INJECT(RelationalExpression) : {extends Expression} 
-INJECT(ShiftExpression) : {extends Expression}
-INJECT(AdditiveExpression) : {extends Expression}
-INJECT(MultiplicativeExpression) : {extends Expression}
-INJECT(UnaryExpression) : {extends Expression}
-INJECT(PreIncrementExpression) : {extends Expression}
-INJECT(PreDecrementExpression) : {extends Expression}
-INJECT(UnaryExpressionNotPlusMinus) : {extends Expression}
-INJECT(PostfixExpression) : {extends Expression}
-INJECT(CastExpression) : {extends Expression}
-INJECT(PrimaryExpression) : {extends Expression} 
-INJECT(LambdaExpression) : {extends Expression} 
-INJECT(CodeBlock) : {extends Expression} 
+INJECT(AssignmentExpression) : extends Expression
+INJECT(TernaryExpression) : extends Expression 
+INJECT(ConditionalOrExpression) : extends Expression 
+INJECT(ConditionalAndExpression) : extends Expression 
+INJECT(InclusiveOrExpression) : extends Expression 
+INJECT(InclusiveAndExpression) : extends Expression 
+INJECT(ExclusiveOrExpression) : extends Expression 
+INJECT(AndExpression) : extends Expression 
+INJECT(EqualityExpression) : extends Expression 
+INJECT(InstanceOfExpression) : extends Expression 
+INJECT(RelationalExpression) : extends Expression 
+INJECT(ShiftExpression) : extends Expression
+INJECT(AdditiveExpression) : extends Expression
+INJECT(MultiplicativeExpression) : extends Expression
+INJECT(UnaryExpression) : extends Expression
+INJECT(PreIncrementExpression) : extends Expression
+INJECT(PreDecrementExpression) : extends Expression
+INJECT(UnaryExpressionNotPlusMinus) : extends Expression
+INJECT(PostfixExpression) : extends Expression
+INJECT(CastExpression) : extends Expression
+INJECT(PrimaryExpression) : extends Expression 
+INJECT(LambdaExpression) : extends Expression 
+INJECT(CodeBlock) : extends Expression
 
 /*
  * This expansion has been written this way instead of:
- *   Assignment() | TernaryExpression()
+ *   Assignment | TernaryExpression
  * for performance reasons.
  * However, it is a weakening of the grammar for it allows the LHS of
  * assignments to be any conditional expression whereas it can only be
  * a primary expression.  Consider adding a semantic predicate to work
  * around this.
  */
-void AssignmentExpression() :
-{
-}
-{
-  TernaryExpression()
+AssignmentExpression :
+  TernaryExpression
   [ 
-        LOOKAHEAD(2)
-    AssignmentOperator() Expression()
+        LOOKAHEAD(2) AssignmentOperator Expression
   ]
-}
+;
 
-void AssignmentOperator() #void :
-{}
+AssignmentOperator #void :
 {
   "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | ">>>=" | "&=" | "^=" | "|="
 }
 
-void TernaryExpression() :
-{}
-{
-  ConditionalOrExpression() [  "?" Expression() ":" Expression() ]
-}
+TernaryExpression :
+  ConditionalOrExpression [  "?" Expression ":" Expression ]
+;
 
-void ConditionalOrExpression() :
-{}
-{
-  ConditionalAndExpression() ( "||" ConditionalAndExpression() )*
-}
+ConditionalOrExpression :
+  ConditionalAndExpression ( "||" ConditionalAndExpression )*
+;
 
-void ConditionalAndExpression():
-{}
-{
-  InclusiveOrExpression() ( "&&" InclusiveOrExpression() )*
-}
+ConditionalAndExpression :
+  InclusiveOrExpression ( "&&" InclusiveOrExpression )*
+;
 
-void InclusiveOrExpression():
-{}
-{
-  ExclusiveOrExpression() ( "|" ExclusiveOrExpression() )*
-}
+InclusiveOrExpression :
+  ExclusiveOrExpression ( "|" ExclusiveOrExpression )*
+;
 
-void ExclusiveOrExpression():
-{}
-{
-  AndExpression() ( "^" AndExpression() )*
-}
+ExclusiveOrExpression :
+  AndExpression ( "^" AndExpression )*
+;
 
-void AndExpression():
-{}
-{
-  EqualityExpression() ( "&" EqualityExpression() )*
-}
+AndExpression :
+  EqualityExpression ( "&" EqualityExpression )*
+;
 
-void EqualityExpression():
-{}
-{
-  InstanceOfExpression() ( ( "==" | "!=" ) InstanceOfExpression() )*
-}
+EqualityExpression :
+  InstanceOfExpression ( ( "==" | "!=" ) InstanceOfExpression )*
+;
 
-void InstanceOfExpression():
-{}
-{
-  RelationalExpression() [ "instanceof" Type() ]
-}
+InstanceOfExpression :
+  RelationalExpression [ "instanceof" Type ]
+;
 
-void RelationalExpression():
-{}
-{
-  ShiftExpression() 
+RelationalExpression :
+  ShiftExpression 
   (
     ( 
      "<" 
@@ -1507,33 +1342,30 @@ void RelationalExpression():
      | "<=" 
      | ">=" 
     ) 
-    ShiftExpression()
+    ShiftExpression
   )*
-}
+;
 
 
-void ShiftExpression():
-{}
-{
-   AdditiveExpression()
+ShiftExpression :
+   AdditiveExpression
    (
       LOOKAHEAD(2)
       (
       "<<"
       |
-        ShiftOperator()
+        ShiftOperator
       )
-      AdditiveExpression()
+      AdditiveExpression
    )*
-}
+;
 
 //Egad, what a ghastly kludge this is! Consider a REVISIT.
 
-void ShiftOperator() #void :
+ShiftOperator #void :
 {
    Token first, second, third=null;
 }
-{
    first=">"
    second=">" 
    [third=">"]
@@ -1559,144 +1391,115 @@ void ShiftOperator() #void :
 	     popNode();
       }
    }
-}
+;
 
 
-void AdditiveExpression():
-{}
-{
-  MultiplicativeExpression() (  ( "+" | "-" ) MultiplicativeExpression() )*
-}
+AdditiveExpression :
+  MultiplicativeExpression (  ( "+" | "-" ) MultiplicativeExpression )*
+;
 
-void MultiplicativeExpression():
-{}
-{
-  UnaryExpression() (  ( "*" | "/" | "%" ) UnaryExpression() )*
-}
+void MultiplicativeExpression :
+  UnaryExpression (  ( "*" | "/" | "%" ) UnaryExpression )*
+;
 
-void UnaryExpression():
-{}
-{
-  ( "+" | "-" ) UnaryExpression()
+UnaryExpression :
+  ( "+" | "-" ) UnaryExpression
 |
-  PreIncrementExpression()
+  PreIncrementExpression
 |
-  PreDecrementExpression()
+  PreDecrementExpression
 |
-  UnaryExpressionNotPlusMinus()
-}
+  UnaryExpressionNotPlusMinus
+;
 
-void PreIncrementExpression():
-{}
-{
-  "++" PrimaryExpression()
-}
+PreIncrementExpression :
+  "++" PrimaryExpression
+;
 
-void PreDecrementExpression():
-{}
-{
-  "--" PrimaryExpression()
-}
+PreDecrementExpression :
+  "--" PrimaryExpression
+;
 
-void UnaryExpressionNotPlusMinus():
-{}
-{
-  ( "~" | "!" ) UnaryExpression()
+UnaryExpressionNotPlusMinus :
+  ( "~" | "!" ) UnaryExpression
   |
-  SCAN LambdaExpression()
+  SCAN LambdaExpression
   |
-  SCAN CastExpression()
+  SCAN CastExpression
   |
-  PostfixExpression()
-}
+  PostfixExpression
+;
 
-void PostfixExpression():
-{}
-{
-  PrimaryExpression() [ "++" | "--" ]
-}
+PostfixExpression :
+  PrimaryExpression [ "++" | "--" ]
+;
 
-void CastExpression():
-{}
-{
-  SCAN "(" PrimitiveType() ")" UnaryExpression()
+CastExpression :
+  SCAN "(" PrimitiveType ")" UnaryExpression
   |
-  SCAN "(" ReferenceType() ")" UnaryExpressionNotPlusMinus()
+  SCAN "(" ReferenceType ")" UnaryExpressionNotPlusMinus
   |
-  SCAN  "(" ClassOrInterfaceType() ("&" ClassOrInterfaceType())+ ")" UnaryExpressionNotPlusMinus() 
-}
+  SCAN  "(" ClassOrInterfaceType ("&" ClassOrInterfaceType)+ ")" UnaryExpressionNotPlusMinus 
+;
 
-Expression PrimaryExpression() #PrimaryExpression :
-{}
-{
-    PrimaryPrefix() 
-    ( LOOKAHEAD(2) PrimarySuffix() )*
+Expression PrimaryExpression #PrimaryExpression :
+    PrimaryPrefix 
+    ( LOOKAHEAD(2) PrimarySuffix )*
     {
             return CURRENT_NODE;
     }
-}
+;
 
-void MemberSelector():
-{
-}
-{
-  "." TypeArguments() <IDENTIFIER>
-}
+MemberSelector :
+  "." TypeArguments <IDENTIFIER>
+;
 
-void PrimaryPrefix():
-{}
-{
-  Literal()
+PrimaryPrefix :
+  Literal
  |
   "this"
  |
  SCAN "super" "." <IDENTIFIER>
  |
-  "(" Expression() ")"
+  "(" Expression ")"
  |
-  AllocationExpression()
+  AllocationExpression
  |
- SCAN PrimitiveType() "." "class"
+ SCAN PrimitiveType "." "class"
  |
- SCAN ReturnType() "." "class"
+ SCAN ReturnType "." "class"
  |
- SCAN MethodReference()
+ SCAN MethodReference
  |  
- Name()
-}
+ Name
+;
 
-void MethodReference() :
-{}
-{
-    (Type()|"super")
+MethodReference :
+    (Type | "super")
      "::" 
      (<IDENTIFIER>|"new")
-}
+;
 
-void PrimarySuffix():
-{}
-{
+PrimarySuffix :
   LOOKAHEAD(2)
    "." ("this"|"super")
     |
   LOOKAHEAD(2)
-    "." AllocationExpression()
+    "." AllocationExpression
     |
   LOOKAHEAD(3)
-    MemberSelector()
+    MemberSelector
     |
-    "[" [Expression()] "]"
+    "[" [Expression] "]"
     |
     "." <IDENTIFIER>
     |
     "::" (<IDENTIFIER>|"new")
     |
-    Arguments()
-}
+    Arguments
+;
 
-void Literal() #void :
-{}
-{
+Literal #void :
   <INTEGER_LITERAL>
  |
   <LONG_LITERAL>
@@ -1712,18 +1515,16 @@ void Literal() #void :
 "false"
 |
   "null"
-}
+;
 
-InvocationArgs Arguments() #InvocationArgs :
-{}
-{
+InvocationArgs Arguments #InvocationArgs :
     "("
-    [ Expression() ("," Expression())* ]
+    [ Expression ("," Expression)* ]
     ")"
     {
         return CURRENT_NODE;
     }
-}
+;
 
 INJECT(InvocationArgs) : 
 {
@@ -1749,114 +1550,96 @@ INJECT(InvocationArgs) :
     }
 }
 
-void AllocationExpression():
-{}
-{
+AllocationExpression :
   LOOKAHEAD(2)
-  "new" PrimitiveType() ArrayDimsAndInits()
-|
-  "new" ClassOrInterfaceType() [ PossiblyEmptyTypeArguments() ]
+  "new" PrimitiveType ArrayDimsAndInits
+ |
+  "new" ClassOrInterfaceType [ PossiblyEmptyTypeArguments ]
     (
-      ArrayDimsAndInits()
+      ArrayDimsAndInits
     |
-      Arguments() [ ClassOrInterfaceBody(false) ]
+      Arguments [ ClassOrInterfaceBody(false) ]
     )
-}
+;
 
 /*
  * The third LOOKAHEAD specification below is to parse to PrimarySuffix
  * if there is an expression between the "[...]".
  */
-void ArrayDimsAndInits():
-{}
-{
+ArrayDimsAndInits :
   LOOKAHEAD(2)
-  ( LOOKAHEAD(2) "[" Expression() "]" )+ ( LOOKAHEAD(2) "[" "]" )*
+  ( LOOKAHEAD(2) "[" Expression "]" )+ ( LOOKAHEAD(2) "[" "]" )*
 |
-  ( "[" "]" )+ ArrayInitializer()
-}
+  ( "[" "]" )+ ArrayInitializer
+;
 
-void Label() :
-{}
-{<IDENTIFIER><COLON>}
-/*
+Label : <IDENTIFIER><COLON>;
+
+
+ /*
  * Statement syntax follows.
  */
 
-void Statement()  :
-{}
-{
-  (LOOKAHEAD(2) Label())*
-  UnlabeledStatement()
-}
+Statement  :
+  (LOOKAHEAD(2) Label)*
+  UnlabeledStatement
+;
 
 
-void UnlabeledStatement() #void :
-{}
-{
-  AssertStatement()
+UnlabeledStatement #void :
+  AssertStatement
  |
-  Block()
+  Block
  |
-  EmptyStatement()
+  EmptyStatement
  |
-  StatementExpression() ";"
+  StatementExpression ";"
  |
-  SwitchStatement()
+  SwitchStatement
  |
-  IfStatement()
+  IfStatement
  |
-  WhileStatement()
+  WhileStatement
  |
-  DoStatement()
+  DoStatement
  |
-  ForStatement()
+  ForStatement
   |
-  BreakStatement()
+  BreakStatement
   |
-  ContinueStatement()
+  ContinueStatement
   |
-  ReturnStatement()
+  ReturnStatement
   |
-  ThrowStatement()
+  ThrowStatement
   |
-  SynchronizedStatement()
+  SynchronizedStatement
  |
-  TryStatement()
-}
+  TryStatement
+;
 
-void TryStatement() #void :
-{}
-{
+TryStatement #void :
    LOOKAHEAD("try" "{")
-   ClassicTryStatement()
+   ClassicTryStatement
    |
    LOOKAHEAD("try" "(" )
-   TryWithResources()
-}
+   TryWithResources
+;
 
-void AssertStatement():
-{}
-{
-  "assert" Expression() [ ":" Expression() ] ";"
-}
+AssertStatement :
+  "assert" Expression [ ":" Expression ] ";"
+;
 
-/*void LabeledStatement():
-{}
-{
-  <IDENTIFIER> ":" Statement()
-}*/
+// LabeledStatement : <IDENTIFIER> ":" Statement;
 
-CodeBlock Block() #CodeBlock :
-{}
-{
+CodeBlock Block #CodeBlock :
   "{"
-  (BlockStatement())*
+  (BlockStatement)*
   "}" 
    {
        return CURRENT_NODE;
    }
-}
+;
 
 INJECT(CodeBlock) : {}
 {
@@ -1872,227 +1655,180 @@ INJECT(CodeBlock) : {}
     }
 }
 
-void BlockStatement() #void :
-{}
-{
-  LOOKAHEAD( Modifiers() Type() <IDENTIFIER> )
-  LocalVariableDeclaration() ";"
+BlockStatement :
+  LOOKAHEAD( Modifiers Type <IDENTIFIER> )
+  LocalVariableDeclaration ";"
   |
-  LOOKAHEAD( Modifiers() "class")
-  Modifiers() ClassDeclaration()
+  LOOKAHEAD( Modifiers "class")
+  Modifiers ClassDeclaration
   |
-  Statement()
-}
+  Statement
+;
 
-void LocalVariableDeclaration():
-{}
-{
-  Modifiers() Type() VariableDeclarator() ( "," VariableDeclarator() )*
-}
+LocalVariableDeclaration :
+  Modifiers Type VariableDeclarator ( "," VariableDeclarator )*
+;
 
-void EmptyStatement():
-{}
-{
-  ";"
-}
+EmptyStatement : ";" ;
 
-void StatementExpression():
+StatementExpression :
 /*
  * The last expansion of this production accepts more than the legal
  * Java expansions for StatementExpression.  This expansion does not
  * use PostfixExpression for performance reasons.
  */
-{}
-{
-  PreIncrementExpression()
-|
-  PreDecrementExpression()
-|
-  PrimaryExpression()
+  PreIncrementExpression
+ |
+  PreDecrementExpression
+  |
+  PrimaryExpression
   [
     "++"
   |
     "--"
   |
-    AssignmentOperator() Expression()
+    AssignmentOperator Expression
   ]
-}
+;
 
-void SwitchStatement() : 
-{}
-{
-  "switch" "(" Expression() ")" "{"
-  (CaseStatement())*
+SwitchStatement : 
+  "switch" "(" Expression ")" "{"
+  (CaseStatement)*
   "}"    
-}
+;
 
-void CaseStatement():
-{}
-{
-    SwitchLabel() 
-    (BlockStatement())*
-}
+CaseStatement :
+    SwitchLabel 
+    (BlockStatement)*
+;
 
-void SwitchLabel() #void :
-{}
-{
-  "case" Expression() ":"
-|
+SwitchLabel #void :
+  "case" Expression ":"
+ |
   "default" ":"
-}
+;
 
-void IfStatement():
-{}
-{
-  "if" "(" Expression() ")" Statement() [ "else" Statement() ]
-}
+IfStatement :
+  "if" "(" Expression ")" Statement [ "else" Statement ]
+;
 
-void WhileStatement():
-{}
-{
-  "while" "(" Expression() ")" Statement()
-}
+WhileStatement :
+  "while" "(" Expression ")" Statement
+;
 
-void DoStatement():
-{}
-{
-  "do" Statement() "while" "(" Expression() ")" ";"
-}
+DoStatement :
+  "do" Statement "while" "(" Expression ")" ";"
+;
 
-void ForStatement():
-{}
-{
+ForStatement :
   "for" "("
   (
-      LOOKAHEAD(Modifiers() Type() <IDENTIFIER> ":")
-      Modifiers() Type() <IDENTIFIER> ":" Expression() 
+      LOOKAHEAD(Modifiers Type <IDENTIFIER> ":")
+      Modifiers Type <IDENTIFIER> ":" Expression 
     |
-     [ ForInit() ] ";" [ Expression() ] ";" [ ForUpdate() ]
+     [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
   )
 
-  ")" Statement()
-}
+  ")" Statement
+;
 
-void ForInit():
-{}
-{
-  LOOKAHEAD( Modifiers() Type() <IDENTIFIER> )
-  LocalVariableDeclaration()
+ForInit :
+  LOOKAHEAD( Modifiers Type <IDENTIFIER> )
+  LocalVariableDeclaration
 |
-  StatementExpressionList()
-}
+  StatementExpressionList
+;
 
-void StatementExpressionList():
-{}
-{
-  StatementExpression() ( "," StatementExpression() )*
-}
+StatementExpressionList :
+  StatementExpression ( "," StatementExpression )*
+;
 
-void ForUpdate():
-{}
-{
-  StatementExpressionList()
-}
+ForUpdate :
+  StatementExpressionList
+;
 
-void BreakStatement():
-{}
-{
+BreakStatement :
   "break" [ <IDENTIFIER> ] ";"
-}
+;
 
-void ContinueStatement():
-{}
-{
+ContinueStatement :
   "continue" [ <IDENTIFIER> ] ";"
-}
+;
 
-void ReturnStatement() :
-{}
-{
+ReturnStatement :
   "return"
   [
-    Expression()
+    Expression
   ]
   ";"
-}
+;
 
-void ThrowStatement() :
-{ }
-{
+ThrowStatement :
  "throw"
-  Expression()
+  Expression
  ";"
-}
+;
 
-void SynchronizedStatement():
-{}
-{
-  "synchronized" "(" Expression() ")" Block()
-}
-ClassicTryStatement ClassicTryStatement():
+SynchronizedStatement :
+  "synchronized" "(" Expression ")" Block
+;
+
+ClassicTryStatement ClassicTryStatement :
 /*
  * Semantic check required here to make sure that at least one
  * finally/catch is present.
  */
-{
-}
-{
   "try"
-
-  Block() 
+  Block 
   (
-     FinallyBlock()
+     FinallyBlock
      |
      (
-        (CatchBlock())+ 
-        [FinallyBlock()]
+        (CatchBlock)+ 
+        [FinallyBlock]
      )
   )
   {
       return CURRENT_NODE;
   }
-}
+;
 
-TryWithResources TryWithResources() :
-{}
-{
+TryWithResources TryWithResources :
    "try"
    "("
      (
-         SCAN LocalVariableDeclaration()
+         SCAN LocalVariableDeclaration
          |
-         Name()
+         Name
       )
       (
         ";"
-	   [
-	      SCAN LocalVariableDeclaration()
-	      |
-	      Name()
-	   ]
+       [
+          SCAN LocalVariableDeclaration
+          |
+          Name
+       ]
      )*
     ")"
-    Block()
-    (CatchBlock())*
-    [FinallyBlock()]
+    Block
+    (CatchBlock)*
+    [FinallyBlock]
     {
        return CURRENT_NODE;
     }
-}
+;
 
-CatchBlock CatchBlock() :
-{}
-{
+CatchBlock CatchBlock :
     "catch"
     "("
     ["final"]
-    ClassOrInterfaceType() ("|" ClassOrInterfaceType())* VariableDeclaratorId()
+    ClassOrInterfaceType ("|" ClassOrInterfaceType)* VariableDeclaratorId
     ")"
-    Block() 
+    Block 
     {
         return CURRENT_NODE;
     } 
-}
+;
 
 INJECT(CatchBlock) : {}
 {
@@ -2101,14 +1837,12 @@ INJECT(CatchBlock) : {}
     }
 }
 
-FinallyBlock FinallyBlock() :
-{}
-{
-    "finally" Block() 
+FinallyBlock FinallyBlock :
+    "finally" Block
     {
         return CURRENT_NODE;
     }
-}
+;
 
 INJECT(FinallyBlock) : {}
 {
@@ -2120,134 +1854,106 @@ INJECT(FinallyBlock) : {}
 
 /* Annotation syntax follows. */
 
-Annotation Annotation() #Annotation :
-{}
-{
-   (LOOKAHEAD( "@" Name() "(" ( <IDENTIFIER> "=" | ")" ))
-   NormalAnnotation()
+Annotation Annotation #Annotation :
+   (LOOKAHEAD( "@" Name "(" ( <IDENTIFIER> "=" | ")" ))
+   NormalAnnotation
  |
-   LOOKAHEAD( "@" Name() "(" )
-   SingleMemberAnnotation()
+   LOOKAHEAD( "@" Name "(" )
+   SingleMemberAnnotation
  |
-   MarkerAnnotation())
+   MarkerAnnotation)
    {
       return CURRENT_NODE;
    }
-}
+;
 
-void NormalAnnotation() #void :
-{}
-{
-   "@" Name() "(" [ MemberValuePairs() ] ")"
-}
+NormalAnnotation #void :
+   "@" Name "(" [ MemberValuePairs ] ")"
+;
 
-void MarkerAnnotation() #void:
-{}
-{
-  "@" Name()
-}
+MarkerAnnotation #void :
+  "@" Name
+;
 
-void SingleMemberAnnotation() #void :
-{}
-{
-  "@" Name() "(" MemberValue() ")"
-}
+SingleMemberAnnotation #void :
+  "@" Name "(" MemberValue ")"
+;
 
-void MemberValuePairs():
-{}
-{
-   MemberValuePair() ( "," MemberValuePair() )*
-}
+MemberValuePairs :
+   MemberValuePair ( "," MemberValuePair )*
+;
 
-void MemberValuePair():
-{}
-{
-    <IDENTIFIER> "=" MemberValue()
-}
+MemberValuePair :
+    <IDENTIFIER> "=" MemberValue
+;
 
-void MemberValue():
-{}
-{
-   Annotation()
+MemberValue :
+   Annotation
+  |
+   MemberValueArrayInitializer
  |
-   MemberValueArrayInitializer()
- |
-  TernaryExpression()
-}
+  TernaryExpression
+;
 
-void  MemberValueArrayInitializer():
-{}
-{
+MemberValueArrayInitializer :
   LOOKAHEAD(2) "{" "}"
   |
-  "{" MemberValue() ( LOOKAHEAD(2) "," MemberValue() )* [ "," ] "}"
-}
+  "{" MemberValue ( LOOKAHEAD(2) "," MemberValue )* [ "," ] "}"
+;
 
 
 /* Annotation Types. */
 
-void AnnotationTypeDeclaration() :
-{}
-{
-  "@" "interface" <IDENTIFIER> AnnotationTypeBody()
-}
+AnnotationTypeDeclaration :
+  "@" "interface" <IDENTIFIER> AnnotationTypeBody
+;
 
-void AnnotationTypeBody():
-{}
-{
-  "{" ( AnnotationTypeMemberDeclaration() )* "}"
-}
+AnnotationTypeBody :
+  "{" ( AnnotationTypeMemberDeclaration )* "}"
+;
 
-void AnnotationTypeMemberDeclaration():
-{}
-{
- Modifiers()
+AnnotationTypeMemberDeclaration :
+ Modifiers
  (
-   LOOKAHEAD(Type() <IDENTIFIER> "(")
-   Type() <IDENTIFIER> "(" ")" [ DefaultValue() ] ";"
+   LOOKAHEAD(Type <IDENTIFIER> "(")
+   Type <IDENTIFIER> "(" ")" [ DefaultValue ] ";"
   |
-   ClassDeclaration()
+   ClassDeclaration
   |
-   InterfaceDeclaration()
+   InterfaceDeclaration
   |
-   EnumDeclaration()
+   EnumDeclaration
   |
-   AnnotationTypeDeclaration()
+   AnnotationTypeDeclaration
   |
-   FieldDeclaration()
+   FieldDeclaration
  )
  |
-   ( ";" )
-}
+  ";" 
+;
 
-void DefaultValue():
-{}
-{
-  "default" MemberValue()
-}
+DefaultValue :
+  "default" MemberValue
+;
 
-LambdaExpression LambdaExpression() :
-{}
-{
-  LambdaLHS()
+LambdaExpression LambdaExpression :
+  LambdaLHS
   "->"
-  LambdaRHS()
+  LambdaRHS
   {
      return CURRENT_NODE;
   }
-}
+;
 
-void LambdaLHS() : {}
-{
-   LOOKAHEAD(SimpleLambdaLHS() "->")
-   SimpleLambdaLHS()
+LambdaLHS :
+   LOOKAHEAD(SimpleLambdaLHS "->")
+   SimpleLambdaLHS
    |
-   LOOKAHEAD(FormalLambdaLHS() "->")
-   FormalLambdaLHS()
-}
+   LOOKAHEAD(FormalLambdaLHS "->")
+   FormalLambdaLHS
+;
 
-void SimpleLambdaLHS() #void : {}
-{
+SimpleLambdaLHS #void :
    <IDENTIFIER>
    |
    (
@@ -2255,32 +1961,26 @@ void SimpleLambdaLHS() #void : {}
      [<IDENTIFIER>(","<IDENTIFIER>)*]
      ")"
    )
-}
+;
 
-void FormalLambdaLHS() #FormalParameters : {}
-{
+FormalLambdaLHS #FormalParameters : 
    "("
-       Type() VariableDeclaratorId()
+       Type VariableDeclaratorId
        (
-         "," Type() VariableDeclaratorId()
+         "," Type VariableDeclaratorId
        )*
    ")"
-}
+;
 
-void LambdaRHS() :
-{}
-{
-  Expression()
+LambdaRHS :
+  Expression
   |
-  Block()
-}
-
-
+  Block
+;
 
 /* IDENTIFIERS */
 
 TOKEN :
-{
   < IDENTIFIER: <LETTER> (<PART_LETTER>)* > #Identifier
   |
   < #LETTER:
@@ -2925,4 +2625,4 @@ TOKEN :
          "\ufff9"-"\ufffb"
       ]
   >
-}
+;

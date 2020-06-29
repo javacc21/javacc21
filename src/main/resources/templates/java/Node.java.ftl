@@ -429,15 +429,19 @@ public interface Node extends Comparable<Node>
 	 		}
 		}
 		
+		public final void recurse(Node node) {
+            for (Node child : node.children()) {
+                visit(child);
+            }
+		}
+		
 		/**
 		 * If there is no specific method to visit this node type,
 		 * it just uses this method. The default base implementation
 		 * is just to recurse over the nodes.
 		 */
 		public void fallback(Node node) {
-		    for (Node child : node.children()) {
-		        visit(child);
-		    }
+		    recurse(node);
 		}
     }
 }
