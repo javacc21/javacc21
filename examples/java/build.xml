@@ -8,7 +8,7 @@
 </target>
 
 <target name="init">
-   <uptodate property="javaparser.uptodate" srcfile="../../src/main/grammars/Java_new_syntax.javacc" targetfile="com/javaparser/JavaParser.java"
+   <uptodate property="javaparser.uptodate" srcfile="../../src/main/grammars/Java.javacc" targetfile="com/javaparser/JavaParser.java"
 />
 </target>
 
@@ -16,7 +16,7 @@
   <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
     <arg value="-q"/>
     <arg value="-BASE_SRC_DIR=${basedir}/../../examples/java" />
-    <arg value="${basedir}/../../src/main/grammars/Java_new_syntax.javacc"/>
+    <arg value="${basedir}/../../src/main/grammars/Java.javacc"/>
   </java>
 </target>
  
