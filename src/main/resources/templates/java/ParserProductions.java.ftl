@@ -55,7 +55,6 @@
 
 ;
 [#macro BuildLookaheads]
-  static private final int INDEFINITE = Integer.MAX_VALUE;
   private Token currentLookaheadToken;
   private int remainingLookahead;
   private boolean semanticLookahead; 
@@ -72,8 +71,6 @@
   }
 //====================================
  // Lookahead Routines
- // If you pass in a positive number to the routine, it resets
- // the remaining lookahead amount to that number.
  //====================================
    [#list parserData.scanAheadExpansions as expansion]
         [@buildScanRoutine expansion, expansion.maxScanAhead /]
@@ -446,26 +443,32 @@
       [#if expansion.requiresScanAhead]
          [#if expansion_index = 0]
             [#set indentLevel = indentLevel+1]
+            remainingLookahead = ${expansion.lookaheadAmount};
+            currentLookaheadToken = current_token;
              if (
              [#if expansion.hasSemanticLookahead]
                (${expansion.semanticLookahead}) &&
             [/#if]
         [#elseif !inPhase1]
-            } else if (
+            } else {
+            remainingLookahead = ${expansion.lookaheadAmount};
+            currentLookaheadToken = current_token;
+            [#set indentLevel = indentLevel+1]
+              if (
              [#if expansion.hasSemanticLookahead]
                (${expansion.semanticLookahead}) &&
             [/#if]
          [#else]
             default:
-               if (
+            remainingLookahead = ${expansion.lookaheadAmount};
+            currentLookaheadToken = current_token;
+            if (
            [#if expansion.hasSemanticLookahead]
                (${expansion.semanticLookahead}) &&
            [/#if]
                 [#set indentLevel = indentLevel+1]
          [/#if]
-                [#var lookaheadAmount = expansion.lookaheadAmount]
-                [#if lookaheadAmount == 2147483647][#set lookaheadAmount = "INDEFINITE"][/#if]
-                ${expansion.lookaheadExpansion.scanRoutineName}(${lookaheadAmount})
+                ${expansion.lookaheadExpansion.scanRoutineName}()
                ) { 
                    ${actions[expansion_index]}
          [#set inPhase1 = false]
@@ -525,10 +528,11 @@
           (${expansion.semanticLookahead}) &&
         [/#if]  
         [#if expansion.negated]![/#if]
-        ${expansion.lookaheadExpansion.scanRoutineName}(${expansion.lookaheadAmount})
+        ${expansion.lookaheadExpansion.scanRoutineName}()
       [/#set]
-      [#set condition = condition?replace("2147483647", "INDEFINITE")]
-   [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]
+     currentLookaheadToken = current_token;
+     remainingLookahead = ${expansion.lookaheadAmount};
+    [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]
       [@newVar type="TokenType" init="nextTokenType()"/]
       [#set condition]
       [#if expansion.firstSetTokenNames?size>2]
@@ -571,11 +575,7 @@
 [#var currentProduction]
 
 [#macro buildScanRoutine expansion count]
-     private boolean ${expansion.scanRoutineName}(int lookaheadAmount) {
-     if (lookaheadAmount > 0) {
-         remainingLookahead = lookaheadAmount; 
-         currentLookaheadToken = current_token;
-     }
+     private boolean ${expansion.scanRoutineName}() {
      if (remainingLookahead <=0) return true;
       [@buildScanCode expansion, count/]
       return true;
@@ -683,7 +683,7 @@
    [#if expansion.isRegexp]
        scanToken(TokenType.${expansion.label})
    [#else]
-      ${expansion.scanRoutineName}(0)
+      ${expansion.scanRoutineName}()
    [/#if]
 [/#macro]
 

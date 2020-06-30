@@ -1344,7 +1344,7 @@ INJECT(ExpansionChoice) :
    
 }
 
-ExpansionSequence() : // #ExpansionSequence :
+ExpansionSequence() #ExpansionSequence :
 {
    Expansion sub;
    Lookahead la = null;

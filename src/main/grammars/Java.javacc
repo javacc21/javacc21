@@ -1098,7 +1098,7 @@ Initializer :
  */
 
 Type :
-   LOOKAHEAD(2, {2+2==4}) ReferenceType
+   LOOKAHEAD(2, ReferenceType, {2+2==4}) ReferenceType
    |
    LOOKAHEAD(1)
    PrimitiveType
@@ -1837,12 +1837,7 @@ INJECT(CatchBlock) : {}
     }
 }
 
-FinallyBlock FinallyBlock :
-    "finally" Block
-    {
-        return CURRENT_NODE;
-    }
-;
+FinallyBlock : "finally" Block;
 
 INJECT(FinallyBlock) : {}
 {
@@ -1883,20 +1878,18 @@ MemberValuePairs :
    MemberValuePair ( "," MemberValuePair )*
 ;
 
-MemberValuePair :
-    <IDENTIFIER> "=" MemberValue
-;
+MemberValuePair :  <IDENTIFIER> "=" MemberValue;
 
 MemberValue :
    Annotation
-  |
+   |
    MemberValueArrayInitializer
- |
-  TernaryExpression
+   | 
+   TernaryExpression
 ;
 
 MemberValueArrayInitializer :
-  LOOKAHEAD(2) "{" "}"
+  SCAN "{" "}"
   |
   "{" MemberValue ( LOOKAHEAD(2) "," MemberValue )* [ "," ] "}"
 ;
