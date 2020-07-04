@@ -731,18 +731,18 @@ void CodeInjection2() :
 void Options() #Options : 
 {}
 {
-    (option_binding)+
+    (SCAN Setting)+
 }
 
 void OptionsBlock() #Options :
 {}
 {
     <_OPTIONS> [":"]
-    "{" ( option_binding() )* "}"
+    "{" ( Setting )* "}"
     {token_source.optionsSeen = true;}
 }
 
-void option_binding() #void :
+void Setting() #void :
 {
 	  String option_name;
 	  Token name, t=null;
@@ -768,11 +768,11 @@ void option_binding() #void :
         |
         t="false" {value=false;}
         |
-        t=<INTEGER_LITERAL> {value = Integer.valueOf(t.getImage());}
+        t= <INTEGER_LITERAL> {value = Integer.valueOf(t.getImage());}
         |
-        t=<STRING_LITERAL> {value = removeEscapesAndQuotes(t);}
+        t= <STRING_LITERAL> {value = removeEscapesAndQuotes(t);}
         |
-        t=<IDENTIFIER> {value = t.getImage();}
+        t= <IDENTIFIER> {value = t.getImage();}
      )
   ]  
   ";"
