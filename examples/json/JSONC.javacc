@@ -1,15 +1,13 @@
 /*
  * A JSONC (JSON with comments) grammar 
  */
-options {
-    PARSER_PACKAGE="com.javacc.jsonc";
-    PARSER_CLASS="JSONCParser";
-    SPECIAL_TOKENS_ARE_NODES;
-    DEFAULT_LEXICAL_STATE="JSON";
-    FAULT_TOLERANT=true;
-}
+PARSER_PACKAGE="com.javacc.jsonc";
+PARSER_CLASS=JSONCParser;
+SPECIAL_TOKENS_ARE_NODES;
+DEFAULT_LEXICAL_STATE=JSON;
+FAULT_TOLERANT=true;
 
-UNPARSED_TOKEN #Comment :
+UNPARSED #Comment :
     <SINGLE_LINE_COMMENT : "//" (~["\n","\r"])*  ("\n"|"\r"|"\r\n") >
     |
     <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">

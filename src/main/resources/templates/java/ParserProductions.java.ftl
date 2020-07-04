@@ -53,7 +53,6 @@
   [/#list]
 [/#macro]
 
-;
 [#macro BuildLookaheads]
   private Token currentLookaheadToken;
   private int remainingLookahead;

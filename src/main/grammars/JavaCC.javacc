@@ -563,7 +563,12 @@ GrammarFile Root() throws IOException #GrammarFile :
     TokenManagerDecls decls;
 }
 {
-   [Options()]
+   [
+      LOOKAHEAD(2)
+      Options()
+      |
+      OptionsBlock() 
+   ]
    {
         if (!grammar.isInInclude()) {
             grammar.getOptions().normalize();
@@ -723,7 +728,13 @@ void CodeInjection2() :
         }
 }
 
-void Options() :
+void Options() #Options : 
+{}
+{
+    (option_binding)+
+}
+
+void OptionsBlock() #Options :
 {}
 {
     <_OPTIONS> [":"]
@@ -741,7 +752,7 @@ void option_binding() #void :
 }
 {
   ( 
-     name=<IDENTIFIER> 
+     name = <IDENTIFIER> 
      | 
      name = <_LOOKAHEAD>
      |
@@ -1055,7 +1066,7 @@ TokenProduction TokenProduction() #TokenProduction :
     Token t = null;
     String tokenClassName = null;
     String firstSpecifiedLexicalState = null;
-    boolean multipleStatesSpecified = false;
+    boolean multipleStatesSpecified = false, useBraces = false;
 }
 {
   [
@@ -1078,12 +1089,16 @@ TokenProduction TokenProduction() #TokenProduction :
           }
         }
   ]
-  [t=<HASH_ID> {tokenClassName=t.getImage().substring(1);}] 
+  [t = <HASH_ID> {tokenClassName=t.getImage().substring(1);}] 
   ":"
-  ["{"]
+  ["{" {useBraces = true;}]
    RegexpSpec(CURRENT_NODE, tokenClassName)
    ( "|" RegexpSpec(CURRENT_NODE, tokenClassName) )*
-   ("}" | ";")
+   (
+      LOOKAHEAD(1, {useBraces}) "}" 
+      | 
+      ";"
+   )
    {
       if (!multipleStatesSpecified) {
           if (firstSpecifiedLexicalState == null) {

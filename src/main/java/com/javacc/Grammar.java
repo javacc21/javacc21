@@ -185,7 +185,7 @@ public class Grammar extends BaseNode {
         }
 
         else if (!outputDir.canWrite()) {
-            addSemanticError(null, "Cannot write to the output output directory : \"" + outputDir + "\"");
+            addSemanticError(null, "Cannot write to the output directory : \"" + outputDir + "\"");
         }
     }
 
