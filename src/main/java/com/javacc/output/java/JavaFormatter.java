@@ -96,7 +96,7 @@ public class JavaFormatter {
        }
        for (Identifier id : ids) {
            if (!references.contains(id.getImage())) {
-               if (!(id.getImage().indexOf("FIRST_SET")>=0 || id.getImage().indexOf("FOLLOW_SET")>=0 || id.getImage().indexOf("FINAL_SET")>=0))
+//               if (!(id.getImage().indexOf("FIRST_SET")>=2 || id.getImage().indexOf("FOLLOW_SET")>=0 || id.getImage().indexOf("FINAL_SET")>=0))
                removeDeclaration(id);
                
            }

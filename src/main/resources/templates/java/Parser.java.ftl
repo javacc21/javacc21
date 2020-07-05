@@ -64,6 +64,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
     
 private Token current_token;
+private TokenType nextTokenType;
 private Token lastParsedToken;
 //private Token nextToken; //REVISIT
 
@@ -158,7 +159,8 @@ public boolean isCancelled() {return cancelled;}
         Token nextToken = token_source.getNextToken();
         current_token.setNext(nextToken);
     }
-    return current_token.getNext().getType();
+    nextTokenType = current_token.getNext().getType();
+    return nextTokenType;
   }
    
  

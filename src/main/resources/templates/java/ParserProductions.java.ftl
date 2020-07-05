@@ -421,6 +421,7 @@
    [#-- TODO: This macro is too gnarly, need to break it up and simplify it  --]
    [#var actions=[], expansions = []]
    [#var defaultAction, inPhase1 = false, indentLevel = 0]
+   // Not in phase 1
    [#set defaultAction]
        pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
        throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack); 
@@ -438,6 +439,7 @@
          [#break]
       [/#if]
    [/#list]
+   nextTokenType = nextTokenType();
    [#list expansions as expansion]
       [#if expansion.requiresScanAhead]
          [#if expansion_index = 0]
@@ -458,33 +460,30 @@
                (${expansion.semanticLookahead}) &&
             [/#if]
          [#else]
-            default:
+            [#set indentLevel = indentLevel+1]
+            else {
+            [#set indentLevel = indentLevel +1]
             remainingLookahead = ${expansion.lookaheadAmount};
             currentLookaheadToken = current_token;
             if (
            [#if expansion.hasSemanticLookahead]
                (${expansion.semanticLookahead}) &&
            [/#if]
-                [#set indentLevel = indentLevel+1]
          [/#if]
                 ${expansion.lookaheadExpansion.scanRoutineName}()
                ) { 
                    ${actions[expansion_index]}
          [#set inPhase1 = false]
        [#elseif expansion.lookaheadAmount = 1&& !expansion.hasSemanticLookahead &&!expansion.lookaheadExpansion.possiblyEmpty]
-          [#if !inPhase1]
-                 [#if expansion_index != 0]
+          [#if !inPhase1 && expansion_index >0]
                  } else {
-                 [/#if]
-                 switch (nextTokenType()) { 
-              [#set indentLevel = indentLevel+1]
           [/#if]
-          [#list expansion.firstSetTokenNames as tokenName]
-                 case ${tokenName}: 
-          [/#list]
-                    ${actions[expansion_index]}
-                    break;
+          [#if expansion_index !=0 && inPhase1]else[/#if]
+               if ([@expansionCondition expansion /]) {
+                  ${actions[expansion_index]}
+               }
           [#set inPhase1 = true]
+          // In phase1
     [#else]
           [#if expansion_index = 0]
              if (
@@ -492,13 +491,13 @@
           [#elseif !inPhase1]
              } else if (
           [#else]
-             default:
-              if (
+          else    if (
                 [#set indentLevel = indentLevel+1]
           [/#if]
                   ${expansion.semanticLookahead!}) {
                       ${actions[expansion_index]}
           [#set inPhase1 = false]
+          // Not in phase1 now
       [/#if]
    [/#list]
       [#if expansions?size = 0]
@@ -507,14 +506,27 @@
            } else {
              ${defaultAction}
       [#else]
-             default:
+          else {
                 ${defaultAction}
+          }
       [/#if]
       [#if indentLevel != 0]
+      // Indent level is ${indentLevel}
          [#list 1..indentLevel as unused]
            }
          [/#list]
       [/#if]
+[/#macro]
+
+[#macro expansionCondition expansion]
+  [#if expansion.firstSetTokenNames?size < 5] 
+     [#list expansion.firstSetTokenNames as name]
+       nextTokenType == TokenType.${name} 
+       [#if name_has_next] || [/#if] 
+     [/#list]
+  [#else]
+     ${expansion.firstSetVarName}.contains(nextTokenType()) 
+  [/#if]
 [/#macro]
 
 [#macro BuildBinaryChoiceCode expansion action fallback]
