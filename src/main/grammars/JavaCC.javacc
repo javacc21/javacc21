@@ -564,10 +564,10 @@ GrammarFile Root() throws IOException #GrammarFile :
 }
 {
    [
-      LOOKAHEAD(2)
-      Options()
-      |
-      OptionsBlock() 
+     LOOKAHEAD(<_OPTIONS> | Setting)
+     (
+       OptionsBlock | Options
+     )
    ]
    {
         if (!grammar.isInInclude()) {
