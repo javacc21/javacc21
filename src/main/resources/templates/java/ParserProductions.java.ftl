@@ -57,7 +57,7 @@
   private Token currentLookaheadToken;
   private int remainingLookahead;
   private boolean semanticLookahead; 
-  private boolean scanToken(TokenType type) {
+  private final boolean scanToken(TokenType type) {
        if (remainingLookahead <=0) return true;
        if (currentLookaheadToken.getNext() == null) {
         Token nextToken = token_source.getNextToken();
@@ -586,7 +586,7 @@
 [#var currentProduction]
 
 [#macro buildScanRoutine expansion count]
-     private boolean ${expansion.scanRoutineName}() {
+     private final boolean ${expansion.scanRoutineName}() {
      if (remainingLookahead <=0) return true;
       [@buildScanCode expansion, count/]
       return true;
@@ -595,9 +595,6 @@
 
 [#macro buildScanCode expansion count]
   [#var classname=expansion.simpleName]
-   [#--  --if classname != "ExpansionSequence"]
-   if (remainingLookahead ==0) return true;
-   [/#if--] 
     [#if expansion.isRegexp]
       [@ScanCodeRegexp expansion/]
    [#elseif classname = "ExpansionSequence"]

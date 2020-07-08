@@ -1494,6 +1494,7 @@ Lookahead Lookahead() #Lookahead :
 {
   <_LOOKAHEAD>
   [
+    LOOKAHEAD(~("(" ExpansionChoice ")" (<BIT_OR>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>)), {getToken(1).getType() == TokenType.LPAREN})
    "("  {token_source.inJavaCode = true;}
       [
         <INTEGER_LITERAL>
