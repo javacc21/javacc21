@@ -1492,7 +1492,7 @@ Lookahead Lookahead() #Lookahead :
     CURRENT_NODE.setAmount(Integer.MAX_VALUE);
 }
 {
-  <_LOOKAHEAD>
+<_LOOKAHEAD>
   [
     LOOKAHEAD(~("(" ExpansionChoice ")" (<BIT_OR>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>)), {getToken(1).getType() == TokenType.LPAREN})
    "("  {token_source.inJavaCode = true;}
@@ -1606,11 +1606,12 @@ Expansion ExpansionUnit() :
   |
   result=TryBlock
   |
+  LOOKAHEAD("ATTEMPT", {!inLookahead})
   result=AttemptBlock()
   |
   LOOKAHEAD([PrimaryExpression() "="] (<STRING_LITERAL>|"<"))
   [
-    LOOKAHEAD(PrimaryExpression() "=")
+    LOOKAHEAD(PrimaryExpression() "=", {!inLookahead})
     lhs=PrimaryExpression()
     "="
   ]
