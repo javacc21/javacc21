@@ -302,7 +302,9 @@ TOKEN :
   |
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
   |
-  < _LOOKAHEAD: "LOOKAHEAD"| "SCAN" > #JavaCCKeyWord
+  < _LOOKAHEAD: "LOOKAHEAD" > #JavaCCKeyWord
+  |
+  < _SCAN : "SCAN" > #JavaCCKeyWord
   |
   < _IGNORE_CASE: "IGNORE_CASE" > #JavaCCKeyWord
   |
@@ -1376,7 +1378,7 @@ ExpansionSequence() #ExpansionSequence :
      }
   ]
   (
-     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>))
+     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<LAMBDA>))
       sub=ExpansionUnit()
       {
           pokeNode(sub);
@@ -1484,17 +1486,67 @@ INJECT(ExpansionSequence) :
    
 }
 
-Lookahead Lookahead() #Lookahead :
+Lookahead Lookahead #void :
+{
+    Lookahead result;
+    this.inLookahead = true;
+}
+   (
+       result = ScanAhead
+       |
+       result = LegacyLookahead
+   )
+   {
+       this.inLookahead = false;
+       return result;
+   }
+;
+
+Lookahead ScanAhead #Lookahead : 
+{
+   CURRENT_NODE.setAmount(Integer.MAX_VALUE);
+   Token amountToken=null;
+   boolean hasSemanticLookahead = false;
+   Expansion expansion = null;
+}
+<_SCAN> 
+[
+    amountToken= <INTEGER_LITERAL>
+    {
+        CURRENT_NODE.setAmount(Integer.parseInt(amountToken.getImage()));
+    }
+]
+[
+    "{" 
+    Expression {hasSemanticLookahead = true;}
+    "}"
+]
+[
+    SCAN
+    ["~" {CURRENT_NODE.setNegated(true);}] 
+    ExpansionChoice() {expansion = (Expansion) popNode();}
+    "->"
+    {
+       CURRENT_NODE.setExpansion(expansion);
+       expansion.setLookahead(CURRENT_NODE);
+    }
+]
+{
+    if (amountToken == null && expansion== null && hasSemanticLookahead) {
+        CURRENT_NODE.setAmount(0);
+    }
+    return CURRENT_NODE;
+};   
+
+Lookahead LegacyLookahead() #Lookahead :
 {
     boolean commaAtEnd = false, empty = true;
     Expansion expansion;
-    this.inLookahead = true;
     CURRENT_NODE.setAmount(Integer.MAX_VALUE);
 }
 {
-<_LOOKAHEAD>
+  <_LOOKAHEAD>
   [
-    LOOKAHEAD(~("(" ExpansionChoice ")" (<BIT_OR>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>)), {getToken(1).getType() == TokenType.LPAREN})
    "("  {token_source.inJavaCode = true;}
       [
         <INTEGER_LITERAL>
@@ -1510,7 +1562,7 @@ Lookahead Lookahead() #Lookahead :
       [ 
         LOOKAHEAD(~(<RPAREN>|<LBRACE>))
         ["~" {CURRENT_NODE.setNegated(true);}] 
-        ExpansionChoice() 
+        ExpansionChoice()
         {
            expansion = (Expansion) popNode();
            empty = false; commaAtEnd = false;
@@ -1533,7 +1585,6 @@ Lookahead Lookahead() #Lookahead :
      ")" {token_source.inJavaCode = false;}
   ]
   {
-     this.inLookahead = false;
      return CURRENT_NODE;
   }
 }

@@ -646,12 +646,10 @@ void If() #IfStatement : {}
     <CLOSE_TAG>
     Block()
     (
-       LOOKAHEAD(2)
-        ElseIf()
+       SCAN 2 ElseIf()
     )*
     [
-       LOOKAHEAD(2)
-         Else()
+       SCAN 2 Else()
     ]
     DirectiveEnd("if")
 }
@@ -677,12 +675,10 @@ void Switch() #SwitchInstruction : {}
     <CLOSE_TAG>
     [<WHITESPACE>]
     (
-     LOOKAHEAD(2)
-      Case()
+     SCAN 2 Case
     )*
     [
-     LOOKAHEAD(2)
-      Default()
+     SCAN 2 Default
     ]
     DirectiveEnd("switch")
 }
@@ -690,15 +686,13 @@ void Switch() #SwitchInstruction : {}
 void Case() #CaseInstruction : {}
 {
     <FTL_DIRECTIVE_OPEN><CASE><BLANK>
-    Expression()
-    <CLOSE_TAG>
-    Block()
+    Expression <CLOSE_TAG> Block
 }
 
 void Default() #DefaultInstruction : {}
 {
     <FTL_DIRECTIVE_OPEN><DEFAUL><CLOSE_TAG>
-    Block()
+    Block
 }
 
 void List() #ListInstruction : {}
@@ -799,7 +793,6 @@ void Text() :
 }
 {
     (
-       LOOKAHEAD(1)
       (t=<PRINTABLE_CHARS>|
        t=<WHITESPACE>|
        t=<SPECIAL_CHAR>)
@@ -817,8 +810,8 @@ void Recover() #RecoverBlock : {}
 void TopLevelDirective() #void : {}
 {
    (
-     LOOKAHEAD(2) Assignment() |
-     LOOKAHEAD(2) Attempt()|
+     SCAN 2 Assignment() |
+     SCAN 2 Attempt()|
      LOOKAHEAD(2) Comment()|
      LOOKAHEAD(2) Compress() |
      LOOKAHEAD(2) Embed() |
@@ -881,7 +874,7 @@ void EndUserDirective(Token startToken) #void : {}
 void Block() : {}
 {
   (
-    LOOKAHEAD(2)
+    SCAN 2
     (
      Text()
      |
@@ -915,8 +908,8 @@ void FTLHeader() : {}
 void Root() : {}
 {
     [
-       LOOKAHEAD([<WHITESPACE>]<FTL_DIRECTIVE_OPEN><FTL>)
-           [<WHITESPACE>]
+        SCAN [<WHITESPACE>]<FTL_DIRECTIVE_OPEN><FTL> ->
+        [<WHITESPACE>]
         FTLHeader() {token_source.rightAfterHeader = true;}
     ]
     Block()
