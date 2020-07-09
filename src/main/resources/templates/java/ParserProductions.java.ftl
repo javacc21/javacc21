@@ -401,12 +401,22 @@
     [/#if]
 [/#macro]
 
+[#var inFirstVarName = "", inFirstIndex =0]
+
 [#macro BuildCodeOneOrMore oom]
-   [#var nestedExp=oom.nestedExpansion]
+   [#var nestedExp=oom.nestedExpansion, prevInFirstVarName = inFirstVarName/]
+   [#if nestedExp.simpleName = "ExpansionChoice"]
+     [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex +1 /]
+     boolean ${inFirstVarName} = true; 
+   [/#if]
    while (true) {
       [@BuildCode nestedExp/]
+      [#if nestedExp.simpleName = "ExpansionChoice"]
+         ${inFirstVarName} = false;
+      [/#if]
       [@BuildBinaryChoiceCode oom, null, "break;"/]
    }
+   [#set inFirstVarName = prevInFirstVarName /]
 [/#macro]
 
 [#macro BuildCodeZeroOrMore zom]
@@ -423,8 +433,15 @@
    [#var defaultAction, inPhase1 = false, indentLevel = 0]
    // Not in phase 1
    [#set defaultAction]
+      [#if choice.parent.simpleName = "ZeroOrOne" || choice.parent.simpleName = "ZeroOrMore"]
+        // Do nothing by default
+        ;                                  
+      [#else]
+        [#if choice.parent.simpleName = "OneOrMore"]if (${inFirstVarName}) { [/#if]
        pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
        throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack); 
+        [#if choice.parent.simpleName = "OneOrMore"]}[/#if]
+      [/#if]
    [/#set]
    [#list choice.choices as nested]
       [#var action]
