@@ -1488,17 +1488,12 @@ INJECT(ExpansionSequence) :
 
 Lookahead Lookahead #void :
 {
-    Lookahead result;
     this.inLookahead = true;
 }
-   (
-       result = ScanAhead
-       |
-       result = LegacyLookahead
-   )
+   (ScanAhead | LegacyLookahead)
    {
        this.inLookahead = false;
-       return result;
+       return (Lookahead) peekNode();
    }
 ;
 
@@ -1531,10 +1526,10 @@ Lookahead ScanAhead #Lookahead :
        expansion.setLookahead(CURRENT_NODE);
     }
 ]
+[
+    SCAN 1 {expansion == null} "->"
+]
 {
-    if (amountToken == null && expansion== null && hasSemanticLookahead) {
-        CURRENT_NODE.setAmount(0);
-    }
     return CURRENT_NODE;
 };   
 

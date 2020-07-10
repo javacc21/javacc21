@@ -536,64 +536,38 @@
 [/#macro]
 
 [#macro expansionCondition expansion]
-  [#if expansion.firstSetTokenNames?size < 5] 
-     [#list expansion.firstSetTokenNames as name]
-       nextTokenType == TokenType.${name} 
-       [#if name_has_next] || [/#if] 
-     [/#list]
+  [#if expansion.requiresScanAhead]
+     [#if expansion.hasSemanticLookahead]
+          (${expansion.semanticLookahead}) &&
+     [/#if]  
+     [#if expansion.negated]![/#if]
+     ${expansion.lookaheadExpansion.scanRoutineName}()
   [#else]
-     ${expansion.firstSetVarName}.contains(nextTokenType()) 
+    [#if expansion.firstSetTokenNames?size < 5] 
+       [#list expansion.firstSetTokenNames as name]
+         nextTokenType == TokenType.${name} 
+         [#if name_has_next] || [/#if] 
+       [/#list]
+    [#else]
+       ${expansion.firstSetVarName}.contains(nextTokenType()) 
+    [/#if]
   [/#if]
 [/#macro]
 
 [#macro BuildBinaryChoiceCode expansion action fallback]
-   [#var emptyAction=!action?has_content]
-   [#var emptyFallback=!action?has_content]
-   [#var condition=expansion.semanticLookahead!]
    [#if expansion.requiresScanAhead]
-      [#set condition]
-        [#if expansion.semanticLookahead??]
-          (${expansion.semanticLookahead}) &&
-        [/#if]  
-        [#if expansion.negated]![/#if]
-        ${expansion.lookaheadExpansion.scanRoutineName}()
-      [/#set]
      currentLookaheadToken = current_token;
      remainingLookahead = ${expansion.lookaheadAmount};
-    [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]
-      [@newVar type="TokenType" init="nextTokenType()"/]
-      [#set condition]
-      [#if expansion.firstSetTokenNames?size>2]
-      ${expansion.firstSetVarName}.contains(tokentype${newVarIndex})
-      [#else]
-      [#list expansion.firstSetTokenNames as tokenName]
-             tokentype${newVarIndex} == TokenType.${tokenName} [#if tokenName_has_next]||[/#if]
-      [/#list]
-      [/#if]
-     [/#set]
+   [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]
+      nextTokenType = nextTokenType();
    [/#if]
-  [@ifelse condition, action, fallback/]
-[/#macro]
-
-[#macro ifelse condition action1 action2]
-   [#if condition?is_null || condition?trim?length = 0]
-      ${action1!}
-   [#else]
-      [#if action1?has_content]
-         if (${condition}) {
-            ${action1}
-         }
-        [#if action2?has_content]
-         else {
-            ${action2}
-         }
-        [/#if]
-      [#elseif action2?has_content]
-         if (!(${condition})) {
-            ${action2}
-         }
-      [/#if]
-   [/#if] 
+   if ([@expansionCondition expansion/]) {
+      ${action!}
+   }
+   [#if !fallback?has_content][#return][/#if] 
+   else {
+      ${fallback}
+   }
 [/#macro]
 
 [#var parserData=grammar.parserData]

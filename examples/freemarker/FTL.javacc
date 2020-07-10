@@ -646,10 +646,10 @@ void If() #IfStatement : {}
     <CLOSE_TAG>
     Block()
     (
-       SCAN 2 ElseIf()
+       SCAN 2 -> ElseIf()
     )*
     [
-       SCAN 2 Else()
+       SCAN 2 -> Else()
     ]
     DirectiveEnd("if")
 }
@@ -811,35 +811,35 @@ void TopLevelDirective() #void : {}
 {
    (
      SCAN 2 Assignment() |
-     SCAN 2 Attempt()|
-     LOOKAHEAD(2) Comment()|
-     LOOKAHEAD(2) Compress() |
-     LOOKAHEAD(2) Embed() |
-     LOOKAHEAD(2) ForEach()|
-     LOOKAHEAD(2) If() |
-     LOOKAHEAD(2) List() |
-     LOOKAHEAD(2) Include() |
-     LOOKAHEAD(2) Import() |
-     LOOKAHEAD(2) MacroDefinition() |
-     LOOKAHEAD(2) NoParse() |
-     LOOKAHEAD(2) Switch() |
-     LOOKAHEAD(2) Setting() |
-     LOOKAHEAD(2) Var()|
-     LOOKAHEAD(2) Break() |
-     LOOKAHEAD(2) Return() |
-     LOOKAHEAD(2) Stop() |
-     LOOKAHEAD(2) Flush() |
-     LOOKAHEAD(2) Trim()|
-     LOOKAHEAD(2) NoTrim()|
-     LOOKAHEAD(2) LeftTrim()|
-     LOOKAHEAD(2) RightTrim()|
-     LOOKAHEAD(2) TrimBlock() |
-     LOOKAHEAD(2) Nested() |
-     LOOKAHEAD(2) EscapeBlock() |
-     LOOKAHEAD(2) NoEscapeBlock() |
-     LOOKAHEAD(2) Visit() |
-     LOOKAHEAD(2) Recurse() |
-     LOOKAHEAD(2) FallBack()
+     SCAN 2 Attempt() |
+     SCAN 2 Comment()|
+     SCAN 2 Compress() |
+     SCAN 2 Embed() |
+     SCAN 2 ForEach()|
+     SCAN 2 If() |
+     SCAN 2 List() |
+     SCAN 2 Include() |
+     SCAN 2 Import() |
+     SCAN 2 MacroDefinition() |
+     SCAN 2 NoParse() |
+     SCAN 2 Switch() |
+     SCAN 2 Setting() |
+     SCAN 2 Var()|
+     SCAN 2 Break() |
+     SCAN 2 Return() |
+     SCAN 2 Stop() |
+     SCAN 2 Flush() |
+     SCAN 2 Trim()|
+     SCAN 2 NoTrim()|
+     SCAN 2 LeftTrim()|
+     SCAN 2 RightTrim()|
+     SCAN 2 TrimBlock() |
+     SCAN 2 Nested() |
+     SCAN 2 EscapeBlock() |
+     SCAN 2 NoEscapeBlock() |
+     SCAN 2 Visit() |
+     SCAN 2 Recurse() |
+     SCAN 2 FallBack()
    )
 }
 
@@ -861,7 +861,7 @@ void UserDirective() :
        (
           <CLOSE_TAG>
           Block()
-            EndUserDirective(startToken)
+          EndUserDirective(startToken)
        )
     )
 }
