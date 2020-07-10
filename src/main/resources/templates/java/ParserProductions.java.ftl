@@ -389,15 +389,13 @@
 
 
 [#macro BuildCodeZeroOrOne zoo]
-    [#var nestedExp=zoo.nestedExpansion]
     [#if zoo.alwaysSuccessful]
-       [@BuildCode nestedExp/]
+       [@BuildCode zoo.nestedExpansion /]
     [#else]
-       [#var expansionCode]
-       [#set expansionCode]
-          [@BuildCode nestedExp/]
-       [/#set]
-       [@BuildBinaryChoiceCode zoo, expansionCode, null/]
+       [@SetupLookahead zoo /]
+       if ([@expansionCondition zoo/]) {
+          [@BuildCode zoo.nestedExpansion/]
+       }
     [/#if]
 [/#macro]
 
@@ -409,27 +407,28 @@
      [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex +1 /]
      boolean ${inFirstVarName} = true; 
    [/#if]
-   while (true) {
+   do {
       [@BuildCode nestedExp/]
       [#if nestedExp.simpleName = "ExpansionChoice"]
          ${inFirstVarName} = false;
       [/#if]
-      [@BuildBinaryChoiceCode oom, null, "break;"/]
-   }
+      [@SetupLookahead nestedExp /]
+   } while([@expansionCondition oom /]);
    [#set inFirstVarName = prevInFirstVarName /]
 [/#macro]
 
 [#macro BuildCodeZeroOrMore zom]
     [#var nestedExp=zom.nestedExpansion]
-    while (true) {
-       [@BuildBinaryChoiceCode zom, null, "break;"/] 
+    [@SetupLookahead zom /]    
+    while (${expansionCondition(zom)}) {
        [@BuildCode nestedExp/]
+       [@SetupLookahead zom /]    
     }
 [/#macro]
 
 [[#macro BuildCodeChoice choice]
    [#-- TODO: This macro is too gnarly, need to break it up and simplify it  --]
-   [#var actions=[], expansions = []]
+   [#var expansions = []]
    [#var defaultAction, inPhase1 = false, indentLevel = 0]
    // Not in phase 1
    [#set defaultAction]
@@ -444,13 +443,8 @@
       [/#if]
    [/#set]
    [#list choice.choices as nested]
-      [#var action]
-      [#set action]
-         [@BuildCode nested/]
-      [/#set]
       [#if !nested.alwaysSuccessful]
          [#set expansions = expansions +[nested]]
-         [#set actions = actions+[action]]
       [#else]
          [#set defaultAction = action]
          [#break]
@@ -489,7 +483,7 @@
          [/#if]
                 ${expansion.lookaheadExpansion.scanRoutineName}()
                ) { 
-                   ${actions[expansion_index]}
+                   [@BuildCode expansion/]
          [#set inPhase1 = false]
        [#elseif expansion.lookaheadAmount = 1&& !expansion.hasSemanticLookahead &&!expansion.lookaheadExpansion.possiblyEmpty]
           [#if !inPhase1 && expansion_index >0]
@@ -497,7 +491,7 @@
           [/#if]
           [#if expansion_index !=0 && inPhase1]else[/#if]
                if ([@expansionCondition expansion /]) {
-                  ${actions[expansion_index]}
+                  [@BuildCode expansion /]
                }
           [#set inPhase1 = true]
           // In phase1
@@ -512,7 +506,7 @@
                 [#set indentLevel = indentLevel+1]
           [/#if]
                   ${expansion.semanticLookahead!}) {
-                      ${actions[expansion_index]}
+                      [@BuildCode expansion /]
           [#set inPhase1 = false]
           // Not in phase1 now
       [/#if]
@@ -535,6 +529,23 @@
       [/#if]
 [/#macro]
 
+[#--
+   Code that must be called before a call to a lookahead 
+   If this is the default single-token lookoahead, it's just 
+   nextTokenType() which sets up the nextTokenType variable.
+--]
+[#macro SetupLookahead expansion]
+   [#if expansion.requiresScanAhead]
+      currentLookaheadToken = current_token;
+      remainingLookahead = ${expansion.lookaheadAmount};
+   [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]
+      nextTokenType = nextTokenType();
+   [/#if]
+[/#macro]
+
+[#-- Macro to generate the condition for looking ahead,
+     including the default single-token lookahead
+--]
 [#macro expansionCondition expansion]
   [#if expansion.requiresScanAhead]
      [#if expansion.hasSemanticLookahead]
@@ -549,25 +560,9 @@
          [#if name_has_next] || [/#if] 
        [/#list]
     [#else]
-       ${expansion.firstSetVarName}.contains(nextTokenType()) 
+       ${expansion.firstSetVarName}.contains(nextTokenType) 
     [/#if]
   [/#if]
-[/#macro]
-
-[#macro BuildBinaryChoiceCode expansion action fallback]
-   [#if expansion.requiresScanAhead]
-     currentLookaheadToken = current_token;
-     remainingLookahead = ${expansion.lookaheadAmount};
-   [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]
-      nextTokenType = nextTokenType();
-   [/#if]
-   if ([@expansionCondition expansion/]) {
-      ${action!}
-   }
-   [#if !fallback?has_content][#return][/#if] 
-   else {
-      ${fallback}
-   }
 [/#macro]
 
 [#var parserData=grammar.parserData]
