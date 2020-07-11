@@ -130,7 +130,6 @@
 [/#macro]
 
 [#macro ParserProduction production]
-
     [@firstSetVar production.expansion/]
     [#if grammar.options.faultTolerant]
       [@finalSetVar production.expansion/]
@@ -389,10 +388,10 @@
 
 
 [#macro BuildCodeZeroOrOne zoo]
+    [@SetupLookahead zoo /]
     [#if zoo.alwaysSuccessful]
        [@BuildCode zoo.nestedExpansion /]
     [#else]
-       [@SetupLookahead zoo /]
        if ([@expansionCondition zoo/]) {
           [@BuildCode zoo.nestedExpansion/]
        }
@@ -426,107 +425,44 @@
     }
 [/#macro]
 
-[[#macro BuildCodeChoice choice]
-   [#-- TODO: This macro is too gnarly, need to break it up and simplify it  --]
-   [#var expansions = []]
-   [#var defaultAction, inPhase1 = false, indentLevel = 0]
-   // Not in phase 1
-   [#set defaultAction]
-      [#if choice.parent.simpleName = "ZeroOrOne" || choice.parent.simpleName = "ZeroOrMore"]
-        // Do nothing by default
-        ;                                  
-      [#else]
-        [#if choice.parent.simpleName = "OneOrMore"]if (${inFirstVarName}) { [/#if]
-       pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
-       throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack); 
-        [#if choice.parent.simpleName = "OneOrMore"]}[/#if]
-      [/#if]
-   [/#set]
-   [#list choice.choices as nested]
-      [#if !nested.alwaysSuccessful]
-         [#set expansions = expansions +[nested]]
-      [#else]
-         [#set defaultAction = action]
+[#macro BuildCodeChoice choice]
+   [#var jumpOut = false, indents = 0]
+   [#list choice.choices as expansion]
+      [#if expansion.alwaysSuccessful]
+         [@BuildCode expansion /]
+         [#set jumpOut = true]
          [#break]
       [/#if]
+      [#if expansion_index > 0] 
+        else {
+        [#set indents = indents + 1]
+      [/#if]
+      ${SetupLookahead(expansion)}
+      if (${expansionCondition(expansion)}) {
+         ${BuildCode(expansion)}
+      }
    [/#list]
-   nextTokenType = nextTokenType();
-   [#list expansions as expansion]
-      [#if expansion.requiresScanAhead]
-         [#if expansion_index = 0]
-            [#set indentLevel = indentLevel+1]
-            remainingLookahead = ${expansion.lookaheadAmount};
-            currentLookaheadToken = current_token;
-             if (
-             [#if expansion.hasSemanticLookahead]
-               (${expansion.semanticLookahead}) &&
-            [/#if]
-        [#elseif !inPhase1]
-            } else {
-            remainingLookahead = ${expansion.lookaheadAmount};
-            currentLookaheadToken = current_token;
-            [#set indentLevel = indentLevel+1]
-              if (
-             [#if expansion.hasSemanticLookahead]
-               (${expansion.semanticLookahead}) &&
-            [/#if]
-         [#else]
-            [#set indentLevel = indentLevel+1]
-            else {
-            [#set indentLevel = indentLevel +1]
-            remainingLookahead = ${expansion.lookaheadAmount};
-            currentLookaheadToken = current_token;
-            if (
-           [#if expansion.hasSemanticLookahead]
-               (${expansion.semanticLookahead}) &&
-           [/#if]
-         [/#if]
-                ${expansion.lookaheadExpansion.scanRoutineName}()
-               ) { 
-                   [@BuildCode expansion/]
-         [#set inPhase1 = false]
-       [#elseif expansion.lookaheadAmount = 1&& !expansion.hasSemanticLookahead &&!expansion.lookaheadExpansion.possiblyEmpty]
-          [#if !inPhase1 && expansion_index >0]
-                 } else {
-          [/#if]
-          [#if expansion_index !=0 && inPhase1]else[/#if]
-               if ([@expansionCondition expansion /]) {
-                  [@BuildCode expansion /]
-               }
-          [#set inPhase1 = true]
-          // In phase1
-    [#else]
-          [#if expansion_index = 0]
-             if (
-             [#set indentLevel = indentLevel+1]
-          [#elseif !inPhase1]
-             } else if (
-          [#else]
-          else    if (
-                [#set indentLevel = indentLevel+1]
-          [/#if]
-                  ${expansion.semanticLookahead!}) {
-                      [@BuildCode expansion /]
-          [#set inPhase1 = false]
-          // Not in phase1 now
-      [/#if]
-   [/#list]
-      [#if expansions?size = 0]
-           ${defaultAction}
-      [#elseif !inPhase1]
-           } else {
-             ${defaultAction}
-      [#else]
-          else {
-                ${defaultAction}
-          }
-      [/#if]
-      [#if indentLevel != 0]
-      // Indent level is ${indentLevel}
-         [#list 1..indentLevel as unused]
-           }
-         [/#list]
-      [/#if]
+   [#if jumpOut || choice.parent.simpleName == "ZeroOrOne"]
+   [#elseif choice.parent.simpleName == "ZeroOrMore"]
+      else {
+         break;
+      }
+   [#elseif choice.parent.simpleName = "OneOrMore"]
+       else if (${inFirstVarName}) {
+           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
+           throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack);
+       } else {
+           break;
+       }
+   [#else]
+       else {
+           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
+           throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack);
+        }
+   [/#if]
+   [#if indents > 0]
+     [#list 1..indents as unused]}[/#list]
+   [/#if]
 [/#macro]
 
 [#--
@@ -538,7 +474,7 @@
    [#if expansion.requiresScanAhead]
       currentLookaheadToken = current_token;
       remainingLookahead = ${expansion.lookaheadAmount};
-   [#elseif expansion.lookaheadAmount = 1&&!expansion.lookaheadExpansion.possiblyEmpty]
+   [#else]
       nextTokenType = nextTokenType();
    [/#if]
 [/#macro]
@@ -547,10 +483,10 @@
      including the default single-token lookahead
 --]
 [#macro expansionCondition expansion]
-  [#if expansion.requiresScanAhead]
      [#if expansion.hasSemanticLookahead]
           (${expansion.semanticLookahead}) &&
-     [/#if]  
+     [/#if] 
+     [#if expansion.requiresScanAhead]
      [#if expansion.negated]![/#if]
      ${expansion.lookaheadExpansion.scanRoutineName}()
   [#else]
