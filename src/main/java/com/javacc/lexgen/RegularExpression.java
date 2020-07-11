@@ -245,6 +245,10 @@ public abstract class RegularExpression extends Expansion {
     final public int minimumSize(int oldMin) {
     	return 1;
     }
+
+    final public int getMaximumSize() {
+        return 1;
+    }
     
     final public boolean isConcrete() {
        return true; 

@@ -328,7 +328,9 @@ abstract public class Expansion extends BaseNode {
     	return minimumSize(Integer.MAX_VALUE);
     }
     
-     abstract public int minimumSize(int oldMin); 
+    abstract public int minimumSize(int oldMin); 
+
+    abstract public int getMaximumSize();
      
      /**
       * @return Does this expansion resolve to a fixed sequence of Tokens?

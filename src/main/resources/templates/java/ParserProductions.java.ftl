@@ -483,22 +483,22 @@
      including the default single-token lookahead
 --]
 [#macro expansionCondition expansion]
-     [#if expansion.hasSemanticLookahead]
-          (${expansion.semanticLookahead}) &&
-     [/#if] 
-     [#if expansion.requiresScanAhead]
-     [#if expansion.negated]![/#if]
-     ${expansion.lookaheadExpansion.scanRoutineName}()
-  [#else]
-    [#if expansion.firstSetTokenNames?size < 5] 
+   [#if expansion.hasSemanticLookahead]
+      (${expansion.semanticLookahead}) &&
+   [/#if] 
+   [#if expansion.requiresScanAhead]
+      [#if expansion.negated]![/#if]
+      ${expansion.lookaheadExpansion.scanRoutineName}()
+   [#else]
+      [#if expansion.firstSetTokenNames?size < 5] 
        [#list expansion.firstSetTokenNames as name]
          nextTokenType == TokenType.${name} 
          [#if name_has_next] || [/#if] 
        [/#list]
-    [#else]
+      [#else]
        ${expansion.firstSetVarName}.contains(nextTokenType) 
-    [/#if]
-  [/#if]
+      [/#if]
+   [/#if]
 [/#macro]
 
 [#var parserData=grammar.parserData]
