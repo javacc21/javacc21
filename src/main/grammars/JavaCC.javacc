@@ -1533,7 +1533,7 @@ Lookahead ScanAhead #Lookahead :
     "}"
 ]
 [
-    SCAN {amountToken == null} ->
+    SCAN 10000 {amountToken == null} 
     ["~" {CURRENT_NODE.setNegated(true);}] 
     ExpansionChoice() {expansion = (Expansion) peekNode();}
     "->"
@@ -1586,11 +1586,6 @@ Lookahead LegacyLookahead() #Lookahead :
       ]
       [
         "{"  Expression()  "}"
-         {
-           if (empty) {
-              CURRENT_NODE.setAmount(0);
-           }
-        }
       ]
      ")" {token_source.inJavaCode = false;}
   ]
