@@ -54,9 +54,6 @@
 [/#macro]
 
 [#macro BuildLookaheads]
-  private Token currentLookaheadToken;
-  private int remainingLookahead;
-  private boolean semanticLookahead; 
   private final boolean scanToken(TokenType type) {
        if (remainingLookahead <=0) return true;
        if (currentLookaheadToken.getNext() == null) {
@@ -388,11 +385,10 @@
 
 
 [#macro BuildCodeZeroOrOne zoo]
-    [@SetupLookahead zoo /]
     [#if zoo.alwaysSuccessful]
        [@BuildCode zoo.nestedExpansion /]
     [#else]
-       if ([@expansionCondition zoo/]) {
+       if (resetScanAhead(${zoo.lookaheadAmount}) && [@expansionCondition zoo/]) {
           [@BuildCode zoo.nestedExpansion/]
        }
     [/#if]
@@ -411,39 +407,27 @@
       [#if nestedExp.simpleName = "ExpansionChoice"]
          ${inFirstVarName} = false;
       [/#if]
-      [@SetupLookahead nestedExp /]
-   } while([@expansionCondition oom /]);
+   } while(resetScanAhead(${nestedExp.lookaheadAmount}) && ${expansionCondition(oom)});
    [#set inFirstVarName = prevInFirstVarName /]
 [/#macro]
 
 [#macro BuildCodeZeroOrMore zom]
-    [#var nestedExp=zom.nestedExpansion]
-    [@SetupLookahead zom /]    
-    while (${expansionCondition(zom)}) {
-       [@BuildCode nestedExp/]
-       [@SetupLookahead zom /]    
+    while (resetScanAhead(${zom.lookaheadAmount}) && ${expansionCondition(zom)}) {
+       [@BuildCode zom.nestedExpansion/]
     }
 [/#macro]
 
 [#macro BuildCodeChoice choice]
-   [#var jumpOut = false, indents = 0]
    [#list choice.choices as expansion]
       [#if expansion.alwaysSuccessful]
-         [@BuildCode expansion /]
-         [#set jumpOut = true]
-         [#break]
+         [@BuildCode expansion /] [#return]
       [/#if]
-      [#if expansion_index > 0] 
-        else {
-        [#set indents = indents + 1]
-      [/#if]
-      ${SetupLookahead(expansion)}
-      if (${expansionCondition(expansion)}) {
+      ${(expansion_index=0)?string("if", "else if")}
+      (resetScanAhead(${expansion.lookaheadAmount}) && ${expansionCondition(expansion)}) {
          ${BuildCode(expansion)}
       }
    [/#list]
-   [#if jumpOut || choice.parent.simpleName == "ZeroOrOne"]
-   [#elseif choice.parent.simpleName == "ZeroOrMore"]
+   [#if choice.parent.simpleName == "ZeroOrMore"]
       else {
          break;
       }
@@ -454,28 +438,11 @@
        } else {
            break;
        }
-   [#else]
+   [#elseif choice.parent.simpleName != "ZeroOrOne"]
        else {
            pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
            throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack);
         }
-   [/#if]
-   [#if indents > 0]
-     [#list 1..indents as unused]}[/#list]
-   [/#if]
-[/#macro]
-
-[#--
-   Code that must be called before a call to a lookahead 
-   If this is the default single-token lookoahead, it's just 
-   nextTokenType() which sets up the nextTokenType variable.
---]
-[#macro SetupLookahead expansion]
-   [#if expansion.requiresScanAhead]
-      currentLookaheadToken = current_token;
-      remainingLookahead = ${expansion.lookaheadAmount};
-   [#else]
-      nextTokenType = nextTokenType();
    [/#if]
 [/#macro]
 

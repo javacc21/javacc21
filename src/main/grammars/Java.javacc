@@ -1098,9 +1098,8 @@ Initializer :
  */
 
 Type :
-   LOOKAHEAD(2, ReferenceType, {2+2==4}) ReferenceType
+   SCAN ReferenceType
    |
-   LOOKAHEAD(1)
    PrimitiveType
 ;
 

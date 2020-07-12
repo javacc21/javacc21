@@ -65,6 +65,10 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     
 private Token current_token;
 private TokenType nextTokenType;
+private Token currentLookaheadToken;
+private int remainingLookahead;
+private boolean semanticLookahead; 
+
 private Token lastParsedToken;
 //private Token nextToken; //REVISIT
 
@@ -154,14 +158,28 @@ public boolean isCancelled() {return cancelled;}
     return t;
   }
   
-  private TokenType nextTokenType() {
+  private final boolean setNextTokenType() {
     if (current_token.getNext() == null) {
         Token nextToken = token_source.getNextToken();
         current_token.setNext(nextToken);
     }
     nextTokenType = current_token.getNext().getType();
+    return true;
+  }
+
+  private final TokenType nextTokenType() {
+    setNextTokenType();
     return nextTokenType;
   }
+
+
+  private final boolean resetScanAhead(int amount) {
+    currentLookaheadToken = current_token;
+    remainingLookahead = amount;
+    setNextTokenType();
+    return true;
+  }
+
    
  
 [#import "ParserProductions.java.ftl" as ParserCode ]
