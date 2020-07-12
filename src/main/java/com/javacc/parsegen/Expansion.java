@@ -155,7 +155,9 @@ abstract public class Expansion extends BaseNode {
     
     public Expansion getLookaheadExpansion() {
         Lookahead la = getLookahead();
-        return la == null ? this : la.getLookaheadExpansion();
+        Expansion exp = la == null ? null : la.getNestedExpansion();
+        return exp != null ? exp : this;
+//        return la == null ? this : la.getLookaheadExpansion();
     }
 
     public boolean getHasSyntacticLookahead() {
