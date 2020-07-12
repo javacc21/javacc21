@@ -78,7 +78,19 @@ public class TokenSet extends BitSet {
 		}
 		return null;
 	}
-	
+
+
+    public List<String> getTokenSetNames() {
+        int tokenCount = grammar.getLexerData().getTokenCount();
+        List<String> result = new ArrayList<>(tokenCount);
+        for (int i=0; i<tokenCount; i++) {
+            if (get(i)) {
+                result.add(grammar.getLexerData().getTokenName(i));
+            }
+        }
+        return result;
+    }
+ 	
 	public String getCommaDelimitedTokens() {
 		if (cardinality() <=1) {
 			return getFirstTokenName();
@@ -90,5 +102,9 @@ public class TokenSet extends BitSet {
 		}
 		result.setLength(result.length() -2);
 		return result.toString();
+	}
+
+	public void not() {
+		flip(0, grammar.getLexerData().getTokenCount());
 	}
 }

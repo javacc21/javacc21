@@ -1597,6 +1597,7 @@ Lookahead LegacyLookahead() #Lookahead :
 INJECT(Lookahead) :
 {
    import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
 } 
 {
     private int amount=Integer.MAX_VALUE;
@@ -1640,17 +1641,51 @@ INJECT(Lookahead) :
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
     }
+
+    public Expansion getExpansion() {
+        return expansion;
+    }
     
     public void setExpansion(Expansion exp){
         this.expansion = exp;
     }
     
     public int getAmount() {
+//        if (isSingleToken()) {
+//            System.out.println("KILROY!!!!");
+//            amount = 1;
+//        }
         return amount;
     }
 
     public void setAmount(int amount) {
         this.amount = amount;
+    }
+
+    public TokenSet getFirstSet() {
+        TokenSet result = new TokenSet(getGrammar());
+        Expansion nestedExp = getNestedExpansion();
+        if (nestedExp != null) {
+            result.and(nestedExp.getFirstSet());
+        }
+        if (isNegated()) {
+            result.not();
+        }
+        result.and(getExpansion().getFirstSet());
+        return result;
+    }
+    
+    private String firstSetVarName;
+
+    public String getFirstSetVarName() {
+        if (firstSetVarName == null) {
+            firstSetVarName = getGrammar().generateUniqueIdentifier("first_set$", this);
+        }
+        return firstSetVarName;
+    }
+
+    public boolean isSingleToken() {
+        return expansion.isSingleToken() && (getNestedExpansion() == null || getNestedExpansion().isSingleToken());
     }
 }
 

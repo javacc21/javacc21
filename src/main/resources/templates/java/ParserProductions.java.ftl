@@ -62,7 +62,7 @@
      } 
      currentLookaheadToken = currentLookaheadToken.getNext();
      if (currentLookaheadToken.getType() != type) return false;
-     --remainingLookahead;
+     if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
      return true;
   }
 //====================================
@@ -79,6 +79,10 @@
      //=================================
     [#list grammar.expansionsForFirstSet as expansion]
           [@firstSetVar expansion/]
+    [/#list]
+
+    [#list grammar.allLookaheads as lookahead]
+       ${firstSetVar(lookahead)}
     [/#list]
 [/#macro]
 
@@ -102,7 +106,7 @@
 [/#macro]
 
 [#macro firstSetVar expansion]
-    [@enumSet expansion.firstSetVarName expansion.firstSetTokenNames /]
+    [@enumSet expansion.firstSetVarName expansion.firstSet.tokenNames /]
 [/#macro]
 
 [#macro finalSetVar expansion]
@@ -122,7 +126,7 @@
           [#if type_index > 0],[/#if]
           TokenType.${type} 
        [/#list]
-     );
+     ); 
    [/#if]
 [/#macro]
 
@@ -457,8 +461,8 @@
       [#if expansion.negated]![/#if]
       ${expansion.lookaheadExpansion.scanRoutineName}()
    [#else]
-      [#if expansion.firstSetTokenNames?size < 5] 
-       [#list expansion.firstSetTokenNames as name]
+      [#if expansion.firstSet.tokenNames?size < 5] 
+       [#list expansion.firstSet.tokenNames as name]
          nextTokenType == TokenType.${name} 
          [#if name_has_next] || [/#if] 
        [/#list]
@@ -577,9 +581,6 @@
 [/#macro]
     
 [#macro InvokeScanRoutine expansion]
-   [#if expansion.hasSyntacticLookahead]
-      // TODO 
-   [/#if]
    [#if expansion.isRegexp]
        scanToken(TokenType.${expansion.label})
    [#else]

@@ -105,15 +105,7 @@ public class Grammar extends BaseNode {
         }
     }
     
-    public void addToUsedIdentifiers(String id) {
-        usedIdentifiers.add(id);
-    }
-    
-    public boolean isIDUsed(String id) {
-        return usedIdentifiers.contains(id);
-    }
-    
-    public String generateUniqueIdentifier(String prefix, Expansion exp) {
+    public String generateUniqueIdentifier(String prefix, Node exp) {
         String id = prefix + exp.getInputSource() + "$line_" + exp.getBeginLine() + "$column_" + exp.getBeginColumn();
         id = removeNonJavaIdentifierPart(id);
         while (usedIdentifiers.contains(id)) {
@@ -436,9 +428,9 @@ public class Grammar extends BaseNode {
         return tokenProductions;
     }
 
-    //    public List<TokenProduction> getAllTokenProductions() {
-    //    	return descendantsOfType(TokenProduction.class);
-    //    }
+    public List<Lookahead> getAllLookaheads() {
+        return this.descendantsOfType(Lookahead.class);
+    }
 
     public void addTokenProduction(TokenProduction tp) {
         tokenProductions.add(tp);

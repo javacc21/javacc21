@@ -152,12 +152,16 @@ abstract public class Expansion extends BaseNode {
         Lookahead la = getLookahead();
         return la != null && la.getRequiresScanAhead();
     }
+
+    public TokenSet getLookaheadFirstSet() {
+        Lookahead la = getLookahead();
+        return la != null ? la.getFirstSet() : getFirstSet();
+    }
     
     public Expansion getLookaheadExpansion() {
         Lookahead la = getLookahead();
         Expansion exp = la == null ? null : la.getNestedExpansion();
         return exp != null ? exp : this;
-//        return la == null ? this : la.getLookaheadExpansion();
     }
 
     public boolean getHasSyntacticLookahead() {
@@ -184,29 +188,17 @@ abstract public class Expansion extends BaseNode {
     }
     
     public List<String> getFirstSetTokenNames() {
-        return tokenSetNames(getFirstSet());
+        return getFirstSet().getTokenNames();
     }
     
     public List<String> getFinalSetTokenNames() {
-        return tokenSetNames(getFinalSet());
+        return getFinalSet().getTokenNames();
     }
     
     public List<String> getFollowSetTokenNames() {
-        return tokenSetNames(getFollowSet());
+        return getFollowSet().getTokenNames();
     }
     
-    private List<String> tokenSetNames(BitSet set) {
-        int tokenCount = getGrammar().getLexerData().getTokenCount();
-        List<String> result = new ArrayList<>(tokenCount);
-        for (int i=0; i<tokenCount; i++) {
-            if (set.get(i)) {
-                result.add(getGrammar().getLexerData().getTokenName(i));
-            }
-        }
-        return result;
-    }
-    
-     
     public boolean isNegated() {
         return getLookahead() != null && getLookahead().isNegated();
     }
@@ -335,6 +327,13 @@ abstract public class Expansion extends BaseNode {
      */
     final public int getMinimumSize() {
     	return minimumSize(Integer.MAX_VALUE);
+    }
+
+    /**
+     * @return whether this Expansion is always matched by exactly one token
+     */
+    public final boolean isSingleToken() {
+        return !isPossiblyEmpty() && getMaximumSize() == 1;
     }
     
     abstract public int minimumSize(int oldMin); 
