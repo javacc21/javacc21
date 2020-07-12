@@ -1379,7 +1379,7 @@ ExpansionSequence() #ExpansionSequence :
     LOOKAHEAD(1, {!inLookahead})  
     la=Lookahead()
     {
-       if (la.getNestedExpansion()==null) {
+       if (la.getLookaheadExpansion()==null) {
           la.setExpansion(CURRENT_NODE);
        }
        CURRENT_NODE.setLookahead(la);
@@ -1635,7 +1635,7 @@ INJECT(Lookahead) :
         return getSemanticLookahead() != null;
     }
     
-   public Expansion getNestedExpansion() {
+   public Expansion getLookaheadExpansion() {
         return expansion;
     }
     
@@ -1869,7 +1869,7 @@ INJECT(ZeroOrOne) :
 
     public Expansion getLookaheadExpansion() {
         Lookahead la = getLookahead();
-        return la == null ? this.getNestedExpansion() : la.getNestedExpansion();
+        return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
     }
 
     public Expansion getNestedExpansion() {
@@ -1921,7 +1921,7 @@ INJECT(ZeroOrMore) :
 
     public Expansion getLookaheadExpansion() {
         Lookahead la = getLookahead();
-        return la == null ? this.getNestedExpansion() : la.getNestedExpansion();
+        return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
     }
  
 
@@ -1977,7 +1977,7 @@ INJECT(OneOrMore) :
     
     public Expansion getLookaheadExpansion() {
         Lookahead la = getLookahead();
-        return la == null ? this.getNestedExpansion() : la.getNestedExpansion();
+        return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
     }
     
     public boolean getRequiresScanAhead(){
