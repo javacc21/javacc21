@@ -187,18 +187,6 @@ abstract public class Expansion extends BaseNode {
         return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;
     }
     
-    public List<String> getFirstSetTokenNames() {
-        return getFirstSet().getTokenNames();
-    }
-    
-    public List<String> getFinalSetTokenNames() {
-        return getFinalSet().getTokenNames();
-    }
-    
-    public List<String> getFollowSetTokenNames() {
-        return getFollowSet().getTokenNames();
-    }
-    
     public boolean isNegated() {
         return getLookahead() != null && getLookahead().isNegated();
     }

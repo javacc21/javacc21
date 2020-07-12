@@ -110,11 +110,11 @@
 [/#macro]
 
 [#macro finalSetVar expansion]
-    [@enumSet expansion.finalSetVarName expansion.finalSetTokenNames /]
+    [@enumSet expansion.finalSetVarName expansion.finalSet.tokenNames /]
 [/#macro]            
 
 [#macro followSetVar expansion]
-    [@enumSet expansion.followSetVarName expansion.followSetTokenNames/]
+    [@enumSet expansion.followSetVarName expansion.followSet.tokenNames/]
 [/#macro]            
 
 [#macro enumSet varName tokenNames]
@@ -461,7 +461,7 @@
       [#if expansion.negated]![/#if]
       ${expansion.lookaheadExpansion.scanRoutineName}()
    [#else]
-      [#if expansion.firstSet.tokenNames?size < 5] 
+      [#if expansion.firstSet.tokenNames?size < 30] 
        [#list expansion.firstSet.tokenNames as name]
          nextTokenType == TokenType.${name} 
          [#if name_has_next] || [/#if] 
