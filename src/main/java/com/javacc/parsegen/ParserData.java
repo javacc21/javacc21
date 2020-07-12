@@ -200,6 +200,7 @@ public class ParserData {
         for (ExpansionSequence sequence : grammar.descendantsOfType(ExpansionSequence.class)) {
             Node parent = sequence.getParent();
             if (!(parent instanceof ExpansionChoice 
+                    || parent instanceof Lookahead
                     || parent instanceof OneOrMore 
                     || parent instanceof ZeroOrOne 
                     || parent instanceof ZeroOrMore) 

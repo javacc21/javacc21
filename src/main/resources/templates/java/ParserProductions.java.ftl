@@ -577,6 +577,9 @@
 [/#macro]
     
 [#macro InvokeScanRoutine expansion]
+   [#if expansion.hasSyntacticLookahead]
+      // TODO 
+   [/#if]
    [#if expansion.isRegexp]
        scanToken(TokenType.${expansion.label})
    [#else]

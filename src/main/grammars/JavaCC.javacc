@@ -1517,7 +1517,6 @@ Lookahead Lookahead #void :
 
 Lookahead ScanAhead #Lookahead : 
 {
-   CURRENT_NODE.setAmount(Integer.MAX_VALUE);
    Token amountToken=null;
    boolean hasSemanticLookahead = false;
    Expansion expansion = null;
@@ -1537,7 +1536,7 @@ Lookahead ScanAhead #Lookahead :
 [
     SCAN
     ["~" {CURRENT_NODE.setNegated(true);}] 
-    ExpansionChoice() {expansion = (Expansion) popNode();}
+    ExpansionChoice() {expansion = (Expansion) peekNode();}
     "->"
     {
        CURRENT_NODE.setExpansion(expansion);
@@ -1555,7 +1554,6 @@ Lookahead LegacyLookahead() #Lookahead :
 {
     boolean commaAtEnd = false, empty = true;
     Expansion expansion;
-    CURRENT_NODE.setAmount(Integer.MAX_VALUE);
 }
 {
   <_LOOKAHEAD>
@@ -1577,7 +1575,7 @@ Lookahead LegacyLookahead() #Lookahead :
         ["~" {CURRENT_NODE.setNegated(true);}] 
         ExpansionChoice()
         {
-           expansion = (Expansion) popNode();
+           expansion = (Expansion) peekNode();
            empty = false; commaAtEnd = false;
            CURRENT_NODE.setExpansion(expansion);
            expansion.setLookahead(CURRENT_NODE);
@@ -1607,7 +1605,7 @@ INJECT(Lookahead) :
    import com.javacc.parsegen.Expansion;
 } 
 {
-    private int amount;
+    private int amount=Integer.MAX_VALUE;
     
     private boolean negated;
 

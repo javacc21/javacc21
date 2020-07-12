@@ -180,7 +180,13 @@ public boolean isCancelled() {return cancelled;}
     return true;
   }
 
-   
+  private final boolean setScanPosition(Token currentLookaheadToken, int remainingLookahead) {
+    this.currentLookaheadToken = currentLookaheadToken;
+    this.remainingLookahead = remainingLookahead;
+    return true;
+  }
+
+  
  
 [#import "ParserProductions.java.ftl" as ParserCode ]
 [@ParserCode.Generate/]

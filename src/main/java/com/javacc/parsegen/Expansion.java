@@ -251,6 +251,9 @@ abstract public class Expansion extends BaseNode {
             } else {
                 scanRoutineName = getGrammar().generateUniqueIdentifier("scan$", this);
             }
+            if (this.getParent() instanceof Lookahead) {
+                this.scanRoutineName = scanRoutineName.replace("scan", "check");
+            }
         }
         return scanRoutineName;
     }
