@@ -1531,6 +1531,7 @@ Lookahead ScanAhead #Lookahead :
     "{" 
     Expression {hasSemanticLookahead = true;}
     "}"
+    ["!" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
 [
     SCAN 10000 {amountToken == null} 
@@ -1586,6 +1587,7 @@ Lookahead LegacyLookahead() #Lookahead :
       ]
       [
         "{"  Expression()  "}"
+        ["!" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
       ]
      ")" {token_source.inJavaCode = false;}
   ]
@@ -1606,6 +1608,8 @@ INJECT(Lookahead) :
 
     private Expansion expansion;
 
+    private boolean nestedSemanticLookahead;
+
     public final boolean isNegated() {
         return negated;
     }
@@ -1624,6 +1628,14 @@ INJECT(Lookahead) :
 
     public Expression getSemanticLookahead() {
         return firstChildOfType(Expression.class);
+    }
+
+    public boolean isSemanticLookaheadNested() {
+        return nestedSemanticLookahead;
+    }
+
+    public void setSemanticLookaheadNested(boolean nestedSemanticLookahead) {
+        this.nestedSemanticLookahead = nestedSemanticLookahead;
     }
     
     public boolean hasSemanticLookahead() {

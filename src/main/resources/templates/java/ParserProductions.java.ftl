@@ -534,9 +534,12 @@
    int remainingLookahead${newVarIndex} = remainingLookahead;
   [#list choice.choices as subseq]
 	  if (
-     [#--if subseq.hasSyntacticLookahead]
+     [#if subseq.lookahead?? && subseq.lookahead.semanticLookaheadNested]
+       !(${subseq.semanticLookahead}) &&
+     [/#if] 
+     [#if subseq.hasSyntacticLookahead]
        ${subseq.negated?string("", "!")}${subseq.lookahead.routineName}() ||
-     [/#if--]
+     [/#if]
 	  [#if subseq_has_next]
 	     ![@InvokeScanRoutine subseq/]) {
 	        currentLookaheadToken = token${newVarIndex};
@@ -561,21 +564,14 @@
 
 [#macro ScanCodeZeroOrOne zoo]
    [@newVar type="Token" init="currentLookaheadToken"/]
-   if (
-      [#if zoo.nestedExpansion.hasSyntacticLookahead]
-            ${zoo.nestedExpansion.negated?string("", "!")}${zoo.nestedExpansion.lookahead.routineName}() ||
-      [/#if]
-      !([@InvokeScanRoutine zoo.nestedExpansion/])) 
+   if (!([@InvokeScanRoutine zoo.nestedExpansion/])) 
       currentLookaheadToken = token${newVarIndex};
 [/#macro]
 
 [#macro ScanCodeZeroOrMore zom]
       while (true) {
-	 [@newVar type="Token" init="currentLookaheadToken"/]
+	   [@newVar type="Token" init="currentLookaheadToken"/]
          if (remainingLookahead == 0 || !(
-         [#if zom.nestedExpansion.hasSyntacticLookahead]
-            ${zom.nestedExpansion.negated?string("!", "")}${zom.nestedExpansion.lookahead.routineName}() &&
-         [/#if]
          [@InvokeScanRoutine zom.nestedExpansion/])) {
              currentLookaheadToken = token${newVarIndex};
              break;
@@ -584,17 +580,10 @@
 [/#macro]
 
 [#macro ScanCodeOneOrMore oom]
-   if (
-      [#if oom.nestedExpansion.hasSyntacticLookahead]
-          ${oom.nestedExpansion.negated?string("", "!")}${oom.nestedExpansion.lookahead.routineName}() ||
-      [/#if]
-      !([@InvokeScanRoutine oom.nestedExpansion/])) return false;
+   if (!([@InvokeScanRoutine oom.nestedExpansion/])) return false;
    while (true) {
        [@newVar type="Token" init="currentLookaheadToken"/]
        if (remainingLookahead == 0 || !(
-         [#if oom.nestedExpansion.hasSyntacticLookahead]
-            ${oom.nestedExpansion.negated?string("!", "")}${oom.nestedExpansion.lookahead.routineName}() &&
-         [/#if]
           [@InvokeScanRoutine oom.nestedExpansion/])) {
            currentLookaheadToken = token${newVarIndex};
            break;
@@ -614,8 +603,19 @@
        [#if count<=0][#break][/#if]
    [/#list]
 [/#macro]
+
+[#function inChoiceConstruct expansion]
+   [#var parentType = expansion.parent.simpleName]
+   [#return parentType = "OneOrMore" || parentType = "ZeroOrMore" || parentType = "ZeroOrOne"]
+[/#function]
     
 [#macro InvokeScanRoutine expansion]
+   [#if expansion.lookahead?? && expansion.lookahead.semanticLookaheadNested]
+       !(${expansion.semanticLookahead}) &&
+     [/#if] 
+   [#if expansion.hasSyntacticLookahead && inChoiceConstruct(expansion)]
+            ${expansion.negated?string("!", "")}${expansion.lookahead.routineName}() &&
+   [/#if]
    [#if expansion.isRegexp]
        scanToken(TokenType.${expansion.label})
    [#else]
