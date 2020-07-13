@@ -562,7 +562,7 @@
 [#macro ScanCodeZeroOrOne zoo]
    [@newVar type="Token" init="currentLookaheadToken"/]
    if (
-      [#if zoo.nestedExpansion.hasSyntacticLookahead] // KILROY FUCKER
+      [#if zoo.nestedExpansion.hasSyntacticLookahead]
             ${zoo.nestedExpansion.negated?string("", "!")}${zoo.nestedExpansion.lookahead.routineName}() ||
       [/#if]
       !([@InvokeScanRoutine zoo.nestedExpansion/])) 

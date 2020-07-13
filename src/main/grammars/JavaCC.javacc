@@ -1652,7 +1652,6 @@ INJECT(Lookahead) :
     
     public int getAmount() {
 //        if (isSingleToken()) {
-//            System.out.println("KILROY!!!!");
 //            amount = 1;
 //        }
         return amount;
