@@ -224,17 +224,14 @@ abstract public class Expansion extends BaseNode {
         }
         return followSetVarName;
     }
-    
+
     public String getScanRoutineName() {
         if (scanRoutineName == null) {
             if (this.getParent() instanceof BNFProduction) {
                 BNFProduction prod = (BNFProduction) getParent();
-                scanRoutineName = "scan$" + prod.getName();
+                scanRoutineName = "check$" + prod.getName();
             } else {
-                scanRoutineName = getGrammar().generateUniqueIdentifier("scan$", this);
-            }
-            if (this.getParent() instanceof Lookahead) {
-                this.scanRoutineName = scanRoutineName.replace("scan", "check");
+                scanRoutineName = getGrammar().generateUniqueIdentifier("check$", this);
             }
         }
         return scanRoutineName;

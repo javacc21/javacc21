@@ -67,7 +67,7 @@ private Token current_token;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
-private boolean semanticLookahead; 
+private boolean semanticLookahead, syntacticLookahead; 
 
 private Token lastParsedToken;
 //private Token nextToken; //REVISIT

@@ -1551,8 +1551,8 @@ Lookahead ScanAhead #Lookahead :
 
 Lookahead LegacyLookahead() #Lookahead :
 {
-    boolean commaAtEnd = false, empty = true;
     Expansion expansion;
+    boolean empty = true, commaAtEnd = false; 
 }
 {
   <_LOOKAHEAD>
@@ -1686,6 +1686,15 @@ INJECT(Lookahead) :
 
     public boolean isSingleToken() {
         return expansion.isSingleToken() && (getNestedExpansion() == null || getNestedExpansion().isSingleToken());
+    }
+
+    private String routineName;
+
+    public String getRoutineName() {
+        if (routineName == null) {
+            routineName = getGrammar().generateUniqueIdentifier("check$", this);
+        }
+        return routineName;
     }
 }
 

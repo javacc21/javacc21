@@ -71,6 +71,13 @@
    [#list parserData.scanAheadExpansions as expansion]
         [@buildScanRoutine expansion, expansion.maxScanAhead /]
    [/#list]
+   [#list grammar.allLookaheads as lookahead]
+[#--       ${firstSetVar(lookahead)} --]
+      [#if lookahead.nestedExpansion??]
+       [@BuildLookaheadRoutine lookahead /]
+     [/#if]
+   [/#list]
+
 [/#macro]   
 
 [#macro firstSetVars]
@@ -81,9 +88,6 @@
           [@firstSetVar expansion/]
     [/#list]
 
-    [#list grammar.allLookaheads as lookahead]
-       ${firstSetVar(lookahead)}
-    [/#list]
 [/#macro]
 
 [#macro finalSetVars]
@@ -478,6 +482,24 @@
 [#var NODE_PREFIX = grammar.options.nodePrefix]
 [#var currentProduction]
 
+[#macro BuildLookaheadRoutine lookahead]
+  [#if lookahead.nestedExpansion??]
+     private final boolean ${lookahead.routineName}() {
+        int prevRemainingLookahead = remainingLookahead;
+        Token prevScanAheadToken = currentLookaheadToken;
+        remainingLookahead = 2147483647;
+        try {
+        [@buildScanCode lookahead.nestedExpansion/]
+        return true;
+        }
+        finally {
+           currentLookaheadToken = prevScanAheadToken;
+           remainingLookahead = prevRemainingLookahead;
+        }
+     }
+   [/#if]
+[/#macro]
+
 [#macro buildScanRoutine expansion count]
      private final boolean ${expansion.scanRoutineName}() {
      if (remainingLookahead <=0) return true;
@@ -486,7 +508,7 @@
     }
 [/#macro]
 
-[#macro buildScanCode expansion count]
+[#macro buildScanCode expansion count=2147483647]
   [#var classname=expansion.simpleName]
     [#if expansion.isRegexp]
       [@ScanCodeRegexp expansion/]
@@ -511,13 +533,10 @@
    [@newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${newVarIndex} = remainingLookahead;
   [#list choice.choices as subseq]
-	  [#if subseq.hasSemanticLookahead]
-	    semanticLookahead = ${subseq.semanticLookahead};
-	  [/#if]
 	  if (
-	  [#if subseq.hasSemanticLookahead]
-	     !semanticLookahead || 
-	  [/#if]
+     [#--if subseq.hasSyntacticLookahead]
+       ${subseq.negated?string("", "!")}${subseq.lookahead.routineName}() ||
+     [/#if--]
 	  [#if subseq_has_next]
 	     ![@InvokeScanRoutine subseq/]) {
 	        currentLookaheadToken = token${newVarIndex};
@@ -542,14 +561,22 @@
 
 [#macro ScanCodeZeroOrOne zoo]
    [@newVar type="Token" init="currentLookaheadToken"/]
-   if (![@InvokeScanRoutine zoo.nestedExpansion/]) 
+   if (
+      [#if zoo.nestedExpansion.hasSyntacticLookahead] // KILROY FUCKER
+            ${zoo.nestedExpansion.negated?string("", "!")}${zoo.nestedExpansion.lookahead.routineName}() ||
+      [/#if]
+      !([@InvokeScanRoutine zoo.nestedExpansion/])) 
       currentLookaheadToken = token${newVarIndex};
 [/#macro]
 
 [#macro ScanCodeZeroOrMore zom]
       while (true) {
-         [@newVar type="Token" init="currentLookaheadToken"/]
-         if (remainingLookahead == 0 || ![@InvokeScanRoutine zom.nestedExpansion/]) {
+	 [@newVar type="Token" init="currentLookaheadToken"/]
+         if (remainingLookahead == 0 || !(
+         [#if zom.nestedExpansion.hasSyntacticLookahead]
+            ${zom.nestedExpansion.negated?string("!", "")}${zom.nestedExpansion.lookahead.routineName}() &&
+         [/#if]
+         [@InvokeScanRoutine zom.nestedExpansion/])) {
              currentLookaheadToken = token${newVarIndex};
              break;
          }
@@ -557,10 +584,18 @@
 [/#macro]
 
 [#macro ScanCodeOneOrMore oom]
-   if (![@InvokeScanRoutine oom.nestedExpansion/]) return false;
+   if (
+      [#if oom.nestedExpansion.hasSyntacticLookahead]
+          ${oom.nestedExpansion.negated?string("", "!")}${oom.nestedExpansion.lookahead.routineName}() ||
+      [/#if]
+      !([@InvokeScanRoutine oom.nestedExpansion/])) return false;
    while (true) {
        [@newVar type="Token" init="currentLookaheadToken"/]
-       if (remainingLookahead == 0 || ![@InvokeScanRoutine oom.nestedExpansion/]) {
+       if (remainingLookahead == 0 || !(
+         [#if oom.nestedExpansion.hasSyntacticLookahead]
+            ${oom.nestedExpansion.negated?string("!", "")}${oom.nestedExpansion.lookahead.routineName}() &&
+         [/#if]
+          [@InvokeScanRoutine oom.nestedExpansion/])) {
            currentLookaheadToken = token${newVarIndex};
            break;
        }
