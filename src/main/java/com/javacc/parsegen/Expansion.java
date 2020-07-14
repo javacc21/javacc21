@@ -169,8 +169,11 @@ abstract public class Expansion extends BaseNode {
     }
     
     public boolean isAlwaysSuccessful() {
+        if (getHasSemanticLookahead() || !isPossiblyEmpty()) {
+            return false;
+        }
         Lookahead la = getLookahead();
-        return la == null ? this.isPossiblyEmpty() : la.isAlwaysSuccessful();
+        return la == null || la.getNestedExpansion() == null || la.getNestedExpansion().isPossiblyEmpty();
     }
     
     public int getLookaheadAmount() {

@@ -199,15 +199,42 @@ public class ParserData {
 
         for (ExpansionSequence sequence : grammar.descendantsOfType(ExpansionSequence.class)) {
             Node parent = sequence.getParent();
-            if (!(parent instanceof ExpansionChoice 
-                    || parent instanceof Lookahead
-                    || parent instanceof OneOrMore 
-                    || parent instanceof ZeroOrOne 
-                    || parent instanceof ZeroOrMore) 
-                    && sequence.hasExplicitLookahead()) {
+            if (sequence.hasExplicitLookahead() 
+               && !(parent instanceof ExpansionChoice 
+                   || parent instanceof OneOrMore 
+                   || parent instanceof ZeroOrOne 
+                   || parent instanceof ZeroOrMore
+                   || parent instanceof Lookahead)) {
                 grammar.addSemanticError(sequence, "Encountered LOOKAHEAD(...) at a non-choice location." );
             }
         }
+
+        for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
+            List<Expansion> choices = choice.childrenOfType(Expansion.class);
+            for (int i=0; i < choices.size() -1; i++) {
+                Expansion unit = choices.get(i);
+                if (unit.isAlwaysSuccessful()) {
+                    int numFollowing = choices.size() - i -1;
+                    String msg = (numFollowing ==1) ? " The expansion that follows " : "The following " + numFollowing + " expansions ";
+                    grammar.addSemanticError(unit, "This expansion can match the empty string." + msg + "can never be matched.");
+                }
+            }
+        }
+
+        for (Node child : grammar.descendants(n -> n instanceof OneOrMore || n instanceof ZeroOrMore)) {
+            Expansion exp = (Expansion) child;
+            String starOrPlus = exp instanceof ZeroOrMore ? "(...)*" : "(...)+";
+            if (exp.getNestedExpansion().isAlwaysSuccessful()) {
+                grammar.addSemanticError(exp, "Expansion inside " + starOrPlus + " can be matched by the empty string, so it would produce an infinite loop!");
+            }
+        }
+
+        for (ZeroOrOne zoo : grammar.descendantsOfType(ZeroOrOne.class)) {
+            if (zoo.getNestedExpansion().isAlwaysSuccessful()) {
+                grammar.addWarning(zoo, "The expansion inside this (...)? construct can be matched by the empty string so it is always matched. This may not be your intention.");
+            }
+        }
+   
 
         // Check that non-terminals have all been defined.
         for (NonTerminal nt : grammar.descendantsOfType(NonTerminal.class)) {
@@ -555,13 +582,6 @@ public class ParserData {
             }
         }
 
-        for (Node child : grammar.descendants(n -> n instanceof OneOrMore || n instanceof ZeroOrMore)) {
-            Expansion exp = (Expansion) child;
-            if (exp.getNestedExpansion().isPossiblyEmpty()) {
-                grammar.addSemanticError(exp, "Expansion can be matched by empty string.");
-            }
-        }
-
         if (!grammar.getOptions().getUserDefinedLexer()) {
             RegexpVisitor reVisitor = new RegexpVisitor();
             for (TokenProduction tp : grammar.getAllTokenProductions()) {
@@ -700,19 +720,6 @@ public class ParserData {
                 partialMatches.add(matchInfo);
                 generateFirstSet(partialMatches, choices.get(i));
                 dbr.set(i, sizeLimitedMatches);
-            }
-            if (la == 1) {
-                for (int i = first; i < choices.size() - 1; i++) {
-                    Expansion exp = choices.get(i);
-                    if (exp.isPossiblyEmpty()) {
-                        grammar
-                        .addWarning(
-                                exp,
-                                "This choice can expand to the empty token sequence "
-                                        + "and will therefore always be taken in favor of the choices appearing later.");
-                        break;
-                    } 
-                }
             }
             overlapDetected = false;
             for (int i = first; i < choices.size() - 1; i++) {

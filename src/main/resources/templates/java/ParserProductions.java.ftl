@@ -393,7 +393,7 @@
 
 
 [#macro BuildCodeZeroOrOne zoo]
-    [#if zoo.alwaysSuccessful]
+    [#if zoo.nestedExpansion.alwaysSuccessful]
        [@BuildCode zoo.nestedExpansion /]
     [#else]
        if (resetScanAhead(${zoo.lookaheadAmount}) && [@expansionCondition zoo/]) {
