@@ -454,7 +454,8 @@
    [/#if]
 [/#macro]
 
-[#-- Macro to generate the condition for looking ahead,
+[#-- 
+     Macro to generate the condition for entering an expansion
      including the default single-token lookahead
 --]
 [#macro expansionCondition expansion]
@@ -482,6 +483,11 @@
 [#var NODE_PREFIX = grammar.options.nodePrefix]
 [#var currentProduction]
 
+
+[#--
+   Generates the routine for an explicit lookahead
+   that is used in a nested lookahead.
+ --]
 [#macro BuildLookaheadRoutine lookahead]
   [#if lookahead.nestedExpansion??]
      private final boolean ${lookahead.routineName}() {
@@ -507,6 +513,11 @@
     }
 [/#macro]
 
+[#--
+   Macro to build the lookahead code for an expansion.
+   This macro just delegates to the various sub-macros
+   based on the Expansion's class name.
+--]
 [#macro buildScanCode expansion count=2147483647]
   [#var classname=expansion.simpleName]
     [#if expansion.isRegexp]
@@ -532,29 +543,15 @@
    [@newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${newVarIndex} = remainingLookahead;
   [#list choice.choices as subseq]
-	  if (
-     [#if subseq.lookahead?? && subseq.lookahead.semanticLookaheadNested]
-       !(${subseq.semanticLookahead}) &&
-     [/#if] 
-     [#if subseq.hasSyntacticLookahead]
-       ${subseq.negated?string("", "!")}${subseq.lookahead.routineName}() ||
-     [/#if]
+	  if (!([@InvokeScanRoutine subseq/])) {
 	  [#if subseq_has_next]
-	     ![@InvokeScanRoutine subseq/]) {
-	        currentLookaheadToken = token${newVarIndex};
-	        remainingLookahead = remainingLookahead${newVarIndex};
+	     currentLookaheadToken = token${newVarIndex};
+	     remainingLookahead = remainingLookahead${newVarIndex};
 	  [#else]
-	     ![@InvokeScanRoutine subseq/]
-	     ) 
 	     return false;
 	  [/#if]
   [/#list]
-  [#var numBraces=choice.choices?size-1]
-  [#if numBraces>0]
-    [#list 1..numBraces as unused]
-    }
-    [/#list]
-  [/#if]
+  [#list 1..choice.choices?size as unused] } [/#list]
 [/#macro]
 
 [#macro ScanCodeRegexp regexp]
@@ -567,6 +564,9 @@
       currentLookaheadToken = token${newVarIndex};
 [/#macro]
 
+[#-- 
+  Generates lookahead code for a ZeroOrMore construct]
+--]
 [#macro ScanCodeZeroOrMore zom]
       while (true) {
 	   [@newVar type="Token" init="currentLookaheadToken"/]
@@ -578,23 +578,34 @@
       }
 [/#macro]
 
+[#--
+   Generates lookahead code for a OneOrMore construct
+   It generates the code for checking a single occurrence
+   and then the same code as a ZeroOrMore
+--]
 [#macro ScanCodeOneOrMore oom]
    if (!([@InvokeScanRoutine oom.nestedExpansion/])) return false;
-   while (true) {
-       [@newVar type="Token" init="currentLookaheadToken"/]
-       if (remainingLookahead == 0 || !(
-          [@InvokeScanRoutine oom.nestedExpansion/])) {
-           currentLookaheadToken = token${newVarIndex};
-           break;
-       }
-   }
+   [@ScanCodeZeroOrMore oom /]
 [/#macro]
 
+[#--
+  Generates the lookahead code for a non-terminal.
+  It (trivially) just delegates to the code for 
+  checking the production's nested expansion 
+--]
 [#macro ScanCodeNonTerminal nt]
       if (![@InvokeScanRoutine nt.production.expansion/])
          return false;
 [/#macro]
 
+[#--
+   Generates the lookahead code for an ExpansionSequence
+   The count parameter is the maximum number of tokens that 
+   we need to lookahead, so, if it is clear that we don't
+   need to generate code beyond the nth expnasion, we just
+   break out. (This is a peephole space optimization that may
+   not be worth the candle. REVISIT later.)
+--]
 [#macro ScanCodeSequence sequence, count]
    [#list sequence.units as sub]
        [@buildScanCode sub, count/]
@@ -603,16 +614,16 @@
    [/#list]
 [/#macro]
 
-[#function inChoiceConstruct expansion]
-   [#var parentType = expansion.parent.simpleName]
-   [#return parentType = "OneOrMore" || parentType = "ZeroOrMore" || parentType = "ZeroOrOne"]
-[/#function]
-    
+[#-- 
+  Invoke the code for scanning for an expansion.
+  If the expansion has an explicit (nested) lookahead, it checks for 
+  the lookahead succeeding and then the expansion itself.
+--]
 [#macro InvokeScanRoutine expansion]
    [#if expansion.lookahead?? && expansion.lookahead.semanticLookaheadNested]
        !(${expansion.semanticLookahead}) &&
      [/#if] 
-   [#if expansion.hasSyntacticLookahead && inChoiceConstruct(expansion)]
+   [#if expansion.hasSyntacticLookahead]
             ${expansion.negated?string("!", "")}${expansion.lookahead.routineName}() &&
    [/#if]
    [#if expansion.isRegexp]
@@ -623,6 +634,9 @@
 [/#macro]
 
 [#var newVarIndex=0]
+[#-- Just to generate a new unique variable name
+  All it does is tack an integer (that is incremented)
+  onto the type name, and optionally initializes it to some value--]
 [#macro newVar type init=null]
    [#set newVarIndex = newVarIndex+1]
    ${type} ${type?lower_case}${newVarIndex}
@@ -632,11 +646,13 @@
    ;
 [/#macro]   
 
+
+[#-- A macro to use at one's convenience to comment out a block of code --]
 [#macro comment]
 [#var content, lines]
 [#set content][#nested/][/#set]
 [#set lines = content?split("\n")]
 [#list lines as line]
-//${line}
+// ${line}
 [/#list]
 [/#macro]
