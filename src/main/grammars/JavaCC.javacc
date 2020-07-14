@@ -1531,7 +1531,7 @@ Lookahead ScanAhead #Lookahead :
     "{" 
     Expression {hasSemanticLookahead = true;}
     "}"
-    ["!" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+    ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
 [
     SCAN 10000 {amountToken == null} 
@@ -1587,7 +1587,7 @@ Lookahead LegacyLookahead() #Lookahead :
       ]
       [
         "{"  Expression()  "}"
-        ["!" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+        ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
       ]
      ")" {token_source.inJavaCode = false;}
   ]

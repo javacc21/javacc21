@@ -487,10 +487,9 @@
      private final boolean ${lookahead.routineName}() {
         int prevRemainingLookahead = remainingLookahead;
         Token prevScanAheadToken = currentLookaheadToken;
-        remainingLookahead = 2147483647;
         try {
-        [@buildScanCode lookahead.nestedExpansion/]
-        return true;
+          [@buildScanCode lookahead.nestedExpansion/]
+          return true;
         }
         finally {
            currentLookaheadToken = prevScanAheadToken;
