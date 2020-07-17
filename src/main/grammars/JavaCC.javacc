@@ -331,6 +331,8 @@ TOKEN :
   <HASH : "#">
   |
   <HASH_ID : "#"<IDENTIFIER>> #HashID
+  |
+  <DOUBLE_STAR : "**"> #DoubleStar 
 }
 
 
@@ -1533,8 +1535,9 @@ Lookahead ScanAhead #Lookahead :
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
+[SCAN LookBehind]
 [
-    SCAN 10000 {amountToken == null} 
+    SCAN {amountToken == null} 
     ["~" {CURRENT_NODE.setNegated(true);}] 
     ExpansionChoice() {expansion = (Expansion) peekNode();}
     "->"
@@ -1548,7 +1551,15 @@ Lookahead ScanAhead #Lookahead :
 ]
 {
     return CURRENT_NODE;
-};   
+};
+
+
+/**
+ * A string that we can specify (when it is implemented) to
+ * specify a predicate to check whether we are in some 
+ * grammatical construct. 
+ */
+LookBehind : ["/"](("*"|"**"|<IDENTIFIER>)"/")+ ;
 
 Lookahead LegacyLookahead() #Lookahead :
 {
@@ -1706,6 +1717,10 @@ INJECT(Lookahead) :
             routineName = getGrammar().generateUniqueIdentifier("check$", this);
         }
         return routineName;
+    }
+
+    public LookBehind getLookBehind() {
+        return firstChildOfType(LookBehind.class);
     }
 }
 

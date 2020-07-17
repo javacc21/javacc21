@@ -53,22 +53,52 @@
     setTracingEnabled(false);
   }
  
-private ArrayList<StackTraceElement> callStack = new ArrayList<>();
+private ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
+private ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
+
+
 private EnumSet<TokenType> currentFollowSet;
 
-private void pushOntoCallStack(String methodName, String fileName, int line) {
-   StackTraceElement item = new StackTraceElement(this.getClass().getName(), methodName, fileName, line);
-   callStack.add(item);
+/**
+ * Inner class that represents entering a grammar production
+ */
+class NonTerminalCall {
+    final String sourceFile;
+    final String productionName;
+    final int line, column;
+
+    NonTerminalCall(String sourceFile, String productionName, int line, int column) {
+        this.sourceFile = sourceFile;
+        this.productionName = productionName;
+        this.line = line;
+        this.column = column;
+    }
+
+    StackTraceElement createStackTraceElement() {
+        return new StackTraceElement(this.getClass().getName(), productionName, sourceFile, line);
+    }
 }
 
-private void popCallStack() {
-    callStack.remove(callStack.size() -1);
+private final void pushOntoCallStack(String methodName, String fileName, int line, int column) {
+   parsingStack.add(new NonTerminalCall(fileName, methodName, line, column));
 }
 
-private void restoreCallStack(int prevSize) {
-    while (callStack.size() > prevSize) {
+private final void popCallStack() {
+    parsingStack.remove(parsingStack.size() -1);
+}
+
+private final void restoreCallStack(int prevSize) {
+    while (parsingStack.size() > prevSize) {
        popCallStack();
     }
+}
+
+private final void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
+    lookaheadStack.add(new NonTerminalCall(fileName, methodName, line, column));
+}
+
+private final void popLookaheadStack() {
+    lookaheadStack.remove(lookaheadStack.size() -1);
 }
 
 [#if grammar.options.faultTolerant]
@@ -201,7 +231,7 @@ private void restoreCallStack(int prevSize) {
            addParsingProblem(new ParsingProblem(message, virtualToken));
        } else 
 [/#if]      
-       throw new ParseException(current_token, EnumSet.of(expectedType), callStack);
+       throw new ParseException(current_token, EnumSet.of(expectedType), parsingStack);
   }
   
  [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]

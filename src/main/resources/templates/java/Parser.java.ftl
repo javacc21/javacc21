@@ -106,6 +106,10 @@ public boolean isCancelled() {return cancelled;}
       token_source.parser = this;
       [/#if]
   }
+
+  public ${grammar.parserClassName}(CharSequence content) {
+    this("input", content);
+  }
  [/#if]
   public ${grammar.parserClassName}(java.io.InputStream stream) {
       this(new InputStreamReader(stream));
@@ -179,13 +183,7 @@ public boolean isCancelled() {return cancelled;}
     return true;
   }
 
-  private final boolean setScanPosition(Token currentLookaheadToken, int remainingLookahead) {
-    this.currentLookaheadToken = currentLookaheadToken;
-    this.remainingLookahead = remainingLookahead;
-    return true;
-  }
-
-  
+ 
  
 [#import "ParserProductions.java.ftl" as ParserCode ]
 [@ParserCode.Generate/]

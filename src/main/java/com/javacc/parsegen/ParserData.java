@@ -636,9 +636,6 @@ public class ParserData {
                     match3 = match2;
                 }
                 if (size != 0) {
-                    // REVISIT. We don't have JAVACODE productions  any more!
-                    // we wish to ignore empty expansions and the JAVACODE stuff
-                    // here.
                     boolean diffFound = false;
                     for (int k = 0; k < size; k++) {
                         if (match1.match[k] != match2.match[k]) {

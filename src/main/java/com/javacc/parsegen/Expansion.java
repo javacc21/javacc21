@@ -84,6 +84,10 @@ abstract public class Expansion extends BaseNode {
 
     public Expansion() {}
 
+    public BNFProduction getContainingProduction() {
+        return firstAncestorOfType(BNFProduction.class);
+    }
+
     long myGeneration = 0; //REVISIT
     
     private String scanRoutineName, firstSetVarName, finalSetVarName, followSetVarName;

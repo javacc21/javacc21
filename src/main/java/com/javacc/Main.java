@@ -96,7 +96,8 @@ public final class Main {
                 Scanner scanner = new Scanner(System.in);
                 String response = scanner.nextLine().trim().toLowerCase();
                 if (response.equals("y") || response.equals("yes")) {
-                    jarFile.renameTo(new File(jarFile.getName().replace("javacc",  "javacc-prev")));
+                    String oldFilename = jarFile.getName().replace("javacc", "javacc-prev");
+                    jarFile.renameTo(new File(jarFile.getParentFile(), oldFilename));
                     System.out.println("Updating jarfile...");
                     InputStream inputStream = url.openStream();
                     FileOutputStream fileOS = new FileOutputStream(jarFile);
@@ -105,7 +106,9 @@ public final class Main {
                     while ((byteContent = inputStream.read(data, 0, 1024)) != -1) {
                         fileOS.write(data, 0, byteContent);
                     }            
-                    System.out.println("Fetched newer jarfile from server. Exiting...");
+                    System.out.println("Fetched newer jarfile from server.");
+                    System.out.println("Saved older jarfile to " + oldFilename);
+                    System.out.println("You will have to run the app again. Exiting...");
                     System.exit(-1);
                 }
             }

@@ -181,7 +181,7 @@
           ParseException ${parseExceptionVar} = null;
           [#set newVarIndex = newVarIndex +1]
           [#set callStackSizeVar = "callStackSize" + newVarIndex]
-          int ${callStackSizeVar} = callStack.size();
+          int ${callStackSizeVar} = parsingStack.size();
          try {
     [/#if]
         ${(production.javaCode)!}
@@ -372,7 +372,7 @@
 [/#macro]
 
 [#macro BuildCodeNonTerminal nonterminal]
-   pushOntoCallStack("${currentProduction.name}", "${nonterminal.inputSource}", ${nonterminal.beginLine}); 
+   pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource}", ${nonterminal.beginLine}, ${nonterminal.beginColumn}); 
    [#if grammar.options.faultTolerant && !nonterminal.production.forced]
      [@newVar type="boolean" init="currentNTForced"/]
     currentNTForced = ${nonterminal.forced?string("true", "false")};
@@ -441,15 +441,15 @@
       }
    [#elseif choice.parent.simpleName = "OneOrMore"]
        else if (${inFirstVarName}) {
-           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
-           throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack);
+           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine}, ${choice.beginColumn});
+           throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, parsingStack);
        } else {
            break;
        }
    [#elseif choice.parent.simpleName != "ZeroOrOne"]
        else {
-           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine});
-           throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, callStack);
+           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine}, ${choice.beginColumn});
+           throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, parsingStack);
         }
    [/#if]
 [/#macro]
@@ -513,6 +513,8 @@
     }
 [/#macro]
 
+
+
 [#--
    Macro to build the lookahead code for an expansion.
    This macro just delegates to the various sub-macros
@@ -568,9 +570,9 @@
   Generates lookahead code for a ZeroOrMore construct]
 --]
 [#macro ScanCodeZeroOrMore zom]
-      while (true) {
+      while (remainingLookahead > 0) {
 	   [@newVar type="Token" init="currentLookaheadToken"/]
-         if (remainingLookahead == 0 || !(
+         if (!(
          [@InvokeScanRoutine zom.nestedExpansion/])) {
              currentLookaheadToken = token${newVarIndex};
              break;
@@ -594,8 +596,12 @@
   checking the production's nested expansion 
 --]
 [#macro ScanCodeNonTerminal nt]
-      if (![@InvokeScanRoutine nt.production.expansion/])
+      pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn}); 
+      if (![@InvokeScanRoutine nt.production.expansion/]) {
+         popLookaheadStack();
          return false;
+      }
+      popLookaheadStack();
 [/#macro]
 
 [#--

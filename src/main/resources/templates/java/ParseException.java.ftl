@@ -24,7 +24,8 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   //We were expecting one of these token types
   private EnumSet<TokenType> expectedTypes;
   
-  private List<StackTraceElement> callStack;
+//  private List<StackTraceElement> callStack;
+    private List<${grammar.parserClassName}.NonTerminalCall> callStack;
   
   private boolean alreadyAdjusted;
 
@@ -33,7 +34,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   }
   
   
-  public ParseException(Token token, EnumSet<TokenType> expectedTypes, List<StackTraceElement> callStack) {
+  public ParseException(Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
       this.token = token;
       this.expectedTypes = expectedTypes;
       this.callStack = new ArrayList<>(callStack);
@@ -50,7 +51,10 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   private void adjustStackTrace() {
       if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;
       List<StackTraceElement> fullTrace = new LinkedList<>();
-      List<StackTraceElement> ourCallStack = new LinkedList<>(callStack);
+      List<StackTraceElement> ourCallStack = new LinkedList<>();
+      for (${grammar.parserClassName}.NonTerminalCall ntc : callStack) {
+         ourCallStack.add(ntc.createStackTraceElement());
+      }
       StackTraceElement[] jvmCallStack = super.getStackTrace();
       for (StackTraceElement regularEntry : jvmCallStack) {
            if (ourCallStack.isEmpty()) break;
