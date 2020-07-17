@@ -30,12 +30,10 @@
 
 package com.javacc;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
@@ -96,7 +94,8 @@ public final class Main {
                 Scanner scanner = new Scanner(System.in);
                 String response = scanner.nextLine().trim().toLowerCase();
                 if (response.equals("y") || response.equals("yes")) {
-                    jarFile.renameTo(new File(jarFile.getName().replace("javacc",  "javacc-prev")));
+                    String oldFile =jarFile.getName().replace("javacc",  "javac-" + new Date().toInstant()); 
+                    jarFile.renameTo(new File(oldFile));
                     System.out.println("Updating jarfile...");
                     InputStream inputStream = url.openStream();
                     FileOutputStream fileOS = new FileOutputStream(jarFile);
@@ -105,7 +104,9 @@ public final class Main {
                     while ((byteContent = inputStream.read(data, 0, 1024)) != -1) {
                         fileOS.write(data, 0, byteContent);
                     }            
-                    System.out.println("Fetched newer jarfile from server. Exiting...");
+                    System.out.println("Fetched newer jarfile from server.");
+                    System.out.println("Older jarfile is at: " + oldFile);
+                    System.out.println("Exiting...");
                     System.exit(-1);
                 }
             }
