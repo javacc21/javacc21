@@ -646,10 +646,10 @@ void If() #IfStatement : {}
     <CLOSE_TAG>
     Block()
     (
-       SCAN 2 -> ElseIf()
+       SCAN 2 => ElseIf()
     )*
     [
-       SCAN 2 -> Else()
+       SCAN 2 => Else()
     ]
     DirectiveEnd("if")
 }
@@ -908,7 +908,7 @@ void FTLHeader() : {}
 void Root() : {}
 {
     [
-        SCAN [<WHITESPACE>]<FTL_DIRECTIVE_OPEN><FTL> ->
+        SCAN [<WHITESPACE>]<FTL_DIRECTIVE_OPEN><FTL> =>
         [<WHITESPACE>]
         FTLHeader() {token_source.rightAfterHeader = true;}
     ]

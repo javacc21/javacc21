@@ -30,8 +30,6 @@
 
 package com.javacc.parsegen;
 
-import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.List;
 
 import com.javacc.Grammar;
@@ -193,6 +191,14 @@ abstract public class Expansion extends BaseNode {
     public Expression getSemanticLookahead() {
         return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;
     }
+
+    public boolean getHasLookBehind() {
+        return getLookahead() != null && getLookahead().getLookBehind() != null;
+    }
+
+    public LookBehind getLookBehind() {
+        return getLookahead() != null ? getLookahead().getLookBehind() : null;
+    }
     
     public boolean isNegated() {
         return getLookahead() != null && getLookahead().isNegated();
@@ -336,4 +342,22 @@ abstract public class Expansion extends BaseNode {
       * @return Does this expansion resolve to a fixed sequence of Tokens?
       */
      abstract public boolean isConcrete();
+
+     public boolean masks(Expansion other) {
+         TokenSet firstSet = this.getFirstSet();
+         TokenSet otherSet = other.getFirstSet();
+         TokenSet set = new TokenSet(this.getGrammar());
+         set.or(firstSet);
+         set.andNot(otherSet);
+         return set.cardinality() == 0;
+     }
+ 
+     public TokenSet overlap(Expansion other) {
+         TokenSet firstSet = this.getFirstSet();
+         TokenSet otherSet = other.getFirstSet();
+         TokenSet result = new TokenSet(getGrammar());
+         result.or(firstSet);
+         result.and(otherSet);
+         return result;
+     }
 }

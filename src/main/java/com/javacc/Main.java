@@ -104,6 +104,8 @@ public final class Main {
                     while ((byteContent = inputStream.read(data, 0, 1024)) != -1) {
                         fileOS.write(data, 0, byteContent);
                     }            
+                    fileOS.close();
+                    scanner.close();
                     System.out.println("Fetched newer jarfile from server.");
                     System.out.println("Older jarfile is at: " + oldFile);
                     System.out.println("Exiting...");

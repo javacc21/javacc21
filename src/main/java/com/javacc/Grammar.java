@@ -432,6 +432,10 @@ public class Grammar extends BaseNode {
         return this.descendantsOfType(Lookahead.class);
     }
 
+    public List<LookBehind> getAllLookBehinds() {
+        return this.descendantsOfType(LookBehind.class);
+    } 
+
     public void addTokenProduction(TokenProduction tp) {
         tokenProductions.add(tp);
     }

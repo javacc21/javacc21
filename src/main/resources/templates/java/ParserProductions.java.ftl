@@ -78,6 +78,10 @@
      [/#if]
    [/#list]
 
+   [#list grammar.allLookBehinds as lookBehind]
+      [@BuildLookBehindRoutine lookBehind /]
+   [/#list]
+
 [/#macro]   
 
 [#macro firstSetVars]
@@ -461,7 +465,10 @@
 [#macro expansionCondition expansion]
    [#if expansion.hasSemanticLookahead]
       (${expansion.semanticLookahead}) &&
-   [/#if] 
+   [/#if]
+   [#if expansion.hasLookBehind]
+      ${expansion.lookBehind.routineName}() &&
+   [/#if]
    [#if expansion.requiresScanAhead]
       [#if expansion.negated]![/#if]
       ${expansion.lookaheadExpansion.scanRoutineName}()
@@ -504,6 +511,58 @@
      }
    [/#if]
 [/#macro]
+
+[#macro BuildLookBehindRoutine lookBehind]
+    private final boolean ${lookBehind.routineName}() {
+       Iterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
+       boolean foundProduction = false;
+       [#var justSawEllipsis = false]
+       [#list lookBehind.path as element]
+          [#var elementNegated = (element[0] == "~")]
+          [#if elementNegated][#set element = element[1..]][/#if]
+          [#if element == "..."]
+             [#set justSawEllipsis = true]
+          [#elseif element = "."]
+             [#set justSawEllipsis = false]
+             if (!stackIterator.hasNext()) {
+                return ${bool(lookBehind.negated)};
+             }
+             stackIterator.next();
+         [#else]
+             [#var exclam = elementNegated?string("!", "")]
+             [#if justSawEllipsis]
+               foundProduction = false;
+               while (stackIterator.hasNext() && !foundProduction) {
+                  NonTerminalCall ntc = stackIterator.next();
+                  if (${exclam}ntc.productionName.equals("${element}")) {
+                     foundProduction = true;
+                  }
+               }
+               if (!foundProduction) {
+                  return ${bool(lookBehind.negated)};
+               }
+           [#else]
+               [#var exclam = elementNegated?string("", "!")]
+               if (!stackIterator.hasNext()) {
+                  return ${bool(lookBehind.negated)};
+               } else {
+                  NonTerminalCall ntc = stackIterator.next();
+                  if (${exclam}ntc.productionName.equals("${element}")) {
+                     return ${bool(lookBehind.negated)};
+                  }
+               }
+           [/#if]
+           [#set justSawEllipsis = false] 
+         [/#if]
+       [/#list]
+       [#if lookBehind.hasEndingSlash]
+           return [#if !lookBehind.negated]![/#if]stackIterator.hasNext();
+       [#else]
+           return ${bool(!lookBehind.negated)};
+       [/#if]
+    }
+[/#macro]
+
 
 [#macro buildScanRoutine expansion count]
      private final boolean ${expansion.scanRoutineName}() {
@@ -662,3 +721,7 @@
 // ${line}
 [/#list]
 [/#macro]
+
+[#function bool val]
+   [#return val?string("true", "false")/]
+[/#function]

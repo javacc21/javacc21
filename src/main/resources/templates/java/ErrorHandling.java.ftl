@@ -75,7 +75,7 @@ class NonTerminalCall {
     }
 
     StackTraceElement createStackTraceElement() {
-        return new StackTraceElement(this.getClass().getName(), productionName, sourceFile, line);
+        return new StackTraceElement("${grammar.parserClassName}", productionName, sourceFile, line);
     }
 }
 
@@ -92,6 +92,33 @@ private final void restoreCallStack(int prevSize) {
        popCallStack();
     }
 }
+
+private Iterator<NonTerminalCall> stackIteratorForward() {
+    final Iterator<NonTerminalCall> parseStackIterator = parsingStack.iterator();
+    final Iterator<NonTerminalCall> lookaheadStackIterator = lookaheadStack.iterator();
+    return new Iterator<NonTerminalCall>() {
+        public boolean hasNext() {
+            return parseStackIterator.hasNext() || lookaheadStackIterator.hasNext();
+        }
+        public NonTerminalCall next() {
+            return parseStackIterator.hasNext() ? parseStackIterator.next() : lookaheadStackIterator.next();
+        }
+    };
+}
+
+private Iterator<NonTerminalCall> stackIteratorBackward() {
+    final ListIterator<NonTerminalCall> parseStackIterator = parsingStack.listIterator(parsingStack.size());
+    final ListIterator<NonTerminalCall> lookaheadStackIterator = lookaheadStack.listIterator(lookaheadStack.size());
+    return new Iterator<NonTerminalCall>() {
+        public boolean hasNext() {
+            return parseStackIterator.hasPrevious() || lookaheadStackIterator.hasPrevious();
+        }
+        public NonTerminalCall next() {
+            return lookaheadStackIterator.hasPrevious() ? lookaheadStackIterator.previous() : parseStackIterator.previous();
+        }
+    };
+}
+
 
 private final void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
     lookaheadStack.add(new NonTerminalCall(fileName, methodName, line, column));

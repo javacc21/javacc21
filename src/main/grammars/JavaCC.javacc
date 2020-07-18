@@ -333,6 +333,12 @@ TOKEN :
   <HASH_ID : "#"<IDENTIFIER>> #HashID
   |
   <DOUBLE_STAR : "**"> #DoubleStar 
+  |
+  <BACKSLASH : "\\"> #Backslash
+  |
+  <DOUBLE_BACKSLASH : "\\\\"> #DoubleBackslash
+  |
+  <RIGHT_ARROW : "=>"> #RightArrow
 }
 
 
@@ -1386,7 +1392,7 @@ ExpansionSequence() #ExpansionSequence :
      }
   ]
   (
-     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<LAMBDA>))
+     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<RIGHT_ARROW>))
       sub=ExpansionUnit()
       {
           pokeNode(sub);
@@ -1540,14 +1546,14 @@ Lookahead ScanAhead #Lookahead :
     SCAN {amountToken == null} 
     ["~" {CURRENT_NODE.setNegated(true);}] 
     ExpansionChoice() {expansion = (Expansion) peekNode();}
-    "->"
+    <RIGHT_ARROW>
     {
        CURRENT_NODE.setExpansion(expansion);
        expansion.setLookahead(CURRENT_NODE);
     }
 ]
 [
-    SCAN 1 {expansion == null} "->"
+    SCAN 1 {expansion == null} (<RIGHT_ARROW>)
 ]
 {
     return CURRENT_NODE;
@@ -1559,7 +1565,116 @@ Lookahead ScanAhead #Lookahead :
  * specify a predicate to check whether we are in some 
  * grammatical construct. 
  */
-LookBehind : ["/"](("*"|"**"|<IDENTIFIER>)"/")+ ;
+ /*
+LookBehind : 
+{boolean atBeginning = true;}
+   [<TILDE> {CURRENT_NODE.setNegated(true);}] 
+   (
+       (
+           SCAN {atBeginning}
+           <DOUBLE_BACKSLASH>
+           |
+           <BACKSLASH>
+       )
+       (
+        ([<TILDE>]<IDENTIFIER>)
+        |
+        (<STAR>|<DOUBLE_STAR>)
+       )
+       {atBeginning = false;}
+   )+
+   [<BACKSLASH><DOT>]
+;*/
+
+LookBehind : 
+   [<TILDE> {CURRENT_NODE.setNegated(true);}] 
+   LookBehindForward | LookBehindBackward
+;
+
+LookBehindForward #void :
+   (
+       <SLASH>
+       (
+         ([<TILDE>]<IDENTIFIER>)
+         |
+         (<DOT>|<VAR_ARGS>)
+       )
+   )+
+   [<BACKSLASH>]
+;
+
+LookBehindBackward #void :
+   (
+       <BACKSLASH>
+       (
+          ([<TILDE>]<IDENTIFIER>)
+          |
+          (<DOT><VAR_ARGS>)
+       )
+   )+
+   [<SLASH>]
+;
+
+INJECT(LookBehind) :
+import java.util.*;
+{
+    private boolean negated;
+
+    public boolean isNegated() {
+        return negated;
+    }
+
+    public void setNegated(boolean negated) {
+        this.negated = negated;
+    }
+
+    public boolean isBackward() {
+        return firstChildOfType(DoubleBackslash.class) == null;
+    }
+
+    public boolean getHasFinalEllipsis() {
+        Token t = (Token) getChild(getChildCount() -1);
+        return t.getImage().equals("...");
+    }
+
+    public List<String> getPath() {
+        ArrayList<String> result = new ArrayList<>();
+        boolean negated = false;
+        for (Token t : childrenOfType(Token.class)) {
+            String img = t.getImage();
+            if (img.charAt(0) == '\\' || img.charAt(0)=='/') continue;
+            if (img.equals("~")) {
+                negated = true;
+                continue;
+            }
+            if (negated) {
+                result.add("~" + img);
+            } else {
+               result.add(img);
+            }
+            negated = false;
+        }
+        if (result.get(0).equals("~")) {
+            result.remove(0);
+        }
+        return result;
+    }
+
+    public boolean getHasEndingSlash() {
+        Token lastToken = (Token) getChild(getChildCount()-1);
+        String img = lastToken.getImage();
+        return img.equals("\\") || img.equals("/");
+    }
+
+    private String routineName;
+    
+    public String getRoutineName() {
+        if (routineName == null) {
+            routineName = getGrammar().generateUniqueIdentifier("backscan$", this);
+        }
+        return routineName;
+    }
+}
 
 Lookahead LegacyLookahead() #Lookahead :
 {
@@ -1734,6 +1849,7 @@ Expansion ExpansionUnit() :
 {
  (
   LOOKAHEAD("{", {!inLookahead})
+//  SCAN ~\**\Lookahead
   result=CodeSnippet() 
   |
   result=ZeroOrOne()

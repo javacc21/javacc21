@@ -243,6 +243,17 @@ public class ParserData {
             }
         }
 
+        // Check that no LookBehind predicates refer to an undefined Production
+        for (LookBehind lb : grammar.getAllLookBehinds()) {
+            for (String name: lb.getPath()) {
+                if (Character.isJavaIdentifierStart(name.charAt(0))) {
+                    if (grammar.getProductionByName(name) == null) {
+                        grammar.addSemanticError(lb, "Predicate refers to undefined Non-terminal: " + name);
+                    }
+                }
+            }
+        }
+
 
         /*
          * The following loop ensures that all target lexical states are
