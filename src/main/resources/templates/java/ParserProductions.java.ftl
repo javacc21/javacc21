@@ -687,7 +687,10 @@
 [#macro InvokeScanRoutine expansion]
    [#if expansion.lookahead?? && expansion.lookahead.semanticLookaheadNested]
        !(${expansion.semanticLookahead}) &&
-     [/#if] 
+   [/#if]
+   [#if expansion.hasLookBehind]
+       ${expansion.lookBehind.routineName}() &&
+   [/#if]
    [#if expansion.hasSyntacticLookahead]
             ${expansion.negated?string("!", "")}${expansion.lookahead.routineName}() &&
    [/#if]

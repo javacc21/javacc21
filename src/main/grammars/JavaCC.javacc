@@ -59,7 +59,6 @@ import com.javacc.parser.tree.*;
 
    private boolean inLookahead;
 
-
    private char character_descriptor_assign(Token t, String s) {
         if (s.length() != 1) {
             grammar.addParseError(t,
@@ -1392,7 +1391,7 @@ ExpansionSequence() #ExpansionSequence :
      }
   ]
   (
-     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<RIGHT_ARROW>))
+     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<RIGHT_ARROW>|<SLASH>|<BACKSLASH>))
       sub=ExpansionUnit()
       {
           pokeNode(sub);
@@ -1541,7 +1540,7 @@ Lookahead ScanAhead #Lookahead :
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
-[SCAN LookBehind]
+[LookBehind]
 [
     SCAN {amountToken == null} 
     ["~" {CURRENT_NODE.setNegated(true);}] 
@@ -1559,35 +1558,8 @@ Lookahead ScanAhead #Lookahead :
     return CURRENT_NODE;
 };
 
-
-/**
- * A string that we can specify (when it is implemented) to
- * specify a predicate to check whether we are in some 
- * grammatical construct. 
- */
- /*
 LookBehind : 
-{boolean atBeginning = true;}
-   [<TILDE> {CURRENT_NODE.setNegated(true);}] 
-   (
-       (
-           SCAN {atBeginning}
-           <DOUBLE_BACKSLASH>
-           |
-           <BACKSLASH>
-       )
-       (
-        ([<TILDE>]<IDENTIFIER>)
-        |
-        (<STAR>|<DOUBLE_STAR>)
-       )
-       {atBeginning = false;}
-   )+
-   [<BACKSLASH><DOT>]
-;*/
-
-LookBehind : 
-   [<TILDE> {CURRENT_NODE.setNegated(true);}] 
+ //  [<TILDE> {CURRENT_NODE.setNegated(true);}] 
    LookBehindForward | LookBehindBackward
 ;
 
@@ -1609,7 +1581,7 @@ LookBehindBackward #void :
        (
           ([<TILDE>]<IDENTIFIER>)
           |
-          (<DOT><VAR_ARGS>)
+          (<DOT>|<VAR_ARGS>)
        )
    )+
    [<SLASH>]
