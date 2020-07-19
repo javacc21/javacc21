@@ -740,7 +740,7 @@ void CodeInjection2() :
 void Options() #Options : 
 {}
 {
-    (SCAN Setting)+
+    (SCAN => Setting)+
 }
 
 void OptionsBlock() #Options :
@@ -1542,7 +1542,7 @@ Lookahead ScanAhead #Lookahead :
 ]
 [LookBehind]
 [
-    SCAN {amountToken == null} 
+    SCAN {amountToken == null} => 
     ["~" {CURRENT_NODE.setNegated(true);}] 
     ExpansionChoice() {expansion = (Expansion) peekNode();}
     <RIGHT_ARROW>
@@ -1559,8 +1559,8 @@ Lookahead ScanAhead #Lookahead :
 };
 
 LookBehind : 
- //  [<TILDE> {CURRENT_NODE.setNegated(true);}] 
-   LookBehindForward | LookBehindBackward
+   [<TILDE> {CURRENT_NODE.setNegated(true);}] 
+   (LookBehindForward | LookBehindBackward)
 ;
 
 LookBehindForward #void :
@@ -1820,8 +1820,8 @@ Expansion ExpansionUnit() :
 }
 {
  (
-  LOOKAHEAD("{", {!inLookahead})
-//  SCAN ~\**\Lookahead
+//  LOOKAHEAD("{", {!inLookahead})
+  SCAN 1 ~\...\Lookahead =>
   result=CodeSnippet() 
   |
   result=ZeroOrOne()
@@ -1833,8 +1833,9 @@ Expansion ExpansionUnit() :
   |
   LOOKAHEAD([PrimaryExpression() "="] (<STRING_LITERAL>|"<"))
   [
-    LOOKAHEAD(PrimaryExpression() "=", {!inLookahead})
-    lhs=PrimaryExpression()
+    SCAN ~\...\Lookahead PrimaryExpression() "=" =>
+//    LOOKAHEAD(PrimaryExpression "=", {!inLookahead})
+    lhs=PrimaryExpression
     "="
   ]
   RegexpExpansion()
