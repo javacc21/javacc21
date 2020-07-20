@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -37,6 +37,9 @@ import java.net.URL;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
+
+import javax.management.RuntimeErrorException;
+
 import java.util.Scanner;
 
 import com.javacc.parser.ParseException;
@@ -94,8 +97,16 @@ public final class Main {
                 Scanner scanner = new Scanner(System.in);
                 String response = scanner.nextLine().trim().toLowerCase();
                 if (response.equals("y") || response.equals("yes")) {
-                    String oldFile =jarFile.getName().replace("javacc",  "javac-" + new Date().toInstant()); 
-                    jarFile.renameTo(new File(oldFile));
+                    boolean renamedFileSuccessfully = false;
+                    String oldFileName =jarFile.getName().replace("javacc",  "javacc-" + System.currentTimeMillis());
+                    File oldFile = new File(jarFile.getParentFile(), oldFileName);
+                    try {
+                        renamedFileSuccessfully = jarFile.renameTo(oldFile);
+                    } catch (Exception e) {
+                        System.out.println("Failed to save older version of jarfile");
+                        System.out.println("Possibly directory " + oldFile.getParent() + " is not writeable.");
+                        return;
+                    }
                     System.out.println("Updating jarfile...");
                     InputStream inputStream = url.openStream();
                     FileOutputStream fileOS = new FileOutputStream(jarFile);
@@ -107,7 +118,7 @@ public final class Main {
                     fileOS.close();
                     scanner.close();
                     System.out.println("Fetched newer jarfile from server.");
-                    System.out.println("Older jarfile is at: " + oldFile);
+                    if (renamedFileSuccessfully) System.out.println("Older jarfile is at: " + oldFile);
                     System.out.println("Exiting...");
                     System.exit(-1);
                 }

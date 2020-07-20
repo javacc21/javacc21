@@ -420,7 +420,7 @@ INJECT(ImportDeclaration) :
  
 Modifiers #void :
  (
-  SCAN 2 //  \...\TypeDeclaration
+  SCAN 2 
   (
    "public"
   |
@@ -493,6 +493,7 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
   |
   Modifiers
   (
+     SCAN  // /CompilationUnit/...\
      ClassDeclaration
      |
      InterfaceDeclaration

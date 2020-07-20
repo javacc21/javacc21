@@ -240,7 +240,6 @@ INJECT(LEXER_CLASS) :
         javaccReservedWords.add("options");
         javaccReservedWords.add("OPTIONS");
         javaccReservedWords.add("INCLUDE");
-        javaccReservedWords.add("LOOKAHEAD");
         javaccReservedWords.add("IGNORE_CASE");
         javaccReservedWords.add("PARSER_BEGIN");
         javaccReservedWords.add("TOKEN");
@@ -253,9 +252,10 @@ INJECT(LEXER_CLASS) :
         javaccReservedWords.add("SKIP");
         javaccReservedWords.add("TOKEN_MGR_DECLS");
         javaccReservedWords.add("EOF");
-        javaccReservedWords.add("SCAN");
         javaccReservedWords.add("ATTEMPT");
         javaccReservedWords.add("RECOVER");
+        javaccReservedWords.add("SCAN");
+        javaccReservedWords.add("LOOKAHEAD");
 //        javaccReservedWords.add("INJECT"); //REVISIT
 //        javaccReservedWords.add("PARSER_END");
    }
@@ -1511,11 +1511,9 @@ INJECT(ExpansionSequence) :
 
 Lookahead Lookahead #void :
 {
-    this.inLookahead = true;
 }
-   (ScanAhead | LegacyLookahead)
+   (LegacyLookahead | SCAN ~/.../ScanAhead ScanAhead)
    {
-       this.inLookahead = false;
        return (Lookahead) peekNode();
    }
 ;
@@ -1526,7 +1524,7 @@ Lookahead ScanAhead #Lookahead :
    boolean hasSemanticLookahead = false;
    Expansion expansion = null;
 }
-<_SCAN> 
+<_SCAN>
 [
     amountToken= <INTEGER_LITERAL>
     {
@@ -1651,6 +1649,7 @@ import java.util.*;
 Lookahead LegacyLookahead() #Lookahead :
 {
     Expansion expansion;
+    this.inLookahead = true;
     boolean empty = true, commaAtEnd = false; 
 }
 {
@@ -1690,6 +1689,7 @@ Lookahead LegacyLookahead() #Lookahead :
      ")" {token_source.inJavaCode = false;}
   ]
   {
+     this.inLookahead = false;
      return CURRENT_NODE;
   }
 }
@@ -1820,7 +1820,6 @@ Expansion ExpansionUnit() :
 }
 {
  (
-//  LOOKAHEAD("{", {!inLookahead})
   SCAN 1 ~\...\Lookahead =>
   result=CodeSnippet() 
   |
