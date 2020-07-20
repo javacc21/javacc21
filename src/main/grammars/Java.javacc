@@ -493,7 +493,6 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
   |
   Modifiers
   (
-     SCAN  // /CompilationUnit/...\
      ClassDeclaration
      |
      InterfaceDeclaration
