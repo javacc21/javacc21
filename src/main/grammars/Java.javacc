@@ -1431,7 +1431,7 @@ PostfixExpression :
   PrimaryExpression [ "++" | "--" ]
 ;
 
-CastExpression :
+CastExpression : 
   SCAN "(" PrimitiveType ")" UnaryExpression
   |
   SCAN "(" ReferenceType ")" UnaryExpressionNotPlusMinus

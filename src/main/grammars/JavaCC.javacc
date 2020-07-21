@@ -28,17 +28,15 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-OPTIONS : {
-  JAVA_UNICODE_ESCAPE;
-  LEXER_USES_PARSER;
-  TREE_BUILDING_ENABLED;
-  FREEMARKER_NODES;
-  SMART_NODE_CREATION;
-  BASE_SRC_DIR="../java";
-  PARSER_PACKAGE="com.javacc.parser";
-  NODE_PACKAGE="com.javacc.parser.tree";
-  DEFAULT_LEXICAL_STATE=JAVA;
-}
+JAVA_UNICODE_ESCAPE;
+LEXER_USES_PARSER;
+TREE_BUILDING_ENABLED;
+FREEMARKER_NODES;
+SMART_NODE_CREATION;
+BASE_SRC_DIR="../java";
+PARSER_PACKAGE="com.javacc.parser";
+NODE_PACKAGE="com.javacc.parser.tree";
+DEFAULT_LEXICAL_STATE=JAVA;
 
 INJECT(PARSER_CLASS) :
 {
@@ -56,8 +54,6 @@ import com.javacc.parser.tree.*;
          this(inputSource, content);
          this.grammar = grammar;
     }
-
-   private boolean inLookahead;
 
    private char character_descriptor_assign(Token t, String s) {
         if (s.length() != 1) {
@@ -573,7 +569,8 @@ GrammarFile Root() throws IOException #GrammarFile :
 }
 {
    [
-     LOOKAHEAD(<_OPTIONS> | Setting)
+     SCAN <_OPTIONS> | Setting
+     =>
      (
        OptionsBlock | Options
      )
@@ -1383,7 +1380,8 @@ ExpansionSequence() #ExpansionSequence :
 }
 {
   [ 
-    LOOKAHEAD(1, {!inLookahead})  
+    SCAN ~\...\Lookahead 
+    =>
     la=Lookahead()
     {
        la.setExpansion(CURRENT_NODE);
@@ -1510,9 +1508,7 @@ INJECT(ExpansionSequence) :
 }
 
 Lookahead Lookahead #void :
-{
-}
-   (LegacyLookahead | SCAN ~/.../ScanAhead ScanAhead)
+   (LegacyLookahead | ScanAhead)
    {
        return (Lookahead) peekNode();
    }
@@ -1523,7 +1519,9 @@ Lookahead ScanAhead #Lookahead :
    Token amountToken=null;
    boolean hasSemanticLookahead = false;
    Expansion expansion = null;
+   Expression exp;
 }
+[exp=PrimaryExpression "=" {CURRENT_NODE.setLHS(exp);}]
 <_SCAN>
 [
     amountToken= <INTEGER_LITERAL>
@@ -1534,7 +1532,7 @@ Lookahead ScanAhead #Lookahead :
 ]
 [
     "{" 
-    Expression {hasSemanticLookahead = true;}
+    exp=Expression {hasSemanticLookahead = true; CURRENT_NODE.setSemanticLookahead(exp);}
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
@@ -1649,7 +1647,7 @@ import java.util.*;
 Lookahead LegacyLookahead() #Lookahead :
 {
     Expansion expansion;
-    this.inLookahead = true;
+    Expression exp;
     boolean empty = true, commaAtEnd = false; 
 }
 {
@@ -1683,13 +1681,12 @@ Lookahead LegacyLookahead() #Lookahead :
         ","
       ]
       [
-        "{"  Expression()  "}"
+        "{"  exp=Expression  "}" {CURRENT_NODE.setSemanticLookahead(exp);}
         ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
       ]
      ")" {token_source.inJavaCode = false;}
   ]
   {
-     this.inLookahead = false;
      return CURRENT_NODE;
   }
 }
@@ -1708,6 +1705,8 @@ INJECT(Lookahead) :
 
     private boolean nestedSemanticLookahead;
 
+    Expression lhs, semanticLookahead;
+
     public final boolean isNegated() {
         return negated;
     }
@@ -1725,7 +1724,11 @@ INJECT(Lookahead) :
     }
 
     public Expression getSemanticLookahead() {
-        return firstChildOfType(Expression.class);
+        return semanticLookahead;
+    }
+
+    public void setSemanticLookahead(Expression semanticLookahead) {
+        this.semanticLookahead = semanticLookahead;
     }
 
     public boolean isSemanticLookaheadNested() {
@@ -1759,7 +1762,15 @@ INJECT(Lookahead) :
     public void setExpansion(Expansion exp){
         this.expansion = exp;
     }
-    
+
+    public Expression getLHS() {
+        return lhs;
+    }
+
+    public void setLHS(Expression lhs) {
+        this.lhs = lhs;
+    }
+
     public int getAmount() {
 //        if (isSingleToken()) {
 //            amount = 1;
@@ -1821,19 +1832,19 @@ Expansion ExpansionUnit() :
 {
  (
   SCAN 1 ~\...\Lookahead =>
-  result=CodeSnippet() 
+  result=CodeSnippet 
   |
-  result=ZeroOrOne()
+  SCAN ~\...\Lookahead "ATTEMPT" =>
+  result=AttemptBlock
   |
+  SCAN 1 ~\...\Lookahead 
   result=TryBlock
   |
-  LOOKAHEAD("ATTEMPT", {!inLookahead})
-  result=AttemptBlock()
+  result=ZeroOrOne
   |
   LOOKAHEAD([PrimaryExpression() "="] (<STRING_LITERAL>|"<"))
   [
     SCAN ~\...\Lookahead PrimaryExpression() "=" =>
-//    LOOKAHEAD(PrimaryExpression "=", {!inLookahead})
     lhs=PrimaryExpression
     "="
   ]

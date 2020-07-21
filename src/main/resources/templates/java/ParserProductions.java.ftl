@@ -181,7 +181,7 @@
         [#else]
         boolean ${forcedVarName} = false;
         [/#if]
-   	[@createNode treeNodeBehavior nodeVarName /]
+      [@createNode treeNodeBehavior nodeVarName /]
           ParseException ${parseExceptionVar} = null;
           [#set newVarIndex = newVarIndex +1]
           [#set callStackSizeVar = "callStackSize" + newVarIndex]
@@ -202,14 +202,14 @@
              throw e;
       [#else]             
              if (trace_enabled) LOGGER.info("We have a parse error but are in in fault-tolerant mode, so we try to handle it.");
-	       [#if production?? && returnType == production.nodeName]
-	          [#-- We just assume that if the return type is the same as the type of the node, we want to return CURRENT_NODE.
-	                This is not theoretically correct, but will probably be true about 99% of the time. Maybe REVISIT. --]
-	           return ${nodeVarName};
-	       
-	          [#-- This is a bit screwy will not work if the return type is a primitive type --]
-	           return null;
-	       [/#if]
+          [#if production?? && returnType == production.nodeName]
+             [#-- We just assume that if the return type is the same as the type of the node, we want to return CURRENT_NODE.
+                   This is not theoretically correct, but will probably be true about 99% of the time. Maybe REVISIT. --]
+              return ${nodeVarName};
+          
+             [#-- This is a bit screwy will not work if the return type is a primitive type --]
+              return null;
+          [/#if]
 [/#if]	
          }
          finally {
@@ -228,11 +228,11 @@
 [#else]
              if (buildTree) {
                  if (${parseExceptionVar} == null) {
- 	                 closeNodeScope(${nodeVarName}, ${closeCondition});
+                     closeNodeScope(${nodeVarName}, ${closeCondition});
                  }
-	             else {
+                else {
                      if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
-	                 ${nodeVarName}.setParseException(${parseExceptionVar});
+                    ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) { 
                         restoreCallStack(${callStackSizeVar});
                         Token virtualToken = insertVirtualToken(TokenType.${expansion.finalSet.firstTokenName}); 
@@ -247,13 +247,13 @@
                                                   +"\n to complete expansion in ${currentProduction.name}\n";
                         message += ${parseExceptionVar}.getMessage(); 
                         addParsingProblem(new ParsingProblem(message, ${nodeVarName})); 
-		                closeNodeScope(${nodeVarName}, true); 
-		             } else {
+                      closeNodeScope(${nodeVarName}, true); 
+                   } else {
                         closeNodeScope(${nodeVarName}, false);
                         if (trace_enabled) LOGGER.info("Rethrowing " + "${parseExceptionVar}");
-		                throw ${parseExceptionVar};
-		             }
-	             }
+                      throw ${parseExceptionVar};
+                   }
+                }
         }
 [/#if]  
          }       
@@ -296,7 +296,7 @@
    [#else]
        ${nodeVarName} = new ${nodeName}();
    [/#if]
-	    openNodeScope(${nodeVarName});
+       openNodeScope(${nodeVarName});
   }
 [/#macro]
 
@@ -463,6 +463,9 @@
      including the default single-token lookahead
 --]
 [#macro expansionCondition expansion]
+   [#if expansion.lookahead?? && expansion.lookahead.LHS??]
+      (${expansion.lookahead.LHS} =
+   [/#if]
    [#if expansion.hasSemanticLookahead]
       (${expansion.semanticLookahead}) &&
    [/#if]
@@ -481,6 +484,9 @@
       [#else]
        ${expansion.firstSetVarName}.contains(nextTokenType) 
       [/#if]
+   [/#if]
+   [#if expansion.lookahead?? && expansion.lookahead.LHS??]
+      )
    [/#if]
 [/#macro]
 
@@ -604,13 +610,13 @@
    [@newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${newVarIndex} = remainingLookahead;
   [#list choice.choices as subseq]
-	  if (!([@InvokeScanRoutine subseq/])) {
-	  [#if subseq_has_next]
-	     currentLookaheadToken = token${newVarIndex};
-	     remainingLookahead = remainingLookahead${newVarIndex};
-	  [#else]
-	     return false;
-	  [/#if]
+     if (!([@InvokeScanRoutine subseq/])) {
+     [#if subseq_has_next]
+        currentLookaheadToken = token${newVarIndex};
+        remainingLookahead = remainingLookahead${newVarIndex};
+     [#else]
+        return false;
+     [/#if]
   [/#list]
   [#list 1..choice.choices?size as unused] } [/#list]
 [/#macro]
@@ -630,7 +636,7 @@
 --]
 [#macro ScanCodeZeroOrMore zom]
       while (remainingLookahead > 0) {
-	   [@newVar type="Token" init="currentLookaheadToken"/]
+      [@newVar type="Token" init="currentLookaheadToken"/]
          if (!(
          [@InvokeScanRoutine zom.nestedExpansion/])) {
              currentLookaheadToken = token${newVarIndex};
