@@ -1508,10 +1508,10 @@ INJECT(ExpansionSequence) :
 }
 
 Lookahead Lookahead #void :
-   (LegacyLookahead | ScanAhead)
-   {
-       return (Lookahead) peekNode();
-   }
+(LegacyLookahead | ScanAhead | <RIGHT_ARROW>#Lookahead)
+{
+    return (Lookahead) peekNode();
+}
 ;
 
 Lookahead ScanAhead #Lookahead : 
@@ -1519,7 +1519,8 @@ Lookahead ScanAhead #Lookahead :
    Token amountToken=null;
    boolean hasSemanticLookahead = false;
    Expansion expansion = null;
-   Expression exp;
+   Expression exp=null;
+   Node lb = null;
 }
 [exp=PrimaryExpression "=" {CURRENT_NODE.setLHS(exp);}]
 <_SCAN>
@@ -1536,7 +1537,7 @@ Lookahead ScanAhead #Lookahead :
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
-[LookBehind]
+[SCAN LookBehind {lb = peekNode();}]
 [
     SCAN {amountToken == null} => 
     ["~" {CURRENT_NODE.setNegated(true);}] 
@@ -1547,9 +1548,11 @@ Lookahead ScanAhead #Lookahead :
        expansion.setLookahead(CURRENT_NODE);
     }
 ]
-[
-    SCAN 1 {expansion == null} (<RIGHT_ARROW>)
-]
+(
+    SCAN {expansion == null} => <RIGHT_ARROW>
+    |
+    SCAN {expansion != null || (exp ==null || lb != null)} => {}
+)
 {
     return CURRENT_NODE;
 };

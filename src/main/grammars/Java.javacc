@@ -1074,7 +1074,7 @@ ConstructorDeclaration :
   // Modifiers matched in the caller
   <IDENTIFIER> FormalParameters [ ThrowsList ]
   "{"
-    [ SCAN ExplicitConstructorInvocation ]
+    [ => ExplicitConstructorInvocation ]
     ( BlockStatement )*
   "}"
 ;
@@ -1616,11 +1616,13 @@ UnlabeledStatement #void :
 ;
 
 TryStatement #void :
-   LOOKAHEAD("try" "{")
+   SCAN "try" "(" => 
+   TryWithResources
+   |
+   SCAN "try" "{"=>
    ClassicTryStatement
    |
-   LOOKAHEAD("try" "(" )
-   TryWithResources
+   "try" {throw new ParseException("Expecting either '{' or '(' after 'try'");}
 ;
 
 AssertStatement :
