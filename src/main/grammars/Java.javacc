@@ -1029,7 +1029,7 @@ FormalParams FormalParameters #FormalParams :
     }
 ;
 
-INJECT(FormalParams) : 
+INJECT FormalParams : 
    import java.util.List;
 {
     public List<FormalParameter> getParams() {

@@ -588,12 +588,12 @@ GrammarFile Root() throws IOException #GrammarFile :
       |
       decls=TokenManagerDecls() {grammar.addCodeInjection(decls);}
       |
-      LOOKAHEAD(<_INJECT><LPAREN>)
-      CodeInjection() 
+      LOOKAHEAD(<_INJECT><COLON>)
+      CodeInjection2 
       |
-      CodeInjection2()
+      CodeInjection
       |
-      GrammarInclusion()
+      GrammarInclusion
   )+
   <EOF>
   {
@@ -664,7 +664,7 @@ void CodeInjection() :
         boolean foundOptionalInitialBrace = false;
         boolean usingParentheses = false;
         token_source.inJavaCode=true;
-}
+}   
 {
         "INJECT" ["(" {usingParentheses = true;}]
         {
@@ -1513,8 +1513,7 @@ Lookahead Lookahead #void :
 (LegacyLookahead | ScanAhead | <RIGHT_ARROW>#Lookahead)
 {
     return (Lookahead) peekNode();
-}
-;
+};
 
 Lookahead ScanAhead #Lookahead : 
 {
