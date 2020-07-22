@@ -407,13 +407,13 @@ INCLUDE("Java.javacc")
    in Java.javacc. Only to set the inJavaCode variable to true.
 */
 
-CodeBlock Block() #CodeBlock:
+CodeBlock Block #CodeBlock:
 {
     token_source.inJavaCode = true;
 }
 {
   "{"
-  (BlockStatement())*
+  (BlockStatement)*
   "}"
    {
        return CURRENT_NODE;
@@ -549,7 +549,7 @@ INJECT GrammarFile :
     } 
 }
 
-GrammarFile Root() throws IOException #GrammarFile :
+GrammarFile Root throws IOException #GrammarFile :
 {
     TokenManagerDecls decls;
 }
@@ -566,16 +566,16 @@ GrammarFile Root() throws IOException #GrammarFile :
             grammar.getOptions().normalize();
         }
    }
-   [ParserCodeDecls()]
+   [ParserCodeDecls]
    (
-      TokenProduction()  {grammar.addTokenProduction((TokenProduction) peekNode());}
+      TokenProduction  {grammar.addTokenProduction((TokenProduction) peekNode());}
       |
-      BNFProduction()
+      BNFProduction
       |
-      decls=TokenManagerDecls() {grammar.addCodeInjection(decls);}
+      decls=TokenManagerDecls {grammar.addCodeInjection(decls);}
       |
-      LOOKAHEAD(<_INJECT><COLON>)
-      CodeInjection2 
+      SCAN <_INJECT><COLON>
+      => CodeInjection2 
       |
       CodeInjection
       |
@@ -587,7 +587,7 @@ GrammarFile Root() throws IOException #GrammarFile :
   }
 }
 
-void ParserCodeDecls() : 
+ParserCodeDecls : 
 {
     Token id;
     CompilationUnit parserCode;
@@ -602,7 +602,7 @@ void ParserCodeDecls() :
           grammar.setParserClassName(id.getImage());
       token_source.inJavaCode = true;
    }
-   parserCode=CompilationUnit()
+   parserCode=CompilationUnit
    {
        if (!grammar.isInInclude())
            grammar.setParserCode(parserCode);
@@ -620,7 +620,7 @@ INJECT ReturnType :
     }
 }
 
-void GrammarInclusion() throws IOException :
+GrammarInclusion throws IOException :
 {
    Token t;
 }
@@ -639,7 +639,7 @@ void GrammarInclusion() throws IOException :
    }
 }
 
-void CodeInjection() :
+CodeInjection :
 {
         boolean isInterface = false;
 //        ImportDeclaration importDecl = null;
@@ -664,14 +664,14 @@ void CodeInjection() :
         ]
         ":"
         [
-          LOOKAHEAD("{"("import"|"@"|"extends"|"implements"|"}"))
-        "{" {foundOptionalInitialBrace=true;}
+          SCAN "{"("import"|"@"|"extends"|"implements"|"}") => "{" 
+          {foundOptionalInitialBrace=true;}
         ]
          (
-            ImportDeclaration() {CURRENT_NODE.importDeclarations.add((ImportDeclaration) peekNode());}
+            ImportDeclaration {CURRENT_NODE.importDeclarations.add((ImportDeclaration) peekNode());}
          )*
          (
-             annotation = Annotation() {CURRENT_NODE.annotations.add(annotation);}
+             annotation = Annotation {CURRENT_NODE.annotations.add(annotation);}
          )*
          [
             CURRENT_NODE.extendsList=ExtendsList(isInterface)
@@ -701,37 +701,32 @@ INJECT CodeInjection :
    public boolean isInterface;   
 }
 
-void CodeInjection2() :
+CodeInjection2 :
 {
         CompilationUnit jcu;
         token_source.inJavaCode = true;
 }
-{
         <_INJECT>
         ":" "{"
-        jcu=CompilationUnit()
+        jcu=CompilationUnit
        "}"
         {
                 token_source.inJavaCode = false;
 				grammar.addCodeInjection(jcu);
         }
-}
+;
 
-void Options() #Options : 
-{}
-{
+Options #Options : 
     (SCAN => Setting)+
-}
+;
 
-void OptionsBlock() #Options :
-{}
-{
+OptionsBlock #Options :
     <_OPTIONS> [":"]
     "{" ( Setting )* "}"
     {token_source.optionsSeen = true;}
-}
+;
 
-void Setting() #void :
+Setting #void :
 {
 	  String option_name;
 	  Token name, t=null;
@@ -739,7 +734,6 @@ void Setting() #void :
 	  boolean inInclude = grammar.isInInclude();
 	  Object value = Boolean.TRUE;
 }
-{
   ( 
      name = <IDENTIFIER> 
      | 
@@ -766,9 +760,9 @@ void Setting() #void :
   ]  
   ";"
   {_options.setInputFileOption(name, t, option_name, value, inInclude);}
-}
+;
 
-BNFProduction BNFProduction() :
+BNFProduction BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
     Token t=getToken(1);
@@ -776,23 +770,22 @@ BNFProduction BNFProduction() :
     inBNFProduction = true;
     boolean hasOptionalOpeningBrace=false;
 }
-{
     [
         "public" | "private" | "protected"
     ]
     [
-       LOOKAHEAD(ReturnType <IDENTIFIER>) ReturnType
+       SCAN ReturnType <IDENTIFIER> => ReturnType
     ]
     <IDENTIFIER> {CURRENT_NODE.setName(current_token.getImage());}
-    [FormalParameters()]
+    [FormalParameters]
     [
       <BANG> {CURRENT_NODE.setForced(true);} 
     ]
     [
-      ThrowsList()
+      ThrowsList
     ]
     [
-        tba=TreeNodeDescriptor() 
+        tba=TreeNodeDescriptor 
         {
             String nodeName = tba.getNodeName();
             if (nodeName == null) {
@@ -802,16 +795,15 @@ BNFProduction BNFProduction() :
         }
     ]
     ":"
-    [LOOKAHEAD Block]
+    [=> Block]
     {
         token_source.inJavaCode = false;
     }
     ["{" {hasOptionalOpeningBrace=true;}] 
-    ExpansionChoice() {expansion = (Expansion) peekNode();}
+    ExpansionChoice {expansion = (Expansion) peekNode();}
     (
-        LOOKAHEAD(1, {hasOptionalOpeningBrace})
-       "}"
-       |
+        SCAN {hasOptionalOpeningBrace} => "}"
+        |
        ";"
      )
      {
@@ -823,7 +815,7 @@ BNFProduction BNFProduction() :
         inBNFProduction = false;
         return CURRENT_NODE;
      }
-}
+;
 
 INJECT BNFProduction : 
 	import java.util.*;
@@ -979,8 +971,6 @@ INJECT BNFProduction :
 }
 
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
-{}
-{
   <HASH_ID>
 	  {
 	        token_source.inJavaCode = true;
@@ -997,7 +987,7 @@ TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
           token_source.inJavaCode = false;
           return CURRENT_NODE;
   }
-}
+;
 
 INJECT TreeBuildingAnnotation :
 {
@@ -1047,7 +1037,7 @@ INJECT TreeBuildingAnnotation :
 }
 
 
-TokenProduction TokenProduction() #TokenProduction :
+TokenProduction TokenProduction #TokenProduction :
 {
     Token t = null;
     String tokenClassName = null;
@@ -1056,7 +1046,7 @@ TokenProduction TokenProduction() #TokenProduction :
 }
 {
   [
-    LOOKAHEAD(2) "<" "*" ">" {multipleStatesSpecified = true;} 
+    => "<" "*" ">" {multipleStatesSpecified = true;} 
     |
     "<"
       <IDENTIFIER>{
@@ -1081,7 +1071,7 @@ TokenProduction TokenProduction() #TokenProduction :
    RegexpSpec(CURRENT_NODE, tokenClassName)
    ( "|" RegexpSpec(CURRENT_NODE, tokenClassName) )*
    (
-      LOOKAHEAD(1, {useBraces}) "}" 
+      SCAN {useBraces} => "}" 
       | 
       ";"
    )
@@ -1203,7 +1193,7 @@ INJECT TokenProduction :
     }
 }
 
-TokenManagerDecls TokenManagerDecls() :
+TokenManagerDecls TokenManagerDecls :
 {
     token_source.inJavaCode = true;
 }
@@ -1216,12 +1206,11 @@ TokenManagerDecls TokenManagerDecls() :
     }
 }
 
-void RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
+RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
 {
     RegularExpression regexp;
 }
-{
-  RegexpExpansion() 
+  RegexpExpansion 
   {
       regexp = (RegularExpression) peekNode();
       CURRENT_NODE.addChild(popNode());
@@ -1238,7 +1227,7 @@ void RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
      }
   ]
   [
-      CodeSnippet()
+      CodeSnippet
         {
             if (grammar.getOptions().getUserDefinedLexer()) {
                 grammar.addWarning(peekNode(), "Ignoring code snippet for regular expression specification since option USER_DEFINED_LEXER has been set to true.");
@@ -1255,7 +1244,7 @@ void RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
           }
         }
   ]
-}
+;
 
 INJECT RegexpSpec : 
    import com.javacc.lexgen.RegularExpression;
@@ -1278,12 +1267,10 @@ INJECT RegexpSpec :
     }
 }
 
-void ExpansionChoice() : 
-{}
-{
-  ExpansionSequence()
-  ( "|" ExpansionSequence())*
-}
+ExpansionChoice : 
+  ExpansionSequence
+  ( "|" ExpansionSequence)*
+;
 
 INJECT ExpansionChoice : 
    import com.javacc.parsegen.Expansion;
@@ -1347,7 +1334,7 @@ INJECT ExpansionChoice :
    public boolean isConcrete() {return false;} 
 }
 
-ExpansionSequence() #ExpansionSequence :
+ExpansionSequence #ExpansionSequence :
 {
    Expansion sub;
    Lookahead la = null;
@@ -1356,15 +1343,15 @@ ExpansionSequence() #ExpansionSequence :
   [ 
     SCAN ~\...\Lookahead 
     =>
-    la=Lookahead()
+    la=Lookahead
     {
        la.setExpansion(CURRENT_NODE);
        CURRENT_NODE.setLookahead(la);
      }
   ]
   (
-     LOOKAHEAD(~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<RIGHT_ARROW>|<SLASH>|<BACKSLASH>))
-      sub=ExpansionUnit()
+     SCAN ~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<RIGHT_ARROW>|<SLASH>|<BACKSLASH>)
+     => sub=ExpansionUnit
       {
           pokeNode(sub);
       }
@@ -1512,7 +1499,7 @@ Lookahead ScanAhead #Lookahead :
 [
     SCAN {amountToken == null} => 
     ["~" {CURRENT_NODE.setNegated(true);}] 
-    ExpansionChoice() {expansion = (Expansion) peekNode();}
+    ExpansionChoice {expansion = (Expansion) peekNode();}
     <RIGHT_ARROW>
     {
        CURRENT_NODE.setExpansion(expansion);
@@ -1618,7 +1605,7 @@ import java.util.*;
     }
 }
 
-Lookahead LegacyLookahead() #Lookahead :
+Lookahead LegacyLookahead #Lookahead :
 {
     Expansion expansion;
     Expression exp;
@@ -1636,13 +1623,14 @@ Lookahead LegacyLookahead() #Lookahead :
         }
       ]
       [ 
-        LOOKAHEAD(~<RPAREN>, {!empty})
-        "," {commaAtEnd = true;}
+        SCAN {!empty} ~<RPAREN> 
+        => "," {commaAtEnd = true;}
       ]
       [ 
-        LOOKAHEAD(~(<RPAREN>|<LBRACE>), {empty})
+        SCAN {empty} ~<RPAREN>|<LBRACE> 
+        =>
         ["~" {CURRENT_NODE.setNegated(true);}] 
-        ExpansionChoice()
+        ExpansionChoice
         {
            expansion = (Expansion) peekNode();
            empty = false; commaAtEnd = false;
@@ -1651,8 +1639,7 @@ Lookahead LegacyLookahead() #Lookahead :
         }
       ]
       [ 
-        LOOKAHEAD(~")", {!empty && !commaAtEnd})
-        ","
+        SCAN {!empty && !commaAtEnd} ~")" => ","
       ]
       [
         "{"  exp=Expression  "}" {CURRENT_NODE.setSemanticLookahead(exp);}
@@ -1794,7 +1781,7 @@ INJECT Lookahead :
     }
 }
 
-Expansion ExpansionUnit() :
+Expansion ExpansionUnit :
 {
     Expression lhs=null;
     Token t=current_token;
@@ -1814,13 +1801,14 @@ Expansion ExpansionUnit() :
   |
   result=ZeroOrOne
   |
-  LOOKAHEAD([PrimaryExpression() "="] (<STRING_LITERAL>|"<"))
+  SCAN [PrimaryExpression "="] (<STRING_LITERAL>|"<")
+  =>
   [
-    SCAN ~\...\Lookahead PrimaryExpression() "=" =>
+    SCAN ~\...\Lookahead PrimaryExpression "=" =>
     lhs=PrimaryExpression
     "="
   ]
-  RegexpExpansion()
+  RegexpExpansion
   {
       RegularExpression re = (RegularExpression) peekNode();
       result = re;
@@ -1843,13 +1831,13 @@ Expansion ExpansionUnit() :
   }
   [<BANG>{result.setForced(true);}]
   |
-  LOOKAHEAD([PrimaryExpression() "="]<IDENTIFIER>)
-  result=NonTerminal()
+  SCAN [PrimaryExpression "="]<IDENTIFIER>
+  => result=NonTerminal
   |
-  "(" ExpansionChoice() {result=(Expansion)peekNode();} ")"
+  "(" ExpansionChoice {result=(Expansion)peekNode();} ")"
   [ 
-   LOOKAHEAD(<BANG> TreeNodeDescriptor())
-   <BANG> {result.setForced(true);}
+   SCAN <BANG> TreeNodeDescriptor
+   => <BANG> {result.setForced(true);}
    | 
    "+" #OneOrMore(4) { result = (OneOrMore) peekNode();}
    | "*" #ZeroOrMore(4) { result = (ZeroOrMore) peekNode();}
@@ -1857,7 +1845,7 @@ Expansion ExpansionUnit() :
   ]
  )
  [
-    tba=TreeNodeDescriptor()
+    tba=TreeNodeDescriptor
  ]
  {
         result.setTreeNodeBehavior(tba);
@@ -1865,21 +1853,19 @@ Expansion ExpansionUnit() :
  }
 }
 
-NonTerminal NonTerminal() #NonTerminal : 
+NonTerminal NonTerminal #NonTerminal : 
 {}
 {
   [
-    LOOKAHEAD(PrimaryExpression() "=")
-    PrimaryExpression()
-    "="
+    => PrimaryExpression "="
   ]
   <IDENTIFIER>
   (
-    LOOKAHEAD("(" ExpansionSequence "|") {}
+    SCAN "(" ExpansionSequence "|" => {}
     |
-    LOOKAHEAD("(" ExpansionChoice ")" ("*"|"+"|"?")) {}
+    SCAN "(" ExpansionChoice ")" ("*"|"+"|"?") => {}
     |
-    LOOKAHEAD (Arguments()) Arguments
+    => Arguments
     |
     {}
   )
@@ -1982,10 +1968,10 @@ INJECT(NonTerminal) :
 }
 
 
-ZeroOrOne ZeroOrOne() : 
+ZeroOrOne ZeroOrOne : 
 {
     "[" 
-    ExpansionChoice() 
+    ExpansionChoice 
     "]"
     {
        return CURRENT_NODE;
@@ -2153,18 +2139,18 @@ INJECT OneOrMore :
 }
 
 
-AttemptBlock AttemptBlock() : 
+AttemptBlock AttemptBlock : 
 {
   boolean hasRecoverExpansion = false;
 }
 {
  "ATTEMPT"
- "(" ExpansionChoice() ")"
+ "(" ExpansionChoice ")"
  "RECOVER"
- (Block() | "(" ExpansionChoice(){hasRecoverExpansion = true;} ")")
+ (Block | "(" ExpansionChoice {hasRecoverExpansion = true;} ")")
  [
-    LOOKAHEAD("(", {!hasRecoverExpansion})
-    "(" ExpansionChoice() ")"  
+    SCAN {!hasRecoverExpansion} "("
+    => "(" ExpansionChoice ")"  
  ]
  {
      return CURRENT_NODE;
@@ -2226,20 +2212,18 @@ INJECT AttemptBlock :
      }
 }
 
-TryBlock TryBlock() : 
-{}
-{
+TryBlock TryBlock : 
     "try" "{" 
-    ExpansionChoice() 
+    ExpansionChoice 
     "}"
     {
         token_source.inJavaCode = true;
     }
     (
-        CatchBlock()
+        CatchBlock
     )*
     [
-        FinallyBlock()
+        FinallyBlock
         {
           token_source.inJavaCode = false;
         }
@@ -2247,7 +2231,7 @@ TryBlock TryBlock() :
     {
        return CURRENT_NODE;
     }
-}
+;
 
 INJECT TryBlock  : 
     import java.util.List;
@@ -2292,18 +2276,17 @@ INJECT TryBlock  :
      }
 }
 
-CodeBlock CodeSnippet() #void :
+CodeBlock CodeSnippet #void :
 {
    CodeBlock block;
    token_source.inJavaCode = true;
 } 
-{
-    block=Block()
+    block=Block
     {
        token_source.inJavaCode = false;
        return block;
     }
-}
+;
 
 
 INJECT CodeBlock :
@@ -2339,41 +2322,38 @@ INJECT CodeBlock :
     }
 }
 
-void RegexpExpansion() #void :
-{}
-{
+RegexpExpansion #void :
  (
-  RegexpStringLiteral() 
+  RegexpStringLiteral 
   |
-  LOOKAHEAD(3) InPlaceRegexp 
+  SCAN 3 InPlaceRegexp 
   |
-  LOOKAHEAD(2) RegexpRef 
+  SCAN 2 RegexpRef 
   |
   EndOfFile 
  ) 
-}
+;
 
 //FIXME
-void InPlaceRegexp() #void :
+InPlaceRegexp #void :
 {
     RegularExpression re, choice;
     String image = "";
     Token t;
     boolean isPrivate= false;
 }
-{
   t=<LT>
   [
    (
      t=<IDENTIFIER> {image = t.getImage();}
      |
-     LOOKAHEAD({!inBNFProduction})
-     t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
+     SCAN {!inBNFProduction}
+     => t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
    )
    ":"
   ]
   {clearNodeScope();}
-  RegexpChoice() {choice = (RegularExpression) peekNode();} 
+  RegexpChoice {choice = (RegularExpression) peekNode();} 
   <GT>
   {
 	  if (choice instanceof RegexpRef) {
@@ -2393,18 +2373,16 @@ void InPlaceRegexp() #void :
 	  re.setBeginColumn(t.getBeginColumn());
 	  pokeNode(re);
   }
-}
+;
 
-RegexpStringLiteral RegexpStringLiteral() #RegexpStringLiteral :
-{} 
-{
+RegexpStringLiteral RegexpStringLiteral #RegexpStringLiteral :
    <STRING_LITERAL>
    {
       String image = removeEscapesAndQuotes(current_token);
       CURRENT_NODE.setImage(image);
       return CURRENT_NODE;
    }
-}
+;
 
 INJECT RegexpStringLiteral : 
    import com.javacc.lexgen.*;
@@ -2434,11 +2412,10 @@ INJECT RegexpStringLiteral :
   }
 }
 
-RegexpRef RegexpRef() : 
+RegexpRef RegexpRef : 
 {
    Token t;
 }
-{
     "<" {++token_source.angleBracketNesting;}
     t=<IDENTIFIER> 
     ">" {--token_source.angleBracketNesting;}
@@ -2446,7 +2423,7 @@ RegexpRef RegexpRef() :
        CURRENT_NODE.setLabel(t.getImage());
        return CURRENT_NODE;
     }
-}
+;
 
 INJECT RegexpRef : 
     import com.javacc.lexgen.*;
@@ -2467,11 +2444,7 @@ INJECT RegexpRef :
     }
 }
 
-void EndOfFile() :
-{}
-{
-   "<" "EOF" ">"
-}
+void EndOfFile : "<" "EOF" ">" ;
 
 INJECT EndOfFile : extends com.javacc.lexgen.RegularExpression;
 
@@ -2480,7 +2453,7 @@ RegexpChoice :
     ("|" RegexpSequence)*
 ;
 
-RegexpChoiceInParen() #RegexpChoice : 
+RegexpChoiceInParen #RegexpChoice : 
    "(" RegexpSequence() ("|" RegexpSequence())* ")"
 ;
 
@@ -2496,13 +2469,13 @@ INJECT RegexpChoice :
 
 RegexpSequence :
    (
-	  RegexpStringLiteral()
+	  RegexpStringLiteral
 	  |
-	  RegexpRef()
+	  RegexpRef
 	  |
-	  CharacterList()
+	  CharacterList
 	  |
-	  RepeatedRegexp()
+	  RepeatedRegexp
    )+
 ;
 
@@ -2521,12 +2494,12 @@ RepeatedRegexp #void :
      int r1 = 0, r2 = -1;
      boolean hasMax = false;
 }
-  RegexpChoiceInParen()
+  RegexpChoiceInParen
   (  "+" #OneOrMoreRegexp(2) 
    | "*" #ZeroOrMoreRegexp(2)
    | "?" #ZeroOrOneRegexp(2) 
-   | "{" r1 = IntegerLiteral()
-         [ "," { hasMax = true; } [ r2 = IntegerLiteral() ] ]
+   | "{" r1 = IntegerLiteral
+         [ "," { hasMax = true; } [ r2 = IntegerLiteral ] ]
      "}" #RepetitionRange(4 + (hasMax ? 1 : 0) + (r2!=-1 ? 1 : 0))
      {
          RepetitionRange range = (RepetitionRange) peekNode();
@@ -2536,7 +2509,7 @@ RepeatedRegexp #void :
   )?
 ;
 
-int IntegerLiteral() :
+int IntegerLiteral :
   <INTEGER_LITERAL>
   {
       try {
@@ -2636,18 +2609,16 @@ INJECT ZeroOrOneRegexp :
    }
 }
 
-CharacterList CharacterList() :
-{}
-{
+CharacterList CharacterList :
   ["~"]
-  "[" [CharacterRange()
-        ( "," CharacterRange())*
+  "[" [CharacterRange
+        ( "," CharacterRange)*
       ]
   "]"
    {
       return CURRENT_NODE;
    }
-}
+;
 
 INJECT CharacterList : 
    import com.javacc.lexgen.*;
@@ -2671,11 +2642,10 @@ INJECT CharacterList :
     }
 }
 
-CharacterRange CharacterRange() #CharacterRange :
+CharacterRange CharacterRange #CharacterRange :
 {
       Token imageL, imageR;
 }
-{
   imageL=<STRING_LITERAL>
         {
           String lString = removeEscapesAndQuotes(imageL);
@@ -2691,7 +2661,7 @@ CharacterRange CharacterRange() #CharacterRange :
         }
    ]
    {return CURRENT_NODE;}
-}
+;
 
 INJECT CharacterRange :
 {

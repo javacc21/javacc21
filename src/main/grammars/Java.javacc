@@ -307,7 +307,7 @@ INJECT BaseNode :
 }
 
 CompilationUnit CompilationUnit #CompilationUnit :
-  [ LOOKAHEAD( ( Annotation )* "package") PackageDeclaration ]
+  [ SCAN (Annotation)* "package" => PackageDeclaration ]
   ( ImportDeclaration )*
   (
      ( TypeDeclaration )+
@@ -452,7 +452,7 @@ Modifiers #void :
 
 Modifiers2 #void :
  (
-  LOOKAHEAD(2)
+  SCAN 2
   (
    "public"
   |
@@ -771,7 +771,7 @@ EnumDeclaration :
 
 EnumBody :
    "{"
-   [ EnumConstant ( LOOKAHEAD(2) "," EnumConstant )* ]
+   [ EnumConstant ( SCAN 2 => "," EnumConstant )* ]
    [ "," ]
    [ ";" ( ClassOrInterfaceBodyDeclaration(false) )* ]
    "}"
@@ -903,7 +903,7 @@ INJECT ClassOrInterfaceBodyDeclaration :
 }
 
 ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
-  LOOKAHEAD(2) // FIXME {!isInterface})
+  SCAN 2 // FIXME {!isInterface})
   Initializer
  |
   Modifiers2 // Just get all the modifiers out of the way. If you want to do
@@ -917,11 +917,11 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
       |
       EnumDeclaration
       |
-      LOOKAHEAD( [ TypeParameters ] <IDENTIFIER> "(" )
-      ConstructorDeclaration
+      SCAN [ TypeParameters ] <IDENTIFIER> "(" 
+      => ConstructorDeclaration
       |
-      LOOKAHEAD( Type <IDENTIFIER> ( "[" "]" )* ( "," | "=" | ";" ) )
-      FieldDeclaration
+      SCAN Type <IDENTIFIER> ( "[" "]" )* ( "," | "=" | ";" ) 
+      => FieldDeclaration
       |
       MethodDeclaration
   )
@@ -985,7 +985,7 @@ VariableDeclaratorId :
 VariableInitializer : ArrayInitializer | Expression ;
 
 ArrayInitializer :
-  "{" [ VariableInitializer ( LOOKAHEAD(2) "," VariableInitializer )* ] [ "," ] "}"
+  "{" [ VariableInitializer ( SCAN 2 => "," VariableInitializer )* ] [ "," ] "}"
 ;
 
 MethodDeclaration :
@@ -1082,7 +1082,7 @@ ConstructorDeclaration :
 ExplicitConstructorInvocation :
   SCAN "this" Arguments ";"
  |
-  [ LOOKAHEAD(2) PrimaryExpression "." ] "super" Arguments ";"
+  [ SCAN 2 => PrimaryExpression "." ] "super" Arguments ";"
 ;
 
 
@@ -1105,13 +1105,13 @@ ReferenceType :
 {
    PrimitiveArrayType
    |
-   ClassOrInterfaceType (LOOKAHEAD "[" "]" )*
+   ClassOrInterfaceType (=> "[" "]" )*
 }
 
 ObjectType ClassOrInterfaceType #ObjectType :
     <IDENTIFIER>
-    [ LOOKAHEAD(2) TypeArguments ]
-    ( LOOKAHEAD(2) "." <IDENTIFIER> [ LOOKAHEAD(2) TypeArguments ] )*
+    [ SCAN 2 TypeArguments ]
+    ( SCAN 2 "." <IDENTIFIER> [ SCAN 2 TypeArguments ] )*
     {
         return CURRENT_NODE;
     }
@@ -1138,8 +1138,7 @@ INJECT ObjectType :
 DiamondOperator :  "<" ">";
 
 PossiblyEmptyTypeArguments #void :
-   LOOKAHEAD
-   DiamondOperator
+   => DiamondOperator
    |
    TypeArguments
 ;
@@ -1180,7 +1179,7 @@ PrimitiveType #void :
 ;
 
 PrimitiveArrayType : 
-    PrimitiveType (LOOKAHEAD "[" "]")+
+    PrimitiveType (=> "[" "]")+
 ;
 
 ReturnType ReturnType #ReturnType :
@@ -1289,7 +1288,7 @@ INJECT CodeBlock : extends Expression
 AssignmentExpression :
   TernaryExpression
   [ 
-        LOOKAHEAD(2) AssignmentOperator Expression
+        SCAN 2 => AssignmentOperator Expression
   ]
 ;
 
@@ -1347,7 +1346,7 @@ RelationalExpression :
 ShiftExpression :
    AdditiveExpression
    (
-      LOOKAHEAD(2)
+      SCAN 2
       (
       "<<"
       |
@@ -1395,7 +1394,7 @@ AdditiveExpression :
   MultiplicativeExpression (  ( "+" | "-" ) MultiplicativeExpression )*
 ;
 
-void MultiplicativeExpression :
+MultiplicativeExpression :
   UnaryExpression (  ( "*" | "/" | "%" ) UnaryExpression )*
 ;
 
@@ -1441,7 +1440,7 @@ CastExpression :
 
 Expression PrimaryExpression #PrimaryExpression :
     PrimaryPrefix 
-    ( LOOKAHEAD(2) PrimarySuffix )*
+    ( SCAN 2 PrimarySuffix )*
     {
             return CURRENT_NODE;
     }
@@ -1478,13 +1477,13 @@ MethodReference :
 ;
 
 PrimarySuffix :
-  LOOKAHEAD(2)
+  SCAN 
    "." ("this"|"super")
     |
-  LOOKAHEAD(2)
+  SCAN 2
     "." AllocationExpression
     |
-  LOOKAHEAD(3)
+  SCAN 3
     MemberSelector
     |
     "[" [Expression] "]"
@@ -1546,7 +1545,7 @@ INJECT InvocationArgs :
 }
 
 AllocationExpression :
-  LOOKAHEAD(2)
+  SCAN 2
   "new" PrimitiveType ArrayDimsAndInits
  |
   "new" ClassOrInterfaceType [ PossiblyEmptyTypeArguments ]
@@ -1558,14 +1557,22 @@ AllocationExpression :
 ;
 
 /*
- * The third LOOKAHEAD specification below is to parse to PrimarySuffix
+ * The third SCAN specification below is to parse to PrimarySuffix
  * if there is an expression between the "[...]".
  */
 ArrayDimsAndInits :
-  LOOKAHEAD(2)
-  ( LOOKAHEAD(2) "[" Expression "]" )+ ( LOOKAHEAD(2) "[" "]" )*
-|
-  ( "[" "]" )+ ArrayInitializer
+  SCAN 2
+  ( 
+    SCAN 2 "[" Expression "]" 
+  )+ 
+  ( 
+    => "[" "]" 
+  )*
+  |
+  ( 
+    "[" "]" 
+  )+ 
+  ArrayInitializer
 ;
 
 Label : <IDENTIFIER><COLON>;
@@ -1576,7 +1583,7 @@ Label : <IDENTIFIER><COLON>;
  */
 
 Statement  :
-  (LOOKAHEAD(2) Label)*
+  (SCAN 2 Label)*
   UnlabeledStatement
 ;
 
@@ -1653,11 +1660,11 @@ INJECT CodeBlock :
 }
 
 BlockStatement :
-  LOOKAHEAD( Modifiers Type <IDENTIFIER> )
-  LocalVariableDeclaration ";"
+  SCAN Modifiers Type <IDENTIFIER> 
+  => LocalVariableDeclaration ";"
   |
-  LOOKAHEAD( Modifiers "class")
-  Modifiers ClassDeclaration
+  SCAN Modifiers "class"
+  => Modifiers ClassDeclaration
   |
   Statement
 ;
@@ -1720,8 +1727,8 @@ DoStatement :
 ForStatement :
   "for" "("
   (
-      LOOKAHEAD(Modifiers Type <IDENTIFIER> ":")
-      Modifiers Type <IDENTIFIER> ":" Expression 
+      SCAN Modifiers Type <IDENTIFIER> ":"
+      => Modifiers Type <IDENTIFIER> ":" Expression 
     |
      [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
   )
@@ -1730,8 +1737,8 @@ ForStatement :
 ;
 
 ForInit :
-  LOOKAHEAD( Modifiers Type <IDENTIFIER> )
-  LocalVariableDeclaration
+  SCAN Modifiers Type <IDENTIFIER> 
+  => LocalVariableDeclaration
 |
   StatementExpressionList
 ;
@@ -1794,7 +1801,7 @@ TryWithResources TryWithResources :
    "try"
    "("
      (
-         SCAN LocalVariableDeclaration
+         => LocalVariableDeclaration
          |
          Name
       )
@@ -1847,16 +1854,18 @@ INJECT FinallyBlock :
 /* Annotation syntax follows. */
 
 Annotation Annotation #Annotation :
-   (LOOKAHEAD( "@" Name "(" ( <IDENTIFIER> "=" | ")" ))
-   NormalAnnotation
- |
-   LOOKAHEAD( "@" Name "(" )
-   SingleMemberAnnotation
- |
-   MarkerAnnotation)
-   {
+ (
+   SCAN "@" Name "(" ( <IDENTIFIER> "=" | ")" )
+   => NormalAnnotation
+   |
+   SCAN "@" Name "(" 
+   => SingleMemberAnnotation
+   |
+   MarkerAnnotation
+ )
+ {
       return CURRENT_NODE;
-   }
+ }
 ;
 
 NormalAnnotation #void :
@@ -1888,7 +1897,7 @@ MemberValue :
 MemberValueArrayInitializer :
   SCAN "{" "}"
   |
-  "{" MemberValue ( LOOKAHEAD(2) "," MemberValue )* [ "," ] "}"
+  "{" MemberValue ( SCAN 2 "," MemberValue )* [ "," ] "}"
 ;
 
 
@@ -1905,21 +1914,21 @@ AnnotationTypeBody :
 AnnotationTypeMemberDeclaration :
  Modifiers
  (
-   LOOKAHEAD(Type <IDENTIFIER> "(")
-   Type <IDENTIFIER> "(" ")" [ DefaultValue ] ";"
-  |
+   SCAN Type <IDENTIFIER> "("
+   => Type <IDENTIFIER> "(" ")" [ DefaultValue ] ";"
+   |
    ClassDeclaration
-  |
+   |
    InterfaceDeclaration
-  |
+   |
    EnumDeclaration
-  |
+   |
    AnnotationTypeDeclaration
-  |
+   |
    FieldDeclaration
  )
  |
-  ";" 
+";" 
 ;
 
 DefaultValue :
@@ -1936,11 +1945,11 @@ LambdaExpression LambdaExpression :
 ;
 
 LambdaLHS :
-   LOOKAHEAD(SimpleLambdaLHS "->")
-   SimpleLambdaLHS
+   SCAN SimpleLambdaLHS "->"
+   => SimpleLambdaLHS
    |
-   LOOKAHEAD(FormalLambdaLHS "->")
-   FormalLambdaLHS
+   SCAN FormalLambdaLHS "->"
+   => FormalLambdaLHS
 ;
 
 SimpleLambdaLHS #void :
