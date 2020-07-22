@@ -662,10 +662,11 @@ void CodeInjection() :
 //        ImportDeclaration importDecl = null;
         Annotation annotation = null;
         boolean foundOptionalInitialBrace = false;
+        boolean usingParentheses = false;
         token_source.inJavaCode=true;
 }
 {
-        "INJECT" "("
+        "INJECT" ["(" {usingParentheses = true;}]
         {
                 token_source.inJavaCode = true;
         }
@@ -675,7 +676,9 @@ void CodeInjection() :
             "interface" {isInterface = true;}
         ]
         <IDENTIFIER> {CURRENT_NODE.name = current_token.toString();} 
-        ")"
+        [
+            SCAN {usingParentheses} => ")"
+        ]
         ":"
         [
           LOOKAHEAD("{"("import"|"@"|"extends"|"implements"|"}"))
@@ -693,8 +696,7 @@ void CodeInjection() :
          ]
          [CURRENT_NODE.implementsList=ImplementsList(isInterface) [";"]]
         [
-           LOOKAHEAD({foundOptionalInitialBrace})
-           "}"
+           SCAN {foundOptionalInitialBrace} => "}"
         ]
         [CURRENT_NODE.body=ClassOrInterfaceBody(isInterface)]
         {
