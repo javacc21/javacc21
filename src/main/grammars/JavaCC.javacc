@@ -38,14 +38,12 @@ PARSER_PACKAGE="com.javacc.parser";
 NODE_PACKAGE="com.javacc.parser.tree";
 DEFAULT_LEXICAL_STATE=JAVA;
 
-INJECT(PARSER_CLASS) :
-{
-import java.util.*;
-import com.javacc.*;
-import com.javacc.lexgen.*;
-import com.javacc.parsegen.*;
-import com.javacc.parser.tree.*;
-}
+INJECT PARSER_CLASS :
+    import java.util.*;
+    import com.javacc.*;
+    import com.javacc.lexgen.*;
+    import com.javacc.parsegen.*;
+    import com.javacc.parser.tree.*;
 {
     Grammar grammar;
     private boolean inBNFProduction;
@@ -226,10 +224,8 @@ import com.javacc.parser.tree.*;
     }
 }
 
-INJECT(LEXER_CLASS) :
-{
+INJECT LEXER_CLASS :
    import java.util.*;
-}
 {
    Set<String> javaccReservedWords = new HashSet<String>();
    {
@@ -337,13 +333,11 @@ TOKEN :
 }
 
 
-INJECT(BaseNode) :
-{
+INJECT BaseNode :
     import freemarker.template.*;
     import java.lang.reflect.*;
     import com.javacc.Grammar;
     implements Node, TemplateHashModel;
-}
 {
     public TemplateModel get(String key) throws TemplateModelException {
         String methodName = "get" + key.substring(0,1).toUpperCase() + key.substring(1);
@@ -426,8 +420,7 @@ CodeBlock Block() #CodeBlock:
    }
 }
 
-INJECT(CaseStatement) :
-{}
+INJECT CaseStatement :
 {
     // If the case statement has an unreachable break statement at the
     // end, we remove it. This allows us to get rid of this horrid longstanding kludge
@@ -442,8 +435,7 @@ INJECT(CaseStatement) :
     }
 }
 
-INJECT(Identifier) : 
-{}
+INJECT Identifier : 
 {
    public String getNormalizedText() {
         String image = getImage();
@@ -469,20 +461,16 @@ INJECT(Identifier) :
    }
 }
 
-INJECT(interface Node) :
-{
+INJECT interface Node :
    import com.javacc.Grammar;
-}
 {
    Grammar getGrammar();
    void setGrammar(Grammar grammar);
 }
 
 
-INJECT(Token) :
-{
+INJECT Token :
     import com.javacc.Grammar;
-}
 {
     private Grammar grammar;
 
@@ -538,10 +526,8 @@ INJECT(Token) :
 }
 
 
-INJECT(GrammarFile) : 
-{
+INJECT GrammarFile : 
    import java.util.Iterator;
-}
 {
     public String getDefaultLexicalState() {
        Options options = firstChildOfType(Options.class);
@@ -625,11 +611,8 @@ void ParserCodeDecls() :
    "PARSER_END" ["(" <IDENTIFIER> ")"]
 }
 
-INJECT(ReturnType) :
-{
+INJECT ReturnType :
     import java.util.List;
-    implements freemarker.template.TemplateBooleanModel;
-}
 {
     public boolean getAsBoolean() {
         List<Token> lt = Nodes.getRealTokens(this);
@@ -705,11 +688,9 @@ void CodeInjection() :
         }
 }
 
-INJECT(CodeInjection) : 
-{
+INJECT CodeInjection : 
    import java.util.List;
    import java.util.ArrayList;
-}
 {
    public String name;
    public List<ImportDeclaration> importDeclarations = new ArrayList<ImportDeclaration>();
@@ -844,12 +825,10 @@ BNFProduction BNFProduction() :
      }
 }
 
-INJECT(BNFProduction) : 
-{
+INJECT BNFProduction : 
 	import java.util.*;
 	import com.javacc.lexgen.TokenSet;
 	import com.javacc.parsegen.Expansion;
-}
 {
     public CodeBlock getJavaCode() {
        return firstChildOfType(CodeBlock.class);
@@ -1020,8 +999,7 @@ TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
   }
 }
 
-INJECT(TreeBuildingAnnotation) :
-{}
+INJECT TreeBuildingAnnotation :
 {
     public String getNodeName() {
         String image = null;
@@ -1118,10 +1096,8 @@ TokenProduction TokenProduction() #TokenProduction :
    }
 }
 
-INJECT(TokenProduction) :
-{
+INJECT TokenProduction :
     import java.util.*;
-}
 {
     /**
      * This is true if this corresponds to a production that actually appears in
@@ -1281,10 +1257,8 @@ void RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
   ]
 }
 
-INJECT(RegexpSpec) : 
-{
+INJECT RegexpSpec : 
    import com.javacc.lexgen.RegularExpression;
-}
 {
     public String getNextState() {
         Token nsTok = getNsTok();
@@ -1311,13 +1285,11 @@ void ExpansionChoice() :
   ( "|" ExpansionSequence())*
 }
 
-INJECT(ExpansionChoice) : 
-{
+INJECT ExpansionChoice : 
    import com.javacc.parsegen.Expansion;
    import com.javacc.lexgen.TokenSet;
    import java.util.List;
    extends Expansion;
-}
 {
    public List<Expansion> getChoices() {
        return childrenOfType(Expansion.class);
@@ -1399,14 +1371,12 @@ ExpansionSequence() #ExpansionSequence :
   )+
 }
 
-INJECT(ExpansionSequence) : 
-{
+INJECT ExpansionSequence : 
    import com.javacc.Grammar;
    import com.javacc.parsegen.Expansion;
    import com.javacc.lexgen.TokenSet;
    import java.util.*;
    extends Expansion;
-}
 {
    public ExpansionSequence(Grammar grammar) {
        setGrammar(grammar);
@@ -1695,11 +1665,9 @@ Lookahead LegacyLookahead() #Lookahead :
   }
 }
 
-INJECT(Lookahead) :
-{
+INJECT Lookahead :
    import com.javacc.parsegen.Expansion;
    import com.javacc.lexgen.TokenSet;
-} 
 {
     private int amount=Integer.MAX_VALUE;
     
@@ -2025,12 +1993,10 @@ ZeroOrOne ZeroOrOne() :
 }
 
 
-INJECT(ZeroOrOne) : 
-{
+INJECT ZeroOrOne : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.lexgen.TokenSet;
      extends Expansion;
-}
 {
     public Lookahead getLookahead() {
         return getNestedExpansion().getLookahead();
@@ -2075,12 +2041,10 @@ INJECT(ZeroOrOne) :
 }
 
 
-INJECT(ZeroOrMore) : 
-{
+INJECT ZeroOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.lexgen.TokenSet;
      extends Expansion;
-}
 {
      private String id;
      public String getLabel() {
@@ -2131,12 +2095,10 @@ INJECT(ZeroOrMore) :
 }
 
 
-INJECT(OneOrMore) : 
-{
+INJECT OneOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.lexgen.TokenSet;
      extends Expansion;
-}
 {
      private String id;
      public String getLabel() {
@@ -2209,13 +2171,11 @@ AttemptBlock AttemptBlock() :
  }
 }
 
-INJECT(AttemptBlock) : 
-{
+INJECT AttemptBlock : 
    import java.util.List;
    import com.javacc.parsegen.Expansion;
    import com.javacc.lexgen.TokenSet;
    extends com.javacc.parsegen.Expansion;
-}
 {
    public Expansion getNestedExpansion() {
        return firstChildOfType(Expansion.class);
@@ -2289,13 +2249,11 @@ TryBlock TryBlock() :
     }
 }
 
-INJECT(TryBlock) : 
-{
+INJECT TryBlock  : 
     import java.util.List;
     import com.javacc.lexgen.TokenSet;
     import com.javacc.parsegen.Expansion;
     extends Expansion;
-}
 {
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
@@ -2348,11 +2306,9 @@ CodeBlock CodeSnippet() #void :
 }
 
 
-INJECT(CodeBlock) :
-{
+INJECT CodeBlock :
    import com.javacc.lexgen.TokenSet;
    extends com.javacc.parsegen.Expansion;
-}
 {
     public CodeBlock getJavaCode() {
         return this;
@@ -2450,11 +2406,9 @@ RegexpStringLiteral RegexpStringLiteral() #RegexpStringLiteral :
    }
 }
 
-INJECT(RegexpStringLiteral) : 
-{
+INJECT RegexpStringLiteral : 
    import com.javacc.lexgen.*;
    extends RegularExpression;
-}
 {
   private String image;
   
@@ -2494,11 +2448,9 @@ RegexpRef RegexpRef() :
     }
 }
 
-INJECT(RegexpRef) : 
-{
+INJECT RegexpRef : 
     import com.javacc.lexgen.*;
     extends RegularExpression;
-}
 {
     private RegularExpression regexp;
 
@@ -2521,40 +2473,28 @@ void EndOfFile() :
    "<" "EOF" ">"
 }
 
-INJECT(EndOfFile) : 
-{
-   extends com.javacc.lexgen.RegularExpression;
-}
-{}
+INJECT EndOfFile : extends com.javacc.lexgen.RegularExpression;
 
-void RegexpChoice() :
-{}
-{
-    RegexpSequence() 
-    ("|" RegexpSequence())*
-}
+RegexpChoice :
+    RegexpSequence 
+    ("|" RegexpSequence)*
+;
 
-void RegexpChoiceInParen() #RegexpChoice : 
-{}
-{
+RegexpChoiceInParen() #RegexpChoice : 
    "(" RegexpSequence() ("|" RegexpSequence())* ")"
-}
+;
 
-INJECT(RegexpChoice) : 
-{
+INJECT RegexpChoice : 
     import java.util.List;
     import com.javacc.lexgen.RegularExpression;
     extends RegularExpression;
-}
 {
     public List<RegularExpression> getChoices() {
         return childrenOfType(RegularExpression.class);
     }
 }
 
-void RegexpSequence() :
-{ }
-{
+RegexpSequence :
    (
 	  RegexpStringLiteral()
 	  |
@@ -2564,26 +2504,23 @@ void RegexpSequence() :
 	  |
 	  RepeatedRegexp()
    )+
-}
+;
 
-INJECT(RegexpSequence) : 
-{
+INJECT RegexpSequence : 
    import java.util.*;
    import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
-}
 {
    public List<RegularExpression> getUnits() {
        return childrenOfType(RegularExpression.class);
    }
 }
 
-void RepeatedRegexp() #void : 
+RepeatedRegexp #void : 
 {
      int r1 = 0, r2 = -1;
      boolean hasMax = false;
 }
-{
   RegexpChoiceInParen()
   (  "+" #OneOrMoreRegexp(2) 
    | "*" #ZeroOrMoreRegexp(2)
@@ -2597,11 +2534,9 @@ void RepeatedRegexp() #void :
          range.setMax(r2);
      }
   )?
-}
+;
 
 int IntegerLiteral() :
-{}
-{
   <INTEGER_LITERAL>
   {
       try {
@@ -2610,13 +2545,11 @@ int IntegerLiteral() :
         throw new Error();
       }
   }
-}
+;
 
-INJECT(RepetitionRange) : 
-{
+INJECT RepetitionRange : 
    import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
-}
 {
     private int min = 0;
     private int max = -1;
@@ -2652,11 +2585,9 @@ INJECT(RepetitionRange) :
     }
 }
 
-INJECT(OneOrMoreRegexp) : 
-{
+INJECT OneOrMoreRegexp : 
    import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
-}
 {
    public RegularExpression getRegexp() 
    {
@@ -2664,11 +2595,9 @@ INJECT(OneOrMoreRegexp) :
    }
 }
 
-INJECT(ZeroOrMoreRegexp) : 
-{
+INJECT ZeroOrMoreRegexp : 
    import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
-}
 {
    public RegularExpression getRegexp() 
    {
@@ -2687,11 +2616,9 @@ INJECT(ZeroOrMoreRegexp) :
 
 }
 
-INJECT(ZeroOrOneRegexp) : 
-{
+INJECT ZeroOrOneRegexp : 
    import com.javacc.lexgen.RegularExpression;
    extends RegularExpression;
-}
 {
    public RegularExpression getRegexp() 
    {
@@ -2722,12 +2649,10 @@ CharacterList CharacterList() :
    }
 }
 
-INJECT(CharacterList) : 
-{
+INJECT CharacterList : 
    import com.javacc.lexgen.*;
    import java.util.*;
    extends RegularExpression;
-}
 {
     public List<CharacterRange> getDescriptors() {
         return childrenOfType(CharacterRange.class);
@@ -2768,8 +2693,7 @@ CharacterRange CharacterRange() #CharacterRange :
    {return CURRENT_NODE;}
 }
 
-INJECT(CharacterRange) :
-{}
+INJECT CharacterRange :
 {
     public char left, right;
     
