@@ -692,7 +692,7 @@ ExtendsList ExtendsList(boolean isInterface) :
    ( "," ClassOrInterfaceType { extendsMoreThanOne = true; } )*
    {
       if (extendsMoreThanOne && !isInterface)
-         throw new ParseException("A class cannot extend more than one other class");
+         throw new ParseException(this, "A class cannot extend more than one other class");
       return CURRENT_NODE;
    }
 ;
@@ -732,7 +732,7 @@ ImplementsList ImplementsList(boolean isInterface) :
    ( "," ClassOrInterfaceType )*
    {
       if (isInterface) {
-         throw new ParseException("An interface cannot implement other interfaces");
+         throw new ParseException(this, "An interface cannot implement other interfaces");
       }
       return CURRENT_NODE;
    }
@@ -1367,11 +1367,11 @@ ShiftOperator #void :
    [third=">"]
    {
       if (second.getBeginColumn() != first.getBeginColumn() + 1) {
-            throw new ParseException("Shift operator cannot have spaces or comments inside!\n" + first.getLocation());
+            throw new ParseException(this, "Shift operator cannot have spaces or comments inside!\n" + first.getLocation());
       }
       if (third!=null) {
          if (third.getBeginColumn() != first.getBeginColumn() + 2) {
-              throw new ParseException("Shift operator >>> cannot have spaces or comments inside!\n" + first.getLocation());
+              throw new ParseException(this, "Shift operator >>> cannot have spaces or comments inside!\n" + first.getLocation());
          }
      	 first.setImage(">>>");
 	 	 first.setType(TokenType.RUNSIGNEDSHIFT);
@@ -1627,7 +1627,7 @@ TryStatement #void :
    SCAN "try" "{"=>
    ClassicTryStatement
    |
-   "try" {throw new ParseException("Expecting either '{' or '(' after 'try'");}
+   "try" {throw new ParseException(this, "Expecting either '{' or '(' after 'try'");}
 ;
 
 AssertStatement :

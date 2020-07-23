@@ -53,7 +53,7 @@
     setTracingEnabled(false);
   }
  
-private ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
+ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
 private ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 
 

@@ -178,7 +178,7 @@ abstract public class Nodes {
         }
         return n.getClass().getSimpleName();
     }
-    
+   
     static public void dump(Node n, String prefix) {
         String output = stringrep(n);
         if (output.length() >0) {
@@ -189,4 +189,8 @@ abstract public class Nodes {
             dump(child, prefix+"  ");
         }
     }
-}
+
+    static public void dump(Node n) {
+        dump(n, "");
+    }
+ }

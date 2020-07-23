@@ -39,6 +39,15 @@ public class ParseException extends Exception implements ${grammar.constantsClas
       this.expectedTypes = expectedTypes;
       this.callStack = new ArrayList<>(callStack);
   }
+
+  public ParseException(${grammar.parserClassName} parser, String message) {
+     super(message);
+     this.token = parser.current_token;
+     if (token.getNext() != null) {
+        token = token.getNext();
+     }
+     this.callStack = new ArrayList<>(parser.parsingStack);
+  }
   
   public ParseException(String message) {
     super(message);
@@ -115,7 +124,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
              buf.append(type);
          }
      }
-     String content = token.toString();
+     String content = token.getImage();
      if (content.length() > 32) content = content.substring(0, 32) + "...";
      buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
      return buf.toString();

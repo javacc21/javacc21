@@ -63,7 +63,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
     }
     
-private Token current_token;
+// The last token successfully "consumed"     
+Token current_token;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
