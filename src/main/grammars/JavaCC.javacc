@@ -753,11 +753,7 @@ BNFProduction BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
     Token t=getToken(1);
-    Expansion expansion;
     inBNFProduction = true;
-    boolean hasOptionalOpeningBrace=false;
-    boolean foundSecondCodeBlock = false;
-    CodeBlock startingBlock = null;
 }
     [
         "public" | "private" | "protected"
@@ -784,22 +780,16 @@ BNFProduction BNFProduction :
         }
     ]
     ":"
-    [=> startingBlock = CodeSnippet
-        ["#" {startingBlock.setAppliesInLookahead(true);}]
-    ]
-    ["{" {hasOptionalOpeningBrace=true;}] 
-    ExpansionChoice {expansion = (Expansion) peekNode();}
     (
-        SCAN {hasOptionalOpeningBrace} => "}"
+        => [=>CodeSnippet] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
         |
-       ";"
-     )
-     {
+        ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
+    )
+    {
         CURRENT_NODE.adjustFirstToken(t);
         if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName());
         }
-        CURRENT_NODE.setExpansion(expansion);
         inBNFProduction = false;
         return CURRENT_NODE;
      }
