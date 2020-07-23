@@ -573,6 +573,11 @@
 [#macro buildScanRoutine expansion count]
      private final boolean ${expansion.scanRoutineName}() {
      if (remainingLookahead <=0) return true;
+     [#if expansion.parent.class.simpleName = "BNFProduction"]
+       [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
+          ${expansion.parent.javaCode}
+       [/#if]
+     [/#if]
       [@buildScanCode expansion, count/]
       return true;
     }
@@ -603,6 +608,10 @@
       [@buildScanCode expansion.nestedExpansion, count/]
    [#elseif classname = "ExpansionChoice"]
       [@ScanCodeChoice expansion /]
+   [#elseif classname = "CodeBlock"]
+      [#if expansion.appliesInLookahead]
+      ${expansion}
+      [/#if]
   [/#if]
 [/#macro]
 
@@ -661,7 +670,7 @@
   checking the production's nested expansion 
 --]
 [#macro ScanCodeNonTerminal nt]
-      pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn}); 
+      pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
       if (![@InvokeScanRoutine nt.production.expansion/]) {
          popLookaheadStack();
          return false;

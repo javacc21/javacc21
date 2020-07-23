@@ -407,19 +407,6 @@ INCLUDE("Java.javacc")
    in Java.javacc. Only to set the inJavaCode variable to true.
 */
 
-CodeBlock Block #CodeBlock:
-{
-    token_source.inJavaCode = true;
-}
-{
-  "{"
-  (BlockStatement)*
-  "}"
-   {
-       return CURRENT_NODE;
-   }
-}
-
 INJECT CaseStatement :
 {
     // If the case statement has an unreachable break statement at the
@@ -769,6 +756,8 @@ BNFProduction BNFProduction :
     Expansion expansion;
     inBNFProduction = true;
     boolean hasOptionalOpeningBrace=false;
+    boolean foundSecondCodeBlock = false;
+    CodeBlock startingBlock = null;
 }
     [
         "public" | "private" | "protected"
@@ -795,10 +784,9 @@ BNFProduction BNFProduction :
         }
     ]
     ":"
-    [=> Block]
-    {
-        token_source.inJavaCode = false;
-    }
+    [=> startingBlock = CodeSnippet
+        ["#" {startingBlock.setAppliesInLookahead(true);}]
+    ]
     ["{" {hasOptionalOpeningBrace=true;}] 
     ExpansionChoice {expansion = (Expansion) peekNode();}
     (
@@ -816,6 +804,7 @@ BNFProduction BNFProduction :
         return CURRENT_NODE;
      }
 ;
+
 
 INJECT BNFProduction : 
 	import java.util.*;
@@ -1788,10 +1777,9 @@ Expansion ExpansionUnit :
     Expansion result=null;
     TreeBuildingAnnotation tba = null;
 }
-{
  (
   SCAN 1 ~\...\Lookahead =>
-  result=CodeSnippet 
+  result=CodeSnippet ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
   SCAN ~\...\Lookahead "ATTEMPT" =>
   result=AttemptBlock
@@ -1851,11 +1839,9 @@ Expansion ExpansionUnit :
         result.setTreeNodeBehavior(tba);
         return result;
  }
-}
+;
 
 NonTerminal NonTerminal #NonTerminal : 
-{}
-{
   [
     => PrimaryExpression "="
   ]
@@ -1873,7 +1859,7 @@ NonTerminal NonTerminal #NonTerminal :
      <BANG>  {CURRENT_NODE.setForced(true);}
   ]
   {return CURRENT_NODE;}
-}
+;
 
 
 INJECT(NonTerminal) : 
@@ -2147,7 +2133,7 @@ AttemptBlock AttemptBlock :
  "ATTEMPT"
  "(" ExpansionChoice ")"
  "RECOVER"
- (Block | "(" ExpansionChoice {hasRecoverExpansion = true;} ")")
+ (CodeSnippet | "(" ExpansionChoice {hasRecoverExpansion = true;} ")")
  [
     SCAN {!hasRecoverExpansion} "("
     => "(" ExpansionChoice ")"  
@@ -2280,7 +2266,7 @@ CodeBlock CodeSnippet #void :
 {
    CodeBlock block;
    token_source.inJavaCode = true;
-} 
+}
     block=Block
     {
        token_source.inJavaCode = false;
@@ -2320,6 +2306,16 @@ INJECT CodeBlock :
     public boolean isConcrete() {
         return true; //REVISIT.
     }
+
+    private boolean appliesInLookahead;
+
+    public void setAppliesInLookahead(boolean b) {
+        appliesInLookahead = b;
+    }
+
+    public boolean getAppliesInLookahead() {
+        return appliesInLookahead;
+    }
 }
 
 RegexpExpansion #void :
@@ -2347,7 +2343,7 @@ InPlaceRegexp #void :
    (
      t=<IDENTIFIER> {image = t.getImage();}
      |
-     SCAN {!inBNFProduction}
+     SCAN ~\...\BNFProduction 
      => t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
    )
    ":"
