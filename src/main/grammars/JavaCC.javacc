@@ -1523,7 +1523,7 @@ LookBehindBackward #void :
    [<SLASH>]
 ;
 
-INJECT(LookBehind) :
+INJECT LookBehind :
 import java.util.*;
 {
     private boolean negated;
@@ -1663,7 +1663,9 @@ INJECT Lookahead :
     }
 
     public boolean getRequiresScanAhead() {
-        return !isAlwaysSuccessful() && getAmount() >1;
+        return !getLookaheadExpansion().isPossiblyEmpty();
+//        return !getLookaheadExpansion().isPossiblyEmpty() && getAmount() > 1;
+//          return !isAlwaysSuccessful() && getAmount() >1;
     }
 
     public Expression getSemanticLookahead() {
@@ -2332,7 +2334,12 @@ InPlaceRegexp #void :
     String image = "";
     Token t;
     boolean isPrivate= false;
+    boolean inBNFProduction = false;
 }
+  [
+      SCAN \...\BNFProduction
+      =>{inBNFProduction = true;}
+  ]
   t=<LT>
   [
    (

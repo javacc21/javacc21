@@ -463,19 +463,26 @@
      including the default single-token lookahead
 --]
 [#macro expansionCondition expansion]
+   [#var empty = true]
    [#if expansion.lookahead?? && expansion.lookahead.LHS??]
       (${expansion.lookahead.LHS} =
    [/#if]
    [#if expansion.hasSemanticLookahead]
-      (${expansion.semanticLookahead}) &&
+      (${expansion.semanticLookahead}) 
+      [#set empty = false]
    [/#if]
    [#if expansion.hasLookBehind]
-      ${expansion.lookBehind.routineName}() &&
+      [#if !empty] && [/#if]
+      [#set empty = false]
+      ${expansion.lookBehind.routineName}() 
    [/#if]
    [#if expansion.requiresScanAhead]
+      [#if !empty] && [/#if]
+      [#set empty = false]
       [#if expansion.negated]![/#if]
       ${expansion.lookaheadExpansion.scanRoutineName}()
-   [#else]
+   [/#if]
+   [#if empty]
       [#if expansion.firstSet.tokenNames?size < 30] 
        [#list expansion.firstSet.tokenNames as name]
          nextTokenType == TokenType.${name} 

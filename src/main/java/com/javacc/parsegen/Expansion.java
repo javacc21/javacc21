@@ -171,7 +171,7 @@ abstract public class Expansion extends BaseNode {
     }
     
     public boolean isAlwaysSuccessful() {
-        if (getHasSemanticLookahead() || !isPossiblyEmpty()) {
+        if (getHasSemanticLookahead() || getHasLookBehind() || !isPossiblyEmpty()) {
             return false;
         }
         Lookahead la = getLookahead();
