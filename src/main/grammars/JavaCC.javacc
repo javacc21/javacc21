@@ -1488,7 +1488,7 @@ Lookahead ScanAhead #Lookahead :
 (
     SCAN {expansion == null} => <RIGHT_ARROW>
     |
-    SCAN {expansion != null || (exp ==null || lb != null)} => {}
+    SCAN {expansion != null || (exp ==null && lb == null)} => {}
 )
 {
     return CURRENT_NODE;
@@ -1781,7 +1781,7 @@ Expansion ExpansionUnit :
   SCAN ~\...\Lookahead "ATTEMPT" =>
   result=AttemptBlock
   |
-  SCAN 1 ~\...\Lookahead 
+  SCAN 1 ~\...\Lookahead =>
   result=TryBlock
   |
   result=ZeroOrOne
