@@ -1419,7 +1419,7 @@ PreDecrementExpression :
 UnaryExpressionNotPlusMinus :
   ( "~" | "!" ) UnaryExpression
   |
-  SCAN LambdaExpression //{System.out.println("KILROY!");}#
+  SCAN LambdaExpression 
   |
   SCAN CastExpression
   |

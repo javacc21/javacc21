@@ -431,8 +431,15 @@
 
 [#macro BuildCodeChoice choice]
    [#list choice.choices as expansion]
+   [#--
       [#if expansion.alwaysSuccessful]
          [@BuildCode expansion /] [#return]
+      [/#if] --]
+      [#if expansion.alwaysSuccessful]
+         else {
+           [@BuildCode expansion /]
+         }
+         [#return]
       [/#if]
       ${(expansion_index=0)?string("if", "else if")}
       (resetScanAhead(${expansion.lookaheadAmount}) && ${expansionCondition(expansion)}) {
@@ -579,12 +586,12 @@
 
 [#macro buildScanRoutine expansion count]
      private final boolean ${expansion.scanRoutineName}() {
-     if (remainingLookahead <=0) return true;
      [#if expansion.parent.class.simpleName = "BNFProduction"]
        [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
           ${expansion.parent.javaCode}
        [/#if]
      [/#if]
+     if (remainingLookahead <=0) return true;
       [@buildScanCode expansion, count/]
       return true;
     }

@@ -46,8 +46,7 @@ INJECT PARSER_CLASS :
     import com.javacc.parser.tree.*;
 {
     Grammar grammar;
-    private boolean inBNFProduction;
-    
+
     public JavaCCParser(Grammar grammar, String inputSource, CharSequence content) {
          this(inputSource, content);
          this.grammar = grammar;
@@ -753,7 +752,6 @@ BNFProduction BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
     Token t=getToken(1);
-    inBNFProduction = true;
 }
     [
         "public" | "private" | "protected"
@@ -790,7 +788,6 @@ BNFProduction BNFProduction :
         if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName());
         }
-        inBNFProduction = false;
         return CURRENT_NODE;
      }
 ;
@@ -2334,12 +2331,14 @@ InPlaceRegexp #void :
     String image = "";
     Token t;
     boolean isPrivate= false;
-    boolean inBNFProduction = false;
+    boolean inBNFProduction;
 }
-  [
+  (
       SCAN \...\BNFProduction
       =>{inBNFProduction = true;}
-  ]
+      |
+      {inBNFProduction = false;}
+  )
   t=<LT>
   [
    (
