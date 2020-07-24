@@ -1586,18 +1586,19 @@ import java.util.*;
 
 Lookahead LegacyLookahead #Lookahead :
 {
-    Expansion expansion;
-    Expression exp;
-    boolean empty = true, commaAtEnd = false; 
+    Expansion expansion = null;
+    Expression exp = null;
+    boolean empty = true, commaAtEnd = false;
+    Token t= null;
 }
 {
   <_LOOKAHEAD>
   [
    "("  {token_source.inJavaCode = true;}
       [
-        <INTEGER_LITERAL>
+        t=<INTEGER_LITERAL>
         {
-           CURRENT_NODE.setAmount(Integer.parseInt(current_token.toString()));
+           CURRENT_NODE.setAmount(Integer.parseInt(t.getImage()));
            empty = false;
         }
       ]
@@ -1627,6 +1628,10 @@ Lookahead LegacyLookahead #Lookahead :
      ")" {token_source.inJavaCode = false;}
   ]
   {
+     if (t == null && expansion == null && exp != null) {
+         // Legacy semantics
+         CURRENT_NODE.setAmount(0);
+     }
      return CURRENT_NODE;
   }
 }
