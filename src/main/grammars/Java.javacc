@@ -412,43 +412,47 @@ INJECT ImportDeclaration :
     }
 }
 
-/*
- * Modifiers. We match all modifiers in a single rule to reduce the chances of
- * syntax errors for simple modifier mistakes. It will also enable us to give
- * better error messages.
- */
- 
-Modifiers #void :
- (
-  SCAN 2 
-  (
-   "public"
-  |
-   "static" 
-  |
-   "protected" 
-  |
-   "private" 
-  |
-   "final" 
-  |
-   "abstract" 
-  |
-   "synchronized"
-  |
-   "native" 
-  |
-   "transient"
-  |
-   "volatile" 
-  |
-   "strictfp"
-  |
-   Annotation
-  )
- )*
-;
+INJECT PARSER_CLASS : {private EnumSet<TokenType> modifiers = EnumSet.noneOf(TokenType.class);}
 
+Modifiers #void :
+{modifiers = EnumSet.noneOf(TokenType.class);}#
+   (
+      SCAN {!modifiers.contains(TokenType.STATIC)}# 
+      => <STATIC> {modifiers.add(TokenType.STATIC);}#
+      |
+      SCAN {!modifiers.contains(TokenType.ABSTRACT)}#
+      => <ABSTRACT> {modifiers.add(TokenType.ABSTRACT);}#
+      |
+      SCAN {!modifiers.contains(TokenType.FINAL)}#
+      => <FINAL> {modifiers.add(TokenType.FINAL);}#
+      |
+      SCAN {!modifiers.contains(TokenType.SYNCHRONIZED)}#
+      => <SYNCHRONIZED> {modifiers.add(TokenType.SYNCHRONIZED);}#
+      |
+      SCAN {!modifiers.contains(TokenType.NATIVE)}#
+      => <NATIVE> {modifiers.add(TokenType.NATIVE);}#
+      |
+      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}#
+      => <PUBLIC> {modifiers.add(TokenType.PUBLIC);}#
+      |
+      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}#
+      => <PROTECTED> {modifiers.add(TokenType.PROTECTED);}#
+      |
+      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}#
+      => <PRIVATE> {modifiers.add(TokenType.PRIVATE);}#
+      |
+      SCAN {!modifiers.contains(TokenType.TRANSIENT)}#
+      => <TRANSIENT> {modifiers.add(TokenType.TRANSIENT);}#
+      |
+      SCAN {!modifiers.contains(TokenType.VOLATILE)}#
+      => <VOLATILE> {modifiers.add(TokenType.VOLATILE);}#
+      | 
+      SCAN {!modifiers.contains(TokenType.STRICTFP)}#
+      => <STRICTFP> {modifiers.add(TokenType.STRICTFP);}#
+      |
+      => Annotation
+   )*
+;
 
 Modifiers2 #void :
  (

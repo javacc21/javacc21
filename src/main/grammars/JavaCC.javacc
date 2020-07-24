@@ -2324,27 +2324,29 @@ RegexpExpansion #void :
  ) 
 ;
 
-//FIXME
+
+INJECT PARSER_CLASS : {private boolean inBNFProduction;}
+
 InPlaceRegexp #void :
 {
     RegularExpression re, choice;
     String image = "";
     Token t;
     boolean isPrivate= false;
-    boolean inBNFProduction;
 }
   (
       SCAN \...\BNFProduction
-      =>{inBNFProduction = true;}
+      =>{inBNFProduction = true;}#
       |
-      {inBNFProduction = false;}
+      {inBNFProduction = false;}#
   )
   t=<LT>
   [
    (
      t=<IDENTIFIER> {image = t.getImage();}
      |
-     SCAN ~\...\BNFProduction 
+//     SCAN ~\...\BNFProduction 
+     SCAN {!inBNFProduction}#
      => t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
    )
    ":"

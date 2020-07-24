@@ -715,7 +715,7 @@
 --]
 [#macro InvokeScanRoutine expansion]
    [#if expansion.lookahead?? && expansion.lookahead.semanticLookaheadNested]
-       !(${expansion.semanticLookahead}) &&
+       (${expansion.semanticLookahead}) &&
    [/#if]
    [#if expansion.hasLookBehind]
        ${expansion.lookBehind.routineName}() &&
