@@ -89,6 +89,9 @@ public class Grammar extends BaseNode {
         parserData = new ParserData(this);
     }
 
+    public Grammar() {   
+    }
+
     public String[] getLexicalStates() {
         return lexicalStates.toArray(new String[]{});
     }
@@ -115,10 +118,11 @@ public class Grammar extends BaseNode {
         return id;
     }
 
-    Node parse(String location) throws IOException, ParseException {
+    public Node parse(String location, boolean enterIncludes) throws IOException, ParseException {
         File file = new File(location);
         String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
         JavaCCParser parser = new JavaCCParser(this, file.getCanonicalFile().getName(), content);
+        parser.setEnterIncludes(enterIncludes);
         setFilename(location);
         System.out.println("Parsing grammar file " + location + " . . .");
         GrammarFile rootNode = parser.Root();
@@ -148,7 +152,7 @@ public class Grammar extends BaseNode {
             String prevLocation = this.filename;
             String prevDefaultLexicalState = this.defaultLexicalState;
             includeNesting++;
-            Node root = parse(location);
+            Node root = parse(location, true);
             includeNesting--;
             setFilename(prevLocation);
             this.defaultLexicalState = prevDefaultLexicalState;

@@ -247,7 +247,9 @@ INJECT LEXER_CLASS :
         javaccReservedWords.add("RECOVER");
         javaccReservedWords.add("SCAN");
         javaccReservedWords.add("LOOKAHEAD");
-//        javaccReservedWords.add("INJECT"); //REVISIT
+// REVISIT: Scanning forwards, the parser has to be able to identify these
+//      as JavaCC keywords even from within a code block (its very end, I guess)
+//        javaccReservedWords.add("INJECT"); 
 //        javaccReservedWords.add("PARSER_END");
    }
 
@@ -601,6 +603,11 @@ INJECT ReturnType :
     }
 }
 
+INJECT PARSER_CLASS : {
+    private boolean enterIncludes = true;
+    public void setEnterIncludes(boolean enterIncludes) {this.enterIncludes = enterIncludes;}
+}
+
 GrammarInclusion throws IOException :
 {
    Token t;
@@ -615,8 +622,9 @@ GrammarInclusion throws IOException :
    ]
    {
       String location = t.getImage().substring(1, t.getImage().length() -1);
-      Node root = grammar.include(location);
-      CURRENT_NODE.addChild(root);
+      if (enterIncludes) {
+          CURRENT_NODE.addChild(grammar.include(location));
+      }
    }
 }
 
@@ -665,7 +673,9 @@ CodeInjection :
         [CURRENT_NODE.body=ClassOrInterfaceBody(isInterface)]
         {
                 token_source.inJavaCode = false;
-                grammar.addCodeInjection(CURRENT_NODE);
+                if (enterIncludes) {
+                    grammar.addCodeInjection(CURRENT_NODE);
+                }
         }
 }
 
@@ -693,7 +703,9 @@ CodeInjection2 :
        "}"
         {
                 token_source.inJavaCode = false;
-				grammar.addCodeInjection(jcu);
+                if (enterIncludes) {
+    				grammar.addCodeInjection(jcu);
+                }
         }
 ;
 

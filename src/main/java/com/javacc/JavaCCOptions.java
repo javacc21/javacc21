@@ -30,9 +30,7 @@
 
 package com.javacc;
 
-import java.io.IOException;
 import java.util.*;
-
 import com.javacc.parser.Node;
 
 
@@ -40,16 +38,19 @@ public class JavaCCOptions {
 
     private Grammar grammar;
 
-    public JavaCCOptions(String[] args) throws IOException {
+    public JavaCCOptions(String[] args) {
         init();
+        if (args[0].equalsIgnoreCase("convert")) {
+            return;
+        }
         String filename = args[args.length -1];
         if (isOption(filename)) {
-            throw new IOException("Last argument \"" + filename + " is not a filename.");
+            throw new IllegalArgumentException("Last argument \"" + filename + " is not a filename.");
         }
         for (int i=0; i<args.length -1; i++) {
             String arg = args[i];
             if (!isOption(arg)) {
-                throw new IOException("Argument \"" + arg + "\" must be an option setting.");
+                throw new IllegalArgumentException("Argument \"" + arg + "\" must be an option setting.");
             }
             setCmdLineOption(arg);
         }

@@ -208,6 +208,10 @@ public final class Main {
             usage();
             System.exit(1);
         } 
+        if (args[0].equalsIgnoreCase("convert")) {
+            com.javacc.output.lint.SyntaxConverter.main(args);
+            System.exit(0);
+        }
   		int errorcode = mainProgram(args);
         System.exit(errorcode);
     }
@@ -225,7 +229,7 @@ public final class Main {
         }
         String filename = args[args.length -1];
         Grammar grammar = new Grammar(options);
-        grammar.parse(filename);
+        grammar.parse(filename, true);
         try {
             grammar.createOutputDir();
             grammar.semanticize();
