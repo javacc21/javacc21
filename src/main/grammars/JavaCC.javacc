@@ -401,11 +401,6 @@ INJECT BaseNode :
 
 INCLUDE("Java.javacc")
 
-/*
-   Overrides the production defined in 
-   in Java.javacc. Only to set the inJavaCode variable to true.
-*/
-
 INJECT CaseStatement :
 {
     // If the case statement has an unreachable break statement at the

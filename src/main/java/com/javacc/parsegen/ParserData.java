@@ -88,7 +88,9 @@ public class ParserData {
                 visit(exp);
                 if (exp.isAlwaysSuccessful()) break;
                 if (exp.getRequiresScanAhead()) {
-                    scanAheadExpansions.add(exp.getLookaheadExpansion());
+                    if (!exp.getLookaheadExpansion().isSingleToken()) {
+                        scanAheadExpansions.add(exp.getLookaheadExpansion());
+                    }
                 }
             }
         }
@@ -96,7 +98,9 @@ public class ParserData {
         private void handleOneOrMoreEtc(Expansion exp) {
             visit(exp.getNestedExpansion());
             if (exp.getRequiresScanAhead()) {
-                scanAheadExpansions.add(exp.getLookaheadExpansion());
+                if (!exp.getLookaheadExpansion().isSingleToken()) {
+                    scanAheadExpansions.add(exp.getLookaheadExpansion());
+                }
             }
         }
 
@@ -176,7 +180,9 @@ public class ParserData {
         private void generate3R(Expansion expansion) {
             // It appears that the only possible Expansion types here are ExpansionChoice and ExpansionSequence
            if (expansion.getMaxScanAhead()< lookaheadAmount) {
-                scanAheadExpansions.add(expansion);
+                if (!expansion.isSingleToken()) {
+                    scanAheadExpansions.add(expansion);
+                }
                 expansion.setMaxScanAhead(lookaheadAmount);
             }
         }

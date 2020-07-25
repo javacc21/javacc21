@@ -412,52 +412,51 @@ INJECT ImportDeclaration :
     }
 }
 
-INJECT PARSER_CLASS : {private EnumSet<TokenType> modifiers = EnumSet.noneOf(TokenType.class);}
-
 Modifiers #void :
-{modifiers = EnumSet.noneOf(TokenType.class);}#
+{EnumSet<TokenType> modifiers = EnumSet.noneOf(TokenType.class);}
    (
-      SCAN {!modifiers.contains(TokenType.STATIC)}# 
-      => <STATIC> {modifiers.add(TokenType.STATIC);}#
+      SCAN {!modifiers.contains(TokenType.STATIC)}
+      => <STATIC> {modifiers.add(TokenType.STATIC);}
       |
-      SCAN {!modifiers.contains(TokenType.ABSTRACT)}#
-      => <ABSTRACT> {modifiers.add(TokenType.ABSTRACT);}#
+      SCAN {!modifiers.contains(TokenType.ABSTRACT)}
+      => <ABSTRACT> {modifiers.add(TokenType.ABSTRACT);}
       |
-      SCAN {!modifiers.contains(TokenType.FINAL)}#
-      => <FINAL> {modifiers.add(TokenType.FINAL);}#
+      SCAN {!modifiers.contains(TokenType.FINAL)}
+      => <FINAL> {modifiers.add(TokenType.FINAL);}
       |
-      SCAN {!modifiers.contains(TokenType.SYNCHRONIZED)}#
-      => <SYNCHRONIZED> {modifiers.add(TokenType.SYNCHRONIZED);}#
+      SCAN {!modifiers.contains(TokenType.SYNCHRONIZED)}
+      => <SYNCHRONIZED> {modifiers.add(TokenType.SYNCHRONIZED);}
       |
-      SCAN {!modifiers.contains(TokenType.NATIVE)}#
-      => <NATIVE> {modifiers.add(TokenType.NATIVE);}#
+      SCAN {!modifiers.contains(TokenType.NATIVE)}
+      => <NATIVE> {modifiers.add(TokenType.NATIVE);}
       |
-      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}#
-      => <PUBLIC> {modifiers.add(TokenType.PUBLIC);}#
+      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}
+      => <PUBLIC> {modifiers.add(TokenType.PUBLIC);}
       |
-      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}#
-      => <PROTECTED> {modifiers.add(TokenType.PROTECTED);}#
+      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}
+      => <PROTECTED> {modifiers.add(TokenType.PROTECTED);}
       |
-      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}#
-      => <PRIVATE> {modifiers.add(TokenType.PRIVATE);}#
+      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}
+      => <PRIVATE> {modifiers.add(TokenType.PRIVATE);}
       |
-      SCAN {!modifiers.contains(TokenType.TRANSIENT)}#
-      => <TRANSIENT> {modifiers.add(TokenType.TRANSIENT);}#
+      SCAN {!modifiers.contains(TokenType.TRANSIENT)}
+      => <TRANSIENT> {modifiers.add(TokenType.TRANSIENT);}
       |
-      SCAN {!modifiers.contains(TokenType.VOLATILE)}#
-      => <VOLATILE> {modifiers.add(TokenType.VOLATILE);}#
+      SCAN {!modifiers.contains(TokenType.VOLATILE)}
+      => <VOLATILE> {modifiers.add(TokenType.VOLATILE);}
       | 
-      SCAN {!modifiers.contains(TokenType.STRICTFP)}#
-      => <STRICTFP> {modifiers.add(TokenType.STRICTFP);}#
+      SCAN {!modifiers.contains(TokenType.STRICTFP)}
+      => <STRICTFP> {modifiers.add(TokenType.STRICTFP);}
       |
+//      SCAN {!modifiers.contains(TokenType._DEFAULT)}
+//      => <_DEFAULT> {modifiers.add(TokenType._DEFAULT);}
+//      |
       => Annotation
    )*
 ;
 
 Modifiers2 #void :
  (
-  SCAN 2
-  (
    "public"
   |
    "static" 
@@ -482,8 +481,7 @@ Modifiers2 #void :
   |
    "default"
   |
-   Annotation
-  )
+  => Annotation
  )*
 ;
 
@@ -907,8 +905,8 @@ INJECT ClassOrInterfaceBodyDeclaration :
 }
 
 ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
-  SCAN 2 // FIXME {!isInterface})
-  Initializer
+  SCAN 2 {!isInterface}
+  => Initializer
  |
   Modifiers2 // Just get all the modifiers out of the way. If you want to do
               // more checks, pass the modifiers down to the member
@@ -992,14 +990,6 @@ ArrayInitializer :
   "{" [ VariableInitializer ( SCAN 2 => "," VariableInitializer )* ] [ "," ] "}"
 ;
 
-MethodDeclaration :
-  // Modifiers already matched in the caller!
-  [ TypeParameters ]
-  ReturnType
-  MethodDeclarator [ ThrowsList ]
-  ( Block | ";" )
-;
-
 INJECT MethodDeclaration : 
 {
     public String getName() {
@@ -1019,6 +1009,15 @@ INJECT MethodDeclaration :
         return getName() + getFormalParams();
     }
 }
+
+MethodDeclaration :
+  // Modifiers already matched in the caller!
+  [ TypeParameters ]
+  ReturnType
+  MethodDeclarator [ ThrowsList ]
+  ( Block | ";" )
+;
+
 
 MethodDeclarator #void :
   <IDENTIFIER> FormalParameters ( "[" "]" )*
@@ -1664,10 +1663,10 @@ INJECT CodeBlock :
 }
 
 BlockStatement :
-  SCAN Modifiers Type <IDENTIFIER> 
+  SCAN Modifiers2 Type <IDENTIFIER> 
   => LocalVariableDeclaration ";"
   |
-  SCAN Modifiers "class"
+  SCAN Modifiers2 "class"
   => Modifiers ClassDeclaration
   |
   Statement
@@ -1731,7 +1730,7 @@ DoStatement :
 ForStatement :
   "for" "("
   (
-      SCAN Modifiers Type <IDENTIFIER> ":"
+      SCAN Modifiers2 Type <IDENTIFIER> ":"
       => Modifiers Type <IDENTIFIER> ":" Expression 
     |
      [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
@@ -1741,7 +1740,7 @@ ForStatement :
 ;
 
 ForInit :
-  SCAN Modifiers Type <IDENTIFIER> 
+  SCAN Modifiers2 Type <IDENTIFIER> 
   => LocalVariableDeclaration
 |
   StatementExpressionList

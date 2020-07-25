@@ -1,102 +1,94 @@
-options {
-   JAVA_UNICODE_ESCAPE;
-   SPECIAL_TOKENS_ARE_NODES;
-   PARSER_PACKAGE="org.parsers.csharp";
-   NODE_PACKAGE="org.parsers.csharp.tree";
-   DEFAULT_LEXICAL_STATE=CSHARP;
-   PRESERVE_LINE_ENDINGS=false;
-   TABS_TO_SPACES=8;
-}
+JAVA_UNICODE_ESCAPE;
+SPECIAL_TOKENS_ARE_NODES;
+PARSER_PACKAGE="org.parsers.csharp";
+NODE_PACKAGE="org.parsers.csharp.tree";
+DEFAULT_LEXICAL_STATE=CSHARP;
+PRESERVE_LINE_ENDINGS=false;
+TABS_TO_SPACES=8;
 
 // The following Token productions are lifted straight from the Java grammar. Should REVISIT
 
 UNPARSED :
-{
   <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace   
-}
+;
 
 
 <IN_MULTI_LINE_COMMENT>
 UNPARSED :
-{
   <MULTI_LINE_COMMENT: "*/" > #Comment : CSHARP
-}
+;
 
 MORE :
-{
   "//" : IN_SINGLE_LINE_COMMENT
 |
   <"/**" ~["/"]> { input_stream.backup(1); } : IN_FORMAL_COMMENT
 |
   "/*" : IN_MULTI_LINE_COMMENT
-}
+;
 
 <IN_SINGLE_LINE_COMMENT>
 UNPARSED :
-{
   <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #Comment : CSHARP
-}
+;
 
 <IN_FORMAL_COMMENT>
 UNPARSED :
-{
   <FORMAL_COMMENT: "*/" > #DocComment : CSHARP
-}
+;
 
 INJECT(DocComment) : {extends Comment}
 
 <IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
 MORE :
-{
   < ~[] >
-}
+;
+
 TOKEN #Literal :
-{
   < LONG_LITERAL:
         <DECIMAL_LITERAL> (["l","L"])
       | <HEX_LITERAL> (["l","L"])
       | <OCTAL_LITERAL> (["l","L"])
       | <BINARY_LITERAL> (["l","L"])
   >
-|
+  |
   < INTEGER_LITERAL:
         <DECIMAL_LITERAL>
       | <HEX_LITERAL>
       | <OCTAL_LITERAL>
       | <BINARY_LITERAL>
   >
-|
+  | 
   < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
-|
+  |
   < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS> >
-|
+  |
   < #OCTAL_LITERAL: "0" ["0"-"7"]((["0"-"7","_"])*["0"-"7"])? >
-|
+  |
   < #BINARY_LITERAL: "0" ["b","B"] ["0","1"]((["0","1","_"])*["0","1"])? >
-|
+  |
   < FLOATING_POINT_LITERAL:
         <DECIMAL_FLOATING_POINT_LITERAL>
       | <HEXADECIMAL_FLOATING_POINT_LITERAL>
   >
-|
+  |
   < #DECIMAL_FLOATING_POINT_LITERAL:
         <DECIMAL_LITERAL> "." (<DECIMAL_LITERAL>)? (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
       | "." <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
       | <DECIMAL_LITERAL> <DECIMAL_EXPONENT> (["f","F","d","D"])?
       | <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? ["f","F","d","D"]
   >
-|
+  |
   < #DECIMAL_EXPONENT: ["e","E"] (["+","-"])? (<DECIMAL_LITERAL>)+ >
-|
+  |
   < #HEXADECIMAL_FLOATING_POINT_LITERAL:
         <HEX_LITERAL> (".")? <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
       | "0" ["x","X"] (<HEX_DIGITS>)? "." <HEX_DIGITS> <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
   >
-|
+  |
   < #HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? <DECIMAL_LITERAL> >
-|
+  |
   < #HEX_DIGITS: ["0"-"9","a"-"f","A"-"F"]((["0"-"9","a"-"f","A"-"F","_"])*["0"-"9","a"-"f","A"-"F"])? >
-|
+  |
   < CHARACTER_LITERAL:
       "'"
       (   (~["'","\\","\n","\r"])
@@ -109,7 +101,7 @@ TOKEN #Literal :
       )
       "'"
   >
-|
+  |
   < STRING_LITERAL:
       "\""
       (   (~["\"","\\","\n","\r"])
@@ -122,10 +114,9 @@ TOKEN #Literal :
       )*
       "\""
   >
-}
+;
 
 TOKEN #Delimiter :
-{
   < LPAREN: "(" > 
 | < RPAREN: ")" >
 | < LBRACE: "{" > 
@@ -139,10 +130,9 @@ TOKEN #Delimiter :
 | < DOUBLE_COLON: "::" > 
 | < VAR_ARGS: "..." > 
 | < AT : "@"> 
-}
+;
 
 TOKEN #Operator : 
-{
  < GT: ">" > 
 | < LT: "<" > 
 | < BANG: "!" > 
@@ -178,11 +168,11 @@ TOKEN #Operator :
 |  < RIGHT_SHIFT: ">>" > 
 | < RIGHT_SHIFT_ASSIGN: ">>=" > 
 | < LAMBDA : "=>"> 
-}
+;
 
 // C# Keywords
 
-TOKEN #KeyWord : {
+TOKEN #KeyWord : 
    <ABSTRACT : "abstract" > | < ADD : "add" > | < AS : "as" > | < ASCENDING : "ascending" > | < ASYNC : "async" > |
    < AWAIT : "await" > | < BASE : "base" > | < BOOL : "bool" > | < BREAK : "break" > | < BY : "by" > |
    < BYTE : "byte" > |  <CASE : "case" > | < CATCH : "catch" > | < CHAR : "char" > | < CHECKED : "checked" > |
@@ -201,317 +191,248 @@ TOKEN #KeyWord : {
    < THIS : "this" > | < THROW : "throw" > | < ULONG : "ulong" > | < UNCHECKED : "unchecked" > | < UNSAFE : "unsafe" > |
    < USHORT : "ushort" > | < USING : "using" > | < VALUE : "value" > | < VAR : "var" > | < VIRTUAL : "virtual" > |
    < VOID : "void" > | < VOLATILE : "volatile" > | < WHERE : "where" > | < WHILE : "while" > | < YIELD : "yield" >   
-}
+;
 
 
-void CompilationUnit() :
-{}
-{
-   (ExternAliasDirective())*
-   (UsingDirective())*
-   (GlobalAttributeSection())*
+CompilationUnit :
+   (ExternAliasDirective)*
+   (UsingDirective)*
+   (GlobalAttributeSection)*
    (
-      NamespaceDeclaration()
+      NamespaceDeclaration
       |
-      TypeDeclaration()
+      TypeDeclaration
     )* 
    <EOF>
-}
+;
 
-void ExternAliasDirective() :
-{}
-{
+ExternAliasDirective :
    "extern" "alias" <IDENTIFIER> ";"
-}
+;
 
-void UsingDirective() :
-{}
-{
-    LOOKAHEAD("using" "static")
-    UsingStaticDirective()
+UsingDirective :
+    SCAN "using" "static"
+    => UsingStaticDirective
     |
-    LOOKAHEAD("using" <IDENTIFIER> "=")
-    UsingAliasDirective()
+    SCAN "using" <IDENTIFIER> "="
+    => UsingAliasDirective
     |
-    UsingNamespaceDirective()
-}    
+    UsingNamespaceDirective
+;    
 
-void UsingStaticDirective() : 
-{}
-{
-    "using" "static" Name() ";"
-} 
+UsingStaticDirective : 
+    "using" "static" Name ";"
+; 
 
-void UsingAliasDirective() :
-{}
-{
-   "using" <IDENTIFIER> "=" Name() ";"
-}
+UsingAliasDirective :
+   "using" <IDENTIFIER> "=" Name ";"
+;
 
-void UsingNamespaceDirective() :
-{}
-{
-    "using" Name() ";"
-}
+UsingNamespaceDirective :
+    "using" Name ";"
+;
 
-void GlobalAttributeSection() :
-{}
-{
-   "["  ("assembly" | "module") ":" AttributeList() [","] "]"
-}
+GlobalAttributeSection :
+   "["  ("assembly" | "module") ":" AttributeList [","] "]"
+;
 
-void AttributeSection() :
-{}
-{
+AttributeSection :
    "["
    ("field"|"event"|"method"|"param"|"property"|"return"|"type")
    ":"
-   AttributeList()
+   AttributeList
    [","]
    "]"
-   
-}
+;
 
-void AttributeList() :
-{}
-{
-     Attribute() ("," Attribute())*
-}
+AttributeList :
+     Attribute ("," Attribute)*
+;
 
-void Attribute() :
-{}
-{
-   Name()
-   [AttributeArguments()]
-}
+Attribute :
+   Name
+   [AttributeArguments]
+;
 
-void AttributeArguments() :
-{}
-{
+AttributeArguments :
     "(" 
     [
-       LOOKAHEAD(~(<IDENTIFIER>"="))
-       Expression()
+       SCAN ~(<IDENTIFIER>"=")
+       => Expression()
        (
           ","
           Expression()
        )*
     ]
     [
-       LOOKAHEAD(<IDENTIFIER>"=")
-       NamedArgument()
+       SCAN <IDENTIFIER>"="
+       => NamedArgument
        (
-          "," NamedArgument()
+          "," NamedArgument
        )*
     ]
     ")"  
-}
+;
 
-void NamedArgument() :
-{}
-{
-    <IDENTIFIER> "=" Expression()
-}
+NamedArgument :
+    <IDENTIFIER> "=" Expression
+;
 
 
 /** Name of a Type or a Namespace */
-void Name() :
-{}
-{
-   LOOKAHEAD(<IDENTIFIER> "::")
-   QualifiedAliasMember()
+Name :
+   SCAN <IDENTIFIER> "::"
+   => QualifiedAliasMember()
    |
    <IDENTIFIER>[TypeArgumentList()]
    ("." <IDENTIFIER> [TypeArgumentList()])*
-}
+;
 
-void QualifiedAliasMember() :
-{}
-{
+QualifiedAliasMember :
    <IDENTIFIER> "::" <IDENTIFIER>
-   [TypeArgumentList()]
-}
+   [TypeArgumentList]
+;
 
-void TypeArgumentList() :
-{}
-{
+TypeArgumentList() :
    "<"
    [
-      Type()
-      ("," Type())* 
+      Type
+      ("," Type)* 
    ]
    ">"
-}
+;
 
-void Expression() :
-{}
-{
-    Name() // TODO!
-}
+Expression :  Name; // TODO!
 
-void NamespaceDeclaration() :
-{}
-{
-   "namespace"  QualifiedIdentifier() NamespaceBody()
-}
+NamespaceDeclaration() :
+   "namespace"  QualifiedIdentifier NamespaceBody
+;
 
-void QualifiedIdentifier() :
-{}
-{
+QualifiedIdentifier :
     <IDENTIFIER> ("." <IDENTIFIER>)*
-}
+;
 
-void NamespaceBody() :
-{}
-{
+NamespaceBody :
    "{"
-       (ExternAliasDirective())* (UsingDirective())* 
+       (ExternAliasDirective)* (UsingDirective)* 
        (
-          NamespaceDeclaration()
+          NamespaceDeclaration
           |
-          TypeDeclaration()
-       )*
+          TypeDeclaration
+       )
    "}"
-}
+;
 
-void TypeDeclaration() :
-{}
-{
-   (AttributeSection())*
+TypeDeclaration :
+   (AttributeSection)*
    ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe")*
    ["partial"]
    (
-     ClassDeclaration()
+     ClassDeclaration
      |
-     StructDeclaration()
+     StructDeclaration
      |
-     InterfaceDeclaration()
+     InterfaceDeclaration
      |
-     EnumDeclaration()
+     EnumDeclaration
      |
-     DelegateDeclaration()
+     DelegateDeclaration
    )
-}
+;
 
-void ClassDeclaration() :
-{}
-{
+ClassDeclaration :
   "class"
    <IDENTIFIER>
-  [TypeParameterList()]
-  [":" (Name() | "object" | "dynamic" | "string") ("," Name())*]
-  (TypeParameterConstraintsClause())*
-  ClassBody()
+  [TypeParameterList]
+  [":" (Name | "object" | "dynamic" | "string") ("," Name)*]
+  (TypeParameterConstraintsClause)*
+  ClassBody
   [";"]
-}
+;
 
-void StructDeclaration() :
-{}
-{
+StructDeclaration :
     "struct" 
     <IDENTIFIER>
-    [":" Name() ("," Name())*]
-    (TypeParameterConstraintsClause())*
-   StructBody()
+    [":" Name ("," Name)*]
+    (TypeParameterConstraintsClause)*
+   StructBody
    [";"] 
-}
+;
 
-void InterfaceDeclaration() :
-{}
-{
+InterfaceDeclaration :
    "interface"
    <IDENTIFIER>
-   [TypeParameterList()]
-   [Name()(","Name())*]
-   (TypeParameterConstraintsClause())*
-   InterfaceBody()
+   [TypeParameterList]
+   [Name ("," Name)*]
+   (TypeParameterConstraintsClause)*
+   InterfaceBody
    [";"]
-}
+;
 
-void EnumDeclaration() : 
-{}
-{
+EnumDeclaration : 
    "enum" 
    <IDENTIFIER>
    [":" ("sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char")]
-   EnumBody()
+   EnumBody
    [";"]
-}
+;
 
-void DelegateDeclaration() :
-{}
-{
+DelegateDeclaration :
   "delegate" 
-  Type()
+  Type
   <IDENTIFIER>
-  [TypeParameterList()]
+  [TypeParameterList]
   "("
-//  [FormalParameterList()] //TODO
+//  [FormalParameterList] //TODO
   ")"
-  (TypeParameterConstraintsClause())*
-}
+  (TypeParameterConstraintsClause)*
+;
 
-void TypeParameterConstraintsClause() :
-{}
-{
-  "where" <IDENTIFIER> ":" (Name() | "class" | "struct") ["," Name()]
-}
+TypeParameterConstraintsClause :
+  "where" <IDENTIFIER> ":" (Name | "class" | "struct") ["," Name]
+;
 
-void ClassBody() :
-{}
-{
+ClassBody :
    "{"
-//   (ClassMemberDeclaration())* //TODO      
+//   (ClassMemberDeclaration)* //TODO      
    "}"
-}
+;
 
-void InterfaceBody() :
-{}
-{
+InterfaceBody :
    "{"
-//  (InterfaceMemberDeclaration())* //TODO
+//  (InterfaceMemberDeclaration)* //TODO
    "}"
-}
+;
 
-void StructBody() :
-{}
-{
+StructBody :
    "{"
 //      (StructMemberDeclaration())* //TODO
    "}"
-}
+;
 
-void TypeParameterList() :
-{}
-{
+TypeParameterList :
    "<"
-   (AttributeSection())*
+   (AttributeSection)*
    ["in"|"out"] // Only with interfaces 
-   Name()
-   ("," (AttributeSection())* Name())*    
+   Name
+   ("," (AttributeSection)* Name)*    
    ">"
-}
+;
 
-
-
-void EnumBody() :
-{}
-{
+EnumBody :
    "{"
 // TODO   
 //   [
-//      EnumMemberDeclaration()
-//      ("," EnumMemberDeclaration())*
+//      EnumMemberDeclaration
+//      ("," EnumMemberDeclaration)*
 //   ]
    "}"
-}
+;
 
-void Type() :
-{}
-{
-    LOOKAHEAD "void" "*"
+Type :
+    => "void" "*"
     |
-    LOOKAHEAD "void" // REVISIT, lone void is only valid in a return type
+    "void" // REVISIT, lone void is only valid in a return type
     |
     (
        (
@@ -522,13 +443,12 @@ void Type() :
       [ "[" (",")* "]" ]
       ["*"]
    )
-}
+;
 
 
 // Definition of Identifiers lifted from Java grammar. REVISIT
 
 TOKEN :
-{
   < IDENTIFIER: <LETTER> (<PART_LETTER>)* > #Identifier
   |
   < #LETTER:
@@ -1173,4 +1093,4 @@ TOKEN :
          "\ufff9"-"\ufffb"
       ]
   >
-}
+;
