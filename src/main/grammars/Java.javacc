@@ -494,15 +494,15 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
  (      
   ";"
   |
+  SCAN UPTO "interface" => AnnotationTypeDeclaration
+  |
+  SCAN UPTO "interface" => InterfaceDeclaration
+  |
   Modifiers
   (
      ClassDeclaration
      |
-     InterfaceDeclaration
-     |
      EnumDeclaration
-     |
-     AnnotationTypeDeclaration
    )
  )
  {
@@ -680,6 +680,7 @@ ClassDeclaration #void :
 ;
 
 InterfaceDeclaration #void :
+  Modifiers
   "interface" 
   <IDENTIFIER>
   [ TypeParameters ]
@@ -909,14 +910,14 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   SCAN 2 {!isInterface}
   => Initializer
  |
+  SCAN UPTO "interface" => AnnotationTypeDeclaration
+  |
+  SCAN UPTO "interface" => InterfaceDeclaration
+  |
   Modifiers2 // Just get all the modifiers out of the way. If you want to do
               // more checks, pass the modifiers down to the member
   (
       ClassDeclaration
-      |
-      InterfaceDeclaration
-      |
-      AnnotationTypeDeclaration
       |
       EnumDeclaration
       |
@@ -1910,6 +1911,7 @@ MemberValueArrayInitializer :
 /* Annotation Types. */
 
 AnnotationTypeDeclaration :
+  Modifiers
   "@" "interface" <IDENTIFIER> AnnotationTypeBody
 ;
 
@@ -1918,6 +1920,10 @@ AnnotationTypeBody :
 ;
 
 AnnotationTypeMemberDeclaration :
+ SCAN UPTO "interface" => AnnotationTypeDeclaration
+ |
+ SCAN UPTO "interface" => InterfaceDeclaration
+ |
  Modifiers
  (
    SCAN Type <IDENTIFIER> "("
@@ -1925,12 +1931,12 @@ AnnotationTypeMemberDeclaration :
    |
    ClassDeclaration
    |
-   InterfaceDeclaration
-   |
+//   InterfaceDeclaration
+//   |
    EnumDeclaration
    |
-   AnnotationTypeDeclaration
-   |
+//   AnnotationTypeDeclaration
+//   |
    FieldDeclaration
  )
  |
