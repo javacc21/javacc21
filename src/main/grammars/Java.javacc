@@ -906,6 +906,8 @@ INJECT ClassOrInterfaceBodyDeclaration :
 }
 
 ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
+  ";"
+  |
   SCAN 2 {!isInterface}
   => Initializer
  |
@@ -917,23 +919,11 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   |
   SCAN Modifiers "class" => ClassDeclaration
   |
-//  SCAN UPTO "(" => ConstructorDeclaration
-//  |
-  Modifiers2 // Just get all the modifiers out of the way. If you want to do
-              // more checks, pass the modifiers down to the member
-  (
-      SCAN UPTO "("
-      => ConstructorDeclaration
-      |
-      SCAN Type <IDENTIFIER> ( "[" "]" )* ( "," | "=" | ";" ) 
-      => FieldDeclaration
-      |
-      MethodDeclaration
-  )
-//  |
-//  SCAN UPTO "{"|";" => MethodDeclaration
+  SCAN Modifiers [TypeParameters] <IDENTIFIER> "(" => ConstructorDeclaration
   |
-  ";"
+  SCAN Modifiers Type <IDENTIFIER>( "[" "]" )* ( "," | "=" | ";" ) => Modifiers FieldDeclaration
+  |
+  SCAN UPTO "{" | ";" => MethodDeclaration
 ;
 
 INJECT ClassOrInterfaceBodyDeclaration : 
@@ -977,7 +967,7 @@ INJECT FieldDeclaration :
 
 
 FieldDeclaration :
-  // Modifiers are already matched in the caller
+  Modifiers 
   Type VariableDeclarator ( "," VariableDeclarator )* ";"
 ;
 
@@ -1016,7 +1006,7 @@ INJECT MethodDeclaration :
 }
 
 MethodDeclaration :
-//  Modifiers
+  Modifiers2
   [ TypeParameters ]
   ReturnType
   MethodDeclarator [ ThrowsList ]
@@ -1078,6 +1068,7 @@ FormalParameter FormalParameter :
 INJECT ConstructorDeclaration : extends ClassOrInterfaceBodyDeclaration
 
 ConstructorDeclaration :
+  Modifiers
   [ TypeParameters ]
   // Modifiers matched in the caller
   <IDENTIFIER> FormalParameters [ ThrowsList ]
@@ -1919,6 +1910,8 @@ AnnotationTypeBody :
 ;
 
 AnnotationTypeMemberDeclaration :
+ ";"
+ |
  SCAN UPTO "interface" => AnnotationTypeDeclaration
  |
  SCAN UPTO "interface" => InterfaceDeclaration
@@ -1927,23 +1920,9 @@ AnnotationTypeMemberDeclaration :
  |
  SCAN Modifiers "class" => ClassDeclaration
  |
- Modifiers
- (
-   SCAN Type <IDENTIFIER> "("
-   => Type <IDENTIFIER> "(" ")" [ DefaultValue ] ";"
-   |
-//   ClassDeclaration
-//   |
-//   InterfaceDeclaration
-//   |
-//   EnumDeclaration
-//   |
-//   AnnotationTypeDeclaration
-//   |
-   FieldDeclaration
- )
+ SCAN Modifiers Type <IDENTIFIER> "(" => Modifiers Type <IDENTIFIER> "(" ")" [ DefaultValue ] ";"
  |
-";" 
+ FieldDeclaration
 ;
 
 DefaultValue :
