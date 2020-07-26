@@ -8,7 +8,7 @@
  *
  *     * Redistributions of source code must retain the above copyright notices,
  *       this list of conditions and the following disclaimer.
- *     * Redistributions in binary formnt must reproduce the above copyright
+ *     * Redistributions in binary format must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
@@ -46,6 +46,9 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.logging.*;
 import java.io.*;
+[#if grammar.parserPackage?has_content]
+import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
+[/#if]
 
 @SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
@@ -68,6 +71,7 @@ Token current_token;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
+private TokenType upToTokenType;
 
 private Token lastParsedToken;
 //private Token nextToken; //REVISIT
@@ -177,15 +181,18 @@ public boolean isCancelled() {return cancelled;}
   }
 
 
-  private final boolean resetScanAhead(int amount) {
+  private final boolean resetScanAhead(int amount, TokenType upToTokenType) {
+    this.upToTokenType = upToTokenType;
     currentLookaheadToken = current_token;
     remainingLookahead = amount;
     setNextTokenType();
     return true;
   }
 
- 
- 
+  private final boolean resetScanAhead(int amount) {
+    return resetScanAhead(amount, null);
+  }
+
 [#import "ParserProductions.java.ftl" as ParserCode ]
 [@ParserCode.Generate/]
  

@@ -919,7 +919,8 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
       |
       EnumDeclaration
       |
-      SCAN [ TypeParameters ] <IDENTIFIER> "(" 
+      SCAN [ TypeParameters ] <IDENTIFIER> "("
+//      SCAN UPTO "("
       => ConstructorDeclaration
       |
       SCAN Type <IDENTIFIER> ( "[" "]" )* ( "," | "=" | ";" ) 
@@ -1203,7 +1204,7 @@ Name Name :
  */
     <IDENTIFIER>
     ( 
-        SCAN "." <IDENTIFIER>
+        => "." <IDENTIFIER>
     )*
     {
         return CURRENT_NODE;
@@ -1351,8 +1352,8 @@ ShiftExpression :
    (
       SCAN 2
       (
-      "<<"
-      |
+        "<<"
+        |
         ShiftOperator
       )
       AdditiveExpression
@@ -1422,7 +1423,8 @@ PreDecrementExpression :
 UnaryExpressionNotPlusMinus :
   ( "~" | "!" ) UnaryExpression
   |
-  SCAN LambdaExpression 
+  SCAN LambdaLHS "->"
+  => LambdaExpression 
   |
   SCAN CastExpression
   |
@@ -1458,17 +1460,17 @@ PrimaryPrefix :
  |
   "this"
  |
- SCAN "super" "." <IDENTIFIER>
+ => "super" "." <IDENTIFIER>
  |
   "(" Expression ")"
  |
   AllocationExpression
  |
- SCAN PrimitiveType "." "class"
+ => PrimitiveType "." "class"
  |
- SCAN ReturnType "." "class"
+ => ReturnType "." "class"
  |
- SCAN MethodReference
+ => MethodReference
  |  
  Name
 ;
@@ -1480,39 +1482,38 @@ MethodReference :
 ;
 
 PrimarySuffix :
-  SCAN 
-   "." ("this"|"super")
+  => "." ("this"|"super")
     |
   SCAN 2
-    "." AllocationExpression
+  => "." AllocationExpression
     |
   SCAN 3
-    MemberSelector
-    |
-    "[" [Expression] "]"
-    |
-    "." <IDENTIFIER>
-    |
-    "::" (<IDENTIFIER>|"new")
-    |
-    Arguments
+  => MemberSelector
+  |
+  "[" [Expression] "]"
+  |
+  "." <IDENTIFIER>
+  |
+  "::" (<IDENTIFIER>|"new")
+  |
+  Arguments
 ;
 
 Literal #void :
   <INTEGER_LITERAL>
- |
+  |
   <LONG_LITERAL>
- |
+  |
   <FLOATING_POINT_LITERAL>
- |
+  |
   <CHARACTER_LITERAL>
- |
+  |
   <STRING_LITERAL>
- |
- "true"
-|
-"false"
-|
+  |
+  "true"
+  |
+  "false"
+  |
   "null"
 ;
 
@@ -1550,7 +1551,7 @@ INJECT InvocationArgs :
 AllocationExpression :
   SCAN 2
   "new" PrimitiveType ArrayDimsAndInits
- |
+  |
   "new" ClassOrInterfaceType [ PossiblyEmptyTypeArguments ]
     (
       ArrayDimsAndInits
@@ -1593,21 +1594,21 @@ Statement  :
 
 UnlabeledStatement #void :
   AssertStatement
- |
+  |
   Block
- |
+  |
   EmptyStatement
- |
+  |
   StatementExpression ";"
- |
+  |
   SwitchStatement
- |
+  |
   IfStatement
- |
+  |
   WhileStatement
- |
+  |
   DoStatement
- |
+  |
   ForStatement
   |
   BreakStatement
@@ -1619,7 +1620,7 @@ UnlabeledStatement #void :
   ThrowStatement
   |
   SynchronizedStatement
- |
+  |
   TryStatement
 ;
 
@@ -1663,10 +1664,10 @@ INJECT CodeBlock :
 }
 
 BlockStatement :
-  SCAN Modifiers2 Type <IDENTIFIER> 
+  SCAN Modifiers Type <IDENTIFIER> 
   => LocalVariableDeclaration ";"
   |
-  SCAN Modifiers2 "class"
+  SCAN Modifiers "class"
   => Modifiers ClassDeclaration
   |
   Statement
@@ -1730,7 +1731,7 @@ DoStatement :
 ForStatement :
   "for" "("
   (
-      SCAN Modifiers2 Type <IDENTIFIER> ":"
+      SCAN Modifiers Type <IDENTIFIER> ":"
       => Modifiers Type <IDENTIFIER> ":" Expression 
     |
      [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
@@ -1740,7 +1741,7 @@ ForStatement :
 ;
 
 ForInit :
-  SCAN Modifiers2 Type <IDENTIFIER> 
+  SCAN Modifiers Type <IDENTIFIER> 
   => LocalVariableDeclaration
 |
   StatementExpressionList
@@ -1811,7 +1812,7 @@ TryWithResources TryWithResources :
       (
         ";"
        [
-          SCAN LocalVariableDeclaration
+          => LocalVariableDeclaration
           |
           Name
        ]
@@ -1898,7 +1899,7 @@ MemberValue :
 ;
 
 MemberValueArrayInitializer :
-  SCAN "{" "}"
+  => "{" "}"
   |
   "{" MemberValue ( SCAN 2 "," MemberValue )* [ "," ] "}"
 ;

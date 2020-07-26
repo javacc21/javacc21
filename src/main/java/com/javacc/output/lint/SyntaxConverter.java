@@ -47,8 +47,8 @@ import java.io.*;
 
      static public void main(String args[]) throws Exception {
          String location = args[0].equalsIgnoreCase("convert") ? args[1] : args[0];
-         SyntaxConverter linter = new SyntaxConverter(location);
-         System.out.print(linter.outputBuffer);
+         SyntaxConverter converter = new SyntaxConverter(location);
+         System.out.print(converter.outputBuffer);
      }
 
      public SyntaxConverter(String location) throws IOException, ParseException{

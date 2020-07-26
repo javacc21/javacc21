@@ -320,6 +320,8 @@ TOKEN :
   |
   < _RECOVER : "RECOVER"> #JavaCCKeyWord
   |
+  < _UPTO : "UPTO"> #JavaCCKeyWord
+  |
   <HASH : "#">
   |
   <HASH_ID : "#"<IDENTIFIER>> #HashID
@@ -1458,7 +1460,7 @@ Lookahead Lookahead #void :
 Lookahead ScanAhead #Lookahead : 
 {
    Token amountToken=null;
-   boolean hasSemanticLookahead = false;
+   boolean hasSemanticLookahead = false, hasUpTo = false;
    Expansion expansion = null;
    Expression exp=null;
    Node lb = null;
@@ -1478,6 +1480,9 @@ Lookahead ScanAhead #Lookahead :
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
+[
+   <_UPTO> ExpansionChoice {hasUpTo = true;}
+]
 [SCAN LookBehind {lb = peekNode();}]
 [
     SCAN {amountToken == null} => 
@@ -1485,14 +1490,14 @@ Lookahead ScanAhead #Lookahead :
     ExpansionChoice {expansion = (Expansion) peekNode();}
     <RIGHT_ARROW>
     {
-       CURRENT_NODE.setExpansion(expansion);
+       CURRENT_NODE.setNestedExpansion(expansion);
        expansion.setLookahead(CURRENT_NODE);
     }
 ]
 (
     SCAN {expansion == null} => <RIGHT_ARROW>
     |
-    SCAN {expansion != null || (exp ==null && lb == null)} => {}
+    SCAN {expansion != null || (exp ==null && lb == null && !hasUpTo)} => {}
 )
 {
     return CURRENT_NODE;
@@ -1586,6 +1591,7 @@ import java.util.*;
         }
         return routineName;
     }
+
 }
 
 Lookahead LegacyLookahead #Lookahead :
@@ -1618,7 +1624,7 @@ Lookahead LegacyLookahead #Lookahead :
         {
            expansion = (Expansion) peekNode();
            empty = false; commaAtEnd = false;
-           CURRENT_NODE.setExpansion(expansion);
+           CURRENT_NODE.setNestedExpansion(expansion);
            expansion.setLookahead(CURRENT_NODE);
         }
       ]
@@ -1643,12 +1649,13 @@ Lookahead LegacyLookahead #Lookahead :
 INJECT Lookahead :
    import com.javacc.parsegen.Expansion;
    import com.javacc.lexgen.TokenSet;
+   import com.javacc.lexgen.RegularExpression;
 {
     private int amount=Integer.MAX_VALUE;
     
     private boolean negated;
 
-    private Expansion expansion;
+    private Expansion expansion, nestedExpansion, upToExpansion;
 
     private boolean nestedSemanticLookahead;
 
@@ -1701,7 +1708,11 @@ INJECT Lookahead :
     }
 
     public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
+        return nestedExpansion;
+    }
+
+    public void setNestedExpansion(Expansion nestedExpansion) {
+        this.nestedExpansion = nestedExpansion;
     }
 
     public Expansion getExpansion() {
@@ -1769,6 +1780,15 @@ INJECT Lookahead :
     public LookBehind getLookBehind() {
         return firstChildOfType(LookBehind.class);
     }
+              
+    public Expansion getUpToExpansion() {
+        return upToExpansion;
+    }
+
+    public void setUpToExpansion(Expansion upToExpansion) {
+        this.upToExpansion = upToExpansion;
+    }
+
 }
 
 Expansion ExpansionUnit :
@@ -1782,7 +1802,6 @@ Expansion ExpansionUnit :
   SCAN 1 ~\...\Lookahead =>
   result=CodeSnippet ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
-  SCAN ~\...\Lookahead "ATTEMPT" =>
   result=AttemptBlock
   |
   SCAN 1 ~\...\Lookahead =>

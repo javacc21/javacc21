@@ -54,15 +54,17 @@
 [/#macro]
 
 [#macro BuildLookaheads]
-  private final boolean scanToken(TokenType type) {
+  private final boolean scanToken(TokenType expectedType) {
        if (remainingLookahead <=0) return true;
        if (currentLookaheadToken.getNext() == null) {
         Token nextToken = token_source.getNextToken();
         currentLookaheadToken.setNext(nextToken);
      } 
      currentLookaheadToken = currentLookaheadToken.getNext();
-     if (currentLookaheadToken.getType() != type) return false;
+     TokenType type = currentLookaheadToken.getType();
+     if (type != expectedType) return false;
      if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
+     if (type == upToTokenType) remainingLookahead = 0;
      return true;
   }
 
@@ -73,8 +75,10 @@
         currentLookaheadToken.setNext(nextToken);
      } 
      currentLookaheadToken = currentLookaheadToken.getNext();
-     if (!types.contains(currentLookaheadToken.getType())) return false;
+     TokenType type = currentLookaheadToken.getType();
+     if (!types.contains(type)) return false;
      if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
+     if (type == upToTokenType) remainingLookahead = 0;
      return true;
   }
 
@@ -94,7 +98,6 @@
    [#list grammar.allLookBehinds as lookBehind]
       [@BuildLookBehindRoutine lookBehind /]
    [/#list]
-
 [/#macro]   
 
 [#macro firstSetVars]
@@ -410,13 +413,13 @@
 
 
 [#macro BuildCodeZeroOrOne zoo]
-    [#if zoo.nestedExpansion.alwaysSuccessful 
+    [#if zoo.nestedExpansion.alwaysSuccessful
       || zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
        [@BuildCode zoo.nestedExpansion /]
     [#else]
-       if (
-          resetScanAhead(${zoo.lookaheadAmount}) && 
-          [@expansionCondition zoo/]) {
+       if (resetScanAhead(${zoo.lookaheadAmount}) &&
+          [@ExpansionCondition
+ zoo/]) {
           [@BuildCode zoo.nestedExpansion/]
        }
     [/#if]
@@ -439,9 +442,10 @@
    [#if nestedExp.simpleName = "ExpansionChoice"]
    while (true);
    [#else]
-   while(
-         resetScanAhead(${nestedExp.lookaheadAmount}) && 
-      ${expansionCondition(oom)});
+   while(resetScanAhead(${nestedExp.lookaheadAmount}) &&
+      ${ExpansionCondition
+
+(oom)});
    [/#if]
    [#set inFirstVarName = prevInFirstVarName /]
 [/#macro]
@@ -451,8 +455,11 @@
        while (true) {
     [#else]
       while (
-         resetScanAhead(${zom.lookaheadAmount}) && 
-         ${expansionCondition(zom)}) {
+         resetScanAhead(${zom.lookaheadAmount}) &&
+         ${ExpansionCondition
+
+
+(zom)}) {
     [/#if]
        [@BuildCode zom.nestedExpansion/]
     }
@@ -467,7 +474,8 @@
          [#return]
       [/#if]
       ${(expansion_index=0)?string("if", "else if")}
-      (resetScanAhead(${expansion.lookaheadAmount}) && ${expansionCondition(expansion)}) {
+      (resetScanAhead(${expansion.lookaheadAmount})
+      && ${ExpansionCondition (expansion)}) {
          ${BuildCode(expansion)}
       }
    [/#list]
@@ -494,7 +502,7 @@
      Macro to generate the condition for entering an expansion
      including the default single-token lookahead
 --]
-[#macro expansionCondition expansion]
+[#macro ExpansionCondition expansion]
    [#var empty = true]
    [#if expansion.lookahead?? && expansion.lookahead.LHS??]
       (${expansion.lookahead.LHS} =

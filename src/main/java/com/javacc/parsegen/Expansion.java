@@ -187,6 +187,11 @@ abstract public class Expansion extends BaseNode {
         Lookahead la = getLookahead();
         return la != null && la.hasSemanticLookahead();
     }
+
+    public Expansion getUpToExpansion() {
+        Lookahead la = getLookahead();
+        return la == null ? null : la.getUpToExpansion();
+    }
     
     public Expression getSemanticLookahead() {
         return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;
