@@ -260,6 +260,13 @@ public class ParserData {
             }
         }
 
+        for (Lookahead la : grammar.getAllLookaheads()) {
+            Expansion exp = la.getUpToExpansion();
+            if (exp != null && !exp.isSingleToken()) {
+                grammar.addSemanticError(exp, "The expansion after UPTO here must be matched by exactly one token.");
+            }
+         }
+
 
         /*
          * The following loop ensures that all target lexical states are

@@ -72,6 +72,7 @@ private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
 private TokenType upToTokenType;
+private EnumSet<TokenType> upToFirstSet;
 
 private Token lastParsedToken;
 //private Token nextToken; //REVISIT
@@ -180,17 +181,26 @@ public boolean isCancelled() {return cancelled;}
     return nextTokenType;
   }
 
+  private final boolean resetScanAhead(int amount, EnumSet<TokenType> upToFirstSet) {
+    resetScanAhead(amount);
+    this.upToFirstSet = upToFirstSet;
+    return true;
+  }
+
 
   private final boolean resetScanAhead(int amount, TokenType upToTokenType) {
+    resetScanAhead(amount);
     this.upToTokenType = upToTokenType;
-    currentLookaheadToken = current_token;
-    remainingLookahead = amount;
-    setNextTokenType();
     return true;
   }
 
   private final boolean resetScanAhead(int amount) {
-    return resetScanAhead(amount, null);
+    currentLookaheadToken = current_token;
+    remainingLookahead = amount;
+    this.upToTokenType = null;
+    this.upToFirstSet = null;
+    setNextTokenType();
+    return true;
   }
 
 [#import "ParserProductions.java.ftl" as ParserCode ]

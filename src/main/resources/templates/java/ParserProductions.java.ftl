@@ -417,10 +417,8 @@
       || zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
        [@BuildCode zoo.nestedExpansion /]
     [#else]
-       if (resetScanAhead(${zoo.lookaheadAmount}) &&
-          [@ExpansionCondition
- zoo/]) {
-          [@BuildCode zoo.nestedExpansion/]
+       if (${ResetCall(zoo)} && ${ExpansionCondition(zoo)}) {
+          ${BuildCode(zoo.nestedExpansion)}
        }
     [/#if]
 [/#macro]
@@ -442,10 +440,7 @@
    [#if nestedExp.simpleName = "ExpansionChoice"]
    while (true);
    [#else]
-   while(resetScanAhead(${nestedExp.lookaheadAmount}) &&
-      ${ExpansionCondition
-
-(oom)});
+   while(${ResetCall(nestedExp)} && ${ExpansionCondition(oom)});
    [/#if]
    [#set inFirstVarName = prevInFirstVarName /]
 [/#macro]
@@ -454,14 +449,9 @@
     [#if zom.nestedExpansion.class.simpleName = "ExpansionChoice"]
        while (true) {
     [#else]
-      while (
-         resetScanAhead(${zom.lookaheadAmount}) &&
-         ${ExpansionCondition
-
-
-(zom)}) {
+      while (${ResetCall(zom)} && ${ExpansionCondition(zom)}) {
     [/#if]
-       [@BuildCode zom.nestedExpansion/]
+       ${BuildCode(zom.nestedExpansion)}
     }
 [/#macro]
 
@@ -474,8 +464,7 @@
          [#return]
       [/#if]
       ${(expansion_index=0)?string("if", "else if")}
-      (resetScanAhead(${expansion.lookaheadAmount})
-      && ${ExpansionCondition (expansion)}) {
+      (${ResetCall(expansion)} && ${ExpansionCondition(expansion)}) {
          ${BuildCode(expansion)}
       }
    [/#list]
@@ -496,6 +485,19 @@
            throw new ParseException(current_token.getNext(), ${choice.firstSetVarName}, parsingStack);
         }
    [/#if]
+[/#macro]
+
+[#macro ResetCall expansion]
+    [#if !expansion.upToExpansion??]
+       resetScanAhead(${expansion.lookaheadAmount})
+    [#else]
+       [#var firstSet = expansion.upToExpansion.firstSet.tokenNames]
+       [#if firstSet?size = 1]
+           resetScanAhead(${expansion.lookaheadAmount}, TokenType.${firstSet[0]})
+       [#else]
+           resetScanAhead(${expansion.lookaheadAmount}, ${expansion.upToExpansion.firstSetVarName})
+       [/#if]
+     [/#if]
 [/#macro]
 
 [#-- 

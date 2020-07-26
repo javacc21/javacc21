@@ -308,6 +308,7 @@ INJECT BaseNode :
 
 CompilationUnit CompilationUnit #CompilationUnit :
   [ SCAN (Annotation)* "package" => PackageDeclaration ]
+//  [ SCAN UPTO "package" => PackageDeclaration ]
   ( ImportDeclaration )*
   (
      ( TypeDeclaration )+
@@ -1423,7 +1424,8 @@ PreDecrementExpression :
 UnaryExpressionNotPlusMinus :
   ( "~" | "!" ) UnaryExpression
   |
-  SCAN LambdaLHS "->"
+  SCAN UPTO "->" 
+//  SCAN LambdaLHS "->"
   => LambdaExpression 
   |
   SCAN CastExpression
@@ -1948,7 +1950,7 @@ LambdaExpression LambdaExpression :
   }
 ;
 
-LambdaLHS :
+LambdaLHS : 
    SCAN SimpleLambdaLHS "->"
    => SimpleLambdaLHS
    |

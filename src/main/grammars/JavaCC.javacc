@@ -712,7 +712,7 @@ CodeInjection2 :
 ;
 
 Options #Options : 
-    (SCAN => Setting)+
+    (SCAN UPTO ":" => Setting)+
 ;
 
 OptionsBlock #Options :
@@ -1460,8 +1460,8 @@ Lookahead Lookahead #void :
 Lookahead ScanAhead #Lookahead : 
 {
    Token amountToken=null;
-   boolean hasSemanticLookahead = false, hasUpTo = false;
-   Expansion expansion = null;
+   boolean hasSemanticLookahead = false;
+   Expansion expansion = null, upToExpansion = null;
    Expression exp=null;
    Node lb = null;
 }
@@ -1481,7 +1481,12 @@ Lookahead ScanAhead #Lookahead :
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
 [
-   <_UPTO> ExpansionChoice {hasUpTo = true;}
+   <_UPTO> 
+   ExpansionChoice 
+   {
+       upToExpansion = (Expansion) peekNode();
+       CURRENT_NODE.setUpToExpansion(upToExpansion);
+   }
 ]
 [SCAN LookBehind {lb = peekNode();}]
 [
@@ -1497,7 +1502,7 @@ Lookahead ScanAhead #Lookahead :
 (
     SCAN {expansion == null} => <RIGHT_ARROW>
     |
-    SCAN {expansion != null || (exp ==null && lb == null && !hasUpTo)} => {}
+    SCAN {expansion != null || (exp ==null && lb == null && upToExpansion == null)} => {}
 )
 {
     return CURRENT_NODE;
