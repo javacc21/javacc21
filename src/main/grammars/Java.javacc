@@ -307,8 +307,8 @@ INJECT BaseNode :
 }
 
 CompilationUnit CompilationUnit #CompilationUnit :
-  [ SCAN (Annotation)* "package" => PackageDeclaration ]
-//  [ SCAN UPTO "package" => PackageDeclaration ]
+//  [ SCAN (Annotation)* "package" => PackageDeclaration ]
+  [ SCAN UPTO "package" => PackageDeclaration ]
   ( ImportDeclaration )*
   (
      ( TypeDeclaration )+
@@ -498,12 +498,9 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
   |
   SCAN UPTO "interface" => InterfaceDeclaration
   |
-  Modifiers
-  (
-     ClassDeclaration
-     |
-     EnumDeclaration
-   )
+  SCAN UPTO "enum" => EnumDeclaration
+  |
+  SCAN UPTO "class" => ClassDeclaration
  )
  {
         return CURRENT_NODE;
@@ -671,6 +668,7 @@ INJECT(TypeDeclaration) :
 }
 
 ClassDeclaration #void :
+  Modifiers
   "class"
   <IDENTIFIER>
   [ TypeParameters ]
@@ -768,6 +766,7 @@ INJECT ImplementsList :
 }
 
 EnumDeclaration :
+   Modifiers
    "enum" <IDENTIFIER>
    [ImplementsList(false)] 
    EnumBody
@@ -914,15 +913,16 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   |
   SCAN UPTO "interface" => InterfaceDeclaration
   |
+  SCAN UPTO "enum" => EnumDeclaration
+  |
+  SCAN Modifiers "class" => ClassDeclaration
+  |
+//  SCAN UPTO "(" => ConstructorDeclaration
+//  |
   Modifiers2 // Just get all the modifiers out of the way. If you want to do
               // more checks, pass the modifiers down to the member
   (
-      ClassDeclaration
-      |
-      EnumDeclaration
-      |
-      SCAN [ TypeParameters ] <IDENTIFIER> "("
-//      SCAN UPTO "("
+      SCAN UPTO "("
       => ConstructorDeclaration
       |
       SCAN Type <IDENTIFIER> ( "[" "]" )* ( "," | "=" | ";" ) 
@@ -930,6 +930,8 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
       |
       MethodDeclaration
   )
+//  |
+//  SCAN UPTO "{"|";" => MethodDeclaration
   |
   ";"
 ;
@@ -1014,7 +1016,7 @@ INJECT MethodDeclaration :
 }
 
 MethodDeclaration :
-  // Modifiers already matched in the caller!
+//  Modifiers
   [ TypeParameters ]
   ReturnType
   MethodDeclarator [ ThrowsList ]
@@ -1425,9 +1427,7 @@ PreDecrementExpression :
 UnaryExpressionNotPlusMinus :
   ( "~" | "!" ) UnaryExpression
   |
-  SCAN UPTO "->" 
-//  SCAN LambdaLHS "->"
-  => LambdaExpression 
+  SCAN UPTO "->" => LambdaExpression 
   |
   SCAN CastExpression
   |
@@ -1670,8 +1670,7 @@ BlockStatement :
   SCAN Modifiers Type <IDENTIFIER> 
   => LocalVariableDeclaration ";"
   |
-  SCAN Modifiers "class"
-  => Modifiers ClassDeclaration
+  SCAN Modifiers "class" => ClassDeclaration
   |
   Statement
 ;
@@ -1924,17 +1923,21 @@ AnnotationTypeMemberDeclaration :
  |
  SCAN UPTO "interface" => InterfaceDeclaration
  |
+ SCAN UPTO "enum" => EnumDeclaration
+ |
+ SCAN Modifiers "class" => ClassDeclaration
+ |
  Modifiers
  (
    SCAN Type <IDENTIFIER> "("
    => Type <IDENTIFIER> "(" ")" [ DefaultValue ] ";"
    |
-   ClassDeclaration
-   |
+//   ClassDeclaration
+//   |
 //   InterfaceDeclaration
 //   |
-   EnumDeclaration
-   |
+//   EnumDeclaration
+//   |
 //   AnnotationTypeDeclaration
 //   |
    FieldDeclaration
