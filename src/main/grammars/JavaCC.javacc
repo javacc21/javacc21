@@ -1804,15 +1804,20 @@ Expansion ExpansionUnit :
     TreeBuildingAnnotation tba = null;
 }
  (
-  SCAN 1 ~\...\Lookahead =>
+  SCAN ~\...\Lookahead =>
   result=CodeSnippet ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
+  SCAN 1 ~\...\Lookahead =>
   result=AttemptBlock
   |
   SCAN 1 ~\...\Lookahead =>
   result=TryBlock
   |
-  result=ZeroOrOne
+  => result = ZeroOrOne
+  |
+  => result = ZeroOrMore
+  |
+  => result = OneOrMore
   |
   SCAN [PrimaryExpression "="] (<STRING_LITERAL>|"<")
   =>
@@ -1851,10 +1856,6 @@ Expansion ExpansionUnit :
   [ 
    SCAN <BANG> TreeNodeDescriptor
    => <BANG> {result.setForced(true);}
-   | 
-   "+" #OneOrMore(4) { result = (OneOrMore) peekNode();}
-   | "*" #ZeroOrMore(4) { result = (ZeroOrMore) peekNode();}
-   | "?" #ZeroOrOne(4) { result = (ZeroOrOne) peekNode();}
   ]
  )
  [
@@ -1978,12 +1979,17 @@ INJECT(NonTerminal) :
      }
 }
 
+ZeroOrMore ZeroOrMore : "(" ExpansionChoice ")" "*" {return CURRENT_NODE;};
+
+OneOrMore OneOrMore : "(" ExpansionChoice ")" "+" {return CURRENT_NODE;};
 
 ZeroOrOne ZeroOrOne : 
 {
-    "[" 
-    ExpansionChoice 
-    "]"
+    (
+      "[" ExpansionChoice "]"
+      |
+      "(" ExpansionChoice ")" "?"
+    )
     {
        return CURRENT_NODE;
     } 
@@ -2222,11 +2228,17 @@ INJECT AttemptBlock :
            return getNestedExpansion().isConcrete();
      }
 }
+/*
+ErrorStatement : "ERROR" <STRING_LITERAL>;
+
+INJECT ErrorStatement :
+   extends Expansion
+{
+}
+*/
 
 TryBlock TryBlock : 
-    "try" "{" 
-    ExpansionChoice 
-    "}"
+    "try" "{" ExpansionChoice "}"
     {
         token_source.inJavaCode = true;
     }
