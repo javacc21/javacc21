@@ -61,6 +61,7 @@ public class JavaCCError {
         }
         if (node instanceof Node) {
             Node n = (Node) node;
+            this.inputSource = n.getInputSource();
             this.beginColumn = n.getBeginColumn();
             this.beginLine = n.getBeginLine();
             this.grammar = n.getGrammar();

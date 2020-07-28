@@ -11,6 +11,8 @@
 /examples/java/com/*
 /examples/json/com/*
 /examples/csharp/org/*
+/.idea/dictionaries/*
+/.idea/inspectionProfiles/*
 
 # Compiled class file
 *.class

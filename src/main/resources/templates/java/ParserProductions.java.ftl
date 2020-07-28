@@ -30,6 +30,14 @@
  */
  --]
 
+ [#var TT = "TokenType."]
+
+ [#if !grammar.options.legacyAPI && grammar.parserPackage?has_content]
+   [#set TT=""]
+ [/#if]
+
+ 
+
 [#macro Generate]
      [@Productions/]
     [@firstSetVars/]
@@ -148,7 +156,7 @@
        static private final EnumSet<TokenType> ${varName} = EnumSet.of(
        [#list tokenNames as type]
           [#if type_index > 0],[/#if]
-          TokenType.${type} 
+          ${TT}${type} 
        [/#list]
      ); 
    [/#if]
@@ -251,7 +259,7 @@
                     ${nodeVarName}.setParseException(${parseExceptionVar});
                      if (${forcedVarName}) { 
                         restoreCallStack(${callStackSizeVar});
-                        Token virtualToken = insertVirtualToken(TokenType.${expansion.finalSet.firstTokenName}); 
+                        Token virtualToken = insertVirtualToken(${TT}${expansion.finalSet.firstTokenName}); 
                         resetNextToken();
                         if (tokensAreNodes) {
                             currentNodeScope.add(virtualToken);
@@ -353,9 +361,9 @@
           ${regexp.LHS} =  
        [/#if]
   [#if !grammar.options.faultTolerant]       
-       consumeToken(TokenType.${regexp.label});
+       consumeToken(${TT}${regexp.label});
    [#else]
-        consumeToken(TokenType.${regexp.label}, ${regexp.forced?string("true", "false")});
+        consumeToken(${TT}${regexp.label}, ${regexp.forced?string("true", "false")});
    [/#if]
 [/#macro]
 
@@ -493,7 +501,7 @@
     [#else]
        [#var firstSet = expansion.upToExpansion.firstSet.tokenNames]
        [#if firstSet?size = 1]
-           resetScanAhead(${expansion.lookaheadAmount}, TokenType.${firstSet[0]})
+           resetScanAhead(${expansion.lookaheadAmount}, ${TT}${firstSet[0]})
        [#else]
            resetScanAhead(${expansion.lookaheadAmount}, ${expansion.upToExpansion.firstSetVarName})
        [/#if]
@@ -539,7 +547,7 @@
 [#macro SingleTokenCondition expansion]
    [#if expansion.firstSet.tokenNames?size < 5] 
       [#list expansion.firstSet.tokenNames as name]
-          nextTokenType == TokenType.${name} 
+          nextTokenType == ${TT}${name} 
          [#if name_has_next] || [/#if] 
       [/#list]
    [#else]
@@ -651,7 +659,7 @@
   [#if expansion.singleToken]
     [#var firstSet = expansion.firstSet.tokenNames]
     [#if firstSet?size = 1]
-      if (!scanToken(TokenType.${firstSet[0]})) return false;
+      if (!scanToken(${TT}${firstSet[0]})) return false;
     [#else]
       if (!scanToken(${expansion.firstSetVarName})) return false;
     [/#if]
@@ -697,7 +705,7 @@
 [/#macro]
 
 [#macro ScanCodeRegexp regexp]
-     if (!scanToken(TokenType.${regexp.label})) return false;
+     if (!scanToken(${TT}${regexp.label})) return false;
 [/#macro]
 
 [#macro ScanCodeZeroOrOne zoo]
@@ -778,7 +786,7 @@
    [#if expansion.singleToken]
        [#var firstSet = expansion.firstSet.tokenNames]
        [#if firstSet?size ==1]
-         scanToken(TokenType.${firstSet[0]})
+         scanToken(${TT}${firstSet[0]})
        [#else]
          scanToken(${expansion.firstSetVarName})
        [/#if]
