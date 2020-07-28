@@ -231,7 +231,12 @@ public class ParserData {
             Expansion exp = (Expansion) child;
             String starOrPlus = exp instanceof ZeroOrMore ? "(...)*" : "(...)+";
             if (exp.getNestedExpansion().isAlwaysSuccessful()) {
-                grammar.addSemanticError(exp, "Expansion inside " + starOrPlus + " can be matched by the empty string, so it would produce an infinite loop!");
+                Failure failure = exp.getNestedExpansion().firstChildOfType(Failure.class);
+                if (failure != null) {
+                    grammar.addSemanticError(exp, "Expansion inside " + starOrPlus + " always fails! This cannot be right!");
+                } else {
+                  grammar.addSemanticError(exp, "Expansion inside " + starOrPlus + " can be matched by the empty string, so it would produce an infinite loop!");
+                }
             }
         }
 

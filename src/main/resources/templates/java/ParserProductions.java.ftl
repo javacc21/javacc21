@@ -33,9 +33,9 @@
  [#var TT = "TokenType."]
 
  [#if !grammar.options.legacyAPI && grammar.parserPackage?has_content]
+   [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]
    [#set TT=""]
  [/#if]
-
  
 
 [#macro Generate]
@@ -329,6 +329,8 @@
     [#var classname=expansion.simpleName]
     [#if classname = "CodeBlock"]
        ${expansion}
+    [#elseif classname = "Failure"]
+       throw new ParseException(this, expansion.message);
     [#elseif classname = "ExpansionSequence"]
        [@BuildCodeSequence expansion/]
     [#elseif classname = "NonTerminal"]
@@ -668,6 +670,8 @@
   [#var classname=expansion.simpleName]
     [#if expansion.isRegexp]
       [@ScanCodeRegexp expansion/]
+   [#elseif classname = "Failure"]
+      [@ScanCodeError expansion /]
    [#elseif classname = "ExpansionSequence"]
       [@ScanCodeSequence expansion count/]
    [#elseif classname = "ZeroOrOne"]
@@ -687,6 +691,10 @@
       ${expansion}
       [/#if]
   [/#if]
+[/#macro]
+
+[#macro ScanCodeError expansion]
+   return false;
 [/#macro]
 
 [#macro ScanCodeChoice choice]

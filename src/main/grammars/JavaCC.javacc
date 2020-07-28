@@ -247,6 +247,7 @@ INJECT LEXER_CLASS :
         javaccReservedWords.add("RECOVER");
         javaccReservedWords.add("SCAN");
         javaccReservedWords.add("LOOKAHEAD");
+        javaccReservedWords.add("FAIL");
 // REVISIT: Scanning forwards, the parser has to be able to identify these
 //      as JavaCC keywords even from within a code block (its very end, I guess)
 //        javaccReservedWords.add("INJECT"); 
@@ -295,6 +296,8 @@ TOKEN :
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
   |
   < _LOOKAHEAD: "LOOKAHEAD" > #JavaCCKeyWord
+  |
+  < _FAIL : "FAIL" > #JavaCCKeyWord
   |
   < _SCAN : "SCAN" > #JavaCCKeyWord
   |
@@ -1804,6 +1807,9 @@ Expansion ExpansionUnit :
     TreeBuildingAnnotation tba = null;
 }
  (
+  SCAN ~\...\Lookahead => 
+  result = Failure
+  |
   SCAN ~\...\Lookahead =>
   result=CodeSnippet ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
@@ -2228,14 +2234,39 @@ INJECT AttemptBlock :
            return getNestedExpansion().isConcrete();
      }
 }
-/*
-ErrorStatement : "ERROR" <STRING_LITERAL>;
 
-INJECT ErrorStatement :
-   extends Expansion
+Failure Failure : 
+   "FAIL" <STRING_LITERAL> 
+   {
+       String message = removeEscapesAndQuotes(current_token);
+       CURRENT_NODE.setMessage(message);
+       return CURRENT_NODE;
+   }
+;
+
+
+INJECT Failure :
+   import com.javacc.lexgen.TokenSet;
+   extends com.javacc.parsegen.Expansion
 {
+    public boolean isConcrete() {return true;}
+    
+    public int getMaximumSize() {return 0;}
+
+    public int minimumSize(int min) {return 0;}
+
+    public boolean isPossiblyEmpty() {return true;}
+    
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+
+    private String message;
+
+    public String getMessage() {return message;}
+
+    public void setMessage(String message) {this.message = message;}
 }
-*/
 
 TryBlock TryBlock : 
     "try" "{" ExpansionChoice "}"
