@@ -151,8 +151,8 @@ private final void popLookaheadStack() {
     }    
 
     private void resetNextToken() {
-       current_token.setNext(null);
-//       token_source.reset(current_token);
+       currentToken.setNext(null);
+//       token_source.reset(currentToken);
        token_source.reset(lastParsedToken);
   }
   
@@ -200,65 +200,65 @@ private final void popLookaheadStack() {
         boolean forced = false;
  [/#if]
         InvalidToken invalidToken = null;
-        Token oldToken = current_token;
-        current_token = current_token.getNext();
-        if (current_token == null ) {
-            current_token = token_source.getNextToken();
+        Token oldToken = currentToken;
+        currentToken = currentToken.getNext();
+        if (currentToken == null ) {
+            currentToken = token_source.getNextToken();
         }
 [#if grammar.options.faultTolerant]        
-        if (tolerantParsing && current_token instanceof InvalidToken) {
-             addParsingProblem(new ParsingProblem("Lexically invalid input", current_token));
-             invalidToken = (InvalidToken) current_token;
-             current_token = token_source.getNextToken();     
+        if (tolerantParsing && currentToken instanceof InvalidToken) {
+             addParsingProblem(new ParsingProblem("Lexically invalid input", currentToken));
+             invalidToken = (InvalidToken) currentToken;
+             currentToken = token_source.getNextToken();     
         }
 [/#if]
-        if (current_token.getType() != expectedType) {
+        if (currentToken.getType() != expectedType) {
             handleUnexpectedTokenType(expectedType, forced, oldToken) ;
         }
         else {
-            this.lastParsedToken = current_token;
+            this.lastParsedToken = currentToken;
         }
 [#if grammar.options.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.options.userDefinedLexer]
-          current_token.setInputSource(inputSource);
+          currentToken.setInputSource(inputSource);
   [/#if]
   [#if grammar.usesjjtreeOpenNodeScope]
-          jjtreeOpenNodeScope(current_token);
+          jjtreeOpenNodeScope(currentToken);
   [/#if]
   [#if grammar.usesOpenNodeScopeHook]
-          openNodeScopeHook(current_token);
+          openNodeScopeHook(currentToken);
   [/#if]
           if (invalidToken != null) {
              pushNode(invalidToken);
           }          
-          pushNode(current_token);
+          pushNode(currentToken);
   [#if grammar.usesjjtreeCloseNodeScope]
-          jjtreeCloseNodeScope(current_token);
+          jjtreeCloseNodeScope(currentToken);
   [/#if]
   [#if grammar.usesCloseNodeScopeHook]
-          closeNodeScopeHook(current_token);
+          closeNodeScopeHook(currentToken);
   [/#if]
       }
 [/#if]
-      if (trace_enabled) LOGGER.info("Consumed token of type " + current_token.getType() + " from " + current_token.getLocation());
-      return current_token;
+      if (trace_enabled) LOGGER.info("Consumed token of type " + currentToken.getType() + " from " + currentToken.getLocation());
+      return currentToken;
   }
  
   private void handleUnexpectedTokenType(TokenType expectedType,  boolean forced, Token oldToken) throws ParseException {
 [#if grammar.options.faultTolerant]    
        if (forced && tolerantParsing) {
-           Token nextToken = current_token;
-           current_token = oldToken;
+           Token nextToken = currentToken;
+           currentToken = oldToken;
            Token virtualToken = insertVirtualToken(expectedType);
            virtualToken.setNext(nextToken);
-           current_token = virtualToken;
+           currentToken = virtualToken;
            String message = "Expecting token type "+ expectedType + " but encountered " + nextToken.getType();
            message += "\nInserting virtual token to continue parsing";
            addParsingProblem(new ParsingProblem(message, virtualToken));
        } else 
 [/#if]      
-       throw new ParseException(current_token, EnumSet.of(expectedType), parsingStack);
+       throw new ParseException(currentToken, EnumSet.of(expectedType), parsingStack);
   }
   
  [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
@@ -293,7 +293,7 @@ private final void popLookaheadStack() {
 [/#if]
     if (state.lastParsed != null) {
         //REVISIT
-        current_token = lastParsedToken = state.lastParsed;
+        currentToken = lastParsedToken = state.lastParsed;
     }
 [#if grammar.lexerData.numLexicalStates > 1]     
      token_source.switchTo(lastParsedToken.getLexicalState());

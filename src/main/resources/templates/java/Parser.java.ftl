@@ -67,7 +67,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
     
 // The last token successfully "consumed"     
-Token current_token;
+Token currentToken;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
@@ -140,22 +140,22 @@ public boolean isCancelled() {return cancelled;}
       [#if grammar.options.lexerUsesParser]
       token_source.parser = this;
       [/#if]
-     current_token = new Token();
+     currentToken = new Token();
   }
 
  final public Token getNextToken() {
-    if (current_token.getNext() != null) current_token = current_token.getNext();
+    if (currentToken.getNext() != null) currentToken = currentToken.getNext();
     else {
        Token nextToken = token_source.getNextToken();
-       current_token.setNext(nextToken);
-       current_token = nextToken;
+       currentToken.setNext(nextToken);
+       currentToken = nextToken;
     }
-    return current_token;
+    return currentToken;
   }
 
 /** Get the specific Token index ahead in the stream. */
   final public Token getToken(int index) {
-    Token t = current_token;
+    Token t = currentToken;
     for (int i = 0; i < index; i++) {
       if (t.getNext() != null) t = t.getNext();
       else {
@@ -168,11 +168,11 @@ public boolean isCancelled() {return cancelled;}
   }
   
   private final boolean setNextTokenType() {
-    if (current_token.getNext() == null) {
+    if (currentToken.getNext() == null) {
         Token nextToken = token_source.getNextToken();
-        current_token.setNext(nextToken);
+        currentToken.setNext(nextToken);
     }
-    nextTokenType = current_token.getNext().getType();
+    nextTokenType = currentToken.getNext().getType();
     return true;
   }
 
@@ -195,7 +195,7 @@ public boolean isCancelled() {return cancelled;}
   }
 
   private final boolean resetScanAhead(int amount) {
-    currentLookaheadToken = current_token;
+    currentLookaheadToken = currentToken;
     remainingLookahead = amount;
     this.upToTokenType = null;
     this.upToFirstSet = null;

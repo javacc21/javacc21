@@ -153,8 +153,8 @@
 	 * is pushed on to the stack.
 	 */
     public void closeNodeScope(Node n, int num) {
-        n.setEndLine(current_token.getEndLine());
-        n.setEndColumn(current_token.getEndColumn());
+        n.setEndLine(currentToken.getEndLine());
+        n.setEndColumn(currentToken.getEndColumn());
         if (trace_enabled) LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + num + " nodes off the stack.");
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();
@@ -195,8 +195,8 @@
 	 */
 	 
     public void closeNodeScope(Node n, boolean condition) {
-        n.setEndLine(current_token.getEndLine());
-        n.setEndColumn(current_token.getEndColumn());
+        n.setEndLine(currentToken.getEndLine());
+        n.setEndColumn(currentToken.getEndColumn());
         if (condition) {
             if (trace_enabled) LOGGER.finer("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + nodeArity() + " nodes off the stack.");
             int a = nodeArity();

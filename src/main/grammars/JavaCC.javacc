@@ -452,6 +452,12 @@ INJECT Identifier :
         if (image.equals("PARSER_PACKAGE")) {
             return getGrammar().getParserPackage();
         }
+        if (image.equals("current_token")) {
+            return "currentToken";
+        }
+//        if (image.equals("input_stream")) {
+//            return "inputSource";
+//        }
         return image;
    }
 }
