@@ -13,6 +13,7 @@
 /examples/csharp/org/*
 /.idea/dictionaries/*
 /.idea/inspectionProfiles/*
+/.vscode/*
 
 # Compiled class file
 *.class

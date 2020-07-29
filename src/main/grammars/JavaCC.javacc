@@ -228,6 +228,10 @@ INJECT LEXER_CLASS :
 {
    Set<String> javaccReservedWords = new HashSet<String>();
    {
+       // A little kludge so that these keywords 
+       // can still be recognized as regular identifiers
+       // in Java code.
+
         javaccReservedWords.add("options");
         javaccReservedWords.add("OPTIONS");
         javaccReservedWords.add("INCLUDE");
@@ -250,6 +254,7 @@ INJECT LEXER_CLASS :
         javaccReservedWords.add("FAIL");
 // REVISIT: Scanning forwards, the parser has to be able to identify these
 //      as JavaCC keywords even from within a code block (its very end, I guess)
+//      Oh well, it's not very important!
 //        javaccReservedWords.add("INJECT"); 
 //        javaccReservedWords.add("PARSER_END");
    }
@@ -267,15 +272,15 @@ INJECT LEXER_CLASS :
        t.setGrammar(parser.getGrammar());
        if (angleBracketNesting >0 && t.getImage().length() >1 && t.getImage().charAt(0) == '>') {
            input_stream.backup(t.getImage().length() -1);
-           Token gt = Token.newToken(TokenType.GT, ">", this);
+           Token gt = Token.newToken(GT, ">", this);
            Nodes.copyLocationInfo(t, gt);
            gt.setEndColumn(gt.getEndColumn() -1);
            gt.setGrammar(parser.getGrammar());
            return gt;
        }
        if (javaccReservedWords.contains(t.getImage())) {
-           if (inJavaCode || (t.getType() == TokenType._OPTIONS && optionsSeen)) {
-	           Token id = Token.newToken(TokenType.IDENTIFIER, t.getImage(), this);
+           if (inJavaCode || (t.getType() == _OPTIONS && optionsSeen)) {
+	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
 	           Nodes.copyLocationInfo(t, id);
 	           id.setGrammar(parser.getGrammar());
 	           return id;
@@ -412,6 +417,8 @@ INJECT CaseStatement :
 {
     // If the case statement has an unreachable break statement at the
     // end, we remove it. This allows us to get rid of this horrid longstanding kludge
+    // This is no longer used! I leave it here for historical reasons! 
+    // See: https://parsers.org/t/a-fun-example-of-code-injection-at-work/30
     public void close() {
         if (getChildCount() >= 2) {
             Node last = this.getLastChild();
@@ -604,7 +611,7 @@ INJECT ReturnType :
 {
     public boolean getAsBoolean() {
         List<Token> lt = Nodes.getRealTokens(this);
-        return lt.size() != 1 || lt.get(0).getType() != TokenType.VOID;
+        return lt.size() != 1 || lt.get(0).getType() != VOID;
     }
 }
 
@@ -810,6 +817,25 @@ INJECT BNFProduction :
 	import com.javacc.lexgen.TokenSet;
 	import com.javacc.parsegen.Expansion;
 {
+
+    // A bit of a kludge. We treat the very first code block in a production specially.
+    public void close() {
+        if (getJavaCode() == null && expansion instanceof ExpansionSequence) {
+            Expansion first = ((ExpansionSequence) expansion).getUnits().get(0);
+            if (first instanceof CodeBlock) {
+                expansion.removeChild(first);
+                List<Node> children = children();
+                for (int i = 0; i < getChildCount(); i++) {
+                    Node child = getChild(i);
+                    if (child instanceof Token && ((Token)child).getType() == COLON) {
+                        addChild(i+1, first);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     public CodeBlock getJavaCode() {
        return firstChildOfType(CodeBlock.class);
     }
@@ -907,13 +933,13 @@ INJECT BNFProduction :
     public String getAccessModifier() {
         for (Token t : childrenOfType(Token.class)) {
            TokenType type = t.getType();
-           if (type == TokenType.PRIVATE) {
+           if (type == PRIVATE) {
                return "private";
            }
-           else if (type == TokenType.PROTECTED) {
+           else if (type == PROTECTED) {
                return "protected";
            }
-           else if (type == TokenType.PUBLIC) {
+           else if (type == PUBLIC) {
                return "public";
            }
         }
@@ -984,7 +1010,7 @@ INJECT TreeBuildingAnnotation :
         for (Node n : children) {
 	   if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getType() == TokenType.HASH_ID) {
+               if (t.getType() == HASH_ID) {
                    image = t.getImage().substring(1);
                }
 	   }
@@ -1000,7 +1026,7 @@ INJECT TreeBuildingAnnotation :
         for (Node n : children) {
 	   if (n instanceof Token) {
 	      Token t = (Token) n;
-              if (t.getType() == TokenType.GT) {
+              if (t.getType() == GT) {
                   return true;
               }
 	   }
@@ -1088,7 +1114,7 @@ INJECT TokenProduction :
         for (Node n : children) {
 	      if (n instanceof Token) {
 	           Token t = (Token) n;
-               if (t.getType() == TokenType._IGNORE_CASE) {
+               if (t.getType() == _IGNORE_CASE) {
                    return true;
                }
 	       }
@@ -1125,7 +1151,7 @@ INJECT TokenProduction :
         for (Node n : children) {
 	   if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getType() == TokenType.IDENTIFIER) {
+               if (t.getType() == IDENTIFIER) {
                   states.add(n.toString());
                }
 	   }
@@ -1145,7 +1171,7 @@ INJECT TokenProduction :
        for (Node n : children) {
           if (n instanceof Token) {
 	      Token t = (Token) n;
-              if (t.getType() == TokenType.STAR) {
+              if (t.getType() == STAR) {
                   return true;
               }
 	      }
@@ -1921,7 +1947,7 @@ INJECT(NonTerminal) :
         for (Node n : children) {
 	    if (n instanceof Token) {
 	        Token t = (Token) n;
-                if (t.getType() == TokenType.IDENTIFIER) {
+                if (t.getType() == IDENTIFIER) {
                     return n.toString();
                 }
 	    }
@@ -2603,7 +2629,7 @@ INJECT RepetitionRange :
         for (Node n : children) {
 	   if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getType() == TokenType.COMMA) return true;	       
+               if (t.getType() == COMMA) return true;	       
 	   }
 
         }
@@ -2706,7 +2732,7 @@ INJECT CharacterList :
         for (Node n : children) {
 	    if (n instanceof Token) {
 	       Token t = (Token) n;
-               if (t.getType() == TokenType.TILDE) {
+               if (t.getType() == TILDE) {
                   return true;
                }
 	       }

@@ -33,9 +33,10 @@
  [#var tokenBuilderClass = options.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
  [#var numLexicalStates=lexerData.lexicalStates?size]
 
-  [#if grammar.parserPackage?has_content]
+[#if grammar.parserPackage?has_content]
     package ${grammar.parserPackage};
-  [/#if]
+    import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
+[/#if]
 [#if grammar.options.userDefinedLexer]
   [#embed "LexerInterface.java.ftl"]
 [#else]

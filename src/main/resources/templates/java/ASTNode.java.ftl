@@ -47,6 +47,9 @@ package ${grammar.nodePackage};
 [#if package != grammar.parserPackage && grammar.parserPackage != ""]
 import ${grammar.parserPackage}.*;
 [/#if]
+[#if grammar.parserPackage?has_content]
+import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
+[/#if]
 
 @SuppressWarnings("unused")
 public class ${classname} extends ${grammar.baseNodeClassName} {

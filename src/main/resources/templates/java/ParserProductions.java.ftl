@@ -210,9 +210,15 @@
           [#set newVarIndex = newVarIndex +1]
           [#set callStackSizeVar = "callStackSize" + newVarIndex]
           int ${callStackSizeVar} = parsingStack.size();
-         try {
-    [/#if]
+        [#-- We want the very first java code block in a production 
+         to be injected *before* the try block. This is for rather hypertechnical 
+         reasons. We want any variables defined up top in a production to be visible within 
+         the following catch/finally blocks.--]
         ${(production.javaCode)!}
+         try {
+    [#else]
+        ${(production.javaCode)!}
+    [/#if]
         [@BuildExpansionCode expansion/]
     [#var returnType = (production.returnType)!"void"]
     [#if production?? && returnType == "void"]
@@ -789,7 +795,7 @@
        ${expansion.lookBehind.routineName}() &&
    [/#if]
    [#if expansion.hasSyntacticLookahead]
-            ${expansion.negated?string("!", "")}${expansion.lookahead.routineName}() &&
+            ${expansion.lookaheadExpansion.negated?string("!", "")}${expansion.lookahead.routineName}() &&
    [/#if]
    [#if expansion.singleToken]
        [#var firstSet = expansion.firstSet.tokenNames]
