@@ -724,7 +724,7 @@ CodeInjection2 :
 ;
 
 Options #Options : 
-    (SCAN UPTO ":" => Setting)+
+    (=> Setting)+
 ;
 
 OptionsBlock #Options :

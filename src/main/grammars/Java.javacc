@@ -307,8 +307,7 @@ INJECT BaseNode :
 }
 
 CompilationUnit CompilationUnit #CompilationUnit :
-//  [ SCAN (Annotation)* "package" => PackageDeclaration ]
-  [ SCAN UPTO "package" => PackageDeclaration ]
+  [ PackageDeclaration ]
   ( ImportDeclaration )*
   (
      ( TypeDeclaration )+
@@ -497,10 +496,8 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
  (      
   ";"
   |
-//  SCAN UPTO "interface" => AnnotationTypeDeclaration
   AnnotationTypeDeclaration
   |
-  SCAN Modifiers "class" =>
   ClassDeclaration
   |
   InterfaceDeclaration
@@ -916,20 +913,20 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   SCAN 2 {!isInterface}
   => Initializer
  |
-//  SCAN UPTO "interface" => AnnotationTypeDeclaration
   AnnotationTypeDeclaration
   |
   InterfaceDeclaration
   |
   EnumDeclaration
   |
-  SCAN Modifiers "class" => ClassDeclaration
+  ClassDeclaration
   |
-  SCAN Modifiers [TypeParameters] <IDENTIFIER> "(" => ConstructorDeclaration
+  ConstructorDeclaration
   |
-  SCAN Modifiers Type <IDENTIFIER>( "[" "]" )* ( "," | "=" | ";" ) => Modifiers FieldDeclaration
+//  SCAN Modifiers Type <IDENTIFIER>( "[" "]" )* ( "," | "=" | ";" ) 
+  => FieldDeclaration
   |
-  SCAN UPTO "{" | ";" => MethodDeclaration
+  MethodDeclaration
 ;
 
 INJECT ClassOrInterfaceBodyDeclaration : 
@@ -1015,7 +1012,8 @@ MethodDeclaration :
   Modifiers2
   [ TypeParameters ]
   ReturnType
-  MethodDeclarator [ ThrowsList ]
+  MethodDeclarator =>|| 
+  [ ThrowsList ]
   ( Block | ";" )
 ;
 
@@ -1076,16 +1074,17 @@ INJECT ConstructorDeclaration : extends ClassOrInterfaceBodyDeclaration
 ConstructorDeclaration :
   Modifiers
   [ TypeParameters ]
-  <IDENTIFIER> FormalParameters [ ThrowsList ]
+  <IDENTIFIER> FormalParameters =>||
+  [ ThrowsList ]
   "{"
-    [ => ExplicitConstructorInvocation ]
-    ( BlockStatement )*
+  [ => ExplicitConstructorInvocation ]
+  ( BlockStatement )*
   "}"
 ;
 
 ExplicitConstructorInvocation :
-  SCAN "this" Arguments ";"
- |
+  => "this" Arguments ";"
+  |
   [ SCAN 2 => PrimaryExpression "." ] "super" Arguments ";"
 ;
 
@@ -1423,7 +1422,7 @@ PreDecrementExpression :
 UnaryExpressionNotPlusMinus :
   ( "~" | "!" ) UnaryExpression
   |
-  SCAN UPTO "->" => LambdaExpression 
+  LambdaExpression 
   |
   SCAN CastExpression
   |
@@ -1666,7 +1665,8 @@ BlockStatement :
   SCAN Modifiers Type <IDENTIFIER> 
   => LocalVariableDeclaration ";"
   |
-  SCAN Modifiers "class" => ClassDeclaration
+//  SCAN Modifiers "class" => 
+  ClassDeclaration
   |
   Statement
 ;
@@ -1917,14 +1917,13 @@ AnnotationTypeBody :
 AnnotationTypeMemberDeclaration :
  ";"
  |
-// SCAN UPTO "interface" => AnnotationTypeDeclaration
  AnnotationTypeDeclaration
  |
  InterfaceDeclaration
  |
  EnumDeclaration
  |
- SCAN Modifiers "class" => ClassDeclaration
+ ClassDeclaration
  |
  SCAN Modifiers Type <IDENTIFIER> "(" => Modifiers Type <IDENTIFIER> "(" ")" [ DefaultValue ] ";"
  |
@@ -1937,8 +1936,8 @@ DefaultValue :
 
 LambdaExpression LambdaExpression :
   LambdaLHS
-  "->"
-  LambdaRHS
+  "->" =>||
+  (Expression | Block)
   {
      return CURRENT_NODE;
   }
@@ -1969,12 +1968,6 @@ FormalLambdaLHS #FormalParameters :
          "," Type VariableDeclaratorId
        )*
    ")"
-;
-
-LambdaRHS :
-  Expression
-  |
-  Block
 ;
 
 /* IDENTIFIERS */
