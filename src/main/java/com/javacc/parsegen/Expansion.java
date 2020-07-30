@@ -190,7 +190,8 @@ abstract public class Expansion extends BaseNode {
     
     public int getLookaheadAmount() {
         Lookahead la = getLookahead();
-        return la == null ? 1 : la.getAmount();
+        if (la != null) return la.getAmount();
+        return getRequiresScanAhead() ? Integer.MAX_VALUE : 1; // A bit kludgy, REVISIT
     }
     
     public boolean getHasSemanticLookahead() {

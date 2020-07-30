@@ -767,14 +767,21 @@
 --]
 [#macro ScanCodeNonTerminal nt]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
-      [@newVar type="boolean" init="stopAtScanLimit"/]
-      stopAtScanLimit = ${nt.atEnd?string("true", "false")};
+      [#var dealWithScanLimit = nt.hasScanLimit && nt.atEnd]
+      [#if dealWithScanLimit]
+        [@newVar type="boolean" init="stopAtScanLimit"/]
+        stopAtScanLimit = true;
+      [/#if]
       if (![@InvokeScanRoutine nt.production.expansion/]) {
          popLookaheadStack();
+         [#if dealWithScanLimit]
          stopAtScanLimit = boolean${newVarIndex};
+         [/#if]
          return false;
       }
-      stopAtScanLimit = boolean${newVarIndex};
+      [#if dealWithScanLimit]
+         stopAtScanLimit = boolean${newVarIndex};
+      [/#if]
       popLookaheadStack();
 [/#macro]
 
@@ -797,6 +804,7 @@
                 remainingLookahead = 0;
              }
           }
+         [#break]
        [/#if]
        [#set count = count - sub.minimumSize]
        [#if count<=0][#break][/#if]

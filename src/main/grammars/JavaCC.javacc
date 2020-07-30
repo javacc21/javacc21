@@ -1437,13 +1437,17 @@ INJECT ExpansionSequence :
    }
 
    public boolean getRequiresScanAhead() {
-        for (Expansion unit : getUnits()) {
+       boolean foundNonEmpty = false;
+       for (Expansion unit : getUnits()) {
             if (unit.isScanLimit()) return true;
-        }
-        Lookahead la = getLookahead();
-        return la != null && la.getRequiresScanAhead();
+            if (!foundNonEmpty && (unit instanceof NonTerminal)) {
+                if (((NonTerminal) unit).getHasScanLimit()) return true;
+            }
+            if (!unit.isPossiblyEmpty()) foundNonEmpty = true;
+       }
+       Lookahead la = getLookahead();
+       return la != null && la.getRequiresScanAhead();
    }
-   
    
    public boolean isPossiblyEmpty() {
         for (Expansion e : getUnits()) {
