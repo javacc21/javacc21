@@ -767,10 +767,14 @@
 --]
 [#macro ScanCodeNonTerminal nt]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
+      [@newVar type="boolean" init="stopAtScanLimit"/]
+      stopAtScanLimit = ${nt.atEnd?string("true", "false")};
       if (![@InvokeScanRoutine nt.production.expansion/]) {
          popLookaheadStack();
+         stopAtScanLimit = boolean${newVarIndex};
          return false;
       }
+      stopAtScanLimit = boolean${newVarIndex};
       popLookaheadStack();
 [/#macro]
 
@@ -785,6 +789,15 @@
 [#macro ScanCodeSequence sequence, count]
    [#list sequence.units as sub]
        [@BuildScanCode sub, count/]
+       [#if sub.scanLimit]
+          if (stopAtScanLimit) {
+             if (!lookaheadStack.isEmpty()) {
+                return true;
+             } else {
+                remainingLookahead = 0;
+             }
+          }
+       [/#if]
        [#set count = count - sub.minimumSize]
        [#if count<=0][#break][/#if]
    [/#list]

@@ -149,6 +149,16 @@ abstract public class Expansion extends BaseNode {
     public boolean hasExplicitLookahead() {
         return getLookahead() != null;
     }
+
+    private boolean scanLimit;
+
+    public boolean isScanLimit() {
+        return scanLimit;
+    }
+
+    public void setScanLimit(boolean scanLimit) {
+        this.scanLimit = scanLimit;
+    }
     
     public boolean getRequiresScanAhead() {
         Lookahead la = getLookahead();
@@ -300,24 +310,25 @@ abstract public class Expansion extends BaseNode {
     }
     
     /**
-     * @return whether this expansion is (possibly) at the very end of a grammatical production
+     * @return whether this expansion is at the very end of 
+     * the root expansion that contains it.
      */
-    public boolean isAtProductionEnd() {
+    public boolean isAtEnd() {
         Node parent = getParent();
-        if (parent instanceof BNFProduction) {
+        if (!(parent instanceof Expansion)) {
             return true;
         }
         if (parent instanceof ExpansionSequence) {
             ExpansionSequence seq = (ExpansionSequence) parent;
+            if (seq.hasExplicitLookahead()) {
+                return true;
+            }
             List<Expansion> siblings = seq.getUnits();
-            int index = siblings.indexOf(this) + 1;
-            for (int i= index; i<siblings.size();i++) {
-                if (!siblings.get(i).isPossiblyEmpty()) {
-                    return false;
-                }
+            if (siblings.get(siblings.size()-1) != this) {
+                return false;
             }
         }
-        return ((Expansion) parent).isAtProductionEnd();
+        return ((Expansion) parent).isAtEnd();
     }
     
     /**

@@ -334,15 +334,12 @@ TOKEN :
   |
   <HASH_ID : "#"<IDENTIFIER>> #HashID
   |
-  <DOUBLE_STAR : "**"> #DoubleStar 
-  |
   <BACKSLASH : "\\"> #Backslash
   |
-  <DOUBLE_BACKSLASH : "\\\\"> #DoubleBackslash
-  |
   <RIGHT_ARROW : "=>"> #RightArrow
+  |
+  <UP_TO_HERE : "=>||"> 
 }
-
 
 INJECT BaseNode :
     import freemarker.template.*;
@@ -486,7 +483,6 @@ INJECT Token :
 
     public void setGrammar(Grammar grammar) {
          this.grammar = grammar;
-
     }
     
     public String getNodeName() {
@@ -844,6 +840,17 @@ INJECT BNFProduction :
                 }
             }
         }
+    }
+
+    public boolean getHasScanLimit() {
+        if (expansion instanceof ExpansionSequence) {
+            for (Expansion exp : ((ExpansionSequence) expansion).getUnits()) {
+                if (exp.isScanLimit()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public CodeBlock getJavaCode() {
@@ -1428,6 +1435,14 @@ INJECT ExpansionSequence :
        }
        return finalSet;
    }
+
+   public boolean getRequiresScanAhead() {
+        for (Expansion unit : getUnits()) {
+            if (unit.isScanLimit()) return true;
+        }
+        Lookahead la = getLookahead();
+        return la != null && la.getRequiresScanAhead();
+   }
    
    
    public boolean isPossiblyEmpty() {
@@ -1590,7 +1605,7 @@ import java.util.*;
     }
 
     public boolean isBackward() {
-        return firstChildOfType(DoubleBackslash.class) == null;
+        return getChild(0) instanceof Backslash || getChild(1) instanceof Backslash;
     }
 
     public boolean getHasFinalEllipsis() {
@@ -1835,6 +1850,28 @@ INJECT Lookahead :
 
 }
 
+ScanLimit #ScanLimit : "=>||";
+
+INJECT ScanLimit : 
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
+   extends Expansion
+{
+    public boolean isConcrete() {return true;}
+
+    public int getMaximumSize() {return 0;}
+
+    public int minimumSize(int min) {return 0;}
+
+    public boolean isPossiblyEmpty() {return true;}
+
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+    
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+
+}
+
+
 Expansion ExpansionUnit :
 {
     Expression lhs=null;
@@ -1855,11 +1892,11 @@ Expansion ExpansionUnit :
   SCAN 1 ~\...\Lookahead =>
   result=TryBlock
   |
-  => result = ZeroOrOne
+  => result = ZeroOrOne [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
   |
-  => result = ZeroOrMore
+  => result = ZeroOrMore [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
   |
-  => result = OneOrMore
+  => result = OneOrMore [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
   |
   SCAN [PrimaryExpression "="] (<STRING_LITERAL>|"<")
   =>
@@ -1890,15 +1927,23 @@ Expansion ExpansionUnit :
       }
   }
   [<BANG>{result.setForced(true);}]
+  [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
   |
   SCAN [PrimaryExpression "="]<IDENTIFIER>
-  => result=NonTerminal
+  => result=NonTerminal 
+  [
+      SCAN ~\...\Lookahead => <UP_TO_HERE>
+      {
+          result.setScanLimit(true);
+      }
+  ]
   |
-  "(" ExpansionChoice {result=(Expansion)peekNode();} ")"
+  "(" ExpansionChoice {result=(Expansion)peekNode();} ")" 
   [ 
    SCAN <BANG> TreeNodeDescriptor
    => <BANG> {result.setForced(true);}
   ]
+  [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
  )
  [
     tba=TreeNodeDescriptor
@@ -1930,12 +1975,10 @@ NonTerminal NonTerminal #NonTerminal :
 ;
 
 
-INJECT(NonTerminal) : 
-{
+INJECT NonTerminal : 
     import com.javacc.parsegen.*;
     import com.javacc.lexgen.TokenSet;
     extends Expansion; 
-}
 {
     /**
      * The production this non-terminal corresponds to.
@@ -2018,6 +2061,10 @@ INJECT(NonTerminal) :
      
      public boolean isConcrete() {
         return getProduction().isConcrete();
+     }
+
+     public boolean getHasScanLimit() {
+         return getProduction().getHasScanLimit();
      }
 }
 

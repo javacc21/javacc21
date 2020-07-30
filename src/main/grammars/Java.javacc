@@ -498,12 +498,15 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
   ";"
   |
   SCAN UPTO "interface" => AnnotationTypeDeclaration
+//  =>AnnotationTypeDeclaration
   |
   SCAN UPTO "interface" => InterfaceDeclaration
+//  =>InterfaceDeclaration
   |
   SCAN UPTO "enum" => EnumDeclaration
   |
   SCAN Modifiers "class" => ClassDeclaration
+//  =>ClassDeclaration
  )
  {
         return CURRENT_NODE;
@@ -672,7 +675,7 @@ INJECT(TypeDeclaration) :
 
 ClassDeclaration #void :
   Modifiers
-  "class"
+  "class" // =>||
   <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList(false) ]
@@ -682,8 +685,8 @@ ClassDeclaration #void :
 
 InterfaceDeclaration #void :
   Modifiers
-  "interface" 
-  <IDENTIFIER>
+  "interface"  //=>||
+  <IDENTIFIER> 
   [ TypeParameters ]
   [ ExtendsList(true) ] 
   ClassOrInterfaceBody(true)

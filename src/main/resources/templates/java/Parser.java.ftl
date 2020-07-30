@@ -73,6 +73,7 @@ private Token currentLookaheadToken;
 private int remainingLookahead;
 private TokenType upToTokenType;
 private EnumSet<TokenType> upToFirstSet;
+private boolean stopAtScanLimit;
 
 private Token lastParsedToken;
 //private Token nextToken; //REVISIT
@@ -199,6 +200,7 @@ public boolean isCancelled() {return cancelled;}
     remainingLookahead = amount;
     this.upToTokenType = null;
     this.upToFirstSet = null;
+    this.stopAtScanLimit = true;
     setNextTokenType();
     return true;
   }
