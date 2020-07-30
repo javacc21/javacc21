@@ -497,21 +497,15 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
  (      
   ";"
   |
-  SCAN UPTO "interface" => AnnotationTypeDeclaration
-//  =>AnnotationTypeDeclaration
+//  SCAN UPTO "interface" => AnnotationTypeDeclaration
+  AnnotationTypeDeclaration
   |
   SCAN Modifiers "class" =>
   ClassDeclaration
   |
-//  SCAN Modifiers "interface" =>
-//  SCAN UPTO "interface" => InterfaceDeclaration
   InterfaceDeclaration
   |
-//  SCAN UPTO "enum" => EnumDeclaration
   EnumDeclaration
-//  |
-//  SCAN Modifiers "class" => ClassDeclaration
-//  =>ClassDeclaration
  )
  {
         return CURRENT_NODE;
@@ -680,7 +674,7 @@ INJECT(TypeDeclaration) :
 
 ClassDeclaration #void :
   Modifiers
-  "class"// =>||
+  "class" =>||
   <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList(false) ]
@@ -922,12 +916,11 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   SCAN 2 {!isInterface}
   => Initializer
  |
-  SCAN UPTO "interface" => AnnotationTypeDeclaration
+//  SCAN UPTO "interface" => AnnotationTypeDeclaration
+  AnnotationTypeDeclaration
   |
-//  SCAN UPTO "interface" => InterfaceDeclaration
   InterfaceDeclaration
   |
-// SCAN UPTO "enum" => EnumDeclaration
   EnumDeclaration
   |
   SCAN Modifiers "class" => ClassDeclaration
@@ -1914,7 +1907,7 @@ MemberValueArrayInitializer :
 
 AnnotationTypeDeclaration :
   Modifiers
-  "@" "interface" <IDENTIFIER> AnnotationTypeBody
+  "@" "interface" =>|| <IDENTIFIER> AnnotationTypeBody
 ;
 
 AnnotationTypeBody :
@@ -1924,12 +1917,11 @@ AnnotationTypeBody :
 AnnotationTypeMemberDeclaration :
  ";"
  |
- SCAN UPTO "interface" => AnnotationTypeDeclaration
+// SCAN UPTO "interface" => AnnotationTypeDeclaration
+ AnnotationTypeDeclaration
  |
-// SCAN UPTO "interface" => InterfaceDeclaration
  InterfaceDeclaration
  |
-// SCAN UPTO "enum" => EnumDeclaration
  EnumDeclaration
  |
  SCAN Modifiers "class" => ClassDeclaration

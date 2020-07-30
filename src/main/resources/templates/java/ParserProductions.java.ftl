@@ -742,9 +742,11 @@
 [#macro ScanCodeZeroOrMore zom]
       while (remainingLookahead > 0) {
       [@newVar type="Token" init="currentLookaheadToken"/]
+      [@newVar type="boolean" init="stopAtScanLimit"/]
          if (!(
          [@InvokeScanRoutine zom.nestedExpansion/])) {
-             currentLookaheadToken = token${newVarIndex};
+             currentLookaheadToken = token${newVarIndex-1};
+             stopAtScanLimit = boolean${newVarIndex};
              break;
          }
       }
@@ -756,7 +758,12 @@
    and then the same code as a ZeroOrMore
 --]
 [#macro ScanCodeOneOrMore oom]
-   if (!([@InvokeScanRoutine oom.nestedExpansion/])) return false;
+   [@newVar type="boolean" init="stopAtScanLimit"/]
+   if (!([@InvokeScanRoutine oom.nestedExpansion/])) {
+      stopAtScanLimit = boolean${newVarIndex};
+      return false;
+   }
+   stopAtScanLimit = boolean${newVarIndex};
    [@ScanCodeZeroOrMore oom /]
 [/#macro]
 
@@ -767,19 +774,18 @@
 --]
 [#macro ScanCodeNonTerminal nt]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
-      [#var dealWithScanLimit = nt.hasScanLimit && nt.atEnd]
-      [#if dealWithScanLimit]
-        [@newVar type="boolean" init="stopAtScanLimit"/]
-        stopAtScanLimit = true;
+      [#if !nt.atEnd]
+         [@newVar type="boolean" init="stopAtScanLimit"/]
+         stopAtScanLimit = false;
       [/#if]
       if (![@InvokeScanRoutine nt.production.expansion/]) {
          popLookaheadStack();
-         [#if dealWithScanLimit]
+         [#if !nt.atEnd]
          stopAtScanLimit = boolean${newVarIndex};
          [/#if]
          return false;
       }
-      [#if dealWithScanLimit]
+      [#if !nt.atEnd]
          stopAtScanLimit = boolean${newVarIndex};
       [/#if]
       popLookaheadStack();
@@ -804,7 +810,7 @@
                 remainingLookahead = 0;
              }
           }
-         [#break]
+         [#-- break (not sure---) --]
        [/#if]
        [#set count = count - sub.minimumSize]
        [#if count<=0][#break][/#if]
