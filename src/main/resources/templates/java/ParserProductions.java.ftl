@@ -336,7 +336,7 @@
     [#if classname = "CodeBlock"]
        ${expansion}
     [#elseif classname = "Failure"]
-       throw new ParseException(this, expansion.message);
+       [@BuildCodeFailure expansion/]
     [#elseif classname = "ExpansionSequence"]
        [@BuildCodeSequence expansion/]
     [#elseif classname = "NonTerminal"]
@@ -355,6 +355,14 @@
         [@BuildCodeOneOrMore expansion/]
     [#elseif classname = "ExpansionChoice"]
         [@BuildCodeChoice expansion/]
+    [/#if]
+[/#macro]
+
+[#macro BuildCodeFailure fail]
+    [#if fail.code?is_null]
+       throw new ParseException(this, ${expansion.message});
+    [#else]
+       ${fail.code}
     [/#if]
 [/#macro]
 

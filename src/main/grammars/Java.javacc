@@ -416,6 +416,8 @@ INJECT ImportDeclaration :
 Modifiers #void :
 {EnumSet<TokenType> modifiers = EnumSet.noneOf(TokenType.class);}
    (
+     SCAN 2=>
+     (
       SCAN {!modifiers.contains(TokenType.STATIC)}
       => <STATIC> {modifiers.add(TokenType.STATIC);}
       |
@@ -448,11 +450,12 @@ Modifiers #void :
       | 
       SCAN {!modifiers.contains(TokenType.STRICTFP)}
       => <STRICTFP> {modifiers.add(TokenType.STRICTFP);}
-      |
+//      |
 //      SCAN {!modifiers.contains(TokenType._DEFAULT)}
 //      => <_DEFAULT> {modifiers.add(TokenType._DEFAULT);}
-//      |
-      => Annotation
+      |
+      Annotation
+     )
    )*
 ;
 
@@ -500,7 +503,7 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
   |
   SCAN UPTO "enum" => EnumDeclaration
   |
-  SCAN UPTO "class" => ClassDeclaration
+  SCAN Modifiers "class" => ClassDeclaration
  )
  {
         return CURRENT_NODE;
@@ -1070,7 +1073,6 @@ INJECT ConstructorDeclaration : extends ClassOrInterfaceBodyDeclaration
 ConstructorDeclaration :
   Modifiers
   [ TypeParameters ]
-  // Modifiers matched in the caller
   <IDENTIFIER> FormalParameters [ ThrowsList ]
   "{"
     [ => ExplicitConstructorInvocation ]

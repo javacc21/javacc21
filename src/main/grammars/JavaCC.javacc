@@ -827,15 +827,19 @@ INJECT BNFProduction :
     // A bit of a kludge. We treat the very first code block in a production specially.
     public void close() {
         if (getJavaCode() == null && expansion instanceof ExpansionSequence) {
-            Expansion first = ((ExpansionSequence) expansion).getUnits().get(0);
+            List<Expansion> children = ((ExpansionSequence) expansion).getUnits();
+            if (children.size() > 1) {
+            Expansion first = children.get(0);
             if (first instanceof CodeBlock) {
-                expansion.removeChild(first);
-                List<Node> children = children();
-                for (int i = 0; i < getChildCount(); i++) {
-                    Node child = getChild(i);
-                    if (child instanceof Token && ((Token)child).getType() == COLON) {
-                        addChild(i+1, first);
-                        break;
+            // If the first child is a code block, we remove it from the seequence
+            // and insert it as a child node of the production itself.
+                    expansion.removeChild(first);
+                    for (int i = 0; i < getChildCount(); i++) {
+                        Node child = getChild(i);
+                        if (child instanceof Token && ((Token)child).getType() == COLON) {
+                            addChild(i+1, first);
+                            break;
+                        }
                     }
                 }
             }
@@ -1336,7 +1340,7 @@ INJECT ExpansionChoice :
    
    public int minimumSize(int min) {
       for (Expansion nestedExpansion : getChoices()) {
-       	if (min<=0) break;
+       	if (min<=0 || nestedExpansion instanceof Failure) break;
         	min = Math.min(min, nestedExpansion.minimumSize(min));
         }
         return min;
@@ -2268,9 +2272,16 @@ INJECT AttemptBlock :
 }
 
 Failure Failure : 
-   "FAIL" <STRING_LITERAL> 
+   {Token t=null;}
+   t="FAIL"
+   [
+      t=<STRING_LITERAL>
+      |
+      CodeSnippet
+   ]
    {
-       String message = removeEscapesAndQuotes(current_token);
+       String message = "Failure: ";
+       if (t != null) message += removeEscapesAndQuotes(t);
        CURRENT_NODE.setMessage(message);
        return CURRENT_NODE;
    }
@@ -2281,6 +2292,10 @@ INJECT Failure :
    import com.javacc.lexgen.TokenSet;
    extends com.javacc.parsegen.Expansion
 {
+    public CodeBlock getCode() {
+        return firstChildOfType(CodeBlock.class);
+    }
+
     public boolean isConcrete() {return true;}
     
     public int getMaximumSize() {return 0;}

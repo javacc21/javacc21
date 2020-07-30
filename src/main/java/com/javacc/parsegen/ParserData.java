@@ -241,8 +241,13 @@ public class ParserData {
         }
 
         for (ZeroOrOne zoo : grammar.descendantsOfType(ZeroOrOne.class)) {
-            if (zoo.getNestedExpansion().isAlwaysSuccessful()) {
-                grammar.addWarning(zoo, "The expansion inside this (...)? construct can be matched by the empty string so it is always matched. This may not be your intention.");
+            Expansion nested = zoo.getNestedExpansion();
+            if (nested.isAlwaysSuccessful()) {
+                if (nested instanceof Failure) {
+                    grammar.addWarning(nested, "The FAIL inside this construct is always triggered. This may not be your intention.");
+                } else {
+                    grammar.addWarning(zoo, "The expansion inside this (...)? construct can be matched by the empty string so it is always matched. This may not be your intention.");
+                }
             }
         }
    
