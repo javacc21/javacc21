@@ -262,6 +262,7 @@ TOKEN #Operator :
 
 INJECT BaseNode : 
     import java.util.*;
+    import NODE_PACKAGE.KeyWord;
     implements Node, CONSTANTS_CLASS
 {    
     protected String getLiteralText() {
@@ -303,6 +304,13 @@ INJECT BaseNode :
     
     public boolean isEmpty() {
         return Nodes.getRealTokens(this).size() == 0;
+    }
+
+    public boolean hasKeyWord(String keyWord) {
+        for (KeyWord kw: childrenOfType(KeyWord.class)) {
+           if (kw.getImage().equals(keyWord)) return true;
+        }
+        return false;
     }
 }
 
@@ -884,27 +892,25 @@ INJECT ClassOrInterfaceBody :
 INJECT ClassOrInterfaceBodyDeclaration : 
 {
     public boolean isPrivate() {
-        return hasKeyWord("private");
+        return firstChildOfType(BaseNode.class).hasKeyWord("private");
+//        return hasKeyWord("private");
     }
     
     public boolean isStatic() {
-         return hasKeyWord("static");
+        return firstChildOfType(BaseNode.class).hasKeyWord("static");
+//         return hasKeyWord("static");
     }
     
     public boolean isProtected() {
-         return hasKeyWord("protected");
+        return firstChildOfType(BaseNode.class).hasKeyWord("protected");
+//         return hasKeyWord("protected");
     }
     
     public boolean isPublic() {
-         return hasKeyWord("public");
+        return firstChildOfType(BaseNode.class).hasKeyWord("public");
+//         return hasKeyWord("public");
     }
     
-    private boolean hasKeyWord(String keyWord) {
-        for (KeyWord kw: childrenOfType(KeyWord.class)) {
-           if (kw.getImage().equals(keyWord)) return true;
-        }
-        return false;
-    }
 }
 
 ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
@@ -943,7 +949,18 @@ INJECT ClassOrInterfaceBodyDeclaration :
 
 INJECT FieldDeclaration : 
    import java.util.*;
+   extends ClassOrInterfaceBodyDeclaration
 {
+  public List<Identifier> getVariableIds() {
+     List<Identifier> result = new ArrayList<>();
+     for (Identifier id : descendantsOfType(Identifier.class)) {
+       if (id.getParent() instanceof VariableDeclaratorId) {
+         result.add(id);
+       }
+     }
+     return result;
+  } 
+/*
    public List<Identifier> getVariableIds() {
        List<Identifier> result = new ArrayList<>();
        boolean atBeginning = true;
@@ -965,7 +982,7 @@ INJECT FieldDeclaration :
            }
        }
        return result;
-   }
+   }*/
 }
 
 
@@ -978,7 +995,7 @@ VariableDeclarator :
   VariableDeclaratorId [ "=" VariableInitializer ]
 ;
 
-VariableDeclaratorId :
+VariableDeclaratorId #VariableDeclaratorId :
   <IDENTIFIER> ( "[" "]" )*
 ;
 

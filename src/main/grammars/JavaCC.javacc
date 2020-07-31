@@ -2112,6 +2112,10 @@ INJECT ZeroOrOne :
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
     }
+
+    public boolean getRequiresScanAhead() {
+        return getNestedExpansion().getRequiresScanAhead();
+    }
     
     public boolean isPossiblyEmpty() {
         return true;
@@ -2162,6 +2166,10 @@ INJECT ZeroOrMore :
 
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
+    }
+
+    public boolean getRequiresScanAhead() {
+        return getNestedExpansion().getRequiresScanAhead();
     }
 
     public boolean isPossiblyEmpty() {

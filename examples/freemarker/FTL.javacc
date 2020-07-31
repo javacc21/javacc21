@@ -94,8 +94,7 @@ INJECT(FTLParser) :
     }
 }
 
-INJECT(FTLLexer) :
-{}
+INJECT FTLLexer :
 {
     boolean syntaxEstablished, olderSyntax;
     boolean noWhitespaceInExpression, rightAfterHeader;
@@ -646,7 +645,8 @@ void If() #IfStatement : {}
     <CLOSE_TAG>
     Block()
     (
-       SCAN 2 => ElseIf()
+//       SCAN 2 => 
+       ElseIf
     )*
     [
        SCAN 2 => Else()
@@ -654,9 +654,10 @@ void If() #IfStatement : {}
     DirectiveEnd("if")
 }
 
-void ElseIf() #ElseIfBlock : {}
+ElseIf #ElseIfBlock : {}
 {
     <FTL_DIRECTIVE_OPEN><ELSEIF><BLANK>
+    =>||
     Expression()
     <CLOSE_TAG>
     Block()
