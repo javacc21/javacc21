@@ -629,7 +629,7 @@ public class ParserData {
         for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
             choiceCalc(choice);
         }
-        for (Node node : grammar.descendants((n) -> n instanceof OneOrMore || n instanceof ZeroOrMore)) {
+        for (Node node : grammar.descendants(n -> n instanceof OneOrMore || n instanceof ZeroOrMore)) {
             Expansion exp = (Expansion) node;
             if (!(exp.getNestedExpansion() instanceof ExpansionSequence)) {
                 ebnfCalc(exp);
@@ -769,7 +769,7 @@ public class ParserData {
             }
         }
         for (int i = first; i < choices.size() - 1; i++) {
-            if (choices.get(i).hasExplicitLookahead()) {
+            if (choices.get(i).getRequiresScanAhead()) {
                 continue;
             }
             if (minLA[i] > grammar.getOptions().getChoiceAmbiguityCheck()) {
@@ -779,8 +779,7 @@ public class ParserData {
                 System.err.print(" and line " + (choices.get(other[i])).getBeginLine());
                 System.err.print(", column " + (choices.get(other[i])).getBeginColumn());
                 System.err.println(" respectively.");
-                System.err
-                .println("         A common prefix is: " + image(overlapInfo[i]));
+                System.err.println("         A common prefix is: " + image(overlapInfo[i]));
                 System.err.println("         Consider using a lookahead of " + minLA[i] + " or more for earlier expansion.");
             } else if (minLA[i] > 1) {
                 grammar.addWarning(null, "Choice conflict involving two expansions at");
