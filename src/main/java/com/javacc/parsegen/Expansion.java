@@ -325,8 +325,8 @@ abstract public class Expansion extends BaseNode {
                 return true;
             }
             List<Expansion> siblings = seq.getUnits();
-            if (siblings.get(siblings.size()-1) != this) {
-                return false;
+            for (int i = siblings.indexOf(this) +1; i< siblings.size();i++) {
+                if (!siblings.get(i).isAlwaysSuccessful()) return false;
             }
         }
         return ((Expansion) parent).isAtEnd();

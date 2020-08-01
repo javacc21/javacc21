@@ -843,14 +843,7 @@ INJECT BNFProduction :
     }
 
     public boolean getHasScanLimit() {
-        if (expansion instanceof ExpansionSequence) {
-            for (Expansion exp : ((ExpansionSequence) expansion).getUnits()) {
-                if (exp.isScanLimit()) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return expansion instanceof ExpansionSequence && ((ExpansionSequence) expansion).getHasScanLimit();
     }
 
     public CodeBlock getJavaCode() {
@@ -1441,6 +1434,15 @@ INJECT ExpansionSequence :
        }
        Lookahead la = getLookahead();
        return la != null && la.getRequiresScanAhead();
+   }
+
+   public boolean getHasScanLimit() {
+       for (Expansion exp : getUnits()) {
+           if (exp.isScanLimit()) {
+               return true;
+           }
+       }
+       return false;
    }
    
    public boolean isPossiblyEmpty() {

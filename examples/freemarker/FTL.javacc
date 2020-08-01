@@ -644,20 +644,18 @@ void If() #IfStatement : {}
     Expression()
     <CLOSE_TAG>
     Block()
-    (
-//       SCAN 2 => 
-       ElseIf
-    )*
+    ( ElseIf )*
     [
-       SCAN 2 => Else()
+       Else
     ]
     DirectiveEnd("if")
 }
 
 ElseIf #ElseIfBlock : {}
 {
-    <FTL_DIRECTIVE_OPEN><ELSEIF><BLANK>
+    <FTL_DIRECTIVE_OPEN><ELSEIF>
     =>||
+    <BLANK>
     Expression()
     <CLOSE_TAG>
     Block()
@@ -665,30 +663,31 @@ ElseIf #ElseIfBlock : {}
 
 void Else() #ElseBlock :  {}
 {
-    <FTL_DIRECTIVE_OPEN><ELSE><CLOSE_TAG>
+    <FTL_DIRECTIVE_OPEN><ELSE>
+    =>||
+    <CLOSE_TAG>
     Block()
 }
 
-void Switch() #SwitchInstruction : {}
-{
-    <FTL_DIRECTIVE_OPEN><SWITCH><BLANK>
-    Expression()
+Switch #SwitchInstruction : 
+    <FTL_DIRECTIVE_OPEN><SWITCH> =>||
+    <BLANK>
+    Expression
     <CLOSE_TAG>
     [<WHITESPACE>]
-    (
-     SCAN 2 Case
-    )*
+    (Case)*
     [
      SCAN 2 Default
     ]
     DirectiveEnd("switch")
-}
+;
 
-void Case() #CaseInstruction : {}
-{
-    <FTL_DIRECTIVE_OPEN><CASE><BLANK>
+Case() #CaseInstruction : 
+    <FTL_DIRECTIVE_OPEN><CASE>
+    =>||
+    <BLANK>
     Expression <CLOSE_TAG> Block
-}
+;
 
 void Default() #DefaultInstruction : {}
 {
@@ -823,7 +822,7 @@ void TopLevelDirective() #void : {}
      SCAN 2 Import() |
      SCAN 2 MacroDefinition() |
      SCAN 2 NoParse() |
-     SCAN 2 Switch() |
+     Switch |
      SCAN 2 Setting() |
      SCAN 2 Var()|
      SCAN 2 Break() |
