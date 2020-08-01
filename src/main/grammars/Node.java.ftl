@@ -363,6 +363,17 @@ public interface Node extends Comparable<Node>
 		}
 	    return result;
     }
+/*
+    default List<Node> descendants(Filter<Node> filter) {
+       List<Node> result = new ArrayList<>();
+       for (Node child : children()) {
+          if (filter.accept(child)) {
+              result.add(child);
+          }
+          result.addAll(child.descendants(filter)); 
+       }
+       return result;
+    }*/
 
     default List<Node> descendants(Filter<Node> filter) {
         return descendants(Node.class, filter);
@@ -371,6 +382,7 @@ public interface Node extends Comparable<Node>
     default <T extends Node> List<T> descendants(Class<T> clazz) {
         return descendants(clazz, null);
     }
+
 
     default <T extends Node> List<T> descendants(Class<T> clazz, Filter<T> filter) {
        List<T> result = new ArrayList<>();

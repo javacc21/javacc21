@@ -916,13 +916,7 @@ INJECT BNFProduction :
     
     public List<NonTerminal> getReferringNonTerminals() {
         if (referringNonTerminals == null) {
-           
-            referringNonTerminals = new ArrayList<NonTerminal>(); 
-            for (NonTerminal nt : getGrammar().descendantsOfType(NonTerminal.class)) {
-            	if (nt.getName().equals(name)) {
-            	   referringNonTerminals.add(nt);
-            	}
-            }
+           referringNonTerminals = getGrammar().descendants(NonTerminal.class, nt->nt.getName().equals(name));
         }
         return referringNonTerminals;
     }
