@@ -210,9 +210,23 @@ public class ParserData {
                    || parent instanceof OneOrMore 
                    || parent instanceof ZeroOrOne 
                    || parent instanceof ZeroOrMore
-                   || parent instanceof Lookahead)) {
+                   || parent instanceof Lookahead)) 
+            {
                 grammar.addSemanticError(sequence, "Encountered LOOKAHEAD(...) at a non-choice location." );
             }
+        }
+
+        for (Node exp : grammar.descendants(n -> n instanceof Expansion && ((Expansion)n).isScanLimit())) {
+            Node grandparent = exp.getParent().getParent();
+            if (!(grandparent instanceof ExpansionChoice 
+               || grandparent instanceof OneOrMore 
+               || grandparent instanceof ZeroOrMore 
+               || grandparent instanceof ZeroOrOne 
+               || grandparent instanceof BNFProduction)) 
+            {
+                   grammar.addSemanticError(exp, "The up-to-here delimiter can only be at a choice point or at the top level of a grammar production.");
+            }
+
         }
 
         for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {

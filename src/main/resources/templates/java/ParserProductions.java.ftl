@@ -742,11 +742,9 @@
 [#macro ScanCodeZeroOrMore zom]
       while (remainingLookahead > 0) {
       [@newVar type="Token" init="currentLookaheadToken"/]
-      [@newVar type="boolean" init="stopAtScanLimit"/]
          if (!(
          [@InvokeScanRoutine zom.nestedExpansion/])) {
-             currentLookaheadToken = token${newVarIndex-1};
-             stopAtScanLimit = boolean${newVarIndex};
+             currentLookaheadToken = token${newVarIndex};
              break;
          }
       }
@@ -758,12 +756,9 @@
    and then the same code as a ZeroOrMore
 --]
 [#macro ScanCodeOneOrMore oom]
-   [@newVar type="boolean" init="stopAtScanLimit"/]
    if (!([@InvokeScanRoutine oom.nestedExpansion/])) {
-      stopAtScanLimit = boolean${newVarIndex};
       return false;
    }
-   stopAtScanLimit = boolean${newVarIndex};
    [@ScanCodeZeroOrMore oom /]
 [/#macro]
 
@@ -775,19 +770,12 @@
 [#macro ScanCodeNonTerminal nt]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
       [#if !nt.atEnd]
-         [@newVar type="boolean" init="stopAtScanLimit"/]
          stopAtScanLimit = false;
       [/#if]
       if (![@InvokeScanRoutine nt.production.expansion/]) {
          popLookaheadStack();
-         [#if !nt.atEnd]
-         stopAtScanLimit = boolean${newVarIndex};
-         [/#if]
          return false;
       }
-      [#if !nt.atEnd]
-         stopAtScanLimit = boolean${newVarIndex};
-      [/#if]
       popLookaheadStack();
 [/#macro]
 
@@ -795,7 +783,7 @@
    Generates the lookahead code for an ExpansionSequence
    The count parameter is the maximum number of tokens that 
    we need to lookahead, so, if it is clear that we don't
-   need to generate code beyond the nth expnasion, we just
+   need to generate code beyond the nth expansion, we just
    break out. (This is a peephole space optimization that may
    not be worth the candle. REVISIT later.)
 --]
