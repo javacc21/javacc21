@@ -375,10 +375,11 @@ public interface Node extends Comparable<Node>
     default <T extends Node> List<T> descendants(Class<T> clazz, Filter<T> filter) {
        List<T> result = new ArrayList<>();
        for (Node child : children()) {
-          if (!clazz.isInstance(child)) continue; 
-          T t = clazz.cast(child);
-          if (filter == null || filter.accept(t)) {
-              result.add(t);
+          if (clazz.isInstance(child)) {
+              T t = clazz.cast(child);
+              if (filter == null || filter.accept(t)) {
+                  result.add(t);
+              }
           }
           result.addAll(child.descendants(clazz, filter)); 
        }

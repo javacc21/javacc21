@@ -57,23 +57,20 @@ public class JavaCodeUtils {
     static public void removeUnusedVariables(CompilationUnit jcu) {
         Set<Identifier> ids = new HashSet<>();
         Set<String> names = new HashSet<>();
-        for (FieldDeclaration fd : jcu.descendantsOfType(FieldDeclaration.class)) {
-            if (fd.getParent() instanceof ClassOrInterfaceBodyDeclaration) {
-                if (((ClassOrInterfaceBodyDeclaration) fd.getParent()).isPrivate()) {
-                    List<Identifier> vars = fd.getVariableIds();
-                    ids.addAll(vars);
-                    for (Identifier id : vars) {
-                        names.add(id.getImage());
-                    }
+        for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, 
+                                     fd->fd.getParent() instanceof ClassOrInterfaceBodyDeclaration)) {
+            if (((ClassOrInterfaceBodyDeclaration) fd.getParent()).isPrivate()) {
+                List<Identifier> vars = fd.getVariableIds();
+                ids.addAll(vars);
+                for (Identifier id : vars) {
+                    names.add(id.getImage());
                 }
             }
         }
         Set<String> references = new HashSet<>();
-        for (Identifier id : jcu.descendantsOfType(Identifier.class)) {
-            String name = id.getImage();
-            if (names.contains(name) && !ids.contains(id)) {
-                references.add(id.getImage());
-            }
+        for (Identifier id : jcu.descendants(Identifier.class, 
+                                    id->names.contains(id.getImage()) && !ids.contains(id))) {
+            references.add(id.getImage());
         }
         for (Identifier id : ids) {
             if (!references.contains(id.getImage())) {

@@ -203,7 +203,7 @@ public class ParserData {
          * of any real value.
          */
 
-        for (ExpansionSequence sequence : grammar.descendantsOfType(ExpansionSequence.class)) {
+        for (ExpansionSequence sequence : grammar.descendants(ExpansionSequence.class)) {
             Node parent = sequence.getParent();
             if (sequence.hasExplicitLookahead() 
                && !(parent instanceof ExpansionChoice 
@@ -216,7 +216,7 @@ public class ParserData {
             }
         }
 
-        for (Node exp : grammar.descendants(n -> n instanceof Expansion && ((Expansion)n).isScanLimit())) {
+        for (Node exp : grammar.descendants(Expansion.class, exp -> exp.isScanLimit())) {
             Node grandparent = exp.getParent().getParent();
             if (!(grandparent instanceof ExpansionChoice 
                || grandparent instanceof OneOrMore 
@@ -229,7 +229,7 @@ public class ParserData {
 
         }
 
-        for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
+        for (ExpansionChoice choice : grammar.descendants(ExpansionChoice.class)) {
             List<Expansion> choices = choice.childrenOfType(Expansion.class);
             for (int i=0; i < choices.size() -1; i++) {
                 Expansion unit = choices.get(i);
@@ -241,7 +241,7 @@ public class ParserData {
             }
         }
 
-        for (Node child : grammar.descendants(n -> n instanceof OneOrMore || n instanceof ZeroOrMore)) {
+        for (Node child : grammar.descendants(Expansion.class, n -> n instanceof OneOrMore || n instanceof ZeroOrMore)) {
             Expansion exp = (Expansion) child;
             String starOrPlus = exp instanceof ZeroOrMore ? "(...)*" : "(...)+";
             if (exp.getNestedExpansion().isAlwaysSuccessful()) {
@@ -254,23 +254,18 @@ public class ParserData {
             }
         }
 
-        for (ZeroOrOne zoo : grammar.descendantsOfType(ZeroOrOne.class)) {
-            Expansion nested = zoo.getNestedExpansion();
-            if (nested.isAlwaysSuccessful()) {
-                if (nested instanceof Failure) {
-                    grammar.addWarning(nested, "The FAIL inside this construct is always triggered. This may not be your intention.");
-                } else {
-                    grammar.addWarning(zoo, "The expansion inside this (...)? construct can be matched by the empty string so it is always matched. This may not be your intention.");
-                }
+        for (ZeroOrOne zoo : grammar.descendants(ZeroOrOne.class, zoo->zoo.getNestedExpansion().isAlwaysSuccessful())) {
+            if (zoo.getNestedExpansion() instanceof Failure) {
+                grammar.addWarning(zoo, "The FAIL inside this construct is always triggered. This may not be your intention.");
+            } else {
+                grammar.addWarning(zoo, "The expansion inside this (...)? construct can be matched by the empty string so it is always matched. This may not be your intention.");
             }
         }
    
 
         // Check that non-terminals have all been defined.
-        for (NonTerminal nt : grammar.descendantsOfType(NonTerminal.class)) {
-            if (nt.getProduction() == null) {
-                grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
-            }
+        for (NonTerminal nt : grammar.descendants(NonTerminal.class, nt->nt.getProduction()==null)) {
+            grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
         }
 
         // Check that no LookBehind predicates refer to an undefined Production
@@ -301,7 +296,7 @@ public class ParserData {
          * USER_DEFINED_LEXER is set to true. In this case, <name> occurrences
          * are OK, while regular expression specs generate a warning.
          */
-        for (TokenProduction tp: grammar.descendantsOfType(TokenProduction.class)) { 
+        for (TokenProduction tp: grammar.descendants(TokenProduction.class)) { 
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 if (res.getNextState() != null) {
                     if (lexerData.getLexicalStateIndex(res.getNextState()) == -1) {
@@ -332,7 +327,7 @@ public class ParserData {
          * "named_tokens_table" and "ordered_named_tokens". Duplications are
          * flagged as errors.
          */
-        for (TokenProduction tp : grammar.descendantsOfType(TokenProduction.class)) { 
+        for (TokenProduction tp : grammar.descendants(TokenProduction.class)) { 
             List<RegexpSpec> respecs = tp.getRegexpSpecs();
             for (RegexpSpec res : respecs) {
                 RegularExpression re = res.getRegexp();
@@ -542,7 +537,7 @@ public class ParserData {
          */
 
         if (!grammar.getOptions().getUserDefinedLexer()) {
-            List<RegexpRef> refs = grammar.descendantsOfType(RegexpRef.class);
+            List<RegexpRef> refs = grammar.descendants(RegexpRef.class);
             for (RegexpRef ref : refs) {
                 String label = ref.getLabel();
                 RegularExpression referenced = grammar.getNamedToken(label);
@@ -556,8 +551,8 @@ public class ParserData {
                     } 
                 } 
             }
-            for (TokenProduction tp : grammar.descendantsOfType(TokenProduction.class)) {
-                for (RegexpRef ref : tp.descendantsOfType(RegexpRef.class)) {
+            for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
+                for (RegexpRef ref : tp.descendants(RegexpRef.class)) {
                     RegularExpression rexp = grammar.getNamedToken(ref.getLabel());
                     if (rexp != null) {
                         ref.setOrdinal(rexp.getOrdinal());
@@ -566,7 +561,7 @@ public class ParserData {
                 }
             }
             
-            for (TokenProduction tp : grammar.descendantsOfType(TokenProduction.class)) {
+            for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
                 List<RegexpSpec> respecs = tp.getRegexpSpecs();
                 for (RegexpSpec res : respecs) {
                     if (res.getRegexp() instanceof RegexpRef) {
@@ -640,7 +635,7 @@ public class ParserData {
         /*
          * The following code performs the lookahead ambiguity checking.
          */
-        for (ExpansionChoice choice : grammar.descendantsOfType(ExpansionChoice.class)) {
+        for (ExpansionChoice choice : grammar.descendants(ExpansionChoice.class)) {
             choiceCalc(choice);
         }
         for (Node node : grammar.descendants(n -> n instanceof OneOrMore || n instanceof ZeroOrMore)) {

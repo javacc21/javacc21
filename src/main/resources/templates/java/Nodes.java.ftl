@@ -44,7 +44,7 @@ import java.util.*;
 abstract public class Nodes {
     
      static public List<Token> getTokens(Node node) {
-	       return node.descendantsOfType(Token.class);
+	       return node.descendants(Token.class);
     }
         
         

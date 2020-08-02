@@ -366,7 +366,7 @@ public class Grammar extends BaseNode {
     public Map<String, BNFProduction> getProductionTable() {
         if (productionTable == null) {
             productionTable = new LinkedHashMap<>();
-            for (BNFProduction production : descendantsOfType(BNFProduction.class )) {
+            for (BNFProduction production : descendants(BNFProduction.class )) {
                 productionTable.put(production.getName(), production);
             }
         }
@@ -399,7 +399,7 @@ public class Grammar extends BaseNode {
     private List<Expansion> getExpansionsForSet(int type) {
         HashSet<String> usedNames = new HashSet<>();
         List<Expansion> result = new ArrayList<>();
-        for (Expansion expansion : descendantsOfType(Expansion.class)) {
+        for (Expansion expansion : descendants(Expansion.class)) {
             if (expansion.getParent() instanceof BNFProduction) continue; // Handle these separately
             BitSet set = null;
             String varName = null;            
@@ -433,11 +433,11 @@ public class Grammar extends BaseNode {
     }
 
     public List<Lookahead> getAllLookaheads() {
-        return this.descendantsOfType(Lookahead.class);
+        return this.descendants(Lookahead.class);
     }
 
     public List<LookBehind> getAllLookBehinds() {
-        return this.descendantsOfType(LookBehind.class);
+        return this.descendants(LookBehind.class);
     } 
 
     public void addTokenProduction(TokenProduction tp) {

@@ -401,7 +401,7 @@ INJECT ImportDeclaration :
     
     public String getName() {
         StringBuilder buf = new StringBuilder();
-        for (Token tok : descendantsOfType(Token.class)) {
+        for (Token tok : descendants(Token.class)) {
             if (tok.getType() != TokenType.IMPORT
               && tok.getType() != TokenType.SEMICOLON) {
                 buf.append(tok);
@@ -918,7 +918,7 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   |
   SCAN 2 {!isInterface}
   => Initializer
- |
+  |
   AnnotationTypeDeclaration
   |
   InterfaceDeclaration
@@ -929,7 +929,6 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   |
   ConstructorDeclaration
   |
-//  SCAN Modifiers Type <IDENTIFIER>( "[" "]" )* ( "," | "=" | ";" ) 
   => FieldDeclaration
   |
   MethodDeclaration
@@ -952,37 +951,8 @@ INJECT FieldDeclaration :
    extends ClassOrInterfaceBodyDeclaration
 {
   public List<Identifier> getVariableIds() {
-     List<Identifier> result = new ArrayList<>();
-     for (Identifier id : descendantsOfType(Identifier.class)) {
-       if (id.getParent() instanceof VariableDeclaratorId) {
-         result.add(id);
-       }
-     }
-     return result;
-  } 
-/*
-   public List<Identifier> getVariableIds() {
-       List<Identifier> result = new ArrayList<>();
-       boolean atBeginning = true;
-       for (Node child : children()) {
-           if (atBeginning) {
-               atBeginning = false;
-               continue;
-           }
-           if (!(child instanceof Delimiter)) {
-              if (child instanceof Identifier) {
-                  result.add((Identifier) child);
-              } else {
-                  if (child.getChild(0) instanceof Identifier) {
-                      result.add((Identifier) child.getChild(0));
-                 } else {
-                       result.add((Identifier) child.getChild(0).getChild(0));
-                 }
-              }
-           }
-       }
-       return result;
-   }*/
+    return descendants(Identifier.class, n->n.getParent() instanceof VariableDeclaratorId);
+  }
 }
 
 

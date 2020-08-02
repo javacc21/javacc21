@@ -441,7 +441,7 @@
       || zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
        [@BuildCode zoo.nestedExpansion /]
     [#else]
-       if (${ResetCall(zoo)} && ${ExpansionCondition(zoo)}) {
+       if (${ResetCall(zoo)} ${ExpansionCondition(zoo)}) {
           ${BuildCode(zoo.nestedExpansion)}
        }
     [/#if]
@@ -464,7 +464,7 @@
    [#if nestedExp.simpleName = "ExpansionChoice"]
    while (true);
    [#else]
-   while(${ResetCall(nestedExp)} && ${ExpansionCondition(oom)});
+   while(${ResetCall(nestedExp)} ${ExpansionCondition(oom)});
    [/#if]
    [#set inFirstVarName = prevInFirstVarName /]
 [/#macro]
@@ -473,7 +473,7 @@
     [#if zom.nestedExpansion.class.simpleName = "ExpansionChoice"]
        while (true) {
     [#else]
-      while (${ResetCall(zom)} && ${ExpansionCondition(zom)}) {
+      while (${ResetCall(zom)} ${ExpansionCondition(zom)}) {
     [/#if]
        ${BuildCode(zom.nestedExpansion)}
     }
@@ -488,7 +488,7 @@
          [#return]
       [/#if]
       ${(expansion_index=0)?string("if", "else if")}
-      (${ResetCall(expansion)} && ${ExpansionCondition(expansion)}) {
+      (${ResetCall(expansion)} ${ExpansionCondition(expansion)}) {
          ${BuildCode(expansion)}
       }
    [/#list]
@@ -522,6 +522,7 @@
            resetScanAhead(${expansion.lookaheadAmount}, ${expansion.upToExpansion.firstSetVarName})
        [/#if]
      [/#if]
+     &&
 [/#macro]
 
 [#-- 
