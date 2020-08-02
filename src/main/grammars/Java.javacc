@@ -1411,7 +1411,7 @@ UnaryExpressionNotPlusMinus :
   |
   LambdaExpression 
   |
-  SCAN CastExpression
+  => CastExpression
   |
   PostfixExpression
 ;
@@ -1421,11 +1421,11 @@ PostfixExpression :
 ;
 
 CastExpression : 
-  SCAN "(" PrimitiveType ")" UnaryExpression
+  => "(" PrimitiveType ")" UnaryExpression
   |
-  SCAN "(" ReferenceType ")" UnaryExpressionNotPlusMinus
+  => "(" ReferenceType ")" UnaryExpressionNotPlusMinus
   |
-  SCAN  "(" ClassOrInterfaceType ("&" ClassOrInterfaceType)+ ")" UnaryExpressionNotPlusMinus 
+  =>  "(" ClassOrInterfaceType ("&" ClassOrInterfaceType)+ ")" UnaryExpressionNotPlusMinus 
 ;
 
 Expression PrimaryExpression #PrimaryExpression :
@@ -1534,8 +1534,7 @@ INJECT InvocationArgs :
 }
 
 AllocationExpression :
-  SCAN 2
-  "new" PrimitiveType ArrayDimsAndInits
+  "new" PrimitiveType =>|| ArrayDimsAndInits
   |
   "new" ClassOrInterfaceType [ PossiblyEmptyTypeArguments ]
     (
@@ -1564,7 +1563,7 @@ ArrayDimsAndInits :
   ArrayInitializer
 ;
 
-Label : <IDENTIFIER><COLON>;
+Label : <IDENTIFIER><COLON> =>|| ;
 
 
  /*
@@ -1572,7 +1571,7 @@ Label : <IDENTIFIER><COLON>;
  */
 
 Statement  :
-  (SCAN 2 Label)*
+  (Label)*
   UnlabeledStatement
 ;
 
@@ -1610,7 +1609,6 @@ UnlabeledStatement #void :
 ;
 
 TryStatement #void :
-   SCAN "try" "(" => 
    TryWithResources
    |
    SCAN "try" "{"=>
@@ -1652,7 +1650,6 @@ BlockStatement :
   SCAN Modifiers Type <IDENTIFIER> 
   => LocalVariableDeclaration ";"
   |
-//  SCAN Modifiers "class" => 
   ClassDeclaration
   |
   Statement
@@ -1718,8 +1715,8 @@ ForStatement :
   (
       SCAN Modifiers Type <IDENTIFIER> ":"
       => Modifiers Type <IDENTIFIER> ":" Expression 
-    |
-     [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
+      |
+      [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
   )
 
   ")" Statement
@@ -1728,7 +1725,7 @@ ForStatement :
 ForInit :
   SCAN Modifiers Type <IDENTIFIER> 
   => LocalVariableDeclaration
-|
+  |
   StatementExpressionList
 ;
 
@@ -1788,7 +1785,7 @@ ClassicTryStatement ClassicTryStatement :
 
 TryWithResources TryWithResources :
    "try"
-   "("
+   "(" =>||
      (
          => LocalVariableDeclaration
          |

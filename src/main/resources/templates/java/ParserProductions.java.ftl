@@ -793,13 +793,8 @@
        [@BuildScanCode sub, count/]
        [#if sub.scanLimit]
           if (stopAtScanLimit) {
-             if (!lookaheadStack.isEmpty()) {
-                return true;
-             } else {
-                remainingLookahead = 0;
-             }
+             return true;
           }
-         [#-- break (not sure---) --]
        [/#if]
        [#set count = count - sub.minimumSize]
        [#if count<=0][#break][/#if]
