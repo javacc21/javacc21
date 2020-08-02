@@ -227,7 +227,7 @@
         input_stream.backup(curPos - jjmatchedPos - 1);
       }
        if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
-          + ParseException.addEscapes(input_stream.getSuffix(jjmatchedPos + 1)) + ") ******\n");
+          + ParseException.addEscapes(input_stream.getSuffix(jjmatchedPos + 2)) + ") ******\n");
  
  [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
           if (tokenSet.get(jjmatchedKind)) {
