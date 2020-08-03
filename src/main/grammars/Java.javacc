@@ -916,8 +916,7 @@ INJECT ClassOrInterfaceBodyDeclaration :
 ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
   ";"
   |
-  SCAN 2 {!isInterface}
-  => Initializer
+  Initializer
   |
   AnnotationTypeDeclaration
   |
@@ -1075,9 +1074,8 @@ ExplicitConstructorInvocation :
   [ SCAN 2 => PrimaryExpression "." ] "super" Arguments ";"
 ;
 
-
 Initializer :
-  [ "static" ] Block
+  [ "static" ] =>|+1 Block
 ;
 
 
