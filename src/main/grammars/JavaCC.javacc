@@ -338,7 +338,9 @@ TOKEN :
   |
   <RIGHT_ARROW : "=>"> #RightArrow
   |
-  <UP_TO_HERE : "=>||"> 
+  <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
+//  |
+//  <UP_TO_HERE_PLUS : "=>|+"["0"-"9"]>
 }
 
 INJECT BaseNode :
@@ -1534,6 +1536,7 @@ Lookahead ScanAhead #Lookahead :
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
+/*
 [
    <_UPTO> 
    ExpansionChoice 
@@ -1541,7 +1544,7 @@ Lookahead ScanAhead #Lookahead :
        upToExpansion = (Expansion) peekNode();
        CURRENT_NODE.setUpToExpansion(upToExpansion);
    }
-]
+]*/
 [SCAN LookBehind {lb = peekNode();}]
 [
     SCAN {amountToken == null} => 
@@ -1850,28 +1853,6 @@ INJECT Lookahead :
 
 }
 
-ScanLimit #ScanLimit : "=>||";
-
-INJECT ScanLimit : 
-   import com.javacc.parsegen.Expansion;
-   import com.javacc.lexgen.TokenSet;
-   extends Expansion
-{
-    public boolean isConcrete() {return true;}
-
-    public int getMaximumSize() {return 0;}
-
-    public int minimumSize(int min) {return 0;}
-
-    public boolean isPossiblyEmpty() {return true;}
-
-    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
-    
-    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-
-}
-
-
 Expansion ExpansionUnit :
 {
     Expression lhs=null;
@@ -1892,11 +1873,11 @@ Expansion ExpansionUnit :
   SCAN 1 ~\...\Lookahead =>
   result=TryBlock
   |
-  => result = ZeroOrOne [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
+  => result = ZeroOrOne [SCAN ~\...\Lookahead => UpToHere(result)]
   |
-  => result = ZeroOrMore [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
+  => result = ZeroOrMore [SCAN ~\...\Lookahead => UpToHere(result)]
   |
-  => result = OneOrMore [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
+  => result = OneOrMore [SCAN ~\...\Lookahead => UpToHere(result)]
   |
   SCAN [PrimaryExpression "="] (<STRING_LITERAL>|"<")
   =>
@@ -1927,23 +1908,17 @@ Expansion ExpansionUnit :
       }
   }
   [<BANG>{result.setForced(true);}]
-  [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
+  [SCAN ~\...\Lookahead => UpToHere(result)]
   |
   SCAN [PrimaryExpression "="]<IDENTIFIER>
-  => result=NonTerminal 
-  [
-      SCAN ~\...\Lookahead => <UP_TO_HERE>
-      {
-          result.setScanLimit(true);
-      }
-  ]
+  => result=NonTerminal [SCAN ~\...\Lookahead => UpToHere(result)]
   |
   "(" ExpansionChoice {result=(Expansion)peekNode();} ")" 
   [ 
    SCAN <BANG> TreeNodeDescriptor
    => <BANG> {result.setForced(true);}
   ]
-  [SCAN ~\...\Lookahead => <UP_TO_HERE> {result.setScanLimit(true);}]
+  [SCAN ~\...\Lookahead => UpToHere(result)] 
  )
  [
     tba=TreeNodeDescriptor
@@ -1972,6 +1947,18 @@ NonTerminal NonTerminal #NonTerminal :
      <BANG>  {CURRENT_NODE.setForced(true);}
   ]
   {return CURRENT_NODE;}
+;
+
+UpToHere(Expansion exp) #void :
+   <UP_TO_HERE>
+   {
+       String img = currentToken.getImage();
+       exp.setScanLimit(true);
+       char lastChar = img.charAt(img.length() -1);
+       if (Character.isDigit(lastChar)) {
+           exp.setScanLimitPlus(lastChar - '0');
+       }
+   }
 ;
 
 

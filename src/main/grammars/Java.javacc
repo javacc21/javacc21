@@ -784,7 +784,7 @@ EnumDeclaration :
 
 EnumBody :
    "{"
-   [ EnumConstant ( SCAN 2 => "," EnumConstant )* ]
+   [ EnumConstant ( "," =>|+1 EnumConstant )* ]
    [ "," ]
    [ ";" ( ClassOrInterfaceBodyDeclaration(false) )* ]
    "}"

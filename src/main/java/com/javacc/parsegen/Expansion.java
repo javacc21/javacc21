@@ -151,6 +151,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     private boolean scanLimit;
+    private int scanLimitPlus;
 
     public boolean isScanLimit() {
         return scanLimit;
@@ -158,6 +159,15 @@ abstract public class Expansion extends BaseNode {
 
     public void setScanLimit(boolean scanLimit) {
         this.scanLimit = scanLimit;
+    }
+
+    public int getScanLimitPlus() {
+        return scanLimitPlus;
+    }
+
+    public void setScanLimitPlus(int scanLimitPlus) {
+        this.scanLimitPlus = scanLimitPlus;
+
     }
     
     public boolean getRequiresScanAhead() {

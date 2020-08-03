@@ -793,7 +793,11 @@
        [@BuildScanCode sub, count/]
        [#if sub.scanLimit]
           if (stopAtScanLimit) {
+         [#if sub.scanLimitPlus >0]
+             remainingLookahead = ${sub.scanLimitPlus};
+         [#else]
              return true;
+         [/#if]
           }
        [/#if]
        [#set count = count - sub.minimumSize]
