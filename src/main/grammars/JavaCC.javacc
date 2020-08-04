@@ -2106,8 +2106,8 @@ INJECT ZeroOrOne :
     }
     
     public TokenSet getFirstSet() {
-//        return getNestedExpansion().getFirstSet();
-        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
+        return getNestedExpansion().getFirstSet();
+//        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
     }
     
     public TokenSet getFinalSet() {
@@ -2163,8 +2163,8 @@ INJECT ZeroOrMore :
     
     public TokenSet getFirstSet() {
          if (firstSet == null) {
-//            firstSet = getNestedExpansion().getFirstSet();
-            firstSet = getNestedExpansion().getLookaheadExpansion().getFirstSet();
+            firstSet = getNestedExpansion().getFirstSet();
+//            firstSet = getNestedExpansion().getLookaheadExpansion().getFirstSet();
          }
          return firstSet;
     }
@@ -2224,8 +2224,8 @@ INJECT OneOrMore :
     }
     
     public TokenSet getFirstSet() {
-//        return getNestedExpansion().getFirstSet();
-        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
+        return getNestedExpansion().getFirstSet();
+//        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
     }
     
     public TokenSet getFinalSet() {
