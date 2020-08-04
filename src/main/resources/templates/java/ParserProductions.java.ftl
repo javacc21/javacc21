@@ -512,6 +512,9 @@
 [/#macro]
 
 [#macro ResetCall expansion]
+    [#if expansion.lookaheadAmount ==1 || expansion.lookaheadExpansion.singleToken]
+       [#return]
+    [/#if]
     [#if !expansion.upToExpansion??]
        resetScanAhead(${expansion.lookaheadAmount})
     [#else]
@@ -564,11 +567,12 @@
 [#macro SingleTokenCondition expansion]
    [#if expansion.firstSet.tokenNames?size < 5] 
       [#list expansion.firstSet.tokenNames as name]
-          nextTokenType == ${TT}${name} 
+          nextTokenType [#if name_index ==0]() [/#if]
+          == ${TT}${name} 
          [#if name_has_next] || [/#if] 
       [/#list]
    [#else]
-      ${expansion.firstSetVarName}.contains(nextTokenType) 
+      ${expansion.firstSetVarName}.contains(nextTokenType()) 
    [/#if]
 [/#macro]
 

@@ -1306,7 +1306,8 @@ INJECT ExpansionChoice :
         if (firstSet == null) {
            firstSet = new TokenSet(getGrammar());
            for (Expansion choice : getChoices()) {
-               firstSet.or(choice.getFirstSet());
+//               firstSet.or(choice.getFirstSet());
+               firstSet.or(choice.getLookaheadExpansion().getFirstSet());
            }
         }
         return firstSet;
@@ -2105,7 +2106,8 @@ INJECT ZeroOrOne :
     }
     
     public TokenSet getFirstSet() {
-        return getNestedExpansion().getFirstSet();
+//        return getNestedExpansion().getFirstSet();
+        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
     }
     
     public TokenSet getFinalSet() {
@@ -2161,7 +2163,8 @@ INJECT ZeroOrMore :
     
     public TokenSet getFirstSet() {
          if (firstSet == null) {
-            firstSet = getNestedExpansion().getFirstSet();
+//            firstSet = getNestedExpansion().getFirstSet();
+            firstSet = getNestedExpansion().getLookaheadExpansion().getFirstSet();
          }
          return firstSet;
     }
@@ -2221,7 +2224,8 @@ INJECT OneOrMore :
     }
     
     public TokenSet getFirstSet() {
-        return getNestedExpansion().getFirstSet();
+//        return getNestedExpansion().getFirstSet();
+        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
     }
     
     public TokenSet getFinalSet() {
