@@ -33,7 +33,7 @@
 [#if grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
 [/#if]
-[#if explicitPackageName??]
+[#elseif explicitPackageName??]
 package ${explicitPackageName};
 [#elseif grammar.nodePackage?has_content]
 package ${grammar.nodePackage};
