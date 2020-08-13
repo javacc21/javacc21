@@ -1123,10 +1123,10 @@ INJECT ObjectType :
     }
 }
 
-DiamondOperator :  "<" ">";
+DiamondOperator :  "<" ">" =>|| ;
 
 PossiblyEmptyTypeArguments #void :
-   => DiamondOperator
+   DiamondOperator
    |
    TypeArguments
 ;
@@ -1466,9 +1466,8 @@ MethodReference :
 
 PrimarySuffix :
   => "." ("this"|"super")
-    |
-  SCAN 2
-  => "." AllocationExpression
+  |
+  "." =>|+1 AllocationExpression
     |
   SCAN 3
   => MemberSelector

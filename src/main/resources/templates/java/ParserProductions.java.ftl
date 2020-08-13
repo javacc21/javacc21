@@ -212,8 +212,8 @@
           int ${callStackSizeVar} = parsingStack.size();
         [#-- We want the very first java code block in a production 
          to be injected *before* the try block. This is for rather hypertechnical 
-         reasons. We want any variables defined up top in a production to be visible within 
-         the following catch/finally blocks.--]
+         reasons. It's that we want any variables defined up top in a production 
+         to be visible within the following catch/finally blocks.--]
         ${(production.javaCode)!}
          try {
     [#else]
@@ -677,22 +677,13 @@
    based on the Expansion's class name.
 --]
 [#macro BuildScanCode expansion count=2147483647]
-  [#if expansion.singleToken]
-    [#var firstSet = expansion.firstSet.tokenNames]
-    [#if firstSet?size = 1]
-      if (!scanToken(${TT}${firstSet[0]})) return false;
-    [#else]
-      if (!scanToken(${expansion.firstSetVarName})) return false;
-    [/#if]
-    [#return]
-  [/#if]
   [#var classname=expansion.simpleName]
-    [#if expansion.isRegexp]
-      [@ScanCodeRegexp expansion/]
+  [#if expansion.singleToken]
+     ${ScanSingleToken(expansion)}
    [#elseif classname = "Failure"]
-      [@ScanCodeError expansion /]
+      ${ScanCodeError(expansion)}
    [#elseif classname = "ExpansionSequence"]
-      [@ScanCodeSequence expansion count/]
+      ${ScanCodeSequence(expansion, count)}
    [#elseif classname = "ZeroOrOne"]
       [@ScanCodeZeroOrOne expansion/]
    [#elseif classname = "ZeroOrMore"]
@@ -712,6 +703,15 @@
   [/#if]
 [/#macro]
 
+[#macro ScanSingleToken expansion]
+    [#var firstSet = expansion.firstSet.tokenNames]
+    [#if firstSet?size = 1]
+      if (!scanToken(${TT}${firstSet[0]})) return false;
+    [#else]
+      if (!scanToken(${expansion.firstSetVarName})) return false;
+    [/#if]
+[/#macro]    
+
 [#macro ScanCodeError expansion]
    return false;
 [/#macro]
@@ -729,10 +729,6 @@
      [/#if]
   [/#list]
   [#list 1..choice.choices?size as unused] } [/#list]
-[/#macro]
-
-[#macro ScanCodeRegexp regexp]
-     if (!scanToken(${TT}${regexp.label})) return false;
 [/#macro]
 
 [#macro ScanCodeZeroOrOne zoo]
