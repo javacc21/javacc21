@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,20 +42,16 @@ import java.util.*;
  */
 
 abstract public class Nodes {
-    
+   /**
+    * @deprecated Quite possibly, this entire Nodes class will disappear soon!
+    *; 
      static public List<Token> getTokens(Node node) {
 	       return node.descendants(Token.class);
     }
         
         
     static public List<Token> getRealTokens(Node node) {
-        List<Token> result = new ArrayList<Token>();
-		for (Token token : getTokens(node)) {
-		    if (!token.isUnparsed()) {
-		        result.add(token);
-		    }
-		}
-	    return result;
+        return node.descendants(Token.class, t->!t.isUnparsed());
 	}
      
     // NB: This is not thread-safe

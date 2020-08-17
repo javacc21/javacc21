@@ -26,12 +26,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-options {
-    TREE_BUILDING_ENABLED=true;
-    TOKENS_ARE_NODES=true;
-    BASE_NODE_CLASS="SimpleNode";
-    SMART_NODE_CREATION=false;
-}
+TREE_BUILDING_ENABLED=true;
+TOKENS_ARE_NODES=true;
+BASE_NODE_CLASS="SimpleNode";
+SMART_NODE_CREATION=false;
 
 INJECT : {
 
@@ -102,12 +100,12 @@ TOKEN : /* LITERALS */
   < INTEGER_LITERAL: (<DIGIT>)+ >
 }
 
-INJECT(interface Node) : {}
+INJECT interface Node :
 {
     public void interpret();
 }
 
-INJECT(Token) : {}
+INJECT Token : 
 {
     /**
      * Necessary so that Token can implement Node
@@ -155,17 +153,15 @@ INJECT : {
 /*
  * Program structuring syntax follows.
  */
-INJECT(CompilationUnit) : 
-{
+INJECT CompilationUnit : 
 	import java.util.*;
-}
 { 
     public void interpret() {
 
         for (int i = 0; i < getChildCount(); i++) {
             System.out.print("Executing:");
             Node child = getChild(i);
-            for (Token t : Nodes.getTokens(child)) {
+            for (Token t : child.descendants(Token.class)) {
                 System.out.print(" ");
                 System.out.print(t);
             }
@@ -177,24 +173,21 @@ INJECT(CompilationUnit) :
     }
 }
 
-/** Compilation unit. */
-void CompilationUnit() :
+CompilationUnit :
 {
    String name;
 }
-{
    (
-       VarDeclaration() ";"
-     |
-       Statement()
+       VarDeclaration ";"
+       |
+       Statement
    )*
    <EOF>
-}
+;
 
-INJECT(VarDeclaration) : {
+INJECT VarDeclaration  : 
     extends SimpleNode
     implements SPLConstants
-}
 {
     TokenType type;
     String name;
@@ -208,10 +201,8 @@ INJECT(VarDeclaration) : {
 }
 
 
-/** Variable declaration. */
-void VarDeclaration() :
+VarDeclaration :
 { Token t; }
-{
   (
     "boolean" { CURRENT_NODE.type = TokenType.BOOL; }
    |
@@ -219,23 +210,19 @@ void VarDeclaration() :
   )
   t = <IDENTIFIER> 
   { CURRENT_NODE.name = t.getImage(); }
-}
+;
 
 /*
  * Expression syntax follows.
  */
 
-/** Expression. */
-void Expression() #void:
-{}
-{
-  LOOKAHEAD( PrimaryExpression() "=" )
-  Assignment()
-|
-  ConditionalOrExpression()
-}
+Expression #void:
+  SCAN PrimaryExpression "=" => Assignment
+  |
+  ConditionalOrExpression
+;
 
-INJECT(Assignment) : {} 
+INJECT Assignment :  
 {
     public void interpret() {
         String name;
@@ -245,22 +232,14 @@ INJECT(Assignment) : {}
     }
 }
 
-/** Assignment. */
-void Assignment() #Assignment(3) :
-{}
-{
-  PrimaryExpression() "=" Expression()
-}
+Assignment #Assignment(3) : PrimaryExpression "=" Expression;
 
-/** Conditional or expression. */
-void ConditionalOrExpression() #void :
-{}
-{
-  ConditionalAndExpression()
-  ( "||" ConditionalAndExpression() #OrNode(3) )*
-}
+ConditionalOrExpression #void :
+  ConditionalAndExpression
+  ( "||" ConditionalAndExpression #OrNode(3) )*
+;
 
-INJECT(OrNode) : {}
+INJECT OrNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -276,15 +255,12 @@ INJECT(OrNode) : {}
 }
 
 
-/** Conditional and expression. */
-void ConditionalAndExpression() #void :
-{}
-{
-  InclusiveOrExpression()
-  ( "&&" InclusiveOrExpression() #AndNode(3) )*
-}
+ConditionalAndExpression() #void :
+  InclusiveOrExpression
+  ( "&&" InclusiveOrExpression #AndNode(3) )*
+;
 
-INJECT(AndNode) : {}
+INJECT AndNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -300,15 +276,12 @@ INJECT(AndNode) : {}
     }
 }
 
-/** Inclusive or expression. */
-void InclusiveOrExpression() #void :
-{}
-{
-  ExclusiveOrExpression()
-  ( "|" ExclusiveOrExpression() #BitwiseOrNode(2) )*
-}
+InclusiveOrExpression() #void :
+  ExclusiveOrExpression
+  ( "|" ExclusiveOrExpression #BitwiseOrNode(2) )*
+;
 
-INJECT(BitwiseOrNode) : {}
+INJECT BitwiseOrNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -320,21 +293,16 @@ INJECT(BitwiseOrNode) : {}
             if (stack[top] instanceof Integer) {
                 stack[ --top] = new Integer(((Integer) stack[top]).intValue() | ((Integer) stack[ top + 1]).intValue());
             }
-
- 
         }
     }
 }
 
-/** Exclusive or expression. */
-void ExclusiveOrExpression() #void :
-{}
-{
-  AndExpression()
-  ( "^" AndExpression() #BitwiseXorNode(2) )*
-}
+ExclusiveOrExpression #void :
+  AndExpression
+  ( "^" AndExpression #BitwiseXorNode(2) )*
+;
 
-INJECT(BitwiseXorNode) : {}
+INJECT BitwiseXorNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -352,15 +320,12 @@ INJECT(BitwiseXorNode) : {}
     }
 }
 
-/** And expression. */
-void AndExpression() #void :
-{}
-{
-  EqualityExpression()
-  ( "&" EqualityExpression() #BitwiseAndNode(2) )*
-}
+AndExpression #void :
+  EqualityExpression
+  ( "&" EqualityExpression #BitwiseAndNode(2) )*
+;
 
-INJECT(BitwiseAndNode) : {}
+INJECT BitwiseAndNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -376,20 +341,16 @@ INJECT(BitwiseAndNode) : {}
     }
 }
 
-/** Equality expression. */
-void EqualityExpression() #void :
-{}
-{
-  RelationalExpression()
+EqualityExpression #void :
+  RelationalExpression
   (
      "==" RelationalExpression() #EQNode(3)
    |
      "!=" RelationalExpression() #NENode(3)
   )*
-}
+;
 
-INJECT(EQNode) : {}
-{
+INJECT EQNode : {
     public void interpret() {
         getChild(0).interpret();
         getChild(2).interpret();
@@ -401,8 +362,8 @@ INJECT(EQNode) : {}
         }
     }
 }
-INJECT(NENode) : {}
-{
+
+INJECT NENode : {
     public void interpret() {
         getChild(0).interpret();
         getChild(2).interpret();
@@ -415,23 +376,20 @@ INJECT(NENode) : {}
     }
 }
 
-/** Relational expression. */
-void RelationalExpression() #void :
-{}
-{
-  AdditiveExpression()
+RelationalExpression #void :
+  AdditiveExpression
   (
-    "<" AdditiveExpression() #LTNode(3)
+    "<" AdditiveExpression #LTNode(3)
    |
-    ">" AdditiveExpression() #GTNode(3)
+    ">" AdditiveExpression #GTNode(3)
    |
-    "<=" AdditiveExpression() #LENode(3)
+    "<=" AdditiveExpression #LENode(3)
    |
-    ">=" AdditiveExpression() #GENode(3)
+    ">=" AdditiveExpression #GENode(3)
   )*
-}
+;
 
-INJECT(LTNode) : {}
+INJECT LTNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -442,7 +400,7 @@ INJECT(LTNode) : {}
 }
 
 
-INJECT(LENode) : {}
+INJECT LENode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -452,8 +410,7 @@ INJECT(LENode) : {}
     }
 }
 
-INJECT(GENode) : {}
-{
+INJECT GENode : {
     public void interpret() {
         getChild(0).interpret();
         getChild(2).interpret();
@@ -462,8 +419,7 @@ INJECT(GENode) : {}
     }
 }
 
-INJECT(GTNode) : {}
-{
+INJECT GTNode : {
   public void interpret()
   {
      getChild(0).interpret();
@@ -475,19 +431,16 @@ INJECT(GTNode) : {}
 }
 
 
-/** Additive expression. */
-void AdditiveExpression() #void :
-{}
-{
-  MultiplicativeExpression()
+AdditiveExpression #void :
+  MultiplicativeExpression
   (
-    "+" MultiplicativeExpression() #AddNode(3)
+    "+" MultiplicativeExpression #AddNode(3)
    |
-    "-" MultiplicativeExpression() #SubtractNode(3)
+    "-" MultiplicativeExpression #SubtractNode(3)
   )*
-}
+;
 
-INJECT(AddNode) : {}
+INJECT AddNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -496,7 +449,8 @@ INJECT(AddNode) : {}
     }
 }
 
-INJECT(SubtractNode) : {} {
+INJECT SubtractNode : 
+{
     public void interpret() {
         getChild(0).interpret();
         getChild(2).interpret();
@@ -505,22 +459,18 @@ INJECT(SubtractNode) : {} {
 }
 
 
-
-/** Multiplicative expression. */
-void MultiplicativeExpression() #void :
-{}
-{
-  UnaryExpression()
+MultiplicativeExpression #void :
+  UnaryExpression
   (
-    "*" UnaryExpression() #MulNode(3)
+    "*" UnaryExpression #MulNode(3)
    |
-    "/" UnaryExpression() #DivNode(3)
+    "/" UnaryExpression #DivNode(3)
    |
-    "%" UnaryExpression() #ModNode(3)
+    "%" UnaryExpression #ModNode(3)
   )*
-}
+;
 
-INJECT(MulNode) : {}
+INJECT MulNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -529,7 +479,7 @@ INJECT(MulNode) : {}
     }
 }
 
-INJECT(ModNode) : {}
+INJECT ModNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -539,7 +489,7 @@ INJECT(ModNode) : {}
 }
 
 
-INJECT(DivNode) : {}
+INJECT DivNode : 
 {
     public void interpret() {
         getChild(0).interpret();
@@ -548,18 +498,15 @@ INJECT(DivNode) : {}
     }
 }
 
-/** Unary expression. */
-void UnaryExpression() #void :
-{}
-{
-  "~" UnaryExpression() #BitwiseComplNode(2)
-|
-  "!" UnaryExpression() #NotNode(2)
-|
-  PrimaryExpression()
-}
+UnaryExpression #void :
+  "~" UnaryExpression #BitwiseComplNode(2)
+  |
+  "!" UnaryExpression #NotNode(2)
+  |
+  PrimaryExpression
+;
 
-INJECT(NotNode) : {}
+INJECT NotNode : 
 {
     public void interpret() {
         getChild(1).interpret();
@@ -568,7 +515,7 @@ INJECT(NotNode) : {}
 }
 
 
-INJECT(BitwiseComplNode) : {}
+INJECT BitwiseComplNode : 
 {
   public void interpret()
   {
@@ -577,34 +524,29 @@ INJECT(BitwiseComplNode) : {}
   }
 }
 
-/** Primary expression. */
-void PrimaryExpression() #void :
+PrimaryExpression #void :
 {
    String name;
 }
-{
-  Literal()
-|
-  Id() 
-|
-  ParentheticalExpression()
-}
+  Literal
+  |
+  Id 
+  |
+  ParentheticalExpression
+;
 
-void ParentheticalExpression() : 
-{}
-{
-   "(" Expression() ")"
-}
+ParentheticalExpression : 
+   "(" Expression ")"
+;
 
-INJECT(ParentheticalExpression) : 
-{}
+INJECT ParentheticalExpression : 
 {
    public void interpret() {
       getChild(1).interpret();
    }
 }
 
-INJECT(Id) : {}
+INJECT Id : 
 {
     String name;
     
@@ -613,32 +555,25 @@ INJECT(Id) : {}
     }
 }
 
-/** An Id. */
-void Id() :
-{
-   Token t;
-}
-{
+Id : { Token t; }
    t = <IDENTIFIER>  { CURRENT_NODE.name = t.getImage(); }
-}
+;
 
-/** A literal. */
-void Literal() #void :
+Literal #void :
 {
    Token t;
 }
-{
  (
   t=<INTEGER_LITERAL>
     {
        CURRENT_NODE.val = Integer.parseInt(t.getImage());
     }
  )#IntConstNode
-|
-  BooleanLiteral()
-}
+  |
+  BooleanLiteral
+;
 
-INJECT(IntConstNode) : {}
+INJECT IntConstNode : 
 {
     int val;
     
@@ -647,14 +582,11 @@ INJECT(IntConstNode) : {}
     }
 }
 
-/** A boolean literal. */
-void BooleanLiteral() #void :
-{}
-{
+BooleanLiteral #void :
   "true" #TrueNode
-|
+  |
   "false" #FalseNode
-}
+;
 
 INJECT(TrueNode) : {}
 {
@@ -664,8 +596,7 @@ INJECT(TrueNode) : {}
 }
 
 
-INJECT(FalseNode) : {}
-{
+INJECT FalseNode : {
     public void interpret() {
         stack[ ++top] = Boolean.FALSE;
     }
@@ -673,38 +604,27 @@ INJECT(FalseNode) : {}
  
 
 
-/*
- * Statement syntax follows.
- */
-
-/** A statement. */
-void Statement() #void :
-{}
-{
+Statement #void :
   ";"
-|
-  LOOKAHEAD(2)
-  LabeledStatement()
-|
-  Block()
-|
-  StatementExpression()
-|
-  IfStatement()
-|
-  WhileStatement()
-|
-  IOStatement()
-}
+  |
+  SCAN 2 => LabeledStatement
+  |
+  Block
+  |
+  StatementExpression
+  |
+  IfStatement
+  |
+  WhileStatement
+  |
+  IOStatement
+;
 
-/** A labeled statement. */
-void LabeledStatement() #void :
-{}
-{
-  <IDENTIFIER> ":" Statement()
-}
+LabeledStatement() #void :
+  <IDENTIFIER> ":" Statement
+;
 
-INJECT(Block) : {}
+INJECT Block : 
 {
     public void interpret() {
         for (int i = 0; i < getChildCount(); i++) {
@@ -715,15 +635,11 @@ INJECT(Block) : {}
     }
 }
 
-/** A block. */
-void Block() :
-{}
-{
-  "{" ( Statement() )* "}"
-}
+Block :
+  "{" ( Statement )* "}"
+;
 
-INJECT(StatementExpression) : {}
-{
+INJECT(StatementExpression) : {
     public void interpret() {
         getChild(0).interpret();
         top--;        //just throw away the value.
@@ -731,19 +647,16 @@ INJECT(StatementExpression) : {}
 }
 
 
-/** A statement expression. */
-void StatementExpression() :
+StatementExpression :
 /*
  * The last expansion of this production accepts more than the legal
  * SPL expansions for StatementExpression.
  */
-{}
-{
-  Assignment() ";"
-}
+  Assignment ";"
+;
 
 
-INJECT(IfStatement) : {}
+INJECT IfStatement : 
 {
     public void interpret() {
         getChild(2).interpret();
@@ -758,20 +671,17 @@ INJECT(IfStatement) : {}
     }
 }
 
-/** An if statement. */
-void IfStatement() :
+IfStatement :
 /*
  * The disambiguating algorithm of JavaCC automatically binds dangling
  * else's to the innermost if statement.  The LOOKAHEAD specification
  * is to tell JavaCC that we know what we are doing.
  */
-{}
-{
-  "if" "(" Expression() ")" Statement() [ LOOKAHEAD(1) "else" Statement() ]
-}
+  "if" "(" Expression ")" Statement [ "else" Statement ]
+;
 
 
-INJECT(WhileStatement) : {}
+INJECT WhileStatement : 
 {
     public void interpret()
     {
@@ -789,21 +699,11 @@ INJECT(WhileStatement) : {}
 }
 
 
-/** A while statement. */
-void WhileStatement() :
-{}
-{
-  "while" "(" Expression() ")" Statement()
-}
+WhileStatement :
+  "while" "(" Expression ")" Statement
+;
 
-/** An IO statement. */
-void IOStatement() #void :
-{ String name; }
-{
-   ReadStatement()
- |
-   WriteStatement()
-}
+IOStatement() #void : ReadStatement | WriteStatement;
 
 INJECT: {
     import java.io.IOException;
@@ -858,27 +758,22 @@ INJECT: {
     }
 }
 
-/** A read statement. */
-void ReadStatement() :
+ReadStatement :
 { Token t; }
-{
    "read" t = <IDENTIFIER>
    { CURRENT_NODE.name = t.getImage(); }
-}
+;
 
-/** A write statement. */
-void WriteStatement() :
+WriteStatement :
 { Token t; }
-{
    "write" t = <IDENTIFIER>
    { CURRENT_NODE.name = t.getImage(); }
-}
+;
 
 TOKEN : /* IDENTIFIERS */
-{
   < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
-|
+  |
   < #LETTER: [ "a"-"z", "A"-"Z" ] >
-|
+  |
   < #DIGIT: [ "0"-"9"] >
-}
+;
