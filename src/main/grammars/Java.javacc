@@ -1649,6 +1649,8 @@ BlockStatement :
   |
   ClassDeclaration
   |
+  InterfaceDeclaration
+  |
   Statement
 ;
 

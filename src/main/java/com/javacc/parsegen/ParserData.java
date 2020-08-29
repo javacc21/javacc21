@@ -112,7 +112,10 @@ public class ParserData {
 
         public void visit(TryBlock exp) {visit(exp.getNestedExpansion());}
 
-        public void visit(Lookahead la) {}
+        public void visit(Lookahead la) {
+            // We ignore expansions that are part of a syntactic lookahead
+        }
+
     };
 
     /**
