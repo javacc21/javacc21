@@ -1353,6 +1353,14 @@ INJECT ExpansionChoice :
    }
    
    public boolean isConcrete() {return false;} 
+
+   public boolean isAlwaysSuccessful() {
+       if (!super.isAlwaysSuccessful()) return false;
+       for (Expansion choice : getChoices()) {
+           if (choice.isAlwaysSuccessful()) return true;
+       }
+       return false;
+   }
 }
 
 ExpansionSequence #ExpansionSequence :
@@ -1392,8 +1400,17 @@ INJECT ExpansionSequence :
 
    public ExpansionSequence() {}
 
+
    public List<Expansion> getUnits() {
        return childrenOfType(Expansion.class);
+   }
+
+   public boolean isAlwaysSuccessful() {
+       if (!super.isAlwaysSuccessful()) return false;
+       for (Expansion unit : getUnits()) {
+           if (!unit.isAlwaysSuccessful()) return false;
+       }
+       return true;
    }
 
 
@@ -2358,6 +2375,8 @@ INJECT Failure :
     public String getMessage() {return message;}
 
     public void setMessage(String message) {this.message = message;}
+
+    public boolean isAlwaysSuccessful() {return false;}
 }
 
 TryBlock TryBlock : 

@@ -195,6 +195,9 @@ abstract public class Expansion extends BaseNode {
         if (getHasSemanticLookahead() || getHasLookBehind() || !isPossiblyEmpty()) {
             return false;
         }
+        if (firstChildOfType(Failure.class) != null) {
+            return false;
+        }
         Lookahead la = getLookahead();
         return la == null || la.getNestedExpansion() == null || la.getNestedExpansion().isPossiblyEmpty();
     }
@@ -364,6 +367,7 @@ abstract public class Expansion extends BaseNode {
      * @return whether this Expansion is always matched by exactly one token
      */
     public final boolean isSingleToken() {
+        if (firstChildOfType(Failure.class)!=null) return false; // Maybe a bit kludgy. REVISIT.
         return !isPossiblyEmpty() && getMaximumSize() == 1;
     }
     

@@ -360,7 +360,7 @@
 
 [#macro BuildCodeFailure fail]
     [#if fail.code?is_null]
-       throw new ParseException(this, ${expansion.message});
+       throw new ParseException(this, "${fail.message?j_string}");
     [#else]
        ${fail.code}
     [/#if]
@@ -713,7 +713,7 @@
 [/#macro]    
 
 [#macro ScanCodeError expansion]
-   return false;
+   if (true) return false; [#-- This ugly trick again! REVISIT later. --]
 [/#macro]
 
 [#macro ScanCodeChoice choice]

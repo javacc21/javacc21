@@ -371,10 +371,10 @@ INJECT PackageDeclaration :
         StringBuilder buf = new StringBuilder();
         boolean seenPackage = false;
         for (Token t : Nodes.getRealTokens(this)) {
-            if (t.getType() == TokenType.PACKAGE) {
+            if (t.getType() == PACKAGE) {
                 seenPackage = true;
             } else if (seenPackage) {
-                if (t.getType() != TokenType.SEMICOLON)
+                if (t.getType() != SEMICOLON)
                     buf.append(t);
             }
         }
@@ -425,41 +425,41 @@ Modifiers #void :
    (
      SCAN 2=>
      (
-      SCAN {!modifiers.contains(TokenType.STATIC)}
-      => <STATIC> {modifiers.add(TokenType.STATIC);}
+      SCAN {!modifiers.contains(STATIC)}
+      => <STATIC> {modifiers.add(STATIC);}
       |
-      SCAN {!modifiers.contains(TokenType.ABSTRACT)}
-      => <ABSTRACT> {modifiers.add(TokenType.ABSTRACT);}
+      SCAN {!modifiers.contains(ABSTRACT)}
+      => <ABSTRACT> {modifiers.add(ABSTRACT);}
       |
-      SCAN {!modifiers.contains(TokenType.FINAL)}
-      => <FINAL> {modifiers.add(TokenType.FINAL);}
+      SCAN {!modifiers.contains(FINAL)}
+      => <FINAL> {modifiers.add(FINAL);}
       |
-      SCAN {!modifiers.contains(TokenType.SYNCHRONIZED)}
-      => <SYNCHRONIZED> {modifiers.add(TokenType.SYNCHRONIZED);}
+      SCAN {!modifiers.contains(SYNCHRONIZED)}
+      => <SYNCHRONIZED> {modifiers.add(SYNCHRONIZED);}
       |
-      SCAN {!modifiers.contains(TokenType.NATIVE)}
-      => <NATIVE> {modifiers.add(TokenType.NATIVE);}
+      SCAN {!modifiers.contains(NATIVE)}
+      => <NATIVE> {modifiers.add(NATIVE);}
       |
-      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}
-      => <PUBLIC> {modifiers.add(TokenType.PUBLIC);}
+      SCAN {!modifiers.contains(PUBLIC) && !modifiers.contains(PRIVATE) && !modifiers.contains(PROTECTED)}
+      => <PUBLIC> {modifiers.add(PUBLIC);}
       |
-      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}
-      => <PROTECTED> {modifiers.add(TokenType.PROTECTED);}
+      SCAN {!modifiers.contains(PUBLIC) && !modifiers.contains(PRIVATE) && !modifiers.contains(PROTECTED)}
+      => <PROTECTED> {modifiers.add(PROTECTED);}
       |
-      SCAN {!modifiers.contains(TokenType.PUBLIC) && !modifiers.contains(TokenType.PRIVATE) && !modifiers.contains(TokenType.PROTECTED)}
-      => <PRIVATE> {modifiers.add(TokenType.PRIVATE);}
+      SCAN {!modifiers.contains(PUBLIC) && !modifiers.contains(PRIVATE) && !modifiers.contains(PROTECTED)}
+      => <PRIVATE> {modifiers.add(PRIVATE);}
       |
-      SCAN {!modifiers.contains(TokenType.TRANSIENT)}
-      => <TRANSIENT> {modifiers.add(TokenType.TRANSIENT);}
+      SCAN {!modifiers.contains(TRANSIENT)}
+      => <TRANSIENT> {modifiers.add(TRANSIENT);}
       |
-      SCAN {!modifiers.contains(TokenType.VOLATILE)}
-      => <VOLATILE> {modifiers.add(TokenType.VOLATILE);}
+      SCAN {!modifiers.contains(VOLATILE)}
+      => <VOLATILE> {modifiers.add(VOLATILE);}
       | 
-      SCAN {!modifiers.contains(TokenType.STRICTFP)}
-      => <STRICTFP> {modifiers.add(TokenType.STRICTFP);}
+      SCAN {!modifiers.contains(STRICTFP)}
+      => <STRICTFP> {modifiers.add(STRICTFP);}
 //      |
-//      SCAN {!modifiers.contains(TokenType._DEFAULT)}
-//      => <_DEFAULT> {modifiers.add(TokenType._DEFAULT);}
+//      SCAN {!modifiers.contains(_DEFAULT)}
+//      => <_DEFAULT> {modifiers.add(_DEFAULT);}
       |
       Annotation
      )
@@ -971,7 +971,7 @@ VariableDeclaratorId #VariableDeclaratorId :
 VariableInitializer : ArrayInitializer | Expression ;
 
 ArrayInitializer :
-  "{" [ VariableInitializer ( SCAN 2 => "," VariableInitializer )* ] [ "," ] "}"
+  "{" [ VariableInitializer ( "," =>|+1 VariableInitializer )* ] [ "," ] "}"
 ;
 
 INJECT MethodDeclaration : 
@@ -1069,9 +1069,9 @@ ConstructorDeclaration :
 ;
 
 ExplicitConstructorInvocation :
-  => "this" Arguments ";"
+  ("this" | "super") =>|+1 Arguments ";"
   |
-  [ SCAN 2 => PrimaryExpression "." ] "super" Arguments ";"
+  PrimaryExpression "." "super" =>|+1 Arguments ";"
 ;
 
 Initializer :
@@ -1084,7 +1084,7 @@ Initializer :
  */
 
 Type :
-   SCAN ReferenceType
+   => ReferenceType
    |
    PrimitiveType
 ;
@@ -1098,8 +1098,8 @@ ReferenceType :
 
 ObjectType ClassOrInterfaceType #ObjectType :
     <IDENTIFIER>
-    [ SCAN 2 TypeArguments ]
-    ( SCAN 2 "." <IDENTIFIER> [ SCAN 2 TypeArguments ] )*
+    [ TypeArguments ]
+    ( "." <IDENTIFIER> =>|| [ TypeArguments ] )*
     {
         return CURRENT_NODE;
     }
@@ -1132,7 +1132,7 @@ PossiblyEmptyTypeArguments #void :
 ;
 
 TypeArguments :
-   "<"
+   "<" =>|+1
    TypeArgument ( "," TypeArgument )* 
    ">"
 ;
@@ -1182,10 +1182,6 @@ ReturnType ReturnType #ReturnType :
 ;
 
 Name Name :
-/*
- * A lookahead of 2 is required below since "Name" can be followed
- * by a ".*" when used in the context of an "ImportDeclaration".
- */
     <IDENTIFIER>
     ( 
         => "." <IDENTIFIER>
@@ -1264,19 +1260,11 @@ INJECT PrimaryExpression : extends Expression
 INJECT LambdaExpression : extends Expression 
 INJECT CodeBlock : extends Expression
 
-/*
- * This expansion has been written this way instead of:
- *   Assignment | TernaryExpression
- * for performance reasons.
- * However, it is a weakening of the grammar for it allows the LHS of
- * assignments to be any conditional expression whereas it can only be
- * a primary expression.  Consider adding a semantic predicate to work
- * around this.
- */
 AssignmentExpression :
   TernaryExpression
   [ 
-        SCAN 2 => AssignmentOperator Expression
+      SCAN {peekNode() instanceof PrimaryExpression} =>
+        AssignmentOperator =>|+1 Expression
   ]
 ;
 
@@ -1334,12 +1322,12 @@ RelationalExpression :
 ShiftExpression :
    AdditiveExpression
    (
-      SCAN 2
       (
         "<<"
         |
         ShiftOperator
       )
+      =>||
       AdditiveExpression
    )*
 ;
@@ -1362,14 +1350,14 @@ ShiftOperator #void :
               throw new ParseException(this, "Shift operator >>> cannot have spaces or comments inside!\n" + first.getLocation());
          }
      	 first.setImage(">>>");
-	 	 first.setType(TokenType.RUNSIGNEDSHIFT);
+	 	 first.setType(RUNSIGNEDSHIFT);
 	 	 Token next = third.getNext();
 	 	 first.setNext(next);
 	 	 popNode();
 	 	 popNode();
       } else {
          first.setImage(">>");
-	 	 first.setType(TokenType.RSIGNEDSHIFT);
+	 	 first.setType(RSIGNEDSHIFT);
 	 	 Token next = second.getNext();
 	     first.setNext(next);
 	     popNode();
@@ -1435,7 +1423,7 @@ Expression PrimaryExpression #PrimaryExpression :
 ;
 
 MemberSelector :
-  "." TypeArguments <IDENTIFIER>
+  "." =>|+2 TypeArguments <IDENTIFIER>
 ;
 
 PrimaryPrefix :
@@ -1469,8 +1457,7 @@ PrimarySuffix :
   |
   "." =>|+1 AllocationExpression
     |
-  SCAN 3
-  => MemberSelector
+  MemberSelector
   |
   "[" [Expression] "]"
   |
@@ -1536,7 +1523,7 @@ AllocationExpression :
   "new" ClassOrInterfaceType [ PossiblyEmptyTypeArguments ]
     (
       ArrayDimsAndInits
-    |
+      |
       Arguments [ ClassOrInterfaceBody(false) ]
     )
 ;
@@ -1548,7 +1535,7 @@ AllocationExpression :
 ArrayDimsAndInits :
   SCAN 2
   ( 
-    SCAN 2 "[" Expression "]" 
+    "[" =>|+1 Expression "]" 
   )+ 
   ( 
     => "[" "]" 
@@ -1608,10 +1595,9 @@ UnlabeledStatement #void :
 TryStatement #void :
    TryWithResources
    |
-   SCAN "try" "{"=>
    ClassicTryStatement
    |
-   "try" {throw new ParseException(this, "Expecting either '{' or '(' after 'try'");}
+   "try" FAIL "Expecting '{' or '(' after 'try'"
 ;
 
 AssertStatement :
@@ -1644,8 +1630,7 @@ INJECT CodeBlock :
 }
 
 BlockStatement :
-  SCAN Modifiers Type <IDENTIFIER> 
-  => LocalVariableDeclaration ";"
+  LocalVariableDeclaration ";"
   |
   ClassDeclaration
   |
@@ -1655,7 +1640,7 @@ BlockStatement :
 ;
 
 LocalVariableDeclaration :
-  Modifiers Type VariableDeclarator ( "," VariableDeclarator )*
+  Modifiers Type =>|+1 VariableDeclarator ( "," VariableDeclarator )*
 ;
 
 EmptyStatement : ";" ;
@@ -1768,6 +1753,7 @@ ClassicTryStatement ClassicTryStatement :
  * finally/catch is present.
  */
   "try"
+  =>|+1
   Block 
   (
      FinallyBlock
@@ -1783,8 +1769,8 @@ ClassicTryStatement ClassicTryStatement :
 ;
 
 TryWithResources TryWithResources :
-   "try"
-   "(" =>||
+   "try" "(" 
+   =>||
      (
          => LocalVariableDeclaration
          |
