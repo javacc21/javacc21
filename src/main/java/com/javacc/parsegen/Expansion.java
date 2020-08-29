@@ -172,8 +172,9 @@ abstract public class Expansion extends BaseNode {
     
     public boolean getRequiresScanAhead() {
         Lookahead la = getLookahead();
-        return la != null && la.getRequiresScanAhead();
-    }
+        if (la != null && la.getRequiresScanAhead()) return true;
+        return getHasGlobalSemanticActions();
+    } 
 
     public TokenSet getLookaheadFirstSet() {
         Lookahead la = getLookahead();
@@ -196,6 +197,11 @@ abstract public class Expansion extends BaseNode {
         }
         Lookahead la = getLookahead();
         return la == null || la.getNestedExpansion() == null || la.getNestedExpansion().isPossiblyEmpty();
+    }
+
+    public boolean getHasGlobalSemanticActions() {
+        List<CodeBlock> blocks = descendants(CodeBlock.class, cb->cb.getAppliesInLookahead());
+        return !blocks.isEmpty();
     }
     
     public int getLookaheadAmount() {

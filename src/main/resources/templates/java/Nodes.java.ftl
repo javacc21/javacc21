@@ -44,7 +44,7 @@ import java.util.*;
 abstract public class Nodes {
    /**
     * @deprecated Quite possibly, this entire Nodes class will disappear soon!
-    *; 
+    */ 
      static public List<Token> getTokens(Node node) {
 	       return node.descendants(Token.class);
     }

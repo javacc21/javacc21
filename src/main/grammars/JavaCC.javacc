@@ -1527,7 +1527,6 @@ Lookahead ScanAhead #Lookahead :
 [
     amountToken= <INTEGER_LITERAL>
     {
-        
         CURRENT_NODE.setAmount(Integer.parseInt(amountToken.getImage()));
     }
 ]
@@ -1737,7 +1736,7 @@ INJECT Lookahead :
     }
 
     public boolean getRequiresScanAhead() {
-        return !getLookaheadExpansion().isPossiblyEmpty();
+        return !getLookaheadExpansion().isPossiblyEmpty() || isSemanticLookaheadNested();
 //        return !getLookaheadExpansion().isPossiblyEmpty() && getAmount() > 1;
 //          return !isAlwaysSuccessful() && getAmount() >1;
     }
@@ -2449,7 +2448,7 @@ INJECT CodeBlock :
     }
     
     /**
-     * These two do nothing but have to fullfil the superclass contract 
+     * These are here to fullfil the superclass contract 
      */
 
     public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
@@ -2501,19 +2500,21 @@ InPlaceRegexp #void :
     Token t;
     boolean isPrivate= false;
 }
+/*
   (
       SCAN \...\BNFProduction
       =>{inBNFProduction = true;}#
       |
       {inBNFProduction = false;}#
   )
+  */
   t=<LT>
   [
    (
      t=<IDENTIFIER> {image = t.getImage();}
      |
-//     SCAN ~\...\BNFProduction 
-     SCAN {!inBNFProduction}#
+     SCAN ~\...\BNFProduction 
+//     SCAN {!inBNFProduction}#
      => t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
    )
    ":"
