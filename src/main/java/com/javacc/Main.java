@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 
@@ -87,7 +88,9 @@ public final class Main {
         if (jarFile !=null && jarFile.exists()) try {
             long jarLastModified = jarFile.lastModified();
             URL url = new URL("https://javacc.com/download/" + jarFile.getName());
-            long lastUpdate = url.openConnection().getLastModified();
+            URLConnection connection = url.openConnection();
+            connection.setConnectTimeout(1000);
+            long lastUpdate = connection.getLastModified();
             if (lastUpdate > jarLastModified) {
                 System.out.println("Found newer version of JavaCC 21 at " + url);
                 System.out.println("Download it? (y/N)");
