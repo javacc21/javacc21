@@ -8,11 +8,11 @@ A list of the main features (in particular, wrt *legacy JavaCC*) follows:
 
 ## Up-to-date Java language support
 
-JavaCC 21 includes support for the Java language through JDK 13. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/).
+JavaCC 21 includes support for the Java language through JDK 13. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/). (As of this writing, Java language support in legacy JavaCC is stalled at the JDK 7 level.)
 
 Note also that the [Java grammar that JavaCC 21 uses internally](https://github.com/JavaCC21/JavaCC21/blob/master/src/main/grammars/Java.javacc) can be used in your own projects without any restriction.
 
-## Nested Syntactic Lookahead now works correctly!
+## Major Bugfix! Nested Syntactic Lookahead now works correctly!
 
 A longstanding limitation of JavaCC has been that syntactic lookahead does not nest, i.e. work recursively. This has been an issue in JavaCC for 24 years and was never addressed, and surely caused the tool to be less generally useful than it could have been, since attempts to do anything at all sophisticated would typically use recursive lookahead and would simply not work.
 

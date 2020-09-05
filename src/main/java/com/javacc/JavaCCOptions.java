@@ -134,8 +134,7 @@ public class JavaCCOptions {
         optionValues = new HashMap<String, Object>();
         optionValues.put("QUIET",  false);
 //        optionValues.put("LOOKAHEAD", 1);
-        optionValues.put("CHOICE_AMBIGUITY_CHECK", 2);
-//        optionValues.put("OTHER_AMBIGUITY_CHECK", 1);
+//        optionValues.put("CHOICE_AMBIGUITY_CHECK", 2);
         optionValues.put("TABS_TO_SPACES",  0);
         optionValues.put("DEBUG_PARSER", false);
 //        optionValues.put("DEBUG_LOOKAHEAD", false);
@@ -434,32 +433,13 @@ public class JavaCCOptions {
     }
 
     /**
-     * Find the lookahead setting.
-     *
-     * @return The requested lookahead value.
-     */
-    public int getLookahead() {
-        return 1;
-//        return intValue("LOOKAHEAD");
-    }
-
-    /**
      * Find the choice ambiguity check value.
      *
      * @return The requested choice ambiguity check value.
      */
     public int getChoiceAmbiguityCheck() {
-        return intValue("CHOICE_AMBIGUITY_CHECK");
-    }
-
-    /**
-     * Find the other ambiguity check value.
-     *
-     * @return The requested other ambiguity check value.
-     */
-    public int getOtherAmbiguityCheck() {
-//        return intValue("OTHER_AMBIGUITY_CHECK");
-        return 1;
+//        return intValue("CHOICE_AMBIGUITY_CHECK");
+       return 2;
     }
 
     /**
@@ -470,15 +450,6 @@ public class JavaCCOptions {
     public boolean getDebugParser() {
         return booleanValue("DEBUG_PARSER");
     }
-
-    /**
-     * Find the debug lookahead value.
-     *
-     * @return The requested debug lookahead value.
-     */
-//    public boolean getDebugLookahead() {
-//        return booleanValue("DEBUG_LOOKAHEAD");
-//    }
 
     /**
      * Find the debug tokenmanager value.

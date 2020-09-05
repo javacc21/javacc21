@@ -105,6 +105,7 @@ public final class Main {
                     } catch (Exception e) {
                         System.out.println("Failed to save older version of jarfile");
                         System.out.println("Possibly directory " + oldFile.getParent() + " is not writeable.");
+                        scanner.close();
                         return;
                     }
                     System.out.println("Updating jarfile...");
@@ -147,9 +148,7 @@ public final class Main {
         System.out.println();
         System.out.println("The integer valued options are:");
         System.out.println();
-        System.out.println("    LOOKAHEAD              (default 1)");
-        System.out.println("    CHOICE_AMBIGUITY_CHECK (default 2)");
-        System.out.println("    OTHER_AMBIGUITY_CHECK  (default 1)");
+//        System.out.println("    CHOICE_AMBIGUITY_CHECK (default 2)");
         System.out.println("    TABS_TO_SPACES (default not set)");
         System.out.println();
         System.out.println("The boolean valued options are:");
@@ -161,10 +160,10 @@ public final class Main {
         System.out.println("    FREEMARKER_NODES       (default false)");
         System.out.println("    IGNORE_CASE            (default false)");
         System.out.println("    JAVA_UNICODE_ESCAPE    (default false)");
-        System.out.println("    LEGACY_API                    (default false)");
+        System.out.println("    LEGACY_API             (default false)");
         System.out.println("    LEXER_USES_PARSER      (default false)");
         System.out.println("    NODES_USE_PARSER       (default false)");
-        System.out.println("    PRESERVE_LINE_ENDINGS       (default true)");
+        System.out.println("    PRESERVE_LINE_ENDINGS  (default true)");
         System.out.println("    SMART_NODE_CREATION    (default true)");
         System.out.println("    TOKENS_ARE_NODES       (default true)");
         System.out.println("    TREE_BUILDING_DEFAULT  (default true)");
