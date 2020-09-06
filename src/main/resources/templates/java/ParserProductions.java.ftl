@@ -512,7 +512,7 @@
 [/#macro]
 
 [#macro ResetCall expansion]
-    [#if expansion.lookaheadAmount ==1 || expansion.lookaheadExpansion.singleToken]
+    [#if (expansion.lookaheadAmount ==1 || expansion.lookaheadExpansion.singleToken) && !expansion.lookaheadExpansion.requiresScanAhead]
        [#return]
     [/#if]
     [#if !expansion.upToExpansion??]

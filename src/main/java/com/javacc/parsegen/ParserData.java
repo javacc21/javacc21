@@ -950,7 +950,7 @@ public class ParserData {
             List<MatchInfo> v1 = new ArrayList<MatchInfo>();
             List<MatchInfo> v2 = new ArrayList<MatchInfo>();
             listSplit(v, partialMatches, v1, v2);
-            if (!v1.isEmpty()) {
+            if (!v1.isEmpty() && seq.getParent() instanceof Expansion) {
                 v1 = generateFollowSet(v1, seq, generation);
             }
             if (!v2.isEmpty()) {
