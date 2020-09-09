@@ -124,7 +124,7 @@ Usage is really quite simple. As described [here](https://javacc.com/home/) Java
 
 The latest source code can be checked out from Github via:
 
-    git clone https://github.com/JavaCC 21/JavaCC 21.git
+    git clone https://github.com/JavaCC21/JavaCC21.git
 
 And then you can do a build by invoking ant from the top-level directory. You should also be able to run the test suite by running "ant test".
 
