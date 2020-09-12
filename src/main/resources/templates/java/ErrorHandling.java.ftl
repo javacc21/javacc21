@@ -134,7 +134,7 @@ private Iterator<NonTerminalCall> stackIteratorBackward() {
 
 
 private final void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
-    lookaheadStack.add(new NonTerminalCall(fileName, methodName, line, column, stopAtScanLimit));
+    lookaheadStack.add(new NonTerminalCall(fileName, methodName, line, column, this.stopAtScanLimit));
 }
 
 private final void popLookaheadStack() {

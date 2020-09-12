@@ -133,7 +133,6 @@ public class JavaCCOptions {
     public void init() {
         optionValues = new HashMap<String, Object>();
         optionValues.put("QUIET",  false);
-//        optionValues.put("LOOKAHEAD", 1);
 //        optionValues.put("CHOICE_AMBIGUITY_CHECK", 2);
         optionValues.put("TABS_TO_SPACES",  0);
         optionValues.put("DEBUG_PARSER", false);
@@ -238,57 +237,50 @@ public class JavaCCOptions {
             // This will be revisited later.
             return;
         }
+        Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
 
         if (s.equalsIgnoreCase("STATIC")) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, the STATIC option is superfluous. All parsers are non-static. Option setting will be ignored.");
             return;
         }
+        else if (s.equalsIgnoreCase("LOOKAHEAD")) {
+            grammar.addWarning(node, "In JavaCC 21, the LOOKAHEAD option has been removed. It is always 1 but you can override that at key points in your grammar.");
+            return;
+        }
 	    else if (s.equalsIgnoreCase("NODE_FACTORY")) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, the NODE_FACTORY option from JJTree has been removed. Option setting will be ignored.");
             return;
         }
 	    else if (s.equalsIgnoreCase("MULTI")) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, the MULTI option from JJTree has been removed. Effectively, it is always true. Option setting will be ignored.");
             return;
         }
-
         else if (s.equalsIgnoreCase("KEEP_LINE_COLUMN")) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, the KEEP_LINE_COLUMN option is superfluous. Location info is always retained. Option setting will be ignored.");
             return;
         }
         else if (s.equalsIgnoreCase("COMMON_TOKEN_ACTION")) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, the COMMON_TOKEN_ACTION option is superfluous. If your Lexer class contains a CommonTokenAction(Token t) method it is used. Option setting will be ignored.");
             return;
         }
         else if (s.equalsIgnoreCase("NODE_SCOPE_HOOK")) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, the NODE_SCOPE_HOOK option is superfluous. If your Parser class contains either or both of openNodeScopeHook(Node n) and closeNodeScopeHook(Node n)," +
             		"then calls to those methods will be inserted at the appropriate locations. This option setting will be ignored.");
             return;
         }
         else if (s.equalsIgnoreCase("UNICODE_INPUT")) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "In JavaCC 21, all input to a parser is assumed to be unicode. The UNICODE_INPUT option is now superfluous.");
             return;
         }
         else if (s.equalsIgnoreCase("TRACK_TOKENS")) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "The JJTree option TRACK_TOKENS is ignored because it is basically obsolete in JavaCC 21.");
             return;
         }
         else if (s.equalsIgnoreCase("NODE_EXTENDS")) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
-            grammar.addWarning(node, "The NODE_EXTENDS option is obsolete. You can simply use code injection instead.");
+            grammar.addWarning(node, "The NODE_EXTENDS option is obsolete and unsupported. You can simply use code injection instead.");
             return;
         }
-
         else if (!optionValues.containsKey(s) && !aliases.containsKey(s)) {
-            Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
             grammar.addWarning(node, "Unrecognized option name \"" + name
                     + "\".  Option setting will be ignored.");
             return;
@@ -298,14 +290,13 @@ public class JavaCCOptions {
         if (existingValue != null) {
             if ((existingValue.getClass() != value.getClass())
                     || (value instanceof Integer && ((Integer) value).intValue() <= 0)) {
-                Node node = (valueloc instanceof Node) ? (Node) valueloc : null;
+                node = (valueloc instanceof Node) ? (Node) valueloc : null;
                 grammar.addWarning(node, "Bad option value \"" + value + "\" for \"" + name
                         + "\".  Option setting will be ignored.");
                 return;
             }
 
             if (inputFileSetting.contains(s)) {
-                Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
                 grammar.addWarning(node, "Duplicate option setting for \"" + name
                         + "\" will be ignored.");
                 return;
@@ -313,7 +304,7 @@ public class JavaCCOptions {
 
             if (cmdLineSetting.contains(s)) {
                 if (!existingValue.equals(value)) {
-                    Node node = (valueloc instanceof Node) ? (Node) valueloc
+                    node = (valueloc instanceof Node) ? (Node) valueloc
                             : null;
                     grammar.addWarning(node, "Command line setting of \"" + name
                             + "\" modifies option value in file.");

@@ -101,8 +101,8 @@ INJECT FTLLexer :
     int parenthesisNesting, bracketNesting, braceNesting;
     TokenType lastMatchedTokenType;
 
-    void CommonTokenAction(Token tok) {
-        if (tok.getType() == TokenType.EOF) return;
+    Token tokenHook(Token tok) {
+        if (tok.getType() == TokenType.EOF) return tok;
         if (noWhitespaceInExpression && parenthesisNesting ==0 && braceNesting==0 && tok.specialToken != null) {
             if (tok.specialToken.getImage().trim().length() == 0) {
                 Token copy = cloneToken(tok);
@@ -112,7 +112,7 @@ INJECT FTLLexer :
                 tok.setNext(copy);
                 noWhitespaceInExpression = false;
                 lastMatchedTokenType = tok.getType();
-                return;
+                return tok;
             }
         }
         char firstChar = tok.getImage().charAt(0);
@@ -206,6 +206,7 @@ INJECT FTLLexer :
               }
         }
         lastMatchedTokenType = tok.getType();
+        return tok;
     }
 
     private boolean possibleIdentifier(String s) {

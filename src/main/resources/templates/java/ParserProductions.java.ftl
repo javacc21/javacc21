@@ -771,13 +771,20 @@
 [#macro ScanCodeNonTerminal nt]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
       [#if !nt.atEnd]
+         [@newVar "boolean" "stopAtScanLimit"/]
          stopAtScanLimit = false;
       [/#if]
       if (![@InvokeScanRoutine nt.production.expansion/]) {
          popLookaheadStack();
+         [#if !nt.atEnd]
+         stopAtScanLimit = boolean${newVarIndex};
+         [/#if]
          return false;
       }
       popLookaheadStack();
+      [#if !nt.atEnd]
+      stopAtScanLimit = boolean${newVarIndex};
+      [/#if]
 [/#macro]
 
 [#--
