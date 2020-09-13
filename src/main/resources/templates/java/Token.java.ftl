@@ -293,10 +293,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
           return new Token(type, image, fileLineMap);      
        [/#if]
     }
-    
-   public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
+[#if grammar.productionTable?size != 0]    
+    public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
         return newToken(type, image, parser.token_source);
     } 
+[/#if]    
     public static Token newToken(TokenType type, String image, ${grammar.lexerClassName} lexer) {
         return newToken(type, image, lexer.input_stream);
     }

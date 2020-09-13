@@ -79,11 +79,11 @@ public class FilesGenerator {
             throw new MetaParseException();
         }
         initializeTemplateEngine();
-        generateParseException();
         generateToken();
         generateLexer();
         generateConstantsFile();
         if (!grammar.getProductionTable().isEmpty()) {
+            generateParseException();
             generateParser();
         }
         if (grammar.getOptions().getTreeBuildingEnabled()) {

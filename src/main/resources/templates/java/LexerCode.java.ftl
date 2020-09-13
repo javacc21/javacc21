@@ -34,7 +34,7 @@
         This is the one remaining template file that is still a god-awful mess and, I (JR) have to admit 
         still quite opaque to me. The corresponding Java code is the stuff in com.javacc.lexgen package
         that, along with this template, will eventually be cleaned up, probably a more accurate 
-        description is torn up and rewritten. 
+        description is that it will be torn up and rewritten. 
   --]
 
  [#var options=grammar.options, lexerData=grammar.lexerData]
@@ -169,7 +169,7 @@
                    [#if numLexicalStates>1]
                    "<" + lexicalState + ">" + 
                    [/#if]
-                   "Skipping character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
+                   "Skipping character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
                    [/#set] 
                     if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
                     curChar = (char) input_stream.beginToken();
@@ -194,7 +194,7 @@
             [#if numLexicalStates>1]
                "<" + lexicalState + ">" + 
             [/#if]
-            "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+            "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
             "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
         [/#set]
         if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
@@ -227,7 +227,7 @@
         input_stream.backup(curPos - jjmatchedPos - 1);
       }
        if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
-          + ParseException.addEscapes(input_stream.getSuffix(jjmatchedPos + 2)) + ") ******\n");
+          + addEscapes(input_stream.getSuffix(jjmatchedPos + 2)) + ") ******\n");
  
  [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
           if (tokenSet.get(jjmatchedKind)) {
@@ -334,7 +334,7 @@
 	              [#if numLexicalStates>1]
 	                 "<" + lexicalState + ">" + 
 	              [/#if]
-	              "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+	              "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
 	              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
 	            [/#set]
 	              if (trace_enabled) LOGGER.info(${debugOutput?trim});
@@ -681,7 +681,7 @@
         [#if numLexicalStates != 1]
             "<" + lexicalState + ">" +  
         [/#if]
-            "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
+            "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
            + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
     [/#if]
         int kind = 0x7fffffff;
@@ -755,7 +755,7 @@
             [#if numLexicalStates != 1]
                "<" + lexicalState + ">" + 
             [/#if]
-               ParseException.addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
+               addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
               + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
         }
     [#if lexicalState.mixedCase]
@@ -1131,7 +1131,7 @@
         [#if lexerData.lexicalStates?size != 1]
            "<${lexicalState.name}>" +
         [/#if]
-        "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) + " ("
+        "Current character : " + addEscapes(String.valueOf(curChar)) + " ("
         + (int) curChar + ") at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
     [/#if]
       switch (curChar) {
@@ -1269,7 +1269,7 @@
      [#if numLexicalStates != 1]
             "<${lexicalState.name}>"+  
      [/#if]
-            "Current character : " + ParseException.addEscapes(String.valueOf(curChar)) 
+            "Current character : " + addEscapes(String.valueOf(curChar)) 
             + " (" + (int)curChar + ") " + "at line " + input_stream.getEndLine() 
             + " column " + input_stream.getEndColumn());
         return jjMoveNfa${lexicalState.suffix}(state, pos+1);
