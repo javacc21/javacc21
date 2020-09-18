@@ -208,8 +208,9 @@ public class ParserData {
 
         for (ExpansionSequence sequence : grammar.descendants(ExpansionSequence.class)) {
             Node parent = sequence.getParent();
-            if (sequence.hasExplicitLookahead() 
-               && !(parent instanceof ExpansionChoice 
+            if (sequence.getHasExplicitLookahead() 
+               && !(//parent instanceof BNFProduction || //comment out for now
+                   parent instanceof ExpansionChoice 
                    || parent instanceof OneOrMore 
                    || parent instanceof ZeroOrOne 
                    || parent instanceof ZeroOrMore
@@ -809,7 +810,7 @@ public class ParserData {
     int firstChoice(ExpansionChoice ch) {
         List<Expansion> choices = ch.getChoices();
         for (int i = 0; i < choices.size(); i++) {
-            if (!choices.get(i).hasExplicitLookahead()) {
+            if (!choices.get(i).getHasExplicitLookahead()) {
                 return i;
             }
         }

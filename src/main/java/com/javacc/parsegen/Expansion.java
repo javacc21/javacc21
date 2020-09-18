@@ -146,7 +146,7 @@ abstract public class Expansion extends BaseNode {
     	return lookahead;
     }
     
-    public boolean hasExplicitLookahead() {
+    public boolean getHasExplicitLookahead() {
         return getLookahead() != null;
     }
 
@@ -340,7 +340,7 @@ abstract public class Expansion extends BaseNode {
         }
         if (parent instanceof ExpansionSequence) {
             ExpansionSequence seq = (ExpansionSequence) parent;
-            if (seq.hasExplicitLookahead()) {
+            if (seq.getHasExplicitLookahead()) {
                 return true;
             }
             List<Expansion> siblings = seq.getUnits();

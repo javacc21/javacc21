@@ -928,7 +928,8 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   |
   ConstructorDeclaration
   |
-  => FieldDeclaration
+//  => 
+  FieldDeclaration
   |
   MethodDeclaration
 ;
@@ -957,7 +958,7 @@ INJECT FieldDeclaration :
 
 FieldDeclaration :
   Modifiers 
-  Type VariableDeclarator ( "," VariableDeclarator )* ";"
+  Type VariableDeclarator =>|+1 ( "," VariableDeclarator )* ";"
 ;
 
 VariableDeclarator :
@@ -998,7 +999,8 @@ MethodDeclaration :
   Modifiers2
   [ TypeParameters ]
   ReturnType
-  MethodDeclarator =>|| 
+  =>|+2
+  MethodDeclarator 
   [ ThrowsList ]
   ( Block | ";" )
 ;
@@ -1417,6 +1419,7 @@ CastExpression :
 Expression PrimaryExpression #PrimaryExpression :
     PrimaryPrefix 
     ( SCAN 2 PrimarySuffix )*
+//    ( PrimarySuffix )*
     {
             return CURRENT_NODE;
     }
@@ -1453,6 +1456,8 @@ MethodReference :
 ;
 
 PrimarySuffix :
+//  SCAN 2 // REVISIT this idea
+ (
   => "." ("this"|"super")
   |
   "." =>|+1 AllocationExpression
@@ -1466,6 +1471,7 @@ PrimarySuffix :
   "::" (<IDENTIFIER>|"new")
   |
   Arguments
+ )
 ;
 
 Literal #void :

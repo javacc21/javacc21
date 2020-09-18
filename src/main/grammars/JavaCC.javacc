@@ -848,6 +848,10 @@ INJECT BNFProduction :
         return expansion instanceof ExpansionSequence && ((ExpansionSequence) expansion).getHasScanLimit();
     }
 
+    public boolean getHasExplicitLookahead() {
+        return expansion.getHasExplicitLookahead();
+    }
+
     public CodeBlock getJavaCode() {
        return firstChildOfType(CodeBlock.class);
     }
@@ -1448,7 +1452,9 @@ INJECT ExpansionSequence :
        for (Expansion unit : getUnits()) {
             if (unit.isScanLimit()) return true;
             if (!foundNonEmpty && (unit instanceof NonTerminal)) {
-                if (((NonTerminal) unit).getHasScanLimit()) return true;
+                NonTerminal nt = (NonTerminal) unit;
+                if (nt.getHasScanLimit()) return true;
+//                if (nt.getProduction().getHasExplicitLookahead()) return true;
             }
             if (!unit.isPossiblyEmpty()) foundNonEmpty = true;
        }
@@ -1819,6 +1825,10 @@ INJECT Lookahead :
 
     public void setAmount(int amount) {
         this.amount = amount;
+    }
+
+    public boolean getHasExplicitAmount() {
+        return amount != Integer.MAX_VALUE;
     }
 
     public TokenSet getFirstSet() {
