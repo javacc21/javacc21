@@ -542,22 +542,14 @@
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion]
-   [#var empty = true]
    [#if expansion.lookahead?? && expansion.lookahead.LHS??]
       (${expansion.lookahead.LHS} =
    [/#if]
-   [#if expansion.hasSemanticLookahead]
-      (${expansion.semanticLookahead}) 
-      [#set empty = false]
-   [/#if]
-   [#if expansion.hasLookBehind]
-      [#if !empty] && [/#if]
-      [#set empty = false]
-      ${expansion.lookBehind.routineName}() 
+   [#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested]
+      (${expansion.semanticLookahead})
+      [#if expansion.requiresScanAhead] && [/#if]
    [/#if]
    [#if expansion.requiresScanAhead]
-      [#if !empty] && [/#if]
-      [#set empty = false]
       [#if expansion.negated]![/#if]
       ${expansion.lookaheadExpansion.scanRoutineName}(false)
    [/#if]
@@ -667,15 +659,15 @@
           ${expansion.parent.javaCode}
        [/#if]
      [/#if]
-     [#if expansion.lookahead?? && expansion.lookahead.semanticLookaheadNested]
-       if (nested && !(${expansion.semanticLookahead}) return false;
+     [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
+       if (!(${expansion.semanticLookahead}) return false;
      [/#if]
      [#if expansion.hasLookBehind]
-       if (nested && !${expansion.lookBehind.routineName}()) return false;
+       if (!${expansion.lookBehind.routineName}()) return false;
      [/#if]
      [#if expansion.hasSyntacticLookahead]
       if (nested && 
-      [#if !expansion.lookaheadExpansion.negated]![/#if]
+      [#if !expansion.negated]![/#if]
       ${expansion.lookahead.routineName}())
         return false;
      [/#if]
