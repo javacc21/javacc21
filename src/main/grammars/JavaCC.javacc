@@ -1961,15 +1961,13 @@ NonTerminal NonTerminal #NonTerminal :
     => PrimaryExpression "="
   ]
   <IDENTIFIER>
-  (
+  [
     SCAN "(" ExpansionSequence "|" => {}
     |
     SCAN "(" ExpansionChoice ")" ("*"|"+"|"?") => {}
     |
-    => Arguments
-    |
-    {}
-  )
+    Arguments
+  ]
   [
      <BANG>  {CURRENT_NODE.setForced(true);}
   ]
