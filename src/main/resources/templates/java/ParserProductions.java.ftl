@@ -533,6 +533,15 @@
      including the default single-token lookahead
 --]
 [#macro ExpansionCondition expansion]
+   [#if expansion.hasSemanticLookahead || expansion.hasLookBehind || expansion.requiresScanAhead]
+      ${ScanAheadCondition(expansion)}
+   [#else]
+      ${SingleTokenCondition(expansion)}
+   [/#if]
+[/#macro]
+
+[#-- Generates code for when we need a scanahead --]
+[#macro ScanAheadCondition expansion]
    [#var empty = true]
    [#if expansion.lookahead?? && expansion.lookahead.LHS??]
       (${expansion.lookahead.LHS} =
@@ -550,20 +559,14 @@
       [#if !empty] && [/#if]
       [#set empty = false]
       [#if expansion.negated]![/#if]
-      [#if expansion.lookaheadExpansion.singleToken]
-      (${SingleTokenCondition(expansion.lookaheadExpansion)})
-      [#else]
-      ${expansion.lookaheadExpansion.scanRoutineName}()
-      [/#if]
-   [/#if]
-   [#if empty]
-      ${SingleTokenCondition(expansion)}
+      ${expansion.lookaheadExpansion.scanRoutineName}(false)
    [/#if]
    [#if expansion.lookahead?? && expansion.lookahead.LHS??]
       )
    [/#if]
 [/#macro]
 
+[#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
    [#if expansion.firstSet.tokenNames?size < 5] 
       [#list expansion.firstSet.tokenNames as name]
@@ -657,14 +660,26 @@
 
 
 [#macro BuildScanRoutine expansion count]
-     private final boolean ${expansion.scanRoutineName}() {
+     private final boolean ${expansion.scanRoutineName}(boolean nested) {
      if (remainingLookahead <=0) return true;
      [#if expansion.parent.class.simpleName = "BNFProduction"]
        [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
           ${expansion.parent.javaCode}
        [/#if]
      [/#if]
-      [@BuildScanCode expansion, count/]
+     [#if expansion.lookahead?? && expansion.lookahead.semanticLookaheadNested]
+       if (nested && !(${expansion.semanticLookahead}) return false;
+     [/#if]
+     [#if expansion.hasLookBehind]
+       if (nested && !${expansion.lookBehind.routineName}()) return false;
+     [/#if]
+     [#if expansion.hasSyntacticLookahead]
+      if (nested && 
+      [#if !expansion.lookaheadExpansion.negated]![/#if]
+      ${expansion.lookahead.routineName}())
+        return false;
+     [/#if]
+     [@BuildScanCode expansion, count/]
       return true;
     }
 [/#macro]
@@ -720,7 +735,7 @@
    [@newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${newVarIndex} = remainingLookahead;
   [#list choice.choices as subseq]
-     if (!([@InvokeScanRoutine subseq/])) {
+     if (!${subseq.scanRoutineName}(true)) {
      [#if subseq_has_next]
         currentLookaheadToken = token${newVarIndex};
         remainingLookahead = remainingLookahead${newVarIndex};
@@ -733,7 +748,7 @@
 
 [#macro ScanCodeZeroOrOne zoo]
    [@newVar type="Token" init="currentLookaheadToken"/]
-   if (!([@InvokeScanRoutine zoo.nestedExpansion/])) 
+   if (!${zoo.nestedExpansion.scanRoutineName}(true))
       currentLookaheadToken = token${newVarIndex};
 [/#macro]
 
@@ -743,8 +758,7 @@
 [#macro ScanCodeZeroOrMore zom]
       while (remainingLookahead > 0) {
       [@newVar type="Token" init="currentLookaheadToken"/]
-         if (!(
-         [@InvokeScanRoutine zom.nestedExpansion/])) {
+         if (!${zom.nestedExpansion.scanRoutineName}(true)) {
              currentLookaheadToken = token${newVarIndex};
              break;
          }
@@ -757,7 +771,7 @@
    and then the same code as a ZeroOrMore
 --]
 [#macro ScanCodeOneOrMore oom]
-   if (!([@InvokeScanRoutine oom.nestedExpansion/])) {
+   if (!${oom.nestedExpansion.scanRoutineName}(true)) {
       return false;
    }
    [@ScanCodeZeroOrMore oom /]
@@ -776,7 +790,7 @@
          boolean ${scanLimitVarName} = stopAtScanLimit;
          stopAtScanLimit = false;
       [/#if]
-      if (![@InvokeScanRoutine nt.production.expansion/]) {
+      if (!${nt.production.expansion.scanRoutineName}(true)) {
          popLookaheadStack();
          [#if !nt.atEnd]
              stopAtScanLimit = ${scanLimitVarName};
@@ -814,33 +828,6 @@
    [/#list]
 [/#macro]
 
-[#-- 
-  Invoke the code for scanning for an expansion.
-  If the expansion has an explicit (nested) lookahead, it checks for 
-  the lookahead succeeding and then the expansion itself.
---]
-[#macro InvokeScanRoutine expansion]
-   [#if expansion.lookahead?? && expansion.lookahead.semanticLookaheadNested]
-       (${expansion.semanticLookahead}) &&
-   [/#if]
-   [#if expansion.hasLookBehind]
-       ${expansion.lookBehind.routineName}() &&
-   [/#if]
-   [#if expansion.hasSyntacticLookahead]
-            ${expansion.lookaheadExpansion.negated?string("!", "")}${expansion.lookahead.routineName}() &&
-   [/#if]
-   [#if expansion.singleToken]
-       [#var firstSet = expansion.firstSet.tokenNames]
-       [#if firstSet?size ==1]
-         scanToken(${TT}${firstSet[0]})
-       [#else]
-         scanToken(${expansion.firstSetVarName})
-       [/#if]
-   [#else]
-      ${expansion.scanRoutineName}()
-   [/#if]
-[/#macro]
-
 [#var newVarIndex=0]
 [#-- Just to generate a new unique variable name
   All it does is tack an integer (that is incremented)
@@ -853,7 +840,6 @@
    [/#if]
    ;
 [/#macro]   
-
 
 [#-- A macro to use at one's convenience to comment out a block of code --]
 [#macro comment]
