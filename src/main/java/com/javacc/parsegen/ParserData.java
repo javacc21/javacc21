@@ -290,6 +290,8 @@ public class ParserData {
          }
 
 
+// Below this point is legacy code that I'm still schlepping around.
+
         /*
          * The following loop ensures that all target lexical states are
          * defined. Also piggybacking on this loop is the detection of <EOF> and

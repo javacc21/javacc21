@@ -133,10 +133,8 @@ public class JavaCCOptions {
     public void init() {
         optionValues = new HashMap<String, Object>();
         optionValues.put("QUIET",  false);
-//        optionValues.put("CHOICE_AMBIGUITY_CHECK", 2);
         optionValues.put("TABS_TO_SPACES",  0);
         optionValues.put("DEBUG_PARSER", false);
-//        optionValues.put("DEBUG_LOOKAHEAD", false);
         optionValues.put("DEBUG_LEXER", false);
         optionValues.put("FAULT_TOLERANT", false);
         optionValues.put("PRESERVE_LINE_ENDINGS",  true); // Will change this to false pretty soon.
@@ -144,7 +142,6 @@ public class JavaCCOptions {
         optionValues.put("IGNORE_CASE", false);
         optionValues.put("USER_DEFINED_LEXER", false);
         optionValues.put("LEXER_USES_PARSER", false);
-//        optionValues.put("FORCE_LA_CHECK", false);
 
         optionValues.put("PARSER_PACKAGE", "");
         optionValues.put("PARSER_CLASS", "");
@@ -155,20 +152,15 @@ public class JavaCCOptions {
 
         optionValues.put("OUTPUT_DIRECTORY", "");
         optionValues.put("TOKEN_FACTORY", "");
-        optionValues.put("CSS", "");
 
         optionValues.put("NODE_DEFAULT_VOID", false);
         optionValues.put("SMART_NODE_CREATION", true);
         optionValues.put("NODE_USES_PARSER", false);
-        optionValues.put("VISITOR", false);
 
         optionValues.put("NODE_PREFIX", "");
         optionValues.put("NODE_CLASS", "");
         optionValues.put("NODE_FACTORY", false);
         optionValues.put("NODE_PACKAGE", "");
-        optionValues.put("VISITOR_DATA_TYPE", "");
-        optionValues.put("VISITOR_RETURN_TYPE", "Object");
-        optionValues.put("VISITOR_EXCEPTION", "");
         optionValues.put("TREE_BUILDING_DEFAULT", true);
         optionValues.put("TREE_BUILDING_ENABLED", true);
         optionValues.put("TOKENS_ARE_NODES", true);
@@ -424,16 +416,6 @@ public class JavaCCOptions {
     }
 
     /**
-     * Find the choice ambiguity check value.
-     *
-     * @return The requested choice ambiguity check value.
-     */
-    public int getChoiceAmbiguityCheck() {
-//        return intValue("CHOICE_AMBIGUITY_CHECK");
-       return 2;
-    }
-
-    /**
      * Find the debug parser value.
      *
      * @return The requested debug parser value.
@@ -490,15 +472,6 @@ public class JavaCCOptions {
     }
 
     /**
-     * Find the force lookahead check value.
-     *
-     * @return The requested force lookahead value.
-     */
-//    public boolean getForceLaCheck() {
-//        return booleanValue("FORCE_LA_CHECK");
-//    }
-//
-    /**
      * @return a CSS file to use for outputting HTML docs
      */
     public String getCSS() {
@@ -542,24 +515,6 @@ public class JavaCCOptions {
     public boolean getHugeFileSupport() {
     	return booleanValue("HUGE_FILE_SUPPORT") && !getTreeBuildingEnabled() && !getFaultTolerant();
     }
-
-    /**
-     *  Check options for consistency
-     */
-    public void validate() {
-      if (!getVisitor()) {
-        if (getVisitorDataType().length() > 0) {
-          grammar.addWarning(null, "VISITOR_DATA_TYPE option will be ignored since VISITOR is false");
-        }
-        if (getVisitorReturnType().length() > 0 && !getVisitorReturnType().equals("Object")) {
-          grammar.addWarning(null, "VISITOR_RETURN_TYPE option will be ignored since VISITOR is false");
-        }
-        if (getVisitorException().length() > 0) {
-          grammar.addWarning(null, "VISITOR_EXCEPTION option will be ignored since VISITOR is false");
-        }
-      }
-    }
-
 
     /**
      * Find the node default void value.

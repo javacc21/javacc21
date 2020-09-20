@@ -670,7 +670,6 @@
       currentLookaheadToken= currentToken;
       remainingLookahead= ${lookaheadAmount};
      stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
-//     stopAtScanLimit = true;
      [#if expansion.parent.class.simpleName = "BNFProduction"]
        [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
           ${expansion.parent.javaCode}

@@ -455,29 +455,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 [/#if]
 
- [#if grammar.options.visitor]
-    [#var VISITOR_THROWS = ""]
-    [#if grammar.options.visitorException?has_content]
-       [#set VISITOR_THROWS = "throws " + grammar.options.visitorException + " "]
-    [/#if]
-    [#var VISITOR_CLASS = grammar.parserClassName + "Visitor"]
-    [#var VISITOR_DATA_TYPE = grammar.options.visitorDataType]
-    [#var VISITOR_RETURN_TYPE = grammar.options.visitorReturnType]
-    [#if !VISITOR_DATA_TYPE?has_content][#set VISITOR_DATA_TYPE="Object"][/#if]
-    [#if !VISITOR_RETURN_TYPE?has_content][#set VISITOR_RETURN_TYPE="Object"][/#if]
-    /** Accept the visitor. **/
-    public ${VISITOR_RETURN_TYPE} jjtAccept(${VISITOR_CLASS} visitor, ${VISITOR_DATA_TYPE} data) ${VISITOR_THROWS}{
-      [#if VISITOR_RETURN_TYPE != "void"]
-        return visitor.visit(this, data);
-      [/#if]
-    }
-           
-    /** Accept the visitor. **/
-    public Object childrenAccept(${VISITOR_CLASS} visitor, ${VISITOR_DATA_TYPE} data) ${VISITOR_THROWS}{
-        return data;
-    }
-[/#if]   
-                
  [/#if]
 
 }

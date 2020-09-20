@@ -206,16 +206,6 @@ public interface Node extends Comparable<Node>
      }
 [/#if]     
  
-[#if grammar.options.visitor] [#--  This thing is just from legacy JJTree. I think the Node.Visitor that uses reflection is more elegant and useful. --]
-   [#var RETURN_TYPE = grammar.options.visitorReturnType]
-   [#if !RETURN_TYPE?has_content][#set RETURN_TYPE = "void"][/#if]
-   [#var DATA_TYPE = grammar.options.visitorDataType]
-   [#if !DATA_TYPE?has_content][#set DATA_TYPE="Object"][/#if]
-   [#var THROWS = ""]
-   [#if grammar.options.visitorException?has_content][#set THROWS = "throws " + grammar.options.visitorException][/#if]
-	 ${RETURN_TYPE} jjtAccept(${grammar.parserClassName}Visitor visitor, ${DATA_TYPE} data) ${THROWS};      
-[/#if]
-
 
    default <T extends Node>T firstChildOfType(Class<T>clazz) {
         for (Node child : children()) {

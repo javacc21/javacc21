@@ -217,38 +217,6 @@
 	    
 	    <echo />
 
-	    <copy todir="${outputdir}/TreeBuildingExamples.eg4">
-	      <fileset dir="TreeBuildingExamples">
-	        <include name="*.java" />
-	      </fileset>
-	    </copy>
-
-	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
-	    	<arg value="-q"/>
-			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg4"/>
-			<arg value="${basedir}/TreeBuildingExamples/eg4.javacc"/>
-		</java>
-	    <javac srcdir="${outputdir}/TreeBuildingExamples.eg4" debug="true" includeantruntime="no" failonerror="true"/>
-
-	    <java failonerror="true" fork="true" 
-	          classname="Eg4" 
-	          classpath="test.tmp/TreeBuildingExamples.eg4/"
-	          inputstring="(a + b) * (c + 1);"
-	          outputproperty="jjtree.eg4.out"
-	    >
-	    	      	                <assertions><enable/></assertions>
-	    </java>
-	    <echo>${jjtree.eg4.out}</echo>
-	    <fail message="JJTree eg4 parse failed">
-	     <condition>
-	      <not>
-	       <contains string="${jjtree.eg4.out}" substring="Thank you." />
-	      </not>
-	     </condition>
-	    </fail>
-
-	    <echo />
-
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
 		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg1"/>

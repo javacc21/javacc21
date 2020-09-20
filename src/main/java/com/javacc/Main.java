@@ -148,7 +148,6 @@ public final class Main {
         System.out.println();
         System.out.println("The integer valued options are:");
         System.out.println();
-//        System.out.println("    CHOICE_AMBIGUITY_CHECK (default 2)");
         System.out.println("    TABS_TO_SPACES (default not set)");
         System.out.println();
         System.out.println("The boolean valued options are:");

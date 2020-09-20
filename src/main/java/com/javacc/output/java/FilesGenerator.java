@@ -117,9 +117,6 @@ public class FilesGenerator {
         else if (currentFilename.endsWith(".html")) {
             templateName = "doc.html.ftl";
         }
-        else if (currentFilename.endsWith("Visitor.java")) {
-            templateName = "Visitor.java.ftl";
-        }
         else if (currentFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
             templateName = "BaseNode.java.ftl";
         }
@@ -293,9 +290,6 @@ public class FilesGenerator {
     	generateUtilsFile();
         Set<File> files = new LinkedHashSet<File>();
         files.add(getOutputFile(grammar.getBaseNodeClassName()));
-        if (grammar.getOptions().getVisitor()) {
-            files.add(getOutputFile(grammar.getParserClassName() + "Visitor"));
-        }
 
         for (RegularExpression re : grammar.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;

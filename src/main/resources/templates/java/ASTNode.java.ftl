@@ -63,18 +63,4 @@ public class ${classname} extends ${grammar.baseNodeClassName} {
     }
 
 [/#if]
-
-[#if grammar.options.visitor]
-   [#var RETURN_TYPE = grammar.options.visitorReturnType]
-   [#if !RETURN_TYPE?has_content][#set RETURN_TYPE = "void"][/#if]
-   [#var DATA_TYPE = grammar.options.visitorDataType]
-   [#if !DATA_TYPE?has_content][#set DATA_TYPE="Object"][/#if]
-   [#var THROWS = ""]
-   [#if grammar.options.visitorException?has_content][#set THROWS = "throws " + grammar.options.visitorException][/#if]
-	 public ${RETURN_TYPE} jjtAccept(${grammar.parserClassName}Visitor visitor, ${DATA_TYPE} data) ${THROWS} {
-	   [#if RETURN_TYPE != "void"]
-	     return visitor.visit(this, data);
-	   [/#if]
-   }      
-[/#if]
 }

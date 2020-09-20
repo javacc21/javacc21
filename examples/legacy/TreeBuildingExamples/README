@@ -55,16 +55,6 @@ non-terminals as if they were decorated as #void. The default
 behavior is to treat such non-terminals as if they were decorated
 with the name of the non-terminal.
 
-eg4.javacc
-
-This is a modification of eg3.javacc with the VISITOR option set.  This
-instructs JJTree to insert a jjtAccept() method into all nodes it
-generates, and to produce a visitor class.  The visitor is used to
-dump the tree.
-
-Here are some instructions on how to run the examples using the Ant build scripts, 
-and the output you can expect to see.
-
 eg1.javacc
 -------
 
@@ -190,7 +180,3 @@ eg3.jjt
 
 This example can be run in the same manner as you ran eg2.jjt.
 
-eg4.jjt
--------
-
-This example again can be run in the same manner as you ran eg2.jjt.
