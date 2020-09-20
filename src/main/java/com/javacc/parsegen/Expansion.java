@@ -48,6 +48,11 @@ import com.javacc.parser.tree.*;
 
 abstract public class Expansion extends BaseNode {
 
+    /**
+     * Marker interface to indicate a choice point
+     */
+    public interface ChoicePoint {}
+
     private boolean forced;
 
     private TreeBuildingAnnotation treeNodeBehavior;
@@ -138,6 +143,10 @@ abstract public class Expansion extends BaseNode {
         }
     }
 
+    public boolean isAtChoicePoint() {
+        return getParent() instanceof ChoicePoint;
+    }
+
     public  void setLookahead(Lookahead lookahead) {
     	this.lookahead = lookahead;
     }
@@ -148,6 +157,16 @@ abstract public class Expansion extends BaseNode {
     
     public boolean getHasExplicitLookahead() {
         return getLookahead() != null;
+    }
+
+    public boolean getHasExplicitNumericalLookahead() {
+        Lookahead la = getLookahead();
+        return la !=null && la.getHasExplicitNumericalAmount();
+    }
+
+    public boolean getHasSeparateSyntacticLookahead() {
+        Lookahead la = getLookahead();
+        return la != null && la.getNestedExpansion() != null;
     }
 
     private boolean scanLimit;
@@ -179,7 +198,7 @@ abstract public class Expansion extends BaseNode {
     public final boolean getRequiresPredicateMethod() {
         if (firstAncestorOfType(Lookahead.class) != null) return false;
         Node parent = getParent();
-        if (!(parent instanceof ExpansionChoice || parent instanceof ZeroOrOne || parent instanceof ZeroOrMore || parent instanceof OneOrMore)) return false;
+        if (!(parent instanceof ChoicePoint)) return false;
         return getRequiresScanAhead();
     }
 
@@ -223,6 +242,14 @@ abstract public class Expansion extends BaseNode {
     public boolean getHasSemanticLookahead() {
         Lookahead la = getLookahead();
         return la != null && la.hasSemanticLookahead();
+    }
+
+    public boolean getHasScanLimit() {
+        if (!(this instanceof ExpansionSequence)) return false;
+        for (Expansion sub : childrenOfType(Expansion.class)) {
+            if (sub.isScanLimit()) return true;
+        }
+        return false;
     }
 
     public Expansion getUpToExpansion() {

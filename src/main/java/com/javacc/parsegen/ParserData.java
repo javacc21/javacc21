@@ -215,10 +215,7 @@ public class ParserData {
             Node parent = sequence.getParent();
             if (sequence.getHasExplicitLookahead() 
                && !(//parent instanceof BNFProduction || //comment out for now
-                   parent instanceof ExpansionChoice 
-                   || parent instanceof OneOrMore 
-                   || parent instanceof ZeroOrOne 
-                   || parent instanceof ZeroOrMore
+                   parent instanceof Expansion.ChoicePoint
                    || parent instanceof Lookahead)) 
             {
                 grammar.addSemanticError(sequence, "Encountered LOOKAHEAD(...) at a non-choice location." );
@@ -227,10 +224,7 @@ public class ParserData {
 
         for (Node exp : grammar.descendants(Expansion.class, exp -> exp.isScanLimit())) {
             Node grandparent = exp.getParent().getParent();
-            if (!(grandparent instanceof ExpansionChoice 
-               || grandparent instanceof OneOrMore 
-               || grandparent instanceof ZeroOrMore 
-               || grandparent instanceof ZeroOrOne 
+            if (!(grandparent instanceof Expansion.ChoicePoint
                || grandparent instanceof BNFProduction)) 
             {
                    grammar.addSemanticError(exp, "The up-to-here delimiter can only be at a choice point or at the top level of a grammar production.");

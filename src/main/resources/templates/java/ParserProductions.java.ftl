@@ -639,7 +639,7 @@
 
 [#macro BuildScanRoutine expansion count]
      [#var failure = (!expansion.hasSyntacticLookahead && expansion.negated)?string("true", "false")] [#-- kludgy,revisit --]
-     private final boolean ${expansion.scanRoutineName}() {
+     private final boolean ${expansion.scanRoutineName}(boolean shouldStopAtScanLimit) {
      [#if expansion.parent.class.simpleName = "BNFProduction"]
        [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
           ${expansion.parent.javaCode}
@@ -669,7 +669,8 @@
    private final boolean ${expansion.predicateMethodName}() {
       currentLookaheadToken= currentToken;
       remainingLookahead= ${lookaheadAmount};
-      stopAtScanLimit= true;
+     stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
+//     stopAtScanLimit = true;
      [#if expansion.parent.class.simpleName = "BNFProduction"]
        [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
           ${expansion.parent.javaCode}
@@ -682,7 +683,7 @@
        if (!${expansion.lookBehind.routineName}()) return false;
      [/#if]
      if (remainingLookahead <=0) return true;
-     [#if expansion.hasSyntacticLookahead]
+     [#if expansion.hasSeparateSyntacticLookahead]
       if (
       [#if !expansion.lookahead.negated]![/#if]
       ${expansion.lookahead.routineName}())
@@ -745,7 +746,7 @@
    [@newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${newVarIndex} = remainingLookahead;
   [#list choice.choices as subseq]
-     if (!${subseq.scanRoutineName}()) {
+     if (!${subseq.scanRoutineName}(stopAtScanLimit)) {
      [#if subseq_has_next]
         currentLookaheadToken = token${newVarIndex};
         remainingLookahead = remainingLookahead${newVarIndex};
@@ -758,7 +759,7 @@
 
 [#macro ScanCodeZeroOrOne zoo]
    [@newVar type="Token" init="currentLookaheadToken"/]
-   if (!${zoo.nestedExpansion.scanRoutineName}())
+   if (!${zoo.nestedExpansion.scanRoutineName}(stopAtScanLimit))
       currentLookaheadToken = token${newVarIndex};
 [/#macro]
 
@@ -768,7 +769,7 @@
 [#macro ScanCodeZeroOrMore zom]
       while (remainingLookahead > 0) {
       [@newVar type="Token" init="currentLookaheadToken"/]
-         if (!${zom.nestedExpansion.scanRoutineName}()) {
+         if (!${zom.nestedExpansion.scanRoutineName}(stopAtScanLimit)) {
              currentLookaheadToken = token${newVarIndex};
              break;
          }
@@ -781,7 +782,7 @@
    and then the same code as a ZeroOrMore
 --]
 [#macro ScanCodeOneOrMore oom]
-   if (!${oom.nestedExpansion.scanRoutineName}()) {
+   if (!${oom.nestedExpansion.scanRoutineName}(stopAtScanLimit)) {
       return false;
    }
    [@ScanCodeZeroOrMore oom /]
@@ -795,12 +796,13 @@
 [#macro ScanCodeNonTerminal nt]
       [#set newVarIndex = newVarIndex +1]
       [#var scanLimitVarName = "stopAtScanLimit" + newVarIndex]
+      [#var respectScanLimit = !nt.parent.hasScanLimit]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
       [#if !nt.atEnd]
          boolean ${scanLimitVarName} = stopAtScanLimit;
          stopAtScanLimit = false;
       [/#if]
-      if (!${nt.production.expansion.scanRoutineName}()) {
+      if (!${nt.production.expansion.scanRoutineName}(stopAtScanLimit)) {
          popLookaheadStack();
          [#if !nt.atEnd]
              stopAtScanLimit = ${scanLimitVarName};

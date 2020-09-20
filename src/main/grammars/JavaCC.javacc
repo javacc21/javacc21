@@ -1300,7 +1300,7 @@ INJECT ExpansionChoice :
    import com.javacc.parsegen.Expansion;
    import com.javacc.lexgen.TokenSet;
    import java.util.List;
-   extends Expansion;
+   extends Expansion implements Expansion.ChoicePoint;
 {
    public List<Expansion> getChoices() {
        return childrenOfType(Expansion.class);
@@ -1417,7 +1417,6 @@ INJECT ExpansionSequence :
        return true;
    }
 
-
    public TokenSet getFirstSet() {
        if (firstSet == null) {
            firstSet = new TokenSet(getGrammar());
@@ -1461,15 +1460,6 @@ INJECT ExpansionSequence :
        return la != null && la.getRequiresScanAhead();
    }
 
-   public boolean getHasScanLimit() {
-       for (Expansion exp : getUnits()) {
-           if (exp.isScanLimit()) {
-               return true;
-           }
-       }
-       return false;
-   }
-   
    public boolean isPossiblyEmpty() {
         for (Expansion e : getUnits()) {
             if (!e.isPossiblyEmpty()) {
@@ -1736,6 +1726,8 @@ INJECT Lookahead :
    import com.javacc.lexgen.RegularExpression;
 {
     private int amount=Integer.MAX_VALUE;
+
+    private boolean explicitNumerical;
     
     private boolean negated;
 
@@ -1751,6 +1743,10 @@ INJECT Lookahead :
     
     public void setNegated(boolean negated) {
         this.negated = negated;
+    }
+
+    public boolean getHasExplicitNumericalAmount() {
+        return explicitNumerical;
     }
     
     public boolean isAlwaysSuccessful() {
@@ -1824,6 +1820,7 @@ INJECT Lookahead :
 
     public void setAmount(int amount) {
         this.amount = amount;
+        this.explicitNumerical = true;
     }
 
     public boolean getHasExplicitAmount() {
@@ -2099,7 +2096,7 @@ ZeroOrOne ZeroOrOne :
 INJECT ZeroOrOne : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.lexgen.TokenSet;
-     extends Expansion;
+     extends Expansion implements Expansion.ChoicePoint;
 {
     public Lookahead getLookahead() {
         return getNestedExpansion().getLookahead();
@@ -2152,7 +2149,7 @@ INJECT ZeroOrOne :
 INJECT ZeroOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.lexgen.TokenSet;
-     extends Expansion;
+     extends Expansion implements Expansion.ChoicePoint;
 {
      private String id;
      public String getLabel() {
@@ -2211,7 +2208,7 @@ INJECT ZeroOrMore :
 INJECT OneOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.lexgen.TokenSet;
-     extends Expansion;
+     extends Expansion implements Expansion.ChoicePoint;
 {
      private String id;
      public String getLabel() {
