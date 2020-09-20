@@ -669,7 +669,7 @@
    private final boolean ${expansion.predicateMethodName}() {
       currentLookaheadToken= currentToken;
       remainingLookahead= ${lookaheadAmount};
-      this.stopAtScanLimit= true;
+      stopAtScanLimit= true;
      [#if expansion.parent.class.simpleName = "BNFProduction"]
        [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
           ${expansion.parent.javaCode}

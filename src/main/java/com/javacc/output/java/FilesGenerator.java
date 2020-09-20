@@ -246,7 +246,6 @@ public class FilesGenerator {
         if (grammar.getErrorCount() !=0) {
         	throw new MetaParseException();
         }
-        grammar.buildParserInfo();
         String filename = grammar.getParserClassName() + ".java";
         File outputFile = new File(grammar.getParserOutputDirectory(), filename);
         generate(outputFile);

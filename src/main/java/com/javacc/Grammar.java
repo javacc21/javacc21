@@ -212,10 +212,6 @@ public class Grammar extends BaseNode {
         resolveStringLiterals();
     }
 
-    public void buildParserInfo() throws MetaParseException {
-        parserData.buildData();
-    }
-
     public void generateFiles() throws ParseException, IOException, TemplateException {
         new FilesGenerator(this, codeInjections).generateAll();
     }
