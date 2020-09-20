@@ -2016,6 +2016,19 @@ INJECT NonTerminal :
         return null;
     }
     
+    /**
+     * The basic logic of when we ignore an up-to-here marker
+     */
+    public boolean getIgnoreUpToHere() {
+        ExpansionSequence parent = (ExpansionSequence) getParent();
+        if (parent.getHasExplicitNumericalLookahead() || parent.getHasScanLimit()) return true;
+        for (Expansion exp : parent.getUnits()) {
+            if (exp == this) return false;
+            if (exp.getMaximumSize() > 0) break;
+        }
+        return true;
+    }
+    
     
      public TokenSet getFirstSet() {
         if (firstSet == null) {

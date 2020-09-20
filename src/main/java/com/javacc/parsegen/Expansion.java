@@ -164,9 +164,33 @@ abstract public class Expansion extends BaseNode {
         return la !=null && la.getHasExplicitNumericalAmount();
     }
 
+    /**
+     * Does this expansion have a separate lookahead expansion?
+     */
+
     public boolean getHasSeparateSyntacticLookahead() {
         Lookahead la = getLookahead();
         return la != null && la.getNestedExpansion() != null;
+    }
+
+    /**
+     * Do we do a syntactic lookahead using this expansion
+     * itself as the lookahead expansion?
+     */
+    public boolean getHasImplicitSyntacticLookahead() {
+        if (getHasSeparateSyntacticLookahead()) return false;
+        if (!this.isAtChoicePoint()) return false;
+        if (this.isAlwaysSuccessful()) return false;
+        if (getLookaheadAmount()>1) return true;
+        if (getHasScanLimit()) return true;
+        if (this instanceof ExpansionSequence) {
+            for (Expansion exp : childrenOfType(Expansion.class)) {
+                if (exp instanceof NonTerminal)
+                return ((NonTerminal)exp).getProduction().getExpansion().getHasScanLimit();
+                if (exp.getMaximumSize()>0) break;
+            }
+        }
+        return false;
     }
 
     private boolean scanLimit;
@@ -197,8 +221,9 @@ abstract public class Expansion extends BaseNode {
     
     public final boolean getRequiresPredicateMethod() {
         if (firstAncestorOfType(Lookahead.class) != null) return false;
-        Node parent = getParent();
-        if (!(parent instanceof ChoicePoint)) return false;
+        if (!isAtChoicePoint()) return false;
+        if (getHasSeparateSyntacticLookahead()) return true;
+        if (getHasImplicitSyntacticLookahead()) return true;
         return getRequiresScanAhead();
     }
 
@@ -256,6 +281,28 @@ abstract public class Expansion extends BaseNode {
         Lookahead la = getLookahead();
         return la == null ? null : la.getUpToExpansion();
     }
+
+   /**
+     * @return whether this expansion is at the very end of
+     * the root expansion that contains it.
+     */
+    public boolean isAtEnd() {
+        Node parent = getParent();
+        if (!(parent instanceof Expansion)) {
+            return true;
+        }
+        if (parent instanceof ExpansionSequence) {
+            ExpansionSequence seq = (ExpansionSequence) parent;
+            if (seq.getHasExplicitLookahead()) {
+                return true;
+            }
+            List<Expansion> siblings = seq.getUnits();
+            for (int i = siblings.indexOf(this) +1; i< siblings.size();i++) {
+                if (!siblings.get(i).isAlwaysSuccessful()) return false;
+            }
+        }
+        return ((Expansion) parent).isAtEnd();
+    }    
     
     public Expression getSemanticLookahead() {
         return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;
@@ -368,28 +415,6 @@ abstract public class Expansion extends BaseNode {
          }
          // REVISIT.
          return new TokenSet(getGrammar());
-    }
-    
-    /**
-     * @return whether this expansion is at the very end of 
-     * the root expansion that contains it.
-     */
-    public boolean isAtEnd() {
-        Node parent = getParent();
-        if (!(parent instanceof Expansion)) {
-            return true;
-        }
-        if (parent instanceof ExpansionSequence) {
-            ExpansionSequence seq = (ExpansionSequence) parent;
-            if (seq.getHasExplicitLookahead()) {
-                return true;
-            }
-            List<Expansion> siblings = seq.getUnits();
-            for (int i = siblings.indexOf(this) +1; i< siblings.size();i++) {
-                if (!siblings.get(i).isAlwaysSuccessful()) return false;
-            }
-        }
-        return ((Expansion) parent).isAtEnd();
     }
     
     /**
