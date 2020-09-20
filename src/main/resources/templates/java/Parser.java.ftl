@@ -65,14 +65,14 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         LOGGER.setLevel(level);
         Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
     }
-    
+static final int INDEFINITE=Integer.MAX_VALUE;    
 // The last token successfully "consumed"     
 Token currentToken;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
-private TokenType upToTokenType;
-private EnumSet<TokenType> upToFirstSet;
+// private TokenType upToTokenType;
+// private EnumSet<TokenType> upToFirstSet;
 private boolean stopAtScanLimit;
 
 private Token lastParsedToken;
@@ -180,29 +180,6 @@ public boolean isCancelled() {return cancelled;}
   private final TokenType nextTokenType() {
     setNextTokenType();
     return nextTokenType;
-  }
-
-  private final boolean resetScanAhead(int amount, EnumSet<TokenType> upToFirstSet) {
-    resetScanAhead(amount);
-    this.upToFirstSet = upToFirstSet;
-    return true;
-  }
-
-
-  private final boolean resetScanAhead(int amount, TokenType upToTokenType) {
-    resetScanAhead(amount);
-    this.upToTokenType = upToTokenType;
-    return true;
-  }
-
-  private final boolean resetScanAhead(int amount) {
-    currentLookaheadToken = currentToken;
-    remainingLookahead = amount;
-    this.upToTokenType = null;
-    this.upToFirstSet = null;
-    this.stopAtScanLimit = true;
-    setNextTokenType();
-    return true;
   }
 
 [#import "ParserProductions.java.ftl" as ParserCode ]

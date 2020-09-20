@@ -53,6 +53,8 @@ public class ParserData {
     private List<MatchInfo> sizeLimitedMatches;
 
     private List<Expansion> scanAheadExpansions = new ArrayList<>();
+
+    private List<Expansion> expansionsNeedingPredicate;
     
     public ParserData(Grammar grammar) {
         this.grammar = grammar;
@@ -82,15 +84,22 @@ public class ParserData {
         return scanAheadExpansions;
     }
 
+    public List<Expansion> getExpansionsNeedingPredicate() {
+        if (expansionsNeedingPredicate == null) {
+            expansionsNeedingPredicate = grammar.descendants(Expansion.class, exp->exp.getRequiresPredicateMethod());
+        }
+        return expansionsNeedingPredicate;
+    }
+
     public class LookaheadTableBuilder extends Node.Visitor {
         public void visit(ExpansionChoice choice) {
             for (Expansion exp : choice.getChoices()) {
                 visit(exp);
                 if (exp.isAlwaysSuccessful()) break;
                 if (exp.getRequiresScanAhead()) {
-//                    if (!exp.getLookaheadExpansion().isSingleToken()) {
+                    if (!exp.getLookaheadExpansion().isSingleToken()) {
                         scanAheadExpansions.add(exp.getLookaheadExpansion());
-//                    }
+                    }
                 }
             }
         }
@@ -98,9 +107,9 @@ public class ParserData {
         private void handleOneOrMoreEtc(Expansion exp) {
             visit(exp.getNestedExpansion());
             if (exp.getRequiresScanAhead()) {
- //               if (!exp.getLookaheadExpansion().isSingleToken()) {
+               if (!exp.getLookaheadExpansion().isSingleToken()) {
                     scanAheadExpansions.add(exp.getLookaheadExpansion());
-//                }
+               }
             }
         }
 

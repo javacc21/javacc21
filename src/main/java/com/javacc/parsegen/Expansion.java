@@ -88,7 +88,7 @@ abstract public class Expansion extends BaseNode {
 
     long myGeneration = 0; //REVISIT
     
-    private String scanRoutineName, firstSetVarName, finalSetVarName, followSetVarName;
+    private String scanRoutineName, predicateMethodName, firstSetVarName, finalSetVarName, followSetVarName;
     
     public String getLabel() {
     	return label;
@@ -174,7 +174,14 @@ abstract public class Expansion extends BaseNode {
         Lookahead la = getLookahead();
         if (la != null && la.getRequiresScanAhead()) return true;
         return getHasGlobalSemanticActions();
-    } 
+    }
+    
+    public final boolean getRequiresPredicateMethod() {
+        if (firstAncestorOfType(Lookahead.class) != null) return false;
+        Node parent = getParent();
+        if (!(parent instanceof ExpansionChoice || parent instanceof ZeroOrOne || parent instanceof ZeroOrMore || parent instanceof OneOrMore)) return false;
+        return getRequiresScanAhead();
+    }
 
     public TokenSet getLookaheadFirstSet() {
         Lookahead la = getLookahead();
@@ -283,6 +290,13 @@ abstract public class Expansion extends BaseNode {
             }
         }
         return scanRoutineName;
+    }
+
+    public String getPredicateMethodName() {
+        if (predicateMethodName == null) {
+            predicateMethodName = getScanRoutineName().replace("check$", "scan$");
+        }
+        return predicateMethodName;
     }
    
     public int getFinalSetSize() {

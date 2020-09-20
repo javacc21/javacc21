@@ -30,7 +30,7 @@
  */
  --]
 
- [#var TT = "TokenType."]
+ [#var TT = "TokenType.", INDEFINITE=2147483647]
 
  [#if !grammar.options.legacyAPI && grammar.parserPackage?has_content]
    [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]
@@ -72,7 +72,7 @@
      TokenType type = currentLookaheadToken.getType();
      if (type != expectedType) return false;
      if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
-     if (type == upToTokenType) remainingLookahead = 0;
+//     if (type == upToTokenType) remainingLookahead = 0;
      return true;
   }
 
@@ -86,7 +86,7 @@
      TokenType type = currentLookaheadToken.getType();
      if (!types.contains(type)) return false;
      if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
-     if (type == upToTokenType) remainingLookahead = 0;
+//     if (type == upToTokenType) remainingLookahead = 0;
      return true;
   }
 
@@ -95,6 +95,9 @@
  //====================================
    [#list parserData.scanAheadExpansions as expansion]
         [@BuildScanRoutine expansion, expansion.maxScanAhead /]
+   [/#list]
+   [#list parserData.expansionsNeedingPredicate as expansion]
+       ${BuildPredicateRoutine(expansion)}
    [/#list]
    [#list grammar.allLookaheads as lookahead]
 [#--       ${firstSetVar(lookahead)} --]
@@ -441,7 +444,7 @@
       || zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
        [@BuildCode zoo.nestedExpansion /]
     [#else]
-       if (${ResetCall(zoo)} ${ExpansionCondition(zoo)}) {
+       if (${ExpansionCondition(zoo.nestedExpansion)}) {
           ${BuildCode(zoo.nestedExpansion)}
        }
     [/#if]
@@ -464,7 +467,7 @@
    [#if nestedExp.simpleName = "ExpansionChoice"]
    while (true);
    [#else]
-   while(${ResetCall(nestedExp)} ${ExpansionCondition(oom)});
+   while(${ExpansionCondition(oom.nestedExpansion)});
    [/#if]
    [#set inFirstVarName = prevInFirstVarName /]
 [/#macro]
@@ -473,7 +476,7 @@
     [#if zom.nestedExpansion.class.simpleName = "ExpansionChoice"]
        while (true) {
     [#else]
-      while (${ResetCall(zom)} ${ExpansionCondition(zom)}) {
+      while (${ExpansionCondition(zom.nestedExpansion)}) {
     [/#if]
        ${BuildCode(zom.nestedExpansion)}
     }
@@ -488,7 +491,7 @@
          [#return]
       [/#if]
       ${(expansion_index=0)?string("if", "else if")}
-      (${ResetCall(expansion)} ${ExpansionCondition(expansion)}) {
+      (${ExpansionCondition(expansion)}) { 
          ${BuildCode(expansion)}
       }
    [/#list]
@@ -511,34 +514,18 @@
    [/#if]
 [/#macro]
 
-[#macro ResetCall expansion]
-    [#if (expansion.lookaheadAmount ==1 || expansion.lookaheadExpansion.singleToken) && !expansion.lookaheadExpansion.requiresScanAhead]
-       [#return]
-    [/#if]
-    [#if !expansion.upToExpansion??]
-       resetScanAhead(${expansion.lookaheadAmount})
-    [#else]
-       [#var firstSet = expansion.upToExpansion.firstSet.tokenNames]
-       [#if firstSet?size = 1]
-           resetScanAhead(${expansion.lookaheadAmount}, ${TT}${firstSet[0]})
-       [#else]
-           resetScanAhead(${expansion.lookaheadAmount}, ${expansion.upToExpansion.firstSetVarName})
-       [/#if]
-     [/#if]
-     &&
-[/#macro]
-
 [#-- 
      Macro to generate the condition for entering an expansion
      including the default single-token lookahead
 --]
 [#macro ExpansionCondition expansion]
-   [#if expansion.hasSemanticLookahead || expansion.hasLookBehind || expansion.requiresScanAhead]
-      ${ScanAheadCondition(expansion)}
-   [#else]
-      ${SingleTokenCondition(expansion)}
-   [/#if]
+    [#if expansion.requiresPredicateMethod]
+       ${ScanAheadCondition(expansion)}
+    [#else] 
+       ${SingleTokenCondition(expansion)}
+    [/#if]
 [/#macro]
+
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion]
@@ -546,21 +533,20 @@
       (${expansion.lookahead.LHS} =
    [/#if]
    [#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested]
-      (${expansion.semanticLookahead})
-      [#if expansion.requiresScanAhead] && [/#if]
+      (${expansion.semanticLookahead}) &&
    [/#if]
-   [#if expansion.requiresScanAhead]
-      [#if expansion.negated]![/#if]
-      ${expansion.lookaheadExpansion.scanRoutineName}()
-   [/#if]
+   ${expansion.predicateMethodName}()
    [#if expansion.lookahead?? && expansion.lookahead.LHS??]
       )
    [/#if]
 [/#macro]
 
+
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
-   [#if expansion.firstSet.tokenNames?size < 5] 
+   [#if expansion.firstSet.tokenNames?size =0]
+      true 
+   [#elseif expansion.firstSet.tokenNames?size < 5] 
       [#list expansion.firstSet.tokenNames as name]
           nextTokenType [#if name_index ==0]() [/#if]
           == ${TT}${name} 
@@ -654,7 +640,6 @@
 [#macro BuildScanRoutine expansion count]
      [#var failure = (!expansion.hasSyntacticLookahead && expansion.negated)?string("true", "false")] [#-- kludgy,revisit --]
      private final boolean ${expansion.scanRoutineName}() {
-        if (remainingLookahead <=0) return true;
      [#if expansion.parent.class.simpleName = "BNFProduction"]
        [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
           ${expansion.parent.javaCode}
@@ -666,6 +651,7 @@
      [#if expansion.hasLookBehind]
        if (!${expansion.lookBehind.routineName}()) return ${failure};
      [/#if]
+     if (remainingLookahead <=0) return true;
      [#if expansion.hasSyntacticLookahead]
       if (
       [#if !expansion.lookahead.negated]![/#if]
@@ -677,6 +663,37 @@
     }
 [/#macro]
 
+[#macro BuildPredicateRoutine expansion] 
+  [#var lookaheadAmount = expansion.lookaheadAmount]
+  [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "INDEFINITE"][/#if]
+   private final boolean ${expansion.predicateMethodName}() {
+      currentLookaheadToken= currentToken;
+      remainingLookahead= ${lookaheadAmount};
+      this.stopAtScanLimit= true;
+     [#if expansion.parent.class.simpleName = "BNFProduction"]
+       [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
+          ${expansion.parent.javaCode}
+       [/#if]
+     [/#if]
+     [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
+       if (!(${expansion.semanticLookahead}) return false;
+     [/#if]
+     [#if expansion.hasLookBehind]
+       if (!${expansion.lookBehind.routineName}()) return false;
+     [/#if]
+     if (remainingLookahead <=0) return true;
+     [#if expansion.hasSyntacticLookahead]
+      if (
+      [#if !expansion.lookahead.negated]![/#if]
+      ${expansion.lookahead.routineName}())
+        return false;
+     [#else]
+        ${BuildScanCode(expansion, expansion.lookaheadAmount)}
+     [/#if]
+     return true;
+   }
+[/#macro]
+
 
 
 [#--
@@ -684,7 +701,7 @@
    This macro just delegates to the various sub-macros
    based on the Expansion's class name.
 --]
-[#macro BuildScanCode expansion count=2147483647]
+[#macro BuildScanCode expansion count=INDEFINITE]
   [#var classname=expansion.simpleName]
   [#if expansion.singleToken]
      ${ScanSingleToken(expansion)}
@@ -695,9 +712,9 @@
    [#elseif classname = "ZeroOrOne"]
       [@ScanCodeZeroOrOne expansion/]
    [#elseif classname = "ZeroOrMore"]
-      [@ScanCodeZeroOrMore expansion/]
+      [@ScanCodeZeroOrMore expansion /]
    [#elseif classname = "OneOrMore"]
-      [@ScanCodeOneOrMore expansion/]
+      [@ScanCodeOneOrMore expansion /]
    [#elseif classname = "NonTerminal"]
       [@ScanCodeNonTerminal expansion/]
    [#elseif classname = "TryBlock" || classname="AttemptBlock"]
