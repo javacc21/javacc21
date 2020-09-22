@@ -51,7 +51,7 @@ abstract public class Expansion extends BaseNode {
     /**
      * Marker interface to indicate a choice point
      */
-    public interface ChoicePoint {}
+    public interface ChoicePoint extends Node {}
 
     private boolean forced;
 
@@ -61,17 +61,14 @@ abstract public class Expansion extends BaseNode {
     
     private String label = "";  
     
-    private int maxScanAhead; 
-    
-    void setMaxScanAhead(int maxScanAhead) {
-    	this.maxScanAhead = maxScanAhead;
-    }
 /**
  * The number of Tokens that can be consumed in a scanahead routine    
  * (assuming that we need a scanAhead routine for this Expansion)
  */
     public int getMaxScanAhead() {
-    	return this.maxScanAhead;
+//    	return this.maxScanAhead;
+//        return this.getMaximumSize();
+        return Integer.MAX_VALUE; // REVISIT later maybe, for now just not bothering with this logic
     }
     
     
@@ -145,6 +142,10 @@ abstract public class Expansion extends BaseNode {
 
     public boolean isAtChoicePoint() {
         return getParent() instanceof ChoicePoint;
+    }
+
+    public boolean isInsideLookahead() {
+        return firstAncestorOfType(Lookahead.class) != null;
     }
 
     public  void setLookahead(Lookahead lookahead) {
@@ -358,7 +359,8 @@ abstract public class Expansion extends BaseNode {
         if (scanRoutineName == null) {
             if (this.getParent() instanceof BNFProduction) {
                 BNFProduction prod = (BNFProduction) getParent();
-                scanRoutineName = "check$" + prod.getName();
+//                scanRoutineName = "check$" + prod.getName();
+                scanRoutineName = prod.getLookaheadMethodName();
             } else {
                 scanRoutineName = getGrammar().generateUniqueIdentifier("check$", this);
             }

@@ -45,7 +45,7 @@
     [@finalSetVars/]
     [@followSetVars/]  
     [/#if]
-    [#if parserData.scanAheadExpansions?size !=0]
+    [#if grammar.scanAheadExpansions?size !=0]
        [@BuildLookaheads /]
      [/#if]
 [/#macro]
@@ -93,10 +93,12 @@
 //====================================
  // Lookahead Routines
  //====================================
-   [#list parserData.scanAheadExpansions as expansion]
+   [#list grammar.scanAheadExpansions as expansion]
+      [#if expansion.parent.class.simpleName != "BNFProduction"]
         [@BuildScanRoutine expansion, expansion.maxScanAhead /]
+      [/#if]
    [/#list]
-   [#list parserData.expansionsNeedingPredicate as expansion]
+   [#list grammar.expansionsNeedingPredicate as expansion]
        ${BuildPredicateRoutine(expansion)}
    [/#list]
    [#list grammar.allLookaheads as lookahead]
@@ -105,9 +107,11 @@
        [@BuildLookaheadRoutine lookahead /]
      [/#if]
    [/#list]
-
    [#list grammar.allLookBehinds as lookBehind]
-      [@BuildLookBehindRoutine lookBehind /]
+      ${BuildLookBehindRoutine(lookBehind)}
+   [/#list]
+   [#list grammar.parserProductions as production]
+      ${BuildProductionLookaheadMethod(production)}
    [/#list]
 [/#macro]   
 
@@ -636,6 +640,12 @@
     }
 [/#macro]
 
+[#macro BuildProductionLookaheadMethod production]
+   private final boolean ${production.lookaheadMethodName}() {
+     ${BuildScanCode(production.expansion)}
+     return true;
+   }
+[/#macro]
 
 [#macro BuildScanRoutine expansion count]
      [#var failure = (!expansion.hasSyntacticLookahead && expansion.negated)?string("true", "false")] [#-- kludgy,revisit --]
@@ -816,11 +826,11 @@
 
 [#--
    Generates the lookahead code for an ExpansionSequence
-   The count parameter is the maximum number of tokens that 
-   we need to lookahead, so, if it is clear that we don't
-   need to generate code beyond the nth expansion, we just
-   break out. (This is a peephole space optimization that may
-   not be worth the candle. REVISIT later.)
+   The count parameter is not being used right now. The original purpose
+   was to specify the maximum number of tokens 
+   we need to lookahead, so we don't generate unnecessary code. However, this
+   kind of space optimization is probably not worth the candle and makes things
+   complicated. So it is currently disabled. (May REVISIT later.)
 --]
 [#macro ScanCodeSequence sequence, count]
    [#list sequence.units as sub]
@@ -834,8 +844,8 @@
          [/#if]
           }
        [/#if]
-       [#set count = count - sub.minimumSize]
-       [#if count<=0][#break][/#if]
+       [#--set count = count - sub.minimumSize]
+       [#if count<=0][#break][/#if--]
    [/#list]
 [/#macro]
 

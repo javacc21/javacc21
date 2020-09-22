@@ -880,8 +880,6 @@ INJECT BNFProduction :
          return forced;
     } 
     
-    
-    
     private String leadingComments;
 
     private Expansion expansion;
@@ -924,6 +922,10 @@ INJECT BNFProduction :
      * The name of the non-terminal of this production.
      */
     private String name;
+
+    public String getLookaheadMethodName() {
+        return "lookahead$" + name;
+    }
     
     public Expansion getExpansion() {
         return expansion;

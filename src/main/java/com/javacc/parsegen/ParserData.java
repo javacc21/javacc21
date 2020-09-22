@@ -50,78 +50,10 @@ public class ParserData {
 
     private LexerData lexerData;
 
-    private List<Expansion> scanAheadExpansions, expansionsNeedingPredicate;
-    
     public ParserData(Grammar grammar) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
     }
-
-    /**
-     * The list of Expansions for which we need to generate scanahead routines
-     * @return
-     */
-    public List<Expansion> getScanAheadExpansions() {
-        if (scanAheadExpansions == null) {
-            scanAheadExpansions = new ArrayList<>();
-            for (BNFProduction production : grammar.getParserProductions()) {
-                new LookaheadTableBuilder().visit(production.getExpansion());
-            }
-            for (Expansion expansion : scanAheadExpansions) {
-                expansion.setMaxScanAhead(expansion.getLookaheadAmount());
-            }
-            for (int scanAheadIndex=0; scanAheadIndex < scanAheadExpansions.size(); scanAheadIndex++) {
-                Expansion exp = scanAheadExpansions.get(scanAheadIndex);
-                new ScanAheadTableBuilder(exp.getMaxScanAhead()).visit(exp);
-            }
-            // Need to get rid of duplicates
-            this.scanAheadExpansions = new ArrayList<>(new LinkedHashSet<>(scanAheadExpansions));
-        }
-        return scanAheadExpansions;
-    }
-
-    public List<Expansion> getExpansionsNeedingPredicate() {
-        if (expansionsNeedingPredicate == null) {
-            expansionsNeedingPredicate = grammar.descendants(Expansion.class, exp->exp.getRequiresPredicateMethod());
-        }
-        return expansionsNeedingPredicate;
-    }
-
-    public class LookaheadTableBuilder extends Node.Visitor {
-        public void visit(ExpansionChoice choice) {
-            for (Expansion exp : choice.getChoices()) {
-                visit(exp);
-                if (exp.isAlwaysSuccessful()) break;
-                if (exp.getRequiresScanAhead()) {
-                    if (!exp.getLookaheadExpansion().isSingleToken()) {
-                        scanAheadExpansions.add(exp.getLookaheadExpansion());
-                    }
-                }
-            }
-        }
-
-        private void handleOneOrMoreEtc(Expansion exp) {
-            visit(exp.getNestedExpansion());
-            if (exp.getRequiresScanAhead()) {
-               if (!exp.getLookaheadExpansion().isSingleToken()) {
-                    scanAheadExpansions.add(exp.getLookaheadExpansion());
-               }
-            }
-        }
-
-       public void visit(OneOrMore exp) {handleOneOrMoreEtc(exp);}
-
-        public void visit(ZeroOrMore exp) {handleOneOrMoreEtc(exp);}
-
-        public void visit(ZeroOrOne exp) {handleOneOrMoreEtc(exp);}
-
-        public void visit(TryBlock exp) {visit(exp.getNestedExpansion());}
-
-        public void visit(Lookahead la) {
-            // We ignore expansions that are part of a syntactic lookahead
-        }
-
-    };
 
     /**
      * A visitor that checks whether there is a self-referential loop in a 
@@ -145,53 +77,6 @@ public class ParserData {
                     alreadyVisited.add(referredTo);
                     grammar.addSemanticError(ref, "Self-referential loop detected");
                 }
-            }
-        }
-    }
-
-
-    public class ScanAheadTableBuilder extends Node.Visitor {
-        private int lookaheadAmount;
-
-        ScanAheadTableBuilder(int lookaheadAmount) {
-            this.lookaheadAmount = lookaheadAmount;
-        }
-
-        public void visit(NonTerminal nt) {
-            generate3R(nt.getProduction().getExpansion());
-        }
-
-        public void visit(ExpansionChoice choice) {
-            for (Expansion sub: choice.getChoices()) {
-                generate3R(sub);
-            }
-        }
-
-        public void visit(ExpansionSequence sequence) {
-            int prevLookaheadAmount = this.lookaheadAmount;
-            for (Expansion sub: sequence.getUnits()) {
-                visit(sub);
-                lookaheadAmount -= sub.getMinimumSize();
-                if (lookaheadAmount <=0) break;
-            }
-            this.lookaheadAmount = prevLookaheadAmount;
-        }
-
-        public void visit(RegularExpression re) {}
-        public void visit(Lookahead la) {}
-
-        public void visit(OneOrMore exp) {generate3R(exp.getNestedExpansion()); }
-        public void visit(ZeroOrMore exp) {generate3R(exp.getNestedExpansion());}
-        public void visit(ZeroOrOne exp) {generate3R(exp.getNestedExpansion());}
-
-
-        private void generate3R(Expansion expansion) {
-            // It appears that the only possible Expansion types here are ExpansionChoice and ExpansionSequence
-           if (expansion.getMaxScanAhead()< lookaheadAmount) {
-//                if (!expansion.isSingleToken()) {
-                    scanAheadExpansions.add(expansion);
-//                }
-                expansion.setMaxScanAhead(lookaheadAmount);
             }
         }
     }

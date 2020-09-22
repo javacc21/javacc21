@@ -58,7 +58,6 @@ public class Grammar extends BaseNode {
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
     private String defaultLexicalState = "DEFAULT";
-    private long nextGenerationIndex = 1L;
     private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
@@ -75,6 +74,8 @@ public class Grammar extends BaseNode {
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
+    private List<Expansion> scanAheadExpansions, expansionsNeedingPredicate;
+
     
     
     private Set<String> usedIdentifiers = new HashSet<>();
@@ -357,6 +358,25 @@ public class Grammar extends BaseNode {
     }
 
     /**
+     * The list of Expansions for which we need to generate scanahead routines
+     * @return
+     */
+    public List<Expansion> getScanAheadExpansions() {
+        if (scanAheadExpansions == null) {
+            scanAheadExpansions = descendants(Expansion.class, exp->exp.isAtChoicePoint());
+        }
+        return scanAheadExpansions;
+    }
+
+    public List<Expansion> getExpansionsNeedingPredicate() {
+        if (expansionsNeedingPredicate == null) {
+            expansionsNeedingPredicate = descendants(Expansion.class, exp->exp.getRequiresPredicateMethod());
+        }
+        return expansionsNeedingPredicate;
+    }
+
+
+    /**
      * A symbol table of all grammar productions.
      */
     public Map<String, BNFProduction> getProductionTable() {
@@ -566,17 +586,6 @@ public class Grammar extends BaseNode {
         JavaCCError error = new JavaCCError(this, JavaCCError.Type.WARNING, message, node);
         System.err.println(error);
         errors.add(error);
-    }
-
-    /**
-     * To avoid right-recursive loops when calculating follow sets, we use a
-     * generation number which indicates if this expansion was visited by
-     * LookaheadWalk.genFollowSet in the same generation. New generations are
-     * obtained by incrementing the counter below, and the current generation is
-     * stored in the non-static variable below.
-     */
-    public long nextGenerationIndex() {
-        return nextGenerationIndex++;
     }
 
     public Set<String> getNodeNames() {
