@@ -30,7 +30,7 @@
  */
  --]
 
- [#var TT = "TokenType.", INDEFINITE=2147483647]
+ [#var TT = "TokenType.", UNLIMITED=2147483647]
 
  [#if !grammar.options.legacyAPI && grammar.parserPackage?has_content]
    [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]
@@ -647,6 +647,18 @@
    }
 [/#macro]
 
+[#macro BuildScanRoutineNOTUSED expansion count]
+     private final boolean ${expansion.scanRoutineName}() {
+        [#if expansion.requiresPredicateMethod]
+          if (!${expansion.predicateMethodName}()) return false;
+        [/#if]
+        [#if !expansion.doesFullSelfLookahead]
+          [@BuildScanCode expansion, count/]
+        [/#if]
+        return true;
+    }
+[/#macro]
+
 [#macro BuildScanRoutine expansion count]
      [#var failure = (!expansion.hasSyntacticLookahead && expansion.negated)?string("true", "false")] [#-- kludgy,revisit --]
      private final boolean ${expansion.scanRoutineName}() {
@@ -675,7 +687,7 @@
 
 [#macro BuildPredicateRoutine expansion] 
   [#var lookaheadAmount = expansion.lookaheadAmount]
-  [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "INDEFINITE"][/#if]
+  [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
    private final boolean ${expansion.predicateMethodName}() {
       currentLookaheadToken= currentToken;
       remainingLookahead= ${lookaheadAmount};
@@ -711,7 +723,7 @@
    This macro just delegates to the various sub-macros
    based on the Expansion's class name.
 --]
-[#macro BuildScanCode expansion count=INDEFINITE]
+[#macro BuildScanCode expansion count=UNLIMITED]
   [#var classname=expansion.simpleName]
   [#if expansion.singleToken]
      ${ScanSingleToken(expansion)}
@@ -811,7 +823,7 @@
          boolean ${scanLimitVarName} = stopAtScanLimit;
          stopAtScanLimit = false;
       [/#if]
-      if (!${nt.production.expansion.scanRoutineName}()) {
+      if (!${nt.production.lookaheadMethodName}()) {
          popLookaheadStack();
          [#if ignoreScanLimit]
              stopAtScanLimit = ${scanLimitVarName};

@@ -194,6 +194,10 @@ abstract public class Expansion extends BaseNode {
         return false;
     }
 
+    public boolean getDoesFullSelfLookahead() {
+        return getHasImplicitSyntacticLookahead() && !getHasExplicitNumericalLookahead() && !getHasScanLimit();
+    }
+
     private boolean scanLimit;
     private int scanLimitPlus;
 
@@ -219,13 +223,14 @@ abstract public class Expansion extends BaseNode {
         if (la != null && la.getRequiresScanAhead()) return true;
         return getHasGlobalSemanticActions();
     }
-    
+
     public final boolean getRequiresPredicateMethod() {
-        if (firstAncestorOfType(Lookahead.class) != null) return false;
+        if (isInsideLookahead()) return false;
         if (!isAtChoicePoint()) return false;
         if (getHasSeparateSyntacticLookahead()) return true;
         if (getHasImplicitSyntacticLookahead()) return true;
-        return getRequiresScanAhead();
+        return getHasGlobalSemanticActions();
+//        return getRequiresScanAhead();
     }
 
     public TokenSet getLookaheadFirstSet() {

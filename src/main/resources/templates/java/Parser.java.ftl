@@ -65,7 +65,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         LOGGER.setLevel(level);
         Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
     }
-static final int INDEFINITE=Integer.MAX_VALUE;    
+static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"     
 Token currentToken;
 private TokenType nextTokenType;
