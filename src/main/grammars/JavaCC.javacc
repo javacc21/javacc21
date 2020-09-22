@@ -1855,15 +1855,6 @@ INJECT Lookahead :
         return expansion.isSingleToken() && (getNestedExpansion() == null || getNestedExpansion().isSingleToken());
     }
 
-    private String routineName;
-
-    public String getRoutineName() {
-        if (routineName == null) {
-            routineName = getGrammar().generateUniqueIdentifier("check$", this);
-        }
-        return routineName;
-    }
-
     public LookBehind getLookBehind() {
         return firstChildOfType(LookBehind.class);
     }

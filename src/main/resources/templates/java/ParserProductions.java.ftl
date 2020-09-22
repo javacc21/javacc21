@@ -95,7 +95,7 @@
  //====================================
    [#list grammar.scanAheadExpansions as expansion]
       [#if expansion.parent.class.simpleName != "BNFProduction"]
-        [@BuildScanRoutine expansion, expansion.maxScanAhead /]
+        ${BuildScanRoutine(expansion)}
       [/#if]
    [/#list]
    [#list grammar.expansionsNeedingPredicate as expansion]
@@ -104,7 +104,7 @@
    [#list grammar.allLookaheads as lookahead]
 [#--       ${firstSetVar(lookahead)} --]
       [#if lookahead.nestedExpansion??]
-       [@BuildLookaheadRoutine lookahead /]
+       ${BuildLookaheadRoutine(lookahead)}
      [/#if]
    [/#list]
    [#list grammar.allLookBehinds as lookBehind]
@@ -565,7 +565,7 @@
 [#var nodeNumbering = 0]
 [#var NODE_USES_PARSER = grammar.options.nodeUsesParser]
 [#var NODE_PREFIX = grammar.options.nodePrefix]
-[#var currentProduction]
+[#var currentProduction, currentLookaheadExpansion]
 
 
 [#--
@@ -574,7 +574,7 @@
  --]
 [#macro BuildLookaheadRoutine lookahead]
   [#if lookahead.nestedExpansion??]
-     private final boolean ${lookahead.routineName}() {
+     private final boolean ${lookahead.nestedExpansion.scanRoutineName}() {
         int prevRemainingLookahead = remainingLookahead;
         Token prevScanAheadToken = currentLookaheadToken;
         try {
@@ -642,61 +642,17 @@
 
 [#macro BuildProductionLookaheadMethod production]
    private final boolean ${production.lookaheadMethodName}() {
+      [#if production.javaCode?? && production.javaCode.appliesInLookahead]
+          ${production.javaCode}
+       [/#if]
      ${BuildScanCode(production.expansion)}
      return true;
    }
 [/#macro]
 
-[#macro BuildScanRoutineNOTUSED expansion count]
-     private final boolean ${expansion.scanRoutineName}() {
-        [#if expansion.requiresPredicateMethod]
-          if (!${expansion.predicateMethodName}()) return false;
-        [/#if]
-        [#if !expansion.doesFullSelfLookahead]
-          [@BuildScanCode expansion, count/]
-        [/#if]
-        return true;
-    }
-[/#macro]
-
-[#macro BuildScanRoutine expansion count]
-     [#var failure = (!expansion.hasSyntacticLookahead && expansion.negated)?string("true", "false")] [#-- kludgy,revisit --]
-     private final boolean ${expansion.scanRoutineName}() {
-     [#if expansion.parent.class.simpleName = "BNFProduction"]
-       [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
-          ${expansion.parent.javaCode}
-       [/#if]
-     [/#if]
-     [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
-       if (!(${expansion.semanticLookahead}) return ${failure};
-     [/#if]
-     [#if expansion.hasLookBehind]
-       if (!${expansion.lookBehind.routineName}()) return ${failure};
-     [/#if]
-     if (remainingLookahead <=0) return true;
-     [#if expansion.hasSyntacticLookahead]
-      if (
-      [#if !expansion.lookahead.negated]![/#if]
-      ${expansion.lookahead.routineName}())
-        return false;
-     [/#if]
-     [@BuildScanCode expansion, count/]
-      return true;
-    }
-[/#macro]
-
-[#macro BuildPredicateRoutine expansion] 
-  [#var lookaheadAmount = expansion.lookaheadAmount]
-  [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
-   private final boolean ${expansion.predicateMethodName}() {
-      currentLookaheadToken= currentToken;
-      remainingLookahead= ${lookaheadAmount};
-     stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
-     [#if expansion.parent.class.simpleName = "BNFProduction"]
-       [#if expansion.parent.javaCode?? && expansion.parent.javaCode.appliesInLookahead]
-          ${expansion.parent.javaCode}
-       [/#if]
-     [/#if]
+[#macro BuildScanRoutine expansion]
+  private final boolean ${expansion.scanRoutineName}() {
+   [#if !expansion.insideLookahead]
      [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
        if (!(${expansion.semanticLookahead}) return false;
      [/#if]
@@ -707,10 +663,38 @@
      [#if expansion.hasSeparateSyntacticLookahead]
       if (
       [#if !expansion.lookahead.negated]![/#if]
-      ${expansion.lookahead.routineName}())
+        ${expansion.lookaheadExpansion.scanRoutineName}())
         return false;
+     [/#if]
+   [/#if]
+     ${BuildScanCode(expansion)}
+      return true;
+  }
+[/#macro]
+
+[#macro BuildPredicateRoutine expansion] 
+  [#var lookaheadAmount = expansion.lookaheadAmount]
+  [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
+   private final boolean ${expansion.predicateMethodName}() {
+      currentLookaheadToken= currentToken;
+      remainingLookahead= ${lookaheadAmount};
+      stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
+     [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
+       if (!(${expansion.semanticLookahead}) return false;
+     [/#if]
+     [#if expansion.hasLookBehind]
+       if (!${expansion.lookBehind.routineName}()) return false;
+     [/#if]
+     if (remainingLookahead <=0) return true;
+     [#if expansion.hasSeparateSyntacticLookahead]
+      if (
+      [#if !expansion.lookahead.negated]![/#if]
+        ${expansion.lookaheadExpansion.scanRoutineName}())
+        return false;
+     [#elseif expansion.hasImplicitSyntacticLookahead]
+        ${BuildScanCode(expansion)}
      [#else]
-        ${BuildScanCode(expansion, expansion.lookaheadAmount)}
+        if (scanToken(${expansion.firstSetVarName})) return false;
      [/#if]
      return true;
    }
@@ -723,14 +707,15 @@
    This macro just delegates to the various sub-macros
    based on the Expansion's class name.
 --]
-[#macro BuildScanCode expansion count=UNLIMITED]
+[#macro BuildScanCode expansion]
+  [#set currentLookaheadExpansion = expansion]
   [#var classname=expansion.simpleName]
   [#if expansion.singleToken]
      ${ScanSingleToken(expansion)}
    [#elseif classname = "Failure"]
       ${ScanCodeError(expansion)}
    [#elseif classname = "ExpansionSequence"]
-      ${ScanCodeSequence(expansion, count)}
+      ${ScanCodeSequence(expansion)}
    [#elseif classname = "ZeroOrOne"]
       [@ScanCodeZeroOrOne expansion/]
    [#elseif classname = "ZeroOrMore"]
@@ -740,7 +725,7 @@
    [#elseif classname = "NonTerminal"]
       [@ScanCodeNonTerminal expansion/]
    [#elseif classname = "TryBlock" || classname="AttemptBlock"]
-      [@BuildScanCode expansion.nestedExpansion, count/]
+      [@BuildScanCode expansion.nestedExpansion/]
    [#elseif classname = "ExpansionChoice"]
       [@ScanCodeChoice expansion /]
    [#elseif classname = "CodeBlock"]
@@ -844,9 +829,9 @@
    kind of space optimization is probably not worth the candle and makes things
    complicated. So it is currently disabled. (May REVISIT later.)
 --]
-[#macro ScanCodeSequence sequence, count]
+[#macro ScanCodeSequence sequence]
    [#list sequence.units as sub]
-       [@BuildScanCode sub, count/]
+       [@BuildScanCode sub/]
        [#if sub.scanLimit]
           if (stopAtScanLimit) {
          [#if sub.scanLimitPlus >0]
