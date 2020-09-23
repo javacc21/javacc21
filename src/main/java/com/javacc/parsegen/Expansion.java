@@ -364,7 +364,6 @@ abstract public class Expansion extends BaseNode {
         if (scanRoutineName == null) {
             if (this.getParent() instanceof BNFProduction) {
                 BNFProduction prod = (BNFProduction) getParent();
-//                scanRoutineName = "check$" + prod.getName();
                 scanRoutineName = prod.getLookaheadMethodName();
             } else {
                 scanRoutineName = getGrammar().generateUniqueIdentifier("check$", this);

@@ -924,7 +924,7 @@ INJECT BNFProduction :
     private String name;
 
     public String getLookaheadMethodName() {
-        return "lookahead$" + name;
+        return "check$" + name;
     }
     
     public Expansion getExpansion() {
