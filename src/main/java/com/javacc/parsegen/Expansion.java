@@ -228,7 +228,7 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead()) return false;
         if (!isAtChoicePoint()) return false;
         if (getHasSeparateSyntacticLookahead()) return true;
-        if (getHasImplicitSyntacticLookahead()) return true;
+        if (getHasImplicitSyntacticLookahead() && !isSingleToken()) return true;
         return getHasGlobalSemanticActions();
 //        return getRequiresScanAhead();
     }

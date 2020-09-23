@@ -70,17 +70,17 @@ class NonTerminalCall {
     // We actually only use this when we're working with the LookaheadStack
     final boolean stopAtScanLimit;
 
-    NonTerminalCall(String sourceFile, String productionName, int line, int column, boolean stopAtScanLimit) {
+    NonTerminalCall(String sourceFile, String productionName, int line, int column) {
         this.sourceFile = sourceFile;
         this.productionName = productionName;
         this.line = line;
         this.column = column;
-        this.stopAtScanLimit = false;
+        this.stopAtScanLimit = ${grammar.parserClassName}.this.stopAtScanLimit;
     }
 
-    NonTerminalCall(String sourceFile, String productionName, int line, int column) {
-        this (sourceFile, productionName, line, column, false);
-    }
+//    NonTerminalCall(String sourceFile, String productionName, int line, int column) {
+//        this (sourceFile, productionName, line, column, false);
+//    }
 
     StackTraceElement createStackTraceElement() {
         return new StackTraceElement("${grammar.parserClassName}", productionName, sourceFile, line);
@@ -134,7 +134,7 @@ private Iterator<NonTerminalCall> stackIteratorBackward() {
 
 
 private final void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
-    lookaheadStack.add(new NonTerminalCall(fileName, methodName, line, column, this.stopAtScanLimit));
+    lookaheadStack.add(new NonTerminalCall(fileName, methodName, line, column));
 }
 
 private final void popLookaheadStack() {

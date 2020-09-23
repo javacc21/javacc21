@@ -814,25 +814,15 @@
   checking the production's nested expansion 
 --]
 [#macro ScanCodeNonTerminal nt]
-      [#set newVarIndex = newVarIndex +1]
-      [#var scanLimitVarName = "stopAtScanLimit" + newVarIndex]
-      [#var ignoreScanLimit = nt.ignoreUpToHere || !nt.atEnd]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
-      [#if ignoreScanLimit]
-         boolean ${scanLimitVarName} = stopAtScanLimit;
+      [#if nt.ignoreUpToHere]
          stopAtScanLimit = false;
       [/#if]
       if (!${nt.production.lookaheadMethodName}()) {
          popLookaheadStack();
-         [#if ignoreScanLimit]
-             stopAtScanLimit = ${scanLimitVarName};
-         [/#if]
          return false;
       }
       popLookaheadStack();
-      [#if ignoreScanLimit]
-         stopAtScanLimit = ${scanLimitVarName};
-      [/#if]
 [/#macro]
 
 [#--
@@ -847,7 +837,7 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
-          if (stopAtScanLimit) {
+          if (stopAtScanLimit && lookaheadStack.size() <= 1) {
          [#if sub.scanLimitPlus >0]
              remainingLookahead = ${sub.scanLimitPlus};
          [#else]
