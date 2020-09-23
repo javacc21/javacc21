@@ -2013,6 +2013,7 @@ INJECT NonTerminal :
      * The basic logic of when we ignore an up-to-here marker
      */
     public boolean getIgnoreUpToHere() {
+        if (isInsideLookahead()) return true;
         ExpansionSequence parent = (ExpansionSequence) getParent();
         if (parent.getHasExplicitNumericalLookahead() || parent.getHasScanLimit()) return true;
         for (Expansion exp : parent.getUnits()) {
