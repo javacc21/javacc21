@@ -283,6 +283,19 @@ abstract public class Expansion extends BaseNode {
         return false;
     }
 
+    public boolean getHasInnerScanLimit() {
+        if (!(this instanceof ExpansionSequence)) return false;
+        for (Expansion sub : childrenOfType(Expansion.class)) {
+            if (sub instanceof NonTerminal) {
+                return ((NonTerminal) sub).getProduction().getHasScanLimit();
+            }
+            if (sub.getMaximumSize()>0) break;
+        }
+        return false;
+    }
+
+
+
     public Expansion getUpToExpansion() {
         Lookahead la = getLookahead();
         return la == null ? null : la.getUpToExpansion();

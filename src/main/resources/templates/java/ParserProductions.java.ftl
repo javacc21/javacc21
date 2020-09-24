@@ -209,8 +209,6 @@
           [#else]
               boolean ${forcedVarName} = this.tolerantParsing && currentNTForced;
           [/#if]
-        [#else]
-        boolean ${forcedVarName} = false;
         [/#if]
       [@createNode treeNodeBehavior nodeVarName /]
           ParseException ${parseExceptionVar} = null;
@@ -680,14 +678,15 @@
    private final boolean ${expansion.predicateMethodName}() {
       currentLookaheadToken= currentToken;
       remainingLookahead= ${lookaheadAmount};
+     [#if expansion.hasScanLimit || expansion.hasInnerScanLimit]
       stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
+     [/#if]
      [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
        if (!(${expansion.semanticLookahead}) return false;
      [/#if]
      [#if expansion.hasLookBehind]
        if (!${expansion.lookBehind.routineName}()) return false;
      [/#if]
-     if (remainingLookahead <=0) return true;
      [#if expansion.hasSeparateSyntacticLookahead]
       if (
       [#if !expansion.lookahead.negated]![/#if]
@@ -815,7 +814,7 @@
 --]
 [#macro ScanCodeNonTerminal nt]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
-      [#if nt.ignoreUpToHere]
+      [#if nt.ignoreUpToHere && nt.production.expansion.hasScanLimit]
          stopAtScanLimit = false;
       [/#if]
       if (!${nt.production.lookaheadMethodName}()) {
