@@ -60,18 +60,7 @@ abstract public class Expansion extends BaseNode {
     private Lookahead lookahead;
     
     private String label = "";  
-    
-/**
- * The number of Tokens that can be consumed in a scanahead routine    
- * (assuming that we need a scanAhead routine for this Expansion)
- */
-    public int getMaxScanAhead() {
-//    	return this.maxScanAhead;
-//        return this.getMaximumSize();
-        return Integer.MAX_VALUE; // REVISIT later maybe, for now just not bothering with this logic
-    }
-    
-    
+
     protected TokenSet firstSet;
 
     public int getIndex() {
@@ -88,8 +77,6 @@ abstract public class Expansion extends BaseNode {
         return firstAncestorOfType(BNFProduction.class);
     }
 
-    long myGeneration = 0; //REVISIT
-    
     private String scanRoutineName, predicateMethodName, firstSetVarName, finalSetVarName, followSetVarName;
     
     public String getLabel() {
@@ -195,7 +182,10 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean getDoesFullSelfLookahead() {
-        return getHasImplicitSyntacticLookahead() && !getHasExplicitNumericalLookahead() && !getHasScanLimit();
+        return getHasImplicitSyntacticLookahead()
+                && !getHasExplicitNumericalLookahead()
+                && !getHasScanLimit()
+                && !getHasInnerScanLimit();
     }
 
     private boolean scanLimit;
@@ -230,24 +220,14 @@ abstract public class Expansion extends BaseNode {
         if (getHasSeparateSyntacticLookahead()) return true;
         if (getHasImplicitSyntacticLookahead() && !isSingleToken()) return true;
         return getHasGlobalSemanticActions();
-//        return getRequiresScanAhead();
     }
 
-    public TokenSet getLookaheadFirstSet() {
-        Lookahead la = getLookahead();
-        return la != null ? la.getFirstSet() : getFirstSet();
-    }
-    
     public Expansion getLookaheadExpansion() {
         Lookahead la = getLookahead();
         Expansion exp = la == null ? null : la.getNestedExpansion();
         return exp != null ? exp : this;
     }
 
-    public boolean getHasSyntacticLookahead() {
-       return getLookaheadExpansion() != this;
-    }
-    
     public boolean isAlwaysSuccessful() {
         if (getHasSemanticLookahead() || getHasLookBehind() || !isPossiblyEmpty()) {
             return false;
