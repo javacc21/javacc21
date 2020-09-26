@@ -167,7 +167,13 @@ public boolean isCancelled() {return cancelled;}
     }
     return t;
   }
-  
+  private final boolean resetLookahead(Token token) {
+    this.currentLookaheadToken = token;
+    this.remainingLookahead = UNLIMITED;
+    this.stopAtScanLimit = false;
+    return true;
+  } 
+
   private final boolean setNextTokenType() {
     if (currentToken.getNext() == null) {
         Token nextToken = token_source.getNextToken();
@@ -191,7 +197,6 @@ public boolean isCancelled() {return cancelled;}
    [#embed "TreeBuildingCode.java.ftl"]
 [/#if]
 }
-
   
 }
 [#list grammar.otherParserCodeDeclarations as decl]

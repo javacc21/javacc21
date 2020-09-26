@@ -78,10 +78,6 @@ class NonTerminalCall {
         this.stopAtScanLimit = ${grammar.parserClassName}.this.stopAtScanLimit;
     }
 
-//    NonTerminalCall(String sourceFile, String productionName, int line, int column) {
-//        this (sourceFile, productionName, line, column, false);
-//    }
-
     StackTraceElement createStackTraceElement() {
         return new StackTraceElement("${grammar.parserClassName}", productionName, sourceFile, line);
     }

@@ -30,6 +30,8 @@
  */
  --]
 
+ [#-- This template contains the core logic for generating the various parser/lookahead routines. --]
+
  [#var TT = "TokenType.", UNLIMITED=2147483647]
 
  [#if !grammar.options.legacyAPI && grammar.parserPackage?has_content]
@@ -652,19 +654,8 @@
  [#if !expansion.singleToken || expansion.requiresPredicateMethod]
   private final boolean ${expansion.scanRoutineName}() {
    [#if !expansion.insideLookahead]
-     [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
-       if (!(${expansion.semanticLookahead}) return false;
-     [/#if]
-     [#if expansion.hasLookBehind]
-       if (!${expansion.lookBehind.routineName}()) return false;
-     [/#if]
      if (remainingLookahead <=0) return true;
-     [#if expansion.hasSeparateSyntacticLookahead]
-      if (
-      [#if !expansion.lookahead.negated]![/#if]
-        ${expansion.lookaheadExpansion.scanRoutineName}())
-        return false;
-     [/#if]
+     ${BuildPredicateCode(expansion)}
    [/#if]
      ${BuildScanCode(expansion)}
       return true;
@@ -681,6 +672,16 @@
      [#if expansion.hasScanLimit || expansion.hasInnerScanLimit]
       stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
      [/#if]
+     ${BuildPredicateCode(expansion)}
+     [#if !expansion.hasSeparateSyntacticLookahead]
+        ${BuildScanCode(expansion)}
+     [/#if]
+     return true;
+   }
+[/#macro]
+
+[#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
+[#macro BuildPredicateCode expansion]
      [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
        if (!(${expansion.semanticLookahead}) return false;
      [/#if]
@@ -692,13 +693,7 @@
       [#if !expansion.lookahead.negated]![/#if]
         ${expansion.lookaheadExpansion.scanRoutineName}())
         return false;
-     [#elseif expansion.hasImplicitSyntacticLookahead]
-        ${BuildScanCode(expansion)}
-     [#else]
-        if (scanToken(${expansion.firstSetVarName})) return false;
-     [/#if]
-     return true;
-   }
+      [/#if]
 [/#macro]
 
 
