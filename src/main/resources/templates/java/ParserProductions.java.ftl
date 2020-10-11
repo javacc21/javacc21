@@ -47,7 +47,7 @@
     [@finalSetVars/]
     [@followSetVars/]  
     [/#if]
-    [#if grammar.scanAheadExpansions?size !=0]
+    [#if grammar.choicePointExpansions?size !=0]
        [@BuildLookaheads /]
      [/#if]
 [/#macro]
@@ -95,7 +95,7 @@
 //====================================
  // Lookahead Routines
  //====================================
-   [#list grammar.scanAheadExpansions as expansion]
+   [#list grammar.choicePointExpansions as expansion]
       [#if expansion.parent.class.simpleName != "BNFProduction"]
         ${BuildScanRoutine(expansion)}
       [/#if]

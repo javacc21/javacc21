@@ -424,7 +424,7 @@ public class LexicalStateData {
 
             if (!grammar.getOptions().getIgnoreCase() && stringLiteral.getIgnoreCase()
                     && c != Character.toLowerCase(c)) {
-                s = ("" + stringLiteral.getImage().charAt(i)).toLowerCase();
+                s = ("" + stringLiteral.getImage().charAt(i)).toLowerCase(Locale.ENGLISH);
 
                 if (i >= charPosKind.size()) // Kludge, but OK
                     charPosKind.add(temp = new HashMap<String, KindInfo>());

@@ -54,10 +54,10 @@ public class Grammar extends BaseNode {
     lexerClassName,
     parserPackage,
     constantsClassName,
-    baseNodeClassName="BaseNode";
+    baseNodeClassName="BaseNode",
+    defaultLexicalState = "DEFAULT";
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
-    private String defaultLexicalState = "DEFAULT";
     private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
@@ -74,7 +74,6 @@ public class Grammar extends BaseNode {
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
-    private List<Expansion> scanAheadExpansions, expansionsNeedingPredicate;
 
     
     
@@ -354,25 +353,18 @@ public class Grammar extends BaseNode {
     }
 
     public Collection<BNFProduction> getParserProductions() {
-        return getProductionTable().values();
+        return descendantsOfType(BNFProduction.class);
     }
 
     /**
-     * The list of Expansions for which we need to generate scanahead routines
-     * @return
+     * @return a List containing all the expansions that are at a choice point
      */
-    public List<Expansion> getScanAheadExpansions() {
-        if (scanAheadExpansions == null) {
-            scanAheadExpansions = descendants(Expansion.class, exp->exp.isAtChoicePoint());
-        }
-        return scanAheadExpansions;
+    public List<Expansion> getChoicePointExpansions() {
+        return descendants(Expansion.class, exp->exp.isAtChoicePoint());
     }
 
     public List<Expansion> getExpansionsNeedingPredicate() {
-        if (expansionsNeedingPredicate == null) {
-            expansionsNeedingPredicate = descendants(Expansion.class, exp->exp.getRequiresPredicateMethod());
-        }
-        return expansionsNeedingPredicate;
+        return descendants(Expansion.class, exp->exp.getRequiresPredicateMethod());
     }
 
 
