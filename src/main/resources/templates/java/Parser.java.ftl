@@ -144,49 +144,35 @@ public boolean isCancelled() {return cancelled;}
      currentToken = new Token();
   }
 
- final public Token getNextToken() {
-    if (currentToken.getNext() != null) currentToken = currentToken.getNext();
-    else {
-       Token nextToken = token_source.getNextToken();
-       currentToken.setNext(nextToken);
-       currentToken = nextToken;
+  // If tok already has a next field set, it returns that
+  // Otherwise, it goes to the token_source, i.e. the Lexer.
+  final private Token nextToken(Token tok) {
+    Token result = tok.getNext();
+    if (result == null) {
+      result = token_source.getNextToken();
+      tok.setNext(result);
     }
-    return currentToken;
+    return result;
+  }
+
+  final public Token getNextToken() {
+    return currentToken = getToken(1);
   }
 
 /** Get the specific Token index ahead in the stream. */
   final public Token getToken(int index) {
     Token t = currentToken;
     for (int i = 0; i < index; i++) {
-      if (t.getNext() != null) t = t.getNext();
-      else {
-         Token nextToken = token_source.getNextToken();
-         t.setNext(nextToken);
-         t = nextToken;
-       }
+      t = nextToken(t);
     }
     return t;
   }
-  private final boolean resetLookahead(Token token) {
-    this.currentLookaheadToken = token;
-    this.remainingLookahead = UNLIMITED;
-    this.stopAtScanLimit = false;
-    return true;
-  } 
-
-  private final boolean setNextTokenType() {
-    if (currentToken.getNext() == null) {
-        Token nextToken = token_source.getNextToken();
-        currentToken.setNext(nextToken);
-    }
-    nextTokenType = currentToken.getNext().getType();
-    return true;
-  }
 
   private final TokenType nextTokenType() {
-    setNextTokenType();
+    this.nextTokenType = nextToken(currentToken).getType();
     return nextTokenType;
   }
+
 
 [#import "ParserProductions.java.ftl" as ParserCode ]
 [@ParserCode.Generate/]

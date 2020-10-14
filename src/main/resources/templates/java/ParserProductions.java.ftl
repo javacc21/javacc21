@@ -65,12 +65,8 @@
 
 [#macro BuildLookaheads]
   private final boolean scanToken(TokenType expectedType) {
-       if (remainingLookahead <=0) return true;
-       if (currentLookaheadToken.getNext() == null) {
-        Token nextToken = token_source.getNextToken();
-        currentLookaheadToken.setNext(nextToken);
-     } 
-     currentLookaheadToken = currentLookaheadToken.getNext();
+     if (remainingLookahead <=0) return true;
+     currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (type != expectedType) return false;
      if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
@@ -80,11 +76,7 @@
 
   private final boolean scanToken(EnumSet<TokenType> types) {
      if (remainingLookahead <=0) return true;
-     if (currentLookaheadToken.getNext() == null) {
-        Token nextToken = token_source.getNextToken();
-        currentLookaheadToken.setNext(nextToken);
-     } 
-     currentLookaheadToken = currentLookaheadToken.getNext();
+     currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (!types.contains(type)) return false;
      if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
