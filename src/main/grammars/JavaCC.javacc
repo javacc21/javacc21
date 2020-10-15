@@ -457,6 +457,10 @@ INJECT Identifier :
         if (image.equals("current_token")) {
             return "currentToken";
         }
+        if (image.equals("TOKEN_HOOK")) {
+            String result = "tokenHook$" + getInputSource() + "_line_" + getBeginLine();
+            return com.javacc.Grammar.removeNonJavaIdentifierPart(result);
+        }
 //        if (image.equals("input_stream")) {
 //            return "inputSource";
 //        }

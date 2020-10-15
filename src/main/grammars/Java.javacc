@@ -38,8 +38,11 @@ DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 
-/* WHITE SPACE */
-
+INJECT LEXER_CLASS : {
+  private Token TOKEN_HOOK(Token tok) {
+    return tok;
+  }
+}
 UNPARSED : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
 
 <IN_MULTI_LINE_COMMENT>

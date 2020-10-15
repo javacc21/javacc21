@@ -79,6 +79,7 @@ public class Grammar extends BaseNode {
     
     private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
+    private List<String> tokenHookMethodNames = new ArrayList<>();
     private boolean usesCommonTokenAction, usesTokenHook, usesCloseNodeScopeHook, usesOpenNodeScopeHook, usesjjtreeOpenNodeScope, usesjjtreeCloseNodeScope;
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
@@ -367,6 +368,10 @@ public class Grammar extends BaseNode {
         return descendants(Expansion.class, exp->exp.getRequiresPredicateMethod());
     }
 
+    public List<String> getTokenHookMethodNames() {
+        return tokenHookMethodNames;
+    }
+
 
     /**
      * A symbol table of all grammar productions.
@@ -652,6 +657,9 @@ public class Grammar extends BaseNode {
                 if (className.equals(lexerClassName)) {
                     if (start.equals("CommonTokenAction")) {
                         usesCommonTokenAction = true;
+                    }
+                    else if (start.startsWith("tokenHook$")) {
+                        tokenHookMethodNames.add(start);
                     }
                     else if (start.equals("tokenHook")) {
                         usesTokenHook = true;

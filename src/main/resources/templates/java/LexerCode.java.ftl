@@ -127,6 +127,10 @@
 [#if grammar.usesTokenHook]
             eof = tokenHook(eof);
 [/#if]
+[#list grammar.tokenHookMethodNames as tokenHookMethodName]
+            eof = ${tokenHookMethodName}(eof);
+[/#list]
+
 		    eof.setSpecialToken(specialToken);
 		    addToken(eof);
     		return eof;
@@ -237,6 +241,10 @@
  [#if grammar.usesTokenHook]
       matchedToken = tokenHook(matchedToken);
  [/#if]
+ [#list grammar.tokenHookMethodNames as tokenHookMethodName]
+         matchedToken = ${tokenHookMethodName}(matchedToken);
+[/#list]
+
  
 
  [#if lexerData.hasSpecial]

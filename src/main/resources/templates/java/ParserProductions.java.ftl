@@ -177,6 +177,8 @@
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
      if (trace_enabled) LOGGER.info("Entering production defined on line ${production.beginLine} of ${production.inputSource}");
      if (cancelled) throw new CancellationException();
+     String prevProduction = currentlyParsedProduction;
+     this.currentlyParsedProduction = "${production.name}";
    [@BuildCode production.expansion /]
     }   
 [/#macro]
@@ -285,6 +287,7 @@
                 }
         }
 [/#if]  
+        this.currentlyParsedProduction = prevProduction;
          }       
           ${grammar.utils.popNodeVariableName()!}
     [/#if]
@@ -816,14 +819,20 @@
 --]
 [#macro ScanCodeNonTerminal nt]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
+      [#set newVarIndex = newVarIndex +1]
+      [#var prevProductionVarName = "prevProduction" + newVarIndex]
+      String ${prevProductionVarName} = currentLookaheadProduction;
+      currentLookaheadProduction = "${nt.production.name}";
       [#if nt.ignoreUpToHere && nt.production.expansion.hasScanLimit]
          stopAtScanLimit = false;
       [/#if]
       if (!${nt.production.lookaheadMethodName}()) {
          popLookaheadStack();
+         currentLookaheadProduction = ${prevProductionVarName};
          return false;
       }
       popLookaheadStack();
+      currentLookaheadProduction = ${prevProductionVarName};
 [/#macro]
 
 [#--

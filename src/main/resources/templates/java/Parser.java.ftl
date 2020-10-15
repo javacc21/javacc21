@@ -71,6 +71,7 @@ Token currentToken;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
+private String currentlyParsedProduction, currentLookaheadProduction;
 // private TokenType upToTokenType;
 // private EnumSet<TokenType> upToFirstSet;
 private boolean stopAtScanLimit;
@@ -171,6 +172,22 @@ public boolean isCancelled() {return cancelled;}
   private final TokenType nextTokenType() {
     this.nextTokenType = nextToken(currentToken).getType();
     return nextTokenType;
+  }
+
+  /**
+   *Are we in the production of the given name, either scanning ahead or parsing?
+   */
+  boolean isInProduction(String productionName) {
+    if (currentlyParsedProduction.equals(productionName)) return true;
+    if (currentLookaheadProduction != null && currentLookaheadProduction.equals(productionName)) return true;
+    Iterator<NonTerminalCall> it = stackIteratorBackward();
+    while (it.hasNext()) {
+      NonTerminalCall ntc = it.next();
+      if (ntc.productionName.equals(productionName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
 
