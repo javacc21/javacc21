@@ -796,6 +796,7 @@ EnumConstant:
 
 TypeParameters #TypeParameterList :
    "<"
+// LEXICAL_STATE JAVA
    TypeParameter ( "," TypeParameter )* 
    ">"
 ;

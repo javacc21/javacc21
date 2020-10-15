@@ -252,6 +252,7 @@ INJECT LEXER_CLASS :
         javaccReservedWords.add("SCAN");
         javaccReservedWords.add("LOOKAHEAD");
         javaccReservedWords.add("FAIL");
+        javaccReservedWords.add("LEXICAL_STATE");
 // REVISIT: Scanning forwards, the parser has to be able to identify these
 //      as JavaCC keywords even from within a code block (its very end, I guess)
 //      Oh well, it's not very important!
@@ -339,6 +340,8 @@ TOKEN :
   <RIGHT_ARROW : "=>"> #RightArrow
   |
   <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
+  |
+  <_LEXICAL_STATE : "LEXICAL_STATE"> #JavaCCKeyWord
 //  |
 //  <UP_TO_HERE_PLUS : "=>|+"["0"-"9"]>
 }
@@ -1889,6 +1892,8 @@ Expansion ExpansionUnit :
   SCAN 1 ~\...\Lookahead =>
   result=TryBlock
   |
+  LexicalStateSwitch {result = (Expansion) peekNode();}
+  |
   => result = ZeroOrOne [SCAN ~\...\Lookahead => UpToHere(result)]
   |
   => result = ZeroOrMore [SCAN ~\...\Lookahead => UpToHere(result)]
@@ -2361,6 +2366,7 @@ Failure Failure :
 ;
 
 
+
 INJECT Failure :
    import com.javacc.lexgen.TokenSet;
    extends com.javacc.parsegen.Expansion
@@ -2389,6 +2395,30 @@ INJECT Failure :
 
     public boolean isAlwaysSuccessful() {return false;}
 }
+
+LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER>;
+
+INJECT LexicalStateSwitch : 
+   import com.javacc.lexgen.TokenSet;
+   extends com.javacc.parsegen.Expansion
+{
+    public boolean isConcrete() {return true;}
+    
+    public int getMaximumSize() {return 0;}
+
+    public int minimumSize(int min) {return 0;}
+
+    public boolean isPossiblyEmpty() {return true;}
+    
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+
+    public String getLexicalStateName() {return firstChildOfType(Identifier.class).getNormalizedText();}
+
+    public boolean isAlwaysSuccessful() {return true;}
+}
+
 
 TryBlock TryBlock : 
     "try" "{" ExpansionChoice "}"

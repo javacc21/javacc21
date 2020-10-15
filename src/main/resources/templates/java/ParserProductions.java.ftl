@@ -334,6 +334,8 @@
     [#var classname=expansion.simpleName]
     [#if classname = "CodeBlock"]
        ${expansion}
+    [#elseif classname="LexicalStateSwitch"] 
+       [@BuildCodeLexicalStateSwitch expansion /]
     [#elseif classname = "Failure"]
        [@BuildCodeFailure expansion/]
     [#elseif classname = "ExpansionSequence"]
@@ -355,6 +357,10 @@
     [#elseif classname = "ExpansionChoice"]
         [@BuildCodeChoice expansion/]
     [/#if]
+[/#macro]
+
+[#macro BuildCodeLexicalStateSwitch switch]
+    token_source.switchTo(LexicalState.${switch.lexicalStateName});
 [/#macro]
 
 [#macro BuildCodeFailure fail]
@@ -698,8 +704,13 @@
 [#macro BuildScanCode expansion]
   [#set currentLookaheadExpansion = expansion]
   [#var classname=expansion.simpleName]
+  [#if classname != "ExpansionSequence"]
+  // Lookahead Code for ${classname} specified on line ${expansion.beginLine} of ${expansion.inputSource}
+  [/#if]
   [#if expansion.singleToken]
      ${ScanSingleToken(expansion)}
+   [#elseif classname = "LexicalStateSwitch"]
+      ${ScanCodeLexicalStateSwitch(expansion)}
    [#elseif classname = "Failure"]
       ${ScanCodeError(expansion)}
    [#elseif classname = "ExpansionSequence"]
@@ -731,6 +742,10 @@
       if (!scanToken(${expansion.firstSetVarName})) return false;
     [/#if]
 [/#macro]    
+
+[#macro ScanCodeLexicalStateSwitch switch]
+   token_source.switchTo(LexicalState.${switch.lexicalStateName});
+[/#macro]
 
 [#macro ScanCodeError expansion]
    if (true) return false; [#-- This ugly trick again! REVISIT later. --]
