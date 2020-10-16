@@ -138,10 +138,20 @@ private final void popLookaheadStack() {
     this.stopAtScanLimit = ntc.stopAtScanLimit;
 }
 
-private void dumpLookaheadStack(PrintStream ps) {
+ void dumpLookaheadStack(PrintStream ps) {
     ListIterator<NonTerminalCall> it = lookaheadStack.listIterator(lookaheadStack.size());
     while (it.hasPrevious()) {
         it.previous().dump(ps);
+    }
+}
+
+void dumpLookaheadCallStack(PrintStream ps) {
+    ps.println("Current Parser Production is: " + currentlyParsedProduction);
+    ps.println("Current Lookahead Production is: " + currentLookaheadProduction);
+    Iterator<NonTerminalCall> it = stackIteratorBackward();
+    while (it.hasNext()) {
+        NonTerminalCall ntc = it.next();
+        ntc.dump(ps);
     }
 }
 
