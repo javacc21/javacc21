@@ -228,15 +228,12 @@ void dumpLookaheadCallStack(PrintStream ps) {
  [/#if]
         InvalidToken invalidToken = null;
         Token oldToken = currentToken;
-        currentToken = currentToken.getNext();
-        if (currentToken == null ) {
-            currentToken = token_source.getNextToken();
-        }
+        currentToken = nextToken(currentToken);
 [#if grammar.options.faultTolerant]        
         if (tolerantParsing && currentToken instanceof InvalidToken) {
              addParsingProblem(new ParsingProblem("Lexically invalid input", currentToken));
              invalidToken = (InvalidToken) currentToken;
-             currentToken = token_source.getNextToken();     
+             currentToken = token_source.getNextToken(); [#-- REVISIT --]
         }
 [/#if]
         if (currentToken.getType() != expectedType) {

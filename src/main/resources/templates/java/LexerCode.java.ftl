@@ -121,14 +121,12 @@
 			jjmatchedKind = 0;
             Token eof = jjFillToken();
             tokenLexicalActions();
-[#if grammar.usesCommonTokenAction]
-            CommonTokenAction(eof);
-[/#if]
-[#if grammar.usesTokenHook]
-            eof = tokenHook(eof);
-[/#if]
-[#list grammar.tokenHookMethodNames as tokenHookMethodName]
-            eof = ${tokenHookMethodName}(eof);
+[#list grammar.lexerTokenHooks as tokenHookMethodName]
+      [#if tokenHookMethodName = "CommonTokenAction"]
+         ${tokenHookMethodName}(eof);
+      [#else]
+         eof = ${tokenHookMethodName}(eof);
+      [/#if]
 [/#list]
 
 		    eof.setSpecialToken(specialToken);
@@ -238,11 +236,12 @@
  [/#if]
 
          matchedToken = jjFillToken();
- [#if grammar.usesTokenHook]
-      matchedToken = tokenHook(matchedToken);
- [/#if]
- [#list grammar.tokenHookMethodNames as tokenHookMethodName]
+ [#list grammar.lexerTokenHooks as tokenHookMethodName]
+      [#if tokenHookMethodName = "CommonTokenAction"]
+         ${tokenHookMethodName}(matchedToken);
+      [#else]
          matchedToken = ${tokenHookMethodName}(matchedToken);
+      [/#if]
 [/#list]
 
  
@@ -255,9 +254,6 @@
       tokenLexicalActions();
  [/#if]
 
- [#if grammar.usesCommonTokenAction]
-      CommonTokenAction(matchedToken);
- [/#if]
  jjmatchedKind = matchedToken.getType().ordinal();
  
  [#if numLexicalStates>1]

@@ -79,8 +79,8 @@ public class Grammar extends BaseNode {
     
     private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
-    private List<String> tokenHookMethodNames = new ArrayList<>();
-    private boolean usesCommonTokenAction, usesTokenHook, usesCloseNodeScopeHook, usesOpenNodeScopeHook, usesjjtreeOpenNodeScope, usesjjtreeCloseNodeScope;
+    private List<String> lexerTokenHooks = new ArrayList<>(), parserTokenHooks = new ArrayList<>();
+    private boolean usesCloseNodeScopeHook, usesOpenNodeScopeHook, usesjjtreeOpenNodeScope, usesjjtreeCloseNodeScope;
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
@@ -368,8 +368,12 @@ public class Grammar extends BaseNode {
         return descendants(Expansion.class, exp->exp.getRequiresPredicateMethod());
     }
 
-    public List<String> getTokenHookMethodNames() {
-        return tokenHookMethodNames;
+    public List<String> getLexerTokenHooks() {
+        return lexerTokenHooks;
+    }
+
+    public List<String> getParserTokenHooks() {
+        return parserTokenHooks;
     }
 
 
@@ -653,29 +657,26 @@ public class Grammar extends BaseNode {
             ClassOrInterfaceBodyDeclaration decl = (ClassOrInterfaceBodyDeclaration) node;
             String sig = decl.getFullNameSignatureIfMethod();
             if (sig != null) {
-                String start = new StringTokenizer(sig, "(\n ").nextToken();
+                String methodName = new StringTokenizer(sig, "(\n ").nextToken();
                 if (className.equals(lexerClassName)) {
-                    if (start.equals("CommonTokenAction")) {
-                        usesCommonTokenAction = true;
-                    }
-                    else if (start.startsWith("tokenHook$")) {
-                        tokenHookMethodNames.add(start);
-                    }
-                    else if (start.equals("tokenHook")) {
-                        usesTokenHook = true;
+                    if (methodName.startsWith("tokenHook$") || methodName.equals("tokenHook") || methodName.equals("CommonTokenAction")) {
+                        lexerTokenHooks.add(methodName);
                     }
                 }
                 else if (className.equals(parserClassName)) {
-                    if (start.equals("jjtreeOpenNodeScope")) {
+                    if (methodName.startsWith("tokenHook$")) {
+                        parserTokenHooks.add(methodName);
+                    }
+                    else if (methodName.equals("jjtreeOpenNodeScope")) {
                         usesjjtreeOpenNodeScope = true;
                     }
-                    else if (start.equals("jjtreeCloseNodeScope")) {
+                    else if (methodName.equals("jjtreeCloseNodeScope")) {
                         usesjjtreeCloseNodeScope = true;
                     }
-                    else if (start.equals("openNodeScopeHook")) {
+                    else if (methodName.equals("openNodeScopeHook")) {
                         usesOpenNodeScopeHook = true;
                     }
-                    else if (start.equals("closeNodeScopeHook")) {
+                    else if (methodName.equals("closeNodeScopeHook")) {
                         usesCloseNodeScopeHook = true;
                     }
                 }
@@ -690,14 +691,6 @@ public class Grammar extends BaseNode {
     public void addCodeInjection(Node n) {
         checkForHooks(n, null);
         codeInjections.add(n);
-    }
-
-    public boolean getUsesCommonTokenAction() {
-        return usesCommonTokenAction;
-    }
-
-    public boolean getUsesTokenHook() {
-        return usesTokenHook;
     }
 
     public boolean getUsesjjtreeOpenNodeScope() {

@@ -153,6 +153,9 @@ public boolean isCancelled() {return cancelled;}
       result = token_source.getNextToken();
       tok.setNext(result);
     }
+[#list grammar.parserTokenHooks as methodName] 
+    result = ${methodName}(result);
+[/#list]
     return result;
   }
 
@@ -177,8 +180,8 @@ public boolean isCancelled() {return cancelled;}
   /**
    *Are we in the production of the given name, either scanning ahead or parsing?
    */
-  boolean isInProduction(String productionName) {
-    if (currentlyParsedProduction.equals(productionName)) return true;
+  private boolean isInProduction(String productionName) {
+    if (currentlyParsedProduction != null && currentlyParsedProduction.equals(productionName)) return true;
     if (currentLookaheadProduction != null && currentLookaheadProduction.equals(productionName)) return true;
     Iterator<NonTerminalCall> it = stackIteratorBackward();
     while (it.hasNext()) {
