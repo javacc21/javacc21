@@ -38,20 +38,11 @@ PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 
 INJECT PARSER_CLASS : {
-  // Scan back in the call and lookahead stack to check for whether we are in TypeParameters or TypeArguments 
-  // production. We check both the call stack and the lookahead stack.
-  private boolean isInGenericTypeSpec() {
-    for (Iterator<NonTerminalCall> it = stackIteratorBackward(); it.hasNext();) {
-      String productionName = it.next().productionName;
-      if (productionName.equals("TypeParameters") || productionName.equals("TypeArguments")) return true;
-    }
-    return false;
-  }
 
   private Token TOKEN_HOOK(Token tok) {
     String img = tok.getImage();
     if (img==null || !img.startsWith(">")) return tok;
-    boolean inGenericTypeSpec = isInGenericTypeSpec();
+    boolean inGenericTypeSpec = isInProduction("TypeArguments") || isInProduction("TypeParameters");
     if (!inGenericTypeSpec && img.length() ==1) {
       // In this case we merge 2 (or 3) '>' tokens into a right shift operator
       Token next = tok.getNext();
@@ -82,12 +73,14 @@ INJECT PARSER_CLASS : {
         next.setBeginColumn(next.getBeginColumn()+1);
         next.setEndColumn(next.getEndColumn() +1);
         gt.setNext(next);
+        next.setNext(tok.getNext());
         if (img.length() ==3) {
           Token nextNext = Token.newToken(TokenType.GT, ">", this);
           Nodes.copyLocationInfo(next, nextNext);
           nextNext.setBeginColumn(next.getBeginColumn() +1);
           nextNext.setEndColumn(next.getEndColumn() +1);
           next.setNext(nextNext);
+          nextNext.setNext(tok.getNext());
         }
         return gt;
     }
@@ -984,7 +977,6 @@ ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclar
   |
   ConstructorDeclaration
   |
-//  => 
   FieldDeclaration
   |
   MethodDeclaration
