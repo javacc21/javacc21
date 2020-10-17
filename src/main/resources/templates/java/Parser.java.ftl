@@ -182,8 +182,8 @@ public boolean isCancelled() {return cancelled;}
    *Are we in the production of the given name, either scanning ahead or parsing?
    */
   private boolean isInProduction(String productionName) {
-//    if (currentlyParsedProduction != null && currentlyParsedProduction.equals(productionName)) return true;
-//    if (currentLookaheadProduction != null && currentLookaheadProduction.equals(productionName)) return true;
+    if (currentlyParsedProduction != null && currentlyParsedProduction.equals(productionName)) return true;
+    if (currentLookaheadProduction != null && currentLookaheadProduction.equals(productionName)) return true;
     Iterator<NonTerminalCall> it = stackIteratorBackward();
     while (it.hasNext()) {
       NonTerminalCall ntc = it.next();
