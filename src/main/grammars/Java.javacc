@@ -43,46 +43,27 @@ INJECT PARSER_CLASS : {
     String img = tok.getImage();
     if (img==null || !img.startsWith(">")) return tok;
     boolean inGenericTypeSpec = isInProduction("TypeArguments") || isInProduction("TypeParameters");
-    if (!inGenericTypeSpec && img.length() ==1) {
-      // In this case we merge 2 (or 3) '>' tokens into a right shift operator
-      Token next = tok.getNext();
-      if (next != null && next.getType() == GT) {
-        Token nextNext = next.getNext();
-        Token merged = null;
-        if (nextNext != null && nextNext.getType() == GT) {
-          merged = Token.newToken(RUNSIGNEDSHIFT, ">>>", this);
-          Nodes.copyLocationInfo(tok, merged);
-          merged.setEndColumn(merged.getEndColumn()+2);
-          merged.setNext(nextNext.getNext());
-        } else {
-          merged = Token.newToken(RSIGNEDSHIFT, ">>", this);
-          Nodes.copyLocationInfo(tok, merged);
-          merged.setEndColumn(merged.getEndColumn()+1);
-          merged.setNext(next.getNext());
-        }
-        return merged;
-      }
-    }
-    else if (inGenericTypeSpec && (img.equals(">>") || img.equals(">>>"))) {
-      // In this case, we separate out a right shift operator into two (or three) '>' closing angle brackets
-        Token gt = Token.newToken(TokenType.GT, ">", this);
-        Token next = Token.newToken(TokenType.GT, ">", this);
-        Nodes.copyLocationInfo(tok, gt);
-        Nodes.copyLocationInfo(tok, next);
-        gt.setEndColumn(gt.getBeginColumn());
-        next.setBeginColumn(next.getBeginColumn()+1);
-        next.setEndColumn(next.getEndColumn() +1);
-        gt.setNext(next);
-        next.setNext(tok.getNext());
-        if (img.length() ==3) {
-          Token nextNext = Token.newToken(TokenType.GT, ">", this);
-          Nodes.copyLocationInfo(next, nextNext);
-          nextNext.setBeginColumn(next.getBeginColumn() +1);
-          nextNext.setEndColumn(next.getEndColumn() +1);
-          next.setNext(nextNext);
-          nextNext.setNext(tok.getNext());
+    if (inGenericTypeSpec && (img.equals(">>") || img.equals(">>>"))) {
+        // If we've entered the TypeParameters or TypeArguments production, we need to split
+        // a ">>" or ">>>" into 2 (or 3) GT tokens.
+        Token gt = Token.split(tok, 1, GT, GT);
+        if (img.length() == 3) {
+          Token next = Token.split(gt.getNext(), 1, GT, GT);
+          gt.setNext(next);
         }
         return gt;
+    }
+    else if (!inGenericTypeSpec && img.length() ==1) {
+      // In this case we do the reverse. We merge 2 (or 3) GT tokens into a right shift operator
+      Token next = tok.getNext();
+      if (next != null && next.getType() == GT && next.getBeginColumn() == tok.getBeginColumn()+1) {
+        Token nextNext = next.getNext();
+        Token merged = Token.merge(tok, next, RSIGNEDSHIFT);
+        if (nextNext != null && nextNext.getType() == GT && nextNext.getBeginColumn() == next.getBeginColumn() +1) {
+          merged = Token.merge(merged, nextNext, RUNSIGNEDSHIFT);
+        } 
+        return merged;
+      }
     }
     return tok;
   }

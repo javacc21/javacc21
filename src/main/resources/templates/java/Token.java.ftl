@@ -224,6 +224,41 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
     }
+
+    /** 
+     * Utility method to merge two tokens into a single token of a given type.
+     */
+    static Token merge(Token t1, Token t2, TokenType type) {
+        Token merged = new Token(type, t1.getImage() + t2.getImage(), t1.getInputSource());
+        merged.setBeginLine(t1.getBeginLine());
+        merged.setBeginColumn(t1.getBeginColumn());
+        merged.setEndColumn(t2.getEndColumn());
+        merged.setEndLine(t2.getEndLine());
+        merged.setNext(t2.getNext());
+        return merged;
+    }
+
+    /**
+     * Utility method to split a token in 2. For now, it assumes that the token 
+     * is all on a single line. (Will maybe fix that later). Returns the first token.
+     */ 
+    static Token split(Token tok, int length, TokenType type1, TokenType type2) {
+        String img1 = tok.getImage().substring(0, length);
+        String img2 = tok.getImage().substring(length);
+        Token t1 = new Token(type1, img1, tok.getInputSource());
+        Token t2 = new Token(type2, img2, tok.getInputSource());
+        t1.setBeginColumn(tok.getBeginColumn());
+        t1.setEndColumn(tok.getBeginColumn() + length -1);
+        t1.setBeginLine(tok.getBeginLine());
+        t1.setEndLine(tok.getBeginLine());
+        t2.setBeginColumn(t1.getEndColumn() +1);
+        t2.setEndColumn(tok.getEndColumn());
+        t2.setBeginLine(tok.getBeginLine());
+        t2.setEndLine(tok.getEndLine());
+        t1.setNext(t2);
+        t2.setNext(tok.getNext());
+        return t1;
+    }
     
     public void clearChildren() {}
     
