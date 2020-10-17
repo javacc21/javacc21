@@ -38,17 +38,11 @@ PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 
 INJECT PARSER_CLASS : {
-
   private Token TOKEN_HOOK(Token tok) {
     String img = tok.getImage();
     if (img==null || !img.startsWith(">")) return tok;
     boolean inGenericTypeSpec = isInProduction("TypeParameters") || isInProduction("TypeArguments");
-//    boolean inGenericTypeSpec = currentLookaheadProduction != null && (currentLookaheadProduction.equals("TypeParameters") || currentLookaheadProduction.equals("TypeArguments"));
-//    inGenericTypeSpec |= (currentlyParsedProduction !=null && (currentlyParsedProduction.equals("TypeParameters") || currentlyParsedProduction.equals("TypeArguments")));
     if (!inGenericTypeSpec && img.length() ==1) {
-//      System.out.println("KILROY 1");
-//      System.out.println(tok.getInputSource() + ":" +tok.getBeginLine() + ":" + tok.getBeginColumn());
-//      dumpLookaheadCallStack(System.out);
       Token next = tok.getNext();
       if (next != null && next.getType() == GT) {
         Token nextNext = next.getNext();
@@ -68,9 +62,6 @@ INJECT PARSER_CLASS : {
       }
     }
     else if (inGenericTypeSpec && (img.equals(">>") || img.equals(">>>"))) {
-//        System.out.println("KILROY 2");
-//        System.out.println(tok.getInputSource() + ":" +tok.getBeginLine() + ":" + tok.getBeginColumn());
-//        dumpLookaheadCallStack(System.out);
         Token gt = Token.newToken(TokenType.GT, ">", this);
         Token next = Token.newToken(TokenType.GT, ">", this);
         Nodes.copyLocationInfo(tok, gt);
@@ -849,7 +840,6 @@ EnumConstant:
 
 TypeParameters #TypeParameterList :
    "<"
-// LEXICAL_STATE JAVA
    TypeParameter ( "," TypeParameter )* 
    ">"
 ;
@@ -1378,49 +1368,10 @@ RelationalExpression :
 ShiftExpression :
    AdditiveExpression
    (
-      (
-        "<<" | ">>" | ">>>"
-//        |
-//        ShiftOperator
-      )
-      =>||
+      ("<<" | ">>" | ">>>")
       AdditiveExpression
    )*
 ;
-
-//Egad, what a ghastly kludge this is! Consider a REVISIT.
-
-ShiftOperator #void :
-{
-   Token first, second, third=null;
-}
-   first=">"
-   second=">" 
-   [third=">"]
-   {
-      if (second.getBeginColumn() != first.getBeginColumn() + 1) {
-            throw new ParseException(this, "Shift operator cannot have spaces or comments inside!\n" + first.getLocation());
-      }
-      if (third!=null) {
-         if (third.getBeginColumn() != first.getBeginColumn() + 2) {
-              throw new ParseException(this, "Shift operator >>> cannot have spaces or comments inside!\n" + first.getLocation());
-         }
-     	 first.setImage(">>>");
-	 	 first.setType(RUNSIGNEDSHIFT);
-	 	 Token next = third.getNext();
-	 	 first.setNext(next);
-	 	 popNode();
-	 	 popNode();
-      } else {
-         first.setImage(">>");
-	 	 first.setType(RSIGNEDSHIFT);
-	 	 Token next = second.getNext();
-	     first.setNext(next);
-	     popNode();
-      }
-   }
-;
-
 
 AdditiveExpression :
   MultiplicativeExpression (  ( "+" | "-" ) MultiplicativeExpression )*
