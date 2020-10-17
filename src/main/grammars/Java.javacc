@@ -33,16 +33,65 @@ JAVA_UNICODE_ESCAPE;
 // UNPARSED_TOKENS_ARE_NODES;
 PARSER_PACKAGE="com.javaparser";
 NODE_PACKAGE="com.javaparser.ast";
-// PARSER_CLASS="JavaParser";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 
-INJECT LEXER_CLASS : {
+INJECT PARSER_CLASS : {
+
   private Token TOKEN_HOOK(Token tok) {
+    String img = tok.getImage();
+    if (img==null || !img.startsWith(">")) return tok;
+    boolean inGenericTypeSpec = isInProduction("TypeParameters") || isInProduction("TypeArguments");
+//    boolean inGenericTypeSpec = currentLookaheadProduction != null && (currentLookaheadProduction.equals("TypeParameters") || currentLookaheadProduction.equals("TypeArguments"));
+//    inGenericTypeSpec |= (currentlyParsedProduction !=null && (currentlyParsedProduction.equals("TypeParameters") || currentlyParsedProduction.equals("TypeArguments")));
+    if (!inGenericTypeSpec && img.length() ==1) {
+//      System.out.println("KILROY 1");
+//      System.out.println(tok.getInputSource() + ":" +tok.getBeginLine() + ":" + tok.getBeginColumn());
+//      dumpLookaheadCallStack(System.out);
+      Token next = tok.getNext();
+      if (next != null && next.getType() == GT) {
+        Token nextNext = next.getNext();
+        Token merged = null;
+        if (nextNext != null && nextNext.getType() == GT) {
+          merged = Token.newToken(RUNSIGNEDSHIFT, ">>>", this);
+          Nodes.copyLocationInfo(tok, merged);
+          merged.setEndColumn(merged.getEndColumn()+2);
+          merged.setNext(nextNext.getNext());
+        } else {
+          merged = Token.newToken(RSIGNEDSHIFT, ">>", this);
+          Nodes.copyLocationInfo(tok, merged);
+          merged.setEndColumn(merged.getEndColumn()+1);
+          merged.setNext(next.getNext());
+        }
+        return merged;
+      }
+    }
+    else if (inGenericTypeSpec && (img.equals(">>") || img.equals(">>>"))) {
+//        System.out.println("KILROY 2");
+//        System.out.println(tok.getInputSource() + ":" +tok.getBeginLine() + ":" + tok.getBeginColumn());
+//        dumpLookaheadCallStack(System.out);
+        Token gt = Token.newToken(TokenType.GT, ">", this);
+        Token next = Token.newToken(TokenType.GT, ">", this);
+        Nodes.copyLocationInfo(tok, gt);
+        Nodes.copyLocationInfo(tok, next);
+        gt.setEndColumn(gt.getBeginColumn());
+        next.setBeginColumn(next.getBeginColumn()+1);
+        next.setEndColumn(next.getEndColumn() +1);
+        gt.setNext(next);
+        if (img.length() ==3) {
+          Token nextNext = Token.newToken(TokenType.GT, ">", this);
+          Nodes.copyLocationInfo(next, nextNext);
+          nextNext.setBeginColumn(next.getBeginColumn() +1);
+          nextNext.setEndColumn(next.getEndColumn() +1);
+          next.setNext(nextNext);
+        }
+        return gt;
+    }
     return tok;
   }
 }
+
 UNPARSED : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
 
 <IN_MULTI_LINE_COMMENT>
@@ -257,7 +306,8 @@ TOKEN #Operator :
 | < LAMBDA : "->" > 
 ;
 
-<PHONY> TOKEN #Operator:
+//<PHONY> TOKEN #Operator:
+TOKEN #Operator :
   < RSIGNEDSHIFT: ">>" > 
   |
   < RUNSIGNEDSHIFT: ">>>" > 
@@ -1329,9 +1379,9 @@ ShiftExpression :
    AdditiveExpression
    (
       (
-        "<<"
-        |
-        ShiftOperator
+        "<<" | ">>" | ">>>"
+//        |
+//        ShiftOperator
       )
       =>||
       AdditiveExpression

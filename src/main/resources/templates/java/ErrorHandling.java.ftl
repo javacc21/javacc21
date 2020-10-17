@@ -83,8 +83,7 @@ class NonTerminalCall {
     }
 
     void dump(PrintStream ps) {
-        ps.print(productionName);
-        ps.println(" stopAtScanLimit: " + this.stopAtScanLimit);
+        ps.println(productionName + ":" + line + ":" + column);
     }
 }
 
@@ -138,8 +137,15 @@ private final void popLookaheadStack() {
     this.stopAtScanLimit = ntc.stopAtScanLimit;
 }
 
- void dumpLookaheadStack(PrintStream ps) {
+void dumpLookaheadStack(PrintStream ps) {
     ListIterator<NonTerminalCall> it = lookaheadStack.listIterator(lookaheadStack.size());
+    while (it.hasPrevious()) {
+        it.previous().dump(ps);
+    }
+}
+
+void dumpCallStack(PrintStream ps) {
+    ListIterator<NonTerminalCall> it = parsingStack.listIterator(parsingStack.size());
     while (it.hasPrevious()) {
         it.previous().dump(ps);
     }
@@ -148,11 +154,10 @@ private final void popLookaheadStack() {
 void dumpLookaheadCallStack(PrintStream ps) {
     ps.println("Current Parser Production is: " + currentlyParsedProduction);
     ps.println("Current Lookahead Production is: " + currentLookaheadProduction);
-    Iterator<NonTerminalCall> it = stackIteratorBackward();
-    while (it.hasNext()) {
-        NonTerminalCall ntc = it.next();
-        ntc.dump(ps);
-    }
+    ps.println("---Lookahead Stack---");
+    dumpLookaheadStack(ps);
+    ps.println("---Call Stack---");
+    dumpCallStack(ps);
 }
 
 [#if grammar.options.faultTolerant]

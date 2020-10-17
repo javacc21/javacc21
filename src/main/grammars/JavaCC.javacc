@@ -269,7 +269,7 @@ INJECT LEXER_CLASS :
    boolean inJavaCode;
    boolean optionsSeen;
 
-   private Token tokenHook(Token t) {
+   private Token TOKEN_HOOK(Token t) {
        t.setGrammar(parser.getGrammar());
        if (angleBracketNesting >0 && t.getImage().length() >1 && t.getImage().charAt(0) == '>') {
            input_stream.backup(t.getImage().length() -1);
