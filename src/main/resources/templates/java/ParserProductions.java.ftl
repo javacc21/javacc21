@@ -668,16 +668,21 @@
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
    private final boolean ${expansion.predicateMethodName}() {
-      currentLookaheadToken= currentToken;
-      remainingLookahead= ${lookaheadAmount};
-     [#if expansion.hasScanLimit || expansion.hasInnerScanLimit]
-      stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
-     [/#if]
-     ${BuildPredicateCode(expansion)}
-     [#if !expansion.hasSeparateSyntacticLookahead]
-        ${BuildScanCode(expansion)}
-     [/#if]
-     return true;
+     try {
+         currentLookaheadToken= currentToken;
+         remainingLookahead= ${lookaheadAmount};
+      [#if expansion.hasScanLimit || expansion.hasInnerScanLimit]
+         stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
+      [/#if]
+      ${BuildPredicateCode(expansion)}
+      [#if !expansion.hasSeparateSyntacticLookahead]
+         ${BuildScanCode(expansion)}
+      [/#if]
+      return true;
+      }
+     finally {
+        currentLookaheadToken = null;
+     }
    }
 [/#macro]
 
@@ -826,13 +831,13 @@
       [#if nt.ignoreUpToHere && nt.production.expansion.hasScanLimit]
          stopAtScanLimit = false;
       [/#if]
-      if (!${nt.production.lookaheadMethodName}()) {
-         popLookaheadStack();
-         currentLookaheadProduction = ${prevProductionVarName};
-         return false;
+      try {
+          if (!${nt.production.lookaheadMethodName}()) return false;
       }
-      popLookaheadStack();
-      currentLookaheadProduction = ${prevProductionVarName};
+      finally {
+          popLookaheadStack();
+          currentLookaheadProduction = ${prevProductionVarName};
+      }
 [/#macro]
 
 [#--

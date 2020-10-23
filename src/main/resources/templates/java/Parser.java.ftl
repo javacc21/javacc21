@@ -160,13 +160,9 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
-  final public Token getNextToken() {
-    return currentToken = getToken(1);
-  }
-
 /** Get the specific Token index ahead in the stream. */
   final public Token getToken(int index) {
-    Token t = currentToken;
+    Token t = currentLookaheadToken == null ? currentToken : currentLookaheadToken;
     for (int i = 0; i < index; i++) {
       t = nextToken(t);
     }

@@ -126,9 +126,8 @@
     }
     
     public void openNodeScope(Node n) {
-        Token start = getToken(1);
-        n.setBeginLine(start.getBeginLine());
-        n.setBeginColumn(start.getBeginColumn());
+        n.setBeginLine(currentToken.getBeginLine());
+        n.setBeginColumn(currentToken.getBeginColumn());
 [#if grammar.options.hugeFileSupport]       
         n.setInputSource(this.getInputSource());
 [#elseif !grammar.options.userDefinedLexer]
