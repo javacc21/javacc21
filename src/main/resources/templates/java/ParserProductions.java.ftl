@@ -65,6 +65,7 @@
 
 [#macro BuildLookaheads]
   private final boolean scanToken(TokenType expectedType) {
+     if (hitFailure) return false;
      if (remainingLookahead <=0) return true;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
@@ -75,6 +76,7 @@
   }
 
   private final boolean scanToken(EnumSet<TokenType> types) {
+     if (hitFailure) return false;
      if (remainingLookahead <=0) return true;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
@@ -577,14 +579,16 @@
   [#if lookahead.nestedExpansion??]
      private final boolean ${lookahead.nestedExpansion.scanRoutineName}() {
         int prevRemainingLookahead = remainingLookahead;
+        boolean prevHitFailure = hitFailure;
         Token prevScanAheadToken = currentLookaheadToken;
         try {
           [@BuildScanCode lookahead.nestedExpansion/]
-          return true;
+          return !hitFailure;
         }
         finally {
            currentLookaheadToken = prevScanAheadToken;
            remainingLookahead = prevRemainingLookahead;
+           hitFailure = prevHitFailure;
         }
      }
    [/#if]
@@ -655,6 +659,7 @@
  [#if !expansion.singleToken || expansion.requiresPredicateMethod]
   private final boolean ${expansion.scanRoutineName}() {
    [#if !expansion.insideLookahead]
+     if (hitFailure) return false;
      if (remainingLookahead <=0) return true;
      ${BuildPredicateCode(expansion)}
    [/#if]
@@ -671,6 +676,7 @@
      try {
          currentLookaheadToken= currentToken;
          remainingLookahead= ${lookaheadAmount};
+         hitFailure = false;
       [#if expansion.hasScanLimit || expansion.hasInnerScanLimit]
          stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
       [/#if]
@@ -756,17 +762,20 @@
 [/#macro]
 
 [#macro ScanCodeError expansion]
-   if (true) return false; [#-- This ugly trick again! REVISIT later. --]
+[#--   if (true) return false; [#-- This ugly trick again! REVISIT later. --]
+    hitFailure = true;
 [/#macro]
 
 [#macro ScanCodeChoice choice]
    [@newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${newVarIndex} = remainingLookahead;
+   boolean hitFailure${newVarIndex} = hitFailure;
   [#list choice.choices as subseq]
      if (!${CheckExpansion(subseq)}) {
      [#if subseq_has_next]
         currentLookaheadToken = token${newVarIndex};
         remainingLookahead = remainingLookahead${newVarIndex};
+        hitFailure = hitFailure${newVarIndex};
      [#else]
         return false;
      [/#if]
@@ -784,7 +793,7 @@
   Generates lookahead code for a ZeroOrMore construct]
 --]
 [#macro ScanCodeZeroOrMore zom]
-      while (remainingLookahead > 0) {
+      while (remainingLookahead > 0 && !hitFailure) {
       [@newVar type="Token" init="currentLookaheadToken"/]
          if (!${CheckExpansion(zom.nestedExpansion)}) {
              currentLookaheadToken = token${newVarIndex};
@@ -852,6 +861,7 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
+          if (hitFailure) return false;
           if (stopAtScanLimit && lookaheadStack.size() <= 1) {
          [#if sub.scanLimitPlus >0]
              remainingLookahead = ${sub.scanLimitPlus};

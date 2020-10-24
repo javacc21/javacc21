@@ -71,6 +71,7 @@ Token currentToken;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
+private boolean hitFailure;
 private String currentlyParsedProduction, currentLookaheadProduction;
 // private TokenType upToTokenType;
 // private EnumSet<TokenType> upToFirstSet;

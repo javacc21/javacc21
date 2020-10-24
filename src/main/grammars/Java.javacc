@@ -1563,13 +1563,11 @@ Statement  :
 
 
 UnlabeledStatement #void :
-  SCAN 0 {getToken(1).getImage().equals("yield")}# \...\SwitchExpression 
-  => 
-  YieldStatement
-  |
   AssertStatement
   |
   Block
+  |
+  YieldStatement
   |
   EmptyStatement
   |
@@ -1789,13 +1787,14 @@ BreakStatement :
 
 YieldStatement :
    <IDENTIFIER>
-   // REVISIT this. There is something screwy about how 
-   // this is handled.
    [
-     SCAN {!"yield".equals(getToken(0).getImage())}# 
-     => FAIL "Expecting \"yield\" here"
+     SCAN {!getToken(0).getImage().equals("yield")}#
+     => FAIL "supposed to have \"yield\" here"
+     |
+     SCAN ~\...\SwitchExpression
+     => FAIL "need to be in a switch expression"
    ]
-   =>|| 
+   =>||
    Expression ";" 
 ;
 

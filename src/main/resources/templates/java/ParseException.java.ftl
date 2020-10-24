@@ -111,7 +111,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
      StringBuilder buf = new StringBuilder();
      if (msg != null) buf.append(msg);
      buf.append("\nEncountered an error on (or somewhere around) " + token.getLocation());
-     if  (expectedTypes != null & expectedTypes.contains(token.getType())) {
+     if  (expectedTypes != null && token!=null && expectedTypes.contains(token.getType())) {
          [#-- //This is really screwy, have to revisit this whole case. --]
          return buf.toString();
      }
