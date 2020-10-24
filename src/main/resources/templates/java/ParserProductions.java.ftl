@@ -689,7 +689,7 @@
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 [#macro BuildPredicateCode expansion]
      [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
-       if (!(${expansion.semanticLookahead}) return false;
+       if (!(${expansion.semanticLookahead})) return false;
      [/#if]
      [#if expansion.hasLookBehind]
        if (!${expansion.lookBehind.routineName}()) return false;
