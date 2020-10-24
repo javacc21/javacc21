@@ -1290,6 +1290,7 @@ INJECT CastExpression : extends Expression
 INJECT PrimaryExpression : extends Expression 
 INJECT LambdaExpression : extends Expression 
 INJECT CodeBlock : extends Expression
+INJECT SwitchExpression : extends Expression
 
 AssignmentExpression :
   TernaryExpression
@@ -1387,15 +1388,22 @@ PreDecrementExpression :
 UnaryExpressionNotPlusMinus :
   ( "~" | "!" ) UnaryExpression
   |
-  LambdaExpression 
+  SCAN ~\...\NewSwitchLabel
+  => LambdaExpression 
   |
   => CastExpression
   |
   PostfixExpression
+  |
+  SwitchExpression
 ;
 
 PostfixExpression :
   PrimaryExpression [ "++" | "--" ]
+;
+
+SwitchExpression #SwitchExpression :
+   SwitchStatement
 ;
 
 CastExpression : 
@@ -1409,7 +1417,6 @@ CastExpression :
 Expression PrimaryExpression #PrimaryExpression :
     PrimaryPrefix 
     ( SCAN 2 PrimarySuffix )*
-//    ( PrimarySuffix )*
     {
             return CURRENT_NODE;
     }
@@ -1446,7 +1453,6 @@ MethodReference :
 ;
 
 PrimarySuffix :
-//  SCAN 2 // REVISIT this idea
  (
   => "." ("this"|"super")
   |
@@ -1557,6 +1563,10 @@ Statement  :
 
 
 UnlabeledStatement #void :
+  SCAN 0 {getToken(1).getImage().equals("yield")}# \...\SwitchExpression 
+  => 
+  YieldStatement
+  |
   AssertStatement
   |
   Block
@@ -1661,22 +1671,78 @@ StatementExpression :
   ]
 ;
 
-SwitchStatement : 
+SwitchStatement :
+  SCAN "switch" "(" Expression ")" "{" NewSwitchLabel
+  => NewSwitchStatement
+  |
+  ClassicSwitchStatement
+;
+
+ClassicSwitchStatement : 
   "switch" "(" Expression ")" "{"
-  (CaseStatement)*
+  (ClassicCaseStatement)*
   "}"    
 ;
 
-CaseStatement :
-    SwitchLabel 
-    (BlockStatement)*
+ClassicSwitchLabel :
+  (
+   "case" Expression ("," Expression)* 
+   |
+   "default" 
+  )
+  ":"
 ;
 
-SwitchLabel #void :
-  "case" Expression ":"
- |
-  "default" ":"
+ClassicCaseStatement :
+  ClassicSwitchLabel
+  (BlockStatement)*
 ;
+
+NewSwitchStatement :
+  "switch" "(" Expression ")" "{"
+  (NewCaseStatement)*
+  "}"
+;
+
+NewSwitchLabel :
+  (
+   "case" Expression ("," Expression)* 
+   |
+   "default" 
+  )
+  "->"
+;
+
+NewCaseStatement : 
+   NewSwitchLabel 
+   (
+     Block
+     |
+     ThrowStatement
+     |
+     SCAN \...\SwitchExpression
+     => Expression ";"
+     |
+     SCAN ~\...\SwitchExpression
+     => BlockStatement
+   )
+;
+
+
+SwitchLabelColon #void :
+  ("case" Expression ("," Expression)* 
+  |
+  "default")
+  ":"
+;
+
+SwitchLabelArrow #void :
+  ("case" Expression ("," Expression)* 
+  |
+  "default")
+  "->"
+;
+
 
 IfStatement :
   "if" "(" Expression ")" Statement [ "else" Statement ]
@@ -1719,6 +1785,18 @@ ForUpdate :
 
 BreakStatement :
   "break" [ <IDENTIFIER> ] ";"
+;
+
+YieldStatement :
+   <IDENTIFIER>
+   // REVISIT this. There is something screwy about how 
+   // this is handled.
+   [
+     SCAN {!"yield".equals(getToken(0).getImage())}# 
+     => FAIL "Expecting \"yield\" here"
+   ]
+   =>|| 
+   Expression ";" 
 ;
 
 ContinueStatement :
