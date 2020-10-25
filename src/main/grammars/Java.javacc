@@ -1794,8 +1794,9 @@ YieldStatement :
      SCAN ~\...\SwitchExpression
      => FAIL "need to be in a switch expression"
    ]
+   Expression
    =>||
-   Expression ";" 
+   ";" 
 ;
 
 ContinueStatement :
