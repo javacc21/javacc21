@@ -457,6 +457,11 @@ public class Grammar extends BaseNode {
         return this.descendants(LookBehind.class);
     } 
 
+    public List<com.javacc.parser.tree.Assertion> getAllAssertions() {
+        return this.descendants(com.javacc.parser.tree.Assertion.class);
+
+    }
+
     public void addTokenProduction(TokenProduction tp) {
         tokenProductions.add(tp);
     }

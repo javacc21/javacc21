@@ -102,7 +102,7 @@ MORE : < ~[] >;
 
 TOKEN #KeyWord :
   < ABSTRACT: "abstract" > 
-| < ASSERT: "assert" > 
+| < _ASSERT: "assert" > 
 | < BOOLEAN: "boolean" > 
 | < BREAK: "break" > 
 | < BYTE: "byte" > 

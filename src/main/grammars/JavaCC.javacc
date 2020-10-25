@@ -305,6 +305,8 @@ TOKEN :
   |
   < _FAIL : "FAIL" > #JavaCCKeyWord
   |
+  < __ASSERT : "ASSERT"> #JavaCCKeyWord
+  |
   < _SCAN : "SCAN" > #JavaCCKeyWord
   |
   < _IGNORE_CASE: "IGNORE_CASE" > #JavaCCKeyWord
@@ -1535,6 +1537,75 @@ Lookahead Lookahead #void :
     return (Lookahead) peekNode();
 };
 
+INJECT Assertion : 
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
+   extends Expansion 
+{
+    private Expression semanticLookahead;
+    private LookBehind lookBehind;
+    private Expansion expansion;
+    private boolean semanticLookaheadNested;
+
+    public Expansion getExpansion() {return expansion;}
+    public LookBehind getLookBehind() {return lookBehind;}
+    public Expression getSemanticLookahead() {return semanticLookahead;}
+    public boolean getSemanticLookaheadNested() {return semanticLookaheadNested;}
+    public void setSemanticLookahead(Expression semanticLookahead) {this.semanticLookahead = semanticLookahead;}
+    public void setLookBehind(LookBehind lookBehind) {this.lookBehind = lookBehind;}
+    public void setExpansion(Expansion expansion) {this.expansion = expansion;}
+    public void setSemanticLookaheadNested(boolean semanticLookaheadNested) {this.semanticLookaheadNested = semanticLookaheadNested;}
+
+    public boolean getRequiresScanAhead() {
+        return false;
+    }
+    
+    public boolean isPossiblyEmpty() {
+        return true;
+    }
+    
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+    
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+     
+     public int minimumSize(int unused) {
+         return 0;
+     }
+
+     public int getMaximumSize() {
+         return 0;
+     }
+
+    public boolean isConcrete() {return false;}
+
+
+}
+
+Assertion Assertion :
+   {
+       Expression exp = null;
+       LookBehind lb = null;
+       Expansion expansion = null;
+   }
+   <__ASSERT>
+   [
+    "{" 
+    exp=Expression {CURRENT_NODE.setSemanticLookahead(exp);}
+    "}"
+    ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+   ]  
+   [LookBehind {lb = (LookBehind) peekNode(); CURRENT_NODE.setLookBehind(lb);}]
+   [ExpansionChoice {expansion = (Expansion) peekNode(); CURRENT_NODE.setExpansion(expansion);}]
+   [
+       SCAN {exp == null && lb == null && expansion == null}
+       => FAIL "Assertion is empty!"
+   ]
+   ":" <STRING_LITERAL>
+   {
+       return CURRENT_NODE;
+   }
+;
+
 Lookahead ScanAhead #Lookahead : 
 {
    Token amountToken=null;
@@ -1896,6 +1967,9 @@ Expansion ExpansionUnit :
   SCAN 1 ~\...\Lookahead =>
   result=TryBlock
   |
+  SCAN 1 ~\...\Lookahead =>
+  result = Assertion
+  |
   LexicalStateSwitch {result = (Expansion) peekNode();}
   |
   => result = ZeroOrOne [SCAN ~\...\Lookahead => UpToHere(result)]
@@ -2035,7 +2109,7 @@ INJECT NonTerminal :
     
      public TokenSet getFirstSet() {
         if (firstSet == null) {
-            firstSet = new TokenSet(getGrammar());
+//            firstSet = new TokenSet(getGrammar());
             firstSet = getProduction().getExpansion().getFirstSet();
         }
         return firstSet;
@@ -2302,7 +2376,7 @@ INJECT AttemptBlock :
    import java.util.List;
    import com.javacc.parsegen.Expansion;
    import com.javacc.lexgen.TokenSet;
-   extends com.javacc.parsegen.Expansion;
+   extends Expansion;
 {
    public Expansion getNestedExpansion() {
        return firstChildOfType(Expansion.class);
