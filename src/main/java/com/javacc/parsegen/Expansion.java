@@ -433,6 +433,7 @@ abstract public class Expansion extends BaseNode {
      */
     public final boolean isSingleToken() {
         if (firstChildOfType(Failure.class)!=null) return false; // Maybe a bit kludgy. REVISIT.
+        if (getHasScanLimit()) return false;
         return !isPossiblyEmpty() && getMaximumSize() == 1;
     }
     

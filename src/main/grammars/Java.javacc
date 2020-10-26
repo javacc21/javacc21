@@ -1407,11 +1407,11 @@ SwitchExpression #SwitchExpression :
 ;
 
 CastExpression : 
-  => "(" PrimitiveType ")" UnaryExpression
+  "(" PrimitiveType ")" =>|| UnaryExpression
   |
   => "(" ReferenceType ")" UnaryExpressionNotPlusMinus
   |
-  =>  "(" ClassOrInterfaceType ("&" ClassOrInterfaceType)+ ")" UnaryExpressionNotPlusMinus 
+  => "(" ClassOrInterfaceType ("&" ClassOrInterfaceType)+ ")" UnaryExpressionNotPlusMinus 
 ;
 
 Expression PrimaryExpression #PrimaryExpression :
