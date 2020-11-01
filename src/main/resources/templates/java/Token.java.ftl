@@ -283,7 +283,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
            switch(ofKind) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${re.generatedClassName}(ofKind, image);
+              case ${re.label} : return new ${grammar.options.nodePrefix}${re.generatedClassName}(ofKind, image);
             [/#if]
            [/#list]
               default: return new Token(ofKind, image);
@@ -300,7 +300,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
            switch(type) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${re.generatedClassName}(TokenType.${re.label}, image, inputSource);
+              case ${re.label} : return new ${grammar.options.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, image, inputSource);
             [/#if]
            [/#list]
            default : return new Token(type, image, inputSource);
@@ -318,7 +318,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
            switch(type) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${re.generatedClassName}(TokenType.${re.label}, image, fileLineMap);
+              case ${re.label} : return new ${grammar.options.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, image, fileLineMap);
             [/#if]
            [/#list]
               default :        return new Token(type, image, fileLineMap);      
