@@ -542,6 +542,7 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
   |
   EnumDeclaration
  )
+// ASSERT {2+2==4} /*~<RSIGNEDSHIFTASSIGN>*/ : "WTF?"
  {
         return CURRENT_NODE;
  }
@@ -1725,22 +1726,6 @@ NewCaseStatement :
      => BlockStatement
    )
 ;
-
-
-SwitchLabelColon #void :
-  ("case" Expression ("," Expression)* 
-  |
-  "default")
-  ":"
-;
-
-SwitchLabelArrow #void :
-  ("case" Expression ("," Expression)* 
-  |
-  "default")
-  "->"
-;
-
 
 IfStatement :
   "if" "(" Expression ")" Statement [ "else" Statement ]

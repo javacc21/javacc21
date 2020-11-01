@@ -106,6 +106,11 @@
    [#list grammar.allLookBehinds as lookBehind]
       ${BuildLookBehindRoutine(lookBehind)}
    [/#list]
+   [#--list grammar.allAssertions as assertion]
+     [#if !assertion.expansion?is_null]
+      ${BuildLookaheadRoutine(assertion.expansion)}
+     [/#if]
+   [/#list--]
    [#list grammar.parserProductions as production]
       ${BuildProductionLookaheadMethod(production)}
    [/#list]
@@ -361,6 +366,8 @@
         [@BuildCodeOneOrMore expansion/]
     [#elseif classname = "ExpansionChoice"]
         [@BuildCodeChoice expansion/]
+    [#elseif classname = "Assertion"]
+        [@BuildAssertionCode expansion/]
     [/#if]
 [/#macro]
 
@@ -594,6 +601,24 @@
    [/#if]
 [/#macro]
 
+[#macro BuildLookaheadRoutine2 expansion]
+     private final boolean ${expansion.scanRoutineName}() {
+        int prevRemainingLookahead = remainingLookahead;
+        boolean prevHitFailure = hitFailure;
+        Token prevScanAheadToken = currentLookaheadToken;
+        currentLookaheadToken = currentToken;
+        try {
+          [@BuildScanCode lookahead.nestedExpansion/]
+          return !hitFailure;
+        }
+        finally {
+           currentLookaheadToken = prevScanAheadToken;
+           remainingLookahead = prevRemainingLookahead;
+           hitFailure = prevHitFailure;
+        }
+     }
+[/#macro]
+
 [#macro BuildLookBehindRoutine lookBehind]
     private final boolean ${lookBehind.routineName}() {
        Iterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
@@ -692,6 +717,51 @@
    }
 [/#macro]
 
+[#macro BuildAssertionRoutine assertion]
+    [#var methodName = assertion.predicateMethodName?replace("scan$", "assert$")]
+    [#var empty = true]
+    private final void ${methodName}() throws ParseException {
+       if (!(
+       [#if !assertion.semanticLookahead?is_null]
+          (${assertion.semanticLookahead})
+          [#set empty = false /]
+       [/#if]
+       [#if !assertion.lookBehind?is_null]
+          [#if !empty] && [/#if]
+          !${assertion.lookBehind.routineName}()
+       [/#if]
+       [#if !assertion.expansion?is_null]
+           [#if !empty] && [/#if]
+           [#if assertion.expansion.negated] ! [/#if]
+           ${assertion.expansion.scanRoutineName}()
+       [/#if]
+       )) {
+          throw new ParseException(this, "${assertion.message?j_string}");
+        }
+    }
+[/#macro]
+
+[#macro BuildAssertionCode assertion]
+    [#var empty = true]
+       if (!(
+       [#if !assertion.semanticLookahead?is_null]
+          (${assertion.semanticLookahead})
+          [#set empty = false /]
+       [/#if]
+       [#if !assertion.lookBehind?is_null]
+          [#if !empty] && [/#if]
+          !${assertion.lookBehind.routineName}()
+       [/#if]
+       [#if !assertion.expansion?is_null]
+           [#if !empty] && [/#if]
+           [#if assertion.expansionNegated] ! [/#if]
+           ${assertion.expansion.scanRoutineName}()
+       [/#if]
+       )) {
+          throw new ParseException(this, "${assertion.message?j_string}");
+        }
+[/#macro]
+
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 [#macro BuildPredicateCode expansion]
      [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
@@ -723,6 +793,8 @@
   [/#if]
   [#if expansion.singleToken]
      ${ScanSingleToken(expansion)}
+   [#elseif classname = "Assertion"]
+      ${ScanCodeAssertion(expansion)} 
    [#elseif classname = "LexicalStateSwitch"]
       ${ScanCodeLexicalStateSwitch(expansion)}
    [#elseif classname = "Failure"]
@@ -761,8 +833,11 @@
    token_source.switchTo(LexicalState.${switch.lexicalStateName});
 [/#macro]
 
+[#macro ScanCodeAssertion assertion]
+    
+[/#macro]
+
 [#macro ScanCodeError expansion]
-[#--   if (true) return false; [#-- This ugly trick again! REVISIT later. --]
     hitFailure = true;
 [/#macro]
 

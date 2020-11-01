@@ -459,7 +459,6 @@ public class Grammar extends BaseNode {
 
     public List<com.javacc.parser.tree.Assertion> getAllAssertions() {
         return this.descendants(com.javacc.parser.tree.Assertion.class);
-
     }
 
     public void addTokenProduction(TokenProduction tp) {
@@ -622,7 +621,7 @@ public class Grammar extends BaseNode {
     // A bit kludgy
 
     private void checkForHooks(Node node, String className) {
-        if (node == null && null instanceof Token) {
+        if (node == null || null instanceof Token) {
             return;
         } 
         else if (node instanceof TokenManagerDecls) {

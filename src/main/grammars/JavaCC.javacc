@@ -305,7 +305,7 @@ TOKEN :
   |
   < _FAIL : "FAIL" > #JavaCCKeyWord
   |
-  < __ASSERT : "ASSERT"> #JavaCCKeyWord
+  < _ENSURE : "ASSERT"> #JavaCCKeyWord
   |
   < _SCAN : "SCAN" > #JavaCCKeyWord
   |
@@ -1545,16 +1545,21 @@ INJECT Assertion :
     private Expression semanticLookahead;
     private LookBehind lookBehind;
     private Expansion expansion;
-    private boolean semanticLookaheadNested;
+    private boolean semanticLookaheadNested, expansionNegated;
+    private String message = "Assertion failed";
 
     public Expansion getExpansion() {return expansion;}
     public LookBehind getLookBehind() {return lookBehind;}
     public Expression getSemanticLookahead() {return semanticLookahead;}
     public boolean getSemanticLookaheadNested() {return semanticLookaheadNested;}
+    public boolean getExpansionNegated() {return expansionNegated;}
+    public String getMessage() {return message;}
     public void setSemanticLookahead(Expression semanticLookahead) {this.semanticLookahead = semanticLookahead;}
     public void setLookBehind(LookBehind lookBehind) {this.lookBehind = lookBehind;}
     public void setExpansion(Expansion expansion) {this.expansion = expansion;}
+    public void setExpansionNegated(boolean expansionNegated) {this.expansionNegated = expansionNegated;}
     public void setSemanticLookaheadNested(boolean semanticLookaheadNested) {this.semanticLookaheadNested = semanticLookaheadNested;}
+    public void setMessage(String message) {this.message = message;}
 
     public boolean getRequiresScanAhead() {
         return false;
@@ -1577,30 +1582,36 @@ INJECT Assertion :
      }
 
     public boolean isConcrete() {return false;}
-
-
 }
+
+//Assertion AssertStatement :
+//;
 
 Assertion Assertion :
    {
        Expression exp = null;
        LookBehind lb = null;
        Expansion expansion = null;
+       Token messageToken;
    }
-   <__ASSERT>
+   "ASSERT"
    [
     "{" 
     exp=Expression {CURRENT_NODE.setSemanticLookahead(exp);}
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
    ]  
-   [LookBehind {lb = (LookBehind) peekNode(); CURRENT_NODE.setLookBehind(lb);}]
-   [ExpansionChoice {expansion = (Expansion) peekNode(); CURRENT_NODE.setExpansion(expansion);}]
+   [=>LookBehind {lb = (LookBehind) peekNode(); CURRENT_NODE.setLookBehind(lb);}]
+   [
+       ["~" {CURRENT_NODE.setExpansionNegated(true);}] 
+       ExpansionChoice {expansion = (Expansion) peekNode(); CURRENT_NODE.setExpansion(expansion);}
+   ]
    [
        SCAN {exp == null && lb == null && expansion == null}
        => FAIL "Assertion is empty!"
    ]
-   ":" <STRING_LITERAL>
+   ":" 
+   messageToken=<STRING_LITERAL> {CURRENT_NODE.setMessage(removeEscapesAndQuotes(messageToken));}
    {
        return CURRENT_NODE;
    }

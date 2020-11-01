@@ -211,6 +211,7 @@ abstract public class Expansion extends BaseNode {
     public boolean getRequiresScanAhead() {
         Lookahead la = getLookahead();
         if (la != null && la.getRequiresScanAhead()) return true;
+//        if (this.getParent() instanceof com.javacc.parser.tree.Assertion) return true;
         return getHasGlobalSemanticActions();
     }
 
