@@ -30,55 +30,54 @@
 
 package com.javacc;
 
-import static com.javacc.JavaCCError.Type.*;
+import static com.javacc.JavaCCError.Type.WARNING;
 
-import com.javacc.parsegen.Expansion;
 import com.javacc.parser.Node;
-
 
 public class JavaCCError {
 
-    public enum Type {
-        PARSE, SEMANTIC, WARNING;
-    }
+	public enum Type {
+		PARSE, SEMANTIC, WARNING;
+	}
 
-    public final Type type;
-    public String message;
-    public Grammar grammar;
-    public int beginColumn, beginLine;
-    public String inputSource = "input";
+	private final Grammar grammar;
+	private final Type type;
+	private final String message;
+	private final Node node;
 
-    public JavaCCError(Grammar grammar, Type type, String message, Object node) {
-        this.grammar = grammar;
-        this.inputSource = grammar.getFilename();
-        this.type = type;
-        this.message = message;
-        if (node instanceof Expansion) {
-            Expansion fnode = (Expansion) node;
-            this.beginColumn = fnode.getBeginColumn();
-            this.beginLine = fnode.getBeginLine();
-            this.grammar = fnode.getGrammar();
-        }
-        if (node instanceof Node) {
-            Node n = (Node) node;
-            this.inputSource = n.getInputSource();
-            this.beginColumn = n.getBeginColumn();
-            this.beginLine = n.getBeginLine();
-            this.grammar = n.getGrammar();
-        }
-    }
+	public JavaCCError(Grammar grammar, Type type, String message, Node node) {
+		this.grammar = grammar;
+		this.type = type;
+		this.message = message;
+		this.node = node;
+	}
 
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        if (type == WARNING) {
-            buf.append("Warning: ");
-        } else {
-            buf.append("Error: ");
-        }
-        if (beginLine != 0) {
-            buf.append("Line " + beginLine + ", Column " + beginColumn + " in " + inputSource +": ");
-        }
-        buf.append(message);
-        return buf.toString();
-    }
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		if (type == WARNING) {
+			buf.append("Warning: ");
+		} else {
+			buf.append("Error: ");
+		}
+		if (node != null) {
+			int beginLine = node.getBeginLine();
+			int beginColumn = node.getBeginColumn();
+			String inputSource = grammar.getInputSource();
+			buf.append("Line " + beginLine + ", Column " + beginColumn + " in " + inputSource + ": ");
+		}
+		buf.append(message);
+		return buf.toString();
+	}
+
+	public Type getType() {
+		return type;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public Node getNode() {
+		return node;
+	}
 }
