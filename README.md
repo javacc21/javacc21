@@ -1,3 +1,5 @@
+[![Gitter chat for JavaCC 21](https://badges.gitter.im/javacc21/javacc21.svg)](https://gitter.im/javacc21/javacc21)
+
 # JavaCC 21
 
 [JavaCC 21](https://javacc.com/) is a continuation of development on the JavaCC codebase that was open-sourced by Sun Microsystems in mid 2003. It is currently the most advanced version of JavaCC. It has many feature enhancements (with more to come soon) and also generates much more modern, readable Java code.
