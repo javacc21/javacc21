@@ -67,7 +67,6 @@ public class Grammar extends BaseNode {
     private Map<String, BNFProduction> productionTable;
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
-    private List<JavaCCError> errors = new ArrayList<>();
     private Map<Integer, RegularExpression> regexpLookup = new HashMap<>();
     private Set<String> lexicalStates = new LinkedHashSet<>();
     private Map<Integer, String> tokenNames = new HashMap<>();
@@ -84,13 +83,24 @@ public class Grammar extends BaseNode {
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
+    // JavaCC error reporter.
+    private JavaCCErrorReporter reporter;
+	private int parseErrorCount;
+	private int semanticErrorCount;
+	private int warningCount;
+    
     public Grammar(JavaCCOptions options) {
+        this();
         this.options = options;
         options.setGrammar(this);
         parserData = new ParserData(this);
     }
 
-    public Grammar() {   
+    public Grammar() {  
+    	setReporter(JavaCCErrorReporter.DEFAULT);
+    	this.parseErrorCount = 0;;
+    	this.semanticErrorCount = 0;
+    	this.warningCount = 0;
     }
 
     public String[] getLexicalStates() {
@@ -125,7 +135,6 @@ public class Grammar extends BaseNode {
         JavaCCParser parser = new JavaCCParser(this, file.getCanonicalFile().getName(), content);
         parser.setEnterIncludes(enterIncludes);
         setFilename(location);
-        System.out.println("Parsing grammar file " + location + " . . .");
         GrammarFile rootNode = parser.Root();
         if (!isInInclude()) {
             addChild(rootNode);
@@ -539,59 +548,112 @@ public class Grammar extends BaseNode {
         tokenNames.put(index, name);
     }
 
-    public int getErrorCount() {
-        int result = 0;
-        for (JavaCCError error : errors) {
-            if (error.type != JavaCCError.Type.WARNING)
-                ++result;
-        }
-        return result;
-    }
+	/**
+	 * Returns the warning count during grammar parsing.
+	 * 
+	 * @return the warning count during grammar parsing.
+	 */
+	public int getWarningCount() {
+		return warningCount;
+	}
 
-    public int getWarningCount() {
-        int result = 0;
-        for (JavaCCError error : errors) {
-            if (error.type == JavaCCError.Type.WARNING)
-                ++result;
-        }
-        return result;
-    }
+	/**
+	 * Returns the parse error count during grammar parsing.
+	 * 
+	 * @return the parse error count during grammar parsing.
+	 */
+	public int getParseErrorCount() {
+		return parseErrorCount;
+	}
 
-    public int getParseErrorCount() {
-        int result = 0;
-        for (JavaCCError error : errors) {
-            if (error.type == JavaCCError.Type.PARSE)
-                ++result;
-        }
-        return result;
-    }
+	/**
+	 * Returns the semantic error count during grammar parsing.
+	 * 
+	 * @return the semantic error count during grammar parsing.
+	 */
+	public int getSemanticErrorCount() {
+		return semanticErrorCount;
+	}
 
-    public int getSemanticErrorCount() {
-        int result = 0;
-        for (JavaCCError error : errors) {
-            if (error.type == JavaCCError.Type.SEMANTIC)
-                ++result;
-        }
-        return result;
-    }
+	/**
+	 * Returns the total error count during grammar parsing.
+	 * 
+	 * @return the total error count during grammar parsing.
+	 */
+	public int getErrorCount() {
+		return getParseErrorCount() + getSemanticErrorCount();
+	}
 
-    public void addSemanticError(Object node, String message) {
-        JavaCCError error = new JavaCCError(this, JavaCCError.Type.SEMANTIC, message, node);
-        System.err.println(error);
-        errors.add(error);
-    }
+	/**
+	 * Add semantic error.
+	 * 
+	 * @param node    the node which causes the error and null otherwise.
+	 * @param message the semantic message error.
+	 */
+	public void addSemanticError(Node node, String message) {
+		addError(node, message, JavaCCError.Type.SEMANTIC);
+	}
 
-    public void addParseError(Object node, String message) {
-        JavaCCError error = new JavaCCError(this, JavaCCError.Type.PARSE, message, node);
-        System.err.println(error);
-        errors.add(error);
-    }
+	/**
+	 * Add parse error.
+	 * 
+	 * @param node    the node which causes the error and null otherwise.
+	 * @param message the parse message error.
+	 */
+	public void addParseError(Node node, String message) {
+		addError(node, message, JavaCCError.Type.PARSE);
+	}
 
-    public void addWarning(Object node, String message) {
-        JavaCCError error = new JavaCCError(this, JavaCCError.Type.WARNING, message, node);
-        System.err.println(error);
-        errors.add(error);
-    }
+	/**
+	 * Add warning.
+	 * 
+	 * @param node    the node which causes the warning and null otherwise.
+	 * @param message the warning message error.
+	 */
+	public void addWarning(Node node, String message) {
+		addError(node, message, JavaCCError.Type.WARNING);
+	}
+
+	/**
+	 * Add error.
+	 * 
+	 * @param node    the node which causes the error and null otherwise.
+	 * @param message the error message.
+	 * @param type    the error type.
+	 */
+	private void addError(Node node, String message, JavaCCError.Type type) {
+		JavaCCError error = new JavaCCError(this, type, message, node);
+		reporter.reportError(error);
+		switch (type) {
+		case PARSE:
+			parseErrorCount++;
+			break;
+		case SEMANTIC:
+			semanticErrorCount++;
+			break;
+		case WARNING:
+			warningCount++;
+			break;
+		}
+	}
+
+	/**
+	 * Set the JavaCC error reporter.
+	 * 
+	 * @param reporter the JavaCC error reporter
+	 */
+	public void setReporter(JavaCCErrorReporter reporter) {
+		this.reporter = reporter;
+	}
+
+	/**
+	 * Returns the JavaCC error reporter.
+	 * 
+	 * @return the JavaCC error reporter
+	 */
+	public JavaCCErrorReporter getReporter() {
+		return reporter;
+	}
 
     public Set<String> getNodeNames() {
         return nodeNames;
