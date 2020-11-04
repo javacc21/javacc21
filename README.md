@@ -10,7 +10,7 @@ A list of the main features (in particular, wrt *legacy JavaCC*) follows:
 
 ## Up-to-date Java language support
 
-JavaCC 21 includes support for the Java language through JDK 13. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/) and [here](https://javacc.com/2020/10/25/jdk-14-now-fully-supported-new-switch-syntax/). (As of this writing, Java language support in legacy JavaCC is stalled at the JDK 7 level.)
+JavaCC 21 includes support for the Java language through JDK 14. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/) and [here](https://javacc.com/2020/10/25/jdk-14-now-fully-supported-new-switch-syntax/). (As of this writing, Java language support in legacy JavaCC is stalled at the JDK 7 level.)
 
 Note also that the [Java grammar that JavaCC 21 uses internally](https://github.com/JavaCC21/JavaCC21/blob/master/src/main/grammars/Java.javacc) can be used in your own projects without any restriction.
 

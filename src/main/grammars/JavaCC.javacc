@@ -637,32 +637,28 @@ GrammarInclusion throws IOException :
 {
    Token t;
 }
-{
    <_INCLUDE>
-   "(" t=<STRING_LITERAL> ")"
-   [
-      ":"
-      "{"
-      "}"
-   ]
+   (
+       t=<STRING_LITERAL>
+       |
+       "(" t=<STRING_LITERAL> ")"
+   )
    {
       String location = t.getImage().substring(1, t.getImage().length() -1);
       if (enterIncludes) {
           CURRENT_NODE.addChild(grammar.include(location));
       }
    }
-}
+;
 
 CodeInjection :
 {
         boolean isInterface = false;
-//        ImportDeclaration importDecl = null;
         Annotation annotation = null;
         boolean foundOptionalInitialBrace = false;
         boolean usingParentheses = false;
         token_source.inJavaCode=true;
 }   
-{
         "INJECT" ["(" {usingParentheses = true;}]
         {
                 token_source.inJavaCode = true;
@@ -702,7 +698,7 @@ CodeInjection :
                     grammar.addCodeInjection(CURRENT_NODE);
                 }
         }
-}
+;
 
 INJECT CodeInjection : 
    import java.util.List;
@@ -1584,8 +1580,6 @@ INJECT Assertion :
     public boolean isConcrete() {return false;}
 }
 
-//Assertion AssertStatement :
-//;
 
 Assertion Assertion :
    {

@@ -12,7 +12,7 @@ If you absolutely must talk about *releases* or *version numbers*, then the date
 
 There is no technical support available (from us, anyway!) for anything but the most recent version. That is the version that can be downloaded at https://javacc.com/download/javacc-full.jar.
 
-Well, alternatively, if you are actually getting your hands dirty in the JavaCC code itself, your own build could also be considered the most recent version, *as long as you are in synch with the most recent version fo the code!*, e.g.
+Well, alternatively, if you are actually getting your hands dirty in the JavaCC code itself, your own build could also be considered the most recent version, *as long as you are in synch with the most recent version of the code!*, e.g.
 
     git pull
     ant clean full-jar

@@ -31,8 +31,6 @@ package com.javacc.output.java;
 
 import static com.javacc.parser.JavaCCConstants.*;
 
-import java.util.*;
-
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
@@ -51,7 +49,7 @@ public class JavaFormatter {
     
     public JavaFormatter() {}
     
-   public String format(BaseNode code) {
+    public String format(BaseNode code) {
         buf = new StringBuilder();
         for (Token t :  Nodes.getAllTokens(code, true, true)) {
             if (t instanceof Whitespace) {
