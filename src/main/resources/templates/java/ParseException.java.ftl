@@ -33,7 +33,6 @@ public class ParseException extends Exception implements ${grammar.constantsClas
     super();
   }
   
-  
   public ParseException(Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
       this.token = token;
       this.expectedTypes = expectedTypes;
@@ -57,52 +56,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
      this.token = token;
   }
   
-  private void adjustStackTrace() {
-      if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;
-      List<StackTraceElement> fullTrace = new LinkedList<>();
-      List<StackTraceElement> ourCallStack = new LinkedList<>();
-      for (${grammar.parserClassName}.NonTerminalCall ntc : callStack) {
-         ourCallStack.add(ntc.createStackTraceElement());
-      }
-      StackTraceElement[] jvmCallStack = super.getStackTrace();
-      for (StackTraceElement regularEntry : jvmCallStack) {
-           if (ourCallStack.isEmpty()) break;
-           String methodName = regularEntry.getMethodName();
-           StackTraceElement ourEntry = lastElementWithName(ourCallStack, methodName);
-           if (ourEntry!= null) {
-               fullTrace.add(ourEntry);
-           }
-           fullTrace.add(regularEntry);
-      }
-      StackTraceElement[] result = new StackTraceElement[fullTrace.size()];
-      setStackTrace(fullTrace.toArray(result));
-      alreadyAdjusted = true;
-  }
-  
-  private StackTraceElement lastElementWithName(List<StackTraceElement> elements, String methodName) {
-      for (ListIterator<StackTraceElement> it = elements.listIterator(elements.size()); it.hasPrevious();) {
-           StackTraceElement elem = it.previous();
-           if (elem.getMethodName().equals(methodName)) {
-                it.remove();
-                return elem;
-           }
-      }
-      return null;
-  }
-  
-  public StackTraceElement[] getStackTrace() {
-      adjustStackTrace();
-      return super.getStackTrace();
-  }
-  
-  
-  public void printStackTrace(java.io.PrintStream s) {
-        adjustStackTrace();
-        super.printStackTrace(s);
-     }
-   
-  
-  
+  @Override 
   public String getMessage() {
      String msg = super.getMessage();
      if (token == null && expectedTypes == null) {
@@ -130,7 +84,28 @@ public class ParseException extends Exception implements ${grammar.constantsClas
      return buf.toString();
   }
   
- static public String addEscapes(String str) {
+  @Override
+  public StackTraceElement[] getStackTrace() {
+      adjustStackTrace();
+      return super.getStackTrace();
+  }
+  
+  @Override
+  public void printStackTrace(java.io.PrintStream s) {
+        adjustStackTrace();
+        super.printStackTrace(s);
+  }
+
+  /**
+   * Returns the token which causes the parse error and null otherwise.
+   * 
+   * @return the token which causes the parse error and null otherwise.
+   */
+  public Token getToken() {
+    return token;
+  }
+  
+  public static String addEscapes(String str) {
       StringBuilder retval = new StringBuilder();
       char ch;
       for (int i = 0; i < str.length(); i++) {
@@ -174,5 +149,38 @@ public class ParseException extends Exception implements ${grammar.constantsClas
       }
       return retval.toString();
    }
+  
+   private void adjustStackTrace() {
+      if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;
+      List<StackTraceElement> fullTrace = new LinkedList<>();
+      List<StackTraceElement> ourCallStack = new LinkedList<>();
+      for (${grammar.parserClassName}.NonTerminalCall ntc : callStack) {
+         ourCallStack.add(ntc.createStackTraceElement());
+      }
+      StackTraceElement[] jvmCallStack = super.getStackTrace();
+      for (StackTraceElement regularEntry : jvmCallStack) {
+           if (ourCallStack.isEmpty()) break;
+           String methodName = regularEntry.getMethodName();
+           StackTraceElement ourEntry = lastElementWithName(ourCallStack, methodName);
+           if (ourEntry!= null) {
+               fullTrace.add(ourEntry);
+           }
+           fullTrace.add(regularEntry);
+      }
+      StackTraceElement[] result = new StackTraceElement[fullTrace.size()];
+      setStackTrace(fullTrace.toArray(result));
+      alreadyAdjusted = true;
+  }
+  
+  private StackTraceElement lastElementWithName(List<StackTraceElement> elements, String methodName) {
+      for (ListIterator<StackTraceElement> it = elements.listIterator(elements.size()); it.hasPrevious();) {
+           StackTraceElement elem = it.previous();
+           if (elem.getMethodName().equals(methodName)) {
+                it.remove();
+                return elem;
+           }
+      }
+      return null;
+  }
   
 }
