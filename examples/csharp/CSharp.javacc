@@ -36,7 +36,7 @@ UNPARSED :
   <FORMAL_COMMENT: "*/" > #DocComment : CSHARP
 ;
 
-INJECT(DocComment) : {extends Comment}
+INJECT DocComment : extends Comment
 
 <IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
 MORE :
@@ -211,25 +211,23 @@ ExternAliasDirective :
 ;
 
 UsingDirective :
-    SCAN "using" "static"
-    => UsingStaticDirective
+    UsingStaticDirective
     |
-    SCAN "using" <IDENTIFIER> "="
-    => UsingAliasDirective
+    UsingAliasDirective
     |
     UsingNamespaceDirective
 ;    
 
 UsingStaticDirective : 
-    "using" "static" Name ";"
+    "using" "static" =>|| Name ";"
 ; 
 
 UsingAliasDirective :
-   "using" <IDENTIFIER> "=" Name ";"
+   "using" <IDENTIFIER> "=" =>|| Name ";"
 ;
 
 UsingNamespaceDirective :
-    "using" Name ";"
+    "using" Name ";" =>||
 ;
 
 GlobalAttributeSection :
