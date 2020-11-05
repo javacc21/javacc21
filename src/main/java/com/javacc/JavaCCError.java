@@ -34,25 +34,90 @@ import static com.javacc.JavaCCError.Type.WARNING;
 
 import com.javacc.parser.Node;
 
+/**
+ * JavaCC error.
+ *
+ */
 public class JavaCCError {
 
 	public enum Type {
 		PARSE, SEMANTIC, WARNING;
 	}
 
-	private final Grammar grammar;
+	public enum ErrorCode {
+		Unknown, //
+		UnrecognizedOption, //
+		DuplicateOption,
+		OptionValueTypeMismatch;
+	}
+
+	private final String fileName;
 	private final Type type;
+	private final ErrorCode code;
+	private final Object[] arguments;
 	private final String message;
 	private final Node node;
 
-	public JavaCCError(Grammar grammar, Type type, String message, Node node) {
-		this.grammar = grammar;
+	public JavaCCError(String fileName, Type type, ErrorCode code, Object[] arguments, String message, Node node) {
+		this.fileName = fileName;
 		this.type = type;
+		this.code = code;
+		this.arguments = arguments;
 		this.message = message;
 		this.node = node;
 	}
 
-	public String toString() {
+	/**
+	 * Returns the file name where the error occurs.
+	 * 
+	 * @return the file name where the error occurs.
+	 */
+	public String getFileName() {
+		return fileName;
+	}
+
+	/**
+	 * Returns the error type.
+	 * 
+	 * @return the error type.
+	 */
+	public Type getType() {
+		return type;
+	}
+
+	/**
+	 * Returns the error code.
+	 * 
+	 * @return the error code.
+	 */
+	public ErrorCode getCode() {
+		return code;
+	}
+
+	/**
+	 * Returns the error message arguments.
+	 * 
+	 * @return the error message arguments.
+	 */
+	public Object[] getArguments() {
+		return arguments;
+	}
+
+	/**
+	 * Returns the error message.
+	 * 
+	 * @return the error message.
+	 */
+	public String getMessage() {
+		return message;
+	}
+
+	/**
+	 * Returns the error message with location and file name information.
+	 * 
+	 * @return the error message with location and file name information.
+	 */
+	public String getFullMessage() {
 		StringBuilder buf = new StringBuilder();
 		if (type == WARNING) {
 			buf.append("Warning: ");
@@ -62,22 +127,23 @@ public class JavaCCError {
 		if (node != null) {
 			int beginLine = node.getBeginLine();
 			int beginColumn = node.getBeginColumn();
-			String inputSource = grammar.getInputSource();
-			buf.append("Line " + beginLine + ", Column " + beginColumn + " in " + inputSource + ": ");
+			buf.append("Line " + beginLine + ", Column " + beginColumn + " in " + fileName + ": ");
 		}
 		buf.append(message);
 		return buf.toString();
 	}
 
-	public Type getType() {
-		return type;
-	}
-
-	public String getMessage() {
-		return message;
-	}
-
+	/**
+	 * Returns the node which causes the error and null otherwise.
+	 * 
+	 * @return the node which causes the error and null otherwise.
+	 */
 	public Node getNode() {
 		return node;
 	}
+
+	public String toString() {
+		return getFullMessage();
+	}
+
 }
