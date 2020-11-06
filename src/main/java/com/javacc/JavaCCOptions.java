@@ -30,7 +30,12 @@
 
 package com.javacc;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import com.javacc.JavaCCError.ErrorCode;
 import com.javacc.parser.Node;
 
 
@@ -273,8 +278,8 @@ public class JavaCCOptions {
             return;
         }
         else if (!optionValues.containsKey(s) && !aliases.containsKey(s)) {
-            grammar.addWarning(node, "Unrecognized option name \"" + name
-                    + "\".  Option setting will be ignored.");
+        	// Unrecognized Option warning
+            grammar.addWarning(node, ErrorCode.UnrecognizedOption, name);
             return;
         }
         final Object existingValue = optionValues.get(s);
@@ -283,14 +288,15 @@ public class JavaCCOptions {
             if ((existingValue.getClass() != value.getClass())
                     || (value instanceof Integer && ((Integer) value).intValue() <= 0)) {
                 node = (valueloc instanceof Node) ? (Node) valueloc : null;
-                grammar.addWarning(node, "Bad option value \"" + value + "\" for \"" + name
-                        + "\".  Option setting will be ignored.");
+				// Option value type mismatch warning
+				grammar.addWarning(node, ErrorCode.OptionValueTypeMismatch, value, name,
+						value.getClass().getSimpleName());
                 return;
             }
 
             if (inputFileSetting.contains(s)) {
-                grammar.addWarning(node, "Duplicate option setting for \"" + name
-                        + "\" will be ignored.");
+            	// Duplicate option warning
+                grammar.addWarning(node, ErrorCode.DuplicateOption, name);
                 return;
             }
 

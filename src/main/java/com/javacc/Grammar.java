@@ -30,16 +30,50 @@
 
 package com.javacc;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
-import com.javacc.lexgen.*;
+import com.javacc.lexgen.LexerData;
+import com.javacc.lexgen.RegularExpression;
 import com.javacc.output.java.FilesGenerator;
-import com.javacc.parsegen.*;
-import com.javacc.parser.*;
-import com.javacc.parser.tree.*;
+import com.javacc.parsegen.Expansion;
+import com.javacc.parsegen.ParserData;
+import com.javacc.parser.BaseNode;
+import com.javacc.parser.JavaCCParser;
+import com.javacc.parser.Node;
+import com.javacc.parser.Nodes;
+import com.javacc.parser.ParseException;
+import com.javacc.parser.Token;
+import com.javacc.parser.tree.BNFProduction;
+import com.javacc.parser.tree.ClassOrInterfaceBody;
+import com.javacc.parser.tree.ClassOrInterfaceBodyDeclaration;
+import com.javacc.parser.tree.CodeInjection;
+import com.javacc.parser.tree.CompilationUnit;
+import com.javacc.parser.tree.GrammarFile;
+import com.javacc.parser.tree.ImportDeclaration;
+import com.javacc.parser.tree.LookBehind;
+import com.javacc.parser.tree.Lookahead;
+import com.javacc.parser.tree.PackageDeclaration;
+import com.javacc.parser.tree.ParserCodeDecls;
+import com.javacc.parser.tree.RegexpStringLiteral;
+import com.javacc.parser.tree.TokenManagerDecls;
+import com.javacc.parser.tree.TokenProduction;
+import com.javacc.parser.tree.TypeDeclaration;
 
 import freemarker.template.TemplateException;
 
@@ -590,8 +624,20 @@ public class Grammar extends BaseNode {
 	 * @param node    the node which causes the error and null otherwise.
 	 * @param message the semantic message error.
 	 */
+	@Deprecated
 	public void addSemanticError(Node node, String message) {
-		addError(node, message, JavaCCError.Type.SEMANTIC);
+		addError(node, JavaCCError.Type.SEMANTIC, JavaCCError.ErrorCode.Unknown, message);
+	}
+
+	/**
+	 * Add semantic error.
+	 * 
+	 * @param node    the node which causes the error and null otherwise.
+	 * @param code      the error code.
+	 * @param arguments the arguments for the error message and null otherwise.
+	 */
+	public void addSemanticError(Node node, JavaCCError.ErrorCode code, Object... arguments) {
+		addError(node, JavaCCError.Type.SEMANTIC, code, null, arguments);
 	}
 
 	/**
@@ -600,8 +646,20 @@ public class Grammar extends BaseNode {
 	 * @param node    the node which causes the error and null otherwise.
 	 * @param message the parse message error.
 	 */
+	@Deprecated
 	public void addParseError(Node node, String message) {
-		addError(node, message, JavaCCError.Type.PARSE);
+		addError(node, JavaCCError.Type.PARSE, JavaCCError.ErrorCode.Unknown, message);
+	}
+
+	/**
+	 * Add parse error.
+	 * 
+	 * @param node      the node which causes the error and null otherwise.
+	 * @param code      the error code.
+	 * @param arguments the arguments for the error message and null otherwise.
+	 */
+	public void addParseError(Node node, JavaCCError.ErrorCode code, Object... arguments) {
+		addError(node, JavaCCError.Type.PARSE, code, null, arguments);
 	}
 
 	/**
@@ -610,19 +668,37 @@ public class Grammar extends BaseNode {
 	 * @param node    the node which causes the warning and null otherwise.
 	 * @param message the warning message error.
 	 */
+	@Deprecated
 	public void addWarning(Node node, String message) {
-		addError(node, message, JavaCCError.Type.WARNING);
+		addError(node, JavaCCError.Type.WARNING, JavaCCError.ErrorCode.Unknown, message);
+	}
+
+	/**
+	 * Add warning.
+	 * 
+	 * @param node      the node which causes the warning and null otherwise.
+	 * @param code      the error code.
+	 * @param arguments the arguments for the error message and null otherwise.
+	 */
+	public void addWarning(Node node, JavaCCError.ErrorCode code, Object... arguments) {
+		addError(node, JavaCCError.Type.WARNING, code, null, arguments);
 	}
 
 	/**
 	 * Add error.
 	 * 
-	 * @param node    the node which causes the error and null otherwise.
-	 * @param message the error message.
-	 * @param type    the error type.
+	 * @param node      the node which causes the error and null otherwise.
+	 * @param type      the error type.
+	 * @param code      the error code.
+	 * @param message   the error message.
+	 * @param arguments the error arguments.
 	 */
-	private void addError(Node node, String message, JavaCCError.Type type) {
-		JavaCCError error = new JavaCCError(this, type, message, node);
+	private void addError(Node node, JavaCCError.Type type, JavaCCError.ErrorCode code, String message,
+			Object... arguments) {
+		if (message == null) {
+			message = Messages.getMessage(code.name(), arguments);
+		}
+		JavaCCError error = new JavaCCError(this.getFilename(), type, code, arguments, message, node);
 		reporter.reportError(error);
 		switch (type) {
 		case PARSE:

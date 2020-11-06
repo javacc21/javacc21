@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -30,13 +30,10 @@
 package com.javacc;
 
 import java.io.IOException;
-import java.io.StringReader;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
-import com.javacc.Grammar;
-import com.javacc.JavaCCOptions;
 import com.javacc.parser.JavaCCParser;
 import com.javacc.parser.Node;
 import com.javacc.parser.ParseException;
@@ -47,12 +44,12 @@ import com.javacc.parser.tree.Options;
 import com.javacc.parser.tree.TokenProduction;
 
 /**
- * JUnit tests for JavaCCParser.
+ * Tests for {@link JavaCCParser} node API.
  * 
  * @author Angelo ZERR
  *
  */
-public class JavaCCParserTest {
+public class JavaCCParserNodeTest {
 
 	private static final String JSON_JAVACC = "options {\r\n" + //
 			"  PARSER_PACKAGE=\"json\";\r\n" + //
@@ -173,7 +170,7 @@ public class JavaCCParserTest {
 		Node lastChild = root.getLastChild();
 		Assert.assertNotNull("lastChild should be not null", lastChild);
 		Assert.assertEquals("lastChild begin line", 100, lastChild.getBeginLine());
-		Assert.assertEquals("lastChild begin column", 1, lastChild.getBeginColumn());
+		Assert.assertEquals("lastChild begin column", 2, lastChild.getBeginColumn());
 		Assert.assertEquals("lastChild end line", 100, lastChild.getEndLine());
 		Assert.assertEquals("lastChild end column", 1, lastChild.getEndColumn());
 		Assert.assertTrue("lastChild is a token", lastChild instanceof Token);
@@ -196,7 +193,7 @@ public class JavaCCParserTest {
 		Assert.assertNotNull("foundedNode should be not null", foundedNode);
 		Assert.assertTrue("foundedNode is a TokenProduction", foundedNode instanceof TokenProduction);
 		Assert.assertTrue("foundedNode first child is a SKIP", foundedNode.getFirstChild() instanceof JavaCCKeyWord);
-		Assert.assertEquals("foundedNode first child is a SKIP", "\"SKIP\"", foundedNode.getFirstChild().getNodeName());
+		Assert.assertEquals("foundedNode first child is a SKIP", "_SKIP", foundedNode.getFirstChild().getNodeName());
 
 		// last node
 		foundedNode = root.findNodeAt(100, 1);
@@ -211,11 +208,7 @@ public class JavaCCParserTest {
 	}
 
 	private static Node parseJSONCC() throws IOException, ParseException {
-		Grammar grammar = new Grammar(new JavaCCOptions(new String[] { "JSON.javacc" }));
-		JavaCCParser parser = new JavaCCParser(grammar, "JSON.javacc", JSON_JAVACC);
-		parser.Root();
-		Node root = parser.rootNode();
-		return root;
+		return JavaCCAssert.parseGrammar("JSON.javacc", JSON_JAVACC);
 	}
 
 }
