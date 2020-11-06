@@ -29,9 +29,13 @@
  */
 package com.javacc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.IOException;
 
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 import com.javacc.parser.JavaCCParser;
@@ -155,56 +159,56 @@ public class JavaCCParserNodeTest {
 	@Test
 	public void nodeHierarchyAPI() throws Exception {
 		Node root = parseJSONCC();
-		Assert.assertNotNull("root should be not null", root);
-		Assert.assertTrue("Node#hasChildNodes", root.hasChildNodes());
-		Assert.assertEquals("Node#getChildCount", 8, root.getChildCount());
+		assertNotNull(root, "root should be not null");
+		assertTrue(root.hasChildNodes(), "Node#hasChildNodes");
+		assertEquals(8, root.getChildCount(), "Node#getChildCount");
 
 		Node firstChild = root.getFirstChild();
-		Assert.assertNotNull("firstChild should be not null", firstChild);
-		Assert.assertEquals("firstChild begin line", 1, firstChild.getBeginLine());
-		Assert.assertEquals("firstChild begin column", 1, firstChild.getBeginColumn());
-		Assert.assertEquals("firstChild end line", 5, firstChild.getEndLine());
-		Assert.assertEquals("firstChild end column", 1, firstChild.getEndColumn());
-		Assert.assertTrue("firstChild is an Options", firstChild instanceof Options);
+		assertNotNull(firstChild, "firstChild should be not null");
+		assertEquals(1, firstChild.getBeginLine(), "firstChild begin line");
+		assertEquals(1, firstChild.getBeginColumn(), "firstChild begin column");
+		assertEquals(5, firstChild.getEndLine(), "firstChild end line");
+		assertEquals(1, firstChild.getEndColumn(), "firstChild end column");
+		assertTrue(firstChild instanceof Options, "firstChild is an Options");
 
 		Node lastChild = root.getLastChild();
-		Assert.assertNotNull("lastChild should be not null", lastChild);
-		Assert.assertEquals("lastChild begin line", 100, lastChild.getBeginLine());
-		Assert.assertEquals("lastChild begin column", 2, lastChild.getBeginColumn());
-		Assert.assertEquals("lastChild end line", 100, lastChild.getEndLine());
-		Assert.assertEquals("lastChild end column", 1, lastChild.getEndColumn());
-		Assert.assertTrue("lastChild is a token", lastChild instanceof Token);
+		assertNotNull(lastChild, "lastChild should be not null");
+		assertEquals(100, lastChild.getBeginLine(), "lastChild begin line");
+		assertEquals(2, lastChild.getBeginColumn(), "lastChild begin column");
+		assertEquals(100, lastChild.getEndLine(), "lastChild end line");
+		assertEquals(1, lastChild.getEndColumn(), "lastChild end column");
+		assertTrue(lastChild instanceof Token, "lastChild is a token");
 	}
 
 	@Test
 	public void nodeFindAPI() throws Exception {
 		Node root = parseJSONCC();
-		Assert.assertNotNull("root should be not null", root);
+		assertNotNull(root, "root should be not null");
 
 		// First node
 		Node foundedNode = root.findNodeAt(1, 1);
-		Assert.assertNotNull("foundedNode should be not null", foundedNode);
-		Assert.assertTrue("foundedNode is a JavaCCKeyWord", foundedNode instanceof JavaCCKeyWord);
+		assertNotNull(foundedNode, "foundedNode should be not null");
+		assertTrue(foundedNode instanceof JavaCCKeyWord, "foundedNode is a JavaCCKeyWord");
 		Node options = root.getFirstChild();
-		Assert.assertEquals("foundedNode parent is the Options", foundedNode.getParent(), options);
+		assertEquals(foundedNode.getParent(), options, "foundedNode parent is the Options");
 
 		// One node
 		foundedNode = root.findNodeAt(9, 1);
-		Assert.assertNotNull("foundedNode should be not null", foundedNode);
-		Assert.assertTrue("foundedNode is a TokenProduction", foundedNode instanceof TokenProduction);
-		Assert.assertTrue("foundedNode first child is a SKIP", foundedNode.getFirstChild() instanceof JavaCCKeyWord);
-		Assert.assertEquals("foundedNode first child is a SKIP", "_SKIP", foundedNode.getFirstChild().getNodeName());
+		assertNotNull(foundedNode, "foundedNode should be not null");
+		assertTrue(foundedNode instanceof TokenProduction, "foundedNode is a TokenProduction");
+		assertTrue(foundedNode.getFirstChild() instanceof JavaCCKeyWord, "foundedNode first child is a SKIP");
+		assertEquals("_SKIP", foundedNode.getFirstChild().getNodeName(), "foundedNode first child is a SKIP");
 
 		// last node
 		foundedNode = root.findNodeAt(100, 1);
-		Assert.assertNotNull("foundedNode should be not null", foundedNode);
-		Assert.assertTrue("foundedNode is a Delimiter", foundedNode instanceof Delimiter);
+		assertNotNull(foundedNode, "foundedNode should be not null");
+		assertTrue(foundedNode instanceof Delimiter, "foundedNode is a Delimiter");
 
 		foundedNode = root.findNodeAt(100, 2);
-		Assert.assertNull(foundedNode);
+		assertNull(foundedNode);
 
 		foundedNode = root.findNodeAt(101, 1);
-		Assert.assertNull(foundedNode);
+		assertNull(foundedNode);
 	}
 
 	private static Node parseJSONCC() throws IOException, ParseException {

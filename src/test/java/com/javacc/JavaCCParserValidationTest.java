@@ -32,7 +32,7 @@ package com.javacc;
 import static com.javacc.JavaCCAssert.err;
 import static com.javacc.JavaCCAssert.testValidationFor;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.javacc.JavaCCError.ErrorCode;
 import com.javacc.parser.JavaCCParser;
@@ -57,7 +57,7 @@ public class JavaCCParserValidationTest {
 				err(ErrorCode.UnrecognizedOption, //
 						"Warning: Line 2, Column 2 in test.javacc: Unrecognized option name `BAD_OPTION`. Option setting will be ignored."));
 	}
-	
+
 	@Test
 	public void DuplicateOption() {
 		testValidationFor("test.javacc", //
@@ -69,7 +69,7 @@ public class JavaCCParserValidationTest {
 				err(ErrorCode.DuplicateOption, //
 						"Warning: Line 3, Column 2 in test.javacc: Duplicate option setting for `TABS_TO_SPACES`. Option setting will be ignored."));
 	}
-	
+
 	@Test
 	public void OptionValueTypeMismatch() {
 		testValidationFor("test.javacc", //
@@ -80,7 +80,7 @@ public class JavaCCParserValidationTest {
 				err(ErrorCode.OptionValueTypeMismatch, //
 						"Warning: Line 2, Column 19 in test.javacc: Bad option value `true` for `TABS_TO_SPACES`. Expected type is `Boolean`. Option setting will be ignored."));
 	}
-	
+
 	@Test
 	public void Unknown() {
 		testValidationFor("test.javacc", //
