@@ -1389,7 +1389,7 @@ PreDecrementExpression :
 UnaryExpressionNotPlusMinus :
   ( "~" | "!" ) UnaryExpression
   |
-  SCAN ~\...\NewSwitchLabel
+  SCAN ~\...\NewSwitchLabel LambdaLHS
   => LambdaExpression 
   |
   => CastExpression
@@ -1525,16 +1525,12 @@ AllocationExpression :
   |
   "new" ClassOrInterfaceType [ PossiblyEmptyTypeArguments ]
     (
-      ArrayDimsAndInits
+      SCAN 2 ArrayDimsAndInits
       |
       Arguments [ ClassOrInterfaceBody(false) ]
     )
 ;
 
-/*
- * The third SCAN specification below is to parse to PrimarySuffix
- * if there is an expression between the "[...]".
- */
 ArrayDimsAndInits :
   SCAN 2
   ( 
@@ -1552,8 +1548,7 @@ ArrayDimsAndInits :
 
 Label : <IDENTIFIER><COLON> =>|| ;
 
-
- /*
+/*
  * Statement syntax follows.
  */
 
@@ -1608,8 +1603,6 @@ TryStatement #void :
 AssertStatement :
   "assert" Expression [ ":" Expression ] ";"
 ;
-
-// LabeledStatement : <IDENTIFIER> ":" Statement;
 
 CodeBlock Block #CodeBlock :
   "{"
@@ -1742,12 +1735,10 @@ DoStatement :
 ForStatement :
   "for" "("
   (
-      SCAN Modifiers Type <IDENTIFIER> ":"
-      => Modifiers Type <IDENTIFIER> ":" Expression 
+      Modifiers Type <IDENTIFIER> ":" =>|| Expression 
       |
       [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
   )
-
   ")" Statement
 ;
 
@@ -1884,12 +1875,10 @@ INJECT FinallyBlock :
 /* Annotation syntax follows. */
 
 Annotation Annotation #Annotation :
- (
-   SCAN "@" Name "(" ( <IDENTIFIER> "=" | ")" )
-   => NormalAnnotation
+ ( 
+   NormalAnnotation
    |
-   SCAN "@" Name "(" 
-   => SingleMemberAnnotation
+   SingleMemberAnnotation
    |
    MarkerAnnotation
  )
@@ -1899,7 +1888,7 @@ Annotation Annotation #Annotation :
 ;
 
 NormalAnnotation #void :
-   "@" Name "(" [ MemberValuePairs ] ")"
+   "@" Name "(" =>|+2 [ MemberValuePairs ] ")"
 ;
 
 MarkerAnnotation #void :
@@ -1907,7 +1896,7 @@ MarkerAnnotation #void :
 ;
 
 SingleMemberAnnotation #void :
-  "@" Name "(" MemberValue ")"
+  "@" Name "(" =>|| MemberValue ")"
 ;
 
 MemberValuePairs :
@@ -1927,7 +1916,7 @@ MemberValue :
 MemberValueArrayInitializer :
   => "{" "}"
   |
-  "{" MemberValue ( SCAN 2 "," MemberValue )* [ "," ] "}"
+  "{" MemberValue ( "," =>|+1 MemberValue )* [ "," ] "}"
 ;
 
 
@@ -1953,7 +1942,7 @@ AnnotationTypeMemberDeclaration :
  |
  ClassDeclaration
  |
- SCAN Modifiers Type <IDENTIFIER> "(" => Modifiers Type <IDENTIFIER> "(" ")" [ DefaultValue ] ";"
+ Modifiers Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
  |
  FieldDeclaration
 ;
@@ -1963,8 +1952,7 @@ DefaultValue :
 ;
 
 LambdaExpression LambdaExpression :
-  LambdaLHS
-  "->" =>||
+  LambdaLHS =>||
   (Expression | Block)
   {
      return CURRENT_NODE;
@@ -1972,29 +1960,12 @@ LambdaExpression LambdaExpression :
 ;
 
 LambdaLHS : 
-   SCAN SimpleLambdaLHS "->"
-   => SimpleLambdaLHS
-   |
-   SCAN FormalLambdaLHS "->"
-   => FormalLambdaLHS
+   (<IDENTIFIER> | SimpleLambdaLHS | FormalParameters) "->" =>||
 ;
 
 SimpleLambdaLHS #void :
-   <IDENTIFIER>
-   |
-   (
-     "("
-     [<IDENTIFIER>(","<IDENTIFIER>)*]
-     ")"
-   )
-;
-
-FormalLambdaLHS #FormalParameters : 
-   "("
-       Type VariableDeclaratorId
-       (
-         "," Type VariableDeclaratorId
-       )*
+   "(" <IDENTIFIER> =>|+1 
+   (","<IDENTIFIER>)*
    ")"
 ;
 
