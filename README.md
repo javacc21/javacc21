@@ -1,3 +1,4 @@
+[![Build Status](https://secure.travis-ci.org/javacc21/javacc21.png)](http://travis-ci.org/javacc21/javacc21)
 [![Gitter chat for JavaCC 21](https://badges.gitter.im/javacc21/javacc21.svg)](https://gitter.im/javacc21/javacc21)
 
 # JavaCC 21
