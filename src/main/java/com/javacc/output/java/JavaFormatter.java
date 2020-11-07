@@ -155,6 +155,9 @@ public class JavaFormatter {
                 if (type == TokenType.IF || type == TokenType.WHILE || type == TokenType.GT || type == TokenType.EQ || type == TokenType.ASSIGN) {
                     buf.append(' ');
                 }
+                if (type == TokenType.IDENTIFIER && parent instanceof Annotation && parent.indexOf(currentToken) == parent.getChildCount()-1) {
+                    newLine();
+                }
         }
     }
     

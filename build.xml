@@ -62,8 +62,9 @@
            target="1.8"
            source="1.8"
     	   classpath="bin/freemarker.jar"
-           includeantruntime="yes"
-           failonerror="true"
+           includeantruntime="no"
+	    failonerror="true"
+	    fork="true"
     />
      <copy todir="build/templates/java">
       <fileset dir="src/main/resources/templates/java">
