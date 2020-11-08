@@ -12,18 +12,35 @@
 		targetfile="src/main/java/com/javacc/parser/JavaCCParser.java">
 	 <srcfiles dir="src/main/grammars" includes="*.javacc"/>
 	</uptodate>
-  </target>
+</target>
 
-  <target name="clean">
+<target name="restore-bootstrap-jar">
+	<exec executable="git" dir="${basedir}">
+		<arg line="checkout bin/javacc.jar"/>
+        </exec>
+</target>
+
+
+<!-- 
+     Build and test using the bootstrap jarfile, then 
+     drop in the newly built jarfile and build and test again
+-->
+<target name="full-test" depends="restore-bootstrap-jar,clean,jar,test">
+	<copy file="javacc.jar" todir="bin"/>
+	<antcall target="clean"/>
+	<antcall target="test"/>
+</target>
+
+<target name="clean">
  	<delete file="javacc.jar"/>
  	<delete file="javacc-full.jar"/>
  	<delete dir="build"/>
 	<delete dir="src/main/java/com/javacc/parser"/>
-   <delete dir="examples/java/com"/>
-   <delete dir="examples/freemarker/fel"/>
-   <delete dir="examples/freemarker/ftl"/>
-   <delete dir="examples/json/com"/>
-  </target>
+  <delete dir="examples/java/com"/>
+  <delete dir="examples/freemarker/fel"/>
+  <delete dir="examples/freemarker/ftl"/>
+  <delete dir="examples/json/com"/>
+</target>
 
 
   <target name="parser-gen" depends="init" unless="parser.uptodate">
