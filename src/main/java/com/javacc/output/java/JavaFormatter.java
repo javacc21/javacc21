@@ -33,6 +33,7 @@ import static com.javacc.parser.JavaCCConstants.*;
 
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
+import java.util.List;
 
 /**
  * A rather rough-and-ready class for pretty-printing java source code.
@@ -46,12 +47,15 @@ public class JavaFormatter {
     private StringBuilder buf = new StringBuilder();
     private String indent = "    ";
     private String currentIndent = "";
+    private String eol = "\n";
     
     public JavaFormatter() {}
     
     public String format(BaseNode code) {
         buf = new StringBuilder();
-        for (Token t :  Nodes.getAllTokens(code, true, true)) {
+        List<Token> allTokens = Nodes.getAllTokens(code, true, true);
+        checkFirstNewLine(allTokens);
+        for (Token t :  allTokens) {
             if (t instanceof Whitespace) {
                 continue;
             }
@@ -63,19 +67,35 @@ public class JavaFormatter {
         return buf.toString();
     }
 
-   private void startNewLineIfNecessary() {
+    // Scans for the first instance of a line terminator 
+    // and sets eol accordingly
+    private void checkFirstNewLine(List<Token> tokens) {
+        for (Token t: tokens) {
+            if (t instanceof Whitespace) {
+                String img = t.getImage();
+                int idx = img.indexOf('\n');
+                if (idx == 0) break;
+                if (idx >1 && img.charAt(idx-1) == '\r') {
+                    eol = "\r\n";
+                    break;
+                }
+            }
+        }
+    }
+
+    private void startNewLineIfNecessary() {
         if (buf.length() == 0) {
             return;
         }
-        int lastNL = buf.lastIndexOf("\n");
-        if (lastNL +1 == buf.length()) {
+        int lastNL = buf.lastIndexOf(eol);
+        if (lastNL + eol.length() == buf.length()) {
             return;
         }
-        String line = buf.substring(lastNL+1);
+        String line = buf.substring(lastNL+ eol.length());
         if (line.trim().length() ==0) {
-            buf.setLength(lastNL+1);
+            buf.setLength(lastNL+eol.length());
         } else {
-            buf.append("\n");
+            buf.append(eol);
         }
     }
     
