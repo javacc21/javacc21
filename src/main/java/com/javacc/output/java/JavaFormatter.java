@@ -123,7 +123,8 @@ public class JavaFormatter {
             case SEMICOLON :
                 buf.append(';');
                 if (parent instanceof PackageDeclaration) {
-                    buf.append("\n\n");
+                    buf.append(eol);
+                    buf.append(eol);
                 }
                 else if (parent instanceof ForStatement) {
                 	if (parent.getChild(parent.getChildCount()-1) != currentToken) {
@@ -183,7 +184,7 @@ public class JavaFormatter {
     
     private void handleSingleLineComment() {
         if (lastToken !=null && lastToken.getEndLine() == currentToken.getBeginLine()) {
-            int lastNL = buf.indexOf("\n");
+            int lastNL = buf.indexOf(eol);
             if (lastNL >=0 && buf.substring(lastNL).trim().length() == 0) {
                 buf.setLength(lastNL);
             }
@@ -216,7 +217,8 @@ public class JavaFormatter {
             || parent instanceof ConstructorDeclaration
             || parent.getParent() instanceof MethodDeclaration)
         {
-            buf.append("\n\n");
+            buf.append(eol);
+            buf.append(eol);
         }
         newLine();
     }
