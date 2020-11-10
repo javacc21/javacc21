@@ -75,8 +75,10 @@ public class JavaFormatter {
                 String img = t.getImage();
                 int idx = img.indexOf('\n');
                 if (idx == 0) break;
-                if (idx >1 && img.charAt(idx-1) == '\r') {
-                    eol = "\r\n";
+                if (idx >0) {
+                    if (img.charAt(idx-1) == '\r') {
+                        eol = "\r\n";
+                    }
                     break;
                 }
             }
