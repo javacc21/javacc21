@@ -70,23 +70,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      }
  [/#if]          
 
- 
-
-[#if grammar.options.faultTolerant]
-
-   // The token does not correspond to actual characters in the input.
-   // It was typically inserted to (tolerantly) complete some grammatical production.
-   private boolean virtual;
-   
-   public boolean isVirtual() {
-      return virtual;
-   }
-   
-   public void setVirtual(boolean virtual) {this.virtual = virtual;}
-   
-[/#if]
-
-
     private String inputSource = "";
 
     private TokenType type;
@@ -263,11 +246,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void clearChildren() {}
     
     public String getNormalizedText() {
-[#if grammar.options.faultTolerant]
-        if (virtual) {
-             return "Virtual Token of type " + getType();
-        }
-[/#if]    
         if (getType() == TokenType.EOF) {
             return "EOF";
         }

@@ -790,9 +790,6 @@ BNFProduction BNFProduction :
     <IDENTIFIER> {CURRENT_NODE.setName(current_token.getImage());}
     [FormalParameters]
     [
-      <BANG> {CURRENT_NODE.setForced(true);} 
-    ]
-    [
       ThrowsList
     ]
     [
@@ -876,15 +873,6 @@ INJECT BNFProduction :
         return this.getName();
     }
 
-    private boolean forced; 
-    
-    public void setForced(boolean forced) {
-        this.forced = forced;
-    }
-    public boolean isForced() {
-         return forced;
-    } 
-    
     private String leadingComments;
 
     private Expansion expansion;
@@ -1054,17 +1042,6 @@ INJECT TreeBuildingAnnotation :
     public boolean getVoid() {
         return "void".equals(getNodeName());
     }
-    
-    private boolean forced;
-    
-    public boolean isForced() {
-       return forced;
-    }
-    
-    public void setForced(boolean forced) {
-        this.forced = forced;
-    }
-    
 }
 
 
@@ -2011,17 +1988,12 @@ Expansion ExpansionUnit :
             grammar.addTokenProduction(tokenProduction);
       }
   }
-  [<BANG>{result.setForced(true);}]
   [SCAN ~\...\Lookahead => UpToHere(result)]
   |
   SCAN [PrimaryExpression "="]<IDENTIFIER>
   => result=NonTerminal [SCAN ~\...\Lookahead => UpToHere(result)]
   |
   "(" ExpansionChoice {result=(Expansion)peekNode();} ")" 
-  [ 
-   SCAN <BANG> TreeNodeDescriptor
-   => <BANG> {result.setForced(true);}
-  ]
   [SCAN ~\...\Lookahead => UpToHere(result)] 
  )
  [
@@ -2044,9 +2016,6 @@ NonTerminal NonTerminal #NonTerminal :
     SCAN "(" ExpansionChoice ")" ("*"|"+"|"?") => {}
     |
     Arguments
-  ]
-  [
-     <BANG>  {CURRENT_NODE.setForced(true);}
   ]
   {return CURRENT_NODE;}
 ;

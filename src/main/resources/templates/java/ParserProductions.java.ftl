@@ -43,10 +43,6 @@
 [#macro Generate]
      [@Productions/]
     [@firstSetVars/]
-    [#if grammar.options.faultTolerant]
-    [@finalSetVars/]
-    [@followSetVars/]  
-    [/#if]
     [#if grammar.choicePointExpansions?size !=0]
        [@BuildLookaheads /]
      [/#if]
@@ -172,9 +168,6 @@
 
 [#macro ParserProduction production]
     [@firstSetVar production.expansion/]
-    [#if grammar.options.faultTolerant]
-      [@finalSetVar production.expansion/]
-    [/#if]
     ${production.leadingComments}
 // ${production.inputSource}, line ${production.beginLine}
     final ${production.accessMod!"public"} 
@@ -194,11 +187,10 @@
    [#if expansion.simpleName != "ExpansionSequence"]
   // Code for ${expansion.simpleName} specified on line ${expansion.beginLine} of ${expansion.inputSource}
   [/#if]
-    [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName, closeCondition = "true", callStackSizeVar]
+    [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, closeCondition = "true", callStackSizeVar]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
-      [#set forced = production.forced || forced]
     [/#if]
     [#if grammar.options.treeBuildingEnabled]
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.options.nodeDefaultVoid)
@@ -206,13 +198,6 @@
     [/#if]
     [#if buildTreeNode]
         [@setupTreeVariables .scope /]
-        [#if grammar.options.faultTolerant]
-         [#if forced]
-              boolean ${forcedVarName} = this.tolerantParsing;
-          [#else]
-              boolean ${forcedVarName} = this.tolerantParsing && currentNTForced;
-          [/#if]
-        [/#if]
       [@createNode treeNodeBehavior nodeVarName /]
           ParseException ${parseExceptionVar} = null;
           [#set newVarIndex = newVarIndex +1]
@@ -236,25 +221,12 @@
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
-      [#if !grammar.options.faultTolerant]
              throw e;
-      [#else]             
-             if (trace_enabled) LOGGER.info("We have a parse error but are in in fault-tolerant mode, so we try to handle it.");
-          [#if production?? && returnType == production.nodeName]
-             [#-- We just assume that if the return type is the same as the type of the node, we want to return CURRENT_NODE.
-                   This is not theoretically correct, but will probably be true about 99% of the time. Maybe REVISIT. --]
-              return ${nodeVarName};
-          
-             [#-- This is a bit screwy will not work if the return type is a primitive type --]
-              return null;
-          [/#if]
-[/#if]	
          }
          finally {
              if (${parseExceptionVar} == null) {
                 restoreCallStack(${callStackSizeVar});
              }
-[#if !grammar.options.faultTolerant]
              if (buildTree) {
                  if (${parseExceptionVar} == null) {
                      closeNodeScope(${nodeVarName}, ${closeCondition});
@@ -263,38 +235,7 @@
                      clearNodeScope();
                  }
              }
-[#else]
-             if (buildTree) {
-                 if (${parseExceptionVar} == null) {
-                     closeNodeScope(${nodeVarName}, ${closeCondition});
-                 }
-                else {
-                     if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
-                    ${nodeVarName}.setParseException(${parseExceptionVar});
-                     if (${forcedVarName}) { 
-                        restoreCallStack(${callStackSizeVar});
-                        Token virtualToken = insertVirtualToken(${TT}${expansion.finalSet.firstTokenName}); 
-                        resetNextToken();
-                        if (tokensAreNodes) {
-                            currentNodeScope.add(virtualToken);
-                        } 
-                        String message = "Inserted virtual token of type " + virtualToken.getType()
-                                                  +"\non line " + virtualToken.getBeginLine()
-                                                  + ", column " + virtualToken.getBeginColumn()
-                                                   + " of " + token_source.getInputSource()
-                                                  +"\n to complete expansion in ${currentProduction.name}\n";
-                        message += ${parseExceptionVar}.getMessage(); 
-                        addParsingProblem(new ParsingProblem(message, ${nodeVarName})); 
-                      closeNodeScope(${nodeVarName}, true); 
-                   } else {
-                        closeNodeScope(${nodeVarName}, false);
-                        if (trace_enabled) LOGGER.info("Rethrowing " + "${parseExceptionVar}");
-                      throw ${parseExceptionVar};
-                   }
-                }
-        }
-[/#if]  
-        this.currentlyParsedProduction = prevProduction;
+             this.currentlyParsedProduction = prevProduction;
          }       
           ${grammar.utils.popNodeVariableName()!}
     [/#if]
@@ -304,7 +245,6 @@
 [#macro setupTreeVariables callingScope]
     [#set nodeNumbering = nodeNumbering +1]
     [#set nodeVarName = currentProduction.name + nodeNumbering in callingScope]
-    [#set forcedVarName = callingScope.nodeVarName+"forced" in callingScope]
     ${grammar.utils.pushNodeVariableName(callingScope.nodeVarName)!}
     [#set parseExceptionVar = "parseException"+nodeNumbering in callingScope]
     [#if !callingScope.treeNodeBehavior??]
@@ -393,11 +333,7 @@
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
-  [#if !grammar.options.faultTolerant]       
        consumeToken(${TT}${regexp.label});
-   [#else]
-        consumeToken(${TT}${regexp.label}, ${regexp.forced?string("true", "false")});
-   [/#if]
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock]
@@ -434,10 +370,6 @@
 
 [#macro BuildCodeNonTerminal nonterminal]
    pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource}", ${nonterminal.beginLine}, ${nonterminal.beginColumn}); 
-   [#if grammar.options.faultTolerant && !nonterminal.production.forced]
-     [@newVar type="boolean" init="currentNTForced"/]
-    currentNTForced = ${nonterminal.forced?string("true", "false")};
-   [/#if]
    try {
    [#if !nonterminal.LHS??]
        ${nonterminal.name}(${nonterminal.args!});
@@ -446,9 +378,6 @@
     [/#if]
     } finally {
         popCallStack();
-    [#if grammar.options.faultTolerant && !nonterminal.production.forced]
-        currentNTForced = boolean${newVarIndex};
-    [/#if]
     }
 [/#macro]
 

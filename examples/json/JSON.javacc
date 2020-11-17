@@ -58,7 +58,7 @@ TOKEN #Literal :
     <NUMBER : ("-")?(<ZERO>|<NON_ZERO>)(<FRACTION>)?(<EXPONENT>)?> #NumberLiteral
 ;
 
-Array ! :
+Array :
     <OPEN_BRACKET>
     [
       Value  (<COMMA>Value)*
@@ -82,15 +82,15 @@ Value :
     JSONObject
 ;
 
-JSONObject ! : 
+JSONObject : 
     <OPEN_BRACE>
     [
        <STRING_LITERAL> 
-       <COLON>! 
+       <COLON> 
        Value
        (
          <COMMA>
-        <STRING_LITERAL><COLON>! 
+        <STRING_LITERAL><COLON> 
         Value
        )*
     ]

@@ -197,17 +197,7 @@ public interface Node extends Comparable<Node>
      
      void setUnparsed(boolean b);
      
-[#if grammar.options.faultTolerant]
-     default boolean isDirty() {
-         for (Node child : children()) {
-            if (child.isDirty()) return true;
-         }
-         return false;
-     }
-[/#if]     
- 
-
-   default <T extends Node>T firstChildOfType(Class<T>clazz) {
+    default <T extends Node>T firstChildOfType(Class<T>clazz) {
         for (Node child : children()) {
             if (clazz.isInstance(child)) {
                 return clazz.cast(child);

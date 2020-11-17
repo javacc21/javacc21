@@ -160,89 +160,24 @@ void dumpLookaheadCallStack(PrintStream ps) {
     dumpCallStack(ps);
 }
 
-[#if grammar.options.faultTolerant]
-    private boolean tolerantParsing= true;
-    private boolean currentNTForced = false;
-    private List<ParsingProblem> parsingProblems;
-    // This is the last "legit" token consumed by the parsing machinery, not
-    // a virtual or invalid Token inserted to continue parsing.
-    
-    public void addParsingProblem(ParsingProblem problem) {
-        if (parsingProblems == null) {
-            parsingProblems = new ArrayList<>();
-        }
-        parsingProblems.add(problem);
-    }
-    
-    public List<ParsingProblem> getParsingProblems() {
-        return parsingProblems;
-    }
-    
-    public boolean hasParsingProblems() {
-        return parsingProblems != null && !parsingProblems.isEmpty();
-    }    
-
-    private void resetNextToken() {
-       currentToken.setNext(null);
-//       token_source.reset(currentToken);
-       token_source.reset(lastParsedToken);
-  }
   
-[#else]
     private final boolean tolerantParsing = false;
-[/#if]
+
     public boolean isParserTolerant() {return tolerantParsing;}
     
     public void setParserTolerant(boolean tolerantParsing) {
-      [#if grammar.options.faultTolerant]
-        this.tolerantParsing = tolerantParsing;
-      [#else]
+   //     this.tolerantParsing = tolerantParsing;
         if (tolerantParsing) {
             throw new UnsupportedOperationException("This parser was not built with that feature!");
         } 
-      [/#if]
     }
 
-[#if grammar.options.faultTolerant]
-    private Token insertVirtualToken(TokenType tokenType) {
-        Token virtualToken = Token.newToken(tokenType, "VIRTUAL " + tokenType, this);
-        virtualToken.setLexicalState(token_source.lexicalState);
-        virtualToken.setUnparsed(true);
-        virtualToken.setVirtual(true);
-        int line = lastParsedToken.getEndLine();
-        int column = lastParsedToken.getEndColumn();
-        virtualToken.setBeginLine(line);
-        virtualToken.setEndLine(line);
-        virtualToken.setBeginColumn(column);
-        virtualToken.setEndColumn(column);
-     [#if grammar.lexerData.numLexicalStates >1]
-         token_source.doLexicalStateSwitch(tokenType);
-     [/#if]
-        return virtualToken;
-    }
-  
-
-     private Token consumeToken(TokenType expectedType) throws ParseException {
-        return consumeToken(expectedType, false);
-     }
- 
-     private Token consumeToken(TokenType expectedType, boolean forced) throws ParseException {
- [#else]
       private Token consumeToken(TokenType expectedType) throws ParseException {
-        boolean forced = false;
- [/#if]
         InvalidToken invalidToken = null;
         Token oldToken = currentToken;
         currentToken = nextToken(currentToken);
-[#if grammar.options.faultTolerant]        
-        if (tolerantParsing && currentToken instanceof InvalidToken) {
-             addParsingProblem(new ParsingProblem("Lexically invalid input", currentToken));
-             invalidToken = (InvalidToken) currentToken;
-             currentToken = token_source.getNextToken(); [#-- REVISIT --]
-        }
-[/#if]
         if (currentToken.getType() != expectedType) {
-            handleUnexpectedTokenType(expectedType, forced, oldToken) ;
+            handleUnexpectedTokenType(expectedType, oldToken) ;
         }
         else {
             this.lastParsedToken = currentToken;
@@ -274,19 +209,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
       return currentToken;
   }
  
-  private void handleUnexpectedTokenType(TokenType expectedType,  boolean forced, Token oldToken) throws ParseException {
-[#if grammar.options.faultTolerant]    
-       if (forced && tolerantParsing) {
-           Token nextToken = currentToken;
-           currentToken = oldToken;
-           Token virtualToken = insertVirtualToken(expectedType);
-           virtualToken.setNext(nextToken);
-           currentToken = virtualToken;
-           String message = "Expecting token type "+ expectedType + " but encountered " + nextToken.getType();
-           message += "\nInserting virtual token to continue parsing";
-           addParsingProblem(new ParsingProblem(message, virtualToken));
-       } else 
-[/#if]      
+  private void handleUnexpectedTokenType(TokenType expectedType, Token oldToken) throws ParseException {
        throw new ParseException(currentToken, EnumSet.of(expectedType), parsingStack);
   }
   
