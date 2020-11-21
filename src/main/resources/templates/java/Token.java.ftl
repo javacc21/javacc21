@@ -109,7 +109,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        this.image = image;
    } 
     
-[#if !grammar.options.userDefinedLexer && grammar.lexerData.tokenCount>1]
+[#if !grammar.options.userDefinedLexer && grammar.lexerData.numLexicalStates > 1]
     private LexicalState lexicalState;
         
     void setLexicalState(LexicalState state) {

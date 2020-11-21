@@ -30,13 +30,12 @@
  */
  --]
 
-[#var currentLookaheadExpansion]
-[#var TT = "TokenType.", UNLIMITED=2147483647]
+ [#-- This template generates the various lookahead/predicate routines --]
 
- [#if !grammar.options.legacyAPI && grammar.parserPackage?has_content]
-   [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]
-   [#set TT=""]
- [/#if]
+[#var currentLookaheadExpansion]
+[#var UNLIMITED=2147483647]
+
+[#import "CommonUtils.java.ftl" as CU]
 
 [#macro Generate]
     [#if grammar.choicePointExpansions?size !=0]
@@ -109,7 +108,7 @@
          remainingLookahead= ${lookaheadAmount};
          hitFailure = false;
       [#if expansion.hasScanLimit || expansion.hasInnerScanLimit]
-         stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
+         stopAtScanLimit= ${CU.bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
       [/#if]
       ${BuildPredicateCode(expansion)}
       [#if !expansion.hasSeparateSyntacticLookahead]
@@ -211,7 +210,7 @@
           [#elseif element = "."]
              [#set justSawEllipsis = false]
              if (!stackIterator.hasNext()) {
-                return ${bool(lookBehind.negated)};
+                return ${CU.bool(lookBehind.negated)};
              }
              stackIterator.next();
          [#else]
@@ -225,16 +224,16 @@
                   }
                }
                if (!foundProduction) {
-                  return ${bool(lookBehind.negated)};
+                  return ${CU.bool(lookBehind.negated)};
                }
            [#else]
                [#var exclam = elementNegated?string("", "!")]
                if (!stackIterator.hasNext()) {
-                  return ${bool(lookBehind.negated)};
+                  return ${CU.bool(lookBehind.negated)};
                } else {
                   NonTerminalCall ntc = stackIterator.next();
                   if (${exclam}ntc.productionName.equals("${element}")) {
-                     return ${bool(lookBehind.negated)};
+                     return ${CU.bool(lookBehind.negated)};
                   }
                }
            [/#if]
@@ -244,7 +243,7 @@
        [#if lookBehind.hasEndingSlash]
            return [#if !lookBehind.negated]![/#if]stackIterator.hasNext();
        [#else]
-           return ${bool(!lookBehind.negated)};
+           return ${CU.bool(!lookBehind.negated)};
        [/#if]
     }
 [/#macro]
@@ -332,8 +331,7 @@
 --]
 [#macro ScanCodeNonTerminal nt]
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
-      [#set newVarIndex = newVarIndex +1]
-      [#var prevProductionVarName = "prevProduction" + newVarIndex]
+      [#var prevProductionVarName = "prevProduction" + CU.newID()]
       String ${prevProductionVarName} = currentLookaheadProduction;
       currentLookaheadProduction = "${nt.production.name}";
       [#if nt.ignoreUpToHere && nt.production.expansion.hasScanLimit]
@@ -355,7 +353,7 @@
 [#macro ScanSingleToken expansion]
     [#var firstSet = expansion.firstSet.tokenNames]
     [#if firstSet?size = 1]
-      if (!scanToken(${TT}${firstSet[0]})) return false;
+      if (!scanToken(${CU.TT}${firstSet[0]})) return false;
     [#else]
       if (!scanToken(${expansion.firstSetVarName})) return false;
     [/#if]
@@ -374,15 +372,15 @@
 [/#macro]
 
 [#macro ScanCodeChoice choice]
-   [@newVar "Token", "currentLookaheadToken"/]
-   int remainingLookahead${newVarIndex} = remainingLookahead;
-   boolean hitFailure${newVarIndex} = hitFailure;
+   [@CU.newVar "Token", "currentLookaheadToken"/]
+   int remainingLookahead${CU.newVarIndex} = remainingLookahead;
+   boolean hitFailure${CU.newVarIndex} = hitFailure;
   [#list choice.choices as subseq]
      if (!${CheckExpansion(subseq)}) {
      [#if subseq_has_next]
-        currentLookaheadToken = token${newVarIndex};
-        remainingLookahead = remainingLookahead${newVarIndex};
-        hitFailure = hitFailure${newVarIndex};
+        currentLookaheadToken = token${CU.newVarIndex};
+        remainingLookahead = remainingLookahead${CU.newVarIndex};
+        hitFailure = hitFailure${CU.newVarIndex};
      [#else]
         return false;
      [/#if]
@@ -391,9 +389,9 @@
 [/#macro]
 
 [#macro ScanCodeZeroOrOne zoo]
-   [@newVar type="Token" init="currentLookaheadToken"/]
+   [@CU.newVar type="Token" init="currentLookaheadToken"/]
    if (!${CheckExpansion(zoo.nestedExpansion)}) 
-      currentLookaheadToken = token${newVarIndex};
+      currentLookaheadToken = token${CU.newVarIndex};
 [/#macro]
 
 [#-- 
@@ -401,9 +399,9 @@
 --]
 [#macro ScanCodeZeroOrMore zom]
       while (remainingLookahead > 0 && !hitFailure) {
-      [@newVar type="Token" init="currentLookaheadToken"/]
+      [@CU.newVar type="Token" init="currentLookaheadToken"/]
          if (!${CheckExpansion(zom.nestedExpansion)}) {
-             currentLookaheadToken = token${newVarIndex};
+             currentLookaheadToken = token${CU.newVarIndex};
              break;
          }
       }
@@ -425,7 +423,7 @@
 [#macro CheckExpansion expansion]
    [#if expansion.singleToken && !expansion.requiresPredicateMethod]
      [#if expansion.firstSet.tokenNames?size = 1]
-      scanToken(${TT}${expansion.firstSet.tokenNames[0]})
+      scanToken(${CU.TT}${expansion.firstSet.tokenNames[0]})
      [#else]
       scanToken(${expansion.firstSetVarName})
      [/#if]
@@ -433,23 +431,3 @@
       ${expansion.scanRoutineName}()
    [/#if]
 [/#macro]
-
-
-
-
-[#var newVarIndex=0]
-[#-- Just to generate a new unique variable name
-  All it does is tack an integer (that is incremented)
-  onto the type name, and optionally initializes it to some value--]
-[#macro newVar type init=null]
-   [#set newVarIndex = newVarIndex+1]
-   ${type} ${type?lower_case}${newVarIndex}
-   [#if init??]
-      = ${init}
-   [/#if]
-   ;
-[/#macro]   
-
-[#function bool val]
-   [#return val?string("true", "false")/]
-[/#function]

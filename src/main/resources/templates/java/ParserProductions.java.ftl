@@ -30,22 +30,13 @@
  */
  --]
 
- [#-- This template contains the core logic for generating the various parser/lookahead routines. --]
+[#-- This template contains the core logic for generating the various parser routines. --]
 
- [#var TT = "TokenType.", UNLIMITED=2147483647]
-
- [#if !grammar.options.legacyAPI && grammar.parserPackage?has_content]
-   [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]
-   [#set TT=""]
- [/#if]
- 
+[#import "CommonUtils.java.ftl" as CU]
 
 [#macro Generate]
-     [@Productions/]
+    [@Productions/]
     [@firstSetVars/]
-    [#-- if grammar.choicePointExpansions?size !=0]
-       [@BuildLookaheads /]
-     [/#if--]
 [/#macro]
  
 [#macro Productions] 
@@ -108,7 +99,7 @@
        static private final EnumSet<TokenType> ${varName} = EnumSet.of(
        [#list tokenNames as type]
           [#if type_index > 0],[/#if]
-          ${TT}${type} 
+          ${CU.TT}${type} 
        [/#list]
      ); 
    [/#if]
@@ -148,8 +139,9 @@
         [@setupTreeVariables .scope /]
       [@createNode treeNodeBehavior nodeVarName /]
           ParseException ${parseExceptionVar} = null;
-          [#set newVarIndex = newVarIndex +1]
-          [#set callStackSizeVar = "callStackSize" + newVarIndex]
+          [#set callStackSizeVar = "callStackSize" + CU.newID()]
+          [#-- set newVarIndex = CU.newVarIndex +1 in CU]
+          [#set callStackSizeVar = "callStackSize" + CU.newVarIndex --]
           int ${callStackSizeVar} = parsingStack.size();
         [#-- We want the very first java code block in a production 
          to be injected *before* the try block. This is for rather hypertechnical 
@@ -281,7 +273,7 @@
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
-       consumeToken(${TT}${regexp.label});
+       consumeToken(${CU.TT}${regexp.label});
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock]
@@ -440,7 +432,7 @@
    [#elseif expansion.firstSet.tokenNames?size < 5] 
       [#list expansion.firstSet.tokenNames as name]
           nextTokenType [#if name_index ==0]() [/#if]
-          == ${TT}${name} 
+          == ${CU.TT}${name} 
          [#if name_has_next] || [/#if] 
       [/#list]
    [#else]
@@ -504,31 +496,3 @@
 [/#macro]
 
 
-
-
-[#var newVarIndex=0]
-[#-- Just to generate a new unique variable name
-  All it does is tack an integer (that is incremented)
-  onto the type name, and optionally initializes it to some value--]
-[#macro newVar type init=null]
-   [#set newVarIndex = newVarIndex+1]
-   ${type} ${type?lower_case}${newVarIndex}
-   [#if init??]
-      = ${init}
-   [/#if]
-   ;
-[/#macro]   
-
-[#-- A macro to use at one's convenience to comment out a block of code --]
-[#macro comment]
-[#var content, lines]
-[#set content][#nested/][/#set]
-[#set lines = content?split("\n")]
-[#list lines as line]
-// ${line}
-[/#list]
-[/#macro]
-
-[#function bool val]
-   [#return val?string("true", "false")/]
-[/#function]
