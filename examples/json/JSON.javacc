@@ -10,8 +10,8 @@
  * still does not allow the trailing commas!
  */
 
-PARSER_PACKAGE="com.javacc.json";
-NODE_PACKAGE="com.javacc.json.ast";
+PARSER_PACKAGE="org.parsers.json";
+NODE_PACKAGE="org.parsers.json.ast";
 DEFAULT_LEXICAL_STATE=JSON;
 
 SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r")+>; 

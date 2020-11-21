@@ -1,5 +1,5 @@
 import java.io.*;
-import com.javacc.json.*;
+import org.parsers.json.*;
 
 public class JSONTest {
     static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
