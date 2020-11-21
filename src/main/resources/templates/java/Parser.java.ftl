@@ -196,8 +196,10 @@ public boolean isCancelled() {return cancelled;}
   }
 
 
-[#import "ParserProductions.java.ftl" as ParserCode ]
+[#import "ParserProductions.java.ftl" as ParserCode]
 [@ParserCode.Generate/]
+[#import "LookaheadRoutines.java.ftl" as LookaheadCode]
+[@LookaheadCode.Generate/]
  
 [#embed "ErrorHandling.java.ftl"]
 
