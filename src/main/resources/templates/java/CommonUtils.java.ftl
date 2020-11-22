@@ -40,6 +40,35 @@
    [#set TT=""]
  [/#if]
 
+[#-- Defines an EnumSet for the list of token names --]
+
+[#macro enumSet varName tokenNames]
+   [#if tokenNames?size=0]
+       static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
+   [#else]
+       static private final EnumSet<TokenType> ${varName} = EnumSet.of(
+       [#list tokenNames as type]
+          [#if type_index > 0],[/#if]
+          ${TT}${type} 
+       [/#list]
+     ); 
+   [/#if]
+[/#macro]
+
+[#macro firstSetVar expansion]
+    [@enumSet expansion.firstSetVarName expansion.firstSet.tokenNames /]
+[/#macro]
+
+[#macro finalSetVar expansion]
+    [@enumSet expansion.finalSetVarName expansion.finalSet.tokenNames /]
+[/#macro]            
+
+[#macro followSetVar expansion]
+    [@enumSet expansion.followSetVarName expansion.followSet.tokenNames/]
+[/#macro]            
+
+
+
 [#var newVarIndex=0]
 [#-- Just to generate a new unique variable name
   All it does is tack an integer (that is incremented)

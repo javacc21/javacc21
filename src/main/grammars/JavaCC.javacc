@@ -225,8 +225,6 @@ INJECT PARSER_CLASS :
 
 TOKEN :
 {
-//  < _OPTIONS: "options"| "OPTIONS" > #JavaCCKeyWord
-//  |
   < _INJECT: "INJECT" > #JavaCCKeyWord
   |
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
@@ -391,7 +389,10 @@ INJECT PARSER_CLASS : {
 
     private Token TOKEN_HOOK(Token t) {
        if (javaccReservedWords.contains(t.getImage())) {
-            if (isInProduction("CompilationUnit") || isInProduction("ClassOrInterfaceBody") || isInProduction("BlockStatement")) {
+            if (isInProduction("CompilationUnit") 
+             || isInProduction("ClassOrInterfaceBody") 
+             || isInProduction("BlockStatement")
+             || isInProduction("TreeBuildingAnnotation")) {
 	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
 	           Nodes.copyLocationInfo(t, id);
 	           return id;
@@ -2377,7 +2378,7 @@ INJECT AttemptBlock :
 }
 
 Failure Failure : 
-   {Token t=null;}
+   {Token t;}
    t="FAIL"
    [
       t=<STRING_LITERAL>
@@ -2386,7 +2387,7 @@ Failure Failure :
    ]
    {
        String message = "Failure: ";
-       if (t != null) message += removeEscapesAndQuotes(t);
+       message += removeEscapesAndQuotes(t);
        CURRENT_NODE.setMessage(message);
        return CURRENT_NODE;
    }
@@ -2560,8 +2561,6 @@ RegexpExpansion #void :
 ;
 
 
-INJECT PARSER_CLASS : {private boolean inBNFProduction;}
-
 InPlaceRegexp #void :
 {
     RegularExpression re, choice;
@@ -2569,21 +2568,12 @@ InPlaceRegexp #void :
     Token t;
     boolean isPrivate= false;
 }
-/*
-  (
-      SCAN \...\BNFProduction
-      =>{inBNFProduction = true;}#
-      |
-      {inBNFProduction = false;}#
-  )
-  */
   t=<LT>
   [
    (
      t=<IDENTIFIER> {image = t.getImage();}
      |
      SCAN ~\...\BNFProduction 
-//     SCAN {!inBNFProduction}#
      => t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
    )
    ":"
@@ -2599,7 +2589,7 @@ InPlaceRegexp #void :
 	  } else {
 	    re = choice;
 	  }
-	  if (inBNFProduction&& image.length() ==0) {
+	  if (image.length() ==0 && isInProduction("BNFProduction")) {
 	     grammar.addParseError(t, "It is mandatory to label an inline regexp in a grammar production.");
 	  }
 	  re.setLabel(image);
@@ -2833,7 +2823,6 @@ INJECT ZeroOrMoreRegexp :
           addChild(0, regexp);
       }
    }
-
 }
 
 INJECT ZeroOrOneRegexp : 

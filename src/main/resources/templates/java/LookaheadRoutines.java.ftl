@@ -38,9 +38,20 @@
 [#import "CommonUtils.java.ftl" as CU]
 
 [#macro Generate]
+    [@firstSetVars /]
     [#if grammar.choicePointExpansions?size !=0]
        [@BuildLookaheads /]
      [/#if]
+[/#macro]
+
+
+[#macro firstSetVars]
+    //=================================
+     // EnumSets that represent the various expansions' first set (i.e. the set of tokens with which the expansion can begin)
+     //=================================
+    [#list grammar.expansionsForFirstSet as expansion]
+          [@CU.firstSetVar expansion/]
+    [/#list]
 [/#macro]
 
 
