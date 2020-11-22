@@ -80,7 +80,11 @@
       = ${init}
    [/#if]
    ;
-[/#macro]  
+[/#macro] 
+
+[#macro newVarName prefix]
+   ${prefix}${newID()}
+[/#macro]
 
 [#function newID]
     [#set newVarIndex = newVarIndex+1]

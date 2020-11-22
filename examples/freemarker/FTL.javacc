@@ -37,10 +37,10 @@ DEFAULT_LEXICAL_STATE="TEMPLATE_TEXT";
 LEGACY_API;
 
 INJECT FTLParser :
-{
     import java.io.*;
     import java.util.*;
-}
+{
+
     static final boolean DUMPTREE = false;
 
     static public void main(String[] args) throws Exception {
@@ -88,7 +88,7 @@ INJECT FTLParser :
     static public void usage() {
         System.err.println("Usage: java ftl.FTLParser <filenames>");
     }
-;
+}
 
 INJECT FTLLexer :
 {

@@ -107,9 +107,8 @@
         [@setupTreeVariables .scope /]
       [@createNode treeNodeBehavior nodeVarName /]
           ParseException ${parseExceptionVar} = null;
-          [#set callStackSizeVar = "callStackSize" + CU.newID()]
-          [#-- set newVarIndex = CU.newVarIndex +1 in CU]
-          [#set callStackSizeVar = "callStackSize" + CU.newVarIndex --]
+          [#--set callStackSizeVar = "callStackSize" + CU.newID()--]
+          [#set callStackSizeVar = CU.newVarName("callStackSize")]
           int ${callStackSizeVar} = parsingStack.size();
         [#-- We want the very first java code block in a production 
          to be injected *before* the try block. This is for rather hypertechnical 
