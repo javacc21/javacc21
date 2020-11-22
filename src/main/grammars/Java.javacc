@@ -163,27 +163,27 @@ TOKEN #Literal :
       | <OCTAL_LITERAL> (["l","L"])
       | <BINARY_LITERAL> (["l","L"])
   >
-|
+  |
   < INTEGER_LITERAL:
         <DECIMAL_LITERAL>
       | <HEX_LITERAL>
       | <OCTAL_LITERAL>
       | <BINARY_LITERAL>
   >
-|
+  |
   < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
-|
+  |
   < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS> >
-|
+  |
   < #OCTAL_LITERAL: "0" ["0"-"7"]((["0"-"7","_"])*["0"-"7"])? >
-|
+  |
   < #BINARY_LITERAL: "0" ["b","B"] ["0","1"]((["0","1","_"])*["0","1"])? >
-|
+  |
   < FLOATING_POINT_LITERAL:
         <DECIMAL_FLOATING_POINT_LITERAL>
       | <HEXADECIMAL_FLOATING_POINT_LITERAL>
   >
-|
+  |
   < #DECIMAL_FLOATING_POINT_LITERAL:
         <DECIMAL_LITERAL> "." (<DECIMAL_LITERAL>)? (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
       | "." <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
@@ -201,7 +201,20 @@ TOKEN #Literal :
   < #HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? <DECIMAL_LITERAL> >
 |
   < #HEX_DIGITS: ["0"-"9","a"-"f","A"-"F"]((["0"-"9","a"-"f","A"-"F","_"])*["0"-"9","a"-"f","A"-"F"])? >
-|
+  |
+  < #STRING_ESCAPE:
+      "\\"
+      ( ["n","t","b","r","f", "s", "\\","'","\""]
+      // octal escapes
+      | ["0"-"7"] ( ["0"-"7"] )?
+      | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+      )
+  >
+  |
+  < #HORIZONTAL_WHITESPACE: [" ", "\t", "\f"] >
+  | 
+  < #LINE_TERMINATOR: "\n" | "\r" | "\r\n" >
+  |
   < CHARACTER_LITERAL:
       "'"
       (   (~["'","\\","\n","\r"])
@@ -213,20 +226,22 @@ TOKEN #Literal :
           )
       )
       "'"
-  >
-|
+  > 
+  |
   < STRING_LITERAL:
       "\""
       (   (~["\"","\\","\n","\r"])
-        | ("\\"
-            ( ["n","t","b","r","f","\\","'","\""]
-            | ["0"-"7"] ( ["0"-"7"] )?
-            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
-            )
-          )
+          |
+          <STRING_ESCAPE>
       )*
       "\""
   > #StringLiteral
+  |
+  < TEXT_BLOCK_LITERAL:
+     "\"\"\"" (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
+        ( ~["\"", "\\"] | "\"" ~["\""] | "\"\"" ~["\""] | <STRING_ESCAPE> | "\\" <LINE_TERMINATOR> )*
+     "\"\"\""
+  > #TextBlock
 ;
 
 TOKEN #Delimiter :
@@ -1481,6 +1496,8 @@ Literal #void :
   <CHARACTER_LITERAL>
   |
   <STRING_LITERAL>
+  |
+  <TEXT_BLOCK_LITERAL>
   |
   "true"
   |

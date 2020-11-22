@@ -30,7 +30,8 @@
  */
  --]
 
-[#-- A place to put some utility routines used in various templates --]
+[#-- A place to put some utility routines used in various templates. Currently doesn't 
+     really have much! --]
 
 [#var TT = "TokenType."]
 

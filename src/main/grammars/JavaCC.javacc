@@ -271,14 +271,6 @@ INJECT LEXER_CLASS :
 
    private Token TOKEN_HOOK(Token t) {
        t.setGrammar(parser.getGrammar());
-       if (angleBracketNesting >0 && t.getImage().length() >1 && t.getImage().charAt(0) == '>') {
-           input_stream.backup(t.getImage().length() -1);
-           Token gt = Token.newToken(GT, ">", this);
-           Nodes.copyLocationInfo(t, gt);
-           gt.setEndColumn(gt.getEndColumn() -1);
-           gt.setGrammar(parser.getGrammar());
-           return gt;
-       }
        if (javaccReservedWords.contains(t.getImage())) {
            if (inJavaCode || (t.getType() == _OPTIONS && optionsSeen)) {
 	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
@@ -416,6 +408,26 @@ INJECT BaseNode :
 }
 
 INCLUDE("Java.javacc")
+
+INJECT PARSER_CLASS : {
+    private Token TOKEN_HOOK(Token tok) {
+        TokenType type = tok.getType();
+        if ((type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) && !isInJavaCode()) {
+          Token gt = Token.split(tok, 1, GT, GT);
+          if (type == RUNSIGNEDSHIFT) {
+              Token next = Token.split(gt.getNext(), 1, GT, GT);
+              gt.setNext(next);
+          }
+          return gt;
+        } 
+
+        return tok;
+    }
+
+    public boolean isInJavaCode() {
+        return isInProduction("CompilationUnit") || isInProduction("Block") || isInProduction("Expression");
+    }    
+}
 
 INJECT CaseStatement :
 {
