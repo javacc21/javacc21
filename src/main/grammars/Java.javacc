@@ -42,7 +42,7 @@ INJECT PARSER_CLASS : {
   private Token TOKEN_HOOK(Token tok) {
     String img = tok.getImage();
     if (img==null || !img.startsWith(">")) return tok;
-    boolean inGenericTypeSpec = isInProduction("TypeArguments") || isInProduction("TypeParameters");
+    boolean inGenericTypeSpec = isInProduction("TypeArguments", "TypeParameters");
     if (inGenericTypeSpec && (img.equals(">>") || img.equals(">>>"))) {
         // If we've entered the TypeParameters or TypeArguments production, we need to split
         // a ">>" or ">>>" into 2 (or 3) GT tokens.

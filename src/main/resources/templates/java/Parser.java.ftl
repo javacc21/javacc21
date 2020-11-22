@@ -182,7 +182,7 @@ public boolean isCancelled() {return cancelled;}
   /**
    *Are we in the production of the given name, either scanning ahead or parsing?
    */
-  private boolean isInProduction(String productionName) {
+  private boolean isInProduction(String productionName, String... prods) {
     if (currentlyParsedProduction != null && currentlyParsedProduction.equals(productionName)) return true;
     if (currentLookaheadProduction != null && currentLookaheadProduction.equals(productionName)) return true;
     Iterator<NonTerminalCall> it = stackIteratorBackward();
@@ -190,6 +190,11 @@ public boolean isCancelled() {return cancelled;}
       NonTerminalCall ntc = it.next();
       if (ntc.productionName.equals(productionName)) {
         return true;
+      }
+      for (String name : prods) {
+        if (ntc.productionName.equals(name)) {
+          return true;
+        }
       }
     }
     return false;

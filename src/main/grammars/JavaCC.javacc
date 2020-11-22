@@ -389,10 +389,7 @@ INJECT PARSER_CLASS : {
 
     private Token TOKEN_HOOK(Token t) {
        if (javaccReservedWords.contains(t.getImage())) {
-            if (isInProduction("CompilationUnit") 
-             || isInProduction("ClassOrInterfaceBody") 
-             || isInProduction("BlockStatement")
-             || isInProduction("TreeBuildingAnnotation")) {
+            if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
 	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
 	           Nodes.copyLocationInfo(t, id);
 	           return id;
