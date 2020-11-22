@@ -232,8 +232,6 @@ INJECT LEXER_CLASS :
        // can still be recognized as regular identifiers
        // in Java code.
 
-        javaccReservedWords.add("options");
-        javaccReservedWords.add("OPTIONS");
         javaccReservedWords.add("INCLUDE");
         javaccReservedWords.add("IGNORE_CASE");
         javaccReservedWords.add("PARSER_BEGIN");
@@ -261,21 +259,13 @@ INJECT LEXER_CLASS :
    }
 
 
-   // This keeps track of the level of nesting of
-   // < and > characters. Note that this is when
-   // they are being used as delimiters, not as
-   // less-than/greater-than operators.
-   int angleBracketNesting;
    boolean inJavaCode;
-   boolean optionsSeen;
 
    private Token TOKEN_HOOK(Token t) {
-       t.setGrammar(parser.getGrammar());
        if (javaccReservedWords.contains(t.getImage())) {
-           if (inJavaCode || (t.getType() == _OPTIONS && optionsSeen)) {
+           if (inJavaCode) {
 	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
 	           Nodes.copyLocationInfo(t, id);
-	           id.setGrammar(parser.getGrammar());
 	           return id;
            }
        }
@@ -287,8 +277,8 @@ INJECT LEXER_CLASS :
 
 TOKEN :
 {
-  < _OPTIONS: "options"| "OPTIONS" > #JavaCCKeyWord
-  |
+//  < _OPTIONS: "options"| "OPTIONS" > #JavaCCKeyWord
+//  |
   < _INJECT: "INJECT" > #JavaCCKeyWord
   |
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
@@ -420,7 +410,23 @@ INJECT PARSER_CLASS : {
           }
           return gt;
         } 
+        return tok;
+    }
+/*
+    private Token TOKEN_HOOK(Token t) {
+       if (token_source.javaccReservedWords.contains(t.getImage())) {
+           if (token_source.inJavaCode) {
+	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
+	           Nodes.copyLocationInfo(t, id);
+	           return id;
+           }
+       }
+       return t;
+   }
+*/
 
+    private Token TOKEN_HOOK(Token tok) {
+        tok.setGrammar(getGrammar());
         return tok;
     }
 
@@ -575,11 +581,7 @@ GrammarFile Root throws IOException #GrammarFile :
 }
 {
    [
-     SCAN <_OPTIONS> | Setting
-     =>
-     (
-       OptionsBlock | Options
-     )
+      OptionsBlock | Options
    ]
    {
         if (!grammar.isInInclude()) {
@@ -743,13 +745,20 @@ CodeInjection2 :
 ;
 
 Options #Options : 
-    (=> Setting)+
+    Setting =>||
+    (=> Setting)*
 ;
 
 OptionsBlock #Options :
-    <_OPTIONS> [":"]
-    "{" ( Setting )* "}"
-    {token_source.optionsSeen = true;}
+    <IDENTIFIER> 
+    [
+        SCAN {!getToken(0).getImage().equalsIgnoreCase("options")}#
+        => FAIL "Expecting \"options\" here"
+    ]
+    =>||
+    [":"]
+    "{" 
+    ( Setting )* "}"
 ;
 
 Setting #void :
@@ -2707,9 +2716,9 @@ RegexpRef RegexpRef :
 {
    Token t;
 }
-    "<" {++token_source.angleBracketNesting;}
+    "<"
     t=<IDENTIFIER> 
-    ">" {--token_source.angleBracketNesting;}
+    ">" 
     {
        CURRENT_NODE.setLabel(t.getImage());
        return CURRENT_NODE;
