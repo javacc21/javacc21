@@ -192,7 +192,6 @@ INJECT PARSER_CLASS :
     	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
     }
     
-    
     static private int hexval(char ch) {
         if (ch >= '0' && ch <= '9')
             return ((int) ch) - ((int) '0');
@@ -450,6 +449,12 @@ INJECT Identifier :
         if (image.equals("TOKEN_HOOK")) {
             String result = "tokenHook$" + getInputSource() + "_line_" + getBeginLine();
             return com.javacc.Grammar.removeNonJavaIdentifierPart(result);
+        }
+        if (image.equals("OPEN_NODE_SCOPE_HOOK")) {
+            String result = "openNodeScopeHook$" + getInputSource() + "_line" + getBeginLine();
+        }
+        if (image.equals("CLOSE_NODE_SCOPE_HOOK")) {
+            String result = "closeNodeScopeHook$" + getInputSource() + "_line" + getBeginLine();
         }
 //        if (image.equals("input_stream")) {
 //            return "inputSource";

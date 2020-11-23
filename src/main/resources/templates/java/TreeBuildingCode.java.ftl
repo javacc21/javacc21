@@ -136,12 +136,9 @@
 [/#if]       
         new NodeScope();
         n.open();
-  [#if grammar.usesjjtreeOpenNodeScope]
-       jjtreeOpenNodeScope(n);
-  [/#if]
-  [#if grammar.usesOpenNodeScopeHook]
-       openNodeScopeHook(n);
-  [/#if]
+  [#list grammar.openNodeScopeHooks as hook]
+       ${hook}(n);
+  [/#list]
         
         if (trace_enabled) LOGGER.info("Opened node scope for node of type: " + n.getClass().getName());
         if (trace_enabled) LOGGER.info("Scope nesting level is "  +  currentNodeScope.nestingLevel());
@@ -178,12 +175,11 @@
         }
         n.close();
         pushNode(n);
- [#if grammar.usesjjtreeCloseNodeScope]
-        jjtreeCloseNodeScope(${nodeVarName});
- [/#if]
- [#if grammar.usesCloseNodeScopeHook]
-        closeNodeScopeHook(${nodeVarName});
- [/#if]
+ [#list grammar.closeNodeScopeHooks as hook]
+       ${hook}(n);
+[/#list]
+        
+
     }
 
 	/**
@@ -230,12 +226,9 @@
                 LOGGER.info("Closed node scope for node of type: " + n.getClass().getName() + ", there are now " + nodeArity() + " nodes on the stack.");
                 LOGGER.info("Nesting level is : " + currentNodeScope.nestingLevel());
             }
- [#if grammar.usesjjtreeCloseNodeScope]
-	        jjtreeCloseNodeScope(${nodeVarName});
- [/#if]
- [#if grammar.usesCloseNodeScopeHook]
-    	    closeNodeScopeHook(${nodeVarName});
- [/#if]
+[#list grammar.closeNodeScopeHooks as hook]
+           ${hook}(${nodeVarName});
+[/#list]
         } else {
             currentNodeScope.close();
             if (trace_enabled) {

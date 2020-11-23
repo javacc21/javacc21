@@ -241,7 +241,7 @@ TOKEN #Literal :
      "\"\"\"" (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
         ( ~["\"", "\\"] | "\"" ~["\""] | "\"\"" ~["\""] | <STRING_ESCAPE> | "\\" <LINE_TERMINATOR> )*
      "\"\"\""
-  > #TextBlock
+  > #StringLiteral
 ;
 
 TOKEN #Delimiter :

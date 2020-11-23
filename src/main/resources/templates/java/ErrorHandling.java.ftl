@@ -187,22 +187,16 @@ void dumpLookaheadCallStack(PrintStream ps) {
   [#if grammar.options.userDefinedLexer]
           currentToken.setInputSource(inputSource);
   [/#if]
-  [#if grammar.usesjjtreeOpenNodeScope]
-          jjtreeOpenNodeScope(currentToken);
-  [/#if]
-  [#if grammar.usesOpenNodeScopeHook]
-          openNodeScopeHook(currentToken);
-  [/#if]
+  [#list grammar.openNodeScopeHooks as hook]
+     ${hook}(currentToken);
+  [/#list]
           if (invalidToken != null) {
              pushNode(invalidToken);
           }          
           pushNode(currentToken);
-  [#if grammar.usesjjtreeCloseNodeScope]
-          jjtreeCloseNodeScope(currentToken);
-  [/#if]
-  [#if grammar.usesCloseNodeScopeHook]
-          closeNodeScopeHook(currentToken);
-  [/#if]
+  [#list grammar.closeNodeScopeHooks as hook]
+     ${hook}(currentToken);
+  [/#list]
       }
 [/#if]
       if (trace_enabled) LOGGER.info("Consumed token of type " + currentToken.getType() + " from " + currentToken.getLocation());
@@ -256,4 +250,4 @@ void dumpLookaheadCallStack(PrintStream ps) {
 [/#if]          
   } 
   
-  [/#if] 
+[/#if] 

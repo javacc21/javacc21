@@ -414,9 +414,6 @@
 [#var currentProduction]
 
 
-
-
-
 [#macro BuildAssertionRoutine assertion]
     [#var methodName = assertion.predicateMethodName?replace("scan$", "assert$")]
     [#var empty = true]

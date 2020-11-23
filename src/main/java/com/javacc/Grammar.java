@@ -112,8 +112,10 @@ public class Grammar extends BaseNode {
     
     private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
-    private List<String> lexerTokenHooks = new ArrayList<>(), parserTokenHooks = new ArrayList<>();
-    private boolean usesCloseNodeScopeHook, usesOpenNodeScopeHook, usesjjtreeOpenNodeScope, usesjjtreeCloseNodeScope;
+    private List<String> lexerTokenHooks = new ArrayList<>(), 
+                         parserTokenHooks = new ArrayList<>(),
+                         openNodeScopeHooks = new ArrayList<>(),
+                         closeNodeScopeHooks = new ArrayList<>();
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
@@ -417,6 +419,14 @@ public class Grammar extends BaseNode {
 
     public List<String> getParserTokenHooks() {
         return parserTokenHooks;
+    }
+
+    public List<String> getOpenNodeScopeHooks() {
+        return openNodeScopeHooks;
+    }
+
+    public List<String> getCloseNodeScopeHooks() {
+        return closeNodeScopeHooks;
     }
 
 
@@ -809,17 +819,11 @@ public class Grammar extends BaseNode {
                     if (methodName.startsWith("tokenHook$")) {
                         parserTokenHooks.add(methodName);
                     }
-                    else if (methodName.equals("jjtreeOpenNodeScope")) {
-                        usesjjtreeOpenNodeScope = true;
+                    else if (methodName.equals("jjtreeOpenNodeScope") || methodName.startsWith("openNodeScopeHook")) {
+                        openNodeScopeHooks.add(methodName);
                     }
-                    else if (methodName.equals("jjtreeCloseNodeScope")) {
-                        usesjjtreeCloseNodeScope = true;
-                    }
-                    else if (methodName.equals("openNodeScopeHook")) {
-                        usesOpenNodeScopeHook = true;
-                    }
-                    else if (methodName.equals("closeNodeScopeHook")) {
-                        usesCloseNodeScopeHook = true;
+                    else if (methodName.equals("jjtreeCloseNodeScope") || methodName.startsWith("closeNodeScopeHook")) {
+                        closeNodeScopeHooks.add(methodName);
                     }
                 }
             }
@@ -835,21 +839,6 @@ public class Grammar extends BaseNode {
         codeInjections.add(n);
     }
 
-    public boolean getUsesjjtreeOpenNodeScope() {
-        return usesjjtreeOpenNodeScope;
-    }
-
-    public boolean getUsesjjtreeCloseNodeScope() {
-        return usesjjtreeCloseNodeScope;
-    }
-
-    public boolean getUsesOpenNodeScopeHook() {
-        return usesOpenNodeScopeHook;
-    }
-
-    public boolean getUsesCloseNodeScopeHook() {
-        return usesCloseNodeScopeHook;
-    }
     public boolean isInInclude() {
         return includeNesting >0;
     }
