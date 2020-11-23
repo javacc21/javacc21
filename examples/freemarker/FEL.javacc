@@ -27,18 +27,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-TREE_BUILDING_ENABLED=true;
-SMART_NODE_CREATION=true;
 PARSER_PACKAGE="fel";
-BASE_SRC_DIR=".";
-TOKENS_ARE_NODES=true;
 SPECIAL_TOKENS_ARE_NODES=true;
 DEFAULT_LEXICAL_STATE="FTL_EXPRESSION";
 FAULT_TOLERANT=true;
 
-INJECT(FELParser) :
-{}
-{
+INJECT FELParser : {
    static public void main(String[] args) throws ParseException {
        FELParser parser = new FELParser(new java.io.InputStreamReader(System.in));
        Node n = parser.Input();
@@ -47,33 +41,26 @@ INJECT(FELParser) :
 }
 
 SKIP :
-{
     <EXP_WHITE_SPACE : (" "|"\t"|"\n"|"\r")+>
-}
+;
 
 MORE :
-{
     <"<#--"> : EXPRESSION_COMMENT
     |
     <"<!--"> : EXPRESSION_COMMENT
     |
     <"[#--"> : EXPRESSION_COMMENT
-}
+;
 
-<EXPRESSION_COMMENT> MORE :
-{
-    <~[]>
-}
+<EXPRESSION_COMMENT> MORE : <~[]> ;
 
 <EXPRESSION_COMMENT> SPECIAL_TOKEN :
-{
     <"-->"> : FTL_EXPRESSION
     |
     <"--]"> : FTL_EXPRESSION
-}
+;
 
 TOKEN :
-{
     <OPEN_PAREN : "(">
     |
     <CLOSE_PAREN : ")">
@@ -806,7 +793,7 @@ TOKEN :
          "\ufff9"-"\ufffb"
       ]
    >
-     |
+   |
    <STRING_LITERAL :
       ("\""
           ((~["\\", "\""]) | ("\\" ~[]))*
@@ -818,266 +805,227 @@ TOKEN :
    >
    |
    <RAW_STRING : "r" (("\"" (~["\""])* "\"") | ("'" (~["'"])* "'"))>
-}
+;
 
-Node Input() #void :
-{}
-{
-   Expression()
+Node Input #void :
+   Expression
    <EOF>
    {
        return rootNode();
    }
-}
+;
 
-void Expression() : {}
-{
-    OrExpression()
-}
+Expression : 
+    OrExpression
+;
 
-void OrExpression() : {}
-{
-    AndExpression()
+OrExpression :
+    AndExpression
     (
-        (<OR>|<OR2>) AndExpression()
+        (<OR>|<OR2>) AndExpression
     )*
-}
+;
 
-void AndExpression() : {}
-{
-    EqualityExpression()
+AndExpression :
+    EqualityExpression
     (
-        (<AND>|<AND2>) EqualityExpression()
+        (<AND>|<AND2>) EqualityExpression
     )*
-}
+;
 
-void EqualityExpression() : {}
-{
-    RelationalExpression()
+EqualityExpression :
+    RelationalExpression
     [
         (<EQUALS>|<DOUBLE_EQUALS>|<NOT_EQUALS>)
-        RelationalExpression()
+        RelationalExpression
     ]
-}
+;
 
-void RelationalExpression() : {}
-{
-    RangeExpression()
+RelationalExpression :
+    RangeExpression
     [
         (<GT>|<GTE>|<LT>|<LTE>|<ALT_GT>|<ALT_GTE>|<ALT_LTE>|<ALT_LT>)
-        RangeExpression()
+        RangeExpression
     ]
-}
+;
 
-void RangeExpression() : {}
-{
-    AdditiveExpression()
+RangeExpression :
+    AdditiveExpression
     [
        <DOT_DOT>
        [
-         LOOKAHEAD
-          AdditiveExpression()
+          => AdditiveExpression
        ]
     ]
-}
+;
 
-void AdditiveExpression() : {}
-{
-    MultiplicativeExpression()
+AdditiveExpression :
+    MultiplicativeExpression
     (
            (<PLUS>|<MINUS>)
-           MultiplicativeExpression()
+           MultiplicativeExpression
     )*
-}
+;
 
-void MultiplicativeExpression() : {}
-{
-    UnaryExpression()
+MultiplicativeExpression :
+    UnaryExpression
     (
           (<TIMES>|<DIVIDE>|<PERCENT>)
-          UnaryExpression()
+          UnaryExpression
     )*
-}
+;
 
 
-void UnaryExpression() #void : {}
-{
-    UnaryPlusMinusExpression()
+UnaryExpression #void :
+    UnaryPlusMinusExpression
     |
-    NotExpression()
+    NotExpression
     |
-    DefaultToExpression()
-}
+    DefaultToExpression
+;
 
-void UnaryPlusMinusExpression() : {}
-{
-    (<PLUS>|<MINUS>) DefaultToExpression()
-}
+UnaryPlusMinusExpression : 
+    (<PLUS>|<MINUS>) DefaultToExpression
+;
 
-void NotExpression() : {}
-{
+NotExpression :
     <EXCLAM>
-    DefaultToExpression()
-}
+    DefaultToExpression
+;
 
-void BuiltinVariable() : {}
-{
+BuiltinVariable :
     <DOT><IDENTIFIER>
-}
+;
 
-void DefaultToExpression() : {}
-{
-    PrimaryExpression()
+DefaultToExpression :
+    PrimaryExpression
     (
-        LOOKAHEAD(<EXCLAM>BaseExpression(), {getToken(2).getType() != TokenType.IDENTIFIER || getToken(3).getType() != TokenType.EQUALS})
-        <EXCLAM>PrimaryExpression()
+    // A bit ugly, REVISIT
+        SCAN {getToken(2).getType() != IDENTIFIER || getToken(3).getType() != EQUALS}
+        => <EXCLAM>PrimaryExpression
     )*
     [
-      LOOKAHEAD(1) //This seems to be necessary to prevent a warning, but it seems like maybe this is a bug.
        <EXCLAM>
     ]
-}
+;
 
-void PrimaryExpression() : {}
-{
-  BaseExpression()
+PrimaryExpression :
+  BaseExpression
   (
-    LOOKAHEAD(<DOT>|<OPEN_BRACKET>|<OPEN_PAREN>|<BUILT_IN>|<EXISTS_OPERATOR>)
-    (
-      DotKey()
+      DotKey
       |
-      DynamicKey()
+      DynamicKey
       |
-      MethodInvoke()
+      MethodInvoke
       |
-      BuiltIn()
+      BuiltIn
       |
-      Exists()
-    )
+      Exists
   )*
-}
+;
 
-void BaseExpression() : {}
-{
+BaseExpression :
     <IDENTIFIER>
     |
-    NumberLiteral()
+    NumberLiteral
     |
-    HashLiteral()
+    HashLiteral
     |
-    StringLiteral()
+    StringLiteral
     |
-    BooleanLiteral()
+    BooleanLiteral
     |
-    NullLiteral()
+    NullLiteral
     |
-    ListLiteral()
+    ListLiteral
     |
-    Parenthesis()
+    Parenthesis
     |
-    BuiltinVariable()
-}
+    BuiltinVariable
+;
 
 
-void DotKey() #void : {}
-{
+DotKey #void :
     <DOT>
     (<IDENTIFIER>|<TIMES>)
-}
+;
 
-void DynamicKey() #void : {}
-{
-    <OPEN_BRACKET>Expression()<CLOSE_BRACKET>
+DynamicKey #void : 
+    <OPEN_BRACKET>Expression<CLOSE_BRACKET>
+;
 
-}
+MethodInvoke #void :
+  <OPEN_PAREN>[ArgsList]<CLOSE_PAREN>
+;
 
-void MethodInvoke() #void : {}
-{
-  <OPEN_PAREN>[ArgsList()]<CLOSE_PAREN>
-}
-
-void BuiltIn() #void : {}
-{
+BuiltIn #void :
     <BUILT_IN><IDENTIFIER>
-}
+;
 
-void Exists() : {}
-{
+Exists :
     <EXISTS_OPERATOR>
-}
+;
 
-void ListLiteral() : {}
-{
+ListLiteral :
     <OPEN_BRACKET>
-    [Expression() ([<COMMA>]Expression())*]
+    [Expression ([<COMMA>]Expression)*]
     <CLOSE_BRACKET>
-}
+;
 
-void StringLiteral() : {}
-{
+StringLiteral :
     <STRING_LITERAL>|<RAW_STRING>
-}
+;
 
 
-void HashLiteral() : {}
-{
+HashLiteral :
     <OPEN_BRACE>
     [
-       Expression() <COLON> Expression()
+       Expression <COLON> Expression
        (<COMMA> Expression <COLON> Expression)*
     ]
     <CLOSE_BRACE>
-}
+;
 
-void NumberLiteral() : {}
-{
+NumberLiteral :
     <INTEGER>|<DECIMAL>
-}
+;
 
-void BooleanLiteral() : {}
-{
+BooleanLiteral : 
     <TRUE>|<FALSE>
-}
+;
 
-void NullLiteral() : {}
-{
-    <NULL>
-}
+NullLiteral : <NULL> ;
 
-void Parenthesis() : {}
-{
+Parenthesis :
     <OPEN_PAREN> Expression <CLOSE_PAREN>
-}
+;
 
-void ArgsList() #void : {}
-{
+ArgsList #void :
     (
         LOOKAHEAD(<IDENTIFIER><EQUALS>)
-        NamedArgsList()
+        NamedArgsList
         |
-        PositionalArgsList()
+        PositionalArgsList
     )
-}
+;
 
-void NamedArgsList() : {}
-{
+NamedArgsList :
     <IDENTIFIER>
     <EQUALS>
-    Expression()
+    Expression
     (
        [<COMMA>]
        <IDENTIFIER>
        <EQUALS>
-       Expression()
+       Expression
     )*
-}
+;
 
-void PositionalArgsList() : {}
-{
-    Expression()
+PositionalArgsList :
+    Expression
     (
        [<COMMA>]
-       Expression()
+       Expression
     )*
-}
+;
 

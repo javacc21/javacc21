@@ -27,14 +27,9 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-TREE_BUILDING_ENABLED=true;
-SMART_NODE_CREATION=true;
-TOKENS_ARE_NODES=true;
-BASE_SRC_DIR=".";
 PARSER_PACKAGE="ftl";
 NODE_PACKAGE="ftl.ast";
 DEFAULT_LEXICAL_STATE="TEMPLATE_TEXT";
-LEGACY_API;
 
 INJECT FTLParser :
     import java.io.*;
@@ -99,11 +94,11 @@ INJECT FTLLexer :
 
     Token tokenHook(Token tok) {
         if (tok.getType() == TokenType.EOF) return tok;
-        if (noWhitespaceInExpression && parenthesisNesting ==0 && braceNesting==0 && tok.specialToken != null) {
-            if (tok.specialToken.getImage().trim().length() == 0) {
+        if (noWhitespaceInExpression && parenthesisNesting ==0 && braceNesting==0 && tok.getSpecialToken() != null) {
+            if (tok.getSpecialToken().getImage().trim().length() == 0) {
                 Token copy = cloneToken(tok);
-                copy.specialToken = null;
-                copyFieldsOfToken(tok.specialToken, tok);
+                copy.setSpecialToken(null);
+                copyFieldsOfToken(tok.getSpecialToken(), tok);
                 tok.setType(TokenType.BLANK);
                 tok.setNext(copy);
                 noWhitespaceInExpression = false;
@@ -123,8 +118,8 @@ INJECT FTLLexer :
                 if (idx <0) idx = img.indexOf('\r');
                 if (idx >=0) {
                     tok.setImage(img.substring(++idx));
-                    tok.beginLine++;
-                    tok.beginColumn = 1;
+                    tok.setBeginLine(tok.getBeginLine()+1);
+                    tok.setBeginColumn(1);
                 }
             }
         }
@@ -151,12 +146,12 @@ INJECT FTLLexer :
              case CLOSE_TAG :
              case CLOSE_EMPTY_TAG :
              if (olderSyntax != hasPointyDelimiter) tok.setType(TokenType.PRINTABLE_CHARS);
-             else SwitchTo(TEMPLATE_TEXT);
+             else switchTo(LexicalState.TEMPLATE_TEXT);
              break;
 
              case END_DIRECTIVE :
              if (olderSyntax!=hasPointyDelimiter) tok.setType(TokenType.PRINTABLE_CHARS);
-             else SwitchTo(TEMPLATE_TEXT);
+             else switchTo(LexicalState.TEMPLATE_TEXT);
              break;
 
              case END_USER_DIRECTIVE :
@@ -169,7 +164,7 @@ INJECT FTLLexer :
                  tok.setType(TokenType.CLOSE_TAG);
                  if (tok.getType() == TokenType.GTE) {
                       tok.setImage(">");
-                      tok.endColumn--;
+                      tok.setEndColumn(tok.getEndColumn()-1);
                       input_stream.backup(1);
                  }
                   switchTo(LexicalState.TEMPLATE_TEXT);
@@ -194,7 +189,7 @@ INJECT FTLLexer :
 
               case END_COMMENT :
               if (hasPointyDelimiter != olderSyntax) tok.setType(TokenType.PRINTABLE_CHARS);
-              else SwitchTo(TEMPLATE_TEXT);
+              else switchTo(LexicalState.TEMPLATE_TEXT);
               break;
               default :
               if (lastMatchedTokenType == TokenType.DOT && possibleIdentifier(tok.getImage())) {
@@ -216,13 +211,13 @@ INJECT FTLLexer :
     private void copyFieldsOfToken (Token src, Token dest) {
         dest.setType(src.getType());
         dest.setImage(src.getImage());
-        dest.specialToken = src.specialToken;
+        dest.setSpecialToken(src.getSpecialToken());
         Token next = src.getNext();
         dest.setNext(next);
-        dest.beginLine = src.beginLine;
-        dest.beginColumn = src.beginColumn;
-        dest.endLine = src.endLine;
-        dest.endColumn = src.endColumn;
+        dest.setBeginLine(src.getBeginLine());
+        dest.setBeginColumn(src.getBeginColumn());
+        dest.setEndLine(src.getEndLine());
+        dest.setEndColumn(src.getEndColumn());
 //        dest.setInputSource(src.getInputSource());
     }
 
@@ -236,7 +231,6 @@ INJECT FTLLexer :
 INCLUDE("FEL.javacc")
 
 TOKEN :
-{
     <FTL_DIRECTIVE_OPEN :  "<#" | "[#" > : FTL_DIRECTIVE
     |
     <USER_DIRECTIVE_OPEN : "<@" | "[@"> : FTL_EXPRESSION
@@ -262,10 +256,9 @@ TOKEN :
     <#END_USER_DIRECTIVE1 : "[/@" (<IDENTIFIER>(<DOT><IDENTIFIER>)*)? (<BLANK>)* "]">
     |
     <#END_USER_DIRECTIVE2 : "</@" (<IDENTIFIER>(<DOT><IDENTIFIER>)*)? (<BLANK>)* ">">
-}
+;
 
 <FTL_DIRECTIVE> TOKEN :
-{
     <TRIM : "t">
     |
     <COMMENT : "--"> : IN_COMMENT
@@ -355,54 +348,46 @@ TOKEN :
     <BLANK : "\n" | "\r" | "\t" | " "> : FTL_EXPRESSION
     |
     <CLOSE_TAG : (<BLANK>)* (">" | "]") > : TEMPLATE_TEXT
-}
+;
 
 <FTL_DIRECTIVE, FTL_EXPRESSION> TOKEN :
-{
     <CLOSE_EMPTY_TAG : (<BLANK>)* "/" (">"|"]")> : TEMPLATE_TEXT
-}
+;
 
 <IN_COMMENT> MORE:
-{
     < ~[]>
-}
+;
 
 <IN_COMMENT> TOKEN:
-{
     <END_COMMENT : "-->" | "--]">
-}
+;
 
-<NO_PARSE> MORE : { <(~[])> }
+<NO_PARSE> MORE :  <(~[])> ;
 
 <NO_PARSE> TOKEN :
-{
     <NOPARSE_END : ("</#noparse" (<BLANK>)* ">") | ("[/#noparse" (<BLANK>)* "]")> : TEMPLATE_TEXT
-}
+;
 
-void IdentifierOrStringLiteral() : {}
-{
+IdentifierOrStringLiteral : 
     <IDENTIFIER>
     |
-    StringLiteral()
-}
+    StringLiteral
+;
 
 
-void Interpolation() : {}
-{
-    <INTERPOLATE>Expression()<CLOSE_BRACE>
-}
+Interpolation :
+    <INTERPOLATE>Expression<CLOSE_BRACE>
+;
 
-void NumericalInterpolation() : {}
-{
-    <NUMERICAL_INTERPOLATE>Expression() [<SEMICOLON><IDENTIFIER>]<CLOSE_BRACE>
-}
+NumericalInterpolation : 
+    <NUMERICAL_INTERPOLATE>Expression [<SEMICOLON><IDENTIFIER>]<CLOSE_BRACE>
+;
 
 
-void Assignment() :
+Assignment :
 {
     Token t;
 }
-{
     <FTL_DIRECTIVE_OPEN>
     (
        t=<SET>|
@@ -411,128 +396,110 @@ void Assignment() :
        t=<GLOBAL>
     )
     <BLANK>
-    IdentifierOrStringLiteral()
+    IdentifierOrStringLiteral
     (
       (
-       <EQUALS>Expression()
-       ([<COMMA>] IdentifierOrStringLiteral() <EQUALS> Expression())*
-       [<IN> Expression()]
-       LooseTagEnd()
+       <EQUALS>Expression
+       ([<COMMA>] IdentifierOrStringLiteral <EQUALS> Expression)*
+       [<IN> Expression]
+       LooseTagEnd
       )
       |
       (
-          [<IN> Expression()]
+          [<IN> Expression]
          <CLOSE_TAG>
-         Block()
+         Block
          DirectiveEnd(t.getImage())
       )
     )
-}
+;
 
-void Var() #VarInstruction : {}
-{
+Var #VarInstruction :
     <FTL_DIRECTIVE_OPEN><VAR><BLANK>
-    IdentifierOrStringLiteral() [<EQUALS> Expression()]
-    ([<COMMA>]IdentifierOrStringLiteral() [<EQUALS> Expression()])*
-    LooseTagEnd()
-}
+    IdentifierOrStringLiteral [<EQUALS> Expression]
+    ([<COMMA>]IdentifierOrStringLiteral [<EQUALS> Expression])*
+    LooseTagEnd
+;
 
-void Setting() #SettingInstruction : {}
-{
+Setting #SettingInstruction :
     <FTL_DIRECTIVE_OPEN><SETTING><BLANK>
-    <IDENTIFIER> [<EQUALS> Expression()]
-    ([<COMMA>]IdentifierOrStringLiteral() [<EQUALS> Expression()])*
-    LooseTagEnd()
-}
+    <IDENTIFIER> [<EQUALS> Expression]
+    ([<COMMA>]IdentifierOrStringLiteral [<EQUALS> Expression])*
+    LooseTagEnd
+;
 
-void Attempt() #AttemptRecover : {}
-{
+Attempt #AttemptRecover : 
     <FTL_DIRECTIVE_OPEN><_ATTEMPT><CLOSE_TAG>
-    Block()
-    Recover()
-}
+    Block
+    Recover
+;
 
-void Comment() #CommentBlock : {}
-{
+Comment #CommentBlock :
    <FTL_DIRECTIVE_OPEN><COMMENT>
    <END_COMMENT>
-}
+;
 
-void NoParse() #NoParseBlock : {}
-{
+NoParse #NoParseBlock :
     <FTL_DIRECTIVE_OPEN><NOPARSE>
-    <CLOSE_TAG>{token_source.SwitchTo(NO_PARSE);}
+    <CLOSE_TAG>{token_source.switchTo(LexicalState.NO_PARSE);}
     <NOPARSE_END>
-}
+;
 
-
-
-void Trim() #TrimInstruction : {}
-{
+Trim #TrimInstruction :
     <FTL_DIRECTIVE_OPEN><TRIM>
-    LooseTagEnd()
-}
+    LooseTagEnd
+;
 
-
-void NoTrim() #TrimInstruction : {}
-{
+NoTrim #TrimInstruction :
     <FTL_DIRECTIVE_OPEN><NOTRIM>
-    LooseTagEnd()
-}
+    LooseTagEnd
+;
 
 
-void RightTrim() #TrimInstruction : {}
-{
+RightTrim #TrimInstruction :
     <FTL_DIRECTIVE_OPEN><RTRIM>
-    LooseTagEnd()
-}
+    LooseTagEnd
+;
 
 
-void LeftTrim() #TrimInstruction : {}
-{
+LeftTrim #TrimInstruction :
     <FTL_DIRECTIVE_OPEN><LTRIM>
-    LooseTagEnd()
-}
+    LooseTagEnd
+;
 
-void Break() #BreakInstruction : {}
-{
+Break #BreakInstruction :
     <FTL_DIRECTIVE_OPEN>
     <BREAK>
-    LooseTagEnd()
-}
+    LooseTagEnd
+;
 
-void Flush() #FlushInstruction : {}
-{
-    <FTL_DIRECTIVE_OPEN><FLUSH>LooseTagEnd()
-}
+Flush #FlushInstruction :
+    <FTL_DIRECTIVE_OPEN><FLUSH>LooseTagEnd
+;
 
-void Return() #ReturnInstruction : {}
-{
+Return #ReturnInstruction :
     <FTL_DIRECTIVE_OPEN><RETURN>
-    [<BLANK>Expression()]
-    LooseTagEnd()
-}
+    [<BLANK>Expression]
+    LooseTagEnd
+;
 
-void Stop() #StopInstruction : {}
-{
+Stop #StopInstruction : 
     <FTL_DIRECTIVE_OPEN><STOP>
-    [<BLANK>Expression()]
-    LooseTagEnd()
-}
+    [<BLANK>Expression]
+    LooseTagEnd
+;
 
 
-void Compress() #CompressBlock : {}
-{
+Compress #CompressBlock : 
     <FTL_DIRECTIVE_OPEN><COMPRESS><CLOSE_TAG>
-    Block()
+    Block
     DirectiveEnd("compress")
-}
+;
 
-void TrimBlock() :
+TrimBlock :
 {
    String closeTag;
 }
-{
     <FTL_DIRECTIVE_OPEN>
     (
         <BLOCKTRIM> {closeTag = "t_lines";}
@@ -544,127 +511,116 @@ void TrimBlock() :
         <BLOCKNOTRIM> {closeTag = "nt_lines";}
     )
     <CLOSE_TAG>
-    Block()
+    Block
     DirectiveEnd(closeTag)
-}
+;
 
-void NoEscapeBlock() : {}
-{
+NoEscapeBlock :
     <FTL_DIRECTIVE_OPEN><NOESCAPE><CLOSE_TAG>
-    Block()
+    Block
     DirectiveEnd("noescape")
-}
+;
 
-void EscapeBlock() : {}
-{
+EscapeBlock : 
     <FTL_DIRECTIVE_OPEN>
     <ESCAPE>
     <BLANK>
     <IDENTIFIER>
     <AS>
-    Expression()
+    Expression
     <CLOSE_TAG>
-    Block()
+    Block
     DirectiveEnd("escape")
-}
+;
 
-void Include() #IncludeInstruction : {}
-{
+Include #IncludeInstruction :
     <FTL_DIRECTIVE_OPEN><_INCLUDE><BLANK>
-    Expression()
+    Expression
     [<SEMICOLON>]
-    (<IDENTIFIER><EQUALS>Expression())*
-    LooseTagEnd()
-}
+    (<IDENTIFIER><EQUALS>Expression)*
+    LooseTagEnd
+;
 
-void Embed() #EmbedInstruction : {}
-{
+Embed #EmbedInstruction : 
     <FTL_DIRECTIVE_OPEN><EMBED><BLANK>
-    Expression()
-    LooseTagEnd()
-}
+    Expression
+    LooseTagEnd
+;
 
-void Import() #ImportInstruction : {}
-{
+Import #ImportInstruction : 
     <FTL_DIRECTIVE_OPEN><IMPORT><BLANK>
-    Expression()
+    Expression
     <AS>
     <IDENTIFIER>
-    LooseTagEnd()
-}
+    LooseTagEnd
+;
 
-void Visit() #VisitInstruction : {}
-{
+Visit #VisitInstruction : 
     <FTL_DIRECTIVE_OPEN>
     <VISIT>
     <BLANK>
-    Expression()
+    Expression
     [
        <USING>
-       Expression()
+       Expression
        (
            [<COMMA>]
-           Expression()
+           Expression
        )*
     ]
-    LooseTagEnd()
-}
+    LooseTagEnd
+;
 
-void Recurse() #RecurseInstruction : {}
-{
+Recurse #RecurseInstruction :
     <FTL_DIRECTIVE_OPEN><RECURSE>
     (
-       LooseTagEnd()
+       LooseTagEnd
        |
        (
           <BLANK>
-          [Expression()]
+          [Expression]
           [<USING>
-            Expression()
-            ([<COMMA>] Expression())*
+            Expression
+            ([<COMMA>] Expression)*
           ]
-          LooseTagEnd()
+          LooseTagEnd
        )
     )
-}
+;
 
-void FallBack() #FallBackInstruction : {}
-{
+FallBack #FallBackInstruction :
     <FTL_DIRECTIVE_OPEN>
     <FALLBACK>
-    LooseTagEnd()
-}
+    LooseTagEnd
+;
 
-void If() #IfStatement : {}
-{
+If #IfStatement :
     <FTL_DIRECTIVE_OPEN><IF><BLANK>
-    Expression()
+    Expression
     <CLOSE_TAG>
-    Block()
+    Block
     ( ElseIf )*
     [
        Else
     ]
     DirectiveEnd("if")
-}
+;
 
-ElseIf #ElseIfBlock : {}
-{
+ElseIf #ElseIfBlock : 
     <FTL_DIRECTIVE_OPEN><ELSEIF>
     =>||
     <BLANK>
-    Expression()
+    Expression
     <CLOSE_TAG>
-    Block()
-}
+    Block
+;
 
-void Else() #ElseBlock :  {}
-{
+Else #ElseBlock : 
     <FTL_DIRECTIVE_OPEN><ELSE>
     =>||
     <CLOSE_TAG>
-    Block()
-}
+    Block
+;
 
 Switch #SwitchInstruction : 
     <FTL_DIRECTIVE_OPEN><SWITCH> =>||
@@ -679,53 +635,48 @@ Switch #SwitchInstruction :
     DirectiveEnd("switch")
 ;
 
-Case() #CaseInstruction : 
+Case #CaseInstruction : 
     <FTL_DIRECTIVE_OPEN><CASE>
     =>||
     <BLANK>
     Expression <CLOSE_TAG> Block
 ;
 
-void Default() #DefaultInstruction : {}
-{
+Default #DefaultInstruction : 
     <FTL_DIRECTIVE_OPEN><DEFAUL><CLOSE_TAG>
     Block
-}
+;
 
-void List() #ListInstruction : {}
-{
+List #ListInstruction : 
     <FTL_DIRECTIVE_OPEN><LIST><BLANK>
-    Expression()
+    Expression
     <AS>
     <IDENTIFIER>
     <CLOSE_TAG>
-    Block()
+    Block
     DirectiveEnd("list")
-}
+;
 
-void ForEach() #ForEachInstruction : {}
-{
+ForEach #ForEachInstruction : 
     <FTL_DIRECTIVE_OPEN><FOREACH><BLANK>
     <IDENTIFIER>
     <IN>
-    Expression()
+    Expression
     <CLOSE_TAG>
-    Block()
+    Block
     DirectiveEnd("foreach")
-}
+;
 
-void Nested() #NestedInstruction : {}
-{
+Nested #NestedInstruction : 
     <FTL_DIRECTIVE_OPEN><NESTED>
-    [<BLANK>PositionalArgsList()]
-    LooseTagEnd()
-}
+    [<BLANK>PositionalArgsList]
+    LooseTagEnd
+;
 
-void MacroDefinition() :
+MacroDefinition :
 {
     Token t;
 }
-{
     <FTL_DIRECTIVE_OPEN>
     (
       t=<MACRO>
@@ -733,46 +684,43 @@ void MacroDefinition() :
       t=<FUNCTION>
     )
     <BLANK>
-    IdentifierOrStringLiteral()
+    IdentifierOrStringLiteral
     [<OPEN_PAREN>]
-    [ParameterList()]
+    [ParameterList]
     [<CLOSE_PAREN>]
     <CLOSE_TAG>
-    Block()
+    Block
     DirectiveEnd(t.getImage())
-}
+;
 
-void ParameterList() : {}
-{
+ParameterList :
 // Of course, the params with default values must come after
 // the ones without and the ellipsis can only occur on the
 // end, but we can check for this at a later stage.
     <IDENTIFIER>
-    [(<EQUALS>Expression()) | <ELLIPSIS>]
+    [(<EQUALS>Expression) | <ELLIPSIS>]
     (
        [<COMMA>]
        <IDENTIFIER>
        [
-          (<EQUALS>Expression())
+          (<EQUALS>Expression)
           |
           <ELLIPSIS>
        ]
     )*
-}
+;
 
 
-void LooseTagEnd() : {}
-{
+LooseTagEnd : 
     <CLOSE_TAG>
     |
     <CLOSE_EMPTY_TAG>
-}
+;
 
-void DirectiveEnd(String name) :
+DirectiveEnd(String name) :
 {
    Token t;
 }
-{
     t=<END_DIRECTIVE>
     {
         String tag = t.getImage();
@@ -782,133 +730,120 @@ void DirectiveEnd(String name) :
             throw new ParseException("Expecting closing tag for " + name);
         }
     }
-}
+;
 
-void Text() :
+Text :
 {
     Token t;
 }
-{
     (
       (t=<PRINTABLE_CHARS>|
        t=<WHITESPACE>|
        t=<SPECIAL_CHAR>)
     )+
-}
+;
 
-
-void Recover() #RecoverBlock : {}
-{
+Recover #RecoverBlock : 
     <FTL_DIRECTIVE_OPEN><_RECOVER><CLOSE_TAG>
-    Block()
+    Block
     DirectiveEnd("attempt")
-}
+;
 
-void TopLevelDirective() #void : {}
-{
+TopLevelDirective #void : 
    (
-     SCAN 2 Assignment() |
-     SCAN 2 Attempt() |
-     SCAN 2 Comment()|
-     SCAN 2 Compress() |
-     SCAN 2 Embed() |
-     SCAN 2 ForEach()|
-     SCAN 2 If() |
-     SCAN 2 List() |
-     SCAN 2 Include() |
-     SCAN 2 Import() |
-     SCAN 2 MacroDefinition() |
-     SCAN 2 NoParse() |
+     SCAN 2 Assignment |
+     SCAN 2 Attempt |
+     SCAN 2 Comment |
+     SCAN 2 Compress |
+     SCAN 2 Embed |
+     SCAN 2 ForEach |
+     SCAN 2 If |
+     SCAN 2 List |
+     SCAN 2 Include |
+     SCAN 2 Import |
+     SCAN 2 MacroDefinition |
+     SCAN 2 NoParse |
      Switch |
-     SCAN 2 Setting() |
-     SCAN 2 Var()|
-     SCAN 2 Break() |
-     SCAN 2 Return() |
-     SCAN 2 Stop() |
-     SCAN 2 Flush() |
-     SCAN 2 Trim()|
-     SCAN 2 NoTrim()|
-     SCAN 2 LeftTrim()|
-     SCAN 2 RightTrim()|
-     SCAN 2 TrimBlock() |
-     SCAN 2 Nested() |
-     SCAN 2 EscapeBlock() |
-     SCAN 2 NoEscapeBlock() |
-     SCAN 2 Visit() |
-     SCAN 2 Recurse() |
-     SCAN 2 FallBack()
+     SCAN 2 Setting |
+     SCAN 2 Var|
+     SCAN 2 Break |
+     SCAN 2 Return |
+     SCAN 2 Stop |
+     SCAN 2 Flush |
+     SCAN 2 Trim |
+     SCAN 2 NoTrim |
+     SCAN 2 LeftTrim |
+     SCAN 2 RightTrim|
+     SCAN 2 TrimBlock |
+     SCAN 2 Nested |
+     SCAN 2 EscapeBlock |
+     SCAN 2 NoEscapeBlock |
+     SCAN 2 Visit |
+     SCAN 2 Recurse |
+     SCAN 2 FallBack
    )
-}
+;
 
-void UserDirective() :
+UserDirective :
 {
     Token startToken;
     token_source.noWhitespaceInExpression = true;
 }
-{
     startToken=<USER_DIRECTIVE_OPEN>
-    Expression()
+    Expression
     {token_source.noWhitespaceInExpression = false;}
     [<BLANK>]
-    [ArgsList()]
-    [<SEMICOLON>[ParameterList()]]
+    [ArgsList]
+    [<SEMICOLON>[ParameterList]]
     (
        <CLOSE_EMPTY_TAG>
        |
        (
           <CLOSE_TAG>
-          Block()
-          EndUserDirective(startToken)
+          Block
+          <END_USER_DIRECTIVE>
        )
     )
-}
+;
 
-void EndUserDirective(Token startToken) #void : {}
-{
-    <END_USER_DIRECTIVE>
-}
-
-void Block() : {}
-{
+Block :
   (
     SCAN 2
     (
-     Text()
+     Text
      |
-     Interpolation()
+     Interpolation
      |
-     NumericalInterpolation()
+     NumericalInterpolation
      |
-     UserDirective()
+     UserDirective
      |
-     TopLevelDirective()
+     TopLevelDirective
     )
   )*
-}
+;
 
-void FTLHeader() : {}
-{
+FTLHeader : 
     <FTL_DIRECTIVE_OPEN><FTL>
     [
        <BLANK>
        (
           <IDENTIFIER>
           <EQUALS>
-          Expression()
+          Expression
        )*
     ]
     (<CLOSE_TAG> |<CLOSE_EMPTY_TAG>)
-}
+;
 
 
 
-void Root() : {}
-{
+Root : 
     [
         SCAN [<WHITESPACE>]<FTL_DIRECTIVE_OPEN><FTL> =>
         [<WHITESPACE>]
-        FTLHeader() {token_source.rightAfterHeader = true;}
+        FTLHeader {token_source.rightAfterHeader = true;}
     ]
-    Block()
+    Block
     <EOF>
-}
+;
