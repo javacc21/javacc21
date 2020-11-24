@@ -34,11 +34,6 @@
 
 [#import "CommonUtils.java.ftl" as CU]
 
-[#macro Generate]
-    [@Productions/]
-    [#-- @firstSetVars/ --]
-[/#macro]
- 
 [#macro Productions] 
  //=================================
  // Start of methods for BNF Productions

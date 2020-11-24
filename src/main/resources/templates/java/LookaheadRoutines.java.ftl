@@ -54,6 +54,12 @@
     [/#list]
 [/#macro]
 
+[#macro followSetVars]
+    [#list grammar.expansionsForFirstSet as expansion]
+          [@CU.followSetVar expansion/]
+    [/#list]
+[/#macro]
+
 
 [#macro BuildLookaheads]
   private final boolean scanToken(TokenType expectedType) {
@@ -62,7 +68,7 @@
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (type != expectedType) return false;
-     if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
+     if (remainingLookahead != UNLIMITED) remainingLookahead--;
 //     if (type == upToTokenType) remainingLookahead = 0;
      return true;
   }
@@ -73,7 +79,7 @@
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (!types.contains(type)) return false;
-     if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
+     if (remainingLookahead != UNLIMITED) remainingLookahead--;
 //     if (type == upToTokenType) remainingLookahead = 0;
      return true;
   }
@@ -90,7 +96,6 @@
        ${BuildPredicateRoutine(expansion)}
    [/#list]
    [#list grammar.allLookaheads as lookahead]
-[#--       ${firstSetVar(lookahead)} --]
       [#if lookahead.nestedExpansion??]
        ${BuildLookaheadRoutine(lookahead)}
      [/#if]
@@ -107,8 +112,6 @@
       ${BuildProductionLookaheadMethod(production)}
    [/#list]
 [/#macro]  
-
-
 
 [#macro BuildPredicateRoutine expansion] 
   [#var lookaheadAmount = expansion.lookaheadAmount]
@@ -127,7 +130,7 @@
       [/#if]
       return true;
       }
-     finally {
+      finally {
         currentLookaheadToken = null;
      }
    }

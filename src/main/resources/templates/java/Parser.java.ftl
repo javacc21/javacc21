@@ -183,8 +183,18 @@ public boolean isCancelled() {return cancelled;}
    *Are we in the production of the given name, either scanning ahead or parsing?
    */
   private boolean isInProduction(String productionName, String... prods) {
-    if (currentlyParsedProduction != null && currentlyParsedProduction.equals(productionName)) return true;
-    if (currentLookaheadProduction != null && currentLookaheadProduction.equals(productionName)) return true;
+    if (currentlyParsedProduction != null) {
+      if (currentlyParsedProduction.equals(productionName)) return true;
+      for (String name : prods) {
+        if (currentlyParsedProduction.equals(name)) return true;
+      }
+    }
+    if (currentLookaheadProduction != null ) {
+      if (currentLookaheadProduction.equals(productionName)) return true;
+      for (String name : prods) {
+        if (currentLookaheadProduction.equals(name)) return true;
+      }
+    }
     Iterator<NonTerminalCall> it = stackIteratorBackward();
     while (it.hasNext()) {
       NonTerminalCall ntc = it.next();
@@ -202,7 +212,7 @@ public boolean isCancelled() {return cancelled;}
 
 
 [#import "ParserProductions.java.ftl" as ParserCode]
-[@ParserCode.Generate/]
+[@ParserCode.Productions /]
 [#import "LookaheadRoutines.java.ftl" as LookaheadCode]
 [@LookaheadCode.Generate/]
  
