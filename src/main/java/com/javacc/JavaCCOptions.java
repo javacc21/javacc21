@@ -95,7 +95,6 @@ public class JavaCCOptions {
         }
         return ((Integer) optionValues.get(option)).intValue();
     }
-
     /**
      * Convenience method to retrieve boolean options.
      */
@@ -165,7 +164,6 @@ public class JavaCCOptions {
         noLongerSetOnCL.add("CONSTANTS_CLASS");
 	    optionValues.put("BASE_SRC_DIR", ".");
         optionValues.put("BASE_NODE_CLASS", "BaseNode");
-        optionValues.put("OUTPUT_DIRECTORY", "");
         optionValues.put("TOKEN_FACTORY", "");
         noLongerSetOnCL.add("TOKEN_FACTORY");
 
@@ -192,6 +190,7 @@ public class JavaCCOptions {
         optionValues.put("UNPARSED_TOKENS_ARE_NODES", false);
         noLongerSetOnCL.add("UNPARSED_TOKENS_ARE_NODES");
         optionValues.put("FREEMARKER_NODES", false);
+        noLongerSetOnCL.add("FREEMARKER_NODES");
         optionValues.put("DEFAULT_LEXICAL_STATE", "DEFAULT");
         optionValues.put("HUGE_FILE_SUPPORT", false);
         noLongerSetOnCL.add("HUGE_FILE_SUPPORT");
@@ -202,14 +201,16 @@ public class JavaCCOptions {
         aliases.put("TOKEN_MANAGER_USES_PARSER", "LEXER_USES_PARSER");
         aliases.put("NODE_CLASS", "BASE_NODE_CLASS");
         aliases.put("SPECIAL_TOKENS_ARE_NODES","UNPARSED_TOKENS_ARE_NODES");
-        aliases.put("q",  "QUIET");
+        aliases.put("OUTPUT_DIRECTORY", "BASE_SRC_DIR");
+        aliases.put("D", "BASE_SRC_DIR");
+        aliases.put("Q",  "QUIET");
     }
     
     public void setOption(String name, Object value) {
-        if (aliases.containsKey(name)) {
-            name = aliases.get(name);
+        if (aliases.containsKey(name.toUpperCase())) {
+            name = aliases.get(name.toUpperCase());
         }
-        else optionValues.put(name, value);
+        optionValues.put(name, value);
     }
 
     /**
@@ -338,42 +339,31 @@ public class JavaCCOptions {
         inputFileSetting.add(s);
     }
 
-    /**
+
+   /**
      * Process a single command-line option. The option is parsed and stored in
      * the optionValues map.
      *
      * @param arg
      */
     public void setCmdLineOption(String arg) {
-        final String s;
+        String s = arg;
         if (arg.charAt(0) == '-') {
             s = arg.substring(1);
-        } else {
-            s = arg;
-        }
+        } 
         
-        if (s.equalsIgnoreCase("quiet")||s.equalsIgnoreCase("Q")) {
+        if (s.equalsIgnoreCase("quiet")||s.equalsIgnoreCase("q")) {
         	this.setOption("QUIET", true);
         	return;
         }
 
+        s = s.replaceFirst("=", ":");
         String name;
         Object Val;
 
         // Look for the first ":" or "=", which will separate the option name
         // from its value (if any).
-        final int index1 = s.indexOf('=');
-        final int index2 = s.indexOf(':');
-        final int index;
-
-        if (index1 < 0)
-            index = index2;
-        else if (index2 < 0)
-            index = index1;
-        else if (index1 < index2)
-            index = index1;
-        else
-            index = index2;
+        int index = s.indexOf(':');
 
         if (index < 0) {
             name = s.toUpperCase();
@@ -393,27 +383,18 @@ public class JavaCCOptions {
             } else if (s.substring(index + 1).equalsIgnoreCase("FALSE")) {
                 Val = Boolean.FALSE;
             } else {
-                try {
-                    int i = Integer.parseInt(s.substring(index + 1));
-                    if (i <= 0) {
-                        System.out.println("Warning: Bad option value in \"" + arg
-                                + "\" will be ignored.");
-                        return;
-                    }
-                    Val = Integer.valueOf(i);
-                } catch (NumberFormatException e) {
-                    Val = s.substring(index + 1);
-                    if (s.length() > index + 2) {
-                        // i.e., there is space for two '"'s in value
-                        if (s.charAt(index + 1) == '"' && s.charAt(s.length() - 1) == '"') {
-                            // remove the two '"'s.
-                            Val = s.substring(index + 2, s.length() - 1);
-                        }
+                Val = s.substring(index + 1);
+                if (s.length() > index + 2) {
+                    // i.e., there is space for two '"'s in value
+                    if (s.charAt(index + 1) == '"' && s.charAt(s.length() - 1) == '"') {
+                        // remove the two '"'s.
+                        Val = s.substring(index + 2, s.length() - 1);
                     }
                 }
             }
         }
-
+        String alias = aliases.get(name.toUpperCase());
+        if (alias !=null) name = alias;
         if (!optionValues.containsKey(name)) {
             System.out.println("Warning: Bad option \"" + arg + "\" will be ignored.");
             return;
@@ -434,7 +415,7 @@ public class JavaCCOptions {
         }
 
         Val = upgradeValue(name, Val);
- 
+
         setOption(name, Val);
         cmdLineSetting.add(name);
     }
@@ -524,10 +505,10 @@ public class JavaCCOptions {
      * Find the output directory.
      *
      * @return The requested output directory.
-     */
+     *//*
     public String getOutputDirectory() {
         return stringValue("OUTPUT_DIRECTORY");
-    }
+    }*/
     
     public boolean getQuiet() {
     	return booleanValue("QUIET");

@@ -205,28 +205,10 @@ public class Grammar extends BaseNode {
             return root;
         }
     }
-
+    
     public void createOutputDir() {
-        String outputDirectory = options.getOutputDirectory();
-        if (outputDirectory.equals("")) {
-            outputDirectory = ".";
-        }
-        File outputDir = new File(outputDirectory);
-        if (!outputDir.exists()) {
-            addWarning(null, "Output directory \"" + outputDir + "\" does not exist. Creating the directory.");
-
-            if (!outputDir.mkdirs()) {
-
-                addSemanticError(null, "Cannot create the output directory : " + outputDir);
-                return;
-            }
-        }
-
-        else if (!outputDir.isDirectory()) {
-            addSemanticError(null, "\"" + outputDir + " is not a valid output directory.");
-        }
-
-        else if (!outputDir.canWrite()) {
+        File outputDir = new File(".");
+        if (!outputDir.canWrite()) {
             addSemanticError(null, "Cannot write to the output directory : \"" + outputDir + "\"");
         }
     }
@@ -857,11 +839,7 @@ public class Grammar extends BaseNode {
     public File getParserOutputDirectory() throws IOException {
         String baseSrcDir = options.getBaseSourceDirectory();
         if (baseSrcDir.equals("")) {
-            String outputDirectory = options.getOutputDirectory();
-            if (outputDirectory.equals("")) {
-                return new File(filename).getParentFile();
-            }
-            return new File(outputDirectory);
+            return new File(".");
         }
         File dir = new File(baseSrcDir);
         if (!dir.isAbsolute()){
