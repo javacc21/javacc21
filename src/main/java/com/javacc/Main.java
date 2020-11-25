@@ -164,12 +164,12 @@ public final class Main {
     		System.err.println("You must have an appropriate (V3 or later) freemarker.jar on your classpath to run JavaCC 21");
     		System.exit(-1);
     	}
-    	checkForNewer();   
         if (args.length == 0) {
             bannerLine();
             usage();
             System.exit(1);
         } 
+    	checkForNewer();   
         if (args[0].equalsIgnoreCase("convert")) {
             com.javacc.output.lint.SyntaxConverter.main(args);
             System.exit(0);
