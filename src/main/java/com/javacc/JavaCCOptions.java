@@ -77,6 +77,8 @@ public class JavaCCOptions {
      * values, and the option types can be determined from these values too.
      */
     private Map<String, Object> optionValues = new HashMap<String, Object>();
+
+    private Set<String> noLongerSetOnCL = new HashSet<>();
     
     private Map<String, String> aliases = new HashMap<String, String>();
 
@@ -139,41 +141,62 @@ public class JavaCCOptions {
         optionValues = new HashMap<String, Object>();
         optionValues.put("QUIET",  false);
         optionValues.put("TABS_TO_SPACES",  0);
+        noLongerSetOnCL.add("TABS_TO_SPACES");
         optionValues.put("DEBUG_PARSER", false);
         optionValues.put("DEBUG_LEXER", false);
         optionValues.put("FAULT_TOLERANT", false);
         optionValues.put("PRESERVE_LINE_ENDINGS",  true); // Will change this to false pretty soon.
+        noLongerSetOnCL.add("PRESERVE_LINE_ENDINGS");
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
+        noLongerSetOnCL.add("JAVA_UNICODE_ESCAPE");
         optionValues.put("IGNORE_CASE", false);
         optionValues.put("USER_DEFINED_LEXER", false);
+        noLongerSetOnCL.add("USER_DEFINED_LEXER");
         optionValues.put("LEXER_USES_PARSER", false);
+        noLongerSetOnCL.add("LEXER_USES_PARSER");
 
         optionValues.put("PARSER_PACKAGE", "");
+        noLongerSetOnCL.add("PARSER_PACKAGE");
         optionValues.put("PARSER_CLASS", "");
+        noLongerSetOnCL.add("PARSER_CLASS");
         optionValues.put("LEXER_CLASS", "");
+        noLongerSetOnCL.add("LEXER_CLASS");
         optionValues.put("CONSTANTS_CLASS", "");
+        noLongerSetOnCL.add("CONSTANTS_CLASS");
 	    optionValues.put("BASE_SRC_DIR", ".");
         optionValues.put("BASE_NODE_CLASS", "BaseNode");
-
         optionValues.put("OUTPUT_DIRECTORY", "");
         optionValues.put("TOKEN_FACTORY", "");
+        noLongerSetOnCL.add("TOKEN_FACTORY");
 
         optionValues.put("NODE_DEFAULT_VOID", false);
+        noLongerSetOnCL.add("NODE_DEFAULT_VOID");
         optionValues.put("SMART_NODE_CREATION", true);
+        noLongerSetOnCL.add("NODE_DEFAULT_VOID");
         optionValues.put("NODE_USES_PARSER", false);
+        noLongerSetOnCL.add("NODE_USES_PARSER");
 
         optionValues.put("NODE_PREFIX", "");
+        noLongerSetOnCL.add("NODE_PREFIX");
         optionValues.put("NODE_CLASS", "");
+        noLongerSetOnCL.add("NODE_CLASS");
         optionValues.put("NODE_FACTORY", false);
+        noLongerSetOnCL.add("NODE_FACTORY");
         optionValues.put("NODE_PACKAGE", "");
         optionValues.put("TREE_BUILDING_DEFAULT", true);
+        noLongerSetOnCL.add("TREE_BUILDING_DEFAULT");
         optionValues.put("TREE_BUILDING_ENABLED", true);
+        noLongerSetOnCL.add("TREE_BUILDING_ENABLED");
         optionValues.put("TOKENS_ARE_NODES", true);
+        noLongerSetOnCL.add("TOKENS_ARE_NODES");
         optionValues.put("UNPARSED_TOKENS_ARE_NODES", false);
+        noLongerSetOnCL.add("UNPARSED_TOKENS_ARE_NODES");
         optionValues.put("FREEMARKER_NODES", false);
         optionValues.put("DEFAULT_LEXICAL_STATE", "DEFAULT");
         optionValues.put("HUGE_FILE_SUPPORT", false);
+        noLongerSetOnCL.add("HUGE_FILE_SUPPORT");
         optionValues.put("LEGACY_API", false);
+        noLongerSetOnCL.add("LEGACY_API");
         aliases.put("DEBUG_TOKEN_MANAGER", "DEBUG_LEXER");
         aliases.put("USER_TOKEN_MANAGER", "USER_DEFINED_LEXER");
         aliases.put("TOKEN_MANAGER_USES_PARSER", "LEXER_USES_PARSER");
@@ -186,7 +209,7 @@ public class JavaCCOptions {
         if (aliases.containsKey(name)) {
             name = aliases.get(name);
         }
-        optionValues.put(name, value);
+        else optionValues.put(name, value);
     }
 
     /**
@@ -393,6 +416,10 @@ public class JavaCCOptions {
 
         if (!optionValues.containsKey(name)) {
             System.out.println("Warning: Bad option \"" + arg + "\" will be ignored.");
+            return;
+        }
+        if (noLongerSetOnCL.contains(name)) {
+            System.out.println("The option " + name + " can now only be set in the grammar file.");
             return;
         }
         Object valOrig = optionValues.get(name);
