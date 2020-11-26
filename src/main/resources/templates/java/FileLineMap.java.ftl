@@ -184,6 +184,7 @@ public class FileLineMap {
 
     private int getLineStartOffset(int lineNumber) {
         int realLineNumber = lineNumber - startingLine;
+        if (realLineNumber<0) realLineNumber = 0; //REVISIT later
         return lineOffsets[realLineNumber];
     }
 
@@ -201,6 +202,7 @@ public class FileLineMap {
     }
 
     private int getOffset(int line, int column) {
+        if (line==0) line = startingLine; // REVISIT? This should not be necessary!
         int columnAdjustment = (line == startingLine) ? startingColumn : 1;
         return lineOffsets[line - startingLine] + column - columnAdjustment;
     }

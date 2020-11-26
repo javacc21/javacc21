@@ -1754,7 +1754,7 @@ ForStatement :
   (
       Modifiers Type <IDENTIFIER> ":" =>|| Expression 
       |
-      [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
+      [ ForInit ] ";" [ Expression ] ";" [ StatementExpressionList ]
   )
   ")" Statement
 ;
@@ -1768,10 +1768,6 @@ ForInit :
 
 StatementExpressionList :
   StatementExpression ( "," StatementExpression )*
-;
-
-ForUpdate :
-  StatementExpressionList
 ;
 
 BreakStatement :
@@ -1788,8 +1784,8 @@ YieldStatement :
      => FAIL "need to be in a switch expression"
    ]
    Expression
-   =>||
    ";" 
+   =>||
 ;
 
 ContinueStatement :

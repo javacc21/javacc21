@@ -32,10 +32,11 @@
 
  [#-- This template generates the various lookahead/predicate routines --]
 
-[#var currentLookaheadExpansion]
-[#var UNLIMITED=2147483647]
-
 [#import "CommonUtils.java.ftl" as CU]
+
+[#var UNLIMITED=2147483647]
+[#var MULTIPLE_LEXICAL_STATE_HANDLING = grammar.lexerData.numLexicalStates>1 && !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
+
 
 [#macro Generate]
     [@firstSetVars /]
@@ -54,9 +55,22 @@
     [/#list]
 [/#macro]
 
+[#macro finalSetVars]
+    //=================================
+     // EnumSets that represent the various expansions' final set (i.e. the set of tokens with which the expansion can end)
+     //=================================
+    [#list grammar.expansionsForFinalSet as expansion]
+          [@finalSetVar expansion/]
+    [/#list]
+[/#macro]
+
+
 [#macro followSetVars]
-    [#list grammar.expansionsForFirstSet as expansion]
-          [@CU.followSetVar expansion/]
+    //=================================
+     // EnumSets that represent the various expansions' follow set (i.e. the set of tokens that can immediately follow this)
+     //=================================
+    [#list grammar.expansionsForFollowSet as expansion]
+          [@followSetVar expansion/]
     [/#list]
 [/#macro]
 
@@ -131,6 +145,16 @@
       return true;
       }
       finally {
+        [#--if MULTIPLE_LEXICAL_STATE_HANDLING]
+         if (false || currentToken.lexicalStateChangesInNextChain()) {
+            System.out.println("KILROY!!!");
+           currentToken.setNext(null);
+           token_source.reset(currentToken);
+            if (currentToken.getFollowingLexicalState() != null) {
+                token_source.switchTo(currentToken.getFollowingLexicalState());
+            }
+         }
+        [/#if--]
         currentLookaheadToken = null;
      }
    }
@@ -278,7 +302,6 @@
    based on the Expansion's class name.
 --]
 [#macro BuildScanCode expansion]
-  [#set currentLookaheadExpansion = expansion]
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence"]
   // Lookahead Code for ${classname} specified on line ${expansion.beginLine} of ${expansion.inputSource}

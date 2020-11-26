@@ -45,29 +45,6 @@
   [/#list]
 [/#macro]
 
-
-[#macro finalSetVars]
-    //=================================
-     // EnumSets that represent the various expansions' final set (i.e. the set of tokens with which the expansion can end)
-     //=================================
-    [#list grammar.expansionsForFinalSet as expansion]
-          [@finalSetVar expansion/]
-    [/#list]
-[/#macro]
-
-
-[#macro followSetVars]
-    //=================================
-     // EnumSets that represent the various expansions' follow set (i.e. the set of tokens that can immediately follow this)
-     //=================================
-    [#list grammar.expansionsForFollowSet as expansion]
-          [@followSetVar expansion/]
-    [/#list]
-[/#macro]
-
-
-
-
 [#macro ParserProduction production]
     [@CU.firstSetVar production.expansion/]
     ${production.leadingComments}
@@ -453,5 +430,3 @@
           throw new ParseException(this, "${assertion.message?j_string}");
         }
 [/#macro]
-
-
