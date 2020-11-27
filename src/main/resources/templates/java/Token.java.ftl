@@ -110,15 +110,58 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
    } 
     
 [#if !grammar.options.userDefinedLexer && grammar.lexerData.numLexicalStates > 1]
-    private LexicalState lexicalState;
+    private LexicalState lexicalState, followingLexicalState;
         
     void setLexicalState(LexicalState state) {
         this.lexicalState = state;
     }
     
+    /**
+     * The lexical state in which this Token was created
+     */ 
     LexicalState getLexicalState() {
         return lexicalState;
     }
+
+    /**
+     * The lexical state that should immediately follow 
+     * this token.
+     */
+    LexicalState getFollowingLexicalState() {
+        return followingLexicalState == null ? lexicalState : followingLexicalState;
+    }
+
+    void setFollowingLexicalState(LexicalState state) {
+        this.followingLexicalState = state;
+    }
+
+    boolean hasCachedLexicalStateChange() {
+        Token token = this;
+        while (token.getNext() != null) {
+            if (token.getNext().getLexicalState() != token.getLexicalState()) {
+                return true;
+            }
+            token = token.getNext();
+        }
+        return false;
+    }
+
+[/#if]
+
+[#if grammar.options.faultTolerant]
+    List<Token> ignoredTokens;
+
+    List<Token> getIgnoredTokens() {
+        if (ignoredTokens == null) {
+            ignoredTokens = new ArrayList<>();
+        }
+        return ignoredTokens;
+    }
+
+    void addIgnoredToken(Token tok) {
+        getIgnoredTokens().add(tok);
+    }
+
 [/#if]
 
 [#if grammar.options.legacyAPI]

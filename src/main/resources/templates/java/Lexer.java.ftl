@@ -245,10 +245,19 @@ void addToken(Token token) {
  [#else]
         // Reset the token source input
     // to just after the Token passed in.
-    void reset(Token t) {
+    void reset(Token t, LexicalState state) {
         input_stream.goTo(t.getEndLine(), t.getEndColumn());
         input_stream.forward(1);
+        t.setNext(null);
+        if (state != null) {
+            switchTo(state);
+        }
     }
+
+    void reset(Token t) {
+        reset(t, null);
+    }
+
     
     FileLineMap getFileLineMap() {
         return input_stream;

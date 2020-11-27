@@ -258,6 +258,7 @@
  
  [#if numLexicalStates>1]
       if (newLexicalStates[jjmatchedKind] != null) {
+          matchedToken.setFollowingLexicalState(newLexicalStates[jjmatchedKind]);
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
@@ -454,7 +455,7 @@
         t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
      [#if numLexicalStates >1]
-        t.setLexicalState(lexicalState);
+        t.setLexicalState(this.lexicalState);
      [/#if]        
         return t;
     }

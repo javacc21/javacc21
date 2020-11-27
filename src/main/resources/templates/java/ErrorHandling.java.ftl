@@ -173,15 +173,17 @@ void dumpLookaheadCallStack(PrintStream ps) {
     }
 
       private Token consumeToken(TokenType expectedType) throws ParseException {
-        InvalidToken invalidToken = null;
         Token oldToken = currentToken;
         currentToken = nextToken(currentToken);
+[#if grammar.options.faultTolerant]        
+        while (currentToken.getType() == TokenType.INVALID) {
+            // TODO
+        }
+[/#if]        
         if (currentToken.getType() != expectedType) {
             handleUnexpectedTokenType(expectedType, oldToken) ;
         }
-        else {
-            this.lastParsedToken = currentToken;
-        }
+        this.lastConsumedToken = currentToken;
 [#if grammar.options.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.options.userDefinedLexer]
@@ -190,9 +192,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
   [#list grammar.openNodeScopeHooks as hook]
      ${hook}(currentToken);
   [/#list]
-          if (invalidToken != null) {
-             pushNode(invalidToken);
-          }          
           pushNode(currentToken);
   [#list grammar.closeNodeScopeHooks as hook]
      ${hook}(currentToken);
@@ -215,7 +214,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
        NodeScope nodeScope;
  [/#if]       
        ParseState() {
-           this.lastParsed  = ${grammar.parserClassName}.this.lastParsedToken;
+           this.lastParsed  = ${grammar.parserClassName}.this.lastConsumedToken;
 [#if grammar.options.treeBuildingEnabled]            
            this.nodeScope = (NodeScope) currentNodeScope.clone();
 [/#if]           
@@ -239,13 +238,13 @@ void dumpLookaheadCallStack(PrintStream ps) {
 [/#if]
     if (state.lastParsed != null) {
         //REVISIT
-        currentToken = lastParsedToken = state.lastParsed;
+        currentToken = lastConsumedToken = state.lastParsed;
     }
 [#if grammar.lexerData.numLexicalStates > 1]     
-     token_source.switchTo(lastParsedToken.getLexicalState());
-     if (token_source.doLexicalStateSwitch(lastParsedToken.getType())) {
-         token_source.reset(lastParsedToken);
-         lastParsedToken.setNext(null);
+     token_source.switchTo(lastConsumedToken.getFollowingLexicalState());
+     if (token_source.doLexicalStateSwitch(lastConsumedToken.getType())) {
+         token_source.reset(lastConsumedToken);
+         lastConsumedToken.setNext(null);
      }
 [/#if]          
   } 

@@ -76,8 +76,9 @@ private String currentlyParsedProduction, currentLookaheadProduction;
 // private TokenType upToTokenType;
 // private EnumSet<TokenType> upToFirstSet;
 private boolean stopAtScanLimit;
+private boolean lastLookaheadSucceeded;
 
-private Token lastParsedToken;
+private Token lastConsumedToken;
 //private Token nextToken; //REVISIT
 
 //private EnumSet<Token> currentFollowSet;
