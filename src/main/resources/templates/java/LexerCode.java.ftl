@@ -71,6 +71,12 @@
           [#list lexerData.specialSet.toLongArray() as long]${long}L,[/#list]
       });      
 
+
+      // BitSet for MORE
+      static private BitSet moreSet = BitSet.valueOf(new long[] {
+          [#list lexerData.moreSet.toLongArray() as long]${long}L,[/#list]
+      });      
+
     private final int[] jjrounds = new int[${lexerData.stateSetSize}];
     private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
 
@@ -104,6 +110,7 @@
       return eof;
     }
 
+
   
   [#--  Need to figure out how to simplify this --]
   private Token nextToken() {
@@ -113,7 +120,7 @@
 
     EOFLoop :
     while (true) {
-        curChar = (char) input_stream.beginToken();
+        curChar = (char)  input_stream.beginToken();
         if (curChar == (char) -1) {
            return generateEOF(specialToken);
         }
@@ -157,7 +164,7 @@
                     if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
                     curChar = (char) input_stream.beginToken();
                     if (curChar == (char) -1) {
-                         return generateEOF(specialToken);
+                        return generateEOF(specialToken);
                     }
                 }
     [/#if]    
@@ -213,8 +220,10 @@
           + addEscapes(input_stream.getSuffix(jjmatchedPos + 2)) + ") ******\n");
  
  [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
-          if (tokenSet.get(jjmatchedKind) || specialSet.get(jjmatchedKind)) {
+          if (tokenSet.get(jjmatchedKind)) {
+//          if (tokenSet.get(jjmatchedKind) || specialSet.get(jjmatchedKind)) {
  [/#if]
+
          matchedToken = jjFillToken();
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
       [#if tokenHookMethodName = "CommonTokenAction"]
@@ -224,24 +233,32 @@
       [/#if]
 [/#list]
 
-//      matchedToken.setSpecialToken(specialToken);
+ 
+
+ [#if lexerData.hasSpecial]
+         matchedToken.setSpecialToken(specialToken);
+ [/#if]
+
       tokenLexicalActions();
-      jjmatchedKind = matchedToken.getType().ordinal();
+
+ jjmatchedKind = matchedToken.getType().ordinal();
  
  [#if numLexicalStates>1]
       if (newLexicalStates[jjmatchedKind] != null) {
-          matchedToken.setFollowingLexicalState(newLexicalStates[jjmatchedKind]);
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
-      if (skipSet.get(jjmatchedKind)) {
+      if (specialSet.get(jjmatchedKind)) {
          matchedToken.setUnparsed(true);
       }
       return matchedToken;
 
       [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
      }
+
+
          [#if lexerData.hasSkip || lexerData.hasSpecial]
+          
             [#if lexerData.hasMore]
           else if (skipSet.get(jjmatchedKind))
             [#else]
@@ -249,13 +266,41 @@
             [/#if]
 
           {
-             tokenLexicalActions();
+
+            [#if lexerData.hasSpecial]
+          
+            if (specialSet.get(jjmatchedKind)) {
+              matchedToken = jjFillToken();
+              matchedToken.setUnparsed(true);
+
+              if (specialToken == null) {
+                specialToken = matchedToken;
+              }
+              else {
+                 matchedToken.setSpecialToken(specialToken);
+                 specialToken.setNext(matchedToken);
+                 specialToken = matchedToken;
+               }
+
+              [#if lexerData.hasSkipActions]
+              tokenLexicalActions();
+              [/#if]
+          }
+      
+              [#if lexerData.hasSkipActions]
+              else 
+                 tokenLexicalActions();
+              [/#if]
+          [#elseif lexerData.hasSkipActions]
+            tokenLexicalActions();
+          [/#if]
 
           [#if numLexicalStates>1]
             if (newLexicalStates[jjmatchedKind] != null) {
                this.lexicalState = newLexicalStates[jjmatchedKind];
             }
           [/#if]
+
             continue EOFLoop;
           }
          [/#if]
@@ -263,8 +308,9 @@
          [#if lexerData.hasMore]
           [#if lexerData.hasMoreActions]
           tokenLexicalActions();
-		    [/#if]
+          [#elseif true || lexerData.hasSkipActions || lexerData.hasTokenActions]
           matchedCharsLength += jjmatchedPos + 1;
+		  [/#if]
 		  
           [#if numLexicalStates>1]
              doLexicalStateSwitch(jjmatchedKind);
@@ -396,7 +442,7 @@
         t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
      [#if numLexicalStates >1]
-        t.setLexicalState(this.lexicalState);
+        t.setLexicalState(lexicalState);
      [/#if]        
         return t;
     }
