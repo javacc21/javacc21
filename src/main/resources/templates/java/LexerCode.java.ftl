@@ -104,6 +104,21 @@
           jjrounds[i] = 0x80000000;
     }
 
+    private Token generateEOF(Token specialToken) {
+      if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
+	   jjmatchedKind = 0;
+      Token eof = jjFillToken();
+      tokenLexicalActions();
+      eof.setSpecialToken(specialToken);
+[#list grammar.lexerTokenHooks as tokenHookMethodName]
+      [#if tokenHookMethodName = "CommonTokenAction"]
+         ${tokenHookMethodName}(eof);
+      [#else]
+         eof = ${tokenHookMethodName}(eof);
+      [/#if]
+[/#list]
+      return eof;
+    }
 
   
   [#--  Need to figure out how to simplify this --]
@@ -114,29 +129,12 @@
 
     EOFLoop :
     while (true) {
-        int retval1 = input_stream.beginToken();
-        curChar = (char) (retval1);
-         if (retval1 == -1) { // Handle end of file
-            if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
-			jjmatchedKind = 0;
-            Token eof = jjFillToken();
-            tokenLexicalActions();
-[#list grammar.lexerTokenHooks as tokenHookMethodName]
-      [#if tokenHookMethodName = "CommonTokenAction"]
-         ${tokenHookMethodName}(eof);
-      [#else]
-         eof = ${tokenHookMethodName}(eof);
-      [/#if]
-[/#list]
-
-		    eof.setSpecialToken(specialToken);
-    		return eof;
-       }
-
-[#if lexerData.hasActions()]
+        curChar = (char) input_stream.beginToken();
+        if (curChar == (char) -1) {
+           return generateEOF(specialToken);
+        }
        image.setLength(0);
        matchedCharsLength = 0;
-[/#if]
 
 [#if lexerData.hasMore]
        while (true) {
@@ -175,7 +173,7 @@
                     if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
                     curChar = (char) input_stream.beginToken();
                     if (curChar == (char) -1) {
-                        continue EOFLoop;
+                         return generateEOF(specialToken);
                     }
                 }
     [/#if]    
@@ -310,7 +308,6 @@
                this.lexicalState = newLexicalStates[jjmatchedKind];
             }
           [/#if]
-
             continue EOFLoop;
           }
          [/#if]
