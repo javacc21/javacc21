@@ -157,27 +157,24 @@ public final void backup(int amount) {
     public void setTabSize(int  size) {this.tabSize=tabSize;}
 [/#if]
 
-  private InvalidToken invalidToken; 
-  private Token pendingToken;
+  private InvalidToken invalidToken;
+  private Token previousToken; 
   
   public Token getNextToken() {
-      if (pendingToken != null) {
-          Token result = pendingToken;
-          pendingToken = null;
-          return result;
-      }
       Token tok = null;
       do {
-         tok = nextToken();
-      }  while (tok instanceof InvalidToken);
+          tok = nextToken();
+      } while (tok instanceof InvalidToken);
       if (invalidToken != null) {
-          invalidToken.setNext(tok);
+          invalidToken.setNextToken(tok);
+          tok.setPreviousToken(invalidToken);
           Token it = invalidToken;
-          pendingToken = tok;
           this.invalidToken = null;
           return it;
       }
-      return tok;
+      tok.setPreviousToken(previousToken);
+      if (previousToken != null) previousToken.setNextToken(tok);
+      return previousToken = tok;
  }
 
 [#if grammar.productionTable?size != 0]

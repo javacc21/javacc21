@@ -151,9 +151,15 @@ public boolean isCancelled() {return cancelled;}
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(Token tok) {
     Token result = tok.getNext();
-    if (result == null) {
-      result = token_source.getNextToken();
-      tok.setNext(result);
+    Token previous = null;
+    while (result == null) {
+      Token next = token_source.getNextToken();
+      if (!next.isUnparsed()) {
+        result = next;
+      } else {
+        next.setSpecialToken(previous);
+        previous = next;
+      }
     }
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);

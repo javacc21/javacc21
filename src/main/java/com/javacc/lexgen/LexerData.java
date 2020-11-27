@@ -49,7 +49,7 @@ public class LexerData {
     int stateSetSize;
     TokenSet skipSet, specialSet, moreSet, tokenSet;
     boolean hasEmptyMatch;
-    boolean hasSkipActions, hasMoreActions, hasTokenActions, hasSpecial, hasSkip, hasMore;
+    boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
     private int lohiByteCount;
     private List<NfaState> nonAsciiTableForMethod = new ArrayList<>();
@@ -194,10 +194,6 @@ public class LexerData {
         return this.hasEmptyMatch;
     }
 
-    public boolean getHasTokenActions() {
-        return hasTokenActions;
-    }
-
     public boolean hasTokenAction(int index) {
         return tokenSet.get(index);
     }
@@ -289,7 +285,6 @@ public class LexerData {
             }
         }
         tokenSet.set(0);
-        hasTokenActions = getRegularExpression(0) != null;
 
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
 

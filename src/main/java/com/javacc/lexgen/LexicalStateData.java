@@ -273,8 +273,6 @@ public class LexicalStateData {
                 lexerData.hasSkipActions = true;
             else if (lexerData.moreSet.get(initialState.kind))
                 lexerData.hasMoreActions = true;
-            else
-                lexerData.hasTokenActions = true;
             if (initMatch == 0 || initMatch > initialState.kind) {
                 initMatch = initialState.kind;
                 lexerData.hasEmptyMatch = true;
@@ -376,7 +374,6 @@ public class LexicalStateData {
                 currentRegexp.setMore();
             }
             else {
-                lexerData.hasTokenActions |= (tokenAction != null);
                 lexerData.tokenSet.set(currentRegexp.getOrdinal());
                 currentRegexp.setRegularToken();
             }
