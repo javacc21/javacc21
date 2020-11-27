@@ -170,10 +170,6 @@ public class LexerData {
         return regularExpressions.size();
     }
 
-    public boolean hasActions() {
-        return moreSet.cardinality() >0 || hasSkipActions || hasTokenActions;
-    }
-
     public boolean getHasMore() {
         return hasMore;
     }

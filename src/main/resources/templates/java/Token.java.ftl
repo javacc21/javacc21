@@ -222,7 +222,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      }
 
 
-
     /**
      * This field is used to access special tokens that occur prior to this
      * token, but after the immediately preceding regular (non-special) token.

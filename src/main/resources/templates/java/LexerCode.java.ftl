@@ -88,10 +88,8 @@
     private final int[] jjrounds = new int[${lexerData.stateSetSize}];
     private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
 
-[#if lexerData.hasActions()]
     private final StringBuilder image = new StringBuilder();
     private int matchedCharsLength;
-[/#if]
 
     char curChar;
     
@@ -259,7 +257,7 @@
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
- return matchedToken;
+      return matchedToken;
 
       [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
      }
@@ -302,6 +300,7 @@
           [#elseif lexerData.hasSkipActions]
             tokenLexicalActions();
           [/#if]
+
 
           [#if numLexicalStates>1]
             if (newLexicalStates[jjmatchedKind] != null) {
