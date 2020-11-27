@@ -130,7 +130,6 @@
 [/#list]
 
 		    eof.setSpecialToken(specialToken);
-		    addToken(eof);
     		return eof;
        }
 
@@ -262,7 +261,6 @@
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
- addToken(matchedToken);
  return matchedToken;
 
       [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
@@ -292,7 +290,6 @@
                  matchedToken.setSpecialToken(specialToken);
                  specialToken.setNext(matchedToken);
                  specialToken = matchedToken;
-                 addToken(specialToken);
                }
 
               [#if lexerData.hasSkipActions]

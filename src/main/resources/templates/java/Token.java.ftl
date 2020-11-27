@@ -185,8 +185,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#else]
     private
 [/#if]
-   Token next;
-    
+
+    Token next;
+
+    private Token previousToken, nextToken;
+
+    /**
+     * The next regular (i.e. parsed) token
+     */
     Token getNext() {
        return next;
     }
@@ -194,6 +200,28 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     void setNext(Token next) {
         this.next = next;
     }
+
+
+    /**
+     * The next token of any sort (parsed or unparsed or invalid)
+     */
+     Token getNextToken() {
+         return nextToken;
+     }
+
+     void setNextToken(Token nextToken) {
+         this.nextToken = nextToken;
+     }
+
+     Token getPreviousToken() {
+         return previousToken;
+     }
+
+     void setPreviousToken(Token previousToken) {
+         this.previousToken = previousToken;
+     }
+
+
 
     /**
      * This field is used to access special tokens that occur prior to this

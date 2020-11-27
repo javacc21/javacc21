@@ -58,7 +58,6 @@ public class FileLineMap {
     private final int[] lineOffsets;
     private int startingLine, startingColumn;
     private int bufferPosition, tokenBeginOffset, tokenBeginColumn, tokenBeginLine, line, column;
-    private final List<Token> tokenList;
     
 	[#var PRESERVE_LINE_ENDINGS = grammar.options.preserveLineEndings?string("true", "false")]
 	[#var JAVA_UNICODE_ESCAPE = grammar.options.javaUnicodeEscape?string("true", "false")]
@@ -74,7 +73,6 @@ public class FileLineMap {
         this.inputSource = inputSource;
         this.content = mungeContent(content, ${grammar.options.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE});
         this.lineOffsets = createLineOffsetsTable(this.content);
-        this.tokenList = new LinkedList<>();
         this.setStartPosition(startingLine, startingColumn);
    }
     
@@ -163,10 +161,6 @@ public class FileLineMap {
         return line;
     }
 
-    void addToken(Token token) {
-        tokenList.add(token);
-    }
-    
     // But there is no goto in Java!!!
     void goTo(int line, int column) {
         this.bufferPosition = getOffset(line, column);

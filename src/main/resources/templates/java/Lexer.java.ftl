@@ -129,12 +129,6 @@ public final void backup(int amount) {
   };
 [/#if]
   
-
-void addToken(Token token) {
-    [#if !options.hugeFileSupport]
-       input_stream.addToken(token);
-    [/#if]  
-}  
     int tabSize = 8;
  [#if options.lexerUsesParser]
 
@@ -177,14 +171,12 @@ void addToken(Token token) {
          tok = nextToken();
       }  while (tok instanceof InvalidToken);
       if (invalidToken != null) {
-          addToken(invalidToken);
           invalidToken.setNext(tok);
           Token it = invalidToken;
           pendingToken = tok;
           this.invalidToken = null;
           return it;
       }
-      addToken(tok);
       return tok;
  }
 
