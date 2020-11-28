@@ -187,8 +187,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [/#if]
 
     Token next;
-
-    private Token previousToken, nextToken;
+[#if !grammar.options.hugeFileSupport]
+    private Token previousToken;
+[/#if]    
+    
+    private Token nextToken;
 
     /**
      * The next regular (i.e. parsed) token
@@ -214,11 +217,17 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      }
 
      Token getPreviousToken() {
-         return previousToken;
+         [#if grammar.options.hugeFileSupport]
+           throw new UnsupportedOperationException("With HUGE_FILE_SUPPORT turned on, the previousToken is not cached");
+         [#else]
+           return previousToken;
+         [/#if]
      }
 
      void setPreviousToken(Token previousToken) {
+         [#if !grammar.options.hugeFileSupport]
          this.previousToken = previousToken;
+         [/#if]
      }
 
 
@@ -234,7 +243,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * immediately follow it (without an intervening regular token).  If there
      * is no such token, this field is null.
      */
-[#if !grammar.options.legacyAPI]private[/#if]     
+[#if grammar.options.legacyAPI]public[#else]public[/#if]     
     Token specialToken;
     
     public Token getSpecialToken() {
@@ -270,13 +279,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.inputSource = inputSource;
     }
     
-   public boolean isUnparsed() {
+    public boolean isUnparsed() {
         return unparsed;
     }
     
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
     }
+
 [#if !grammar.options.userDefinedLexer]
     /** 
      * Utility method to merge two tokens into a single token of a given type.
@@ -285,8 +295,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         [#var lastArg = "t1.getFileLineMap()"]
         [#if grammar.options.hugeFileSupport][#set lastArg = "t1.getInputSource()"][/#if]
         Token merged = newToken(type, t1.getImage() + t2.getImage(), ${lastArg});
-        merged.setBeginLine(t1.getBeginLine());
+        merged.setSpecialToken(t1.getSpecialToken());
         merged.setPreviousToken(t1.getPreviousToken());
+        merged.setBeginLine(t1.getBeginLine());
         merged.setBeginColumn(t1.getBeginColumn());
         merged.setEndColumn(t2.getEndColumn());
         merged.setEndLine(t2.getEndLine());
@@ -443,7 +454,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getLocation() {
          return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
      }
-   
 [/#if]     
     
 [#if grammar.options.treeBuildingEnabled]

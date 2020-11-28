@@ -154,7 +154,7 @@ public boolean isCancelled() {return cancelled;}
     Token previous = null;
     while (result == null) {
       Token next = token_source.getNextToken();
-      if (previous != null) {
+      if (previous != null && !(previous instanceof InvalidToken)) {
         next.setSpecialToken(previous);
       }
       previous = next;

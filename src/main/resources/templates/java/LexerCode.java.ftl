@@ -217,10 +217,7 @@
        if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
           + addEscapes(input_stream.getSuffix(jjmatchedPos + 2)) + ") ******\n");
  
- [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
-//          if (tokenSet.get(jjmatchedKind)) {
-          if (tokenSet.get(jjmatchedKind) || specialSet.get(jjmatchedKind)) {
- [/#if]
+       if (tokenSet.get(jjmatchedKind) || specialSet.get(jjmatchedKind)) {
 
          matchedToken = jjFillToken();
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
@@ -237,15 +234,13 @@
  
  [#if numLexicalStates>1]
       if (newLexicalStates[jjmatchedKind] != null) {
+          matchedToken.setFollowingLexicalState(newLexicalStates[jjmatchedKind]);
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
-      if (specialSet.get(jjmatchedKind)) {
-         matchedToken.setUnparsed(true);
-      }
+      matchedToken.setUnparsed(specialSet.get(jjmatchedKind));
       return matchedToken;
 
-      [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
      }
          [#if lexerData.hasSkip || lexerData.hasSpecial]
           
@@ -256,11 +251,9 @@
             [/#if]
 
           {
-
           [#if lexerData.hasSkipActions]
                  tokenLexicalActions();
           [/#if]
-
           [#if numLexicalStates>1]
             if (newLexicalStates[jjmatchedKind] != null) {
                this.lexicalState = newLexicalStates[jjmatchedKind];
@@ -269,7 +262,6 @@
 
             continue EOFLoop;
           }
-         [/#if]
          [#if lexerData.hasMore]
           [#if lexerData.hasMoreActions]
           tokenLexicalActions();

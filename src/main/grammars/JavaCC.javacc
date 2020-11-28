@@ -516,14 +516,6 @@ INJECT Token :
         } 
         return image;
     }
-
-    public Token getSpecialToken() {
-        return specialToken;
-    }
-
-    public void clearSpecialToken() {
-        specialToken = null;
-    }
 }
 
 
@@ -944,7 +936,7 @@ INJECT BNFProduction :
     
     public void adjustFirstToken(Token t) {
         this.leadingComments = t.getLeadingComments();
-        t.clearSpecialToken();
+        t.setSpecialToken(null);
     }
 
     public String getLeadingComments() {

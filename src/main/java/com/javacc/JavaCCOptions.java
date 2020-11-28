@@ -643,21 +643,7 @@ public class JavaCCOptions {
      * Some warnings if incompatible options are set.
      */
     public void sanityCheck() {
-        boolean baseSourceDefined = getBaseSourceDirectory().length() >0;
         boolean nodePackageDefined = getNodePackage().length() >0;
-//        if (getLookahead() > 1 && !getForceLaCheck()) {
-//            grammar.addWarning(null,
-//                    "Lookahead adequacy checking not being performed since option LOOKAHEAD "
-//                            + "is more than 1.  Set option FORCE_LA_CHECK to true to force checking.");
-//        }
-        if (!baseSourceDefined) {
-            if (getNodePackage().length() > 0) {
-                String s = "You have defined the NODE_PACKAGE option but no BASE_SRC_DIR."
-                            + " The option will be ignored since it only makes sense relative "
-                            + "to a specified base directory for source files.";
-                grammar.addWarning(null, s);
-            }
-        }
 
         if (!getTreeBuildingEnabled()) {
             String msg = "You have specified the OPTION_NAME option but it is "

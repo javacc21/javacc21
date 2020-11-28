@@ -6,7 +6,6 @@ package ${grammar.parserPackage};
 /**
  * Token subclass to represent lexically invalid input
  */
- 
 public class InvalidToken extends Token {
 
 [#if grammar.options.hugeFileSupport || grammar.options.userDefinedLexer]
@@ -18,16 +17,15 @@ public class InvalidToken extends Token {
        super(TokenType.INVALID, image, inputSource);
     }
 [/#if]    
-/*    
-    public InvalidToken() {
-       super(TokenType.INVALID, null, "input");
-    }
-*/        
     public String getNormalizedText() {
         return "Lexically Invalid Input:" + getImage();
     }
     
-    public boolean isDirty() {
-        return true;
+    public boolean isUnparsed() {
+        [#if grammar.options.faultTolerant]
+          return false;
+        [#else]
+          return true;
+        [/#if]
     }
 }
