@@ -29,8 +29,6 @@
  */
 
 JAVA_UNICODE_ESCAPE;
-//  TOKENS_ARE_NODES=false;
-// UNPARSED_TOKENS_ARE_NODES;
 PARSER_PACKAGE="org.parsers.java";
 NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
@@ -50,17 +48,20 @@ INJECT PARSER_CLASS : {
         if (img.length() == 3) {
           Token next = Token.split(gt.getNext(), 1, GT, GT);
           gt.setNext(next);
+//          gt.setNextToken(next);
         }
         return gt;
     }
     else if (!inGenericTypeSpec && img.length() ==1) {
       // In this case we do the reverse. We merge 2 (or 3) GT tokens into a right shift operator
+//      Token next = tok.getNextToken();
       Token next = tok.getNext();
-      if (next != null && next.getType() == GT && next.getBeginColumn() == tok.getBeginColumn()+1) {
+      if (next != null && next.getType() == GT) {// && next.getBeginColumn() == tok.getBeginColumn()+1) {
+//        Token nextNext = next.getNextToken();
         Token nextNext = next.getNext();
         Token merged = Token.merge(tok, next, RSIGNEDSHIFT);
-        if (nextNext != null && nextNext.getType() == GT && nextNext.getBeginColumn() == next.getBeginColumn() +1) {
-          merged = Token.merge(merged, nextNext, RUNSIGNEDSHIFT);
+        if (nextNext != null && nextNext.getType() == GT) {// && nextNext.getBeginColumn() == next.getBeginColumn() +1) {
+            merged = Token.merge(merged, nextNext, RUNSIGNEDSHIFT);
         } 
         return merged;
       }
@@ -1811,10 +1812,6 @@ SynchronizedStatement :
 ;
 
 ClassicTryStatement ClassicTryStatement :
-/*
- * Semantic check required here to make sure that at least one
- * finally/catch is present.
- */
   "try"
   =>|+1
   Block 

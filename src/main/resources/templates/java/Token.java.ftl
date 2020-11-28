@@ -277,17 +277,21 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
     }
-
+[#if !grammar.options.userDefinedLexer]
     /** 
      * Utility method to merge two tokens into a single token of a given type.
      */
     static Token merge(Token t1, Token t2, TokenType type) {
-        Token merged = new Token(type, t1.getImage() + t2.getImage(), t1.getInputSource());
+        [#var lastArg = "t1.getFileLineMap()"]
+        [#if grammar.options.hugeFileSupport][#set lastArg = "t1.getInputSource()"][/#if]
+        Token merged = newToken(type, t1.getImage() + t2.getImage(), ${lastArg});
         merged.setBeginLine(t1.getBeginLine());
+        merged.setPreviousToken(t1.getPreviousToken());
         merged.setBeginColumn(t1.getBeginColumn());
         merged.setEndColumn(t2.getEndColumn());
         merged.setEndLine(t2.getEndLine());
         merged.setNext(t2.getNext());
+        merged.setNextToken(t2.getNextToken());
         return merged;
     }
 
@@ -298,21 +302,27 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     static Token split(Token tok, int length, TokenType type1, TokenType type2) {
         String img1 = tok.getImage().substring(0, length);
         String img2 = tok.getImage().substring(length);
-        Token t1 = new Token(type1, img1, tok.getInputSource());
-        Token t2 = new Token(type2, img2, tok.getInputSource());
+        [#set lastArg = "tok.getFileLineMap()"]
+        [#if grammar.options.hugeFileSupport][#set lastArg = "tok.getInputSource()"][/#if]
+        Token t1 = newToken(type1, img1, ${lastArg});
+        Token t2 = newToken(type2, img2, ${lastArg});
         t1.setBeginColumn(tok.getBeginColumn());
         t1.setEndColumn(tok.getBeginColumn() + length -1);
         t1.setBeginLine(tok.getBeginLine());
         t1.setEndLine(tok.getBeginLine());
+        t1.setPreviousToken(tok.getPreviousToken());
         t2.setBeginColumn(t1.getEndColumn() +1);
         t2.setEndColumn(tok.getEndColumn());
         t2.setBeginLine(tok.getBeginLine());
         t2.setEndLine(tok.getEndLine());
         t1.setNext(t2);
+        t1.setNextToken(t2);
+        t2.setPreviousToken(t1);
         t2.setNext(tok.getNext());
+        t2.setNextToken(tok.getNextToken());
         return t1;
     }
-    
+[/#if]    
     public void clearChildren() {}
     
     public String getNormalizedText() {
