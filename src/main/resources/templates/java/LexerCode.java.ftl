@@ -120,6 +120,7 @@
 
     EOFLoop :
     while (true) {
+        if (specialToken != null) return specialToken;
         curChar = (char)  input_stream.beginToken();
         if (curChar == (char) -1) {
            return generateEOF(specialToken);

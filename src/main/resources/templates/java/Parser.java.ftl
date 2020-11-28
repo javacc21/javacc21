@@ -154,12 +154,13 @@ public boolean isCancelled() {return cancelled;}
     Token previous = null;
     while (result == null) {
       Token next = token_source.getNextToken();
+      if (previous != null) {
+        next.setSpecialToken(previous);
+      }
+      previous = next;
       if (!next.isUnparsed()) {
         result = next;
-      } else {
-        next.setSpecialToken(previous);
-        previous = next;
-      }
+      } 
     }
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);
