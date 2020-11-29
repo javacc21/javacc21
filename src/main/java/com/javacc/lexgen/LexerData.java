@@ -47,7 +47,7 @@ public class LexerData {
     private List<RegularExpression> regularExpressions = new ArrayList<>();
     
     int stateSetSize;
-    TokenSet skipSet, specialSet, moreSet, tokenSet;
+    private TokenSet skipSet, specialSet, moreSet, tokenSet;
     boolean hasEmptyMatch;
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
