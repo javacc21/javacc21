@@ -1,5 +1,3 @@
-<?xml version='1.0' encoding='ISO-8859-1' ?>
-
 <project name="Java Parser" default="compile">
 
 <target name="clean">
@@ -13,7 +11,7 @@
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
-  <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
+  <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
     <arg value="-q"/>
     <arg value="-D:${basedir}/../../examples/java" />
     <arg value="${basedir}/../../src/main/grammars/Java.javacc"/>

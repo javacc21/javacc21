@@ -87,13 +87,13 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * of this token; endLine and endColumn describe the position of the
      * last character of this token.
      */
-[#if !grammar.options.legacyAPI]private[/#if]      
+[#if grammar.options.legacyAPI]public[#else]private[/#if]      
     int beginLine, beginColumn, endLine, endColumn;
 
     /**
      * The string image of the token.
      */
-[#if !grammar.options.legacyAPI]private[/#if]      
+[#if grammar.options.legacyAPI]public[#else]private[/#if]      
     String image;
     
     public String getImage() {
@@ -185,18 +185,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#else]
     private
 [/#if]
-
     Token next;
-[#if !grammar.options.hugeFileSupport]
-    private Token previousToken;
-[/#if]    
+    private Token previousToken, nextToken;
     
-    private Token nextToken;
 
     /**
      * The next regular (i.e. parsed) token
      */
-    Token getNext() {
+    public Token getNext() {
        return next;
     }
     
@@ -208,7 +204,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     /**
      * The next token of any sort (parsed or unparsed or invalid)
      */
-     Token getNextToken() {
+     public Token getNextToken() {
          return nextToken;
      }
 
@@ -216,7 +212,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
          this.nextToken = nextToken;
      }
 
-     Token getPreviousToken() {
+     public Token getPreviousToken() {
          [#if grammar.options.hugeFileSupport]
            throw new UnsupportedOperationException("With HUGE_FILE_SUPPORT turned on, the previousToken is not cached");
          [#else]
@@ -225,9 +221,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      }
 
      void setPreviousToken(Token previousToken) {
-         [#if !grammar.options.hugeFileSupport]
+         [#if grammar.options.hugeFileSupport] if (previousToken == null || previousToken.isUnparsed())[/#if]
          this.previousToken = previousToken;
-         [/#if]
      }
 
 
@@ -243,13 +238,20 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * immediately follow it (without an intervening regular token).  If there
      * is no such token, this field is null.
      */
-[#if grammar.options.legacyAPI]public[#else]public[/#if]     
+[#if grammar.options.legacyAPI]public[#else]private[/#if]
+
     Token specialToken;
-    
+
+    @Deprecated
     public Token getSpecialToken() {
-         return specialToken;
+        [#if grammar.options.legacyAPI]
+           return specialToken;
+        [#else]
+           return previousToken == null || !previousToken.isUnparsed() ? null : previousToken;
+        [/#if] 
     }
     
+    @Deprecated 
     public void setSpecialToken(Token specialToken) {
          this.specialToken = specialToken;
     }
