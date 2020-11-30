@@ -175,11 +175,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
       private Token consumeToken(TokenType expectedType) throws ParseException {
         Token oldToken = currentToken;
         currentToken = nextToken(currentToken);
-[#if grammar.options.faultTolerant]        
-        while (currentToken.getType() == TokenType.INVALID) {
-            // TODO
-        }
-[/#if]        
         if (currentToken.getType() != expectedType) {
             handleUnexpectedTokenType(expectedType, oldToken) ;
         }
@@ -203,6 +198,14 @@ void dumpLookaheadCallStack(PrintStream ps) {
   }
  
   private void handleUnexpectedTokenType(TokenType expectedType, Token oldToken) throws ParseException {
+      [#if grammar.options.faultTolerant]
+         Token next = nextToken(oldToken);
+         if (next.getType() == expectedType) {
+             oldToken.setSkipped(true);
+             currentToken = next;
+             return;
+         }
+      [/#if]
        throw new ParseException(currentToken, EnumSet.of(expectedType), parsingStack);
   }
   

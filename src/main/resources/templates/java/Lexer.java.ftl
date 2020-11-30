@@ -170,6 +170,9 @@ public final void backup(int amount) {
           tok.setPreviousToken(invalidToken);
           Token it = invalidToken;
           this.invalidToken = null;
+[#if grammar.options.faultTolerant]
+          it.setUnparsed(true);
+[/#if]
           return it;
       }
       tok.setPreviousToken(previousToken);

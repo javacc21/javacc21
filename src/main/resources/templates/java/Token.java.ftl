@@ -149,19 +149,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [/#if]
 
 [#if grammar.options.faultTolerant]
-    List<Token> ignoredTokens;
-
-    List<Token> getIgnoredTokens() {
-        if (ignoredTokens == null) {
-            ignoredTokens = new ArrayList<>();
-        }
-        return ignoredTokens;
+    private boolean skipped;
+    boolean isSkipped() {
+        return skipped;
     }
 
-    void addIgnoredToken(Token tok) {
-        getIgnoredTokens().add(tok);
+    void setSkipped(boolean skipped) {
+        this.skipped = skipped;
     }
-
 [/#if]
 
 [#if grammar.options.legacyAPI]

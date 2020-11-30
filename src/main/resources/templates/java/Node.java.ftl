@@ -238,7 +238,20 @@ public interface Node extends Comparable<Node>
         }
         return null;
     }
-    
+
+[#if grammar.options.tokensAreNodes]
+    default Token getFirstToken() {
+        Node first = getFirstChild();
+        if (first instanceof Token) {
+           return (Token) first;
+        }
+        if (first == null) {
+            return null;
+        }
+        return first.getFirstToken(); 
+    }
+[/#if]    
+
     default Node findNodeAt(int line, int column) {
         if (!isIncluded(line, column)) {
             return null;

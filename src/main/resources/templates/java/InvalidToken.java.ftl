@@ -20,12 +20,4 @@ public class InvalidToken extends Token {
     public String getNormalizedText() {
         return "Lexically Invalid Input:" + getImage();
     }
-    
-    public boolean isUnparsed() {
-        [#if grammar.options.faultTolerant]
-          return false;
-        [#else]
-          return true;
-        [/#if]
-    }
 }
