@@ -149,8 +149,13 @@ public boolean isCancelled() {return cancelled;}
 
   // If tok already has a next field set, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
-  final private Token nextToken(Token tok) {
+  final private Token nextToken(final Token tok) {
     Token result = tok.getNext();
+    if (result != null) {
+[#list grammar.parserTokenHooks as methodName] 
+    result = ${methodName}(result);
+[/#list]
+    }
     Token previous = null;
     while (result == null) {
       Token next = token_source.getNextToken();
@@ -158,13 +163,13 @@ public boolean isCancelled() {return cancelled;}
         next.setSpecialToken(previous);
       }
       previous = next;
+[#list grammar.parserTokenHooks as methodName] 
+      next = ${methodName}(next);
+[/#list]
       if (!next.isUnparsed()) {
         result = next;
       } 
     }
-[#list grammar.parserTokenHooks as methodName] 
-    result = ${methodName}(result);
-[/#list]
     tok.setNext(result);
     return result;
   }
