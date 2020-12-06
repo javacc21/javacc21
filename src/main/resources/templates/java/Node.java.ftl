@@ -35,6 +35,7 @@ package ${grammar.parserPackage};
 [/#if]
 import java.util.*;
 import java.lang.reflect.*;
+import java.util.function.Predicate;
 [#if grammar.options.freemarkerNodes]
 import freemarker.template.*;
 [/#if]
@@ -357,30 +358,26 @@ public interface Node extends Comparable<Node>
 	    return result;
     }
 
-    default List<Node> descendants(Filter<Node> filter) {
-        return descendants(Node.class, filter);
+    default List<Node> descendants(Predicate<Node> predicate) {
+        return descendants(Node.class, predicate);
     }
 
     default <T extends Node> List<T> descendants(Class<T> clazz) {
         return descendants(clazz, null);
     }
 
-    default <T extends Node> List<T> descendants(Class<T> clazz, Filter<T> filter) {
+    default <T extends Node> List<T> descendants(Class<T> clazz, Predicate<T> predicate) {
        List<T> result = new ArrayList<>();
        for (Node child : children()) {
           if (clazz.isInstance(child)) {
               T t = clazz.cast(child);
-              if (filter == null || filter.accept(t)) {
+              if (predicate == null || predicate.test(t)) {
                   result.add(t);
               }
           }
-          result.addAll(child.descendants(clazz, filter)); 
+          result.addAll(child.descendants(clazz, predicate)); 
        }
        return result;
-    }
-    
-    public interface Filter<T extends Node> {
-       boolean accept(T node);
     }
     
 	static abstract public class Visitor {
