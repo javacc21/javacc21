@@ -30,28 +30,10 @@
  */
  --]
 
- [#-- This template contains the core logic for generating the various parser/lookahead routines. --]
+[#-- This template contains the core logic for generating the various parser routines. --]
 
- [#var TT = "TokenType.", UNLIMITED=2147483647]
+[#import "CommonUtils.java.ftl" as CU]
 
- [#if !grammar.options.legacyAPI && grammar.parserPackage?has_content]
-   [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]
-   [#set TT=""]
- [/#if]
- 
-
-[#macro Generate]
-     [@Productions/]
-    [@firstSetVars/]
-    [#if grammar.options.faultTolerant]
-    [@finalSetVars/]
-    [@followSetVars/]  
-    [/#if]
-    [#if grammar.choicePointExpansions?size !=0]
-       [@BuildLookaheads /]
-     [/#if]
-[/#macro]
- 
 [#macro Productions] 
  //=================================
  // Start of methods for BNF Productions
@@ -63,118 +45,8 @@
   [/#list]
 [/#macro]
 
-[#macro BuildLookaheads]
-  private final boolean scanToken(TokenType expectedType) {
-     if (hitFailure) return false;
-     if (remainingLookahead <=0) return true;
-     currentLookaheadToken = nextToken(currentLookaheadToken);
-     TokenType type = currentLookaheadToken.getType();
-     if (type != expectedType) return false;
-     if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
-//     if (type == upToTokenType) remainingLookahead = 0;
-     return true;
-  }
-
-  private final boolean scanToken(EnumSet<TokenType> types) {
-     if (hitFailure) return false;
-     if (remainingLookahead <=0) return true;
-     currentLookaheadToken = nextToken(currentLookaheadToken);
-     TokenType type = currentLookaheadToken.getType();
-     if (!types.contains(type)) return false;
-     if (remainingLookahead != Integer.MAX_VALUE) remainingLookahead--;
-//     if (type == upToTokenType) remainingLookahead = 0;
-     return true;
-  }
-
-//====================================
- // Lookahead Routines
- //====================================
-   [#list grammar.choicePointExpansions as expansion]
-      [#if expansion.parent.class.simpleName != "BNFProduction"]
-        ${BuildScanRoutine(expansion)}
-      [/#if]
-   [/#list]
-   [#list grammar.expansionsNeedingPredicate as expansion]
-       ${BuildPredicateRoutine(expansion)}
-   [/#list]
-   [#list grammar.allLookaheads as lookahead]
-[#--       ${firstSetVar(lookahead)} --]
-      [#if lookahead.nestedExpansion??]
-       ${BuildLookaheadRoutine(lookahead)}
-     [/#if]
-   [/#list]
-   [#list grammar.allLookBehinds as lookBehind]
-      ${BuildLookBehindRoutine(lookBehind)}
-   [/#list]
-   [#--list grammar.allAssertions as assertion]
-     [#if !assertion.expansion?is_null]
-      ${BuildLookaheadRoutine(assertion.expansion)}
-     [/#if]
-   [/#list--]
-   [#list grammar.parserProductions as production]
-      ${BuildProductionLookaheadMethod(production)}
-   [/#list]
-[/#macro]   
-
-[#macro firstSetVars]
-    //=================================
-     // EnumSets that represent the various expansions' first set (i.e. the set of tokens with which the expansion can begin)
-     //=================================
-    [#list grammar.expansionsForFirstSet as expansion]
-          [@firstSetVar expansion/]
-    [/#list]
-
-[/#macro]
-
-[#macro finalSetVars]
-    //=================================
-     // EnumSets that represent the various expansions' final set (i.e. the set of tokens with which the expansion can end)
-     //=================================
-    [#list grammar.expansionsForFinalSet as expansion]
-          [@finalSetVar expansion/]
-    [/#list]
-[/#macro]
-
-
-[#macro followSetVars]
-    //=================================
-     // EnumSets that represent the various expansions' follow set (i.e. the set of tokens that can immediately follow this)
-     //=================================
-    [#list grammar.expansionsForFollowSet as expansion]
-          [@followSetVar expansion/]
-    [/#list]
-[/#macro]
-
-[#macro firstSetVar expansion]
-    [@enumSet expansion.firstSetVarName expansion.firstSet.tokenNames /]
-[/#macro]
-
-[#macro finalSetVar expansion]
-    [@enumSet expansion.finalSetVarName expansion.finalSet.tokenNames /]
-[/#macro]            
-
-[#macro followSetVar expansion]
-    [@enumSet expansion.followSetVarName expansion.followSet.tokenNames/]
-[/#macro]            
-
-[#macro enumSet varName tokenNames]
-   [#if tokenNames?size=0]
-       static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
-   [#else]
-       static private final EnumSet<TokenType> ${varName} = EnumSet.of(
-       [#list tokenNames as type]
-          [#if type_index > 0],[/#if]
-          ${TT}${type} 
-       [/#list]
-     ); 
-   [/#if]
-[/#macro]
-
 [#macro ParserProduction production]
-    [@firstSetVar production.expansion/]
-    [#if grammar.options.faultTolerant]
-      [@finalSetVar production.expansion/]
-    [/#if]
+    [@CU.firstSetVar production.expansion/]
     ${production.leadingComments}
 // ${production.inputSource}, line ${production.beginLine}
     final ${production.accessMod!"public"} 
@@ -194,11 +66,10 @@
    [#if expansion.simpleName != "ExpansionSequence"]
   // Code for ${expansion.simpleName} specified on line ${expansion.beginLine} of ${expansion.inputSource}
   [/#if]
-    [#var forced=expansion.forced, nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, forcedVarName, closeCondition = "true", callStackSizeVar]
+    [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, closeCondition = "true", callStackSizeVar]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
-      [#set forced = production.forced || forced]
     [/#if]
     [#if grammar.options.treeBuildingEnabled]
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.options.nodeDefaultVoid)
@@ -206,17 +77,10 @@
     [/#if]
     [#if buildTreeNode]
         [@setupTreeVariables .scope /]
-        [#if grammar.options.faultTolerant]
-         [#if forced]
-              boolean ${forcedVarName} = this.tolerantParsing;
-          [#else]
-              boolean ${forcedVarName} = this.tolerantParsing && currentNTForced;
-          [/#if]
-        [/#if]
       [@createNode treeNodeBehavior nodeVarName /]
           ParseException ${parseExceptionVar} = null;
-          [#set newVarIndex = newVarIndex +1]
-          [#set callStackSizeVar = "callStackSize" + newVarIndex]
+          [#--set callStackSizeVar = "callStackSize" + CU.newID()--]
+          [#set callStackSizeVar = CU.newVarName("callStackSize")]
           int ${callStackSizeVar} = parsingStack.size();
         [#-- We want the very first java code block in a production 
          to be injected *before* the try block. This is for rather hypertechnical 
@@ -236,25 +100,12 @@
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
-      [#if !grammar.options.faultTolerant]
              throw e;
-      [#else]             
-             if (trace_enabled) LOGGER.info("We have a parse error but are in in fault-tolerant mode, so we try to handle it.");
-          [#if production?? && returnType == production.nodeName]
-             [#-- We just assume that if the return type is the same as the type of the node, we want to return CURRENT_NODE.
-                   This is not theoretically correct, but will probably be true about 99% of the time. Maybe REVISIT. --]
-              return ${nodeVarName};
-          
-             [#-- This is a bit screwy will not work if the return type is a primitive type --]
-              return null;
-          [/#if]
-[/#if]	
          }
          finally {
              if (${parseExceptionVar} == null) {
                 restoreCallStack(${callStackSizeVar});
              }
-[#if !grammar.options.faultTolerant]
              if (buildTree) {
                  if (${parseExceptionVar} == null) {
                      closeNodeScope(${nodeVarName}, ${closeCondition});
@@ -263,38 +114,7 @@
                      clearNodeScope();
                  }
              }
-[#else]
-             if (buildTree) {
-                 if (${parseExceptionVar} == null) {
-                     closeNodeScope(${nodeVarName}, ${closeCondition});
-                 }
-                else {
-                     if (trace_enabled) LOGGER.warning("ParseException ${parseExceptionVar}: " + ${parseExceptionVar}.getMessage());
-                    ${nodeVarName}.setParseException(${parseExceptionVar});
-                     if (${forcedVarName}) { 
-                        restoreCallStack(${callStackSizeVar});
-                        Token virtualToken = insertVirtualToken(${TT}${expansion.finalSet.firstTokenName}); 
-                        resetNextToken();
-                        if (tokensAreNodes) {
-                            currentNodeScope.add(virtualToken);
-                        } 
-                        String message = "Inserted virtual token of type " + virtualToken.getType()
-                                                  +"\non line " + virtualToken.getBeginLine()
-                                                  + ", column " + virtualToken.getBeginColumn()
-                                                   + " of " + token_source.getInputSource()
-                                                  +"\n to complete expansion in ${currentProduction.name}\n";
-                        message += ${parseExceptionVar}.getMessage(); 
-                        addParsingProblem(new ParsingProblem(message, ${nodeVarName})); 
-                      closeNodeScope(${nodeVarName}, true); 
-                   } else {
-                        closeNodeScope(${nodeVarName}, false);
-                        if (trace_enabled) LOGGER.info("Rethrowing " + "${parseExceptionVar}");
-                      throw ${parseExceptionVar};
-                   }
-                }
-        }
-[/#if]  
-        this.currentlyParsedProduction = prevProduction;
+             this.currentlyParsedProduction = prevProduction;
          }       
           ${grammar.utils.popNodeVariableName()!}
     [/#if]
@@ -304,7 +124,6 @@
 [#macro setupTreeVariables callingScope]
     [#set nodeNumbering = nodeNumbering +1]
     [#set nodeVarName = currentProduction.name + nodeNumbering in callingScope]
-    [#set forcedVarName = callingScope.nodeVarName+"forced" in callingScope]
     ${grammar.utils.pushNodeVariableName(callingScope.nodeVarName)!}
     [#set parseExceptionVar = "parseException"+nodeNumbering in callingScope]
     [#if !callingScope.treeNodeBehavior??]
@@ -393,11 +212,7 @@
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
-  [#if !grammar.options.faultTolerant]       
-       consumeToken(${TT}${regexp.label});
-   [#else]
-        consumeToken(${TT}${regexp.label}, ${regexp.forced?string("true", "false")});
-   [/#if]
+       consumeToken(${CU.TT}${regexp.label});
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock]
@@ -434,10 +249,6 @@
 
 [#macro BuildCodeNonTerminal nonterminal]
    pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource}", ${nonterminal.beginLine}, ${nonterminal.beginColumn}); 
-   [#if grammar.options.faultTolerant && !nonterminal.production.forced]
-     [@newVar type="boolean" init="currentNTForced"/]
-    currentNTForced = ${nonterminal.forced?string("true", "false")};
-   [/#if]
    try {
    [#if !nonterminal.LHS??]
        ${nonterminal.name}(${nonterminal.args!});
@@ -446,9 +257,6 @@
     [/#if]
     } finally {
         popCallStack();
-    [#if grammar.options.faultTolerant && !nonterminal.production.forced]
-        currentNTForced = boolean${newVarIndex};
-    [/#if]
     }
 [/#macro]
 
@@ -563,7 +371,7 @@
    [#elseif expansion.firstSet.tokenNames?size < 5] 
       [#list expansion.firstSet.tokenNames as name]
           nextTokenType [#if name_index ==0]() [/#if]
-          == ${TT}${name} 
+          == ${CU.TT}${name} 
          [#if name_has_next] || [/#if] 
       [/#list]
    [#else]
@@ -575,147 +383,8 @@
 [#var nodeNumbering = 0]
 [#var NODE_USES_PARSER = grammar.options.nodeUsesParser]
 [#var NODE_PREFIX = grammar.options.nodePrefix]
-[#var currentProduction, currentLookaheadExpansion]
+[#var currentProduction]
 
-
-[#--
-   Generates the routine for an explicit lookahead
-   that is used in a nested lookahead.
- --]
-[#macro BuildLookaheadRoutine lookahead]
-  [#if lookahead.nestedExpansion??]
-     private final boolean ${lookahead.nestedExpansion.scanRoutineName}() {
-        int prevRemainingLookahead = remainingLookahead;
-        boolean prevHitFailure = hitFailure;
-        Token prevScanAheadToken = currentLookaheadToken;
-        try {
-          [@BuildScanCode lookahead.nestedExpansion/]
-          return !hitFailure;
-        }
-        finally {
-           currentLookaheadToken = prevScanAheadToken;
-           remainingLookahead = prevRemainingLookahead;
-           hitFailure = prevHitFailure;
-        }
-     }
-   [/#if]
-[/#macro]
-
-[#macro BuildLookaheadRoutine2 expansion]
-     private final boolean ${expansion.scanRoutineName}() {
-        int prevRemainingLookahead = remainingLookahead;
-        boolean prevHitFailure = hitFailure;
-        Token prevScanAheadToken = currentLookaheadToken;
-        currentLookaheadToken = currentToken;
-        try {
-          [@BuildScanCode lookahead.nestedExpansion/]
-          return !hitFailure;
-        }
-        finally {
-           currentLookaheadToken = prevScanAheadToken;
-           remainingLookahead = prevRemainingLookahead;
-           hitFailure = prevHitFailure;
-        }
-     }
-[/#macro]
-
-[#macro BuildLookBehindRoutine lookBehind]
-    private final boolean ${lookBehind.routineName}() {
-       Iterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
-       boolean foundProduction = false;
-       [#var justSawEllipsis = false]
-       [#list lookBehind.path as element]
-          [#var elementNegated = (element[0] == "~")]
-          [#if elementNegated][#set element = element[1..]][/#if]
-          [#if element == "..."]
-             [#set justSawEllipsis = true]
-          [#elseif element = "."]
-             [#set justSawEllipsis = false]
-             if (!stackIterator.hasNext()) {
-                return ${bool(lookBehind.negated)};
-             }
-             stackIterator.next();
-         [#else]
-             [#var exclam = elementNegated?string("!", "")]
-             [#if justSawEllipsis]
-               foundProduction = false;
-               while (stackIterator.hasNext() && !foundProduction) {
-                  NonTerminalCall ntc = stackIterator.next();
-                  if (${exclam}ntc.productionName.equals("${element}")) {
-                     foundProduction = true;
-                  }
-               }
-               if (!foundProduction) {
-                  return ${bool(lookBehind.negated)};
-               }
-           [#else]
-               [#var exclam = elementNegated?string("", "!")]
-               if (!stackIterator.hasNext()) {
-                  return ${bool(lookBehind.negated)};
-               } else {
-                  NonTerminalCall ntc = stackIterator.next();
-                  if (${exclam}ntc.productionName.equals("${element}")) {
-                     return ${bool(lookBehind.negated)};
-                  }
-               }
-           [/#if]
-           [#set justSawEllipsis = false] 
-         [/#if]
-       [/#list]
-       [#if lookBehind.hasEndingSlash]
-           return [#if !lookBehind.negated]![/#if]stackIterator.hasNext();
-       [#else]
-           return ${bool(!lookBehind.negated)};
-       [/#if]
-    }
-[/#macro]
-
-[#macro BuildProductionLookaheadMethod production]
-   private final boolean ${production.lookaheadMethodName}() {
-      [#if production.javaCode?? && production.javaCode.appliesInLookahead]
-          ${production.javaCode}
-       [/#if]
-     ${BuildScanCode(production.expansion)}
-     return true;
-   }
-[/#macro]
-
-[#macro BuildScanRoutine expansion]
- [#if !expansion.singleToken || expansion.requiresPredicateMethod]
-  private final boolean ${expansion.scanRoutineName}() {
-   [#if !expansion.insideLookahead]
-     if (hitFailure) return false;
-     if (remainingLookahead <=0) return true;
-     ${BuildPredicateCode(expansion)}
-   [/#if]
-     ${BuildScanCode(expansion)}
-      return true;
-  }
- [/#if]
-[/#macro]
-
-[#macro BuildPredicateRoutine expansion] 
-  [#var lookaheadAmount = expansion.lookaheadAmount]
-  [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
-   private final boolean ${expansion.predicateMethodName}() {
-     try {
-         currentLookaheadToken= currentToken;
-         remainingLookahead= ${lookaheadAmount};
-         hitFailure = false;
-      [#if expansion.hasScanLimit || expansion.hasInnerScanLimit]
-         stopAtScanLimit= ${bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
-      [/#if]
-      ${BuildPredicateCode(expansion)}
-      [#if !expansion.hasSeparateSyntacticLookahead]
-         ${BuildScanCode(expansion)}
-      [/#if]
-      return true;
-      }
-     finally {
-        currentLookaheadToken = null;
-     }
-   }
-[/#macro]
 
 [#macro BuildAssertionRoutine assertion]
     [#var methodName = assertion.predicateMethodName?replace("scan$", "assert$")]
@@ -761,218 +430,3 @@
           throw new ParseException(this, "${assertion.message?j_string}");
         }
 [/#macro]
-
-[#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
-[#macro BuildPredicateCode expansion]
-     [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
-       if (!(${expansion.semanticLookahead})) return false;
-     [/#if]
-     [#if expansion.hasLookBehind]
-       if (!${expansion.lookBehind.routineName}()) return false;
-     [/#if]
-     [#if expansion.hasSeparateSyntacticLookahead]
-      if (
-      [#if !expansion.lookahead.negated]![/#if]
-        ${expansion.lookaheadExpansion.scanRoutineName}())
-        return false;
-      [/#if]
-[/#macro]
-
-
-
-[#--
-   Macro to build the lookahead code for an expansion.
-   This macro just delegates to the various sub-macros
-   based on the Expansion's class name.
---]
-[#macro BuildScanCode expansion]
-  [#set currentLookaheadExpansion = expansion]
-  [#var classname=expansion.simpleName]
-  [#if classname != "ExpansionSequence"]
-  // Lookahead Code for ${classname} specified on line ${expansion.beginLine} of ${expansion.inputSource}
-  [/#if]
-  [#if expansion.singleToken]
-     ${ScanSingleToken(expansion)}
-   [#elseif classname = "Assertion"]
-      ${ScanCodeAssertion(expansion)} 
-   [#elseif classname = "LexicalStateSwitch"]
-      ${ScanCodeLexicalStateSwitch(expansion)}
-   [#elseif classname = "Failure"]
-      ${ScanCodeError(expansion)}
-   [#elseif classname = "ExpansionSequence"]
-      ${ScanCodeSequence(expansion)}
-   [#elseif classname = "ZeroOrOne"]
-      [@ScanCodeZeroOrOne expansion/]
-   [#elseif classname = "ZeroOrMore"]
-      [@ScanCodeZeroOrMore expansion /]
-   [#elseif classname = "OneOrMore"]
-      [@ScanCodeOneOrMore expansion /]
-   [#elseif classname = "NonTerminal"]
-      [@ScanCodeNonTerminal expansion/]
-   [#elseif classname = "TryBlock" || classname="AttemptBlock"]
-      [@BuildScanCode expansion.nestedExpansion/]
-   [#elseif classname = "ExpansionChoice"]
-      [@ScanCodeChoice expansion /]
-   [#elseif classname = "CodeBlock"]
-      [#if expansion.appliesInLookahead]
-      ${expansion}
-      [/#if]
-  [/#if]
-[/#macro]
-
-[#macro ScanSingleToken expansion]
-    [#var firstSet = expansion.firstSet.tokenNames]
-    [#if firstSet?size = 1]
-      if (!scanToken(${TT}${firstSet[0]})) return false;
-    [#else]
-      if (!scanToken(${expansion.firstSetVarName})) return false;
-    [/#if]
-[/#macro]    
-
-[#macro ScanCodeLexicalStateSwitch switch]
-   token_source.switchTo(LexicalState.${switch.lexicalStateName});
-[/#macro]
-
-[#macro ScanCodeAssertion assertion]
-    
-[/#macro]
-
-[#macro ScanCodeError expansion]
-    hitFailure = true;
-[/#macro]
-
-[#macro ScanCodeChoice choice]
-   [@newVar "Token", "currentLookaheadToken"/]
-   int remainingLookahead${newVarIndex} = remainingLookahead;
-   boolean hitFailure${newVarIndex} = hitFailure;
-  [#list choice.choices as subseq]
-     if (!${CheckExpansion(subseq)}) {
-     [#if subseq_has_next]
-        currentLookaheadToken = token${newVarIndex};
-        remainingLookahead = remainingLookahead${newVarIndex};
-        hitFailure = hitFailure${newVarIndex};
-     [#else]
-        return false;
-     [/#if]
-  [/#list]
-  [#list 1..choice.choices?size as unused] } [/#list]
-[/#macro]
-
-[#macro ScanCodeZeroOrOne zoo]
-   [@newVar type="Token" init="currentLookaheadToken"/]
-   if (!${CheckExpansion(zoo.nestedExpansion)}) 
-      currentLookaheadToken = token${newVarIndex};
-[/#macro]
-
-[#-- 
-  Generates lookahead code for a ZeroOrMore construct]
---]
-[#macro ScanCodeZeroOrMore zom]
-      while (remainingLookahead > 0 && !hitFailure) {
-      [@newVar type="Token" init="currentLookaheadToken"/]
-         if (!${CheckExpansion(zom.nestedExpansion)}) {
-             currentLookaheadToken = token${newVarIndex};
-             break;
-         }
-      }
-[/#macro]
-
-[#--
-   Generates lookahead code for a OneOrMore construct
-   It generates the code for checking a single occurrence
-   and then the same code as a ZeroOrMore
---]
-[#macro ScanCodeOneOrMore oom]
-   if (!${CheckExpansion(oom.nestedExpansion)}) {
-      return false;
-   }
-   [@ScanCodeZeroOrMore oom /]
-[/#macro]
-
-[#macro CheckExpansion expansion]
-   [#if expansion.singleToken && !expansion.requiresPredicateMethod]
-     [#if expansion.firstSet.tokenNames?size = 1]
-      scanToken(${TT}${expansion.firstSet.tokenNames[0]})
-     [#else]
-      scanToken(${expansion.firstSetVarName})
-     [/#if]
-   [#else]
-      ${expansion.scanRoutineName}()
-   [/#if]
-[/#macro]
-
-[#--
-  Generates the lookahead code for a non-terminal.
-  It (trivially) just delegates to the code for 
-  checking the production's nested expansion 
---]
-[#macro ScanCodeNonTerminal nt]
-      pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource}", ${nt.beginLine}, ${nt.beginColumn});
-      [#set newVarIndex = newVarIndex +1]
-      [#var prevProductionVarName = "prevProduction" + newVarIndex]
-      String ${prevProductionVarName} = currentLookaheadProduction;
-      currentLookaheadProduction = "${nt.production.name}";
-      [#if nt.ignoreUpToHere && nt.production.expansion.hasScanLimit]
-         stopAtScanLimit = false;
-      [/#if]
-      try {
-          if (!${nt.production.lookaheadMethodName}()) return false;
-      }
-      finally {
-          popLookaheadStack();
-          currentLookaheadProduction = ${prevProductionVarName};
-      }
-[/#macro]
-
-[#--
-   Generates the lookahead code for an ExpansionSequence
-   The count parameter is not being used right now. The original purpose
-   was to specify the maximum number of tokens 
-   we need to lookahead, so we don't generate unnecessary code. However, this
-   kind of space optimization is probably not worth the candle and makes things
-   complicated. So it is currently disabled. (May REVISIT later.)
---]
-[#macro ScanCodeSequence sequence]
-   [#list sequence.units as sub]
-       [@BuildScanCode sub/]
-       [#if sub.scanLimit]
-          if (hitFailure) return false;
-          if (stopAtScanLimit && lookaheadStack.size() <= 1) {
-         [#if sub.scanLimitPlus >0]
-             remainingLookahead = ${sub.scanLimitPlus};
-         [#else]
-             return true;
-         [/#if]
-          }
-       [/#if]
-       [#--set count = count - sub.minimumSize]
-       [#if count<=0][#break][/#if--]
-   [/#list]
-[/#macro]
-
-[#var newVarIndex=0]
-[#-- Just to generate a new unique variable name
-  All it does is tack an integer (that is incremented)
-  onto the type name, and optionally initializes it to some value--]
-[#macro newVar type init=null]
-   [#set newVarIndex = newVarIndex+1]
-   ${type} ${type?lower_case}${newVarIndex}
-   [#if init??]
-      = ${init}
-   [/#if]
-   ;
-[/#macro]   
-
-[#-- A macro to use at one's convenience to comment out a block of code --]
-[#macro comment]
-[#var content, lines]
-[#set content][#nested/][/#set]
-[#set lines = content?split("\n")]
-[#list lines as line]
-// ${line}
-[/#list]
-[/#macro]
-
-[#function bool val]
-   [#return val?string("true", "false")/]
-[/#function]

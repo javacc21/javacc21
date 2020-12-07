@@ -47,9 +47,9 @@ public class LexerData {
     private List<RegularExpression> regularExpressions = new ArrayList<>();
     
     int stateSetSize;
-    TokenSet skipSet, specialSet, moreSet, tokenSet;
+    private TokenSet skipSet, specialSet, moreSet, tokenSet;
     boolean hasEmptyMatch;
-    boolean hasSkipActions, hasMoreActions, hasTokenActions, hasSpecial, hasSkip, hasMore;
+    boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
     private int lohiByteCount;
     private List<NfaState> nonAsciiTableForMethod = new ArrayList<>();
@@ -170,10 +170,6 @@ public class LexerData {
         return regularExpressions.size();
     }
 
-    public boolean hasActions() {
-        return moreSet.cardinality() >0 || hasSkipActions || hasTokenActions;
-    }
-
     public boolean getHasMore() {
         return hasMore;
     }
@@ -196,10 +192,6 @@ public class LexerData {
 
     public boolean getHasEmptyMatch() {
         return this.hasEmptyMatch;
-    }
-
-    public boolean getHasTokenActions() {
-        return hasTokenActions;
     }
 
     public boolean hasTokenAction(int index) {
@@ -293,7 +285,6 @@ public class LexerData {
             }
         }
         tokenSet.set(0);
-        hasTokenActions = getRegularExpression(0) != null;
 
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
 

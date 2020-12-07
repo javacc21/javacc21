@@ -137,18 +137,14 @@ public final class Main {
         System.out.println("NB: Most option-settings now must be set from the grammar file.");
         System.out.println("The ones which can still be set from the command line are:");
         System.out.println();
-        System.out.println("    -DEBUG_PARSER           (default false)");
-        System.out.println("    -DEBUG_LEXER            (default false)");
-        System.out.println("    -FAULT_TOLERANT         (default false)");
-        System.out.println("    -FREEMARKER_NODES       (default false)");
+        System.out.println("    -DEBUG_PARSER");
+        System.out.println("    -DEBUG_LEXER");
+        System.out.println("    -FAULT_TOLERANT");
         System.out.println();
-        System.out.println("The following options require a string parameter, i.e.");
-        System.out.println("-BASE_SRC_DIR=\"../../src/generated\"");
+        System.out.println("By default, source files are generated relative to the location of the input file.");
+        System.out.println("This can be changed by setting as follows:");
         System.out.println();
-        System.out.println("    -BASE_SRC_DIR           (default same directory as input file)");
-        System.out.println("    -OUTPUT_DIRECTORY       (default not set, uses BASE_SRC_DIR)");
-        System.out.println();
-        System.out.println("    The OUTPUT_DIRECTORY option is legacy. You should use BASE_SRC_DIR instead.");
+        System.out.println("-d:\"../../src/generated\"");
         System.out.println();
     }
 

@@ -76,8 +76,9 @@ private String currentlyParsedProduction, currentLookaheadProduction;
 // private TokenType upToTokenType;
 // private EnumSet<TokenType> upToFirstSet;
 private boolean stopAtScanLimit;
+private boolean lastLookaheadSucceeded;
 
-private Token lastParsedToken;
+private Token lastConsumedToken;
 //private Token nextToken; //REVISIT
 
 //private EnumSet<Token> currentFollowSet;
@@ -148,15 +149,27 @@ public boolean isCancelled() {return cancelled;}
 
   // If tok already has a next field set, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
-  final private Token nextToken(Token tok) {
+  final private Token nextToken(final Token tok) {
     Token result = tok.getNext();
-    if (result == null) {
-      result = token_source.getNextToken();
-      tok.setNext(result);
-    }
+    if (result != null) {
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);
 [/#list]
+    }
+    Token previous = null;
+    while (result == null) {
+      Token next = token_source.getNextToken();
+      if (previous != null && !(previous instanceof InvalidToken)) {
+        next.setSpecialToken(previous);
+      }
+      previous = next;
+[#list grammar.parserTokenHooks as methodName] 
+      next = ${methodName}(next);
+[/#list]
+      if (!next.isUnparsed()) {
+        result = next;
+      } 
+    }
     tok.setNext(result);
     return result;
   }
@@ -182,22 +195,39 @@ public boolean isCancelled() {return cancelled;}
   /**
    *Are we in the production of the given name, either scanning ahead or parsing?
    */
-  private boolean isInProduction(String productionName) {
-    if (currentlyParsedProduction != null && currentlyParsedProduction.equals(productionName)) return true;
-    if (currentLookaheadProduction != null && currentLookaheadProduction.equals(productionName)) return true;
+  private boolean isInProduction(String productionName, String... prods) {
+    if (currentlyParsedProduction != null) {
+      if (currentlyParsedProduction.equals(productionName)) return true;
+      for (String name : prods) {
+        if (currentlyParsedProduction.equals(name)) return true;
+      }
+    }
+    if (currentLookaheadProduction != null ) {
+      if (currentLookaheadProduction.equals(productionName)) return true;
+      for (String name : prods) {
+        if (currentLookaheadProduction.equals(name)) return true;
+      }
+    }
     Iterator<NonTerminalCall> it = stackIteratorBackward();
     while (it.hasNext()) {
       NonTerminalCall ntc = it.next();
       if (ntc.productionName.equals(productionName)) {
         return true;
       }
+      for (String name : prods) {
+        if (ntc.productionName.equals(name)) {
+          return true;
+        }
+      }
     }
     return false;
   }
 
 
-[#import "ParserProductions.java.ftl" as ParserCode ]
-[@ParserCode.Generate/]
+[#import "ParserProductions.java.ftl" as ParserCode]
+[@ParserCode.Productions /]
+[#import "LookaheadRoutines.java.ftl" as LookaheadCode]
+[@LookaheadCode.Generate/]
  
 [#embed "ErrorHandling.java.ftl"]
 

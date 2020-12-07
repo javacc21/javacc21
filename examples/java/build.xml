@@ -1,21 +1,19 @@
-<?xml version='1.0' encoding='ISO-8859-1' ?>
-
 <project name="Java Parser" default="compile">
 
 <target name="clean">
-   <delete dir="com"/>
+   <delete dir="org"/>
    <delete file="JParse.class"/>
 </target>
 
 <target name="init">
-   <uptodate property="javaparser.uptodate" srcfile="../../src/main/grammars/Java.javacc" targetfile="com/javaparser/JavaParser.java"
+	<uptodate property="javaparser.uptodate" srcfile="../../src/main/grammars/Java.javacc" targetfile="org/parsers/java/JavaParser.java"
 />
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
-  <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
+  <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
     <arg value="-q"/>
-    <arg value="-BASE_SRC_DIR=${basedir}/../../examples/java" />
+    <arg value="-D:${basedir}/../../examples/java" />
     <arg value="${basedir}/../../src/main/grammars/Java.javacc"/>
   </java>
 </target>
@@ -28,7 +26,7 @@
 
 <target name="test" depends="compile">
      <java fork="true" failonerror="true" classname="JParse">
-         <arg value="com/javaparser"/>
+         <arg value="org/parsers/java"/>
      </java>
      <echo>
         -------------------
@@ -36,7 +34,7 @@
         -------------------
      </echo>
      <java fork="true" failonerror="true" classname="JParse">
-         <arg value="com/javaparser/ast/CompilationUnit.java"/>
+         <arg value="org/parsers/java/ast/CompilationUnit.java"/>
      </java>
 </target>
 

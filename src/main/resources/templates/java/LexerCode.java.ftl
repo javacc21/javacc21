@@ -56,42 +56,32 @@
   private String inputSource = "input";
   
  
-[#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
       // BitSet for TOKEN
       static private BitSet tokenSet = BitSet.valueOf(new long[] {
           [#list lexerData.tokenSet.toLongArray() as long]${long}L,[/#list]
       });
-[/#if]
 
-[#if lexerData.hasSkip || lexerData.hasSpecial]
       // BitSet for SKIP
       static private BitSet skipSet = BitSet.valueOf(new long[] {
           [#list lexerData.skipSet.toLongArray() as long]${long}L,[/#list]
       });
-[/#if]
 
-[#if lexerData.hasSpecial]
       // BitSet for SPECIAL
       static private BitSet specialSet = BitSet.valueOf(new long[] {
           [#list lexerData.specialSet.toLongArray() as long]${long}L,[/#list]
       });      
-[/#if]
 
 
-[#if lexerData.hasMore]
       // BitSet for MORE
       static private BitSet moreSet = BitSet.valueOf(new long[] {
           [#list lexerData.moreSet.toLongArray() as long]${long}L,[/#list]
       });      
-[/#if]
 
     private final int[] jjrounds = new int[${lexerData.stateSetSize}];
     private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
 
-[#if lexerData.hasActions()]
     private final StringBuilder image = new StringBuilder();
     private int matchedCharsLength;
-[/#if]
 
     char curChar;
     
@@ -104,23 +94,11 @@
           jjrounds[i] = 0x80000000;
     }
 
-
-  
-  [#--  Need to figure out how to simplify this --]
-  private Token nextToken() {
-    Token specialToken = null;
-    Token matchedToken;
-    int curPos = 0;
-
-    EOFLoop :
-    while (true) {
-        int retval1 = input_stream.beginToken();
-        curChar = (char) (retval1);
-         if (retval1 == -1) { // Handle end of file
-            if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
-			jjmatchedKind = 0;
-            Token eof = jjFillToken();
-            tokenLexicalActions();
+    private Token generateEOF() {
+      if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
+	   jjmatchedKind = 0;
+      Token eof = jjFillToken();
+      tokenLexicalActions();
 [#list grammar.lexerTokenHooks as tokenHookMethodName]
       [#if tokenHookMethodName = "CommonTokenAction"]
          ${tokenHookMethodName}(eof);
@@ -128,16 +106,24 @@
          eof = ${tokenHookMethodName}(eof);
       [/#if]
 [/#list]
+      return eof;
+    }
 
-		    eof.setSpecialToken(specialToken);
-		    addToken(eof);
-    		return eof;
-       }
 
-[#if lexerData.hasActions()]
+  
+  [#--  Need to figure out how to simplify this --]
+  private Token nextToken() {
+    Token matchedToken;
+    int curPos = 0;
+
+    EOFLoop :
+    while (true) {
+        curChar = (char)  input_stream.beginToken();
+        if (curChar == (char) -1) {
+           return generateEOF();
+        }
        image.setLength(0);
        matchedCharsLength = 0;
-[/#if]
 
 [#if lexerData.hasMore]
        while (true) {
@@ -176,7 +162,7 @@
                     if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
                     curChar = (char) input_stream.beginToken();
                     if (curChar == (char) -1) {
-                        continue EOFLoop;
+                        return generateEOF();
                     }
                 }
     [/#if]    
@@ -231,9 +217,7 @@
        if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
           + addEscapes(input_stream.getSuffix(jjmatchedPos + 2)) + ") ******\n");
  
- [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
-          if (tokenSet.get(jjmatchedKind)) {
- [/#if]
+       if (tokenSet.get(jjmatchedKind) || specialSet.get(jjmatchedKind)) {
 
          matchedToken = jjFillToken();
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
@@ -243,31 +227,21 @@
          matchedToken = ${tokenHookMethodName}(matchedToken);
       [/#if]
 [/#list]
-
  
-
- [#if lexerData.hasSpecial]
-         matchedToken.setSpecialToken(specialToken);
- [/#if]
-
- [#if lexerData.hasTokenActions]
       tokenLexicalActions();
- [/#if]
 
- jjmatchedKind = matchedToken.getType().ordinal();
+      jjmatchedKind = matchedToken.getType().ordinal();
  
  [#if numLexicalStates>1]
       if (newLexicalStates[jjmatchedKind] != null) {
+          matchedToken.setFollowingLexicalState(newLexicalStates[jjmatchedKind]);
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
- addToken(matchedToken);
- return matchedToken;
+      matchedToken.setUnparsed(specialSet.get(jjmatchedKind));
+      return matchedToken;
 
-      [#if lexerData.hasSkip || lexerData.hasMore || lexerData.hasSpecial]
      }
-
-
          [#if lexerData.hasSkip || lexerData.hasSpecial]
           
             [#if lexerData.hasMore]
@@ -277,36 +251,9 @@
             [/#if]
 
           {
-
-            [#if lexerData.hasSpecial]
-          
-            if (specialSet.get(jjmatchedKind)) {
-              matchedToken = jjFillToken();
-              matchedToken.setUnparsed(true);
-
-              if (specialToken == null) {
-                specialToken = matchedToken;
-              }
-              else {
-                 matchedToken.setSpecialToken(specialToken);
-                 specialToken.setNext(matchedToken);
-                 specialToken = matchedToken;
-                 addToken(specialToken);
-               }
-
-              [#if lexerData.hasSkipActions]
-              tokenLexicalActions();
-              [/#if]
-          }
-      
-              [#if lexerData.hasSkipActions]
-              else 
+          [#if lexerData.hasSkipActions]
                  tokenLexicalActions();
-              [/#if]
-          [#elseif lexerData.hasSkipActions]
-            tokenLexicalActions();
           [/#if]
-
           [#if numLexicalStates>1]
             if (newLexicalStates[jjmatchedKind] != null) {
                this.lexicalState = newLexicalStates[jjmatchedKind];
@@ -315,12 +262,10 @@
 
             continue EOFLoop;
           }
-         [/#if]
-
          [#if lexerData.hasMore]
           [#if lexerData.hasMoreActions]
           tokenLexicalActions();
-          [#elseif lexerData.hasSkipActions || lexerData.hasTokenActions]
+          [#elseif true || lexerData.hasSkipActions || lexerData.hasTokenActions]
           matchedCharsLength += jjmatchedPos + 1;
 		  [/#if]
 		  

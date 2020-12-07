@@ -192,7 +192,6 @@ INJECT PARSER_CLASS :
     	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
     }
     
-    
     static private int hexval(char ch) {
         if (ch >= '0' && ch <= '9')
             return ((int) ch) - ((int) '0');
@@ -204,13 +203,11 @@ INJECT PARSER_CLASS :
     static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
         JavaCCParser parser = new JavaCCParser(input);
         parser.setInputSource(inputSource);
-        parser.token_source.inJavaCode = true;
         return parser.CompilationUnit();
     }
     
     static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) throws ParseException {
         JavaCCParser parser = new JavaCCParser(inputSource, content);
-        parser.token_source.inJavaCode = true;
         return parser.CompilationUnit();
     }
 
@@ -223,80 +220,10 @@ INJECT PARSER_CLASS :
     }
 }
 
-INJECT LEXER_CLASS :
-   import java.util.*;
-{
-   Set<String> javaccReservedWords = new HashSet<String>();
-   {
-       // A little kludge so that these keywords 
-       // can still be recognized as regular identifiers
-       // in Java code.
-
-        javaccReservedWords.add("options");
-        javaccReservedWords.add("OPTIONS");
-        javaccReservedWords.add("INCLUDE");
-        javaccReservedWords.add("IGNORE_CASE");
-        javaccReservedWords.add("PARSER_BEGIN");
-        javaccReservedWords.add("TOKEN");
-        javaccReservedWords.add("REGULAR_TOKEN");
-        javaccReservedWords.add("SPECIAL_TOKEN");
-        javaccReservedWords.add("SPECIAL_TOKEN");
-        javaccReservedWords.add("UNPARSED_TOKEN");
-        javaccReservedWords.add("MORE");
-        javaccReservedWords.add("INCOMPLETE_TOKEN");
-        javaccReservedWords.add("SKIP");
-        javaccReservedWords.add("TOKEN_MGR_DECLS");
-        javaccReservedWords.add("EOF");
-        javaccReservedWords.add("ATTEMPT");
-        javaccReservedWords.add("RECOVER");
-        javaccReservedWords.add("SCAN");
-        javaccReservedWords.add("LOOKAHEAD");
-        javaccReservedWords.add("FAIL");
-        javaccReservedWords.add("LEXICAL_STATE");
-// REVISIT: Scanning forwards, the parser has to be able to identify these
-//      as JavaCC keywords even from within a code block (its very end, I guess)
-//      Oh well, it's not very important!
-//        javaccReservedWords.add("INJECT"); 
-//        javaccReservedWords.add("PARSER_END");
-   }
-
-
-   // This keeps track of the level of nesting of
-   // < and > characters. Note that this is when
-   // they are being used as delimiters, not as
-   // less-than/greater-than operators.
-   int angleBracketNesting;
-   boolean inJavaCode;
-   boolean optionsSeen;
-
-   private Token TOKEN_HOOK(Token t) {
-       t.setGrammar(parser.getGrammar());
-       if (angleBracketNesting >0 && t.getImage().length() >1 && t.getImage().charAt(0) == '>') {
-           input_stream.backup(t.getImage().length() -1);
-           Token gt = Token.newToken(GT, ">", this);
-           Nodes.copyLocationInfo(t, gt);
-           gt.setEndColumn(gt.getEndColumn() -1);
-           gt.setGrammar(parser.getGrammar());
-           return gt;
-       }
-       if (javaccReservedWords.contains(t.getImage())) {
-           if (inJavaCode || (t.getType() == _OPTIONS && optionsSeen)) {
-	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
-	           Nodes.copyLocationInfo(t, id);
-	           id.setGrammar(parser.getGrammar());
-	           return id;
-           }
-       }
-       return t;
-   }
-}
-
 /* JAVACC RESERVED WORDS: These are the only tokens in JavaCC but not in Java */
 
 TOKEN :
 {
-  < _OPTIONS: "options"| "OPTIONS" > #JavaCCKeyWord
-  |
   < _INJECT: "INJECT" > #JavaCCKeyWord
   |
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
@@ -324,8 +251,6 @@ TOKEN :
   < _SKIP: "SKIP" > #JavaCCKeyWord
   |
   < _TOKEN_MGR_DECLS: "TOKEN_MGR_DECLS" > #JavaCCKeyWord
-  |
-  < _EOF: "EOF" > #JavaCCKeyWord
   |
   < _ATTEMPT: "ATTEMPT"> #JavaCCKeyWord
   |
@@ -417,6 +342,68 @@ INJECT BaseNode :
 
 INCLUDE("Java.javacc")
 
+INJECT PARSER_CLASS : {
+
+       
+   Set<String> javaccReservedWords = new HashSet<String>();
+   {
+       // A little kludge so that these keywords 
+       // can still be recognized as regular identifiers
+       // in Java code.
+
+        javaccReservedWords.add("INCLUDE");
+        javaccReservedWords.add("IGNORE_CASE");
+        javaccReservedWords.add("PARSER_BEGIN");
+        javaccReservedWords.add("TOKEN");
+        javaccReservedWords.add("REGULAR_TOKEN");
+        javaccReservedWords.add("SPECIAL_TOKEN");
+        javaccReservedWords.add("SPECIAL_TOKEN");
+        javaccReservedWords.add("UNPARSED_TOKEN");
+        javaccReservedWords.add("MORE");
+        javaccReservedWords.add("INCOMPLETE_TOKEN");
+        javaccReservedWords.add("SKIP");
+        javaccReservedWords.add("TOKEN_MGR_DECLS");
+        javaccReservedWords.add("ATTEMPT");
+        javaccReservedWords.add("RECOVER");
+        javaccReservedWords.add("SCAN");
+        javaccReservedWords.add("LOOKAHEAD");
+        javaccReservedWords.add("FAIL");
+        javaccReservedWords.add("LEXICAL_STATE");
+        javaccReservedWords.add("INJECT"); 
+        javaccReservedWords.add("PARSER_END");
+   }
+
+    private Token TOKEN_HOOK(Token tok) {
+        TokenType type = tok.getType();
+        if ((type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) && !isInProduction("Expression")) {
+          Token gt = Token.split(tok, 1, GT, GT);
+          if (type == RUNSIGNEDSHIFT) {
+              Token next = Token.split(gt.getNext(), 1, GT, GT);
+              gt.setNext(next);
+          }
+          return gt;
+        } 
+        return tok;
+    }
+
+    private Token TOKEN_HOOK(Token t) {
+       if (javaccReservedWords.contains(t.getImage())) {
+            if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
+	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
+	           Nodes.copyLocationInfo(t, id);
+	           return id;
+           }
+       }
+       return t;
+    }
+
+    private Token TOKEN_HOOK(Token tok) {
+        tok.setGrammar(getGrammar());
+        return tok;
+    }
+
+}
+
 INJECT CaseStatement :
 {
     // If the case statement has an unreachable break statement at the
@@ -462,6 +449,12 @@ INJECT Identifier :
         if (image.equals("TOKEN_HOOK")) {
             String result = "tokenHook$" + getInputSource() + "_line_" + getBeginLine();
             return com.javacc.Grammar.removeNonJavaIdentifierPart(result);
+        }
+        if (image.equals("OPEN_NODE_SCOPE_HOOK")) {
+            String result = "openNodeScopeHook$" + getInputSource() + "_line" + getBeginLine();
+        }
+        if (image.equals("CLOSE_NODE_SCOPE_HOOK")) {
+            String result = "closeNodeScopeHook$" + getInputSource() + "_line" + getBeginLine();
         }
 //        if (image.equals("input_stream")) {
 //            return "inputSource";
@@ -523,14 +516,6 @@ INJECT Token :
         } 
         return image;
     }
-
-    public Token getSpecialToken() {
-        return specialToken;
-    }
-
-    public void clearSpecialToken() {
-        specialToken = null;
-    }
 }
 
 
@@ -563,11 +548,7 @@ GrammarFile Root throws IOException #GrammarFile :
 }
 {
    [
-     SCAN <_OPTIONS> | Setting
-     =>
-     (
-       OptionsBlock | Options
-     )
+      OptionsBlock | Options
    ]
    {
         if (!grammar.isInInclude()) {
@@ -608,13 +589,11 @@ ParserCodeDecls :
    {
       if (!grammar.isInInclude())
           grammar.setParserClassName(id.getImage());
-      token_source.inJavaCode = true;
    }
    parserCode=CompilationUnit
    {
        if (!grammar.isInInclude())
            grammar.setParserCode(parserCode);
-       token_source.inJavaCode = false;
    }
    "PARSER_END" ["(" <IDENTIFIER> ")"]
 }
@@ -657,12 +636,8 @@ CodeInjection :
         Annotation annotation = null;
         boolean foundOptionalInitialBrace = false;
         boolean usingParentheses = false;
-        token_source.inJavaCode=true;
 }   
         "INJECT" ["(" {usingParentheses = true;}]
-        {
-                token_source.inJavaCode = true;
-        }
         [
             "class"
             |
@@ -693,7 +668,6 @@ CodeInjection :
         ]
         [CURRENT_NODE.body=ClassOrInterfaceBody(isInterface)]
         {
-                token_source.inJavaCode = false;
                 if (enterIncludes) {
                     grammar.addCodeInjection(CURRENT_NODE);
                 }
@@ -716,14 +690,12 @@ INJECT CodeInjection :
 CodeInjection2 :
 {
         CompilationUnit jcu;
-        token_source.inJavaCode = true;
 }
         <_INJECT>
         ":" "{"
         jcu=CompilationUnit
        "}"
         {
-                token_source.inJavaCode = false;
                 if (enterIncludes) {
     				grammar.addCodeInjection(jcu);
                 }
@@ -731,13 +703,20 @@ CodeInjection2 :
 ;
 
 Options #Options : 
-    (=> Setting)+
+    Setting =>||
+    (=> Setting)*
 ;
 
 OptionsBlock #Options :
-    <_OPTIONS> [":"]
-    "{" ( Setting )* "}"
-    {token_source.optionsSeen = true;}
+    <IDENTIFIER> 
+    [
+        SCAN {!getToken(0).getImage().equalsIgnoreCase("options")}#
+        => FAIL "Expecting \"options\" here"
+    ]
+    =>||
+    [":"]
+    "{" 
+    ( Setting )* "}"
 ;
 
 Setting #void :
@@ -790,9 +769,6 @@ BNFProduction BNFProduction :
     <IDENTIFIER> {CURRENT_NODE.setName(current_token.getImage());}
     [FormalParameters]
     [
-      <BANG> {CURRENT_NODE.setForced(true);} 
-    ]
-    [
       ThrowsList
     ]
     [
@@ -807,7 +783,7 @@ BNFProduction BNFProduction :
     ]
     ":"
     (
-        => [=>CodeSnippet] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
+        => [=>Block] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
         |
         ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
     )
@@ -876,15 +852,6 @@ INJECT BNFProduction :
         return this.getName();
     }
 
-    private boolean forced; 
-    
-    public void setForced(boolean forced) {
-        this.forced = forced;
-    }
-    public boolean isForced() {
-         return forced;
-    } 
-    
     private String leadingComments;
 
     private Expansion expansion;
@@ -969,7 +936,7 @@ INJECT BNFProduction :
     
     public void adjustFirstToken(Token t) {
         this.leadingComments = t.getLeadingComments();
-        t.clearSpecialToken();
+        t.setSpecialToken(null);
     }
 
     public String getLeadingComments() {
@@ -1003,9 +970,6 @@ INJECT BNFProduction :
 
 TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
   <HASH_ID>
-	  {
-	        token_source.inJavaCode = true;
-	  }
    [
 	   <LPAREN>  
 	      [
@@ -1015,7 +979,6 @@ TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 	   <RPAREN>
   ]
   {
-          token_source.inJavaCode = false;
           return CURRENT_NODE;
   }
 ;
@@ -1054,17 +1017,6 @@ INJECT TreeBuildingAnnotation :
     public boolean getVoid() {
         return "void".equals(getNodeName());
     }
-    
-    private boolean forced;
-    
-    public boolean isForced() {
-       return forced;
-    }
-    
-    public void setForced(boolean forced) {
-        this.forced = forced;
-    }
-    
 }
 
 
@@ -1225,17 +1177,12 @@ INJECT TokenProduction :
 }
 
 TokenManagerDecls TokenManagerDecls :
-{
-    token_source.inJavaCode = true;
-}
-{
    "TOKEN_MGR_DECLS" ":"
     ClassOrInterfaceBody(false)
     {
-        token_source.inJavaCode = false;
         return CURRENT_NODE;
     }
-}
+;
 
 RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
 {
@@ -1258,7 +1205,7 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
      }
   ]
   [
-      CodeSnippet
+      Block
         {
             if (grammar.getOptions().getUserDefinedLexer()) {
                 grammar.addWarning(peekNode(), "Ignoring code snippet for regular expression specification since option USER_DEFINED_LEXER has been set to true.");
@@ -1763,7 +1710,7 @@ Lookahead LegacyLookahead #Lookahead :
 {
   <_LOOKAHEAD>
   [
-   "("  {token_source.inJavaCode = true;}
+   "(" 
       [
         t=<INTEGER_LITERAL>
         {
@@ -1794,7 +1741,7 @@ Lookahead LegacyLookahead #Lookahead :
         "{"  exp=Expression  "}" {CURRENT_NODE.setSemanticLookahead(exp);}
         ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
       ]
-     ")" {token_source.inJavaCode = false;}
+     ")"
   ]
   {
      if (t == null && expansion == null && exp != null) {
@@ -1964,7 +1911,7 @@ Expansion ExpansionUnit :
   result = Failure
   |
   SCAN ~\...\Lookahead =>
-  result=CodeSnippet ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
+  result=Block ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
   SCAN 1 ~\...\Lookahead =>
   result=AttemptBlock
@@ -2011,17 +1958,12 @@ Expansion ExpansionUnit :
             grammar.addTokenProduction(tokenProduction);
       }
   }
-  [<BANG>{result.setForced(true);}]
   [SCAN ~\...\Lookahead => UpToHere(result)]
   |
   SCAN [PrimaryExpression "="]<IDENTIFIER>
   => result=NonTerminal [SCAN ~\...\Lookahead => UpToHere(result)]
   |
   "(" ExpansionChoice {result=(Expansion)peekNode();} ")" 
-  [ 
-   SCAN <BANG> TreeNodeDescriptor
-   => <BANG> {result.setForced(true);}
-  ]
   [SCAN ~\...\Lookahead => UpToHere(result)] 
  )
  [
@@ -2044,9 +1986,6 @@ NonTerminal NonTerminal #NonTerminal :
     SCAN "(" ExpansionChoice ")" ("*"|"+"|"?") => {}
     |
     Arguments
-  ]
-  [
-     <BANG>  {CURRENT_NODE.setForced(true);}
   ]
   {return CURRENT_NODE;}
 ;
@@ -2367,7 +2306,7 @@ AttemptBlock AttemptBlock :
  "ATTEMPT"
  "(" ExpansionChoice ")"
  "RECOVER"
- (CodeSnippet | "(" ExpansionChoice {hasRecoverExpansion = true;} ")")
+ (Block  | "(" ExpansionChoice {hasRecoverExpansion = true;} ")")
  [
     SCAN {!hasRecoverExpansion} "("
     => "(" ExpansionChoice ")"  
@@ -2433,16 +2372,16 @@ INJECT AttemptBlock :
 }
 
 Failure Failure : 
-   {Token t=null;}
+   {Token t;}
    t="FAIL"
    [
       t=<STRING_LITERAL>
       |
-      CodeSnippet
+      Block
    ]
    {
        String message = "Failure: ";
-       if (t != null) message += removeEscapesAndQuotes(t);
+       message += removeEscapesAndQuotes(t);
        CURRENT_NODE.setMessage(message);
        return CURRENT_NODE;
    }
@@ -2505,17 +2444,11 @@ INJECT LexicalStateSwitch :
 
 TryBlock TryBlock : 
     "try" "{" ExpansionChoice "}"
-    {
-        token_source.inJavaCode = true;
-    }
     (
         CatchBlock
     )*
     [
         FinallyBlock
-        {
-          token_source.inJavaCode = false;
-        }
     ]
     {
        return CURRENT_NODE;
@@ -2564,18 +2497,6 @@ INJECT TryBlock  :
           return getNestedExpansion().isConcrete();
      }
 }
-
-CodeBlock CodeSnippet #void :
-{
-   CodeBlock block;
-   token_source.inJavaCode = true;
-}
-    block=Block
-    {
-       token_source.inJavaCode = false;
-       return block;
-    }
-;
 
 
 INJECT CodeBlock :
@@ -2634,8 +2555,6 @@ RegexpExpansion #void :
 ;
 
 
-INJECT PARSER_CLASS : {private boolean inBNFProduction;}
-
 InPlaceRegexp #void :
 {
     RegularExpression re, choice;
@@ -2643,21 +2562,12 @@ InPlaceRegexp #void :
     Token t;
     boolean isPrivate= false;
 }
-/*
-  (
-      SCAN \...\BNFProduction
-      =>{inBNFProduction = true;}#
-      |
-      {inBNFProduction = false;}#
-  )
-  */
   t=<LT>
   [
    (
      t=<IDENTIFIER> {image = t.getImage();}
      |
      SCAN ~\...\BNFProduction 
-//     SCAN {!inBNFProduction}#
      => t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
    )
    ":"
@@ -2673,7 +2583,7 @@ InPlaceRegexp #void :
 	  } else {
 	    re = choice;
 	  }
-	  if (inBNFProduction&& image.length() ==0) {
+	  if (image.length() ==0 && isInProduction("BNFProduction")) {
 	     grammar.addParseError(t, "It is mandatory to label an inline regexp in a grammar production.");
 	  }
 	  re.setLabel(image);
@@ -2726,9 +2636,9 @@ RegexpRef RegexpRef :
 {
    Token t;
 }
-    "<" {++token_source.angleBracketNesting;}
+    "<"
     t=<IDENTIFIER> 
-    ">" {--token_source.angleBracketNesting;}
+    ">" 
     {
        CURRENT_NODE.setLabel(t.getImage());
        return CURRENT_NODE;
@@ -2754,7 +2664,18 @@ INJECT RegexpRef :
     }
 }
 
-void EndOfFile : "<" "EOF" ">" ;
+void EndOfFile : 
+    "<" 
+    <IDENTIFIER>  
+    [
+        SCAN {!getToken(0).getImage().equals("EOF")}#
+        => FAIL
+    ]
+    =>||
+    ">" 
+;
+
+
 
 INJECT EndOfFile : extends com.javacc.lexgen.RegularExpression;
 
@@ -2896,7 +2817,6 @@ INJECT ZeroOrMoreRegexp :
           addChild(0, regexp);
       }
    }
-
 }
 
 INJECT ZeroOrOneRegexp : 

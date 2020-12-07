@@ -129,12 +129,6 @@ public final void backup(int amount) {
   };
 [/#if]
   
-
-void addToken(Token token) {
-    [#if !options.hugeFileSupport]
-       input_stream.addToken(token);
-    [/#if]  
-}  
     int tabSize = 8;
  [#if options.lexerUsesParser]
 
@@ -163,29 +157,27 @@ void addToken(Token token) {
     public void setTabSize(int  size) {this.tabSize=tabSize;}
 [/#if]
 
-  private InvalidToken invalidToken; 
-  private Token pendingToken;
+  private InvalidToken invalidToken;
+  private Token previousToken; 
   
   public Token getNextToken() {
-      if (pendingToken != null) {
-          Token result = pendingToken;
-          pendingToken = null;
-          return result;
-      }
       Token tok = null;
       do {
-         tok = nextToken();
-      }  while (tok instanceof InvalidToken);
+          tok = nextToken();
+      } while (tok instanceof InvalidToken);
       if (invalidToken != null) {
-          addToken(invalidToken);
-          invalidToken.setNext(tok);
+          invalidToken.setNextToken(tok);
+          tok.setPreviousToken(invalidToken);
           Token it = invalidToken;
-          pendingToken = tok;
           this.invalidToken = null;
+[#if grammar.options.faultTolerant]
+          it.setUnparsed(true);
+[/#if]
           return it;
       }
-      addToken(tok);
-      return tok;
+      tok.setPreviousToken(previousToken);
+      if (previousToken != null) previousToken.setNextToken(tok);
+      return previousToken = tok;
  }
 
 [#if grammar.productionTable?size != 0]
@@ -245,10 +237,19 @@ void addToken(Token token) {
  [#else]
         // Reset the token source input
     // to just after the Token passed in.
-    void reset(Token t) {
+    void reset(Token t, LexicalState state) {
         input_stream.goTo(t.getEndLine(), t.getEndColumn());
         input_stream.forward(1);
+        t.setNext(null);
+        if (state != null) {
+            switchTo(state);
+        }
     }
+
+    void reset(Token t) {
+        reset(t, null);
+    }
+
     
     FileLineMap getFileLineMap() {
         return input_stream;

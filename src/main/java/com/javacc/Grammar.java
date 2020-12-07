@@ -112,8 +112,10 @@ public class Grammar extends BaseNode {
     
     private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
-    private List<String> lexerTokenHooks = new ArrayList<>(), parserTokenHooks = new ArrayList<>();
-    private boolean usesCloseNodeScopeHook, usesOpenNodeScopeHook, usesjjtreeOpenNodeScope, usesjjtreeCloseNodeScope;
+    private List<String> lexerTokenHooks = new ArrayList<>(), 
+                         parserTokenHooks = new ArrayList<>(),
+                         openNodeScopeHooks = new ArrayList<>(),
+                         closeNodeScopeHooks = new ArrayList<>();
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
@@ -203,28 +205,10 @@ public class Grammar extends BaseNode {
             return root;
         }
     }
-
+    
     public void createOutputDir() {
-        String outputDirectory = options.getOutputDirectory();
-        if (outputDirectory.equals("")) {
-            outputDirectory = ".";
-        }
-        File outputDir = new File(outputDirectory);
-        if (!outputDir.exists()) {
-            addWarning(null, "Output directory \"" + outputDir + "\" does not exist. Creating the directory.");
-
-            if (!outputDir.mkdirs()) {
-
-                addSemanticError(null, "Cannot create the output directory : " + outputDir);
-                return;
-            }
-        }
-
-        else if (!outputDir.isDirectory()) {
-            addSemanticError(null, "\"" + outputDir + " is not a valid output directory.");
-        }
-
-        else if (!outputDir.canWrite()) {
+        File outputDir = new File(".");
+        if (!outputDir.canWrite()) {
             addSemanticError(null, "Cannot write to the output directory : \"" + outputDir + "\"");
         }
     }
@@ -417,6 +401,14 @@ public class Grammar extends BaseNode {
 
     public List<String> getParserTokenHooks() {
         return parserTokenHooks;
+    }
+
+    public List<String> getOpenNodeScopeHooks() {
+        return openNodeScopeHooks;
+    }
+
+    public List<String> getCloseNodeScopeHooks() {
+        return closeNodeScopeHooks;
     }
 
 
@@ -809,17 +801,11 @@ public class Grammar extends BaseNode {
                     if (methodName.startsWith("tokenHook$")) {
                         parserTokenHooks.add(methodName);
                     }
-                    else if (methodName.equals("jjtreeOpenNodeScope")) {
-                        usesjjtreeOpenNodeScope = true;
+                    else if (methodName.equals("jjtreeOpenNodeScope") || methodName.startsWith("openNodeScopeHook")) {
+                        openNodeScopeHooks.add(methodName);
                     }
-                    else if (methodName.equals("jjtreeCloseNodeScope")) {
-                        usesjjtreeCloseNodeScope = true;
-                    }
-                    else if (methodName.equals("openNodeScopeHook")) {
-                        usesOpenNodeScopeHook = true;
-                    }
-                    else if (methodName.equals("closeNodeScopeHook")) {
-                        usesCloseNodeScopeHook = true;
+                    else if (methodName.equals("jjtreeCloseNodeScope") || methodName.startsWith("closeNodeScopeHook")) {
+                        closeNodeScopeHooks.add(methodName);
                     }
                 }
             }
@@ -835,21 +821,6 @@ public class Grammar extends BaseNode {
         codeInjections.add(n);
     }
 
-    public boolean getUsesjjtreeOpenNodeScope() {
-        return usesjjtreeOpenNodeScope;
-    }
-
-    public boolean getUsesjjtreeCloseNodeScope() {
-        return usesjjtreeCloseNodeScope;
-    }
-
-    public boolean getUsesOpenNodeScopeHook() {
-        return usesOpenNodeScopeHook;
-    }
-
-    public boolean getUsesCloseNodeScopeHook() {
-        return usesCloseNodeScopeHook;
-    }
     public boolean isInInclude() {
         return includeNesting >0;
     }
@@ -868,11 +839,7 @@ public class Grammar extends BaseNode {
     public File getParserOutputDirectory() throws IOException {
         String baseSrcDir = options.getBaseSourceDirectory();
         if (baseSrcDir.equals("")) {
-            String outputDirectory = options.getOutputDirectory();
-            if (outputDirectory.equals("")) {
-                return new File(filename).getParentFile();
-            }
-            return new File(outputDirectory);
+            return new File(".");
         }
         File dir = new File(baseSrcDir);
         if (!dir.isAbsolute()){

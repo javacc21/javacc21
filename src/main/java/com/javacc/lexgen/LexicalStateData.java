@@ -268,13 +268,11 @@ public class LexicalStateData {
         }
 
         if (initialState.kind != Integer.MAX_VALUE && initialState.kind != 0) {
-            if (lexerData.skipSet.get(initialState.kind)
-                || (lexerData.specialSet.get(initialState.kind)))
+            if (lexerData.getSkipSet().get(initialState.kind)
+                || (lexerData.getSpecialSet().get(initialState.kind)))
                 lexerData.hasSkipActions = true;
-            else if (lexerData.moreSet.get(initialState.kind))
+            else if (lexerData.getMoreSet().get(initialState.kind))
                 lexerData.hasMoreActions = true;
-            else
-                lexerData.hasTokenActions = true;
             if (initMatch == 0 || initMatch > initialState.kind) {
                 initMatch = initialState.kind;
                 lexerData.hasEmptyMatch = true;
@@ -359,25 +357,24 @@ public class LexicalStateData {
                     lexerData.hasSkipActions = true;
                 }
                 lexerData.hasSpecial = true;
-                lexerData.specialSet.set(currentRegexp.getOrdinal());
-                lexerData.skipSet.set(currentRegexp.getOrdinal());
+                lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
+                lexerData.getSkipSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setSpecialToken();
             }
             else if (kind.equals("SKIP")) {
                 lexerData.hasSkipActions |= (tokenAction != null);
                 lexerData.hasSkip = true;
-                lexerData.skipSet.set(currentRegexp.getOrdinal());
+                lexerData.getSkipSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setSkip();
             }
             else if (kind.equals("MORE")) {
                 lexerData.hasMoreActions |= tokenAction != null;
                 lexerData.hasMore = true;
-                lexerData.moreSet.set(currentRegexp.getOrdinal());
+                lexerData.getMoreSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setMore();
             }
             else {
-                lexerData.hasTokenActions |= (tokenAction != null);
-                lexerData.tokenSet.set(currentRegexp.getOrdinal());
+                lexerData.getTokenSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setRegularToken();
             }
         }
@@ -510,17 +507,14 @@ public class LexicalStateData {
     /**
      * Returns true if s1 starts with s2 (ignoring case for each character).
      */
-    static private boolean StartsWithIgnoreCase(String s1, String s2) {
+    static private boolean startsWithIgnoreCase(String s1, String s2) {
         if (s1.length() < s2.length())
             return false;
-
         for (int i = 0; i < s2.length(); i++) {
             char c1 = s1.charAt(i), c2 = s2.charAt(i);
-
             if (c1 != c2 && Character.toLowerCase(c2) != c1 && Character.toUpperCase(c2) != c1)
                 return false;
         }
-
         return true;
     }
 
@@ -551,7 +545,7 @@ public class LexicalStateData {
                         subStringAtPos[images[i].length() - 1] = true;
                         break;
                     } else if (grammar.getOptions().getIgnoreCase()
-                            && StartsWithIgnoreCase(images[j], images[i])) {
+                            && startsWithIgnoreCase(images[j], images[i])) {
                         subString[i] = true;
                         subStringAtPos[images[i].length() - 1] = true;
                         break;
@@ -610,9 +604,8 @@ public class LexicalStateData {
         						&& intermediateMatchedPos != null && intermediateMatchedPos[kind][index] == index)
         						|| (matchAnyChar != null && matchAnyChar.getOrdinal() < kind))
         					break;
-//        				else if ((lexerData.toSkip[kind / 64] & (1L << (kind % 64))) != 0L
-                        else if (lexerData.skipSet.get(kind)
-        				        && !lexerData.specialSet.get(kind)
+                        else if (lexerData.getSkipSet().get(kind)
+        				        && !lexerData.getSpecialSet().get(kind)
         						&& lexerData.getRegularExpression(kind).getCodeSnippet() == null
         						&& lexerData.getRegularExpression(kind).getNewLexicalState() == null) {
         					singlesToSkip.addChar(firstChar);

@@ -53,8 +53,6 @@ abstract public class Expansion extends BaseNode {
      */
     public interface ChoicePoint extends Node {}
 
-    private boolean forced;
-
     private TreeBuildingAnnotation treeNodeBehavior;
 
     private Lookahead lookahead;
@@ -319,10 +317,6 @@ abstract public class Expansion extends BaseNode {
     public boolean isNegated() {
         return getLookahead() != null && getLookahead().isNegated();
     }
-    
-    public void setForced(boolean forced) {this.forced = forced;}
-
-    public boolean getForced() {return this.forced;}
     
     public String getFirstSetVarName() {
         if (firstSetVarName == null) {

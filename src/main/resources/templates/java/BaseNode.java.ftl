@@ -109,17 +109,6 @@ public class ${grammar.baseNodeClassName} implements Node {
 
 [/#if]
 
-[#if grammar.options.faultTolerant]
-
-    private ParseException parseException;
-    
-    public ParseException getParseException() {return parseException;}
-    
-    public void setParseException(ParseException parseException) {this.parseException = parseException;}
-    
-
-[/#if]
-
     public void open() {
     }
 

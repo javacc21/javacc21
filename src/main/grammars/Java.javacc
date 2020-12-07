@@ -29,10 +29,8 @@
  */
 
 JAVA_UNICODE_ESCAPE;
-//  TOKENS_ARE_NODES=false;
-// UNPARSED_TOKENS_ARE_NODES;
-PARSER_PACKAGE="com.javaparser";
-NODE_PACKAGE="com.javaparser.ast";
+PARSER_PACKAGE="org.parsers.java";
+NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
@@ -42,7 +40,7 @@ INJECT PARSER_CLASS : {
   private Token TOKEN_HOOK(Token tok) {
     String img = tok.getImage();
     if (img==null || !img.startsWith(">")) return tok;
-    boolean inGenericTypeSpec = isInProduction("TypeArguments") || isInProduction("TypeParameters");
+    boolean inGenericTypeSpec = isInProduction("TypeArguments", "TypeParameters");
     if (inGenericTypeSpec && (img.equals(">>") || img.equals(">>>"))) {
         // If we've entered the TypeParameters or TypeArguments production, we need to split
         // a ">>" or ">>>" into 2 (or 3) GT tokens.
@@ -50,17 +48,20 @@ INJECT PARSER_CLASS : {
         if (img.length() == 3) {
           Token next = Token.split(gt.getNext(), 1, GT, GT);
           gt.setNext(next);
+//          gt.setNextToken(next);
         }
         return gt;
     }
     else if (!inGenericTypeSpec && img.length() ==1) {
       // In this case we do the reverse. We merge 2 (or 3) GT tokens into a right shift operator
+//      Token next = tok.getNextToken();
       Token next = tok.getNext();
-      if (next != null && next.getType() == GT && next.getBeginColumn() == tok.getBeginColumn()+1) {
+      if (next != null && next.getType() == GT) {// && next.getBeginColumn() == tok.getBeginColumn()+1) {
+//        Token nextNext = next.getNextToken();
         Token nextNext = next.getNext();
         Token merged = Token.merge(tok, next, RSIGNEDSHIFT);
-        if (nextNext != null && nextNext.getType() == GT && nextNext.getBeginColumn() == next.getBeginColumn() +1) {
-          merged = Token.merge(merged, nextNext, RUNSIGNEDSHIFT);
+        if (nextNext != null && nextNext.getType() == GT) {// && nextNext.getBeginColumn() == next.getBeginColumn() +1) {
+            merged = Token.merge(merged, nextNext, RUNSIGNEDSHIFT);
         } 
         return merged;
       }
@@ -163,27 +164,27 @@ TOKEN #Literal :
       | <OCTAL_LITERAL> (["l","L"])
       | <BINARY_LITERAL> (["l","L"])
   >
-|
+  |
   < INTEGER_LITERAL:
         <DECIMAL_LITERAL>
       | <HEX_LITERAL>
       | <OCTAL_LITERAL>
       | <BINARY_LITERAL>
   >
-|
+  |
   < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
-|
+  |
   < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS> >
-|
+  |
   < #OCTAL_LITERAL: "0" ["0"-"7"]((["0"-"7","_"])*["0"-"7"])? >
-|
+  |
   < #BINARY_LITERAL: "0" ["b","B"] ["0","1"]((["0","1","_"])*["0","1"])? >
-|
+  |
   < FLOATING_POINT_LITERAL:
         <DECIMAL_FLOATING_POINT_LITERAL>
       | <HEXADECIMAL_FLOATING_POINT_LITERAL>
   >
-|
+  |
   < #DECIMAL_FLOATING_POINT_LITERAL:
         <DECIMAL_LITERAL> "." (<DECIMAL_LITERAL>)? (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
       | "." <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
@@ -201,7 +202,20 @@ TOKEN #Literal :
   < #HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? <DECIMAL_LITERAL> >
 |
   < #HEX_DIGITS: ["0"-"9","a"-"f","A"-"F"]((["0"-"9","a"-"f","A"-"F","_"])*["0"-"9","a"-"f","A"-"F"])? >
-|
+  |
+  < #STRING_ESCAPE:
+      "\\"
+      ( ["n","t","b","r","f", "s", "\\","'","\""]
+      // octal escapes
+      | ["0"-"7"] ( ["0"-"7"] )?
+      | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+      )
+  >
+  |
+  < #HORIZONTAL_WHITESPACE: [" ", "\t", "\f"] >
+  | 
+  < #LINE_TERMINATOR: "\n" | "\r" | "\r\n" >
+  |
   < CHARACTER_LITERAL:
       "'"
       (   (~["'","\\","\n","\r"])
@@ -213,19 +227,21 @@ TOKEN #Literal :
           )
       )
       "'"
-  >
-|
+  > 
+  |
   < STRING_LITERAL:
       "\""
       (   (~["\"","\\","\n","\r"])
-        | ("\\"
-            ( ["n","t","b","r","f","\\","'","\""]
-            | ["0"-"7"] ( ["0"-"7"] )?
-            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
-            )
-          )
+          |
+          <STRING_ESCAPE>
       )*
       "\""
+  > #StringLiteral
+  |
+  < TEXT_BLOCK_LITERAL:
+     "\"\"\"" (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
+        ( ~["\"", "\\"] | "\"" ~["\""] | "\"\"" ~["\""] | <STRING_ESCAPE> | "\\" <LINE_TERMINATOR> )*
+     "\"\"\""
   > #StringLiteral
 ;
 
@@ -1482,6 +1498,8 @@ Literal #void :
   |
   <STRING_LITERAL>
   |
+  <TEXT_BLOCK_LITERAL>
+  |
   "true"
   |
   "false"
@@ -1737,7 +1755,7 @@ ForStatement :
   (
       Modifiers Type <IDENTIFIER> ":" =>|| Expression 
       |
-      [ ForInit ] ";" [ Expression ] ";" [ ForUpdate ]
+      [ ForInit ] ";" [ Expression ] ";" [ StatementExpressionList ]
   )
   ")" Statement
 ;
@@ -1751,10 +1769,6 @@ ForInit :
 
 StatementExpressionList :
   StatementExpression ( "," StatementExpression )*
-;
-
-ForUpdate :
-  StatementExpressionList
 ;
 
 BreakStatement :
@@ -1771,8 +1785,8 @@ YieldStatement :
      => FAIL "need to be in a switch expression"
    ]
    Expression
-   =>||
    ";" 
+   =>||
 ;
 
 ContinueStatement :
@@ -1798,10 +1812,6 @@ SynchronizedStatement :
 ;
 
 ClassicTryStatement ClassicTryStatement :
-/*
- * Semantic check required here to make sure that at least one
- * finally/catch is present.
- */
   "try"
   =>|+1
   Block 

@@ -1,7 +1,7 @@
 /*
  * A JSONC (JSON with comments) grammar 
  */
-PARSER_PACKAGE="com.javacc.jsonc";
+PARSER_PACKAGE="org.parsers.jsonc";
 PARSER_CLASS=JSONCParser;
 SPECIAL_TOKENS_ARE_NODES;
 DEFAULT_LEXICAL_STATE=JSON;

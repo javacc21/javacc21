@@ -142,6 +142,7 @@ abstract public class Nodes {
                     continue;
                 }
                 if (includeCommentTokens) {
+/*                    
 	                Token specialToken = token;
 	                while (specialToken.getSpecialToken() != null) {
 	                    specialToken = specialToken.getSpecialToken();
@@ -149,7 +150,18 @@ abstract public class Nodes {
 	                while (specialToken != token && specialToken !=null) {
 	                    result.add(specialToken);
 	                    specialToken = specialToken.getNext();
-	                }
+	                }*/
+                    ArrayList<Token> comments = null;
+                    Token prev = token.getPreviousToken();
+                    while (prev != null && prev.isUnparsed()) {
+                        if (comments == null) comments = new ArrayList<>();
+                        comments.add(prev);
+                        prev = prev.getPreviousToken();
+                    }
+                    if (comments !=null) {
+                        Collections.reverse(comments);
+                        result.addAll(comments);
+                    }
                 }
                 result.add(token);
             } 

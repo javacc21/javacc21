@@ -70,23 +70,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      }
  [/#if]          
 
- 
-
-[#if grammar.options.faultTolerant]
-
-   // The token does not correspond to actual characters in the input.
-   // It was typically inserted to (tolerantly) complete some grammatical production.
-   private boolean virtual;
-   
-   public boolean isVirtual() {
-      return virtual;
-   }
-   
-   public void setVirtual(boolean virtual) {this.virtual = virtual;}
-   
-[/#if]
-
-
     private String inputSource = "";
 
     private TokenType type;
@@ -104,13 +87,13 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * of this token; endLine and endColumn describe the position of the
      * last character of this token.
      */
-[#if !grammar.options.legacyAPI]private[/#if]      
+[#if grammar.options.legacyAPI]public[#else]private[/#if]      
     int beginLine, beginColumn, endLine, endColumn;
 
     /**
      * The string image of the token.
      */
-[#if !grammar.options.legacyAPI]private[/#if]      
+[#if grammar.options.legacyAPI]public[#else]private[/#if]      
     String image;
     
     public String getImage() {
@@ -126,15 +109,53 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        this.image = image;
    } 
     
-[#if !grammar.options.userDefinedLexer && grammar.lexerData.tokenCount>1]
-    private LexicalState lexicalState;
+[#if !grammar.options.userDefinedLexer && grammar.lexerData.numLexicalStates > 1]
+    private LexicalState lexicalState, followingLexicalState;
         
     void setLexicalState(LexicalState state) {
         this.lexicalState = state;
     }
     
+    /**
+     * The lexical state in which this Token was created
+     */ 
     LexicalState getLexicalState() {
         return lexicalState;
+    }
+
+    /**
+     * The lexical state that should immediately follow 
+     * this token.
+     */
+    LexicalState getFollowingLexicalState() {
+        return followingLexicalState == null ? lexicalState : followingLexicalState;
+    }
+
+    void setFollowingLexicalState(LexicalState state) {
+        this.followingLexicalState = state;
+    }
+
+    boolean hasCachedLexicalStateChange() {
+        Token token = this;
+        while (token.getNext() != null) {
+            if (token.getNext().getLexicalState() != token.getLexicalState()) {
+                return true;
+            }
+            token = token.getNext();
+        }
+        return false;
+    }
+
+[/#if]
+
+[#if grammar.options.faultTolerant]
+    private boolean skipped;
+    boolean isSkipped() {
+        return skipped;
+    }
+
+    void setSkipped(boolean skipped) {
+        this.skipped = skipped;
     }
 [/#if]
 
@@ -159,15 +180,46 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#else]
     private
 [/#if]
-   Token next;
+    Token next;
+    private Token previousToken, nextToken;
     
-    Token getNext() {
+
+    /**
+     * The next regular (i.e. parsed) token
+     */
+    public Token getNext() {
        return next;
     }
     
     void setNext(Token next) {
         this.next = next;
     }
+
+
+    /**
+     * The next token of any sort (parsed or unparsed or invalid)
+     */
+     public Token getNextToken() {
+         return nextToken;
+     }
+
+     void setNextToken(Token nextToken) {
+         this.nextToken = nextToken;
+     }
+
+     public Token getPreviousToken() {
+         [#if grammar.options.hugeFileSupport]
+           throw new UnsupportedOperationException("With HUGE_FILE_SUPPORT turned on, the previousToken is not cached");
+         [#else]
+           return previousToken;
+         [/#if]
+     }
+
+     void setPreviousToken(Token previousToken) {
+         [#if grammar.options.hugeFileSupport] if (previousToken == null || previousToken.isUnparsed())[/#if]
+         this.previousToken = previousToken;
+     }
+
 
     /**
      * This field is used to access special tokens that occur prior to this
@@ -181,13 +233,20 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * immediately follow it (without an intervening regular token).  If there
      * is no such token, this field is null.
      */
-[#if !grammar.options.legacyAPI]private[/#if]     
+[#if grammar.options.legacyAPI]public[#else]private[/#if]
+
     Token specialToken;
-    
+
+    @Deprecated
     public Token getSpecialToken() {
-         return specialToken;
+        [#if grammar.options.legacyAPI]
+           return specialToken;
+        [#else]
+           return previousToken == null || !previousToken.isUnparsed() ? null : previousToken;
+        [/#if] 
     }
     
+    @Deprecated 
     public void setSpecialToken(Token specialToken) {
          this.specialToken = specialToken;
     }
@@ -217,7 +276,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.inputSource = inputSource;
     }
     
-   public boolean isUnparsed() {
+    public boolean isUnparsed() {
         return unparsed;
     }
     
@@ -225,16 +284,22 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.unparsed = unparsed;
     }
 
+[#if !grammar.options.userDefinedLexer]
     /** 
      * Utility method to merge two tokens into a single token of a given type.
      */
     static Token merge(Token t1, Token t2, TokenType type) {
-        Token merged = new Token(type, t1.getImage() + t2.getImage(), t1.getInputSource());
+        [#var lastArg = "t1.getFileLineMap()"]
+        [#if grammar.options.hugeFileSupport][#set lastArg = "t1.getInputSource()"][/#if]
+        Token merged = newToken(type, t1.getImage() + t2.getImage(), ${lastArg});
+        merged.setSpecialToken(t1.getSpecialToken());
+        merged.setPreviousToken(t1.getPreviousToken());
         merged.setBeginLine(t1.getBeginLine());
         merged.setBeginColumn(t1.getBeginColumn());
         merged.setEndColumn(t2.getEndColumn());
         merged.setEndLine(t2.getEndLine());
         merged.setNext(t2.getNext());
+        merged.setNextToken(t2.getNextToken());
         return merged;
     }
 
@@ -245,29 +310,30 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     static Token split(Token tok, int length, TokenType type1, TokenType type2) {
         String img1 = tok.getImage().substring(0, length);
         String img2 = tok.getImage().substring(length);
-        Token t1 = new Token(type1, img1, tok.getInputSource());
-        Token t2 = new Token(type2, img2, tok.getInputSource());
+        [#set lastArg = "tok.getFileLineMap()"]
+        [#if grammar.options.hugeFileSupport][#set lastArg = "tok.getInputSource()"][/#if]
+        Token t1 = newToken(type1, img1, ${lastArg});
+        Token t2 = newToken(type2, img2, ${lastArg});
         t1.setBeginColumn(tok.getBeginColumn());
         t1.setEndColumn(tok.getBeginColumn() + length -1);
         t1.setBeginLine(tok.getBeginLine());
         t1.setEndLine(tok.getBeginLine());
+        t1.setPreviousToken(tok.getPreviousToken());
         t2.setBeginColumn(t1.getEndColumn() +1);
         t2.setEndColumn(tok.getEndColumn());
         t2.setBeginLine(tok.getBeginLine());
         t2.setEndLine(tok.getEndLine());
         t1.setNext(t2);
+        t1.setNextToken(t2);
+        t2.setPreviousToken(t1);
         t2.setNext(tok.getNext());
+        t2.setNextToken(tok.getNextToken());
         return t1;
     }
-    
+[/#if]    
     public void clearChildren() {}
     
     public String getNormalizedText() {
-[#if grammar.options.faultTolerant]
-        if (virtual) {
-             return "Virtual Token of type " + getType();
-        }
-[/#if]    
         if (getType() == TokenType.EOF) {
             return "EOF";
         }
@@ -385,7 +451,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getLocation() {
          return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
      }
-   
 [/#if]     
     
 [#if grammar.options.treeBuildingEnabled]
