@@ -494,12 +494,13 @@ INJECT Token :
     }
     
     public String getLeadingComments() {
+        Token specialToken = getPreviousToken() == null || !getPreviousToken().isUnparsed() ? null : getPreviousToken();
         if (specialToken == null)
             return "";
         StringBuilder buf = new StringBuilder();
         Token tok = specialToken;
-        while (tok.specialToken != null) {
-            tok = tok.getSpecialToken();
+        while (tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
+            tok = tok.getPreviousToken();
         }
         while (tok != this && tok != null) {
             buf.append(tok);
@@ -936,7 +937,7 @@ INJECT BNFProduction :
     
     public void adjustFirstToken(Token t) {
         this.leadingComments = t.getLeadingComments();
-        t.setSpecialToken(null);
+//        t.setSpecialToken(null); // FIXME, I guess we need something a bit kludgy for now
     }
 
     public String getLeadingComments() {

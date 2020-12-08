@@ -163,15 +163,15 @@ public abstract class RegularExpression extends Expansion {
         return type == REGULAR_TOKEN;
     }
     
-    public boolean isSpecialToken() {
+    boolean isUnparsedToken() {
         return type == UNPARSED_TOKEN;
     }
     
-    public boolean isSkip() {
+    boolean isSkip() {
         return type == SKIP || type == UNPARSED_TOKEN;
     }
     
-    public boolean isMore() {
+    boolean isMore() {
         return type == MORE;
     }
     
@@ -179,7 +179,7 @@ public abstract class RegularExpression extends Expansion {
         this.type = REGULAR_TOKEN;
     }
     
-    void setSpecialToken() {
+    void setUnparsedToken() {
         this.type = UNPARSED_TOKEN;
     }
     

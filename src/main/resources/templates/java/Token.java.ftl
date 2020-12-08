@@ -233,9 +233,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * immediately follow it (without an intervening regular token).  If there
      * is no such token, this field is null.
      */
-[#if grammar.options.legacyAPI]public[#else]private[/#if]
+[#if grammar.options.legacyAPI]
 
-    Token specialToken;
+    public Token specialToken;
 
     @Deprecated
     public Token getSpecialToken() {
@@ -250,6 +250,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void setSpecialToken(Token specialToken) {
          this.specialToken = specialToken;
     }
+[/#if]    
     
     private boolean unparsed;
 
@@ -292,7 +293,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         [#var lastArg = "t1.getFileLineMap()"]
         [#if grammar.options.hugeFileSupport][#set lastArg = "t1.getInputSource()"][/#if]
         Token merged = newToken(type, t1.getImage() + t2.getImage(), ${lastArg});
+[#if grammar.options.legacyAPI]        
         merged.setSpecialToken(t1.getSpecialToken());
+[/#if]        
         merged.setPreviousToken(t1.getPreviousToken());
         merged.setBeginLine(t1.getBeginLine());
         merged.setBeginColumn(t1.getBeginColumn());

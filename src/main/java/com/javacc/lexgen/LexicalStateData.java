@@ -359,7 +359,7 @@ public class LexicalStateData {
                 lexerData.hasSpecial = true;
                 lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
                 lexerData.getSkipSet().set(currentRegexp.getOrdinal());
-                currentRegexp.setSpecialToken();
+                currentRegexp.setUnparsedToken();
             }
             else if (kind.equals("SKIP")) {
                 lexerData.hasSkipActions |= (tokenAction != null);

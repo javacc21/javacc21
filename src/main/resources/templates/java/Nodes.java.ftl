@@ -109,24 +109,6 @@ abstract public class Nodes {
     }
  
     /**
-     * Expands (in place) a Node's children to include any comment tokens hanging
-     * off the regular tokens.
-     * @param n the Node 
-     * @param recursive whether to recurse into child nodes.
-     */
-
-    static public void expandSpecialTokens(Node n, boolean recursive) {
-        List<Token> expandedList = getAllTokens(n, true, false);
-        n.clearChildren();
-        for (Node child : expandedList) {
-            n.addChild(child);
-            if (recursive && child.getChildCount() >0) {
-                expandSpecialTokens(child, true);
-            }
-        }
-    }
-    
-    /**
      * @return a List containing all the tokens in a Node
      * @param n The Node 
      * @param includeCommentTokens Whether to include comment tokens
@@ -142,15 +124,6 @@ abstract public class Nodes {
                     continue;
                 }
                 if (includeCommentTokens) {
-/*                    
-	                Token specialToken = token;
-	                while (specialToken.getSpecialToken() != null) {
-	                    specialToken = specialToken.getSpecialToken();
-	                }
-	                while (specialToken != token && specialToken !=null) {
-	                    result.add(specialToken);
-	                    specialToken = specialToken.getNext();
-	                }*/
                     ArrayList<Token> comments = null;
                     Token prev = token.getPreviousToken();
                     while (prev != null && prev.isUnparsed()) {

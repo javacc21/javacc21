@@ -49,8 +49,8 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.javacc.lexgen.LexerData;
-import com.javacc.lexgen.RegularExpression;
 import com.javacc.output.java.FilesGenerator;
+import com.javacc.lexgen.RegularExpression;
 import com.javacc.parsegen.Expansion;
 import com.javacc.parsegen.ParserData;
 import com.javacc.parser.BaseNode;
