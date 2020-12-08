@@ -187,11 +187,19 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     /**
      * The next regular (i.e. parsed) token
      */
-    public Token getNext() {
-       return next;
+    public final Token getNext() {
+        return getNextParsedToken();
     }
     
-    void setNext(Token next) {
+    final void setNext(Token next) {
+        setNextParsedToken(next);
+    }
+
+    public Token getNextParsedToken() {
+        return next;
+    }
+
+    void setNextParsedToken(Token next) {
         this.next = next;
     }
 
@@ -239,11 +247,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     @Deprecated
     public Token getSpecialToken() {
-        [#if grammar.options.legacyAPI]
            return specialToken;
-        [#else]
-           return previousToken == null || !previousToken.isUnparsed() ? null : previousToken;
-        [/#if] 
     }
     
     @Deprecated 

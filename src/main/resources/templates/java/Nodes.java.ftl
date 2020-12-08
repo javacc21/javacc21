@@ -112,9 +112,8 @@ abstract public class Nodes {
      * @return a List containing all the tokens in a Node
      * @param n The Node 
      * @param includeCommentTokens Whether to include comment tokens
-     * @param recursive Whether to recurse into child Nodes.
      */
-    static public List<Token> getAllTokens(Node n, boolean includeCommentTokens, boolean recursive) {
+    static public List<Token> getAllTokens(Node n, boolean includeCommentTokens) {
 		List<Token> result = new ArrayList<Token>();
         for (Iterator<Node> it = iterator(n); it.hasNext();) {
             Node child = it.next();
@@ -139,11 +138,13 @@ abstract public class Nodes {
                 result.add(token);
             } 
             else if (child.getChildCount() >0) {
-               result.addAll(getAllTokens(child, includeCommentTokens, recursive));
+               result.addAll(getAllTokens(child, includeCommentTokens));
             }
         }
         return result;
     }
+
+
     
     static public void copyLocationInfo(Node from, Node to) {
 //        to.setInputSource(from.getInputSource()); REVISIT

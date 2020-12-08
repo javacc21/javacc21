@@ -206,8 +206,7 @@ public interface Node extends Comparable<Node>
         }
         return null; 
      }
-     
-     
+
     default <T extends Node>List<T>childrenOfType(Class<T>clazz) {
         List<T>result=new java.util.ArrayList<>();
         for (Node child : children()) {

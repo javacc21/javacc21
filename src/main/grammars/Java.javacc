@@ -47,18 +47,14 @@ INJECT PARSER_CLASS : {
         Token gt = Token.split(tok, 1, GT, GT);
         if (img.length() == 3) {
           Token next = Token.split(gt.getNext(), 1, GT, GT);
-          gt.setNext(next);
-//          gt.setNextToken(next);
         }
         return gt;
     }
     else if (!inGenericTypeSpec && img.length() ==1) {
       // In this case we do the reverse. We merge 2 (or 3) GT tokens into a right shift operator
-//      Token next = tok.getNextToken();
-      Token next = tok.getNext();
-      if (next != null && next.getType() == GT) {// && next.getBeginColumn() == tok.getBeginColumn()+1) {
-//        Token nextNext = next.getNextToken();
-        Token nextNext = next.getNext();
+      Token next = tok.getNextToken();
+      if (next != null && next.getType() == GT) {
+        Token nextNext = next.getNextToken();
         Token merged = Token.merge(tok, next, RSIGNEDSHIFT);
         if (nextNext != null && nextNext.getType() == GT) {// && nextNext.getBeginColumn() == next.getBeginColumn() +1) {
             merged = Token.merge(merged, nextNext, RUNSIGNEDSHIFT);
@@ -313,7 +309,7 @@ INJECT BaseNode :
 {    
     protected String getLiteralText() {
         StringBuilder buf = new StringBuilder();
-        for (Token t : Nodes.getAllTokens(this, true,true)) {
+        for (Token t : Nodes.getAllTokens(this, true)) {
             buf.append(t);
         }
         return buf.toString();
@@ -321,7 +317,7 @@ INJECT BaseNode :
     
     protected String getInnerText() {
         StringBuilder buf = new StringBuilder();
-        List<Token> tokens = Nodes.getAllTokens(this, true, true);
+        List<Token> tokens = Nodes.getAllTokens(this, true);
         boolean outputOpeningBrace = false;
         for (int i=0; i<tokens.size() -1; i++) {
             Token t = tokens.get(i);

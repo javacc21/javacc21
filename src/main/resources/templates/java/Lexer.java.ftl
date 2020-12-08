@@ -161,13 +161,13 @@ public final void backup(int amount) {
   private Token previousToken; 
   
   public Token getNextToken() {
-      Token tok = null;
+      Token token = null;
       do {
-          tok = nextToken();
-      } while (tok instanceof InvalidToken);
+          token = nextToken();
+      } while (token instanceof InvalidToken);
       if (invalidToken != null) {
-          invalidToken.setNextToken(tok);
-          tok.setPreviousToken(invalidToken);
+          invalidToken.setNextToken(token);
+          token.setPreviousToken(invalidToken);
           Token it = invalidToken;
           this.invalidToken = null;
 [#if grammar.options.faultTolerant]
@@ -175,9 +175,9 @@ public final void backup(int amount) {
 [/#if]
           return it;
       }
-      tok.setPreviousToken(previousToken);
-      if (previousToken != null) previousToken.setNextToken(tok);
-      return previousToken = tok;
+      token.setPreviousToken(previousToken);
+      if (previousToken != null) previousToken.setNextToken(token);
+      return previousToken = token;
  }
 
 [#if grammar.productionTable?size != 0]

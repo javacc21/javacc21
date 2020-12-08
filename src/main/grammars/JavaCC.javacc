@@ -378,8 +378,7 @@ INJECT PARSER_CLASS : {
         if ((type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) && !isInProduction("Expression")) {
           Token gt = Token.split(tok, 1, GT, GT);
           if (type == RUNSIGNEDSHIFT) {
-              Token next = Token.split(gt.getNext(), 1, GT, GT);
-              gt.setNext(next);
+              Token.split(gt.getNextToken(), 1, GT, GT);
           }
           return gt;
         } 
