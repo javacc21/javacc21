@@ -53,7 +53,7 @@ public class JavaFormatter {
     
     public String format(BaseNode code) {
         buf = new StringBuilder();
-        List<Token> allTokens = Nodes.getAllTokens(code, true);
+        List<Token> allTokens = Nodes.getAllTokens(code, true, true);
         checkFirstNewLine(allTokens);
         for (Token t :  allTokens) {
             if (t instanceof Whitespace) {
@@ -147,7 +147,9 @@ public class JavaFormatter {
                 break;
             case FORMAL_COMMENT :
             case MULTI_LINE_COMMENT :
-                handleMultiLineComment();
+                newLine();
+                buf.append(currentToken);
+                newLine();
                 break;
             case SINGLE_LINE_COMMENT : 
                 handleSingleLineComment();
@@ -192,13 +194,6 @@ public class JavaFormatter {
         buf.append(currentToken);
         newLine();
     }
-
-    private void handleMultiLineComment() {
-        startNewLineIfNecessary();
-        for (int i = 0; i < currentToken.getBeginColumn()-1; i++) buf.append(' ');
-        buf.append(currentToken);
-        newLine();
-    }
     
     
     private void handleOpenBrace() {
@@ -213,23 +208,20 @@ public class JavaFormatter {
     }
     
     private void handleCloseBrace() {
-        /*
-        Node parent = currentToken.getParent();
         if (parent instanceof ArrayInitializer) {
             buf.append('}');
             return;
         }
-        currentIndent = currentIndent.substring(0, Math.max(0,currentIndent.length() -indent.length()));
+        currentIndent = currentIndent.substring(0, currentIndent.length() -indent.length());
         newLine();
         buf.append('}');
-        if (parent !=null && (parent instanceof TypeDeclaration 
+        if (parent instanceof TypeDeclaration 
             || parent instanceof ConstructorDeclaration
-            || parent.getParent() instanceof MethodDeclaration))
+            || parent.getParent() instanceof MethodDeclaration)
         {
             buf.append(eol);
             buf.append(eol);
         }
-        newLine();*/
-        buf.append("}");
+        newLine();
     }
 }

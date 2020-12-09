@@ -11,7 +11,7 @@ A list of the main features (in particular, wrt *legacy JavaCC*) follows:
 
 ## Up-to-date Java language support
 
-JavaCC 21 includes support for the Java language through JDK 14. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/) and [here](https://javacc.com/2020/10/25/jdk-14-now-fully-supported-new-switch-syntax/). (As of this writing, Java language support in legacy JavaCC is stalled at the JDK 7 level.)
+JavaCC 21 includes support for the Java language through JDK 15. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/) and [here](https://javacc.com/2020/10/25/jdk-14-now-fully-supported-new-switch-syntax/). (As of this writing, Java language support in legacy JavaCC is stalled at the JDK 7 level.)
 
 Note also that the [Java grammar that JavaCC 21 uses internally](https://github.com/JavaCC21/JavaCC21/blob/master/src/main/grammars/Java.javacc) can be used in your own projects without any restriction.
 
@@ -116,8 +116,6 @@ In general, JavaCC 21 has more sensible default settings and is [much more usabl
 Perhaps most importantly, the project is again under active development.  
 
 Now that the project is active again, users can expect significant new features fairly soon. Given that code generation has been externalized to template files, the ability to generate parsers in other languages is probably not very far off. Another near-term major goal is to provide support for *fault-tolerant* parsing, where a parser incorporates heuristics for building an AST even when the input is invalid (unbalanced delimiters, missing semicolon and such).
-
-One by-product of the ongoing work on fault-tolerant parsing is a new ATTEMPT/RECOVER statement that is [described here](https://javacc.com/2020/05/03/new-experimental-feature-attempt-recover/).
 
 One way to stay up to date with the JavaCC 21 project is to subscribe to [our blog newsfeed](https://javacc.com/feed) in any newsreader. 
 
