@@ -144,6 +144,10 @@ abstract public class Nodes {
         return result;
     }
 
+    public List<Token> getAllTokens(Node n, boolean includeCommentTokens, boolean recursive) {
+        return getAllTokens(n, includeCommentTokens);
+    }
+
 
     
     static public void copyLocationInfo(Node from, Node to) {
