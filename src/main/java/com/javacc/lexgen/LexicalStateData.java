@@ -387,78 +387,35 @@ public class LexicalStateData {
      */
     private void generateDfa(final RegexpStringLiteral stringLiteral) {
         final String image = stringLiteral.getImage();
-        int imageLength = image.length();
-        int ordinal = stringLiteral.getOrdinal();
-        maxStringLength = Math.max(imageLength, maxStringLength);
-        maxStringIndex = Math.max(maxStringIndex, ordinal+1);
+        final int imageLength = image.length();
+        final int ordinal = stringLiteral.getOrdinal();
+        this.maxStringLength = Math.max(imageLength, maxStringLength);
+        this.maxStringIndex = Math.max(maxStringIndex, ordinal+1);
 
         for (int i = 0; i < imageLength; i++) {
-            Map<String, KindInfo> temp;
-            KindInfo info;
+            boolean pastArrayLimit = (i >= charPosKind.size());
             final char c = image.charAt(i);
             String s = Character.toString(c);
             if (grammar.getOptions().getIgnoreCase()) {
                 s = s.toLowerCase();
             } 
-            if (i >= charPosKind.size()) {// Kludge, but OK
-                temp = new HashMap<>();
+            Map<String, KindInfo> temp = pastArrayLimit ? new HashMap<>() : charPosKind.get(i);
+            if (pastArrayLimit) {
                 charPosKind.add(temp);
             }
-            else {
-                temp = charPosKind.get(i);
+            KindInfo info = temp.containsKey(s) ? temp.get(s) : new KindInfo(grammar);
+            temp.put(s, info);
+            if (!grammar.getOptions().getIgnoreCase() && stringLiteral.getIgnoreCase()) {
+                temp.put(s.toLowerCase(Locale.ENGLISH), info);
+                temp.put(s.toUpperCase(Locale.ENGLISH), info);
             }
-            info = temp.get(s);
-            if (info == null) {
-                info = new KindInfo(grammar);
-                temp.put(s, info);
-            }
-            if (i + 1 == imageLength)
+            if (i + 1 == imageLength) {
                 info.insertFinalKind(ordinal);
-            else
-                info.insertValidKind(ordinal);
-
-            if (!grammar.getOptions().getIgnoreCase() && stringLiteral.getIgnoreCase()
-                    && c != Character.toLowerCase(c)) {
-                s = ("" + stringLiteral.getImage().charAt(i)).toLowerCase(Locale.ENGLISH);
-
-                if (i >= charPosKind.size()) { // Kludge, but OK
-                    temp = new HashMap<>();
-                    charPosKind.add(temp);
-                }
-                else {
-                    temp = charPosKind.get(i);
-                }
-                info = temp.get(s);
-                if (info == null) {
-                    info = new KindInfo(grammar);
-                    temp.put(s, info);
-                }
-
-                if (i + 1 == imageLength)
-                    info.insertFinalKind(ordinal);
-                else
-                    info.insertValidKind(ordinal);
             }
-
-            if (!grammar.getOptions().getIgnoreCase() && stringLiteral.getIgnoreCase()
-                    && c != Character.toUpperCase(c)) {
-                s = ("" + image.charAt(i)).toUpperCase();
-
-                if (i >= charPosKind.size()) // Kludge, but OK
-                    charPosKind.add(temp = new HashMap<String, KindInfo>());
-                else
-                    temp = charPosKind.get(i);
-
-                if ((info = (KindInfo) temp.get(s)) == null)
-                    temp.put(s, info = new KindInfo(grammar));
-
-                if (i + 1 == imageLength)
-                    info.insertFinalKind(ordinal);
-                else
-                    info.insertValidKind(ordinal);
+            else {
+                info.insertValidKind(ordinal);
             }
         }
-
         maxStringLengthForActive[ordinal/64] = Math.max(maxStringLengthForActive[ordinal/64], imageLength - 1);
         images[ordinal] = image;
     }
