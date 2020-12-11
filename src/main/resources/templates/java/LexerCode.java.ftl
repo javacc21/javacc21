@@ -992,7 +992,7 @@
   
   [#list 0..(maxStringLength-1) as i]
     [#var startNfaNeeded=false]
-    [#var table=lexicalState.charPosKind[i]]
+    [#var table=lexicalState.stringLiteralTables[i]]
     
     private int jjMoveStringLiteralDfa${i}${lexicalState.suffix}
     [@ArgsList]

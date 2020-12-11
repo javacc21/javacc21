@@ -71,7 +71,7 @@ public class LexicalStateData {
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
 
     private int maxStringIndex, maxStringLength;
-    private List<Map<String, KindInfo>> charPosKind = new ArrayList<>();
+    private List<Map<String, KindInfo>> stringLiteralTables = new ArrayList<>();
 
     // with single char keys;
     private int[] maxStringLengthForActive = new int[100]; // 6400 tokens
@@ -110,8 +110,8 @@ public class LexicalStateData {
         return maxStringIndex;
     }
 
-    public List<Map<String, KindInfo>> getCharPosKind() {
-        return charPosKind;
+    public List<Map<String, KindInfo>> getStringLiteralTables() {
+        return stringLiteralTables;
     }
 
     public int getMaxStringLength() {
@@ -385,39 +385,39 @@ public class LexicalStateData {
     /**
      * Used for top level string literals.
      */
-    private void generateDfa(final RegexpStringLiteral stringLiteral) {
-        final String image = stringLiteral.getImage();
-        final int imageLength = image.length();
-        final int ordinal = stringLiteral.getOrdinal();
-        this.maxStringLength = Math.max(imageLength, maxStringLength);
+    private void generateDfa(final RegexpStringLiteral rsLiteral) {
+        final int ordinal = rsLiteral.getOrdinal();
+        final String stringLiteral = rsLiteral.getImage();
+        final int stringLength = stringLiteral.length();
+        this.maxStringLength = Math.max(stringLength, maxStringLength);
         this.maxStringIndex = Math.max(maxStringIndex, ordinal+1);
-
-        for (int i = 0; i < imageLength; i++) {
-            boolean pastArrayLimit = (i >= charPosKind.size());
-            final char c = image.charAt(i);
+        while (stringLiteralTables.size() < stringLength) {
+            stringLiteralTables.add(new HashMap<>());
+        }
+        for (int i = 0; i < stringLength; i++) {
+            final char c = stringLiteral.charAt(i);
             String s = Character.toString(c);
             if (grammar.getOptions().getIgnoreCase()) {
-                s = s.toLowerCase();
-            } 
-            Map<String, KindInfo> temp = pastArrayLimit ? new HashMap<>() : charPosKind.get(i);
-            if (pastArrayLimit) {
-                charPosKind.add(temp);
+                s = s.toLowerCase(Locale.ROOT);
             }
-            KindInfo info = temp.containsKey(s) ? temp.get(s) : new KindInfo(grammar);
-            temp.put(s, info);
-            if (!grammar.getOptions().getIgnoreCase() && stringLiteral.getIgnoreCase()) {
-                temp.put(s.toLowerCase(Locale.ENGLISH), info);
-                temp.put(s.toUpperCase(Locale.ENGLISH), info);
+            Map<String, KindInfo> table = stringLiteralTables.get(i);
+            if (!table.containsKey(s)) {
+                table.put(s, new KindInfo(grammar));
             }
-            if (i + 1 == imageLength) {
+            KindInfo info = table.get(s);
+            if (!grammar.getOptions().getIgnoreCase() && rsLiteral.getIgnoreCase()) {
+                table.put(s.toLowerCase(Locale.ROOT), info);
+                table.put(s.toUpperCase(Locale.ROOT), info);
+            }
+            if (i + 1 == stringLength) {
                 info.insertFinalKind(ordinal);
             }
             else {
                 info.insertValidKind(ordinal);
             }
         }
-        maxStringLengthForActive[ordinal/64] = Math.max(maxStringLengthForActive[ordinal/64], imageLength - 1);
-        images[ordinal] = image;
+        maxStringLengthForActive[ordinal/64] = Math.max(maxStringLengthForActive[ordinal/64], stringLength - 1);
+        images[ordinal] = stringLiteral;
     }
 
     public int getStateSetForKind(int pos, int kind) {
@@ -953,7 +953,7 @@ public class LexicalStateData {
 
     private void setupStateSetsForKinds() {
         for (int i = 0; i < maxStringLength; i++) {
-            Map<String, KindInfo> tab = charPosKind.get(i);
+            Map<String, KindInfo> tab = stringLiteralTables.get(i);
             for (String key : tab.keySet()) {
                 KindInfo info = tab.get(key);
                 if (generateDfaCase(key, info, i)) {
