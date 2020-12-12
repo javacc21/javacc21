@@ -187,21 +187,6 @@
         [/#set]
         if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
         curPos = jjMoveStringLiteralDfa0${lexicalState.suffix}();
-    [#if lexicalState.matchAnyChar??]
-         [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
-        if (jjmatchedPos < 0 || (jjmatchedPos == 0 && jjmatchedKind > ${lexicalState.canMatchAnyChar}))
-         [#else]
-        if (jjmatchedPos == 0 && jjmatchedKind > ${lexicalState.canMatchAnyChar})
-        [/#if]
-        {
-        if (trace_enabled) LOGGER.info("    Current character matched as a " + tokenImage[${lexicalState.canMatchAnyChar}] + " token."); 
-        jjmatchedKind = ${lexicalState.canMatchAnyChar};
-        [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
-        jjmatchedPos = 0;
-        [/#if]
-      }
-    [/#if]
-
     [#if numLexicalStates>1]
         break;
     [/#if]
@@ -976,10 +961,10 @@
 
 [#macro DumpDfaCode lexicalState]
   [#var initState=lexicalState.initStateName()]
-  [#var maxLen=lexicalState.maxLen]
-  [#var maxStrKind=lexicalState.maxStrKind]
-  [#var maxLenForActive=lexicalState.maxLenForActive]
-  [#if maxLen = 0]
+  [#var maxStringLength=lexicalState.maxStringLength]
+  [#var maxStringIndex=lexicalState.maxStringIndex]
+  [#var maxStringLengthForActive=lexicalState.maxStringLengthForActive]
+  [#if maxStringLength = 0]
     private int jjMoveStringLiteralDfa0${lexicalState.suffix}() {
     [#if lexicalState.hasNfa()]
         return jjMoveNfa${lexicalState.suffix}(${initState}, 0);
@@ -990,14 +975,14 @@
     [#return]
   [/#if]
   
-  [#list 0..(maxLen-1) as i]
+  [#list 0..(maxStringLength-1) as i]
     [#var startNfaNeeded=false]
-    [#var table=lexicalState.charPosKind[i]]
+    [#var table=lexicalState.stringLiteralTables[i]]
     
     private int jjMoveStringLiteralDfa${i}${lexicalState.suffix}
     [@ArgsList]
-        [#list 0..maxStrKind/64 as j]
-           [#if i != 0&&i<=maxLenForActive[j]+1&&maxLenForActive[j] != 0]
+        [#list 0..maxStringIndex/64 as j]
+           [#if i != 0&&i<=maxStringLengthForActive[j]+1&&maxStringLengthForActive[j] != 0]
               [#if i != 1]
                  long old${j}
               [/#if]
@@ -1007,14 +992,14 @@
     [/@ArgsList] {
     [#if i != 0]
       [#if i>1]
-         [#list 0..maxStrKind/64 as j]
-           [#if i<=lexicalState.maxLenForActive[j]+1]
+         [#list 0..maxStringIndex/64 as j]
+           [#if i<=lexicalState.maxStringLengthForActive[j]+1]
         active${j} = active${j} & old${j};
            [/#if]
          [/#list]
         if ([@ArgsList delimiter=" | "]
-         [#list 0..maxStrKind/64 as j]
-           [#if i<=lexicalState.maxLenForActive[j]+1]
+         [#list 0..maxStringIndex/64 as j]
+           [#if i<=lexicalState.maxStringLengthForActive[j]+1]
             active${j}
            [/#if]
          [/#list]
@@ -1023,8 +1008,8 @@
             return jjStartNfa${lexicalState.suffix}
             [@ArgsList]
                ${i-2}
-               [#list 0..maxStrKind/64 as j]
-                 [#if i<=lexicalState.maxLenForActive[j]+1]
+               [#list 0..maxStringIndex/64 as j]
+                 [#if i<=lexicalState.maxStringLengthForActive[j]+1]
                    old${j}
                  [#else]
                    0L
@@ -1042,8 +1027,8 @@
             LOGGER.info("    Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
         }
         if (trace_enabled) LOGGER.info("   Possible string literal matches : { "
-        [#list 0..maxStrKind/64 as vecs]
-           [#if i<=maxLenForActive[vecs]]
+        [#list 0..maxStringIndex/64 as vecs]
+           [#if i<=maxStringLengthForActive[vecs]]
              + jjKindsForBitVector(${vecs}, active${vecs}) 
            [/#if]
         [/#list]
@@ -1057,8 +1042,8 @@
          [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
            jjStopStringLiteralDfa${lexicalState.suffix}[@ArgsList]
               ${i-1}
-           [#list 0..maxStrKind/64 as k]
-              [#if (i<=maxLenForActive[k])]
+           [#list 0..maxStringIndex/64 as k]
+              [#if (i<=maxStringLengthForActive[k])]
                 active${k}
               [#else]
                 0L
@@ -1100,7 +1085,7 @@
 	      [/#if]
 	           case ${utils.firstCharAsInt(c)} :
 	      [#if info.finalKindCnt != 0]
-	        [#list 0..maxStrKind as j]
+	        [#list 0..maxStringIndex as j]
 	          [#var matchedKind=info.finalKinds[(j/64)?int]]
               [#if utils.isBitSet(matchedKind, j%64)]
                  [#if ifGenerated]
@@ -1135,8 +1120,8 @@
 	      [/#if]
 	      [#if info.validKindCnt != 0]
 	           return jjMoveStringLiteralDfa${i+1}${lexicalState.suffix}[@ArgsList]
-	              [#list 0..maxStrKind/64 as j]
-	                 [#if i<=maxLenForActive[j]&&maxLenForActive[j] != 0]
+	              [#list 0..maxStringIndex/64 as j]
+	                 [#if i<=maxStringLengthForActive[j]&&maxStringLengthForActive[j] != 0]
 	                    [#if i != 0]
 	                       active${j}
 	                    [/#if]
@@ -1182,8 +1167,8 @@
                  string. --]
             return jjStartNfa${lexicalState.suffix}[@ArgsList]
                ${i-1}
-               [#list 0..maxStrKind/64 as k]
-                 [#if i<=maxLenForActive[k]]
+               [#list 0..maxStringIndex/64 as k]
+                 [#if i<=maxStringLengthForActive[k]]
                   active${k}
                  [#else]
                    0L
@@ -1227,10 +1212,10 @@
  
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
   [#var statesForPos=lexicalState.statesForPos]
-  [#var maxKindsReqd=(1+lexicalState.maxStrKind/64)?int]
+  [#var maxKindsReqd=(1+lexicalState.maxStringIndex/64)?int]
   [#var ind=0]
-  [#var maxStrKind=lexicalState.maxStrKind]
-  [#var maxLen=lexicalState.maxLen]
+  [#var maxStringIndex=lexicalState.maxStringIndex]
+  [#var maxStringLength=lexicalState.maxStringLength]
   
     private int jjStartNfa${lexicalState.suffix}(int pos, 
   [#list 0..(maxKindsReqd-1) as i]
@@ -1259,7 +1244,7 @@
   ) { 
         if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
         switch (pos) {
-  [#list 0..(maxLen-1) as i]
+  [#list 0..(maxStringLength-1) as i]
 	 [#if statesForPos[i]??]
             case ${i} :
         [#list statesForPos[i]?keys as stateSetString]

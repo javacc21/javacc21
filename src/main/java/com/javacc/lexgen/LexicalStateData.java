@@ -52,12 +52,12 @@ public class LexicalStateData {
     int dummyStateIndex = -1;
     boolean done;
     boolean mark[];
-    Vector<NfaState> allStates = new Vector<>();
+    List<NfaState> allStates = new ArrayList<>();
     List<NfaState> indexedAllStates = new ArrayList<>();
     Map<String, NfaState> equivStatesTable = new HashMap<>();
-    Map<String, int[]> allNextStates = new Hashtable<>();
-    private Hashtable<String, int[]> compositeStateTable = new Hashtable<>();
-    private Hashtable<String, Integer> stateIndexFromComposite = new Hashtable<>();
+    Map<String, int[]> allNextStates = new HashMap<>();
+    private Map<String, int[]> compositeStateTable = new HashMap<>();
+    private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     private List<TokenProduction> tokenProductions = new ArrayList<>();
     private NfaState initialState;
     private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
@@ -65,16 +65,15 @@ public class LexicalStateData {
     private NfaState singlesToSkip;
     private boolean mixed;
     boolean canLoop;
-    RegularExpression matchAnyChar;
     int initMatch;
     RegularExpression currentRegexp;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
 
-    private int maxStrKind, maxLen;
-    private List<Map<String, KindInfo>> charPosKind = new ArrayList<>();
+    private int maxStringIndex, maxStringLength;
+    private List<Map<String, KindInfo>> stringLiteralTables = new ArrayList<>();
 
     // with single char keys;
-    private int[] maxLenForActive = new int[100]; // 6400 tokens
+    private int[] maxStringLengthForActive = new int[100]; // 6400 tokens
     private int[][] intermediateKinds;
     private int[][] intermediateMatchedPos;
 
@@ -106,16 +105,16 @@ public class LexicalStateData {
         return index;
     }
 
-    public int getMaxStrKind() {
-        return maxStrKind;
+    public int getMaxStringIndex() {
+        return maxStringIndex;
     }
 
-    public List<Map<String, KindInfo>> getCharPosKind() {
-        return charPosKind;
+    public List<Map<String, KindInfo>> getStringLiteralTables() {
+        return stringLiteralTables;
     }
 
-    public int getMaxLen() {
-        return maxLen;
+    public int getMaxStringLength() {
+        return maxStringLength;
     }
 
     void addTokenProduction(TokenProduction tokenProduction) {
@@ -151,14 +150,6 @@ public class LexicalStateData {
         return canLoop;
     }
 
-    public int getCanMatchAnyChar() {
-        return matchAnyChar == null ? -1 : matchAnyChar.getOrdinal();
-    }
-
-    public RegularExpression getMatchAnyChar() {
-        return matchAnyChar;
-    }
-
     public int getInitMatch() {
         return initMatch;
     }
@@ -167,8 +158,8 @@ public class LexicalStateData {
         return subStringAtPos;
     }
 
-    public int getMaxLenForActive(int i) {
-        return maxLenForActive[i];
+    public int getMaxStringLengthForActive(int i) {
+        return maxStringLengthForActive[i];
     }
 
     public boolean[] getSubString() {
@@ -237,7 +228,7 @@ public class LexicalStateData {
     }
 
     public boolean getDumpNfaStarts() {
-        return indexedAllStates.size() != 0 && !mixed && maxStrKind > 0;
+        return indexedAllStates.size() != 0 && !mixed && maxStringIndex > 0;
     }
 
     List<RegexpChoice> process() {
@@ -324,22 +315,18 @@ public class LexicalStateData {
             }
             if (currentRegexp instanceof RegexpStringLiteral
                     && !((RegexpStringLiteral) currentRegexp).getImage().equals("")) {
-                if (maxStrKind <= currentRegexp.getOrdinal()) {
-                    maxStrKind = currentRegexp.getOrdinal() + 1;
+                if (maxStringIndex <= currentRegexp.getOrdinal()) {
+                    maxStringIndex = currentRegexp.getOrdinal() + 1;
                 }
                 generateDfa((RegexpStringLiteral) currentRegexp);
                 if (!isFirst && !mixed && ignoring != ignore) {
                     mixed = true;
                 }
-            } else if (currentRegexp.canMatchAnyChar()) {
-                if (matchAnyChar == null || matchAnyChar.getOrdinal() > currentRegexp.getOrdinal())
-                    matchAnyChar = currentRegexp;
             } else {
                 if (currentRegexp instanceof RegexpChoice) {
                     choices.add((RegexpChoice) currentRegexp);
                 }
                 Nfa nfa = Nfa.buildNfa(currentRegexp, this, ignore);
-               // Nfa nfa = new NfaBuilder(currentRegexp, this, ignore).getNfa();
                 nfa.getEnd().isFinal = true;
                 nfa.getEnd().kind = currentRegexp.getOrdinal();
                 initialState.addMove(nfa.getStart());
@@ -359,7 +346,7 @@ public class LexicalStateData {
                 lexerData.hasSpecial = true;
                 lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
                 lexerData.getSkipSet().set(currentRegexp.getOrdinal());
-                currentRegexp.setSpecialToken();
+                currentRegexp.setUnparsedToken();
             }
             else if (kind.equals("SKIP")) {
                 lexerData.hasSkipActions |= (tokenAction != null);
@@ -385,80 +372,39 @@ public class LexicalStateData {
     /**
      * Used for top level string literals.
      */
-    private void generateDfa(RegexpStringLiteral stringLiteral) {
-        String s;
-        Map<String, KindInfo> temp;
-        KindInfo info;
-
-        if (maxStrKind <= stringLiteral.getOrdinal()) {
-            maxStrKind = stringLiteral.getOrdinal() + 1;
+    private void generateDfa(final RegexpStringLiteral rsLiteral) {
+        final int ordinal = rsLiteral.getOrdinal();
+        final String stringLiteral = rsLiteral.getImage();
+        final int stringLength = stringLiteral.length();
+        this.maxStringLength = Math.max(stringLength, maxStringLength);
+        this.maxStringIndex = Math.max(maxStringIndex, ordinal+1);
+        while (stringLiteralTables.size() < stringLength) {
+            stringLiteralTables.add(new HashMap<>());
         }
-
-        int imageLength = stringLiteral.getImage().length();
-        if (imageLength > maxLen) {
-            maxLen = imageLength;
-        }
-
-        for (int i = 0; i < imageLength; i++) {
-            char c = stringLiteral.getImage().charAt(i);
+        for (int i = 0; i < stringLength; i++) {
+            final char c = stringLiteral.charAt(i);
+            String s = Character.toString(c);
             if (grammar.getOptions().getIgnoreCase()) {
-                s = "" + Character.toLowerCase(c);
-            } else {
-                s = "" + c;
+                s = s.toLowerCase(Locale.ROOT);
             }
-            if (i >= charPosKind.size()) // Kludge, but OK
-                charPosKind.add(temp = new HashMap<String, KindInfo>());
-            else
-                temp = charPosKind.get(i);
-
-            if ((info = (KindInfo) temp.get(s)) == null)
-                temp.put(s, info = new KindInfo(grammar));
-
-            if (i + 1 == imageLength)
-                info.insertFinalKind(stringLiteral.getOrdinal());
-            else
-                info.insertValidKind(stringLiteral.getOrdinal());
-
-            if (!grammar.getOptions().getIgnoreCase() && stringLiteral.getIgnoreCase()
-                    && c != Character.toLowerCase(c)) {
-                s = ("" + stringLiteral.getImage().charAt(i)).toLowerCase(Locale.ENGLISH);
-
-                if (i >= charPosKind.size()) // Kludge, but OK
-                    charPosKind.add(temp = new HashMap<String, KindInfo>());
-                else
-                    temp = charPosKind.get(i);
-
-                if ((info = (KindInfo) temp.get(s)) == null)
-                    temp.put(s, info = new KindInfo(grammar));
-
-                if (i + 1 == imageLength)
-                    info.insertFinalKind(stringLiteral.getOrdinal());
-                else
-                    info.insertValidKind(stringLiteral.getOrdinal());
+            Map<String, KindInfo> table = stringLiteralTables.get(i);
+            if (!table.containsKey(s)) {
+                table.put(s, new KindInfo(grammar));
             }
-
-            if (!grammar.getOptions().getIgnoreCase() && stringLiteral.getIgnoreCase()
-                    && c != Character.toUpperCase(c)) {
-                s = ("" + stringLiteral.getImage().charAt(i)).toUpperCase();
-
-                if (i >= charPosKind.size()) // Kludge, but OK
-                    charPosKind.add(temp = new HashMap<String, KindInfo>());
-                else
-                    temp = charPosKind.get(i);
-
-                if ((info = (KindInfo) temp.get(s)) == null)
-                    temp.put(s, info = new KindInfo(grammar));
-
-                if (i + 1 == imageLength)
-                    info.insertFinalKind(stringLiteral.getOrdinal());
-                else
-                    info.insertValidKind(stringLiteral.getOrdinal());
+            KindInfo info = table.get(s);
+            if (!grammar.getOptions().getIgnoreCase() && rsLiteral.getIgnoreCase()) {
+                table.put(s.toLowerCase(Locale.ROOT), info);
+                table.put(s.toUpperCase(Locale.ROOT), info);
+            }
+            if (i + 1 == stringLength) {
+                info.insertFinalKind(ordinal);
+            }
+            else {
+                info.insertValidKind(ordinal);
             }
         }
-
-        maxLenForActive[stringLiteral.getOrdinal() / 64] = Math.max(maxLenForActive[stringLiteral
-                .getOrdinal() / 64], imageLength - 1);
-        images[stringLiteral.getOrdinal()] = stringLiteral.getImage();
+        maxStringLengthForActive[ordinal/64] = Math.max(maxStringLengthForActive[ordinal/64], stringLength - 1);
+        images[ordinal] = stringLiteral;
     }
 
     public int getStateSetForKind(int pos, int kind) {
@@ -519,10 +465,10 @@ public class LexicalStateData {
     }
 
     void fillSubString() {
-        subString = new boolean[maxStrKind + 1];
-        subStringAtPos = new boolean[maxLen];
+        subString = new boolean[maxStringIndex + 1];
+        subStringAtPos = new boolean[maxStringLength];
 
-        for (int i = 0; i < maxStrKind; i++) {
+        for (int i = 0; i < maxStringIndex; i++) {
             RegularExpression re = lexerData.getRegularExpression(i);
             subString[i] = false;
 
@@ -537,7 +483,7 @@ public class LexicalStateData {
                 continue;
             }
 
-            for (int j = 0; j < maxStrKind; j++) {
+            for (int j = 0; j < maxStringIndex; j++) {
                 RegularExpression re2 = lexerData.getRegularExpression(j);
                 if (j != i && this.containsRegularExpression(re2) && images[j] != null) {
                     if (images[j].indexOf(images[i]) == 0) {
@@ -570,18 +516,12 @@ public class LexicalStateData {
                     + getLine(kind) + ", column " + getColumn(kind) + ". It will be matched as "
                     + getLabel(intermediateKinds[kind][index]) + ".");
             return intermediateKinds[kind][index];
-        } else if (index == 0 && matchAnyChar != null && matchAnyChar.getOrdinal() < kind) {
-            grammar.addWarning(null, " \"" + ParseException.addEscapes(images[kind])
-                    + "\" cannot be matched as a string literal token " + "at line "
-                    + getLine(kind) + ", column " + getColumn(kind) + ". It will be matched as "
-                    + matchAnyChar.getLabel() + ".");
-            return matchAnyChar.getOrdinal();
-        }
+        } 
         return kind;
     }
 
     final int getStrKind(String str) {
-        for (int i = 0; i < maxStrKind; i++) {
+        for (int i = 0; i < maxStringIndex; i++) {
             RegularExpression re = lexerData.getRegularExpression(i);
             if (!this.containsRegularExpression(re))
                 continue;
@@ -595,14 +535,13 @@ public class LexicalStateData {
 
     public boolean generateDfaCase(String key, KindInfo info, int index) {
         char firstChar = key.charAt(0);
-        for (int kind = 0; kind<maxStrKind; kind++) {
+        for (int kind = 0; kind<maxStringIndex; kind++) {
         	if (index == 0 && firstChar < 128 && info.getFinalKindCnt() !=0
         			&& (indexedAllStates.size() == 0 || !canStartNfaUsingAscii(firstChar))) {
         			if (info.isFinalKind(kind) && !subString[kind]) {
         				if ((intermediateKinds != null && intermediateKinds[(kind)] != null
         						&& intermediateKinds[kind][index] < kind
-        						&& intermediateMatchedPos != null && intermediateMatchedPos[kind][index] == index)
-        						|| (matchAnyChar != null && matchAnyChar.getOrdinal() < kind))
+        						&& intermediateMatchedPos != null && intermediateMatchedPos[kind][index] == index))
         					break;
                         else if (lexerData.getSkipSet().get(kind)
         				        && !lexerData.getSpecialSet().get(kind)
@@ -635,17 +574,17 @@ public class LexicalStateData {
         Map<String, String> stateSets = new HashMap<String, String>();
         String stateSetString = "";
         int i, j, kind, jjmatchedPos = 0;
-        int maxKindsReqd = maxStrKind / 64 + 1;
+        int maxKindsReqd = maxStringIndex / 64 + 1;
         long[] actives;
         List<NfaState> newStates = new ArrayList<NfaState>();
         List<NfaState> jjtmpStates;
 
-        statesForPos = new ArrayList<Map<String, long[]>>(maxLen);
-        for (int k = 0; k < maxLen; k++)
+        statesForPos = new ArrayList<Map<String, long[]>>(maxStringLength);
+        for (int k = 0; k < maxStringLength; k++)
             statesForPos.add(null);
-        intermediateKinds = new int[maxStrKind + 1][];
-        intermediateMatchedPos = new int[maxStrKind + 1][];
-        for (i = 0; i < maxStrKind; i++) {
+        intermediateKinds = new int[maxStringIndex + 1][];
+        intermediateMatchedPos = new int[maxStringIndex + 1][];
+        for (i = 0; i < maxStringIndex; i++) {
             RegularExpression re = lexerData.getRegularExpression(i);
             if (!this.containsRegularExpression(re)) {
                 continue;
@@ -670,10 +609,6 @@ public class LexicalStateData {
                 } else {
                     kind = MoveFromSet(image.charAt(j), oldStates, newStates);
                     oldStates.clear();
-
-                    if (j == 0 && kind != Integer.MAX_VALUE && matchAnyChar != null
-                            && kind > matchAnyChar.getOrdinal())
-                        kind = matchAnyChar.getOrdinal();
 
                     if (getStrKind(image.substring(0, j + 1)) < kind) {
                         intermediateKinds[i][j] = kind = Integer.MAX_VALUE;
@@ -749,7 +684,7 @@ public class LexicalStateData {
     }
 
     public int addStartStateSet(String stateSetString) {
-        if (stateIndexFromComposite.contains(stateSetString)) {
+        if (stateIndexFromComposite.containsKey(stateSetString)) {
             return stateIndexFromComposite.get(stateSetString);
         }
         int toRet = 0;
@@ -769,15 +704,12 @@ public class LexicalStateData {
             st.compositeStates = nameSet;
         }
 
-        while (toRet < nameSet.length && (indexedAllStates.get(nameSet[toRet]).inNextOf > 1))
+        while (toRet < nameSet.length && (indexedAllStates.get(nameSet[toRet]).inNextOf > 1)) {
             toRet++;
-
-        Enumeration<String> e = compositeStateTable.keys();
-        String s;
-        while (e.hasMoreElements()) {
-            s = e.nextElement();
-            if (!s.equals(stateSetString) && intersect(stateSetString, s)) {
-                int[] other = compositeStateTable.get(s);
+        }
+        for (String key : compositeStateTable.keySet()) {
+            if (!key.equals(stateSetString) && intersect(stateSetString, key)) {
+                int[] other = compositeStateTable.get(key);
 
                 while (toRet < nameSet.length
                         && (((indexedAllStates.get(nameSet[toRet])).inNextOf > 1) || NfaState.arrayContains(other, nameSet[toRet]))) {
@@ -875,23 +807,17 @@ public class LexicalStateData {
             if (!state.closureDone)
                 state.optimizeEpsilonMoves(false);
         }
-
-        for (int i = 0; i < allStates.size(); i++) {
-            NfaState tmp = allStates.get(i);
-            tmp.epsilonMoveArray = new NfaState[tmp.epsilonMoves.size()];
-            ((Vector<NfaState>)tmp.epsilonMoves).copyInto(tmp.epsilonMoveArray);
-//            tmp.epsilonMoves.toArray(tmp.epsilonMoveArray);
-        }
     }
 
     private void generateNfaStates() {
         if (indexedAllStates.isEmpty()) {
             return;
         }
-        Vector<NfaState> v = allStates;
-        allStates = new Vector<NfaState>();
-        allStates.setSize(indexedAllStates.size());
-
+        List<NfaState> v = allStates;
+        allStates = new ArrayList<>();
+        while (allStates.size() < indexedAllStates.size()) {
+            allStates.add(null);
+        }
         for (NfaState state : v) {
             if (state.index != -1 && !state.dummy)
                 allStates.set(state.index, state);
@@ -911,18 +837,16 @@ public class LexicalStateData {
 
     public List<List<NfaState>> partitionStatesSetForAscii(NfaState[] states, int byteNum) {
         int[] cardinalities = new int[states.length];
-        Vector<NfaState> original = new Vector<>();
-        Vector<List<NfaState>> partition = new Vector<>();
-        NfaState tmp;
+        List<NfaState> original = new ArrayList<>(Arrays.asList(states));
+        List<List<NfaState>> partition = new ArrayList<>();
+        NfaState state;
 
-        original.setSize(states.length);
         int cnt = 0;
         for (int i = 0; i < states.length; i++) {
-            tmp = states[i];
-
-            if (tmp.getAsciiMoves()[byteNum] != 0L) {
+            state = states[i];
+            if (state.getAsciiMoves()[byteNum] != 0L) {
                 int j;
-                int p = numberOfBitsSet(tmp.getAsciiMoves()[byteNum]);
+                int p = numberOfBitsSet(state.getAsciiMoves()[byteNum]);
 
                 for (j = 0; j < i; j++)
                     if (cardinalities[j] <= p)
@@ -932,35 +856,27 @@ public class LexicalStateData {
                     cardinalities[k] = cardinalities[k - 1];
 
                 cardinalities[j] = p;
-
-                original.insertElementAt(tmp, j);
+                original.add(j, state);
                 cnt++;
             }
         }
-
-        original.setSize(cnt);
-
+        original = original.subList(0, cnt);
         while (original.size() > 0) {
-            tmp = (NfaState) original.get(0);
-            original.removeElement(tmp);
-
-            long bitVec = tmp.getAsciiMoves()[byteNum];
-            List<NfaState> subSet = new Vector<NfaState>();
-            subSet.add(tmp);
-
-            for (int j = 0; j < original.size(); j++) {
-                NfaState tmp1 = (NfaState) original.get(j);
-
-                if ((tmp1.getAsciiMoves()[byteNum] & bitVec) == 0L) {
-                    bitVec |= tmp1.getAsciiMoves()[byteNum];
-                    subSet.add(tmp1);
-                    original.removeElementAt(j--);
+            state = (NfaState) original.get(0);
+            original.remove(state);
+            long bitVec = state.getAsciiMoves()[byteNum];
+            List<NfaState> subSet = new ArrayList<NfaState>();
+            subSet.add(state);
+            for (Iterator<NfaState> it = original.iterator(); it.hasNext();) {
+                NfaState otherState = it.next();
+                if ((otherState.getAsciiMoves()[byteNum] & bitVec) == 0L) {
+                    bitVec |= otherState.getAsciiMoves()[byteNum];
+                    subSet.add(otherState);
+                    it.remove();
                 }
             }
-
-            partition.addElement(subSet);
+            partition.add(subSet);
         }
-
         return partition;
     }
 
@@ -993,13 +909,13 @@ public class LexicalStateData {
     }
 
     private void setupStateSetsForKinds() {
-        for (int i = 0; i < maxLen; i++) {
-            Map<String, KindInfo> tab = charPosKind.get(i);
+        for (int i = 0; i < maxStringLength; i++) {
+            Map<String, KindInfo> tab = stringLiteralTables.get(i);
             for (String key : tab.keySet()) {
                 KindInfo info = tab.get(key);
                 if (generateDfaCase(key, info, i)) {
                     if (info.getFinalKindCnt() != 0) {
-                        for (int j = 0; j < maxStrKind; j++) {
+                        for (int j = 0; j < maxStringIndex; j++) {
                         	if (info.isFinalKind(j) && !subString[j]) {
                         		getStateSetForKind(i, j); // <-- needs to be called!
                         	}

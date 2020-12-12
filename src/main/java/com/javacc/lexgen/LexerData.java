@@ -308,8 +308,7 @@ public class LexerData {
         String reList;
 
         Outer: for (LexicalStateData ls : lexicalStates) {
-            if (done[ls.getIndex()] || ls.initMatch == 0 || ls.initMatch == Integer.MAX_VALUE
-                    || ls.matchAnyChar != null) {
+            if (done[ls.getIndex()] || ls.initMatch == 0 || ls.initMatch == Integer.MAX_VALUE) {
                 continue;
             }
             done[ls.getIndex()] = true;
@@ -336,7 +335,7 @@ public class LexerData {
                 done[j] = true;
                 seen[j] = true;
                 initMatch = lexicalStates.get(j).initMatch;
-                if (initMatch == 0 || initMatch == Integer.MAX_VALUE || lexicalStates.get(j).matchAnyChar != null) {
+                if (initMatch == 0 || initMatch == Integer.MAX_VALUE) {
                     continue Outer;
                 }
 
