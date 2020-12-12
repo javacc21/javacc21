@@ -65,7 +65,6 @@ public class LexicalStateData {
     private NfaState singlesToSkip;
     private boolean mixed;
     boolean canLoop;
-    RegularExpression matchAnyChar;
     int initMatch;
     RegularExpression currentRegexp;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
@@ -149,14 +148,6 @@ public class LexicalStateData {
 
     public boolean getCanLoop() {
         return canLoop;
-    }
-
-    public int getCanMatchAnyChar() {
-        return matchAnyChar == null ? -1 : matchAnyChar.getOrdinal();
-    }
-
-    public RegularExpression getMatchAnyChar() {
-        return matchAnyChar;
     }
 
     public int getInitMatch() {
@@ -331,15 +322,11 @@ public class LexicalStateData {
                 if (!isFirst && !mixed && ignoring != ignore) {
                     mixed = true;
                 }
-            } else if (currentRegexp.canMatchAnyChar()) {
-                if (matchAnyChar == null || matchAnyChar.getOrdinal() > currentRegexp.getOrdinal())
-                    matchAnyChar = currentRegexp;
             } else {
                 if (currentRegexp instanceof RegexpChoice) {
                     choices.add((RegexpChoice) currentRegexp);
                 }
                 Nfa nfa = Nfa.buildNfa(currentRegexp, this, ignore);
-               // Nfa nfa = new NfaBuilder(currentRegexp, this, ignore).getNfa();
                 nfa.getEnd().isFinal = true;
                 nfa.getEnd().kind = currentRegexp.getOrdinal();
                 initialState.addMove(nfa.getStart());
@@ -529,13 +516,7 @@ public class LexicalStateData {
                     + getLine(kind) + ", column " + getColumn(kind) + ". It will be matched as "
                     + getLabel(intermediateKinds[kind][index]) + ".");
             return intermediateKinds[kind][index];
-        } else if (index == 0 && matchAnyChar != null && matchAnyChar.getOrdinal() < kind) {
-            grammar.addWarning(null, " \"" + ParseException.addEscapes(images[kind])
-                    + "\" cannot be matched as a string literal token " + "at line "
-                    + getLine(kind) + ", column " + getColumn(kind) + ". It will be matched as "
-                    + matchAnyChar.getLabel() + ".");
-            return matchAnyChar.getOrdinal();
-        }
+        } 
         return kind;
     }
 
@@ -560,8 +541,7 @@ public class LexicalStateData {
         			if (info.isFinalKind(kind) && !subString[kind]) {
         				if ((intermediateKinds != null && intermediateKinds[(kind)] != null
         						&& intermediateKinds[kind][index] < kind
-        						&& intermediateMatchedPos != null && intermediateMatchedPos[kind][index] == index)
-        						|| (matchAnyChar != null && matchAnyChar.getOrdinal() < kind))
+        						&& intermediateMatchedPos != null && intermediateMatchedPos[kind][index] == index))
         					break;
                         else if (lexerData.getSkipSet().get(kind)
         				        && !lexerData.getSpecialSet().get(kind)
@@ -629,10 +609,6 @@ public class LexicalStateData {
                 } else {
                     kind = MoveFromSet(image.charAt(j), oldStates, newStates);
                     oldStates.clear();
-
-                    if (j == 0 && kind != Integer.MAX_VALUE && matchAnyChar != null
-                            && kind > matchAnyChar.getOrdinal())
-                        kind = matchAnyChar.getOrdinal();
 
                     if (getStrKind(image.substring(0, j + 1)) < kind) {
                         intermediateKinds[i][j] = kind = Integer.MAX_VALUE;
@@ -833,13 +809,6 @@ public class LexicalStateData {
             NfaState state = allStates.get(i);
             if (!state.closureDone)
                 state.optimizeEpsilonMoves(false);
-        }
-
-        for (int i = 0; i < allStates.size(); i++) {
-            NfaState tmp = allStates.get(i);
-            tmp.epsilonMoveArray = new NfaState[tmp.epsilonMoves.size()];
-            ((Vector<NfaState>)tmp.epsilonMoves).copyInto(tmp.epsilonMoveArray);
-//            tmp.epsilonMoves.toArray(tmp.epsilonMoveArray);
         }
     }
 

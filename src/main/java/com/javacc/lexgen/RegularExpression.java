@@ -108,10 +108,6 @@ public abstract class RegularExpression extends Expansion {
      */
     public TokenProduction tpContext = null;
 
-    boolean canMatchAnyChar() {
-        return false;
-    }
-
     public final String getLabel() {
     	String label = super.getLabel();
     	if (label != null && label.length() != 0) {

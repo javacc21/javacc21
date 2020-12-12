@@ -187,21 +187,6 @@
         [/#set]
         if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
         curPos = jjMoveStringLiteralDfa0${lexicalState.suffix}();
-    [#if lexicalState.matchAnyChar??]
-         [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
-        if (jjmatchedPos < 0 || (jjmatchedPos == 0 && jjmatchedKind > ${lexicalState.canMatchAnyChar}))
-         [#else]
-        if (jjmatchedPos == 0 && jjmatchedKind > ${lexicalState.canMatchAnyChar})
-        [/#if]
-        {
-        if (trace_enabled) LOGGER.info("    Current character matched as a " + tokenImage[${lexicalState.canMatchAnyChar}] + " token."); 
-        jjmatchedKind = ${lexicalState.canMatchAnyChar};
-        [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
-        jjmatchedPos = 0;
-        [/#if]
-      }
-    [/#if]
-
     [#if numLexicalStates>1]
         break;
     [/#if]

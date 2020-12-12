@@ -39,6 +39,8 @@ import com.javacc.Grammar;
  */
 public class NfaState {
 
+    static final NfaState[] EMPTY_ARRAY = new NfaState[0];
+
     private Grammar grammar;
     private LexerData lexerData;
     private LexicalStateData lexicalState;
@@ -46,7 +48,6 @@ public class NfaState {
     private StringBuilder charMoveBuffer = new StringBuilder();
     private NfaState stateForCase;
     String epsilonMovesString;
-    NfaState[] epsilonMoveArray;
     private int id;
     RegularExpression lookingFor;
     private int usefulEpsilonMoves = 0;
@@ -57,7 +58,7 @@ public class NfaState {
 
     private BitSet asciiMoves = new BitSet();
     private NfaState next;
-    Vector<NfaState> epsilonMoves = new Vector<NfaState>();
+    Vector<NfaState> epsilonMoves = new Vector<>();
     int index = -1;
     int kind = Integer.MAX_VALUE;
     int inNextOf;
@@ -658,27 +659,25 @@ public class NfaState {
         int sz = states.length;
 
         for (int i = 0; i < sz; i++) {
-            NfaState tmp1, tmp2;
-
-            if ((tmp1 = states[i]) == null)
+            NfaState tmp1 = states[i];
+            if (tmp1 == null) {
                 break;
-
+            }
             if (tmp1.canMoveUsingChar(c)) {
                 if (tmp1.kindToPrint != Integer.MAX_VALUE) {
                     newStates[start] = null;
                     return 1;
                 }
-
-                NfaState[] v = tmp1.getNext().epsilonMoveArray;
+                NfaState[] v = tmp1.getNext().epsilonMoves.toArray(EMPTY_ARRAY);
                 for (int j = v.length; j-- > 0;) {
-                    if ((tmp2 = v[j]).round != round) {
+                    NfaState tmp2 = v[j];
+                    if (tmp2.round != round) {
                         tmp2.round = round;
                         newStates[start++] = tmp2;
                     }
                 }
             }
         }
-
         newStates[start] = null;
         return Integer.MAX_VALUE;
     }
