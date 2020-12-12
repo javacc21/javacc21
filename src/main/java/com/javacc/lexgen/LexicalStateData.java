@@ -52,12 +52,12 @@ public class LexicalStateData {
     int dummyStateIndex = -1;
     boolean done;
     boolean mark[];
-    Vector<NfaState> allStates = new Vector<>();
+    List<NfaState> allStates = new ArrayList<>();
     List<NfaState> indexedAllStates = new ArrayList<>();
     Map<String, NfaState> equivStatesTable = new HashMap<>();
-    Map<String, int[]> allNextStates = new Hashtable<>();
-    private Hashtable<String, int[]> compositeStateTable = new Hashtable<>();
-    private Hashtable<String, Integer> stateIndexFromComposite = new Hashtable<>();
+    Map<String, int[]> allNextStates = new HashMap<>();
+    private Map<String, int[]> compositeStateTable = new HashMap<>();
+    private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     private List<TokenProduction> tokenProductions = new ArrayList<>();
     private NfaState initialState;
     private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
@@ -684,7 +684,7 @@ public class LexicalStateData {
     }
 
     public int addStartStateSet(String stateSetString) {
-        if (stateIndexFromComposite.contains(stateSetString)) {
+        if (stateIndexFromComposite.containsKey(stateSetString)) {
             return stateIndexFromComposite.get(stateSetString);
         }
         int toRet = 0;
@@ -704,15 +704,12 @@ public class LexicalStateData {
             st.compositeStates = nameSet;
         }
 
-        while (toRet < nameSet.length && (indexedAllStates.get(nameSet[toRet]).inNextOf > 1))
+        while (toRet < nameSet.length && (indexedAllStates.get(nameSet[toRet]).inNextOf > 1)) {
             toRet++;
-
-        Enumeration<String> e = compositeStateTable.keys();
-        String s;
-        while (e.hasMoreElements()) {
-            s = e.nextElement();
-            if (!s.equals(stateSetString) && intersect(stateSetString, s)) {
-                int[] other = compositeStateTable.get(s);
+        }
+        for (String key : compositeStateTable.keySet()) {
+            if (!key.equals(stateSetString) && intersect(stateSetString, key)) {
+                int[] other = compositeStateTable.get(key);
 
                 while (toRet < nameSet.length
                         && (((indexedAllStates.get(nameSet[toRet])).inNextOf > 1) || NfaState.arrayContains(other, nameSet[toRet]))) {
@@ -816,10 +813,11 @@ public class LexicalStateData {
         if (indexedAllStates.isEmpty()) {
             return;
         }
-        Vector<NfaState> v = allStates;
-        allStates = new Vector<NfaState>();
-        allStates.setSize(indexedAllStates.size());
-
+        List<NfaState> v = allStates;
+        allStates = new ArrayList<>();
+        while (allStates.size() < indexedAllStates.size()) {
+            allStates.add(null);
+        }
         for (NfaState state : v) {
             if (state.index != -1 && !state.dummy)
                 allStates.set(state.index, state);
@@ -839,18 +837,16 @@ public class LexicalStateData {
 
     public List<List<NfaState>> partitionStatesSetForAscii(NfaState[] states, int byteNum) {
         int[] cardinalities = new int[states.length];
-        Vector<NfaState> original = new Vector<>();
-        Vector<List<NfaState>> partition = new Vector<>();
-        NfaState tmp;
+        List<NfaState> original = new ArrayList<>(Arrays.asList(states));
+        List<List<NfaState>> partition = new ArrayList<>();
+        NfaState state;
 
-        original.setSize(states.length);
         int cnt = 0;
         for (int i = 0; i < states.length; i++) {
-            tmp = states[i];
-
-            if (tmp.getAsciiMoves()[byteNum] != 0L) {
+            state = states[i];
+            if (state.getAsciiMoves()[byteNum] != 0L) {
                 int j;
-                int p = numberOfBitsSet(tmp.getAsciiMoves()[byteNum]);
+                int p = numberOfBitsSet(state.getAsciiMoves()[byteNum]);
 
                 for (j = 0; j < i; j++)
                     if (cardinalities[j] <= p)
@@ -860,35 +856,27 @@ public class LexicalStateData {
                     cardinalities[k] = cardinalities[k - 1];
 
                 cardinalities[j] = p;
-
-                original.insertElementAt(tmp, j);
+                original.add(j, state);
                 cnt++;
             }
         }
-
-        original.setSize(cnt);
-
+        original = original.subList(0, cnt);
         while (original.size() > 0) {
-            tmp = (NfaState) original.get(0);
-            original.removeElement(tmp);
-
-            long bitVec = tmp.getAsciiMoves()[byteNum];
-            List<NfaState> subSet = new Vector<NfaState>();
-            subSet.add(tmp);
-
-            for (int j = 0; j < original.size(); j++) {
-                NfaState tmp1 = (NfaState) original.get(j);
-
-                if ((tmp1.getAsciiMoves()[byteNum] & bitVec) == 0L) {
-                    bitVec |= tmp1.getAsciiMoves()[byteNum];
-                    subSet.add(tmp1);
-                    original.removeElementAt(j--);
+            state = (NfaState) original.get(0);
+            original.remove(state);
+            long bitVec = state.getAsciiMoves()[byteNum];
+            List<NfaState> subSet = new ArrayList<NfaState>();
+            subSet.add(state);
+            for (Iterator<NfaState> it = original.iterator(); it.hasNext();) {
+                NfaState otherState = it.next();
+                if ((otherState.getAsciiMoves()[byteNum] & bitVec) == 0L) {
+                    bitVec |= otherState.getAsciiMoves()[byteNum];
+                    subSet.add(otherState);
+                    it.remove();
                 }
             }
-
-            partition.addElement(subSet);
+            partition.add(subSet);
         }
-
         return partition;
     }
 
