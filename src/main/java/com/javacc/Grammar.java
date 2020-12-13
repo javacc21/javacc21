@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -84,12 +85,12 @@ import freemarker.template.TemplateException;
 public class Grammar extends BaseNode {
 
     private String filename,
-    parserClassName,
-    lexerClassName,
-    parserPackage,
-    constantsClassName,
-    baseNodeClassName="BaseNode",
-    defaultLexicalState = "DEFAULT";
+                   parserClassName,
+                   lexerClassName,
+                   parserPackage,
+                   constantsClassName,
+                   baseNodeClassName="BaseNode",
+                   defaultLexicalState = "DEFAULT";
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
     private ParserData parserData;
@@ -107,9 +108,6 @@ public class Grammar extends BaseNode {
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
-
-    
-    
     private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
     private List<String> lexerTokenHooks = new ArrayList<>(), 
@@ -351,13 +349,8 @@ public class Grammar extends BaseNode {
         return result;
     }
 
-
     public List<ImportDeclaration> getParserCodeImports() {
-        List<ImportDeclaration> result = new ArrayList<ImportDeclaration>();
-        if (parserCode != null) {
-            result.addAll(parserCode.childrenOfType(ImportDeclaration.class));
-        }
-        return result;
+        return parserCode == null ? Collections.emptyList(): parserCode.childrenOfType(ImportDeclaration.class);
     }
 
     public void setParserCode(CompilationUnit parserCode) {
@@ -473,7 +466,6 @@ public class Grammar extends BaseNode {
         }
         return result;
     }
-
 
     /**
      * The list of all TokenProductions from the input file. This list includes

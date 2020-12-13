@@ -245,19 +245,14 @@ public class LexicalStateData {
             choices.addAll(processTokenProduction(tp, isFirst));
             isFirst = false;
         }
-
-        // Generate a static block for initializing the nfa transitions
-        computeClosures();
-
-        for (NfaState epsilonMove : initialState.epsilonMoves) {
+        for (NfaState state : allStates) state.optimizeEpsilonMoves();
+        for (NfaState epsilonMove : initialState.getEpsilonMoves()) {
             epsilonMove.generateCode();
         }
-
         if (indexedAllStates.size() != 0) {
             initialState.generateCode();
             initialState.generateInitMoves();
         }
-
         if (initialState.kind != Integer.MAX_VALUE && initialState.kind != 0) {
             if (lexerData.getSkipSet().get(initialState.kind)
                 || (lexerData.getSpecialSet().get(initialState.kind)))
@@ -589,13 +584,11 @@ public class LexicalStateData {
             if (!this.containsRegularExpression(re)) {
                 continue;
             }
-
             String image = images[i];
-
             if (image == null || image.length() < 1) {
                 continue;
             }
-            List<NfaState> oldStates = new ArrayList<NfaState>(initialState.epsilonMoves);
+            List<NfaState> oldStates = new ArrayList<NfaState>(initialState.getEpsilonMoves());
             intermediateKinds[i] = new int[image.length()];
             intermediateMatchedPos[i] = new int[image.length()];
             jjmatchedPos = 0;
@@ -792,20 +785,12 @@ public class LexicalStateData {
     }
 
     public boolean intersect(NfaState state1, NfaState state2) {
-        return intersect(state1.epsilonMovesString, state2.epsilonMovesString);
+        return intersect(state1.getEpsilonMovesString(), state2.getEpsilonMovesString());
     }
 
     void computeClosures() {
-        for (int i = allStates.size(); i-- > 0;) {
-            NfaState tmp = allStates.get(i);
-
-            if (!tmp.closureDone)
-                tmp.optimizeEpsilonMoves(true);
-        }
-        for (int i = 0; i < allStates.size(); i++) {
-            NfaState state = allStates.get(i);
-            if (!state.closureDone)
-                state.optimizeEpsilonMoves(false);
+        for (NfaState state : allStates) {
+            state.optimizeEpsilonMoves();
         }
     }
 
@@ -839,22 +824,18 @@ public class LexicalStateData {
         int[] cardinalities = new int[states.length];
         List<NfaState> original = new ArrayList<>(Arrays.asList(states));
         List<List<NfaState>> partition = new ArrayList<>();
-        NfaState state;
-
         int cnt = 0;
         for (int i = 0; i < states.length; i++) {
-            state = states[i];
+            NfaState state = states[i];
             if (state.getAsciiMoves()[byteNum] != 0L) {
-                int j;
                 int p = numberOfBitsSet(state.getAsciiMoves()[byteNum]);
-
-                for (j = 0; j < i; j++)
-                    if (cardinalities[j] <= p)
-                        break;
-
-                for (int k = i; k > j; k--)
+                int j;
+                for (j = 0; j < i; j++) {
+                    if (cardinalities[j] <= p) break;
+                }
+                for (int k = i; k > j; k--) {
                     cardinalities[k] = cardinalities[k - 1];
-
+                }
                 cardinalities[j] = p;
                 original.add(j, state);
                 cnt++;
@@ -862,7 +843,7 @@ public class LexicalStateData {
         }
         original = original.subList(0, cnt);
         while (original.size() > 0) {
-            state = (NfaState) original.get(0);
+            NfaState state = original.get(0);
             original.remove(state);
             long bitVec = state.getAsciiMoves()[byteNum];
             List<NfaState> subSet = new ArrayList<NfaState>();
@@ -882,9 +863,9 @@ public class LexicalStateData {
 
     public int initStateName() {
         String s = initialState.getEpsilonMovesString();
-
-        if (initialState.hasEpsilonMoves())
+        if (initialState.hasEpsilonMoves()) {
             return stateIndexFromComposite.get(s);
+        }
         return -1;
     }
 
@@ -893,7 +874,6 @@ public class LexicalStateData {
         for (int i = 0; i < 63; i++)
             if (((l >> i) & 1L) != 0L)
                 ret++;
-
         return ret;
     }
 

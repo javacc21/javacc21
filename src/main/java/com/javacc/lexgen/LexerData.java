@@ -351,7 +351,6 @@ public class LexerData {
             if (getRegularExpression(initMatch).getNewLexicalState() == null) {
                 cycle += getRegularExpression(initMatch).getLexicalState().getName();
             }
-
             k = 0;
             for (LexicalStateData lexState : lexicalStates) {
                 if (seen[k++]) {

@@ -47,18 +47,18 @@ public class NfaState {
     private char[] rangeMoves, charMoves;
     private StringBuilder charMoveBuffer = new StringBuilder();
     private NfaState stateForCase;
-    String epsilonMovesString;
+    private String epsilonMovesString;
     private int id;
     RegularExpression lookingFor;
     private int usefulEpsilonMoves = 0;
-    int nonAsciiMethod = -1;
+    private int nonAsciiMethod = -1;
     boolean isComposite;
     private char matchSingleChar;
     private int[] nonAsciiMoveIndices;
 
     private BitSet asciiMoves = new BitSet();
     private NfaState next;
-    List<NfaState> epsilonMoves = new ArrayList<>();
+    private List<NfaState> epsilonMoves = new ArrayList<>();
     int index = -1;
     int kind = Integer.MAX_VALUE;
     int inNextOf;
@@ -116,6 +116,10 @@ public class NfaState {
             ll = Arrays.copyOf(ll, 2);
         }
         return ll;
+    }
+
+    List<NfaState> getEpsilonMoves() {
+        return epsilonMoves;
     }
     
     boolean hasAsciiMove(char c) {
@@ -397,7 +401,6 @@ public class NfaState {
                 }
             }
         }
-
         return null;
     }
 
@@ -431,20 +434,20 @@ public class NfaState {
         }
     }
 
-    void optimizeEpsilonMoves(boolean optReqd) {
+    void optimizeEpsilonMoves() {
+        if (closureDone) return;
         // First do epsilon closure
         lexicalState.done = false;
         while (!lexicalState.done) {
             if (lexicalState.mark == null || lexicalState.mark.length < lexicalState.allStates.size()) {
                 lexicalState.mark = new boolean[lexicalState.allStates.size()];
             }
-            for (int i = lexicalState.allStates.size(); i-- > 0;)
+            for (int i = lexicalState.allStates.size(); i-- > 0;) {
                 lexicalState.mark[i] = false;
-
+            }
             lexicalState.done = true;
             epsilonClosure();
         }
-
         for (int i = lexicalState.allStates.size(); i-- > 0;) {
             (lexicalState.allStates.get(i)).closureDone = lexicalState.mark[(lexicalState.allStates
                     .get(i)).id];
@@ -461,18 +464,17 @@ public class NfaState {
     }
 
     void generateNextStatesCode() {
-        if (getNext().usefulEpsilonMoves > 0)
+        if (getNext().usefulEpsilonMoves > 0) {
             getNext().getEpsilonMovesString();
+        }
     }
 
     public String getEpsilonMovesString() {
         if (epsilonMovesString != null) {
             return epsilonMovesString;
         }
-
         int[] stateNames = new int[usefulEpsilonMoves];
         int cnt = 0;
-
         if (usefulEpsilonMoves > 0) {
             NfaState tempState;
             epsilonMovesString = "{ ";
@@ -488,19 +490,15 @@ public class NfaState {
                         epsilonMovesString += "\n";
                 }
             }
-
             epsilonMovesString += "};";
         }
-
         usefulEpsilonMoves = cnt;
         if (epsilonMovesString != null
                 && lexicalState.allNextStates.get(epsilonMovesString) == null) {
             int[] statesToPut = new int[usefulEpsilonMoves];
-
             System.arraycopy(stateNames, 0, statesToPut, 0, cnt);
             lexicalState.allNextStates.put(epsilonMovesString, statesToPut);
         }
-
         return epsilonMovesString;
     }
 
