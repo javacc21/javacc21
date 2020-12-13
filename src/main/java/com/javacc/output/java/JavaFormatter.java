@@ -33,6 +33,8 @@ import static com.javacc.parser.JavaCCConstants.*;
 
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,6 +57,13 @@ public class JavaFormatter {
         buf = new StringBuilder();
         List<Token> allTokens = Nodes.getAllTokens(code, true, true);
         checkFirstNewLine(allTokens);
+        /*
+        Token tok = allTokens.get(0);
+        List<Token> allTokens2 = new ArrayList<>();
+        while (tok != null && tok.getType() != TokenType.EOF) {
+            allTokens2.add(tok);
+            tok = tok.getNextToken();
+        }*/
         for (Token t :  allTokens) {
             if (t instanceof Whitespace) {
                 continue;
@@ -208,11 +217,16 @@ public class JavaFormatter {
     }
     
     private void handleCloseBrace() {
+        if (parent == null) {
+            return; //REVISIT
+        }
         if (parent instanceof ArrayInitializer) {
             buf.append('}');
             return;
         }
-        currentIndent = currentIndent.substring(0, currentIndent.length() -indent.length());
+        if (currentIndent.length() >= indent.length()) {
+            currentIndent = currentIndent.substring(0, currentIndent.length() -indent.length());
+        }
         newLine();
         buf.append('}');
         if (parent instanceof TypeDeclaration 

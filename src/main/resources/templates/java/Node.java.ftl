@@ -240,15 +240,31 @@ public interface Node extends Comparable<Node>
     }
 
 [#if grammar.options.tokensAreNodes]
+    /**
+     * return the very first token that is part of this node
+     * may be an unparsed (i.e. special) token.
+     /*
     default Token getFirstToken() {
         Node first = getFirstChild();
+        if (first == null) return null;
         if (first instanceof Token) {
-           return (Token) first;
-        }
-        if (first == null) {
-            return null;
+            Token tok = (Token) first;
+            while (tok.getPreviousToken() != null && tok.getPreviousToken.isUnparsed()) {
+                tok = tok.getPreviousToken();
+
+            }
+           return tok;
         }
         return first.getFirstToken(); 
+    }
+
+    default Token getLastToken() {
+        Node last = getLastChild();
+        if (last == null) return null;
+        if (last instanceof Token) {
+            return (Token) last;
+        }
+        return last.lastToken();
     }
 [/#if]    
 

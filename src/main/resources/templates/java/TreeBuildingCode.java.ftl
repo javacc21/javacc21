@@ -192,7 +192,16 @@
             }
             Collections.reverse(nodes);
             for (Node child : nodes) {
-                // FIXME, deal with the UNPARSED_TOKENS_ARE_NODES case
+                if (unparsedTokensAreNodes && child instanceof Token) {
+                    Token tok = (Token) child;
+                    while (tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
+                        tok = tok.getPreviousToken();
+                    }
+                    while (tok.isUnparsed()) {
+                        n.addChild(tok);
+                        tok = tok.getNextToken();
+                    }
+                }
                 n.addChild(child);
             }
             n.close();

@@ -282,7 +282,6 @@ class CodeInjector {
                     typedecl.addImplements(type);
                 }
             }
-            
             TypeParameterList injectedTypeParameters = typeParameterLists.get(fullName);
             if (injectedTypeParameters != null) {
                 TypeParameterList typeParameters = typedecl.getTypeParameterList();
