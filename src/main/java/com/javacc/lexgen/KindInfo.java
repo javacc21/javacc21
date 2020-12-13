@@ -31,6 +31,7 @@
 package com.javacc.lexgen;
 
 import java.util.BitSet;
+import com.javacc.parsegen.TokenSet;
 
 import com.javacc.Grammar;
 

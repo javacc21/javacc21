@@ -33,6 +33,7 @@ package com.javacc.lexgen;
 import java.util.*;
 
 import com.javacc.Grammar;
+import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.ParseException;
 import com.javacc.parser.tree.CodeBlock;
 import com.javacc.parser.tree.RegexpChoice;
@@ -182,7 +183,7 @@ public class LexicalStateData {
         return !mixed && indexedAllStates.size() != 0;
     }
 
-    boolean containsRegularExpression(RegularExpression re) {
+    public boolean containsRegularExpression(RegularExpression re) {
         return regularExpressions.contains(re);
     }
 

@@ -34,6 +34,7 @@ NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
+UNPARSED_TOKENS_ARE_NODES;
 
 INJECT PARSER_CLASS : {
 
@@ -334,7 +335,7 @@ INJECT BaseNode :
        return Nodes.iterator(this);
     }
 
-    
+    // REVISIT. Need to fix the token chaining    
     public void prepend(Node n) {
         ListIterator<Node> iterator = iterator();
         iterator.add(n);
@@ -365,7 +366,7 @@ CompilationUnit CompilationUnit #CompilationUnit :
      <EOF>
   )
   {
-     return CURRENT_NODE;
+    return CURRENT_NODE;
   }
 ;
 
@@ -396,6 +397,7 @@ INJECT CompilationUnit :
         while (!(n instanceof TypeDeclaration) &&!(n instanceof Annotation)) {
             n = iterator.next();
         }
+        // REVISIT. fix token chaining
         if (iterator.hasPrevious()) {
             iterator.previous();
             iterator.add(decl);
@@ -651,6 +653,7 @@ INJECT(TypeDeclaration) :
                 keys.add(key);
             }
         }
+        //REVISIT. fix token chaining
         for (Iterator<Node> it = getBody().iterator(); it.hasNext();) {
             Node n = it.next();
             if (n instanceof ClassOrInterfaceBodyDeclaration) {
@@ -666,6 +669,7 @@ INJECT(TypeDeclaration) :
    public void addAnnotations(Set<Annotation> annotations) {
        Node parent = this.getParent();
        int index = parent.indexOf(this);
+       //REVISIT. fix token chaining
        for (Annotation annotation : annotations) {
            parent.addChild(index, annotation);
        }
@@ -758,8 +762,9 @@ INJECT ExtendsList :
     public List<ObjectType> getTypes() {
         return childrenOfType(ObjectType.class);
     }
-    
-    public void addType(ObjectType type, boolean isInterface) {
+
+    //REVISIT. fix token chaining 
+      public void addType(ObjectType type, boolean isInterface) {
         if (!isInterface) {
             children = new java.util.ArrayList<Node>();
         }
@@ -799,7 +804,7 @@ INJECT ImplementsList :
     public List<ObjectType> getTypes() {
         return childrenOfType(ObjectType.class);
     }
-    
+    //REVISIT. fix token chaining    
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
@@ -846,6 +851,7 @@ TypeParameters #TypeParameterList :
 INJECT TypeParameterList : 
     import java.util.*;
 {
+    // REVISIT. fix token chaining
     public void add(TypeParameter param) {
         if (!getParameters().contains(param)) {
             ListIterator<Node> iterator = iterator();
@@ -858,7 +864,8 @@ INJECT TypeParameterList :
             iterator.add(param);
         }
     }
-    
+
+    // REVISIT. fix token chaining 
     public void add(TypeParameterList params) {
         for (TypeParameter param : params.getParameters()) {
             add(param);
@@ -894,24 +901,25 @@ INJECT ClassOrInterfaceBody :
         return getInnerText();
     }
     
+    // REVISIT. fix token chaining
     public void prepend(List<ClassOrInterfaceBodyDeclaration> elements) {
         ListIterator<Node> iterator = iterator();
         Node n = null;
         while (iterator.hasNext()) {
             n = iterator.next();
-	    if (n instanceof Token) {
-	       Token t = (Token) n;
+      	    if (n instanceof Token) {
+	          Token t = (Token) n;
                if (t.getType() == TokenType.LBRACE) {
                    break;
                }
-	    }
+	          }
         }
         for (ClassOrInterfaceBodyDeclaration elem : elements) {
             iterator.add(elem);
             iterator.next();
         }
     }
-    
+    // REVISIT. fix token chaining 
     public void removeDuplicateMethods() {
         Set<String> sigs = new HashSet<String>();
         ListIterator<Node> decls = iterator();

@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.javacc.Grammar;
+import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.Node;
 import com.javacc.parser.tree.*;
 

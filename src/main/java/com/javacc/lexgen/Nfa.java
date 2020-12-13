@@ -30,6 +30,8 @@
 
 package com.javacc.lexgen;
 
+import com.javacc.parsegen.RegularExpression;
+
 /**
  * NFA (Non-deterministic Finite Automaton) code.
  * This class simply is a pair of NfaState objects representing

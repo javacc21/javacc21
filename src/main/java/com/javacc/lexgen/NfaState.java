@@ -33,6 +33,7 @@ package com.javacc.lexgen;
 import java.util.*;
 
 import com.javacc.Grammar;
+import com.javacc.parsegen.RegularExpression;
 
 /**
  * The state of a Non-deterministic Finite Automaton.
