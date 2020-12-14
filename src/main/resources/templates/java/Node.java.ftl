@@ -243,13 +243,13 @@ public interface Node extends Comparable<Node>
     /**
      * return the very first token that is part of this node
      * may be an unparsed (i.e. special) token.
-     /*
+     */
     default Token getFirstToken() {
         Node first = getFirstChild();
         if (first == null) return null;
         if (first instanceof Token) {
             Token tok = (Token) first;
-            while (tok.getPreviousToken() != null && tok.getPreviousToken.isUnparsed()) {
+            while (tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
                 tok = tok.getPreviousToken();
 
             }
@@ -264,7 +264,7 @@ public interface Node extends Comparable<Node>
         if (last instanceof Token) {
             return (Token) last;
         }
-        return last.lastToken();
+        return last.getLastToken();
     }
 [/#if]    
 
