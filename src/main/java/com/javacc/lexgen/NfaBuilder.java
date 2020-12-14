@@ -53,7 +53,8 @@ public class NfaBuilder extends Node.Visitor {
     private boolean ignoreCase;
     private LexicalStateData lexicalState;
     private Grammar grammar;
-    private Nfa nfa = null;
+
+    private NfaState start, end;
 
     NfaBuilder(RegularExpression regularExpression, LexicalStateData lexicalState, boolean ignoreCase) {
         this.lexicalState = lexicalState;
@@ -62,9 +63,9 @@ public class NfaBuilder extends Node.Visitor {
         visit(regularExpression);
     }
 
-    Nfa getNfa() {
-        return nfa;
-    }
+    NfaState getStart() {return start;}
+
+    NfaState getEnd() {return end;}
 
     public void visit(CharacterList charList) {
         List<CharacterRange> descriptors = charList.getDescriptors();
@@ -75,9 +76,8 @@ public class NfaBuilder extends Node.Visitor {
         if (charList.isNegated()) {
             descriptors = removeNegation(descriptors);
         }
-        this.nfa = new Nfa(lexicalState);
-        NfaState startState = nfa.getStart();
-        NfaState finalState = nfa.getEnd();
+        NfaState startState = start = new NfaState(lexicalState);
+        NfaState finalState = end = new NfaState(lexicalState);
         for (CharacterRange cr : descriptors) {
             if (cr.isSingleChar()) {
                 startState.addChar(cr.left);
@@ -89,14 +89,14 @@ public class NfaBuilder extends Node.Visitor {
     }
 
     public void visit(OneOrMoreRegexp oom) {
-        Nfa newNfa = new Nfa(lexicalState);
-        NfaState startState = newNfa.getStart();
-        NfaState finalState = newNfa.getEnd();
+        NfaState startState = new NfaState(lexicalState);
+        NfaState finalState = new NfaState(lexicalState);
         visit(oom.getRegexp());
-        startState.addMove(nfa.getStart());
-        nfa.getEnd().addMove(nfa.getStart());
-        nfa.getEnd().addMove(finalState);
-        this.nfa = newNfa;
+        startState.addMove(this.start);
+        this.end.addMove(this.start);
+        this.end.addMove(finalState);
+        this.start = startState;
+        this.end = finalState;
     }
 
     public void visit(RegexpChoice choice) {
@@ -104,15 +104,15 @@ public class NfaBuilder extends Node.Visitor {
         if (choices.size() == 1) {
             visit(choices.get(0));
         }
-        Nfa newNfa = new Nfa(lexicalState);
-        NfaState startState = newNfa.getStart();
-        NfaState finalState = newNfa.getEnd();
+        NfaState startState = new NfaState(lexicalState);
+        NfaState finalState = new NfaState(lexicalState);
         for (RegularExpression curRE : choices) {
             visit(curRE);
-            startState.addMove(nfa.getStart());
-            nfa.getEnd().addMove(finalState);
+            startState.addMove(this.start);
+            this.end.addMove(finalState);
         }
-        this.nfa = newNfa;
+        this.start = startState;
+        this.end = finalState;
     }
 
     public void visit(RegexpStringLiteral stringLiteral) {
@@ -132,7 +132,7 @@ public class NfaBuilder extends Node.Visitor {
         NfaState theStartState = startState;
         NfaState finalState = null;
         if (image.length() == 0) {
-            this.nfa = new Nfa(theStartState, theStartState);
+            this.start = this.end = theStartState;
             return;
         }
         for (int i = 0; i < image.length(); i++) {
@@ -146,30 +146,31 @@ public class NfaBuilder extends Node.Visitor {
             startState.setNext(finalState);
             startState = finalState;
         }
-        this.nfa = new Nfa(theStartState, finalState);
+        this.start = theStartState;
+        this.end = finalState;
     }
 
     public void visit(ZeroOrMoreRegexp zom) {
-        Nfa newNfa = new Nfa(lexicalState);
-        NfaState startState = newNfa.getStart();
-        NfaState finalState = newNfa.getEnd();
+        NfaState startState = new NfaState(lexicalState);
+        NfaState finalState = new NfaState(lexicalState);
         visit(zom.getRegexp());
-        startState.addMove(nfa.getStart());
+        startState.addMove(this.start);
         startState.addMove(finalState);
-        nfa.getEnd().addMove(finalState);
-        nfa.getEnd().addMove(nfa.getStart());
-        this.nfa = newNfa;
+        this.end.addMove(finalState);
+        this.end.addMove(this.start);
+        this.start = startState;
+        this.end = finalState;
     }
 
     public void visit(ZeroOrOneRegexp zoo) {
-        Nfa newNfa = new Nfa(lexicalState);
-        NfaState startState = newNfa.getStart();
-        NfaState finalState = newNfa.getEnd();
+        NfaState startState = new NfaState(lexicalState);
+        NfaState finalState = new NfaState(lexicalState);
         visit(zoo.getRegexp());
-        startState.addMove(nfa.getStart());
+        startState.addMove(this.start);
         startState.addMove(finalState);
-        nfa.getEnd().addMove(finalState);
-        this.nfa = newNfa;
+        this.end.addMove(finalState);
+        this.start = startState;
+        this.end = finalState;
     }
 
     public void visit(RegexpRef ref) {
@@ -180,21 +181,23 @@ public class NfaBuilder extends Node.Visitor {
         if (sequence.getUnits().size() == 1) {
             visit(sequence.getUnits().get(0));
         }
-        Nfa newNfa = new Nfa(lexicalState);
-        NfaState startState = newNfa.getStart();
-        NfaState finalState = newNfa.getEnd();
-        Nfa prevNfa = null;
+        NfaState startState = new NfaState(lexicalState);
+        NfaState finalState = new NfaState(lexicalState);
+        NfaState prevStartState = null;
+        NfaState prevEndState = null;
         for (RegularExpression re : sequence.getUnits()) {
             visit(re);
-            if (prevNfa == null) {
-                startState.addMove(nfa.getStart());
+            if (prevStartState == null) {
+                startState.addMove(this.start);
             } else {
-                prevNfa.getEnd().addMove(nfa.getStart());
+                prevEndState.addMove(this.start);
             }
-            prevNfa = this.nfa;
+            prevStartState = this.start;
+            prevEndState = this.end;
         }
-        nfa.getEnd().addMove(finalState);
-        this.nfa = newNfa;
+        this.end.addMove(finalState);
+        this.start = startState;
+        this.end = finalState;
     }
 
     public void visit(RepetitionRange repRange) {

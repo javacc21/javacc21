@@ -316,10 +316,10 @@ public class LexicalStateData {
                 if (currentRegexp instanceof RegexpChoice) {
                     choices.add((RegexpChoice) currentRegexp);
                 }
-                Nfa nfa = Nfa.buildNfa(currentRegexp, this, ignore);
-                nfa.getEnd().isFinal = true;
-                nfa.getEnd().kind = currentRegexp.getOrdinal();
-                initialState.addMove(nfa.getStart());
+                NfaBuilder nfaBuilder = new NfaBuilder(currentRegexp, this, ignore);
+                nfaBuilder.getEnd().isFinal = true;
+                nfaBuilder.getEnd().kind = currentRegexp.getOrdinal();
+                initialState.addMove(nfaBuilder.getStart());
             }
             if (respec.getNextState() != null && !respec.getNextState().equals(this.name))
                 currentRegexp.setNewLexicalState(lexerData.getLexicalState(respec.getNextState()));
