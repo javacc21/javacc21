@@ -305,44 +305,20 @@
        switch(jjmatchedKind) {
    [#list 0..(tokenCount-1) as i]
       [#var regexp=lexerData.getRegularExpression(i)]
-      [#var jumpOut]
       [#if lexerData.hasTokenAction(i) || lexerData.hasMoreAction(i) || lexerData.hasSkipAction(i)]
-        [#var act=regexp.codeSnippet]
         [#var lexicalState=regexp.lexicalState]
-        [#set jumpOut = (!act?? || !act.javaCode?has_content)&&!lexicalState.canLoop]
-        [#if !jumpOut]
-		  case ${i} : 
-          [#if lexicalState.initMatch = i&&lexicalState.canLoop]
-             [#-- Do we ever enter this block? If so, when? (JR) --]
-             [#var lexicalStateIndex=lexerData.getIndex(lexicalState.name)]
-             //MOTHERFUCKER!!!!
-              if (jjmatchedPos == -1) {
-                 if (jjbeenHere[${lexerData.getIndex(lexicalState.name)}] &&
-                     jjemptyLineNo[${lexicalStateIndex}] == input_stream.getBeginLine() && 
-                     jjemptyColNo[${lexicalStateIndex}] == input_stream.getBeginColumn())
-                          throw new RuntimeException("Error: Bailing out of infinite loop caused by repeated empty string matches " +
-                             "at line " + input_stream.getBeginLine() + ", " +
-                             "column " + input_stream.getBeginColumn());
-                 jjemptyLineNo[${lexicalStateIndex}] = input_stream.getBeginLine();
-                 jjemptyColNo[${lexicalStateIndex}] = input_stream.getBeginColumn();
-                 jjbeenHere[${lexicalStateIndex}] = true;
-              }              
-          [/#if]
-		  [#if act??&&act.javaCode?has_content]
+        [#if regexp.codeSnippet?has_content]
+		  case ${i} :
             [#if i = 0]
               image.setLength(0); // For EOF no chars are matched
             [#else]
               image.append(input_stream.getSuffix(matchedCharsLength + jjmatchedPos + 1));
             [/#if]
-		      ${act.javaCode}
-		  [/#if]
-        [/#if]
-        [#if !jumpOut]
-            break;
+		      ${regexp.codeSnippet.javaCode}
+           break;
         [/#if]
       [/#if]
    [/#list]
-           default : break;
       }
     }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -26,8 +26,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- */
-
+ */ 
 package com.javacc.lexgen;
 
 import java.util.*;
@@ -65,7 +64,6 @@ public class LexicalStateData {
 
     private NfaState singlesToSkip;
     private boolean mixed;
-    boolean canLoop;
     int initMatch;
     RegularExpression currentRegexp;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
@@ -145,10 +143,6 @@ public class LexicalStateData {
     // FIXME! There is currently no testing in place for mixed case Lexical states!
     public boolean isMixedCase() {
         return mixed;
-    }
-
-    public boolean getCanLoop() {
-        return canLoop;
     }
 
     public int getInitMatch() {

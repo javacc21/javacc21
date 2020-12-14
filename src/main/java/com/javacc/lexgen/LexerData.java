@@ -258,7 +258,7 @@ public class LexerData {
 
     public List<int[]> getOrderedStateSet() {
         return orderedStateSet;
-    }//
+    }
 
     int getLastIndex() {
         return lastIndex;
@@ -279,7 +279,6 @@ public class LexerData {
     }
 
     public void buildData() {
-
         for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class)) {
             for (String lexStateName : tokenProduction.getLexStates()) {
                 LexicalStateData lexState = getLexicalState(lexStateName);
@@ -287,43 +286,31 @@ public class LexerData {
             }
         }
         tokenSet.set(0);
-
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
-
         for (LexicalStateData lexState : lexicalStates) {
             choices.addAll(lexState.process());
         }
-
         for (RegexpChoice choice : choices) {
             checkUnmatchability(choice);
         }
-
         checkEmptyStringMatch();
     }
 
     void checkEmptyStringMatch() {
-        int j, k, len;
-        int numLexStates = lexicalStates.size();
-        boolean[] seen = new boolean[numLexStates];
+        final int numLexStates = lexicalStates.size();
         boolean[] done = new boolean[numLexStates];
-        String cycle;
-        String reList;
-
         Outer: for (LexicalStateData ls : lexicalStates) {
-            if (done[ls.getIndex()] || ls.initMatch == 0 || ls.initMatch == Integer.MAX_VALUE) {
+            final int lexicalStateIndex = ls.getIndex();
+            if (done[lexicalStateIndex] || ls.initMatch == 0 || ls.initMatch == Integer.MAX_VALUE) {
                 continue;
             }
-            done[ls.getIndex()] = true;
-            len = 0;
-            cycle = "";
-            reList = "";
-
-            for (k = 0; k < numLexStates; k++) {
-                seen[k] = false;
-            }
-
-            j = ls.getIndex();
-            seen[ls.getIndex()] = true;
+            boolean[] seen = new boolean[numLexStates];
+            done[lexicalStateIndex] = true;
+            String cycle = "";
+            String reList = "";
+            int len = 0;
+            int j = lexicalStateIndex;
+            seen[lexicalStateIndex] = true;
             cycle += ls.getName() + "-->";
             int initMatch = lexicalStates.get(j).initMatch;
             while (getRegularExpression(initMatch).getNewLexicalState() != null) {
@@ -340,11 +327,9 @@ public class LexerData {
                 if (initMatch == 0 || initMatch == Integer.MAX_VALUE) {
                     continue Outer;
                 }
-
                 if (len != 0) {
                     reList += "; ";
                 }
-
                 reList += "line " + getRegularExpression(initMatch).getBeginLine() + ", column "
                         + getRegularExpression(initMatch).getBeginColumn();
                 len++;
@@ -353,22 +338,14 @@ public class LexerData {
             if (getRegularExpression(initMatch).getNewLexicalState() == null) {
                 cycle += getRegularExpression(initMatch).getLexicalState().getName();
             }
-            k = 0;
-            for (LexicalStateData lexState : lexicalStates) {
-                if (seen[k++]) {
-                    lexState.canLoop = true;
-                }
-            }
             initMatch = ls.initMatch;
             RegularExpression re = getRegularExpression(initMatch);
             if (len == 0) {
-
                 grammar.addWarning(re, "Regular expression"
                         + ((re.getLabel().equals("")) ? "" : (" for " + getRegularExpression(initMatch).getLabel()))
                         + " can be matched by the empty string (\"\") in lexical state " + ls.getName()
                         + ". This can result in an endless loop of " + "empty string matches.");
             } else {
-
                 grammar.addWarning(re,
                         "Regular expression" + ((re.getLabel().equals("")) ? "" : (" for " + re.getLabel()))
                                 + " can be matched by the empty string (\"\") in lexical state " + ls.getName()
