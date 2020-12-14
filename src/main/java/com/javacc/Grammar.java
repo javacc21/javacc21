@@ -57,7 +57,6 @@ import com.javacc.parsegen.ParserData;
 import com.javacc.parser.BaseNode;
 import com.javacc.parser.JavaCCParser;
 import com.javacc.parser.Node;
-import com.javacc.parser.Nodes;
 import com.javacc.parser.ParseException;
 import com.javacc.parser.Token;
 import com.javacc.parser.tree.BNFProduction;
@@ -769,12 +768,12 @@ public class Grammar extends BaseNode {
             TypeDeclaration typeDecl = (TypeDeclaration) node;
             String typeName = typeDecl.getName(); 
             if (typeName.equals(getLexerClassName()) || typeName.endsWith("." +lexerClassName)) {
-                for (Iterator<Node> it = Nodes.iterator(typeDecl); it.hasNext();) {
+                for (Iterator<Node> it = typeDecl.iterator(); it.hasNext();) {
                     checkForHooks(it.next(), lexerClassName);
                 }
             }
             else if (typeName.equals(getParserClassName()) || typeName.endsWith("." + parserClassName)) {
-                for (Iterator<Node> it = Nodes.iterator(typeDecl); it.hasNext();) {
+                for (Iterator<Node> it = typeDecl.iterator(); it.hasNext();) {
                     checkForHooks(it.next(), parserClassName);
                 }
             }
@@ -802,7 +801,7 @@ public class Grammar extends BaseNode {
                 }
             }
         } else {
-            for (Iterator<Node> it= Nodes.iterator(node);  it.hasNext();) {
+            for (Iterator<Node> it= node.iterator();  it.hasNext();) {
                 checkForHooks(it.next(), className);
             }
         }

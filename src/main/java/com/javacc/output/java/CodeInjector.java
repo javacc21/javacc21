@@ -81,7 +81,7 @@ class CodeInjector {
                 String name = ci.name;
                 add(name, ci.importDeclarations, ci.annotations, ci.extendsList, ci.implementsList, ci.body, ci.isInterface);
             } else if (n instanceof TokenManagerDecls) {
-                for (Iterator<Node> it = Nodes.iterator(n); it.hasNext();) {
+                for (Iterator<Node> it = n.iterator(); it.hasNext();) {
                     Node child  = it.next();
                     if (child instanceof ClassOrInterfaceBody) {
                         ClassOrInterfaceBody body = (ClassOrInterfaceBody) child;       
@@ -176,7 +176,7 @@ class CodeInjector {
                 }
             }
             List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<ClassOrInterfaceBodyDeclaration>(); 
-            for (Iterator<Node> it = Nodes.iterator(dec.getBody()); it.hasNext();) {
+            for (Iterator<Node> it = dec.getBody().iterator(); it.hasNext();) {
                 Node n = it.next();
                 if (n instanceof ClassOrInterfaceBodyDeclaration) {
                     injectedCode.add((ClassOrInterfaceBodyDeclaration)n);

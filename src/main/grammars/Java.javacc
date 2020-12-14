@@ -330,10 +330,10 @@ INJECT BaseNode :
         }
         return buf.toString();
     }
-    
+/*    
     public ListIterator<Node> iterator() {
        return Nodes.iterator(this);
-    }
+    }*/
 
     // REVISIT. Need to fix the token chaining    
     public void prepend(Node n) {

@@ -34,7 +34,6 @@ import static com.javacc.parser.JavaCCConstants.*;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -51,19 +50,10 @@ public class JavaFormatter {
     private String currentIndent = "";
     private String eol = "\n";
     
-    public JavaFormatter() {}
-    
     public String format(BaseNode code) {
         buf = new StringBuilder();
         List<Token> allTokens = Nodes.getAllTokens(code, true, true);
         checkFirstNewLine(allTokens);
-        /*
-        Token tok = allTokens.get(0);
-        List<Token> allTokens2 = new ArrayList<>();
-        while (tok != null && tok.getType() != TokenType.EOF) {
-            allTokens2.add(tok);
-            tok = tok.getNextToken();
-        }*/
         for (Token t :  allTokens) {
             if (t instanceof Whitespace) {
                 continue;

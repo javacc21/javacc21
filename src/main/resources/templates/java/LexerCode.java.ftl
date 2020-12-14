@@ -315,6 +315,7 @@
           [#if lexicalState.initMatch = i&&lexicalState.canLoop]
              [#-- Do we ever enter this block? If so, when? (JR) --]
              [#var lexicalStateIndex=lexerData.getIndex(lexicalState.name)]
+             //MOTHERFUCKER!!!!
               if (jjmatchedPos == -1) {
                  if (jjbeenHere[${lexerData.getIndex(lexicalState.name)}] &&
                      jjemptyLineNo[${lexicalStateIndex}] == input_stream.getBeginLine() && 
