@@ -68,10 +68,6 @@ public class NfaBuilder extends Node.Visitor {
         lexicalState.getInitialState().addMove(start);
     }
 
-    NfaState getStart() {return start;}
-
-    NfaState getEnd() {return end;}
-
     public void visit(CharacterList charList) {
         List<CharacterRange> descriptors = charList.getDescriptors();
         if (ignoreCase) {

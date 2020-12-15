@@ -92,13 +92,11 @@ public class LexicalStateData {
         initialState = new NfaState(this);
     }
 
-    NfaState getInitialState() {
-        return this.initialState;
-    }
-
     Grammar getGrammar() {
         return grammar;
     }
+
+    NfaState getInitialState() {return initialState;}
 
     public String getName() {
         return name;
