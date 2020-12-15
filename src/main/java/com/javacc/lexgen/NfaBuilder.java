@@ -35,32 +35,37 @@ import java.util.Collections;
 import java.util.List;
 
 import com.javacc.Grammar;
+
 import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.Node;
 import com.javacc.parser.tree.*;
 
 /**
- * A Visitor object that builds an Nfa from a Regular expression. This is a
+ * A Visitor object that builds an Nfa start and end state from a Regular expression. This is a
  * result of refactoring some legacy code that used all static methods. NB. This
  * class and the visit methods must be public because of the use of reflection.
  * Ideally, it would all be private and package-private.
  * 
  * @author revusky
  */
-
 public class NfaBuilder extends Node.Visitor {
 
+    private NfaState start, end;
     private boolean ignoreCase;
     private LexicalStateData lexicalState;
     private Grammar grammar;
-
-    private NfaState start, end;
 
     NfaBuilder(RegularExpression regularExpression, LexicalStateData lexicalState, boolean ignoreCase) {
         this.lexicalState = lexicalState;
         this.grammar = lexicalState.getGrammar();
         this.ignoreCase = ignoreCase;
+    }
+
+    void buildStates(RegularExpression regularExpression) {
         visit(regularExpression);
+        end.isFinal = true;
+        end.kind = regularExpression.getOrdinal();
+        lexicalState.getInitialState().addMove(start);
     }
 
     NfaState getStart() {return start;}
@@ -116,38 +121,18 @@ public class NfaBuilder extends Node.Visitor {
     }
 
     public void visit(RegexpStringLiteral stringLiteral) {
-        String image = stringLiteral.getImage();
-        Grammar grammar = stringLiteral.getGrammar();
-        if (image.length() == 1) {
-            CharacterList charList = new CharacterList();
-            charList.setGrammar(grammar);
-            CharacterRange cr = new CharacterRange();
-            cr.setGrammar(grammar);
-            cr.left = cr.right = image.charAt(0);
-            charList.addChild(cr);
-            visit(charList);
-            return;
-        }
-        NfaState startState = new NfaState(lexicalState);
-        NfaState theStartState = startState;
-        NfaState finalState = null;
-        if (image.length() == 0) {
-            this.start = this.end = theStartState;
-            return;
-        }
-        for (int i = 0; i < image.length(); i++) {
-            finalState = new NfaState(lexicalState);
-            startState.setCharMoves(new char[1]);
-            startState.addChar(image.charAt(i));
+        NfaState state = end = start = new NfaState(lexicalState);
+        for (char ch : stringLiteral.getImage().toCharArray()) {
+            state.setCharMoves(new char[1]);
+            state.addChar(ch);
             if (grammar.getOptions().getIgnoreCase() || ignoreCase) {
-                startState.addChar(Character.toLowerCase(image.charAt(i)));
-                startState.addChar(Character.toUpperCase(image.charAt(i)));
+                state.addChar(Character.toLowerCase(ch));
+                state.addChar(Character.toUpperCase(ch));
             }
-            startState.setNext(finalState);
-            startState = finalState;
+            end = new NfaState(lexicalState);
+            state.setNext(end);
+            state = end;
         }
-        this.start = theStartState;
-        this.end = finalState;
     }
 
     public void visit(ZeroOrMoreRegexp zom) {
@@ -481,6 +466,7 @@ public class NfaBuilder extends Node.Visitor {
             8019, 8019, 8021, 8021, 8023, 8023, 8032, 8039, 8048, 8049, 8050, 8053, 8054, 8055, 8056, 8057, 8058, 8059,
             8060, 8061, 8064, 8071, 8080, 8087, 8096, 8103, 8112, 8113, 8115, 8115, 8131, 8131, 8144, 8145, 8160, 8161,
             8165, 8165, 8179, 8179, 8560, 8575, 9424, 9449, 65345, 65370, 65371, 0xfffe, 0xffff, 0xffff };
+
     private static final char[] diffLowerCaseRanges = { 65, 90, 192, 214, 216, 222, 256, 256, 258, 258, 260, 260, 262,
             262, 264, 264, 266, 266, 268, 268, 270, 270, 272, 272, 274, 274, 276, 276, 278, 278, 280, 280, 282, 282,
             284, 284, 286, 286, 288, 288, 290, 290, 292, 292, 294, 294, 296, 296, 298, 298, 300, 300, 302, 302, 304, 304, 
