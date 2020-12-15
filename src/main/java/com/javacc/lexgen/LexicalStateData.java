@@ -96,6 +96,8 @@ public class LexicalStateData {
         return grammar;
     }
 
+    NfaState getInitialState() {return initialState;}
+
     public String getName() {
         return name;
     }
@@ -316,10 +318,7 @@ public class LexicalStateData {
                 if (currentRegexp instanceof RegexpChoice) {
                     choices.add((RegexpChoice) currentRegexp);
                 }
-                NfaBuilder nfaBuilder = new NfaBuilder(currentRegexp, this, ignore);
-                nfaBuilder.getEnd().isFinal = true;
-                nfaBuilder.getEnd().kind = currentRegexp.getOrdinal();
-                initialState.addMove(nfaBuilder.getStart());
+                new NfaBuilder(currentRegexp, this, ignore);
             }
             if (respec.getNextState() != null && !respec.getNextState().equals(this.name))
                 currentRegexp.setNewLexicalState(lexerData.getLexicalState(respec.getNextState()));

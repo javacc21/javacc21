@@ -61,11 +61,10 @@ public class NfaBuilder extends Node.Visitor {
         this.grammar = lexicalState.getGrammar();
         this.ignoreCase = ignoreCase;
         visit(regularExpression);
+        lexicalState.getInitialState().addMove(start);
+        end.kind = regularExpression.getOrdinal();
+        end.isFinal = true;
     }
-
-    NfaState getStart() {return start;}
-
-    NfaState getEnd() {return end;}
 
     public void visit(CharacterList charList) {
         List<CharacterRange> descriptors = charList.getDescriptors();

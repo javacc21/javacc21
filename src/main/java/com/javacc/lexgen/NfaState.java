@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -318,11 +318,12 @@ public class NfaState {
 
     public boolean hasTransitions() {
         return (asciiMoves.cardinality() > 0
-                || (charMoves != null && charMoves[0] != 0) || (rangeMoves != null && rangeMoves[0] != 0));
+                || (charMoves != null && charMoves[0] != 0) 
+                || (rangeMoves != null && rangeMoves[0] != 0));
     }
 
     void mergeMoves(NfaState other) {
-        // Warning : This function does not merge epsilon moves
+        // Warning : This method does not merge epsilon moves
        asciiMoves.or(other.asciiMoves);
 
         if (other.charMoves != null) {
