@@ -301,7 +301,7 @@ public class LexerData {
         boolean[] done = new boolean[numLexStates];
         Outer: for (LexicalStateData ls : lexicalStates) {
             final int lexicalStateIndex = ls.getIndex();
-            if (done[lexicalStateIndex] || ls.initMatch == 0 || ls.initMatch == Integer.MAX_VALUE) {
+            if (done[lexicalStateIndex] || ls.getInitMatch() == 0 || ls.getInitMatch() == Integer.MAX_VALUE) {
                 continue;
             }
             boolean[] seen = new boolean[numLexStates];
@@ -312,7 +312,7 @@ public class LexerData {
             int j = lexicalStateIndex;
             seen[lexicalStateIndex] = true;
             cycle += ls.getName() + "-->";
-            int initMatch = lexicalStates.get(j).initMatch;
+            int initMatch = lexicalStates.get(j).getInitMatch();
             while (getRegularExpression(initMatch).getNewLexicalState() != null) {
                 LexicalStateData newLexState = getRegularExpression(initMatch).getNewLexicalState();
                 cycle += newLexState.getName();
@@ -323,7 +323,7 @@ public class LexerData {
                 cycle += "-->";
                 done[j] = true;
                 seen[j] = true;
-                initMatch = lexicalStates.get(j).initMatch;
+                initMatch = lexicalStates.get(j).getInitMatch();
                 if (initMatch == 0 || initMatch == Integer.MAX_VALUE) {
                     continue Outer;
                 }
@@ -334,11 +334,11 @@ public class LexerData {
                         + getRegularExpression(initMatch).getBeginColumn();
                 len++;
             }
-            initMatch = lexicalStates.get(j).initMatch;
+            initMatch = lexicalStates.get(j).getInitMatch();
             if (getRegularExpression(initMatch).getNewLexicalState() == null) {
                 cycle += getRegularExpression(initMatch).getLexicalState().getName();
             }
-            initMatch = ls.initMatch;
+            initMatch = ls.getInitMatch();
             RegularExpression re = getRegularExpression(initMatch);
             if (len == 0) {
                 grammar.addWarning(re, "Regular expression"

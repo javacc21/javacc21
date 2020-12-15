@@ -1,5 +1,5 @@
 [#--
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,7 @@
   private int jjmatchedPos;
   //FIXME,should be an enum.
   private int jjmatchedKind;
+  private TokenType matchedType;
   private String inputSource = "input";
   
  
@@ -97,6 +98,7 @@
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
 	   jjmatchedKind = 0;
+      matchedType = TokenType.EOF;
       Token eof = jjFillToken();
       tokenLexicalActions();
 [#list grammar.lexerTokenHooks as tokenHookMethodName]
@@ -171,10 +173,12 @@
     [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
         if (trace_enabled) LOGGER.info("   Matched the empty string as " + tokenImage[${lexicalState.initMatch}] + " token.");
         jjmatchedKind = ${lexicalState.initMatch};
+        matchedType = TokenType.values()[${lexicalState.initMatch}];
         jjmatchedPos = -1;
         curPos = 0;
     [#else]
         jjmatchedKind = 0x7FFFFFFF;
+        matchedType = null;
         jjmatchedPos = 0;
     [/#if]
         [#var debugOutput]
@@ -212,9 +216,7 @@
          matchedToken = ${tokenHookMethodName}(matchedToken);
       [/#if]
 [/#list]
- 
       tokenLexicalActions();
-
       jjmatchedKind = matchedToken.getType().ordinal();
  
  [#if numLexicalStates>1]
@@ -228,7 +230,6 @@
 
      }
          [#if lexerData.hasSkip || lexerData.hasSpecial]
-          
             [#if lexerData.hasMore]
           else if (skipSet.get(jjmatchedKind))
             [#else]
@@ -303,13 +304,10 @@
 
   private void tokenLexicalActions() {
        switch(jjmatchedKind) {
-   [#list 0..(tokenCount-1) as i]
-      [#var regexp=lexerData.getRegularExpression(i)]
-      [#if lexerData.hasTokenAction(i) || lexerData.hasMoreAction(i) || lexerData.hasSkipAction(i)]
-        [#var lexicalState=regexp.lexicalState]
+   [#list lexerData.regularExpressions as regexp]
         [#if regexp.codeSnippet?has_content]
-		  case ${i} :
-            [#if i = 0]
+		  case ${regexp.ordinal} :
+            [#if regexp.ordinal = 0]
               image.setLength(0); // For EOF no chars are matched
             [#else]
               image.append(input_stream.getSuffix(matchedCharsLength + jjmatchedPos + 1));
@@ -317,7 +315,6 @@
 		      ${regexp.codeSnippet.javaCode}
            break;
         [/#if]
-      [/#if]
    [/#list]
       }
     }

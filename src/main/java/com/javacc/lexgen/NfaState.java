@@ -50,26 +50,24 @@ public class NfaState {
     private NfaState stateForCase;
     private String epsilonMovesString;
     private int id;
-    RegularExpression lookingFor;
+    private RegularExpression lookingFor;
     private int usefulEpsilonMoves = 0;
     private int nonAsciiMethod = -1;
-    boolean isComposite;
+    private boolean composite;
     private char matchSingleChar;
     private int[] nonAsciiMoveIndices;
-
     private BitSet asciiMoves = new BitSet();
     private NfaState next;
     private List<NfaState> epsilonMoves = new ArrayList<>();
-    int index = -1;
-    int kind = Integer.MAX_VALUE;
-    int inNextOf;
     private int kindToPrint = Integer.MAX_VALUE;
-    boolean dummy = false;
-    int[] compositeStates = null;
-    boolean isFinal = false;
     private List<Integer> loByteVec;
-    private int round = 0;
-    private int onlyChar = 0;
+    private int round, onlyChar; 
+    private boolean isFinal;
+    private boolean dummy;
+    private int index = -1;
+    private int kind = Integer.MAX_VALUE;
+    private int inNextOf;
+    private int[] compositeStates;
 
     public NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -77,27 +75,40 @@ public class NfaState {
         this.lexerData = grammar.getLexerData();
         id = lexicalState.idCnt++;
         lexicalState.allStates.add(this);
-        if (lexicalState.currentRegexp != null) {
-            lookingFor = lexicalState.currentRegexp;
+        if (lexicalState.getCurrentRegexp() != null) {
+            lookingFor = lexicalState.getCurrentRegexp();
         }
     }
 
-    NfaState createClone() {
+    private NfaState createClone() {
         NfaState copy = new NfaState(lexicalState);
-
         copy.isFinal = isFinal;
         copy.kind = kind;
         copy.lookingFor = lookingFor;
         copy.inNextOf = inNextOf;
-
         copy.mergeMoves(this);
-
         return copy;
     }
 
     public int getIndex() {
         return index;
     }
+
+    int getKind() {return kind;}
+
+    void setKind(int kind) {this.kind = kind;}
+
+    RegularExpression getLookingFor() {return lookingFor;} 
+
+    void setFinal(boolean b) {
+        this.isFinal = b;
+    }
+
+    void setComposite(boolean composite) {this.composite = composite;}
+
+    int[] getCompositeStates() {return this.compositeStates;}
+
+    void setCompositeStates(int[] compositeStates) {this.compositeStates = compositeStates;}
 
     public int getNonAsciiMethod() {
         return nonAsciiMethod;
@@ -131,6 +142,10 @@ public class NfaState {
         return inNextOf;
     }
 
+    void incrementInNextOf() {
+        this.inNextOf++;
+    }
+
     public NfaState getStateForCase() {
         return stateForCase;
     }
@@ -144,12 +159,14 @@ public class NfaState {
     }
 
     public boolean isComposite() {
-        return isComposite;
+        return composite;
     }
 
     public boolean isDummy() {
         return dummy;
     }
+
+    void setDummy(boolean dummy) {this.dummy = dummy;}
 
     public NfaState getNext() {
         return next;
@@ -810,7 +827,7 @@ public class NfaState {
     }
 
     private boolean isMoveState(NfaState other, int byteNum) {
-        if (other.isComposite) {
+        if (other.composite) {
             return false;
         }
         if (this.kindToPrint != other.kindToPrint) {

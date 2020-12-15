@@ -63,8 +63,8 @@ public class NfaBuilder extends Node.Visitor {
 
     void buildStates(RegularExpression regularExpression) {
         visit(regularExpression);
-        end.isFinal = true;
-        end.kind = regularExpression.getOrdinal();
+        end.setFinal(true);
+        end.setKind(regularExpression.getOrdinal());
         lexicalState.getInitialState().addMove(start);
     }
 
