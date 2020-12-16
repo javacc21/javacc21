@@ -235,7 +235,6 @@ public class NfaState {
      * in the epsilon moves that might have a lower kind of token number for the
      * same length.
      */
-
     private void epsilonClosure() {
         if (closureDone || lexicalState.mark[id]) {
             return;
