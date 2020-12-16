@@ -45,13 +45,13 @@ public class NfaState {
     private Grammar grammar;
     private LexerData lexerData;
     private LexicalStateData lexicalState;
-    private char[] rangeMoves;
     private StringBuilder charMoveBuffer = new StringBuilder();
+    private StringBuilder rangeMoveBuffer = new StringBuilder();
     private NfaState stateForCase;
     private String epsilonMovesString;
     private int id;
     private RegularExpression lookingFor;
-    private int usefulEpsilonMoves = 0;
+    private int usefulEpsilonMoves;
     private int nonAsciiMethod = -1;
     private boolean composite;
     private char matchSingleChar;
@@ -215,51 +215,17 @@ public class NfaState {
 
     void addRange(char left, char right) {
         onlyChar = 2;
-        int i;
-        char tempLeft1, tempLeft2, tempRight1, tempRight2;
-
         if (left < 128) {
             if (right < 128) {
                 for (; left <= right; left++)
                     addASCIIMove(left);
-
                 return;
             }
-
             for (; left < 128; left++)
                 addASCIIMove(left);
         }
-        if (rangeMoves == null)
-            rangeMoves = new char[20];
-
-        int len = rangeMoves.length;
-
-        if (rangeMoves[len - 1] != 0) {
-            rangeMoves = ExpandCharArr(rangeMoves, 20);
-            len += 20;
-        }
-
-        for (i = 0; i < len; i += 2)
-            if (rangeMoves[i] == 0 || (rangeMoves[i] > left)
-                    || ((rangeMoves[i] == left) && (rangeMoves[i + 1] > right)))
-                break;
-
-        tempLeft1 = rangeMoves[i];
-        tempRight1 = rangeMoves[i + 1];
-        rangeMoves[i] = left;
-        rangeMoves[i + 1] = right;
-
-        for (i += 2; i < len; i += 2) {
-            if (tempLeft1 == 0)
-                break;
-
-            tempLeft2 = rangeMoves[i];
-            tempRight2 = rangeMoves[i + 1];
-            rangeMoves[i] = tempLeft1;
-            rangeMoves[i + 1] = tempRight1;
-            tempLeft1 = tempLeft2;
-            tempRight1 = tempRight2;
-        }
+        rangeMoveBuffer.append(left);
+        rangeMoveBuffer.append(right);
     }
     boolean closureDone = false;
 
@@ -298,31 +264,22 @@ public class NfaState {
     public boolean hasTransitions() {
         return asciiMoves.cardinality() >0
                 || charMoveBuffer.length()>0
-                || (rangeMoves !=null && rangeMoves[0] != 0);
+                || rangeMoveBuffer.length()>0;
     }
 
     void mergeMoves(NfaState other) {
         // Warning : This method does not merge epsilon moves
         asciiMoves.or(other.asciiMoves);
         charMoveBuffer.append(other.charMoveBuffer);
-        if (other.rangeMoves != null) {
-            if (rangeMoves == null)
-                rangeMoves = other.rangeMoves;
-            else {
-                char[] tmpRangeMoves = new char[rangeMoves.length + other.rangeMoves.length];
-                System.arraycopy(rangeMoves, 0, tmpRangeMoves, 0, rangeMoves.length);
-                rangeMoves = tmpRangeMoves;
-                for (int i = 0; i < other.rangeMoves.length; i += 2)
-                    addRange(other.rangeMoves[i], other.rangeMoves[i + 1]);
-            }
+        if (other.rangeMoveBuffer.length() > 0) {
+            rangeMoveBuffer.append(other.rangeMoveBuffer);
         }
-
-        if (other.kind < kind)
+        if (other.kind < kind) {
             kind = other.kind;
-
-        if (other.kindToPrint < kindToPrint)
+        }
+        if (other.kindToPrint < kindToPrint) {
             kindToPrint = other.kindToPrint;
-
+        }
         isFinal |= other.isFinal;
     }
 
@@ -423,15 +380,13 @@ public class NfaState {
         }
         // For ranges, iterate thru the table to see if the current char
         // is in some range
-        if (rangeMoves != null && rangeMoves[0] != 0) {
-            for (int i = 0; i < rangeMoves.length; i += 2) {
-                char left = rangeMoves[i];
-                char right = rangeMoves[i+1];
-                if (c >= left && c <= right) 
-                    return true;
-                else if (c < left || left == 0)
-                    break;
-            }
+        for (int i = 0; i < rangeMoveBuffer.length(); i += 2) {
+            char left = rangeMoveBuffer.charAt(i);
+            char right = rangeMoveBuffer.charAt(i+1);
+            if (c >= left && c <= right) 
+                return true;
+            else if (c < left || left == 0)
+                break;
         }
         return false;
     }
@@ -495,59 +450,49 @@ public class NfaState {
      * better comment).
      */
     void generateNonAsciiMoves() {
-        int i, j;
+//        int j;
         char hiByte;
         int cnt = 0;
         long[][] loBytes = new long[256][4];
-        if ((charMoveBuffer.length() == 0) && (rangeMoves == null || rangeMoves[0] == 0))
+        if ((charMoveBuffer.length() == 0) && rangeMoveBuffer.length() == 0)
             return;
         for (char ch : charMoveBuffer.toString().toCharArray()) {
             hiByte = (char) (ch >> 8);
             loBytes[hiByte][(ch & 0xFF)/64] |= (1L << ((ch & 0xFF) %64));
         }
-
-        if (rangeMoves != null) {
-            for (i = 0; i < rangeMoves.length; i += 2) {
-                if (rangeMoves[i] == 0)
-                    break;
-
-                char c, r;
-
-                r = (char) (rangeMoves[i + 1] & 0xff);
-                hiByte = (char) (rangeMoves[i] >> 8);
-
-                if (hiByte == (char) (rangeMoves[i + 1] >> 8)) {
-                    for (c = (char) (rangeMoves[i] & 0xff); c <= r; c++)
-                        loBytes[hiByte][c / 64] |= (1L << (c % 64));
-
-                    continue;
-                }
-
-                for (c = (char) (rangeMoves[i] & 0xff); c <= 0xff; c++)
+        for (int i = 0; i < rangeMoveBuffer.length(); i += 2) {
+            char r = (char) (rangeMoveBuffer.charAt(i + 1) & 0xff);
+            hiByte = (char) (rangeMoveBuffer.charAt(i) >> 8);
+            if (hiByte == (char) (rangeMoveBuffer.charAt(i + 1) >> 8)) {
+                for (char c = (char) (rangeMoveBuffer.charAt(i) & 0xff); c <= r; c++) {
                     loBytes[hiByte][c / 64] |= (1L << (c % 64));
-
-                while (++hiByte < (char) (rangeMoves[i + 1] >> 8)) {
-                    loBytes[hiByte][0] |= 0xffffffffffffffffL;
-                    loBytes[hiByte][1] |= 0xffffffffffffffffL;
-                    loBytes[hiByte][2] |= 0xffffffffffffffffL;
-                    loBytes[hiByte][3] |= 0xffffffffffffffffL;
                 }
-
-                for (c = 0; c <= r; c++)
-                    loBytes[hiByte][c / 64] |= (1L << (c % 64));
+                continue;
+            }
+            for (char c = (char) (rangeMoveBuffer.charAt(i) & 0xff); c <= 0xff; c++) {
+                loBytes[hiByte][c / 64] |= (1L << (c % 64));
+            }
+            while (++hiByte < (char) (rangeMoveBuffer.charAt(i + 1) >> 8)) {
+                loBytes[hiByte][0] |= 0xffffffffffffffffL;
+                loBytes[hiByte][1] |= 0xffffffffffffffffL;
+                loBytes[hiByte][2] |= 0xffffffffffffffffL;
+                loBytes[hiByte][3] |= 0xffffffffffffffffL;
+            }
+            for (char c = 0; c <= r; c++) {
+                loBytes[hiByte][c / 64] |= (1L << (c % 64));
             }
         }
 
         long[] common = null;
         boolean[] done = new boolean[256];
 
-        for (i = 0; i <= 255; i++) {
+        for (int i = 0; i <= 255; i++) {
             if (done[i]
                     || (done[i] = loBytes[i][0] == 0 && loBytes[i][1] == 0 && loBytes[i][2] == 0
                             && loBytes[i][3] == 0))
                 continue;
 
-            for (j = i + 1; j < 256; j++) {
+            for (int j = i + 1; j < 256; j++) {
                 if (done[j])
                     continue;
 
@@ -602,7 +547,7 @@ public class NfaState {
         nonAsciiMoveIndices = new int[cnt];
         System.arraycopy(lexerData.getTempIndices(), 0, nonAsciiMoveIndices, 0, cnt);
 
-        for (i = 0; i < 256; i++) {
+        for (int i = 0; i < 256; i++) {
             if (done[i])
                 loBytes[i] = null;
             else {
@@ -759,7 +704,6 @@ public class NfaState {
     }
 
     public void setCharMoves(char[] charMoves) {
-//        this.charMoves = charMoves;
         for(char ch : charMoves) {
             if (ch != 0) charMoveBuffer.append(ch);
         }
