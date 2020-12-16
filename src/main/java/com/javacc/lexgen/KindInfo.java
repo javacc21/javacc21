@@ -31,7 +31,6 @@
 package com.javacc.lexgen;
 
 import com.javacc.parsegen.TokenSet;
-
 import com.javacc.Grammar;
 
 public final class KindInfo {

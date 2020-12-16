@@ -45,7 +45,7 @@ public class NfaState {
     private Grammar grammar;
     private LexerData lexerData;
     private LexicalStateData lexicalState;
-    private char[] rangeMoves, charMoves;
+    private char[] rangeMoves;
     private StringBuilder charMoveBuffer = new StringBuilder();
     private NfaState stateForCase;
     private String epsilonMovesString;
@@ -78,16 +78,6 @@ public class NfaState {
         if (lexicalState.getCurrentRegexp() != null) {
             lookingFor = lexicalState.getCurrentRegexp();
         }
-    }
-
-    private NfaState createClone() {
-        NfaState copy = new NfaState(lexicalState);
-        copy.isFinal = isFinal;
-        copy.kind = kind;
-        copy.lookingFor = lookingFor;
-        copy.inNextOf = inNextOf;
-        copy.mergeMoves(this);
-        return copy;
     }
 
     public int getIndex() {
@@ -218,36 +208,8 @@ public class NfaState {
         matchSingleChar = c;
         if (c < 128) {// ASCII char
             addASCIIMove(c);
-            return;
-        }
-        int i;
-        char temp;
-        char temp1;
-
-        if (charMoves == null) {
-             charMoves = new char[10];
-        }
-
-        int len = charMoves.length; 
-
-        if (charMoves[len - 1] != 0) {
-            setCharMoves(ExpandCharArr(charMoves, 10));
-            len += 10;
-        }
-
-        for (i = 0; i < len; i++)
-            if (charMoves[i] == 0 || charMoves[i] > c)
-                break;
-        temp = charMoves[i];
-        charMoves[i] = c;
-
-        for (i++; i < len; i++) {
-            if (temp == 0)
-                break;
-
-            temp1 = charMoves[i];
-            charMoves[i] = temp;
-            temp = temp1;
+        } else {
+            charMoveBuffer.append(c);
         }
     }
 
@@ -334,29 +296,15 @@ public class NfaState {
     }
 
     public boolean hasTransitions() {
-        return (asciiMoves.cardinality() > 0
-                || (charMoves != null && charMoves[0] != 0) 
-                || (rangeMoves != null && rangeMoves[0] != 0));
+        return asciiMoves.cardinality() >0
+                || charMoveBuffer.length()>0
+                || (rangeMoves !=null && rangeMoves[0] != 0);
     }
 
     void mergeMoves(NfaState other) {
         // Warning : This method does not merge epsilon moves
-       asciiMoves.or(other.asciiMoves);
-
-        if (other.charMoves != null) {
-            if (charMoves == null) {
-                setCharMoves(other.charMoves);
-            }
-            else {
-                char[] tmpCharMoves = new char[charMoves.length + other.charMoves.length];
-                System.arraycopy(charMoves, 0, tmpCharMoves, 0, charMoves.length);
-                setCharMoves(tmpCharMoves);
-
-                for (char charMove : other.charMoves)
-                    addChar(charMove);
-            }
-        }
-
+        asciiMoves.or(other.asciiMoves);
+        charMoveBuffer.append(other.charMoveBuffer);
         if (other.rangeMoves != null) {
             if (rangeMoves == null)
                 rangeMoves = other.rangeMoves;
@@ -378,74 +326,16 @@ public class NfaState {
         isFinal |= other.isFinal;
     }
 
-    NfaState createEquivState(List<NfaState> states) {
-        NfaState newState = states.get(0).createClone();
-
-        newState.setNext(new NfaState(lexicalState));
-
-        insertInOrder(newState.getNext().epsilonMoves, states.get(0).getNext());
-
-        for (int i = 1; i < states.size(); i++) {
-            NfaState tmp2 = states.get(i);
-
-            if (tmp2.kind < newState.kind)
-                newState.kind = tmp2.kind;
-
-            newState.isFinal |= tmp2.isFinal;
-
-            insertInOrder(newState.getNext().epsilonMoves, tmp2.getNext());
-        }
-
-        return newState;
-    }
-
-    private NfaState getEquivalentRunTimeState() {
-        Outer: for (int i = lexicalState.allStates.size(); i-- > 0;) {
-            NfaState other = lexicalState.allStates.get(i);
-
-            if (this != other && other.index != -1 && kindToPrint == other.kindToPrint
-                    && asciiMoves.equals(other.asciiMoves)
-                    && Arrays.equals(charMoves, other.charMoves) 
-                    && Arrays.equals(rangeMoves, other.rangeMoves)) {
-                if (getNext() == other.getNext())
-                    return other;
-                else if (getNext() != null && other.getNext() != null) {
-                    if (getNext().epsilonMoves.size() == other.getNext().epsilonMoves.size()) {
-                        for (int j = 0; j < getNext().epsilonMoves.size(); j++)
-                            if (getNext().epsilonMoves.get(j) != other.getNext().epsilonMoves.get(j))
-                                continue Outer;
-
-                        return other;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
     // generates code (without outputting it) and returns the name used.
     void generateCode() {
         if (index != -1)
             return;
-
         if (getNext() != null) {
             getNext().generateCode();
             if (getNext().kind != Integer.MAX_VALUE)
                 kindToPrint = getNext().kind;
         }
-
         if (index == -1 && hasTransitions()) {
-            NfaState tmp = getEquivalentRunTimeState();
-
-            if (tmp != null) {
-                index = tmp.index;
-                // ????
-                // tmp.inNextOf += inNextOf;
-                // ????
-                dummy = true;
-                return;
-            }
-
             // stateName = lexicalState.generatedStates++;
             index = lexicalState.getGeneratedStates();
             lexicalState.indexedAllStates.add(this);
@@ -528,13 +418,8 @@ public class NfaState {
             return asciiMoves.get(c);
         }
         // Just check directly if there is a move for this char
-        if (charMoves != null && charMoves[0] != 0) {
-            for (char charMove : charMoves) {
-                if (c == charMove)
-                    return true;
-                else if (c < charMove || charMove == 0)
-                    break;
-            }
+        if (charMoveBuffer.indexOf(Character.toString(c)) >=0) {
+            return true;
         }
         // For ranges, iterate thru the table to see if the current char
         // is in some range
@@ -614,18 +499,11 @@ public class NfaState {
         char hiByte;
         int cnt = 0;
         long[][] loBytes = new long[256][4];
-
-        if ((charMoves == null || charMoves[0] == 0) && (rangeMoves == null || rangeMoves[0] == 0))
+        if ((charMoveBuffer.length() == 0) && (rangeMoves == null || rangeMoves[0] == 0))
             return;
-
-        if (charMoves != null) {
-            for (i = 0; i < charMoves.length; i++) {
-                if (charMoves[i] == 0)
-                    break;
-
-                hiByte = (char) (charMoves[i] >> 8);
-                loBytes[hiByte][(charMoves[i] & 0xff) / 64] |= (1L << ((charMoves[i] & 0xff) % 64));
-            }
+        for (char ch : charMoveBuffer.toString().toCharArray()) {
+            hiByte = (char) (ch >> 8);
+            loBytes[hiByte][(ch & 0xFF)/64] |= (1L << ((ch & 0xFF) %64));
         }
 
         if (rangeMoves != null) {
@@ -881,9 +759,10 @@ public class NfaState {
     }
 
     public void setCharMoves(char[] charMoves) {
-        charMoveBuffer = new StringBuilder();
-        charMoveBuffer.append(charMoves);
-        this.charMoves = charMoves;
+//        this.charMoves = charMoves;
+        for(char ch : charMoves) {
+            if (ch != 0) charMoveBuffer.append(ch);
+        }
     }
 
     public void setNext(NfaState next) {
