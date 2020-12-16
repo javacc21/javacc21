@@ -40,8 +40,6 @@ import com.javacc.parsegen.RegularExpression;
  */
 public class NfaState {
 
-    static final NfaState[] EMPTY_ARRAY = new NfaState[0];
-
     private Grammar grammar;
     private LexerData lexerData;
     private LexicalStateData lexicalState;
@@ -61,7 +59,7 @@ public class NfaState {
     private List<NfaState> epsilonMoves = new ArrayList<>();
     private int kindToPrint = Integer.MAX_VALUE;
     private List<Integer> loByteVec;
-    private int round, onlyChar; 
+    private boolean onlyOneCharAdded, noCharsAdded=true;
     private boolean isFinal;
     private boolean dummy;
     private int index = -1;
@@ -189,12 +187,6 @@ public class NfaState {
         return (byteNum >= 0 && hasAsciiMoves) || (byteNum < 0 && nonAsciiMethod != -1);
     }
 
-    private static char[] ExpandCharArr(char[] oldArr, int incr) {
-        char[] ret = new char[oldArr.length + incr];
-        System.arraycopy(oldArr, 0, ret, 0, oldArr.length);
-        return ret;
-    }
-
     void addMove(NfaState newState) {
         insertInOrder(epsilonMoves, newState);
     }
@@ -204,7 +196,10 @@ public class NfaState {
     }
 
     public void addChar(char c) {
-        onlyChar++;
+        onlyOneCharAdded = noCharsAdded;
+        noCharsAdded = false;
+
+//        onlyChar++;
         matchSingleChar = c;
         if (c < 128) {// ASCII char
             addASCIIMove(c);
@@ -214,7 +209,8 @@ public class NfaState {
     }
 
     void addRange(char left, char right) {
-        onlyChar = 2;
+        noCharsAdded = onlyOneCharAdded = false;
+//        onlyChar = 2;
         if (left < 128) {
             if (right < 128) {
                 for (; left <= right; left++)
@@ -246,7 +242,7 @@ public class NfaState {
             for (NfaState otherState : state.epsilonMoves) {
                 if (otherState.usefulState() && !epsilonMoves.contains(otherState)) {
                     insertInOrder(epsilonMoves, otherState);
-                    lexicalState.done = false;
+                    lexicalState.setDone(false);
                 }
             }
             kind = Math.min(kind, state.kind);
@@ -302,15 +298,15 @@ public class NfaState {
     void optimizeEpsilonMoves() {
         if (closureDone) return;
         // First do epsilon closure
-        lexicalState.done = false;
-        while (!lexicalState.done) {
+        lexicalState.setDone(false);
+        while (!lexicalState.isDone()) {
             if (lexicalState.mark == null || lexicalState.mark.length < lexicalState.allStates.size()) {
                 lexicalState.mark = new boolean[lexicalState.allStates.size()];
             }
             for (int i = lexicalState.allStates.size(); i-- > 0;) {
                 lexicalState.mark[i] = false;
             }
-            lexicalState.done = true;
+            lexicalState.setDone(true);
             epsilonClosure();
         }
         for (int i = lexicalState.allStates.size(); i-- > 0;) {
@@ -368,7 +364,8 @@ public class NfaState {
     }
 
     final boolean canMoveUsingChar(char c) {
-        if (onlyChar == 1)
+//        if (onlyChar == 1)
+        if (onlyOneCharAdded) 
             return c == matchSingleChar;
         if (c < 128) {
             return asciiMoves.get(c);
@@ -391,7 +388,8 @@ public class NfaState {
     }
 
     int getFirstValidPos(String s, int i, int len) {
-        if (onlyChar == 1) {
+//        if (onlyChar == 1) {
+        if (onlyOneCharAdded) {
             char c = matchSingleChar;
             while (c != s.charAt(i) && ++i < len)
                 ;
@@ -415,31 +413,6 @@ public class NfaState {
         return Integer.MAX_VALUE;
     }
 
-    static int moveFromSetForRegEx(char c, NfaState[] states, NfaState[] newStates, int round) {
-        int start = 0;
-        for (NfaState state : states) {
-            if (state == null) {
-                break;
-            }
-            if (state.canMoveUsingChar(c)) {
-                if (state.kindToPrint != Integer.MAX_VALUE) {
-                    newStates[start] = null;
-                    return 1;
-                }
-                NfaState[] v = state.getNext().epsilonMoves.toArray(EMPTY_ARRAY);
-                for (int j = v.length; j-- > 0;) {
-                    NfaState state2 = v[j];
-                    if (state2.round != round) {
-                        state2.round = round;
-                        newStates[start++] = state2;
-                    }
-                }
-            }
-        }
-        newStates[start] = null;
-        return Integer.MAX_VALUE;
-    }
-
     /*
      * This function generates the bit vectors of low and hi bytes for common
      * bit vectors and returns those that are not common with anything (in
@@ -449,7 +422,6 @@ public class NfaState {
      * better comment).
      */
     void generateNonAsciiMoves() {
-//        int j;
         char hiByte;
         int cnt = 0;
         long[][] loBytes = new long[256][4];

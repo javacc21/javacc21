@@ -47,9 +47,9 @@ public class LexerData {
     private Grammar grammar;
     private List<LexicalStateData> lexicalStates = new ArrayList<>();
     private List<RegularExpression> regularExpressions = new ArrayList<>();
-    
-    int stateSetSize;
     private TokenSet skipSet, specialSet, moreSet, tokenSet;
+    
+    private int stateSetSize;
     boolean hasEmptyMatch;
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
@@ -294,6 +294,10 @@ public class LexerData {
             checkUnmatchability(choice);
         }
         checkEmptyStringMatch();
+    }
+
+    void expandStateSetSize(int size) {
+        if (stateSetSize < size) stateSetSize = size;
     }
 
     void checkEmptyStringMatch() {

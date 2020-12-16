@@ -73,14 +73,13 @@ public class LexicalStateData {
     private String[] images;
     private int[] kindsForStates;
     private int[][] statesForState;
+    private boolean done;
 
     int idCnt = 0;
     int dummyStateIndex = -1;
-    boolean done;
     boolean mark[];
     List<NfaState> allStates = new ArrayList<>();
     List<NfaState> indexedAllStates = new ArrayList<>();
-    Map<String, NfaState> equivStatesTable = new HashMap<>();
     Map<String, int[]> allNextStates = new HashMap<>();
 
     public LexicalStateData(Grammar grammar, String name) {
@@ -103,6 +102,10 @@ public class LexicalStateData {
     public String getName() {
         return name;
     }
+
+    void setDone(boolean done) {this.done = done;}
+
+    boolean isDone() {return this.done;}
 
     public int getIndex() {
         return index;
@@ -269,8 +272,7 @@ public class LexicalStateData {
         if (indexedAllStates.size() != 0 && !mixed) {
             generateNfaStartStates();
         }
-        if (lexerData.stateSetSize < indexedAllStates.size())
-            lexerData.stateSetSize = indexedAllStates.size();
+        lexerData.expandStateSetSize(indexedAllStates.size());
         generateNfaStates();
         setupStateSetsForKinds();
         for (NfaState nfaState : allStates) {
