@@ -33,6 +33,8 @@ package com.javacc.lexgen;
 import java.util.*;
 
 import com.javacc.Grammar;
+import com.javacc.parsegen.RegularExpression;
+import com.javacc.parsegen.TokenSet;
 import com.javacc.parser.tree.EndOfFile;
 import com.javacc.parser.tree.RegexpChoice;
 import com.javacc.parser.tree.RegexpStringLiteral;
@@ -45,9 +47,9 @@ public class LexerData {
     private Grammar grammar;
     private List<LexicalStateData> lexicalStates = new ArrayList<>();
     private List<RegularExpression> regularExpressions = new ArrayList<>();
-    
-    int stateSetSize;
     private TokenSet skipSet, specialSet, moreSet, tokenSet;
+    
+    private int stateSetSize;
     boolean hasEmptyMatch;
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
@@ -256,7 +258,7 @@ public class LexerData {
 
     public List<int[]> getOrderedStateSet() {
         return orderedStateSet;
-    }//
+    }
 
     int getLastIndex() {
         return lastIndex;
@@ -277,7 +279,6 @@ public class LexerData {
     }
 
     public void buildData() {
-
         for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class)) {
             for (String lexStateName : tokenProduction.getLexStates()) {
                 LexicalStateData lexState = getLexicalState(lexStateName);
@@ -285,45 +286,36 @@ public class LexerData {
             }
         }
         tokenSet.set(0);
-
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
-
         for (LexicalStateData lexState : lexicalStates) {
             choices.addAll(lexState.process());
         }
-
         for (RegexpChoice choice : choices) {
             checkUnmatchability(choice);
         }
-
         checkEmptyStringMatch();
     }
 
-    void checkEmptyStringMatch() {
-        int j, k, len;
-        int numLexStates = lexicalStates.size();
-        boolean[] seen = new boolean[numLexStates];
-        boolean[] done = new boolean[numLexStates];
-        String cycle;
-        String reList;
+    void expandStateSetSize(int size) {
+        if (stateSetSize < size) stateSetSize = size;
+    }
 
+    void checkEmptyStringMatch() {
+        final int numLexStates = lexicalStates.size();
+        boolean[] done = new boolean[numLexStates];
         Outer: for (LexicalStateData ls : lexicalStates) {
-            if (done[ls.getIndex()] || ls.initMatch == 0 || ls.initMatch == Integer.MAX_VALUE) {
+            final int lexicalStateIndex = ls.getIndex();
+            if (done[lexicalStateIndex] || ls.getInitMatch() == 0 || ls.getInitMatch() == Integer.MAX_VALUE) {
                 continue;
             }
-            done[ls.getIndex()] = true;
-            len = 0;
-            cycle = "";
-            reList = "";
-
-            for (k = 0; k < numLexStates; k++) {
-                seen[k] = false;
-            }
-
-            j = ls.getIndex();
-            seen[ls.getIndex()] = true;
-            cycle += ls.getName() + "-->";
-            int initMatch = lexicalStates.get(j).initMatch;
+            boolean[] seen = new boolean[numLexStates];
+            done[lexicalStateIndex] = true;
+            String reList = "";
+            int len = 0;
+            int j = lexicalStateIndex;
+            seen[lexicalStateIndex] = true;
+            String cycle = ls.getName() + "-->";
+            int initMatch = ls.getInitMatch();
             while (getRegularExpression(initMatch).getNewLexicalState() != null) {
                 LexicalStateData newLexState = getRegularExpression(initMatch).getNewLexicalState();
                 cycle += newLexState.getName();
@@ -334,40 +326,29 @@ public class LexerData {
                 cycle += "-->";
                 done[j] = true;
                 seen[j] = true;
-                initMatch = lexicalStates.get(j).initMatch;
+                initMatch = lexicalStates.get(j).getInitMatch();
                 if (initMatch == 0 || initMatch == Integer.MAX_VALUE) {
                     continue Outer;
                 }
-
                 if (len != 0) {
                     reList += "; ";
                 }
-
                 reList += "line " + getRegularExpression(initMatch).getBeginLine() + ", column "
                         + getRegularExpression(initMatch).getBeginColumn();
                 len++;
             }
-            initMatch = lexicalStates.get(j).initMatch;
+            initMatch = lexicalStates.get(j).getInitMatch();
             if (getRegularExpression(initMatch).getNewLexicalState() == null) {
                 cycle += getRegularExpression(initMatch).getLexicalState().getName();
             }
-
-            k = 0;
-            for (LexicalStateData lexState : lexicalStates) {
-                if (seen[k++]) {
-                    lexState.canLoop = true;
-                }
-            }
-            initMatch = ls.initMatch;
+            initMatch = ls.getInitMatch();
             RegularExpression re = getRegularExpression(initMatch);
             if (len == 0) {
-
                 grammar.addWarning(re, "Regular expression"
                         + ((re.getLabel().equals("")) ? "" : (" for " + getRegularExpression(initMatch).getLabel()))
                         + " can be matched by the empty string (\"\") in lexical state " + ls.getName()
                         + ". This can result in an endless loop of " + "empty string matches.");
             } else {
-
                 grammar.addWarning(re,
                         "Regular expression" + ((re.getLabel().equals("")) ? "" : (" for " + re.getLabel()))
                                 + " can be matched by the empty string (\"\") in lexical state " + ls.getName()

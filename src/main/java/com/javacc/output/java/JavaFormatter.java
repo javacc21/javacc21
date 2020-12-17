@@ -33,6 +33,7 @@ import static com.javacc.parser.JavaCCConstants.*;
 
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
+
 import java.util.List;
 
 /**
@@ -48,8 +49,6 @@ public class JavaFormatter {
     private String indent = "    ";
     private String currentIndent = "";
     private String eol = "\n";
-    
-    public JavaFormatter() {}
     
     public String format(BaseNode code) {
         buf = new StringBuilder();
@@ -208,11 +207,16 @@ public class JavaFormatter {
     }
     
     private void handleCloseBrace() {
+        if (parent == null) {
+            return; //REVISIT
+        }
         if (parent instanceof ArrayInitializer) {
             buf.append('}');
             return;
         }
-        currentIndent = currentIndent.substring(0, currentIndent.length() -indent.length());
+        if (currentIndent.length() >= indent.length()) {
+            currentIndent = currentIndent.substring(0, currentIndent.length() -indent.length());
+        }
         newLine();
         buf.append('}');
         if (parent instanceof TypeDeclaration 

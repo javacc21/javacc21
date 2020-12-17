@@ -206,8 +206,7 @@ public interface Node extends Comparable<Node>
         }
         return null; 
      }
-     
-     
+
     default <T extends Node>List<T>childrenOfType(Class<T>clazz) {
         List<T>result=new java.util.ArrayList<>();
         for (Node child : children()) {
@@ -241,15 +240,31 @@ public interface Node extends Comparable<Node>
     }
 
 [#if grammar.options.tokensAreNodes]
+    /**
+     * return the very first token that is part of this node
+     * may be an unparsed (i.e. special) token.
+     */
     default Token getFirstToken() {
         Node first = getFirstChild();
+        if (first == null) return null;
         if (first instanceof Token) {
-           return (Token) first;
-        }
-        if (first == null) {
-            return null;
+            Token tok = (Token) first;
+            while (tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
+                tok = tok.getPreviousToken();
+
+            }
+           return tok;
         }
         return first.getFirstToken(); 
+    }
+
+    default Token getLastToken() {
+        Node last = getLastChild();
+        if (last == null) return null;
+        if (last instanceof Token) {
+            return (Token) last;
+        }
+        return last.getLastToken();
     }
 [/#if]    
 
@@ -379,8 +394,62 @@ public interface Node extends Comparable<Node>
        }
        return result;
     }
-    
-	static abstract public class Visitor {
+
+    // NB: This is not thread-safe
+    // If the node's children could change out from under you,
+    // you could have a problem.
+
+    default public ListIterator<Node> iterator() {
+        return new ListIterator<Node>() {
+            private int current = -1;
+            private boolean justModified;
+            
+            public boolean hasNext() {
+                return current+1 < getChildCount();
+            }
+            
+            public Node next() {
+                justModified = false;
+                return getChild(++current);
+            }
+            
+            public Node previous() {
+                justModified = false;
+                return getChild(--current);
+            }
+            
+            public void remove() {
+                if (justModified) throw new IllegalStateException();
+                removeChild(current);
+                --current;
+                justModified = true;
+            }
+            
+            public void add(Node n) {
+                if (justModified) throw new IllegalStateException();
+                addChild(current+1, n);
+                justModified = true;
+            }
+            
+            public boolean hasPrevious() {
+                return current >0;
+            }
+            
+            public int nextIndex() {
+                return current + 1;
+            }
+            
+            public int previousIndex() {
+                return current;
+            }
+            
+            public void set(Node n) {
+                setChild(current, n);
+            }
+        };
+    }
+
+ 	static abstract public class Visitor {
 		
 		static private Method baseVisitMethod;
 		private HashMap<Class<? extends Node>, Method> methodCache = new HashMap<>();

@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -49,14 +50,13 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.javacc.lexgen.LexerData;
-import com.javacc.lexgen.RegularExpression;
 import com.javacc.output.java.FilesGenerator;
+import com.javacc.parsegen.RegularExpression;
 import com.javacc.parsegen.Expansion;
 import com.javacc.parsegen.ParserData;
 import com.javacc.parser.BaseNode;
 import com.javacc.parser.JavaCCParser;
 import com.javacc.parser.Node;
-import com.javacc.parser.Nodes;
 import com.javacc.parser.ParseException;
 import com.javacc.parser.Token;
 import com.javacc.parser.tree.BNFProduction;
@@ -84,12 +84,12 @@ import freemarker.template.TemplateException;
 public class Grammar extends BaseNode {
 
     private String filename,
-    parserClassName,
-    lexerClassName,
-    parserPackage,
-    constantsClassName,
-    baseNodeClassName="BaseNode",
-    defaultLexicalState = "DEFAULT";
+                   parserClassName,
+                   lexerClassName,
+                   parserPackage,
+                   constantsClassName,
+                   baseNodeClassName="BaseNode",
+                   defaultLexicalState = "DEFAULT";
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
     private ParserData parserData;
@@ -107,9 +107,6 @@ public class Grammar extends BaseNode {
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
-
-    
-    
     private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
     private List<String> lexerTokenHooks = new ArrayList<>(), 
@@ -351,13 +348,8 @@ public class Grammar extends BaseNode {
         return result;
     }
 
-
     public List<ImportDeclaration> getParserCodeImports() {
-        List<ImportDeclaration> result = new ArrayList<ImportDeclaration>();
-        if (parserCode != null) {
-            result.addAll(parserCode.childrenOfType(ImportDeclaration.class));
-        }
-        return result;
+        return parserCode == null ? Collections.emptyList(): parserCode.childrenOfType(ImportDeclaration.class);
     }
 
     public void setParserCode(CompilationUnit parserCode) {
@@ -473,7 +465,6 @@ public class Grammar extends BaseNode {
         }
         return result;
     }
-
 
     /**
      * The list of all TokenProductions from the input file. This list includes
@@ -777,12 +768,12 @@ public class Grammar extends BaseNode {
             TypeDeclaration typeDecl = (TypeDeclaration) node;
             String typeName = typeDecl.getName(); 
             if (typeName.equals(getLexerClassName()) || typeName.endsWith("." +lexerClassName)) {
-                for (Iterator<Node> it = Nodes.iterator(typeDecl); it.hasNext();) {
+                for (Iterator<Node> it = typeDecl.iterator(); it.hasNext();) {
                     checkForHooks(it.next(), lexerClassName);
                 }
             }
             else if (typeName.equals(getParserClassName()) || typeName.endsWith("." + parserClassName)) {
-                for (Iterator<Node> it = Nodes.iterator(typeDecl); it.hasNext();) {
+                for (Iterator<Node> it = typeDecl.iterator(); it.hasNext();) {
                     checkForHooks(it.next(), parserClassName);
                 }
             }
@@ -810,7 +801,7 @@ public class Grammar extends BaseNode {
                 }
             }
         } else {
-            for (Iterator<Node> it= Nodes.iterator(node);  it.hasNext();) {
+            for (Iterator<Node> it= node.iterator();  it.hasNext();) {
                 checkForHooks(it.next(), className);
             }
         }

@@ -160,17 +160,7 @@
         }
         Collections.reverse(nodes);
         for (Node child : nodes) {
-        	if (unparsedTokensAreNodes && (child instanceof Token)) {
-        	    Token token = (Token) child;
-        	    Token specialToken = token;
-        	    while (specialToken != null) {
-        	        specialToken = specialToken.getSpecialToken();
-        	    }
-        	    while (specialToken !=null && specialToken != token) {
-        	        n.addChild(specialToken);
-        	        specialToken = specialToken.getNext();
-        	    }
-        	}
+            // FIXME deal with the UNPARSED_TOKENS_ARE_NODES case
             n.addChild(child);
         }
         n.close();
@@ -189,7 +179,6 @@
 	 * on to the stack.  If the condition is false the node is not
 	 * constructed and they are left on the stack. 
 	 */
-	 
     public void closeNodeScope(Node n, boolean condition) {
         n.setEndLine(currentToken.getEndLine());
         n.setEndColumn(currentToken.getEndColumn());
@@ -203,17 +192,16 @@
             }
             Collections.reverse(nodes);
             for (Node child : nodes) {
-	        	if (unparsedTokensAreNodes && (child instanceof Token)) {
-	        	    Token token = (Token) child;
-	        	    Token specialToken = token;
-	        	    while (specialToken.getSpecialToken() !=null) {
-	        	        specialToken = specialToken.getSpecialToken();
-	        	    }
-	        	    while (specialToken !=null && specialToken != token) {
-	        	        n.addChild(specialToken);
-	        	        specialToken = specialToken.getNext();
-	        	    }
-	        	}
+                if (unparsedTokensAreNodes && child instanceof Token) {
+                    Token tok = (Token) child;
+                    while (tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
+                        tok = tok.getPreviousToken();
+                    }
+                    while (tok.isUnparsed()) {
+                        n.addChild(tok);
+                        tok = tok.getNextToken();
+                    }
+                }
                 n.addChild(child);
             }
             n.close();

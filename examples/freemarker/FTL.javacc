@@ -94,11 +94,11 @@ INJECT FTLLexer :
 
     Token tokenHook(Token tok) {
         if (tok.getType() == TokenType.EOF) return tok;
-        if (noWhitespaceInExpression && parenthesisNesting ==0 && braceNesting==0 && tok.getSpecialToken() != null) {
-            if (tok.getSpecialToken().getImage().trim().length() == 0) {
+        if (noWhitespaceInExpression && parenthesisNesting ==0 && braceNesting==0 && tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
+            if (tok.getPreviousToken().getImage().trim().length() == 0) {
                 Token copy = cloneToken(tok);
-                copy.setSpecialToken(null);
-                copyFieldsOfToken(tok.getSpecialToken(), tok);
+//                copy.setSpecialToken(null);
+                copyFieldsOfToken(tok.getPreviousToken(), tok);
                 tok.setType(TokenType.BLANK);
                 tok.setNext(copy);
                 noWhitespaceInExpression = false;
@@ -211,7 +211,8 @@ INJECT FTLLexer :
     private void copyFieldsOfToken (Token src, Token dest) {
         dest.setType(src.getType());
         dest.setImage(src.getImage());
-        dest.setSpecialToken(src.getSpecialToken());
+        dest.setPreviousToken(src.getPreviousToken());
+//        dest.setSpecialToken(src.getSpecialToken());
         Token next = src.getNext();
         dest.setNext(next);
         dest.setBeginLine(src.getBeginLine());

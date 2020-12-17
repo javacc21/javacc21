@@ -42,99 +42,33 @@ import java.util.*;
  */
 
 abstract public class Nodes {
+
    /**
-    * @deprecated Quite possibly, this entire Nodes class will disappear soon!
+    * @deprecated just use node.descendants(Token.class)
     */ 
      static public List<Token> getTokens(Node node) {
 	       return node.descendants(Token.class);
     }
         
-        
     static public List<Token> getRealTokens(Node node) {
         return node.descendants(Token.class, t->!t.isUnparsed());
 	}
      
-    // NB: This is not thread-safe
-    // If the node's children could change out from under you,
-    // you could have a problem.
-
-    static public ListIterator<Node> iterator(final Node node) {
-        return new ListIterator<Node>() {
-            int current = -1;
-            boolean justModified;
-            
-            public boolean hasNext() {
-                return current+1 < node.getChildCount();
-            }
-            
-            public Node next() {
-                justModified = false;
-                return node.getChild(++current);
-            }
-            
-            public Node previous() {
-                justModified = false;
-                return node.getChild(--current);
-            }
-            
-            public void remove() {
-                if (justModified) throw new IllegalStateException();
-                node.removeChild(current);
-                --current;
-                justModified = true;
-            }
-            
-            public void add(Node n) {
-                if (justModified) throw new IllegalStateException();
-                node.addChild(current+1, n);
-                justModified = true;
-            }
-            
-            public boolean hasPrevious() {
-                return current >0;
-            }
-            
-            public int nextIndex() {
-                return current + 1;
-            }
-            
-            public int previousIndex() {
-                return current;
-            }
-            
-            public void set(Node n) {
-                node.setChild(current, n);
-            }
-        };
-    }
- 
     /**
-     * Expands (in place) a Node's children to include any comment tokens hanging
-     * off the regular tokens.
-     * @param n the Node 
-     * @param recursive whether to recurse into child nodes.
+     * @deprecated just use node.iterator()
      */
-
-    static public void expandSpecialTokens(Node n, boolean recursive) {
-        List<Token> expandedList = getAllTokens(n, true, false);
-        n.clearChildren();
-        for (Node child : expandedList) {
-            n.addChild(child);
-            if (recursive && child.getChildCount() >0) {
-                expandSpecialTokens(child, true);
-            }
-        }
+    static public ListIterator<Node> iterator(final Node node) {
+        return node.iterator();
     }
-    
+
     /**
      * @return a List containing all the tokens in a Node
      * @param n The Node 
      * @param includeCommentTokens Whether to include comment tokens
-     * @param recursive Whether to recurse into child Nodes.
      */
-    static public List<Token> getAllTokens(Node n, boolean includeCommentTokens, boolean recursive) {
+    static public List<Token> getAllTokens(Node n, boolean includeCommentTokens) {
 		List<Token> result = new ArrayList<Token>();
-        for (Iterator<Node> it = iterator(n); it.hasNext();) {
+        for (Iterator<Node> it = n.iterator(); it.hasNext();) {
             Node child = it.next();
             if (child instanceof Token) {
                 Token token = (Token) child;
@@ -142,15 +76,6 @@ abstract public class Nodes {
                     continue;
                 }
                 if (includeCommentTokens) {
-/*                    
-	                Token specialToken = token;
-	                while (specialToken.getSpecialToken() != null) {
-	                    specialToken = specialToken.getSpecialToken();
-	                }
-	                while (specialToken != token && specialToken !=null) {
-	                    result.add(specialToken);
-	                    specialToken = specialToken.getNext();
-	                }*/
                     ArrayList<Token> comments = null;
                     Token prev = token.getPreviousToken();
                     while (prev != null && prev.isUnparsed()) {
@@ -166,12 +91,16 @@ abstract public class Nodes {
                 result.add(token);
             } 
             else if (child.getChildCount() >0) {
-               result.addAll(getAllTokens(child, includeCommentTokens, recursive));
+               result.addAll(getAllTokens(child, includeCommentTokens));
             }
         }
         return result;
     }
-    
+
+    static public List<Token> getAllTokens(Node n, boolean includeCommentTokens, boolean recursive) {
+        return getAllTokens(n, includeCommentTokens);
+    }
+
     static public void copyLocationInfo(Node from, Node to) {
 //        to.setInputSource(from.getInputSource()); REVISIT
         to.setBeginLine(from.getBeginLine());
@@ -192,7 +121,7 @@ abstract public class Nodes {
         if (output.length() >0) {
             System.out.println(prefix + output);
         }
-        for (Iterator<Node> it = iterator(n); it.hasNext();) {
+        for (Iterator<Node> it = n.iterator(); it.hasNext();) {
             Node child = it.next();
             dump(child, prefix+"  ");
         }

@@ -34,7 +34,7 @@ import java.util.*;
 
 import com.javacc.Grammar;
 import com.javacc.MetaParseException;
-import com.javacc.lexgen.RegularExpression;
+import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.CompilationUnit;
 

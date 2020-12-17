@@ -28,12 +28,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.lexgen;
+package com.javacc.parsegen;
 
 import java.util.*;
 
 import com.javacc.Grammar;
-import com.javacc.parsegen.Expansion;
+import com.javacc.lexgen.LexicalStateData;
 import com.javacc.parser.tree.CodeBlock;
 import com.javacc.parser.tree.Expression;
 import com.javacc.parser.tree.TokenProduction;
@@ -81,7 +81,7 @@ public abstract class RegularExpression extends Expansion {
         this.codeSnippet = codeSnippet;
     }
 
-    void setIgnoreCase(boolean b) {
+    public void setIgnoreCase(boolean b) {
         this.ignoreCase = b;
     }
 
@@ -147,7 +147,7 @@ public abstract class RegularExpression extends Expansion {
         
     }
     
-    void setNewLexicalState(LexicalStateData newLexicalState) {
+    public void setNewLexicalState(LexicalStateData newLexicalState) {
         this.newLexicalState = newLexicalState;
     }
 
@@ -171,19 +171,19 @@ public abstract class RegularExpression extends Expansion {
         return type == MORE;
     }
     
-    void setRegularToken() {
+    public void setRegularToken() {
         this.type = REGULAR_TOKEN;
     }
     
-    void setUnparsedToken() {
+    public void setUnparsedToken() {
         this.type = UNPARSED_TOKEN;
     }
     
-    void setMore() {
+    public void setMore() {
         this.type = MORE;
     }
     
-    void setSkip() {
+    public void setSkip() {
         this.type = SKIP;
     }
  

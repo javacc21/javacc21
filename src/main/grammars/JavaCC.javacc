@@ -378,8 +378,7 @@ INJECT PARSER_CLASS : {
         if ((type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) && !isInProduction("Expression")) {
           Token gt = Token.split(tok, 1, GT, GT);
           if (type == RUNSIGNEDSHIFT) {
-              Token next = Token.split(gt.getNext(), 1, GT, GT);
-              gt.setNext(next);
+              Token.split(gt.getNextToken(), 1, GT, GT);
           }
           return gt;
         } 
@@ -494,12 +493,13 @@ INJECT Token :
     }
     
     public String getLeadingComments() {
+        Token specialToken = getPreviousToken() == null || !getPreviousToken().isUnparsed() ? null : getPreviousToken();
         if (specialToken == null)
             return "";
         StringBuilder buf = new StringBuilder();
         Token tok = specialToken;
-        while (tok.specialToken != null) {
-            tok = tok.getSpecialToken();
+        while (tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
+            tok = tok.getPreviousToken();
         }
         while (tok != this && tok != null) {
             buf.append(tok);
@@ -799,7 +799,7 @@ BNFProduction BNFProduction :
 
 INJECT BNFProduction : 
 	import java.util.*;
-	import com.javacc.lexgen.TokenSet;
+	import com.javacc.parsegen.TokenSet;
 	import com.javacc.parsegen.Expansion;
 {
 
@@ -936,7 +936,7 @@ INJECT BNFProduction :
     
     public void adjustFirstToken(Token t) {
         this.leadingComments = t.getLeadingComments();
-        t.setSpecialToken(null);
+//        t.setSpecialToken(null); // FIXME, I guess we need something a bit kludgy for now
     }
 
     public String getLeadingComments() {
@@ -1225,7 +1225,7 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
 ;
 
 INJECT RegexpSpec : 
-   import com.javacc.lexgen.RegularExpression;
+   import com.javacc.parsegen.RegularExpression;
 {
     public String getNextState() {
         Token nsTok = getNsTok();
@@ -1252,7 +1252,7 @@ ExpansionChoice :
 
 INJECT ExpansionChoice : 
    import com.javacc.parsegen.Expansion;
-   import com.javacc.lexgen.TokenSet;
+   import com.javacc.parsegen.TokenSet;
    import java.util.List;
    extends Expansion implements Expansion.ChoicePoint;
 {
@@ -1348,7 +1348,7 @@ ExpansionSequence #ExpansionSequence :
 INJECT ExpansionSequence : 
    import com.javacc.Grammar;
    import com.javacc.parsegen.Expansion;
-   import com.javacc.lexgen.TokenSet;
+   import com.javacc.parsegen.TokenSet;
    import java.util.*;
    extends Expansion;
 {
@@ -1482,7 +1482,7 @@ Lookahead Lookahead #void :
 
 INJECT Assertion : 
    import com.javacc.parsegen.Expansion;
-   import com.javacc.lexgen.TokenSet;
+   import com.javacc.parsegen.TokenSet;
    extends Expansion 
 {
     private Expression semanticLookahead;
@@ -1754,8 +1754,8 @@ Lookahead LegacyLookahead #Lookahead :
 
 INJECT Lookahead :
    import com.javacc.parsegen.Expansion;
-   import com.javacc.lexgen.TokenSet;
-   import com.javacc.lexgen.RegularExpression;
+   import com.javacc.parsegen.RegularExpression;
+   import com.javacc.parsegen.TokenSet;
 {
     private int amount=Integer.MAX_VALUE;
 
@@ -2005,7 +2005,7 @@ UpToHere(Expansion exp) #void :
 
 INJECT NonTerminal : 
     import com.javacc.parsegen.*;
-    import com.javacc.lexgen.TokenSet;
+    import com.javacc.parsegen.TokenSet;
     extends Expansion; 
 {
     /**
@@ -2129,7 +2129,7 @@ ZeroOrOne ZeroOrOne :
 
 INJECT ZeroOrOne : 
      import com.javacc.parsegen.Expansion;
-     import com.javacc.lexgen.TokenSet;
+     import com.javacc.parsegen.TokenSet;
      extends Expansion implements Expansion.ChoicePoint;
 {
     public Lookahead getLookahead() {
@@ -2182,7 +2182,7 @@ INJECT ZeroOrOne :
 
 INJECT ZeroOrMore : 
      import com.javacc.parsegen.Expansion;
-     import com.javacc.lexgen.TokenSet;
+     import com.javacc.parsegen.TokenSet;
      extends Expansion implements Expansion.ChoicePoint;
 {
      private String id;
@@ -2241,7 +2241,7 @@ INJECT ZeroOrMore :
 
 INJECT OneOrMore : 
      import com.javacc.parsegen.Expansion;
-     import com.javacc.lexgen.TokenSet;
+     import com.javacc.parsegen.TokenSet;
      extends Expansion implements Expansion.ChoicePoint;
 {
      private String id;
@@ -2319,7 +2319,7 @@ AttemptBlock AttemptBlock :
 INJECT AttemptBlock : 
    import java.util.List;
    import com.javacc.parsegen.Expansion;
-   import com.javacc.lexgen.TokenSet;
+   import com.javacc.parsegen.TokenSet;
    extends Expansion;
 {
    public Expansion getNestedExpansion() {
@@ -2390,7 +2390,7 @@ Failure Failure :
 
 
 INJECT Failure :
-   import com.javacc.lexgen.TokenSet;
+   import com.javacc.parsegen.TokenSet;
    extends com.javacc.parsegen.Expansion
 {
     public CodeBlock getCode() {
@@ -2421,7 +2421,7 @@ INJECT Failure :
 LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER>;
 
 INJECT LexicalStateSwitch : 
-   import com.javacc.lexgen.TokenSet;
+   import com.javacc.parsegen.TokenSet;
    extends com.javacc.parsegen.Expansion
 {
     public boolean isConcrete() {return true;}
@@ -2457,7 +2457,7 @@ TryBlock TryBlock :
 
 INJECT TryBlock  : 
     import java.util.List;
-    import com.javacc.lexgen.TokenSet;
+    import com.javacc.parsegen.TokenSet;
     import com.javacc.parsegen.Expansion;
     extends Expansion;
 {
@@ -2500,7 +2500,7 @@ INJECT TryBlock  :
 
 
 INJECT CodeBlock :
-   import com.javacc.lexgen.TokenSet;
+   import com.javacc.parsegen.TokenSet;
    extends com.javacc.parsegen.Expansion;
 {
     public CodeBlock getJavaCode() {
@@ -2606,6 +2606,7 @@ RegexpStringLiteral RegexpStringLiteral #RegexpStringLiteral :
 
 INJECT RegexpStringLiteral : 
    import com.javacc.lexgen.*;
+   import com.javacc.parsegen.RegularExpression;
    extends RegularExpression;
 {
   private String image;
@@ -2647,6 +2648,8 @@ RegexpRef RegexpRef :
 
 INJECT RegexpRef : 
     import com.javacc.lexgen.*;
+    import com.javacc.parsegen.RegularExpression;
+
     extends RegularExpression;
 {
     private RegularExpression regexp;
@@ -2677,7 +2680,7 @@ void EndOfFile :
 
 
 
-INJECT EndOfFile : extends com.javacc.lexgen.RegularExpression;
+INJECT EndOfFile : extends com.javacc.parsegen.RegularExpression;
 
 RegexpChoice :
     RegexpSequence 
@@ -2690,7 +2693,7 @@ RegexpChoiceInParen #RegexpChoice :
 
 INJECT RegexpChoice : 
     import java.util.List;
-    import com.javacc.lexgen.RegularExpression;
+    import com.javacc.parsegen.RegularExpression;
     extends RegularExpression;
 {
     public List<RegularExpression> getChoices() {
@@ -2712,7 +2715,7 @@ RegexpSequence :
 
 INJECT RegexpSequence : 
    import java.util.*;
-   import com.javacc.lexgen.RegularExpression;
+   import com.javacc.parsegen.RegularExpression;
    extends RegularExpression;
 {
    public List<RegularExpression> getUnits() {
@@ -2752,7 +2755,7 @@ int IntegerLiteral :
 ;
 
 INJECT RepetitionRange : 
-   import com.javacc.lexgen.RegularExpression;
+   import com.javacc.parsegen.RegularExpression;
    extends RegularExpression;
 {
     private int min = 0;
@@ -2790,7 +2793,7 @@ INJECT RepetitionRange :
 }
 
 INJECT OneOrMoreRegexp : 
-   import com.javacc.lexgen.RegularExpression;
+   import com.javacc.parsegen.RegularExpression;
    extends RegularExpression;
 {
    public RegularExpression getRegexp() 
@@ -2800,7 +2803,7 @@ INJECT OneOrMoreRegexp :
 }
 
 INJECT ZeroOrMoreRegexp : 
-   import com.javacc.lexgen.RegularExpression;
+   import com.javacc.parsegen.RegularExpression;
    extends RegularExpression;
 {
    public RegularExpression getRegexp() 
@@ -2820,7 +2823,7 @@ INJECT ZeroOrMoreRegexp :
 }
 
 INJECT ZeroOrOneRegexp : 
-   import com.javacc.lexgen.RegularExpression;
+   import com.javacc.parsegen.RegularExpression;
    extends RegularExpression;
 {
    public RegularExpression getRegexp() 
@@ -2851,8 +2854,9 @@ CharacterList CharacterList :
 ;
 
 INJECT CharacterList : 
-   import com.javacc.lexgen.*;
    import java.util.*;
+   import com.javacc.lexgen.*;
+   import com.javacc.parsegen.RegularExpression;
    extends RegularExpression;
 {
     public List<CharacterRange> getDescriptors() {

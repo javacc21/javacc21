@@ -187,11 +187,19 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     /**
      * The next regular (i.e. parsed) token
      */
-    public Token getNext() {
-       return next;
+    public final Token getNext() {
+        return getNextParsedToken();
     }
     
-    void setNext(Token next) {
+    final void setNext(Token next) {
+        setNextParsedToken(next);
+    }
+
+    public Token getNextParsedToken() {
+        return next;
+    }
+
+    void setNextParsedToken(Token next) {
         this.next = next;
     }
 
@@ -233,23 +241,20 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * immediately follow it (without an intervening regular token).  If there
      * is no such token, this field is null.
      */
-[#if grammar.options.legacyAPI]public[#else]private[/#if]
+[#if grammar.options.legacyAPI]
 
-    Token specialToken;
+    public Token specialToken;
 
     @Deprecated
     public Token getSpecialToken() {
-        [#if grammar.options.legacyAPI]
            return specialToken;
-        [#else]
-           return previousToken == null || !previousToken.isUnparsed() ? null : previousToken;
-        [/#if] 
     }
     
     @Deprecated 
     public void setSpecialToken(Token specialToken) {
          this.specialToken = specialToken;
     }
+[/#if]    
     
     private boolean unparsed;
 
@@ -292,7 +297,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         [#var lastArg = "t1.getFileLineMap()"]
         [#if grammar.options.hugeFileSupport][#set lastArg = "t1.getInputSource()"][/#if]
         Token merged = newToken(type, t1.getImage() + t2.getImage(), ${lastArg});
+[#if grammar.options.legacyAPI]        
         merged.setSpecialToken(t1.getSpecialToken());
+[/#if]        
         merged.setPreviousToken(t1.getPreviousToken());
         merged.setBeginLine(t1.getBeginLine());
         merged.setBeginColumn(t1.getBeginColumn());

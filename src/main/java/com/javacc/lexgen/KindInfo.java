@@ -30,13 +30,12 @@
 
 package com.javacc.lexgen;
 
-import java.util.BitSet;
-
+import com.javacc.parsegen.TokenSet;
 import com.javacc.Grammar;
 
 public final class KindInfo {
    
-  private BitSet validKindSet = new BitSet(), finalKindSet = new BitSet();
+  private TokenSet validKindSet, finalKindSet;
    
   KindInfo(Grammar grammar) {
 	  this.validKindSet = new TokenSet(grammar);
