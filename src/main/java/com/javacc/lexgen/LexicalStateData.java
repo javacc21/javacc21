@@ -74,13 +74,14 @@ public class LexicalStateData {
     private int[] kindsForStates;
     private int[][] statesForState;
     private boolean done;
+    private List<NfaState> allStates = new ArrayList<>();
+    private List<NfaState> indexedAllStates = new ArrayList<>();
+    private Map<String, int[]> allNextStates = new HashMap<>();
+    private int idCnt;
+    
 
-    int idCnt = 0;
     int dummyStateIndex = -1;
     boolean mark[];
-    List<NfaState> allStates = new ArrayList<>();
-    List<NfaState> indexedAllStates = new ArrayList<>();
-    Map<String, int[]> allNextStates = new HashMap<>();
 
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -94,6 +95,9 @@ public class LexicalStateData {
     Grammar getGrammar() {
         return grammar;
     }
+    int nextId() {
+        return idCnt++;
+    }
 
     NfaState getInitialState() {return initialState;}
 
@@ -101,6 +105,18 @@ public class LexicalStateData {
 
     public String getName() {
         return name;
+    }
+
+    boolean isMarked(int i) {
+        return mark[i];
+    }
+
+    void setMark(int i) {
+        mark[i] = true;
+    }
+
+    void unsetMark(int i) {
+        mark[i] = false;
     }
 
     void setDone(boolean done) {this.done = done;}
@@ -141,6 +157,10 @@ public class LexicalStateData {
 
     public List<NfaState> getIndexedAllStates() {
         return indexedAllStates;
+    }
+
+    Map<String, int[]> getAllNextStates() {
+        return allNextStates;
     }
 
     public NfaState getSinglesToSkip() {
