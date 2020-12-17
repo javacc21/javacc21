@@ -74,7 +74,6 @@ public class LexicalStateData {
     private List<NfaState> allStates = new ArrayList<>();
     private List<NfaState> indexedAllStates = new ArrayList<>();
     private Map<String, int[]> allNextStates = new HashMap<>();
-    private int idCnt;
     private int dummyStateIndex = -1;
     private BitSet marks = new BitSet();
     private boolean done;
@@ -90,9 +89,6 @@ public class LexicalStateData {
 
     Grammar getGrammar() {
         return grammar;
-    }
-    int nextId() {
-        return idCnt++;
     }
 
     NfaState getInitialState() {return initialState;}

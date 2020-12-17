@@ -43,6 +43,7 @@ public class NfaState {
     private Grammar grammar;
     private LexerData lexerData;
     private LexicalStateData lexicalState;
+    private List<NfaState> epsilonMoves = new ArrayList<>();
     private StringBuilder charMoveBuffer = new StringBuilder();
     private StringBuilder rangeMoveBuffer = new StringBuilder();
     private NfaState stateForCase;
@@ -52,14 +53,11 @@ public class NfaState {
     private int usefulEpsilonMoves;
     private int nonAsciiMethod = -1;
     private boolean composite;
-    private char matchSingleChar;
     private int[] nonAsciiMoveIndices;
     private BitSet asciiMoves = new BitSet();
     private NfaState next;
-    private List<NfaState> epsilonMoves = new ArrayList<>();
     private int kindToPrint = Integer.MAX_VALUE;
     private List<Integer> loByteVec;
-    private boolean onlyOneCharAdded, noCharsAdded=true;
     private boolean isFinal;
     private boolean dummy;
     private int index = -1;
@@ -71,7 +69,7 @@ public class NfaState {
         this.lexicalState = lexicalState;
         this.grammar = lexicalState.getGrammar();
         this.lexerData = grammar.getLexerData();
-        id = lexicalState.nextId();
+        id = lexicalState.getAllStates().size();
         lexicalState.getAllStates().add(this);
         if (lexicalState.getCurrentRegexp() != null) {
             lookingFor = lexicalState.getCurrentRegexp();
@@ -119,6 +117,7 @@ public class NfaState {
     }
 
     List<NfaState> getEpsilonMoves() {
+        Collections.sort(epsilonMoves, (state1, state2) -> state1.id-state2.id);
         return epsilonMoves;
     }
     
@@ -168,27 +167,13 @@ public class NfaState {
         return usefulEpsilonMoves;
     }
 
-    static private void insertInOrder(List<NfaState> stateList, NfaState stateToInsert) {
-        for (ListIterator<NfaState> it = stateList.listIterator(); it.hasNext();) {
-            NfaState state = it.next();
-            if (state.id == stateToInsert.id) {
-                return;
-            }
-            if (state.id > stateToInsert.id) {
-                stateList.add(it.previousIndex(), stateToInsert);
-                return;
-            }
-        }
-        stateList.add(stateToInsert);
-    }
-
     public boolean isNeeded(int byteNum) {
         boolean  hasAsciiMoves = byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
         return (byteNum >= 0 && hasAsciiMoves) || (byteNum < 0 && nonAsciiMethod != -1);
     }
 
     void addMove(NfaState newState) {
-        insertInOrder(epsilonMoves, newState);
+        if (!epsilonMoves.contains(newState)) epsilonMoves.add(newState);
     }
 
     private void addASCIIMove(char c) {
@@ -196,11 +181,6 @@ public class NfaState {
     }
 
     public void addChar(char c) {
-        onlyOneCharAdded = noCharsAdded;
-        noCharsAdded = false;
-
-//        onlyChar++;
-        matchSingleChar = c;
         if (c < 128) {// ASCII char
             addASCIIMove(c);
         } else {
@@ -209,8 +189,6 @@ public class NfaState {
     }
 
     void addRange(char left, char right) {
-        noCharsAdded = onlyOneCharAdded = false;
-//        onlyChar = 2;
         if (left < 128) {
             if (right < 128) {
                 for (; left <= right; left++)
@@ -241,14 +219,14 @@ public class NfaState {
             state.epsilonClosure();
             for (NfaState otherState : state.epsilonMoves) {
                 if (otherState.usefulState() && !epsilonMoves.contains(otherState)) {
-                    insertInOrder(epsilonMoves, otherState);
+                    addMove(otherState);
                     lexicalState.setDone(false);
                 }
             }
             kind = Math.min(kind, state.kind);
         }
         if (hasTransitions() && !epsilonMoves.contains(this)) {
-            insertInOrder(epsilonMoves, this);
+            addMove(this);
         }
     }
 
@@ -358,9 +336,6 @@ public class NfaState {
     }
 
     final boolean canMoveUsingChar(char c) {
-//        if (onlyChar == 1)
-        if (onlyOneCharAdded) 
-            return c == matchSingleChar;
         if (c < 128) {
             return asciiMoves.get(c);
         }
@@ -382,14 +357,6 @@ public class NfaState {
     }
 
     int getFirstValidPos(String s, int i, int len) {
-//        if (onlyChar == 1) {
-        if (onlyOneCharAdded) {
-            char c = matchSingleChar;
-            while (c != s.charAt(i) && ++i < len)
-                ;
-            return i;
-        }
-
         do {
             if (canMoveUsingChar(s.charAt(i)))
                 return i;
@@ -399,9 +366,9 @@ public class NfaState {
 
     int moveFrom(char c, List<NfaState> newStates) {
         if (canMoveUsingChar(c)) {
-            for (int i = getNext().epsilonMoves.size(); i-- > 0;)
-                insertInOrder(newStates, getNext().epsilonMoves.get(i));
-
+            for (int i = getNext().epsilonMoves.size(); i-- > 0;) {
+                newStates.add(getNext().epsilonMoves.get(i));
+            }
             return kindToPrint;
         }
         return Integer.MAX_VALUE;
@@ -666,14 +633,8 @@ public class NfaState {
         }
         return true;
     }
-
-    public void setCharMoves(char[] charMoves) {
-        for(char ch : charMoves) {
-            if (ch != 0) charMoveBuffer.append(ch);
-        }
-    }
-
-    public void setNext(NfaState next) {
+ 
+    void setNext(NfaState next) {
         this.next = next;
     }
 }
