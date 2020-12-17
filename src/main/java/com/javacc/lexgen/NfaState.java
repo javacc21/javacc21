@@ -300,12 +300,7 @@ public class NfaState {
         // First do epsilon closure
         lexicalState.setDone(false);
         while (!lexicalState.isDone()) {
-            if (lexicalState.mark == null || lexicalState.mark.length < lexicalState.getAllStates().size()) {
-                lexicalState.mark = new boolean[lexicalState.getAllStates().size()];
-            }
-            for (int i = 0; i< lexicalState.getAllStates().size(); i++) {
-                lexicalState.unsetMark(i);
-            }
+            lexicalState.clearMarks();
             lexicalState.setDone(true);
             epsilonClosure();
         }
@@ -656,7 +651,6 @@ public class NfaState {
      * @param byteNum
      *            either 0 or 1
      */
-
     public boolean isOnlyState(int byteNum) {
         for (NfaState state : lexicalState.getAllStates()) {
             BitSet bs = new BitSet();

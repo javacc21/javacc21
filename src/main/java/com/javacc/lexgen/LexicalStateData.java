@@ -45,8 +45,6 @@ public class LexicalStateData {
     private Grammar grammar;
     private LexerData lexerData;
     private String name;
-    private int index;
-    private String suffix;
 
     private Map<String, int[]> compositeStateTable = new HashMap<>();
     private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
@@ -73,15 +71,13 @@ public class LexicalStateData {
     private String[] images;
     private int[] kindsForStates;
     private int[][] statesForState;
-    private boolean done;
     private List<NfaState> allStates = new ArrayList<>();
     private List<NfaState> indexedAllStates = new ArrayList<>();
     private Map<String, int[]> allNextStates = new HashMap<>();
     private int idCnt;
-    
-
-    int dummyStateIndex = -1;
-    boolean mark[];
+    private int dummyStateIndex = -1;
+    private BitSet marks = new BitSet();
+    private boolean done;
 
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -108,15 +104,19 @@ public class LexicalStateData {
     }
 
     boolean isMarked(int i) {
-        return mark[i];
+        return marks.get(i);
     }
 
     void setMark(int i) {
-        mark[i] = true;
+        marks.set(i);
     }
 
     void unsetMark(int i) {
-        mark[i] = false;
+        marks.clear(i);
+    }
+
+    void clearMarks() {
+        marks.clear();
     }
 
     void setDone(boolean done) {this.done = done;}
@@ -124,7 +124,7 @@ public class LexicalStateData {
     boolean isDone() {return this.done;}
 
     public int getIndex() {
-        return index;
+        return lexerData.getIndex(name);
     }
 
     public int getMaxStringIndex() {
@@ -189,7 +189,7 @@ public class LexicalStateData {
     }
 
     public String getSuffix() {
-        return suffix;
+        return name.equals("DEFAULT") ? "" : "_" + name;
     }
 
     public int[] getKindsForStates() {
@@ -255,12 +255,6 @@ public class LexicalStateData {
 
     List<RegexpChoice> process() {
         images = new String[lexerData.getTokenCount()];
-        this.index = lexerData.getIndex(this.name);
-        suffix = "_" + name;
-        if (suffix.equals("_DEFAULT")) {
-            suffix = "";
-        }
-
     	List<RegexpChoice> choices = new ArrayList<>();
         boolean isFirst = true;
         for (TokenProduction tp : tokenProductions) {

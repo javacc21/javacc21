@@ -310,13 +310,12 @@ public class LexerData {
             }
             boolean[] seen = new boolean[numLexStates];
             done[lexicalStateIndex] = true;
-            String cycle = "";
             String reList = "";
             int len = 0;
             int j = lexicalStateIndex;
             seen[lexicalStateIndex] = true;
-            cycle += ls.getName() + "-->";
-            int initMatch = lexicalStates.get(j).getInitMatch();
+            String cycle = ls.getName() + "-->";
+            int initMatch = ls.getInitMatch();
             while (getRegularExpression(initMatch).getNewLexicalState() != null) {
                 LexicalStateData newLexState = getRegularExpression(initMatch).getNewLexicalState();
                 cycle += newLexState.getName();
