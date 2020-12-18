@@ -326,8 +326,7 @@ public class NfaState {
             epsilonMovesString += "};";
         }
         usefulEpsilonMoves = cnt;
-        if (epsilonMovesString != null
-                && lexicalState.getAllNextStates().get(epsilonMovesString) == null) {
+        if (lexicalState.getAllNextStates().get(epsilonMovesString) == null) {
             int[] statesToPut = new int[usefulEpsilonMoves];
             System.arraycopy(stateNames, 0, statesToPut, 0, cnt);
             lexicalState.getAllNextStates().put(epsilonMovesString, statesToPut);
@@ -440,7 +439,6 @@ public class NfaState {
                     common[j / 64] |= (1L << (j % 64));
                 }
             }
-
             if (common != null) {
                 Integer ind;
                 String bitVector = "{\n   0x" + Long.toHexString(common[0]) + "L, " + "0x"
@@ -542,7 +540,6 @@ public class NfaState {
                     return -1;
                 oneSeen = i;
             }
-
         return oneSeen;
     }
 
