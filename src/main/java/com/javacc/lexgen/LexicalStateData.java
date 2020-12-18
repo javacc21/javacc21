@@ -680,7 +680,7 @@ public class LexicalStateData {
                 int[] other = compositeStateTable.get(key);
 
                 while (toRet < nameSet.length
-                        && (((indexedAllStates.get(nameSet[toRet])).getInNextOf() > 1) || NfaState.arrayContains(other, nameSet[toRet]))) {
+                        && (((indexedAllStates.get(nameSet[toRet])).getInNextOf() > 1) || arrayContains(other, nameSet[toRet]))) {
                     toRet++;
                 }
             }
@@ -868,5 +868,10 @@ public class LexicalStateData {
                 }
             }
         }
+    }
+
+    static private boolean arrayContains(int[] arr, int elem) {
+        for (int i : arr) if (i==elem) return true;
+        return false;
     }
 }

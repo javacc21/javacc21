@@ -86,15 +86,6 @@
 
     char curChar;
     
-    
-    // Method to reinitialize the jjrounds array.
-    private void ReInitRounds() {
-       int i;
-       jjround = 0x80000001;
-       for (i = ${lexerData.stateSetSize}; i-- > 0;) 
-          jjrounds[i] = 0x80000000;
-    }
-
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
 	   jjmatchedKind = 0;
@@ -595,7 +586,8 @@
         int kind = 0x7fffffff;
         while (true) {
             if (++jjround == 0x7fffffff) {
-                ReInitRounds();
+               jjround = 0x80000001;
+               Arrays.fill(jjrounds,0x80000000);
             }
             if (curChar < 64) {
             	long l = 1L << curChar;
@@ -735,34 +727,23 @@
    [#list nfaState.getMoveStates(byteNum, statesDumped) as state]
                    case ${state.index} :
    [/#list]
-   [#var oneBit=0]
-   [#if (byteNum>=0)]
-       [#set oneBit = nfaState.OnlyOneBitSet(nfaState.asciiMoves[byteNum])]
-   [/#if]
    [#if byteNum<0 || nfaState.asciiMoves[byteNum] != -1]
       [#if nfaState.next?is_null || nfaState.next.usefulEpsilonMoves<=0]
           [#var kindCheck=" && kind > "+kindToPrint]
           [#if onlyState][#set kindCheck = ""][/#if]
           [#if byteNum>=0]
-             [#if oneBit != -1]
-                     if (curChar == ${(64*byteNum+oneBit)} ${kindCheck})
-             [#else]
-                     if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} & l) != 0L ${kindCheck})
-             [/#if]
+               if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} & l) != 0L ${kindCheck})
           [#else]
-                     if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2) ${kindCheck})
+               if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2) ${kindCheck})
           [/#if]
-                         kind = ${kindToPrint};
-                         break;
+               kind = ${kindToPrint};
+               break;
           [#return]
       [/#if]
    [/#if]
    [#if kindToPrint != MAX_INT]
        [#if byteNum>=0]
-          [#if oneBit != -1]
-                    if (curChar != ${64*byteNum+oneBit})
-                          break;
-          [#elseif nfaState.asciiMoves[byteNum] != -1]
+          [#if nfaState.asciiMoves[byteNum] != -1]
                     if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} &l) == 0L)
                           break;
           [/#if]
@@ -777,9 +758,7 @@
                          kind = ${kindToPrint};
        [/#if]
    [#elseif (byteNum>=0)]
-       [#if oneBit != -1]
-                    if (curChar == ${64*byteNum+oneBit})
-       [#elseif nfaState.asciiMoves[byteNum] != -1]
+       [#if nfaState.asciiMoves[byteNum] != -1]
                     if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} & l) != 0L)
        [/#if]
    [#else]
@@ -884,12 +863,7 @@
    [#var kindToPrint=nfaState.kindToPrint asciiMoves=nfaState.asciiMoves loByteVec=nfaState.loByteVec next=nfaState.next lexicalState=nfaState.lexicalState]
    [#if (byteNum>=0)]
       [#if byteNum<0 || nfaState.asciiMoves[byteNum] != -1]
-         [#var oneBit=nfaState.OnlyOneBitSet(asciiMoves[byteNum])]
-         [#if oneBit != -1]
-               [#if elseNeeded]else [/#if] if (curChar == ${64*byteNum+oneBit})
-         [#else]
-               [#if elseNeeded] else [/#if] if ((${utils.toHexStringL(asciiMoves[byteNum])} &l) != 0L)
-         [/#if]
+         [#if elseNeeded] else [/#if] if ((${utils.toHexStringL(asciiMoves[byteNum])} &l) != 0L)
       [/#if]
    [#else]
               if (jjCanMove_${nonAsciiMethod}(hiByte, i1, i2, l1, l2))

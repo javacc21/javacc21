@@ -532,40 +532,7 @@ public class NfaState {
         lexicalState.addStartStateSet(epsilonMovesString);
     }
 
-    public int OnlyOneBitSet(long l) {
-        int oneSeen = -1;
-        for (int i = 0; i < 64; i++)
-            if (((l >> i) & 1L) != 0L) {
-                if (oneSeen >= 0)
-                    return -1;
-                oneSeen = i;
-            }
-        return oneSeen;
-    }
-
-
-    public boolean selfLoops() {
-        if (getNext() == null || getNext().epsilonMovesString == null)
-            return false;
-
-        int[] set = lexicalState.getAllNextStates().get(getNext().epsilonMovesString);
-        return arrayContains(set, index);
-    }
-    
-    static boolean arrayContains(int[] arr, int elem) {
-        for (int i = arr.length; i-- > 0;) {
-            if (arr[i] == elem) {
-                return true;
-            }
-        }
-        return false;
-
-    }
-
     public boolean isNextIntersects() {
-        if (selfLoops()) {
-            return true;
-        }
         for (NfaState state : lexicalState.getAllStates()) {
             if (this == state || state.index == -1 || state.dummy || index == state.index
                     || (state.nonAsciiMethod == -1))
