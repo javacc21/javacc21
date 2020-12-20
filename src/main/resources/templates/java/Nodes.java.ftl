@@ -45,8 +45,7 @@ abstract public class Nodes {
 
    /**
     * @deprecated just use node.descendants(Token.class)
-    */
-     @Deprecated 
+    */ 
      static public List<Token> getTokens(Node node) {
 	       return node.descendants(Token.class);
     }
@@ -58,7 +57,6 @@ abstract public class Nodes {
     /**
      * @deprecated just use node.iterator()
      */
-     @Deprecated
     static public ListIterator<Node> iterator(final Node node) {
         return node.iterator();
     }
