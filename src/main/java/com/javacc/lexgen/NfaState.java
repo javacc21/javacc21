@@ -149,7 +149,7 @@ public class NfaState {
         return composite;
     }
 
-    public boolean isDummy() {
+    boolean isDummy() {
         return dummy;
     }
 
@@ -180,7 +180,7 @@ public class NfaState {
         asciiMoves.set(c);
     }
 
-    public void addChar(char c) {
+    void addChar(char c) {
         if (c < 128) {// ASCII char
             addASCIIMove(c);
         } else {
@@ -189,18 +189,17 @@ public class NfaState {
     }
 
     void addRange(char left, char right) {
-        if (left < 128) {
-            if (right < 128) {
-                for (; left <= right; left++)
-                    addASCIIMove(left);
-                return;
-            }
-            for (; left < 128; left++)
-                addASCIIMove(left);
+        for (char c = left; c <=right && c<128; c++) {
+            addASCIIMove(c);
         }
-        rangeMoveBuffer.append(left);
-        rangeMoveBuffer.append(right);
+        left = (char) Math.max(left, 128);
+        right = (char) Math.max(right, 128);
+        if (right>left) {
+            rangeMoveBuffer.append(left);
+            rangeMoveBuffer.append(right);
+        }
     }
+    
     boolean closureDone = false;
 
     /**
@@ -266,8 +265,7 @@ public class NfaState {
                 kindToPrint = getNext().kind;
         }
         if (index == -1 && hasTransitions()) {
-            // stateName = lexicalState.generatedStates++;
-            index = lexicalState.getGeneratedStates();
+            this.index = lexicalState.getIndexedAllStates().size();
             lexicalState.getIndexedAllStates().add(this);
             generateNextStatesCode();
         }

@@ -147,10 +147,6 @@ public class LexicalStateData {
         return !indexedAllStates.isEmpty();
     }
 
-    public int getGeneratedStates() {
-        return indexedAllStates.size();
-    }
-
     public List<NfaState> getIndexedAllStates() {
         return indexedAllStates;
     }
@@ -284,7 +280,7 @@ public class LexicalStateData {
         }
         lexerData.expandStateSetSize(indexedAllStates.size());
         generateNfaStates();
-        setupStateSetsForKinds();
+        generateDfaData();
         for (NfaState nfaState : allStates) {
             nfaState.generateNonAsciiMoves();
         }
@@ -852,7 +848,7 @@ public class LexicalStateData {
         return retVal;
     }
 
-    private void setupStateSetsForKinds() {
+    private void generateDfaData() {
         for (int i = 0; i < maxStringLength; i++) {
             Map<String, KindInfo> tab = stringLiteralTables.get(i);
             for (String key : tab.keySet()) {
