@@ -1,3 +1,4 @@
+[#ftl strict_vars=true]
 [#--
 /* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
@@ -28,7 +29,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
  --]
- 
  
  [#--  
         This is the one remaining template file that is still a god-awful mess and, I (JR) have to admit 
@@ -132,33 +132,33 @@
             case ${lexicalState.name} : 
     [/#if]
     [#if singlesToSkip.hasTransitions()]
-          [#if singlesToSkip.asciiMoves[0] != 0&&singlesToSkip.asciiMoves[1] != 0]
-                 while ((curChar < 64 && (${utils.toHexString(singlesToSkip.asciiMoves[0])}
-                  & (1L <<curChar)) != 0L) || (curChar>>6) == 1 && (${utils.toHexStringL(singlesToSkip.asciiMoves[1])} 
-                  & (1L << (curChar & 077))) != 0L)
-          [#elseif singlesToSkip.asciiMoves[1] = 0]
-                 while (curChar <= ${lexerData.maxChar(singlesToSkip.asciiMoves[0])} 
-                        && (${utils.toHexStringL(singlesToSkip.asciiMoves[0])}
-                        & (1L << curChar)) != 0L) 
-          [#elseif singlesToSkip.asciiMoves[0] = 0]
-                 while (curChar > 63 && curChar <= ${lexerData.MaxChar(singlesToSkip.asciiMoves[1])+64}
-                        && ${utils.toHexString(singlesToSkip.asciiMoves[1])}L & (1L<< (curChar&077))) != 0L)
-          [/#if]
-                 {
-                   [#var debugOutput]
-                   [#set debugOutput]
-                   [#if numLexicalStates>1]
-                   "<" + lexicalState + ">" + 
-                   [/#if]
-                   "Skipping character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
-                   [/#set] 
-                    if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-                    curChar = (char) input_stream.beginToken();
-                    if (curChar == (char) -1) {
-                        return generateEOF();
-                    }
-                }
-    [/#if]    
+      [#if singlesToSkip.asciiMoves[0] != 0&&singlesToSkip.asciiMoves[1] != 0]
+            while ((curChar < 64 && (${utils.toHexString(singlesToSkip.asciiMoves[0])}
+            & (1L <<curChar)) != 0L) || (curChar>>6) == 1 && (${utils.toHexStringL(singlesToSkip.asciiMoves[1])} 
+            & (1L << (curChar & 077))) != 0L)
+      [#elseif singlesToSkip.asciiMoves[1] = 0]
+            while (curChar <= ${lexerData.maxChar(singlesToSkip.asciiMoves[0])} 
+                  && (${utils.toHexStringL(singlesToSkip.asciiMoves[0])}
+                  & (1L << curChar)) != 0L) 
+      [#elseif singlesToSkip.asciiMoves[0] = 0]
+            while (curChar > 63 && curChar <= ${lexerData.MaxChar(singlesToSkip.asciiMoves[1])+64}
+                  && ${utils.toHexString(singlesToSkip.asciiMoves[1])}L & (1L<< (curChar&077))) != 0L)
+      [/#if]
+            {
+               [#var debugOutput]
+               [#set debugOutput]
+               [#if numLexicalStates>1]
+               "<" + lexicalState + ">" + 
+               [/#if]
+               "Skipping character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
+               [/#set] 
+               if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
+               curChar = (char) input_stream.beginToken();
+               if (curChar == (char) -1) {
+                  return generateEOF();
+               }
+            }
+   [/#if]
              
              
     [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
@@ -553,8 +553,6 @@
 [/#list]
   };
 
-
-
 [#macro DumpMoveNfa lexicalState]
     private int jjMoveNfa${lexicalState.suffix}(int startState, int curPos) {
     [#if !lexicalState.hasNfa()]
@@ -681,45 +679,24 @@
 [/#macro]
 
 [#macro DumpMoves lexicalState byteNum]
-   [#set statesDumped = utils.newBitSet()]
+   [#var statesDumped = utils.newBitSet()]
    [#list lexicalState.compositeStateTable?keys as key]
       [@dumpCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
    [/#list]
-   [@dumpMoves lexicalState, byteNum, statesDumped/]
-[/#macro]
-
-[#macro dumpMoves lexicalState byteNum statesDumped]
    [#list lexicalState.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)&&state.hasTransitions()]
-          [#var toPrint=""]
-          [#var stateForCaseHandled=false]
-          [#if !state.stateForCase?is_null]
-              [#set stateForCaseHandled = statesDumped.get(state.stateForCase.index) || state.inNextOf = 1]
-              [#if !stateForCaseHandled]
-                  [#var stateForCase=state.stateForCase]
-                  ${statesDumped.set(stateForCase.index)!}
-                  [#if stateForCase.isNeeded(byteNum)]
-                  case ${stateForCase.index} :
-                  [#else]
-                    [#set toPrint = "case "+stateForCase.index+" : "]
-                  [/#if]
-              [/#if] 
-          [/#if]
-          [#if !stateForCaseHandled]
-              [#if state.isNeeded(byteNum)]
-                  ${toPrint}
-                  ${statesDumped.set(state.index)!}
-                  case ${state.index} :
-                  [@dumpMove state, byteNum, statesDumped/]
-              [#elseif !state.stateForCase?is_null&&toPrint = ""]
-                     break;
-              [/#if]
-          [/#if]
+         [#var toPrint=""]
+         [#if state.isNeeded(byteNum)]
+            ${toPrint}
+            ${statesDumped.set(state.index)!}
+            case ${state.index} :
+            [@DumpMove state, byteNum, statesDumped/]
+         [/#if]
       [/#if]
    [/#list]
 [/#macro]
 
-[#macro dumpMove nfaState byteNum statesDumped]
+[#macro DumpMove nfaState byteNum statesDumped]
    [#var nextIntersects=nfaState.composite || nfaState.nextIntersects]
    [#var onlyState=(byteNum>=0)&&nfaState.isOnlyState(byteNum)]
    [#var lexicalState=nfaState.lexicalState]
@@ -797,7 +774,7 @@
    [#var stateIndex=lexicalState.stateIndexFromComposite(key)]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
-   [#var toBePrinted stateForCase toPrint=""]
+   [#var toBePrinted toPrint=""]
    [#list stateSet as state]
        [#if state.isNeeded(byteNum)]
           [#set neededStates = neededStates+1]
@@ -809,24 +786,8 @@
        [#else]
           ${statesDumped.set(state.index)!}
        [/#if]
-       [#if !state.stateForCase?is_null]
-          [#set stateForCase = state.stateForCase]
-       [/#if]
    [/#list]
-   [#if stateForCase??]
-        ${statesDumped.set(stateForCase.index)!}
-        [#if state.stateForCase.isNeeded(byteNum)]
-           case ${index} :
-               [@dumpMoveForCompositeState nfaState, byteNum, false/]
-           [#set toPrint = "case "+index+":"] 
-        [#else]
-           [#set toPrint = ""]
-        [/#if]
-   [/#if]
    [#if neededStates = 0]
-        [#if stateForCase??&&toPrint = ""]
-               break;
-        [/#if]
         [#return]
    [/#if]
    [#if neededStates = 1]
@@ -836,7 +797,7 @@
           case ${toBePrinted.index} :
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
-              [@dumpMove toBePrinted, byteNum, statesDumped/]
+              [@DumpMove toBePrinted, byteNum, statesDumped/]
       [#return] 
    [/#if]
               ${toPrint}
@@ -848,17 +809,15 @@
    [#if (byteNum>=0)]
          [#var partition=lexicalState.partitionStatesSetForAscii(stateSet, byteNum)]
          [#list partition as subSet]
-            [#var atStart=true]
             [#list subSet as state]
-              [@dumpMoveForCompositeState state, byteNum, !atStart/]
-              [#set atStart = false]
+              [@DumpMoveForCompositeState state, byteNum, state_index!=0/]
             [/#list]
          [/#list]
    [/#if]
                   break;
 [/#macro]
 
-[#macro dumpMoveForCompositeState nfaState byteNum elseNeeded]
+[#macro DumpMoveForCompositeState nfaState byteNum elseNeeded]
    [#var nextIntersects=nfaState.nextIntersects]
    [#var kindToPrint=nfaState.kindToPrint asciiMoves=nfaState.asciiMoves loByteVec=nfaState.loByteVec next=nfaState.next lexicalState=nfaState.lexicalState]
    [#if (byteNum>=0)]
@@ -903,9 +862,7 @@
    [#if kindToPrint != MAX_INT]
          }
    [/#if]
- [/#macro]
-
-
+[/#macro]
 
 [#macro DumpDfaCode lexicalState]
   [#var initState=lexicalState.initStateName()]
@@ -1271,7 +1228,6 @@
    Utility macro to output a sequence of args, typically
    to a method. The input can be passed in as an argument,
    or via the macro's nested content. In either case, it
-   is just one argument per line. 
    is just one argument per line. The macro takes care of 
    commas and the opening and closing parentheses.  
 --]   

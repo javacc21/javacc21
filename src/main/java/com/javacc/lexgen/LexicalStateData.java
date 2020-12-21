@@ -660,7 +660,6 @@ public class LexicalStateData {
             stateIndexFromComposite.put(stateSetString, nameSet[0]);
             return nameSet[0];
         }
-
         for (int i = 0; i < nameSet.length; i++) {
             if (nameSet[i] != -1) {
                 NfaState st = indexedAllStates.get(nameSet[i]);
@@ -681,19 +680,19 @@ public class LexicalStateData {
                 }
             }
         }
-        int tmp;
+        int result;
         if (toRet >= nameSet.length) {
             if (dummyStateIndex == -1) {
-                tmp = dummyStateIndex = indexedAllStates.size();
+                result = dummyStateIndex = indexedAllStates.size();
             } else {
-                tmp = ++dummyStateIndex;
+                result = ++dummyStateIndex;
             }
         } else {
-            tmp = nameSet[toRet];
+            result = nameSet[toRet];
         }
-        stateIndexFromComposite.put(stateSetString, tmp);
+        stateIndexFromComposite.put(stateSetString, result);
         compositeStateTable.put(stateSetString, nameSet);
-        return tmp;
+        return result;
     }
 
     public int[] getStateSetIndicesForUse(String arrayString) {

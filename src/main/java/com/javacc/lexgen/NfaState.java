@@ -46,7 +46,6 @@ public class NfaState {
     private List<NfaState> epsilonMoves = new ArrayList<>();
     private StringBuilder charMoveBuffer = new StringBuilder();
     private StringBuilder rangeMoveBuffer = new StringBuilder();
-    private NfaState stateForCase;
     private String epsilonMovesString;
     private int id;
     private RegularExpression lookingFor;
@@ -133,10 +132,6 @@ public class NfaState {
         this.inNextOf++;
     }
 
-    public NfaState getStateForCase() {
-        return stateForCase;
-    }
-
     boolean hasEpsilonMoves() {
         return usefulEpsilonMoves > 0;
     }
@@ -199,7 +194,7 @@ public class NfaState {
             rangeMoveBuffer.append(right);
         }
     }
-    
+
     boolean closureDone = false;
 
     /**
