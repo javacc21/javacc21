@@ -38,6 +38,7 @@
   --]
 
  [#var options=grammar.options, lexerData=grammar.lexerData]
+ [#var utils=grammar.utils]
  [#var tokenCount=lexerData.tokenCount]
  [#var numLexicalStates=lexerData.lexicalStates?size]
 
@@ -93,11 +94,10 @@
       Token eof = jjFillToken();
       tokenLexicalActions();
 [#list grammar.lexerTokenHooks as tokenHookMethodName]
-      [#if tokenHookMethodName = "CommonTokenAction"]
-         ${tokenHookMethodName}(eof);
-      [#else]
-         eof = ${tokenHookMethodName}(eof);
+      [#if tokenHookMethodName != "CommonTokenAction"]
+         eof =
       [/#if]
+      ${tokenHookMethodName}(eof);
 [/#list]
       return eof;
     }

@@ -129,7 +129,7 @@ public final void backup(int amount) {
   };
 [/#if]
   
-    int tabSize = 8;
+    private int tabSize = 8;
  [#if options.lexerUsesParser]
 
   public ${grammar.parserClassName} parser;
