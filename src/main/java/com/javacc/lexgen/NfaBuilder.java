@@ -65,7 +65,7 @@ public class NfaBuilder extends Node.Visitor {
         visit(regularExpression);
         end.setFinal(true);
         end.setKind(regularExpression.getOrdinal());
-        lexicalState.getInitialState().addMove(start);
+        lexicalState.getInitialState().addEpsilonMove(start);
     }
 
     public void visit(CharacterList charList) {
@@ -93,9 +93,9 @@ public class NfaBuilder extends Node.Visitor {
         NfaState startState = new NfaState(lexicalState);
         NfaState finalState = new NfaState(lexicalState);
         visit(oom.getRegexp());
-        startState.addMove(this.start);
-        this.end.addMove(this.start);
-        this.end.addMove(finalState);
+        startState.addEpsilonMove(this.start);
+        this.end.addEpsilonMove(this.start);
+        this.end.addEpsilonMove(finalState);
         this.start = startState;
         this.end = finalState;
     }
@@ -109,8 +109,8 @@ public class NfaBuilder extends Node.Visitor {
         NfaState finalState = new NfaState(lexicalState);
         for (RegularExpression curRE : choices) {
             visit(curRE);
-            startState.addMove(this.start);
-            this.end.addMove(finalState);
+            startState.addEpsilonMove(this.start);
+            this.end.addEpsilonMove(finalState);
         }
         this.start = startState;
         this.end = finalState;
@@ -134,10 +134,10 @@ public class NfaBuilder extends Node.Visitor {
         NfaState startState = new NfaState(lexicalState);
         NfaState finalState = new NfaState(lexicalState);
         visit(zom.getRegexp());
-        startState.addMove(this.start);
-        startState.addMove(finalState);
-        this.end.addMove(finalState);
-        this.end.addMove(this.start);
+        startState.addEpsilonMove(this.start);
+        startState.addEpsilonMove(finalState);
+        this.end.addEpsilonMove(finalState);
+        this.end.addEpsilonMove(this.start);
         this.start = startState;
         this.end = finalState;
     }
@@ -146,9 +146,9 @@ public class NfaBuilder extends Node.Visitor {
         NfaState startState = new NfaState(lexicalState);
         NfaState finalState = new NfaState(lexicalState);
         visit(zoo.getRegexp());
-        startState.addMove(this.start);
-        startState.addMove(finalState);
-        this.end.addMove(finalState);
+        startState.addEpsilonMove(this.start);
+        startState.addEpsilonMove(finalState);
+        this.end.addEpsilonMove(finalState);
         this.start = startState;
         this.end = finalState;
     }
@@ -168,14 +168,14 @@ public class NfaBuilder extends Node.Visitor {
         for (RegularExpression re : sequence.getUnits()) {
             visit(re);
             if (prevStartState == null) {
-                startState.addMove(this.start);
+                startState.addEpsilonMove(this.start);
             } else {
-                prevEndState.addMove(this.start);
+                prevEndState.addEpsilonMove(this.start);
             }
             prevStartState = this.start;
             prevEndState = this.end;
         }
-        this.end.addMove(finalState);
+        this.end.addEpsilonMove(finalState);
         this.start = startState;
         this.end = finalState;
     }

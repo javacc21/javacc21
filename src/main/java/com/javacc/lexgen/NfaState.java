@@ -58,7 +58,6 @@ public class NfaState {
     private int kindToPrint = Integer.MAX_VALUE;
     private List<Integer> loByteVec;
     private boolean isFinal;
-    private boolean dummy;
     private int index = -1;
     private int kind = Integer.MAX_VALUE;
     private int inNextOf;
@@ -116,6 +115,8 @@ public class NfaState {
     }
 
     List<NfaState> getEpsilonMoves() {
+        // REVISIT: The following line does not seem necessary, but I have it there
+        // to replicate legacy behavior just in case.
         Collections.sort(epsilonMoves, (state1, state2) -> state1.id-state2.id);
         return epsilonMoves;
     }
@@ -144,12 +145,6 @@ public class NfaState {
         return composite;
     }
 
-    boolean isDummy() {
-        return dummy;
-    }
-
-    void setDummy(boolean dummy) {this.dummy = dummy;}
-
     public NfaState getNext() {
         return next;
     }
@@ -167,7 +162,7 @@ public class NfaState {
         return (byteNum >= 0 && hasAsciiMoves) || (byteNum < 0 && nonAsciiMethod != -1);
     }
 
-    void addMove(NfaState newState) {
+    void addEpsilonMove(NfaState newState) {
         if (!epsilonMoves.contains(newState)) epsilonMoves.add(newState);
     }
 
@@ -213,14 +208,14 @@ public class NfaState {
             state.epsilonClosure();
             for (NfaState otherState : state.epsilonMoves) {
                 if (otherState.usefulState() && !epsilonMoves.contains(otherState)) {
-                    addMove(otherState);
+                    addEpsilonMove(otherState);
                     lexicalState.setDone(false);
                 }
             }
             kind = Math.min(kind, state.kind);
         }
         if (hasTransitions() && !epsilonMoves.contains(this)) {
-            addMove(this);
+            addEpsilonMove(this);
         }
     }
 
@@ -529,7 +524,7 @@ public class NfaState {
     
     public boolean isNextIntersects() {
         for (NfaState state : lexicalState.getAllStates()) {
-            if (this == state || state.index == -1 || state.dummy || index == state.index
+            if (this == state || state.index == -1 || index == state.index
                     || (state.nonAsciiMethod == -1))
                 continue;
 

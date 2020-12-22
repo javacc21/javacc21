@@ -126,13 +126,12 @@
 [/#if]
     
 [#list lexerData.lexicalStates as lexicalState]
-    [#var singlesToSkip=lexicalState.singlesToSkip]
-    [#var byteMask1 = utils.toHexStringL(singlesToSkip.asciiMoves[0])]
-    [#var byteMask2 = utils.toHexStringL(singlesToSkip.asciiMoves[1])]
     [#if numLexicalStates>1]
             case ${lexicalState.name} : 
     [/#if]
-    [#if singlesToSkip.hasTransitions()]
+    [#if lexicalState.hasSinglesToSkip()]
+       [#var byteMask1 = utils.toHexStringL(lexicalState.getSinglesToSkip(0))]
+       [#var byteMask2 = utils.toHexStringL(lexicalState.getSinglesToSkip(1))]
        while ((curChar < 64 && ((${byteMask1} & (1L << curChar)) != 0)) 
              || (curChar >=64 && curChar < 128 && (${byteMask2} & (1L<<(curChar-64)))!=0))
             {

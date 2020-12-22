@@ -52,7 +52,7 @@ public class LexicalStateData {
     private NfaState initialState;
     private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
 
-    private NfaState singlesToSkip;
+    private BitSet singlesToSkipSet = new BitSet();
     private boolean mixed;
     private int initMatch;
     private RegularExpression currentRegexp;
@@ -82,8 +82,6 @@ public class LexicalStateData {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
         this.name = name;
-        singlesToSkip = new NfaState(this);
-        singlesToSkip.setDummy(true);
         initialState = new NfaState(this);
     }
 
@@ -155,8 +153,13 @@ public class LexicalStateData {
         return allNextStates;
     }
 
-    public NfaState getSinglesToSkip() {
-        return this.singlesToSkip;
+    public long getSinglesToSkip(int byteNum) {
+        long[] ll = singlesToSkipSet.toLongArray();
+        return ll.length > byteNum ? ll[byteNum] : 0L;
+    }
+
+    public boolean hasSinglesToSkip() {
+        return singlesToSkipSet.cardinality()>0;
     }
 
     // FIXME! There is currently no testing in place for mixed case Lexical states!
@@ -519,10 +522,10 @@ public class LexicalStateData {
     }
 
     public boolean generateDfaCase(String key, KindInfo info, int index) {
-        char firstChar = key.charAt(0);
+        char ch = key.charAt(0);
         for (int kind = 0; kind<maxStringIndex; kind++) {
-        	if (index == 0 && firstChar < 128 && info.getFinalKindCnt() !=0
-        			&& (indexedAllStates.size() == 0 || !canStartNfaUsingAscii(firstChar))) {
+        	if (index == 0 && ch < 128 && info.getFinalKindCnt() !=0
+        			&& (indexedAllStates.size() == 0 || !canStartNfaUsingAscii(ch))) {
         			if (info.isFinalKind(kind) && !subString[kind]) {
         				if ((intermediateKinds != null && intermediateKinds[(kind)] != null
         						&& intermediateKinds[kind][index] < kind
@@ -532,19 +535,10 @@ public class LexicalStateData {
         				        && !lexerData.getSpecialSet().get(kind)
         						&& lexerData.getRegularExpression(kind).getCodeSnippet() == null
         						&& lexerData.getRegularExpression(kind).getNewLexicalState() == null) {
-        					singlesToSkip.addChar(firstChar);
-        					singlesToSkip.setKind(kind);
-
+                            singlesToSkipSet.set(ch);
         					if (grammar.getOptions().getIgnoreCase()) {
-        						if (firstChar != Character.toUpperCase(firstChar)) {
-        							singlesToSkip.addChar(firstChar);
-        							singlesToSkip.setKind(kind);
-        						}
-
-        						if (firstChar != Character.toLowerCase(firstChar)) {
-        							singlesToSkip.addChar(firstChar);
-        							singlesToSkip.setKind(kind);
-        						}
+                                singlesToSkipSet.set(Character.toUpperCase(ch));
+                                singlesToSkipSet.set(Character.toLowerCase(ch));
         					}
         					return false;
         				}
@@ -763,11 +757,11 @@ public class LexicalStateData {
             allStates.add(null);
         }
         for (NfaState state : v) {
-            if (state.getIndex() != -1 && !state.isDummy())
+            if (state.getIndex() != -1 /*&& state != singlesToSkip*/)
                 allStates.set(state.getIndex(), state);
         }
         for (NfaState nfaState : allStates) {
-            if (nfaState.getLexicalState() != this || !nfaState.hasTransitions() || nfaState.isDummy()
+            if (nfaState.getLexicalState() != this || !nfaState.hasTransitions() /*|| nfaState == singlesToSkip*/
                     || nfaState.getIndex() == -1)
                 continue;
             if (kindsForStates == null) {
