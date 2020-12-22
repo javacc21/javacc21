@@ -73,7 +73,6 @@
           [#list lexerData.specialSet.toLongArray() as long]${long}L,[/#list]
       });      
 
-
       // BitSet for MORE
       static private BitSet moreSet = BitSet.valueOf(new long[] {
           [#list lexerData.moreSet.toLongArray() as long]${long}L,[/#list]
@@ -128,22 +127,14 @@
     
 [#list lexerData.lexicalStates as lexicalState]
     [#var singlesToSkip=lexicalState.singlesToSkip]
+    [#var byteMask1 = utils.toHexStringL(singlesToSkip.asciiMoves[0])]
+    [#var byteMask2 = utils.toHexStringL(singlesToSkip.asciiMoves[1])]
     [#if numLexicalStates>1]
             case ${lexicalState.name} : 
     [/#if]
     [#if singlesToSkip.hasTransitions()]
-      [#if singlesToSkip.asciiMoves[0] != 0&&singlesToSkip.asciiMoves[1] != 0]
-            while ((curChar < 64 && (${utils.toHexString(singlesToSkip.asciiMoves[0])}
-            & (1L <<curChar)) != 0L) || (curChar>>6) == 1 && (${utils.toHexStringL(singlesToSkip.asciiMoves[1])} 
-            & (1L << (curChar & 077))) != 0L)
-      [#elseif singlesToSkip.asciiMoves[1] = 0]
-            while (curChar <= ${lexerData.maxChar(singlesToSkip.asciiMoves[0])} 
-                  && (${utils.toHexStringL(singlesToSkip.asciiMoves[0])}
-                  & (1L << curChar)) != 0L) 
-      [#elseif singlesToSkip.asciiMoves[0] = 0]
-            while (curChar > 63 && curChar <= ${lexerData.MaxChar(singlesToSkip.asciiMoves[1])+64}
-                  && ${utils.toHexString(singlesToSkip.asciiMoves[1])}L & (1L<< (curChar&077))) != 0L)
-      [/#if]
+       while ((curChar < 64 && ((${byteMask1} & (1L << curChar)) != 0)) 
+             || (curChar >=64 && curChar < 128 && (${byteMask2} & (1L<<(curChar-64)))!=0))
             {
                [#var debugOutput]
                [#set debugOutput]
@@ -160,8 +151,7 @@
             }
    [/#if]
              
-             
-    [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
+   [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
         if (trace_enabled) LOGGER.info("   Matched the empty string as " + tokenImage[${lexicalState.initMatch}] + " token.");
         jjmatchedKind = ${lexicalState.initMatch};
         matchedType = TokenType.values()[${lexicalState.initMatch}];
@@ -438,7 +428,7 @@
     };
     
     
-    protected static final int[][] kindForState =
+    private static final int[][] kindForState =
     {
     [#list lexerData.lexicalStates as lexicalState]
       [#if lexicalState_index != 0], [/#if]
