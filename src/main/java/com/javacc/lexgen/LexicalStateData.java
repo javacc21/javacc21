@@ -158,7 +158,7 @@ public class LexicalStateData {
         return ll.length > byteNum ? ll[byteNum] : 0L;
     }
 
-    public boolean hasSinglesToSkip() {
+    public boolean getHasSinglesToSkip() {
         return singlesToSkipSet.cardinality()>0;
     }
 
@@ -331,7 +331,7 @@ public class LexicalStateData {
                 if (currentRegexp instanceof RegexpChoice) {
                     choices.add((RegexpChoice) currentRegexp);
                 }
-                new NfaBuilder(currentRegexp, this, ignore).buildStates(currentRegexp);
+                new NfaBuilder(this, ignore).buildStates(currentRegexp);
             }
             if (respec.getNextState() != null && !respec.getNextState().equals(this.name))
                 currentRegexp.setNewLexicalState(lexerData.getLexicalState(respec.getNextState()));
@@ -521,8 +521,9 @@ public class LexicalStateData {
         return Integer.MAX_VALUE;
     }
 
-    public boolean generateDfaCase(String key, KindInfo info, int index) {
-        char ch = key.charAt(0);
+    public boolean generateDfaCase(char ch, KindInfo info, int index) {
+//        assert key.length() == 1;
+//        char ch = key.charAt(0);
         for (int kind = 0; kind<maxStringIndex; kind++) {
         	if (index == 0 && ch < 128 && info.getFinalKindCnt() !=0
         			&& (indexedAllStates.size() == 0 || !canStartNfaUsingAscii(ch))) {
@@ -636,8 +637,8 @@ public class LexicalStateData {
             return false;
         int[] states = allNextStates.get(s);
         for (int i = 0; i < states.length; i++) {
-            NfaState tmp = indexedAllStates.get(states[i]);
-            if (tmp.hasAsciiMove(c)) 
+            NfaState state = indexedAllStates.get(states[i]);
+            if (state.hasAsciiMove(c)) 
                 return true;
         }
         return false;
@@ -845,8 +846,9 @@ public class LexicalStateData {
         for (int i = 0; i < maxStringLength; i++) {
             Map<String, KindInfo> tab = stringLiteralTables.get(i);
             for (String key : tab.keySet()) {
+                assert key.length() ==1;
                 KindInfo info = tab.get(key);
-                if (generateDfaCase(key, info, i)) {
+                if (generateDfaCase(key.charAt(0), info, i)) {
                     if (info.getFinalKindCnt() != 0) {
                         for (int j = 0; j < maxStringIndex; j++) {
                         	if (info.isFinalKind(j) && !subString[j]) {

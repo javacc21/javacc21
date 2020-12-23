@@ -129,7 +129,7 @@
     [#if numLexicalStates>1]
             case ${lexicalState.name} : 
     [/#if]
-    [#if lexicalState.hasSinglesToSkip()]
+    [#if lexicalState.hasSinglesToSkip]
        [#var byteMask1 = utils.toHexStringL(lexicalState.getSinglesToSkip(0))]
        [#var byteMask2 = utils.toHexStringL(lexicalState.getSinglesToSkip(1))]
        while ((curChar < 64 && ((${byteMask1} & (1L << curChar)) != 0)) 
@@ -808,9 +808,13 @@
 
 [#macro DumpMoveForCompositeState nfaState byteNum elseNeeded]
    [#var nextIntersects=nfaState.nextIntersects]
-   [#var kindToPrint=nfaState.kindToPrint asciiMoves=nfaState.asciiMoves loByteVec=nfaState.loByteVec next=nfaState.next lexicalState=nfaState.lexicalState]
+   [#var kindToPrint=nfaState.kindToPrint 
+         asciiMoves=nfaState.asciiMoves 
+         loByteVec=nfaState.loByteVec 
+         next=nfaState.next 
+         lexicalState=nfaState.lexicalState]
    [#if (byteNum>=0)]
-      [#if byteNum<0 || nfaState.asciiMoves[byteNum] != -1]
+      [#if byteNum<0 || asciiMoves[byteNum] != -1]
          [#if elseNeeded] else [/#if] if ((${utils.toHexStringL(asciiMoves[byteNum])} &l) != 0L)
       [/#if]
    [#else]

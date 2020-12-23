@@ -63,7 +63,7 @@ public class NfaState {
     private int inNextOf;
     private int[] compositeStates;
 
-    public NfaState(LexicalStateData lexicalState) {
+    NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
         this.grammar = lexicalState.getGrammar();
         this.lexerData = grammar.getLexerData();
@@ -210,7 +210,7 @@ public class NfaState {
                 if (otherState.usefulState() && !epsilonMoves.contains(otherState)) {
                     addEpsilonMove(otherState);
                     lexicalState.setDone(false);
-                }
+                } 
             }
             kind = Math.min(kind, state.kind);
         }
@@ -295,30 +295,25 @@ public class NfaState {
             return epsilonMovesString;
         }
         int[] stateNames = new int[usefulEpsilonMoves];
-        int cnt = 0;
         if (usefulEpsilonMoves > 0) {
-            NfaState tempState;
+            usefulEpsilonMoves = 0;
             epsilonMovesString = "{ ";
             for (NfaState epsilonMove : epsilonMoves) {
-                if ((tempState = epsilonMove).hasTransitions()) {
-                    if (tempState.index == -1)
-                        tempState.generateCode();
+                if (epsilonMove.hasTransitions()) {
+                    if (epsilonMove.index == -1)
+                        epsilonMove.generateCode();
 
-                    lexicalState.getIndexedAllStates().get(tempState.index).inNextOf++;
-                    stateNames[cnt] = tempState.index;
-                    epsilonMovesString += tempState.index + ", ";
-                    if (cnt++ > 0 && cnt % 16 == 0)
+                    lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
+                    stateNames[usefulEpsilonMoves] = epsilonMove.index;
+                    epsilonMovesString += epsilonMove.index + ", ";
+                    if (usefulEpsilonMoves++ > 0 && usefulEpsilonMoves % 16 == 0)
                         epsilonMovesString += "\n";
                 }
             }
             epsilonMovesString += "};";
         }
-        usefulEpsilonMoves = cnt;
-        if (epsilonMovesString != null
-                && lexicalState.getAllNextStates().get(epsilonMovesString) == null) {
-            int[] statesToPut = new int[usefulEpsilonMoves];
-            System.arraycopy(stateNames, 0, statesToPut, 0, cnt);
-            lexicalState.getAllNextStates().put(epsilonMovesString, statesToPut);
+        if (epsilonMovesString != null) {
+            lexicalState.getAllNextStates().put(epsilonMovesString, stateNames);
         }
         return epsilonMovesString;
     }

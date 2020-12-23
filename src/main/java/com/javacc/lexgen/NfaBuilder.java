@@ -55,7 +55,7 @@ public class NfaBuilder extends Node.Visitor {
     private LexicalStateData lexicalState;
     private Grammar grammar;
 
-    NfaBuilder(RegularExpression regularExpression, LexicalStateData lexicalState, boolean ignoreCase) {
+    NfaBuilder(LexicalStateData lexicalState, boolean ignoreCase) {
         this.lexicalState = lexicalState;
         this.grammar = lexicalState.getGrammar();
         this.ignoreCase = ignoreCase;
