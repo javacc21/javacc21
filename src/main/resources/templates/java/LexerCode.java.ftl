@@ -863,7 +863,7 @@
   [#var initState=lexicalState.initStateName()]
   [#var maxStringLength=dfaData.maxStringLength]
   [#var maxStringIndex=dfaData.maxStringIndex]
-  [#var maxStringLengthForActive=lexicalState.maxStringLengthForActive]
+  [#var maxStringLengthForActive=dfaData.maxStringLengthForActive]
   [#if maxStringLength = 0]
     private int jjMoveStringLiteralDfa0${lexicalState.suffix}() {
     [#if lexicalState.hasNfa()]

@@ -80,7 +80,7 @@ public class DfaData {
         return maxStringLength;
     }
 
-    int getMaxStringLengthForActive(int i) {
+    public int getMaxStringLengthForActive(int i) {
         return maxStringLengthForActive[i];
     }
 
