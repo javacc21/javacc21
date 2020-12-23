@@ -64,7 +64,7 @@ public class DfaData {
         return singlesToSkipSet.cardinality()>0;
     }
 
-    int getMaxStringIndex() {
+    public int getMaxStringIndex() {
         return this.maxStringIndex;
     }
 

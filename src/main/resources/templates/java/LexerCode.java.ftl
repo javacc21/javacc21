@@ -126,12 +126,13 @@
 [/#if]
     
 [#list lexerData.lexicalStates as lexicalState]
+    [#var dfaData = lexicalState.dfaData]
     [#if numLexicalStates>1]
             case ${lexicalState.name} : 
     [/#if]
-    [#if lexicalState.dfaData.hasSinglesToSkip]
-       [#var byteMask1 = utils.toHexStringL(lexicalState.dfaData.getSinglesToSkip(0))]
-       [#var byteMask2 = utils.toHexStringL(lexicalState.dfaData.getSinglesToSkip(1))]
+    [#if dfaData.hasSinglesToSkip]
+       [#var byteMask1 = utils.toHexStringL(dfaData.getSinglesToSkip(0))]
+       [#var byteMask2 = utils.toHexStringL(dfaData.getSinglesToSkip(1))]
        while ((curChar < 64 && ((${byteMask1} & (1L << curChar)) != 0)) 
              || (curChar >=64 && curChar < 128 && (${byteMask2} & (1L<<(curChar-64)))!=0))
             {
@@ -858,9 +859,10 @@
 [/#macro]
 
 [#macro DumpDfaCode lexicalState]
+  [#var dfaData = lexicalState.dfaData]
   [#var initState=lexicalState.initStateName()]
-  [#var maxStringLength=lexicalState.maxStringLength]
-  [#var maxStringIndex=lexicalState.maxStringIndex]
+  [#var maxStringLength=dfaData.maxStringLength]
+  [#var maxStringIndex=dfaData.maxStringIndex]
   [#var maxStringLengthForActive=lexicalState.maxStringLengthForActive]
   [#if maxStringLength = 0]
     private int jjMoveStringLiteralDfa0${lexicalState.suffix}() {
@@ -873,7 +875,7 @@
     [#return]
   [/#if]
   
-  [#list lexicalState.dfaData.stringLiteralTables as table]
+  [#list dfaData.stringLiteralTables as table]
     [#var startNfaNeeded=false]
     [#var first = (table_index==0)]
     
@@ -967,11 +969,11 @@
         + (int) curChar + ") at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
     [/#if]
       switch (curChar) {
-    [#list lexicalState.dfaData.rearrange(table) as key]
+    [#list dfaData.rearrange(table) as key]
        [#var info=table[key]]
        [#var ifGenerated=false]
 	   [#var c=key[0..0]]
-	   [#if lexicalState.dfaData.generateDfaCase(key, info, table_index)]
+	   [#if dfaData.generateDfaCase(key, info, table_index)]
 	      [#-- We know key is a single character.... --]
 	      [#if grammar.options.ignoreCase]
 	         [#if c != c?upper_case]
@@ -996,7 +998,7 @@
                    ((active${(j/64)?int} & ${utils.powerOfTwoInHex(j%64)}) != 0L) 
                  [/#if]
                  [#var kindToPrint=lexicalState.getKindToPrint(j, table_index)]
-                 [#if !lexicalState.dfaData.subString[j]]
+                 [#if !dfaData.subString[j]]
                     [#var stateSetIndex=lexicalState.getStateSetForKind(table_index, j)]
                     [#if stateSetIndex != -1]
                     return jjStartNfaWithStates${lexicalState.suffix}(${table_index}, ${kindToPrint}, ${stateSetIndex});
@@ -1109,11 +1111,12 @@
 [/#macro]
  
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
+  [#var dfaData = lexicalState.dfaData] 
   [#var statesForPos=lexicalState.statesForPos]
-  [#var maxKindsReqd=(1+lexicalState.maxStringIndex/64)?int]
+  [#var maxKindsReqd=(1+dfaData.maxStringIndex/64)?int]
   [#var ind=0]
-  [#var maxStringIndex=lexicalState.maxStringIndex]
-  [#var maxStringLength=lexicalState.maxStringLength]
+  [#var maxStringIndex=dfaData.maxStringIndex]
+  [#var maxStringLength=dfaData.maxStringLength]
   
     private int jjStartNfa${lexicalState.suffix}(int pos, 
   [#list 0..(maxKindsReqd-1) as i]
@@ -1173,7 +1176,7 @@
                     jjmatchedPos = 0;
                     [/#if]
                  [#elseif i = jjmatchedPos]
-                    [#if lexicalState.dfaData.subStringAtPos[i]]
+                    [#if dfaData.subStringAtPos[i]]
                     if (jjmatchedPos != ${i}) {
                         jjmatchedKind = ${kindStr};
                         jjmatchedPos = ${i};

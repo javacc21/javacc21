@@ -95,8 +95,6 @@ public class LexicalStateData {
 
     String getImage(int i) {return images[i];}
 
-    void setImage(int i, String image) {images[i] = image;}
-
     boolean isMarked(int i) {return marks.get(i);}
 
     void setMark(int i) {marks.set(i);}
@@ -110,10 +108,6 @@ public class LexicalStateData {
     boolean isDone() {return this.done;}
 
     public int getIndex() {return lexerData.getIndex(name);}
-
-    public int getMaxStringIndex() {return dfaData.getMaxStringIndex();}
-
-    public int getMaxStringLength() {return dfaData.getMaxStringLength();}
 
     public List<Map<String, long[]>> getStatesForPos() {return statesForPos;}
 
@@ -208,7 +202,9 @@ public class LexicalStateData {
     }
 
     public boolean getDumpNfaStarts() {
-        return indexedAllStates.size() != 0 && !mixed && getMaxStringIndex() > 0;
+        return indexedAllStates.size() != 0 
+               && !mixed 
+               && dfaData.getMaxStringIndex() > 0;
     }
 
     List<RegexpChoice> process() {
@@ -283,7 +279,7 @@ public class LexicalStateData {
             }
             if (currentRegexp instanceof RegexpStringLiteral
                     && !((RegexpStringLiteral) currentRegexp).getImage().equals("")) {
-                if (getMaxStringIndex() <= currentRegexp.getOrdinal()) {
+                if (dfaData.getMaxStringIndex() <= currentRegexp.getOrdinal()) {
                     dfaData.setMaxStringIndex(currentRegexp.getOrdinal() + 1);
                 }
                 dfaData.generate((RegexpStringLiteral) currentRegexp);
@@ -400,16 +396,16 @@ public class LexicalStateData {
         boolean[] seen = new boolean[indexedAllStates.size()];
         Map<String, String> stateSets = new HashMap<String, String>();
         String stateSetString = "";
-        int maxKindsReqd = getMaxStringIndex() / 64 + 1;
+        int maxKindsReqd = dfaData.getMaxStringIndex() / 64 + 1;
         long[] actives;
         List<NfaState> newStates = new ArrayList<>();
 
-        statesForPos = new ArrayList<Map<String, long[]>>(getMaxStringLength());
-        for (int k = 0; k < getMaxStringLength(); k++)
+        statesForPos = new ArrayList<Map<String, long[]>>(dfaData.getMaxStringLength());
+        for (int k = 0; k < dfaData.getMaxStringLength(); k++)
             statesForPos.add(null);
-        intermediateKinds = new int[getMaxStringIndex() + 1][];
-        intermediateMatchedPos = new int[getMaxStringIndex() + 1][];
-        for (int i = 0; i < getMaxStringIndex(); i++) {
+        intermediateKinds = new int[dfaData.getMaxStringIndex() + 1][];
+        intermediateMatchedPos = new int[dfaData.getMaxStringIndex() + 1][];
+        for (int i = 0; i < dfaData.getMaxStringIndex(); i++) {
             RegularExpression re = lexerData.getRegularExpression(i);
             if (!this.containsRegularExpression(re)) {
                 continue;

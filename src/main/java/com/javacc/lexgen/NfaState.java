@@ -47,8 +47,8 @@ public class NfaState {
     private StringBuilder charMoveBuffer = new StringBuilder();
     private StringBuilder rangeMoveBuffer = new StringBuilder();
     private String epsilonMovesString;
-    private int id;
-    private RegularExpression lookingFor;
+    final private int id;
+    final private RegularExpression lookingFor;
     private int usefulEpsilonMoves;
     private int nonAsciiMethod = -1;
     private boolean composite;
@@ -69,9 +69,7 @@ public class NfaState {
         this.lexerData = grammar.getLexerData();
         id = lexicalState.getAllStates().size();
         lexicalState.getAllStates().add(this);
-        if (lexicalState.getCurrentRegexp() != null) {
-            lookingFor = lexicalState.getCurrentRegexp();
-        }
+        lookingFor = lexicalState.getCurrentRegexp();
     }
 
     public int getIndex() {
@@ -245,7 +243,6 @@ public class NfaState {
         isFinal |= other.isFinal;
     }
 
-    // generates code (without outputting it) and returns the name used.
     void generateCode() {
         if (index != -1)
             return;
