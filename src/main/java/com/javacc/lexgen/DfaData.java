@@ -43,12 +43,11 @@ public class DfaData {
     final private LexicalStateData lexicalState;
     final private Grammar grammar;
     private BitSet singlesToSkipSet = new BitSet();
+    private BitSet subStringSet = new BitSet();
+    private BitSet subStringAtPosSet = new BitSet();
     private List<Map<String, KindInfo>> stringLiteralTables = new ArrayList<>();
     private int[] maxStringLengthForActive = new int[100]; // 6400 tokens
     private int maxStringIndex, maxStringLength;
-    private boolean subString[];
-    private boolean[] subStringAtPos;
-
 
     DfaData(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -84,12 +83,12 @@ public class DfaData {
         return maxStringLengthForActive[i];
     }
 
-    public boolean[] getSubString() {
-        return this.subString;
+    public boolean getSubString(int i) {
+        return subStringSet.get(i);
     }
 
-    public boolean[] getSubStringAtPos() {
-        return subStringAtPos;
+    public boolean getSubStringAtPos(int i) {
+        return subStringAtPosSet.get(i);
     }
 
     void generate(final RegexpStringLiteral rsLiteral) {
@@ -136,7 +135,7 @@ public class DfaData {
                 if (generateDfaCase(key.charAt(0), info, i)) {
                     if (info.getFinalKindCnt() != 0) {
                         for (int j = 0; j < getMaxStringIndex(); j++) {
-                        	if (info.isFinalKind(j) && !subString[j]) {
+                        	if (info.isFinalKind(j) && !subStringSet.get(j)) {
                         		lexicalState.getStateSetForKind(i, j); // <-- needs to be called!
                         	}
                         }
@@ -150,7 +149,7 @@ public class DfaData {
         for (int kind = 0; kind<getMaxStringIndex(); kind++) {
         	if (index == 0 && ch < 128 && info.getFinalKindCnt() !=0
         			&& (!lexicalState.hasNfa() || !lexicalState.canStartNfaUsingAscii(ch))) {
-        			if (info.isFinalKind(kind) && !subString[kind]) {
+        			if (info.isFinalKind(kind) && !subStringSet.get(kind)) {
                         if (lexicalState.cannotBeMatchedAsStringLiteral(kind, index)) {
                             break; 
                         }
@@ -184,35 +183,29 @@ public class DfaData {
     }
 
     void fillSubString() {
-        subString = new boolean[getMaxStringIndex() + 1];
-        subStringAtPos = new boolean[getMaxStringLength()];
-
         for (int i = 0; i < getMaxStringIndex(); i++) {
             RegularExpression re = grammar.getLexerData().getRegularExpression(i);
-            subString[i] = false;
-
+            subStringSet.clear(i);
             if (lexicalState.getImage(i) == null || !lexicalState.containsRegularExpression(re)) {
                 continue;
             }
-
             if (lexicalState.isMixedCase()) {
                 // We will not optimize for mixed case
-                subString[i] = true;
-                subStringAtPos[lexicalState.getImage(i).length() - 1] = true;
+                subStringSet.set(i);
+                subStringAtPosSet.set(lexicalState.getImage(i).length() - 1);
                 continue;
             }
-
-            for (int j = 0; j < getMaxStringIndex(); j++) {
+            for (int j = 0; j < maxStringIndex; j++) {
                 RegularExpression re2 = grammar.getLexerData().getRegularExpression(j);
                 if (j != i && lexicalState.containsRegularExpression(re2) && lexicalState.getImage(j) != null) {
                     if (lexicalState.getImage(j).indexOf(lexicalState.getImage(i)) == 0) {
-                        subString[i] = true;
-                        subStringAtPos[lexicalState.getImage(i).length() - 1] = true;
+                        subStringSet.set(i);
+                        subStringAtPosSet.set(lexicalState.getImage(i).length() - 1);
                         break;
                     } else if (grammar.getOptions().getIgnoreCase()
                             && lexicalState.getImage(j).toLowerCase().startsWith(lexicalState.getImage(i).toLowerCase())) {
-                        subString[i] = true;
-                        subStringAtPos[lexicalState.getImage(i).length() - 1] = true;
+                        subStringSet.set(i);
+                        subStringAtPosSet.set(lexicalState.getImage(i).length() - 1);
                         break;
                     }
                 }

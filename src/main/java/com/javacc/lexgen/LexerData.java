@@ -273,7 +273,6 @@ public class LexerData {
             if (lexicalStates.get(i).getName().equals(name)) {
                 return i;
             }
-
         }
         return -1;
     }
@@ -369,16 +368,5 @@ public class LexerData {
                         + " can never be matched as : " + choice.getLabel());
             }
         }
-    }
-
-    // Assumes l != 0L
-    public int maxChar(long l) {
-        for (int i = 64; i-- > 0;) {
-            if ((l & (1L << i)) != 0L) {
-                return (int) (char) i;
-            }
-
-        }
-        return 0xffff;
     }
 }

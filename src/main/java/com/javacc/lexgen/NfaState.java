@@ -226,23 +226,7 @@ public class NfaState {
                 || charMoveBuffer.length()>0
                 || rangeMoveBuffer.length()>0;
     }
-
-    void mergeMoves(NfaState other) {
-        // Warning : This method does not merge epsilon moves
-        asciiMoves.or(other.asciiMoves);
-        charMoveBuffer.append(other.charMoveBuffer);
-        if (other.rangeMoveBuffer.length() > 0) {
-            rangeMoveBuffer.append(other.rangeMoveBuffer);
-        }
-        if (other.kind < kind) {
-            kind = other.kind;
-        }
-        if (other.kindToPrint < kindToPrint) {
-            kindToPrint = other.kindToPrint;
-        }
-        isFinal |= other.isFinal;
-    }
-
+    
     void generateCode() {
         if (index != -1)
             return;

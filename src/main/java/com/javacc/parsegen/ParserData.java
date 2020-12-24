@@ -35,7 +35,6 @@ import java.util.*;
 import com.javacc.Grammar;
 import com.javacc.lexgen.LexerData;
 import com.javacc.lexgen.LexicalStateData;
-import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 

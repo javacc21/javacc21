@@ -136,14 +136,6 @@ public class LexicalStateData {
         return initMatch;
     }
 
-    public int getMaxStringLengthForActive(int i) {
-        return dfaData.getMaxStringLengthForActive(i);
-    }
-
-    public String getSuffix() {
-        return name.equals("DEFAULT") ? "" : "_" + name;
-    }
-
     public int[] getKindsForStates() {
         return kindsForStates;
     }
