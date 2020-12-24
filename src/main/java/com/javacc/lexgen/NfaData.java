@@ -49,11 +49,11 @@ public class NfaData {
     private int dummyStateIndex = -1;
     private Map<String, int[]> compositeStateTable = new HashMap<>();
     private List<Map<String, long[]>> statesForPos;
+    private Map<String, int[]> allNextStates = new HashMap<>();
+    private List<NfaState> allStates = new ArrayList<>();
 
-    List<NfaState> allStates = new ArrayList<>();
     List<NfaState> indexedAllStates = new ArrayList<>();
     Map<String, Integer> stateIndexFromComposite = new HashMap<>();
-    Map<String, int[]> allNextStates = new HashMap<>();
     NfaState initialState;
 
 
@@ -76,6 +76,10 @@ public class NfaData {
         return result;
     }
 
+    Map<String, int[]> getAllNextStates() {
+        return allNextStates;
+    }
+
     public int[] nextStatesFromKey(String key) {
         return allNextStates.get(key);
     }
@@ -93,6 +97,38 @@ public class NfaData {
     }
 
     public List<Map<String, long[]>> getStatesForPos() {return statesForPos;}
+    
+    void generateData() {
+        for (NfaState state : allStates) state.optimizeEpsilonMoves();
+        for (NfaState epsilonMove : initialState.getEpsilonMoves()) {
+            epsilonMove.generateCode();
+        }
+        if (indexedAllStates.size() != 0) {
+            initialState.generateCode();
+            initialState.generateInitMoves();
+        }
+        if (initialState.getKind() != Integer.MAX_VALUE && initialState.getKind() != 0) {
+            if (lexerData.getSkipSet().get(initialState.getKind())
+                || (lexerData.getSpecialSet().get(initialState.getKind())))
+                lexerData.hasSkipActions = true;
+            else if (lexerData.getMoreSet().get(initialState.getKind()))
+                lexerData.hasMoreActions = true;
+            if (lexicalState.initMatch == 0 || lexicalState.initMatch > initialState.getKind()) {
+                lexicalState.initMatch = initialState.getKind();
+                lexerData.hasEmptyMatch = true;
+            }
+        } else if (lexicalState.initMatch == 0) {
+            lexicalState.initMatch = Integer.MAX_VALUE;
+        }
+        if (indexedAllStates.size() != 0 && !lexicalState.isMixedCase()) {
+            generateNfaStartStates();
+        }
+        generateNfaStates();
+        for (NfaState nfaState : allStates) {
+            nfaState.generateNonAsciiMoves();
+        }
+        lexerData.expandStateSetSize(indexedAllStates.size());
+    }
 
     void generateNfaStates() {
         if (indexedAllStates.isEmpty()) {
@@ -242,7 +278,7 @@ public class NfaData {
 
 
     void generateNfaStartStates() {
-        boolean[] seen = new boolean[indexedAllStates.size()];
+        Set<NfaState> seenStates = new HashSet<>();
         Map<String, String> stateSets = new HashMap<String, String>();
         String stateSetString = "";
         int maxKindsReqd = lexicalState.getDfaData().getMaxStringIndex() / 64 + 1;
@@ -294,15 +330,16 @@ public class NfaData {
                 }
                 if (kind == Integer.MAX_VALUE && (newStates == null || newStates.size() == 0))
                     continue;
+
                 if (stateSets.get(stateSetString) == null) {
                     stateSets.put(stateSetString, stateSetString);
                     for (NfaState state : newStates) {
-                        if (seen[state.getIndex()]) state.incrementInNextOf();
-                        else seen[state.getIndex()] = true;
+                        if (seenStates.contains(state)) state.incrementInNextOf();
+                        else seenStates.add(state);
                     }
                 } else {
                     for (NfaState state : newStates) {
-                        seen[state.getIndex()] = true;
+                        seenStates.add(state);
                     }
                 }
                 List<NfaState> jjtmpStates = oldStates;

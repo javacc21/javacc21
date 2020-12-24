@@ -127,6 +127,7 @@ public class DfaData {
 
 
     void generateData() {
+        fillSubString();
         for (int i = 0; i < getMaxStringLength(); i++) {
             Map<String, KindInfo> tab = getStringLiteralTables().get(i);
             for (String key : tab.keySet()) {

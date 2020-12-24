@@ -294,7 +294,7 @@ public class NfaState {
             epsilonMovesString += "};";
         }
         if (epsilonMovesString != null) {
-            lexicalState.getAllNextStates().put(epsilonMovesString, stateNames);
+            lexicalState.getNfaData().getAllNextStates().put(epsilonMovesString, stateNames);
         }
         return epsilonMovesString;
     }
@@ -381,7 +381,6 @@ public class NfaState {
 
         long[] common = null;
         boolean[] done = new boolean[256];
-
         for (int i = 0; i <= 255; i++) {
             if (done[i]
                     || (done[i] = loBytes[i][0] == 0 && loBytes[i][1] == 0 && loBytes[i][2] == 0

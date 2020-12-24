@@ -51,13 +51,13 @@ public class LexicalStateData {
     private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
 
     private boolean mixed;
-    private int initMatch;
     private RegularExpression currentRegexp;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
     private String[] images;
 
     private BitSet marks = new BitSet();
     private boolean done;
+    int initMatch;
 
 
     public LexicalStateData(Grammar grammar, String name) {
@@ -112,10 +112,6 @@ public class LexicalStateData {
         return nfaData.indexedAllStates;
     }
 
-    Map<String, int[]> getAllNextStates() {
-        return nfaData.allNextStates;
-    }
-
     // FIXME! There is currently no testing in place for mixed case Lexical states!
     public boolean isMixedCase() {
         return mixed;
@@ -153,37 +149,8 @@ public class LexicalStateData {
             choices.addAll(processTokenProduction(tp, isFirst));
             isFirst = false;
         }
-        for (NfaState state : nfaData.allStates) state.optimizeEpsilonMoves();
-        for (NfaState epsilonMove : nfaData.initialState.getEpsilonMoves()) {
-            epsilonMove.generateCode();
-        }
-        if (nfaData.indexedAllStates.size() != 0) {
-            nfaData.initialState.generateCode();
-            nfaData.initialState.generateInitMoves();
-        }
-        if (nfaData.initialState.getKind() != Integer.MAX_VALUE && nfaData.initialState.getKind() != 0) {
-            if (lexerData.getSkipSet().get(nfaData.initialState.getKind())
-                || (lexerData.getSpecialSet().get(nfaData.initialState.getKind())))
-                lexerData.hasSkipActions = true;
-            else if (lexerData.getMoreSet().get(nfaData.initialState.getKind()))
-                lexerData.hasMoreActions = true;
-            if (initMatch == 0 || initMatch > nfaData.initialState.getKind()) {
-                initMatch = nfaData.initialState.getKind();
-                lexerData.hasEmptyMatch = true;
-            }
-        } else if (initMatch == 0) {
-            initMatch = Integer.MAX_VALUE;
-        }
-        dfaData.fillSubString();
-        if (nfaData.indexedAllStates.size() != 0 && !mixed) {
-            nfaData.generateNfaStartStates();
-        }
-        lexerData.expandStateSetSize(nfaData.indexedAllStates.size());
-        nfaData.generateNfaStates();
         dfaData.generateData();
-        for (NfaState nfaState : nfaData.allStates) {
-            nfaState.generateNonAsciiMoves();
-        }
+        nfaData.generateData();
         return choices;
     }
 
@@ -252,6 +219,5 @@ public class LexicalStateData {
             }
         }
         return choices;
-
     }
 }
