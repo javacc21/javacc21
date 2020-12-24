@@ -406,15 +406,15 @@
        [/#list]
     };
     
-    
+    [#-- REVISIT. Is this really ever used. If so, what for? --]
     private static final int[][] kindForState =
     {
     [#list lexerData.lexicalStates as lexicalState]
       [#if lexicalState_index != 0], [/#if]
-      [#if lexicalState.kindsForStates?is_null]null 
+      [#if lexicalState.nfaData.kindsForStates?is_null]null 
       [#else]
        { 
-        [#list lexicalState.kindsForStates as kind]
+        [#list lexicalState.nfaData.kindsForStates as kind]
 		  [#if kind_index%15 = 0]${"
    "}[/#if]
           ${kind}[#if kind_has_next], [/#if]
@@ -491,7 +491,7 @@
 [/#list]    
 
 [#list lexerData.lexicalStates as lexicalState]
-  [#if lexicalState.dumpNfaStarts]
+  [#if lexicalState.nfaData.dumpNfaStarts]
   [@DumpNfaStartStatesCode lexicalState, lexicalState_index/]
   [/#if]
   [#if lexicalState.createStartNfa]
@@ -646,10 +646,10 @@
 
 [#macro DumpMoves lexicalState byteNum]
    [#var statesDumped = utils.newBitSet()]
-   [#list lexicalState.compositeStateTable?keys as key]
+   [#list lexicalState.nfaData.compositeStateTable?keys as key]
       [@dumpCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
    [/#list]
-   [#list lexicalState.allStates as state]
+   [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)&&state.hasTransitions()]
          [#var toPrint=""]
          [#if state.isNeeded(byteNum)]
@@ -708,7 +708,7 @@
                     if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
    [/#if]
    [#if !nfaState.next?is_null&&nfaState.next.usefulEpsilonMoves>0]
-       [#var stateNames=lexicalState.nextStatesFromKey(nfaState.next.epsilonMovesString)]
+       [#var stateNames=lexicalState.nfaData.nextStatesFromKey(nfaState.next.epsilonMovesString)]
        [#if nfaState.next.usefulEpsilonMoves = 1]
           [#var name=stateNames[0]]
           [#if nextIntersects]
@@ -719,7 +719,7 @@
        [#elseif nfaState.next.usefulEpsilonMoves = 2&&nextIntersects]
                     jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
        [#else]
-          [#var indices=lexicalState.getStateSetIndicesForUse(nfaState.next.epsilonMovesString)]
+          [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nfaState.next.epsilonMovesString)]
           [#var notTwo=(indices[0]+1 != indices[1])]
           [#if nextIntersects]
                     jjCheckNAddStates(${indices[0]}
@@ -736,8 +736,8 @@
 [/#macro]
 
 [#macro dumpCompositeStatesMoves lexicalState key byteNum statesDumped]
-   [#var stateSet=lexicalState.getStateSetFromCompositeKey(key)]
-   [#var stateIndex=lexicalState.stateIndexFromComposite(key)]
+   [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
+   [#var stateIndex=lexicalState.nfaData.stateIndexFromComposite(key)]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
    [#var toBePrinted toPrint=""]
@@ -758,7 +758,7 @@
    [/#if]
    [#if neededStates = 1]
           ${toPrint}
-          case ${lexicalState.stateIndexFromComposite(key)} :
+          case ${lexicalState.nfaData.stateIndexFromComposite(key)} :
       [#if !statesDumped.get(toBePrinted.index)&&toBePrinted.inNextOf>1]
           case ${toBePrinted.index} :
       [/#if]
@@ -767,13 +767,13 @@
       [#return] 
    [/#if]
               ${toPrint}
-              [#var keyState=lexicalState.stateIndexFromComposite(key)]
+              [#var keyState=lexicalState.nfaData.stateIndexFromComposite(key)]
               case ${keyState} :
               [#if keyState<lexicalState.indexedAllStates?size]
                  ${statesDumped.set(keyState)!}
               [/#if]
    [#if (byteNum>=0)]
-         [#var partition=lexicalState.partitionStatesSetForAscii(stateSet, byteNum)]
+         [#var partition=lexicalState.nfaData.partitionStatesSetForAscii(stateSet, byteNum)]
          [#list partition as subSet]
             [#list subSet as state]
               [@DumpMoveForCompositeState state, byteNum, state_index!=0/]
@@ -802,7 +802,7 @@
                       kind = ${kindToPrint};
    [/#if]
    [#if !next?is_null&&next.usefulEpsilonMoves>0]
-       [#var stateNames=lexicalState.nextStatesFromKey(next.epsilonMovesString)]
+       [#var stateNames=lexicalState.nfaData.nextStatesFromKey(next.epsilonMovesString)]
        [#if next.usefulEpsilonMoves = 1]
           [#var name=stateNames[0]]
           [#if nextIntersects]
@@ -816,7 +816,7 @@
            [#-- Note that the getStateSetIndicesForUse() method builds up a needed
                 data structure lexicalState.orderedStateSet, which is used to output
                 the jjnextStates vector. --]
-           [#var indices=nfaState.lexicalState.getStateSetIndicesForUse(next.epsilonMovesString)]
+           [#var indices=nfaState.lexicalState.nfaData.getStateSetIndicesForUse(next.epsilonMovesString)]
            [#var notTwo=(indices[0]+1 != indices[1])]
            [#if nextIntersects]
                    jjCheckNAddStates(${indices[0]}
@@ -861,7 +861,7 @@
  
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
   [#var dfaData = lexicalState.dfaData] 
-  [#var statesForPos=lexicalState.statesForPos]
+  [#var statesForPos=lexicalState.nfaData.statesForPos]
   [#var maxKindsReqd=(1+dfaData.maxStringIndex/64)?int]
   [#var ind=0]
   [#var maxStringIndex=dfaData.maxStringIndex]
@@ -952,7 +952,7 @@
               [#if stateSetString = "null;"]
                         return -1;
               [#else]
-                   return ${lexicalState.addStartStateSet(stateSetString)};
+                   return ${lexicalState.nfaData.addStartStateSet(stateSetString)};
               [/#if]
               [#if kindStr != "2147483647"]
               }

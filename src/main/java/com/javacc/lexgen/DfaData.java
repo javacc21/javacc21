@@ -136,7 +136,7 @@ public class DfaData {
                     if (info.getFinalKindCnt() != 0) {
                         for (int j = 0; j < getMaxStringIndex(); j++) {
                         	if (info.isFinalKind(j) && !subStringSet.get(j)) {
-                        		lexicalState.getStateSetForKind(i, j); // <-- needs to be called!
+                        		lexicalState.getNfaData().getStateSetForKind(i, j); // <-- needs to be called!
                         	}
                         }
                     }
@@ -148,9 +148,9 @@ public class DfaData {
     public boolean generateDfaCase(char ch, KindInfo info, int index) {
         for (int kind = 0; kind<getMaxStringIndex(); kind++) {
         	if (index == 0 && ch < 128 && info.getFinalKindCnt() !=0
-        			&& (!lexicalState.hasNfa() || !lexicalState.canStartNfaUsingAscii(ch))) {
+        			&& (!lexicalState.hasNfa() || !lexicalState.getNfaData().canStartNfaUsingAscii(ch))) {
         			if (info.isFinalKind(kind) && !subStringSet.get(kind)) {
-                        if (lexicalState.cannotBeMatchedAsStringLiteral(kind, index)) {
+                        if (lexicalState.getNfaData().cannotBeMatchedAsStringLiteral(kind, index)) {
                             break; 
                         }
                         else if (grammar.getLexerData().getSkipSet().get(kind)

@@ -40,7 +40,7 @@
 
 [#macro DumpDfaCode lexicalState]
   [#var dfaData = lexicalState.dfaData]
-  [#var initState=lexicalState.initStateName()]
+  [#var initState=lexicalState.nfaData.initStateName()]
   [#var maxStringLength=dfaData.maxStringLength]
   [#var maxStringIndex=dfaData.maxStringIndex]
   [#var maxStringLengthForActive=dfaData.maxStringLengthForActive]
@@ -177,9 +177,9 @@
                  [#if table_index != 0]
                    ((active${(j/64)?int} & ${utils.powerOfTwoInHex(j%64)}) != 0L) 
                  [/#if]
-                 [#var kindToPrint=lexicalState.getKindToPrint(j, table_index)]
+                 [#var kindToPrint=lexicalState.nfaData.getKindToPrint(j, table_index)]
                  [#if !dfaData.subString[j]]
-                    [#var stateSetIndex=lexicalState.getStateSetForKind(table_index, j)]
+                    [#var stateSetIndex=lexicalState.nfaData.getStateSetForKind(table_index, j)]
                     [#if stateSetIndex != -1]
                     return jjStartNfaWithStates_${lexicalState.name}(${table_index}, ${kindToPrint}, ${stateSetIndex});
                     [#else]
