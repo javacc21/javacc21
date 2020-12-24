@@ -184,20 +184,6 @@ public class LexicalStateData {
         for (NfaState nfaState : nfaData.allStates) {
             nfaState.generateNonAsciiMoves();
         }
-        for (Map.Entry<String, Integer> entry : nfaData.stateIndexFromComposite.entrySet()) {
-//REVISIT: I don't really grok this code. What is going on?            
-            int state = entry.getValue();
-            if (state >= nfaData.indexedAllStates.size()) {
-                if (state >= nfaData.statesForState.length) {
-                    int[][] prevStatesForState = nfaData.statesForState;
-                    nfaData.statesForState = new int[state+1][];
-                    for (int i=0; i<prevStatesForState.length;i++) {
-                        nfaData.statesForState[i] = prevStatesForState[i];
-                    }
-                }
-                nfaData.statesForState[state] = nfaData.allNextStates.get(entry.getKey());
-            }
-        }
         return choices;
     }
 

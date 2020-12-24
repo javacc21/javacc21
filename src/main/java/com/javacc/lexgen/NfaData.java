@@ -46,7 +46,6 @@ public class NfaData {
     final private LexerData lexerData;
     private int[][] intermediateKinds;
     private int[][] intermediateMatchedPos;
-    private int[] kindsForStates;
     private int dummyStateIndex = -1;
     private Map<String, int[]> compositeStateTable = new HashMap<>();
     private List<Map<String, long[]>> statesForPos;
@@ -56,7 +55,6 @@ public class NfaData {
     Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     Map<String, int[]> allNextStates = new HashMap<>();
     NfaState initialState;
-    int[][] statesForState;
 
 
     NfaData(LexicalStateData lexicalState) {
@@ -67,14 +65,6 @@ public class NfaData {
 
     public Map<String, int[]> getCompositeStateTable() {
         return compositeStateTable;
-    }
-
-    public int[] getKindsForStates() {
-        return kindsForStates;
-    }
-
-    public int[][] getStatesForState() {
-        return statesForState;
     }
 
     public NfaState[] getStateSetFromCompositeKey(String key) {
@@ -116,17 +106,6 @@ public class NfaData {
         for (NfaState state : v) {
             if (state.getIndex() != -1 /*&& state != singlesToSkip*/)
                 allStates.set(state.getIndex(), state);
-        }
-        for (NfaState nfaState : allStates) {
-            if (nfaState.getLexicalState() != this.lexicalState || !nfaState.hasTransitions()
-                    || nfaState.getIndex() == -1)
-                continue;
-            if (kindsForStates == null) {
-                kindsForStates = new int[indexedAllStates.size()];
-                statesForState = new int[Math.max(indexedAllStates.size(), dummyStateIndex + 1)][];
-            }
-            kindsForStates[nfaState.getIndex()] = nfaState.getLookingFor().getOrdinal();
-            statesForState[nfaState.getIndex()] = nfaState.getCompositeStates();
         }
     }
 

@@ -102,18 +102,6 @@
             return ${table_index};
          [/#if]   
       [/#if]
-      [#if grammar.options.debugLexer]
-        if (trace_enabled && jjmatchedKind !=0 && jjmatchedKind != 0x7fffffff) {
-            LOGGER.info("    Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
-        }
-        if (trace_enabled) LOGGER.info("   Possible string literal matches : { "
-        [#list 0..maxStringIndex/64 as vecs]
-           [#if table_index<=maxStringLengthForActive[vecs]]
-             + jjKindsForBitVector(${vecs}, active${vecs}) 
-           [/#if]
-        [/#list]
-        + " } ");
-      [/#if]
        int retval = input_stream.readChar();
        if (retval >=0) {
            curChar = (char) retval;

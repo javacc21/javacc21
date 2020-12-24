@@ -58,15 +58,6 @@
         jjnewStateCnt = ${lexicalState.indexedAllStates?size};
         int i=1;
         jjstateSet[0] = startState;
-    [#if grammar.options.debugLexer]
-        if (trace_enabled) LOGGER.info("   Starting NFA to match one of : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, 0, 1));
-        if (trace_enabled) LOGGER.info("" + 
-        [#if multipleLexicalStates]
-            "<" + lexicalState + ">" +  
-        [/#if]
-            "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
-           + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
-    [/#if]
         int kind = 0x7fffffff;
         while (true) {
             if (++jjround == 0x7fffffff) {
@@ -120,9 +111,6 @@
                  break;
     [#else]
                  return curPos;
-    [/#if]
-    [#if grammar.options.debugLexer]
-            if (trace_enabled) LOGGER.info("   Possible kinds of longer matches : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, startsAt, i));
     [/#if]
             int retval = input_stream.readChar();
             if (retval >=0) {
