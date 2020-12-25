@@ -24,7 +24,6 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   //We were expecting one of these token types
   private EnumSet<TokenType> expectedTypes;
   
-//  private List<StackTraceElement> callStack;
     private List<${grammar.parserClassName}.NonTerminalCall> callStack;
   
   private boolean alreadyAdjusted;
@@ -107,12 +106,8 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   
   public static String addEscapes(String str) {
       StringBuilder retval = new StringBuilder();
-      char ch;
-      for (int i = 0; i < str.length(); i++) {
-        switch (str.charAt(i))
-        {
-           case 0 :
-              continue;
+      for (char ch : str.toCharArray()) {
+        switch (ch) {
            case '\b':
               retval.append("\\b");
               continue;
@@ -138,7 +133,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
               retval.append("\\\\");
               continue;
            default:
-              if ((ch = str.charAt(i)) < 0x20 || ch > 0x7e) {
+              if (!Character.isUnicodeIdentifierPart(ch)) {
                  String s = "0000" + java.lang.Integer.toString(ch, 16);
                  retval.append("\\u" + s.substring(s.length() - 4, s.length()));
               } else {

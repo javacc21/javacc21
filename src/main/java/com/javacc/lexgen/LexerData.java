@@ -273,7 +273,6 @@ public class LexerData {
             if (lexicalStates.get(i).getName().equals(name)) {
                 return i;
             }
-
         }
         return -1;
     }
@@ -301,32 +300,29 @@ public class LexerData {
     }
 
     void checkEmptyStringMatch() {
-        final int numLexStates = lexicalStates.size();
-        boolean[] done = new boolean[numLexStates];
+        Set<LexicalStateData> statesDone = new HashSet<>();
         Outer: for (LexicalStateData ls : lexicalStates) {
-            final int lexicalStateIndex = ls.getIndex();
-            if (done[lexicalStateIndex] || ls.getInitMatch() == 0 || ls.getInitMatch() == Integer.MAX_VALUE) {
+            if (statesDone.contains(ls) || ls.getInitMatch() == 0 || ls.getInitMatch() == Integer.MAX_VALUE) {
                 continue;
             }
-            boolean[] seen = new boolean[numLexStates];
-            done[lexicalStateIndex] = true;
+            Set<LexicalStateData> statesSeen = new HashSet<>();
+            statesDone.add(ls);
+            statesSeen.add(ls);
             String reList = "";
             int len = 0;
-            int j = lexicalStateIndex;
-            seen[lexicalStateIndex] = true;
             String cycle = ls.getName() + "-->";
             int initMatch = ls.getInitMatch();
+            LexicalStateData newLexState = ls;
             while (getRegularExpression(initMatch).getNewLexicalState() != null) {
-                LexicalStateData newLexState = getRegularExpression(initMatch).getNewLexicalState();
+                newLexState = getRegularExpression(initMatch).getNewLexicalState();
                 cycle += newLexState.getName();
-                j = newLexState.getIndex();
-                if (seen[j]) {
+                if (statesSeen.contains(newLexState)) {
                     break;
                 }
                 cycle += "-->";
-                done[j] = true;
-                seen[j] = true;
-                initMatch = lexicalStates.get(j).getInitMatch();
+                statesDone.add(newLexState);
+                statesSeen.add(newLexState);
+                initMatch = newLexState.getInitMatch();
                 if (initMatch == 0 || initMatch == Integer.MAX_VALUE) {
                     continue Outer;
                 }
@@ -337,7 +333,7 @@ public class LexerData {
                         + getRegularExpression(initMatch).getBeginColumn();
                 len++;
             }
-            initMatch = lexicalStates.get(j).getInitMatch();
+            initMatch = newLexState.getInitMatch();
             if (getRegularExpression(initMatch).getNewLexicalState() == null) {
                 cycle += getRegularExpression(initMatch).getLexicalState().getName();
             }
@@ -369,16 +365,5 @@ public class LexerData {
                         + " can never be matched as : " + choice.getLabel());
             }
         }
-    }
-
-    // Assumes l != 0L
-    public int maxChar(long l) {
-        for (int i = 64; i-- > 0;) {
-            if ((l & (1L << i)) != 0L) {
-                return (int) (char) i;
-            }
-
-        }
-        return 0xffff;
     }
 }

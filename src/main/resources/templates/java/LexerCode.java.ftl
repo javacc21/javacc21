@@ -1,3 +1,4 @@
+[#ftl strict_vars=true]
 [#--
 /* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
@@ -28,18 +29,20 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
  --]
- 
- 
+
  [#--  
         This is the one remaining template file that is still a god-awful mess and, I (JR) have to admit 
         still quite opaque to me. The corresponding Java code is the stuff in com.javacc.lexgen package
         that, along with this template, will eventually be cleaned up, probably a more accurate 
         description is that it will be torn up and rewritten. 
   --]
-
+ [#import "DfaCode.java.ftl" as dfa]
+ [#import "NfaCode.java.ftl" as nfa]
  [#var options=grammar.options, lexerData=grammar.lexerData]
+ [#var utils=grammar.utils]
  [#var tokenCount=lexerData.tokenCount]
  [#var numLexicalStates=lexerData.lexicalStates?size]
+ [#var multipleLexicalStates = numLexicalStates>1]
 
 [#var MAX_INT=2147483647]
 
@@ -72,7 +75,6 @@
           [#list lexerData.specialSet.toLongArray() as long]${long}L,[/#list]
       });      
 
-
       // BitSet for MORE
       static private BitSet moreSet = BitSet.valueOf(new long[] {
           [#list lexerData.moreSet.toLongArray() as long]${long}L,[/#list]
@@ -86,15 +88,6 @@
 
     char curChar;
     
-    
-    // Method to reinitialize the jjrounds array.
-    private void ReInitRounds() {
-       int i;
-       jjround = 0x80000001;
-       for (i = ${lexerData.stateSetSize}; i-- > 0;) 
-          jjrounds[i] = 0x80000000;
-    }
-
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
 	   jjmatchedKind = 0;
@@ -102,11 +95,10 @@
       Token eof = jjFillToken();
       tokenLexicalActions();
 [#list grammar.lexerTokenHooks as tokenHookMethodName]
-      [#if tokenHookMethodName = "CommonTokenAction"]
-         ${tokenHookMethodName}(eof);
-      [#else]
-         eof = ${tokenHookMethodName}(eof);
+      [#if tokenHookMethodName != "CommonTokenAction"]
+         eof =
       [/#if]
+      ${tokenHookMethodName}(eof);
 [/#list]
       return eof;
     }
@@ -131,46 +123,16 @@
        while (true) {
 [/#if]
     [#-- this also sets up the start state of the nfa --]
-[#if numLexicalStates>1]
+[#if multipleLexicalStates]
        switch(lexicalState) {
 [/#if]
     
 [#list lexerData.lexicalStates as lexicalState]
-    [#var singlesToSkip=lexicalState.singlesToSkip]
-    [#if numLexicalStates>1]
+    [#if multipleLexicalStates]
             case ${lexicalState.name} : 
     [/#if]
-    [#if singlesToSkip.hasTransitions()]
-          [#if singlesToSkip.asciiMoves[0] != 0&&singlesToSkip.asciiMoves[1] != 0]
-                 while ((curChar < 64 && (${utils.toHexString(singlesToSkip.asciiMoves[0])}
-                  & (1L <<curChar)) != 0L) || (curChar>>6) == 1 && (${utils.toHexStringL(singlesToSkip.asciiMoves[1])} 
-                  & (1L << (curChar & 077))) != 0L)
-          [#elseif singlesToSkip.asciiMoves[1] = 0]
-                 while (curChar <= ${lexerData.maxChar(singlesToSkip.asciiMoves[0])} 
-                        && (${utils.toHexStringL(singlesToSkip.asciiMoves[0])}
-                        & (1L << curChar)) != 0L) 
-          [#elseif singlesToSkip.asciiMoves[0] = 0]
-                 while (curChar > 63 && curChar <= ${lexerData.MaxChar(singlesToSkip.asciiMoves[1])+64}
-                        && ${utils.toHexString(singlesToSkip.asciiMoves[1])}L & (1L<< (curChar&077))) != 0L)
-          [/#if]
-                 {
-                   [#var debugOutput]
-                   [#set debugOutput]
-                   [#if numLexicalStates>1]
-                   "<" + lexicalState + ">" + 
-                   [/#if]
-                   "Skipping character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
-                   [/#set] 
-                    if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-                    curChar = (char) input_stream.beginToken();
-                    if (curChar == (char) -1) {
-                        return generateEOF();
-                    }
-                }
-    [/#if]    
-             
-             
-    [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
+    [@dfa.SkipSingles lexicalState.dfaData /]
+   [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
         if (trace_enabled) LOGGER.info("   Matched the empty string as " + tokenImage[${lexicalState.initMatch}] + " token.");
         jjmatchedKind = ${lexicalState.initMatch};
         matchedType = TokenType.values()[${lexicalState.initMatch}];
@@ -183,19 +145,19 @@
     [/#if]
         [#var debugOutput]
         [#set debugOutput]
-            [#if numLexicalStates>1]
+            [#if multipleLexicalStates]
                "<" + lexicalState + ">" + 
             [/#if]
             "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
             "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
         [/#set]
         if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-        curPos = jjMoveStringLiteralDfa0${lexicalState.suffix}();
-    [#if numLexicalStates>1]
+        curPos = jjMoveStringLiteralDfa0_${lexicalState.name}();
+    [#if multipleLexicalStates]
         break;
     [/#if]
 [/#list]
-  [#if numLexicalStates>1]
+  [#if multipleLexicalStates]
       }
   [/#if]
   if (jjmatchedKind != 0x7FFFFFFF) { 
@@ -219,7 +181,7 @@
       tokenLexicalActions();
       jjmatchedKind = matchedToken.getType().ordinal();
  
- [#if numLexicalStates>1]
+ [#if multipleLexicalStates]
       if (newLexicalStates[jjmatchedKind] != null) {
           matchedToken.setFollowingLexicalState(newLexicalStates[jjmatchedKind]);
           switchTo(newLexicalStates[jjmatchedKind]);
@@ -240,7 +202,7 @@
           [#if lexerData.hasSkipActions]
                  tokenLexicalActions();
           [/#if]
-          [#if numLexicalStates>1]
+          [#if multipleLexicalStates]
             if (newLexicalStates[jjmatchedKind] != null) {
                this.lexicalState = newLexicalStates[jjmatchedKind];
             }
@@ -251,11 +213,11 @@
          [#if lexerData.hasMore]
           [#if lexerData.hasMoreActions]
           tokenLexicalActions();
-          [#elseif true || lexerData.hasSkipActions || lexerData.hasTokenActions]
+          [#else]
           matchedCharsLength += jjmatchedPos + 1;
 		  [/#if]
 		  
-          [#if numLexicalStates>1]
+          [#if multipleLexicalStates]
              doLexicalStateSwitch(jjmatchedKind);
           [/#if]
           curPos = 0;
@@ -266,7 +228,7 @@
 	
 	            [#var debugOutput]
 	            [#set debugOutput]
-	              [#if numLexicalStates>1]
+	              [#if multipleLexicalStates]
 	                 "<" + lexicalState + ">" + 
 	              [/#if]
 	              "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
@@ -357,7 +319,7 @@
         t.setBeginColumn(beginColumn);
         t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
-     [#if numLexicalStates >1]
+     [#if multipleLexicalStates]
         t.setLexicalState(lexicalState);
      [/#if]        
         return t;
@@ -423,100 +385,6 @@
 		
 [/#list]
     
-[#if options.debugLexer]
-
-    protected static final int[][][] statesForState =  
-    [#if false]
-        null;
-    [#else]
-    {
-    [/#if]
-       [#list lexerData.lexicalStates as lexicalState]
-          [#var states=lexicalState.statesForState]
-          [#if !states??] null, [#else]
-      {
-            [#list states as stateSet]
-               [#if !stateSet??]   { ${stateSet_index} },
-               [#else]
-                {[#list stateSet as state]${state}, [/#list]},
-               [/#if]
-            [/#list]
-      }, 
-          [/#if]
-       [/#list]
-    };
-    
-    
-    protected static final int[][] kindForState =
-    {
-    [#list lexerData.lexicalStates as lexicalState]
-      [#if lexicalState_index != 0], [/#if]
-      [#if lexicalState.kindsForStates?is_null]null 
-      [#else]
-       { 
-        [#list lexicalState.kindsForStates as kind]
-		  [#if kind_index%15 = 0]${"
-   "}[/#if]
-          ${kind}[#if kind_has_next], [/#if]
-        [/#list]
-       }
-      [/#if]
-    [/#list]
-    };
-
-
-      int kindCnt = 0;
-      
-      protected final String jjKindsForBitVector(int i, long vec)
-      {
-        String retVal = "";
-        if (i == 0)
-           kindCnt = 0;
-        for (int j = 0; j < 64; j++)
-        {
-           if ((vec & (1L << j)) != 0L)
-           {
-              if (kindCnt++ > 0)
-                 retVal += ", ";
-              if (kindCnt % 5 == 0)
-                 retVal += "\n     ";
-              retVal += tokenImage[i * 64 + j];
-           }
-        }
-        return retVal;
-      }
-
-    protected final String jjKindsForStateVector(
-       int lexState, int[] vec, int start, int end)   
-    {
-        boolean[] kindDone = new boolean[${tokenCount}];
-        String retVal = "";
-        int cnt = 0;
-        for (int i = start; i < end; i++)
-        {
-         if (vec[i] == -1)
-           continue;
-         int[] stateSet = statesForState[lexicalState.ordinal()][vec[i]];
-         for (int j = 0; j < stateSet.length; j++)
-         {
-           int state = stateSet[j];
-           if (!kindDone[kindForState[lexState][state]])
-           {
-              kindDone[kindForState[lexState][state]] = true;
-              if (cnt++ > 0)
-                 retVal += ", ";
-              if (cnt % 5 == 0)
-                 retVal += "\n     ";
-              retVal += tokenImage[kindForState[lexState][state]];
-           }
-         }
-        }
-        if (cnt == 0)
-           return "{  }";
-        else
-           return "{ " + retVal + " }";
-  }
-[/#if]
     private int jjStopAtPos(int pos, int kind) {
          jjmatchedKind = kind;
          jjmatchedPos = pos;
@@ -526,22 +394,19 @@
          return pos + 1;
     }
     
-
-    
-    
 [#list lexerData.allBitVectors as bitVec]
     private static final long[] jjbitVec${bitVec_index} = ${bitVec};
 [/#list]    
 
 [#list lexerData.lexicalStates as lexicalState]
-  [#if lexicalState.dumpNfaStarts]
-  [@DumpNfaStartStatesCode lexicalState, lexicalState_index/]
+  [#if lexicalState.nfaData.dumpNfaStarts]
+  [@nfa.DumpNfaStartStatesCode lexicalState, lexicalState_index/]
   [/#if]
   [#if lexicalState.createStartNfa]
-     [@DumpStartWithStates lexicalState/]
+     [@nfa.DumpStartWithStates lexicalState/]
   [/#if]
-   [@DumpDfaCode lexicalState/]
-   [@DumpMoveNfa lexicalState/]
+   [@dfa.DumpDfaCode lexicalState/]
+   [@nfa.DumpMoveNfa lexicalState/]
 [/#list]
 
 [#--
@@ -561,764 +426,3 @@
     [/#list]
 [/#list]
   };
-
-
-
-[#macro DumpMoveNfa lexicalState]
-    private int jjMoveNfa${lexicalState.suffix}(int startState, int curPos) {
-    [#if !lexicalState.hasNfa()]
-        return curPos;
-    }
-       [#return]
-    [/#if]
-    [#if lexicalState.mixedCase]
-        int strKind = jjmatchedKind;
-        int strPos = jjmatchedPos;
-        int seenUpto = curPos+1;
-        input_stream.backup(seenUpto);
-        curChar = (char) input_stream.readChar(); //REVISIT, deal with error return code
-        curPos = 0;
-    [/#if]
-        int startsAt = 0;
-        jjnewStateCnt = ${lexicalState.indexedAllStates?size};
-        int i=1;
-        jjstateSet[0] = startState;
-    [#if grammar.options.debugLexer]
-        if (trace_enabled) LOGGER.info("   Starting NFA to match one of : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, 0, 1));
-        if (trace_enabled) LOGGER.info("" + 
-        [#if numLexicalStates != 1]
-            "<" + lexicalState + ">" +  
-        [/#if]
-            "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
-           + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
-    [/#if]
-        int kind = 0x7fffffff;
-        while (true) {
-            if (++jjround == 0x7fffffff) {
-                ReInitRounds();
-            }
-            if (curChar < 64) {
-            	long l = 1L << curChar;
-	            do {
-	                switch (jjstateSet[--i]) {
-	                    [@DumpMoves lexicalState, 0/]
-	                    default : break;
-	                }
-	            } while (i != startsAt);
-            }
-            else if (curChar <128) {
-            	long l = 1L << (curChar & 077);
-	            do {
-	                switch (jjstateSet[--i]) {
- 	                    [@DumpMoves lexicalState, 1/]
-                	     default : break;
-                	}
-                } while (i!= startsAt);
-            }
-            else {
-                int hiByte = (int)(curChar >> 8);
-                int i1 = hiByte >> 6;
-                long l1 = 1L << (hiByte & 077);
-                int i2 = (curChar & 0xff) >> 6;
-                long l2 = 1L << (curChar & 077);
-	            do {
-	                switch (jjstateSet[--i]) {
-	                    [@DumpMoves lexicalState, -1/]
-                        default : break;
-                    }
-                } while(i != startsAt);
-	                
-            }
-            if (kind != 0x7fffffff) {
-                jjmatchedKind = kind;
-                jjmatchedPos = curPos;
-                kind = 0x7fffffff;
-            }
-            ++curPos;
-            if (jjmatchedKind != 0 && jjmatchedKind != 0x7fffffff) {
-                if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
-                                     + tokenImage[jjmatchedKind] + " token.");
-            }
-            if ((i = jjnewStateCnt) == (startsAt = ${lexicalState.indexedAllStates?size} - (jjnewStateCnt = startsAt)))
-    [#if lexicalState.mixedCase]
-                 break;
-    [#else]
-                 return curPos;
-    [/#if]
-    [#if grammar.options.debugLexer]
-            if (trace_enabled) LOGGER.info("   Possible kinds of longer matches : " + jjKindsForStateVector(lexicalState.ordinal(), jjstateSet, startsAt, i));
-    [/#if]
-            int retval = input_stream.readChar();
-            if (retval >=0) {
-                 curChar = (char) retval;
-            }
-            else  {
-    [#if lexicalState.mixedCase]            
-                break;
-    [#else]
-                return curPos;
-    [/#if]
-            }
-            if (trace_enabled) LOGGER.info("" + 
-            [#if numLexicalStates != 1]
-               "<" + lexicalState + ">" + 
-            [/#if]
-               addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
-              + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
-        }
-    [#if lexicalState.mixedCase]
-        if (jjmatchedPos > strPos) {
-            return curPos;
-        }
-        int toRet = Math.max(curPos, seenUpto);
-        if (curPos < toRet) {
-           for (i = toRet - Math.min(curPos, seenUpto); i-- >0;) {
-                   curChar = (char) input_stream.readChar(); // REVISIT, not handling error return code
-           }
-        }
-        if (jjmatchedPos < strPos) {
-            jjmatchedKind = strKind;
-            jjmatchedPos = strPos;
-        }
-        else if (jjmatchedPos == strPos && jjmatchedKind > strKind) {
-            jjmatchedKind = strKind;
-        }
-        return toRet;
-    [/#if]
-    }
-[/#macro]
-
-[#macro DumpMoves lexicalState byteNum]
-   [#set statesDumped = utils.newBitSet()]
-   [#list lexicalState.compositeStateTable?keys as key]
-      [@dumpCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
-   [/#list]
-   [@dumpMoves lexicalState, byteNum, statesDumped/]
-[/#macro]
-
-[#macro dumpMoves lexicalState byteNum statesDumped]
-   [#list lexicalState.allStates as state]
-      [#if state.index>=0&&!statesDumped.get(state.index)&&state.hasTransitions()]
-          [#var toPrint=""]
-          [#var stateForCaseHandled=false]
-          [#if !state.stateForCase?is_null]
-              [#set stateForCaseHandled = statesDumped.get(state.stateForCase.index) || state.inNextOf = 1]
-              [#if !stateForCaseHandled]
-                  [#var stateForCase=state.stateForCase]
-                  ${statesDumped.set(stateForCase.index)!}
-                  [#if stateForCase.isNeeded(byteNum)]
-                  case ${stateForCase.index} :
-                  [#else]
-                    [#set toPrint = "case "+stateForCase.index+" : "]
-                  [/#if]
-              [/#if] 
-          [/#if]
-          [#if !stateForCaseHandled]
-              [#if state.isNeeded(byteNum)]
-                  ${toPrint}
-                  ${statesDumped.set(state.index)!}
-                  case ${state.index} :
-                  [@dumpMove state, byteNum, statesDumped/]
-              [#elseif !state.stateForCase?is_null&&toPrint = ""]
-                     break;
-              [/#if]
-          [/#if]
-      [/#if]
-   [/#list]
-[/#macro]
-
-[#macro dumpMove nfaState byteNum statesDumped]
-   [#var nextIntersects=nfaState.composite || nfaState.nextIntersects]
-   [#var onlyState=(byteNum>=0)&&nfaState.isOnlyState(byteNum)]
-   [#var lexicalState=nfaState.lexicalState]
-   [#var kindToPrint=nfaState.kindToPrint]
-   [#list nfaState.getMoveStates(byteNum, statesDumped) as state]
-                   case ${state.index} :
-   [/#list]
-   [#var oneBit=0]
-   [#if (byteNum>=0)]
-       [#set oneBit = nfaState.OnlyOneBitSet(nfaState.asciiMoves[byteNum])]
-   [/#if]
-   [#if byteNum<0 || nfaState.asciiMoves[byteNum] != -1]
-      [#if nfaState.next?is_null || nfaState.next.usefulEpsilonMoves<=0]
-          [#var kindCheck=" && kind > "+kindToPrint]
-          [#if onlyState][#set kindCheck = ""][/#if]
-          [#if byteNum>=0]
-             [#if oneBit != -1]
-                     if (curChar == ${(64*byteNum+oneBit)} ${kindCheck})
-             [#else]
-                     if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} & l) != 0L ${kindCheck})
-             [/#if]
-          [#else]
-                     if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2) ${kindCheck})
-          [/#if]
-                         kind = ${kindToPrint};
-                         break;
-          [#return]
-      [/#if]
-   [/#if]
-   [#if kindToPrint != MAX_INT]
-       [#if byteNum>=0]
-          [#if oneBit != -1]
-                    if (curChar != ${64*byteNum+oneBit})
-                          break;
-          [#elseif nfaState.asciiMoves[byteNum] != -1]
-                    if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} &l) == 0L)
-                          break;
-          [/#if]
-       [#else]
-                    if (!jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
-                          break;
-       [/#if]
-       [#if onlyState]
-                    kind = ${kindToPrint};
-       [#else]
-                    if (kind > ${kindToPrint})
-                         kind = ${kindToPrint};
-       [/#if]
-   [#elseif (byteNum>=0)]
-       [#if oneBit != -1]
-                    if (curChar == ${64*byteNum+oneBit})
-       [#elseif nfaState.asciiMoves[byteNum] != -1]
-                    if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} & l) != 0L)
-       [/#if]
-   [#else]
-                    if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
-   [/#if]
-   [#if !nfaState.next?is_null&&nfaState.next.usefulEpsilonMoves>0]
-       [#var stateNames=lexicalState.nextStatesFromKey(nfaState.next.epsilonMovesString)]
-       [#if nfaState.next.usefulEpsilonMoves = 1]
-          [#var name=stateNames[0]]
-          [#if nextIntersects]
-                    jjCheckNAdd(${name});
-          [#else]
-                    jjstateSet[jjnewStateCnt++] = ${name};
-          [/#if]
-       [#elseif nfaState.next.usefulEpsilonMoves = 2&&nextIntersects]
-                    jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
-       [#else]
-          [#var indices=lexicalState.getStateSetIndicesForUse(nfaState.next.epsilonMovesString)]
-          [#var notTwo=(indices[0]+1 != indices[1])]
-          [#if nextIntersects]
-                    jjCheckNAddStates(${indices[0]}
-              [#if notTwo]
-                    , ${indices[1]}
-              [/#if]
-                    );
-          [#else]
-                    jjAddStates(${indices[0]}, ${indices[1]});
-          [/#if]
-       [/#if]
-   [/#if]
-                         break;
-[/#macro]
-
-[#macro dumpCompositeStatesMoves lexicalState key byteNum statesDumped]
-   [#var stateSet=lexicalState.getStateSetFromCompositeKey(key)]
-   [#var stateIndex=lexicalState.stateIndexFromComposite(key)]
-   [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
-   [#var neededStates=0]
-   [#var toBePrinted stateForCase toPrint=""]
-   [#list stateSet as state]
-       [#if state.isNeeded(byteNum)]
-          [#set neededStates = neededStates+1]
-          [#if neededStates = 2]
-             [#break]
-          [#else]
-             [#set toBePrinted = state]
-          [/#if]
-       [#else]
-          ${statesDumped.set(state.index)!}
-       [/#if]
-       [#if !state.stateForCase?is_null]
-          [#set stateForCase = state.stateForCase]
-       [/#if]
-   [/#list]
-   [#if stateForCase??]
-        ${statesDumped.set(stateForCase.index)!}
-        [#if state.stateForCase.isNeeded(byteNum)]
-           case ${index} :
-               [@dumpMoveForCompositeState nfaState, byteNum, false/]
-           [#set toPrint = "case "+index+":"] 
-        [#else]
-           [#set toPrint = ""]
-        [/#if]
-   [/#if]
-   [#if neededStates = 0]
-        [#if stateForCase??&&toPrint = ""]
-               break;
-        [/#if]
-        [#return]
-   [/#if]
-   [#if neededStates = 1]
-          ${toPrint}
-          case ${lexicalState.stateIndexFromComposite(key)} :
-      [#if !statesDumped.get(toBePrinted.index)&&toBePrinted.inNextOf>1]
-          case ${toBePrinted.index} :
-      [/#if]
-              ${statesDumped.set(toBePrinted.index)!}
-              [@dumpMove toBePrinted, byteNum, statesDumped/]
-      [#return] 
-   [/#if]
-              ${toPrint}
-              [#var keyState=lexicalState.stateIndexFromComposite(key)]
-              case ${keyState} :
-              [#if keyState<lexicalState.indexedAllStates?size]
-                 ${statesDumped.set(keyState)!}
-              [/#if]
-   [#if (byteNum>=0)]
-         [#var partition=lexicalState.partitionStatesSetForAscii(stateSet, byteNum)]
-         [#list partition as subSet]
-            [#var atStart=true]
-            [#list subSet as state]
-              [@dumpMoveForCompositeState state, byteNum, !atStart/]
-              [#set atStart = false]
-            [/#list]
-         [/#list]
-   [/#if]
-                  break;
-[/#macro]
-
-[#macro dumpMoveForCompositeState nfaState byteNum elseNeeded]
-   [#var nextIntersects=nfaState.nextIntersects]
-   [#var kindToPrint=nfaState.kindToPrint asciiMoves=nfaState.asciiMoves loByteVec=nfaState.loByteVec next=nfaState.next lexicalState=nfaState.lexicalState]
-   [#if (byteNum>=0)]
-      [#if byteNum<0 || nfaState.asciiMoves[byteNum] != -1]
-         [#var oneBit=nfaState.OnlyOneBitSet(asciiMoves[byteNum])]
-         [#if oneBit != -1]
-               [#if elseNeeded]else [/#if] if (curChar == ${64*byteNum+oneBit})
-         [#else]
-               [#if elseNeeded] else [/#if] if ((${utils.toHexStringL(asciiMoves[byteNum])} &l) != 0L)
-         [/#if]
-      [/#if]
-   [#else]
-              if (jjCanMove_${nonAsciiMethod}(hiByte, i1, i2, l1, l2))
-   [/#if]
-   [#if kindToPrint != MAX_INT] {
-                  if (kind > ${kindToPrint})
-                      kind = ${kindToPrint};
-   [/#if]
-   [#if !next?is_null&&next.usefulEpsilonMoves>0]
-       [#var stateNames=lexicalState.nextStatesFromKey(next.epsilonMovesString)]
-       [#if next.usefulEpsilonMoves = 1]
-          [#var name=stateNames[0]]
-          [#if nextIntersects]
-                   jjCheckNAdd(${name});
-          [#else]
-                   jjstateSet[jjnewStateCnt++] = ${name};
-          [/#if]
-       [#elseif next.usefulEpsilonMoves = 2&&nextIntersects]
-                   jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
-       [#else]
-           [#-- Note that the getStateSetIndicesForUse() method builds up a needed
-                data structure lexicalState.orderedStateSet, which is used to output
-                the jjnextStates vector. --]
-           [#var indices=nfaState.lexicalState.getStateSetIndicesForUse(next.epsilonMovesString)]
-           [#var notTwo=(indices[0]+1 != indices[1])]
-           [#if nextIntersects]
-                   jjCheckNAddStates(${indices[0]}
-               [#if notTwo]
-                   , ${indices[1]}
-               [/#if]
-                  );
-           [#else]
-                   jjAddStates(${indices[0]}, ${indices[1]});
-           [/#if]
-       [/#if]
-   [/#if]
-   [#if kindToPrint != MAX_INT]
-         }
-   [/#if]
- [/#macro]
-
-
-
-[#macro DumpDfaCode lexicalState]
-  [#var initState=lexicalState.initStateName()]
-  [#var maxStringLength=lexicalState.maxStringLength]
-  [#var maxStringIndex=lexicalState.maxStringIndex]
-  [#var maxStringLengthForActive=lexicalState.maxStringLengthForActive]
-  [#if maxStringLength = 0]
-    private int jjMoveStringLiteralDfa0${lexicalState.suffix}() {
-    [#if lexicalState.hasNfa()]
-        return jjMoveNfa${lexicalState.suffix}(${initState}, 0);
-    [#else]
-        return 1;        
-    [/#if]
-    }
-    [#return]
-  [/#if]
-  
-  [#list lexicalState.stringLiteralTables as table]
-    [#var startNfaNeeded=false]
-    [#var first = (table_index==0)]
-    
-    private int jjMoveStringLiteralDfa${table_index}${lexicalState.suffix}
-    [@ArgsList]
-        [#list 0..maxStringIndex/64 as j]
-           [#if !first && table_index<=maxStringLengthForActive[j]+1&&maxStringLengthForActive[j] != 0]
-              [#if table_index != 1]
-                 long old${j}
-              [/#if]
-               long active${j}
-           [/#if]
-        [/#list]
-    [/@ArgsList] {
-    [#if !first]
-      [#if table_index > 1]
-         [#list 0..maxStringIndex/64 as j]
-           [#if table_index<=lexicalState.maxStringLengthForActive[j]+1]
-        active${j} = active${j} & old${j};
-           [/#if]
-         [/#list]
-        if ([@ArgsList delimiter=" | "]
-         [#list 0..maxStringIndex/64 as j]
-           [#if table_index<=lexicalState.maxStringLengthForActive[j]+1]
-            active${j}
-           [/#if]
-         [/#list]
-         [/@ArgsList] == 0L)
-         [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
-            return jjStartNfa${lexicalState.suffix}
-            [@ArgsList]
-               ${table_index-2}
-               [#list 0..maxStringIndex/64 as j]
-                 [#if table_index<=lexicalState.maxStringLengthForActive[j]+1]
-                   old${j}
-                 [#else]
-                   0L
-                 [/#if]
-               [/#list]
-            [/@ArgsList];
-         [#elseif lexicalState.hasNfa()]
-            return jjMoveNfa${lexicalState.suffix}(${initState}, ${table_index-1});
-         [#else]
-            return ${table_index};
-         [/#if]   
-      [/#if]
-      [#if grammar.options.debugLexer]
-        if (trace_enabled && jjmatchedKind !=0 && jjmatchedKind != 0x7fffffff) {
-            LOGGER.info("    Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
-        }
-        if (trace_enabled) LOGGER.info("   Possible string literal matches : { "
-        [#list 0..maxStringIndex/64 as vecs]
-           [#if table_index<=maxStringLengthForActive[vecs]]
-             + jjKindsForBitVector(${vecs}, active${vecs}) 
-           [/#if]
-        [/#list]
-        + " } ");
-      [/#if]
-       int retval = input_stream.readChar();
-       if (retval >=0) {
-           curChar = (char) retval;
-       }
-       else  {
-         [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
-           jjStopStringLiteralDfa${lexicalState.suffix}[@ArgsList]
-              ${table_index-1}
-           [#list 0..maxStringIndex/64 as k]
-              [#if (table_index<=maxStringLengthForActive[k])]
-                active${k}
-              [#else]
-                0L
-              [/#if]
-           [/#list][/@ArgsList];
-          if (trace_enabled && jjmatchedKind != 0 && jjmatchedKind != 0x7fffffff) {
-             LOGGER.info("    Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token. ");
-          }
-           return ${table_index};
-         [#elseif lexicalState.hasNfa()]
-           return jjMoveNfa${lexicalState.suffix}(${initState}, ${table_index-1}); 
-         [#else]
-           return ${table_index};
-         [/#if]
-       }
-    [/#if]
-    [#if !first]
-      if (trace_enabled) LOGGER.info("" + 
-        [#if lexerData.lexicalStates?size != 1]
-           "<${lexicalState.name}>" +
-        [/#if]
-        "Current character : " + addEscapes(String.valueOf(curChar)) + " ("
-        + (int) curChar + ") at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
-    [/#if]
-      switch (curChar) {
-    [#list lexicalState.rearrange(table) as key]
-       [#var info=table[key]]
-       [#var ifGenerated=false]
-	   [#var c=key[0..0]]
-	   [#if lexicalState.generateDfaCase(key, info, table_index)]
-	      [#-- We know key is a single character.... --]
-	      [#if grammar.options.ignoreCase]
-	         [#if c != c?upper_case]
-	           case ${utils.firstCharAsInt(c?upper_case)} :
-	         [/#if]
-	         [#if c != c?lower_case]
-	           case ${utils.firstCharAsInt(c?lower_case)} : 
-	         [/#if]
-	      [/#if]
-	           case ${utils.firstCharAsInt(c)} :
-	      [#if info.finalKindCnt != 0]
-	        [#list 0..maxStringIndex as j]
-	          [#var matchedKind=info.finalKinds[(j/64)?int]]
-              [#if utils.isBitSet(matchedKind, j%64)]
-                 [#if ifGenerated]
-                 else if 
-                 [#elseif table_index != 0]
-                 if 
-                 [/#if]
-                 [#set ifGenerated = true]
-                 [#if table_index != 0]
-                   ((active${(j/64)?int} & ${utils.powerOfTwoInHex(j%64)}) != 0L) 
-                 [/#if]
-                 [#var kindToPrint=lexicalState.getKindToPrint(j, table_index)]
-                 [#if !lexicalState.subString[j]]
-                    [#var stateSetIndex=lexicalState.getStateSetForKind(table_index, j)]
-                    [#if stateSetIndex != -1]
-                    return jjStartNfaWithStates${lexicalState.suffix}(${table_index}, ${kindToPrint}, ${stateSetIndex});
-                    [#else]
-                    return jjStopAtPos(${table_index}, ${kindToPrint});
-                    [/#if]
-                 [#else]
-                    [#if table_index != 0 || (lexicalState.initMatch != 0&&lexicalState.initMatch != MAX_INT)]
-                     {
-                    jjmatchedKind = ${kindToPrint};
-                    jjmatchedPos = ${table_index};
-                 }
-                    [#else]
-                    jjmatchedKind = ${kindToPrint};
-                    [/#if]
-                 [/#if]
-              [/#if]
-	        [/#list]
-	      [/#if]
-	      [#if info.validKindCnt != 0]
-	           return jjMoveStringLiteralDfa${table_index+1}${lexicalState.suffix}[@ArgsList]
-	              [#list 0..maxStringIndex/64 as j]
-	                 [#if table_index<=maxStringLengthForActive[j]&&maxStringLengthForActive[j] != 0]
-	                    [#if table_index != 0]
-	                       active${j}
-	                    [/#if]
-	                    ${utils.toHexStringL(info.validKinds[j])}
-	                 [/#if]
-	              [/#list]
-	           [/@ArgsList];
-	      [#else][#-- a very special case--]
-	        [#if table_index = 0&&lexicalState.mixedCase]
-	           [#if lexicalState.hasNfa()]
-	           return jjMoveNfa${lexicalState.suffix}(${initState}, 0);
-	           [#else]
-	           return 1;
-	           [/#if]
-	        [#elseif table_index != 0][#-- No more str literals to look for --]
-	           break;
-	           [#set startNfaNeeded = true]
-	        [/#if]
-	      [/#if]
-	   [/#if]       
-    [/#list]
-    [#-- default means that the current characters is not in any of
-    the strings at this position--]
-         default : 
-            if (trace_enabled) LOGGER.info("   No string literal matches possible.");
-    [#if lexicalState.hasNfa()]
-       [#if table_index = 0]
-            return jjMoveNfa${lexicalState.suffix}(${initState}, 0);
-       [#else]
-            break;
-          [#set startNfaNeeded = true]
-       [/#if]
-    [#else]
-           return ${table_index+1};
-    [/#if]
-      }
-    [#if table_index != 0]
-       [#if startNfaNeeded]
-          [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
-            [#-- Here a string literal is successfully matched and no
-                 more string literals are possible. So set the kind and t
-                 state set up to and including this position for the matched
-                 string. --]
-            return jjStartNfa${lexicalState.suffix}[@ArgsList]
-               ${table_index-1}
-               [#list 0..maxStringIndex/64 as k]
-                 [#if table_index<=maxStringLengthForActive[k]]
-                  active${k}
-                 [#else]
-                   0L
-                 [/#if]
-               [/#list]
-            [/@ArgsList];
-          [#elseif lexicalState.hasNfa()]
-             return jjMoveNfa${lexicalState.suffix}(${initState}, ${table_index});
-          [#else]
-             return ${table_index+1};
-          [/#if]        
-       [/#if]
-    [/#if]
-   }
-  [/#list]
-[/#macro] 
-  
-[#macro DumpStartWithStates lexicalState]
-    private int jjStartNfaWithStates${lexicalState.suffix}(int pos, int kind, int state) {
-        jjmatchedKind = kind;
-        jjmatchedPos = pos;
-        if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
-        if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
-         int retval = input_stream.readChar();
-       if (retval >=0) {
-           curChar = (char) retval;
-       } 
-       else  { 
-            return pos + 1; 
-        }
-        if (trace_enabled) LOGGER.info("" + 
-     [#if numLexicalStates != 1]
-            "<${lexicalState.name}>"+  
-     [/#if]
-            "Current character : " + addEscapes(String.valueOf(curChar)) 
-            + " (" + (int)curChar + ") " + "at line " + input_stream.getEndLine() 
-            + " column " + input_stream.getEndColumn());
-        return jjMoveNfa${lexicalState.suffix}(state, pos+1);
-   }
-[/#macro]
- 
-[#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
-  [#var statesForPos=lexicalState.statesForPos]
-  [#var maxKindsReqd=(1+lexicalState.maxStringIndex/64)?int]
-  [#var ind=0]
-  [#var maxStringIndex=lexicalState.maxStringIndex]
-  [#var maxStringLength=lexicalState.maxStringLength]
-  
-    private int jjStartNfa${lexicalState.suffix}(int pos, 
-  [#list 0..(maxKindsReqd-1) as i]
-       long active${i}[#if i_has_next], [#else]) {[/#if]
-  [/#list]
-  [#if lexicalState.mixedCase] [#--  FIXME! Currently no test coverage of any sort for this. --]
-    [#if lexicalState.hasNfa()]
-       return jjMoveNfa${lexicalState.suffix}(${lexicalState.initStateName()}, pos+1);
-    [#else]
-       return pos + 1;
-    [/#if]
-    }
-  [#else]
-       return jjMoveNfa${lexicalState.suffix}(jjStopStringLiteralDfa${lexicalState.suffix}(pos, 
-     [#list 0..(maxKindsReqd-1) as i]
-        active${i}[#if i_has_next], [#else])[/#if]
-     [/#list]
-        , pos+1);}
-   [/#if]
-
-  
-    private final int jjStopStringLiteralDfa${lexicalState.suffix}(int pos, 
-   [#list 0..(maxKindsReqd-1) as i]
-    long active${i}[#if i_has_next], [/#if]
-   [/#list]
-  ) { 
-        if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
-        switch (pos) {
-  [#list 0..(maxStringLength-1) as i]
-	 [#if statesForPos[i]??]
-            case ${i} :
-        [#list statesForPos[i]?keys as stateSetString]
-           [#var condGenerated=false]
-           [#var actives=statesForPos[i][stateSetString]]
-           [#list 0..(maxKindsReqd-1) as j]
-             [#if actives[j] != 0]
-               [#if !condGenerated]
-               if (
-               [#else]
-               ||
-               [/#if]
-               [#set condGenerated = true]
-              (active${j} & ${utils.toHexStringL(actives[j])}) != 0L 
-             [/#if]
-           [/#list]
-           [#if condGenerated]
-               ) 
-              [#set ind = stateSetString?index_of(", ")]
-              [#var kindStr=stateSetString?substring(0, ind)]
-              [#var afterKind=stateSetString?substring(ind+2)] 
-              [#var jjmatchedPos=afterKind?substring(0, afterKind?index_of(", "))?number]
-              [#if kindStr != "2147483647"]
-                 {
-                 [#if i = 0]
-                    jjmatchedKind = ${kindStr};
-					[#if lexicalState.initMatch != 0&&lexicalState.initMatch != MAX_INT]
-                    jjmatchedPos = 0;
-                    [/#if]
-                 [#elseif i = jjmatchedPos]
-                    [#if lexicalState.subStringAtPos[i]]
-                    if (jjmatchedPos != ${i}) {
-                        jjmatchedKind = ${kindStr};
-                        jjmatchedPos = ${i};
-                    }
-                    [#else]
-                    jjmatchedKind = ${kindStr};
-                    jjmatchedPos = ${i};
-                    [/#if]
-                 [#else]
-                    [#if jjmatchedPos>0]
-                    if (jjmatchedPos < ${jjmatchedPos}) {
-                    [#else]
-                    if (jjmatchedPos == 0) {
-                    [/#if]
-                        jjmatchedKind = ${kindStr};
-                        jjmatchedPos = ${jjmatchedPos};
-                    }
-                 [/#if]
-              [/#if]
-              [#set ind = stateSetString?index_of(", ")]
-			  [#set kindStr = stateSetString?substring(0, ind)]
-			  [#set afterKind = stateSetString?substring(ind+2)]
-			  [#set stateSetString = afterKind?substring(afterKind?index_of(",")+2)]
-              [#if stateSetString = "null;"]
-                        return -1;
-              [#else]
-                   return ${lexicalState.addStartStateSet(stateSetString)};
-              [/#if]
-              [#if kindStr != "2147483647"]
-              }
-              [/#if]
-           [/#if]
-           [#set condGenerated = false]
-     [/#list]
-                       return -1;
-    [/#if]
-  [/#list]
-                   default :
-                       return -1;
-      }
-    }
-[/#macro]
-
-[#---
-   Utility macro to output a sequence of args, typically
-   to a method. The input can be passed in as an argument,
-   or via the macro's nested content. In either case, it
-   is just one argument per line. 
-   is just one argument per line. The macro takes care of 
-   commas and the opening and closing parentheses.  
---]   
-
-[#macro ArgsList input="" delimiter=","]
-   [#if input?length = 0]
-     [#set input]
-       [#nested]
-     [/#set]
-   [/#if]
-   [#set input = input?trim?split("
-")]
-   (
-   [#list input as arg]
-      [#set arg = arg?trim]
-      [#if arg?length != 0]
-        ${arg}
-        [#if arg_has_next]
-           ${delimiter} 
-        [/#if]
-      [/#if]
-   [/#list] 
-   )
-[/#macro]

@@ -901,10 +901,7 @@ public class Grammar extends BaseNode {
         return nodeVariableNameStack.get(nodeVariableNameStack.size() - 1);
     }
 
-    private final Utils utils = new Utils();
-    private List<String> nodeVariableNameStack = new ArrayList<>();
 
-    public Utils getUtils() {return utils;}
     static public String removeNonJavaIdentifierPart(String s) {
         StringBuilder buf = new StringBuilder(s.length());
         for (char c : s.toCharArray()) {
@@ -916,6 +913,12 @@ public class Grammar extends BaseNode {
         }
         return buf.toString();
     }
+
+    private final Utils utils = new Utils();
+    private List<String> nodeVariableNameStack = new ArrayList<>();
+    
+    public Utils getUtils() {return utils;}
+
     public class Utils {
         public void pushNodeVariableName(String jjtThis) {
             nodeVariableNameStack.add(jjtThis);
@@ -923,6 +926,55 @@ public class Grammar extends BaseNode {
 
         public void popNodeVariableName() {
             nodeVariableNameStack.remove(nodeVariableNameStack.size() - 1);
+        }
+
+
+        private Map<String, String> id_map = new HashMap<String, String>();
+        private int id = 1;
+        
+        public String toHexString(int i) {
+            return "0x" + Integer.toHexString(i);
+        }
+
+        public String toHexStringL(long l) {
+            return "0x" + Long.toHexString(l) + "L";
+        }
+
+        public String toOctalString(int i) {
+            return "\\" + Integer.toOctalString(i);
+        }
+
+        public int charAt(String s, int i) {
+            return (int) s.charAt(i);
+        }
+
+        public String addEscapes(String input) {
+            return ParseException.addEscapes(input);
+        }
+
+        public boolean isBitSet(long num, int bit) {
+            return (num & (1L<<bit)) != 0;
+        }
+        
+        public int firstCharAsInt(String s) {
+            return (int) s.charAt(0);
+        }
+        
+        public String powerOfTwoInHex(int i) {
+            return toHexStringL(1L << i);
+        }
+        
+        public BitSet newBitSet() {
+            return new BitSet();
+        }
+        
+        public String getID(String name) {
+            String value = id_map.get(name);
+            if (value == null) {
+              value = "prod" + id++;
+              id_map.put(name, value);
+            }
+            return value;
         }
     }
 }

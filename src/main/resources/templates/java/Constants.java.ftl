@@ -52,7 +52,7 @@ String[] tokenImage = {
 
 [#macro output_regexp regexp]
    [#if regexp.class.name?ends_with("StringLiteral")]
-      "\"${utils.addEscapes(utils.addEscapes(regexp.image))}\""   
+      "\"${grammar.utils.addEscapes(regexp.image)}\""   
    [#elseif regexp.label != ""]
       "<${regexp.label}>"
    [#else]

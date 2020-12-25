@@ -135,7 +135,7 @@ public class FilesGenerator {
         HashMap<String, Object> dataModel = new HashMap<String, Object>();
         dataModel.put("grammar", grammar);
         dataModel.put("filename", currentFilename);
-        dataModel.put("utils", new Utils());
+//        dataModel.put("utils", new Utils());
         dataModel.put("generated_by", com.javacc.Main.PROG_NAME);
         String classname = currentFilename.substring(0, currentFilename.length() - 5);
         String superClassName = superClassLookup.get(classname);
@@ -340,56 +340,5 @@ public class FilesGenerator {
             return new File(grammar.getNodeOutputDirectory(nodeName), className + ".java");
         }
         return new File(new File(sourceBase, explicitlyDeclaredPackage.replace('.', '/')), className + ".java"); 
-    }
-
-    
-    public class Utils {
-        private Map<String, String> id_map = new HashMap<String, String>();
-        private int id = 1;
-        
-        public String toHexString(int i) {
-            return "0x" + Integer.toHexString(i);
-        }
-
-        public String toHexStringL(long l) {
-            return "0x" + Long.toHexString(l) + "L";
-        }
-
-        public String toOctalString(int i) {
-            return "\\" + Integer.toOctalString(i);
-        }
-
-        public int charAt(String s, int i) {
-            return (int) s.charAt(i);
-        }
-        
-        public String addEscapes(String input) {
-            return ParseException.addEscapes(input);
-        }
-
-        public boolean isBitSet(long num, int bit) {
-            return (num & (1L<<bit)) != 0;
-        }
-        
-        public int firstCharAsInt(String s) {
-            return (int) s.charAt(0);
-        }
-        
-        public String powerOfTwoInHex(int i) {
-            return toHexStringL(1L << i);
-        }
-        
-        public BitSet newBitSet() {
-            return new BitSet();
-        }
-        
-        public String getID(String name) {
-            String value = id_map.get(name);
-            if (value == null) {
-              value = "prod" + id++;
-              id_map.put(name, value);
-            }
-            return value;
-        }
     }
 }

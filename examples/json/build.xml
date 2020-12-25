@@ -15,7 +15,6 @@
    <target name="parser1-gen" unless="parser1.uptodate">
         <mkdir dir="../../bin"/>
         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
-
             <arg value="${basedir}/JSON.javacc"/>
         </java>
    </target>
