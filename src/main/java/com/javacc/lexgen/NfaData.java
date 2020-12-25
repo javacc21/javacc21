@@ -107,14 +107,15 @@ public class NfaData {
             initialState.generateCode();
             initialState.generateInitMoves();
         }
-        if (initialState.getKind() != Integer.MAX_VALUE && initialState.getKind() != 0) {
-            if (lexerData.getSkipSet().get(initialState.getKind())
-                || (lexerData.getSpecialSet().get(initialState.getKind())))
+        int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
+        if (initialState.getType() != null && initialOrdinal != 0) {
+            if (lexerData.getSkipSet().get(initialOrdinal)
+                || (lexerData.getSpecialSet().get(initialOrdinal)))
                 lexerData.hasSkipActions = true;
-            else if (lexerData.getMoreSet().get(initialState.getKind()))
+            else if (lexerData.getMoreSet().get(initialOrdinal))
                 lexerData.hasMoreActions = true;
-            if (lexicalState.initMatch == 0 || lexicalState.initMatch > initialState.getKind()) {
-                lexicalState.initMatch = initialState.getKind();
+            if (lexicalState.initMatch == 0 || lexicalState.initMatch > initialOrdinal) {
+                lexicalState.initMatch = initialOrdinal;
                 lexerData.hasEmptyMatch = true;
             }
         } else if (lexicalState.initMatch == 0) {

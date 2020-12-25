@@ -64,7 +64,7 @@ public class NfaBuilder extends Node.Visitor {
     void buildStates(RegularExpression regularExpression) {
         visit(regularExpression);
         end.setFinal(true);
-        end.setKind(regularExpression.getOrdinal());
+        end.setType(regularExpression);
         lexicalState.getInitialState().addEpsilonMove(start);
     }
 
@@ -81,7 +81,7 @@ public class NfaBuilder extends Node.Visitor {
         NfaState finalState = end = new NfaState(lexicalState);
         for (CharacterRange cr : descriptors) {
             if (cr.isSingleChar()) {
-                startState.addChar(cr.left);
+                startState.addCharMove(cr.left);
             } else {
                 startState.addRange(cr.left, cr.right);
             }
@@ -119,10 +119,10 @@ public class NfaBuilder extends Node.Visitor {
     public void visit(RegexpStringLiteral stringLiteral) {
         NfaState state = end = start = new NfaState(lexicalState);
         for (char ch : stringLiteral.getImage().toCharArray()) {
-            state.addChar(ch);
+            state.addCharMove(ch);
             if (grammar.getOptions().getIgnoreCase() || ignoreCase) {
-                state.addChar(Character.toLowerCase(ch));
-                state.addChar(Character.toUpperCase(ch));
+                state.addCharMove(Character.toLowerCase(ch));
+                state.addCharMove(Character.toUpperCase(ch));
             }
             end = new NfaState(lexicalState);
             state.setNext(end);

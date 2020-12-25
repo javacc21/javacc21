@@ -46,7 +46,7 @@ public class DfaData {
     private BitSet subStringSet = new BitSet();
     private BitSet subStringAtPosSet = new BitSet();
     private List<Map<String, KindInfo>> stringLiteralTables = new ArrayList<>();
-    private int[] maxStringLengthForActive = new int[100]; // 6400 tokens
+    private int[] maxStringLengthForActive = new int[100]; 
     private int maxStringIndex, maxStringLength;
 
     DfaData(LexicalStateData lexicalState) {
@@ -131,17 +131,7 @@ public class DfaData {
         for (int i = 0; i < getMaxStringLength(); i++) {
             Map<String, KindInfo> tab = getStringLiteralTables().get(i);
             for (String key : tab.keySet()) {
-                assert key.length() ==1;
-                KindInfo info = tab.get(key);
-                if (generateDfaCase(key.charAt(0), info, i)) {
-                    if (info.getFinalKindCnt() != 0) {
-                        for (int j = 0; j < getMaxStringIndex(); j++) {
-                        	if (info.isFinalKind(j) && !subStringSet.get(j)) {
-                        		lexicalState.getNfaData().getStateSetForKind(i, j); // <-- needs to be called!
-                        	}
-                        }
-                    }
-                }
+                generateDfaCase(key.charAt(0), tab.get(key), i);
             }
         }
     }

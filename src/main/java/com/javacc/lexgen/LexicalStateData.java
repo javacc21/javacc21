@@ -58,6 +58,7 @@ public class LexicalStateData {
     private BitSet marks = new BitSet();
     private boolean done;
     int initMatch;
+    RegularExpression initialKind;
 
 
     public LexicalStateData(Grammar grammar, String name) {
