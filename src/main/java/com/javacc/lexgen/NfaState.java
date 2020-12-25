@@ -525,9 +525,6 @@ public class NfaState {
         if (byteNum >=0 && !this.asciiMoves.equals(other.asciiMoves)) {
             return false;
         }
-        if (this.getNext().epsilonMovesString == other.getNext().epsilonMovesString) {
-            return true;
-        }
         if (this.getNext().epsilonMovesString == null || other.getNext().epsilonMovesString == null) {
             return false;
         }

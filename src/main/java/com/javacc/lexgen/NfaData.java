@@ -296,8 +296,8 @@ public class NfaData {
             if (!lexicalState.containsRegularExpression(re)) {
                 continue;
             }
-            String image = lexicalState.getImage(i);
-            if (image == null || image.length() < 1) {
+            String image = re.getImage();
+            if (image == null || image.length() ==0 ) {
                 continue;
             }
             List<NfaState> oldStates = new ArrayList<NfaState>(initialState.getEpsilonMoves());
@@ -314,7 +314,6 @@ public class NfaData {
                 } else {
                     kind = MoveFromSet(image.charAt(j), oldStates, newStates);
                     oldStates.clear();
-
                     if (lexicalState.getDfaData().getStrKind(image.substring(0, j + 1)) < kind) {
                         intermediateKinds[i][j] = kind = Integer.MAX_VALUE;
                         jjmatchedPos = 0;
@@ -370,7 +369,7 @@ public class NfaData {
 
     public int getKindToPrint(int kind, int index) {
         if (cannotBeMatchedAsStringLiteral(kind, index)) {
-            grammar.addWarning(null, " \"" + ParseException.addEscapes(lexicalState.getImage(kind))
+            grammar.addWarning(null, " \"" + ParseException.addEscapes(lexerData.getRegularExpression(kind).getImage())
                     + "\" cannot be matched as a string literal token " + "at line "
                     + getLine(kind) + ", column " + getColumn(kind) + ". It will be matched as "
                     + getLabel(intermediateKinds[kind][index]) + ".");

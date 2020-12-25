@@ -164,11 +164,10 @@ public class DfaData {
     final int getStrKind(String str) {
         for (int i = 0; i < getMaxStringIndex(); i++) {
             RegularExpression re = grammar.getLexerData().getRegularExpression(i);
-            if (!lexicalState.containsRegularExpression(re))
-                continue;
-
-            if (lexicalState.getImage(i) != null && lexicalState.getImage(i).equals(str))
-                return i;
+            if (lexicalState.containsRegularExpression(re)) {
+                if (re.getImage() != null && re.getImage().equals(str))
+                    return i;
+            }
         }
         return Integer.MAX_VALUE;
     }
@@ -177,26 +176,26 @@ public class DfaData {
         for (int i = 0; i < getMaxStringIndex(); i++) {
             RegularExpression re = grammar.getLexerData().getRegularExpression(i);
             subStringSet.clear(i);
-            if (lexicalState.getImage(i) == null || !lexicalState.containsRegularExpression(re)) {
+            if (re.getImage() == null || !lexicalState.containsRegularExpression(re)) {
                 continue;
             }
             if (lexicalState.isMixedCase()) {
-                // We will not optimize for mixed case
+                // We will not optimize ior mixed case
                 subStringSet.set(i);
-                subStringAtPosSet.set(lexicalState.getImage(i).length() - 1);
+                subStringAtPosSet.set(re.getImage().length() - 1);
                 continue;
             }
             for (int j = 0; j < maxStringIndex; j++) {
                 RegularExpression re2 = grammar.getLexerData().getRegularExpression(j);
-                if (j != i && lexicalState.containsRegularExpression(re2) && lexicalState.getImage(j) != null) {
-                    if (lexicalState.getImage(j).indexOf(lexicalState.getImage(i)) == 0) {
+                if (j != i && lexicalState.containsRegularExpression(re2) && re2.getImage() != null) {
+                    if (re2.getImage().indexOf(re.getImage()) == 0) {
                         subStringSet.set(i);
-                        subStringAtPosSet.set(lexicalState.getImage(i).length() - 1);
+                        subStringAtPosSet.set(re.getImage().length() - 1);
                         break;
                     } else if (grammar.getOptions().getIgnoreCase()
-                            && lexicalState.getImage(j).toLowerCase().startsWith(lexicalState.getImage(i).toLowerCase())) {
+                            && re2.getImage().toLowerCase().startsWith(re.getImage().toLowerCase())) {
                         subStringSet.set(i);
-                        subStringAtPosSet.set(lexicalState.getImage(i).length() - 1);
+                        subStringAtPosSet.set(re.getImage().length() - 1);
                         break;
                     }
                 }

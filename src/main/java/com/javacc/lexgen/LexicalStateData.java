@@ -53,13 +53,10 @@ public class LexicalStateData {
     private boolean mixed;
     private RegularExpression currentRegexp;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
-    private String[] images;
 
     private BitSet marks = new BitSet();
     private boolean done;
     int initMatch;
-    RegularExpression initialKind;
-
 
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -83,8 +80,6 @@ public class LexicalStateData {
     public DfaData getDfaData() {return dfaData;}
 
     public NfaData getNfaData() {return nfaData;}
-
-    String getImage(int i) {return images[i];}
 
     boolean isMarked(int i) {return marks.get(i);}
 
@@ -143,7 +138,6 @@ public class LexicalStateData {
     }
 
     List<RegexpChoice> process() {
-        images = new String[lexerData.getTokenCount()];
     	List<RegexpChoice> choices = new ArrayList<>();
         boolean isFirst = true;
         for (TokenProduction tp : tokenProductions) {
@@ -175,7 +169,6 @@ public class LexicalStateData {
                     dfaData.setMaxStringIndex(currentRegexp.getOrdinal() + 1);
                 }
                 dfaData.generate((RegexpStringLiteral) currentRegexp);
-                images[currentRegexp.getOrdinal()] = ((RegexpStringLiteral) currentRegexp).getImage();
                 if (!isFirst && !mixed && ignoring != ignore) {
                     mixed = true;
                 }
