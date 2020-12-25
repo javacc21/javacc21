@@ -144,6 +144,10 @@ public class NfaState {
         return next;
     }
 
+    void setNext(NfaState next) {
+        this.next = next;
+    }
+
     public int getKindToPrint() {
         return typeToPrint == null ? Integer.MAX_VALUE : typeToPrint.getOrdinal();
     }
@@ -258,19 +262,15 @@ public class NfaState {
                 it.remove();
             }
         }
-
     }
 
     void generateNextStatesCode() {
         if (getNext().usefulEpsilonMoveCount > 0) {
-            getNext().getEpsilonMovesString();
+            getNext().generateEpsilonMovesString();
         }
     }
 
-    public String getEpsilonMovesString() {
-        if (epsilonMovesString != null) {
-            return epsilonMovesString;
-        }
+    private void generateEpsilonMovesString() {
         int[] stateNames = new int[usefulEpsilonMoveCount];
         if (usefulEpsilonMoveCount > 0) {
             usefulEpsilonMoveCount = 0;
@@ -291,6 +291,12 @@ public class NfaState {
         }
         if (epsilonMovesString != null) {
             lexicalState.getNfaData().getAllNextStates().put(epsilonMovesString, stateNames);
+        }
+    }
+
+    public String getEpsilonMovesString() {
+        if (epsilonMovesString == null) {
+            generateEpsilonMovesString();
         }
         return epsilonMovesString;
     }
@@ -486,7 +492,7 @@ public class NfaState {
         nonAsciiTableForMethod.add(this);
     }
 
-      void generateInitMoves() {
+    void generateInitMoves() {
         getEpsilonMovesString();
         if (epsilonMovesString == null)
             epsilonMovesString = "null;";
@@ -559,8 +565,4 @@ public class NfaState {
         return true;
     }
  
-    void setNext(NfaState next) {
-        this.next = next;
-    }
-
 }

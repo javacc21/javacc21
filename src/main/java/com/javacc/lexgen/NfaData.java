@@ -361,14 +361,11 @@ public class NfaData {
     }
 
     private static int MoveFromSet(char c, List<NfaState> states, List<NfaState> newStates) {
-        int tmp;
-        int retVal = Integer.MAX_VALUE;
-
-        for (int i = states.size(); i-- > 0;)
-            if (retVal > (tmp = states.get(i).moveFrom(c, newStates)))
-                retVal = tmp;
-
-        return retVal;
+        int result = Integer.MAX_VALUE;
+        for (NfaState state : states) {
+            result = Math.min(result, state.moveFrom(c, newStates));
+        }
+        return result;
     }
 
     public int getKindToPrint(int kind, int index) {
