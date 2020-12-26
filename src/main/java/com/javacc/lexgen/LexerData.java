@@ -50,7 +50,6 @@ public class LexerData {
     private TokenSet skipSet, specialSet, moreSet, tokenSet;
     
     private int stateSetSize;
-    boolean hasEmptyMatch;
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
     private int lohiByteCount;
@@ -123,6 +122,7 @@ public class LexerData {
     }
 
     public void addRegularExpression(RegularExpression regexp) {
+        regexp.setOrdinal(regularExpressions.size());
         regularExpressions.add(regexp);
     }
     

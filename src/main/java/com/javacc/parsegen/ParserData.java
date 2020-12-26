@@ -94,7 +94,6 @@ public class ParserData {
          * in these cases, but serious analysis seems to show that it was not something
          * of any real value.
          */
-
         for (ExpansionSequence sequence : grammar.descendants(ExpansionSequence.class)) {
             Node parent = sequence.getParent();
             if (sequence.getHasExplicitLookahead() 
@@ -273,7 +272,6 @@ public class ParserData {
                             // than the current one.
                             // So go ahead and insert this item.
                             if (stringLiteral.getOrdinal() == 0) {
-                                stringLiteral.setOrdinal(lexerData.getTokenCount());
                                 lexerData.addRegularExpression(stringLiteral);
                             }
                             table2 = new HashMap<String, RegularExpression>();
@@ -332,7 +330,6 @@ public class ParserData {
                             }
                             // This entry is legitimate. So insert it.
                             if (stringLiteral.getOrdinal() == 0) {
-                                stringLiteral.setOrdinal(lexerData.getTokenCount());
                                 lexerData.addRegularExpression(stringLiteral);
                             }
                             table2.put(stringLiteral.getImage(), stringLiteral);
@@ -344,7 +341,6 @@ public class ParserData {
                             RegularExpression re = (RegularExpression) table2.get(stringLiteral.getImage());
                             if (re == null) {
                                 if (stringLiteral.getOrdinal() == 0) {
-                                    stringLiteral.setOrdinal(lexerData.getTokenCount());
                                     lexerData.addRegularExpression(stringLiteral);
                                 }
                                 table2.put(stringLiteral.getImage(), stringLiteral);
@@ -397,7 +393,6 @@ public class ParserData {
                         }
                     }
                 } else if (!(res.getRegexp() instanceof RegexpRef)) {
-                    res.getRegexp().setOrdinal(lexerData.getTokenCount());
                     lexerData.addRegularExpression(res.getRegexp());
                 }
                 if (!(res.getRegexp() instanceof RegexpRef)
@@ -479,11 +474,9 @@ public class ParserData {
                 List<RegexpSpec> respecs = tp.getRegexpSpecs();
                 for (RegexpSpec res : respecs) {
                     if (res.getRegexp() instanceof RegexpRef) {
-
                         RegexpRef jn = (RegexpRef) res.getRegexp();
                         RegularExpression rexp = grammar.getNamedToken(jn.getLabel());
                         if (rexp == null) {
-                            jn.setOrdinal(lexerData.getTokenCount());
                             lexerData.addRegularExpression(jn);
                             grammar.addNamedToken(jn.getLabel(), jn);
                             grammar.addTokenName(jn.getOrdinal(), jn.getLabel());
