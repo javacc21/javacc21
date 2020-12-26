@@ -187,6 +187,9 @@ public class ParserData {
          */
         for (TokenProduction tp: grammar.descendants(TokenProduction.class)) { 
             for (RegexpSpec res : tp.getRegexpSpecs()) {
+                if (res.getRegexp().matchesEmptyString()) {
+                    grammar.addSemanticError(res.getRegexp(), "Regular Expression can match empty string. This is not allowed here.");
+                }
                 if (res.getNextState() != null) {
                     if (lexerData.getLexicalStateIndex(res.getNextState()) == -1) {
                         grammar.addSemanticError(res.getNsTok(), "Lexical state \""

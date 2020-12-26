@@ -114,12 +114,6 @@ public class NfaData {
                 lexerData.hasSkipActions = true;
             else if (lexerData.getMoreSet().get(initialOrdinal))
                 lexerData.hasMoreActions = true;
-            if (lexicalState.initMatch == 0 || lexicalState.initMatch > initialOrdinal) {
-                lexicalState.initMatch = initialOrdinal;
-                lexerData.hasEmptyMatch = true;
-            }
-        } else if (lexicalState.initMatch == 0) {
-            lexicalState.initMatch = Integer.MAX_VALUE;
         }
         if (indexedAllStates.size() != 0 && !lexicalState.isMixedCase()) {
             generateNfaStartStates();
@@ -143,12 +137,6 @@ public class NfaData {
         for (NfaState state : v) {
             if (state.getIndex() != -1 /*&& state != singlesToSkip*/)
                 allStates.set(state.getIndex(), state);
-        }
-    }
-
-    void computeClosures() {
-        for (NfaState state : allStates) {
-            state.optimizeEpsilonMoves();
         }
     }
 

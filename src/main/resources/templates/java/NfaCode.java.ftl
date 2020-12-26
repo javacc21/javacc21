@@ -407,9 +407,7 @@
                  {
                  [#if i = 0]
                     jjmatchedKind = ${kindStr};
-					[#if lexicalState.initMatch != 0&&lexicalState.initMatch != MAX_INT]
                     jjmatchedPos = 0;
-                    [/#if]
                  [#elseif i = jjmatchedPos]
                     [#if dfaData.subStringAtPos[i]]
                     if (jjmatchedPos != ${i}) {

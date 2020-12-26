@@ -2631,6 +2631,10 @@ INJECT RegexpStringLiteral :
   public int hashCode() {
       return image.hashCode();
   }
+
+  public boolean matchesEmptyString() {
+      return getImage().length() == 0;
+  }
 }
 
 RegexpRef RegexpRef : 
@@ -2665,9 +2669,13 @@ INJECT RegexpRef :
     public boolean isPrivate() {
         return regexp!= null && regexp.isPrivate(); //REVISIT, why do we need a null check?
     }
+
+    public boolean matchesEmptyString() {
+        return regexp != null && regexp.matchesEmptyString();
+    }
 }
 
-void EndOfFile : 
+EndOfFile : 
     "<" 
     <IDENTIFIER>  
     [
@@ -2680,7 +2688,10 @@ void EndOfFile :
 
 
 
-INJECT EndOfFile : extends com.javacc.parsegen.RegularExpression;
+INJECT EndOfFile : extends com.javacc.parsegen.RegularExpression
+{
+    public boolean matchesEmptyString() {return true;}
+}
 
 RegexpChoice :
     RegexpSequence 
@@ -2698,6 +2709,15 @@ INJECT RegexpChoice :
 {
     public List<RegularExpression> getChoices() {
         return childrenOfType(RegularExpression.class);
+    }
+
+    public boolean matchesEmptyString() {
+        for (RegularExpression choice: getChoices()) {
+            if (choice.matchesEmptyString()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
@@ -2720,6 +2740,13 @@ INJECT RegexpSequence :
 {
    public List<RegularExpression> getUnits() {
        return childrenOfType(RegularExpression.class);
+   }
+
+   public boolean matchesEmptyString() {
+       for (RegularExpression child : getUnits()) {
+           if (!child.matchesEmptyString()) return false;
+       }
+       return true;
    }
 }
 
@@ -2790,6 +2817,11 @@ INJECT RepetitionRange :
     public RegularExpression getRegexp() { 
         return firstChildOfType(RegularExpression.class);
     }
+
+    public boolean matchesEmptyString() {
+        if (min ==0) return true;
+        return getRegexp().matchesEmptyString();
+    }
 }
 
 INJECT OneOrMoreRegexp : 
@@ -2799,6 +2831,10 @@ INJECT OneOrMoreRegexp :
    public RegularExpression getRegexp() 
    {
       return firstChildOfType(RegularExpression.class);
+   }
+
+   public boolean matchesEmptyString() {
+       return getRegexp().matchesEmptyString(); 
    }
 }
 
@@ -2820,6 +2856,10 @@ INJECT ZeroOrMoreRegexp :
           addChild(0, regexp);
       }
    }
+
+   public boolean matchesEmptyString() {
+       return true;
+   }
 }
 
 INJECT ZeroOrOneRegexp : 
@@ -2839,6 +2879,10 @@ INJECT ZeroOrOneRegexp :
       } else {
           addChild(0, regexp);
       }
+   }
+
+   public boolean matchesEmptyString() {
+       return true;
    }
 }
 
@@ -2872,6 +2916,10 @@ INJECT CharacterList :
                }
 	       }
         }
+        return false;
+    }
+
+public boolean matchesEmptyString() {
         return false;
     }
 }

@@ -192,10 +192,6 @@ public class LexerData {
         return hasSkipActions;
     }
 
-    public boolean getHasEmptyMatch() {
-        return this.hasEmptyMatch;
-    }
-
     public boolean hasTokenAction(int index) {
         return tokenSet.get(index);
     }
@@ -292,70 +288,12 @@ public class LexerData {
         for (RegexpChoice choice : choices) {
             checkUnmatchability(choice);
         }
-        checkEmptyStringMatch();
     }
 
     void expandStateSetSize(int size) {
         if (stateSetSize < size) stateSetSize = size;
     }
 
-    void checkEmptyStringMatch() {
-        Set<LexicalStateData> statesDone = new HashSet<>();
-        Outer: for (LexicalStateData ls : lexicalStates) {
-            if (statesDone.contains(ls) || ls.getInitMatch() == 0 || ls.getInitMatch() == Integer.MAX_VALUE) {
-                continue;
-            }
-            Set<LexicalStateData> statesSeen = new HashSet<>();
-            statesDone.add(ls);
-            statesSeen.add(ls);
-            String reList = "";
-            int len = 0;
-            String cycle = ls.getName() + "-->";
-            int initMatch = ls.getInitMatch();
-            LexicalStateData newLexState = ls;
-            while (getRegularExpression(initMatch).getNewLexicalState() != null) {
-                newLexState = getRegularExpression(initMatch).getNewLexicalState();
-                cycle += newLexState.getName();
-                if (statesSeen.contains(newLexState)) {
-                    break;
-                }
-                cycle += "-->";
-                statesDone.add(newLexState);
-                statesSeen.add(newLexState);
-                initMatch = newLexState.getInitMatch();
-                if (initMatch == 0 || initMatch == Integer.MAX_VALUE) {
-                    continue Outer;
-                }
-                if (len != 0) {
-                    reList += "; ";
-                }
-                reList += "line " + getRegularExpression(initMatch).getBeginLine() + ", column "
-                        + getRegularExpression(initMatch).getBeginColumn();
-                len++;
-            }
-            initMatch = newLexState.getInitMatch();
-            if (getRegularExpression(initMatch).getNewLexicalState() == null) {
-                cycle += getRegularExpression(initMatch).getLexicalState().getName();
-            }
-            initMatch = ls.getInitMatch();
-            RegularExpression re = getRegularExpression(initMatch);
-            if (len == 0) {
-                grammar.addWarning(re, "Regular expression"
-                        + ((re.getLabel().equals("")) ? "" : (" for " + getRegularExpression(initMatch).getLabel()))
-                        + " can be matched by the empty string (\"\") in lexical state " + ls.getName()
-                        + ". This can result in an endless loop of " + "empty string matches.");
-            } else {
-                grammar.addWarning(re,
-                        "Regular expression" + ((re.getLabel().equals("")) ? "" : (" for " + re.getLabel()))
-                                + " can be matched by the empty string (\"\") in lexical state " + ls.getName()
-                                + ". This regular expression along with the " + "regular expressions at " + reList
-                                + " forms the cycle \n   " + cycle
-                                + "\ncontaining regular expressions with empty matches."
-                                + " This can result in an endless loop of empty string matches.");
-            }
-        }
-    }
-    
     //What about the case of a regexp existing in multiple lexical states? REVISIT (JR)
     static public void checkUnmatchability(RegexpChoice choice) {
         for (RegularExpression curRE : choice.getChoices()) {

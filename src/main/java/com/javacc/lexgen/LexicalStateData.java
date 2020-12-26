@@ -55,7 +55,6 @@ public class LexicalStateData {
 
     private BitSet marks = new BitSet();
     private boolean done;
-    int initMatch;
 
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -69,7 +68,7 @@ public class LexicalStateData {
     Grammar getGrammar() {
         return grammar;
     }
-
+   
     NfaState getInitialState() {return nfaData.initialState;}
 
     public String getName() {return name;}
@@ -127,9 +126,10 @@ public class LexicalStateData {
         return mixed;
     }
 
-    public int getInitMatch() {
-        return initMatch;
-    }
+/*    public int getInitMatch() {
+//        return initMatch;
+        return Integer.MAX_VALUE;
+    }*/
 
     public boolean getCreateStartNfa() {
         return !mixed && nfaData.indexedAllStates.size() != 0;

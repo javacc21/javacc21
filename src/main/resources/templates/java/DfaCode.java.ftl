@@ -174,7 +174,7 @@
                     return jjStopAtPos(${table_index}, ${kindToPrint});
                     [/#if]
                  [#else]
-                    [#if table_index != 0 || (lexicalState.initMatch != 0&&lexicalState.initMatch != MAX_INT)]
+                    [#if table_index != 0]
                      {
                     jjmatchedKind = ${kindToPrint};
                     jjmatchedPos = ${table_index};
