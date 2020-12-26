@@ -51,7 +51,6 @@ public class LexicalStateData {
     private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
 
     private boolean mixed;
-    private RegularExpression currentRegexp;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
 
     private BitSet marks = new BitSet();
@@ -72,8 +71,6 @@ public class LexicalStateData {
     }
 
     NfaState getInitialState() {return nfaData.initialState;}
-
-    RegularExpression getCurrentRegexp() {return currentRegexp;}
 
     public String getName() {return name;}
 
@@ -174,7 +171,7 @@ public class LexicalStateData {
         }
         List<RegexpChoice> choices = new ArrayList<>();
         for (RegexpSpec respec : tp.getRegexpSpecs()) {
-            currentRegexp = respec.getRegexp();
+            RegularExpression currentRegexp = respec.getRegexp();
             regularExpressions.add(currentRegexp);
             currentRegexp.setIgnoreCase(ignore);
             if (currentRegexp.isPrivate()) {
