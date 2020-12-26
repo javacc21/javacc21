@@ -1765,8 +1765,8 @@ ForStatement :
 ;
 
 ForInit :
-  SCAN Modifiers Type <IDENTIFIER> 
-  => LocalVariableDeclaration
+  //SCAN Modifiers Type <IDENTIFIER> =>
+  LocalVariableDeclaration
   |
   StatementExpressionList
 ;

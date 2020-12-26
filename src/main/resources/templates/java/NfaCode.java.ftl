@@ -348,10 +348,10 @@
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
   [#var dfaData = lexicalState.dfaData] 
   [#var statesForPos=lexicalState.nfaData.statesForPos]
-  [#var maxKindsReqd=(1+dfaData.maxStringIndex/64)?int]
+  [#var maxKindsReqd=(1+lexicalState.maxStringIndex/64)?int]
   [#var ind=0]
-  [#var maxStringIndex=dfaData.maxStringIndex]
-  [#var maxStringLength=dfaData.maxStringLength]
+  [#var maxStringIndex=lexicalState.maxStringIndex]
+  [#var maxStringLength=lexicalState.maxStringLength]
   
     private int jjStartNfa_${lexicalState.name}(int pos, 
   [#list 0..(maxKindsReqd-1) as i]

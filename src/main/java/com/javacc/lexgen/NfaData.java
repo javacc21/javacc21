@@ -107,14 +107,15 @@ public class NfaData {
             initialState.generateCode();
             initialState.generateInitMoves();
         }
-        if (initialState.getKind() != Integer.MAX_VALUE && initialState.getKind() != 0) {
-            if (lexerData.getSkipSet().get(initialState.getKind())
-                || (lexerData.getSpecialSet().get(initialState.getKind())))
+        int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
+        if (initialState.getType() != null && initialOrdinal != 0) {
+            if (lexerData.getSkipSet().get(initialOrdinal)
+                || (lexerData.getSpecialSet().get(initialOrdinal)))
                 lexerData.hasSkipActions = true;
-            else if (lexerData.getMoreSet().get(initialState.getKind()))
+            else if (lexerData.getMoreSet().get(initialOrdinal))
                 lexerData.hasMoreActions = true;
-            if (lexicalState.initMatch == 0 || lexicalState.initMatch > initialState.getKind()) {
-                lexicalState.initMatch = initialState.getKind();
+            if (lexicalState.initMatch == 0 || lexicalState.initMatch > initialOrdinal) {
+                lexicalState.initMatch = initialOrdinal;
                 lexerData.hasEmptyMatch = true;
             }
         } else if (lexicalState.initMatch == 0) {
@@ -281,22 +282,22 @@ public class NfaData {
         Set<NfaState> seenStates = new HashSet<>();
         Map<String, String> stateSets = new HashMap<String, String>();
         String stateSetString = "";
-        int maxKindsReqd = lexicalState.getDfaData().getMaxStringIndex() / 64 + 1;
+        int maxKindsReqd = lexicalState.getMaxStringIndex() / 64 + 1;
         long[] actives;
         List<NfaState> newStates = new ArrayList<>();
 
-        statesForPos = new ArrayList<Map<String, long[]>>(lexicalState.getDfaData().getMaxStringLength());
-        for (int k = 0; k < lexicalState.getDfaData().getMaxStringLength(); k++)
+        statesForPos = new ArrayList<Map<String, long[]>>(lexicalState.getMaxStringLength());
+        for (int k = 0; k < lexicalState.getMaxStringLength(); k++)
             statesForPos.add(null);
-        intermediateKinds = new int[lexicalState.getDfaData().getMaxStringIndex() + 1][];
-        intermediateMatchedPos = new int[lexicalState.getDfaData().getMaxStringIndex() + 1][];
-        for (int i = 0; i < lexicalState.getDfaData().getMaxStringIndex(); i++) {
+        intermediateKinds = new int[lexicalState.getMaxStringIndex() + 1][];
+        intermediateMatchedPos = new int[lexicalState.getMaxStringIndex() + 1][];
+        for (int i = 0; i < lexicalState.getMaxStringIndex(); i++) {
             RegularExpression re = lexerData.getRegularExpression(i);
             if (!lexicalState.containsRegularExpression(re)) {
                 continue;
             }
-            String image = lexicalState.getImage(i);
-            if (image == null || image.length() < 1) {
+            String image = re.getImage();
+            if (image == null || image.length() ==0 ) {
                 continue;
             }
             List<NfaState> oldStates = new ArrayList<NfaState>(initialState.getEpsilonMoves());
@@ -313,7 +314,6 @@ public class NfaData {
                 } else {
                     kind = MoveFromSet(image.charAt(j), oldStates, newStates);
                     oldStates.clear();
-
                     if (lexicalState.getDfaData().getStrKind(image.substring(0, j + 1)) < kind) {
                         intermediateKinds[i][j] = kind = Integer.MAX_VALUE;
                         jjmatchedPos = 0;
@@ -360,19 +360,16 @@ public class NfaData {
     }
 
     private static int MoveFromSet(char c, List<NfaState> states, List<NfaState> newStates) {
-        int tmp;
-        int retVal = Integer.MAX_VALUE;
-
-        for (int i = states.size(); i-- > 0;)
-            if (retVal > (tmp = states.get(i).moveFrom(c, newStates)))
-                retVal = tmp;
-
-        return retVal;
+        int result = Integer.MAX_VALUE;
+        for (NfaState state : states) {
+            result = Math.min(result, state.moveFrom(c, newStates));
+        }
+        return result;
     }
 
     public int getKindToPrint(int kind, int index) {
         if (cannotBeMatchedAsStringLiteral(kind, index)) {
-            grammar.addWarning(null, " \"" + ParseException.addEscapes(lexicalState.getImage(kind))
+            grammar.addWarning(null, " \"" + ParseException.addEscapes(lexerData.getRegularExpression(kind).getImage())
                     + "\" cannot be matched as a string literal token " + "at line "
                     + getLine(kind) + ", column " + getColumn(kind) + ". It will be matched as "
                     + getLabel(intermediateKinds[kind][index]) + ".");
@@ -391,7 +388,7 @@ public class NfaData {
         RegularExpression re = lexerData.getRegularExpression(kind);
 
         if (re instanceof RegexpStringLiteral)
-            return " \"" + ParseException.addEscapes(((RegexpStringLiteral) re).getImage()) + "\"";
+            return " \"" + ParseException.addEscapes(re.getImage()) + "\"";
         else if (!re.getLabel().equals(""))
             return " <" + re.getLabel() + ">";
         else
@@ -433,7 +430,7 @@ public class NfaData {
     public boolean getDumpNfaStarts() {
         return indexedAllStates.size() != 0 
                && !lexicalState.isMixedCase() 
-               && lexicalState.getDfaData().getMaxStringIndex() > 0;
+               && lexicalState.getMaxStringIndex() > 0;
     }
 
     public List<List<NfaState>> partitionStatesSetForAscii(NfaState[] states, int byteNum) {

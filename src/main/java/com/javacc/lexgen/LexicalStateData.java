@@ -51,15 +51,12 @@ public class LexicalStateData {
     private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
 
     private boolean mixed;
-    private RegularExpression currentRegexp;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
-    private String[] images;
 
     private BitSet marks = new BitSet();
     private boolean done;
     int initMatch;
     RegularExpression initialKind;
-
 
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -76,15 +73,11 @@ public class LexicalStateData {
 
     NfaState getInitialState() {return nfaData.initialState;}
 
-    RegularExpression getCurrentRegexp() {return currentRegexp;}
-
     public String getName() {return name;}
 
     public DfaData getDfaData() {return dfaData;}
 
     public NfaData getNfaData() {return nfaData;}
-
-    String getImage(int i) {return images[i];}
 
     boolean isMarked(int i) {return marks.get(i);}
 
@@ -100,6 +93,23 @@ public class LexicalStateData {
 
     public int getIndex() {return lexerData.getIndex(name);}
 
+    public int getMaxStringLength() {
+        int result = 0;
+        for (RegularExpression re : regularExpressions) {
+            int length = re.getImage() == null ? 0 : re.getImage().length();
+            result = Math.max(result, length);
+        }
+        return result;
+    }
+    
+    public int getMaxStringIndex() {
+        int result =0;
+        for (RegularExpression re: regularExpressions) {
+            if (re instanceof RegexpStringLiteral  && re.getImage().length()>0) 
+                result = Math.max(result,re.getOrdinal()+1);
+        }
+        return result;
+    }
 
     void addTokenProduction(TokenProduction tokenProduction) {
         tokenProductions.add(tokenProduction);
@@ -143,7 +153,6 @@ public class LexicalStateData {
     }
 
     List<RegexpChoice> process() {
-        images = new String[lexerData.getTokenCount()];
     	List<RegexpChoice> choices = new ArrayList<>();
         boolean isFirst = true;
         for (TokenProduction tp : tokenProductions) {
@@ -163,7 +172,7 @@ public class LexicalStateData {
         }
         List<RegexpChoice> choices = new ArrayList<>();
         for (RegexpSpec respec : tp.getRegexpSpecs()) {
-            currentRegexp = respec.getRegexp();
+            RegularExpression currentRegexp = respec.getRegexp();
             regularExpressions.add(currentRegexp);
             currentRegexp.setIgnoreCase(ignore);
             if (currentRegexp.isPrivate()) {
@@ -171,11 +180,7 @@ public class LexicalStateData {
             }
             if (currentRegexp instanceof RegexpStringLiteral
                     && !((RegexpStringLiteral) currentRegexp).getImage().equals("")) {
-                if (dfaData.getMaxStringIndex() <= currentRegexp.getOrdinal()) {
-                    dfaData.setMaxStringIndex(currentRegexp.getOrdinal() + 1);
-                }
                 dfaData.generate((RegexpStringLiteral) currentRegexp);
-                images[currentRegexp.getOrdinal()] = ((RegexpStringLiteral) currentRegexp).getImage();
                 if (!isFirst && !mixed && ignoring != ignore) {
                     mixed = true;
                 }

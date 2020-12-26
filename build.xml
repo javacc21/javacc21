@@ -1,5 +1,4 @@
 <project name="javacc21" default="compile" basedir=".">
-
     <tstamp>
         <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
     </tstamp>
@@ -10,14 +9,14 @@
 	<echo>JDK Version: ${java.version} on ${os.name}</echo>
 	<uptodate property="parser.uptodate"
 		targetfile="src/main/java/com/javacc/parser/JavaCCParser.java">
-	 <srcfiles dir="src/main/grammars" includes="*.javacc"/>
+        <srcfiles dir="src/main/grammars" includes="*.javacc"/>
 	</uptodate>
 </target>
 
 <target name="restore-bootstrap-jar">
 	<exec executable="git" dir="${basedir}">
 		<arg line="checkout bin/javacc.jar"/>
-        </exec>
+    </exec>
 </target>
 
 
@@ -44,26 +43,6 @@
 
 
   <target name="parser-gen" depends="init" unless="parser.uptodate">
-        <!-- get 
-            src="https://javacc.com/download/javacc.jar" 
-            dest="bin"
-            quiet="true"
-            ignoreerrors="true"
-            usetimestamp="true" />
-         <fail message="Bootstrap javacc.jar not available">
-            <condition>
-             <not>
-              <available file="bin/javacc.jar"/>
-             </not>
-            </condition>
-         </fail>
-         <fail message="Bootstrap freemarker.jar not available">
-            <condition>
-             <not>
-              <available file="bin/freemarker.jar"/>
-             </not>
-            </condition>
-         </fail -->
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
  	   <arg value="src/main/grammars/JavaCC.javacc"/>
  	</java>
@@ -76,8 +55,6 @@
  	       deprecation="off"
  	       debug="on"
  	       optimize="off"
-           target="1.8"
-           source="1.8"
     	   classpath="bin/freemarker.jar"
            includeantruntime="no"
 	    failonerror="true"
@@ -136,5 +113,4 @@
     <chmod file="javacc-full.jar" perm="+x"/>
 </target>
 
-	
 </project>

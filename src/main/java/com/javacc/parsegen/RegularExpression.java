@@ -190,6 +190,10 @@ public abstract class RegularExpression extends Expansion {
     public boolean isPrivate() {
         return this._private;
     }
+
+    public String getImage() {
+        return null;
+    }
     
     public void setPrivate(boolean _private) {
         this._private = _private;

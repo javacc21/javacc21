@@ -45,23 +45,21 @@ public class NfaState {
     private Grammar grammar;
     private LexerData lexerData;
     private LexicalStateData lexicalState;
+    private RegularExpression type, typeToPrint;
     private List<NfaState> epsilonMoves = new ArrayList<>();
+    private BitSet asciiMoves = new BitSet();
     private StringBuilder charMoveBuffer = new StringBuilder();
     private StringBuilder rangeMoveBuffer = new StringBuilder();
     private String epsilonMovesString;
+    private NfaState next;
     final private int id;
-    final private RegularExpression lookingFor;
-    private int usefulEpsilonMoves;
+    private boolean isFinal;
+    private int usefulEpsilonMoveCount;
     private int nonAsciiMethod = -1;
     private boolean composite;
     private int[] nonAsciiMoveIndices;
-    private BitSet asciiMoves = new BitSet();
-    private NfaState next;
-    private int kindToPrint = Integer.MAX_VALUE;
     private List<Integer> loByteVec;
-    private boolean isFinal;
     private int index = -1;
-    private int kind = Integer.MAX_VALUE;
     private int inNextOf;
     private int[] compositeStates;
 
@@ -71,18 +69,17 @@ public class NfaState {
         this.lexerData = grammar.getLexerData();
         id = lexicalState.getNfaData().getAllStates().size();
         lexicalState.getNfaData().getAllStates().add(this);
-        lookingFor = lexicalState.getCurrentRegexp();
     }
 
     public int getIndex() {
         return index;
     }
 
-    int getKind() {return kind;}
+    RegularExpression getType() {return type;}
 
-    void setKind(int kind) {this.kind = kind;}
-
-    RegularExpression getLookingFor() {return lookingFor;} 
+    void setType(RegularExpression type) {
+        this.type = type;
+    }
 
     void setFinal(boolean b) {
         this.isFinal = b;
@@ -134,7 +131,7 @@ public class NfaState {
     }
 
     boolean hasEpsilonMoves() {
-        return usefulEpsilonMoves > 0;
+        return usefulEpsilonMoveCount > 0;
     }
 
     public LexicalStateData getLexicalState() {
@@ -149,12 +146,16 @@ public class NfaState {
         return next;
     }
 
+    void setNext(NfaState next) {
+        this.next = next;
+    }
+
     public int getKindToPrint() {
-        return kindToPrint;
+        return typeToPrint == null ? Integer.MAX_VALUE : typeToPrint.getOrdinal();
     }
 
     public int getUsefulEpsilonMoves() {
-        return usefulEpsilonMoves;
+        return usefulEpsilonMoveCount;
     }
 
     public boolean isNeeded(int byteNum) {
@@ -166,13 +167,9 @@ public class NfaState {
         if (!epsilonMoves.contains(newState)) epsilonMoves.add(newState);
     }
 
-    private void addASCIIMove(char c) {
-        asciiMoves.set(c);
-    }
-
-    void addChar(char c) {
+    void addCharMove(char c) {
         if (c < 128) {// ASCII char
-            addASCIIMove(c);
+            asciiMoves.set(c);
         } else {
             charMoveBuffer.append(c);
         }
@@ -180,7 +177,7 @@ public class NfaState {
 
     void addRange(char left, char right) {
         for (char c = left; c <=right && c<128; c++) {
-            addASCIIMove(c);
+            asciiMoves.set(c);
         }
         left = (char) Math.max(left, 128);
         right = (char) Math.max(right, 128);
@@ -212,7 +209,9 @@ public class NfaState {
                     lexicalState.setDone(false);
                 } 
             }
-            kind = Math.min(kind, state.kind);
+            if (type == null || (state.type != null && state.type.getOrdinal() < type.getOrdinal())) {
+                type = state.type;
+            } 
         }
         if (hasTransitions() && !epsilonMoves.contains(this)) {
             addEpsilonMove(this);
@@ -234,8 +233,9 @@ public class NfaState {
             return;
         if (getNext() != null) {
             getNext().generateCode();
-            if (getNext().kind != Integer.MAX_VALUE)
-                kindToPrint = getNext().kind;
+            if (getNext().type != null) {
+                typeToPrint = getNext().getType();
+            }
         }
         if (index == -1 && hasTransitions()) {
             this.index = lexicalState.getIndexedAllStates().size();
@@ -259,27 +259,23 @@ public class NfaState {
         for (Iterator<NfaState> it = epsilonMoves.iterator(); it.hasNext();) {
             NfaState state = it.next();
             if (state.hasTransitions()) {
-                usefulEpsilonMoves++;
+                usefulEpsilonMoveCount++;
             } else {
                 it.remove();
             }
         }
-
     }
 
     void generateNextStatesCode() {
-        if (getNext().usefulEpsilonMoves > 0) {
-            getNext().getEpsilonMovesString();
+        if (getNext().usefulEpsilonMoveCount > 0) {
+            getNext().generateEpsilonMovesString();
         }
     }
 
-    public String getEpsilonMovesString() {
-        if (epsilonMovesString != null) {
-            return epsilonMovesString;
-        }
-        int[] stateNames = new int[usefulEpsilonMoves];
-        if (usefulEpsilonMoves > 0) {
-            usefulEpsilonMoves = 0;
+    private void generateEpsilonMovesString() {
+        int[] stateNames = new int[usefulEpsilonMoveCount];
+        if (usefulEpsilonMoveCount > 0) {
+            usefulEpsilonMoveCount = 0;
             epsilonMovesString = "{ ";
             for (NfaState epsilonMove : epsilonMoves) {
                 if (epsilonMove.hasTransitions()) {
@@ -287,9 +283,9 @@ public class NfaState {
                         epsilonMove.generateCode();
 
                     lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
-                    stateNames[usefulEpsilonMoves] = epsilonMove.index;
+                    stateNames[usefulEpsilonMoveCount] = epsilonMove.index;
                     epsilonMovesString += epsilonMove.index + ", ";
-                    if (usefulEpsilonMoves++ > 0 && usefulEpsilonMoves % 16 == 0)
+                    if (usefulEpsilonMoveCount++ > 0 && usefulEpsilonMoveCount % 16 == 0)
                         epsilonMovesString += "\n";
                 }
             }
@@ -297,6 +293,12 @@ public class NfaState {
         }
         if (epsilonMovesString != null) {
             lexicalState.getNfaData().getAllNextStates().put(epsilonMovesString, stateNames);
+        }
+    }
+
+    public String getEpsilonMovesString() {
+        if (epsilonMovesString == null) {
+            generateEpsilonMovesString();
         }
         return epsilonMovesString;
     }
@@ -335,7 +337,7 @@ public class NfaState {
             for (int i = getNext().epsilonMoves.size(); i-- > 0;) {
                 newStates.add(getNext().epsilonMoves.get(i));
             }
-            return kindToPrint;
+            return getKindToPrint();
         }
         return Integer.MAX_VALUE;
     }
@@ -492,7 +494,7 @@ public class NfaState {
         nonAsciiTableForMethod.add(this);
     }
 
-      void generateInitMoves() {
+    void generateInitMoves() {
         getEpsilonMovesString();
         if (epsilonMovesString == null)
             epsilonMovesString = "null;";
@@ -516,7 +518,7 @@ public class NfaState {
         if (other.composite) {
             return false;
         }
-        if (this.kindToPrint != other.kindToPrint) {
+        if (this.typeToPrint != other.typeToPrint) {
             return false;
         }
         if (byteNum < 0 && this.nonAsciiMethod != other.nonAsciiMethod) {
@@ -524,9 +526,6 @@ public class NfaState {
         }
         if (byteNum >=0 && !this.asciiMoves.equals(other.asciiMoves)) {
             return false;
-        }
-        if (this.getNext().epsilonMovesString == other.getNext().epsilonMovesString) {
-            return true;
         }
         if (this.getNext().epsilonMovesString == null || other.getNext().epsilonMovesString == null) {
             return false;
@@ -565,8 +564,4 @@ public class NfaState {
         return true;
     }
  
-    void setNext(NfaState next) {
-        this.next = next;
-    }
-
 }
