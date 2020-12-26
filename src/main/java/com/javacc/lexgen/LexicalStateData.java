@@ -202,8 +202,10 @@ public class LexicalStateData {
                     lexerData.hasSkipActions = true;
                 }
                 lexerData.hasSpecial = true;
-                lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
-                lexerData.getSkipSet().set(currentRegexp.getOrdinal());
+                if (currentRegexp.getOrdinal() >0) {
+                    lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
+                    lexerData.getSkipSet().set(currentRegexp.getOrdinal());
+                }
                 currentRegexp.setUnparsedToken();
             }
             else if (kind.equals("SKIP")) {
@@ -212,13 +214,13 @@ public class LexicalStateData {
                 lexerData.getSkipSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setSkip();
             }
-            else if (kind.equals("MORE")) {
+            else if (kind.equals("MORE") && currentRegexp.getOrdinal()>0) { // REVISIT
                 lexerData.hasMoreActions |= tokenAction != null;
                 lexerData.hasMore = true;
                 lexerData.getMoreSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setMore();
             }
-            else {
+            else if (currentRegexp.getOrdinal() >0) { // REVISIT
                 lexerData.getTokenSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setRegularToken();
             }

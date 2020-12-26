@@ -65,6 +65,7 @@ public abstract class RegularExpression extends Expansion {
      * internal processing and passing information between the parser and the
      * lexical analyzer.
      */
+//    private int id = -1; //REVISIT
     private int id;
 
     private boolean ignoreCase;
@@ -119,11 +120,11 @@ public abstract class RegularExpression extends Expansion {
   	    return String.valueOf(id);
     }
 
-    public int getOrdinal() {
+    public final int getOrdinal() {
         return id;
     }
 
-    public void setOrdinal(int id) {
+    public final void setOrdinal(int id) {
         this.id =  id;
     }
 

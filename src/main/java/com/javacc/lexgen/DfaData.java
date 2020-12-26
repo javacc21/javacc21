@@ -110,10 +110,10 @@ public class DfaData {
                 table.put(s.toLowerCase(Locale.ROOT), info);
                 table.put(s.toUpperCase(Locale.ROOT), info);
             }
-            if (i + 1 == stringLength) {
+            if (i + 1 == stringLength && ordinal > 0) { // REVISIT
                 info.insertFinalKind(ordinal);
             }
-            else {
+            else if (ordinal > 0) { // REVISIT
                 info.insertValidKind(ordinal);
             }
         }

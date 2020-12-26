@@ -187,9 +187,6 @@ public class ParserData {
          */
         for (TokenProduction tp: grammar.descendants(TokenProduction.class)) { 
             for (RegexpSpec res : tp.getRegexpSpecs()) {
-                if (res.getRegexp().matchesEmptyString()) {
-                    grammar.addSemanticError(res.getRegexp(), "Regular Expression can match empty string. This is not allowed here.");
-                }
                 if (res.getNextState() != null) {
                     if (lexerData.getLexicalStateIndex(res.getNextState()) == -1) {
                         grammar.addSemanticError(res.getNsTok(), "Lexical state \""
@@ -407,13 +404,16 @@ public class ParserData {
                         && !res.getRegexp().getLabel().equals("")) {
                     grammar.addTokenName(res.getRegexp().getOrdinal(), res.getRegexp().getLabel());
                 }
-                if (!(res.getRegexp() instanceof RegexpRef)) {
-                    RegularExpression regexp = res.getRegexp();
-                    int ordinal = regexp.getOrdinal();
-                    grammar.addRegularExpression(ordinal, regexp);
-                }
             }
         }
+
+        for (RegexpSpec regexpSpec : grammar.descendants(RegexpSpec.class)) {
+            if (regexpSpec.getRegexp().matchesEmptyString()) {
+                grammar.addSemanticError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
+            }
+        }
+        
+
         //Let's jump out here, I guess.
         if (grammar.getErrorCount() >0) return;
 
@@ -429,8 +429,7 @@ public class ParserData {
          */
 
         if (!grammar.getOptions().getUserDefinedLexer()) {
-            List<RegexpRef> refs = grammar.descendants(RegexpRef.class);
-            for (RegexpRef ref : refs) {
+            for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
                 String label = ref.getLabel();
                 RegularExpression referenced = grammar.getNamedToken(label);
                 if (referenced == null && !ref.getLabel().equals("EOF")) {
