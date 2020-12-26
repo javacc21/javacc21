@@ -15,8 +15,6 @@ public class JParse {
    static public void main(String args[]) {
       List<File> failures = new ArrayList<File>();
       List<File> successes = new ArrayList<File>();    
-      boolean failureOccurred = false;
-      JavaParser parser;
       if (args.length == 0) {
         usage();
       }
@@ -79,7 +77,7 @@ public class JParse {
 	         addFilesRecursively(files, f);
 	   }
        }
-       else if (file.getName().endsWith("java") && !file.getName().endsWith("-info.java")) {
+       else if (file.getName().endsWith(".java") && !file.getName().endsWith("-info.java")) {
            files.add(file);
        }
    }

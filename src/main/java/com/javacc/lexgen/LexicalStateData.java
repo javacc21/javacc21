@@ -95,6 +95,23 @@ public class LexicalStateData {
 
     public int getIndex() {return lexerData.getIndex(name);}
 
+    public int getMaxStringLength() {
+        int result = 0;
+        for (RegularExpression re : regularExpressions) {
+            int length = re.getImage() == null ? 0 : re.getImage().length();
+            result = Math.max(result, length);
+        }
+        return result;
+    }
+    
+    public int getMaxStringIndex() {
+        int result =0;
+        for (RegularExpression re: regularExpressions) {
+            if (re instanceof RegexpStringLiteral  && re.getImage().length()>0) 
+                result = Math.max(result,re.getOrdinal()+1);
+        }
+        return result;
+    }
 
     void addTokenProduction(TokenProduction tokenProduction) {
         tokenProductions.add(tokenProduction);
@@ -165,9 +182,6 @@ public class LexicalStateData {
             }
             if (currentRegexp instanceof RegexpStringLiteral
                     && !((RegexpStringLiteral) currentRegexp).getImage().equals("")) {
-                if (dfaData.getMaxStringIndex() <= currentRegexp.getOrdinal()) {
-                    dfaData.setMaxStringIndex(currentRegexp.getOrdinal() + 1);
-                }
                 dfaData.generate((RegexpStringLiteral) currentRegexp);
                 if (!isFirst && !mixed && ignoring != ignore) {
                     mixed = true;

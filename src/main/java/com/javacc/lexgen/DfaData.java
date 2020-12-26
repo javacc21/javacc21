@@ -33,6 +33,7 @@ import java.util.*;
 import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.tree.RegexpStringLiteral;
+import static java.lang.Math.min; 
 
 /**
  * Class to hold the data for generating the DFA's for 
@@ -46,8 +47,6 @@ public class DfaData {
     private BitSet subStringSet = new BitSet();
     private BitSet subStringAtPosSet = new BitSet();
     private List<Map<String, KindInfo>> stringLiteralTables = new ArrayList<>();
-    private int[] maxStringLengthForActive = new int[100]; 
-    private int maxStringIndex, maxStringLength;
 
     DfaData(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -63,24 +62,21 @@ public class DfaData {
         return singlesToSkipSet.cardinality()>0;
     }
 
-    public int getMaxStringIndex() {
-        return this.maxStringIndex;
-    }
-
-    void setMaxStringIndex(int maxStringIndex) {
-        this.maxStringIndex = maxStringIndex;
-    }
-
     public List<Map<String, KindInfo>> getStringLiteralTables() {
         return stringLiteralTables;
     }
 
-    public int getMaxStringLength() {
-        return maxStringLength;
-    }
-
-    public int getMaxStringLengthForActive(int i) {
-        return maxStringLengthForActive[i];
+    public int getMaxStringLengthForActive(int byteNum){
+        int result = 0;
+        int leftBound = byteNum*64;
+        int rightBound = min(grammar.getLexerData().getTokenCount(), leftBound+64);
+        for (int i = leftBound; i< rightBound; i++) {
+            String image = grammar.getLexerData().getRegularExpression(i).getImage();
+            if (image !=null && image.length() > result) {
+                result = image.length();
+            }
+        }
+        return result;
     }
 
     public boolean getSubString(int i) {
@@ -95,8 +91,7 @@ public class DfaData {
         final int ordinal = rsLiteral.getOrdinal();
         final String stringLiteral = rsLiteral.getImage();
         final int stringLength = stringLiteral.length();
-        this.maxStringLength = Math.max(stringLength, maxStringLength);
-        this.maxStringIndex = Math.max(maxStringIndex, ordinal+1);
+//        this.maxStringLength = max(stringLength, maxStringLength);
         while (stringLiteralTables.size() < stringLength) {
             stringLiteralTables.add(new HashMap<>());
         }
@@ -122,13 +117,12 @@ public class DfaData {
                 info.insertValidKind(ordinal);
             }
         }
-        maxStringLengthForActive[ordinal/64] = Math.max(maxStringLengthForActive[ordinal/64], stringLength - 1);
     }
 
 
     void generateData() {
         fillSubString();
-        for (int i = 0; i < getMaxStringLength(); i++) {
+        for (int i = 0; i < lexicalState.getMaxStringLength(); i++) {
             Map<String, KindInfo> tab = getStringLiteralTables().get(i);
             for (String key : tab.keySet()) {
                 generateDfaCase(key.charAt(0), tab.get(key), i);
@@ -137,7 +131,8 @@ public class DfaData {
     }
 
     public boolean generateDfaCase(char ch, KindInfo info, int index) {
-        for (int kind = 0; kind<getMaxStringIndex(); kind++) {
+        int maxStringIndex = lexicalState.getMaxStringIndex();
+        for (int kind = 0; kind < maxStringIndex; kind++) {
         	if (index == 0 && ch < 128 && info.getFinalKindCnt() !=0
         			&& (!lexicalState.hasNfa() || !lexicalState.getNfaData().canStartNfaUsingAscii(ch))) {
         			if (info.isFinalKind(kind) && !subStringSet.get(kind)) {
@@ -162,7 +157,8 @@ public class DfaData {
     }
 
     final int getStrKind(String str) {
-        for (int i = 0; i < getMaxStringIndex(); i++) {
+        int maxStringIndex = lexicalState.getMaxStringIndex();
+        for (int i = 0; i < maxStringIndex; i++) {
             RegularExpression re = grammar.getLexerData().getRegularExpression(i);
             if (lexicalState.containsRegularExpression(re)) {
                 if (re.getImage() != null && re.getImage().equals(str))
@@ -173,14 +169,15 @@ public class DfaData {
     }
 
     void fillSubString() {
-        for (int i = 0; i < getMaxStringIndex(); i++) {
+        int maxStringIndex = lexicalState.getMaxStringIndex();
+        for (int i = 0; i < maxStringIndex; i++) {
             RegularExpression re = grammar.getLexerData().getRegularExpression(i);
             subStringSet.clear(i);
             if (re.getImage() == null || !lexicalState.containsRegularExpression(re)) {
                 continue;
             }
             if (lexicalState.isMixedCase()) {
-                // We will not optimize ior mixed case
+                // We will not optimize for mixed case
                 subStringSet.set(i);
                 subStringAtPosSet.set(re.getImage().length() - 1);
                 continue;

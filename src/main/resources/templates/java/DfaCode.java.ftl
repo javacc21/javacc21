@@ -41,8 +41,8 @@
 [#macro DumpDfaCode lexicalState]
   [#var dfaData = lexicalState.dfaData]
   [#var initState=lexicalState.nfaData.initStateName()]
-  [#var maxStringLength=dfaData.maxStringLength]
-  [#var maxStringIndex=dfaData.maxStringIndex]
+  [#var maxStringLength=lexicalState.maxStringLength]
+  [#var maxStringIndex=lexicalState.maxStringIndex]
   [#var maxStringLengthForActive=dfaData.maxStringLengthForActive]
   [#if maxStringLength = 0]
     private int jjMoveStringLiteralDfa0_${lexicalState.name}() {

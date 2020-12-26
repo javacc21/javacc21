@@ -282,16 +282,16 @@ public class NfaData {
         Set<NfaState> seenStates = new HashSet<>();
         Map<String, String> stateSets = new HashMap<String, String>();
         String stateSetString = "";
-        int maxKindsReqd = lexicalState.getDfaData().getMaxStringIndex() / 64 + 1;
+        int maxKindsReqd = lexicalState.getMaxStringIndex() / 64 + 1;
         long[] actives;
         List<NfaState> newStates = new ArrayList<>();
 
-        statesForPos = new ArrayList<Map<String, long[]>>(lexicalState.getDfaData().getMaxStringLength());
-        for (int k = 0; k < lexicalState.getDfaData().getMaxStringLength(); k++)
+        statesForPos = new ArrayList<Map<String, long[]>>(lexicalState.getMaxStringLength());
+        for (int k = 0; k < lexicalState.getMaxStringLength(); k++)
             statesForPos.add(null);
-        intermediateKinds = new int[lexicalState.getDfaData().getMaxStringIndex() + 1][];
-        intermediateMatchedPos = new int[lexicalState.getDfaData().getMaxStringIndex() + 1][];
-        for (int i = 0; i < lexicalState.getDfaData().getMaxStringIndex(); i++) {
+        intermediateKinds = new int[lexicalState.getMaxStringIndex() + 1][];
+        intermediateMatchedPos = new int[lexicalState.getMaxStringIndex() + 1][];
+        for (int i = 0; i < lexicalState.getMaxStringIndex(); i++) {
             RegularExpression re = lexerData.getRegularExpression(i);
             if (!lexicalState.containsRegularExpression(re)) {
                 continue;
@@ -388,7 +388,7 @@ public class NfaData {
         RegularExpression re = lexerData.getRegularExpression(kind);
 
         if (re instanceof RegexpStringLiteral)
-            return " \"" + ParseException.addEscapes(((RegexpStringLiteral) re).getImage()) + "\"";
+            return " \"" + ParseException.addEscapes(re.getImage()) + "\"";
         else if (!re.getLabel().equals(""))
             return " <" + re.getLabel() + ">";
         else
@@ -430,7 +430,7 @@ public class NfaData {
     public boolean getDumpNfaStarts() {
         return indexedAllStates.size() != 0 
                && !lexicalState.isMixedCase() 
-               && lexicalState.getDfaData().getMaxStringIndex() > 0;
+               && lexicalState.getMaxStringIndex() > 0;
     }
 
     public List<List<NfaState>> partitionStatesSetForAscii(NfaState[] states, int byteNum) {
