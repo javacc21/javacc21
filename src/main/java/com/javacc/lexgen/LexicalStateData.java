@@ -50,11 +50,8 @@ public class LexicalStateData {
     private List<TokenProduction> tokenProductions = new ArrayList<>();
     private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
 
-    private boolean mixed;
+    private boolean mixedCase;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
-
-    private BitSet marks = new BitSet();
-    private boolean done;
 
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -76,18 +73,6 @@ public class LexicalStateData {
     public DfaData getDfaData() {return dfaData;}
 
     public NfaData getNfaData() {return nfaData;}
-
-    boolean isMarked(int i) {return marks.get(i);}
-
-    void setMark(int i) {marks.set(i);}
-
-    void unsetMark(int i) {marks.clear(i);}
-
-    void clearMarks() {marks.clear();}
-
-    void setDone(boolean done) {this.done = done;}
-
-    boolean isDone() {return this.done;}
 
     public int getIndex() {return lexerData.getIndex(name);}
 
@@ -123,16 +108,11 @@ public class LexicalStateData {
 
     // FIXME! There is currently no testing in place for mixed case Lexical states!
     public boolean isMixedCase() {
-        return mixed;
+        return mixedCase;
     }
 
-/*    public int getInitMatch() {
-//        return initMatch;
-        return Integer.MAX_VALUE;
-    }*/
-
     public boolean getCreateStartNfa() {
-        return !mixed && nfaData.indexedAllStates.size() != 0;
+        return !mixedCase && nfaData.indexedAllStates.size() != 0;
     }
 
     public boolean containsRegularExpression(RegularExpression re) {
@@ -180,8 +160,8 @@ public class LexicalStateData {
             if (currentRegexp instanceof RegexpStringLiteral
                     && !((RegexpStringLiteral) currentRegexp).getImage().equals("")) {
                 dfaData.generate((RegexpStringLiteral) currentRegexp);
-                if (!isFirst && !mixed && ignoring != ignore) {
-                    mixed = true;
+                if (!isFirst && ignoring != ignore) {
+                    mixedCase = true;
                 }
             } else {
                 if (currentRegexp instanceof RegexpChoice) {

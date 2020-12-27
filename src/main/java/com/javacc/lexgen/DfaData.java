@@ -136,10 +136,7 @@ public class DfaData {
         	if (index == 0 && ch < 128 && info.getFinalKindCnt() !=0
         			&& (!lexicalState.hasNfa() || !lexicalState.getNfaData().canStartNfaUsingAscii(ch))) {
         			if (info.isFinalKind(kind) && !subStringSet.get(kind)) {
-                        if (lexicalState.getNfaData().cannotBeMatchedAsStringLiteral(kind, index)) {
-                            break; 
-                        }
-                        else if (grammar.getLexerData().getSkipSet().get(kind)
+                        if (grammar.getLexerData().getSkipSet().get(kind)
         				        && !grammar.getLexerData().getSpecialSet().get(kind)
         						&& grammar.getLexerData().getRegularExpression(kind).getCodeSnippet() == null
         						&& grammar.getLexerData().getRegularExpression(kind).getNewLexicalState() == null) {

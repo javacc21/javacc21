@@ -153,9 +153,9 @@
 	      [/#if]
 	           case ${utils.firstCharAsInt(c)} :
 	      [#if info.finalKindCnt != 0]
-	        [#list 0..maxStringIndex as j]
-	          [#var matchedKind=info.finalKinds[(j/64)?int]]
-              [#if utils.isBitSet(matchedKind, j%64)]
+	        [#list 0..maxStringIndex as kind]
+	          [#var matchedKind=info.finalKinds[(kind/64)?int]]
+              [#if utils.isBitSet(matchedKind, kind%64)]
                  [#if ifGenerated]
                  else if 
                  [#elseif table_index != 0]
@@ -163,24 +163,23 @@
                  [/#if]
                  [#set ifGenerated = true]
                  [#if table_index != 0]
-                   ((active${(j/64)?int} & ${utils.powerOfTwoInHex(j%64)}) != 0L) 
+                   ((active${(kind/64)?int} & ${utils.powerOfTwoInHex(kind%64)}) != 0L) 
                  [/#if]
-                 [#var kindToPrint=lexicalState.nfaData.getKindToPrint(j, table_index)]
-                 [#if !dfaData.subString[j]]
-                    [#var stateSetIndex=lexicalState.nfaData.getStateSetForKind(table_index, j)]
+                 [#if !dfaData.subString[kind]]
+                    [#var stateSetIndex=lexicalState.nfaData.getStateSetForKind(table_index, kind)]
                     [#if stateSetIndex != -1]
-                    return jjStartNfaWithStates_${lexicalState.name}(${table_index}, ${kindToPrint}, ${stateSetIndex});
+                    return jjStartNfaWithStates_${lexicalState.name}(${table_index}, ${kind}, ${stateSetIndex});
                     [#else]
-                    return jjStopAtPos(${table_index}, ${kindToPrint});
+                    return jjStopAtPos(${table_index}, ${kind});
                     [/#if]
                  [#else]
                     [#if table_index != 0]
                      {
-                    jjmatchedKind = ${kindToPrint};
+                    jjmatchedKind = ${kind};
                     jjmatchedPos = ${table_index};
-                 }
+                    }
                     [#else]
-                    jjmatchedKind = ${kindToPrint};
+                    jjmatchedKind = ${kind};
                     [/#if]
                  [/#if]
               [/#if]
