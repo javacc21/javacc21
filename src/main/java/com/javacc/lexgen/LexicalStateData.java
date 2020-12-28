@@ -50,13 +50,8 @@ public class LexicalStateData {
     private List<TokenProduction> tokenProductions = new ArrayList<>();
     private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
 
-    private boolean mixed;
+    private boolean mixedCase;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
-
-    private BitSet marks = new BitSet();
-    private boolean done;
-    int initMatch;
-    RegularExpression initialKind;
 
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -70,7 +65,7 @@ public class LexicalStateData {
     Grammar getGrammar() {
         return grammar;
     }
-
+   
     NfaState getInitialState() {return nfaData.initialState;}
 
     public String getName() {return name;}
@@ -78,18 +73,6 @@ public class LexicalStateData {
     public DfaData getDfaData() {return dfaData;}
 
     public NfaData getNfaData() {return nfaData;}
-
-    boolean isMarked(int i) {return marks.get(i);}
-
-    void setMark(int i) {marks.set(i);}
-
-    void unsetMark(int i) {marks.clear(i);}
-
-    void clearMarks() {marks.clear();}
-
-    void setDone(boolean done) {this.done = done;}
-
-    boolean isDone() {return this.done;}
 
     public int getIndex() {return lexerData.getIndex(name);}
 
@@ -125,15 +108,11 @@ public class LexicalStateData {
 
     // FIXME! There is currently no testing in place for mixed case Lexical states!
     public boolean isMixedCase() {
-        return mixed;
-    }
-
-    public int getInitMatch() {
-        return initMatch;
+        return mixedCase;
     }
 
     public boolean getCreateStartNfa() {
-        return !mixed && nfaData.indexedAllStates.size() != 0;
+        return !mixedCase && nfaData.indexedAllStates.size() != 0;
     }
 
     public boolean containsRegularExpression(RegularExpression re) {
@@ -181,8 +160,8 @@ public class LexicalStateData {
             if (currentRegexp instanceof RegexpStringLiteral
                     && !((RegexpStringLiteral) currentRegexp).getImage().equals("")) {
                 dfaData.generate((RegexpStringLiteral) currentRegexp);
-                if (!isFirst && !mixed && ignoring != ignore) {
-                    mixed = true;
+                if (!isFirst && ignoring != ignore) {
+                    mixedCase = true;
                 }
             } else {
                 if (currentRegexp instanceof RegexpChoice) {
@@ -203,8 +182,10 @@ public class LexicalStateData {
                     lexerData.hasSkipActions = true;
                 }
                 lexerData.hasSpecial = true;
-                lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
-                lexerData.getSkipSet().set(currentRegexp.getOrdinal());
+                if (currentRegexp.getOrdinal() >0) {
+                    lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
+                    lexerData.getSkipSet().set(currentRegexp.getOrdinal());
+                }
                 currentRegexp.setUnparsedToken();
             }
             else if (kind.equals("SKIP")) {
@@ -213,13 +194,13 @@ public class LexicalStateData {
                 lexerData.getSkipSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setSkip();
             }
-            else if (kind.equals("MORE")) {
+            else if (kind.equals("MORE") && currentRegexp.getOrdinal()>0) { // REVISIT
                 lexerData.hasMoreActions |= tokenAction != null;
                 lexerData.hasMore = true;
                 lexerData.getMoreSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setMore();
             }
-            else {
+            else if (currentRegexp.getOrdinal() >0) { // REVISIT
                 lexerData.getTokenSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setRegularToken();
             }

@@ -132,27 +132,19 @@
             case ${lexicalState.name} : 
     [/#if]
     [@dfa.SkipSingles lexicalState.dfaData /]
-   [#if lexicalState.initMatch != MAX_INT&&lexicalState.initMatch != 0]
-        if (trace_enabled) LOGGER.info("   Matched the empty string as " + tokenImage[${lexicalState.initMatch}] + " token.");
-        jjmatchedKind = ${lexicalState.initMatch};
-        matchedType = TokenType.values()[${lexicalState.initMatch}];
-        jjmatchedPos = -1;
-        curPos = 0;
-    [#else]
-        jjmatchedKind = 0x7FFFFFFF;
-        matchedType = null;
-        jjmatchedPos = 0;
-    [/#if]
-        [#var debugOutput]
-        [#set debugOutput]
-            [#if multipleLexicalStates]
-               "<" + lexicalState + ">" + 
-            [/#if]
-            "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
-            "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
-        [/#set]
-        if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-        curPos = jjMoveStringLiteralDfa0_${lexicalState.name}();
+    jjmatchedKind = 0x7FFFFFFF;
+    matchedType = null;
+    jjmatchedPos = 0;
+    [#var debugOutput]
+    [#set debugOutput]
+        [#if multipleLexicalStates]
+            "<" + lexicalState + ">" + 
+        [/#if]
+        "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+        "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
+    [/#set]
+    if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
+    curPos = jjMoveStringLiteralDfa0_${lexicalState.name}();
     [#if multipleLexicalStates]
         break;
     [/#if]
@@ -288,25 +280,11 @@
         final int endLine;
         final int beginColumn;
         final int endColumn;
-    [#if lexerData.hasEmptyMatch]
-        if (jjmatchedPos < 0) {
-          curTokenImage = image.toString();
-          beginLine = endLine = input_stream.getBeginLine();
-          beginColumn = endColumn = input_stream.getBeginColumn();
-        } else {
-               curTokenImage = input_stream.getImage(); 
-               beginLine = input_stream.getBeginLine();
-               beginColumn = input_stream.getBeginColumn();
-               endLine = input_stream.getEndLine();
-               endColumn = input_stream.getEndColumn();
-        }
-    [#else]
         curTokenImage = input_stream.getImage();
         beginLine = input_stream.getBeginLine();
         beginColumn = input_stream.getBeginColumn();
         endLine = input_stream.getEndLine();
         endColumn = input_stream.getEndColumn();
-    [/#if]
     [#if options.tokenFactory != ""] 
         t = ${options.tokenFactory}.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
     [#elseif !grammar.options.hugeFileSupport]

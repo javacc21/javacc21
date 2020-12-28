@@ -44,11 +44,11 @@ public class NfaData {
     final private LexicalStateData lexicalState;
     final private Grammar grammar;
     final private LexerData lexerData;
-    private int[][] intermediateKinds;
     private int[][] intermediateMatchedPos;
     private int dummyStateIndex = -1;
     private Map<String, int[]> compositeStateTable = new HashMap<>();
     private List<Map<String, long[]>> statesForPos;
+    private List<Map<String, BitSet>> stateSetForPos;
     private Map<String, int[]> allNextStates = new HashMap<>();
     private List<NfaState> allStates = new ArrayList<>();
 
@@ -97,13 +97,15 @@ public class NfaData {
     }
 
     public List<Map<String, long[]>> getStatesForPos() {return statesForPos;}
+
+    public List<Map<String, BitSet>> getStateSetForPos() {return stateSetForPos;}
     
     void generateData() {
         for (NfaState state : allStates) state.optimizeEpsilonMoves();
         for (NfaState epsilonMove : initialState.getEpsilonMoves()) {
             epsilonMove.generateCode();
         }
-        if (indexedAllStates.size() != 0) {
+        if (!indexedAllStates.isEmpty()) {
             initialState.generateCode();
             initialState.generateInitMoves();
         }
@@ -114,12 +116,6 @@ public class NfaData {
                 lexerData.hasSkipActions = true;
             else if (lexerData.getMoreSet().get(initialOrdinal))
                 lexerData.hasMoreActions = true;
-            if (lexicalState.initMatch == 0 || lexicalState.initMatch > initialOrdinal) {
-                lexicalState.initMatch = initialOrdinal;
-                lexerData.hasEmptyMatch = true;
-            }
-        } else if (lexicalState.initMatch == 0) {
-            lexicalState.initMatch = Integer.MAX_VALUE;
         }
         if (indexedAllStates.size() != 0 && !lexicalState.isMixedCase()) {
             generateNfaStartStates();
@@ -146,28 +142,21 @@ public class NfaData {
         }
     }
 
-    void computeClosures() {
-        for (NfaState state : allStates) {
-            state.optimizeEpsilonMoves();
-        }
-    }
-
     public int addStartStateSet(String stateSetString) {
         if (stateIndexFromComposite.containsKey(stateSetString)) {
             return stateIndexFromComposite.get(stateSetString);
         }
         int toRet = 0;
         int[] nameSet = allNextStates.get(stateSetString);
-
         if (nameSet.length == 1) {
             stateIndexFromComposite.put(stateSetString, nameSet[0]);
             return nameSet[0];
         }
         for (int i = 0; i < nameSet.length; i++) {
             if (nameSet[i] != -1) {
-                NfaState st = indexedAllStates.get(nameSet[i]);
-                st.setComposite(true);
-                st.setCompositeStates(nameSet);
+                NfaState state = indexedAllStates.get(nameSet[i]);
+                state.setComposite(true);
+                state.setCompositeStates(nameSet);
             }
         }
         while (toRet < nameSet.length && (indexedAllStates.get(nameSet[toRet]).getInNextOf() > 1)) {
@@ -232,14 +221,12 @@ public class NfaData {
     String getStateSetString(List<NfaState> states) {
         if (states == null || states.size() == 0)
             return "null;";
-
         int[] set = new int[states.size()];
         String retVal = "{ ";
         for (int i = 0; i < states.size();) {
             int k;
             retVal += (k = (states.get(i)).getIndex()) + ", ";
             set[i] = k;
-
             if (i++ > 0 && i % 16 == 0)
                 retVal += "\n";
         }
@@ -265,10 +252,10 @@ public class NfaData {
 
     boolean canStartNfaUsingAscii(char c) {
         assert c < 128 : "This should be impossible.";
-        String s = initialState.getEpsilonMovesString();
-        if (s == null || s.equals("null;"))
+        String epsilonMovesString = initialState.getEpsilonMovesString();
+        if (epsilonMovesString == null || epsilonMovesString.equals("null;"))
             return false;
-        int[] states = allNextStates.get(s);
+        int[] states = allNextStates.get(epsilonMovesString);
         for (int i = 0; i < states.length; i++) {
             NfaState state = indexedAllStates.get(states[i]);
             if (state.hasAsciiMove(c)) 
@@ -284,47 +271,40 @@ public class NfaData {
         String stateSetString = "";
         int maxKindsReqd = lexicalState.getMaxStringIndex() / 64 + 1;
         long[] actives;
+        BitSet activeSet = new BitSet();
         List<NfaState> newStates = new ArrayList<>();
 
-        statesForPos = new ArrayList<Map<String, long[]>>(lexicalState.getMaxStringLength());
-        for (int k = 0; k < lexicalState.getMaxStringLength(); k++)
+        statesForPos = new ArrayList<>();
+        stateSetForPos = new ArrayList<>();
+        for (int k = 0; k < lexicalState.getMaxStringLength(); k++) {
             statesForPos.add(null);
-        intermediateKinds = new int[lexicalState.getMaxStringIndex() + 1][];
+            stateSetForPos.add(null);
+        }
         intermediateMatchedPos = new int[lexicalState.getMaxStringIndex() + 1][];
-        for (int i = 0; i < lexicalState.getMaxStringIndex(); i++) {
-            RegularExpression re = lexerData.getRegularExpression(i);
-            if (!lexicalState.containsRegularExpression(re)) {
+        for (RegularExpression re : lexerData.getRegularExpressions()) {
+            if (!lexicalState.containsRegularExpression(re) || !(re instanceof RegexpStringLiteral)) {
                 continue;
             }
             String image = re.getImage();
-            if (image == null || image.length() ==0 ) {
-                continue;
-            }
+            int ordinal = re.getOrdinal();
             List<NfaState> oldStates = new ArrayList<NfaState>(initialState.getEpsilonMoves());
-            intermediateKinds[i] = new int[image.length()];
-            intermediateMatchedPos[i] = new int[image.length()];
+            intermediateMatchedPos[ordinal] = new int[image.length()];
             int jjmatchedPos = 0;
             int kind = Integer.MAX_VALUE;
-
-            for (int j = 0; j < image.length(); j++) {
-                if (oldStates == null || oldStates.size() <= 0) {
-                    // Here, j > 0
-                    kind = intermediateKinds[i][j] = intermediateKinds[i][j - 1];
-                    jjmatchedPos = intermediateMatchedPos[i][j] = intermediateMatchedPos[i][j - 1];
+            for (int charOffset = 0; charOffset < image.length(); charOffset++) {
+                if (oldStates == null || oldStates.isEmpty()) {
+                    // Here, charOffset > 0
+                    jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = intermediateMatchedPos[ordinal][charOffset - 1];
                 } else {
-                    kind = MoveFromSet(image.charAt(j), oldStates, newStates);
+                    kind = moveFromSet(image.charAt(charOffset), oldStates, newStates);
                     oldStates.clear();
-                    if (lexicalState.getDfaData().getStrKind(image.substring(0, j + 1)) < kind) {
-                        intermediateKinds[i][j] = kind = Integer.MAX_VALUE;
+                    if (lexicalState.getDfaData().getStrKind(image.substring(0, charOffset + 1)) < kind) {
                         jjmatchedPos = 0;
                     } else if (kind != Integer.MAX_VALUE) {
-                        intermediateKinds[i][j] = kind;
-                        jjmatchedPos = intermediateMatchedPos[i][j] = j;
-                    } else if (j == 0)
-                        kind = intermediateKinds[i][j] = Integer.MAX_VALUE;
-                    else {
-                        kind = intermediateKinds[i][j] = intermediateKinds[i][j - 1];
-                        jjmatchedPos = intermediateMatchedPos[i][j] = intermediateMatchedPos[i][j - 1];
+                        jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = charOffset;
+                    } 
+                    else if (charOffset>0) {
+                        jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = intermediateMatchedPos[ordinal][charOffset - 1];
                     }
                     stateSetString = getStateSetString(newStates);
                 }
@@ -345,43 +325,30 @@ public class NfaData {
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();
-                if (statesForPos.get(j) == null) {
-                    statesForPos.set(j, new HashMap<String, long[]>());
+                if (statesForPos.get(charOffset) == null) {
+                    statesForPos.set(charOffset, new HashMap<>());
+                    stateSetForPos.set(charOffset, new HashMap<>());
                 }
-                if ((actives = (statesForPos.get(j).get(kind + ", " + jjmatchedPos + ", "
+                if ((actives = (statesForPos.get(charOffset).get(kind + ", " + jjmatchedPos + ", "
                         + stateSetString))) == null) {
                     actives = new long[maxKindsReqd];
-                    statesForPos.get(j).put(kind + ", " + jjmatchedPos + ", " + stateSetString,
+                    statesForPos.get(charOffset).put(kind + ", " + jjmatchedPos + ", " + stateSetString,
                             actives);
+                    stateSetForPos.get(charOffset).put(kind + ", " + jjmatchedPos + ", " + stateSetString,
+                            activeSet);
                 }
-                actives[i / 64] |= 1L << (i % 64);
+                actives[ordinal / 64] |= 1L << (ordinal % 64);
+                activeSet.set(ordinal);
             }
         }
     }
 
-    private static int MoveFromSet(char c, List<NfaState> states, List<NfaState> newStates) {
+    private static int moveFromSet(char c, List<NfaState> states, List<NfaState> newStates) {
         int result = Integer.MAX_VALUE;
         for (NfaState state : states) {
             result = Math.min(result, state.moveFrom(c, newStates));
         }
         return result;
-    }
-
-    public int getKindToPrint(int kind, int index) {
-        if (cannotBeMatchedAsStringLiteral(kind, index)) {
-            grammar.addWarning(null, " \"" + ParseException.addEscapes(lexerData.getRegularExpression(kind).getImage())
-                    + "\" cannot be matched as a string literal token " + "at line "
-                    + getLine(kind) + ", column " + getColumn(kind) + ". It will be matched as "
-                    + getLabel(intermediateKinds[kind][index]) + ".");
-            return intermediateKinds[kind][index];
-        } 
-        return kind;
-    }
-
-    boolean cannotBeMatchedAsStringLiteral(int kind, int index) {
-        return intermediateKinds != null && intermediateKinds[kind] != null
-        && intermediateKinds[kind][index] < kind && intermediateMatchedPos != null
-        && intermediateMatchedPos[kind][index] == index;
     }
 
     String getLabel(int kind) {

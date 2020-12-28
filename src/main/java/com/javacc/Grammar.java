@@ -101,7 +101,6 @@ public class Grammar extends BaseNode {
     private Map<String, BNFProduction> productionTable;
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
-    private Map<Integer, RegularExpression> regexpLookup = new HashMap<>();
     private Set<String> lexicalStates = new LinkedHashSet<>();
     private Map<Integer, String> tokenNames = new HashMap<>();
     private Set<String> nodeNames = new LinkedHashSet<>();
@@ -491,14 +490,6 @@ public class Grammar extends BaseNode {
         tokenProductions.add(tp);
     }
 
-    public RegularExpression getRegexpForToken(int index) {
-        return regexpLookup.get(index);
-    }
-
-    public void addRegularExpression(int index, RegularExpression regexp) {
-        regexpLookup.put(index, regexp);
-    }
-
     /**
      * This is a symbol table that contains all named tokens (those that are
      * defined with a label). The index to the table is the image of the label
@@ -607,7 +598,7 @@ public class Grammar extends BaseNode {
 	 * @param node    the node which causes the error and null otherwise.
 	 * @param message the semantic message error.
 	 */
-	@Deprecated
+//	@Deprecated
 	public void addSemanticError(Node node, String message) {
 		addError(node, JavaCCError.Type.SEMANTIC, JavaCCError.ErrorCode.Unknown, message);
 	}
@@ -651,7 +642,7 @@ public class Grammar extends BaseNode {
 	 * @param node    the node which causes the warning and null otherwise.
 	 * @param message the warning message error.
 	 */
-	@Deprecated
+//	@Deprecated
 	public void addWarning(Node node, String message) {
 		addError(node, JavaCCError.Type.WARNING, JavaCCError.ErrorCode.Unknown, message);
 	}

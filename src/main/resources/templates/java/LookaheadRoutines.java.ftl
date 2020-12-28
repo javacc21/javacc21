@@ -134,6 +134,7 @@
    private final boolean ${expansion.predicateMethodName}() {
       LexicalState currentLexicalState = token_source.lexicalState;
      try {
+         lookaheadRoutineNesting++;
          currentLookaheadToken= currentToken;
          remainingLookahead= ${lookaheadAmount};
          hitFailure = false;
@@ -163,6 +164,7 @@
             token_source.switchTo(currentLexicalState);
         }
         [/#if--]
+        lookaheadRoutineNesting--;
         currentLookaheadToken = null;
      }
    }
@@ -173,6 +175,8 @@
 [#macro BuildScanRoutine expansion]
  [#if !expansion.singleToken || expansion.requiresPredicateMethod]
   private final boolean ${expansion.scanRoutineName}() {
+    try {
+       lookaheadRoutineNesting++;
    [#if !expansion.insideLookahead]
      if (hitFailure) return lastLookaheadSucceeded = false;
      if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
@@ -180,6 +184,10 @@
    [/#if]
      ${BuildScanCode(expansion)}
       return lastLookaheadSucceeded = true;
+    }
+    finally {
+       lookaheadRoutineNesting--;
+    }
   }
  [/#if]
 [/#macro]
@@ -212,10 +220,12 @@
         boolean prevHitFailure = hitFailure;
         Token prevScanAheadToken = currentLookaheadToken;
         try {
+          lookaheadRoutineNesting++;
           [@BuildScanCode lookahead.nestedExpansion/]
           return lastLookaheadSucceeded = !hitFailure;
         }
         finally {
+           lookaheadRoutineNesting--;
            currentLookaheadToken = prevScanAheadToken;
            remainingLookahead = prevRemainingLookahead;
            hitFailure = prevHitFailure;
@@ -351,7 +361,7 @@
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
           if (hitFailure) return lastLookaheadSucceeded = false;
-          if (stopAtScanLimit && lookaheadStack.size() <= 1) {
+          if (stopAtScanLimit && lookaheadRoutineNesting <= 1) {
          [#if sub.scanLimitPlus >0]
              remainingLookahead = ${sub.scanLimitPlus};
          [#else]
