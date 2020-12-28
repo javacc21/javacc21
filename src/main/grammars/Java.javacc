@@ -1121,9 +1121,9 @@ ConstructorDeclaration :
 ;
 
 ExplicitConstructorInvocation :
-  ("this" | "super") =>|+1 Arguments ";"
+  [TypeArguments] ("this" | "super") =>|+1 Arguments ";"
   |
-  PrimaryExpression "." "super" =>|+1 Arguments ";"
+  [=>Name "."] [TypeArguments] "super" =>|+1 Arguments ";"
 ;
 
 Initializer :
@@ -1452,7 +1452,7 @@ PrimaryPrefix :
  |
   "this"
  |
- => "super" "." <IDENTIFIER>
+ => "super" "." [TypeArguments] <IDENTIFIER>
  |
   "(" Expression ")"
  |

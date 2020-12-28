@@ -133,7 +133,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
               retval.append("\\\\");
               continue;
            default:
-              if (!Character.isUnicodeIdentifierPart(ch)) {
+              if (Character.isISOControl(ch)) {
                  String s = "0000" + java.lang.Integer.toString(ch, 16);
                  retval.append("\\u" + s.substring(s.length() - 4, s.length()));
               } else {
