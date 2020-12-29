@@ -330,10 +330,6 @@ INJECT BaseNode :
         }
         return buf.toString();
     }
-/*    
-    public ListIterator<Node> iterator() {
-       return Nodes.iterator(this);
-    }*/
 
     // REVISIT. Need to fix the token chaining    
     public void prepend(Node n) {
@@ -407,7 +403,7 @@ INJECT CompilationUnit :
     }
 }
 
-PackageDeclaration : "package" Name ";" ;
+PackageDeclaration : (Annotation)* "package" =>|| Name ";" ;
 
 INJECT PackageDeclaration :
 {
@@ -919,6 +915,7 @@ INJECT ClassOrInterfaceBody :
             iterator.next();
         }
     }
+    
     // REVISIT. fix token chaining 
     public void removeDuplicateMethods() {
         Set<String> sigs = new HashSet<String>();
@@ -944,24 +941,19 @@ INJECT ClassOrInterfaceBodyDeclaration :
 {
     public boolean isPrivate() {
         return firstChildOfType(BaseNode.class).hasKeyWord("private");
-//        return hasKeyWord("private");
     }
     
     public boolean isStatic() {
         return firstChildOfType(BaseNode.class).hasKeyWord("static");
-//         return hasKeyWord("static");
     }
     
     public boolean isProtected() {
         return firstChildOfType(BaseNode.class).hasKeyWord("protected");
-//         return hasKeyWord("protected");
     }
     
     public boolean isPublic() {
         return firstChildOfType(BaseNode.class).hasKeyWord("public");
-//         return hasKeyWord("public");
     }
-    
 }
 
 ClassOrInterfaceBodyDeclaration(boolean isInterface) #ClassOrInterfaceBodyDeclaration :
@@ -1142,11 +1134,10 @@ Type :
 ;
 
 ReferenceType : 
-{
    PrimitiveArrayType
    |
    ClassOrInterfaceType (=> "[" "]" )*
-}
+;
 
 ObjectType ClassOrInterfaceType #ObjectType :
     <IDENTIFIER>
@@ -1190,9 +1181,12 @@ TypeArguments :
 ;
 
 TypeArgument :
-   ReferenceType
-   |
-   "?" [ WildcardBounds ]
+   (Annotation)*
+   (
+      ReferenceType
+      |
+      "?" [ WildcardBounds ]
+   )
 ;
 
 WildcardBounds :

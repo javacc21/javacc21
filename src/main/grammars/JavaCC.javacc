@@ -344,34 +344,12 @@ INCLUDE("Java.javacc")
 
 INJECT PARSER_CLASS : {
 
-       
-   Set<String> javaccReservedWords = new HashSet<String>();
-   {
-       // A little kludge so that these keywords 
-       // can still be recognized as regular identifiers
-       // in Java code.
+    private EnumSet<TokenType> javaccKeyWords = EnumSet.of(_INJECT,
+       _INCLUDE, _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
+       _PARSER_BEGIN, _PARSER_END, _TOKEN, _SPECIAL_TOKEN, _MORE,
+       _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _UPTO, 
+       _LEXICAL_STATE);
 
-        javaccReservedWords.add("INCLUDE");
-        javaccReservedWords.add("IGNORE_CASE");
-        javaccReservedWords.add("PARSER_BEGIN");
-        javaccReservedWords.add("TOKEN");
-        javaccReservedWords.add("REGULAR_TOKEN");
-        javaccReservedWords.add("SPECIAL_TOKEN");
-        javaccReservedWords.add("SPECIAL_TOKEN");
-        javaccReservedWords.add("UNPARSED_TOKEN");
-        javaccReservedWords.add("MORE");
-        javaccReservedWords.add("INCOMPLETE_TOKEN");
-        javaccReservedWords.add("SKIP");
-        javaccReservedWords.add("TOKEN_MGR_DECLS");
-        javaccReservedWords.add("ATTEMPT");
-        javaccReservedWords.add("RECOVER");
-        javaccReservedWords.add("SCAN");
-        javaccReservedWords.add("LOOKAHEAD");
-        javaccReservedWords.add("FAIL");
-        javaccReservedWords.add("LEXICAL_STATE");
-        javaccReservedWords.add("INJECT"); 
-        javaccReservedWords.add("PARSER_END");
-   }
 
     private Token TOKEN_HOOK(Token tok) {
         TokenType type = tok.getType();
@@ -386,13 +364,15 @@ INJECT PARSER_CLASS : {
     }
 
     private Token TOKEN_HOOK(Token t) {
-       if (javaccReservedWords.contains(t.getImage())) {
+        if (javaccKeyWords.contains(t.getType())) {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
-	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
-	           Nodes.copyLocationInfo(t, id);
-	           return id;
+               if (t.getType() != _PARSER_END || !isInProduction("ParserCodeDecls")) {
+	               Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
+	               Nodes.copyLocationInfo(t, id);
+	               return id;
+               }
            }
-       }
+        }
        return t;
     }
 
@@ -400,7 +380,6 @@ INJECT PARSER_CLASS : {
         tok.setGrammar(getGrammar());
         return tok;
     }
-
 }
 
 INJECT CaseStatement :
