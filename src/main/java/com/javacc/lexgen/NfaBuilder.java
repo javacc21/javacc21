@@ -402,19 +402,23 @@ public class NfaBuilder extends Node.Visitor {
         return result;
     }
 
-    static private List<CharacterRange> sortDescriptors(List<CharacterRange> descriptors) {
+   static private List<CharacterRange> sortDescriptors(List<CharacterRange> descriptors) {
         Collections.sort(descriptors, (first, second) -> first.left - second.left);
         List<CharacterRange> result = new ArrayList<>();
         CharacterRange previous = null;
-        for (CharacterRange current : descriptors) {
+        for (CharacterRange range : descriptors) {
             if (previous == null) {
-                result.add(current);
-                previous = current;
-            } else if (current.left > previous.right + 1) {
-                result.add(current);
-                previous = current;
+                result.add(range);
+                previous = range;
             } else {
-                previous.right = current.right;
+                if (previous.left == range.left) {
+                    previous.right = (char) Math.max(previous.right, range.right);
+                } else if (previous.right >= range.left - 1) {
+                    previous.right = (char) Math.max(previous.right, range.right);
+                } else {
+                    result.add(range);
+                    previous = range;
+                }
             }
         }
         return result;
