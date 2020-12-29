@@ -132,7 +132,6 @@
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
    private final boolean ${expansion.predicateMethodName}() {
-      LexicalState currentLexicalState = token_source.lexicalState;
      try {
          lookaheadRoutineNesting++;
          currentLookaheadToken= currentToken;
@@ -148,29 +147,11 @@
       return lastLookaheadSucceeded = true;
       }
       finally {
-        [#--if MULTIPLE_LEXICAL_STATE_HANDLING]
-         if (false || currentToken.lexicalStateChangesInNextChain()) {
-            System.out.println("KILROY!!!");
-           currentToken.setNext(null);
-           token_source.reset(currentToken);
-            if (currentToken.getFollowingLexicalState() != null) {
-                token_source.switchTo(currentToken.getFollowingLexicalState());
-            }
-         }
-        [/#if--]
-        [#--if MULTIPLE_LEXICAL_STATE_HANDLING]
-        if (!lastLookaheadSucceeded) {
-            token_source.reset(currentToken);
-            token_source.switchTo(currentLexicalState);
-        }
-        [/#if--]
         lookaheadRoutineNesting--;
         currentLookaheadToken = null;
      }
    }
 [/#macro]
-
-
 
 [#macro BuildScanRoutine expansion]
  [#if !expansion.singleToken || expansion.requiresPredicateMethod]

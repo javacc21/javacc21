@@ -31,7 +31,7 @@ TOKENS_ARE_NODES=true;
 BASE_NODE_CLASS="SimpleNode";
 SMART_NODE_CREATION=false;
 
-INJECT : {
+PARSER_BEGIN(SPLParser)
 
 /** Stupid Programming Language parser. */
 public class SPLParser {
@@ -76,7 +76,7 @@ public class SPLParser {
 
 }
 
-}
+PARSER_END(SPLParser)
 
 
 SKIP : /* WHITE SPACE */
