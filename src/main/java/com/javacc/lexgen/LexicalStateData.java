@@ -153,7 +153,7 @@ public class LexicalStateData {
         for (RegexpSpec respec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = respec.getRegexp();
             regularExpressions.add(currentRegexp);
-            currentRegexp.setIgnoreCase(ignore);
+//            currentRegexp.setIgnoreCase(ignore);
             if (currentRegexp.isPrivate()) {
                 continue;
             }

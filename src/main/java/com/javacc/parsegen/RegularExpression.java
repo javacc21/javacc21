@@ -36,6 +36,7 @@ import com.javacc.Grammar;
 import com.javacc.lexgen.LexicalStateData;
 import com.javacc.parser.tree.CodeBlock;
 import com.javacc.parser.tree.Expression;
+import com.javacc.parser.tree.GrammarFile;
 import com.javacc.parser.tree.TokenProduction;
 
 /**
@@ -68,8 +69,6 @@ public abstract class RegularExpression extends Expansion {
 //    private int id = -1; //REVISIT
     private int id;
 
-    private boolean ignoreCase;
-
     private LexicalStateData newLexicalState;
 
     private CodeBlock codeSnippet;
@@ -82,19 +81,19 @@ public abstract class RegularExpression extends Expansion {
         this.codeSnippet = codeSnippet;
     }
 
-    public void setIgnoreCase(boolean b) {
-        this.ignoreCase = b;
-    }
-
     public boolean getIgnoreCase() {
-        return ignoreCase;
+        TokenProduction tp = firstAncestorOfType(TokenProduction.class);
+        if (tp !=null) return tp.getIgnoreCase();
+        GrammarFile gf = firstAncestorOfType(GrammarFile.class);
+        if (gf != null) return gf.getIgnoreCase();
+        return getGrammar().getOptions().getIgnoreCase();
     }
 
     /**
      * The LHS to which the token value of the regular expression is assigned.
      * This can be null.
      */
-    public Expression lhs;
+    private Expression lhs;
 
     /**
      * This flag is set if the regular expression has a label prefixed with the #
@@ -107,7 +106,11 @@ public abstract class RegularExpression extends Expansion {
      * If this is a top-level regular expression (nested directly within a
      * TokenProduction), then this field point to that TokenProduction object.
      */
-    public TokenProduction tpContext = null;
+//    public TokenProduction tpContext = null;
+
+    public TokenProduction getTokenProduction() {
+        return firstAncestorOfType(TokenProduction.class);
+    }
 
     public final String getLabel() {
     	String label = super.getLabel();
