@@ -495,35 +495,6 @@ INJECT Token :
     }
 }
 
-
-INJECT GrammarFile : 
-   import java.util.Iterator;
-{
-    public String getDefaultLexicalState() {
-       Options options = firstChildOfType(Options.class);
-       if (options != null) {
-           for (Setting setting : options.childrenOfType(Setting.class)) {
-               if (setting.getKey().equalsIgnoreCase("DEFAULT_LEXICAL_STATE")) {
-                   return (String) setting.getValue();
-               }
-           }
-        }
-        return null; 
-    }
-
-    public Boolean getIgnoreCase() {
-        Options options = firstChildOfType(Options.class);
-        if (options != null) {
-            for (Setting setting : options.childrenOfType(Setting.class)) {
-                if (setting.getKey().equalsIgnoreCase("IGNORE_CASE")) {
-                   return (Boolean) setting.getValue();
-                }
-            }
-        }
-        return false;
-    }
-}
-
 GrammarFile Root throws IOException #GrammarFile :
 {
     TokenManagerDecls decls;
@@ -686,7 +657,7 @@ CodeInjection2 :
 
 Options #Options : 
     Setting =>||
-    (SCAN <IDENTIFIER>(<ASSIGN>|<SEMICOLON>) => Setting)*
+    (Setting)*
 ;
 
 OptionsBlock #Options :
@@ -714,6 +685,7 @@ Setting #Setting :
      | 
      name = "IGNORE_CASE"
   )
+  =>|+1
   {
 	  key = name.getImage();
   }
@@ -733,11 +705,14 @@ Setting #Setting :
   ]  
   ";"
   {
-      if (key.equalsIgnoreCase("IGNORE_CASE")) getGrammar().setIgnoreCase((Boolean) value);
-      else {
-         CURRENT_NODE.setKeyValue(key, value);
+      // TODO sanity check the rhs of the options
+      if (key.equalsIgnoreCase("IGNORE_CASE")) {
+          getGrammar().setIgnoreCase((Boolean) value);
       }
-      _options.setInputFileOption(name, t, key, value, inInclude);
+      else if (key.equalsIgnoreCase("DEFAULT_LEXICAL_STATE")) {
+          getGrammar().setDefaultLexicalState((String) value);
+      }
+      if (!getGrammar().isInInclude()) _options.setInputFileOption(name, t, key, value);
   }
 ;
 
@@ -1015,7 +990,7 @@ INJECT TreeBuildingAnnotation :
 }
 
 
-TokenProduction TokenProduction #TokenProduction :
+TokenProduction #TokenProduction :
 {
     Token t = null;
     String tokenClassName = null;
@@ -1061,7 +1036,7 @@ TokenProduction TokenProduction #TokenProduction :
           }
           CURRENT_NODE.setLexicalState(firstSpecifiedLexicalState);
       }
-      return CURRENT_NODE;
+      CURRENT_NODE.setIgnoreCase(ignoreCase || grammar.getIgnoreCase());
    }
 }
 
@@ -1073,23 +1048,11 @@ INJECT TokenProduction :
      * the input grammar. Otherwise (if this is created to describe a regular
      * expression that is part of the BNF) this is set to false.
      */
-    private boolean explicit = true;
+    private boolean ignoreCase, explicit = true;
+    
+    public boolean getIgnoreCase() {return ignoreCase;}
+    public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
 
-    public boolean getIgnoreCase() {
-        for (Node n : children) {
-	      if (n instanceof Token) {
-	           Token t = (Token) n;
-               if (t.getType() == _IGNORE_CASE) {
-                   return true;
-               }
-	       }
-        }
-        GrammarFile gf = firstAncestorOfType(GrammarFile.class);
-        Boolean b = gf == null ? Boolean.FALSE : gf.getIgnoreCase();
-        return b == null ? getGrammar().getIgnoreCase() : b; //REVISIT
-    }
-    
-    
     private String lexicalState;
     
     public void setLexicalState(String lexicalState) {

@@ -244,25 +244,12 @@ public class JavaCCOptions {
         return value;
     }
 
-    public void setInputFileOption(Object nameloc, Object valueloc, String name, Object value, boolean inInclude) {
+    public void setInputFileOption(Object nameloc, Object valueloc, String name, Object value) {
         String s = name.toUpperCase();
-        
-        if (inInclude) {
-        	if (s.equalsIgnoreCase("DEFAULT_LEXICAL_STATE")) {
-        		grammar.setDefaultLexicalState((String) value);
-            }
-            // For now, we just ignore any other options if we are within a INCLUDE processing.
-            // This will be revisited later.
-            return;
-        }
         Node node = (nameloc instanceof Node) ? (Node) nameloc : null;
 
         if (s.equalsIgnoreCase("STATIC")) {
             grammar.addWarning(node, "In JavaCC 21, the STATIC option is superfluous. All parsers are non-static. Option setting will be ignored.");
-            return;
-        }
-        else if (s.equalsIgnoreCase("LOOKAHEAD")) {
-            grammar.addWarning(node, "In JavaCC 21, the LOOKAHEAD option has been removed. It is always 1 but you can override that at key points in your grammar.");
             return;
         }
 	    else if (s.equalsIgnoreCase("NODE_FACTORY")) {

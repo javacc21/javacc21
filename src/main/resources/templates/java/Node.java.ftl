@@ -280,6 +280,23 @@ public interface Node extends Comparable<Node>
         }
         return this;
     }
+
+    default void copyLocationInfo(Node to) {
+        //to.setInputSource(from.getInputSource()); REVISIT
+        to.setBeginLine(this.getBeginLine());
+        to.setBeginColumn(this.getBeginColumn());
+        to.setEndLine(this.getEndLine());
+        to.setEndColumn(this.getEndColumn());
+    }
+
+    default void replace(Node toBeReplaced) {
+        toBeReplaced.copyLocationInfo(this);
+        Node parent = toBeReplaced.getParent();
+        if (parent !=null) {
+           int index = parent.indexOf(toBeReplaced);
+           parent.setChild(index, this);
+        }
+    }
     
     /**
      * Returns true if the given position (line,column) is included in the given
