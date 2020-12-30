@@ -148,8 +148,6 @@ public class JavaCCOptions {
         noLongerSetOnCL.add("PRESERVE_LINE_ENDINGS");
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
         noLongerSetOnCL.add("JAVA_UNICODE_ESCAPE");
-        optionValues.put("IGNORE_CASE", false);
-        noLongerSetOnCL.add("IGNORE_CASE");
         optionValues.put("USER_DEFINED_LEXER", false);
         noLongerSetOnCL.add("USER_DEFINED_LEXER");
         optionValues.put("LEXER_USES_PARSER", false);
@@ -456,15 +454,6 @@ public class JavaCCOptions {
     }
 
     /**
-     * Find the ignore case value.
-     *
-     * @return The requested ignore case value.
-     */
-    public boolean getIgnoreCase() {
-        return booleanValue("IGNORE_CASE");
-    }
-
-    /**
      * Find the user tokenmanager value.
      *
      * @return The requested user tokenmanager value.
@@ -485,13 +474,6 @@ public class JavaCCOptions {
     }
 
     /**
-     * @return a CSS file to use for outputting HTML docs
-     */
-    public String getCSS() {
-        return stringValue("CSS");
-    }
-
-    /**
      * Return the Token's factory class.
      *
      * @return The required factory class for Token.
@@ -500,15 +482,6 @@ public class JavaCCOptions {
         return stringValue("TOKEN_FACTORY");
     }
 
-    /**
-     * Find the output directory.
-     *
-     * @return The requested output directory.
-     *//*
-    public String getOutputDirectory() {
-        return stringValue("OUTPUT_DIRECTORY");
-    }*/
-    
     public boolean getQuiet() {
     	return booleanValue("QUIET");
     }

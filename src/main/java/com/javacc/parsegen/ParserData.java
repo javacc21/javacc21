@@ -222,13 +222,12 @@ public class ParserData {
          * values), and populates the table "names_of_tokens".
          */
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
-            List<RegexpSpec> respecs = tp.getRegexpSpecs();
             List<Map<String, Map<String, RegularExpression>>> table = new ArrayList<>();
             for (int i = 0; i < tp.getLexStates().length; i++) {
                 LexicalStateData lexState = lexerData.getLexicalState(tp.getLexStates()[i]);
                 table.add(lexState.getTokenTable());
             }
-            for (RegexpSpec res : respecs) {
+            for (RegexpSpec res : tp.getRegexpSpecs()) {
                 if (res.getRegexp() instanceof RegexpStringLiteral) {
                     // TODO: Clean this mess up! (JR)
                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) res.getRegexp();

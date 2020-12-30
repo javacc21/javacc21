@@ -120,7 +120,7 @@ public class NfaBuilder extends Node.Visitor {
         NfaState state = end = start = new NfaState(lexicalState);
         for (char ch : stringLiteral.getImage().toCharArray()) {
             state.addCharMove(ch);
-            if (grammar.getOptions().getIgnoreCase() || ignoreCase) {
+            if (grammar.getIgnoreCase() || ignoreCase) {//REVISIT
                 state.addCharMove(Character.toLowerCase(ch));
                 state.addCharMove(Character.toUpperCase(ch));
             }

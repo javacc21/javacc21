@@ -250,6 +250,8 @@ TOKEN :
   |
   < _SKIP: "SKIP" > #JavaCCKeyWord
   |
+  <_EOF : "EOF"> #JavaCCKeyWord
+  |
   < _TOKEN_MGR_DECLS: "TOKEN_MGR_DECLS" > #JavaCCKeyWord
   |
   < _ATTEMPT: "ATTEMPT"> #JavaCCKeyWord
@@ -348,7 +350,7 @@ INJECT PARSER_CLASS : {
        _INCLUDE, _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
        _PARSER_BEGIN, _PARSER_END, _TOKEN, _SPECIAL_TOKEN, _MORE,
        _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _UPTO, 
-       _LEXICAL_STATE);
+       _LEXICAL_STATE, _EOF);
 
 
     private Token TOKEN_HOOK(Token tok) {
@@ -373,12 +375,8 @@ INJECT PARSER_CLASS : {
                }
            }
         }
-       return t;
-    }
-
-    private Token TOKEN_HOOK(Token tok) {
-        tok.setGrammar(getGrammar());
-        return tok;
+        t.setGrammar(getGrammar());
+        return t;
     }
 }
 
@@ -688,7 +686,7 @@ CodeInjection2 :
 
 Options #Options : 
     Setting =>||
-    (=> Setting)*
+    (SCAN <IDENTIFIER>(<ASSIGN>|<SEMICOLON>) => Setting)*
 ;
 
 OptionsBlock #Options :
@@ -735,7 +733,10 @@ Setting #Setting :
   ]  
   ";"
   {
-      CURRENT_NODE.setKeyValue(key, value);
+      if (key.equalsIgnoreCase("IGNORE_CASE")) getGrammar().setIgnoreCase((Boolean) value);
+      else {
+         CURRENT_NODE.setKeyValue(key, value);
+      }
       _options.setInputFileOption(name, t, key, value, inInclude);
   }
 ;
@@ -1085,7 +1086,7 @@ INJECT TokenProduction :
         }
         GrammarFile gf = firstAncestorOfType(GrammarFile.class);
         Boolean b = gf == null ? Boolean.FALSE : gf.getIgnoreCase();
-        return b == null ? getGrammar().getOptions().getIgnoreCase() : b;
+        return b == null ? getGrammar().getIgnoreCase() : b; //REVISIT
     }
     
     
@@ -1939,20 +1940,8 @@ Expansion ExpansionUnit :
       RegularExpression re = (RegularExpression) peekNode();
       result = re;
       re.setLHS(lhs);
-      if (re instanceof RegexpStringLiteral) {
-      	grammar.addStringLiteralToResolve((RegexpStringLiteral) re);
-      }
       if (!(re instanceof EndOfFile)) {
-            TokenProduction tokenProduction = new TokenProduction();
-            tokenProduction.setGrammar(grammar);
-            tokenProduction.setExplicit(false);
-            tokenProduction.setLexicalState(grammar.getDefaultLexicalState());
-            RegexpSpec res = new RegexpSpec();
-            res.addChild(re);
-//            re.tpContext = tokenProduction;
-            tokenProduction.addChild(res);
-            grammar.addChild(tokenProduction);
-            grammar.addTokenProduction(tokenProduction);
+            grammar.addInplaceRegexp(re);
       }
   }
   [SCAN ~\...\Lookahead => UpToHere(result)]
@@ -2543,12 +2532,11 @@ RegexpExpansion #void :
  (
   RegexpStringLiteral 
   |
-  SCAN 3 InPlaceRegexp 
-  |
   SCAN ~\.\TokenProduction =>
-  RegexpRef 
+  (RegexpRef|EndOfFile)
   |
-  EndOfFile 
+  SCAN 3 {isInProduction("TokenProduction")||grammar.getOptions().getUserDefinedLexer()} =>
+  InPlaceRegexp 
  ) 
 ;
 
@@ -2673,16 +2661,7 @@ INJECT RegexpRef :
     }
 }
 
-EndOfFile : 
-    "<" 
-    <IDENTIFIER>  
-    [
-        SCAN {!getToken(0).getImage().equals("EOF")}#
-        => FAIL
-    ]
-    =>||
-    ">" 
-;
+EndOfFile : "<" <_EOF> =>|| ">" ;
 
 
 

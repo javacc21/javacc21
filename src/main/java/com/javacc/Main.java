@@ -87,6 +87,10 @@ public final class Main {
     static void checkForNewer() {
         if (jarFile !=null && jarFile.exists()) try {
             long jarLastModified = jarFile.lastModified();
+            if (System.currentTimeMillis() - jarLastModified < 3600000L) {
+                // If the current jarfile is less than an hour old, let's not bother.
+                return;
+            }
             URL url = new URL("https://javacc.com/download/" + jarFile.getName());
             URLConnection connection = url.openConnection();
             connection.setConnectTimeout(1000);

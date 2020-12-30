@@ -70,6 +70,7 @@ import com.javacc.parser.tree.LookBehind;
 import com.javacc.parser.tree.Lookahead;
 import com.javacc.parser.tree.PackageDeclaration;
 import com.javacc.parser.tree.ParserCodeDecls;
+import com.javacc.parser.tree.RegexpSpec;
 import com.javacc.parser.tree.RegexpStringLiteral;
 import com.javacc.parser.tree.TokenManagerDecls;
 import com.javacc.parser.tree.TokenProduction;
@@ -94,7 +95,7 @@ public class Grammar extends BaseNode {
     private JavaCCOptions options = new JavaCCOptions(this);
     private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
-    private int includeNesting;
+    private int includeNesting;  
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
 
@@ -138,10 +139,20 @@ public class Grammar extends BaseNode {
     public String[] getLexicalStates() {
         return lexicalStates.toArray(new String[]{});
     }
-    //REVISIT: I don't really like these two methods and the whole disposition. 
-    // It works, but should have something cleaner.
-    public void addStringLiteralToResolve(RegexpStringLiteral stringLiteral) {
-        stringLiteralsToResolve.add(stringLiteral);
+
+    public void addInplaceRegexp(RegularExpression regexp) {
+        if (regexp instanceof RegexpStringLiteral) {
+            stringLiteralsToResolve.add((RegexpStringLiteral) regexp);
+        }
+        TokenProduction tp = new TokenProduction();
+        tp.setGrammar(this);
+        tp.setExplicit(false);
+        tp.setLexicalState(getDefaultLexicalState());
+        addChild(tp);
+        addTokenProduction(tp);
+        RegexpSpec res = new RegexpSpec();
+        res.addChild(regexp);
+        tp.addChild(res);
     }
     
     private void resolveStringLiterals() {
@@ -193,11 +204,13 @@ public class Grammar extends BaseNode {
         } else {
             String prevLocation = this.filename;
             String prevDefaultLexicalState = this.defaultLexicalState;
+            boolean prevIgnoreCase = this.ignoreCase;
             includeNesting++;
             Node root = parse(location, true);
             includeNesting--;
             setFilename(prevLocation);
             this.defaultLexicalState = prevDefaultLexicalState;
+            this.ignoreCase = prevIgnoreCase;
             return root;
         }
     }
@@ -904,6 +917,11 @@ public class Grammar extends BaseNode {
         }
         return buf.toString();
     }
+
+
+    private boolean ignoreCase;
+    public boolean getIgnoreCase() {return ignoreCase;}
+    public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
 
     private final Utils utils = new Utils();
     private List<String> nodeVariableNameStack = new ArrayList<>();
