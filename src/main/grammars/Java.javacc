@@ -39,25 +39,25 @@ UNPARSED_TOKENS_ARE_NODES;
 INJECT PARSER_CLASS : {
 
   private Token TOKEN_HOOK(Token tok) {
-    String img = tok.getImage();
-    if (img==null || !img.startsWith(">")) return tok;
+    final TokenType type = tok.getType();
+    if (type != GT && type != RSIGNEDSHIFT && type != RUNSIGNEDSHIFT) return tok;
     boolean inGenericTypeSpec = isInProduction("TypeArguments", "TypeParameters");
-    if (inGenericTypeSpec && (img.equals(">>") || img.equals(">>>"))) {
+    if (type != GT && inGenericTypeSpec) {
         // If we've entered the TypeParameters or TypeArguments production, we need to split
         // a ">>" or ">>>" into 2 (or 3) GT tokens.
         Token gt = Token.split(tok, 1, GT, GT);
-        if (img.length() == 3) {
+        if (type == RUNSIGNEDSHIFT) {
           Token next = Token.split(gt.getNext(), 1, GT, GT);
         }
         return gt;
     }
-    else if (!inGenericTypeSpec && img.length() ==1) {
+    else if (type == GT && !inGenericTypeSpec) {
       // In this case we do the reverse. We merge 2 (or 3) GT tokens into a right shift operator
       Token next = tok.getNextToken();
       if (next != null && next.getType() == GT) {
         Token nextNext = next.getNextToken();
         Token merged = Token.merge(tok, next, RSIGNEDSHIFT);
-        if (nextNext != null && nextNext.getType() == GT) {// && nextNext.getBeginColumn() == next.getBeginColumn() +1) {
+        if (nextNext != null && nextNext.getType() == GT) {
             merged = Token.merge(merged, nextNext, RUNSIGNEDSHIFT);
         } 
         return merged;
@@ -291,16 +291,11 @@ TOKEN #Operator :
 | < XORASSIGN: "^=" > 
 | < REMASSIGN: "%=" > 
 | < LSHIFTASSIGN: "<<=" > 
+| < RSIGNEDSHIFT: ">>" > 
+| < RUNSIGNEDSHIFT: ">>>" > 
 | < RSIGNEDSHIFTASSIGN: ">>=" > 
 | < RUNSIGNEDSHIFTASSIGN: ">>>=" > 
 | < LAMBDA : "->" > 
-;
-
-//<PHONY> TOKEN #Operator:
-TOKEN #Operator :
-  < RSIGNEDSHIFT: ">>" > 
-  |
-  < RUNSIGNEDSHIFT: ">>>" > 
 ;
 
 INJECT BaseNode : 

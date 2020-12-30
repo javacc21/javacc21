@@ -149,6 +149,7 @@ public class JavaCCOptions {
         optionValues.put("JAVA_UNICODE_ESCAPE", false);
         noLongerSetOnCL.add("JAVA_UNICODE_ESCAPE");
         optionValues.put("IGNORE_CASE", false);
+        noLongerSetOnCL.add("IGNORE_CASE");
         optionValues.put("USER_DEFINED_LEXER", false);
         noLongerSetOnCL.add("USER_DEFINED_LEXER");
         optionValues.put("LEXER_USES_PARSER", false);
@@ -246,14 +247,12 @@ public class JavaCCOptions {
     }
 
     public void setInputFileOption(Object nameloc, Object valueloc, String name, Object value, boolean inInclude) {
-
-
         String s = name.toUpperCase();
         
         if (inInclude) {
-        	if (s.equals("DEFAULT_LEXICAL_STATE")) {
+        	if (s.equalsIgnoreCase("DEFAULT_LEXICAL_STATE")) {
         		grammar.setDefaultLexicalState((String) value);
-        	}
+            }
             // For now, we just ignore any other options if we are within a INCLUDE processing.
             // This will be revisited later.
             return;
@@ -543,7 +542,6 @@ public class JavaCCOptions {
         return booleanValue("SMART_NODE_CREATION");
     }
 
-
     /**
      * Find the node uses parser value.
      *
@@ -551,15 +549,6 @@ public class JavaCCOptions {
      */
     public boolean getNodeUsesParser() {
         return booleanValue("NODE_USES_PARSER");
-    }
-
-    /**
-     * Find the visitor value.
-     *
-     * @return The requested visitor value.
-     */
-    public boolean getVisitor() {
-        return booleanValue("VISITOR");
     }
 
     /**
@@ -577,37 +566,6 @@ public class JavaCCOptions {
 
     public String getParserPackage() {
         return stringValue("PARSER_PACKAGE");
-    }
-
-    /**
-     * Find the visitor exception value
-     *
-     * @return The requested visitor exception value.
-     */
-    public String getVisitorException() {
-        return stringValue("VISITOR_EXCEPTION");
-    }
-
-    /**
-     * Find the visitor data type value
-     *
-     * @return The requested visitor data type value.
-     */
-    public String getVisitorDataType() {
-        String type = stringValue("VISITOR_DATA_TYPE");
-        if (type.equals("")) {
-            type = "Object";
-        }
-        return type;
-    }
-
-    /**
-     * Find the visitor return type value
-     *
-     * @return The requested visitor return type value.
-     */
-    public String getVisitorReturnType() {
-        return stringValue("VISITOR_RETURN_TYPE");
     }
 
     public boolean getTreeBuildingEnabled() {
@@ -667,16 +625,13 @@ public class JavaCCOptions {
             if (getNodeUsesParser()) {
                 grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
             }
-            if (getVisitor()) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "VISITOR"));
-            }
         }
         if (booleanValue("HUGE_FILE_SUPPORT")) {
             if (booleanValue("TREE_BUILDING_ENABLED")) {
                 grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because TREE_BUILDING_ENABLED is set.");
             }
             if (booleanValue("FAULT_TOLERANT")) {
-                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is igored because FAULT_TOLERANT is set.");
+                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because FAULT_TOLERANT is set.");
             }
         }
     }
