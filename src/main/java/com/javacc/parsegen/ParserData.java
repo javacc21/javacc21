@@ -172,43 +172,16 @@ public class ParserData {
             }
          }
 
-
-// Below this point is legacy code that I'm still schlepping around.
-
-        /*
-         * The following loop ensures that all target lexical states are
-         * defined. Also piggybacking on this loop is the detection of <EOF> and
-         * <name> in token productions. After reporting an error, these entries
-         * are removed. Also checked are definitions on inline private regular
-         * expressions. This loop works slightly differently when
-         * USER_DEFINED_LEXER is set to true. In this case, <name> occurrences
-         * are OK, while regular expression specs generate a warning.
-         */
-        for (TokenProduction tp: grammar.descendants(TokenProduction.class)) { 
-            for (RegexpSpec res : tp.getRegexpSpecs()) {
-                if (res.getNextState() != null) {
-                    if (lexerData.getLexicalStateIndex(res.getNextState()) == -1) {
-                        grammar.addSemanticError(res.getNsTok(), "Lexical state \""
-                                + res.getNextState() + "\" has not been defined.");
-                    }
-                }
-                if (tp.isExplicit() && grammar.getOptions().getUserDefinedLexer()) {
-                    grammar.addWarning(res.getRegexp(),
-                            "Ignoring regular expression specification since "
-                                    + "option USER_DEFINED_LEXER has been set to true.");
-                } else if (tp.isExplicit()
-                        && !grammar.getOptions().getUserDefinedLexer()
-                        && res.getRegexp() instanceof RegexpRef) {
-                    grammar
-                    .addWarning(
-                            res.getRegexp(),
-                            "Ignoring free-standing regular expression reference.  "
-                                    + "If you really want this, you must give it a different label as <NEWLABEL:<"
-                                    + res.getRegexp().getLabel() + ">>.");
-                    tp.removeChild(res);
-                } 
+        // Check that any lexical state referred to actually exists
+        for (RegexpSpec res : grammar.descendants(RegexpSpec.class)) {
+            String nextLexicalState = res.getNextState();
+            if (nextLexicalState != null && lexerData.getLexicalState(nextLexicalState) == null) {
+                grammar.addSemanticError(res.getNsTok(), "Lexical state \""
+                + nextLexicalState + "\" has not been defined.");
             }
         }
+
+// Below this point is legacy code that I'm still schlepping around.
 
         /*
          * The following loop inserts all names of regular expressions into
@@ -248,11 +221,9 @@ public class ParserData {
          * code also numbers all regular expressions (by setting their ordinal
          * values), and populates the table "names_of_tokens".
          */
-        //        	 for (TokenProduction tp: grammar.descendantsOfType(TokenProduction.class)) { 
-        // Cripes, for some reason this is order dependent!
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
             List<RegexpSpec> respecs = tp.getRegexpSpecs();
-            List<Map<String, Map<String, RegularExpression>>> table = new ArrayList<Map<String, Map<String, RegularExpression>>>();
+            List<Map<String, Map<String, RegularExpression>>> table = new ArrayList<>();
             for (int i = 0; i < tp.getLexStates().length; i++) {
                 LexicalStateData lexState = lexerData.getLexicalState(tp.getLexStates()[i]);
                 table.add(lexState.getTokenTable());
@@ -285,7 +256,7 @@ public class ParserData {
                             // found.
                             // Since IGNORE_CASE version exists, current one is
                             // useless and bad.
-                            if (!stringLiteral.tpContext.isExplicit()) {
+                            if (!stringLiteral.getTokenProduction().isExplicit()) {
                                 // inline BNF string is used earlier with an
                                 // IGNORE_CASE.
                                 grammar
@@ -307,7 +278,7 @@ public class ParserData {
                                                 + stringLiteral.getImage() + "\" "
                                                 + "can never be matched.");
                             }
-                        } else if (stringLiteral.tpContext.getIgnoreCase()) {
+                        } else if (stringLiteral.getIgnoreCase()) {//REVISIT
                             // This has to be explicit. A warning needs to be
                             // given with respect
                             // to all previous strings.
@@ -358,14 +329,15 @@ public class ParserData {
                                                     + "\" in lexical state \""
                                                     + tp.getLexStates()[i] + "\".");
                                 }
-                            } else if (!re.tpContext.getKind().equals("TOKEN")) {
+                            } else if (re.getTokenProduction() != null && !re.getTokenProduction().getKind().equals("TOKEN")) {
+                                String kind = re.getTokenProduction().getKind();
                                 grammar
                                 .addSemanticError(
                                         stringLiteral,
                                         "String token \""
                                                 + stringLiteral.getImage()
                                                 + "\" has been defined as a \""
-                                                + re.tpContext.getKind()
+                                                + kind
                                                 + "\" token.");
                             } else if (re.isPrivate()) {
                                 grammar
@@ -417,10 +389,8 @@ public class ParserData {
          * attaching links to "RegexpRef"s. Error messages are given if
          * undeclared names are used, or if "RegexpRefs" refer to private
          * regular expressions or to regular expressions of any kind other than
-         * TOKEN. In addition, this loop also removes top level "RJustName"s
-         * from "rexprlist". This code is not executed if
-         * grammar.getOptions().getUserDefinedLexer() is set to true. Instead
-         * the following block of code is executed.
+         * TOKEN. In addition, this loop also removes top level RegexpRefs
+         * from "rexprlist". 
          */
 
         if (!grammar.getOptions().getUserDefinedLexer()) {
@@ -429,10 +399,10 @@ public class ParserData {
                 RegularExpression referenced = grammar.getNamedToken(label);
                 if (referenced == null && !ref.getLabel().equals("EOF")) {
                     grammar.addSemanticError(ref,  "Undefined lexical token name \"" + label + "\".");
-                } else if (referenced != null && ref.tpContext != null && !ref.tpContext.isExplicit()) {
+                } else if (referenced != null && ref.getTokenProduction() != null && !ref.getTokenProduction().isExplicit()) {
                     if (referenced.isPrivate()) {
                         grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
-                    }   else if (!referenced.tpContext.getKind().equals("TOKEN")) {
+                    }   else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
                         grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
                     } 
                 } 
@@ -460,9 +430,9 @@ public class ParserData {
         /*
          * The following code is executed only if
          * grammar.getOptions().getUserDefinedLexer() is set to true. This code
-         * visits all top-level "RJustName"s (ignores "RJustName"s nested within
+         * visits all top-level RegexpRefs (ignores RegexpRefs nested within
          * regular expressions). Since regular expressions are optional in this
-         * case, RegexpRef's"without corresponding regular expressions are
+         * case, RegexpRef's without corresponding regular expressions are
          * given ordinal values here. If a "RegexpRef" refers to a named regular
          * expression, its ordinal value is set to reflect this. All but one
          * RegexpRef node is removed from the lists by the end of execution of
@@ -508,7 +478,7 @@ public class ParserData {
                 }
             }
         }
-
+        // Check for self-referential loops in regular expressions
         if (!grammar.getOptions().getUserDefinedLexer()) {
             RegexpVisitor reVisitor = new RegexpVisitor();
             for (TokenProduction tp : grammar.getAllTokenProductions()) {
@@ -517,20 +487,19 @@ public class ParserData {
         }
     }
 
-    private RegularExpression other;
-
     // Checks to see if the "str" is superseded by another equal (except case)
     // string
     // in table.
-    private boolean hasIgnoreCase(Map<String, RegularExpression> table,
-            String str) {
+
+    private RegularExpression other;
+    private boolean hasIgnoreCase(Map<String, RegularExpression> table, String str) {
         RegularExpression rexp;
         rexp = (RegularExpression) (table.get(str));
-        if (rexp != null && !rexp.tpContext.getIgnoreCase()) {
+        if (rexp != null && !rexp.getIgnoreCase()) {//REVISIT
             return false;
         }
         for (RegularExpression re : table.values()) {
-            if (re.tpContext.getIgnoreCase()) {
+            if (re.getIgnoreCase()) {//REVISIT
                 other = re;
                 return true;
             }
