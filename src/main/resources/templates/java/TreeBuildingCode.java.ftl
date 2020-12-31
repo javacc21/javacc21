@@ -62,13 +62,13 @@
 	 */ 
     public Node rootNode() {
         Node root = currentNodeScope.rootNode();
-[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
+[#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]
         recursivelySetInputSource(root, this.token_source.input_stream);
 [/#if]        
         return root;
     }
     
-[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]    
+[#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]    
     static private void recursivelySetInputSource(Node n, FileLineMap fileLineMap) {
         n.setInputSource(fileLineMap);
         for (Node child : n.children()) {
@@ -131,7 +131,7 @@
         n.setBeginColumn(next.getBeginColumn());
 [#if grammar.options.hugeFileSupport]       
         n.setInputSource(this.getInputSource());
-[#elseif !grammar.options.userDefinedLexer]
+[#elseif !grammar.userDefinedLexer]
        n.setInputSource(token_source.input_stream);
 [/#if]       
         new NodeScope();

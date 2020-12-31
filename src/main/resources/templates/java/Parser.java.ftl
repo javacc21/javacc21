@@ -87,7 +87,7 @@ private Token lastConsumedToken;
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
-[#if grammar.options.userDefinedLexer]
+[#if grammar.userDefinedLexer]
   /** User defined Lexer. */
   public Lexer token_source;
   String inputSource = "input";
@@ -109,7 +109,7 @@ public boolean isCancelled() {return cancelled;}
  // Generated constructors
  //=================================
 
-[#if !grammar.options.userDefinedLexer]
+[#if !grammar.userDefinedLexer]
  [#if !grammar.options.hugeFileSupport]
    public ${grammar.parserClassName}(String inputSource, CharSequence content) {
        this(new ${grammar.lexerClassName}(inputSource, content));
@@ -134,7 +134,7 @@ public boolean isCancelled() {return cancelled;}
   }
 [/#if]
 
-[#if grammar.options.userDefinedLexer]
+[#if grammar.userDefinedLexer]
   /** Constructor with user supplied Lexer. */
   public ${grammar.parserClassName}(Lexer lexer) {
 [#else]

@@ -36,12 +36,12 @@ package ${grammar.parserPackage};
 import java.util.*;
 import java.lang.reflect.*;
 import java.util.function.Predicate;
-[#if grammar.options.freemarkerNodes]
+[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
 import freemarker.template.*;
 [/#if]
 
 public interface Node extends Comparable<Node> 
-[#if grammar.options.freemarkerNodes]
+[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
    , TemplateNodeModel, TemplateScalarModel
 [/#if] {
 
@@ -138,7 +138,7 @@ public interface Node extends Comparable<Node>
      java.util.Set<String> getAttributeNames();
      
     
-[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
+[#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]
      FileLineMap getFileLineMap();
 
      default String getInputSource() {

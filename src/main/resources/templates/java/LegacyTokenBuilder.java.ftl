@@ -5,7 +5,17 @@
       Now the contents of this file are an include from LexGen.java.ftl.
   --]
 
-   
+[#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS=true, JAVA_UNICODE_ESCAPE=false]
+[#if grammar.settings.TABS_TO_SPACES??]
+    [#set TABS_TO_SPACES = grammar.settings.TABS_TO_SPACES]
+[/#if]
+[#if grammar.settings.PRESERVE_LINE_ENDINGS?? && !grammar.settings.PRESERVE_LINE_ENDINGS]
+    [#set PRESERVE_LINE_ENDINGS = false]
+[/#if]
+[#if grammar.settings.JAVA_UNICODE_ESCAPE?? && grammar.settings.JAVA_UNICODE_ESCAPE]
+    [#set JAVA_UNICODE_ESCAPE = true]
+[/#if]
+
 
 private class TokenBuilder {
 
@@ -139,8 +149,8 @@ private class TokenBuilder {
          if (ch <0) {
              return ch;
          }
-             
-[#if grammar.options.javaUnicodeEscape]             
+
+[#if JAVA_UNICODE_ESCAPE]             
          if (ch == '\\') {
              ch = handleBackSlash();
          } else {
@@ -148,7 +158,7 @@ private class TokenBuilder {
          }
 [/#if]
 
-[#if grammar.options.tabsToSpaces > 0]
+[#if TABS_TO_SPACES > 0]
         int tabsToSpaces = ${grammar.options.tabsToSpaces};
         if (ch == '\t') {
               ch = ' ';
@@ -159,7 +169,7 @@ private class TokenBuilder {
         }
 [/#if]
 
-[#if !grammar.options.preserveLineEndings]
+[#if !PRESERVE_LINE_ENDINGS]
      if (ch == '\r') {
         int nextChar = nextChar();
         if (nextChar >=0 && nextChar != '\n') {
@@ -182,7 +192,7 @@ private class TokenBuilder {
            column += (tabSize - (column % tabSize));        
         }
         
-[#if grammar.options.javaUnicodeEscape]        
+[#if JAVA_UNICODE_ESCAPE]
         if (lastCharWasUnicodeEscape) {
             column += (hexEscapeBuffer.length() -1);
         }
@@ -194,7 +204,7 @@ private class TokenBuilder {
     }
 
         
-[#if grammar.options.javaUnicodeEscape]
+[#if JAVA_UNICODE_ESCAPE]
     private StringBuilder hexEscapeBuffer = new StringBuilder();
     private boolean lastCharWasUnicodeEscape;
     

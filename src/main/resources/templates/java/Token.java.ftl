@@ -7,7 +7,7 @@ import java.util.*;
 import ${grammar.nodePackage}.*;
 [/#if]
 
-[#if grammar.options.freemarkerNodes]
+[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
 import freemarker.template.*;
 [/#if]
 
@@ -20,7 +20,7 @@ import freemarker.template.*;
 public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 
- [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
+ [#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]
  
     private FileLineMap fileLineMap; 
     
@@ -97,7 +97,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     String image;
     
     public String getImage() {
-[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]    
+[#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]    
         if (image == null) {
             return getSource();
         } 
@@ -109,7 +109,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        this.image = image;
    } 
     
-[#if !grammar.options.userDefinedLexer && grammar.lexerData.numLexicalStates > 1]
+[#if !grammar.userDefinedLexer && grammar.lexerData.numLexicalStates > 1]
     private LexicalState lexicalState, followingLexicalState;
         
     void setLexicalState(LexicalState state) {
@@ -289,7 +289,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.unparsed = unparsed;
     }
 
-[#if !grammar.options.userDefinedLexer]
+[#if !grammar.userDefinedLexer]
     /** 
      * Utility method to merge two tokens into a single token of a given type.
      */
@@ -356,7 +356,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
            switch(ofKind) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${grammar.options.nodePrefix}${re.generatedClassName}(ofKind, image);
+              case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(ofKind, image);
             [/#if]
            [/#list]
               default: return new Token(ofKind, image);
@@ -384,14 +384,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
     
 [#else]
-   [#if !grammar.options.userDefinedLexer]    
+   [#if !grammar.userDefinedLexer]    
     public static Token newToken(TokenType type, String image, FileLineMap fileLineMap) {
            [#--  if !grammar.options.hugeFileSupport]image = null;[/#if --]
            [#if grammar.options.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${grammar.options.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, image, fileLineMap);
+              case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, image, fileLineMap);
             [/#if]
            [/#list]
               default :        return new Token(type, image, fileLineMap);      
@@ -411,7 +411,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
     [/#if]
     
-  [#if grammar.options.treeBuildingEnabled && !grammar.options.userDefinedLexer]    
+  [#if grammar.options.treeBuildingEnabled && !grammar.userDefinedLexer]    
     public static Token newToken(TokenType type, String image, Node node) {
         return newToken(type, image, node.getFileLineMap());
     }
@@ -536,7 +536,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return attributes.keySet();
     }
 
-   [#if grammar.options.freemarkerNodes]
+   [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
     public TemplateNodeModel getParentNode() {
         return parent;
     }

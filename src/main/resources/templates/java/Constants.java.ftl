@@ -22,7 +22,7 @@ public interface ${grammar.constantsClassName} {
      INVALID
   }
   
-[#if !grammar.options.userDefinedLexer]
+[#if !grammar.userDefinedLexer]
   /**
    * Lexical States
    */

@@ -8,7 +8,7 @@ package ${grammar.parserPackage};
  */
 public class InvalidToken extends Token {
 
-[#if grammar.options.hugeFileSupport || grammar.options.userDefinedLexer]
+[#if grammar.options.hugeFileSupport || grammar.userDefinedLexer]
     public InvalidToken(String image, String inputSource) {
        super(TokenType.INVALID, image, inputSource);
     }

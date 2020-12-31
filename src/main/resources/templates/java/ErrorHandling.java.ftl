@@ -181,7 +181,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
         this.lastConsumedToken = currentToken;
 [#if grammar.options.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
-  [#if grammar.options.userDefinedLexer]
+  [#if grammar.userDefinedLexer]
           currentToken.setInputSource(inputSource);
   [/#if]
   [#list grammar.openNodeScopeHooks as hook]
@@ -209,7 +209,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
        throw new ParseException(currentToken, EnumSet.of(expectedType), parsingStack);
   }
   
- [#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
+ [#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]
  
   private class ParseState {
        Token lastParsed;

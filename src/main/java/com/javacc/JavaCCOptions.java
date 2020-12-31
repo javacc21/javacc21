@@ -83,19 +83,6 @@ public class JavaCCOptions {
     private Map<String, String> aliases = new HashMap<String, String>();
 
     /**
-     * Convenience method to retrieve integer options.
-     */
-    protected int intValue(final String option) {
-        Object value = optionValues.get(option);
-        if (value instanceof Integer) {
-            return (Integer) value;
-        }
-        if (value instanceof String) {
-            return Integer.parseInt(value.toString());
-        }
-        return ((Integer) optionValues.get(option)).intValue();
-    }
-    /**
      * Convenience method to retrieve boolean options.
      */
     protected boolean booleanValue(final String option) {
@@ -139,17 +126,9 @@ public class JavaCCOptions {
     public void init() {
         optionValues = new HashMap<String, Object>();
         optionValues.put("QUIET",  false);
-        optionValues.put("TABS_TO_SPACES",  0);
-        noLongerSetOnCL.add("TABS_TO_SPACES");
         optionValues.put("DEBUG_PARSER", false);
         optionValues.put("DEBUG_LEXER", false);
         optionValues.put("FAULT_TOLERANT", false);
-        optionValues.put("PRESERVE_LINE_ENDINGS",  true); // Will change this to false pretty soon.
-        noLongerSetOnCL.add("PRESERVE_LINE_ENDINGS");
-        optionValues.put("JAVA_UNICODE_ESCAPE", false);
-        noLongerSetOnCL.add("JAVA_UNICODE_ESCAPE");
-        optionValues.put("USER_DEFINED_LEXER", false);
-        noLongerSetOnCL.add("USER_DEFINED_LEXER");
         optionValues.put("LEXER_USES_PARSER", false);
         noLongerSetOnCL.add("LEXER_USES_PARSER");
 
@@ -166,8 +145,6 @@ public class JavaCCOptions {
         optionValues.put("NODE_USES_PARSER", false);
         noLongerSetOnCL.add("NODE_USES_PARSER");
 
-        optionValues.put("NODE_PREFIX", "");
-        noLongerSetOnCL.add("NODE_PREFIX");
         optionValues.put("NODE_CLASS", "");
         noLongerSetOnCL.add("NODE_CLASS");
         optionValues.put("NODE_FACTORY", false);
@@ -181,8 +158,6 @@ public class JavaCCOptions {
         noLongerSetOnCL.add("TOKENS_ARE_NODES");
         optionValues.put("UNPARSED_TOKENS_ARE_NODES", false);
         noLongerSetOnCL.add("UNPARSED_TOKENS_ARE_NODES");
-        optionValues.put("FREEMARKER_NODES", false);
-        noLongerSetOnCL.add("FREEMARKER_NODES");
         optionValues.put("HUGE_FILE_SUPPORT", false);
         noLongerSetOnCL.add("HUGE_FILE_SUPPORT");
         optionValues.put("LEGACY_API", false);
@@ -214,26 +189,6 @@ public class JavaCCOptions {
      */
     static public boolean isOption(final String opt) {
         return opt != null && opt.length() > 1 && opt.charAt(0) == '-';
-    }
-
-    /**
-     * Help function to handle cases where the meaning of an option has changed
-     * over time. If the user has supplied an option in the old format, it will
-     * be converted to the new format.
-     *
-     * @param name
-     *            The name of the option being checked.
-     * @param value
-     *            The option's value.
-     * @return The upgraded value.
-     */
-    public Object upgradeValue(final String name, Object value) {
-        if (name.equalsIgnoreCase("NODE_FACTORY") && value instanceof Boolean) if ((Boolean) value) {
-            value = "*";
-        } else {
-            value = "";
-        }
-        return value;
     }
 
     public void setInputFileOption(Object nameloc, Object valueloc, String name, Object value) {
@@ -389,15 +344,8 @@ public class JavaCCOptions {
                     .println("Warning: Duplicate option setting \"" + arg + "\" will be ignored.");
             return;
         }
-
-        Val = upgradeValue(name, Val);
-
         setOption(name, Val);
         cmdLineSetting.add(name);
-    }
-
-    public void normalize() {
-        grammar.setParserPackage(stringValue("PARSER_PACKAGE"));
     }
 
     /**
@@ -416,24 +364,6 @@ public class JavaCCOptions {
      */
     public boolean getDebugLexer() {
         return booleanValue("DEBUG_LEXER");
-    }
-
-    /**
-     * Find the Java unicode escape value.
-     *
-     * @return The requested Java unicode escape value.
-     */
-    public boolean getJavaUnicodeEscape() {
-        return booleanValue("JAVA_UNICODE_ESCAPE");
-    }
-
-    /**
-     * Find the user tokenmanager value.
-     *
-     * @return The requested user tokenmanager value.
-     */
-    public boolean getUserDefinedLexer() {
-        return booleanValue("USER_DEFINED_LEXER");
     }
 
     public boolean getLegacyAPI() {
@@ -458,14 +388,6 @@ public class JavaCCOptions {
 
     public boolean getQuiet() {
     	return booleanValue("QUIET");
-    }
-    
-    public boolean getPreserveLineEndings() {
-    	return booleanValue("PRESERVE_LINE_ENDINGS");
-    }
-    
-    public int getTabsToSpaces() {
-    	return intValue("TABS_TO_SPACES");
     }
 
     public boolean getFaultTolerant() {
@@ -498,23 +420,10 @@ public class JavaCCOptions {
         return booleanValue("NODE_USES_PARSER");
     }
 
-    /**
-     * Find the node prefix value.
-     *
-     * @return The requested node prefix value.
-     */
-    public String getNodePrefix() {
-        return stringValue("NODE_PREFIX");
-    }
-
     public String getNodePackage() {
         return stringValue("NODE_PACKAGE");
     }
-/*
-    public String getParserPackage() {
-        return stringValue("PARSER_PACKAGE");
-    }
-*/
+
     public boolean getTreeBuildingEnabled() {
         return booleanValue("TREE_BUILDING_ENABLED");
     }
@@ -529,10 +438,6 @@ public class JavaCCOptions {
 
     public boolean getUnparsedTokensAreNodes() {
         return booleanValue("UNPARSED_TOKENS_ARE_NODES");
-    }
-
-    public boolean getFreemarkerNodes() {
-        return booleanValue("FREEMARKER_NODES");
     }
 
     public String getBaseSourceDirectory() {

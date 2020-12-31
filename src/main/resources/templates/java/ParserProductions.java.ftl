@@ -382,7 +382,7 @@
 [#var parserData=grammar.parserData]
 [#var nodeNumbering = 0]
 [#var NODE_USES_PARSER = grammar.options.nodeUsesParser]
-[#var NODE_PREFIX = grammar.options.nodePrefix]
+[#var NODE_PREFIX = grammar.nodePrefix]
 [#var currentProduction]
 
 

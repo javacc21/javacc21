@@ -196,7 +196,7 @@ public final class Main {
             grammar.createOutputDir();
             grammar.semanticize();
 
-            if (!grammar.getOptions().getUserDefinedLexer() && grammar.getErrorCount() == 0) {
+            if (!grammar.getUserDefinedLexer() && grammar.getErrorCount() == 0) {
                 grammar.generateLexer();
             }
 

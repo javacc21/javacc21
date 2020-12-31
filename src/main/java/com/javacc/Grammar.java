@@ -728,20 +728,26 @@ public class Grammar extends BaseNode {
     public Set<String> getNodeNames() {
         return nodeNames;
     }
+    
+    public String getNodePrefix() {
+        String nodePrefix = (String) settings.get("NODE_PREFIX");
+        if (nodePrefix == null) nodePrefix = "";
+        return nodePrefix;
+    }
 
     public void addNodeType(String nodeName) {
         if (nodeName.equals("void")) {
             return;
         }
         nodeNames.add(nodeName);
-        nodeClassNames.put(nodeName, options.getNodePrefix() + nodeName);
+        nodeClassNames.put(nodeName, getNodePrefix() + nodeName);
         nodePackageNames.put(nodeName, getNodePackage());
     }
 
     public String getNodeClassName(String nodeName) {
         String className = nodeClassNames.get(nodeName);
         if (className ==null) {
-            return options.getNodePrefix() + nodeName;
+            return getNodePrefix() + nodeName;
         }
         return className;
     }
@@ -828,6 +834,9 @@ public class Grammar extends BaseNode {
     }
 
     public String getParserPackage() {
+        if (parserPackage == null) {
+            parserPackage = (String) settings.get("PARSER_PACKAGE");
+        }
         return parserPackage;
     }
 
@@ -924,6 +933,12 @@ public class Grammar extends BaseNode {
         }
         return buf.toString();
     }
+
+    public boolean getUserDefinedLexer() {
+        Boolean b = (Boolean) settings.get("USER_DEFINED_LEXER");
+        return b == null ? false : b;
+    }
+
     private boolean ignoreCase;
     public boolean getIgnoreCase() {return ignoreCase;}
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
@@ -941,6 +956,8 @@ public class Grammar extends BaseNode {
             if (!isInInclude()) options.setInputFileOption(null, null, key, value);
         }
     }
+
+    public Map<String, Object> getSettings() {return settings;}
 
     private final Utils utils = new Utils();
     private List<String> nodeVariableNameStack = new ArrayList<>();

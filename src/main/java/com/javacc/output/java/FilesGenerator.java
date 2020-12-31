@@ -120,7 +120,7 @@ public class FilesGenerator {
         else if (currentFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
             templateName = "BaseNode.java.ftl";
         }
-        else if (currentFilename.startsWith(grammar.getOptions().getNodePrefix())) {
+        else if (currentFilename.startsWith(grammar.getNodePrefix())) {
             if (!(currentFilename.equals("ParseException.java") 
                     || currentFilename.equals("ParsingProblem.java")
                     || currentFilename.equals("Token.java")
@@ -135,7 +135,6 @@ public class FilesGenerator {
         HashMap<String, Object> dataModel = new HashMap<String, Object>();
         dataModel.put("grammar", grammar);
         dataModel.put("filename", currentFilename);
-//        dataModel.put("utils", new Utils());
         dataModel.put("generated_by", com.javacc.Main.PROG_NAME);
         String classname = currentFilename.substring(0, currentFilename.length() - 5);
         String superClassName = superClassLookup.get(classname);
@@ -232,7 +231,7 @@ public class FilesGenerator {
 
     void generateLexer() throws IOException, TemplateException {
         String filename = "Lexer.java";
-        if (!grammar.getOptions().getUserDefinedLexer()) {
+        if (!grammar.getUserDefinedLexer()) {
             filename = grammar.getLexerClassName() + ".java";
         }
         File outputFile = new File(grammar.getParserOutputDirectory(), filename);

@@ -37,7 +37,7 @@
     package ${grammar.parserPackage};
     import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
 [/#if]
-[#if grammar.options.userDefinedLexer]
+[#if grammar.userDefinedLexer]
   [#embed "LexerInterface.java.ftl"]
 [#else]
 [#list grammar.parserCodeImports as import]

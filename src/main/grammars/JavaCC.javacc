@@ -503,14 +503,9 @@ GrammarFile Root throws IOException #GrammarFile :
    [
       OptionsBlock | Options
    ]
-   {
-        if (!grammar.isInInclude()) {
-            grammar.getOptions().normalize();
-        }
-   }
    [ParserCodeDecls]
    (
-      SCAN {!grammar.getOptions().getUserDefinedLexer()} =>
+      SCAN {!grammar.getUserDefinedLexer()} =>
       TokenProduction  {grammar.addTokenProduction((TokenProduction) peekNode());}
       |
       BNFProduction
@@ -1002,7 +997,7 @@ TokenProduction #TokenProduction :
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
         {
-          if (grammar.getOptions().getUserDefinedLexer()) {
+          if (grammar.getUserDefinedLexer()) {
             grammar.addWarning(current_token, "Ignoring \"IGNORE_CASE\" specification since option USER_DEFINED_LEXER has been set to true.");
           }
         }
@@ -1156,7 +1151,7 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
   [
       Block
         {
-            if (grammar.getOptions().getUserDefinedLexer()) {
+            if (grammar.getUserDefinedLexer()) {
                 grammar.addWarning(peekNode(), "Ignoring code snippet for regular expression specification since option USER_DEFINED_LEXER has been set to true.");
             }
             if (regexp.isPrivate()) {
@@ -2486,7 +2481,7 @@ RegexpExpansion #void :
   SCAN ~\.\TokenProduction =>
   (RegexpRef|EndOfFile)
   |
-  SCAN 3 {isInProduction("TokenProduction")||grammar.getOptions().getUserDefinedLexer()} =>
+  SCAN 3 {isInProduction("TokenProduction")||grammar.getUserDefinedLexer()} =>
   InPlaceRegexp 
  ) 
 ;
