@@ -93,7 +93,6 @@ public class Grammar extends BaseNode {
                    defaultLexicalState;
     private Map<String, Object> settings = new HashMap<>();
     private CompilationUnit parserCode;
-    private JavaCCOptions options = new JavaCCOptions(this);
     private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;  
@@ -121,12 +120,16 @@ public class Grammar extends BaseNode {
     private JavaCCErrorReporter reporter;
 	private int parseErrorCount;
 	private int semanticErrorCount;
-	private int warningCount;
+    private int warningCount;
+
+    private File grammarFile, outputDir;
+    private boolean quiet;
     
-    public Grammar(JavaCCOptions options) {
+    public Grammar(File grammarFile, File outputDir, boolean quiet) {
         this();
-        this.options = options;
-        options.setGrammar(this);
+        this.grammarFile = grammarFile;
+        this.outputDir = outputDir;
+        this.quiet = quiet;
         parserData = new ParserData(this);
     }
 
@@ -136,6 +139,8 @@ public class Grammar extends BaseNode {
     	this.semanticErrorCount = 0;
     	this.warningCount = 0;
     }
+
+    public boolean isQuiet() {return quiet;}
 
     public String[] getLexicalStates() {
         return lexicalStates.toArray(new String[]{});
@@ -263,15 +268,6 @@ public class Grammar extends BaseNode {
 
     public ParserData getParserData() {
         return parserData;
-    }
-
-    public JavaCCOptions getOptions() {
-        return options;
-    }
-
-    void setOptions(JavaCCOptions options) {
-        this.options = options;
-        options.setGrammar(this);
     }
 
     public String getConstantsClassName() {
@@ -840,15 +836,8 @@ public class Grammar extends BaseNode {
         return parserPackage;
     }
 
-    String getNodePackageName() {
-        String nodePackage = options.getNodePackage();
-        if (nodePackage.equals("")) 
-            nodePackage = getParserPackage();
-        return nodePackage;
-    }
-
     public File getParserOutputDirectory() throws IOException {
-        String baseSrcDir = options.getBaseSourceDirectory();
+        String baseSrcDir = outputDir.toString();
         if (baseSrcDir.equals("")) {
             return new File(".");
         }
@@ -872,12 +861,14 @@ public class Grammar extends BaseNode {
         return dir;
     }
 
+    //FIXME.
+    public String getBaseSourceDirectory() {
+        return outputDir.toString(); 
+    }
+
     public File getNodeOutputDirectory(String nodeName) throws IOException {
-        String nodePackage = getNodePackageName(nodeName);
-        if (nodePackage == null) {
-            nodePackage = options.getNodePackage();
-        }
-        String baseSrcDir = options.getBaseSourceDirectory();
+        String nodePackage = getNodePackage();
+        String baseSrcDir = outputDir.toString();
         if (nodePackage == null || nodePackage.equals("") || baseSrcDir.equals("")) {
             return getParserOutputDirectory();
         }
@@ -904,8 +895,8 @@ public class Grammar extends BaseNode {
     }
 
     public String getNodePackage() {
-        String nodePackage = options.getNodePackage();
-        if (nodePackage.equals("")) {
+        String nodePackage = (String) settings.get("NODE_PACKAGE");
+        if (nodePackage == null) {
             nodePackage = this.getParserPackage();
         }
         return nodePackage;
@@ -991,6 +982,16 @@ public class Grammar extends BaseNode {
         return b && !getTreeBuildingEnabled() && !getFaultTolerant();
     }
 
+    public boolean getDebugParser() {
+        Boolean b = (Boolean) settings.get("DEBUG_PARSER");
+        return b == null ? false : b;
+    }
+
+    public boolean getDebugLexer() {
+        Boolean b = (Boolean) settings.get("DEBUG_LEXER");
+        return b==null ? false : b;
+    }
+
     public boolean getLegacyAPI() {
         Boolean b = (Boolean) settings.get("LEGACY_API");
         return b == null ? false : b;
@@ -1010,7 +1011,9 @@ public class Grammar extends BaseNode {
             else if (key.equals("DEFAULT_LEXICAL_STATE")) {
                 setDefaultLexicalState((String) value);
             }
-            if (!isInInclude()) options.setInputFileOption(null, null, key, value);
+            if (!isInInclude() && key.equals("BASE_SRC_DIR")) {
+                outputDir = new File((String)value);
+            }
         }
     }
 

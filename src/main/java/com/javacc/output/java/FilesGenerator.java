@@ -334,7 +334,7 @@ public class FilesGenerator {
         if (explicitlyDeclaredPackage == null) {
             return new File(grammar.getNodeOutputDirectory(nodeName), className + ".java");            
         }
-        String sourceBase = grammar.getOptions().getBaseSourceDirectory();
+        String sourceBase = grammar.getBaseSourceDirectory();
         if (sourceBase.equals("")) {
             return new File(grammar.getNodeOutputDirectory(nodeName), className + ".java");
         }

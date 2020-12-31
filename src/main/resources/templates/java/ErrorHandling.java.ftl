@@ -29,7 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
  --]
- [#if grammar.options.debugParser]
+ [#if grammar.debugParser]
   private boolean trace_enabled = true;
  [#else]
   private boolean trace_enabled = false;

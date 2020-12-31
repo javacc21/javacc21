@@ -52,7 +52,7 @@ import java.util.*;
 @SuppressWarnings("unused")
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
-    [#if grammar.options.debugLexer]  
+    [#if grammar.debugLexer]  
   private boolean trace_enabled = true;
     [#else]  
   private boolean trace_enabled = false;

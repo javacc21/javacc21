@@ -55,7 +55,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(${grammar.parserClassName}.class.getName());
     
-[#if grammar.options.debugParser]
+[#if grammar.debugParser]
      static {
          LOGGER.setLevel(Level.FINEST);
      }

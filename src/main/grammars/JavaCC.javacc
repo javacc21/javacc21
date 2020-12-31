@@ -675,7 +675,6 @@ Setting(Map settings) #Setting :
 {
 	  String key;
 	  Token name, t=null;
-	  JavaCCOptions _options = grammar.getOptions();
 	  boolean inInclude = grammar.isInInclude();
 	  Object value = Boolean.TRUE;
 }
