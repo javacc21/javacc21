@@ -86,13 +86,13 @@ public class FilesGenerator {
             generateParseException();
             generateParser();
         }
-        if (grammar.getOptions().getTreeBuildingEnabled()) {
+        if (grammar.getTreeBuildingEnabled()) {
             generateTreeBuildingFiles();
         }
-    	if (!grammar.getOptions().getHugeFileSupport()) {
+    	if (!grammar.getHugeFileSupport()) {
     		generateFileLineMap();
     	}
-    	if (grammar.getOptions().getFaultTolerant()) {
+    	if (grammar.getFaultTolerant()) {
     	    generateParsingProblem();
     	}
         

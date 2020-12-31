@@ -179,7 +179,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
             handleUnexpectedTokenType(expectedType, oldToken) ;
         }
         this.lastConsumedToken = currentToken;
-[#if grammar.options.treeBuildingEnabled]
+[#if grammar.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.userDefinedLexer]
           currentToken.setInputSource(inputSource);
@@ -198,7 +198,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
   }
  
   private void handleUnexpectedTokenType(TokenType expectedType, Token oldToken) throws ParseException {
-      [#if grammar.options.faultTolerant]
+      [#if grammar.faultTolerant]
          Token next = nextToken(oldToken);
          if (next.getType() == expectedType) {
              oldToken.setSkipped(true);
@@ -209,16 +209,16 @@ void dumpLookaheadCallStack(PrintStream ps) {
        throw new ParseException(currentToken, EnumSet.of(expectedType), parsingStack);
   }
   
- [#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]
+ [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
  
   private class ParseState {
        Token lastParsed;
-  [#if grammar.options.treeBuildingEnabled]
+  [#if grammar.treeBuildingEnabled]
        NodeScope nodeScope;
  [/#if]       
        ParseState() {
            this.lastParsed  = ${grammar.parserClassName}.this.lastConsumedToken;
-[#if grammar.options.treeBuildingEnabled]            
+[#if grammar.treeBuildingEnabled]            
            this.nodeScope = (NodeScope) currentNodeScope.clone();
 [/#if]           
        } 
@@ -236,7 +236,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
   
   void restoreStashedParseState() {
      ParseState state = popParseState();
-[#if grammar.options.treeBuildingEnabled]
+[#if grammar.treeBuildingEnabled]
      currentNodeScope = state.nodeScope;
 [/#if]
     if (state.lastParsed != null) {

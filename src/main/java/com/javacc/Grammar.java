@@ -939,6 +939,63 @@ public class Grammar extends BaseNode {
         return b == null ? false : b;
     }
 
+    public boolean getTreeBuildingEnabled() {
+        Boolean b = (Boolean) settings.get("TREE_BUILDING_ENABLED");
+        return b == null ? true : b;
+    }
+
+    public boolean getTreeBuildingDefault() {
+        Boolean b = (Boolean) settings.get("TREE_BUILDING_DEFAULT");
+        return b == null ? true : b;
+    }
+
+    public boolean getNodeDefaultVoid() {
+        Boolean b = (Boolean) settings.get("NODE_DEFAULT_VOID");
+        return b == null ? false : b;
+    }
+
+    public boolean getSmartNodeCreation() {
+        Boolean b = (Boolean) settings.get("SMART_NODE_CREATION");
+        return b == null ? true : b;
+    }
+
+    public boolean getTokensAreNodes() {
+        Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
+        return b == null ? true : b;
+    }
+
+    public boolean getUnparsedTokensAreNodes() {
+        Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
+        if (b == null) b = (Boolean) settings.get("SPECIAL_TOKENS_ARE_NODES");
+        return b== null ? false : true;
+    }
+
+    public boolean getNodeUsesParser() {
+        Boolean b = (Boolean) settings.get("NODE_USES_PARSER");
+        return b == null ? false : b;
+    }
+
+    public boolean getLexerUsesParser() {
+        Boolean b = (Boolean) settings.get("LEXER_USES_PARSER");
+        return b == null ? false : b;
+    }
+
+    public boolean getFaultTolerant() {
+        Boolean b = (Boolean) settings.get("FAULT_TOLERANT");
+        return b== null ? false : b;
+    }
+
+    public boolean getHugeFileSupport() {
+        Boolean b = (Boolean) settings.get("HUGE_FILE_SUPPORT");
+        if (b == null) b = false;
+        return b && !getTreeBuildingEnabled() && !getFaultTolerant();
+    }
+
+    public boolean getLegacyAPI() {
+        Boolean b = (Boolean) settings.get("LEGACY_API");
+        return b == null ? false : b;
+    }
+
     private boolean ignoreCase;
     public boolean getIgnoreCase() {return ignoreCase;}
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
@@ -958,6 +1015,48 @@ public class Grammar extends BaseNode {
     }
 
     public Map<String, Object> getSettings() {return settings;}
+
+    /**
+     * Some warnings if incompatible options are set.
+     * TODO. Have moved this from the defunct JavaCCOptions
+     * so it needs a bit of adjustment maybe.
+     */
+    public void sanityCheck() {
+        //        boolean nodePackageDefined = getNodePackage().length() >0;
+        
+        //        if (!getTreeBuildingEnabled()) {
+        //            String msg = "You have specified the OPTION_NAME option but it is "
+        //                + "meaningless unless the TREE_BUILDING_ENABLED is set to true."
+        //                + " This option will be ignored.\n";
+        //            if (nodePackageDefined) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_PACKAGE"));
+        //            }
+        //            if (getTokensAreNodes()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "TOKENS_ARE_NODES"));
+        //            }
+        //            if (getUnparsedTokensAreNodes()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "UNPARSED_TOKENS_ARE_NODES"));
+        //            }
+        //            if (getSmartNodeCreation()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "SMART_NODE_CREATION"));
+        //            }
+        //      if (getNodeDefaultVoid()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_DEFAULT_VOID"));
+        //            }
+        //            if (getNodeUsesParser()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
+        //            }
+        //        }
+        //        if (booleanValue("HUGE_FILE_SUPPORT")) {
+        //            if (booleanValue("TREE_BUILDING_ENABLED")) {
+        //                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because TREE_BUILDING_ENABLED is set.");
+        //            }
+        //            if (booleanValue("FAULT_TOLERANT")) {
+        //                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because FAULT_TOLERANT is set.");
+        //            }
+        //        }
+            }
+        
 
     private final Utils utils = new Utils();
     private List<String> nodeVariableNameStack = new ArrayList<>();

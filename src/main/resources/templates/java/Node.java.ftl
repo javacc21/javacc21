@@ -138,7 +138,7 @@ public interface Node extends Comparable<Node>
      java.util.Set<String> getAttributeNames();
      
     
-[#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]
+[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
      FileLineMap getFileLineMap();
 
      default String getInputSource() {
@@ -239,7 +239,7 @@ public interface Node extends Comparable<Node>
         return null;
     }
 
-[#if grammar.options.tokensAreNodes]
+[#if grammar.tokensAreNodes]
     /**
      * return the very first token that is part of this node
      * may be an unparsed (i.e. special) token.

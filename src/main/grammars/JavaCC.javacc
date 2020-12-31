@@ -742,7 +742,7 @@ BNFProduction BNFProduction :
     )
     {
         CURRENT_NODE.adjustFirstToken(t);
-        if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
+        if (tba == null && !grammar.getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName());
         }
         return CURRENT_NODE;

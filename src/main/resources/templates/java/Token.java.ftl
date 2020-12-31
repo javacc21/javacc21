@@ -13,19 +13,19 @@ import freemarker.template.*;
 
  [#var extendsNode = ""]
  
- [#if grammar.options.treeBuildingEnabled]
+ [#if grammar.treeBuildingEnabled]
     [#set extendsNode =", Node"]
  [/#if]
  
 public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 
- [#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]
+ [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
  
     private FileLineMap fileLineMap; 
     
     public FileLineMap getFileLineMap() {
-        [#if grammar.options.treeBuildingEnabled]
+        [#if grammar.treeBuildingEnabled]
         if (fileLineMap == null) {
            Node n = getParent();
            while (n!= null) {
@@ -49,7 +49,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.fileLineMap = fileLineMap;
     }
     
-    [#if !grammar.options.treeBuildingEnabled]
+    [#if !grammar.treeBuildingEnabled]
     public String getInputSource() {
         return inputSource;
      }
@@ -87,17 +87,17 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * of this token; endLine and endColumn describe the position of the
      * last character of this token.
      */
-[#if grammar.options.legacyAPI]public[#else]private[/#if]      
+[#if grammar.legacyAPI]public[#else]private[/#if]      
     int beginLine, beginColumn, endLine, endColumn;
 
     /**
      * The string image of the token.
      */
-[#if grammar.options.legacyAPI]public[#else]private[/#if]      
+[#if grammar.legacyAPI]public[#else]private[/#if]      
     String image;
     
     public String getImage() {
-[#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]    
+[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]    
         if (image == null) {
             return getSource();
         } 
@@ -148,7 +148,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 [/#if]
 
-[#if grammar.options.faultTolerant]
+[#if grammar.faultTolerant]
     private boolean skipped;
     boolean isSkipped() {
         return skipped;
@@ -159,7 +159,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 [/#if]
 
-[#if grammar.options.legacyAPI]
+[#if grammar.legacyAPI]
 
     void setKind(int kind) {
         this.type = TokenType.values()[kind];
@@ -216,7 +216,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      }
 
      public Token getPreviousToken() {
-         [#if grammar.options.hugeFileSupport]
+         [#if grammar.hugeFileSupport]
            throw new UnsupportedOperationException("With HUGE_FILE_SUPPORT turned on, the previousToken is not cached");
          [#else]
            return previousToken;
@@ -224,7 +224,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      }
 
      void setPreviousToken(Token previousToken) {
-         [#if grammar.options.hugeFileSupport] if (previousToken == null || previousToken.isUnparsed())[/#if]
+         [#if grammar.hugeFileSupport] if (previousToken == null || previousToken.isUnparsed())[/#if]
          this.previousToken = previousToken;
      }
 
@@ -241,7 +241,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * immediately follow it (without an intervening regular token).  If there
      * is no such token, this field is null.
      */
-[#if grammar.options.legacyAPI]
+[#if grammar.legacyAPI]
 
     public Token specialToken;
 
@@ -295,9 +295,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      */
     static Token merge(Token t1, Token t2, TokenType type) {
         [#var lastArg = "t1.getFileLineMap()"]
-        [#if grammar.options.hugeFileSupport][#set lastArg = "t1.getInputSource()"][/#if]
+        [#if grammar.hugeFileSupport][#set lastArg = "t1.getInputSource()"][/#if]
         Token merged = newToken(type, t1.getImage() + t2.getImage(), ${lastArg});
-[#if grammar.options.legacyAPI]        
+[#if grammar.legacyAPI]        
         merged.setSpecialToken(t1.getSpecialToken());
 [/#if]        
         merged.setPreviousToken(t1.getPreviousToken());
@@ -318,7 +318,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         String img1 = tok.getImage().substring(0, length);
         String img2 = tok.getImage().substring(length);
         [#set lastArg = "tok.getFileLineMap()"]
-        [#if grammar.options.hugeFileSupport][#set lastArg = "tok.getInputSource()"][/#if]
+        [#if grammar.hugeFileSupport][#set lastArg = "tok.getInputSource()"][/#if]
         Token t1 = newToken(type1, img1, ${lastArg});
         Token t2 = newToken(type2, img2, ${lastArg});
         t1.setBeginColumn(tok.getBeginColumn());
@@ -350,7 +350,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String toString() {
         return getNormalizedText();
     }
-[#if grammar.options.legacyAPI]    
+[#if grammar.legacyAPI]    
     public static Token newToken(int ofKind, String image) {
        [#if grammar.options.treeBuildingEnabled]
            switch(ofKind) {
@@ -366,10 +366,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        [/#if]
     }
 [/#if]    
-[#if grammar.options.hugeFileSupport]    
+[#if grammar.hugeFileSupport]    
     public static Token newToken(TokenType type, String image, String inputSource) {
-           [#if !grammar.options.hugeFileSupport]image = null;[/#if]
-           [#if grammar.options.treeBuildingEnabled]
+           [#--if !grammar.hugeFileSupport]image = null;[/#if--]
+           [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
@@ -387,7 +387,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
    [#if !grammar.userDefinedLexer]    
     public static Token newToken(TokenType type, String image, FileLineMap fileLineMap) {
            [#--  if !grammar.options.hugeFileSupport]image = null;[/#if --]
-           [#if grammar.options.treeBuildingEnabled]
+           [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
@@ -411,7 +411,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
     [/#if]
     
-  [#if grammar.options.treeBuildingEnabled && !grammar.userDefinedLexer]    
+  [#if grammar.treeBuildingEnabled && !grammar.userDefinedLexer]    
     public static Token newToken(TokenType type, String image, Node node) {
         return newToken(type, image, node.getFileLineMap());
     }
@@ -454,13 +454,13 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
     
    
-[#if !grammar.options.treeBuildingEnabled]    
+[#if !grammar.treeBuildingEnabled]    
     public String getLocation() {
          return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
      }
 [/#if]     
     
-[#if grammar.options.treeBuildingEnabled]
+[#if grammar.treeBuildingEnabled]
     
     private Node parent;
     private Map<String,Object> attributes; 

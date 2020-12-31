@@ -53,7 +53,7 @@ import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*
 
 @SuppressWarnings("unused")
 public class ${classname} extends ${grammar.baseNodeClassName} {
-[#if grammar.options.nodeUsesParser]
+[#if grammar.nodeUsesParser]
     public ${classname}(${grammar.parserClassName} p, int id) {
         super(p, id);
     }

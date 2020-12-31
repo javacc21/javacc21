@@ -128,22 +128,10 @@ public class JavaCCOptions {
         optionValues.put("QUIET",  false);
         optionValues.put("DEBUG_PARSER", false);
         optionValues.put("DEBUG_LEXER", false);
-        optionValues.put("FAULT_TOLERANT", false);
-        optionValues.put("LEXER_USES_PARSER", false);
-        noLongerSetOnCL.add("LEXER_USES_PARSER");
 
         optionValues.put("PARSER_PACKAGE", "");
         noLongerSetOnCL.add("PARSER_PACKAGE");
 	    optionValues.put("BASE_SRC_DIR", ".");
-        optionValues.put("TOKEN_FACTORY", "");
-        noLongerSetOnCL.add("TOKEN_FACTORY");
-
-        optionValues.put("NODE_DEFAULT_VOID", false);
-        noLongerSetOnCL.add("NODE_DEFAULT_VOID");
-        optionValues.put("SMART_NODE_CREATION", true);
-        noLongerSetOnCL.add("NODE_DEFAULT_VOID");
-        optionValues.put("NODE_USES_PARSER", false);
-        noLongerSetOnCL.add("NODE_USES_PARSER");
 
         optionValues.put("NODE_CLASS", "");
         noLongerSetOnCL.add("NODE_CLASS");
@@ -154,19 +142,10 @@ public class JavaCCOptions {
         noLongerSetOnCL.add("TREE_BUILDING_DEFAULT");
         optionValues.put("TREE_BUILDING_ENABLED", true);
         noLongerSetOnCL.add("TREE_BUILDING_ENABLED");
-        optionValues.put("TOKENS_ARE_NODES", true);
-        noLongerSetOnCL.add("TOKENS_ARE_NODES");
-        optionValues.put("UNPARSED_TOKENS_ARE_NODES", false);
-        noLongerSetOnCL.add("UNPARSED_TOKENS_ARE_NODES");
-        optionValues.put("HUGE_FILE_SUPPORT", false);
-        noLongerSetOnCL.add("HUGE_FILE_SUPPORT");
-        optionValues.put("LEGACY_API", false);
-        noLongerSetOnCL.add("LEGACY_API");
         aliases.put("DEBUG_TOKEN_MANAGER", "DEBUG_LEXER");
         aliases.put("USER_TOKEN_MANAGER", "USER_DEFINED_LEXER");
-        aliases.put("TOKEN_MANAGER_USES_PARSER", "LEXER_USES_PARSER");
+//        aliases.put("TOKEN_MANAGER_USES_PARSER", "LEXER_USES_PARSER");
         aliases.put("NODE_CLASS", "BASE_NODE_CLASS");
-        aliases.put("SPECIAL_TOKENS_ARE_NODES","UNPARSED_TOKENS_ARE_NODES");
         aliases.put("OUTPUT_DIRECTORY", "BASE_SRC_DIR");
         aliases.put("D", "BASE_SRC_DIR");
         aliases.put("Q",  "QUIET");
@@ -366,121 +345,15 @@ public class JavaCCOptions {
         return booleanValue("DEBUG_LEXER");
     }
 
-    public boolean getLegacyAPI() {
-        return booleanValue("LEGACY_API");
-    }
-
-    /**
-     * the LEXER_USES_PARSER setting
-     */
-    public boolean getLexerUsesParser() {
-        return booleanValue("LEXER_USES_PARSER");
-    }
-
-    /**
-     * Return the Token's factory class.
-     *
-     * @return The required factory class for Token.
-     */
-    public String getTokenFactory() {
-        return stringValue("TOKEN_FACTORY");
-    }
-
     public boolean getQuiet() {
     	return booleanValue("QUIET");
-    }
-
-    public boolean getFaultTolerant() {
-        return booleanValue("FAULT_TOLERANT");
-    }
-    
-    public boolean getHugeFileSupport() {
-    	return booleanValue("HUGE_FILE_SUPPORT") && !getTreeBuildingEnabled() && !getFaultTolerant();
-    }
-
-    /**
-     * Find the node default void value.
-     *
-     * @return The requested node default void value.
-     */
-    public boolean getNodeDefaultVoid() {
-        return booleanValue("NODE_DEFAULT_VOID");
-    }
-
-    public boolean getSmartNodeCreation() {
-        return booleanValue("SMART_NODE_CREATION");
-    }
-
-    /**
-     * Find the node uses parser value.
-     *
-     * @return The requested node uses parser value.
-     */
-    public boolean getNodeUsesParser() {
-        return booleanValue("NODE_USES_PARSER");
     }
 
     public String getNodePackage() {
         return stringValue("NODE_PACKAGE");
     }
 
-    public boolean getTreeBuildingEnabled() {
-        return booleanValue("TREE_BUILDING_ENABLED");
-    }
-
-    public boolean getTreeBuildingDefault() {
-        return booleanValue("TREE_BUILDING_DEFAULT") && getTreeBuildingEnabled();
-    }
-
-    public boolean getTokensAreNodes() {
-        return booleanValue("TOKENS_ARE_NODES");
-    }
-
-    public boolean getUnparsedTokensAreNodes() {
-        return booleanValue("UNPARSED_TOKENS_ARE_NODES");
-    }
-
     public String getBaseSourceDirectory() {
         return stringValue("BASE_SRC_DIR");
-    }
-
-
-    /**
-     * Some warnings if incompatible options are set.
-     */
-    public void sanityCheck() {
-        boolean nodePackageDefined = getNodePackage().length() >0;
-
-        if (!getTreeBuildingEnabled()) {
-            String msg = "You have specified the OPTION_NAME option but it is "
-                + "meaningless unless the TREE_BUILDING_ENABLED is set to true."
-                + " This option will be ignored.\n";
-            if (nodePackageDefined) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_PACKAGE"));
-            }
-            if (getTokensAreNodes()) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "TOKENS_ARE_NODES"));
-            }
-            if (getUnparsedTokensAreNodes()) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "UNPARSED_TOKENS_ARE_NODES"));
-            }
-            if (getSmartNodeCreation()) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "SMART_NODE_CREATION"));
-            }
-            if (getNodeDefaultVoid()) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_DEFAULT_VOID"));
-            }
-            if (getNodeUsesParser()) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
-            }
-        }
-        if (booleanValue("HUGE_FILE_SUPPORT")) {
-            if (booleanValue("TREE_BUILDING_ENABLED")) {
-                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because TREE_BUILDING_ENABLED is set.");
-            }
-            if (booleanValue("FAULT_TOLERANT")) {
-                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because FAULT_TOLERANT is set.");
-            }
-        }
     }
 }

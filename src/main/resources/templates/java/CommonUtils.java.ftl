@@ -35,7 +35,7 @@
 
 [#var TT = "TokenType."]
 
- [#if !grammar.options.legacyAPI && grammar.parserPackage?has_content]
+ [#if !grammar.legacyAPI && grammar.parserPackage?has_content]
    [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]
    [#set TT=""]
  [/#if]

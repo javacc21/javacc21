@@ -29,17 +29,17 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
  --]
-[#if grammar.options.treeBuildingDefault]
+[#if grammar.treeBuildingDefault]
     private boolean buildTree = true;
 [#else]
     private boolean buildTree = false;
 [/#if]    
-[#if grammar.options.tokensAreNodes]
+[#if grammar.tokensAreNodes]
     private boolean tokensAreNodes = true;
 [#else]
     private boolean tokensAreNodes = false;
 [/#if]
-[#if grammar.options.unparsedTokensAreNodes]
+[#if grammar.unparsedTokensAreNodes]
     private boolean unparsedTokensAreNodes = true;
 [#else]
     private boolean unparsedTokensAreNodes = false;
@@ -62,13 +62,13 @@
 	 */ 
     public Node rootNode() {
         Node root = currentNodeScope.rootNode();
-[#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]
+[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
         recursivelySetInputSource(root, this.token_source.input_stream);
 [/#if]        
         return root;
     }
     
-[#if !grammar.options.hugeFileSupport && !grammar.userDefinedLexer]    
+[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]    
     static private void recursivelySetInputSource(Node n, FileLineMap fileLineMap) {
         n.setInputSource(fileLineMap);
         for (Node child : n.children()) {
@@ -129,7 +129,7 @@
         Token next = nextToken(currentToken);
         n.setBeginLine(next.getBeginLine());
         n.setBeginColumn(next.getBeginColumn());
-[#if grammar.options.hugeFileSupport]       
+[#if grammar.hugeFileSupport]       
         n.setInputSource(this.getInputSource());
 [#elseif !grammar.userDefinedLexer]
        n.setInputSource(token_source.input_stream);

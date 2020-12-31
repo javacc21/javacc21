@@ -110,10 +110,10 @@ public boolean isCancelled() {return cancelled;}
  //=================================
 
 [#if !grammar.userDefinedLexer]
- [#if !grammar.options.hugeFileSupport]
+ [#if !grammar.hugeFileSupport]
    public ${grammar.parserClassName}(String inputSource, CharSequence content) {
        this(new ${grammar.lexerClassName}(inputSource, content));
-      [#if grammar.options.lexerUsesParser]
+      [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
   }
@@ -128,7 +128,7 @@ public boolean isCancelled() {return cancelled;}
   
   public ${grammar.parserClassName}(Reader reader) {
     this(new ${grammar.lexerClassName}(reader));
-      [#if grammar.options.lexerUsesParser]
+      [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
   }
@@ -142,7 +142,7 @@ public boolean isCancelled() {return cancelled;}
   public ${grammar.parserClassName}(${grammar.lexerClassName} lexer) {
 [/#if]
     token_source = lexer;
-      [#if grammar.options.lexerUsesParser]
+      [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
      currentToken = new Token();
@@ -160,7 +160,7 @@ public boolean isCancelled() {return cancelled;}
     Token previous = null;
     while (result == null) {
       Token next = token_source.getNextToken();
-[#if grammar.options.legacyAPI]      
+[#if grammar.legacyAPI]      
       if (previous != null && !(previous instanceof InvalidToken)) {
         next.setSpecialToken(previous);
       }
@@ -234,7 +234,7 @@ public boolean isCancelled() {return cancelled;}
  
 [#embed "ErrorHandling.java.ftl"]
 
-[#if grammar.options.treeBuildingEnabled]
+[#if grammar.treeBuildingEnabled]
    [#embed "TreeBuildingCode.java.ftl"]
 [/#if]
 }

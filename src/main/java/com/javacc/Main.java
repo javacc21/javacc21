@@ -143,7 +143,6 @@ public final class Main {
         System.out.println();
         System.out.println("    -DEBUG_PARSER");
         System.out.println("    -DEBUG_LEXER");
-        System.out.println("    -FAULT_TOLERANT");
         System.out.println();
         System.out.println("By default, source files are generated relative to the location of the input file.");
         System.out.println("This can be changed by setting as follows:");
