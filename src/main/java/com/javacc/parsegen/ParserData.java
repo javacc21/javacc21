@@ -189,24 +189,16 @@ public class ParserData {
          * flagged as errors.
          */
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) { 
-            List<RegexpSpec> respecs = tp.getRegexpSpecs();
-            for (RegexpSpec res : respecs) {
+            for (RegexpSpec res : tp.getRegexpSpecs()){
                 RegularExpression re = res.getRegexp();
                 if (!(re instanceof RegexpRef) && re.hasLabel()) {
-                    String s = res.getRegexp().getLabel();
-                    RegularExpression regexp = grammar.addNamedToken(s,
-                            res.getRegexp());
+                    String label = re.getLabel();
+                    RegularExpression regexp = grammar.addNamedToken(label, re);
                     if (regexp != null) {
                         grammar.addSemanticError(res.getRegexp(),
-                                "Multiply defined lexical token name \"" + s
+                                "Multiply defined lexical token name \"" + label
                                 + "\".");
                     } 
-                    if (lexerData.getLexicalStateIndex(s) != -1) {
-                        grammar.addSemanticError(res.getRegexp(),
-                                "Lexical token name \"" + s
-                                + "\" is the same as "
-                                + "that of a lexical state.");
-                    }
                 }
             }
         }
@@ -228,15 +220,20 @@ public class ParserData {
                 table.add(lexState.getTokenTable());
             }
             for (RegexpSpec res : tp.getRegexpSpecs()) {
-                if (res.getRegexp() instanceof RegexpStringLiteral) {
+                RegularExpression regexp = res.getRegexp();
+                if (regexp instanceof RegexpStringLiteral) {
                     // TODO: Clean this mess up! (JR)
-                    RegexpStringLiteral stringLiteral = (RegexpStringLiteral) res.getRegexp();
-                    // This loop performs the checks and actions with respect to
+                    RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
+                    String image = stringLiteral.getImage();
+//                    if (stringLiteral.getOrdinal() == 0) {
+//                        lexerData.addRegularExpression(stringLiteral);
+//                    }
+            // This loop performs the checks and actions with respect to
                     // each lexical state.
                     for (int i = 0; i < table.size(); i++) {
                         // Get table of all case variants of "sl.image" into
                         // table2.
-                        Map<String, RegularExpression> table2 = table.get(i).get(stringLiteral.getImage().toUpperCase());
+                        Map<String, RegularExpression> table2 = table.get(i).get(image.toUpperCase());
                         if (table2 == null) {
                             // There are no case variants of "sl.image" earlier
                             // than the current one.
@@ -245,24 +242,18 @@ public class ParserData {
                                 lexerData.addRegularExpression(stringLiteral);
                             }
                             table2 = new HashMap<String, RegularExpression>();
-                            table2.put(stringLiteral.getImage(), stringLiteral);
-                            table.get(i).put(stringLiteral.getImage().toUpperCase(), table2);
-                        } else if (hasIgnoreCase(table2, stringLiteral.getImage())) { // hasIgnoreCase
-                            // sets
-                            // "other"
-                            // if it
-                            // is
-                            // found.
+                            table2.put(image, stringLiteral);
+                            table.get(i).put(image.toUpperCase(), table2);
+                        } else if (hasIgnoreCase(table2, image)) { 
+                            // hasIgnoreCase sets "other" if it is found.
                             // Since IGNORE_CASE version exists, current one is
                             // useless and bad.
                             if (!stringLiteral.getTokenProduction().isExplicit()) {
                                 // inline BNF string is used earlier with an
                                 // IGNORE_CASE.
-                                grammar
-                                .addSemanticError(
-                                        stringLiteral,
-                                        "String \""
-                                                + stringLiteral.getImage()
+                                grammar.addSemanticError(stringLiteral,
+                                                "String \""
+                                                + image
                                                 + "\" can never be matched "
                                                 + "due to presence of more general (IGNORE_CASE) regular expression "
                                                 + "at line "
@@ -396,9 +387,9 @@ public class ParserData {
             for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
                 String label = ref.getLabel();
                 RegularExpression referenced = grammar.getNamedToken(label);
-                if (referenced == null && !ref.getLabel().equals("EOF")) {
+                if (referenced == null) {// && !ref.getLabel().equals("EOF")) {
                     grammar.addSemanticError(ref,  "Undefined lexical token name \"" + label + "\".");
-                } else if (referenced != null && ref.getTokenProduction() != null && !ref.getTokenProduction().isExplicit()) {
+                } else if (ref.getTokenProduction() == null || !ref.getTokenProduction().isExplicit()) {
                     if (referenced.isPrivate()) {
                         grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
                     }   else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
@@ -417,8 +408,7 @@ public class ParserData {
             }
             
             for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
-                List<RegexpSpec> respecs = tp.getRegexpSpecs();
-                for (RegexpSpec res : respecs) {
+                for (RegexpSpec res : tp.getRegexpSpecs()) {
                     if (res.getRegexp() instanceof RegexpRef) {
                         tp.removeChild(res);
                     }
