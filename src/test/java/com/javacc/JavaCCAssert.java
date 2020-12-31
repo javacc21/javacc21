@@ -142,7 +142,7 @@ public class JavaCCAssert {
 
 	public static Node parseGrammar(String fileName, String content, JavaCCErrorReporter reporter)
 			throws IOException, ParseException {
-		Grammar grammar = new Grammar(new JavaCCOptions((Grammar) null));
+		Grammar grammar = new Grammar();
 		grammar.setFilename(fileName);
 		if (reporter != null) {
 			grammar.setReporter(reporter);
