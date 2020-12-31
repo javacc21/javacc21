@@ -225,87 +225,24 @@ public class ParserData {
                     // TODO: Clean this mess up! (JR)
                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
                     String image = stringLiteral.getImage();
-//                    if (stringLiteral.getOrdinal() == 0) {
-//                        lexerData.addRegularExpression(stringLiteral);
-//                    }
             // This loop performs the checks and actions with respect to
                     // each lexical state.
                     for (int i = 0; i < table.size(); i++) {
                         // Get table of all case variants of "sl.image" into
                         // table2.
-                        Map<String, RegularExpression> table2 = table.get(i).get(image.toUpperCase());
+                        Map<String, RegularExpression> table2 = table.get(i).get(image);
                         if (table2 == null) {
-                            // There are no case variants of "sl.image" earlier
-                            // than the current one.
-                            // So go ahead and insert this item.
                             if (stringLiteral.getOrdinal() == 0) {
                                 lexerData.addRegularExpression(stringLiteral);
                             }
                             table2 = new HashMap<String, RegularExpression>();
                             table2.put(image, stringLiteral);
-                            table.get(i).put(image.toUpperCase(), table2);
-                        } else if (hasIgnoreCase(table2, image)) { 
-                            // hasIgnoreCase sets "other" if it is found.
-                            // Since IGNORE_CASE version exists, current one is
-                            // useless and bad.
-                            if (!stringLiteral.getTokenProduction().isExplicit()) {
-                                // inline BNF string is used earlier with an
-                                // IGNORE_CASE.
-                                grammar.addSemanticError(stringLiteral,
-                                                "String \""
-                                                + image
-                                                + "\" can never be matched "
-                                                + "due to presence of more general (IGNORE_CASE) regular expression "
-                                                + "at line "
-                                                + other.getBeginLine()
-                                                + ", column "
-                                                + other.getBeginColumn()
-                                                + ".");
-                            } else {
-                                // give the standard error message.
-                                grammar.addSemanticError(stringLiteral,
-                                        "(1) Duplicate definition of string token \""
-                                                + stringLiteral.getImage() + "\" "
-                                                + "can never be matched.");
-                            }
-                        } else if (stringLiteral.getIgnoreCase()) {//REVISIT
-                            // This has to be explicit. A warning needs to be
-                            // given with respect
-                            // to all previous strings.
-                            String pos = "";
-                            int count = 0;
-                            for (RegularExpression rexp : table2.values()) {
-                                if (count != 0)
-                                    pos += ",";
-                                pos += " line " + rexp.getBeginLine();
-                                count++;
-                            }
-                            if (count == 1) {
-                                grammar.addWarning(stringLiteral,
-                                        "String with IGNORE_CASE is partially superseded by string at"
-                                                + pos + ".");
-                            } else {
-                                grammar.addWarning(stringLiteral,
-                                        "String with IGNORE_CASE is partially superseded by strings at"
-                                                + pos + ".");
-                            }
-                            // This entry is legitimate. So insert it.
-                            if (stringLiteral.getOrdinal() == 0) {
-                                lexerData.addRegularExpression(stringLiteral);
-                            }
-                            table2.put(stringLiteral.getImage(), stringLiteral);
-                            // The above "put" may override an existing entry
-                            // (that is not IGNORE_CASE) and that's
-                            // the desired behavior.
-                        } else {
+                            table.get(i).put(image, table2);
+                        } 
+                        else {
                             // The rest of the cases do not involve IGNORE_CASE.
                             RegularExpression re = (RegularExpression) table2.get(stringLiteral.getImage());
-                            if (re == null) {
-                                if (stringLiteral.getOrdinal() == 0) {
-                                    lexerData.addRegularExpression(stringLiteral);
-                                }
-                                table2.put(stringLiteral.getImage(), stringLiteral);
-                            } else if (tp.isExplicit()) {
+                            if (tp.isExplicit()) {
                                 // This is an error even if the first occurrence
                                 // was implicit.
                                 if (tp.getLexStates()[i].equals(grammar.getDefaultLexicalState())) {
@@ -321,35 +258,26 @@ public class ParserData {
                                 }
                             } else if (re.getTokenProduction() != null && !re.getTokenProduction().getKind().equals("TOKEN")) {
                                 String kind = re.getTokenProduction().getKind();
-                                grammar
-                                .addSemanticError(
-                                        stringLiteral,
+                                grammar.addSemanticError(stringLiteral,
                                         "String token \""
                                                 + stringLiteral.getImage()
                                                 + "\" has been defined as a \""
                                                 + kind
                                                 + "\" token.");
                             } else if (re.isPrivate()) {
-                                grammar
-                                .addSemanticError(
-                                        stringLiteral,
-                                        "String token \""
-                                                + stringLiteral.getImage()
-                                                + "\" has been defined as a private regular expression.");
+                                grammar.addSemanticError(stringLiteral,   
+                                     "String token \"" + stringLiteral.getImage()
+                                     + "\" has been defined as a private regular expression.");
                             } else {
                                 // This is now a legitimate reference to an
                                 // existing StringLiteralRegexp.
-                                // So we assign it a number and take it out of
-                                // "rexprlist".
-                                // Therefore, if all is OK (no errors), then
-                                // there will be only unequal
-                                // string literals in each lexical state. Note
-                                // that the only way
-                                // this can be legal is if this is a string
-                                // declared inline within the
-                                // BNF. Hence, it belongs to only one lexical
-                                // state - namely "DEFAULT".
-                                stringLiteral.setOrdinal(re.getOrdinal());
+                            // There used to be some very complicated logic relating
+                            // to upper/lower case here, and I ripped it out, but
+                            // there may be some subtle cases that are broken, but
+                            // all my tests are working. Will need to re-examine all this.
+                            // But meanwhile, I need to simplify this further
+                            // because I still don't fully understand this code!
+                            stringLiteral.setOrdinal(re.getOrdinal());
                                 tp.removeChild(res);
                             }
                         }
@@ -369,7 +297,6 @@ public class ParserData {
                 grammar.addSemanticError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
             }
         }
-        
 
         //Let's jump out here, I guess.
         if (grammar.getErrorCount() >0) return;
@@ -427,7 +354,6 @@ public class ParserData {
          * RegexpRef node is removed from the lists by the end of execution of
          * this code.
          */
-
         if (grammar.getUserDefinedLexer()) {
             for (TokenProduction tp : grammar.getAllTokenProductions()) {
                 List<RegexpSpec> respecs = tp.getRegexpSpecs();
@@ -474,25 +400,5 @@ public class ParserData {
                 reVisitor.visit(tp);
             }
         }
-    }
-
-    // Checks to see if the "str" is superseded by another equal (except case)
-    // string
-    // in table.
-
-    private RegularExpression other;
-    private boolean hasIgnoreCase(Map<String, RegularExpression> table, String str) {
-        RegularExpression rexp;
-        rexp = (RegularExpression) (table.get(str));
-        if (rexp != null && !rexp.getIgnoreCase()) {//REVISIT
-            return false;
-        }
-        for (RegularExpression re : table.values()) {
-            if (re.getIgnoreCase()) {//REVISIT
-                other = re;
-                return true;
-            }
-        }
-        return false;
     }
 }
