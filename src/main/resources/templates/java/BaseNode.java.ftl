@@ -35,7 +35,7 @@ package ${explicitPackageName};
 [#elseif grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
 [/#if]
-[#if grammar.options.freemarkerNodes]
+[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
 import freemarker.template.*;
 [/#if]
 
@@ -44,7 +44,7 @@ import java.util.*;
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
 
-[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
+[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
        private FileLineMap fileLineMap;
        
        public FileLineMap getFileLineMap() {
@@ -98,7 +98,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         this.unparsed = unparsed;
     } 
 
-[#if grammar.options.nodeUsesParser]    
+[#if grammar.nodeUsesParser]    
     protected ${grammar.parserClassName} parser;
     public ${grammar.baseNodeClassName}(${grammar.parserClassName} parser) {
         this.parser = parser;
@@ -239,7 +239,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         this.endColumn = endColumn;
     }
      
-[#if grammar.options.freemarkerNodes]    
+[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
     public TemplateSequenceModel getChildNodes() {
         SimpleSequence seq = new SimpleSequence();
         for (Node child : children) {

@@ -250,6 +250,8 @@ TOKEN :
   |
   < _SKIP: "SKIP" > #JavaCCKeyWord
   |
+  <_EOF : "EOF"> #JavaCCKeyWord
+  |
   < _TOKEN_MGR_DECLS: "TOKEN_MGR_DECLS" > #JavaCCKeyWord
   |
   < _ATTEMPT: "ATTEMPT"> #JavaCCKeyWord
@@ -348,7 +350,7 @@ INJECT PARSER_CLASS : {
        _INCLUDE, _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
        _PARSER_BEGIN, _PARSER_END, _TOKEN, _SPECIAL_TOKEN, _MORE,
        _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _UPTO, 
-       _LEXICAL_STATE);
+       _LEXICAL_STATE, _EOF);
 
 
     private Token TOKEN_HOOK(Token tok) {
@@ -373,12 +375,8 @@ INJECT PARSER_CLASS : {
                }
            }
         }
-       return t;
-    }
-
-    private Token TOKEN_HOOK(Token tok) {
-        tok.setGrammar(getGrammar());
-        return tok;
+        t.setGrammar(getGrammar());
+        return t;
     }
 }
 
@@ -497,35 +495,6 @@ INJECT Token :
     }
 }
 
-
-INJECT GrammarFile : 
-   import java.util.Iterator;
-{
-    public String getDefaultLexicalState() {
-       Options options = firstChildOfType(Options.class);
-       if (options != null) {
-           for (Setting setting : options.childrenOfType(Setting.class)) {
-               if (setting.getKey().equalsIgnoreCase("DEFAULT_LEXICAL_STATE")) {
-                   return (String) setting.getValue();
-               }
-           }
-        }
-        return null; 
-    }
-
-    public Boolean getIgnoreCase() {
-        Options options = firstChildOfType(Options.class);
-        if (options != null) {
-            for (Setting setting : options.childrenOfType(Setting.class)) {
-                if (setting.getKey().equalsIgnoreCase("IGNORE_CASE")) {
-                   return (Boolean) setting.getValue();
-                }
-            }
-        }
-        return false;
-    }
-}
-
 GrammarFile Root throws IOException #GrammarFile :
 {
     TokenManagerDecls decls;
@@ -534,14 +503,9 @@ GrammarFile Root throws IOException #GrammarFile :
    [
       OptionsBlock | Options
    ]
-   {
-        if (!grammar.isInInclude()) {
-            grammar.getOptions().normalize();
-        }
-   }
    [ParserCodeDecls]
    (
-      SCAN {!grammar.getOptions().getUserDefinedLexer()} =>
+      SCAN {!grammar.getUserDefinedLexer()} =>
       TokenProduction  {grammar.addTokenProduction((TokenProduction) peekNode());}
       |
       BNFProduction
@@ -686,12 +650,15 @@ CodeInjection2 :
         }
 ;
 
-Options #Options : 
-    Setting =>||
-    (=> Setting)*
+Options #Options :
+    {HashMap<String, Object> settings = new HashMap<>();} 
+    Setting(settings) =>||
+    (Setting(settings))*
+    {grammar.setSettings(settings);}
 ;
 
 OptionsBlock #Options :
+    {HashMap<String, Object> settings = new HashMap<>();} 
     <IDENTIFIER> 
     [
         SCAN {!getToken(0).getImage().equalsIgnoreCase("options")}#
@@ -700,24 +667,25 @@ OptionsBlock #Options :
     =>||
     [":"]
     "{" 
-    ( Setting )* "}"
+    ( Setting (settings) )* "}"
+    {grammar.setSettings(settings);}
 ;
 
-Setting #Setting :
+Setting(Map settings) #Setting :
 {
 	  String key;
 	  Token name, t=null;
-	  JavaCCOptions _options = grammar.getOptions();
 	  boolean inInclude = grammar.isInInclude();
 	  Object value = Boolean.TRUE;
 }
   ( 
      name = <IDENTIFIER> 
      | 
-     name = "IGNORE_CASE"
+     name = <_IGNORE_CASE>
   )
+  =>|+1
   {
-	  key = name.getImage();
+	  key = name.getImage().toUpperCase();
   }
   [
      "="
@@ -735,19 +703,9 @@ Setting #Setting :
   ]  
   ";"
   {
-      CURRENT_NODE.setKeyValue(key, value);
-      _options.setInputFileOption(name, t, key, value, inInclude);
+      settings.put(key, value);
   }
 ;
-
-INJECT Setting :
-{
-    private String key;
-    private Object value;
-    public String getKey() {return key;}
-    public Object getValue() {return value;}
-    public void setKeyValue(String key, Object value) {this.key = key; this.value = value;}
-}
 
 BNFProduction BNFProduction :
 {
@@ -783,7 +741,7 @@ BNFProduction BNFProduction :
     )
     {
         CURRENT_NODE.adjustFirstToken(t);
-        if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
+        if (tba == null && !grammar.getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName());
         }
         return CURRENT_NODE;
@@ -1014,7 +972,7 @@ INJECT TreeBuildingAnnotation :
 }
 
 
-TokenProduction TokenProduction #TokenProduction :
+TokenProduction #TokenProduction :
 {
     Token t = null;
     String tokenClassName = null;
@@ -1038,7 +996,7 @@ TokenProduction TokenProduction #TokenProduction :
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
         {
-          if (grammar.getOptions().getUserDefinedLexer()) {
+          if (grammar.getUserDefinedLexer()) {
             grammar.addWarning(current_token, "Ignoring \"IGNORE_CASE\" specification since option USER_DEFINED_LEXER has been set to true.");
           }
         }
@@ -1060,7 +1018,7 @@ TokenProduction TokenProduction #TokenProduction :
           }
           CURRENT_NODE.setLexicalState(firstSpecifiedLexicalState);
       }
-      return CURRENT_NODE;
+      CURRENT_NODE.setIgnoreCase(ignoreCase || grammar.getIgnoreCase());
    }
 }
 
@@ -1072,23 +1030,11 @@ INJECT TokenProduction :
      * the input grammar. Otherwise (if this is created to describe a regular
      * expression that is part of the BNF) this is set to false.
      */
-    private boolean explicit = true;
+    private boolean ignoreCase, explicit = true;
+    
+    public boolean getIgnoreCase() {return ignoreCase;}
+    public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
 
-    public boolean getIgnoreCase() {
-        for (Node n : children) {
-	      if (n instanceof Token) {
-	           Token t = (Token) n;
-               if (t.getType() == _IGNORE_CASE) {
-                   return true;
-               }
-	       }
-        }
-        GrammarFile gf = firstAncestorOfType(GrammarFile.class);
-        Boolean b = gf == null ? Boolean.FALSE : gf.getIgnoreCase();
-        return b == null ? getGrammar().getOptions().getIgnoreCase() : b;
-    }
-    
-    
     private String lexicalState;
     
     public void setLexicalState(String lexicalState) {
@@ -1204,7 +1150,7 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
   [
       Block
         {
-            if (grammar.getOptions().getUserDefinedLexer()) {
+            if (grammar.getUserDefinedLexer()) {
                 grammar.addWarning(peekNode(), "Ignoring code snippet for regular expression specification since option USER_DEFINED_LEXER has been set to true.");
             }
             if (regexp.isPrivate()) {
@@ -1939,20 +1885,8 @@ Expansion ExpansionUnit :
       RegularExpression re = (RegularExpression) peekNode();
       result = re;
       re.setLHS(lhs);
-      if (re instanceof RegexpStringLiteral) {
-      	grammar.addStringLiteralToResolve((RegexpStringLiteral) re);
-      }
       if (!(re instanceof EndOfFile)) {
-            TokenProduction tokenProduction = new TokenProduction();
-            tokenProduction.setGrammar(grammar);
-            tokenProduction.setExplicit(false);
-            tokenProduction.setLexicalState(grammar.getDefaultLexicalState());
-            RegexpSpec res = new RegexpSpec();
-            res.addChild(re);
-//            re.tpContext = tokenProduction;
-            tokenProduction.addChild(res);
-            grammar.addChild(tokenProduction);
-            grammar.addTokenProduction(tokenProduction);
+            grammar.addInplaceRegexp(re);
       }
   }
   [SCAN ~\...\Lookahead => UpToHere(result)]
@@ -2543,12 +2477,11 @@ RegexpExpansion #void :
  (
   RegexpStringLiteral 
   |
-  SCAN 3 InPlaceRegexp 
-  |
   SCAN ~\.\TokenProduction =>
-  RegexpRef 
+  (RegexpRef|EndOfFile)
   |
-  EndOfFile 
+  SCAN 3 {isInProduction("TokenProduction")||grammar.getUserDefinedLexer()} =>
+  InPlaceRegexp 
  ) 
 ;
 
@@ -2673,16 +2606,7 @@ INJECT RegexpRef :
     }
 }
 
-EndOfFile : 
-    "<" 
-    <IDENTIFIER>  
-    [
-        SCAN {!getToken(0).getImage().equals("EOF")}#
-        => FAIL
-    ]
-    =>||
-    ">" 
-;
+EndOfFile : "<" <_EOF> =>|| ">" ;
 
 
 

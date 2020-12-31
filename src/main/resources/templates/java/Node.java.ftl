@@ -36,12 +36,12 @@ package ${grammar.parserPackage};
 import java.util.*;
 import java.lang.reflect.*;
 import java.util.function.Predicate;
-[#if grammar.options.freemarkerNodes]
+[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
 import freemarker.template.*;
 [/#if]
 
 public interface Node extends Comparable<Node> 
-[#if grammar.options.freemarkerNodes]
+[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
    , TemplateNodeModel, TemplateScalarModel
 [/#if] {
 
@@ -138,7 +138,7 @@ public interface Node extends Comparable<Node>
      java.util.Set<String> getAttributeNames();
      
     
-[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]
+[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
      FileLineMap getFileLineMap();
 
      default String getInputSource() {
@@ -239,7 +239,7 @@ public interface Node extends Comparable<Node>
         return null;
     }
 
-[#if grammar.options.tokensAreNodes]
+[#if grammar.tokensAreNodes]
     /**
      * return the very first token that is part of this node
      * may be an unparsed (i.e. special) token.
@@ -279,6 +279,23 @@ public interface Node extends Comparable<Node>
             }
         }
         return this;
+    }
+
+    default void copyLocationInfo(Node to) {
+        //to.setInputSource(from.getInputSource()); REVISIT
+        to.setBeginLine(this.getBeginLine());
+        to.setBeginColumn(this.getBeginColumn());
+        to.setEndLine(this.getEndLine());
+        to.setEndColumn(this.getEndColumn());
+    }
+
+    default void replace(Node toBeReplaced) {
+        toBeReplaced.copyLocationInfo(this);
+        Node parent = toBeReplaced.getParent();
+        if (parent !=null) {
+           int index = parent.indexOf(toBeReplaced);
+           parent.setChild(index, this);
+        }
     }
     
     /**

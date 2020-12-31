@@ -43,7 +43,7 @@ package ${grammar.nodePackage};
 [#set package = grammar.nodePackage]
 [/#if]
 
-[#if package != grammar.parserPackage && grammar.parserPackage != ""]
+[#if grammar.parserPackage?has_content && package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
 import ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType;
 [/#if]
@@ -53,7 +53,7 @@ import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*
 
 @SuppressWarnings("unused")
 public class ${classname} extends ${superclass} {
-[#if grammar.options.legacyAPI]
+[#if grammar.legacyAPI]
     public ${classname}(int kind, String image) {
         this(TokenType.values()[kind], image, "input");
     }
@@ -62,7 +62,7 @@ public class ${classname} extends ${superclass} {
         super(type, image, inputSource);
     }
     
-[#if !grammar.options.hugeFileSupport && !grammar.options.userDefinedLexer]    
+[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]    
     public ${classname}(TokenType type, String image, FileLineMap fileLineMap) {
         super(type, image, fileLineMap);
     }

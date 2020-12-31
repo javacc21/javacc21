@@ -39,19 +39,19 @@ UNPARSED_TOKENS_ARE_NODES;
 INJECT PARSER_CLASS : {
 
   private Token TOKEN_HOOK(Token tok) {
-    final TokenType type = tok.getType();
-    if (type != GT && type != RSIGNEDSHIFT && type != RUNSIGNEDSHIFT) return tok;
+    String img = tok.getImage();
+    if (img==null || !img.startsWith(">")) return tok;
     boolean inGenericTypeSpec = isInProduction("TypeArguments", "TypeParameters");
-    if (type != GT && inGenericTypeSpec) {
+    if (inGenericTypeSpec && (img.equals(">>") || img.equals(">>>"))) {
         // If we've entered the TypeParameters or TypeArguments production, we need to split
         // a ">>" or ">>>" into 2 (or 3) GT tokens.
         Token gt = Token.split(tok, 1, GT, GT);
-        if (type == RUNSIGNEDSHIFT) {
+        if (img.length() == 3) {
           Token next = Token.split(gt.getNext(), 1, GT, GT);
         }
         return gt;
     }
-    else if (type == GT && !inGenericTypeSpec) {
+    else if (!inGenericTypeSpec && img.length() ==1) {
       // In this case we do the reverse. We merge 2 (or 3) GT tokens into a right shift operator
       Token next = tok.getNextToken();
       if (next != null && next.getType() == GT) {

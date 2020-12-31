@@ -237,7 +237,7 @@
     String error_after = null;
     error_after = curPos <= 1 ? "" : input_stream.getImage();
     if (invalidToken == null) {
-    [#if grammar.options.hugeFileSupport]
+    [#if grammar.hugeFileSupport]
        invalidToken = new InvalidToken(""+ curChar, inputSource);
     [#else]
        invalidToken = new InvalidToken(""+ curChar, input_stream);
@@ -285,9 +285,9 @@
         beginColumn = input_stream.getBeginColumn();
         endLine = input_stream.getEndLine();
         endColumn = input_stream.getEndColumn();
-    [#if options.tokenFactory != ""] 
-        t = ${options.tokenFactory}.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
-    [#elseif !grammar.options.hugeFileSupport]
+    [#if grammar.settings.TOKEN_FACTORY??]
+        t = ${grammar.settings.TOKEN_FACTORY}.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
+    [#elseif !grammar.hugeFileSupport]
         t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, this);
     [#else]
         t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);

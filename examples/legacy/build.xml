@@ -8,7 +8,8 @@
 	    <mkdir dir="test.tmp" />
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
 	    	<arg value="-q"/>
-			<arg value="-BASE_SRC_DIR=${outputdir}/CORBA-IDL"/>
+	    	<arg value="-d"/>
+			<arg value="${outputdir}/CORBA-IDL"/>
 			<arg value="${basedir}/CORBA-IDL/IDL.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/CORBA-IDL" includeantruntime="no" failonerror="true" />
@@ -42,7 +43,8 @@
 
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
 	    	<arg value="-q"/>
-			<arg value="-BASE_SRC_DIR=${outputdir}/GUIParsing/ParserVersion"/>
+	    	<arg value="-d"/>
+			<arg value="${outputdir}/GUIParsing/ParserVersion"/>
 			<arg value="${basedir}/GUIParsing/ParserVersion/CalcInput.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/GUIParsing/ParserVersion" includeantruntime="no" failonerror="true"/>
@@ -57,7 +59,8 @@
 
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
 	    	<arg value="-q"/>
-			<arg value="-BASE_SRC_DIR=${outputdir}/Interpreter"/>
+	    	<arg value="-d"/>
+			<arg value="${outputdir}/Interpreter"/>
 			<arg value="${basedir}/Interpreter/SPL.javacc"/>
 		</java>
 
@@ -126,7 +129,8 @@
 	    
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
 	    	<arg value="-q"/>
-			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg1"/>
+	    	<arg value="-d"/>
+			<arg value="${outputdir}/TreeBuildingExamples.eg1"/>
 			<arg value="${basedir}/TreeBuildingExamples/eg1.javacc"/>
 		</java>
 	    <javac debug="on" srcdir="${outputdir}/TreeBuildingExamples.eg1" includeantruntime="no" failonerror="true"/>
@@ -159,7 +163,8 @@
 
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
 	    	<arg value="-q"/>
-			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg2"/>
+	    	<arg value="-d"/>
+			<arg value="${outputdir}/TreeBuildingExamples.eg2"/>
 			<arg value="${basedir}/TreeBuildingExamples/eg2.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/TreeBuildingExamples.eg2" includes="Eg2.java" includeantruntime="no" failonerror="true"/>
@@ -191,8 +196,8 @@
 	    </copy>
 
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
-	    	<arg value="-q"/>
-			<arg value="-BASE_SRC_DIR=${outputdir}/TreeBuildingExamples.eg3"/>
+	    	<arg value="-d"/>
+			<arg value="${outputdir}/TreeBuildingExamples.eg3"/>
 			<arg value="${basedir}/TreeBuildingExamples/eg3.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/TreeBuildingExamples.eg3" includeantruntime="no" failonerror="true"/>
@@ -219,56 +224,65 @@
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg1"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/Lookahead.eg1"/>
 		 <arg value="${basedir}/Lookahead/Example1.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg2"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/Lookahead.eg2"/>
 		 <arg value="${basedir}/Lookahead/Example2.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg4"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/Lookahead.eg4"/>
 		 <arg value="${basedir}/Lookahead/Example4.javacc"/>
 	 </java>
 
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg5"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/Lookahead.eg5"/>
 		 <arg value="${basedir}/Lookahead/Example5.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg6"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/Lookahead.eg6"/>
 		 <arg value="${basedir}/Lookahead/Example6.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg7"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/Lookahead.eg7"/>
 		 <arg value="${basedir}/Lookahead/Example7.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg8"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/Lookahead.eg8"/>
 		 <arg value="${basedir}/Lookahead/Example8.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg9"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/Lookahead.eg9"/>
 		 <arg value="${basedir}/Lookahead/Example9.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/Lookahead.eg10"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/Lookahead.eg10"/>
 		 <arg value="${basedir}/Lookahead/Example10.javacc"/>
 
 	 </java>
@@ -277,13 +291,15 @@
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/MailProcessing"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/MailProcessing"/>
 		 <arg value="${basedir}/MailProcessing/Digest.javacc"/>
 	 </java>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
-		 <arg value="-BASE_SRC_DIR=${outputdir}/MailProcessing"/>
+    	<arg value="-d"/>
+		 <arg value="${outputdir}/MailProcessing"/>
 		 <arg value="${basedir}/MailProcessing/Faq.javacc"/>
 	 </java>
 

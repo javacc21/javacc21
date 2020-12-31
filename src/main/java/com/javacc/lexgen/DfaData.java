@@ -98,7 +98,7 @@ public class DfaData {
         for (int i = 0; i < stringLength; i++) {
             final char c = stringLiteral.charAt(i);
             String s = Character.toString(c);
-            if (grammar.getOptions().getIgnoreCase()) {
+            if (grammar.getIgnoreCase()) {
                 s = s.toLowerCase(Locale.ROOT);
             }
             Map<String, KindInfo> table = stringLiteralTables.get(i);
@@ -106,7 +106,7 @@ public class DfaData {
                 table.put(s, new KindInfo(grammar));
             }
             KindInfo info = table.get(s);
-            if (!grammar.getOptions().getIgnoreCase() && rsLiteral.getIgnoreCase()) {
+            if (!grammar.getIgnoreCase() && rsLiteral.getIgnoreCase()) {
                 table.put(s.toLowerCase(Locale.ROOT), info);
                 table.put(s.toUpperCase(Locale.ROOT), info);
             }
@@ -141,7 +141,8 @@ public class DfaData {
         						&& grammar.getLexerData().getRegularExpression(kind).getCodeSnippet() == null
         						&& grammar.getLexerData().getRegularExpression(kind).getNewLexicalState() == null) {
                             singlesToSkipSet.set(ch);
-        					if (grammar.getOptions().getIgnoreCase()) {
+                            //REVISIT
+        					if (grammar.getIgnoreCase()) {
                                 singlesToSkipSet.set(Character.toUpperCase(ch));
                                 singlesToSkipSet.set(Character.toLowerCase(ch));
         					}
@@ -186,7 +187,7 @@ public class DfaData {
                         subStringSet.set(i);
                         subStringAtPosSet.set(re.getImage().length() - 1);
                         break;
-                    } else if (grammar.getOptions().getIgnoreCase()
+                    } else if (grammar.getIgnoreCase()//REVISIT
                             && re2.getImage().toLowerCase().startsWith(re.getImage().toLowerCase())) {
                         subStringSet.set(i);
                         subStringAtPosSet.set(re.getImage().length() - 1);

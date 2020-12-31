@@ -222,13 +222,12 @@ public class ParserData {
          * values), and populates the table "names_of_tokens".
          */
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
-            List<RegexpSpec> respecs = tp.getRegexpSpecs();
             List<Map<String, Map<String, RegularExpression>>> table = new ArrayList<>();
             for (int i = 0; i < tp.getLexStates().length; i++) {
                 LexicalStateData lexState = lexerData.getLexicalState(tp.getLexStates()[i]);
                 table.add(lexState.getTokenTable());
             }
-            for (RegexpSpec res : respecs) {
+            for (RegexpSpec res : tp.getRegexpSpecs()) {
                 if (res.getRegexp() instanceof RegexpStringLiteral) {
                     // TODO: Clean this mess up! (JR)
                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) res.getRegexp();
@@ -393,7 +392,7 @@ public class ParserData {
          * from "rexprlist". 
          */
 
-        if (!grammar.getOptions().getUserDefinedLexer()) {
+        if (!grammar.getUserDefinedLexer()) {
             for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
                 String label = ref.getLabel();
                 RegularExpression referenced = grammar.getNamedToken(label);
@@ -439,7 +438,7 @@ public class ParserData {
          * this code.
          */
 
-        if (grammar.getOptions().getUserDefinedLexer()) {
+        if (grammar.getUserDefinedLexer()) {
             for (TokenProduction tp : grammar.getAllTokenProductions()) {
                 List<RegexpSpec> respecs = tp.getRegexpSpecs();
                 for (RegexpSpec res : respecs) {
@@ -466,7 +465,7 @@ public class ParserData {
          * is doing so. These labels are added to "ordered_named_tokens" so that
          * they may be generated into the ...Constants file.
          */
-        if (grammar.getOptions().getUserDefinedLexer()) {
+        if (grammar.getUserDefinedLexer()) {
             for (TokenProduction tp : grammar.getAllTokenProductions()) {
                 List<RegexpSpec> respecs = tp.getRegexpSpecs();
                 for (RegexpSpec res : respecs) {
@@ -479,7 +478,7 @@ public class ParserData {
             }
         }
         // Check for self-referential loops in regular expressions
-        if (!grammar.getOptions().getUserDefinedLexer()) {
+        if (!grammar.getUserDefinedLexer()) {
             RegexpVisitor reVisitor = new RegexpVisitor();
             for (TokenProduction tp : grammar.getAllTokenProductions()) {
                 reVisitor.visit(tp);

@@ -70,6 +70,7 @@ import com.javacc.parser.tree.LookBehind;
 import com.javacc.parser.tree.Lookahead;
 import com.javacc.parser.tree.PackageDeclaration;
 import com.javacc.parser.tree.ParserCodeDecls;
+import com.javacc.parser.tree.RegexpSpec;
 import com.javacc.parser.tree.RegexpStringLiteral;
 import com.javacc.parser.tree.TokenManagerDecls;
 import com.javacc.parser.tree.TokenProduction;
@@ -88,13 +89,13 @@ public class Grammar extends BaseNode {
                    lexerClassName,
                    parserPackage,
                    constantsClassName,
-                   baseNodeClassName="BaseNode",
-                   defaultLexicalState = "DEFAULT";
+                   baseNodeClassName,
+                   defaultLexicalState;
+    private Map<String, Object> settings = new HashMap<>();
     private CompilationUnit parserCode;
-    private JavaCCOptions options = new JavaCCOptions(this);
     private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
-    private int includeNesting;
+    private int includeNesting;  
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
 
@@ -119,12 +120,16 @@ public class Grammar extends BaseNode {
     private JavaCCErrorReporter reporter;
 	private int parseErrorCount;
 	private int semanticErrorCount;
-	private int warningCount;
+    private int warningCount;
+
+    private File grammarFile, outputDir;
+    private boolean quiet;
     
-    public Grammar(JavaCCOptions options) {
+    public Grammar(File grammarFile, File outputDir, boolean quiet) {
         this();
-        this.options = options;
-        options.setGrammar(this);
+        this.grammarFile = grammarFile;
+        this.outputDir = outputDir;
+        this.quiet = quiet;
         parserData = new ParserData(this);
     }
 
@@ -135,13 +140,25 @@ public class Grammar extends BaseNode {
     	this.warningCount = 0;
     }
 
+    public boolean isQuiet() {return quiet;}
+
     public String[] getLexicalStates() {
         return lexicalStates.toArray(new String[]{});
     }
-    //REVISIT: I don't really like these two methods and the whole disposition. 
-    // It works, but should have something cleaner.
-    public void addStringLiteralToResolve(RegexpStringLiteral stringLiteral) {
-        stringLiteralsToResolve.add(stringLiteral);
+
+    public void addInplaceRegexp(RegularExpression regexp) {
+        if (regexp instanceof RegexpStringLiteral) {
+            stringLiteralsToResolve.add((RegexpStringLiteral) regexp);
+        }
+        TokenProduction tp = new TokenProduction();
+        tp.setGrammar(this);
+        tp.setExplicit(false);
+        tp.setLexicalState(getDefaultLexicalState());
+        addChild(tp);
+        addTokenProduction(tp);
+        RegexpSpec res = new RegexpSpec();
+        res.addChild(regexp);
+        tp.addChild(res);
     }
     
     private void resolveStringLiterals() {
@@ -193,11 +210,13 @@ public class Grammar extends BaseNode {
         } else {
             String prevLocation = this.filename;
             String prevDefaultLexicalState = this.defaultLexicalState;
+            boolean prevIgnoreCase = this.ignoreCase;
             includeNesting++;
             Node root = parse(location, true);
             includeNesting--;
             setFilename(prevLocation);
             this.defaultLexicalState = prevDefaultLexicalState;
+            this.ignoreCase = prevIgnoreCase;
             return root;
         }
     }
@@ -225,6 +244,9 @@ public class Grammar extends BaseNode {
     }
 
     public void semanticize() throws MetaParseException {
+        if (defaultLexicalState == null) {
+            setDefaultLexicalState("DEFAULT");
+        }
         for (String lexicalState : lexicalStates) {
             lexerData.addLexicalState(lexicalState);
         }
@@ -248,17 +270,11 @@ public class Grammar extends BaseNode {
         return parserData;
     }
 
-    public JavaCCOptions getOptions() {
-        return options;
-    }
-
-    void setOptions(JavaCCOptions options) {
-        this.options = options;
-        options.setGrammar(this);
-    }
-
     public String getConstantsClassName() {
-        if (constantsClassName == null || constantsClassName.length() == 0) {
+        if (constantsClassName == null) {
+            constantsClassName = (String) settings.get("CONSTANTS_CLASS");
+        }
+        if (constantsClassName == null) {
             constantsClassName = getParserClassName();
             if (constantsClassName.toLowerCase().endsWith("parser")) {
                 constantsClassName = constantsClassName.substring(0, constantsClassName.length() -6);
@@ -269,7 +285,10 @@ public class Grammar extends BaseNode {
     }
 
     public String getParserClassName() {
-        if (parserClassName == null || parserClassName.length() ==0) {
+        if (parserClassName ==null) {
+            parserClassName = (String) settings.get("PARSER_CLASS");
+        }
+        if (parserClassName == null) {
             String name = new File(filename).getName();
             int lastDot = name.lastIndexOf('.');
             if (lastDot >0) {
@@ -290,24 +309,21 @@ public class Grammar extends BaseNode {
         this.parserClassName = parserClassName;
     }
 
-    public void setLexerClassName(String lexerClassName) {
-        this.lexerClassName = lexerClassName;
-    }
-
-    public void setConstantsClassName(String constantsClassName) {
-        this.constantsClassName = constantsClassName;
-    }
-
-    public void setBaseNodeClassName(String baseNodeClassName) {
-        this.baseNodeClassName = baseNodeClassName;
-    }
-
     public String getBaseNodeClassName() {
+        if (baseNodeClassName == null) {
+            baseNodeClassName = (String) settings.get("BASE_NODE_CLASS");
+        }
+        if (baseNodeClassName == null) {
+            baseNodeClassName = "BaseNode";
+        }
         return baseNodeClassName;
     }
 
     public String getLexerClassName() {
-        if (lexerClassName == null || lexerClassName.length() == 0) {
+        if (lexerClassName == null) {
+            lexerClassName = (String) settings.get("LEXER_CLASS");
+        }
+        if (lexerClassName == null) {
             lexerClassName = getParserClassName();
             if (lexerClassName.toLowerCase().endsWith("parser")) {
                 lexerClassName = lexerClassName.substring(0, lexerClassName.length() - 6);
@@ -353,10 +369,10 @@ public class Grammar extends BaseNode {
 
     public void setParserCode(CompilationUnit parserCode) {
         this.parserCode = parserCode;
-        parserPackage = options.getParserPackage();
+        parserPackage = (String) settings.get("PARSER_PACKAGE");
         String specifiedPackageName = parserCode.getPackageName();
         if (specifiedPackageName != null && specifiedPackageName.length() >0) {
-            if (!parserPackage.equals("")) {
+            if (parserPackage != null) {
                 if (!parserPackage.equals(specifiedPackageName)) {
                     String msg = "PARSER_PACKAGE was specified in the options directory as " + parserPackage + " but is specified in the PARSER_BEGIN/PARSER_END section as " + specifiedPackageName +".";
                     addSemanticError(null, msg);
@@ -424,7 +440,7 @@ public class Grammar extends BaseNode {
      * Add a new lexical state
      */
     public void addLexicalState(String name) {
-        lexicalStates.add(name);
+        if (!lexicalStates.contains(name)) lexicalStates.add(name);
     }
     
     public List<Expansion> getExpansionsForFirstSet() {
@@ -708,20 +724,26 @@ public class Grammar extends BaseNode {
     public Set<String> getNodeNames() {
         return nodeNames;
     }
+    
+    public String getNodePrefix() {
+        String nodePrefix = (String) settings.get("NODE_PREFIX");
+        if (nodePrefix == null) nodePrefix = "";
+        return nodePrefix;
+    }
 
     public void addNodeType(String nodeName) {
         if (nodeName.equals("void")) {
             return;
         }
         nodeNames.add(nodeName);
-        nodeClassNames.put(nodeName, options.getNodePrefix() + nodeName);
+        nodeClassNames.put(nodeName, getNodePrefix() + nodeName);
         nodePackageNames.put(nodeName, getNodePackage());
     }
 
     public String getNodeClassName(String nodeName) {
         String className = nodeClassNames.get(nodeName);
         if (className ==null) {
-            return options.getNodePrefix() + nodeName;
+            return getNodePrefix() + nodeName;
         }
         return className;
     }
@@ -808,18 +830,14 @@ public class Grammar extends BaseNode {
     }
 
     public String getParserPackage() {
+        if (parserPackage == null) {
+            parserPackage = (String) settings.get("PARSER_PACKAGE");
+        }
         return parserPackage;
     }
 
-    String getNodePackageName() {
-        String nodePackage = options.getNodePackage();
-        if (nodePackage.equals("")) 
-            nodePackage = getParserPackage();
-        return nodePackage;
-    }
-
     public File getParserOutputDirectory() throws IOException {
-        String baseSrcDir = options.getBaseSourceDirectory();
+        String baseSrcDir = outputDir.toString();
         if (baseSrcDir.equals("")) {
             return new File(".");
         }
@@ -843,12 +861,14 @@ public class Grammar extends BaseNode {
         return dir;
     }
 
+    //FIXME.
+    public String getBaseSourceDirectory() {
+        return outputDir.toString(); 
+    }
+
     public File getNodeOutputDirectory(String nodeName) throws IOException {
-        String nodePackage = getNodePackageName(nodeName);
-        if (nodePackage == null) {
-            nodePackage = options.getNodePackage();
-        }
-        String baseSrcDir = options.getBaseSourceDirectory();
+        String nodePackage = getNodePackage();
+        String baseSrcDir = outputDir.toString();
         if (nodePackage == null || nodePackage.equals("") || baseSrcDir.equals("")) {
             return getParserOutputDirectory();
         }
@@ -875,8 +895,8 @@ public class Grammar extends BaseNode {
     }
 
     public String getNodePackage() {
-        String nodePackage = options.getNodePackage();
-        if (nodePackage.equals("")) {
+        String nodePackage = (String) settings.get("NODE_PACKAGE");
+        if (nodePackage == null) {
             nodePackage = this.getParserPackage();
         }
         return nodePackage;
@@ -904,6 +924,142 @@ public class Grammar extends BaseNode {
         }
         return buf.toString();
     }
+
+    public boolean getUserDefinedLexer() {
+        Boolean b = (Boolean) settings.get("USER_DEFINED_LEXER");
+        return b == null ? false : b;
+    }
+
+    public boolean getTreeBuildingEnabled() {
+        Boolean b = (Boolean) settings.get("TREE_BUILDING_ENABLED");
+        return b == null ? true : b;
+    }
+
+    public boolean getTreeBuildingDefault() {
+        Boolean b = (Boolean) settings.get("TREE_BUILDING_DEFAULT");
+        return b == null ? true : b;
+    }
+
+    public boolean getNodeDefaultVoid() {
+        Boolean b = (Boolean) settings.get("NODE_DEFAULT_VOID");
+        return b == null ? false : b;
+    }
+
+    public boolean getSmartNodeCreation() {
+        Boolean b = (Boolean) settings.get("SMART_NODE_CREATION");
+        return b == null ? true : b;
+    }
+
+    public boolean getTokensAreNodes() {
+        Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
+        return b == null ? true : b;
+    }
+
+    public boolean getUnparsedTokensAreNodes() {
+        Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
+        if (b == null) b = (Boolean) settings.get("SPECIAL_TOKENS_ARE_NODES");
+        return b== null ? false : true;
+    }
+
+    public boolean getNodeUsesParser() {
+        Boolean b = (Boolean) settings.get("NODE_USES_PARSER");
+        return b == null ? false : b;
+    }
+
+    public boolean getLexerUsesParser() {
+        Boolean b = (Boolean) settings.get("LEXER_USES_PARSER");
+        return b == null ? false : b;
+    }
+
+    public boolean getFaultTolerant() {
+        Boolean b = (Boolean) settings.get("FAULT_TOLERANT");
+        return b== null ? false : b;
+    }
+
+    public boolean getHugeFileSupport() {
+        Boolean b = (Boolean) settings.get("HUGE_FILE_SUPPORT");
+        if (b == null) b = false;
+        return b && !getTreeBuildingEnabled() && !getFaultTolerant();
+    }
+
+    public boolean getDebugParser() {
+        Boolean b = (Boolean) settings.get("DEBUG_PARSER");
+        return b == null ? false : b;
+    }
+
+    public boolean getDebugLexer() {
+        Boolean b = (Boolean) settings.get("DEBUG_LEXER");
+        return b==null ? false : b;
+    }
+
+    public boolean getLegacyAPI() {
+        Boolean b = (Boolean) settings.get("LEGACY_API");
+        return b == null ? false : b;
+    }
+
+    private boolean ignoreCase;
+    public boolean getIgnoreCase() {return ignoreCase;}
+    public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
+
+    public void setSettings(Map<String, Object> settings) {
+        if (!isInInclude()) this.settings = settings;
+        for (String key : settings.keySet()) {
+            Object value = settings.get(key);
+            if (key.equals("IGNORE_CASE")) {
+                setIgnoreCase((Boolean) value);
+            }
+            else if (key.equals("DEFAULT_LEXICAL_STATE")) {
+                setDefaultLexicalState((String) value);
+            }
+            if (!isInInclude() && key.equals("BASE_SRC_DIR")) {
+                outputDir = new File((String)value);
+            }
+        }
+    }
+
+    public Map<String, Object> getSettings() {return settings;}
+
+    /**
+     * Some warnings if incompatible options are set.
+     * TODO. Have moved this from the defunct JavaCCOptions
+     * so it needs a bit of adjustment maybe.
+     */
+    public void sanityCheck() {
+        //        boolean nodePackageDefined = getNodePackage().length() >0;
+        
+        //        if (!getTreeBuildingEnabled()) {
+        //            String msg = "You have specified the OPTION_NAME option but it is "
+        //                + "meaningless unless the TREE_BUILDING_ENABLED is set to true."
+        //                + " This option will be ignored.\n";
+        //            if (nodePackageDefined) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_PACKAGE"));
+        //            }
+        //            if (getTokensAreNodes()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "TOKENS_ARE_NODES"));
+        //            }
+        //            if (getUnparsedTokensAreNodes()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "UNPARSED_TOKENS_ARE_NODES"));
+        //            }
+        //            if (getSmartNodeCreation()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "SMART_NODE_CREATION"));
+        //            }
+        //      if (getNodeDefaultVoid()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_DEFAULT_VOID"));
+        //            }
+        //            if (getNodeUsesParser()) {
+        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
+        //            }
+        //        }
+        //        if (booleanValue("HUGE_FILE_SUPPORT")) {
+        //            if (booleanValue("TREE_BUILDING_ENABLED")) {
+        //                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because TREE_BUILDING_ENABLED is set.");
+        //            }
+        //            if (booleanValue("FAULT_TOLERANT")) {
+        //                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because FAULT_TOLERANT is set.");
+        //            }
+        //        }
+            }
+        
 
     private final Utils utils = new Utils();
     private List<String> nodeVariableNameStack = new ArrayList<>();

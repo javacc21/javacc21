@@ -44,7 +44,7 @@ package ${grammar.nodePackage};
 [#set package = grammar.nodePackage]
 [/#if]
 
-[#if package != grammar.parserPackage && grammar.parserPackage != ""]
+[#if grammar.parserPackage?has_content && package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
 [/#if]
 [#if grammar.parserPackage?has_content]
@@ -53,7 +53,7 @@ import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*
 
 @SuppressWarnings("unused")
 public class ${classname} extends ${grammar.baseNodeClassName} {
-[#if grammar.options.nodeUsesParser]
+[#if grammar.nodeUsesParser]
     public ${classname}(${grammar.parserClassName} p, int id) {
         super(p, id);
     }

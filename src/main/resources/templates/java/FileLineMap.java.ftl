@@ -59,8 +59,16 @@ public class FileLineMap {
     private int startingLine, startingColumn;
     private int bufferPosition, tokenBeginOffset, tokenBeginColumn, tokenBeginLine, line, column;
     
-	[#var PRESERVE_LINE_ENDINGS = grammar.options.preserveLineEndings?string("true", "false")]
-	[#var JAVA_UNICODE_ESCAPE = grammar.options.javaUnicodeEscape?string("true", "false")]
+    [#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="true", JAVA_UNICODE_ESCAPE="false"]
+    [#if grammar.settings.TABS_TO_SPACES??]
+       [#set TABS_TO_SPACES = grammar.settings.TABS_TO_SPACES]
+    [/#if]
+    [#if grammar.settings.PRESERVE_LINE_ENDINGS?? && !grammar.settings.PRESERVE_LINE_ENDINGS]
+       [#set PRESERVE_LINE_ENDINGS = "false"]
+    [/#if]
+    [#if grammar.settings.JAVA_UNICODE_ESCAPE?? && grammar.settings.JAVA_UNICODE_ESCAPE]
+       [#set JAVA_UNICODE_ESCAPE = "true"]
+    [/#if]
     public FileLineMap(String inputSource, Reader reader, int startingLine, int startingColumn) {
         this(inputSource, readToEnd(reader), startingLine, startingColumn);
     }
@@ -71,7 +79,7 @@ public class FileLineMap {
 
     public FileLineMap(String inputSource, CharSequence content, int startingLine, int startingColumn) {
         this.inputSource = inputSource;
-        this.content = mungeContent(content, ${grammar.options.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE});
+        this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE});
         this.lineOffsets = createLineOffsetsTable(this.content);
         this.setStartPosition(startingLine, startingColumn);
    }

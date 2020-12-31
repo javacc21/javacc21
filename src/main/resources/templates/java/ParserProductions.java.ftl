@@ -71,8 +71,8 @@
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
     [/#if]
-    [#if grammar.options.treeBuildingEnabled]
-      [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.options.nodeDefaultVoid)
+    [#if grammar.treeBuildingEnabled]
+      [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
                         || (treeNodeBehavior?? && !treeNodeBehavior.void)]
     [/#if]
     [#if buildTreeNode]
@@ -127,7 +127,7 @@
     ${grammar.utils.pushNodeVariableName(callingScope.nodeVarName)!}
     [#set parseExceptionVar = "parseException"+nodeNumbering in callingScope]
     [#if !callingScope.treeNodeBehavior??]
-        [#if grammar.options.smartNodeCreation]
+        [#if grammar.smartNodeCreation]
            [#set treeNodeBehavior = {"name" : callingScope.production.name, "condition" : "1", "gtNode" : true, "void" :false} in callingScope]
         [#else]
            [#set treeNodeBehavior = {"name" : callingScope.production.name, "condition" : null, "gtNode" : false, "void" : false} in callingScope]
@@ -381,8 +381,8 @@
 
 [#var parserData=grammar.parserData]
 [#var nodeNumbering = 0]
-[#var NODE_USES_PARSER = grammar.options.nodeUsesParser]
-[#var NODE_PREFIX = grammar.options.nodePrefix]
+[#var NODE_USES_PARSER = grammar.nodeUsesParser]
+[#var NODE_PREFIX = grammar.nodePrefix]
 [#var currentProduction]
 
 

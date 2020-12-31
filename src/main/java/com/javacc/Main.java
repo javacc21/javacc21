@@ -35,164 +35,218 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import java.util.Scanner;
 
 import com.javacc.parser.ParseException;
 
+import jdk.nashorn.internal.runtime.arrays.ArrayLikeIterator;
+
 /**
  * Entry point.
  */
 public final class Main {
-    
+
     public static final String PROG_NAME = "JavaCC 21 Parser Generator";
     public static final String URL = "Go to https://javacc.com for more information.";
     private static String manifestContent = "", jarFileName = "javacc.jar";
     private static File jarFile;
-    
+
     static {
-    	try {
-    	   	Enumeration<URL> urls = Main.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
-        	while(urls.hasMoreElements()) {
-        		URL url = urls.nextElement();
-        		InputStream is = url.openStream();
-        		int available = is.available();
-        		byte[] bytes = new byte[available];
-        		is.read(bytes);
-        		is.close();
-        		String content = new String(bytes);
-        		if (content.indexOf("javacc.Main") >=0) {
-            		String path = url.getFile();
-            		if (path.startsWith("file:")) {
-            			path = path.substring(5);
-            		}
-            		int exclamIndex = path.lastIndexOf('!');
-            		if (exclamIndex >0) {
-            			path = path.substring(0, exclamIndex);
-            		}
-            		jarFile = new File(path);
-            		jarFileName = jarFile.getName();
-        			manifestContent = content;
-         		    break;
-        		}
-        	}    		
-    	}
-    	catch (Exception e) {
-    		//Oh well, never mind!
-        }
-    }
-    
-    static void checkForNewer() {
-        if (jarFile !=null && jarFile.exists()) try {
-            long jarLastModified = jarFile.lastModified();
-            URL url = new URL("https://javacc.com/download/" + jarFile.getName());
-            URLConnection connection = url.openConnection();
-            connection.setConnectTimeout(1000);
-            long lastUpdate = connection.getLastModified();
-            if (lastUpdate > jarLastModified) {
-                System.out.println("Found newer version of JavaCC 21 at " + url);
-                System.out.println("Download it? (y/N)");
-                Scanner scanner = new Scanner(System.in);
-                String response = scanner.nextLine().trim().toLowerCase();
-                if (response.equals("y") || response.equals("yes")) {
-                    boolean renamedFileSuccessfully = false;
-                    String oldFileName =jarFile.getName().replace("javacc",  "javacc-" + System.currentTimeMillis());
-                    File oldFile = new File(jarFile.getParentFile(), oldFileName);
-                    try {
-                        renamedFileSuccessfully = jarFile.renameTo(oldFile);
-                    } catch (Exception e) {
-                        System.out.println("Failed to save older version of jarfile");
-                        System.out.println("Possibly directory " + oldFile.getParent() + " is not writeable.");
-                        scanner.close();
-                        return;
+        try {
+            Enumeration<URL> urls = Main.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
+            while (urls.hasMoreElements()) {
+                URL url = urls.nextElement();
+                InputStream is = url.openStream();
+                int available = is.available();
+                byte[] bytes = new byte[available];
+                is.read(bytes);
+                is.close();
+                String content = new String(bytes);
+                if (content.indexOf("javacc.Main") >= 0) {
+                    String path = url.getFile();
+                    if (path.startsWith("file:")) {
+                        path = path.substring(5);
                     }
-                    System.out.println("Updating jarfile...");
-                    InputStream inputStream = url.openStream();
-                    FileOutputStream fileOS = new FileOutputStream(jarFile);
-                    byte data[] = new byte[1024];
-                    int byteContent;
-                    while ((byteContent = inputStream.read(data, 0, 1024)) != -1) {
-                        fileOS.write(data, 0, byteContent);
-                    }            
-                    fileOS.close();
-                    scanner.close();
-                    System.out.println("Fetched newer jarfile from server.");
-                    if (renamedFileSuccessfully) System.out.println("Older jarfile is at: " + oldFile);
-                    System.out.println("Exiting...");
-                    System.exit(-1);
+                    int exclamIndex = path.lastIndexOf('!');
+                    if (exclamIndex > 0) {
+                        path = path.substring(0, exclamIndex);
+                    }
+                    jarFile = new File(path);
+                    jarFileName = jarFile.getName();
+                    manifestContent = content;
+                    break;
                 }
             }
-        }
-        catch (Exception e) {
-            //Never mind.
+        } catch (Exception e) {
+            // Oh well, never mind!
         }
     }
-    
+
+    static void checkForNewer() {
+        if (jarFile != null && jarFile.exists())
+            try {
+                long jarLastModified = jarFile.lastModified();
+                if (System.currentTimeMillis() - jarLastModified < 3600000L) {
+                    // If the current jarfile is less than an hour old, let's not bother.
+                    return;
+                }
+                URL url = new URL("https://javacc.com/download/" + jarFile.getName());
+                URLConnection connection = url.openConnection();
+                connection.setConnectTimeout(1000);
+                long lastUpdate = connection.getLastModified();
+                if (lastUpdate > jarLastModified) {
+                    System.out.println("Found newer version of JavaCC 21 at " + url);
+                    System.out.println("Download it? (y/N)");
+                    Scanner scanner = new Scanner(System.in);
+                    String response = scanner.nextLine().trim().toLowerCase();
+                    if (response.equals("y") || response.equals("yes")) {
+                        boolean renamedFileSuccessfully = false;
+                        String oldFileName = jarFile.getName().replace("javacc",
+                                "javacc-" + System.currentTimeMillis());
+                        File oldFile = new File(jarFile.getParentFile(), oldFileName);
+                        try {
+                            renamedFileSuccessfully = jarFile.renameTo(oldFile);
+                        } catch (Exception e) {
+                            System.out.println("Failed to save older version of jarfile");
+                            System.out.println("Possibly directory " + oldFile.getParent() + " is not writeable.");
+                            scanner.close();
+                            return;
+                        }
+                        System.out.println("Updating jarfile...");
+                        InputStream inputStream = url.openStream();
+                        FileOutputStream fileOS = new FileOutputStream(jarFile);
+                        byte data[] = new byte[1024];
+                        int byteContent;
+                        while ((byteContent = inputStream.read(data, 0, 1024)) != -1) {
+                            fileOS.write(data, 0, byteContent);
+                        }
+                        fileOS.close();
+                        scanner.close();
+                        System.out.println("Fetched newer jarfile from server.");
+                        if (renamedFileSuccessfully)
+                            System.out.println("Older jarfile is at: " + oldFile);
+                        System.out.println("Exiting...");
+                        System.exit(-1);
+                    }
+                }
+            } catch (Exception e) {
+                // Never mind.
+            }
+    }
+
     static void usage() {
         System.out.println("Usage:");
-        System.out.println("    java -jar " + jarFileName + " option-settings inputfile");
+        System.out.println("    java -jar " + jarFileName + " grammarfile");
         System.out.println();
-        System.out.println("NB: Most option-settings now must be set from the grammar file.");
-        System.out.println("The ones which can still be set from the command line are:");
+        System.out.println("NB: Pretty much all option-settings must now be set from the grammar file.");
         System.out.println();
-        System.out.println("    -DEBUG_PARSER");
-        System.out.println("    -DEBUG_LEXER");
-        System.out.println("    -FAULT_TOLERANT");
+        System.out.println("By default, source files are generated relative to");
+        System.out.println("the location of the grammar file.");
+        System.out.println("This can be changed with the -d setting. For example:");
         System.out.println();
-        System.out.println("By default, source files are generated relative to the location of the input file.");
-        System.out.println("This can be changed by setting as follows:");
-        System.out.println();
-        System.out.println("-d:\"../../src/generated\"");
+        System.out.println("-d ../../src/generated");
+//        System.out.println();
+//        System.out.println("You can make the tool's output much more terse with the -q option.");
+//        System.out.println("The ones which can still be set from the command line are:");
         System.out.println();
     }
 
     /**
      * A main program that exercises the parser.
      */
-    @SuppressWarnings("unused")
-	public static void main(String[] args) throws Exception {
-    	try {
-    		Class<?> fmClass = Class.forName("freemarker.core.Scope");
-    	}
-    	catch (ClassNotFoundException e) {
-    		System.err.println("You must have an appropriate (V3 or later) freemarker.jar on your classpath to run JavaCC 21");
-    		System.exit(-1);
-    	}
+    public static void main(String[] args) throws Exception {
+        try {
+            Class.forName("freemarker.core.Scope");
+        } catch (ClassNotFoundException e) {
+            System.err.println(
+                    "You must have an appropriate (V3 or later) freemarker.jar on your classpath to run JavaCC 21");
+            System.exit(-1);
+        }
         if (args.length == 0) {
             bannerLine();
             usage();
             System.exit(1);
-        } 
-    	checkForNewer();   
+        }
+        checkForNewer();
         if (args[0].equalsIgnoreCase("convert")) {
             com.javacc.output.lint.SyntaxConverter.main(args);
             System.exit(0);
         }
-  		int errorcode = mainProgram(args);
+        File grammarFile = null, outputDirectory = null;
+        boolean quiet = false;
+        for (int i=0; i<args.length;i++) {
+            String arg = args[i];
+            if (arg.charAt(0) == '-') {
+                if (arg.startsWith("--")) arg = arg.substring(1);
+                if (arg.equalsIgnoreCase("-d")) {
+                    if (i==args.length-1) {
+                        System.err.println("-d flag with no output directory");
+                        System.exit(-1);
+                    }
+                    outputDirectory = new File(args[++i]);
+                }
+                else if (arg.equalsIgnoreCase("-q") || arg.equalsIgnoreCase("-quiet")) {
+                    quiet = true;
+                }
+                else {
+                    System.err.println("Unknown flag: " + arg);
+                    System.exit(-1);
+                }
+            } else {
+                if (grammarFile == null) {
+                    grammarFile = new File(arg);
+                    if (!grammarFile.exists()) {
+                        System.err.println("File " + grammarFile + " does not exist!");
+                        System.exit(-1);
+                    }
+                }
+                else {
+                    System.err.println("Extraneous argument " + arg);
+                    System.exit(-1);
+                }
+            }
+        }
+        if (grammarFile == null) {
+            System.err.println("No input file specified");
+            System.exit(-1);
+        }
+        if (!grammarFile.exists()) {
+            System.err.println("File " + grammarFile + " does not exist!");
+            System.exit(-1);
+        }
+        if (outputDirectory == null) {
+            outputDirectory = grammarFile.getParentFile();
+        }
+        if (!outputDirectory.exists()) {
+            if (!outputDirectory.mkdirs()) {
+                System.err.println("Cannot create directory " + outputDirectory);
+                System.exit(-1);
+            } 
+            if (!outputDirectory.canWrite()) {
+                System.err.println("Cannot write to directory " + outputDirectory);
+                System.exit(-1);
+            }
+        }
+        int errorcode = mainProgram(grammarFile, outputDirectory, quiet);
         System.exit(errorcode);
     }
 
-    /**
-     * The method to call to exercise the parser from other Java programs. It
-     * returns an error code. See how the main program above uses this method.
-     */
-    public static int mainProgram(String[] args) throws Exception {
-        JavaCCOptions options = new JavaCCOptions(args);
-        boolean quiet = options.getQuiet();
-        if (!quiet) {
-        	bannerLine();
-            System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)\n");
-        }
-        String filename = args[args.length -1];
-        Grammar grammar = new Grammar(options);
-        grammar.parse(filename, true);
+    public static int mainProgram(File grammarFile, File outputDir, boolean quiet) throws Exception {
+      	bannerLine();
+        System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)\n");
+        Grammar grammar = new Grammar(grammarFile, outputDir, quiet);
+        grammar.parse(grammarFile.toString(), true);
         try {
             grammar.createOutputDir();
             grammar.semanticize();
 
-            if (!grammar.getOptions().getUserDefinedLexer() && grammar.getErrorCount() == 0) {
+            if (!grammar.getUserDefinedLexer() && grammar.getErrorCount() == 0) {
                 grammar.generateLexer();
             }
 

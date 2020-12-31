@@ -55,7 +55,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(${grammar.parserClassName}.class.getName());
     
-[#if grammar.options.debugParser]
+[#if grammar.debugParser]
      static {
          LOGGER.setLevel(Level.FINEST);
      }
@@ -87,7 +87,7 @@ private Token lastConsumedToken;
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
-[#if grammar.options.userDefinedLexer]
+[#if grammar.userDefinedLexer]
   /** User defined Lexer. */
   public Lexer token_source;
   String inputSource = "input";
@@ -109,11 +109,11 @@ public boolean isCancelled() {return cancelled;}
  // Generated constructors
  //=================================
 
-[#if !grammar.options.userDefinedLexer]
- [#if !grammar.options.hugeFileSupport]
+[#if !grammar.userDefinedLexer]
+ [#if !grammar.hugeFileSupport]
    public ${grammar.parserClassName}(String inputSource, CharSequence content) {
        this(new ${grammar.lexerClassName}(inputSource, content));
-      [#if grammar.options.lexerUsesParser]
+      [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
   }
@@ -128,13 +128,13 @@ public boolean isCancelled() {return cancelled;}
   
   public ${grammar.parserClassName}(Reader reader) {
     this(new ${grammar.lexerClassName}(reader));
-      [#if grammar.options.lexerUsesParser]
+      [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
   }
 [/#if]
 
-[#if grammar.options.userDefinedLexer]
+[#if grammar.userDefinedLexer]
   /** Constructor with user supplied Lexer. */
   public ${grammar.parserClassName}(Lexer lexer) {
 [#else]
@@ -142,7 +142,7 @@ public boolean isCancelled() {return cancelled;}
   public ${grammar.parserClassName}(${grammar.lexerClassName} lexer) {
 [/#if]
     token_source = lexer;
-      [#if grammar.options.lexerUsesParser]
+      [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
      currentToken = new Token();
@@ -160,7 +160,7 @@ public boolean isCancelled() {return cancelled;}
     Token previous = null;
     while (result == null) {
       Token next = token_source.getNextToken();
-[#if grammar.options.legacyAPI]      
+[#if grammar.legacyAPI]      
       if (previous != null && !(previous instanceof InvalidToken)) {
         next.setSpecialToken(previous);
       }
@@ -234,7 +234,7 @@ public boolean isCancelled() {return cancelled;}
  
 [#embed "ErrorHandling.java.ftl"]
 
-[#if grammar.options.treeBuildingEnabled]
+[#if grammar.treeBuildingEnabled]
    [#embed "TreeBuildingCode.java.ftl"]
 [/#if]
 }

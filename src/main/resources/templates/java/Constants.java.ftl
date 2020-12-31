@@ -9,7 +9,7 @@ package ${grammar.parserPackage};
 
 public interface ${grammar.constantsClassName} {
 
-[#if grammar.options.legacyAPI]
+[#if grammar.legacyAPI]
   int INVALID = ${grammar.lexerData.tokenCount}; // Used for Lexically invalid input
   [#list grammar.lexerData.regularExpressions as regexp]
   int ${regexp.label} = ${regexp.ordinal};
@@ -22,11 +22,11 @@ public interface ${grammar.constantsClassName} {
      INVALID
   }
   
-[#if !grammar.options.userDefinedLexer]
+[#if !grammar.userDefinedLexer]
   /**
    * Lexical States
    */
-[#if grammar.options.legacyAPI]
+[#if grammar.legacyAPI]
  [#list grammar.lexerData.lexicalStates as lexicalState]
   int ${lexicalState.name} = ${lexicalState_index};
  [/#list]

@@ -143,7 +143,7 @@
 	   [#var c=key[0..0]]
 	   [#if dfaData.generateDfaCase(key, info, table_index)]
 	      [#-- We know key is a single character.... --]
-	      [#if grammar.options.ignoreCase]
+	      [#if grammar.ignoreCase][#--REVISIT--]
 	         [#if c != c?upper_case]
 	           case ${utils.firstCharAsInt(c?upper_case)} :
 	         [/#if]
