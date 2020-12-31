@@ -155,14 +155,7 @@ public class JavaCCOptions {
 
         optionValues.put("PARSER_PACKAGE", "");
         noLongerSetOnCL.add("PARSER_PACKAGE");
-        optionValues.put("PARSER_CLASS", "");
-        noLongerSetOnCL.add("PARSER_CLASS");
-        optionValues.put("LEXER_CLASS", "");
-        noLongerSetOnCL.add("LEXER_CLASS");
-        optionValues.put("CONSTANTS_CLASS", "");
-        noLongerSetOnCL.add("CONSTANTS_CLASS");
 	    optionValues.put("BASE_SRC_DIR", ".");
-        optionValues.put("BASE_NODE_CLASS", "BaseNode");
         optionValues.put("TOKEN_FACTORY", "");
         noLongerSetOnCL.add("TOKEN_FACTORY");
 
@@ -190,7 +183,6 @@ public class JavaCCOptions {
         noLongerSetOnCL.add("UNPARSED_TOKENS_ARE_NODES");
         optionValues.put("FREEMARKER_NODES", false);
         noLongerSetOnCL.add("FREEMARKER_NODES");
-        optionValues.put("DEFAULT_LEXICAL_STATE", "DEFAULT");
         optionValues.put("HUGE_FILE_SUPPORT", false);
         noLongerSetOnCL.add("HUGE_FILE_SUPPORT");
         optionValues.put("LEGACY_API", false);
@@ -285,11 +277,11 @@ public class JavaCCOptions {
             grammar.addWarning(node, "The NODE_EXTENDS option is obsolete and unsupported. You can simply use code injection instead.");
             return;
         }
-        else if (!optionValues.containsKey(s) && !aliases.containsKey(s)) {
+//        else if (!optionValues.containsKey(s) && !aliases.containsKey(s)) {
         	// Unrecognized Option warning
-            grammar.addWarning(node, ErrorCode.UnrecognizedOption, name);
-            return;
-        }
+//            grammar.addWarning(node, ErrorCode.UnrecognizedOption, name);
+//            return;
+//        }
         final Object existingValue = optionValues.get(s);
 
         if (existingValue != null) {
@@ -406,11 +398,6 @@ public class JavaCCOptions {
 
     public void normalize() {
         grammar.setParserPackage(stringValue("PARSER_PACKAGE"));
-        grammar.setParserClassName(stringValue("PARSER_CLASS"));
-        grammar.setLexerClassName(stringValue("LEXER_CLASS"));
-        grammar.setConstantsClassName(stringValue("CONSTANTS_CLASS"));
-        grammar.setBaseNodeClassName(stringValue("BASE_NODE_CLASS"));
-        grammar.setDefaultLexicalState(stringValue("DEFAULT_LEXICAL_STATE"));
     }
 
     /**
@@ -523,11 +510,11 @@ public class JavaCCOptions {
     public String getNodePackage() {
         return stringValue("NODE_PACKAGE");
     }
-
+/*
     public String getParserPackage() {
         return stringValue("PARSER_PACKAGE");
     }
-
+*/
     public boolean getTreeBuildingEnabled() {
         return booleanValue("TREE_BUILDING_ENABLED");
     }
@@ -546,10 +533,6 @@ public class JavaCCOptions {
 
     public boolean getFreemarkerNodes() {
         return booleanValue("FREEMARKER_NODES");
-    }
-
-    public String getDefaultLexicalState() {
-        return this.stringValue("DEFAULT_LEXICAL_STATE");
     }
 
     public String getBaseSourceDirectory() {

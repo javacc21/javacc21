@@ -43,7 +43,7 @@ package ${grammar.nodePackage};
 [#set package = grammar.nodePackage]
 [/#if]
 
-[#if package != grammar.parserPackage && grammar.parserPackage != ""]
+[#if grammar.parserPackage?has_content && package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
 import ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType;
 [/#if]

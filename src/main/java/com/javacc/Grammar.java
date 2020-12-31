@@ -89,8 +89,9 @@ public class Grammar extends BaseNode {
                    lexerClassName,
                    parserPackage,
                    constantsClassName,
-                   baseNodeClassName="BaseNode",
-                   defaultLexicalState = "DEFAULT";
+                   baseNodeClassName,
+                   defaultLexicalState;
+    private Map<String, Object> settings = new HashMap<>();
     private CompilationUnit parserCode;
     private JavaCCOptions options = new JavaCCOptions(this);
     private ParserData parserData;
@@ -238,6 +239,9 @@ public class Grammar extends BaseNode {
     }
 
     public void semanticize() throws MetaParseException {
+        if (defaultLexicalState == null) {
+            setDefaultLexicalState("DEFAULT");
+        }
         for (String lexicalState : lexicalStates) {
             lexerData.addLexicalState(lexicalState);
         }
@@ -271,7 +275,10 @@ public class Grammar extends BaseNode {
     }
 
     public String getConstantsClassName() {
-        if (constantsClassName == null || constantsClassName.length() == 0) {
+        if (constantsClassName == null) {
+            constantsClassName = (String) settings.get("CONSTANTS_CLASS");
+        }
+        if (constantsClassName == null) {
             constantsClassName = getParserClassName();
             if (constantsClassName.toLowerCase().endsWith("parser")) {
                 constantsClassName = constantsClassName.substring(0, constantsClassName.length() -6);
@@ -282,7 +289,10 @@ public class Grammar extends BaseNode {
     }
 
     public String getParserClassName() {
-        if (parserClassName == null || parserClassName.length() ==0) {
+        if (parserClassName ==null) {
+            parserClassName = (String) settings.get("PARSER_CLASS");
+        }
+        if (parserClassName == null) {
             String name = new File(filename).getName();
             int lastDot = name.lastIndexOf('.');
             if (lastDot >0) {
@@ -303,24 +313,21 @@ public class Grammar extends BaseNode {
         this.parserClassName = parserClassName;
     }
 
-    public void setLexerClassName(String lexerClassName) {
-        this.lexerClassName = lexerClassName;
-    }
-
-    public void setConstantsClassName(String constantsClassName) {
-        this.constantsClassName = constantsClassName;
-    }
-
-    public void setBaseNodeClassName(String baseNodeClassName) {
-        this.baseNodeClassName = baseNodeClassName;
-    }
-
     public String getBaseNodeClassName() {
+        if (baseNodeClassName == null) {
+            baseNodeClassName = (String) settings.get("BASE_NODE_CLASS");
+        }
+        if (baseNodeClassName == null) {
+            baseNodeClassName = "BaseNode";
+        }
         return baseNodeClassName;
     }
 
     public String getLexerClassName() {
-        if (lexerClassName == null || lexerClassName.length() == 0) {
+        if (lexerClassName == null) {
+            lexerClassName = (String) settings.get("LEXER_CLASS");
+        }
+        if (lexerClassName == null) {
             lexerClassName = getParserClassName();
             if (lexerClassName.toLowerCase().endsWith("parser")) {
                 lexerClassName = lexerClassName.substring(0, lexerClassName.length() - 6);
@@ -366,10 +373,10 @@ public class Grammar extends BaseNode {
 
     public void setParserCode(CompilationUnit parserCode) {
         this.parserCode = parserCode;
-        parserPackage = options.getParserPackage();
+        parserPackage = (String) settings.get("PARSER_PACKAGE");
         String specifiedPackageName = parserCode.getPackageName();
         if (specifiedPackageName != null && specifiedPackageName.length() >0) {
-            if (!parserPackage.equals("")) {
+            if (parserPackage != null) {
                 if (!parserPackage.equals(specifiedPackageName)) {
                     String msg = "PARSER_PACKAGE was specified in the options directory as " + parserPackage + " but is specified in the PARSER_BEGIN/PARSER_END section as " + specifiedPackageName +".";
                     addSemanticError(null, msg);
@@ -437,7 +444,7 @@ public class Grammar extends BaseNode {
      * Add a new lexical state
      */
     public void addLexicalState(String name) {
-        lexicalStates.add(name);
+        if (!lexicalStates.contains(name)) lexicalStates.add(name);
     }
     
     public List<Expansion> getExpansionsForFirstSet() {
@@ -921,7 +928,8 @@ public class Grammar extends BaseNode {
     public boolean getIgnoreCase() {return ignoreCase;}
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
 
-    public void setSettings(Map<String, Object> settings){
+    public void setSettings(Map<String, Object> settings) {
+        if (!isInInclude()) this.settings = settings;
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
             if (key.equals("IGNORE_CASE")) {
