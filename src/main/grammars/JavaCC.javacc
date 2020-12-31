@@ -655,12 +655,15 @@ CodeInjection2 :
         }
 ;
 
-Options #Options : 
-    Setting =>||
-    (Setting)*
+Options #Options :
+    {HashMap<String, Object> settings = new HashMap<>();} 
+    Setting(settings) =>||
+    (Setting(settings))*
+    {grammar.setSettings(settings);}
 ;
 
 OptionsBlock #Options :
+    {HashMap<String, Object> settings = new HashMap<>();} 
     <IDENTIFIER> 
     [
         SCAN {!getToken(0).getImage().equalsIgnoreCase("options")}#
@@ -669,10 +672,11 @@ OptionsBlock #Options :
     =>||
     [":"]
     "{" 
-    ( Setting )* "}"
+    ( Setting (settings) )* "}"
+    {grammar.setSettings(settings);}
 ;
 
-Setting #Setting :
+Setting(Map settings) #Setting :
 {
 	  String key;
 	  Token name, t=null;
@@ -683,11 +687,11 @@ Setting #Setting :
   ( 
      name = <IDENTIFIER> 
      | 
-     name = "IGNORE_CASE"
+     name = <_IGNORE_CASE>
   )
   =>|+1
   {
-	  key = name.getImage();
+	  key = name.getImage().toUpperCase();
   }
   [
      "="
@@ -705,25 +709,9 @@ Setting #Setting :
   ]  
   ";"
   {
-      // TODO sanity check the rhs of the options
-      if (key.equalsIgnoreCase("IGNORE_CASE")) {
-          getGrammar().setIgnoreCase((Boolean) value);
-      }
-      else if (key.equalsIgnoreCase("DEFAULT_LEXICAL_STATE")) {
-          getGrammar().setDefaultLexicalState((String) value);
-      }
-      if (!getGrammar().isInInclude()) _options.setInputFileOption(name, t, key, value);
+      settings.put(key, value);
   }
 ;
-
-INJECT Setting :
-{
-    private String key;
-    private Object value;
-    public String getKey() {return key;}
-    public Object getValue() {return value;}
-    public void setKeyValue(String key, Object value) {this.key = key; this.value = value;}
-}
 
 BNFProduction BNFProduction :
 {

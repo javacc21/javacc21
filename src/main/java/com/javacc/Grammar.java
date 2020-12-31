@@ -917,11 +917,22 @@ public class Grammar extends BaseNode {
         }
         return buf.toString();
     }
-
-
     private boolean ignoreCase;
     public boolean getIgnoreCase() {return ignoreCase;}
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
+
+    public void setSettings(Map<String, Object> settings){
+        for (String key : settings.keySet()) {
+            Object value = settings.get(key);
+            if (key.equals("IGNORE_CASE")) {
+                setIgnoreCase((Boolean) value);
+            }
+            else if (key.equals("DEFAULT_LEXICAL_STATE")) {
+                setDefaultLexicalState((String) value);
+            }
+            if (!isInInclude()) options.setInputFileOption(null, null, key, value);
+        }
+    }
 
     private final Utils utils = new Utils();
     private List<String> nodeVariableNameStack = new ArrayList<>();
