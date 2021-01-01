@@ -204,80 +204,59 @@ public class ParserData {
         }
 
         /*
-         * The following code merges multiple uses of the same string in the
-         * same lexical state and produces error messages when there are
-         * multiple explicit occurrences (outside the BNF) of the string in the
-         * same lexical state, or when within BNF occurrences of a string are
-         * duplicates of those that occur as non-TOKEN's (SKIP, MORE,
-         * SPECIAL_TOKEN) or private regular expressions. While doing this, this
-         * code also numbers all regular expressions (by setting their ordinal
-         * values), and populates the table "names_of_tokens".
+         * The following code checks for duplicate string literal
+         * tokens in the same lexical state. This is the result 
+         * of refactoring some really grotesque legacy code.
+         * This may need to be revisited. (REVISIT)
          */
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
-            List<Map<String, Map<String, RegularExpression>>> table = new ArrayList<>();
-            for (int i = 0; i < tp.getLexStates().length; i++) {
-                LexicalStateData lexState = lexerData.getLexicalState(tp.getLexStates()[i]);
-                table.add(lexState.getTokenTable());
-            }
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression regexp = res.getRegexp();
                 if (regexp instanceof RegexpStringLiteral) {
-                    // TODO: Clean this mess up! (JR)
                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
                     String image = stringLiteral.getImage();
             // This loop performs the checks and actions with respect to
                     // each lexical state.
-                    for (int i = 0; i < table.size(); i++) {
-                        // Get table of all case variants of "sl.image" into
-                        // table2.
-                        Map<String, RegularExpression> table2 = table.get(i).get(image);
-                        if (table2 == null) {
+                    for (String name : tp.getLexStates()) {
+                        LexicalStateData lsd = lexerData.getLexicalState(name);
+                        RegularExpression alreadyPresent = lsd.getStringLiteral(image);
+                        if (alreadyPresent == null) {
                             if (stringLiteral.getOrdinal() == 0) {
                                 lexerData.addRegularExpression(stringLiteral);
                             }
-                            table2 = new HashMap<String, RegularExpression>();
-                            table2.put(image, stringLiteral);
-                            table.get(i).put(image, table2);
+                            lsd.addStringLiteral(stringLiteral);
                         } 
                         else {
-                            // The rest of the cases do not involve IGNORE_CASE.
-                            RegularExpression re = (RegularExpression) table2.get(stringLiteral.getImage());
                             if (tp.isExplicit()) {
                                 // This is an error even if the first occurrence
                                 // was implicit.
-                                if (tp.getLexStates()[i].equals(grammar.getDefaultLexicalState())) {
+                                if (name.equals(grammar.getDefaultLexicalState())) {
                                     grammar.addSemanticError(stringLiteral,
                                             "(2) Duplicate definition of string token \""
-                                                    + stringLiteral.getImage() + "\".");
+                                                    + image + "\".");
                                 } else {
                                     grammar.addSemanticError(stringLiteral,
                                             "(3) Duplicate definition of string token \""
-                                                    + stringLiteral.getImage()
+                                                    + image
                                                     + "\" in lexical state \""
-                                                    + tp.getLexStates()[i] + "\".");
+                                                    + name + "\".");
                                 }
-                            } else if (re.getTokenProduction() != null && !re.getTokenProduction().getKind().equals("TOKEN")) {
-                                String kind = re.getTokenProduction().getKind();
+                            } else if (alreadyPresent.getTokenProduction() != null && !alreadyPresent.getTokenProduction().getKind().equals("TOKEN")) {
+                                String kind = alreadyPresent.getTokenProduction().getKind();
                                 grammar.addSemanticError(stringLiteral,
                                         "String token \""
-                                                + stringLiteral.getImage()
+                                                + image
                                                 + "\" has been defined as a \""
                                                 + kind
                                                 + "\" token.");
-                            } else if (re.isPrivate()) {
+                            } else if (alreadyPresent.isPrivate()) {
                                 grammar.addSemanticError(stringLiteral,   
-                                     "String token \"" + stringLiteral.getImage()
+                                     "String token \"" + image
                                      + "\" has been defined as a private regular expression.");
                             } else {
                                 // This is now a legitimate reference to an
                                 // existing StringLiteralRegexp.
-                            // There used to be some very complicated logic relating
-                            // to upper/lower case here, and I ripped it out, but
-                            // there may be some subtle cases that are broken, but
-                            // all my tests are working. Will need to re-examine all this.
-                            // But meanwhile, I need to simplify this further
-                            // because I still don't fully understand this code!
-                            stringLiteral.setOrdinal(re.getOrdinal());
+                                stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
                                 tp.removeChild(res);
                             }
                         }

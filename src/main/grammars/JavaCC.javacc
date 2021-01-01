@@ -1024,6 +1024,8 @@ TokenProduction #TokenProduction :
 
 INJECT TokenProduction :
     import java.util.*;
+    import com.javacc.lexgen.LexerData;
+    import com.javacc.lexgen.LexicalStateData;
 {
     /**
      * This is true if this corresponds to a production that actually appears in
@@ -1044,6 +1046,27 @@ INJECT TokenProduction :
     public List<RegexpSpec> getRegexpSpecs() {
         return childrenOfType(RegexpSpec.class);
     }
+
+    public List<LexicalStateData> getLexicalStates() {
+        LexerData lexerData = getGrammar().getLexerData();
+        List<LexicalStateData> result = new ArrayList<>();
+/*        if (lexicalState != null) {
+            result.add(lexerData.getLexicalState(lexicalState));
+            return result;
+        }        
+        if (isInAllLexStates()) {
+            return lexerData.getLexicalStates();
+        }
+        for (Identifier id : childrenOfType(Identifier.class)) {
+            result.add(lexerData.getLexicalState(id.getImage()));
+        }*/
+        for (String name : getLexStates()) {
+            LexicalStateData lsd = lexerData.getLexicalState(name);
+            if (!result.contains(lsd)) result.add(lexerData.getLexicalState(lexicalState));
+        }
+        return result;
+    }
+
 
     /**
      * The states in which this regular expression production exists.

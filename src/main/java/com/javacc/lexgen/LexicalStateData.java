@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -48,7 +48,8 @@ public class LexicalStateData {
     private NfaData nfaData;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
-    private Map<String, Map<String, RegularExpression>> tokenTable = new HashMap<>();
+    private Map<String, RegularExpression> caseSensitiveTokenTable = new HashMap<>();
+    private Map<String, RegularExpression> caseInsensitiveTokenTable = new HashMap<>();
 
     private boolean mixedCase;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
@@ -119,16 +120,20 @@ public class LexicalStateData {
         return regularExpressions.contains(re);
     }
 
-    /**
-     * This is a two-level symbol table that contains all simple tokens (those
-     * that are defined using a single string (with or without a label). The
-     * index to the first level hashtable is the string of the simple token
-     * converted to upper case, and this maps to a second level hashtable. This
-     * second level hashtable contains the actual string of the simple token and
-     * maps it to its RegularExpression.
-     */
-    public Map<String, Map<String, RegularExpression>> getTokenTable() {
-        return tokenTable;
+    public void addStringLiteral(RegexpStringLiteral re) {
+        if (re.getIgnoreCase()) {
+            caseInsensitiveTokenTable.put(re.getImage().toUpperCase(), re);
+        } else {
+            caseSensitiveTokenTable.put(re.getImage(), re);
+        }
+    }
+
+    public RegularExpression getStringLiteral(String image) {
+        RegularExpression result = caseSensitiveTokenTable.get(image);
+        if (result == null) {
+            result = caseInsensitiveTokenTable.get(image.toUpperCase());
+        }
+        return result;
     }
 
     List<RegexpChoice> process() {
