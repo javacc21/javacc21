@@ -278,7 +278,7 @@ public class ${grammar.baseNodeClassName} implements Node {
     
     public String toString() {
         StringBuilder buf=new StringBuilder();
-        for(Token t : Nodes.getRealTokens(this)) {
+        for(Token t : getRealTokens()) {
             buf.append(t);
         }
         return buf.toString();

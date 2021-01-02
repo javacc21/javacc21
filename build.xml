@@ -44,7 +44,7 @@
 
   <target name="parser-gen" depends="init" unless="parser.uptodate">
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
- 	   <arg line="-n -d ../java src/main/grammars/JavaCC.javacc"/>
+ 	   <arg line="-n -q -d ../java src/main/grammars/JavaCC.javacc"/>
  	</java>
   </target>
 

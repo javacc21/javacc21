@@ -257,10 +257,10 @@ public class FilesGenerator {
     }
     
     void generateUtilsFile() throws IOException, TemplateException {
-        File outputFile = new File(grammar.getParserOutputDirectory(), "Nodes.java");
-        if (regenerate(outputFile)) {
-            generate(outputFile);
-        }
+//        File outputFile = new File(grammar.getParserOutputDirectory(), "Nodes.java");
+//        if (regenerate(outputFile)) {
+//            generate(outputFile);
+//        }
     }
     
     private boolean regenerate(File file) throws IOException {

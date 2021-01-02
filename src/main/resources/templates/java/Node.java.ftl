@@ -136,6 +136,51 @@ public interface Node extends Comparable<Node>
      boolean hasAttribute(String name);
      
      java.util.Set<String> getAttributeNames();
+
+
+    /**
+     * @return a List containing all the tokens in a Node
+     * @param includeCommentTokens Whether to include comment tokens
+     */
+     default List<Token> getAllTokens(boolean includeCommentTokens) {
+		List<Token> result = new ArrayList<Token>();
+        for (Iterator<Node> it = iterator(); it.hasNext();) {
+            Node child = it.next();
+            if (child instanceof Token) {
+                Token token = (Token) child;
+                if (token.isUnparsed()) {
+                    continue;
+                }
+                if (includeCommentTokens) {
+                    ArrayList<Token> comments = null;
+                    Token prev = token.getPreviousToken();
+                    while (prev != null && prev.isUnparsed()) {
+                        if (comments == null) comments = new ArrayList<>();
+                        comments.add(prev);
+                        prev = prev.getPreviousToken();
+                    }
+                    if (comments !=null) {
+                        Collections.reverse(comments);
+                        result.addAll(comments);
+                    }
+                }
+                result.add(token);
+            } 
+            else if (child.getChildCount() >0) {
+               result.addAll(child.getAllTokens(includeCommentTokens));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @return All the tokens in the node that 
+     * are "real" (i.e. participate in parsing)
+     */
+    default List<Token> getRealTokens() {
+        return descendants(Token.class, t->!t.isUnparsed());
+    }
+
      
     
 [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
@@ -410,6 +455,21 @@ public interface Node extends Comparable<Node>
           result.addAll(child.descendants(clazz, predicate)); 
        }
        return result;
+    }
+
+    default void dump(String prefix) {
+        String output = (this instanceof Token) ? toString().trim() : getClass().getSimpleName();
+        if (output.length() >0) {
+            System.out.println(prefix + output);
+        }
+        for (Iterator<Node> it = iterator(); it.hasNext();) {
+            Node child = it.next();
+            child.dump(prefix+"  ");
+        }
+    }
+
+    default void dump() {
+        dump("");
     }
 
     // NB: This is not thread-safe

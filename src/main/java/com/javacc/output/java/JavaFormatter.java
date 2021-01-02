@@ -52,7 +52,7 @@ public class JavaFormatter {
     
     public String format(BaseNode code) {
         buf = new StringBuilder();
-        List<Token> allTokens = Nodes.getAllTokens(code, true, true);
+        List<Token> allTokens = code.getAllTokens(true);
         checkFirstNewLine(allTokens);
         for (Token t :  allTokens) {
             if (t instanceof Whitespace) {

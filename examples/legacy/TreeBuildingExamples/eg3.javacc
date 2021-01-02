@@ -42,7 +42,7 @@ INJECT(PARSER_CLASS) :
     Eg3 t = new Eg3(new java.io.InputStreamReader(System.in));
     try {
       Start n = t.Start();
-      Nodes.dump(n, "  ");
+      n.dump("  ");
       System.out.println("Thank you.");
     } catch (Exception e) {
       System.out.println("Oops.");

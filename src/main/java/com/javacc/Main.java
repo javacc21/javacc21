@@ -140,7 +140,7 @@ public final class Main {
         System.out.println("Usage:");
         System.out.println("    java -jar " + jarFileName + " grammarfile");
         System.out.println();
-        System.out.println("The following options are available:");
+        System.out.println("The following command-line flags are available:");
         System.out.println(" -d <directory>    Specify the directory (relative or absolute) to place generated files");
         System.out.println("   For example:   -d ../../src/generated");
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
@@ -165,6 +165,7 @@ public final class Main {
         if (args.length == 0) {
             bannerLine();
             usage();
+            checkForNewer();
             System.exit(1);
         }
         if (args[0].equalsIgnoreCase("convert")) {
