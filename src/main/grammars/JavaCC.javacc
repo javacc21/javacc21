@@ -365,7 +365,7 @@ INJECT PARSER_CLASS : {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
                if (t.getType() != _PARSER_END || !isInProduction("ParserCodeDecls")) {
 	               Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
-	               Nodes.copyLocationInfo(t, id);
+	               t.copyLocationInfo(id);
 	               return id;
                }
            }
@@ -545,7 +545,7 @@ INJECT ReturnType :
     import java.util.List;
 {
     public boolean getAsBoolean() {
-        List<Token> lt = Nodes.getRealTokens(this);
+        List<Token> lt = getRealTokens();
         return lt.size() != 1 || lt.get(0).getType() != VOID;
     }
 }

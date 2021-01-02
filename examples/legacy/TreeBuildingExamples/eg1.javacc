@@ -40,7 +40,7 @@ INJECT(PARSER_CLASS) :
     PARSER_CLASS t = new PARSER_CLASS(new java.io.InputStreamReader(System.in));
     try {
       BaseNode n = t.Start();
-      Nodes.dump(n,"  ");
+      n.dump("  ");
       System.out.println("Thank you.");
     } catch (Exception e) {
       System.out.println("Oops.");

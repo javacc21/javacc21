@@ -305,7 +305,7 @@ INJECT BaseNode :
 {    
     protected String getLiteralText() {
         StringBuilder buf = new StringBuilder();
-        for (Token t : Nodes.getAllTokens(this, true)) {
+        for (Token t : getAllTokens(true)) {
             buf.append(t);
         }
         return buf.toString();
@@ -313,7 +313,7 @@ INJECT BaseNode :
     
     protected String getInnerText() {
         StringBuilder buf = new StringBuilder();
-        List<Token> tokens = Nodes.getAllTokens(this, true);
+        List<Token> tokens = getAllTokens(true);
         boolean outputOpeningBrace = false;
         for (int i=0; i<tokens.size() -1; i++) {
             Token t = tokens.get(i);
@@ -337,7 +337,7 @@ INJECT BaseNode :
     }
     
     public boolean isEmpty() {
-        return Nodes.getRealTokens(this).size() == 0;
+        return getRealTokens().isEmpty();
     }
 
     public boolean hasKeyWord(String keyWord) {
@@ -405,7 +405,7 @@ INJECT PackageDeclaration :
     public String getPackageName() {
         StringBuilder buf = new StringBuilder();
         boolean seenPackage = false;
-        for (Token t : Nodes.getRealTokens(this)) {
+        for (Token t : getRealTokens()) {
             if (t.getType() == PACKAGE) {
                 seenPackage = true;
             } else if (seenPackage) {
@@ -1079,7 +1079,7 @@ INJECT FormalParams :
     
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        for (Token tok : Nodes.getRealTokens(this)) {
+        for (Token tok : getRealTokens()) {
             buf.append(" ");
             buf.append(tok);
         }
@@ -1154,7 +1154,7 @@ INJECT ObjectType :
     
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        for (Token t : Nodes.getRealTokens(this)) {
+        for (Token t : getRealTokens()) {
             buf.append(t);
         }
         return buf.toString();
@@ -1236,7 +1236,7 @@ INJECT Name :
 {
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        for (Token tok : Nodes.getRealTokens(this)) {
+        for (Token tok : getRealTokens()) {
             buf.append(tok);
         }
         return buf.toString();
@@ -1634,7 +1634,7 @@ INJECT CodeBlock :
      * The block is empty if it only consists of { and }
      */
     public boolean isEmpty() {
-        return Nodes.getRealTokens(this).size() == 2;
+        return getRealTokens().size() == 2;
     }
 }
 

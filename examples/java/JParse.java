@@ -67,7 +67,7 @@ public class JParse {
 //       }
        
        if (dumpTree) {
-           Nodes.dump(root, "");
+           root.dump("");
        }
    }
 

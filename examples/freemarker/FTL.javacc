@@ -76,7 +76,7 @@ INJECT FTLParser :
         }
         System.err.println("File " + inputFile + " parsed successfully.");
         if (dumpTree) {
-            Nodes.dump(parser.rootNode(), "---");
+            parser.rootNode().dump("---");
        }
     }
 

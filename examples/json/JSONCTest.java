@@ -9,7 +9,7 @@ public class JSONCTest {
         parser.Value();
         Node root=parser.rootNode();
         if (dumpTree) {
-            Nodes.dump(root, "");
+            root.dump();
         }
     }
  

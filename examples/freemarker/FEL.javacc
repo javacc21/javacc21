@@ -36,7 +36,7 @@ INJECT FELParser : {
    static public void main(String[] args) throws ParseException {
        FELParser parser = new FELParser(new java.io.InputStreamReader(System.in));
        Node n = parser.Input();
-       Nodes.dump(n, "  ");
+       n.dump("  ");
    }
 }
 
