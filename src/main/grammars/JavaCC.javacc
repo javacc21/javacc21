@@ -995,11 +995,6 @@ TokenProduction #TokenProduction :
   (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP")
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
-        {
-          if (grammar.getUserDefinedLexer()) {
-            grammar.addWarning(current_token, "Ignoring \"IGNORE_CASE\" specification since option USER_DEFINED_LEXER has been set to true.");
-          }
-        }
   ]
   [t = <HASH_ID> {tokenClassName=t.getImage().substring(1);}] 
   ":"
@@ -1016,7 +1011,7 @@ TokenProduction #TokenProduction :
           if (firstSpecifiedLexicalState == null) {
               firstSpecifiedLexicalState = grammar.getDefaultLexicalState();
           }
-          CURRENT_NODE.setLexicalState(firstSpecifiedLexicalState);
+          CURRENT_NODE.setImplicitLexicalState(firstSpecifiedLexicalState);
       }
       CURRENT_NODE.setIgnoreCase(ignoreCase || grammar.getIgnoreCase());
    }
@@ -1037,59 +1032,32 @@ INJECT TokenProduction :
     public boolean getIgnoreCase() {return ignoreCase;}
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
 
-    private String lexicalState;
+    private String implicitLexicalState;
     
-    public void setLexicalState(String lexicalState) {
-        this.lexicalState = lexicalState;
+    public void setImplicitLexicalState(String implicitLexicalState) {
+        this.implicitLexicalState = implicitLexicalState;
     }
 
     public List<RegexpSpec> getRegexpSpecs() {
         return childrenOfType(RegexpSpec.class);
     }
 
-    public List<LexicalStateData> getLexicalStates() {
-        LexerData lexerData = getGrammar().getLexerData();
-        List<LexicalStateData> result = new ArrayList<>();
-/*        if (lexicalState != null) {
-            result.add(lexerData.getLexicalState(lexicalState));
-            return result;
-        }        
-        if (isInAllLexStates()) {
-            return lexerData.getLexicalStates();
-        }
-        for (Identifier id : childrenOfType(Identifier.class)) {
-            result.add(lexerData.getLexicalState(id.getImage()));
-        }*/
-        for (String name : getLexStates()) {
-            LexicalStateData lsd = lexerData.getLexicalState(name);
-            if (!result.contains(lsd)) result.add(lexerData.getLexicalState(lexicalState));
-        }
-        return result;
-    }
-
-
     /**
      * The states in which this regular expression production exists.
      */
-    public String[] getLexStates() {
+    public String[] getLexicalStateNames() {
     
-        if (lexicalState != null) {
-            return new String[] {lexicalState};
+        if (implicitLexicalState != null) {
+            return new String[] {implicitLexicalState};
         }        
-        if (!explicit) {
-            return new String[] {getGrammar().getDefaultLexicalState()};
-        }
         if (isInAllLexStates()) {
-	    return getGrammar().getLexicalStates();
+     	    return getGrammar().getLexicalStates();
         }
         Set<String> states = new LinkedHashSet<String>();
-        for (Node n : children) {
-	   if (n instanceof Token) {
-	       Token t = (Token) n;
-               if (t.getType() == IDENTIFIER) {
-                  states.add(n.toString());
-               }
-	   }
+        for (Token t : childrenOfType(Token.class)) {
+            if (t.getType() == IDENTIFIER) {
+                states.add(t.getImage());
+            }
         }
         if (states.isEmpty()) {
            return new String[] {getGrammar().getDefaultLexicalState()};
@@ -1113,8 +1081,6 @@ INJECT TokenProduction :
        }
        return false;
     }
-
-
 
     public void setExplicit(boolean explicit) {
         this.explicit = explicit;
@@ -1158,7 +1124,6 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
   {
       regexp = (RegularExpression) peekNode();
       CURRENT_NODE.addChild(popNode());
-//      regexp.tpContext = p;
       if (tokenClassName != null) {
           regexp.setGeneratedClassName(tokenClassName);
       }
@@ -1171,22 +1136,12 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
      }
   ]
   [
+      SCAN {!regexp.isPrivate()} \...\TokenProduction =>
       Block
-        {
-            if (grammar.getUserDefinedLexer()) {
-                grammar.addWarning(peekNode(), "Ignoring code snippet for regular expression specification since option USER_DEFINED_LEXER has been set to true.");
-            }
-            if (regexp.isPrivate()) {
-                grammar.addParseError(peekNode(), "Code snippets are not permitted on private (#) regular expressions.");
-            }
-        }
   ]
-  [ ":" <IDENTIFIER>
-        {
-          if (regexp.isPrivate()) {
-            grammar.addParseError(current_token, "Lexical state changes are not permitted after private (#) regular expressions.");
-          }
-        }
+  [ 
+      SCAN {!regexp.isPrivate()} \...\TokenProduction =>
+      ":" <IDENTIFIER>
   ]
 ;
 
@@ -2912,5 +2867,3 @@ INJECT CharacterRange :
        return left == right;
     }
 }
-
-

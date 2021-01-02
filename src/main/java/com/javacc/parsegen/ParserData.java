@@ -39,9 +39,11 @@ import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
 /**
- * This class holds the remains of all the most icky legacy code that is used to build up the data
- * structure for the parser. The near-term (or possibly mid-term) goal is to refactor and clean it 
- * all up (JR).
+ * This class is what remains of a bunch of horrible legacy code 
+ * that was used to build up the data structures for the parser.
+ * The way JavaCC21 works increasingly is simply to expose the 
+ * various data structures to the FreeMarker templates. Most
+ * of what this class contains now is a bunch of various sanity checks.
  */
 public class ParserData {
 
@@ -181,7 +183,15 @@ public class ParserData {
             }
         }
 
+        for (RegexpSpec regexpSpec : grammar.descendants(RegexpSpec.class)) {
+            if (regexpSpec.getRegexp().matchesEmptyString()) {
+                grammar.addSemanticError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
+            }
+        }
+
+
 // Below this point is legacy code that I'm still schlepping around.
+// Well, actually, even what is below this point is substantially cleaned up now!
 
         /*
          * The following loop inserts all names of regular expressions into
@@ -212,12 +222,15 @@ public class ParserData {
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression regexp = res.getRegexp();
-                if (regexp instanceof RegexpStringLiteral) {
+                if (regexp instanceof RegexpRef) continue;
+                if (!(regexp instanceof RegexpStringLiteral)) {
+                    lexerData.addRegularExpression(res.getRegexp());
+                } else {
                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
                     String image = stringLiteral.getImage();
             // This loop performs the checks and actions with respect to
                     // each lexical state.
-                    for (String name : tp.getLexStates()) {
+                    for (String name : tp.getLexicalStateNames()) {
                         LexicalStateData lsd = lexerData.getLexicalState(name);
                         RegularExpression alreadyPresent = lsd.getStringLiteral(image);
                         if (alreadyPresent == null) {
@@ -261,21 +274,13 @@ public class ParserData {
                             }
                         }
                     }
-                } else if (!(res.getRegexp() instanceof RegexpRef)) {
-                    lexerData.addRegularExpression(res.getRegexp());
-                }
-                if (!(res.getRegexp() instanceof RegexpRef)
-                        && !res.getRegexp().getLabel().equals("")) {
-                    grammar.addTokenName(res.getRegexp().getOrdinal(), res.getRegexp().getLabel());
+                } 
+                if (!regexp.getLabel().equals("")) {
+                    grammar.addTokenName(regexp.getOrdinal(), regexp.getLabel());
                 }
             }
         }
 
-        for (RegexpSpec regexpSpec : grammar.descendants(RegexpSpec.class)) {
-            if (regexpSpec.getRegexp().matchesEmptyString()) {
-                grammar.addSemanticError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
-            }
-        }
 
         //Let's jump out here, I guess.
         if (grammar.getErrorCount() >0) return;
@@ -323,8 +328,7 @@ public class ParserData {
         }
 
         /*
-         * The following code is executed only if
-         * grammar.getOptions().getUserDefinedLexer() is set to true. This code
+         * This code applies to the user-defined lexer case. It
          * visits all top-level RegexpRefs (ignores RegexpRefs nested within
          * regular expressions). Since regular expressions are optional in this
          * case, RegexpRef's without corresponding regular expressions are

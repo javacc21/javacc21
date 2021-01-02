@@ -153,7 +153,7 @@ public class Grammar extends BaseNode {
         TokenProduction tp = new TokenProduction();
         tp.setGrammar(this);
         tp.setExplicit(false);
-        tp.setLexicalState(getDefaultLexicalState());
+        tp.setImplicitLexicalState(getDefaultLexicalState());
         addChild(tp);
         addTokenProduction(tp);
         RegexpSpec res = new RegexpSpec();
