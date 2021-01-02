@@ -92,18 +92,6 @@ class CodeInjector {
         } 
     }
     
-    void addAll(CodeInjector other) {
-        types.putAll(other.types);
-        injectedImportsMap.putAll(other.injectedImportsMap);
-        injectedAnnotationsMap.putAll(other.injectedAnnotationsMap);
-        extendsLists.putAll(other.extendsLists);
-        implementsLists.putAll(other.implementsLists);
-        typeParameterLists.putAll(other.typeParameterLists);
-        bodyDeclarations.putAll(other.bodyDeclarations);
-        overriddenMethods.addAll(other.overriddenMethods);
-        typeNames.addAll(other.typeNames);
-    }
-    
     private boolean isInNodePackage(String classname) {
         return !classname.equals(parserClassName)
              && !classname.equals(lexerClassName)
@@ -311,5 +299,4 @@ class CodeInjector {
     boolean hasInjectedCode(String typename) {
         return typeNames.contains(typename);
     }
-    
 }
