@@ -29,10 +29,8 @@
  */
 
 JAVA_UNICODE_ESCAPE;
-LEXER_USES_PARSER;
 TREE_BUILDING_ENABLED;
 FREEMARKER_NODES;
-SMART_NODE_CREATION;
 BASE_SRC_DIR="../java";
 PARSER_PACKAGE="com.javacc.parser";
 NODE_PACKAGE="com.javacc.parser.tree";
@@ -80,8 +78,6 @@ INJECT PARSER_CLASS :
             return s.charAt(0);
         }
     }
-
-
 
     private String removeEscapesAndQuotes(Token t) {
         String retval = "";
