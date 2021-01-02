@@ -124,12 +124,11 @@ public class Grammar extends BaseNode {
 	private int semanticErrorCount;
     private int warningCount;
 
-    private File grammarFile, outputDir;
+    private File outputDir;
     private boolean quiet;
     
-    public Grammar(File grammarFile, File outputDir, boolean quiet) {
+    public Grammar(File outputDir, boolean quiet) {
         this();
-        this.grammarFile = grammarFile;
         this.outputDir = outputDir;
         this.quiet = quiet;
         parserData = new ParserData(this);
@@ -839,7 +838,7 @@ public class Grammar extends BaseNode {
     }
 
     public File getParserOutputDirectory() throws IOException {
-        String baseSrcDir = outputDir.toString();
+        String baseSrcDir = outputDir == null ? "." : outputDir.toString();
         if (baseSrcDir.equals("")) {
             return new File(".");
         }
@@ -865,12 +864,12 @@ public class Grammar extends BaseNode {
 
     //FIXME.
     public String getBaseSourceDirectory() {
-        return outputDir.toString(); 
+        return outputDir == null ? "." : outputDir.toString(); 
     }
 
     public File getNodeOutputDirectory(String nodeName) throws IOException {
         String nodePackage = getNodePackage();
-        String baseSrcDir = outputDir.toString();
+        String baseSrcDir = getBaseSourceDirectory();
         if (nodePackage == null || nodePackage.equals("") || baseSrcDir.equals("")) {
             return getParserOutputDirectory();
         }
@@ -1015,8 +1014,9 @@ public class Grammar extends BaseNode {
             else if (key.equals("DEFAULT_LEXICAL_STATE")) {
                 setDefaultLexicalState((String) value);
             }
-            if (!isInInclude() && key.equals("BASE_SRC_DIR")) {
-                outputDir = new File((String)value);
+            if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {
+                if (!isInInclude() && outputDir == null)
+                    outputDir = new File((String)value);
             }
         }
     }

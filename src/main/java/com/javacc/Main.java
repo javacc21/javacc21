@@ -154,7 +154,7 @@ public final class Main {
     }
 
     /**
-     * A main program that exercises the parser.
+     * The main program.
      */
     public static void main(String[] args) throws Exception {
         try {
@@ -233,10 +233,18 @@ public final class Main {
         System.exit(errorcode);
     }
 
+    /**
+     * @param grammarFile The input file
+     * @param outputDir The output directory, if this is null, just use the directory where the input file is.
+     * @param quiet Whether to be silent (or quiet). Currently does nothing!
+     * @return error code
+     * @throws Exception
+     */
+
     public static int mainProgram(File grammarFile, File outputDir, boolean quiet) throws Exception {
       	bannerLine();
         System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)\n");
-        Grammar grammar = new Grammar(grammarFile, outputDir, quiet);
+        Grammar grammar = new Grammar(outputDir, quiet);
         grammar.parse(grammarFile.toString(), true);
         try {
             grammar.createOutputDir();
