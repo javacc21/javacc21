@@ -21,7 +21,7 @@
           classpath="${basedir}/../../build:${basedir}/../../bin/javacc.jar:${basedir}/../../bin/freemarker.jar">
           <arg line="-q -n ${basedir}/FTL.javacc"/>     
     </java>      
-    <javac classpath="." debug="on" srcdir="." includeantruntime="no"  failonerror="true"/>
+    <javac classpath="." debug="on" srcdir="." includeantruntime="no"  fork="true" failonerror="true"/>
 </target>
 
 <target name="test" depends="build">

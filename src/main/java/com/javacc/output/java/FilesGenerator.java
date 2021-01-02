@@ -125,7 +125,6 @@ public class FilesGenerator {
                     || currentFilename.equals("ParsingProblem.java")
                     || currentFilename.equals("Token.java")
                     || currentFilename.equals("Node.java")
-                    || currentFilename.equals("Nodes.java")
             		|| currentFilename.equals("InvalidToken.java")
             		|| currentFilename.equals("FileLineMap.java")))
             {
@@ -256,13 +255,6 @@ public class FilesGenerator {
         }
     }
     
-    void generateUtilsFile() throws IOException, TemplateException {
-//        File outputFile = new File(grammar.getParserOutputDirectory(), "Nodes.java");
-//        if (regenerate(outputFile)) {
-//            generate(outputFile);
-//        }
-    }
-    
     private boolean regenerate(File file) throws IOException {
         if (!file.exists()) {
         	return true;
@@ -288,7 +280,6 @@ public class FilesGenerator {
     
     void generateTreeBuildingFiles() throws IOException, TemplateException {
     	generateNodeFile();
-    	generateUtilsFile();
         Set<File> files = new LinkedHashSet<File>();
         files.add(getOutputFile(grammar.getBaseNodeClassName()));
 
