@@ -49,6 +49,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import com.javacc.JavaCCError.ErrorCode;
+import com.javacc.JavaCCError.Type;
 import com.javacc.lexgen.LexerData;
 import com.javacc.output.java.FilesGenerator;
 import com.javacc.parsegen.RegularExpression;
@@ -122,12 +124,11 @@ public class Grammar extends BaseNode {
 	private int semanticErrorCount;
     private int warningCount;
 
-    private File grammarFile, outputDir;
+    private File outputDir;
     private boolean quiet;
     
-    public Grammar(File grammarFile, File outputDir, boolean quiet) {
+    public Grammar(File outputDir, boolean quiet) {
         this();
-        this.grammarFile = grammarFile;
         this.outputDir = outputDir;
         this.quiet = quiet;
         parserData = new ParserData(this);
@@ -153,7 +154,7 @@ public class Grammar extends BaseNode {
         TokenProduction tp = new TokenProduction();
         tp.setGrammar(this);
         tp.setExplicit(false);
-        tp.setLexicalState(getDefaultLexicalState());
+        tp.setImplicitLexicalState(getDefaultLexicalState());
         addChild(tp);
         addTokenProduction(tp);
         RegexpSpec res = new RegexpSpec();
@@ -837,7 +838,7 @@ public class Grammar extends BaseNode {
     }
 
     public File getParserOutputDirectory() throws IOException {
-        String baseSrcDir = outputDir.toString();
+        String baseSrcDir = outputDir == null ? "." : outputDir.toString();
         if (baseSrcDir.equals("")) {
             return new File(".");
         }
@@ -863,12 +864,12 @@ public class Grammar extends BaseNode {
 
     //FIXME.
     public String getBaseSourceDirectory() {
-        return outputDir.toString(); 
+        return outputDir == null ? "." : outputDir.toString(); 
     }
 
     public File getNodeOutputDirectory(String nodeName) throws IOException {
         String nodePackage = getNodePackage();
-        String baseSrcDir = outputDir.toString();
+        String baseSrcDir = getBaseSourceDirectory();
         if (nodePackage == null || nodePackage.equals("") || baseSrcDir.equals("")) {
             return getParserOutputDirectory();
         }
@@ -1002,6 +1003,8 @@ public class Grammar extends BaseNode {
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
 
     public void setSettings(Map<String, Object> settings) {
+        typeCheckSettings(settings);
+        sanityCheck();
         if (!isInInclude()) this.settings = settings;
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
@@ -1011,8 +1014,37 @@ public class Grammar extends BaseNode {
             else if (key.equals("DEFAULT_LEXICAL_STATE")) {
                 setDefaultLexicalState((String) value);
             }
-            if (!isInInclude() && key.equals("BASE_SRC_DIR")) {
-                outputDir = new File((String)value);
+            if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {
+                if (!isInInclude() && outputDir == null)
+                    outputDir = new File((String)value);
+            }
+        }
+    }
+
+    private String booleanSettings = "FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,USER_DEFINED_LEXER,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,HUGE_FILE_SUPPORT,LEGACY_API,NODE_FACTORY,DEBUG_TOKEN_MANAGER,USER_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER";
+    private String stringSettings = "PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,TOKEN_FACTORY,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY";
+    private String integerSettings = "TABS_TO_SPACES";
+
+    private void typeCheckSettings(Map<String, Object> settings) {
+        for (String key : settings.keySet()) {
+            Object value = settings.get(key);
+            if (booleanSettings.indexOf(key)>=0) {
+                if (!(value instanceof Boolean)) {
+                    addError(null, Type.SEMANTIC, ErrorCode.OptionValueTypeMismatch, "The option " + key + " is supposed to be a boolean (true/false) type");
+                }
+            }
+            else if (stringSettings.indexOf(key)>=0) {
+                if (!(value instanceof String)) {
+                    addError(null, Type.SEMANTIC, ErrorCode.OptionValueTypeMismatch, "The option " + key + " is supposed to be a string");
+                }
+            }
+            else if (integerSettings.indexOf(key)>=0) {
+                if (!(value instanceof Integer)) {
+                    addError(null, Type.SEMANTIC, ErrorCode.OptionValueTypeMismatch, "The option " + key + " is supposed to be an integer");
+                }
+            }
+            else {
+                addError(null, Type.WARNING, ErrorCode.UnrecognizedOption, "The option " + key + " is not recognized and will be ignored.");
             }
         }
     }
@@ -1021,45 +1053,37 @@ public class Grammar extends BaseNode {
 
     /**
      * Some warnings if incompatible options are set.
-     * TODO. Have moved this from the defunct JavaCCOptions
-     * so it needs a bit of adjustment maybe.
      */
-    public void sanityCheck() {
-        //        boolean nodePackageDefined = getNodePackage().length() >0;
-        
-        //        if (!getTreeBuildingEnabled()) {
-        //            String msg = "You have specified the OPTION_NAME option but it is "
-        //                + "meaningless unless the TREE_BUILDING_ENABLED is set to true."
-        //                + " This option will be ignored.\n";
-        //            if (nodePackageDefined) {
-        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_PACKAGE"));
-        //            }
-        //            if (getTokensAreNodes()) {
-        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "TOKENS_ARE_NODES"));
-        //            }
-        //            if (getUnparsedTokensAreNodes()) {
-        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "UNPARSED_TOKENS_ARE_NODES"));
-        //            }
-        //            if (getSmartNodeCreation()) {
-        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "SMART_NODE_CREATION"));
-        //            }
-        //      if (getNodeDefaultVoid()) {
-        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_DEFAULT_VOID"));
-        //            }
-        //            if (getNodeUsesParser()) {
-        //                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
-        //            }
-        //        }
-        //        if (booleanValue("HUGE_FILE_SUPPORT")) {
-        //            if (booleanValue("TREE_BUILDING_ENABLED")) {
-        //                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because TREE_BUILDING_ENABLED is set.");
-        //            }
-        //            if (booleanValue("FAULT_TOLERANT")) {
-        //                grammar.addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because FAULT_TOLERANT is set.");
-        //            }
-        //        }
+    private void sanityCheck() {
+        if (!getTreeBuildingEnabled()) {
+            String msg = "You have specified the OPTION_NAME option but it is "
+                    + "meaningless unless the TREE_BUILDING_ENABLED is set to true."
+                    + " This option will be ignored.\n";
+            if (getTokensAreNodes()) {
+                addWarning(null, msg.replace("OPTION_NAME", "TOKENS_ARE_NODES"));
             }
-        
+            if (getUnparsedTokensAreNodes()) {
+                addWarning(null, msg.replace("OPTION_NAME", "UNPARSED_TOKENS_ARE_NODES"));
+            }
+            if (getSmartNodeCreation()) {
+                addWarning(null, msg.replace("OPTION_NAME", "SMART_NODE_CREATION"));
+            }
+            if (getNodeDefaultVoid()) {
+                addWarning(null, msg.replace("OPTION_NAME", "NODE_DEFAULT_VOID"));
+            }
+            if (getNodeUsesParser()) {
+                addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
+            }
+        }
+        if (getHugeFileSupport()) {
+            if (getTreeBuildingEnabled()) {
+                addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because TREE_BUILDING_ENABLED is set.");
+            }
+            if (getFaultTolerant()) {
+                addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because FAULT_TOLERANT is set.");
+            }
+        }
+    }
 
     private final Utils utils = new Utils();
     private List<String> nodeVariableNameStack = new ArrayList<>();

@@ -15,16 +15,16 @@
    <target name="parser1-gen" unless="parser1.uptodate">
         <mkdir dir="../../bin"/>
         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
-            <arg value="${basedir}/JSON.javacc"/>
+            <arg line="-n -q ${basedir}/JSON.javacc"/>
         </java>
    </target>
    <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
          <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
-            <arg value="${basedir}/JSONC.javacc"/>
+            <arg line="${basedir}/JSONC.javacc -q -n"/>
         </java>
    </target>
    <target name="compile" depends="parser2-gen, parser2-gen">
-       <javac srcdir="." includeantruntime="off"  failonerror="true" debug="on"/>
+       <javac srcdir="." includeantruntime="off"  failonerror="true" debug="on" target="1.8" source="1.8"/>
        <echo>
            test harness via: java JSONTest &lt;filename&gt;
            OR              : java JSONCTest &lt;filename&gt;

@@ -7,10 +7,7 @@
 	    <delete dir="test.tmp" />
 	    <mkdir dir="test.tmp" />
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
-	    	<arg value="-q"/>
-	    	<arg value="-d"/>
-			<arg value="${outputdir}/CORBA-IDL"/>
-			<arg value="${basedir}/CORBA-IDL/IDL.javacc"/>
+	    	<arg line="-q -d ${outputdir}/CORBA-IDL ${basedir}/CORBA-IDL/IDL.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/CORBA-IDL" includeantruntime="no" failonerror="true" />
 		<copy todir="${outputdir}/CORBA-IDL/">
@@ -33,7 +30,7 @@
 	     </condition>
 	    </fail>
 
-	    <echo />
+	    <echo>Corba test succeeded</echo>
 	    
 	    <copy todir="test.tmp/GUIParsing/ParserVersion">
 	      <fileset dir="GUIParsing/ParserVersion">
@@ -49,7 +46,7 @@
 		</java>
 	    <javac srcdir="${outputdir}/GUIParsing/ParserVersion" includeantruntime="no" failonerror="true"/>
 
-	    <echo />
+	    <echo>GUIParsing test succeeded</echo>
 	    
 	    <copy todir="${outputdir}/Interpreter">
 	      <fileset dir="Interpreter">
@@ -63,6 +60,7 @@
 			<arg value="${outputdir}/Interpreter"/>
 			<arg value="${basedir}/Interpreter/SPL.javacc"/>
 		</java>
+
 
 	 <copy todir="${outputdir}/Interpreter/">
 	      <fileset dir="Interpreter/">
@@ -90,6 +88,7 @@
 	      </not>
 	     </condition>
 	    </fail>
+		<echo>Interpreter test succeeded.</echo>
 	    <java failonerror="true" fork="true" 
 	          classname="SPLParser" 
 	          classpath="test.tmp/Interpreter/"
@@ -125,6 +124,7 @@
 	     </condition>
 	    </fail>
 
+		<echo>Interpreter test succeeded.</echo>
 	    <echo />
 	    
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
@@ -196,6 +196,7 @@
 	    </copy>
 
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	    	<arg value="-q"/>
 	    	<arg value="-d"/>
 			<arg value="${outputdir}/TreeBuildingExamples.eg3"/>
 			<arg value="${basedir}/TreeBuildingExamples/eg3.javacc"/>
@@ -220,7 +221,7 @@
 	    </fail>
 
 	    
-	    <echo />
+	    <echo>TreeBuildingExamples succeeded</echo>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
@@ -287,7 +288,7 @@
 
 	 </java>
 
-	 <echo />
+	 <echo>Lookahead examples succeeded</echo>
 
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
     	<arg value="-q"/>
@@ -304,6 +305,6 @@
 	 </java>
 
 	 <javac srcdir="${outputdir}/MailProcessing" failonerror="true" includeantruntime="no"/>
-	    <echo />
+	  <echo>MailProcessing example succeeded</echo>
 	  </target>
 </project>

@@ -44,7 +44,7 @@
 
   <target name="parser-gen" depends="init" unless="parser.uptodate">
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
- 	   <arg value="src/main/grammars/JavaCC.javacc"/>
+ 	   <arg line="-n -d ../java src/main/grammars/JavaCC.javacc"/>
  	</java>
   </target>
 
@@ -58,7 +58,7 @@
     	   classpath="bin/freemarker.jar"
            includeantruntime="no"
 	    failonerror="true"
-	    fork="true"
+	    target="1.8" source="1.8"
     />
      <copy todir="build/templates/java">
       <fileset dir="src/main/resources/templates/java">

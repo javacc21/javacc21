@@ -275,7 +275,7 @@ public class LexerData {
 
     public void buildData() {
         for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class)) {
-            for (String lexStateName : tokenProduction.getLexStates()) {
+            for (String lexStateName : tokenProduction.getLexicalStateNames()) {
                 LexicalStateData lexState = getLexicalState(lexStateName);
                 lexState.addTokenProduction(tokenProduction);
             }
