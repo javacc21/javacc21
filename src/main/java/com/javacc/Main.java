@@ -140,16 +140,14 @@ public final class Main {
         System.out.println("Usage:");
         System.out.println("    java -jar " + jarFileName + " grammarfile");
         System.out.println();
-        System.out.println("NB: Pretty much all option-settings must now be set from the grammar file.");
+        System.out.println("The following options are available:");
+        System.out.println(" -d <directory>    Specify the directory (relative or absolute) to place generated files");
+        System.out.println("   For example:   -d ../../src/generated");
+        System.out.println("   If this is unset, files are generated relative to the grammar file location.");
+        System.out.println(" -n                Suppress the check for a newer version");
+        System.out.println(" -q                Quieter output");
         System.out.println();
-        System.out.println("By default, source files are generated relative to");
-        System.out.println("the location of the grammar file.");
-        System.out.println("This can be changed with the -d setting. For example:");
-        System.out.println();
-        System.out.println("-d ../../src/generated");
-//        System.out.println();
-//        System.out.println("You can make the tool's output much more terse with the -q option.");
-//        System.out.println("The ones which can still be set from the command line are:");
+        System.out.println("As of 2021, all other options can only be set at the top of your grammar file.");
         System.out.println();
     }
 
@@ -169,13 +167,12 @@ public final class Main {
             usage();
             System.exit(1);
         }
-        checkForNewer();
         if (args[0].equalsIgnoreCase("convert")) {
             com.javacc.output.lint.SyntaxConverter.main(args);
             System.exit(0);
         }
         File grammarFile = null, outputDirectory = null;
-        boolean quiet = false;
+        boolean quiet = false, noNewerCheck = false;
         for (int i=0; i<args.length;i++) {
             String arg = args[i];
             if (arg.charAt(0) == '-') {
@@ -186,6 +183,9 @@ public final class Main {
                         System.exit(-1);
                     }
                     outputDirectory = new File(args[++i]);
+                }
+                else if (arg.equalsIgnoreCase("-n")) {
+                    noNewerCheck = true;
                 }
                 else if (arg.equalsIgnoreCase("-q") || arg.equalsIgnoreCase("-quiet")) {
                     quiet = true;
@@ -207,6 +207,9 @@ public final class Main {
                     System.exit(-1);
                 }
             }
+        }
+        if (!noNewerCheck) {
+            checkForNewer();
         }
         if (grammarFile == null) {
             System.err.println("No input file specified");
@@ -242,8 +245,7 @@ public final class Main {
      */
 
     public static int mainProgram(File grammarFile, File outputDir, boolean quiet) throws Exception {
-      	bannerLine();
-        System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)\n");
+        if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, quiet);
         grammar.parse(grammarFile.toString(), true);
         try {
@@ -257,11 +259,11 @@ public final class Main {
             grammar.generateFiles();
 
             if ((grammar.getErrorCount() == 0)) {
-                if (grammar.getWarningCount() == 0) {
+                if (grammar.getWarningCount() == 0 && !quiet) {
                     System.out.println("Parser generated successfully.");
-                } else {
-                    System.out
-                            .println("Parser generated with 0 errors and " + grammar.getWarningCount() + " warnings.");
+                } else if (grammar.getWarningCount()>0) {
+                    System.out.println("Parser generated with 0 errors and " 
+                                        + grammar.getWarningCount() + " warnings.");
                 }
                 return 0;
             } else {
@@ -289,6 +291,7 @@ public final class Main {
     	System.out.println();
         System.out.println(Main.PROG_NAME + getBuiltOnString());
         System.out.println(Main.URL);
+        System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)\n");
         System.out.println();
     }
     
