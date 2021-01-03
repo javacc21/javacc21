@@ -838,9 +838,9 @@ public class Grammar extends BaseNode {
     }
 
     public File getParserOutputDirectory() throws IOException {
-        String baseSrcDir = outputDir == null ? "." : outputDir.toString();
-        if (baseSrcDir.equals("")) {
-            return new File(".");
+        String baseSrcDir = (String) settings.get("BASE_SRC_DIR");
+        if (baseSrcDir == null) {
+            baseSrcDir = outputDir == null ? "." : outputDir.toString();
         }
         File dir = new File(baseSrcDir);
         if (!dir.isAbsolute()){

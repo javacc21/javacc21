@@ -61,10 +61,4 @@ public class ${classname} extends ${superclass} {
     public ${classname}(TokenType type, String image, String inputSource) {
         super(type, image, inputSource);
     }
-    
-[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]    
-    public ${classname}(TokenType type, String image, FileLineMap fileLineMap) {
-        super(type, image, fileLineMap);
-    }
-[/#if]    
 }

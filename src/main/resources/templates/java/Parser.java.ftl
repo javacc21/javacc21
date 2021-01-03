@@ -127,7 +127,7 @@ public boolean isCancelled() {return cancelled;}
   }
   
   public ${grammar.parserClassName}(Reader reader) {
-    this(new ${grammar.lexerClassName}(reader));
+    this(new ${grammar.lexerClassName}("input", reader));
       [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]

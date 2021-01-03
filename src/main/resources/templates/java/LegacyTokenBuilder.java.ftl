@@ -2,7 +2,7 @@
 
 [#--  This file used to be used to build a separate class called SimpleCharStream
       that should never have been exposed as public.
-      Now the contents of this file are an include from LexGen.java.ftl.
+      Now the contents of this file are an include from Lexer.java.ftl.
   --]
 
 [#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS=true, JAVA_UNICODE_ESCAPE=false]

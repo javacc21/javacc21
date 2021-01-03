@@ -56,6 +56,17 @@ public interface Node extends Comparable<Node>
      */
     void close();
 
+
+    /**
+     * The input source (usually a filename) from which this Node came from
+     */
+    String getInputSource();
+
+    /**
+     * Set the input source, typically only used internally
+     */
+    void setInputSource(String name);
+
     
     /**
      * Returns whether this node has any children.
@@ -180,35 +191,16 @@ public interface Node extends Comparable<Node>
     default List<Token> getRealTokens() {
         return descendants(Token.class, t->!t.isUnparsed());
     }
-
-     
     
 [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
-     FileLineMap getFileLineMap();
-
-     default String getInputSource() {
-         FileLineMap fileLineMap = getFileLineMap();
-         return fileLineMap == null ? "input" : fileLineMap.getInputSource();
+     default FileLineMap getFileLineMap() {
+         return FileLineMap.getFileLineMapByName(getInputSource());
      }
-     
-     void setInputSource(FileLineMap fileLineMap);
-     
-     
+
      default String getSource() {
         return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
     }
-    
- 
-[#else]     
-     /**
-      * @return A string that says where the input came from. Typically a file name, though
-      *         it could be a URL or something else, of course.  
-      */
-     String getInputSource();
-     
-     
-    void setInputSource(String inputSource);
-  [/#if]          
+[/#if]          
       
      int getBeginLine();
      
@@ -327,7 +319,9 @@ public interface Node extends Comparable<Node>
     }
 
     default void copyLocationInfo(Node to) {
-        //to.setInputSource(from.getInputSource()); REVISIT
+        if (getInputSource()!=null && to.getInputSource()==null) {
+            to.setInputSource(getInputSource()); //REVISIT
+        }
         to.setBeginLine(this.getBeginLine());
         to.setBeginColumn(this.getBeginColumn());
         to.setEndLine(this.getEndLine());

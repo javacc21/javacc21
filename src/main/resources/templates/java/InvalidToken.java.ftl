@@ -8,15 +8,10 @@ package ${grammar.parserPackage};
  */
 public class InvalidToken extends Token {
 
-[#if grammar.hugeFileSupport || grammar.userDefinedLexer]
     public InvalidToken(String image, String inputSource) {
-       super(TokenType.INVALID, image, inputSource);
+        super(TokenType.INVALID, image, inputSource);
     }
-[#else]
-    public InvalidToken(String image, FileLineMap inputSource) {
-       super(TokenType.INVALID, image, inputSource);
-    }
-[/#if]    
+
     public String getNormalizedText() {
         return "Lexically Invalid Input:" + getImage();
     }

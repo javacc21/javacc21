@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
-/* Copyright (c) 2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2020, 2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,7 +11,7 @@
  *     * Redistributions in binary formnt must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
+ *     * Neither the name Jonathan Revusky
  *       nor the names of any contributors may be used to endorse 
  *       or promote products derived from this software without specific prior written 
  *       permission.
@@ -37,7 +37,8 @@ package ${grammar.parserPackage};
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -45,10 +46,28 @@ import java.util.*;
  * and store the contents in a String, and keep track of where the 
  * lines are.
  */
-
+@SuppressWarnings("unused")
 public class FileLineMap {
 
     private static final int[] EMPTY_INT = new int[0];
+
+    static private Map<String, FileLineMap> mapsByName = new HashMap<>();
+
+    /**
+     * Get a FileLineMap by name
+     */
+    static public FileLineMap getFileLineMapByName(String name) {
+        return mapsByName.get(name);
+    }
+
+    /**
+     * This class maintains a lookup table of all the FileLineMap objects by name.
+     * A long-running process that reads in and parses a lot of different files 
+     * might choose to clear that map to make this data subject to garbage collection.
+     */
+    static public void clearFileLineMaps() {
+        mapsByName.clear();
+    }
 
     // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
     private final CharSequence content;
@@ -82,6 +101,7 @@ public class FileLineMap {
         this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE});
         this.lineOffsets = createLineOffsetsTable(this.content);
         this.setStartPosition(startingLine, startingColumn);
+        mapsByName.put(inputSource, this);
    }
     
    
@@ -308,11 +328,11 @@ public class FileLineMap {
     }
     
     void setInputSource(String inputSource) {
+        mapsByName.put(inputSource, this);
         this.inputSource = inputSource;
     }
     
     // ------------- TODO: unused method for the moment....
-
     private int getLineCount() {
         return lineOffsets.length;
     }
