@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
-/* Copyright (c) 2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2020, 2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,7 +11,7 @@
  *     * Redistributions in binary formnt must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
+ *     * Neither the name Jonathan Revusky
  *       nor the names of any contributors may be used to endorse 
  *       or promote products derived from this software without specific prior written 
  *       permission.
@@ -46,7 +46,7 @@ import java.util.Map;
  * and store the contents in a String, and keep track of where the 
  * lines are.
  */
-
+@SuppressWarnings("unused")
 public class FileLineMap {
 
     private static final int[] EMPTY_INT = new int[0];
@@ -328,11 +328,11 @@ public class FileLineMap {
     }
     
     void setInputSource(String inputSource) {
+        mapsByName.put(inputSource, this);
         this.inputSource = inputSource;
     }
     
     // ------------- TODO: unused method for the moment....
-
     private int getLineCount() {
         return lineOffsets.length;
     }

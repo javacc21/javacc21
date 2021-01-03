@@ -191,36 +191,15 @@ public interface Node extends Comparable<Node>
     default List<Token> getRealTokens() {
         return descendants(Token.class, t->!t.isUnparsed());
     }
-
-     
     
 [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
      default FileLineMap getFileLineMap() {
          return FileLineMap.getFileLineMapByName(getInputSource());
      }
 
-/*     default String getInputSource() {
-         FileLineMap fileLineMap = getFileLineMap();
-         return fileLineMap == null ? "input" : fileLineMap.getInputSource();
-     }*/
-     
-//     void setInputSource(FileLineMap fileLineMap);
-     
-     
      default String getSource() {
         return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
     }
-    
- 
-[#else]     
-     /**
-      * @return A string that says where the input came from. Typically a file name, though
-      *         it could be a URL or something else, of course.  
-      */
-//     String getInputSource();
-     
-     
-//    void setInputSource(String inputSource);
 [/#if]          
       
      int getBeginLine();

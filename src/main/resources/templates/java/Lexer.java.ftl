@@ -82,16 +82,11 @@ private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName
         switchTo(lexState);
      }
 [/#if]
+
     public ${grammar.lexerClassName}(String inputSource, Reader reader) {
        this(inputSource, reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
     }
-    /**
-     * @deprecated Use the constructor where you specify an inputSource string so that you can have error messages that make sense!
-     */
-    @Deprecated
-    public ${grammar.lexerClassName}(Reader reader) {
-        this("input" , reader);
-    }
+
     public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
         input_stream = new ${tokenBuilderClass}(inputSource, reader, line, column);
         switchTo(lexState);
@@ -152,7 +147,11 @@ public final void backup(int amount) {
     public boolean SwitchTo(int lexState) {
        return switchTo(LexicalState.values()[lexState]);
     }
-    
+    [#if !grammar.hugeFileSupport]
+      /**
+       * This is just here for backward compatibility. It doesn't actually do anything!
+       */
+    [/#if]
     @Deprecated
     public void setTabSize(int  size) {this.tabSize=tabSize;}
 [/#if]

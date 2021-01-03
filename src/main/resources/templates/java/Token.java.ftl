@@ -43,12 +43,45 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#if grammar.legacyAPI]public[#else]private[/#if]      
     int beginLine, beginColumn, endLine, endColumn;
 
-    /**
-     * The string image of the token.
-     */
+    
+    public void setBeginColumn(int beginColumn) {
+        this.beginColumn = beginColumn;
+    }	
+    
+    public void setEndColumn(int endColumn) {
+        this.endColumn = endColumn;
+    }	
+    
+    public void setBeginLine(int beginLine) {
+        this.beginLine = beginLine;
+    }	
+    
+    public void setEndLine(int endLine) {
+        this.endLine = endLine;
+    }	
+    
+    public int getBeginLine() {
+        return beginLine;
+    }
+    
+    public int getBeginColumn() {
+        return beginColumn;
+    }
+    
+    public int getEndLine() {
+        return endLine;
+    }
+    
+    public int getEndColumn() {
+        return endColumn;
+    }
+
 [#if grammar.legacyAPI]public[#else]private[/#if]      
     String image;
     
+    /**
+     * The string image of the token.
+     */
     public String getImage() {
         return image;
     }
@@ -176,6 +209,18 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
          this.previousToken = previousToken;
      }
 
+ [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
+    [#if !grammar.treeBuildingEnabled]
+     public FileLineMap getFileLineMap() {
+         return FileLineMap.getFileLineMapByName(getInputSource());
+     }
+    [/#if]
+     
+    public String getSource() {
+         if (type == TokenType.EOF) return "";
+         return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
+    }
+ [/#if]
 
     /**
      * This field is used to access special tokens that occur prior to this
@@ -337,8 +382,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        return new Token(ofKind, image); 
        [/#if]
     }
-[/#if]    
-[#if grammar.hugeFileSupport]    
+[/#if]   
+[#if !grammar.userDefinedLexer]
     public static Token newToken(TokenType type, String image, String inputSource) {
            [#--if !grammar.hugeFileSupport]image = null;[/#if--]
            [#if grammar.treeBuildingEnabled]
@@ -354,83 +399,29 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
          return new Token(type, image, inputSource);      
        [/#if]
     }
-    
-[#else]
-   [#if !grammar.userDefinedLexer]    
-    public static Token newToken(TokenType type, String image, String inputSource) {
-           [#--  if !grammar.hugeFileSupport]image = null;[/#if --]
-           [#if grammar.treeBuildingEnabled]
-           switch(type) {
-           [#list grammar.orderedNamedTokens as re]
-            [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, image, inputSource);
-            [/#if]
-           [/#list]
-              default :        return new Token(type, image, inputSource);      
 
-           }
-       [#else]
-          return new Token(type, image, inputSource);      
-       [/#if]
-    }
-[#if grammar.productionTable?size != 0]    
-    public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
-        return newToken(type, image, parser.getInputSource());
-    } 
-[/#if]    
     public static Token newToken(TokenType type, String image, ${grammar.lexerClassName} lexer) {
         return newToken(type, image, lexer.getInputSource());
     }
-    [/#if]
+
+    [#if grammar.productionTable?size != 0]    
+        public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
+            return newToken(type, image, parser.getInputSource());
+        } 
+    [/#if]    
     
-  [#if grammar.treeBuildingEnabled && !grammar.userDefinedLexer]    
-    public static Token newToken(TokenType type, String image, Node node) {
-        return newToken(type, image, node.getInputSource());
-    }
-  [/#if]
-     
+    [#if grammar.treeBuildingEnabled]
+        public static Token newToken(TokenType type, String image, Node node) {
+            return newToken(type, image, node.getInputSource());
+        }
+    [/#if]
 [/#if]    
     
     
-    public void setBeginColumn(int beginColumn) {
-        this.beginColumn = beginColumn;
-    }	
-    
-    public void setEndColumn(int endColumn) {
-        this.endColumn = endColumn;
-    }	
-    
-    public void setBeginLine(int beginLine) {
-        this.beginLine = beginLine;
-    }	
-    
-    public void setEndLine(int endLine) {
-        this.endLine = endLine;
-    }	
-    
-    public int getBeginLine() {
-        return beginLine;
-    }
-    
-    public int getBeginColumn() {
-        return beginColumn;
-    }
-    
-    public int getEndLine() {
-        return endLine;
-    }
-    
-    public int getEndColumn() {
-        return endColumn;
-    }
-    
-    
    
-[#if !grammar.treeBuildingEnabled]    
     public String getLocation() {
          return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
      }
-[/#if]     
     
 [#if grammar.treeBuildingEnabled]
     
@@ -530,7 +521,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public String getAsString() {
         return getNormalizedText();
     }
-[/#if]
+  [/#if]
 
  [/#if]
 
