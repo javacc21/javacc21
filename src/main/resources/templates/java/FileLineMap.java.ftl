@@ -37,7 +37,8 @@ package ${grammar.parserPackage};
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -49,6 +50,24 @@ import java.util.*;
 public class FileLineMap {
 
     private static final int[] EMPTY_INT = new int[0];
+
+    static private Map<String, FileLineMap> mapsByName = new HashMap<>();
+
+    /**
+     * Get a FileLineMap by name
+     */
+    static public FileLineMap getFileLineMapByName(String name) {
+        return mapsByName.get(name);
+    }
+
+    /**
+     * This class maintains a lookup table of all the FileLineMap objects by name.
+     * A long-running process that reads in and parses a lot of different files 
+     * might choose to clear that map to make this data subject to garbage collection.
+     */
+    static public void clearFileLineMaps() {
+        mapsByName.clear();
+    }
 
     // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
     private final CharSequence content;
@@ -82,6 +101,7 @@ public class FileLineMap {
         this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE});
         this.lineOffsets = createLineOffsetsTable(this.content);
         this.setStartPosition(startingLine, startingColumn);
+        mapsByName.put(inputSource, this);
    }
     
    

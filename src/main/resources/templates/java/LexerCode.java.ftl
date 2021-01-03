@@ -237,11 +237,7 @@
     String error_after = null;
     error_after = curPos <= 1 ? "" : input_stream.getImage();
     if (invalidToken == null) {
-    [#if grammar.hugeFileSupport]
        invalidToken = new InvalidToken(""+ curChar, inputSource);
-    [#else]
-       invalidToken = new InvalidToken(""+ curChar, input_stream);
-    [/#if]       
        invalidToken.setBeginLine(error_line);
        invalidToken.setBeginColumn(error_column);
     } else {

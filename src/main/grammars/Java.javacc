@@ -34,7 +34,7 @@ NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
-UNPARSED_TOKENS_ARE_NODES;
+//UNPARSED_TOKENS_ARE_NODES;
 
 INJECT PARSER_CLASS : {
 
@@ -807,7 +807,7 @@ INJECT ImplementsList :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(TokenType.COMMA, ",", getFileLineMap()));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
             iterator.next();
             iterator.add(type);
         }

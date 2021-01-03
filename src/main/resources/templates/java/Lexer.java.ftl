@@ -57,11 +57,11 @@ private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName
     [#else]  
   private boolean trace_enabled = false;
     [/#if]
-[#--
+    
   private void setTracingEnabled(boolean trace_enabled) {
      this.trace_enabled = trace_enabled;
   }
---]  
+
   public String getInputSource() {
       return inputSource;
   }

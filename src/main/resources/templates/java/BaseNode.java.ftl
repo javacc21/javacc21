@@ -43,30 +43,15 @@ import java.util.*;
   
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
-
-[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
-       private FileLineMap fileLineMap;
-       
-       public FileLineMap getFileLineMap() {
-           return fileLineMap; 
-       }
-       
-       public void setInputSource(FileLineMap fileLineMap) {
-          this.fileLineMap = fileLineMap;
-       }
-[#else]
-       private String inputSource;
-       
-       public String getInputSource() {
-           return inputSource;
-       }
-       
-       public void setInputSource(String inputSource) {
-          this.inputSource = inputSource;
-       }
-       
- [/#if]       
-
+    private String inputSource;
+    
+    public String getInputSource() {
+        return inputSource;
+    }
+    
+    public void setInputSource(String inputSource) {
+        this.inputSource = inputSource;
+    }
     
     static private Class listClass = ArrayList.class;
 
