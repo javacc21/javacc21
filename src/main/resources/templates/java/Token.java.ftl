@@ -34,7 +34,38 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     void setType(TokenType type) {
         this.type=type;
     }
-    
+
+    /**
+     * Does this Token represent actual input or was it inserted somehow?
+     */
+    public boolean isVirtual() {
+        [#if grammar.faultTolerant]
+            return virtual || type == TokenType.EOF;
+        [#else]
+            return type == TokenType.EOF;
+        [/#if]
+    }
+
+    /**
+     * Did we skip this token in parsing?
+     */
+    public boolean isSkipped() {
+        [#if grammar.faultTolerant]
+           return skipped;
+        [#else]
+           return false;
+        [/#if]
+    }
+
+
+[#if grammar.faultTolerant]
+    private boolean virtual, skipped;
+
+    void setVirtual(boolean virtual) {this.virtual = virtual;}
+
+    void setSkipped(boolean skipped) {this.skipped = skipped;}
+[/#if]
+
     /**
      * beginLine and beginColumn describe the position of the first character
      * of this token; endLine and endColumn describe the position of the
@@ -127,17 +158,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return false;
     }
 
-[/#if]
-
-[#if grammar.faultTolerant]
-    private boolean skipped;
-    boolean isSkipped() {
-        return skipped;
-    }
-
-    void setSkipped(boolean skipped) {
-        this.skipped = skipped;
-    }
 [/#if]
 
 [#if grammar.legacyAPI]

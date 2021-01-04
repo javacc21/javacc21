@@ -702,7 +702,7 @@ Setting(Map settings) #Setting :
   }
 ;
 
-BNFProduction BNFProduction :
+BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
     Token t=getToken(1);
@@ -739,7 +739,6 @@ BNFProduction BNFProduction :
         if (tba == null && !grammar.getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName());
         }
-        return CURRENT_NODE;
      }
 ;
 

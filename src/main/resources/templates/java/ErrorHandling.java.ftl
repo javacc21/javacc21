@@ -213,11 +213,13 @@ void dumpLookaheadCallStack(PrintStream ps) {
  
   private class ParseState {
        Token lastParsed;
+       ArrayList<NonTerminalCall> parsingStack;
   [#if grammar.treeBuildingEnabled]
        NodeScope nodeScope;
  [/#if]       
        ParseState() {
            this.lastParsed  = ${grammar.parserClassName}.this.lastConsumedToken;
+           this.parsingStack = (ArrayList<NonTerminalCall>) ${grammar.parserClassName}.this.parsingStack.clone();
 [#if grammar.treeBuildingEnabled]            
            this.nodeScope = (NodeScope) currentNodeScope.clone();
 [/#if]           
@@ -226,18 +228,19 @@ void dumpLookaheadCallStack(PrintStream ps) {
 
  private ArrayList<ParseState> parseStateStack = new ArrayList<>();
  
-  void stashParseState() {
+  private void stashParseState() {
       parseStateStack.add(new ParseState());
   }
   
-  ParseState popParseState() {
+  private ParseState popParseState() {
       return parseStateStack.remove(parseStateStack.size() -1);
   }
   
-  void restoreStashedParseState() {
+  private void restoreStashedParseState() {
      ParseState state = popParseState();
 [#if grammar.treeBuildingEnabled]
      currentNodeScope = state.nodeScope;
+     ${grammar.parserClassName}.this.parsingStack = state.parsingStack;
 [/#if]
     if (state.lastParsed != null) {
         //REVISIT
@@ -248,6 +251,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
      if (token_source.doLexicalStateSwitch(lastConsumedToken.getType())) {
          token_source.reset(lastConsumedToken);
          lastConsumedToken.setNext(null);
+         lastConsumedToken.setNextToken(null);
      }
 [/#if]          
   } 
