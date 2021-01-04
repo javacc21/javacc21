@@ -38,7 +38,7 @@
   --]
  [#import "DfaCode.java.ftl" as dfa]
  [#import "NfaCode.java.ftl" as nfa]
- [#var options=grammar.options, lexerData=grammar.lexerData]
+ [#var lexerData=grammar.lexerData]
  [#var utils=grammar.utils]
  [#var tokenCount=lexerData.tokenCount]
  [#var numLexicalStates=lexerData.lexicalStates?size]

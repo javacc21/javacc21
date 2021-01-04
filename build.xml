@@ -25,6 +25,7 @@
      drop in the newly built jarfile and build and test again
 -->
 <target name="full-test" depends="restore-bootstrap-jar,clean,jar,test">
+	<echo>Now we copy the new javacc.jar to bin to rebootstrap</echo>
 	<copy file="javacc.jar" todir="bin"/>
 	<antcall target="clean"/>
 	<antcall target="test"/>
@@ -42,7 +43,8 @@
 </target>
 
 
-  <target name="parser-gen" depends="init" unless="parser.uptodate">
+<target name="parser-gen" depends="init" unless="parser.uptodate">
+	<echo>Using Bootstrap JavaCC to regenerate JavaCC parser</echo>
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
  	   <arg line="-n -q -d ../java src/main/grammars/JavaCC.javacc"/>
  	</java>
@@ -79,17 +81,22 @@
   </target>
 
 	
- <target name="test" depends="jar">
+  <target name="test" depends="jar">
+    <echo>Testing the Java parser standalone</echo>
     <ant antfile="build.xml" dir="examples/java" target="clean"/>
     <ant antfile="build.xml" dir="examples/java" target="test"/>
+    <echo>Testing the newer FreeMarker parser</echo>
     <ant antfile="build.xml" dir="examples/freemarker" target="clean"/>
     <ant antfile="build.xml" dir="examples/freemarker" target="test"/>
+    <echo>Testing the JSON Parser</echo>
     <ant antfile="build.xml" dir="examples/json" target="clean"/>
     <ant antfile="build.xml" dir="examples/json" target="test"/>
+    <echo>Running through the crufty old legacy examples</echo>
     <ant antfile="build.xml" dir="examples/legacy" target="test" />
  </target>
 	
  <target name="jar" depends="compile">
+    <echo>Creating basic jarfile, using this requires a freemarker.jar in the same directory</echo>
     <jar jarfile="javacc.jar" basedir="build" compress="true">
         <manifest>
             <attribute name="Main-Class" value="com.javacc.Main"/>
@@ -101,7 +108,8 @@
     <chmod file="javacc.jar" perm="+x"/>
  </target>
 
-<target name="full-jar" depends="compile">
+ <target name="full-jar" depends="compile">
+	 <echo>Creating the "uber-jar" with all dependencies, i.e. the FreeMarker classes</echo>
     <jar jarfile="javacc-full.jar" compress="true">
         <fileset dir="build"/>
         <zipfileset includes="**/*.class" src="bin/freemarker.jar"/>
