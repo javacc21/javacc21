@@ -250,12 +250,12 @@
 [#macro BuildCodeNonTerminal nonterminal]
    pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource}", ${nonterminal.beginLine}, ${nonterminal.beginColumn}); 
    try {
-   [#if !nonterminal.LHS??]
-       ${nonterminal.name}(${nonterminal.args!});
-   [#else]
-       ${nonterminal.LHS} = ${nonterminal.name}(${nonterminal.args!});
-    [/#if]
-    } finally {
+   [#if !nonterminal.LHS?is_null]
+       ${nonterminal.LHS} = 
+   [/#if]
+      ${nonterminal.name}(${nonterminal.args!});
+    } 
+    finally {
         popCallStack();
     }
 [/#macro]

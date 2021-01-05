@@ -253,6 +253,8 @@ TOKEN :
   |
   < _RECOVER : "RECOVER"> #JavaCCKeyWord
   |
+  < _RECOVER_TO : "RECOVER_TO"> #JavaCCKeyWord
+  |
   < _UPTO : "UPTO"> #JavaCCKeyWord
   |
   <HASH : "#">
@@ -728,6 +730,10 @@ BNFProduction :
             grammar.addNodeType(nodeName);
         }
     ]
+    [
+        "RECOVER_TO" ExpansionChoice
+        {CURRENT_NODE.setRecoveryExpansion((Expansion)peekNode());} 
+    ]
     ":"
     (
         => [=>Block] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
@@ -741,7 +747,6 @@ BNFProduction :
         }
      }
 ;
-
 
 INJECT BNFProduction : 
 	import java.util.*;
@@ -800,7 +805,7 @@ INJECT BNFProduction :
 
     private String leadingComments;
 
-    private Expansion expansion;
+    private Expansion expansion, recoveryExpansion;
 
 
     public void setName(String name) {
@@ -852,6 +857,10 @@ INJECT BNFProduction :
     public void setExpansion(Expansion expansion) {
         this.expansion = expansion;
     }
+
+    public Expansion getRecoveryExpansion() {return recoveryExpansion;}
+
+    public void setRecoveryExpansion(Expansion expansion) {this.recoveryExpansion = recoveryExpansion;}
 
     /**
      * Can this production be matched by an empty string?
