@@ -235,7 +235,6 @@
             return parentScope == null;
         }
 
-
         Node rootNode() {
             NodeScope ns = this;
             while (ns.parentScope != null) {
@@ -273,6 +272,14 @@
                parent = parent.parentScope;
             }
             return result;            
+        }
+
+        public Object clone() {
+            NodeScope clone = (NodeScope) super.clone();
+            if (parentScope != null) {
+                clone.parentScope = (NodeScope) parentScope.clone();
+            }
+            return clone;
         } 
     }
 

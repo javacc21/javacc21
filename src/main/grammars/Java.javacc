@@ -1032,7 +1032,7 @@ INJECT MethodDeclaration :
     }
 }
 
-MethodDeclaration :
+MethodDeclaration MethodDeclaration :
   Modifiers2
   [ TypeParameters ]
   ReturnType
@@ -1040,6 +1040,7 @@ MethodDeclaration :
   MethodDeclarator 
   [ ThrowsList ]
   ( Block | ";" )
+  {return CURRENT_NODE;}
 ;
 
 
@@ -1128,6 +1129,9 @@ Type :
    PrimitiveType
 ;
 
+INJECT ReferenceType : extends Type;
+INJECT PrimitiveType : extends Type;
+
 ReferenceType : 
    PrimitiveArrayType
    |
@@ -1143,7 +1147,7 @@ ObjectType ClassOrInterfaceType #ObjectType :
     }
 ;
 
-INJECT ObjectType : 
+INJECT ObjectType : extends Type 
 {
     public boolean equals(Object obj) {
         if (obj instanceof ObjectType) {
