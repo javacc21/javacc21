@@ -805,21 +805,9 @@ INJECT BNFProduction :
 
     private String leadingComments;
 
-//    private Expansion expansion, recoveryExpansion;
     @Property Expansion expansion, recoveryExpansion;
-//   @Property private Expansion expansion;
-//   @Property private Expansion recoveryExpansion;
-//    private Expansion recoveryExpansion;
+    @Property String name;
 
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-    
     public ThrowsList getThrowsList() {
         return firstChildOfType(ThrowsList.class);
     }
@@ -845,22 +833,9 @@ INJECT BNFProduction :
         return referringNonTerminals;
     }
 
-    /**
-     * The name of the non-terminal of this production.
-     */
-    private String name;
-
     public String getLookaheadMethodName() {
         return "check$" + name;
     }
-/*    
-    public Expansion getExpansion() {
-        return expansion;
-    }
-    
-    public void setExpansion(Expansion expansion) {
-        this.expansion = expansion;
-    }*/
 
     /**
      * Can this production be matched by an empty string?
@@ -1016,7 +991,7 @@ TokenProduction #TokenProduction :
           }
           CURRENT_NODE.setImplicitLexicalState(firstSpecifiedLexicalState);
       }
-      CURRENT_NODE.setIgnoreCase(ignoreCase || grammar.getIgnoreCase());
+      CURRENT_NODE.setIgnoreCase(ignoreCase || grammar.isIgnoreCase());
    }
 }
 
@@ -1025,15 +1000,7 @@ INJECT TokenProduction :
     import com.javacc.lexgen.LexerData;
     import com.javacc.lexgen.LexicalStateData;
 {
-    /**
-     * This is true if this corresponds to a production that actually appears in
-     * the input grammar. Otherwise (if this is created to describe a regular
-     * expression that is part of the BNF) this is set to false.
-     */
-    private boolean ignoreCase, explicit = true;
-    
-    public boolean getIgnoreCase() {return ignoreCase;}
-    public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
+   @Property private boolean explicit=true, ignoreCase;
 
     private String implicitLexicalState;
     
@@ -1083,18 +1050,6 @@ INJECT TokenProduction :
 	      }
        }
        return false;
-    }
-
-    public void setExplicit(boolean explicit) {
-        this.explicit = explicit;
-    }
-
-    public boolean isExplicit() {
-        return explicit;
-    }
-
-    public boolean getExplicit() {
-        return explicit;
     }
 
     public String getKind() {
@@ -1565,15 +1520,7 @@ LookBehindBackward #void :
 INJECT LookBehind :
 import java.util.*;
 {
-    private boolean negated;
-
-    public boolean isNegated() {
-        return negated;
-    }
-
-    public void setNegated(boolean negated) {
-        this.negated = negated;
-    }
+    @Property boolean negated;
 
     public boolean isBackward() {
         return getChild(0) instanceof Backslash || getChild(1) instanceof Backslash;
@@ -1681,25 +1628,16 @@ INJECT Lookahead :
    import com.javacc.parsegen.RegularExpression;
    import com.javacc.parsegen.TokenSet;
 {
+    @Property Expression LHS;
+    @Property Expansion expansion, nestedExpansion;
+    @Property boolean negated, semanticLookaheadNested;
+    @Property Expression semanticLookahead;
+
     private int amount=Integer.MAX_VALUE;
 
     private boolean explicitNumerical;
     
-    private boolean negated;
-
-    private Expansion expansion, nestedExpansion, upToExpansion;
-
-    private boolean nestedSemanticLookahead;
-
-    Expression lhs, semanticLookahead;
-
-    public final boolean isNegated() {
-        return negated;
-    }
-    
-    public void setNegated(boolean negated) {
-        this.negated = negated;
-    }
+    private Expansion upToExpansion;
 
     public boolean getHasExplicitNumericalAmount() {
         return explicitNumerical;
@@ -1715,22 +1653,6 @@ INJECT Lookahead :
 //          return !isAlwaysSuccessful() && getAmount() >1;
     }
 
-    public Expression getSemanticLookahead() {
-        return semanticLookahead;
-    }
-
-    public void setSemanticLookahead(Expression semanticLookahead) {
-        this.semanticLookahead = semanticLookahead;
-    }
-
-    public boolean isSemanticLookaheadNested() {
-        return nestedSemanticLookahead;
-    }
-
-    public void setSemanticLookaheadNested(boolean nestedSemanticLookahead) {
-        this.nestedSemanticLookahead = nestedSemanticLookahead;
-    }
-    
     public boolean hasSemanticLookahead() {
         return getSemanticLookahead() != null;
     }
@@ -1743,29 +1665,6 @@ INJECT Lookahead :
         return expansion;
     }
 
-    public Expansion getNestedExpansion() {
-        return nestedExpansion;
-    }
-
-    public void setNestedExpansion(Expansion nestedExpansion) {
-        this.nestedExpansion = nestedExpansion;
-    }
-
-    public Expansion getExpansion() {
-        return expansion;
-    }
-    
-    public void setExpansion(Expansion exp){
-        this.expansion = exp;
-    }
-
-    public Expression getLHS() {
-        return lhs;
-    }
-
-    public void setLHS(Expression lhs) {
-        this.lhs = lhs;
-    }
 
     public int getAmount() {
 //        if (isSingleToken()) {
@@ -2305,6 +2204,7 @@ INJECT Failure :
    import com.javacc.parsegen.TokenSet;
    extends com.javacc.parsegen.Expansion
 {
+    @Property String message;
     public CodeBlock getCode() {
         return firstChildOfType(CodeBlock.class);
     }
@@ -2320,12 +2220,6 @@ INJECT Failure :
     public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
 
     public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-
-    private String message;
-
-    public String getMessage() {return message;}
-
-    public void setMessage(String message) {this.message = message;}
 
     public boolean isAlwaysSuccessful() {return false;}
 }
@@ -2404,6 +2298,7 @@ INJECT TryBlock  :
      public int getMaximumSize() {
          return getNestedExpansion().getMaximumSize();
      }
+    @Property boolean appliesInLookahead;
      
      public boolean isConcrete() {
           return getNestedExpansion().isConcrete();
@@ -2415,6 +2310,8 @@ INJECT CodeBlock :
    import com.javacc.parsegen.TokenSet;
    extends com.javacc.parsegen.Expansion;
 {
+    @Property boolean appliesInLookahead;
+
     public CodeBlock getJavaCode() {
         return this;
     }
@@ -2424,7 +2321,7 @@ INJECT CodeBlock :
     }
     
     /**
-     * These are here to fullfil the superclass contract 
+     * These are here to fullfil the superclass contract. They are never used. 
      */
 
     public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
@@ -2443,15 +2340,6 @@ INJECT CodeBlock :
         return true; //REVISIT.
     }
 
-    private boolean appliesInLookahead;
-
-    public void setAppliesInLookahead(boolean b) {
-        appliesInLookahead = b;
-    }
-
-    public boolean getAppliesInLookahead() {
-        return appliesInLookahead;
-    }
 }
 
 RegexpExpansion #void :
@@ -2521,21 +2409,14 @@ INJECT RegexpStringLiteral :
    import com.javacc.parsegen.RegularExpression;
    extends RegularExpression;
 {
-  private String image;
+  @Property String image;
   
 
   public String toString() {
     return super.toString() + " - " + getImage();
   }
   
-  public String getImage() {
-    return image;
-  }
-
-   public void setImage(String image) {
-       this.image = image;
-  }
-  
+  //REVISIT What about different lexical states? As well as ignoreCase... 
   public boolean equals(Object obj) {
       return obj instanceof RegexpStringLiteral && ((RegexpStringLiteral) obj).image == this.image;
   }
@@ -2565,19 +2446,10 @@ RegexpRef RegexpRef :
 INJECT RegexpRef : 
     import com.javacc.lexgen.*;
     import com.javacc.parsegen.RegularExpression;
-
     extends RegularExpression;
 {
-    private RegularExpression regexp;
+    @Property RegularExpression regexp;
 
-    public void setRegexp(RegularExpression regexp) {
-        this.regexp = regexp;
-    }
-
-    public RegularExpression getRegexp() {
-        return regexp;
-    }
-    
     public boolean isPrivate() {
         return regexp!= null && regexp.isPrivate(); //REVISIT, why do we need a null check?
     }
@@ -2588,8 +2460,6 @@ INJECT RegexpRef :
 }
 
 EndOfFile : "<" <_EOF> =>|| ">" ;
-
-
 
 INJECT EndOfFile : extends com.javacc.parsegen.RegularExpression
 {
@@ -2688,8 +2558,9 @@ INJECT RepetitionRange :
    import com.javacc.parsegen.RegularExpression;
    extends RegularExpression;
 {
-    private int min = 0;
-    private int max = -1;
+    @Property int min = 0, max = -1;
+
+
     public boolean hasMax() {
         for (Node n : children) {
 	   if (n instanceof Token) {
@@ -2701,22 +2572,6 @@ INJECT RepetitionRange :
         return false;
     }
     
-	public void setMin(int min) {
-	    this.min = min;
-	}
-	
-	public int getMin() {
-	    return min;
-	}
-	
-	public void setMax(int max) {
-	    this.max = max;
-	}
-	
-	public int getMax() {
-	    return max;
-	}
-
     public RegularExpression getRegexp() { 
         return firstChildOfType(RegularExpression.class);
     }

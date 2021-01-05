@@ -1130,6 +1130,7 @@ Type :
 ;
 
 INJECT ReferenceType : extends Type;
+INJECT PrimitiveArrayType : extends Type;
 INJECT PrimitiveType : extends Type;
 
 ReferenceType : 
@@ -1193,7 +1194,7 @@ WildcardBounds :
 ;
 
 
-PrimitiveType #void :
+PrimitiveType #PrimitiveType :
   "boolean"
    |
   "char"

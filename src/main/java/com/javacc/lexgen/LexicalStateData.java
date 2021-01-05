@@ -150,7 +150,7 @@ public class LexicalStateData {
 
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {
         boolean ignoring = false;
-        boolean ignore = tp.getIgnoreCase() || grammar.getIgnoreCase();//REVISIT
+        boolean ignore = tp.isIgnoreCase() || grammar.isIgnoreCase();//REVISIT
         if (isFirst) {
             ignoring = ignore;
         }

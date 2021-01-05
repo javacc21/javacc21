@@ -999,7 +999,7 @@ public class Grammar extends BaseNode {
     }
 
     private boolean ignoreCase;
-    public boolean getIgnoreCase() {return ignoreCase;}
+    public boolean isIgnoreCase() {return ignoreCase;}
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
 
     public void setSettings(Map<String, Object> settings) {

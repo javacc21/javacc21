@@ -141,10 +141,10 @@ public class JavaCodeUtils {
 
     static private void insertGetterSetter(Node context, String fieldType, String fieldName, int index) {
         String getterMethodName = "get" + capitalizeFirstLetter((fieldName));
+        String setterMethodName = getterMethodName.replaceFirst("g", "s");
         if (fieldType.equals("boolean")) {
             getterMethodName = getterMethodName.replaceFirst("get", "is");
         }
-        String setterMethodName = getterMethodName.replaceFirst("g", "s");
         String getter = "//Inserted getter for " + fieldName 
                         +"\npublic " + fieldType + " " + getterMethodName 
                         + "() {return " + fieldName + ";}";
