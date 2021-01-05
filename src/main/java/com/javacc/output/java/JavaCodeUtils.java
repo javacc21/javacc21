@@ -33,11 +33,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.javacc.parser.JavaCCParser;
 import com.javacc.parser.Node;
+import com.javacc.parser.ParseException;
+import com.javacc.parser.Token;
+import com.javacc.parser.JavaCCConstants.TokenType;
+import com.javacc.parser.tree.Annotation;
 import com.javacc.parser.tree.ClassOrInterfaceBodyDeclaration;
 import com.javacc.parser.tree.CompilationUnit;
 import com.javacc.parser.tree.FieldDeclaration;
 import com.javacc.parser.tree.Identifier;
+import com.javacc.parser.tree.MethodDeclaration;
+import com.javacc.parser.tree.Type;
 
 public class JavaCodeUtils {
 
@@ -87,9 +94,75 @@ public class JavaCodeUtils {
             Node parent = fd.getParent();
             Node grandparent = parent.getParent();
             grandparent.removeChild(parent);
-//            System.out.println("KILROY: removing statement: " + parent.getSource());
         }
     }
 
+    /**
+     * Adds getter/setter methods if a field is annotated with a "@Property" annotation
+     */
+    static public void addGetterSetters(Node root) {
+        List<FieldDeclaration> fds = root.descendants(FieldDeclaration.class);
+        for (FieldDeclaration fd : fds) {
+            List<Annotation> annotations  = fd.childrenOfType(Annotation.class);
+            for (Annotation annotation : annotations) {
+                if (annotation.firstChildOfType(Identifier.class).toString().equals("Property")) {
+                    addGetterSetter(fd);
+                    fd.removeChild(annotation);
+                }
+            }
+        }
+    }
 
+    static private void addGetterSetter(FieldDeclaration fd) {
+        Node context = fd.getParent();
+        int index = context.indexOf(fd);
+        String fieldType = fd.firstChildOfType(Type.class).toString();
+        for (Identifier id : fd.getVariableIds()) {
+            ensurePrivate(fd);
+            insertGetterSetter(context, fieldType, id.getImage(), index);
+        }
+    }
+
+    static private void ensurePrivate(FieldDeclaration fd) {
+        for (Token tok : fd.childrenOfType(Token.class)) {
+            TokenType type = tok.getType();
+            if (type == TokenType.PRIVATE) {
+                return; // Nothing to do!
+            }
+            else if (type == TokenType.PROTECTED || type == TokenType.PUBLIC) {
+                fd.removeChild(tok);
+                break;
+            }
+        }
+        Type type = fd.firstChildOfType(Type.class);
+        Token privateToken = Token.newToken(TokenType.PRIVATE, "private", fd);
+        fd.addChild(fd.indexOf(type), privateToken);
+    }
+
+    static private void insertGetterSetter(Node context, String fieldType, String fieldName, int index) {
+        String getterMethodName = "get" + capitalizeFirstLetter((fieldName));
+        if (fieldType.equals("boolean")) {
+            getterMethodName = getterMethodName.replaceFirst("get", "is");
+        }
+        String setterMethodName = getterMethodName.replaceFirst("g", "s");
+        String getter = "//Inserted getter for " + fieldName 
+                        +"\npublic " + fieldType + " " + getterMethodName 
+                        + "() {return " + fieldName + ";}";
+        String setter = "//Inserted setter for " + fieldName 
+                        + "\npublic void " + setterMethodName 
+                        + "(" + fieldType + " " +  fieldName + ") {this." + fieldName + " = " + fieldName + ";}";
+        MethodDeclaration getterMethod = null, setterMethod=null;
+        try {
+           getterMethod = new JavaCCParser(getter).MethodDeclaration();
+           setterMethod = new JavaCCParser(setter).MethodDeclaration();
+        } catch (ParseException pe) {
+            throw new InternalError(pe);
+        }
+        context.addChild(index +1, setterMethod);
+        context.addChild(index +1, getterMethod);
+    }
+
+    static private final String capitalizeFirstLetter(String s) {
+        return s.substring(0, 1).toUpperCase() + s.substring(1);
+    }
 }

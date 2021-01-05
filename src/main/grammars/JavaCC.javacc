@@ -805,7 +805,11 @@ INJECT BNFProduction :
 
     private String leadingComments;
 
-    private Expansion expansion, recoveryExpansion;
+//    private Expansion expansion, recoveryExpansion;
+    @Property Expansion expansion, recoveryExpansion;
+//   @Property private Expansion expansion;
+//   @Property private Expansion recoveryExpansion;
+//    private Expansion recoveryExpansion;
 
 
     public void setName(String name) {
@@ -849,18 +853,14 @@ INJECT BNFProduction :
     public String getLookaheadMethodName() {
         return "check$" + name;
     }
-    
+/*    
     public Expansion getExpansion() {
         return expansion;
     }
     
     public void setExpansion(Expansion expansion) {
         this.expansion = expansion;
-    }
-
-    public Expansion getRecoveryExpansion() {return recoveryExpansion;}
-
-    public void setRecoveryExpansion(Expansion expansion) {this.recoveryExpansion = recoveryExpansion;}
+    }*/
 
     /**
      * Can this production be matched by an empty string?

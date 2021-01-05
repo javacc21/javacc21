@@ -184,8 +184,9 @@ public class FilesGenerator {
         }
         codeInjector.injectCode(jcu);
         try {
-            JavaFormatter formatter = new JavaFormatter();
+            JavaCodeUtils.addGetterSetters(jcu);
             JavaCodeUtils.removeUnusedVariables(jcu);
+            JavaFormatter formatter = new JavaFormatter();
             out.write(formatter.format(jcu));
         } finally {
             out.close();
