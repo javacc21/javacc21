@@ -97,7 +97,7 @@ public class JavaCodeUtils {
         for (FieldDeclaration fd : fds) {
             List<Annotation> annotations  = fd.childrenOfType(Annotation.class);
             for (Annotation annotation : annotations) {
-                if (annotation.firstChildOfType(Identifier.class).toString().equals("Property")) {
+                if (annotation.getName().equals("Property")) {
                     addGetterSetter(fd);
                     fd.removeChild(annotation);
                 }
@@ -148,6 +148,7 @@ public class JavaCodeUtils {
            getterMethod = new JavaCCParser(getter).MethodDeclaration();
            setterMethod = new JavaCCParser(setter).MethodDeclaration();
         } catch (ParseException pe) {
+            // We can't really get here unless something is horribly broken!
             throw new InternalError(pe);
         }
         context.addChild(index +1, setterMethod);
