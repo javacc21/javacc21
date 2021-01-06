@@ -56,27 +56,8 @@ import com.javacc.output.java.FilesGenerator;
 import com.javacc.parsegen.RegularExpression;
 import com.javacc.parsegen.Expansion;
 import com.javacc.parsegen.ParserData;
-import com.javacc.parser.BaseNode;
-import com.javacc.parser.JavaCCParser;
-import com.javacc.parser.Node;
-import com.javacc.parser.ParseException;
-import com.javacc.parser.Token;
-import com.javacc.parser.tree.BNFProduction;
-import com.javacc.parser.tree.ClassOrInterfaceBody;
-import com.javacc.parser.tree.ClassOrInterfaceBodyDeclaration;
-import com.javacc.parser.tree.CodeInjection;
-import com.javacc.parser.tree.CompilationUnit;
-import com.javacc.parser.tree.GrammarFile;
-import com.javacc.parser.tree.ImportDeclaration;
-import com.javacc.parser.tree.LookBehind;
-import com.javacc.parser.tree.Lookahead;
-import com.javacc.parser.tree.PackageDeclaration;
-import com.javacc.parser.tree.ParserCodeDecls;
-import com.javacc.parser.tree.RegexpSpec;
-import com.javacc.parser.tree.RegexpStringLiteral;
-import com.javacc.parser.tree.TokenManagerDecls;
-import com.javacc.parser.tree.TokenProduction;
-import com.javacc.parser.tree.TypeDeclaration;
+import com.javacc.parser.*;
+import com.javacc.parser.tree.*;
 
 import freemarker.template.TemplateException;
 
@@ -85,7 +66,6 @@ import freemarker.template.TemplateException;
  * information regarding a JavaCC processing job.
  */
 public class Grammar extends BaseNode {
-
     private String filename,
                    parserClassName,
                    lexerClassName,
@@ -127,9 +107,10 @@ public class Grammar extends BaseNode {
     private File outputDir;
     private boolean quiet;
     
-    public Grammar(File outputDir, boolean quiet) {
+    public Grammar(File outputDir, int jdkTarget, boolean quiet) {
         this();
         this.outputDir = outputDir;
+        this.jdkTarget = jdkTarget;
         this.quiet = quiet;
         parserData = new ParserData(this);
     }
@@ -998,6 +979,11 @@ public class Grammar extends BaseNode {
         return b == null ? false : b;
     }
 
+    public int getJdkTarget() {
+        if (jdkTarget == 0) return 8;
+        return jdkTarget;
+    }
+
     private boolean ignoreCase;
     public boolean isIgnoreCase() {return ignoreCase;}
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
@@ -1018,12 +1004,21 @@ public class Grammar extends BaseNode {
                 if (!isInInclude() && outputDir == null)
                     outputDir = new File((String)value);
             }
+            if (!isInInclude() && key.equals("JDK_TARGET") && jdkTarget ==0){
+                int jdkTarget = (Integer) value;
+                if (jdkTarget >=8 && jdkTarget <= 15) {
+                    this.jdkTarget = (Integer) value; 
+                }
+                else {
+                    addWarning(null, "Invalid JDK Target " + jdkTarget);
+                }
+            }
         }
     }
-
+    private int jdkTarget = 8;
     private String booleanSettings = "FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,USER_DEFINED_LEXER,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,HUGE_FILE_SUPPORT,LEGACY_API,NODE_FACTORY,DEBUG_TOKEN_MANAGER,USER_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER";
     private String stringSettings = "PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,TOKEN_FACTORY,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY";
-    private String integerSettings = "TABS_TO_SPACES";
+    private String integerSettings = "TABS_TO_SPACES,JDK_TARGET";
 
     private void typeCheckSettings(Map<String, Object> settings) {
         for (String key : settings.keySet()) {

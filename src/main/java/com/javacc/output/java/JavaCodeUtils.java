@@ -33,18 +33,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.javacc.parser.JavaCCParser;
-import com.javacc.parser.Node;
-import com.javacc.parser.ParseException;
-import com.javacc.parser.Token;
-import com.javacc.parser.JavaCCConstants.TokenType;
-import com.javacc.parser.tree.Annotation;
-import com.javacc.parser.tree.ClassOrInterfaceBodyDeclaration;
-import com.javacc.parser.tree.CompilationUnit;
-import com.javacc.parser.tree.FieldDeclaration;
-import com.javacc.parser.tree.Identifier;
-import com.javacc.parser.tree.MethodDeclaration;
-import com.javacc.parser.tree.Type;
+import com.javacc.parser.*;
+import static com.javacc.parser.JavaCCConstants.TokenType;
+import static com.javacc.parser.JavaCCConstants.TokenType.*;
+import com.javacc.parser.tree.*;
 
 public class JavaCodeUtils {
 
@@ -126,16 +118,16 @@ public class JavaCodeUtils {
     static private void ensurePrivate(FieldDeclaration fd) {
         for (Token tok : fd.childrenOfType(Token.class)) {
             TokenType type = tok.getType();
-            if (type == TokenType.PRIVATE) {
+            if (type == PRIVATE) {
                 return; // Nothing to do!
             }
-            else if (type == TokenType.PROTECTED || type == TokenType.PUBLIC) {
+            else if (type == PROTECTED || type == PUBLIC) {
                 fd.removeChild(tok);
                 break;
             }
         }
         Type type = fd.firstChildOfType(Type.class);
-        Token privateToken = Token.newToken(TokenType.PRIVATE, "private", fd);
+        Token privateToken = Token.newToken(PRIVATE, "private", fd);
         fd.addChild(fd.indexOf(type), privateToken);
     }
 
@@ -160,6 +152,31 @@ public class JavaCodeUtils {
         }
         context.addChild(index +1, setterMethod);
         context.addChild(index +1, getterMethod);
+    }
+
+    static public void removeWrongJDKElements(Node context, int target) {
+        List<Annotation> annotations = context.descendants(Annotation.class, 
+            a->a.getName().toLowerCase().startsWith("minjdk") || a.getName().toLowerCase().startsWith("maxjdk"));
+        for (Annotation annotation : annotations) {
+            boolean specifiesMax = annotation.getName().toLowerCase().startsWith("max");
+            String intPart = annotation.getName().substring(6);
+            int specifiedVersion = target;
+            try {
+                specifiedVersion = Integer.valueOf(intPart);
+            }
+            catch (NumberFormatException nfe) {
+                //okay, do nothing here. Just leave the annotation there and let the 
+                // Java compiler deal with the fact that it is wrong!
+                continue;
+            }
+            boolean removeElement = specifiesMax ? target > specifiedVersion : target < specifiedVersion;
+            Node parent = annotation.getParent();
+            Node grandparent = parent.getParent();
+            parent.removeChild(annotation);
+            if (removeElement) {
+                grandparent.removeChild(parent);
+            } 
+        }
     }
 
     static private final String capitalizeFirstLetter(String s) {

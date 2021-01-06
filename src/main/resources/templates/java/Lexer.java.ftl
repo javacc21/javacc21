@@ -78,6 +78,7 @@ private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName
         this(inputSource, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
      }
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
+         this.inputSource = inputSource;
         input_stream = new ${tokenBuilderClass}(inputSource, chars, line, column);
         switchTo(lexState);
      }
@@ -88,6 +89,7 @@ private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName
     }
 
     public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
+        this.inputSource = inputSource;
         input_stream = new ${tokenBuilderClass}(inputSource, reader, line, column);
         switchTo(lexState);
     }
