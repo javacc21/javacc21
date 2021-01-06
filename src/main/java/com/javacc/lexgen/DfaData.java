@@ -98,7 +98,7 @@ public class DfaData {
         for (int i = 0; i < stringLength; i++) {
             final char c = stringLiteral.charAt(i);
             String s = Character.toString(c);
-            if (grammar.getIgnoreCase()) {
+            if (grammar.isIgnoreCase()) {
                 s = s.toLowerCase(Locale.ROOT);
             }
             Map<String, KindInfo> table = stringLiteralTables.get(i);
@@ -106,7 +106,7 @@ public class DfaData {
                 table.put(s, new KindInfo(grammar));
             }
             KindInfo info = table.get(s);
-            if (!grammar.getIgnoreCase() && rsLiteral.getIgnoreCase()) {
+            if (!grammar.isIgnoreCase() && rsLiteral.getIgnoreCase()) {
                 table.put(s.toLowerCase(Locale.ROOT), info);
                 table.put(s.toUpperCase(Locale.ROOT), info);
             }
@@ -142,7 +142,7 @@ public class DfaData {
         						&& grammar.getLexerData().getRegularExpression(kind).getNewLexicalState() == null) {
                             singlesToSkipSet.set(ch);
                             //REVISIT
-        					if (grammar.getIgnoreCase()) {
+        					if (grammar.isIgnoreCase()) {
                                 singlesToSkipSet.set(Character.toUpperCase(ch));
                                 singlesToSkipSet.set(Character.toLowerCase(ch));
         					}
@@ -187,7 +187,7 @@ public class DfaData {
                         subStringSet.set(i);
                         subStringAtPosSet.set(re.getImage().length() - 1);
                         break;
-                    } else if (grammar.getIgnoreCase()//REVISIT
+                    } else if (grammar.isIgnoreCase()//REVISIT
                             && re2.getImage().toLowerCase().startsWith(re.getImage().toLowerCase())) {
                         subStringSet.set(i);
                         subStringAtPosSet.set(re.getImage().length() - 1);

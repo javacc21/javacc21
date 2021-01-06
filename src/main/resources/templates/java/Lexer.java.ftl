@@ -74,20 +74,30 @@ private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName
   }
    
 [#if !grammar.hugeFileSupport]
+     public ${grammar.lexerClassName}(CharSequence chars) {
+        this("input", chars);
+     }
+
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars) {
         this(inputSource, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
      }
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
+         this.inputSource = inputSource;
         input_stream = new ${tokenBuilderClass}(inputSource, chars, line, column);
         switchTo(lexState);
      }
 [/#if]
+
+    public ${grammar.lexerClassName}(Reader reader) {
+       this("input", reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
+    }
 
     public ${grammar.lexerClassName}(String inputSource, Reader reader) {
        this(inputSource, reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
     }
 
     public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
+        this.inputSource = inputSource;
         input_stream = new ${tokenBuilderClass}(inputSource, reader, line, column);
         switchTo(lexState);
     }

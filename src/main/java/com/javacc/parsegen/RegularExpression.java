@@ -83,8 +83,8 @@ public abstract class RegularExpression extends Expansion {
 
     public boolean getIgnoreCase() {
         TokenProduction tp = firstAncestorOfType(TokenProduction.class);
-        if (tp !=null) return tp.getIgnoreCase();
-        return getGrammar().getIgnoreCase();//REVISIT
+        if (tp !=null) return tp.isIgnoreCase();
+        return getGrammar().isIgnoreCase();//REVISIT
     }
 
     /**

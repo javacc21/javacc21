@@ -144,6 +144,7 @@ public final class Main {
         System.out.println(" -d <directory>    Specify the directory (relative or absolute) to place generated files");
         System.out.println("   For example:   -d ../../src/generated");
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
+        System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 15. (Default is 8)");
         System.out.println(" -n                Suppress the check for a newer version");
         System.out.println(" -q                Quieter output");
         System.out.println();
@@ -173,6 +174,7 @@ public final class Main {
             System.exit(0);
         }
         File grammarFile = null, outputDirectory = null;
+        int jdkTarget = 0;
         boolean quiet = false, noNewerCheck = false;
         for (int i=0; i<args.length;i++) {
             String arg = args[i];
@@ -190,6 +192,17 @@ public final class Main {
                 }
                 else if (arg.equalsIgnoreCase("-q") || arg.equalsIgnoreCase("-quiet")) {
                     quiet = true;
+                }
+                else if (arg.toLowerCase().startsWith("-jdk")) {
+                    String number = arg.substring(4);
+                    try {
+                       jdkTarget = Integer.valueOf(number);
+                    } catch (NumberFormatException nfe) {
+                        System.err.println("Expecting a number after 'jdk', like -jdk11");
+                    }
+                    if (jdkTarget <8 || jdkTarget > 15) {
+                        System.err.println("The JDK Target currently must be between 8 and 15.");
+                    }
                 }
                 else {
                     System.err.println("Unknown flag: " + arg);
@@ -233,7 +246,7 @@ public final class Main {
                 System.exit(-1);
             }
         }
-        int errorcode = mainProgram(grammarFile, outputDirectory, quiet);
+        int errorcode = mainProgram(grammarFile, outputDirectory, jdkTarget, quiet);
         System.exit(errorcode);
     }
 
@@ -245,9 +258,9 @@ public final class Main {
      * @throws Exception
      */
 
-    public static int mainProgram(File grammarFile, File outputDir, boolean quiet) throws Exception {
+    public static int mainProgram(File grammarFile, File outputDir, int jdkTarget, boolean quiet) throws Exception {
         if (!quiet) bannerLine();
-        Grammar grammar = new Grammar(outputDir, quiet);
+        Grammar grammar = new Grammar(outputDir, jdkTarget, quiet);
         grammar.parse(grammarFile.toString(), true);
         try {
             grammar.createOutputDir();

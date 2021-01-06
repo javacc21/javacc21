@@ -366,7 +366,7 @@ public class FileLineMap {
     static private int BUF_SIZE = 0x10000;
 
     // Annoying kludge really...
-    static private String readToEnd(Reader reader) {
+    static String readToEnd(Reader reader) {
         try {
             return readFully(reader);
         } catch (IOException ioe) {

@@ -237,7 +237,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean getHasGlobalSemanticActions() {
-        List<CodeBlock> blocks = descendants(CodeBlock.class, cb->cb.getAppliesInLookahead());
+        List<CodeBlock> blocks = descendants(CodeBlock.class, cb->cb.isAppliesInLookahead());
         return !blocks.isEmpty();
     }
     

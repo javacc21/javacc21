@@ -1,5 +1,5 @@
 import java.io.*;
-
+import java.nio.file.Files;
 import java.util.*;
 import org.parsers.java.*;
 
@@ -51,9 +51,8 @@ public class JParse {
     }
       
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-       FileReader fr = new FileReader(file);
-       JavaParser parser = new JavaParser(fr);
-       parser.setInputSource(file.toString());
+       String content = new String(Files.readAllBytes(file.toPath()));
+       JavaParser parser = new JavaParser(file.toString(), content);
        Node root=parser.CompilationUnit();
 // Uncomment the following code if you want all the parsed trees 
 //  to remain in memory. This is useful if you want to know how much

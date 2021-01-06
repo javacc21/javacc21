@@ -167,7 +167,7 @@ TOKEN #Literal :
       | <HEX_LITERAL>
       | <OCTAL_LITERAL>
       | <BINARY_LITERAL>
-  >
+  > #IntegerLiteral 
   |
   < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
   |
@@ -360,6 +360,13 @@ CompilationUnit CompilationUnit #CompilationUnit :
     return CURRENT_NODE;
   }
 ;
+
+INJECT IntegerLiteral :
+{
+   public int getValue() {
+     return Integer.valueOf(getImage());
+   }
+}
 
 INJECT CompilationUnit : 
     import java.util.*;
@@ -1130,6 +1137,7 @@ Type :
 ;
 
 INJECT ReferenceType : extends Type;
+INJECT PrimitiveArrayType : extends Type;
 INJECT PrimitiveType : extends Type;
 
 ReferenceType : 
@@ -1193,7 +1201,7 @@ WildcardBounds :
 ;
 
 
-PrimitiveType #void :
+PrimitiveType #PrimitiveType :
   "boolean"
    |
   "char"
@@ -1905,6 +1913,13 @@ MarkerAnnotation #void :
 SingleMemberAnnotation #void :
   "@" Name "(" =>|| MemberValue ")"
 ;
+
+INJECT Annotation : 
+{
+  public String getName() {
+    return getChild(1).toString();
+  }
+}
 
 MemberValuePairs :
    MemberValuePair ( "," MemberValuePair )*
