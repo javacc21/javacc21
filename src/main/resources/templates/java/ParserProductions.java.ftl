@@ -154,6 +154,7 @@
    [#else]
        ${nodeVarName} = new ${nodeName}();
    [/#if]
+       ${nodeVarName}.setInputSource(getInputSource());
        openNodeScope(${nodeVarName});
   }
 [/#macro]
