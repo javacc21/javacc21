@@ -45,8 +45,8 @@ class CodeInjector {
     private Map<String, TypeDeclaration> types = new HashMap<>();
     private Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
     private Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
-    private Map<String, ExtendsList> extendsLists = new HashMap<>();
-    private Map<String, ImplementsList> implementsLists = new HashMap<>();
+    private Map<String, List<ObjectType>> extendsLists = new HashMap<>();
+    private Map<String, List<ObjectType>> implementsLists = new HashMap<>();
     private Map<String, TypeParameterList> typeParameterLists = new HashMap<>();
     private Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
     private Set<String> overriddenMethods = new HashSet<>();
@@ -125,7 +125,7 @@ class CodeInjector {
                 }
             }
             types.put(name, dec);
-            if (dec.getInterface()) {
+            if (dec instanceof InterfaceDeclaration) {
                 interfaces.add(name);
             }
             if (!importdecls.isEmpty()) {
@@ -136,22 +136,22 @@ class CodeInjector {
                 }
                 injectedImports.addAll(importdecls);
             }
-            ExtendsList extendsList = dec.getExtendsList();
-            ExtendsList existingOne = extendsLists.get(name);
+            List<ObjectType> extendsList = dec.getExtendsList() == null ? new ArrayList<>() : dec.getExtendsList().getTypes();
+            List<ObjectType> existingOne = extendsLists.get(name);
             if (existingOne == null) {
                 extendsLists.put(name, extendsList);
             } else {
-                for (ObjectType type : extendsList.getTypes()) {
-                    existingOne.addType(type, interfaces.contains(name));
+                for (ObjectType type : extendsList) {
+                    existingOne.add(type);
                 }
             }
-            ImplementsList implementsList = dec.getImplementsList();
-            ImplementsList existing = implementsLists.get(name);
+            List<ObjectType> implementsList = dec.getImplementsList() == null ? new ArrayList<>() : dec.getImplementsList().getTypes();
+            List<ObjectType> existing = implementsLists.get(name);
             if (existing == null) {
                 implementsLists.put(name, implementsList);
             } else {
-                for (ObjectType type : implementsList.getTypes()) {
-                    existing.addType(type);
+                for (ObjectType type : implementsList) {
+                    existing.add(type);
                 }
             }
             TypeParameterList typeParameterList = dec.getTypeParameterList();
@@ -188,8 +188,8 @@ class CodeInjector {
         }
     }
     
-    private void add(String name, List<ImportDeclaration> importDeclarations, List<Annotation> annotations, ExtendsList extendsList, 
-            ImplementsList implementsList, ClassOrInterfaceBody body, boolean isInterface) 
+    private void add(String name, List<ImportDeclaration> importDeclarations, List<Annotation> annotations, List<ObjectType> extendsList, 
+            List<ObjectType> implementsList, ClassOrInterfaceBody body, boolean isInterface) 
     {
         typeNames.add(name);
         if (isInterface) {
@@ -220,22 +220,22 @@ class CodeInjector {
         	}
         }
         if (extendsList != null) {
-            ExtendsList existingExtendsList = extendsLists.get(name);
+            List<ObjectType> existingExtendsList = extendsLists.get(name);
             if (existingExtendsList == null) {
                 extendsLists.put(name, extendsList);
             } else {
-                for (ObjectType type : extendsList.getTypes()) {
-                    existingExtendsList.addType(type, isInterface);
+                for (ObjectType type : extendsList) {
+                    existingExtendsList.add(type);
                 }
             }
         }
         if (implementsList != null) {
-            ImplementsList existingImplementsList = implementsLists.get(name);
+            List<ObjectType> existingImplementsList = implementsLists.get(name);
             if (existingImplementsList == null) {
                 implementsLists.put(name, implementsList);
             } else {
-                for (ObjectType type : implementsList.getTypes()) {
-                    existingImplementsList.addType(type);
+                for (ObjectType type : implementsList) {
+                    existingImplementsList.add(type);
                 }
             }
         }
@@ -251,22 +251,26 @@ class CodeInjector {
     }
     
     void injectCode(CompilationUnit jcu) {
+        String packageName = jcu.getPackageName();
         Set<ImportDeclaration> allInjectedImports = new HashSet<ImportDeclaration>();
         for (TypeDeclaration typedecl : jcu.getTypeDeclarations()) {
-            String fullName = typedecl.getFullName();
+            String fullName = typedecl.getName();
+            if (packageName !=null) {
+                fullName = packageName + "." + fullName;
+            }
             Set<ImportDeclaration> injectedImports = injectedImportsMap.get(fullName);
             if (injectedImports != null) {
                 allInjectedImports.addAll(injectedImports);
             }
-            ExtendsList injectedExtends = extendsLists.get(fullName);
+            List<ObjectType> injectedExtends = extendsLists.get(fullName);
             if (injectedExtends != null) {
-                for (ObjectType type : injectedExtends.getTypes()) {
+                for (ObjectType type : injectedExtends) {
                     typedecl.addExtends(type);
                 }
             }
-            ImplementsList injectedImplements = implementsLists.get(fullName);
+            List<ObjectType> injectedImplements = implementsLists.get(fullName);
             if (injectedImplements != null) {
-                for (ObjectType type : injectedImplements.getTypes()) {
+                for (ObjectType type : injectedImplements) {
                     typedecl.addImplements(type);
                 }
             }

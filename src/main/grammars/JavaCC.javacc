@@ -341,9 +341,144 @@ INJECT BaseNode :
         String name = getClass().getName();
         return name.substring(name.lastIndexOf(".") + 1); // strip the package name
     }
+
 }
 
 INCLUDE("Java.javacc")
+
+INJECT TypeDeclaration : 
+    import java.util.*;
+{
+    public void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
+        Set<String> keys = new HashSet<String>();
+        for (ClassOrInterfaceBodyDeclaration decl : elements) {
+            String key = decl.getFullNameSignatureIfMethod();
+            if (key != null) {
+                keys.add(key);
+            }
+        }
+        //REVISIT. fix token chaining
+        for (Iterator<Node> it = getBody().iterator(); it.hasNext();) {
+            Node n = it.next();
+            if (n instanceof ClassOrInterfaceBodyDeclaration) {
+                String s = ((ClassOrInterfaceBodyDeclaration) n).getFullNameSignatureIfMethod();
+                if (keys.contains(s)) {
+                    it.remove();
+                }
+            }
+        }
+        getBody().prepend(elements);
+    }
+    
+   public void addAnnotations(Set<Annotation> annotations) {
+       Node parent = this.getParent();
+       int index = parent.indexOf(this);
+       //REVISIT. fix token chaining
+       for (Annotation annotation : annotations) {
+           parent.addChild(index, annotation);
+       }
+   } 
+   
+    
+    public boolean isClass() {
+        for (Node n : children) {
+	    if (n instanceof Token) {
+	       Token t = (Token) n;
+               if (t.getType() == TokenType.CLASS) {
+                  return true;
+               }
+	    }
+        }
+        return false;
+    }
+    
+    public void addImplements(ObjectType type) {
+    	ImplementsList implementsList = getImplementsList();
+    	if (implementsList == null) {
+    	   implementsList = new ImplementsList();
+    	   ListIterator<Node> iterator = iterator();
+    	   while (iterator.hasNext()) {
+    	      Node node = iterator.next();
+    	      if (node instanceof ClassOrInterfaceBody || node instanceof EnumBody)
+    	          break; 
+    	   }
+    	   iterator.previous();
+    	   iterator.add(implementsList);
+    	}
+    	implementsList.addType(type);
+    }
+
+    public void addExtends(ObjectType type) {
+        ExtendsList extendsList = getExtendsList();
+        if (extendsList == null) {
+            extendsList = new ExtendsList();
+            ListIterator<Node> iterator = iterator();
+            while (iterator.hasNext()) {
+                Node node = iterator.next();
+                if (node instanceof ImplementsList || node instanceof ClassOrInterfaceBody) {
+                    break;
+                }
+            }
+            iterator.previous();
+            iterator.add(Token.newToken(TokenType.WHITESPACE, " ", this));
+            iterator.next();
+            iterator.add(extendsList);
+        }
+        extendsList.addType(type, this instanceof InterfaceDeclaration);
+    }
+}
+
+INJECT ExtendsList : 
+     import java.util.*;
+{
+    //REVISIT. fix token chaining 
+    
+      public void addType(ObjectType type, boolean isInterface) {
+        if (!isInterface) {
+            children = new java.util.ArrayList<Node>();
+        }
+        ListIterator<Node> iterator = iterator();
+        if (!iterator.hasNext()) {
+            iterator.add(Token.newToken(TokenType.EXTENDS, "extends", this));
+            iterator.next();
+            iterator.add(type);
+        } else {
+            while (iterator.hasNext()) {
+                if (type.equals(iterator.next())) 
+                    return;
+            }
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
+            iterator.next();
+            iterator.add(type);
+        }
+    }
+}
+
+INJECT TypeParameterList : 
+    import java.util.*;
+{
+    // REVISIT. fix token chaining
+    
+    public void add(TypeParameter param) {
+        if (!getParameters().contains(param)) {
+            ListIterator<Node> iterator = iterator();
+            while(iterator.hasNext()) {
+                iterator.next();
+            }
+            iterator.previous();
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
+            iterator.next();
+            iterator.add(param);
+        }
+    }
+
+    // REVISIT. fix token chaining 
+    public void add(TypeParameterList params) {
+        for (TypeParameter param : params.getParameters()) {
+            add(param);
+        }
+    }
+}
 
 INJECT PARSER_CLASS : {
 
@@ -591,6 +726,7 @@ CodeInjection :
         boolean isInterface = false;
         Annotation annotation = null;
         boolean foundOptionalInitialBrace = false;
+         
         boolean usingParentheses = false;
 }   
         "INJECT" ["(" {usingParentheses = true;}]
@@ -608,21 +744,27 @@ CodeInjection :
           SCAN "{"("import"|"@"|"extends"|"implements"|"}") => "{" 
           {foundOptionalInitialBrace=true;}
         ]
-         (
+        (
             ImportDeclaration {CURRENT_NODE.importDeclarations.add((ImportDeclaration) peekNode());}
-         )*
-         (
-             annotation = Annotation {CURRENT_NODE.annotations.add(annotation);}
-         )*
-         [
-            CURRENT_NODE.extendsList=ExtendsList(isInterface)
-            [";"]
-         ]
-         [CURRENT_NODE.implementsList=ImplementsList(isInterface) [";"]]
+        )*
+        (
+             Annotation {CURRENT_NODE.annotations.add((Annotation) peekNode());}
+        )*
+        [
+             "extends" ClassOrInterfaceType {CURRENT_NODE.addExtendsType((ObjectType)peekNode());}
+             (SCAN {isInterface} => "," ClassOrInterfaceType {CURRENT_NODE.addExtendsType((ObjectType) peekNode());})*
+             [";"]
+        ]
+        [
+             SCAN {!isInterface} =>
+             "implements" ClassOrInterfaceType {CURRENT_NODE.addImplementsType((ObjectType) peekNode());}
+             ("," ClassOrInterfaceType {CURRENT_NODE.addImplementsType((ObjectType) peekNode());})*
+             [";"]
+        ]
         [
            SCAN {foundOptionalInitialBrace} => "}"
         ]
-        [CURRENT_NODE.body=ClassOrInterfaceBody(isInterface)]
+        [ClassOrInterfaceBody(isInterface) {CURRENT_NODE.body = (ClassOrInterfaceBody) peekNode();}]
         {
                 if (enterIncludes) {
                     grammar.addCodeInjection(CURRENT_NODE);
@@ -637,10 +779,13 @@ INJECT CodeInjection :
    public String name;
    public List<ImportDeclaration> importDeclarations = new ArrayList<ImportDeclaration>();
    public List<Annotation> annotations = new ArrayList<>();
-   public ExtendsList extendsList;
-   public ImplementsList implementsList;
+   public List<ObjectType> extendsList = new ArrayList<>();
+   public List<ObjectType> implementsList = new ArrayList<>();
    public ClassOrInterfaceBody body;
    public boolean isInterface;   
+
+   public void addExtendsType(ObjectType type) {extendsList.add(type);}
+   public void addImplementsType(ObjectType type) {implementsList.add(type);}
 }
 
 CodeInjection2 :

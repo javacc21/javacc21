@@ -34,7 +34,6 @@ NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
-//UNPARSED_TOKENS_ARE_NODES;
 
 INJECT PARSER_CLASS : {
 
@@ -298,18 +297,12 @@ TOKEN #Operator :
 | < LAMBDA : "->" > 
 ;
 
+
 INJECT BaseNode : 
     import java.util.*;
     import NODE_PACKAGE.KeyWord;
     implements Node, CONSTANTS_CLASS
 {    
-    protected String getLiteralText() {
-        StringBuilder buf = new StringBuilder();
-        for (Token t : getAllTokens(true)) {
-            buf.append(t);
-        }
-        return buf.toString();
-    }
     
     protected String getInnerText() {
         StringBuilder buf = new StringBuilder();
@@ -346,13 +339,23 @@ INJECT BaseNode :
         }
         return false;
     }
+
+    protected String getLiteralText() {
+        StringBuilder buf = new StringBuilder();
+        for (Token t : getAllTokens(true)) {
+            buf.append(t);
+        }
+        return buf.toString();
+    }
+
 }
+
 
 CompilationUnit CompilationUnit #CompilationUnit :
   [ PackageDeclaration ]
   ( ImportDeclaration )*
   (
-     ( TypeDeclaration )+
+     ( TypeDeclaration | ";")+
      |
      <EOF>
   )
@@ -388,20 +391,13 @@ INJECT CompilationUnit :
     public List<TypeDeclaration> getTypeDeclarations() {
         return childrenOfType(TypeDeclaration.class);
     }
-    
+
     public void addImportDeclaration(ImportDeclaration decl) {
-        ListIterator<Node> iterator = iterator();
-        Node n = null;
-        while (!(n instanceof TypeDeclaration) &&!(n instanceof Annotation)) {
-            n = iterator.next();
+        Node firstTypeDeclaration = firstChildOfType(TypeDeclaration.class);
+        if (firstTypeDeclaration == null) {
+          firstTypeDeclaration = firstChildOfType(Delimiter.class); //lone semicolon, I suppose
         }
-        // REVISIT. fix token chaining
-        if (iterator.hasPrevious()) {
-            iterator.previous();
-            iterator.add(decl);
-        } else {
-            prepend(decl);
-        }
+        addChild(indexOf(firstTypeDeclaration), decl);
     }
 }
 
@@ -409,58 +405,13 @@ PackageDeclaration : (Annotation)* "package" =>|| Name ";" ;
 
 INJECT PackageDeclaration :
 {
-    public String getPackageName() {
-        StringBuilder buf = new StringBuilder();
-        boolean seenPackage = false;
-        for (Token t : getRealTokens()) {
-            if (t.getType() == PACKAGE) {
-                seenPackage = true;
-            } else if (seenPackage) {
-                if (t.getType() != SEMICOLON)
-                    buf.append(t);
-            }
-        }
-        return buf.toString();
-    }
+  public String getPackageName() {
+    Node nameNode = getChild(getChildCount()-2);
+    return nameNode.toString();
+  }
 }
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
-
-INJECT ImportDeclaration : 
-{
-    public String getAsString() {
-        return super.getAsString().trim();
-    }
-    
-    public boolean isStaticImport() {
-        for (Node n : children) {
-            if ((n instanceof KeyWord) && n.toString().equals("static")) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    public String getName() {
-        StringBuilder buf = new StringBuilder();
-        for (Token tok : descendants(Token.class)) {
-            if (tok.getType() != TokenType.IMPORT
-              && tok.getType() != TokenType.SEMICOLON) {
-                buf.append(tok);
-            }
-        }
-        return buf.toString();
-    }
-    
-    public boolean equals(Object obj) {
-        if (!(obj instanceof ImportDeclaration)) {
-            return false;
-        }
-        ImportDeclaration other = (ImportDeclaration) obj;
-        return other.isStaticImport() == this.isStaticImport()
-            && other.getName().equals(this.getName());
-    }
-}
 
 Modifiers #void :
 {EnumSet<TokenType> modifiers = EnumSet.noneOf(TokenType.class);}
@@ -542,10 +493,10 @@ Modifiers2 #void :
  * Declaration syntax follows.
  */
 
-TypeDeclaration TypeDeclaration #TypeDeclaration :
+TypeDeclaration TypeDeclaration #TypeDeclaration(>100) :
  (      
-  ";"
-  |
+//  ";"
+//  |
   AnnotationTypeDeclaration
   |
   ClassDeclaration
@@ -554,65 +505,25 @@ TypeDeclaration TypeDeclaration #TypeDeclaration :
   |
   EnumDeclaration
  )
-// ASSERT {2+2==4} /*~<RSIGNEDSHIFTASSIGN>*/ : "WTF?"
  {
-        return CURRENT_NODE;
+        return (TypeDeclaration) peekNode();
  }
 ;
 
-INJECT(TypeDeclaration) : 
+INJECT AnnotationTypeDeclaration : extends TypeDeclaration;
+INJECT ClassDeclaration : extends TypeDeclaration;
+INJECT InterfaceDeclaration : extends TypeDeclaration;
+INJECT EnumDeclaration : extends TypeDeclaration;
+
+INJECT TypeDeclaration : 
     import java.util.*;
 {
     public String getName() {
-        for (Node n : children) {
-            if (n instanceof Identifier) {
-                return n.toString();
-            }
-        }
-        throw new RuntimeException("Should never get here.");
-    }
-    
-    public boolean getInterface() {
-       for (Node n : children) {
-           if (n instanceof Token) {
-              Token t = (Token) n;
-              if (t.getType() == TokenType.INTERFACE) {
-                  return true;
-              }
-	   }
-       }
-       return false;
-    } 
-    
-    public String getPackageName() {
-        String packageName = null;
-        if (parent instanceof CompilationUnit) {
-            CompilationUnit jcu = (CompilationUnit) parent; 
-            packageName = jcu.getPackageName();
-        }
-        return packageName;
-    }
-    
-    public String getFullName() {
-        String name = getName();
-        String packageName = getPackageName();
-        if (packageName != null && packageName.length()>0) {
-            return packageName + "." + name;
-        }
-        return name;
+        return firstChildOfType(Identifier.class).toString();
     }
     
     public TypeParameterList getTypeParameterList() {
-        ListIterator<Node> iterator = iterator();
-        Node n = iterator.next();
-        while (n instanceof Identifier) {
-            n = iterator.next();
-        }
-        n = iterator.next();
-        if (n instanceof TypeParameterList) {
-            return (TypeParameterList) n;
-        }
-        return null;
+        return firstChildOfType(TypeParameterList.class);
     }
     
     public ClassOrInterfaceBody getBody() {
@@ -628,173 +539,56 @@ INJECT(TypeDeclaration) :
     }
     
     public CompilationUnit getCompilationUnit() {
-        Node parent = getParent();
-        if (parent instanceof CompilationUnit) {
-            return (CompilationUnit) parent;
-        }
-        return null;
+        return firstAncestorOfType(CompilationUnit.class);
     }
     
     public List<ImportDeclaration> getImportDeclarations() {
         CompilationUnit jcu = getCompilationUnit();
-        if (jcu == null) {
-            return new ArrayList<ImportDeclaration>();
-        }
-        return jcu.getImportDeclarations();
-    }
-    
-    public void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
-        Set<String> keys = new HashSet<String>();
-        for (ClassOrInterfaceBodyDeclaration decl : elements) {
-            String key = decl.getFullNameSignatureIfMethod();
-            if (key != null) {
-                keys.add(key);
-            }
-        }
-        //REVISIT. fix token chaining
-        for (Iterator<Node> it = getBody().iterator(); it.hasNext();) {
-            Node n = it.next();
-            if (n instanceof ClassOrInterfaceBodyDeclaration) {
-                String s = ((ClassOrInterfaceBodyDeclaration) n).getFullNameSignatureIfMethod();
-                if (keys.contains(s)) {
-                    it.remove();
-                }
-            }
-        }
-        getBody().prepend(elements);
-    }
-    
-   public void addAnnotations(Set<Annotation> annotations) {
-       Node parent = this.getParent();
-       int index = parent.indexOf(this);
-       //REVISIT. fix token chaining
-       for (Annotation annotation : annotations) {
-           parent.addChild(index, annotation);
-       }
-   } 
-   
-    
-    public boolean isClass() {
-        for (Node n : children) {
-	    if (n instanceof Token) {
-	       Token t = (Token) n;
-               if (t.getType() == TokenType.CLASS) {
-                  return true;
-               }
-	    }
-        }
-        return false;
-    }
-    
-    public void addImplements(ObjectType type) {
-    	ImplementsList implementsList = getImplementsList();
-    	if (implementsList == null) {
-    	   implementsList = new ImplementsList();
-    	   ListIterator<Node> iterator = iterator();
-    	   while (iterator.hasNext()) {
-    	      Node node = iterator.next();
-    	      if (node instanceof ClassOrInterfaceBody || node instanceof EnumBody)
-    	          break; 
-    	   }
-    	   iterator.previous();
-    	   iterator.add(implementsList);
-    	}
-    	implementsList.addType(type);
-    }
-    
-    public void addExtends(ObjectType type) {
-        ExtendsList extendsList = getExtendsList();
-        if (extendsList == null) {
-            extendsList = new ExtendsList();
-            ListIterator<Node> iterator = iterator();
-            while (iterator.hasNext()) {
-                Node node = iterator.next();
-                if (node instanceof ImplementsList || node instanceof ClassOrInterfaceBody) {
-                    break;
-                }
-            }
-            iterator.previous();
-            iterator.add(Token.newToken(TokenType.WHITESPACE, " ", this));
-            iterator.next();
-            iterator.add(extendsList);
-        }
-        extendsList.addType(type, getInterface());
+        return jcu==null ? new ArrayList<ImportDeclaration>() : jcu.getImportDeclarations();
     }
 }
 
-ClassDeclaration #void :
+ClassDeclaration :
   Modifiers
   "class" =>||
   <IDENTIFIER>
   [ TypeParameters ]
-  [ ExtendsList(false) ]
-  [ ImplementsList(false) ]
+  [ ExtendsList]
+  [ ImplementsList ]
   ClassOrInterfaceBody(false)
 ;
 
-InterfaceDeclaration #void :
+InterfaceDeclaration :
   Modifiers
   "interface" =>||
   <IDENTIFIER> 
   [ TypeParameters ]
-  [ ExtendsList(true) ] 
+  [ ExtendsList ] 
   ClassOrInterfaceBody(true)
 ;
 
-ExtendsList ExtendsList(boolean isInterface) :
-{
-   boolean extendsMoreThanOne = false;
-}
+ExtendsList : 
    "extends" ClassOrInterfaceType
-   ( "," ClassOrInterfaceType { extendsMoreThanOne = true; } )*
-   {
-      if (extendsMoreThanOne && !isInterface)
-         throw new ParseException(this, "A class cannot extend more than one other class");
-      return CURRENT_NODE;
-   }
+   ( 
+     SCAN \InterfaceDeclaration => 
+     "," ClassOrInterfaceType 
+   )*
 ;
 
-INJECT ExtendsList : 
-     import java.util.*;
+INJECT ExtendsList :
+import java.util.List; 
 {
     public List<ObjectType> getTypes() {
         return childrenOfType(ObjectType.class);
     }
-
-    //REVISIT. fix token chaining 
-      public void addType(ObjectType type, boolean isInterface) {
-        if (!isInterface) {
-            children = new java.util.ArrayList<Node>();
-        }
-        ListIterator<Node> iterator = iterator();
-        if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(TokenType.EXTENDS, "extends", this));
-            iterator.next();
-            iterator.add(type);
-        } else {
-            while (iterator.hasNext()) {
-                if (type.equals(iterator.next())) 
-                    return;
-            }
-            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
-            iterator.next();
-            iterator.add(type);
-        }
-    }
 }
 
-ImplementsList ImplementsList(boolean isInterface) :
-{}
-{
+ImplementsList :
    "implements" ClassOrInterfaceType
-   ( "," ClassOrInterfaceType )*
-   {
-      if (isInterface) {
-         throw new ParseException(this, "An interface cannot implement other interfaces");
-      }
-      return CURRENT_NODE;
-   }
-}
+   ( 
+     "," ClassOrInterfaceType 
+   )*
+;
 
 INJECT ImplementsList : 
    import java.util.*;
@@ -824,7 +618,7 @@ INJECT ImplementsList :
 EnumDeclaration :
    Modifiers
    "enum" =>|| <IDENTIFIER>
-   [ImplementsList(false)] 
+   [ImplementsList] 
    EnumBody
 ;
 
@@ -847,29 +641,8 @@ TypeParameters #TypeParameterList :
 ;
 
 INJECT TypeParameterList : 
-    import java.util.*;
+  import java.util.List;
 {
-    // REVISIT. fix token chaining
-    public void add(TypeParameter param) {
-        if (!getParameters().contains(param)) {
-            ListIterator<Node> iterator = iterator();
-            while(iterator.hasNext()) {
-                iterator.next();
-            }
-            iterator.previous();
-            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
-            iterator.next();
-            iterator.add(param);
-        }
-    }
-
-    // REVISIT. fix token chaining 
-    public void add(TypeParameterList params) {
-        for (TypeParameter param : params.getParameters()) {
-            add(param);
-        }
-    }
-    
     public List<TypeParameter> getParameters() {
         return childrenOfType(TypeParameter.class);
     }
@@ -881,15 +654,12 @@ TypeBound :
    "extends" ClassOrInterfaceType ( "&" ClassOrInterfaceType )*
 ;
 
-ClassOrInterfaceBody ClassOrInterfaceBody(boolean isInterface) :
+ClassOrInterfaceBody(boolean isInterface) :
     "{"
     ( 
        ClassOrInterfaceBodyDeclaration(isInterface) 
     )*
     "}"
-    {
-        return CURRENT_NODE;
-    }
 ;
 
 INJECT ClassOrInterfaceBody : 
@@ -1055,13 +825,10 @@ MethodDeclarator #void :
   <IDENTIFIER> FormalParameters ( "[" "]" )*
 ;
 
-FormalParams FormalParameters #FormalParams :
+FormalParameters #FormalParams :
    "("
     [ FormalParameter ( "," FormalParameter )* ]
    ")"
-    {
-        return CURRENT_NODE;
-    }
 ;
 
 INJECT FormalParams : 
@@ -1095,12 +862,7 @@ INJECT FormalParams :
     }
 }
 
-FormalParameter FormalParameter :
-    Modifiers Type [ "..." ] VariableDeclaratorId
-    {
-        return CURRENT_NODE;
-    }
-;
+FormalParameter : Modifiers Type [ "..." ] VariableDeclaratorId ;
 
 INJECT ConstructorDeclaration : extends ClassOrInterfaceBodyDeclaration
 
@@ -1146,13 +908,10 @@ ReferenceType :
    ClassOrInterfaceType (=> "[" "]" )*
 ;
 
-ObjectType ClassOrInterfaceType #ObjectType :
+ClassOrInterfaceType #ObjectType :
     <IDENTIFIER>
     [ TypeArguments ]
     ( "." <IDENTIFIER> =>|| [ TypeArguments ] )*
-    {
-        return CURRENT_NODE;
-    }
 ;
 
 INJECT ObjectType : extends Type 
@@ -1223,45 +982,11 @@ PrimitiveArrayType :
     PrimitiveType (=> "[" "]")+
 ;
 
-ReturnType ReturnType #ReturnType :
-    (
-        "void"
-        |
-        Type
-    )
-    {
-        return CURRENT_NODE;
-    }
-;
+ReturnType #ReturnType : "void" | Type ;
 
-Name Name :
-    <IDENTIFIER>
-    ( 
-        => "." <IDENTIFIER>
-    )*
-    {
-        return CURRENT_NODE;
-    }
-;
+Name : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
 
-INJECT Name : 
-{
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        for (Token tok : getRealTokens()) {
-            buf.append(tok);
-        }
-        return buf.toString();
-    }
-}
-
-
-ThrowsList ThrowsList :
-    "throws" Name ( "," Name )*
-    {
-        return CURRENT_NODE;
-    }
-;
+ThrowsList : "throws" Name ( "," Name )* ;
 
 INJECT ThrowsList : 
     import java.util.List;
@@ -1436,11 +1161,11 @@ CastExpression :
   => "(" ClassOrInterfaceType ("&" ClassOrInterfaceType)+ ")" UnaryExpressionNotPlusMinus 
 ;
 
-Expression PrimaryExpression #PrimaryExpression :
+PrimaryExpression PrimaryExpression #PrimaryExpression :
     PrimaryPrefix 
     ( SCAN 2 PrimarySuffix )*
     {
-            return CURRENT_NODE;
+       return CURRENT_NODE;
     }
 ;
 
@@ -1512,13 +1237,10 @@ Literal #void :
   "null"
 ;
 
-InvocationArgs Arguments #InvocationArgs :
+Arguments #InvocationArgs :
     "("
     [ Expression ("," Expression)* ]
     ")"
-    {
-        return CURRENT_NODE;
-    }
 ;
 
 INJECT InvocationArgs : 
@@ -1816,7 +1538,7 @@ SynchronizedStatement :
   "synchronized" "(" Expression ")" Block
 ;
 
-ClassicTryStatement ClassicTryStatement :
+ClassicTryStatement :
   "try"
   =>|+1
   Block 
@@ -1828,12 +1550,9 @@ ClassicTryStatement ClassicTryStatement :
         [FinallyBlock]
      )
   )
-  {
-      return CURRENT_NODE;
-  }
 ;
 
-TryWithResources TryWithResources :
+TryWithResources :
    "try" "(" 
    =>||
      (
@@ -1853,21 +1572,15 @@ TryWithResources TryWithResources :
     Block
     (CatchBlock)*
     [FinallyBlock]
-    {
-       return CURRENT_NODE;
-    }
 ;
 
-CatchBlock CatchBlock :
+CatchBlock :
     "catch"
     "("
     ["final"]
     ClassOrInterfaceType ("|" ClassOrInterfaceType)* VariableDeclaratorId
     ")"
     Block 
-    {
-        return CURRENT_NODE;
-    } 
 ;
 
 INJECT CatchBlock :
@@ -1889,7 +1602,7 @@ INJECT FinallyBlock :
 
 /* Annotation syntax follows. */
 
-Annotation Annotation #Annotation :
+Annotation #Annotation :
  ( 
    NormalAnnotation
    |
@@ -1897,9 +1610,6 @@ Annotation Annotation #Annotation :
    |
    MarkerAnnotation
  )
- {
-      return CURRENT_NODE;
- }
 ;
 
 NormalAnnotation #void :
@@ -1944,7 +1654,7 @@ MemberValueArrayInitializer :
 
 /* Annotation Types. */
 
-AnnotationTypeDeclaration :
+AnnotationTypeDeclaration #AnnotationTypeDeclaration :
   Modifiers
   "@" "interface" =>|| <IDENTIFIER> AnnotationTypeBody
 ;
@@ -1969,21 +1679,11 @@ AnnotationTypeMemberDeclaration :
  FieldDeclaration
 ;
 
-DefaultValue :
-  "default" MemberValue
-;
+DefaultValue : "default" MemberValue ;
 
-LambdaExpression LambdaExpression :
-  LambdaLHS =>||
-  (Expression | Block)
-  {
-     return CURRENT_NODE;
-  }
-;
+LambdaExpression : LambdaLHS =>|| (Expression | Block) ;
 
-LambdaLHS : 
-   (<IDENTIFIER> | SimpleLambdaLHS | FormalParameters) "->" =>||
-;
+LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | FormalParameters) "->" =>|| ;
 
 SimpleLambdaLHS #void :
    "(" <IDENTIFIER> =>|+1 
