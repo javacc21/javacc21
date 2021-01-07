@@ -1784,6 +1784,11 @@ Expansion ExpansionUnit :
   [SCAN ~\...\Lookahead => UpToHere(result)] 
  )
  [
+     SCAN ~\...\Lookahead =>
+     "!" {((Expansion) peekNode()).setTolerantParsing(true);}
+ ]
+ [
+     SCAN ~\...\Lookahead => 
     tba=TreeNodeDescriptor
  ]
  {

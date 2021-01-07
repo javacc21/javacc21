@@ -440,7 +440,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
    
     public String getLocation() {
-         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
+//         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
+         return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
      }
     
 [#if grammar.treeBuildingEnabled]

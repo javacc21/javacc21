@@ -64,7 +64,8 @@
 
 [#macro BuildCode expansion]
    [#if expansion.simpleName != "ExpansionSequence"]
-  // Code for ${expansion.simpleName} specified on line ${expansion.beginLine} of ${expansion.inputSource}
+  // Code for ${expansion.simpleName} specified at:
+  // ${expansion.location}
   [/#if]
     [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, closeCondition = "true", callStackSizeVar]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]

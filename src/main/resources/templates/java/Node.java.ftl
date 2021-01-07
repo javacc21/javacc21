@@ -219,7 +219,8 @@ public interface Node extends Comparable<Node>
      void setEndColumn(int endColumn);
      
      default String getLocation() {
-         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
+         //return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
+         return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
      }
      
      
