@@ -151,7 +151,14 @@ public class Grammar extends BaseNode {
     }
     
     public String generateUniqueIdentifier(String prefix, Node exp) {
-        String id = prefix + exp.getInputSource() + "$line_" + exp.getBeginLine() + "$column_" + exp.getBeginColumn();
+        String inputSource = exp.getInputSource();
+        if (inputSource != null) {
+            int lastSlash = Math.max(inputSource.lastIndexOf('\\'), inputSource.lastIndexOf('/'));
+            if (lastSlash+1<inputSource.length()) inputSource = inputSource.substring(lastSlash+1);
+        } else {
+            inputSource = "";
+        }
+        String id = prefix + inputSource + "$" + exp.getBeginLine() + "$" + exp.getBeginColumn();
         id = removeNonJavaIdentifierPart(id);
         while (usedIdentifiers.contains(id)) {
             id += "$";
@@ -163,7 +170,7 @@ public class Grammar extends BaseNode {
     public Node parse(String location, boolean enterIncludes) throws IOException, ParseException {
         File file = new File(location);
         String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
-        JavaCCParser parser = new JavaCCParser(this, file.getCanonicalFile().getName(), content);
+        JavaCCParser parser = new JavaCCParser(this, file.getPath(), content);
         parser.setEnterIncludes(enterIncludes);
         setFilename(location);
         GrammarFile rootNode = parser.Root();
@@ -179,7 +186,7 @@ public class Grammar extends BaseNode {
             if (!file.isAbsolute()) {
                 file = new File(new File(this.filename).getParent(), location);
                 if (file.exists()) {
-                    location = file.getAbsolutePath();
+                    location = file.getPath();
                 }
             }
         }

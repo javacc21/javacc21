@@ -131,6 +131,8 @@
 [#macro BuildPredicateRoutine expansion] 
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
+  // predicate routine for expansion at: 
+  // ${expansion.location}
    private final boolean ${expansion.predicateMethodName}() {
      try {
          lookaheadRoutineNesting++;
@@ -155,6 +157,8 @@
 
 [#macro BuildScanRoutine expansion]
  [#if !expansion.singleToken || expansion.requiresPredicateMethod]
+  // scanahead routine for expansion at: 
+  // ${expansion.location}
   private final boolean ${expansion.scanRoutineName}() {
     try {
        lookaheadRoutineNesting++;
@@ -196,6 +200,8 @@
  --]
 [#macro BuildLookaheadRoutine lookahead]
   [#if lookahead.nestedExpansion??]
+     // lookahead routine for lookahead at: 
+     // ${lookahead.location}
      private final boolean ${lookahead.nestedExpansion.scanRoutineName}() {
         int prevRemainingLookahead = remainingLookahead;
         boolean prevHitFailure = hitFailure;

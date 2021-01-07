@@ -37,7 +37,6 @@ import com.javacc.parser.BaseNode;
 import com.javacc.parser.Node;
 import com.javacc.parser.tree.*;
 
-
 /**
  * Describes expansions - entities that may occur on the right hand sides of
  * productions. This is the base class of a bunch of other more specific
@@ -49,44 +48,57 @@ abstract public class Expansion extends BaseNode {
     /**
      * Marker interface to indicate a choice point
      */
-    public interface ChoicePoint extends Node {}
+    public interface ChoicePoint extends Node {
+    }
 
     private TreeBuildingAnnotation treeNodeBehavior;
 
     private Lookahead lookahead;
-    
-    private String label = "";  
+
+    private String label = "";
 
     protected TokenSet firstSet;
 
     public int getIndex() {
-    	return parent.indexOf(this);
-	}
+        return parent.indexOf(this);
+    }
 
-	public Expansion(Grammar grammar) {
+    public Expansion(Grammar grammar) {
         setGrammar(grammar);
     }
 
-    public Expansion() {}
+    public Expansion() {
+    }
 
     public BNFProduction getContainingProduction() {
         return firstAncestorOfType(BNFProduction.class);
     }
 
     private String scanRoutineName, predicateMethodName, firstSetVarName, finalSetVarName, followSetVarName;
-    
+
     public String getLabel() {
-    	return label;
+        return label;
     }
-    
+
     public final boolean hasLabel() {
         return label.length() > 0;
     }
-    
+
     public void setLabel(String label) {
-    	this.label = label;
+        this.label = label;
     }
-    
+
+
+    private boolean tolerantParsing;
+
+    /**
+     * If we hit a parsing error in this expansion, do we 
+     * try to recover? This is only used in fault-tolerant mode, of course!
+     */
+    public boolean isTolerantParsing() {return tolerantParsing;}
+
+    public void setTolerantParsing(boolean tolerantParsing) {this.tolerantParsing = tolerantParsing;}
+
     public String toString() {
         String result = "[" + getSimpleName() + " on line " + getBeginLine() + ", column " + getBeginColumn();
         String inputSource = getInputSource();
@@ -104,7 +116,7 @@ abstract public class Expansion extends BaseNode {
     public boolean getIsRegexp() {
         return this instanceof RegularExpression;
     }
-    
+
     public TreeBuildingAnnotation getTreeNodeBehavior() {
         if (treeNodeBehavior == null) {
             if (this.getParent() instanceof BNFProduction) {
@@ -131,21 +143,21 @@ abstract public class Expansion extends BaseNode {
         return firstAncestorOfType(Lookahead.class) != null;
     }
 
-    public  void setLookahead(Lookahead lookahead) {
-    	this.lookahead = lookahead;
+    public void setLookahead(Lookahead lookahead) {
+        this.lookahead = lookahead;
     }
 
     public Lookahead getLookahead() {
-    	return lookahead;
+        return lookahead;
     }
-    
+
     public boolean getHasExplicitLookahead() {
         return getLookahead() != null;
     }
 
     public boolean getHasExplicitNumericalLookahead() {
         Lookahead la = getLookahead();
-        return la !=null && la.getHasExplicitNumericalAmount();
+        return la != null && la.getHasExplicitNumericalAmount();
     }
 
     /**
@@ -158,30 +170,29 @@ abstract public class Expansion extends BaseNode {
     }
 
     /**
-     * Do we do a syntactic lookahead using this expansion
-     * itself as the lookahead expansion?
+     * Do we do a syntactic lookahead using this expansion itself as the lookahead
+     * expansion?
      */
     public boolean getHasImplicitSyntacticLookahead() {
-        if (getHasSeparateSyntacticLookahead()) return false;
-        if (!this.isAtChoicePoint()) return false;
-        if (this.isAlwaysSuccessful()) return false;
-        if (getLookaheadAmount()>1) return true;
-        if (getHasScanLimit()) return true;
+        if (getHasSeparateSyntacticLookahead())
+            return false;
+        if (!this.isAtChoicePoint())
+            return false;
+        if (this.isAlwaysSuccessful())
+            return false;
+        if (getLookaheadAmount() > 1)
+            return true;
+        if (getHasScanLimit())
+            return true;
         if (this instanceof ExpansionSequence) {
             for (Expansion exp : childrenOfType(Expansion.class)) {
                 if (exp instanceof NonTerminal)
-                return ((NonTerminal)exp).getProduction().getExpansion().getHasScanLimit();
-                if (exp.getMaximumSize()>0) break;
+                    return ((NonTerminal) exp).getProduction().getExpansion().getHasScanLimit();
+                if (exp.getMaximumSize() > 0)
+                    break;
             }
         }
         return false;
-    }
-
-    public boolean getDoesFullSelfLookahead() {
-        return getHasImplicitSyntacticLookahead()
-                && !getHasExplicitNumericalLookahead()
-                && !getHasScanLimit()
-                && !getHasInnerScanLimit();
     }
 
     private boolean scanLimit;
@@ -203,19 +214,25 @@ abstract public class Expansion extends BaseNode {
         this.scanLimitPlus = scanLimitPlus;
 
     }
-    
+
     public boolean getRequiresScanAhead() {
         Lookahead la = getLookahead();
-        if (la != null && la.getRequiresScanAhead()) return true;
-//        if (this.getParent() instanceof com.javacc.parser.tree.Assertion) return true;
+        if (la != null && la.getRequiresScanAhead())
+            return true;
+        // if (this.getParent() instanceof com.javacc.parser.tree.Assertion) return
+        // true;
         return getHasGlobalSemanticActions();
     }
 
     public final boolean getRequiresPredicateMethod() {
-        if (isInsideLookahead()) return false;
-        if (!isAtChoicePoint()) return false;
-        if (getHasSeparateSyntacticLookahead()) return true;
-        if (getHasImplicitSyntacticLookahead() && !isSingleToken()) return true;
+        if (isInsideLookahead())
+            return false;
+        if (!isAtChoicePoint())
+            return false;
+        if (getHasSeparateSyntacticLookahead())
+            return true;
+        if (getHasImplicitSyntacticLookahead() && !isSingleToken())
+            return true;
         return getHasGlobalSemanticActions();
     }
 
@@ -237,50 +254,53 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean getHasGlobalSemanticActions() {
-        List<CodeBlock> blocks = descendants(CodeBlock.class, cb->cb.isAppliesInLookahead());
+        List<CodeBlock> blocks = descendants(CodeBlock.class, cb -> cb.isAppliesInLookahead());
         return !blocks.isEmpty();
     }
-    
+
     public int getLookaheadAmount() {
         Lookahead la = getLookahead();
-        if (la != null) return la.getAmount();
+        if (la != null)
+            return la.getAmount();
         return getRequiresScanAhead() ? Integer.MAX_VALUE : 1; // A bit kludgy, REVISIT
     }
-    
+
     public boolean getHasSemanticLookahead() {
         Lookahead la = getLookahead();
         return la != null && la.hasSemanticLookahead();
     }
 
     public boolean getHasScanLimit() {
-        if (!(this instanceof ExpansionSequence)) return false;
+        if (!(this instanceof ExpansionSequence))
+            return false;
         for (Expansion sub : childrenOfType(Expansion.class)) {
-            if (sub.isScanLimit()) return true;
+            if (sub.isScanLimit())
+                return true;
         }
         return false;
     }
 
     public boolean getHasInnerScanLimit() {
-        if (!(this instanceof ExpansionSequence)) return false;
+        if (!(this instanceof ExpansionSequence))
+            return false;
         for (Expansion sub : childrenOfType(Expansion.class)) {
             if (sub instanceof NonTerminal) {
                 return ((NonTerminal) sub).getProduction().getHasScanLimit();
             }
-            if (sub.getMaximumSize()>0) break;
+            if (sub.getMaximumSize() > 0)
+                break;
         }
         return false;
     }
-
-
 
     public Expansion getUpToExpansion() {
         Lookahead la = getLookahead();
         return la == null ? null : la.getUpToExpansion();
     }
 
-   /**
-     * @return whether this expansion is at the very end of
-     * the root expansion that contains it.
+    /**
+     * @return whether this expansion is at the very end of the root expansion that
+     *         contains it.
      */
     public boolean isAtEnd() {
         Node parent = getParent();
@@ -293,13 +313,14 @@ abstract public class Expansion extends BaseNode {
                 return true;
             }
             List<Expansion> siblings = seq.getUnits();
-            for (int i = siblings.indexOf(this) +1; i< siblings.size();i++) {
-                if (!siblings.get(i).isAlwaysSuccessful()) return false;
+            for (int i = siblings.indexOf(this) + 1; i < siblings.size(); i++) {
+                if (!siblings.get(i).isAlwaysSuccessful())
+                    return false;
             }
         }
         return ((Expansion) parent).isAtEnd();
-    }    
-    
+    }
+
     public Expression getSemanticLookahead() {
         return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;
     }
@@ -311,11 +332,11 @@ abstract public class Expansion extends BaseNode {
     public LookBehind getLookBehind() {
         return getLookahead() != null ? getLookahead().getLookBehind() : null;
     }
-    
+
     public boolean isNegated() {
         return getLookahead() != null && getLookahead().isNegated();
     }
-    
+
     public String getFirstSetVarName() {
         if (firstSetVarName == null) {
             if (this.getParent() instanceof BNFProduction) {
@@ -326,19 +347,19 @@ abstract public class Expansion extends BaseNode {
         }
         return firstSetVarName;
     }
-    
+
     public String getFinalSetVarName() {
-         if (finalSetVarName == null) {
-             finalSetVarName = getFirstSetVarName();
-             if (finalSetVarName.startsWith("first_set$")) {
-                 finalSetVarName = finalSetVarName.replaceFirst("first", "final");
-             } else {
-                 finalSetVarName = finalSetVarName.replace("_FIRST_SET", "_FINAL_SET");
-             }
-         }
-         return finalSetVarName;
+        if (finalSetVarName == null) {
+            finalSetVarName = getFirstSetVarName();
+            if (finalSetVarName.startsWith("first_set$")) {
+                finalSetVarName = finalSetVarName.replaceFirst("first", "final");
+            } else {
+                finalSetVarName = finalSetVarName.replace("_FIRST_SET", "_FINAL_SET");
+            }
+        }
+        return finalSetVarName;
     }
-    
+
     public String getFollowSetVarName() {
         if (followSetVarName == null) {
             followSetVarName = getGrammar().generateUniqueIdentifier("follow_set$", this);
@@ -364,96 +385,98 @@ abstract public class Expansion extends BaseNode {
         }
         return predicateMethodName;
     }
-   
+
     public int getFinalSetSize() {
-	     return getFinalSet().cardinality();
+        return getFinalSet().cardinality();
     }
-    
+
     abstract public TokenSet getFirstSet();
-    
+
     abstract public TokenSet getFinalSet();
-    
+
     public TokenSet getFollowSet() {
-         Node parent = getParent();
-         if (parent instanceof ExpansionChoice) {
-             return ((ExpansionChoice) parent).getFollowSet();
-         }
-         if (parent instanceof ExpansionSequence) {
-             ExpansionSequence sequence = (ExpansionSequence) parent;
-             List<Expansion> siblings = sequence.getUnits();
-             int index = siblings.indexOf(this) +1;
-             TokenSet result = new TokenSet(getGrammar());
-             boolean atEnd = false;
-             for (int i = index; i<siblings.size(); i++) {
-                  result.or(siblings.get(i).getFollowSet());
-                  if (!siblings.get(i).isPossiblyEmpty()) {
-                      atEnd = true; 
-                      break;
-                  }
-             }
-             if (!atEnd) {
-                  result.or(sequence.getFollowSet());
-             }
-             return result;
-         }
-         if (parent instanceof OneOrMore || parent instanceof ZeroOrMore) {
-             TokenSet result = new TokenSet(getGrammar());
-             result.or(this.getFinalSet());
-             result.or(((Expansion)parent).getFollowSet());
-             return result;
-         }
-         if (parent instanceof Expansion) {
-             return ((Expansion) parent).getFollowSet();
-         }
-         // REVISIT.
-         return new TokenSet(getGrammar());
+        Node parent = getParent();
+        if (parent instanceof ExpansionChoice) {
+            return ((ExpansionChoice) parent).getFollowSet();
+        }
+        if (parent instanceof ExpansionSequence) {
+            ExpansionSequence sequence = (ExpansionSequence) parent;
+            List<Expansion> siblings = sequence.getUnits();
+            int index = siblings.indexOf(this) + 1;
+            TokenSet result = new TokenSet(getGrammar());
+            boolean atEnd = false;
+            for (int i = index; i < siblings.size(); i++) {
+                result.or(siblings.get(i).getFollowSet());
+                if (!siblings.get(i).isPossiblyEmpty()) {
+                    atEnd = true;
+                    break;
+                }
+            }
+            if (!atEnd) {
+                result.or(sequence.getFollowSet());
+            }
+            return result;
+        }
+        if (parent instanceof OneOrMore || parent instanceof ZeroOrMore) {
+            TokenSet result = new TokenSet(getGrammar());
+            result.or(this.getFinalSet());
+            result.or(((Expansion) parent).getFollowSet());
+            return result;
+        }
+        if (parent instanceof Expansion) {
+            return ((Expansion) parent).getFollowSet();
+        }
+        // REVISIT.
+        return new TokenSet(getGrammar());
     }
-    
+
     /**
      * @return Can this expansion be matched by the empty string.
      */
-    abstract public boolean isPossiblyEmpty(); 
-    
+    abstract public boolean isPossiblyEmpty();
+
     /**
      * Returns the minimum number of tokens that can parse to this expansion.
      */
     final public int getMinimumSize() {
-    	return minimumSize(Integer.MAX_VALUE);
+        return minimumSize(Integer.MAX_VALUE);
     }
 
     /**
      * @return whether this Expansion is always matched by exactly one token
      */
     public final boolean isSingleToken() {
-        if (firstChildOfType(Failure.class)!=null) return false; // Maybe a bit kludgy. REVISIT.
-        if (getHasScanLimit()) return false;
+        if (firstChildOfType(Failure.class) != null)
+            return false; // Maybe a bit kludgy. REVISIT.
+        if (getHasScanLimit())
+            return false;
         return !isPossiblyEmpty() && getMaximumSize() == 1;
     }
-    
-    abstract public int minimumSize(int oldMin); 
+
+    abstract public int minimumSize(int oldMin);
 
     abstract public int getMaximumSize();
-     
-     /**
-      * @return Does this expansion resolve to a fixed sequence of Tokens?
-      */
-     abstract public boolean isConcrete();
 
-     public boolean masks(Expansion other) {
-         TokenSet firstSet = this.getFirstSet();
-         TokenSet otherSet = other.getFirstSet();
-         TokenSet set = new TokenSet(this.getGrammar());
-         set.or(firstSet);
-         set.andNot(otherSet);
-         return set.cardinality() == 0;
-     }
- 
-     public TokenSet overlap(Expansion other) {
-         TokenSet firstSet = this.getFirstSet();
-         TokenSet otherSet = other.getFirstSet();
-         TokenSet result = new TokenSet(getGrammar());
-         result.or(firstSet);
-         result.and(otherSet);
-         return result;
-     }
+    /**
+     * @return Does this expansion resolve to a fixed sequence of Tokens?
+     */
+    abstract public boolean isConcrete();
+
+    public boolean masks(Expansion other) {
+        TokenSet firstSet = this.getFirstSet();
+        TokenSet otherSet = other.getFirstSet();
+        TokenSet set = new TokenSet(this.getGrammar());
+        set.or(firstSet);
+        set.andNot(otherSet);
+        return set.cardinality() == 0;
+    }
+
+    public TokenSet overlap(Expansion other) {
+        TokenSet firstSet = this.getFirstSet();
+        TokenSet otherSet = other.getFirstSet();
+        TokenSet result = new TokenSet(getGrammar());
+        result.or(firstSet);
+        result.and(otherSet);
+        return result;
+    }
 }
