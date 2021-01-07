@@ -95,6 +95,9 @@ public class Grammar extends BaseNode {
                          parserTokenHooks = new ArrayList<>(),
                          openNodeScopeHooks = new ArrayList<>(),
                          closeNodeScopeHooks = new ArrayList<>();
+    private Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
+
+
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
@@ -405,6 +408,19 @@ public class Grammar extends BaseNode {
 
     public List<String> getCloseNodeScopeHooks() {
         return closeNodeScopeHooks;
+    }
+
+    public Map<String, List<String>> getCloseNodeHooksByClass() {
+        return closeNodeHooksByClass;
+    }
+
+    private List<String> getCloseNodeScopeHooks(String className) {
+        List<String> result = closeNodeHooksByClass.get(className);
+        if (result == null) {
+            result = new ArrayList<>();
+            closeNodeHooksByClass.put(className, result);
+        }
+        return result;
     }
 
 
@@ -742,7 +758,7 @@ public class Grammar extends BaseNode {
     }
 
     // A bit kludgy
-
+    // Also, this code doesn't really belong in this class, I don't think.
     private void checkForHooks(Node node, String className) {
         if (node == null || null instanceof Token) {
             return;
@@ -800,6 +816,9 @@ public class Grammar extends BaseNode {
                     else if (methodName.equals("jjtreeCloseNodeScope") || methodName.startsWith("closeNodeScopeHook")) {
                         closeNodeScopeHooks.add(methodName);
                     }
+                }
+                else if (methodName.startsWith("closeNodeHook$")) {
+                        getCloseNodeScopeHooks(className).add(methodName);
                 }
             }
         } else {

@@ -63,4 +63,5 @@ public class ${classname} extends ${grammar.baseNodeClassName} {
     }
 
 [/#if]
+
 }

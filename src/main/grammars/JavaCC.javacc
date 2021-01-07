@@ -400,6 +400,8 @@ INJECT CaseStatement :
 
 INJECT Identifier : 
 {
+    private String tokenHookName, openHookName, closeHookName;
+
    public String getNormalizedText() {
         String image = getImage();
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
@@ -424,18 +426,23 @@ INJECT Identifier :
             return "currentToken";
         }
         if (image.equals("TOKEN_HOOK")) {
-            String result = "tokenHook$" + getInputSource() + "_line_" + getBeginLine();
-            return com.javacc.Grammar.removeNonJavaIdentifierPart(result);
+            if (tokenHookName ==null) {
+                tokenHookName = getGrammar().generateUniqueIdentifier("tokenHook$", this);
+            }
+            return tokenHookName;
         }
-        if (image.equals("OPEN_NODE_SCOPE_HOOK")) {
-            String result = "openNodeScopeHook$" + getInputSource() + "_line" + getBeginLine();
+        if (image.equals("OPEN_NODE_HOOK")) {
+            if (openHookName == null) {
+                openHookName = getGrammar().generateUniqueIdentifier("openNodeHook$", this);
+            }
+            return openHookName;
         }
-        if (image.equals("CLOSE_NODE_SCOPE_HOOK")) {
-            String result = "closeNodeScopeHook$" + getInputSource() + "_line" + getBeginLine();
+        if (image.equals("CLOSE_NODE_HOOK")) {
+            if (closeHookName == null) {
+                closeHookName = getGrammar().generateUniqueIdentifier("closeNodeHook$", this);
+            }
+            return closeHookName;
         }
-//        if (image.equals("input_stream")) {
-//            return "inputSource";
-//        }
         return image;
    }
 }
@@ -778,7 +785,10 @@ INJECT BNFProduction :
                 }
             }
         }
+
     }
+
+    public void CLOSE_NODE_HOOK() {}
 
 
 

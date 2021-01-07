@@ -34,6 +34,11 @@
 
 [#import "CommonUtils.java.ftl" as CU]
 
+[#var nodeNumbering = 0]
+[#var NODE_USES_PARSER = grammar.nodeUsesParser]
+[#var NODE_PREFIX = grammar.nodePrefix]
+[#var currentProduction]
+
 [#macro Productions] 
  //=================================
  // Start of methods for BNF Productions
@@ -62,6 +67,7 @@
     }   
 [/#macro]
 
+[#-- The next 100 lines are too messy and need a significant cleanup --]
 [#macro BuildCode expansion]
    [#if expansion.simpleName != "ExpansionSequence"]
   // Code for ${expansion.simpleName} specified at:
@@ -110,6 +116,9 @@
              if (buildTree) {
                  if (${parseExceptionVar} == null) {
                      closeNodeScope(${nodeVarName}, ${closeCondition});
+                     [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
+                        ${hook}(${nodeVarName});
+                     [/#list]
                  } else {
                      if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
                      clearNodeScope();
@@ -144,21 +153,21 @@
 
 [#--  Boilerplate code to create the node variable --]
 [#macro createNode treeNodeBehavior nodeVarName]
-   [#var nodeName = NODE_PREFIX + currentProduction.name]
-   [#if treeNodeBehavior?? && treeNodeBehavior.nodeName??]
-      [#set nodeName = NODE_PREFIX + treeNodeBehavior.nodeName]
-   [/#if]
+   [#var nodeName = nodeClassName(treeNodeBehavior)]
    ${nodeName} ${nodeVarName} = null;
    if (buildTree) {
-   [#if NODE_USES_PARSER]
-        ${nodeVarName} = new ${nodeName}(this);
-   [#else]
-       ${nodeVarName} = new ${nodeName}();
-   [/#if]
-       ${nodeVarName}.setInputSource(getInputSource());
+     ${nodeVarName} = new ${nodeName}([#if NODE_USES_PARSER]this[/#if]);
+      ${nodeVarName}.setInputSource(getInputSource());
        openNodeScope(${nodeVarName});
   }
 [/#macro]
+
+[#function nodeClassName treeNodeBehavior]
+   [#if treeNodeBehavior?? && treeNodeBehavior.nodeName??] 
+      [#return NODE_PREFIX + treeNodeBehavior.nodeName]
+   [/#if]
+   [#return NODE_PREFIX + currentProduction.name]
+[/#function]
 
 
 [#macro BuildExpansionCode expansion]
@@ -381,11 +390,6 @@
    [/#if]
 [/#macro]
 
-[#var parserData=grammar.parserData]
-[#var nodeNumbering = 0]
-[#var NODE_USES_PARSER = grammar.nodeUsesParser]
-[#var NODE_PREFIX = grammar.nodePrefix]
-[#var currentProduction]
 
 
 [#macro BuildAssertionRoutine assertion]
