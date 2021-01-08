@@ -23,9 +23,9 @@
             <arg line="${basedir}/JSONC.javacc -q -n"/>
         </java>
    </target>
-   <target name="compile" depends="parser2-gen, parser2-gen">
-       <javac srcdir="." includeantruntime="off"  failonerror="true" debug="on" target="1.8" source="1.8"
-       fork="true"/>
+   <target name="compile" depends="parser1-gen, parser2-gen">
+	   <javac classpath="." srcdir="." includeantruntime="off"  failonerror="true" debug="on" target="1.8" source="1.8"
+		   fork="true"/>
        <echo>
            test harness via: java JSONTest &lt;filename&gt;
            OR              : java JSONCTest &lt;filename&gt;

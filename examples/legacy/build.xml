@@ -9,7 +9,8 @@
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
 	    	<arg line="-q -d ${outputdir}/CORBA-IDL ${basedir}/CORBA-IDL/IDL.javacc"/>
 		</java>
-	    <javac srcdir="${outputdir}/CORBA-IDL" 
+	    <javac srcdir="${outputdir}/CORBA-IDL"
+				classpath="${outputdir}/CORBA-IDL"
 		       includeantruntime="no" 
 			   failonerror="true" 
 			   fork="true"
@@ -49,6 +50,7 @@
 			<arg value="${basedir}/GUIParsing/ParserVersion/CalcInput.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/GUIParsing/ParserVersion" 
+		       classpath="${outputdir}/GUIParsing/ParserVersion" 
 		       includeantruntime="no" 
 			   failonerror="true"
 			   fork="true"/>
@@ -76,6 +78,7 @@
 	    </copy>
  	
  	    <javac srcdir="${outputdir}/Interpreter" 
+		       classpath="${outputdir}/Interpreter" 
 		       debug="on" 
 			   includeantruntime="no" 
 			   failonerror="true"
@@ -146,6 +149,7 @@
 		</java>
 	    <javac debug="on" 
 		       srcdir="${outputdir}/TreeBuildingExamples.eg1" 
+			   classpath="${outputdir}/TreeBuildingExamples.eg1" 
 			   includeantruntime="no" 
 			   failonerror="true"
 			   fork="true" />
@@ -183,6 +187,7 @@
 			<arg value="${basedir}/TreeBuildingExamples/eg2.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/TreeBuildingExamples.eg2" 
+	           classpath="${outputdir}/TreeBuildingExamples.eg2" 
 		       includes="Eg2.java" 
 			   includeantruntime="no" 
 			   fork="true"
@@ -221,6 +226,7 @@
 			<arg value="${basedir}/TreeBuildingExamples/eg3.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/TreeBuildingExamples.eg3"
+	           classpath="${outputdir}/TreeBuildingExamples.eg3"
 		       fork="true" 
 		       includeantruntime="no" failonerror="true"/>
 
@@ -325,7 +331,9 @@
 		 <arg value="${basedir}/MailProcessing/Faq.javacc"/>
 	 </java>
 
-	 <javac srcdir="${outputdir}/MailProcessing" fork="true" failonerror="true" includeantruntime="no"/>
+	 <javac srcdir="${outputdir}/MailProcessing" 
+	        classpath ="${outputdir}/MailProcessing" 
+	        fork="true" failonerror="true" includeantruntime="no"/>
 	  <echo>MailProcessing example succeeded</echo>
 	  </target>
 </project>
