@@ -233,17 +233,16 @@ public final class Main {
             System.err.println("File " + grammarFile + " does not exist!");
             System.exit(-1);
         }
-        if (outputDirectory == null) {
-            outputDirectory = grammarFile.getParentFile();
-        }
-        if (!outputDirectory.exists()) {
-            if (!outputDirectory.mkdirs()) {
-                System.err.println("Cannot create directory " + outputDirectory);
-                System.exit(-1);
-            } 
-            if (!outputDirectory.canWrite()) {
-                System.err.println("Cannot write to directory " + outputDirectory);
-                System.exit(-1);
+        if (outputDirectory !=null) {
+            if (!outputDirectory.exists()) {
+                if (!outputDirectory.mkdirs()) {
+                    System.err.println("Cannot create directory " + outputDirectory);
+                    System.exit(-1);
+                } 
+                if (!outputDirectory.canWrite()) {
+                    System.err.println("Cannot write to directory " + outputDirectory);
+                    System.exit(-1);
+                }
             }
         }
         int errorcode = mainProgram(grammarFile, outputDirectory, jdkTarget, quiet);
