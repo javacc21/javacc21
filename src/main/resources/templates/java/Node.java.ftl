@@ -245,13 +245,40 @@ public interface Node extends Comparable<Node>
         return null; 
      }
 
-     default <T extends Node>T firstDescendantOfType(Class<T> clazz) {
+[#if !grammar.userDefinedLexer && grammar.tokensAreNodes]
+    default Token firstDescendantOfType(${grammar.constantsClassName}.TokenType type) {
+         for (Node child : children()) {
+             if (child instanceof Token) {
+                 Token tok = (Token) child;
+                 if (tok.getType()==type) {
+                     return tok;
+                 }
+             } else {
+                 Token tok = child.firstDescendantOfType(type);
+                 if (tok != null) return tok;
+             }
+         }
+         return null;
+    }
+
+    default Token firstChildOfType(${grammar.constantsClassName}.TokenType tokenType) {
+        for (Node child : children()) {
+            if (child instanceof Token) {
+                Token tok = (Token) child;
+                if (tok.getType() == tokenType) return tok;
+            }
+        }
+        return null;
+    }
+[/#if]
+
+    default <T extends Node>T firstDescendantOfType(Class<T> clazz) {
          for (Node child : children()) {
              if (clazz.isInstance(child)) return clazz.cast(child);
              else return child.firstDescendantOfType(clazz);
          }
          return null;
-     }
+    }
 
     default <T extends Node>List<T>childrenOfType(Class<T>clazz) {
         List<T>result=new java.util.ArrayList<>();
