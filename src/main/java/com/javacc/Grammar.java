@@ -175,7 +175,9 @@ public class Grammar extends BaseNode {
         String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
         JavaCCParser parser = new JavaCCParser(this, file.getPath(), content);
         parser.setEnterIncludes(enterIncludes);
-        setFilename(location);
+        if (!isInInclude()) {
+            setFilename(location);
+        }
         GrammarFile rootNode = parser.Root();
         if (!isInInclude()) {
             addChild(rootNode);
@@ -320,7 +322,9 @@ public class Grammar extends BaseNode {
             if (lexerClassName.toLowerCase().endsWith("parser")) {
                 lexerClassName = lexerClassName.substring(0, lexerClassName.length() - 6);
             }
-            lexerClassName += "Lexer";
+            if (!lexerClassName.toLowerCase().endsWith("lexer")) {
+                lexerClassName += "Lexer";
+            }
         }
         return lexerClassName;
     }

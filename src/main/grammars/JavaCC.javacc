@@ -278,10 +278,12 @@ TOKEN :
 }
 
 INJECT BaseNode :
+    import java.util.*;
     import freemarker.template.*;
     import java.lang.reflect.*;
     import com.javacc.Grammar;
-    implements Node, TemplateHashModel;
+    import NODE_PACKAGE.KeyWord;
+    implements Node, TemplateHashModel, CONSTANTS_CLASS;
 {
     public TemplateModel get(String key) throws TemplateModelException {
         String methodName = "get" + key.substring(0,1).toUpperCase() + key.substring(1);
@@ -342,8 +344,207 @@ INJECT BaseNode :
         String name = getClass().getName();
         return name.substring(name.lastIndexOf(".") + 1); // strip the package name
     }
+    
+    protected String getInnerText() {
+        StringBuilder buf = new StringBuilder();
+        List<Token> tokens = getAllTokens(true);
+        boolean outputOpeningBrace = false;
+        for (int i=0; i<tokens.size() -1; i++) {
+            Token t = tokens.get(i);
+            if (outputOpeningBrace) {
+                buf.append(t);
+            } else if (t.getType() == TokenType.LBRACE) {
+                outputOpeningBrace = true;
+            }
+        }
+        return buf.toString();
+    }
 
+    // REVISIT. Need to fix the token chaining    
+    public void prepend(Node n) {
+        ListIterator<Node> iterator = iterator();
+        iterator.add(n);
+    }
+    
+    public String getAsString() {
+        return getLiteralText();
+    }
+    
+    public boolean isEmpty() {
+        return getRealTokens().isEmpty();
+    }
+
+    public boolean hasKeyWord(String keyWord) {
+        for (KeyWord kw: childrenOfType(KeyWord.class)) {
+           if (kw.getImage().equals(keyWord)) return true;
+        }
+        return false;
+    }
+
+    protected String getLiteralText() {
+        StringBuilder buf = new StringBuilder();
+        for (Token t : getAllTokens(true)) {
+            buf.append(t);
+        }
+        return buf.toString();
+    }
 }
+
+INJECT CompilationUnit : 
+    import java.util.*;
+{
+    public String getPackageName() {
+        PackageDeclaration jpd = getPackageDeclaration();
+        return jpd == null ?  null : jpd.getPackageName();
+    }
+    
+    
+    public PackageDeclaration getPackageDeclaration() {
+        return firstChildOfType(PackageDeclaration.class);
+    }
+    
+    public List<ImportDeclaration> getImportDeclarations() {
+        return childrenOfType(ImportDeclaration.class);
+    }
+    
+    public List<TypeDeclaration> getTypeDeclarations() {
+        return childrenOfType(TypeDeclaration.class);
+    }
+
+    public void addImportDeclaration(ImportDeclaration decl) {
+        Node firstTypeDeclaration = firstChildOfType(TypeDeclaration.class);
+        if (firstTypeDeclaration == null) {
+          firstTypeDeclaration = firstChildOfType(Delimiter.class); //lone semicolon, I suppose
+        }
+        addChild(indexOf(firstTypeDeclaration), decl);
+    }
+}
+
+INJECT TypeDeclaration : 
+    import java.util.*;
+{
+    public String getName() {
+        return firstChildOfType(Identifier.class).toString();
+    }
+    
+    public TypeParameterList getTypeParameterList() {
+        return firstChildOfType(TypeParameterList.class);
+    }
+    
+    public ClassOrInterfaceBody getBody() {
+        return firstChildOfType(ClassOrInterfaceBody.class);
+    }
+    
+    public ExtendsList getExtendsList() {
+        return firstChildOfType(ExtendsList.class);
+    }
+    
+    public ImplementsList getImplementsList() {
+        return firstChildOfType(ImplementsList.class);
+    }
+    
+    public CompilationUnit getCompilationUnit() {
+        return firstAncestorOfType(CompilationUnit.class);
+    }
+    
+    public List<ImportDeclaration> getImportDeclarations() {
+        CompilationUnit jcu = getCompilationUnit();
+        return jcu==null ? new ArrayList<ImportDeclaration>() : jcu.getImportDeclarations();
+    }
+}
+
+INJECT FormalParams : 
+   import java.util.List;
+{
+    public List<FormalParameter> getParams() {
+        return childrenOfType(FormalParameter.class);
+    }
+    
+    public String getAsString() {
+        StringBuilder buf = new StringBuilder();
+        List<FormalParameter> params = getParams();
+        boolean first = true;
+        for (FormalParameter param : params) {
+            if (!first) {
+                buf.append(", ");
+            }
+            buf.append(param.getAsString());
+            first = false;
+        }
+        return buf.toString();
+    }
+    
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        for (Token tok : getRealTokens()) {
+            buf.append(" ");
+            buf.append(tok);
+        }
+        return buf.toString();
+    }
+}
+
+INJECT ImplementsList : 
+   import java.util.*;
+{    
+    public List<ObjectType> getTypes() {
+        return childrenOfType(ObjectType.class);
+    }
+    //REVISIT. fix token chaining    
+    public void addType(ObjectType type) {
+        ListIterator<Node> iterator = iterator();
+        if (!iterator.hasNext()) {
+            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements", this));
+            iterator.next();
+            iterator.add(type);
+        } else {
+            while (iterator.hasNext()) {
+                if (type.equals(iterator.next())) 
+                    return;
+            }
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this));
+            iterator.next();
+            iterator.add(type);
+        }
+    }
+}
+
+INJECT CodeBlock :
+{
+    public String getAsString() {
+        return getInnerText();
+    }
+    
+    /**
+     * The block is empty if it only consists of { and }
+     */
+    public boolean isEmpty() {
+        return getRealTokens().size() == 2;
+    }
+}
+
+INJECT InvocationArgs : 
+    import java.util.*;
+{
+    public List<Expression> getArgs() {
+        return childrenOfType(Expression.class);
+    }
+
+    public String getAsString() {
+        StringBuilder buf = new StringBuilder();
+        List<Expression> args = getArgs();
+        boolean first = true;
+        for (Expression arg : args) {
+            if (!first) {
+                buf.append(", ");
+            }
+            buf.append(arg.getAsString());
+            first = false;
+        }
+        return buf.toString();
+    }
+} 
+
 
 INCLUDE("Java.javacc")
 
@@ -481,6 +682,75 @@ INJECT TypeParameterList :
     }
 }
 
+INJECT ClassOrInterfaceBody : 
+    import java.util.*;
+{
+    public String getAsString() {
+        return getInnerText();
+    }
+    
+    // REVISIT. fix token chaining
+    public void prepend(List<ClassOrInterfaceBodyDeclaration> elements) {
+        ListIterator<Node> iterator = iterator();
+        Node n = null;
+        while (iterator.hasNext()) {
+            n = iterator.next();
+      	    if (n instanceof Token) {
+	          Token t = (Token) n;
+               if (t.getType() == TokenType.LBRACE) {
+                   break;
+               }
+	          }
+        }
+        for (ClassOrInterfaceBodyDeclaration elem : elements) {
+            iterator.add(elem);
+            iterator.next();
+        }
+    }
+    
+    // REVISIT. fix token chaining 
+    public void removeDuplicateMethods() {
+        Set<String> sigs = new HashSet<String>();
+        ListIterator<Node> decls = iterator();
+        while (decls.hasNext()) {
+           Node n = decls.next();
+           if (n instanceof ClassOrInterfaceBodyDeclaration) {
+               ClassOrInterfaceBodyDeclaration decl = (ClassOrInterfaceBodyDeclaration) n;
+               String sig = decl.getFullNameSignatureIfMethod();
+               if (sig != null) {
+                    if (sigs.contains(sig)) {
+                        decls.remove();
+                    } else {
+                        sigs.add(sig);
+                    }
+               }
+           }
+        }
+    }
+}
+
+INJECT ClassOrInterfaceBodyDeclaration : 
+{
+    public boolean isMethod() {
+        return firstChildOfType(MethodDeclaration.class) != null;
+    }
+    
+    public String getFullNameSignatureIfMethod() {
+        MethodDeclaration md = firstChildOfType(MethodDeclaration.class);
+        return md == null ? null : md.getFullSignature();
+    }
+}
+
+INJECT FieldDeclaration : 
+   import java.util.*;
+   extends ClassOrInterfaceBodyDeclaration
+{
+  public List<Identifier> getVariableIds() {
+    return descendants(Identifier.class, n->n.getParent() instanceof VariableDeclaratorId);
+  }
+}
+
+
 INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> javaccKeyWords = EnumSet.of(_INJECT,
@@ -531,6 +801,41 @@ INJECT CaseStatement :
                 removeChild(last);
             }
         }
+    }
+}
+
+INJECT MethodDeclaration : 
+{
+    public String getName() {
+        for (Node n : children) {
+            if (n instanceof Identifier) {
+                return n.toString();
+            }
+        }
+        throw new IllegalStateException();
+    }
+    
+    public FormalParams getFormalParams() {
+        return firstChildOfType(FormalParams.class);
+    }
+    
+    public String getFullSignature() {
+        return getName() + getFormalParams();
+    }
+}
+
+INJECT ThrowsList : 
+    import java.util.List;
+    import java.util.ArrayList;
+{
+    public List<Node> getTypes() {
+        List<Node> result = new ArrayList<>();
+        for (Node n : children) {
+           if ((n instanceof Name) || (n instanceof Identifier)) {
+              result.add(n);
+           }
+        }
+        return result; 
     }
 }
 
@@ -765,7 +1070,7 @@ CodeInjection :
         [
            SCAN {foundOptionalInitialBrace} => "}"
         ]
-        [ClassOrInterfaceBody(isInterface) {CURRENT_NODE.body = (ClassOrInterfaceBody) peekNode();}]
+        [ClassOrInterfaceBody {CURRENT_NODE.body = (ClassOrInterfaceBody) peekNode();}]
         {
                 if (enterIncludes) {
                     grammar.addCodeInjection(CURRENT_NODE);
@@ -1230,7 +1535,7 @@ INJECT TokenProduction :
 
 TokenManagerDecls TokenManagerDecls :
    "TOKEN_MGR_DECLS" ":"
-    ClassOrInterfaceBody(false)
+    ClassOrInterfaceBody
     {
         return CURRENT_NODE;
     }
