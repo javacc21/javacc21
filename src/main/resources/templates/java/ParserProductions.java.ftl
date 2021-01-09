@@ -59,7 +59,7 @@
     ${production.name}(${production.parameterList!}) 
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
-     if (trace_enabled) LOGGER.info("Entering production defined on line ${production.beginLine} of ${production.inputSource}");
+     if (trace_enabled) LOGGER.info("Entering production defined on line ${production.beginLine} of ${production.inputSource?j_string}");
      if (cancelled) throw new CancellationException();
      String prevProduction = currentlyParsedProduction;
      this.currentlyParsedProduction = "${production.name}";
@@ -259,7 +259,7 @@
 [/#macro]
 
 [#macro BuildCodeNonTerminal nonterminal]
-   pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource}", ${nonterminal.beginLine}, ${nonterminal.beginColumn}); 
+   pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn}); 
    try {
    [#if !nonterminal.LHS?is_null]
        ${nonterminal.LHS} = 
@@ -334,14 +334,14 @@
       }
    [#elseif choice.parent.simpleName = "OneOrMore"]
        else if (${inFirstVarName}) {
-           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine}, ${choice.beginColumn});
+           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
            throw new ParseException(currentToken.getNext(), ${choice.firstSetVarName}, parsingStack);
        } else {
            break;
        }
    [#elseif choice.parent.simpleName != "ZeroOrOne"]
        else {
-           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource}", ${choice.beginLine}, ${choice.beginColumn});
+           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
            throw new ParseException(currentToken.getNext(), ${choice.firstSetVarName}, parsingStack);
         }
    [/#if]

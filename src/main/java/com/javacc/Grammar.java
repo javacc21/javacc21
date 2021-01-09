@@ -173,7 +173,7 @@ public class Grammar extends BaseNode {
     public Node parse(String location, boolean enterIncludes) throws IOException, ParseException {
         File file = new File(location);
         String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
-        JavaCCParser parser = new JavaCCParser(this, file.getName(), content);
+        JavaCCParser parser = new JavaCCParser(this, file.getPath(), content);
         parser.setEnterIncludes(enterIncludes);
         setFilename(location);
         GrammarFile rootNode = parser.Root();
