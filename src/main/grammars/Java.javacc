@@ -68,9 +68,6 @@ INJECT PARSER_CLASS : {
   }
 }
 
-
-
-
 CompilationUnit CompilationUnit #CompilationUnit :
   [ PackageDeclaration ]
   ( ImportDeclaration )*
@@ -141,10 +138,10 @@ Modifiers #void :
       | 
       SCAN {!modifiers.contains(STRICTFP)}
       => <STRICTFP> {modifiers.add(STRICTFP);}
-//      |
-//      SCAN {!modifiers.contains(_DEFAULT)}
-//      => <_DEFAULT> {modifiers.add(_DEFAULT);}
       |
+//      SCAN {!modifiers.contains(_DEFAULT)} \MethodDeclaration
+//      => <_DEFAULT> {modifiers.add(_DEFAULT);}
+//        |
       Annotation
      )
    )*
@@ -170,13 +167,15 @@ Modifiers2 #void :
   |
    "transient" 
   |
+  SCAN ~\MethodDeclaration =>
    "volatile" 
   |
    "strictfp" 
   |
+  SCAN \MethodDeclaration =>
    "default"
   |
-  => Annotation
+  Annotation
  )*
 ;
 
@@ -184,10 +183,8 @@ Modifiers2 #void :
  * Declaration syntax follows.
  */
 
-TypeDeclaration TypeDeclaration #TypeDeclaration(>100) :
+TypeDeclaration TypeDeclaration #TypeDeclaration(false) :
  (      
-//  ";"
-//  |
   AnnotationTypeDeclaration
   |
   ClassDeclaration

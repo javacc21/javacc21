@@ -225,11 +225,9 @@ abstract public class Expansion extends BaseNode {
     }
 
     public final boolean getRequiresPredicateMethod() {
-        if (isInsideLookahead())
+        if (isInsideLookahead() || !isAtChoicePoint())
             return false;
-        if (!isAtChoicePoint())
-            return false;
-        if (getHasSeparateSyntacticLookahead())
+        if (getHasSeparateSyntacticLookahead() || getHasLookBehind() || getHasSemanticLookahead())
             return true;
         if (getHasImplicitSyntacticLookahead() && !isSingleToken())
             return true;
