@@ -105,7 +105,7 @@
             <attribute name="Build-Date"   value="${timestamp}"/>
         </manifest>
     </jar>
-    <chmod file="javacc.jar" perm="+x"/>
+    <!--chmod file="javacc.jar" perm="+x"/-->
  </target>
 
  <target name="full-jar" depends="compile">
