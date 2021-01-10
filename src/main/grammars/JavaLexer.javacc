@@ -266,8 +266,6 @@ TOKEN #Operator :
 | < LAMBDA : "->" > 
 ;
 
-/* IDENTIFIERS */
-
 TOKEN :
   < IDENTIFIER: <LETTER> (<PART_LETTER>)* > #Identifier
   |

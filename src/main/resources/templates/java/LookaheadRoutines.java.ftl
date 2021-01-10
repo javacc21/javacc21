@@ -183,7 +183,8 @@
        if (!(${expansion.semanticLookahead})) return lastLookaheadSucceeded = false;
      [/#if]
      [#if expansion.hasLookBehind]
-       if (!${expansion.lookBehind.routineName}()) return lastLookaheadSucceeded = false;
+       if ([#if !expansion.lookBehind.negated]![/#if]
+       ${expansion.lookBehind.routineName}()) return lastLookaheadSucceeded = false;
      [/#if]
      [#if expansion.hasSeparateSyntacticLookahead]
       if (
@@ -222,6 +223,55 @@
 [/#macro]
 
 [#macro BuildLookBehindRoutine lookBehind]
+    private final boolean ${lookBehind.routineName}() {
+       ListIterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
+       [#list lookBehind.path as element]
+          [#var elementNegated = (element[0] == "~")]
+          [#if elementNegated][#set element = element?substring(1)][/#if]
+          [#if element = "."]
+              if (!stackIterator.hasNext()) {
+                 return lastLookaheadSucceeded = false;
+              }
+              stackIterator.next();
+          [#elseif element = "..."]
+             [#if element_index = lookBehind.path?size-1]
+                 [#if lookBehind.hasEndingSlash]
+                      return lastLookaheadSucceeded = stackIterator.hasNext();
+                 [#else]
+                      return lastLookaheadSucceeded = true;
+                 [/#if]
+             [#else]
+                 [#var nextElement = lookBehind.path[element_index+1]]
+                 [#var nextElementNegated = (nextElement[0]=="~")]
+                 [#if nextElementNegated][#set nextElement=nextElement?substring(1)][/#if]
+                 while (stackIterator.hasNext()) {
+                    NonTerminalCall ntc = stackIterator.next();
+                    [#var equalityOp = nextElementNegated?string("!=", "==")]
+[#--                    if ([#if nextElementNegated]![/#if]ntc.productionName.equals("${nextElement}")) {--]
+                    if (ntc.productionName ${equalityOp} "${nextElement}") {
+                       stackIterator.previous();
+                       break;
+                    }
+                    if (!stackIterator.hasNext()) return lastLookaheadSucceeded = false;
+                 }
+             [/#if]
+          [#else]
+             if (!stackIterator.hasNext()) return lastLookaheadSucceeded = false;
+             NonTerminalCall ntc = stackIterator.next();
+             [#var equalityOp = elementNegated?string("==", "!=")]
+[#--             if ([#if !elementNegated]![/#if]ntc.productionName.equals("${element}")) return lastLookaheadSucceeded = false;--]
+               if (ntc.productionName ${equalityOp} "${element}") return lastLookaheadSucceeded = false;
+          [/#if]
+       [/#list]
+       [#if lookBehind.hasEndingSlash]
+           return lastLookaheadSucceeded = !stackIterator.hasNext();
+       [#else]
+           return lastLookaheadSucceeded = true;
+       [/#if]
+    }
+[/#macro]
+
+[#macro BuildLookBehindRoutine2 lookBehind]
     private final boolean ${lookBehind.routineName}() {
        Iterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
        boolean foundProduction = false;
@@ -268,7 +318,7 @@
            return lastLookaheadSucceeded = [#if !lookBehind.negated]![/#if]stackIterator.hasNext();
        [#else]
            return lastLookaheadSucceeded = ${CU.bool(!lookBehind.negated)};
-       [/#if]
+[/#if]
     }
 [/#macro]
 

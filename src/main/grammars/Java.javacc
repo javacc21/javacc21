@@ -68,9 +68,6 @@ INJECT PARSER_CLASS : {
   }
 }
 
-
-
-
 CompilationUnit CompilationUnit #CompilationUnit :
   [ PackageDeclaration ]
   ( ImportDeclaration )*
@@ -107,8 +104,6 @@ ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 Modifiers #void :
 {EnumSet<TokenType> modifiers = EnumSet.noneOf(TokenType.class);}
    (
-     SCAN 2=>
-     (
       SCAN {!modifiers.contains(STATIC)}
       => <STATIC> {modifiers.add(STATIC);}
       |
@@ -141,12 +136,11 @@ Modifiers #void :
       | 
       SCAN {!modifiers.contains(STRICTFP)}
       => <STRICTFP> {modifiers.add(STRICTFP);}
-//      |
-//      SCAN {!modifiers.contains(_DEFAULT)}
-//      => <_DEFAULT> {modifiers.add(_DEFAULT);}
       |
-      Annotation
-     )
+//      SCAN {!modifiers.contains(_DEFAULT)} \MethodDeclaration
+//      => <_DEFAULT> {modifiers.add(_DEFAULT);}
+//      |
+      SCAN 2 => Annotation
    )*
 ;
 
@@ -174,9 +168,10 @@ Modifiers2 #void :
   |
    "strictfp" 
   |
+  SCAN \MethodDeclaration =>
    "default"
   |
-  => Annotation
+  SCAN 2 => Annotation
  )*
 ;
 
@@ -184,10 +179,8 @@ Modifiers2 #void :
  * Declaration syntax follows.
  */
 
-TypeDeclaration TypeDeclaration #TypeDeclaration(>100) :
+TypeDeclaration TypeDeclaration #TypeDeclaration(false) :
  (      
-//  ";"
-//  |
   AnnotationTypeDeclaration
   |
   ClassDeclaration
@@ -502,11 +495,11 @@ PrimitiveArrayType :
 
 ReturnType #ReturnType : "void" | Type ;
 
-Name : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
+Name #Name : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
 
 ThrowsList : "throws" Name ( "," Name )* ;
 
-Expression Expression #Expression(>1) :
+Expression Expression #Expression(false) :
     AssignmentExpression
     {return (Expression) peekNode();}
 ;
@@ -813,6 +806,22 @@ UnlabeledStatement #void :
   TryStatement
 ;
 
+INJECT AssertStatement : extends Statement;
+INJECT YieldStatement : extends Statement;
+INJECT EmptyStatement : extends Statement;
+INJECT TryStatement : extends Statement
+INJECT SwitchStatement : extends Statement
+INJECT IfStatement : extends Statement
+INJECT WhileStatement : extends Statement
+INJECT DoStatement : extends Statement
+INJECT ForStatement : extends Statement
+INJECT BreakStatement : extends Statement
+INJECT ContinueStatement : extends Statement
+INJECT ReturnStatement : extends Statement
+INJECT ThrowStatement : extends Statement
+INJECT SynchronizedStatement : extends Statement
+INJECT TryStatement : extends Statement
+
 TryStatement #void :
    TryWithResources
    |
@@ -1045,7 +1054,7 @@ CatchBlock :
     Block 
 ;
 
-INJECT CatchBlock :
+INJECT CatchBlock : extends Statement
 {
     public CodeBlock getBlock() {
         return firstChildOfType(CodeBlock.class);
