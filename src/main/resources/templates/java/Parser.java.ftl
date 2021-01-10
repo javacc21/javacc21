@@ -180,7 +180,7 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
-  final public getNextToken() {
+  final public Token getNextToken() {
     return getToken(1);
   }
 
