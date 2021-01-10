@@ -10,6 +10,9 @@ public class InvalidToken extends Token {
 
     public InvalidToken(String image, String inputSource) {
         super(TokenType.INVALID, image, inputSource);
+[#if grammar.faultTolerant]
+        super.setUnparsed(true);
+[/#if]
     }
 
     public String getNormalizedText() {

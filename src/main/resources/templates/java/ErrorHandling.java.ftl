@@ -182,29 +182,44 @@ void dumpLookaheadCallStack(PrintStream ps) {
     dumpCallStack(ps);
 }
 
-  
-    private final boolean tolerantParsing = false;
+[#if grammar.faultTolerant] 
+    private boolean tolerantParsing = true;
+[/#if]    
 
-    public boolean isParserTolerant() {return tolerantParsing;}
+    public boolean isParserTolerant() {
+       [#if grammar.faultTolerant] 
+        return tolerantParsing;
+       [#else]
+        return false;
+       [/#if]
+    }
     
     public void setParserTolerant(boolean tolerantParsing) {
-   //     this.tolerantParsing = tolerantParsing;
-        if (tolerantParsing) {
+        [#if grammar.faultTolerant]
+          this.tolerantParsing = tolerantParsing;
+        [#else]
+          if (tolerantParsing) {
             throw new UnsupportedOperationException("This parser was not built with that feature!");
-        } 
+          }
+        [/#if]
     }
 
-      private Token consumeToken(TokenType expectedType) throws ParseException {
+      private Token consumeToken(TokenType expectedType 
+        [#if grammar.faultTolerant], boolean tolerant [/#if]
+      ) throws ParseException {
         Token oldToken = currentToken;
         currentToken = nextToken(currentToken);
         if (currentToken.getType() != expectedType) {
-            handleUnexpectedTokenType(expectedType, oldToken) ;
+            handleUnexpectedTokenType(expectedType, oldToken
+            [#if grammar.faultTolerant], tolerant[/#if]
+            ) ;
         }
         this.lastConsumedToken = currentToken;
 [#if grammar.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.userDefinedLexer]
-          currentToken.setInputSource(inputSource);
+          currentToken.setInputSource(getInputSource());
+
   [/#if]
   [#list grammar.openNodeScopeHooks as hook]
      ${hook}(currentToken);
@@ -219,16 +234,32 @@ void dumpLookaheadCallStack(PrintStream ps) {
       return currentToken;
   }
  
-  private void handleUnexpectedTokenType(TokenType expectedType, Token oldToken) throws ParseException {
-      [#if grammar.faultTolerant]
-         Token next = nextToken(oldToken);
+  private void handleUnexpectedTokenType(TokenType expectedType, Token oldToken
+      [#if grammar.faultTolerant], boolean tolerant[/#if]
+      ) throws ParseException {
+      [#if !grammar.faultTolerant]
+       throw new ParseException(currentToken, EnumSet.of(expectedType), parsingStack);
+      [#else]
+       if (!tolerant || !this.tolerantParsing) {
+          throw new ParseException(currentToken, EnumSet.of(expectedType), parsingStack);
+       }
+         Token next = nextToken(currentToken);
          if (next.getType() == expectedType) {
-             oldToken.setSkipped(true);
+             [#--] REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
+             should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
+             currentToken.setSkipped(true);
+             currentToken.setNext(next);
              currentToken = next;
              return;
-         }
+         } 
+         [#-- Since skipping the next token did not work, we will insert a virtual token --]
+            Token virtualToken = Token.newToken(expectedType, "VIRTUAL", currentToken);
+            virtualToken.setVirtual(true);
+            currentToken.copyLocationInfo(virtualToken);
+            virtualToken.setNext(currentToken);
+            oldToken.setNext(virtualToken);
+            this.currentToken = virtualToken;
       [/#if]
-       throw new ParseException(currentToken, EnumSet.of(expectedType), parsingStack);
   }
   
  [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]

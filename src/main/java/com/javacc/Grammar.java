@@ -76,6 +76,10 @@ public class Grammar extends BaseNode {
     private Map<Integer, String> tokenNames = new HashMap<>();
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
+    // TODO use these later for Nodes that correspond to abstract 
+    // classes or interfaces
+//    private Set<String> abstractNodeNames = new HashSet<>();
+//    private Set<String> interfaceNodeNames = new HashSet<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
     private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();

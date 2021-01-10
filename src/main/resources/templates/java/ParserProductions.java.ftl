@@ -223,7 +223,12 @@
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
+   [#if !grammar.faultTolerant]
        consumeToken(${CU.TT}${regexp.label});
+   [#else]
+       [#var tolerant = regexp.tolerantParsing?string("true", "false")]
+       consumeToken(${CU.TT}${regexp.label}, ${tolerant});
+   [/#if]
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock]

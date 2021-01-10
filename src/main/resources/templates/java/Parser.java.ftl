@@ -4,7 +4,7 @@
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * modification, are permitted provide that the following conditions are met:
  *
  *     * Redistributions of source code must retain the above copyright notices,
  *       this list of conditions and the following disclaimer.
@@ -152,11 +152,13 @@ public boolean isCancelled() {return cancelled;}
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
     Token result = tok.getNext();
+[#if grammar.parserTokenHooks?size>0]    
     if (result != null) {
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);
 [/#list]
     }
+[/#if]    
     Token previous = null;
     while (result == null) {
       Token next = token_source.getNextToken();
@@ -171,7 +173,9 @@ public boolean isCancelled() {return cancelled;}
 [/#list]
       if (!next.isUnparsed()) {
         result = next;
-      } 
+      } else if (next instanceof InvalidToken) {
+        result = next.getNextToken();
+      }
     }
     tok.setNext(result);
     return result;
