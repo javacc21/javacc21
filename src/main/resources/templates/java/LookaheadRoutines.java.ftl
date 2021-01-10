@@ -431,10 +431,6 @@
       }
 [/#macro]
 
-
-
-
-
 [#macro ScanSingleToken expansion]
     [#var firstSet = expansion.firstSet.tokenNames]
     [#if firstSet?size = 1]

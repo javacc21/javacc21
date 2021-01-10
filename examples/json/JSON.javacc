@@ -10,6 +10,10 @@
  * still does not allow the trailing commas!
  */
 
+ //N.B. The various exclam (!) markers inserted have to do with 
+ // experimental fault-tolerant parsing. Unless you set FAULT_TOLERANT=true
+ // these are ignored.
+
 PARSER_PACKAGE="org.parsers.json";
 NODE_PACKAGE="org.parsers.json.ast";
 DEFAULT_LEXICAL_STATE=JSON;
@@ -82,17 +86,12 @@ Value :
     JSONObject
 ;
 
+KeyValuePair : <STRING_LITERAL> <COLON>! Value;
+
 JSONObject : 
     <OPEN_BRACE>
     [
-       <STRING_LITERAL> 
-       <COLON> 
-       Value
-       (
-         <COMMA>
-        <STRING_LITERAL><COLON> 
-        Value
-       )*!
+        KeyValuePair ("," KeyValuePair)*!
     ]
     <CLOSE_BRACE>!
 ;

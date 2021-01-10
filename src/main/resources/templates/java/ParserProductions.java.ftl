@@ -340,14 +340,14 @@
    [#elseif choice.parent.simpleName = "OneOrMore"]
        else if (${inFirstVarName}) {
            pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
-           throw new ParseException(lastConsumedToken.getNext(), ${choice.firstSetVarName}, parsingStack);
+           throw new ParseException(this, ${choice.firstSetVarName}, parsingStack);
        } else {
            break;
        }
    [#elseif choice.parent.simpleName != "ZeroOrOne"]
        else {
            pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
-           throw new ParseException(lastConsumedToken.getNext(), ${choice.firstSetVarName}, parsingStack);
+           throw new ParseException(this, ${choice.firstSetVarName}, parsingStack);
         }
    [/#if]
 [/#macro]

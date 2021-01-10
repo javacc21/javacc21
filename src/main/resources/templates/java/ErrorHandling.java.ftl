@@ -208,13 +208,14 @@ void dumpLookaheadCallStack(PrintStream ps) {
         [#if grammar.faultTolerant], boolean tolerant [/#if]
       ) throws ParseException {
         Token oldToken = lastConsumedToken;
-        lastConsumedToken = nextToken(lastConsumedToken);
-        nextTokenType = null;
-        if (lastConsumedToken.getType() != expectedType) {
-            handleUnexpectedTokenType(expectedType, oldToken
+        Token nextToken = nextToken(lastConsumedToken);
+        if (nextToken.getType() != expectedType) {
+            handleUnexpectedTokenType(expectedType, nextToken
             [#if grammar.faultTolerant], tolerant[/#if]
             ) ;
         }
+        this.lastConsumedToken = nextToken;
+        this.nextTokenType = null;
 [#if grammar.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.userDefinedLexer]
@@ -233,30 +234,29 @@ void dumpLookaheadCallStack(PrintStream ps) {
       return lastConsumedToken;
   }
  
-  private void handleUnexpectedTokenType(TokenType expectedType, Token oldToken
+  private Token handleUnexpectedTokenType(TokenType expectedType, Token nextToken
       [#if grammar.faultTolerant], boolean tolerant[/#if]
       ) throws ParseException {
       [#if !grammar.faultTolerant]
-       throw new ParseException(lastConsumedToken, EnumSet.of(expectedType), parsingStack);
+       throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
       [#else]
        if (!tolerant || !this.tolerantParsing) {
-          throw new ParseException(lastConsumedToken, EnumSet.of(expectedType), parsingStack);
+          throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
        }
-         Token next = nextToken(lastConsumedToken);
-         if (next.getType() == expectedType) {
+         Token nextNext = nextToken(nextToken);
+         if (nextNext.getType() == expectedType) {
              [#--] REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
              should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
-             lastConsumedToken.setSkipped(true);
-             lastConsumedToken = next;
-             return;
+             nextToken.setSkipped(true);
+             return nextNext;
          } 
          [#-- Since skipping the next token did not work, we will insert a virtual token --]
             Token virtualToken = Token.newToken(expectedType, "VIRTUAL", lastConsumedToken);
             virtualToken.setVirtual(true);
-            lastConsumedToken.copyLocationInfo(virtualToken);
-            virtualToken.setNext(lastConsumedToken);
-            oldToken.setNext(virtualToken);
-            this.lastConsumedToken = virtualToken;
+            nextToken.copyLocationInfo(virtualToken);
+            virtualToken.setNext(nextToken);
+            lastConsumedToken.setNext(virtualToken);
+            return virtualToken;
       [/#if]
   }
   

@@ -67,7 +67,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"     
-Token lastConsumedToken;
+Token lastConsumedToken = new Token(); // We start with a dummy token. REVISIT
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
@@ -144,13 +144,13 @@ public boolean isCancelled() {return cancelled;}
       [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
-     lastConsumedToken = new Token();
+      lastConsumedToken.setInputSource(lexer.getInputSource());
   }
 
   // If tok already has a next field set, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
-    Token result = tok.getNext();
+    Token result = tok == null? null : tok.getNext();
 [#if grammar.parserTokenHooks?size>0]    
     if (result != null) {
 [#list grammar.parserTokenHooks as methodName] 
@@ -176,8 +176,12 @@ public boolean isCancelled() {return cancelled;}
         result = next.getNextToken();
       }
     }
-    tok.setNext(result);
+    if (tok != null) tok.setNext(result);
     return result;
+  }
+
+  final public getNextToken() {
+    return getToken(1);
   }
 
 /** Get the specific Token index ahead in the stream. */

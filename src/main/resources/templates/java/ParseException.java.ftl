@@ -41,10 +41,16 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   public ParseException(${grammar.parserClassName} parser, String message) {
      super(message);
      this.token = parser.lastConsumedToken;
-     if (token.getNext() != null) {
+     if (token != null && token.getNext() != null) {
         token = token.getNext();
      }
      this.callStack = new ArrayList<>(parser.parsingStack);
+  }
+
+  public ParseException(${grammar.parserClassName} parser, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
+     this.token = parser.lastConsumedToken;
+     if (token.getNext() != null) token = token.getNext();
+     this.expectedTypes = expectedTypes;
   }
   
   public ParseException(String message) {

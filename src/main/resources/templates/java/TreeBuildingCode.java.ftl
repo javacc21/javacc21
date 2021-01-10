@@ -147,8 +147,6 @@
  [#list grammar.closeNodeScopeHooks as hook]
        ${hook}(n);
 [/#list]
-        
-
     }
 
 	/**
