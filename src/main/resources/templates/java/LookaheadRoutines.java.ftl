@@ -136,7 +136,7 @@
    private final boolean ${expansion.predicateMethodName}() {
      try {
          lookaheadRoutineNesting++;
-         currentLookaheadToken= currentToken;
+         currentLookaheadToken= lastConsumedToken;
          remainingLookahead= ${lookaheadAmount};
          hitFailure = false;
       [#if expansion.hasScanLimit || expansion.hasInnerScanLimit]

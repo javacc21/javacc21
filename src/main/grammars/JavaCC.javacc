@@ -864,7 +864,7 @@ INJECT Identifier :
             return getGrammar().getParserPackage();
         }
         if (image.equals("current_token")) {
-            return "currentToken";
+            return "lastConsumedToken";
         }
         if (image.equals("TOKEN_HOOK")) {
             if (tokenHookName ==null) {
@@ -2285,7 +2285,7 @@ NonTerminal NonTerminal #NonTerminal :
 UpToHere(Expansion exp) #void :
    <UP_TO_HERE>
    {
-       String img = currentToken.getImage();
+       String img = lastConsumedToken.getImage();
        exp.setScanLimit(true);
        char lastChar = img.charAt(img.length() -1);
        if (Character.isDigit(lastChar)) {

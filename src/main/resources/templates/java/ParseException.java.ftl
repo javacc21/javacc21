@@ -40,7 +40,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
 
   public ParseException(${grammar.parserClassName} parser, String message) {
      super(message);
-     this.token = parser.currentToken;
+     this.token = parser.lastConsumedToken;
      if (token.getNext() != null) {
         token = token.getNext();
      }

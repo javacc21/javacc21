@@ -67,7 +67,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"     
-Token currentToken;
+Token lastConsumedToken;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
@@ -79,7 +79,6 @@ private int lookaheadRoutineNesting;
 private boolean stopAtScanLimit;
 private boolean lastLookaheadSucceeded;
 
-private Token lastConsumedToken;
 //private Token nextToken; //REVISIT
 
 //private EnumSet<Token> currentFollowSet;
@@ -145,7 +144,7 @@ public boolean isCancelled() {return cancelled;}
       [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
-     currentToken = new Token();
+     lastConsumedToken = new Token();
   }
 
   // If tok already has a next field set, it returns that
@@ -181,13 +180,9 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
-  final Token getNextToken() {
-      return currentToken= getToken(1);
-  }
-
 /** Get the specific Token index ahead in the stream. */
   final public Token getToken(int index) {
-    Token t = currentLookaheadToken == null ? currentToken : currentLookaheadToken;
+    Token t = currentLookaheadToken == null ? lastConsumedToken : currentLookaheadToken;
     for (int i = 0; i < index; i++) {
       t = nextToken(t);
     }
@@ -195,7 +190,9 @@ public boolean isCancelled() {return cancelled;}
   }
 
   private final TokenType nextTokenType() {
-    this.nextTokenType = nextToken(currentToken).getType();
+    if (nextTokenType == null) {
+       nextTokenType = nextToken(lastConsumedToken).getType();
+    }
     return nextTokenType;
   }
 

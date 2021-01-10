@@ -383,11 +383,11 @@ public class Grammar extends BaseNode {
      * @return a List containing all the expansions that are at a choice point
      */
     public List<Expansion> getChoicePointExpansions() {
-        return descendants(Expansion.class, exp->exp.isAtChoicePoint());
+        return descendants(Expansion.class, Expansion::isAtChoicePoint);
     }
 
     public List<Expansion> getExpansionsNeedingPredicate() {
-        return descendants(Expansion.class, exp->exp.getRequiresPredicateMethod());
+        return descendants(Expansion.class, Expansion::getRequiresPredicateMethod);
     }
 
     public List<String> getLexerTokenHooks() {
