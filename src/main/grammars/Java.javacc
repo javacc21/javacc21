@@ -101,50 +101,27 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
-Modifiers #void :
-{EnumSet<TokenType> modifiers = EnumSet.noneOf(TokenType.class);}
+TypeModifiers #void :
    (
-      SCAN {!modifiers.contains(STATIC)}
-      => <STATIC> {modifiers.add(STATIC);}
+      <STATIC> 
       |
-      SCAN {!modifiers.contains(ABSTRACT)}
-      => <ABSTRACT> {modifiers.add(ABSTRACT);}
+      <ABSTRACT> 
       |
-      SCAN {!modifiers.contains(FINAL)}
-      => <FINAL> {modifiers.add(FINAL);}
+      <FINAL> 
       |
-      SCAN {!modifiers.contains(SYNCHRONIZED)}
-      => <SYNCHRONIZED> {modifiers.add(SYNCHRONIZED);}
+      <PUBLIC>
       |
-      SCAN {!modifiers.contains(NATIVE)}
-      => <NATIVE> {modifiers.add(NATIVE);}
+      <PROTECTED>
       |
-      SCAN {!modifiers.contains(PUBLIC) && !modifiers.contains(PRIVATE) && !modifiers.contains(PROTECTED)}
-      => <PUBLIC> {modifiers.add(PUBLIC);}
+      <PRIVATE>
       |
-      SCAN {!modifiers.contains(PUBLIC) && !modifiers.contains(PRIVATE) && !modifiers.contains(PROTECTED)}
-      => <PROTECTED> {modifiers.add(PROTECTED);}
+      <STRICTFP>
       |
-      SCAN {!modifiers.contains(PUBLIC) && !modifiers.contains(PRIVATE) && !modifiers.contains(PROTECTED)}
-      => <PRIVATE> {modifiers.add(PRIVATE);}
-      |
-      SCAN {!modifiers.contains(TRANSIENT)}
-      => <TRANSIENT> {modifiers.add(TRANSIENT);}
-      |
-      SCAN {!modifiers.contains(VOLATILE)}
-      => <VOLATILE> {modifiers.add(VOLATILE);}
-      | 
-      SCAN {!modifiers.contains(STRICTFP)}
-      => <STRICTFP> {modifiers.add(STRICTFP);}
-      |
-//      SCAN {!modifiers.contains(_DEFAULT)} \MethodDeclaration
-//      => <_DEFAULT> {modifiers.add(_DEFAULT);}
-//      |
       SCAN 2 => Annotation
    )*
 ;
 
-Modifiers2 #void :
+Modifiers #void :
  (
    "public"
   |
@@ -167,7 +144,7 @@ Modifiers2 #void :
    "volatile" 
   |
    "strictfp" 
-  |
+  | 
   SCAN \MethodDeclaration =>
    "default"
   |
@@ -200,7 +177,7 @@ INJECT InterfaceDeclaration : extends TypeDeclaration;
 INJECT EnumDeclaration : extends TypeDeclaration;
 
 ClassDeclaration :
-  Modifiers
+  TypeModifiers
   "class" =>||
   <IDENTIFIER>
   [ TypeParameters ]
@@ -210,7 +187,7 @@ ClassDeclaration :
 ;
 
 InterfaceDeclaration :
-  Modifiers
+  TypeModifiers
   "interface" =>||
   <IDENTIFIER> 
   [ TypeParameters ]
@@ -243,7 +220,7 @@ ImplementsList :
 
 
 EnumDeclaration :
-   Modifiers
+   TypeModifiers
    "enum" =>|| <IDENTIFIER>
    [ImplementsList] 
    EnumBody
@@ -257,7 +234,7 @@ EnumBody :
    "}"
 ;
 
-EnumConstant:
+EnumConstant :
   Modifiers <IDENTIFIER> [ Arguments ] [ ClassOrInterfaceBody ]
 ;
 
@@ -351,7 +328,7 @@ ArrayInitializer :
 
 
 MethodDeclaration MethodDeclaration :
-  Modifiers2
+  Modifiers
   [ TypeParameters ]
   ReturnType
   =>|+2
@@ -472,21 +449,7 @@ WildcardBounds :
 
 
 PrimitiveType #PrimitiveType :
-  "boolean"
-   |
-  "char"
-   |
-  "byte"
-   |
-  "short"
-   |
-  "int"
-   |
-  "long"
-   |
-  "float"
-   |
-  "double"
+  "boolean" | "char" | "byte" | "short" | "int" | "long" | "float" | "double"
 ;
 
 PrimitiveArrayType : 
@@ -809,7 +772,6 @@ UnlabeledStatement #void :
 INJECT AssertStatement : extends Statement;
 INJECT YieldStatement : extends Statement;
 INJECT EmptyStatement : extends Statement;
-INJECT TryStatement : extends Statement
 INJECT SwitchStatement : extends Statement
 INJECT IfStatement : extends Statement
 INJECT WhileStatement : extends Statement
@@ -821,8 +783,10 @@ INJECT ReturnStatement : extends Statement
 INJECT ThrowStatement : extends Statement
 INJECT SynchronizedStatement : extends Statement
 INJECT TryStatement : extends Statement
+INJECT TryWithResources : extends TryStatement
+INJECT ClassicTryStatement : extends TryStatement
 
-TryStatement #void :
+TryStatement #TryStatement(false) :
    TryWithResources
    |
    ClassicTryStatement
@@ -854,7 +818,7 @@ BlockStatement :
 ;
 
 LocalVariableDeclaration :
-  Modifiers Type =>|+1 VariableDeclarator ( "," VariableDeclarator )*
+  TypeModifiers Type =>|+1 VariableDeclarator ( "," VariableDeclarator )*
 ;
 
 EmptyStatement : ";" ;
@@ -928,10 +892,10 @@ NewCaseStatement :
      |
      ThrowStatement
      |
-     SCAN \...\SwitchExpression
+     SCAN \.\.\SwitchExpression
      => Expression ";"
      |
-     SCAN ~\...\SwitchExpression
+     SCAN ~\.\.\SwitchExpression
      => BlockStatement
    )
 ;
@@ -959,7 +923,6 @@ ForStatement :
 ;
 
 ForInit :
-  //SCAN Modifiers Type <IDENTIFIER> =>
   LocalVariableDeclaration
   |
   StatementExpressionList

@@ -247,7 +247,6 @@
                  while (stackIterator.hasNext()) {
                     NonTerminalCall ntc = stackIterator.next();
                     [#var equalityOp = nextElementNegated?string("!=", "==")]
-[#--                    if ([#if nextElementNegated]![/#if]ntc.productionName.equals("${nextElement}")) {--]
                     if (ntc.productionName ${equalityOp} "${nextElement}") {
                        stackIterator.previous();
                        break;
@@ -259,7 +258,6 @@
              if (!stackIterator.hasNext()) return lastLookaheadSucceeded = false;
              NonTerminalCall ntc = stackIterator.next();
              [#var equalityOp = elementNegated?string("==", "!=")]
-[#--             if ([#if !elementNegated]![/#if]ntc.productionName.equals("${element}")) return lastLookaheadSucceeded = false;--]
                if (ntc.productionName ${equalityOp} "${element}") return lastLookaheadSucceeded = false;
           [/#if]
        [/#list]
