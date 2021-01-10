@@ -101,29 +101,51 @@ private final void restoreCallStack(int prevSize) {
     }
 }
 
-private Iterator<NonTerminalCall> stackIteratorForward() {
-    final Iterator<NonTerminalCall> parseStackIterator = parsingStack.iterator();
-    final Iterator<NonTerminalCall> lookaheadStackIterator = lookaheadStack.iterator();
-    return new Iterator<NonTerminalCall>() {
+private ListIterator<NonTerminalCall> stackIteratorForward() {
+    final ListIterator<NonTerminalCall> parseStackIterator = parsingStack.listIterator();
+    final ListIterator<NonTerminalCall> lookaheadStackIterator = lookaheadStack.listIterator();
+    return new ListIterator<NonTerminalCall>() {
         public boolean hasNext() {
             return parseStackIterator.hasNext() || lookaheadStackIterator.hasNext();
         }
         public NonTerminalCall next() {
             return parseStackIterator.hasNext() ? parseStackIterator.next() : lookaheadStackIterator.next();
         }
+        public NonTerminalCall previous() {
+           return lookaheadStackIterator.hasPrevious() ? lookaheadStackIterator.previous() : parseStackIterator.previous(); 
+        }
+        public boolean hasPrevious() {
+            return lookaheadStackIterator.hasPrevious() || parseStackIterator.hasPrevious();
+        }
+        public void add(NonTerminalCall ntc) {throw new UnsupportedOperationException();}
+        public void set(NonTerminalCall ntc) {throw new UnsupportedOperationException();}
+        public void remove() {throw new UnsupportedOperationException();}
+        public int previousIndex() {throw new UnsupportedOperationException();}
+        public int nextIndex() {throw new UnsupportedOperationException();}
     };
 }
 
-private Iterator<NonTerminalCall> stackIteratorBackward() {
+private ListIterator<NonTerminalCall> stackIteratorBackward() {
     final ListIterator<NonTerminalCall> parseStackIterator = parsingStack.listIterator(parsingStack.size());
     final ListIterator<NonTerminalCall> lookaheadStackIterator = lookaheadStack.listIterator(lookaheadStack.size());
-    return new Iterator<NonTerminalCall>() {
+    return new ListIterator<NonTerminalCall>() {
         public boolean hasNext() {
             return parseStackIterator.hasPrevious() || lookaheadStackIterator.hasPrevious();
         }
         public NonTerminalCall next() {
             return lookaheadStackIterator.hasPrevious() ? lookaheadStackIterator.previous() : parseStackIterator.previous();
         }
+        public NonTerminalCall previous() {
+           return lookaheadStackIterator.hasNext() ? lookaheadStackIterator.next() : parseStackIterator.next();
+        }
+        public boolean hasPrevious() {
+            return lookaheadStackIterator.hasNext() || parseStackIterator.hasNext();
+        }
+        public void add(NonTerminalCall ntc) {throw new UnsupportedOperationException();}
+        public void set(NonTerminalCall ntc) {throw new UnsupportedOperationException();}
+        public void remove() {throw new UnsupportedOperationException();}
+        public int previousIndex() {throw new UnsupportedOperationException();}
+        public int nextIndex() {throw new UnsupportedOperationException();}
     };
 }
 
