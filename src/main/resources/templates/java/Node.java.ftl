@@ -275,7 +275,10 @@ public interface Node extends Comparable<Node>
     default <T extends Node>T firstDescendantOfType(Class<T> clazz) {
          for (Node child : children()) {
              if (clazz.isInstance(child)) return clazz.cast(child);
-             else return child.firstDescendantOfType(clazz);
+             else {
+                 T descendant = child.firstDescendantOfType(clazz);
+                 if (descendant !=null) return descendant;
+             }
          }
          return null;
     }
