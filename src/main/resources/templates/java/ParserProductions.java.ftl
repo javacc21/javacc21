@@ -80,7 +80,7 @@
     [/#if]
     [#if grammar.treeBuildingEnabled]
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
-                        || (treeNodeBehavior?? && !treeNodeBehavior.void)]
+                        || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
     [#if buildTreeNode]
         [@setupTreeVariables .scope /]
@@ -156,7 +156,11 @@
    [#var nodeName = nodeClassName(treeNodeBehavior)]
    ${nodeName} ${nodeVarName} = null;
    if (buildTree) {
-     ${nodeVarName} = new ${nodeName}([#if NODE_USES_PARSER]this[/#if]);
+     ${nodeVarName} = new ${nodeName}();
+  [#if grammar.nodeUsesParser]
+     ${nodeVarName}.setParser(this);
+  [/#if]
+   
       ${nodeVarName}.setInputSource(getInputSource());
        openNodeScope(${nodeVarName});
   }

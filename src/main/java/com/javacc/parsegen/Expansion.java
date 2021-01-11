@@ -130,7 +130,7 @@ abstract public class Expansion extends BaseNode {
         if (getGrammar().getTreeBuildingEnabled()) {
             this.treeNodeBehavior = treeNodeBehavior;
             if (treeNodeBehavior != null) {
-                getGrammar().addNodeType(treeNodeBehavior.getNodeName());
+                getGrammar().addNodeType(null, treeNodeBehavior.getNodeName());
             }
         }
     }

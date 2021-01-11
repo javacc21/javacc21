@@ -85,12 +85,15 @@ public class ${grammar.baseNodeClassName} implements Node {
 
 [#if grammar.nodeUsesParser]    
     protected ${grammar.parserClassName} parser;
+
+    public void setParser(${grammar.parserClassName} parser) {this.parser = parser;}
+    [#--
     public ${grammar.baseNodeClassName}(${grammar.parserClassName} parser) {
         this.parser = parser;
     }
 
     public ${grammar.baseNodeClassName}() {
-    }
+    }--]
 
 [/#if]
 

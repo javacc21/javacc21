@@ -1185,11 +1185,7 @@ BNFProduction :
     [
         tba=TreeNodeDescriptor 
         {
-            String nodeName = tba.getNodeName();
-            if (nodeName == null) {
-               nodeName = CURRENT_NODE.getName();
-            }
-            grammar.addNodeType(nodeName);
+            grammar.addNodeType(CURRENT_NODE.getName(), tba.getNodeName());
         }
     ]
     [
@@ -1205,7 +1201,7 @@ BNFProduction :
     {
         CURRENT_NODE.adjustFirstToken(t);
         if (tba == null && !grammar.getNodeDefaultVoid()) {
-           grammar.addNodeType(CURRENT_NODE.getName());
+           grammar.addNodeType(CURRENT_NODE.getName(),CURRENT_NODE.getName());
         }
      }
 ;
@@ -1383,16 +1379,12 @@ TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
 INJECT TreeBuildingAnnotation :
 {
     public String getNodeName() {
-        String image = null;
-        for (Node n : children) {
-	   if (n instanceof Token) {
-	       Token t = (Token) n;
-               if (t.getType() == HASH_ID) {
-                   image = t.getImage().substring(1);
-               }
-	   }
-        }
-        return image;
+        Token t = firstChildOfType(TokenType.HASH_ID);
+        return t==null ? null : t.getImage().substring(1);
+    }
+
+    public boolean isNeverInstantiated() {
+        return isVoid() || isAbstract() || isInterface();
     }
 
     public Expression getCondition() {

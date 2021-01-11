@@ -34,6 +34,7 @@ NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
+NODE_USES_PARSER;
 
 INCLUDE("JavaLexer.javacc")
 
@@ -156,7 +157,7 @@ Modifiers #void :
  * Declaration syntax follows.
  */
 
-TypeDeclaration TypeDeclaration #TypeDeclaration(false) :
+TypeDeclaration TypeDeclaration #abstract :
  (      
   AnnotationTypeDeclaration
   |
@@ -177,8 +178,8 @@ INJECT InterfaceDeclaration : extends TypeDeclaration;
 INJECT EnumDeclaration : extends TypeDeclaration;
 
 ClassDeclaration :
-  TypeModifiers
-  "class" =>||
+ TypeModifiers
+  "class" =>|| 
   <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList]

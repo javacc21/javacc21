@@ -40,20 +40,27 @@
 package ${explicitPackageName};
 [#set package = explicitPackageName]
 [#elseif grammar.nodePackage?has_content]
-package ${grammar.nodePackage};
 [#set package = grammar.nodePackage]
+package ${package};
 [/#if]
-
 [#if grammar.parserPackage?has_content && package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
 [/#if]
+
+[#if isInterface]
+
+public interface ${classname} extends Node {}
+
+[#else]
+
 [#if grammar.parserPackage?has_content]
 import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
 [/#if]
 
 @SuppressWarnings("unused")
+[#if isAbstract]abstract[/#if]
 public class ${classname} extends ${grammar.baseNodeClassName} {
-[#if grammar.nodeUsesParser]
+[#if false] grammar.nodeUsesParser]
     public ${classname}(${grammar.parserClassName} p, int id) {
         super(p, id);
     }
@@ -65,3 +72,4 @@ public class ${classname} extends ${grammar.baseNodeClassName} {
 [/#if]
 
 }
+[/#if]
