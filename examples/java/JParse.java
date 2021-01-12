@@ -32,6 +32,7 @@ public class JParse {
           try {
              // A bit screwball, we'll dump the tree if there is only one arg. :-)
               parseFile(file, files.size() == 1);
+              FileLineMap.clearFileLineMaps();
           } 
           catch (Exception e) {
               System.err.println("Error processing file: " + file);

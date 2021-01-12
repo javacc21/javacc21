@@ -102,26 +102,6 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
-TypeModifiers #void :
-   (
-      <STATIC> 
-      |
-      <ABSTRACT> 
-      |
-      <FINAL> 
-      |
-      <PUBLIC>
-      |
-      <PROTECTED>
-      |
-      <PRIVATE>
-      |
-      <STRICTFP>
-      |
-      SCAN 2 => Annotation
-   )*
-;
-
 Modifiers #void :
  (
    "public"
@@ -158,7 +138,9 @@ Modifiers #void :
  */
 
 TypeDeclaration TypeDeclaration #abstract :
- (      
+ (
+  EmptyDeclaration 
+  |
   AnnotationTypeDeclaration
   |
   ClassDeclaration
@@ -172,13 +154,16 @@ TypeDeclaration TypeDeclaration #abstract :
  }
 ;
 
+INJECT EmptyDeclaration : extends TypeDeclaration;
 INJECT AnnotationTypeDeclaration : extends TypeDeclaration;
 INJECT ClassDeclaration : extends TypeDeclaration;
 INJECT InterfaceDeclaration : extends TypeDeclaration;
 INJECT EnumDeclaration : extends TypeDeclaration;
 
+EmptyDeclaration #EmptyDeclaration : ";" ;
+
 ClassDeclaration :
- TypeModifiers
+ Modifiers
   "class" =>|| 
   <IDENTIFIER>
   [ TypeParameters ]
@@ -188,7 +173,7 @@ ClassDeclaration :
 ;
 
 InterfaceDeclaration :
-  TypeModifiers
+  Modifiers
   "interface" =>||
   <IDENTIFIER> 
   [ TypeParameters ]
@@ -221,7 +206,7 @@ ImplementsList :
 
 
 EnumDeclaration :
-   TypeModifiers
+   Modifiers
    "enum" =>|| <IDENTIFIER>
    [ImplementsList] 
    EnumBody
@@ -267,7 +252,6 @@ ClassOrInterfaceBody :
     "}"
 ;
 
-
 INJECT ClassOrInterfaceBodyDeclaration : 
 import static PARSER_PACKAGE.CONSTANTS_CLASS.TokenType.*;
 {
@@ -289,7 +273,7 @@ import static PARSER_PACKAGE.CONSTANTS_CLASS.TokenType.*;
 }
 
 ClassOrInterfaceBodyDeclaration #ClassOrInterfaceBodyDeclaration :
-  ";"
+  EmptyDeclaration
   |
   Initializer
   |
@@ -307,6 +291,7 @@ ClassOrInterfaceBodyDeclaration #ClassOrInterfaceBodyDeclaration :
   |
   MethodDeclaration
 ;
+
 
 FieldDeclaration :
   Modifiers 
@@ -327,21 +312,15 @@ ArrayInitializer :
   "{" [ VariableInitializer ( "," =>|+1 VariableInitializer )* ] [ "," ] "}"
 ;
 
-
 MethodDeclaration MethodDeclaration :
   Modifiers
   [ TypeParameters ]
   ReturnType
-  =>|+2
-  MethodDeclarator 
+  <IDENTIFIER> 
+  =>|+1 FormalParameters ( "[" "]" )*
   [ ThrowsList ]
   ( Block | ";" )
   {return CURRENT_NODE;}
-;
-
-
-MethodDeclarator #void :
-  <IDENTIFIER> FormalParameters ( "[" "]" )*
 ;
 
 FormalParameters #FormalParams :
@@ -349,7 +328,6 @@ FormalParameters #FormalParams :
     [ FormalParameter ( "," FormalParameter )* ]
    ")"
 ;
-
 
 FormalParameter : Modifiers Type [ "..." ] VariableDeclaratorId ;
 
@@ -819,7 +797,7 @@ BlockStatement :
 ;
 
 LocalVariableDeclaration :
-  TypeModifiers Type =>|+1 VariableDeclarator ( "," VariableDeclarator )*
+  Modifiers Type =>|+1 VariableDeclarator ( "," VariableDeclarator )*
 ;
 
 EmptyStatement : ";" ;
@@ -868,7 +846,11 @@ ClassicSwitchLabel :
 
 ClassicCaseStatement :
   ClassicSwitchLabel
-  (BlockStatement)*
+  (SCAN 2 // We need this because we'll spuriously enter the BlockStatement 
+          // if the next token is "default", because "default" is in the 
+          // BlockStatement first set. This is really quite tricky, but maybe not my
+          // fault, but the Java designers for re-using keywords!
+  => BlockStatement)*
 ;
 
 NewSwitchStatement :

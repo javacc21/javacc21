@@ -36,13 +36,13 @@ public class JLex {
           catch (Exception e) {
               System.err.println("Error processing file: " + file);
               e.printStackTrace();
-	      failures.add(file);
+              failures.add(file);
               continue;
           }
           System.out.println(file.getName()  + " tokenized successfully.");
           successes.add(file);
        }
-       for (File file : failures) {
+       if (!failures.isEmpty()) for (File file : failures) {
            System.out.println("Lexing failed on: " + file);
        }
        System.out.println("\nTokenized " + successes.size() + " files, containing " + numTokens + " tokens.");
