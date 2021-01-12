@@ -87,14 +87,6 @@ public class ${grammar.baseNodeClassName} implements Node {
     protected ${grammar.parserClassName} parser;
 
     public void setParser(${grammar.parserClassName} parser) {this.parser = parser;}
-    [#--
-    public ${grammar.baseNodeClassName}(${grammar.parserClassName} parser) {
-        this.parser = parser;
-    }
-
-    public ${grammar.baseNodeClassName}() {
-    }--]
-
 [/#if]
 
     public void open() {
@@ -132,11 +124,7 @@ public class ${grammar.baseNodeClassName} implements Node {
     public Node removeChild(int i) {
         return children.remove(i);
     }
-    
-    public boolean  removeChild(Node n) {
-        return children.remove(n);
-    }
-    
+
     public void clearChildren() {
         children.clear();
     }
