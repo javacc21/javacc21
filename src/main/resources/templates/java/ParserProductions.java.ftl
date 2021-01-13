@@ -53,9 +53,9 @@
 [#macro ParserProduction production]
     [@CU.firstSetVar production.expansion/]
     ${production.leadingComments}
-// ${production.inputSource}, line ${production.beginLine}
+// ${production.location}
     final ${production.accessMod!"public"} 
-    ${production.returnType!"void"}
+    ${production.returnType}
     ${production.name}(${production.parameterList!}) 
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
@@ -95,6 +95,7 @@
          to be visible within the following catch/finally blocks.--]
         ${(production.javaCode)!}
          try {
+            if (false) throw new ParseException("Never happens!");
     [#else]
         ${(production.javaCode)!}
     [/#if]
@@ -211,7 +212,7 @@
 
 [#macro BuildCodeFailure fail]
     [#if fail.code?is_null]
-       throw new ParseException(this, "${fail.message?j_string}");
+       if (true) throw new ParseException(this, "${fail.message?j_string}");
     [#else]
        ${fail.code}
     [/#if]

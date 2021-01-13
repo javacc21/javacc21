@@ -944,7 +944,7 @@ INJECT Token :
     }
 }
 
-GrammarFile Root throws IOException #GrammarFile :
+#Root throws IOException #GrammarFile :
 {
     TokenManagerDecls decls;
 }
@@ -1176,6 +1176,8 @@ BNFProduction :
     ]
     [
        SCAN ReturnType <IDENTIFIER> => ReturnType
+       |
+       "#" {CURRENT_NODE.setImplicitReturnType(true);}
     ]
     <IDENTIFIER> {CURRENT_NODE.setName(lastConsumedToken.getImage());}
     [FormalParameters]
@@ -1185,7 +1187,9 @@ BNFProduction :
     [
         tba=TreeNodeDescriptor 
         {
-            grammar.addNodeType(CURRENT_NODE.getName(), tba.getNodeName());
+            String nodeName = tba.getNodeName();
+            if (nodeName == null) nodeName = CURRENT_NODE.getNodeName();
+            grammar.addNodeType(CURRENT_NODE.getName(), nodeName);
         }
     ]
     [
@@ -1211,6 +1215,7 @@ INJECT BNFProduction :
 	import com.javacc.parsegen.TokenSet;
 	import com.javacc.parsegen.Expansion;
 {
+    @Property boolean implicitReturnType;
 
     // A bit of a kludge. We treat the very first code block in a production specially.
     public void close() {
@@ -1235,7 +1240,7 @@ INJECT BNFProduction :
 
     }
 
-    public void CLOSE_NODE_HOOK() {}
+//    public void CLOSE_NODE_HOOK() {} //FIXME
 
 
 
@@ -1259,7 +1264,9 @@ INJECT BNFProduction :
         TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
         if (tba != null) {
              String nodeName = tba.getNodeName();
-             if (nodeName == null) {
+             if (nodeName != null && !nodeName.equals("abstract") 
+                 && !nodeName.equals("interface")
+                 && !nodeName.equals("void")) {
                 return nodeName;
              }
         }
@@ -1323,8 +1330,12 @@ INJECT BNFProduction :
         return "";
     }
 
-    public ReturnType getReturnType() {
-        return firstChildOfType(ReturnType.class);
+    public String getReturnType() {
+        if (isImplicitReturnType()) {
+            return getNodeName();
+        }
+        ReturnType rt = firstChildOfType(ReturnType.class);
+        return rt == null ? "void" : rt.getAsString();
     }
     
     public void adjustFirstToken(Token t) {
@@ -1378,6 +1389,9 @@ TreeBuildingAnnotation TreeNodeDescriptor #TreeBuildingAnnotation :
 
 INJECT TreeBuildingAnnotation :
 {
+    /**
+     * Just returns whatever comes after the hash ("#") including "void", etc.
+     */
     public String getNodeName() {
         Token hash = firstChildOfType(TokenType.HASH);
         if (hash == null) return null;
