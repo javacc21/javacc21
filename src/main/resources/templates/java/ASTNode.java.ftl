@@ -59,17 +59,5 @@ import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*
 
 @SuppressWarnings("unused")
 [#if isAbstract]abstract[/#if]
-public class ${classname} extends ${grammar.baseNodeClassName} {
-[#if false] grammar.nodeUsesParser]
-    public ${classname}(${grammar.parserClassName} p, int id) {
-        super(p, id);
-    }
-
-    public ${classname}(${grammar.parserClassName} p) {
-        super(p, ${grammar.constantsClassName}.${classname?upper_case});
-    }
-
-[/#if]
-
-}
+public class ${classname} extends ${grammar.baseNodeClassName} {}
 [/#if]
