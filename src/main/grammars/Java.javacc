@@ -69,6 +69,10 @@ INJECT PARSER_CLASS : {
   }
 }
 
+INJECT : {
+  public class Fuck extends BaseNode {}
+}
+
 #CompilationUnit# :
   [ PackageDeclaration ]
   ( ImportDeclaration )*
@@ -133,8 +137,8 @@ Modifiers #void :
  )*
 ;
 
-#TypeDeclaration #abstract :
- (
+TypeDeclaration #abstract :
+// (
   EmptyDeclaration 
   |
   AnnotationTypeDeclaration
@@ -144,10 +148,10 @@ Modifiers #void :
   InterfaceDeclaration
   |
   EnumDeclaration
- )
- {
-        return (TypeDeclaration) peekNode();
- }
+// )
+// {
+//        return (TypeDeclaration) peekNode();
+// }
 ;
 
 INJECT EmptyDeclaration : extends TypeDeclaration;
@@ -249,23 +253,28 @@ ClassOrInterfaceBody :
 ;
 
 ClassOrInterfaceBodyDeclaration# :
+  {TypeDeclaration td = null;}
+  (
   Initializer
   |
-  EmptyDeclaration
-  |
-  AnnotationTypeDeclaration
-  |
-  InterfaceDeclaration
-  |
-  EnumDeclaration
-  |
-  ClassDeclaration
+  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "@")) =>
+  td=TypeDeclaration
+//  EmptyDeclaration
+//  |
+//  AnnotationTypeDeclaration
+//  |
+//  InterfaceDeclaration
+//  |
+//  EnumDeclaration
+//  |
+//  ClassDeclaration
   |
   ConstructorDeclaration
   |
   FieldDeclaration
   |
   MethodDeclaration
+  )
 ;
 
 FieldDeclaration :

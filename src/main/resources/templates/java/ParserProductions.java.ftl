@@ -269,16 +269,24 @@
 [/#macro]
 
 [#macro BuildCodeNonTerminal nonterminal]
+   [#var production = nonterminal.production]
    pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn}); 
    try {
-   [#if !nonterminal.LHS?is_null]
+   [#if !nonterminal.LHS?is_null && production.returnType != "void"]
        ${nonterminal.LHS} = 
    [/#if]
       ${nonterminal.name}(${nonterminal.args!});
-    } 
-    finally {
-        popCallStack();
-    }
+   [#if !nonterminal.LHS?is_null && production.returnType = "void"]
+      try {
+         ${nonterminal.LHS} = (${production.nodeName}) peekNode();
+      } catch (ClassCastException cce) {
+         ${nonterminal.LHS} = null;
+      }
+   [/#if]
+   } 
+   finally {
+       popCallStack();
+   }
 [/#macro]
 
 

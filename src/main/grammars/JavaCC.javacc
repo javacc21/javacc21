@@ -1198,9 +1198,12 @@ BNFProduction :
     ]
     ":"
     (
+        // Older syntax
         => [=>Block] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
         |
-        ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
+        [Block]
+        ExpansionChoice 
+        {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
     )
     {
         CURRENT_NODE.adjustFirstToken(t);
@@ -1216,33 +1219,7 @@ INJECT BNFProduction :
 	import com.javacc.parsegen.Expansion;
 {
     @Property boolean implicitReturnType;
-
-    // A bit of a kludge. We treat the very first code block in a production specially.
-    public void close() {
-        if (getJavaCode() == null && expansion instanceof ExpansionSequence) {
-            List<Expansion> children = ((ExpansionSequence) expansion).getUnits();
-            if (children.size() > 1) {
-            Expansion first = children.get(0);
-            if (first instanceof CodeBlock) {
-            // If the first child is a code block, we remove it from the seequence
-            // and insert it as a child node of the production itself.
-                    expansion.removeChild(first);
-                    for (int i = 0; i < getChildCount(); i++) {
-                        Node child = getChild(i);
-                        if (child instanceof Token && ((Token)child).getType() == COLON) {
-                            addChild(i+1, first);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-
 //    public void CLOSE_NODE_HOOK() {} //FIXME
-
-
 
     public boolean getHasScanLimit() {
         return expansion instanceof ExpansionSequence && ((ExpansionSequence) expansion).getHasScanLimit();
@@ -1323,11 +1300,11 @@ INJECT BNFProduction :
            else if (type == PROTECTED) {
                return "protected";
            }
-           else if (type == PUBLIC) {
-               return "public";
+           else if (type == PACKAGE) {
+               return "";
            }
         }
-        return "";
+        return "public";
     }
 
     public String getReturnType() {
@@ -1372,7 +1349,8 @@ INJECT BNFProduction :
     }
 }
 
-TreeBuildingAnnotation TreeNodeDescriptor #TreeBuildingAnnotation :
+//TreeBuildingAnnotation 
+TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" [<IDENTIFIER>|"abstract"|"interface"|"void"]
    [
 	   "("
@@ -1382,9 +1360,9 @@ TreeBuildingAnnotation TreeNodeDescriptor #TreeBuildingAnnotation :
 	      Expression()
 	   ")"
   ]
-  {
-          return CURRENT_NODE;
-  }
+//  {
+//          return CURRENT_NODE;
+//  }
 ;
 
 INJECT TreeBuildingAnnotation :
