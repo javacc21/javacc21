@@ -138,7 +138,6 @@ TypeDeclaration #abstract :
   |
   AnnotationTypeDeclaration
   |
-  SCAN Modifiers "class" =>
   ClassDeclaration
   |
   InterfaceDeclaration
@@ -156,15 +155,15 @@ EmptyDeclaration# : ";" ;
 
 ClassDeclaration :
 // SCAN Modifiers "class" =>
- (
+// (
  Modifiers
-  "class" //=>|| 
+  "class" =>|| 
   <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList]
   [ ImplementsList ]
   ClassOrInterfaceBody
- )
+// )
 ;
 
 InterfaceDeclaration :
