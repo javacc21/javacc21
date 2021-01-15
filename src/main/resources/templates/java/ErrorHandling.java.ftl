@@ -182,65 +182,94 @@ void dumpLookaheadCallStack(PrintStream ps) {
     dumpCallStack(ps);
 }
 
-  
-    private final boolean tolerantParsing = false;
+[#if grammar.faultTolerant] 
+    private boolean tolerantParsing = true;
+[/#if]    
 
-    public boolean isParserTolerant() {return tolerantParsing;}
+    public boolean isParserTolerant() {
+       [#if grammar.faultTolerant] 
+        return tolerantParsing;
+       [#else]
+        return false;
+       [/#if]
+    }
     
     public void setParserTolerant(boolean tolerantParsing) {
-   //     this.tolerantParsing = tolerantParsing;
-        if (tolerantParsing) {
+        [#if grammar.faultTolerant]
+          this.tolerantParsing = tolerantParsing;
+        [#else]
+          if (tolerantParsing) {
             throw new UnsupportedOperationException("This parser was not built with that feature!");
-        } 
+          }
+        [/#if]
     }
 
-      private Token consumeToken(TokenType expectedType) throws ParseException {
-        Token oldToken = currentToken;
-        currentToken = nextToken(currentToken);
-        if (currentToken.getType() != expectedType) {
-            handleUnexpectedTokenType(expectedType, oldToken) ;
+      private Token consumeToken(TokenType expectedType 
+        [#if grammar.faultTolerant], boolean tolerant [/#if]
+      ) throws ParseException {
+        Token oldToken = lastConsumedToken;
+        Token nextToken = nextToken(lastConsumedToken);
+        if (nextToken.getType() != expectedType) {
+            handleUnexpectedTokenType(expectedType, nextToken
+            [#if grammar.faultTolerant], tolerant[/#if]
+            ) ;
         }
-        this.lastConsumedToken = currentToken;
+        this.lastConsumedToken = nextToken;
+        this.nextTokenType = null;
 [#if grammar.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#if grammar.userDefinedLexer]
-          currentToken.setInputSource(inputSource);
+          lastConsumedToken.setInputSource(getInputSource());
   [/#if]
   [#list grammar.openNodeScopeHooks as hook]
-     ${hook}(currentToken);
+     ${hook}(lastConsumedToken);
   [/#list]
-          pushNode(currentToken);
+          pushNode(lastConsumedToken);
   [#list grammar.closeNodeScopeHooks as hook]
-     ${hook}(currentToken);
+     ${hook}(lastConsumedToken);
   [/#list]
       }
 [/#if]
-      if (trace_enabled) LOGGER.info("Consumed token of type " + currentToken.getType() + " from " + currentToken.getLocation());
-      return currentToken;
+      if (trace_enabled) LOGGER.info("Consumed token of type " + lastConsumedToken.getType() + " from " + lastConsumedToken.getLocation());
+      return lastConsumedToken;
   }
  
-  private void handleUnexpectedTokenType(TokenType expectedType, Token oldToken) throws ParseException {
-      [#if grammar.faultTolerant]
-         Token next = nextToken(oldToken);
-         if (next.getType() == expectedType) {
-             oldToken.setSkipped(true);
-             currentToken = next;
-             return;
-         }
+  private Token handleUnexpectedTokenType(TokenType expectedType, Token nextToken
+      [#if grammar.faultTolerant], boolean tolerant[/#if]
+      ) throws ParseException {
+      [#if !grammar.faultTolerant]
+       throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
+      [#else]
+       if (!tolerant || !this.tolerantParsing) {
+          throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
+       }
+         Token nextNext = nextToken(nextToken);
+         if (nextNext.getType() == expectedType) {
+             [#--] REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
+             should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
+             nextToken.setSkipped(true);
+             return nextNext;
+         } 
+         [#-- Since skipping the next token did not work, we will insert a virtual token --]
+            Token virtualToken = Token.newToken(expectedType, "VIRTUAL", lastConsumedToken);
+            virtualToken.setVirtual(true);
+            nextToken.copyLocationInfo(virtualToken);
+            virtualToken.setNext(nextToken);
+            lastConsumedToken.setNext(virtualToken);
+            return virtualToken;
       [/#if]
-       throw new ParseException(currentToken, EnumSet.of(expectedType), parsingStack);
   }
   
  [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
  
   private class ParseState {
-       Token lastParsed;
+       Token lastConsumed;
        ArrayList<NonTerminalCall> parsingStack;
   [#if grammar.treeBuildingEnabled]
        NodeScope nodeScope;
  [/#if]       
        ParseState() {
-           this.lastParsed  = ${grammar.parserClassName}.this.lastConsumedToken;
+           this.lastConsumed = ${grammar.parserClassName}.this.lastConsumedToken;
            this.parsingStack = (ArrayList<NonTerminalCall>) ${grammar.parserClassName}.this.parsingStack.clone();
 [#if grammar.treeBuildingEnabled]            
            this.nodeScope = (NodeScope) currentNodeScope.clone();
@@ -264,9 +293,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
      currentNodeScope = state.nodeScope;
      ${grammar.parserClassName}.this.parsingStack = state.parsingStack;
 [/#if]
-    if (state.lastParsed != null) {
+    if (state.lastConsumed != null) {
         //REVISIT
-        currentToken = lastConsumedToken = state.lastParsed;
+         lastConsumedToken = state.lastConsumed;
     }
 [#if grammar.lexerData.numLexicalStates > 1]     
      token_source.switchTo(lastConsumedToken.getFollowingLexicalState());

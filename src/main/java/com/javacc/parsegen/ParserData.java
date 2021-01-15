@@ -107,7 +107,7 @@ public class ParserData {
             }
         }
 
-        for (Node exp : grammar.descendants(Expansion.class, exp -> exp.isScanLimit())) {
+        for (Node exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {
             Node grandparent = exp.getParent().getParent();
             if (!(grandparent instanceof Expansion.ChoicePoint
                || grandparent instanceof BNFProduction)) 

@@ -53,9 +53,9 @@
 [#macro ParserProduction production]
     [@CU.firstSetVar production.expansion/]
     ${production.leadingComments}
-// ${production.inputSource}, line ${production.beginLine}
+// ${production.location}
     final ${production.accessMod!"public"} 
-    ${production.returnType!"void"}
+    ${production.returnType}
     ${production.name}(${production.parameterList!}) 
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
@@ -80,7 +80,7 @@
     [/#if]
     [#if grammar.treeBuildingEnabled]
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
-                        || (treeNodeBehavior?? && !treeNodeBehavior.void)]
+                        || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
     [#if buildTreeNode]
         [@setupTreeVariables .scope /]
@@ -95,6 +95,7 @@
          to be visible within the following catch/finally blocks.--]
         ${(production.javaCode)!}
          try {
+            if (false) throw new ParseException("Never happens!");
     [#else]
         ${(production.javaCode)!}
     [/#if]
@@ -156,7 +157,11 @@
    [#var nodeName = nodeClassName(treeNodeBehavior)]
    ${nodeName} ${nodeVarName} = null;
    if (buildTree) {
-     ${nodeVarName} = new ${nodeName}([#if NODE_USES_PARSER]this[/#if]);
+     ${nodeVarName} = new ${nodeName}();
+  [#if grammar.nodeUsesParser]
+     ${nodeVarName}.setParser(this);
+  [/#if]
+   
       ${nodeVarName}.setInputSource(getInputSource());
        openNodeScope(${nodeVarName});
   }
@@ -207,7 +212,7 @@
 
 [#macro BuildCodeFailure fail]
     [#if fail.code?is_null]
-       throw new ParseException(this, "${fail.message?j_string}");
+       if (true) throw new ParseException(this, "${fail.message?j_string}");
     [#else]
        ${fail.code}
     [/#if]
@@ -223,7 +228,12 @@
        [#if regexp.LHS??]
           ${regexp.LHS} =  
        [/#if]
+   [#if !grammar.faultTolerant]
        consumeToken(${CU.TT}${regexp.label});
+   [#else]
+       [#var tolerant = regexp.tolerantParsing?string("true", "false")]
+       consumeToken(${CU.TT}${regexp.label}, ${tolerant});
+   [/#if]
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock]
@@ -259,16 +269,24 @@
 [/#macro]
 
 [#macro BuildCodeNonTerminal nonterminal]
+   [#var production = nonterminal.production]
    pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn}); 
    try {
-   [#if !nonterminal.LHS?is_null]
+   [#if !nonterminal.LHS?is_null && production.returnType != "void"]
        ${nonterminal.LHS} = 
    [/#if]
       ${nonterminal.name}(${nonterminal.args!});
-    } 
-    finally {
-        popCallStack();
-    }
+   [#if !nonterminal.LHS?is_null && production.returnType = "void"]
+      try {
+         ${nonterminal.LHS} = (${production.nodeName}) peekNode();
+      } catch (ClassCastException cce) {
+         ${nonterminal.LHS} = null;
+      }
+   [/#if]
+   } 
+   finally {
+       popCallStack();
+   }
 [/#macro]
 
 
@@ -335,14 +353,14 @@
    [#elseif choice.parent.simpleName = "OneOrMore"]
        else if (${inFirstVarName}) {
            pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
-           throw new ParseException(currentToken.getNext(), ${choice.firstSetVarName}, parsingStack);
+           throw new ParseException(this, ${choice.firstSetVarName}, parsingStack);
        } else {
            break;
        }
    [#elseif choice.parent.simpleName != "ZeroOrOne"]
        else {
            pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
-           throw new ParseException(currentToken.getNext(), ${choice.firstSetVarName}, parsingStack);
+           throw new ParseException(this, ${choice.firstSetVarName}, parsingStack);
         }
    [/#if]
 [/#macro]

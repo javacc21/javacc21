@@ -96,7 +96,33 @@ public interface Node extends Comparable<Node>
      
      Node removeChild(int i);
      
-     boolean removeChild(Node n);
+     default boolean removeChild(Node n) {
+         int index = indexOf(n);
+         if (index == -1) return false;
+         removeChild(index);
+         return true;
+     }
+
+     default boolean replaceChild(Node current, Node replacement) {
+         int index = indexOf(current);
+         if (index == -1) return false;
+         setChild(index, replacement);
+         return true;
+     }
+
+     default boolean prependChild(Node where, Node inserted) {
+         int index = indexOf(where);
+         if (index == -1) return false;
+         addChild(index, inserted);
+         return true;
+     }
+
+     default boolean appendChild(Node where, Node inserted) {
+         int index = indexOf(where);
+         if (index == -1) return false;
+         addChild(index+1, inserted);
+         return true;
+     }
      
      default int indexOf(Node child) {
          for (int i=0; i<getChildCount(); i++) {
@@ -106,6 +132,7 @@ public interface Node extends Comparable<Node>
          }
          return -1;
      }
+
      /**
       * Used to order Nodes by location.
       */
@@ -275,7 +302,10 @@ public interface Node extends Comparable<Node>
     default <T extends Node>T firstDescendantOfType(Class<T> clazz) {
          for (Node child : children()) {
              if (clazz.isInstance(child)) return clazz.cast(child);
-             else return child.firstDescendantOfType(clazz);
+             else {
+                 T descendant = child.firstDescendantOfType(clazz);
+                 if (descendant !=null) return descendant;
+             }
          }
          return null;
     }

@@ -130,13 +130,39 @@ abstract public class Expansion extends BaseNode {
         if (getGrammar().getTreeBuildingEnabled()) {
             this.treeNodeBehavior = treeNodeBehavior;
             if (treeNodeBehavior != null) {
-                getGrammar().addNodeType(treeNodeBehavior.getNodeName());
+                getGrammar().addNodeType(null, treeNodeBehavior.getNodeName());
             }
         }
     }
+/*
+    public boolean isAtChoicePoint() {
+        Node parent = getParent();
+        if (parent instanceof ChoicePoint) return true;
+        if (parent instanceof BNFProduction) return true;
+        if (beginsSequence() && parent.getParent() instanceof BNFProduction) return true;
+        return false;
+        // The expansion directly inside a BNFProduction
+        // should also be treated as a choice point, I guess,
+        // since a NonTerminal that represents it may
+        // itself be at a choice point.
+    }*/
 
     public boolean isAtChoicePoint() {
-        return getParent() instanceof ChoicePoint;
+        Node parent = getParent();
+        return parent instanceof ChoicePoint || parent instanceof BNFProduction;
+
+    }
+
+
+    public boolean beginsSequence() {
+        if (getParent() instanceof ExpansionSequence) {
+            ExpansionSequence seq = (ExpansionSequence) getParent();
+            for (Expansion child : seq.childrenOfType(Expansion.class)) {
+                if (child == this) return true;
+                if (!child.isPossiblyEmpty()) return false;
+            }
+        }
+        return false;
     }
 
     public boolean isInsideLookahead() {
@@ -184,14 +210,6 @@ abstract public class Expansion extends BaseNode {
             return true;
         if (getHasScanLimit())
             return true;
-        if (this instanceof ExpansionSequence) {
-            for (Expansion exp : childrenOfType(Expansion.class)) {
-                if (exp instanceof NonTerminal)
-                    return ((NonTerminal) exp).getProduction().getExpansion().getHasScanLimit();
-                if (exp.getMaximumSize() > 0)
-                    break;
-            }
-        }
         return false;
     }
 
@@ -225,12 +243,30 @@ abstract public class Expansion extends BaseNode {
     }
 
     public final boolean getRequiresPredicateMethod() {
-        if (isInsideLookahead() || !isAtChoicePoint())
+        if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
-        if (getHasSeparateSyntacticLookahead() || getHasLookBehind())
+        }
+        if (getHasSeparateSyntacticLookahead() || getHasLookBehind()) {
             return true;
-        if (getHasImplicitSyntacticLookahead() && !isSingleToken())
+        }
+        if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
             return true;
+        }
+        if (this instanceof ExpansionChoice) {
+            for (Expansion choice : childrenOfType(Expansion.class)) {
+                if (choice.getRequiresPredicateMethod()) return true;
+            }
+        }
+        if (this instanceof ExpansionSequence) {
+            for (Expansion exp : childrenOfType(Expansion.class)) {
+                if (exp instanceof NonTerminal) {
+                    NonTerminal nt = (NonTerminal) exp;
+                    exp = nt.getProduction().getExpansion();
+                }
+                if (exp.getRequiresPredicateMethod()) return true;
+                if (!exp.isPossiblyEmpty()) break;
+            }
+        }
         return getHasGlobalSemanticActions();
     }
 

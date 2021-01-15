@@ -76,6 +76,10 @@ public class Grammar extends BaseNode {
     private Map<Integer, String> tokenNames = new HashMap<>();
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
+    // TODO use these later for Nodes that correspond to abstract 
+    // classes or interfaces
+    private Set<String> abstractNodeNames = new HashSet<>();
+    private Set<String> interfaceNodeNames = new HashSet<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
     private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
@@ -379,11 +383,11 @@ public class Grammar extends BaseNode {
      * @return a List containing all the expansions that are at a choice point
      */
     public List<Expansion> getChoicePointExpansions() {
-        return descendants(Expansion.class, exp->exp.isAtChoicePoint());
+        return descendants(Expansion.class, Expansion::isAtChoicePoint);
     }
 
     public List<Expansion> getExpansionsNeedingPredicate() {
-        return descendants(Expansion.class, exp->exp.getRequiresPredicateMethod());
+        return descendants(Expansion.class, Expansion::getRequiresPredicateMethod);
     }
 
     public List<String> getLexerTokenHooks() {
@@ -728,13 +732,29 @@ public class Grammar extends BaseNode {
         return nodePrefix;
     }
 
-    public void addNodeType(String nodeName) {
+    public void addNodeType(String productionName, String nodeName) {
         if (nodeName.equals("void")) {
             return;
+        }
+        if (nodeName.equals("abstract")) {
+            abstractNodeNames.add(productionName);
+            nodeName = productionName;
+        }
+        else if (nodeName.equals("interface")) {
+            interfaceNodeNames.add(productionName);
+            nodeName = productionName;
         }
         nodeNames.add(nodeName);
         nodeClassNames.put(nodeName, getNodePrefix() + nodeName);
         nodePackageNames.put(nodeName, getNodePackage());
+    }
+
+    public boolean nodeIsInterface(String nodeName) {
+        return interfaceNodeNames.contains(nodeName);
+    }
+
+    public boolean nodeIsAbstract(String nodeName) {
+        return abstractNodeNames.contains(nodeName);
     }
 
     public String getNodeClassName(String nodeName) {

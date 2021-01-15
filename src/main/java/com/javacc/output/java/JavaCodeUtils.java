@@ -58,7 +58,7 @@ public class JavaCodeUtils {
         Set<String> names = new HashSet<>();
         for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, 
                                      fd->fd.getParent() instanceof ClassOrInterfaceBodyDeclaration)) {
-            if (((ClassOrInterfaceBodyDeclaration) fd.getParent()).isPrivate()) {
+            if (fd.firstChildOfType(PRIVATE) != null) {
                 List<Identifier> vars = fd.getVariableIds();
                 ids.addAll(vars);
                 for (Identifier id : vars) {

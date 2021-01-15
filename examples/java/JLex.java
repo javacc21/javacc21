@@ -2,13 +2,13 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import org.parsers.java.*;
-
+import org.parsers.java.JavaConstants.TokenType;
 
 /**
- * A test harness for parsing Java files from 
+ * A test harness for lexing Java files from 
  * the command line.
  */
-public class JParse {
+public class JLex {
     
     static public ArrayList<Node> roots= new ArrayList<>();
 
@@ -28,47 +28,39 @@ public class JParse {
 	   addFilesRecursively(files, file);
       }
       long startTime = System.currentTimeMillis();
+      int numTokens =0;
       for (File file : files) {
           try {
-             // A bit screwball, we'll dump the tree if there is only one arg. :-)
-              parseFile(file, files.size() == 1);
-              FileLineMap.clearFileLineMaps();
+              numTokens+=tokenizeFile(file);
           } 
           catch (Exception e) {
               System.err.println("Error processing file: " + file);
               e.printStackTrace();
-	      failures.add(file);
+              failures.add(file);
               continue;
           }
-          System.out.println(file.getName()  + " parsed successfully.");
+          System.out.println(file.getName()  + " tokenized successfully.");
           successes.add(file);
        }
-       for (File file : failures) {
-           System.out.println("Parse failed on: " + file);
+       if (!failures.isEmpty()) for (File file : failures) {
+           System.out.println("Lexing failed on: " + file);
        }
-       System.out.println("\nParsed " + successes.size() + " files successfully");
+       System.out.println("\nTokenized " + successes.size() + " files, containing " + numTokens + " tokens.");
        System.out.println("Failed on " + failures.size() + " files.");
        System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
     }
       
-   static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
+   static public int tokenizeFile(File file) throws IOException, ParseException {
        String content = new String(Files.readAllBytes(file.toPath()));
-       JavaParser parser = new JavaParser(file.toString(), content);
-       Node root=parser.CompilationUnit();
-// Uncomment the following code if you want all the parsed trees 
-//  to remain in memory. This is useful if you want to know how much
-//  memory it takes to parse all the source code in the JDK, for example.
-//  (About 8GB if we're talking about JDK 13)
-//       roots.add(root);
-//       if (roots.size() % 1000 == 0) {
-//            System.out.println("-----------------------------------------------");
-//            System.out.println("Parsed "  +  roots.size() + " files.");
-//            System.out.println("-----------------------------------------------");
-//       }
-       
-       if (dumpTree) {
-           root.dump("");
+       JavaLexer lexer = new JavaLexer(file.toString(), content);
+       Token t = null;
+       int numTokens = 0;
+       do {
+           t = lexer.getNextToken();
+           ++numTokens;
        }
+       while (t.getType() != TokenType.EOF);
+       return numTokens;
    }
 
    static public void addFilesRecursively(List<File> files, File file) {
@@ -84,8 +76,7 @@ public class JParse {
    
    
    static public void usage() {
-       System.out.println("Usage: java JParse <sourcefiles or directories>");
-       System.out.println("If you just pass it one java source file, it dumps the AST");
+       System.out.println("Usage: java JLex <sourcefiles or directories>");
        System.exit(-1);
    }
 }

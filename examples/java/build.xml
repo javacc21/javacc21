@@ -3,6 +3,7 @@
 <target name="clean">
    <delete dir="org"/>
    <delete file="JParse.class"/>
+   <delete file="JLex.class"/>
 </target>
 
 <target name="init">

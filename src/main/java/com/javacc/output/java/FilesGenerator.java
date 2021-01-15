@@ -97,8 +97,12 @@ public class FilesGenerator {
     	}
         
     }
+
+    public void generate(File outputFile) throws IOException, TemplateException {
+        generate(null, outputFile);
+    }
     
-    public void generate(File outputFile) throws IOException, TemplateException  {
+    public void generate(String nodeName, File outputFile) throws IOException, TemplateException  {
         this.currentFilename = outputFile.getName();
         String templateName = currentFilename + ".ftl";
         if (tokenSubclassFileNames.contains(currentFilename)) {
@@ -134,6 +138,8 @@ public class FilesGenerator {
         HashMap<String, Object> dataModel = new HashMap<String, Object>();
         dataModel.put("grammar", grammar);
         dataModel.put("filename", currentFilename);
+        dataModel.put("isAbstract", grammar.nodeIsAbstract(nodeName));
+        dataModel.put("isInterface", grammar.nodeIsInterface(nodeName));
         dataModel.put("generated_by", com.javacc.Main.PROG_NAME);
         String classname = currentFilename.substring(0, currentFilename.length() - 5);
         String superClassName = superClassLookup.get(classname);
@@ -282,19 +288,20 @@ public class FilesGenerator {
     
     void generateTreeBuildingFiles() throws IOException, TemplateException {
     	generateNodeFile();
-        Set<File> files = new LinkedHashSet<File>();
-        files.add(getOutputFile(grammar.getBaseNodeClassName()));
+//        Set<File> files = new LinkedHashSet<File>();
+        Map<String, File> files = new LinkedHashMap<>();
+        files.put(grammar.getBaseNodeClassName(), getOutputFile(grammar.getBaseNodeClassName()));
 
         for (RegularExpression re : grammar.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;
             String tokenClassName = re.getGeneratedClassName();
             File outputFile = getOutputFile(tokenClassName);
-            files.add(outputFile);
+            files.put(tokenClassName, outputFile);
             tokenSubclassFileNames.add(outputFile.getName());
             String superClassName = re.getGeneratedSuperClassName();
             if (superClassName != null) {
                 outputFile = getOutputFile(superClassName);
-                files.add(outputFile);
+                files.put(superClassName, outputFile);
                 tokenSubclassFileNames.add(outputFile.getName());
                 superClassLookup.put(tokenClassName, superClassName);
             }
@@ -306,15 +313,15 @@ public class FilesGenerator {
                 name = name.substring(0, name.length() -5);
                 grammar.addSemanticError(null, "The name " + name + " is already used as a Token subclass.");
             }
-            files.add(outputFile);
+            files.put(nodeName, outputFile);
         }
-        for (File file : files) {
-            if (regenerate(file)) {
-                generate(file);
+        for (Map.Entry<String, File> entry : files.entrySet()) {
+            if (regenerate(entry.getValue())) {
+                generate(entry.getKey(), entry.getValue());
             }
         }
     }
-    
+
     // only used for tree-building files (a bit kludgy)
     private File getOutputFile(String nodeName) throws IOException {
         if (nodeName.equals(grammar.getBaseNodeClassName())) {
@@ -322,7 +329,7 @@ public class FilesGenerator {
         }
         String className = grammar.getNodeClassName(nodeName);
         //KLUDGE
-        if (nodeName.equals(grammar.getParserClassName() + "Visitor") || nodeName.equals(grammar.getBaseNodeClassName())) {
+        if (nodeName.equals(grammar.getBaseNodeClassName())) {
             className = nodeName;
         }
         String explicitlyDeclaredPackage = codeInjector.getExplicitlyDeclaredPackage(className);

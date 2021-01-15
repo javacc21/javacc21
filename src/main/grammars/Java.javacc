@@ -34,6 +34,7 @@ NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
+NODE_USES_PARSER;
 
 INCLUDE("JavaLexer.javacc")
 
@@ -68,11 +69,15 @@ INJECT PARSER_CLASS : {
   }
 }
 
-CompilationUnit CompilationUnit #CompilationUnit :
+INJECT : {
+  public class Fuck extends BaseNode {}
+}
+
+#CompilationUnit# :
   [ PackageDeclaration ]
   ( ImportDeclaration )*
   (
-     ( TypeDeclaration | ";")+
+     ( TypeDeclaration )+
      |
      <EOF>
   )
@@ -102,49 +107,6 @@ INJECT PackageDeclaration :
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
 Modifiers #void :
-{EnumSet<TokenType> modifiers = EnumSet.noneOf(TokenType.class);}
-   (
-      SCAN {!modifiers.contains(STATIC)}
-      => <STATIC> {modifiers.add(STATIC);}
-      |
-      SCAN {!modifiers.contains(ABSTRACT)}
-      => <ABSTRACT> {modifiers.add(ABSTRACT);}
-      |
-      SCAN {!modifiers.contains(FINAL)}
-      => <FINAL> {modifiers.add(FINAL);}
-      |
-      SCAN {!modifiers.contains(SYNCHRONIZED)}
-      => <SYNCHRONIZED> {modifiers.add(SYNCHRONIZED);}
-      |
-      SCAN {!modifiers.contains(NATIVE)}
-      => <NATIVE> {modifiers.add(NATIVE);}
-      |
-      SCAN {!modifiers.contains(PUBLIC) && !modifiers.contains(PRIVATE) && !modifiers.contains(PROTECTED)}
-      => <PUBLIC> {modifiers.add(PUBLIC);}
-      |
-      SCAN {!modifiers.contains(PUBLIC) && !modifiers.contains(PRIVATE) && !modifiers.contains(PROTECTED)}
-      => <PROTECTED> {modifiers.add(PROTECTED);}
-      |
-      SCAN {!modifiers.contains(PUBLIC) && !modifiers.contains(PRIVATE) && !modifiers.contains(PROTECTED)}
-      => <PRIVATE> {modifiers.add(PRIVATE);}
-      |
-      SCAN {!modifiers.contains(TRANSIENT)}
-      => <TRANSIENT> {modifiers.add(TRANSIENT);}
-      |
-      SCAN {!modifiers.contains(VOLATILE)}
-      => <VOLATILE> {modifiers.add(VOLATILE);}
-      | 
-      SCAN {!modifiers.contains(STRICTFP)}
-      => <STRICTFP> {modifiers.add(STRICTFP);}
-      |
-//      SCAN {!modifiers.contains(_DEFAULT)} \MethodDeclaration
-//      => <_DEFAULT> {modifiers.add(_DEFAULT);}
-//      |
-      SCAN 2 => Annotation
-   )*
-;
-
-Modifiers2 #void :
  (
    "public"
   |
@@ -167,7 +129,7 @@ Modifiers2 #void :
    "volatile" 
   |
    "strictfp" 
-  |
+  | 
   SCAN \MethodDeclaration =>
    "default"
   |
@@ -175,12 +137,10 @@ Modifiers2 #void :
  )*
 ;
 
-/*
- * Declaration syntax follows.
- */
-
-TypeDeclaration TypeDeclaration #TypeDeclaration(false) :
- (      
+TypeDeclaration #abstract :
+// (
+  EmptyDeclaration 
+  |
   AnnotationTypeDeclaration
   |
   ClassDeclaration
@@ -188,20 +148,23 @@ TypeDeclaration TypeDeclaration #TypeDeclaration(false) :
   InterfaceDeclaration
   |
   EnumDeclaration
- )
- {
-        return (TypeDeclaration) peekNode();
- }
+// )
+// {
+//        return (TypeDeclaration) peekNode();
+// }
 ;
 
+INJECT EmptyDeclaration : extends TypeDeclaration;
 INJECT AnnotationTypeDeclaration : extends TypeDeclaration;
 INJECT ClassDeclaration : extends TypeDeclaration;
 INJECT InterfaceDeclaration : extends TypeDeclaration;
 INJECT EnumDeclaration : extends TypeDeclaration;
 
+EmptyDeclaration# : ";" ;
+
 ClassDeclaration :
-  Modifiers
-  "class" =>||
+ Modifiers
+  "class" =>|| 
   <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList]
@@ -257,7 +220,7 @@ EnumBody :
    "}"
 ;
 
-EnumConstant:
+EnumConstant :
   Modifiers <IDENTIFIER> [ Arguments ] [ ClassOrInterfaceBody ]
 ;
 
@@ -289,45 +252,29 @@ ClassOrInterfaceBody :
     "}"
 ;
 
-
-INJECT ClassOrInterfaceBodyDeclaration : 
-import static PARSER_PACKAGE.CONSTANTS_CLASS.TokenType.*;
-{
-    public boolean isPrivate() {
-        return firstDescendantOfType(PRIVATE) != null;
-    }
-    
-    public boolean isStatic() {
-        return firstDescendantOfType(STATIC) != null;
-    }
-    
-    public boolean isProtected() {
-        return firstDescendantOfType(PROTECTED) != null;
-    }
-    
-    public boolean isPublic() {
-        return firstDescendantOfType(PUBLIC) != null;
-    }
-}
-
-ClassOrInterfaceBodyDeclaration #ClassOrInterfaceBodyDeclaration :
-  ";"
-  |
+ClassOrInterfaceBodyDeclaration# :
+  {TypeDeclaration td = null;}
+  (
   Initializer
   |
-  AnnotationTypeDeclaration
-  |
-  InterfaceDeclaration
-  |
-  EnumDeclaration
-  |
-  ClassDeclaration
+  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "@")) =>
+  td=TypeDeclaration
+//  EmptyDeclaration
+//  |
+//  AnnotationTypeDeclaration
+//  |
+//  InterfaceDeclaration
+//  |
+//  EnumDeclaration
+//  |
+//  ClassDeclaration
   |
   ConstructorDeclaration
   |
   FieldDeclaration
   |
   MethodDeclaration
+  )
 ;
 
 FieldDeclaration :
@@ -339,7 +286,7 @@ VariableDeclarator :
   VariableDeclaratorId [ "=" VariableInitializer ]
 ;
 
-VariableDeclaratorId #VariableDeclaratorId :
+VariableDeclaratorId# :
   <IDENTIFIER> ( "[" "]" )*
 ;
 
@@ -349,21 +296,15 @@ ArrayInitializer :
   "{" [ VariableInitializer ( "," =>|+1 VariableInitializer )* ] [ "," ] "}"
 ;
 
-
 MethodDeclaration MethodDeclaration :
-  Modifiers2
+  Modifiers
   [ TypeParameters ]
   ReturnType
-  =>|+2
-  MethodDeclarator 
+  <IDENTIFIER> 
+  =>|+1 FormalParameters ( "[" "]" )*
   [ ThrowsList ]
   ( Block | ";" )
   {return CURRENT_NODE;}
-;
-
-
-MethodDeclarator #void :
-  <IDENTIFIER> FormalParameters ( "[" "]" )*
 ;
 
 FormalParameters #FormalParams :
@@ -371,7 +312,6 @@ FormalParameters #FormalParams :
     [ FormalParameter ( "," FormalParameter )* ]
    ")"
 ;
-
 
 FormalParameter : Modifiers Type [ "..." ] VariableDeclaratorId ;
 
@@ -471,35 +411,21 @@ WildcardBounds :
 ;
 
 
-PrimitiveType #PrimitiveType :
-  "boolean"
-   |
-  "char"
-   |
-  "byte"
-   |
-  "short"
-   |
-  "int"
-   |
-  "long"
-   |
-  "float"
-   |
-  "double"
+PrimitiveType# :
+  "boolean" | "char" | "byte" | "short" | "int" | "long" | "float" | "double"
 ;
 
 PrimitiveArrayType : 
     PrimitiveType (=> "[" "]")+
 ;
 
-ReturnType #ReturnType : "void" | Type ;
+ReturnType# : "void" | Type ;
 
-Name #Name : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
+Name# : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
 
 ThrowsList : "throws" Name ( "," Name )* ;
 
-Expression Expression #Expression(false) :
+#Expression#(false) :
     AssignmentExpression
     {return (Expression) peekNode();}
 ;
@@ -639,7 +565,7 @@ PostfixExpression :
   PrimaryExpression [ "++" | "--" ]
 ;
 
-SwitchExpression #SwitchExpression :
+SwitchExpression# :
    SwitchStatement
 ;
 
@@ -651,7 +577,7 @@ CastExpression :
   => "(" ClassOrInterfaceType ("&" ClassOrInterfaceType)+ ")" UnaryExpressionNotPlusMinus 
 ;
 
-PrimaryExpression PrimaryExpression #PrimaryExpression :
+#PrimaryExpression# :
     PrimaryPrefix 
     ( SCAN 2 PrimarySuffix )*
     {
@@ -768,52 +694,49 @@ Label : <IDENTIFIER><COLON> =>|| ;
 
 Statement  :
   (Label)*
-  UnlabeledStatement
-;
-
-
-UnlabeledStatement #void :
-  AssertStatement
-  |
-  Block
-  |
-  YieldStatement
-  |
-  EmptyStatement
-  |
-  StatementExpression ";"
-  |
-  SwitchStatement
-  |
-  IfStatement
-  |
-  WhileStatement
-  |
-  DoStatement
-  |
-  ForStatement
-  |
-  BreakStatement
-  |
-  ContinueStatement
-  |
-  ReturnStatement
-  |
-  ThrowStatement
-  |
-  SynchronizedStatement
-  |
-  TryStatement
+  (
+    AssertStatement
+    |
+    Block
+    |
+    YieldStatement
+    |
+    EmptyStatement
+    |
+    ExpressionStatement
+    |
+    SwitchStatement
+    |
+    IfStatement
+    |
+    WhileStatement
+    |
+    DoStatement
+    |
+    ForStatement
+    |
+    BreakStatement
+    |
+    ContinueStatement
+    |
+    ReturnStatement
+    |
+    ThrowStatement
+    |
+    SynchronizedStatement
+    |
+    TryStatement
+  )
 ;
 
 INJECT AssertStatement : extends Statement;
 INJECT YieldStatement : extends Statement;
 INJECT EmptyStatement : extends Statement;
-INJECT TryStatement : extends Statement
 INJECT SwitchStatement : extends Statement
 INJECT IfStatement : extends Statement
 INJECT WhileStatement : extends Statement
 INJECT DoStatement : extends Statement
+INJECT ExpressionStatement : extends Statement
 INJECT ForStatement : extends Statement
 INJECT BreakStatement : extends Statement
 INJECT ContinueStatement : extends Statement
@@ -821,8 +744,10 @@ INJECT ReturnStatement : extends Statement
 INJECT ThrowStatement : extends Statement
 INJECT SynchronizedStatement : extends Statement
 INJECT TryStatement : extends Statement
+INJECT TryWithResources : extends TryStatement
+INJECT ClassicTryStatement : extends TryStatement
 
-TryStatement #void :
+TryStatement #(false) :
    TryWithResources
    |
    ClassicTryStatement
@@ -866,18 +791,15 @@ StatementExpression :
  * use PostfixExpression for performance reasons.
  */
   PreIncrementExpression
- |
+  |
   PreDecrementExpression
   |
-  PrimaryExpression
-  [
-    "++"
+  PrimaryExpression AssignmentOperator =>|| Expression #AssignmentExpression
   |
-    "--"
-  |
-    AssignmentOperator Expression
-  ]
+  PostfixExpression
 ;
+
+ExpressionStatement : StatementExpression ";" ;
 
 SwitchStatement :
   SCAN "switch" "(" Expression ")" "{" NewSwitchLabel
@@ -903,7 +825,11 @@ ClassicSwitchLabel :
 
 ClassicCaseStatement :
   ClassicSwitchLabel
-  (BlockStatement)*
+  (SCAN 2 // We need this because we'll spuriously enter the BlockStatement 
+          // if the next token is "default", because "default" is in the 
+          // BlockStatement first set. This is really quite tricky, but maybe not my
+          // fault, but the Java designers for re-using keywords!
+  => BlockStatement)*
 ;
 
 NewSwitchStatement :
@@ -928,10 +854,10 @@ NewCaseStatement :
      |
      ThrowStatement
      |
-     SCAN \...\SwitchExpression
+     SCAN \.\.\SwitchExpression
      => Expression ";"
      |
-     SCAN ~\...\SwitchExpression
+     SCAN ~\.\.\SwitchExpression
      => BlockStatement
    )
 ;
@@ -959,7 +885,6 @@ ForStatement :
 ;
 
 ForInit :
-  //SCAN Modifiers Type <IDENTIFIER> =>
   LocalVariableDeclaration
   |
   StatementExpressionList
@@ -1125,7 +1050,7 @@ MemberValueArrayInitializer :
 
 /* Annotation Types. */
 
-AnnotationTypeDeclaration #AnnotationTypeDeclaration :
+AnnotationTypeDeclaration :
   Modifiers
   "@" "interface" =>|| <IDENTIFIER> AnnotationTypeBody
 ;
@@ -1135,19 +1060,19 @@ AnnotationTypeBody :
 ;
 
 AnnotationTypeMemberDeclaration :
- ";"
- |
- AnnotationTypeDeclaration
- |
- InterfaceDeclaration
- |
- EnumDeclaration
- |
- ClassDeclaration
- |
- Modifiers Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
- |
- FieldDeclaration
+  EmptyDeclaration 
+  |
+  AnnotationTypeDeclaration
+  |
+  ClassDeclaration
+  |
+  InterfaceDeclaration
+  |
+  EnumDeclaration
+  |
+  Modifiers Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
+  |
+  FieldDeclaration
 ;
 
 DefaultValue : "default" MemberValue ;

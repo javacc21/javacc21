@@ -264,8 +264,8 @@ TOKEN :
   |
   <HASH : "#">
   |
-  <HASH_ID : "#"<IDENTIFIER>> #HashID
-  |
+//  <HASH_ID : "#"<IDENTIFIER>> #HashID
+//  |
   <BACKSLASH : "\\"> #Backslash
   |
   <RIGHT_ARROW : "=>"> #RightArrow
@@ -864,7 +864,7 @@ INJECT Identifier :
             return getGrammar().getParserPackage();
         }
         if (image.equals("current_token")) {
-            return "currentToken";
+            return "lastConsumedToken";
         }
         if (image.equals("TOKEN_HOOK")) {
             if (tokenHookName ==null) {
@@ -944,7 +944,7 @@ INJECT Token :
     }
 }
 
-GrammarFile Root throws IOException #GrammarFile :
+#Root throws IOException #GrammarFile :
 {
     TokenManagerDecls decls;
 }
@@ -1041,7 +1041,7 @@ CodeInjection :
             |
             "interface" {isInterface = true;}
         ]
-        <IDENTIFIER> {CURRENT_NODE.name = current_token.toString();} 
+        <IDENTIFIER> {CURRENT_NODE.name = lastConsumedToken.toString();} 
         [
             SCAN {usingParentheses} => ")"
         ]
@@ -1176,8 +1176,10 @@ BNFProduction :
     ]
     [
        SCAN ReturnType <IDENTIFIER> => ReturnType
+       |
+       "#" {CURRENT_NODE.setImplicitReturnType(true);}
     ]
-    <IDENTIFIER> {CURRENT_NODE.setName(current_token.getImage());}
+    <IDENTIFIER> {CURRENT_NODE.setName(lastConsumedToken.getImage());}
     [FormalParameters]
     [
       ThrowsList
@@ -1186,10 +1188,8 @@ BNFProduction :
         tba=TreeNodeDescriptor 
         {
             String nodeName = tba.getNodeName();
-            if (nodeName == null) {
-               nodeName = CURRENT_NODE.getName();
-            }
-            grammar.addNodeType(nodeName);
+            if (nodeName == null) nodeName = CURRENT_NODE.getNodeName();
+            grammar.addNodeType(CURRENT_NODE.getName(), nodeName);
         }
     ]
     [
@@ -1198,14 +1198,17 @@ BNFProduction :
     ]
     ":"
     (
+        // Older syntax
         => [=>Block] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
         |
-        ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
+        [Block]
+        ExpansionChoice 
+        {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
     )
     {
         CURRENT_NODE.adjustFirstToken(t);
         if (tba == null && !grammar.getNodeDefaultVoid()) {
-           grammar.addNodeType(CURRENT_NODE.getName());
+           grammar.addNodeType(CURRENT_NODE.getName(),CURRENT_NODE.getName());
         }
      }
 ;
@@ -1215,33 +1218,8 @@ INJECT BNFProduction :
 	import com.javacc.parsegen.TokenSet;
 	import com.javacc.parsegen.Expansion;
 {
-
-    // A bit of a kludge. We treat the very first code block in a production specially.
-    public void close() {
-        if (getJavaCode() == null && expansion instanceof ExpansionSequence) {
-            List<Expansion> children = ((ExpansionSequence) expansion).getUnits();
-            if (children.size() > 1) {
-            Expansion first = children.get(0);
-            if (first instanceof CodeBlock) {
-            // If the first child is a code block, we remove it from the seequence
-            // and insert it as a child node of the production itself.
-                    expansion.removeChild(first);
-                    for (int i = 0; i < getChildCount(); i++) {
-                        Node child = getChild(i);
-                        if (child instanceof Token && ((Token)child).getType() == COLON) {
-                            addChild(i+1, first);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-
-    public void CLOSE_NODE_HOOK() {}
-
-
+    @Property boolean implicitReturnType;
+//    public void CLOSE_NODE_HOOK() {} //FIXME
 
     public boolean getHasScanLimit() {
         return expansion instanceof ExpansionSequence && ((ExpansionSequence) expansion).getHasScanLimit();
@@ -1263,7 +1241,9 @@ INJECT BNFProduction :
         TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
         if (tba != null) {
              String nodeName = tba.getNodeName();
-             if (nodeName == null) {
+             if (nodeName != null && !nodeName.equals("abstract") 
+                 && !nodeName.equals("interface")
+                 && !nodeName.equals("void")) {
                 return nodeName;
              }
         }
@@ -1320,15 +1300,19 @@ INJECT BNFProduction :
            else if (type == PROTECTED) {
                return "protected";
            }
-           else if (type == PUBLIC) {
-               return "public";
+           else if (type == PACKAGE) {
+               return "";
            }
         }
-        return "";
+        return "public";
     }
 
-    public ReturnType getReturnType() {
-        return firstChildOfType(ReturnType.class);
+    public String getReturnType() {
+        if (isImplicitReturnType()) {
+            return getNodeName();
+        }
+        ReturnType rt = firstChildOfType(ReturnType.class);
+        return rt == null ? "void" : rt.getAsString();
     }
     
     public void adjustFirstToken(Token t) {
@@ -1365,34 +1349,41 @@ INJECT BNFProduction :
     }
 }
 
-TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
-  <HASH_ID>
+//TreeBuildingAnnotation 
+TreeNodeDescriptor #TreeBuildingAnnotation :
+  "#" [<IDENTIFIER>|"abstract"|"interface"|"void"]
    [
-	   <LPAREN>  
+	   "("
 	      [
 	        ">"
 	      ]
 	      Expression()
-	   <RPAREN>
+	   ")"
   ]
-  {
-          return CURRENT_NODE;
-  }
+//  {
+//          return CURRENT_NODE;
+//  }
 ;
 
 INJECT TreeBuildingAnnotation :
 {
+    /**
+     * Just returns whatever comes after the hash ("#") including "void", etc.
+     */
     public String getNodeName() {
-        String image = null;
-        for (Node n : children) {
-	   if (n instanceof Token) {
-	       Token t = (Token) n;
-               if (t.getType() == HASH_ID) {
-                   image = t.getImage().substring(1);
-               }
-	   }
-        }
-        return image;
+        Token hash = firstChildOfType(TokenType.HASH);
+        if (hash == null) return null;
+        Token nextToken = hash.getNext();
+        TokenType nextType = nextToken.getType();
+        if (nextType != IDENTIFIER 
+            && nextType != ABSTRACT 
+            && nextType != INTERFACE 
+            && nextType != VOID) return null;
+        return nextToken.getImage();
+    }
+
+    public boolean isNeverInstantiated() {
+        return isVoid() || isAbstract() || isInterface();
     }
 
     public Expression getCondition() {
@@ -1400,18 +1391,18 @@ INJECT TreeBuildingAnnotation :
     }
     
     public boolean getGtNode() {
-        for (Node n : children) {
-	   if (n instanceof Token) {
-	      Token t = (Token) n;
-              if (t.getType() == GT) {
-                  return true;
-              }
-	   }
-        }
-        return false;
+        return firstChildOfType(GT) != null;
+    }
+
+    public boolean isAbstract() {
+        return "abstract".equals(getNodeName());
+    }
+
+    public boolean isInterface() {
+        return "interface".equals(getNodeName());
     }
     
-    public boolean getVoid() {
+    public boolean isVoid() {
         return "void".equals(getNodeName());
     }
 }
@@ -1431,17 +1422,17 @@ TokenProduction #TokenProduction :
     |
     "<"
       <IDENTIFIER>{
-          firstSpecifiedLexicalState = current_token.getImage();
+          firstSpecifiedLexicalState = lastConsumedToken.getImage();
           grammar.addLexicalState(firstSpecifiedLexicalState);
       }
-      ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(current_token.getImage());})*
+      ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.getImage());})*
     ">"
   ]
   (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP")
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
   ]
-  [t = <HASH_ID> {tokenClassName=t.getImage().substring(1);}] 
+  ["#" t = <IDENTIFIER> {tokenClassName=t.getImage();}] 
   ":"
   ["{" {useBraces = true;}]
    RegexpSpec(CURRENT_NODE, tokenClassName)
@@ -1554,10 +1545,10 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
       }
   }
   [
-     <HASH_ID>
+     "#"<IDENTIFIER>
      {
         regexp.setGeneratedSuperClassName(tokenClassName);
-        regexp.setGeneratedClassName(current_token.getImage().substring(1));
+        regexp.setGeneratedClassName(lastConsumedToken.getImage());
      }
   ]
   [
@@ -1578,8 +1569,9 @@ INJECT RegexpSpec :
         return nsTok == null ? null : nsTok.toString();
     }
 
-    public Identifier getNsTok() {
-       return firstChildOfType(Identifier.class);
+    public Token getNsTok() {
+        Token colon = firstChildOfType(COLON);
+        return colon == null ? null : colon.getNext();
     }
 
     public RegularExpression getRegexp() {
@@ -2192,7 +2184,7 @@ INJECT Lookahead :
 Expansion ExpansionUnit :
 {
     Expression lhs=null;
-    Token t=current_token;
+    Token t=lastConsumedToken;
     Expansion result=null;
     TreeBuildingAnnotation tba = null;
 }
@@ -2246,7 +2238,8 @@ Expansion ExpansionUnit :
  )
  [
      SCAN ~\...\Lookahead =>
-     "!" {((Expansion) peekNode()).setTolerantParsing(true);}
+      {((Expansion) peekNode()).setTolerantParsing(true);}
+     "!"
  ]
  [
      SCAN ~\...\Lookahead => 
@@ -2276,7 +2269,7 @@ NonTerminal NonTerminal #NonTerminal :
 UpToHere(Expansion exp) #void :
    <UP_TO_HERE>
    {
-       String img = currentToken.getImage();
+       String img = lastConsumedToken.getImage();
        exp.setScanLimit(true);
        char lastChar = img.charAt(img.length() -1);
        if (Character.isDigit(lastChar)) {
@@ -2840,7 +2833,7 @@ InPlaceRegexp #void :
      t=<IDENTIFIER> {image = t.getImage();}
      |
      SCAN ~\...\BNFProduction 
-     => t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
+     => "#"t=<IDENTIFIER> {image = t.getImage(); isPrivate= true;}
    )
    ":"
   ]
@@ -2870,7 +2863,7 @@ InPlaceRegexp #void :
 RegexpStringLiteral RegexpStringLiteral #RegexpStringLiteral :
    <STRING_LITERAL>
    {
-      String image = removeEscapesAndQuotes(current_token);
+      String image = removeEscapesAndQuotes(lastConsumedToken);
       CURRENT_NODE.setImage(image);
       return CURRENT_NODE;
    }
@@ -3151,7 +3144,7 @@ CharacterRange CharacterRange #CharacterRange :
   imageL=<STRING_LITERAL>
         {
           String lString = removeEscapesAndQuotes(imageL);
-          CURRENT_NODE.left = character_descriptor_assign(current_token, lString);
+          CURRENT_NODE.left = character_descriptor_assign(lastConsumedToken, lString);
           CURRENT_NODE.right = CURRENT_NODE.left;
         }
    [
@@ -3159,7 +3152,7 @@ CharacterRange CharacterRange #CharacterRange :
     imageR=<STRING_LITERAL>
         {
           String rString = removeEscapesAndQuotes(imageR);
-          CURRENT_NODE.right = character_descriptor_assign(current_token, rString, lString);
+          CURRENT_NODE.right = character_descriptor_assign(lastConsumedToken, rString, lString);
         }
    ]
    {return CURRENT_NODE;}

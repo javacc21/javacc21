@@ -32,15 +32,22 @@
        </echo>
    </target>
    <target name="test" depends="compile">
+      <echo>
+            Now test a few files I grabbed with various non-European characters
+            This might not display correctly on the terminal you are using!
+      </echo>
       <java classname="JSONTest" classpath="."  failonerror="true">
           <arg value="${basedir}/testfiles/Mono.WebAssembly.Build.targets.buildschema.json"/>
           <arg value="${basedir}/testfiles/package.nls.ko.json"/>
           <arg value="${basedir}/testfiles/package.nls.ru.json"/>
           <arg value="${basedir}/testfiles/package.nls.zh-cn.json"/>
       </java>
-      <!-- java classname="JSONCTest" classpath="." failonerror="true">
+      <echo>
+         Now test the JSONC parser on a file with lexically invalid schmoo
+      </echo>
+      <java classname="JSONCTest" classpath="." failonerror="true">
           <arg value="${basedir}/testfiles/invalid.json"/>
-      </java -->     
+      </java>
    </target>
 
       

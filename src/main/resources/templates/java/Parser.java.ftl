@@ -4,7 +4,7 @@
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * modification, are permitted provide that the following conditions are met:
  *
  *     * Redistributions of source code must retain the above copyright notices,
  *       this list of conditions and the following disclaimer.
@@ -67,7 +67,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
     }
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"     
-Token currentToken;
+Token lastConsumedToken = new Token(); // We start with a dummy token. REVISIT
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
@@ -79,7 +79,6 @@ private int lookaheadRoutineNesting;
 private boolean stopAtScanLimit;
 private boolean lastLookaheadSucceeded;
 
-private Token lastConsumedToken;
 //private Token nextToken; //REVISIT
 
 //private EnumSet<Token> currentFollowSet;
@@ -145,18 +144,20 @@ public boolean isCancelled() {return cancelled;}
       [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
-     currentToken = new Token();
+      lastConsumedToken.setInputSource(lexer.getInputSource());
   }
 
   // If tok already has a next field set, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
-    Token result = tok.getNext();
+    Token result = tok == null? null : tok.getNext();
+[#if grammar.parserTokenHooks?size>0]    
     if (result != null) {
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);
 [/#list]
     }
+[/#if]    
     Token previous = null;
     while (result == null) {
       Token next = token_source.getNextToken();
@@ -171,19 +172,21 @@ public boolean isCancelled() {return cancelled;}
 [/#list]
       if (!next.isUnparsed()) {
         result = next;
-      } 
+      } else if (next instanceof InvalidToken) {
+        result = next.getNextToken();
+      }
     }
-    tok.setNext(result);
+    if (tok != null) tok.setNext(result);
     return result;
   }
 
-  final Token getNextToken() {
-      return currentToken= getToken(1);
+  final public Token getNextToken() {
+    return getToken(1);
   }
 
 /** Get the specific Token index ahead in the stream. */
   final public Token getToken(int index) {
-    Token t = currentLookaheadToken == null ? currentToken : currentLookaheadToken;
+    Token t = currentLookaheadToken == null ? lastConsumedToken : currentLookaheadToken;
     for (int i = 0; i < index; i++) {
       t = nextToken(t);
     }
@@ -191,7 +194,9 @@ public boolean isCancelled() {return cancelled;}
   }
 
   private final TokenType nextTokenType() {
-    this.nextTokenType = nextToken(currentToken).getType();
+    if (nextTokenType == null) {
+       nextTokenType = nextToken(lastConsumedToken).getType();
+    }
     return nextTokenType;
   }
 

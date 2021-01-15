@@ -109,7 +109,7 @@
     }
     
     public void openNodeScope(Node n) {
-        Token next = nextToken(currentToken);
+        Token next = nextToken(lastConsumedToken);
         n.setBeginLine(next.getBeginLine());
         n.setBeginColumn(next.getBeginColumn());
         n.setInputSource(this.getInputSource());
@@ -129,8 +129,8 @@
 	 * is pushed on to the stack.
 	 */
     public void closeNodeScope(Node n, int num) {
-        n.setEndLine(currentToken.getEndLine());
-        n.setEndColumn(currentToken.getEndColumn());
+        n.setEndLine(lastConsumedToken.getEndLine());
+        n.setEndColumn(lastConsumedToken.getEndColumn());
         if (trace_enabled) LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + num + " nodes off the stack.");
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();
@@ -147,8 +147,6 @@
  [#list grammar.closeNodeScopeHooks as hook]
        ${hook}(n);
 [/#list]
-        
-
     }
 
 	/**
@@ -159,8 +157,8 @@
 	 * constructed and they are left on the stack. 
 	 */
     public void closeNodeScope(Node n, boolean condition) {
-        n.setEndLine(currentToken.getEndLine());
-        n.setEndColumn(currentToken.getEndColumn());
+        n.setEndLine(lastConsumedToken.getEndLine());
+        n.setEndColumn(lastConsumedToken.getEndColumn());
         if (condition) {
             if (trace_enabled) LOGGER.finer("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + nodeArity() + " nodes off the stack.");
             int a = nodeArity();
