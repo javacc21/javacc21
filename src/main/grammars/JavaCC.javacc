@@ -1752,9 +1752,11 @@ INJECT ExpansionSequence :
        boolean foundNonEmpty = false;
        for (Expansion unit : getUnits()) {
             if (unit.isScanLimit()) return true;
+//            if (unit.getRequiresPredicateMethod()) return true;
             if (!foundNonEmpty && (unit instanceof NonTerminal)) {
                 NonTerminal nt = (NonTerminal) unit;
                 if (nt.getHasScanLimit()) return true;
+//                if (nt.getProduction().getExpansion().getRequiresPredicateMethod()) return true;
             }
             if (!unit.isPossiblyEmpty()) foundNonEmpty = true;
        }
