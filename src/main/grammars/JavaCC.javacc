@@ -427,8 +427,8 @@ INJECT TypeDeclaration :
         return firstChildOfType(Identifier.class).toString();
     }
     
-    public TypeParameterList getTypeParameterList() {
-        return firstChildOfType(TypeParameterList.class);
+    public TypeParameters getTypeParameters() {
+        return firstChildOfType(TypeParameters.class);
     }
     
     public ClassOrInterfaceBody getBody() {
@@ -453,7 +453,7 @@ INJECT TypeDeclaration :
     }
 }
 
-INJECT FormalParams : 
+INJECT FormalParameters : 
    import java.util.List;
 {
     public List<FormalParameter> getParams() {
@@ -523,7 +523,7 @@ INJECT CodeBlock :
     }
 }
 
-INJECT InvocationArgs : 
+INJECT InvocationArguments : 
     import java.util.*;
 {
     public List<Expression> getArgs() {
@@ -656,7 +656,7 @@ INJECT ExtendsList :
     }
 }
 
-INJECT TypeParameterList : 
+INJECT TypeParameters : 
     import java.util.*;
 {
     // REVISIT. fix token chaining
@@ -675,7 +675,7 @@ INJECT TypeParameterList :
     }
 
     // REVISIT. fix token chaining 
-    public void add(TypeParameterList params) {
+    public void add(TypeParameters params) {
         for (TypeParameter param : params.getParameters()) {
             add(param);
         }
@@ -815,12 +815,12 @@ INJECT MethodDeclaration :
         throw new IllegalStateException();
     }
     
-    public FormalParams getFormalParams() {
-        return firstChildOfType(FormalParams.class);
+    public FormalParameters getFormalParameters() {
+        return firstChildOfType(FormalParameters.class);
     }
     
     public String getFullSignature() {
-        return getName() + getFormalParams();
+        return getName() + getFormalParameters();
     }
 }
 
@@ -947,6 +947,7 @@ INJECT Token :
 #Root throws IOException #GrammarFile :
 {
     TokenManagerDecls decls;
+    TokenProduction tp;
 }
 {
    [
@@ -955,7 +956,7 @@ INJECT Token :
    [ParserCodeDecls]
    (
       SCAN {!grammar.getUserDefinedLexer()} =>
-      TokenProduction  {grammar.addTokenProduction((TokenProduction) peekNode());}
+      tp=TokenProduction  {grammar.addTokenProduction(tp);}
       |
       BNFProduction
       |
@@ -1029,11 +1030,14 @@ GrammarInclusion throws IOException :
 
 CodeInjection :
 {
-        boolean isInterface = false;
-        Annotation annotation = null;
-        boolean foundOptionalInitialBrace = false;
-         
-        boolean usingParentheses = false;
+    boolean isInterface = false;
+    Annotation annotation = null;
+    boolean foundOptionalInitialBrace = false;
+    boolean usingParentheses = false;
+    ImportDeclaration id;
+    ObjectType ot;
+    Annotation ann;
+    ClassOrInterfaceBody coib;
 }   
         "INJECT" ["(" {usingParentheses = true;}]
         [
@@ -1051,26 +1055,27 @@ CodeInjection :
           {foundOptionalInitialBrace=true;}
         ]
         (
-            ImportDeclaration {CURRENT_NODE.importDeclarations.add((ImportDeclaration) peekNode());}
+            id=ImportDeclaration {CURRENT_NODE.importDeclarations.add(id);}
         )*
         (
-             Annotation {CURRENT_NODE.annotations.add((Annotation) peekNode());}
+            ann=Annotation {CURRENT_NODE.annotations.add(ann);}
         )*
         [
-             "extends" ClassOrInterfaceType {CURRENT_NODE.addExtendsType((ObjectType)peekNode());}
-             (SCAN {isInterface} => "," ClassOrInterfaceType {CURRENT_NODE.addExtendsType((ObjectType) peekNode());})*
+             "extends" 
+             ot=ObjectType {CURRENT_NODE.addExtendsType(ot);}
+             (SCAN {isInterface} => "," ot=ObjectType {CURRENT_NODE.addExtendsType(ot);})*
              [";"]
         ]
         [
              SCAN {!isInterface} =>
-             "implements" ClassOrInterfaceType {CURRENT_NODE.addImplementsType((ObjectType) peekNode());}
-             ("," ClassOrInterfaceType {CURRENT_NODE.addImplementsType((ObjectType) peekNode());})*
+             "implements" ot=ObjectType {CURRENT_NODE.addImplementsType(ot);}
+             ("," ot=ObjectType {CURRENT_NODE.addImplementsType(ot);})*
              [";"]
         ]
         [
            SCAN {foundOptionalInitialBrace} => "}"
         ]
-        [ClassOrInterfaceBody {CURRENT_NODE.body = (ClassOrInterfaceBody) peekNode();}]
+        [coib=ClassOrInterfaceBody {CURRENT_NODE.body = coib;}]
         {
                 if (enterIncludes) {
                     grammar.addCodeInjection(CURRENT_NODE);
@@ -1169,7 +1174,8 @@ Setting(Map settings) #Setting :
 BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
-    Token t=getToken(1);
+    Token firstToken=getToken(1), id;
+    Expansion exp;
 }
     [
         "public" | "private" | "protected"
@@ -1179,7 +1185,7 @@ BNFProduction :
        |
        "#" {CURRENT_NODE.setImplicitReturnType(true);}
     ]
-    <IDENTIFIER> {CURRENT_NODE.setName(lastConsumedToken.getImage());}
+    id=<IDENTIFIER> {CURRENT_NODE.setName(id.getImage());}
     [FormalParameters]
     [
       ThrowsList
@@ -1206,7 +1212,7 @@ BNFProduction :
         {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
     )
     {
-        CURRENT_NODE.adjustFirstToken(t);
+        CURRENT_NODE.adjustFirstToken(firstToken);
         if (tba == null && !grammar.getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName(),CURRENT_NODE.getName());
         }
@@ -1250,7 +1256,7 @@ INJECT BNFProduction :
         return this.getName();
     }
 
-    private String leadingComments;
+    private String leadingComments="";
 
     @Property Expansion expansion, recoveryExpansion;
     @Property String name;
@@ -1259,8 +1265,8 @@ INJECT BNFProduction :
         return firstChildOfType(ThrowsList.class);
     }
     
-    public FormalParams getParameterList() {
-        return firstChildOfType(FormalParams.class);
+    public FormalParameters getParameterList() {
+        return firstChildOfType(FormalParameters.class);
     }
     
     public TreeBuildingAnnotation getTreeNodeBehavior() {
@@ -1316,8 +1322,15 @@ INJECT BNFProduction :
     }
     
     public void adjustFirstToken(Token t) {
+        //FIXME later. Not very urgent.
+/*        
+        Token firstToken = firstChildOfType(Token.class);
+        if (firstToken != t) {
+
+        }
+        if (firstChildOfType(Token.class) !== t)
         this.leadingComments = t.getLeadingComments();
-//        t.setSpecialToken(null); // FIXME, I guess we need something a bit kludgy for now
+*/
     }
 
     public String getLeadingComments() {
@@ -1524,12 +1537,9 @@ INJECT TokenProduction :
     }
 }
 
-TokenManagerDecls TokenManagerDecls :
+TokenManagerDecls :
    "TOKEN_MGR_DECLS" ":"
     ClassOrInterfaceBody
-    {
-        return CURRENT_NODE;
-    }
 ;
 
 RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
@@ -2261,7 +2271,7 @@ NonTerminal NonTerminal #NonTerminal :
     |
     SCAN "(" ExpansionChoice ")" ("*"|"+"|"?") => {}
     |
-    Arguments
+    InvocationArguments
   ]
   {return CURRENT_NODE;}
 ;
@@ -2292,8 +2302,8 @@ INJECT NonTerminal :
         return getGrammar().getProductionByName(getName());
     }
 
-    public InvocationArgs getArgs() {
-        return firstChildOfType(InvocationArgs.class);
+    public InvocationArguments getArgs() {
+        return firstChildOfType(InvocationArguments.class);
     }
 
     public Expression getLHS() {

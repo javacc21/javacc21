@@ -118,15 +118,18 @@ public class JavaCCError {
 	 */
 	public String getFullMessage() {
 		StringBuilder buf = new StringBuilder();
+		if (node != null) {
+			buf.append(node.getLocation());
+			buf.append(": ");
+/*			
+			int beginLine = node.getBeginLine();
+			int beginColumn = node.getBeginColumn();
+			buf.append("Line " + beginLine + ", Column " + beginColumn + " in " + fileName + ": ");*/
+		}
 		if (type == WARNING) {
 			buf.append("Warning: ");
 		} else {
 			buf.append("Error: ");
-		}
-		if (node != null) {
-			int beginLine = node.getBeginLine();
-			int beginColumn = node.getBeginColumn();
-			buf.append("Line " + beginLine + ", Column " + beginColumn + " in " + fileName + ": ");
 		}
 		buf.append(message);
 		return buf.toString();

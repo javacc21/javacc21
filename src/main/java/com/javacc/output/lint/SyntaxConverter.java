@@ -105,14 +105,14 @@ import java.io.*;
                  t.setImage(";");
              }
          }
-         FormalParams params = bnf.firstChildOfType(FormalParams.class);
+         FormalParameters params = bnf.firstChildOfType(FormalParameters.class);
          if (params != null && params.firstChildOfType(FormalParameter.class) == null) {
              bnf.removeChild(params);
          }
      }
 
      public void visit(NonTerminal nt) {
-         InvocationArgs args = nt.getArgs();
+         InvocationArguments args = nt.getArgs();
          if (args != null && args.firstChildOfType(Expression.class) == null) {
              nt.removeChild(args);
          }
