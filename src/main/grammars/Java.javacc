@@ -126,8 +126,7 @@ Modifiers #void :
   |
    "strictfp" 
   | 
-  SCAN \MethodDeclaration =>
-   "default"
+  "default"
   |
   SCAN 2 => Annotation
  )*
@@ -573,22 +572,22 @@ MemberSelector :
 
 PrimaryPrefix :
   Literal
- |
+  |
   "this"
- |
- => "super" "." [TypeArguments] <IDENTIFIER>
- |
+  |
+  => "super" "." [TypeArguments] <IDENTIFIER>
+  |
   "(" Expression ")"
- |
+  |
   AllocationExpression
- |
- => PrimitiveType "." "class"
- |
- => ReturnType "." "class"
- |
- => MethodReference
- |  
- Name
+  |
+  => PrimitiveType "." "class"
+  |
+  => ReturnType "." "class"
+  |
+  => MethodReference
+  |  
+  Name
 ;
 
 MethodReference :

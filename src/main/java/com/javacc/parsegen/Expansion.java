@@ -45,12 +45,6 @@ import com.javacc.parser.tree.*;
 
 abstract public class Expansion extends BaseNode {
 
-    /**
-     * Marker interface to indicate a choice point
-     */
-    public interface ChoicePoint extends Node {
-    }
-
     private TreeBuildingAnnotation treeNodeBehavior;
 
     private Lookahead lookahead;
@@ -134,23 +128,14 @@ abstract public class Expansion extends BaseNode {
             }
         }
     }
-/*
-    public boolean isAtChoicePoint() {
-        Node parent = getParent();
-        if (parent instanceof ChoicePoint) return true;
-        if (parent instanceof BNFProduction) return true;
-        if (beginsSequence() && parent.getParent() instanceof BNFProduction) return true;
-        return false;
-        // The expansion directly inside a BNFProduction
-        // should also be treated as a choice point, I guess,
-        // since a NonTerminal that represents it may
-        // itself be at a choice point.
-    }*/
 
     public boolean isAtChoicePoint() {
         Node parent = getParent();
-        return parent instanceof ChoicePoint || parent instanceof BNFProduction;
-
+        return parent instanceof ExpansionChoice
+            || parent instanceof OneOrMore
+            || parent instanceof ZeroOrMore
+            || parent instanceof ZeroOrOne
+            || parent instanceof BNFProduction;
     }
 
 
@@ -206,7 +191,9 @@ abstract public class Expansion extends BaseNode {
             return false;
         if (this.isAlwaysSuccessful())
             return false;
-        if (getLookaheadAmount() > 1)
+        if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <=1 )
+            return false;
+        if (getRequiresScanAhead())
             return true;
         if (getHasScanLimit())
             return true;
@@ -251,12 +238,12 @@ abstract public class Expansion extends BaseNode {
         }
         if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
             return true;
-        }
+        }/*
         if (this instanceof ExpansionChoice) {
             for (Expansion choice : childrenOfType(Expansion.class)) {
                 if (choice.getRequiresPredicateMethod()) return true;
             }
-        }
+        }/*
         if (this instanceof ExpansionSequence) {
             for (Expansion exp : childrenOfType(Expansion.class)) {
                 if (exp instanceof NonTerminal) {
@@ -266,7 +253,7 @@ abstract public class Expansion extends BaseNode {
                 if (exp.getRequiresPredicateMethod()) return true;
                 if (!exp.isPossiblyEmpty()) break;
             }
-        }
+        }*/
         return getHasGlobalSemanticActions();
     }
 
@@ -305,13 +292,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean getHasScanLimit() {
-        if (!(this instanceof ExpansionSequence))
-            return false;
-        for (Expansion sub : childrenOfType(Expansion.class)) {
-            if (sub.isScanLimit())
-                return true;
-        }
-        return false;
+        return false; //Only an ExpansionSequence can have a scan limit.
     }
 
     public boolean getHasInnerScanLimit() {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -51,7 +51,7 @@ INJECT PARSER_CLASS :
          this.grammar = grammar;
     }
 
-   private char character_descriptor_assign(Token t, String s) {
+    private char character_descriptor_assign(Token t, String s) {
         if (s.length() != 1) {
             grammar.addParseError(t,
                     "String in character list may contain only one character.");
@@ -1362,7 +1362,6 @@ INJECT BNFProduction :
     }
 }
 
-//TreeBuildingAnnotation 
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" [<IDENTIFIER>|"abstract"|"interface"|"void"]
    [
@@ -1373,9 +1372,6 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
 	      Expression()
 	   ")"
   ]
-//  {
-//          return CURRENT_NODE;
-//  }
 ;
 
 INJECT TreeBuildingAnnotation :
@@ -1602,7 +1598,7 @@ INJECT ExpansionChoice :
    import com.javacc.parsegen.Expansion;
    import com.javacc.parsegen.TokenSet;
    import java.util.List;
-   extends Expansion implements Expansion.ChoicePoint;
+   extends Expansion 
 {
    public List<Expansion> getChoices() {
        return childrenOfType(Expansion.class);
@@ -1612,21 +1608,16 @@ INJECT ExpansionChoice :
         if (firstSet == null) {
            firstSet = new TokenSet(getGrammar());
            for (Expansion choice : getChoices()) {
-//               firstSet.or(choice.getFirstSet());
                firstSet.or(choice.getLookaheadExpansion().getFirstSet());
            }
         }
         return firstSet;
    }
    
-   private TokenSet finalSet;
-    
    public TokenSet getFinalSet() {
-       if (finalSet == null) {
-           finalSet = new TokenSet(getGrammar());
-           for (Expansion choice : getChoices()) {
-               finalSet.or(choice.getFinalSet());
-           }
+       TokenSet finalSet = new TokenSet(getGrammar());
+       for (Expansion choice : getChoices()) {
+           finalSet.or(choice.getFinalSet());
        }
        return finalSet;
    }
@@ -1671,12 +1662,9 @@ INJECT ExpansionChoice :
 
 ExpansionWithParentheses :
 {
-//    Expansion nestedExpansion;
     Token start;
 }
-   start="("
-   ExpansionChoice// {nestedExpansion = (Expansion) peekNode();}
-   ")"
+   start="(" ExpansionChoice ")"
    [
        "*" {CURRENT_NODE = new ZeroOrMore();}
        |
@@ -1716,7 +1704,6 @@ ExpansionSequence #ExpansionSequence :
    Expansion sub;
    Lookahead la = null;
 }
-{
   [ 
     SCAN ~\...\Lookahead 
     =>
@@ -1727,13 +1714,12 @@ ExpansionSequence #ExpansionSequence :
      }
   ]
   (
-     SCAN ~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<RIGHT_ARROW>|<SLASH>|<BACKSLASH>)
-     => sub=ExpansionUnit
-      {
-          pokeNode(sub);
-      }
+     sub=ExpansionUnit
+     {
+         pokeNode(sub);
+     }
   )+
-}
+;
 
 INJECT ExpansionSequence : 
    import com.javacc.Grammar;
@@ -1742,13 +1728,6 @@ INJECT ExpansionSequence :
    import java.util.*;
    extends Expansion;
 {
-   public ExpansionSequence(Grammar grammar) {
-       setGrammar(grammar);
-   }
-
-   public ExpansionSequence() {}
-
-
    public List<Expansion> getUnits() {
        return childrenOfType(Expansion.class);
    }
@@ -1773,18 +1752,15 @@ INJECT ExpansionSequence :
        }
        return firstSet;
    }
-//   private TokenSet finalSet;
+
    public TokenSet getFinalSet() {
-       TokenSet finalSet = null; // REVISIT, not sure why this is necessary
-       if (finalSet == null) {
-           finalSet = new TokenSet(getGrammar());
-           List<Expansion> children = getUnits();
-           Collections.reverse(children);
-           for (Expansion child : children) {
-               finalSet.or(child.getFinalSet());
-               if (!child.isPossiblyEmpty()) {
-                  break;
-               }
+       TokenSet finalSet = new TokenSet(getGrammar());
+       List<Expansion> children = getUnits();
+       Collections.reverse(children);
+       for (Expansion child : children) {
+           finalSet.or(child.getFinalSet());
+           if (!child.isPossiblyEmpty()) {
+              break;
            }
        }
        return finalSet;
@@ -1811,7 +1787,7 @@ INJECT ExpansionSequence :
             }
         }
         return true;
-   }
+    }
 
     public int minimumSize(int oldMin) {
           int min = 0;
@@ -1846,22 +1822,17 @@ INJECT ExpansionSequence :
       }
       return true;
    }
-   
-   public boolean isSingleton() {
-       return getUnits().size() == 1 && getLookahead() == null;
-   }
-  /* 
-  // need to REVISIT this.
-   public String getFirstSetVarName() {
-       if (isSingleton()) {
-          NonTerminal nt = firstChildOfType(NonTerminal.class);
-          if (nt != null) {
-              return nt.getFirstSetVarName();
-          }
+
+   public boolean getHasScanLimit() {
+       for (Expansion unit : getUnits()) {
+           if (unit.isScanLimit()) return true;
+           else if (unit.getClass() == ExpansionWithParentheses.class) {
+               ExpansionSequence sub = unit.firstChildOfType(ExpansionSequence.class);
+               if (sub!= null && sub.getHasScanLimit()) return true;
+           }
        }
-       return super.getFirstSetVarName();
-   }*/
-   
+       return false;
+   }
 }
 
 Lookahead Lookahead #void :
@@ -2346,15 +2317,7 @@ INJECT NonTerminal :
     }
     
     public String getName() {
-        for (Node n : children) {
-	    if (n instanceof Token) {
-	        Token t = (Token) n;
-                if (t.getType() == IDENTIFIER) {
-                    return n.toString();
-                }
-	    }
-        }
-        return null;
+        return firstChildOfType(TokenType.IDENTIFIER).getImage();
     }
     
     /**
@@ -2449,7 +2412,7 @@ ZeroOrOne :
 INJECT ZeroOrOne : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.parsegen.TokenSet;
-     extends ExpansionWithParentheses implements Expansion.ChoicePoint;
+     extends ExpansionWithParentheses 
 {
     public Lookahead getLookahead() {
         return getNestedExpansion().getLookahead();
@@ -2502,7 +2465,7 @@ INJECT ZeroOrOne :
 INJECT ZeroOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.parsegen.TokenSet;
-     extends ExpansionWithParentheses implements Expansion.ChoicePoint;
+     extends ExpansionWithParentheses 
 {
      private String id;
      public String getLabel() {
@@ -2552,7 +2515,7 @@ INJECT ZeroOrMore :
 INJECT OneOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.parsegen.TokenSet;
-     extends ExpansionWithParentheses implements Expansion.ChoicePoint;
+     extends ExpansionWithParentheses 
 {
      private String id;
      public String getLabel() {
@@ -3134,34 +3097,26 @@ INJECT CharacterList :
     }
 
     public boolean isNegated() {
-        for (Node n : children) {
-	    if (n instanceof Token) {
-	       Token t = (Token) n;
-               if (t.getType() == TILDE) {
-                  return true;
-               }
-	       }
-        }
-        return false;
+        return firstChildOfType(TokenType.TILDE) != null;
     }
 
-public boolean matchesEmptyString() {
-        return false;
-    }
-}
-
-CharacterRange CharacterRange #CharacterRange :
-{
-      Token imageL, imageR;
-}
-  imageL=<STRING_LITERAL>
-        {
-          String lString = removeEscapesAndQuotes(imageL);
-          CURRENT_NODE.left = character_descriptor_assign(lastConsumedToken, lString);
-          CURRENT_NODE.right = CURRENT_NODE.left;
+    public boolean matchesEmptyString() {
+            return false;
         }
-   [
-   "-"
+    }
+
+    CharacterRange CharacterRange #CharacterRange :
+    {
+        Token imageL, imageR;
+    }
+    imageL=<STRING_LITERAL>
+    {
+        String lString = removeEscapesAndQuotes(imageL);
+        CURRENT_NODE.left = character_descriptor_assign(lastConsumedToken, lString);
+        CURRENT_NODE.right = CURRENT_NODE.left;
+    }
+    [ 
+    "-"
     imageR=<STRING_LITERAL>
         {
           String rString = removeEscapesAndQuotes(imageR);
