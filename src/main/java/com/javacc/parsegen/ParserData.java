@@ -110,13 +110,17 @@ public class ParserData {
                 grammar.addSemanticError(sequence, "Encountered LOOKAHEAD(...) at a non-choice location." );
             }
         }
+        for (ExpansionSequence seq : grammar.descendants(ExpansionSequence.class, Expansion::getHasScanLimit)) {
+            if (!seq.isAtChoicePoint())
+                grammar.addSemanticError(seq, "The up-to-here delimiter can only be at a choice point.");
+        }
 /* REVISIT this later.
         for (Node exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {
             Node grandparent = exp.getParent().getParent();
             if (!(grandparent instanceof Expansion.ChoicePoint
                || grandparent instanceof BNFProduction)) 
             {
-                   grammar.addSemanticError(exp, "The up-to-here delimiter can only be at a choice point or at the top level of a grammar production.");
+                   grammar.addSemanticError(exp, "The up-to-here delimiter can only be at a choice point.");
             }
 
         }*/

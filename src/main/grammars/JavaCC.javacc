@@ -35,7 +35,7 @@ PARSER_PACKAGE="com.javacc.parser";
 NODE_PACKAGE="com.javacc.parser.tree";
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../java";
-JDK_TARGET=11;
+//JDK_TARGET=11;
 
 INJECT PARSER_CLASS :
     import java.util.*;
@@ -50,152 +50,6 @@ INJECT PARSER_CLASS :
          this(inputSource, content);
          this.grammar = grammar;
     }
-
-    private char character_descriptor_assign(Token t, String s) {
-        if (s.length() != 1) {
-            grammar.addParseError(t,
-                    "String in character list may contain only one character.");
-            return ' ';
-        } else {
-            return s.charAt(0);
-        }
-    }
-
-    private char character_descriptor_assign(Token t, String s, String left) {
-        if (s.length() != 1) {
-            grammar.addParseError(t,
-                    "String in character list may contain only one character.");
-            return ' ';
-        } else if ((int) (left.charAt(0)) > (int) (s.charAt(0))) {
-            grammar
-                    .addParseError(
-                            t,
-                            "Right end of character range \'"
-                                    + s
-                                    + "\' has a lower ordinal value than the left end of character range \'"
-                                    + left + "\'.");
-            return left.charAt(0);
-        } else {
-            return s.charAt(0);
-        }
-    }
-
-    private String removeEscapesAndQuotes(Token t) {
-        String retval = "";
-        String str = t.getImage();
-        int index = 1;
-        char ch, ch1;
-        int ordinal;
-        while (index < str.length() - 1) {
-            if (str.charAt(index) != '\\') {
-                retval += str.charAt(index);
-                index++;
-                continue;
-            }
-            index++;
-            ch = str.charAt(index);
-            if (ch == 'b') {
-                retval += '\b';
-                index++;
-                continue;
-            }
-            if (ch == 't') {
-                retval += '\t';
-                index++;
-                continue;
-            }
-            if (ch == 'n') {
-                retval += '\n';
-                index++;
-                continue;
-            }
-            if (ch == 'f') {
-                retval += '\f';
-                index++;
-                continue;
-            }
-            if (ch == 'r') {
-                retval += '\r';
-                index++;
-                continue;
-            }
-            if (ch == '"') {
-                retval += '\"';
-                index++;
-                continue;
-            }
-            if (ch == '\'') {
-                retval += '\'';
-                index++;
-                continue;
-            }
-            if (ch == '\\') {
-                retval += '\\';
-                index++;
-                continue;
-            }
-            if (ch >= '0' && ch <= '7') {
-                ordinal = ((int) ch) - ((int) '0');
-                index++;
-                ch1 = str.charAt(index);
-                if (ch1 >= '0' && ch1 <= '7') {
-                    ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
-                    index++;
-                    ch1 = str.charAt(index);
-                    if (ch <= '3' && ch1 >= '0' && ch1 <= '7') {
-                        ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
-                        index++;
-                    }
-                }
-                retval += (char) ordinal;
-                continue;
-            }
-            if (ch == 'u') {
-                index++;
-                ch = str.charAt(index);
-                if (hexchar(ch)) {
-                    ordinal = hexval(ch);
-                    index++;
-                    ch = str.charAt(index);
-                    if (hexchar(ch)) {
-                        ordinal = ordinal * 16 + hexval(ch);
-                        index++;
-                        ch = str.charAt(index);
-                        if (hexchar(ch)) {
-                            ordinal = ordinal * 16 + hexval(ch);
-                            index++;
-                            ch = str.charAt(index);
-                            if (hexchar(ch)) {
-                                ordinal = ordinal * 16 + hexval(ch);
-                                index++;
-                                continue;
-                            }
-                        }
-                    }
-                }
-                grammar.addParseError(t, "Encountered non-hex character '" + ch
-                        + "' at position " + index + " of string "
-                        + "- Unicode escape must have 4 hex digits after it.");
-                return retval;
-            }
-            grammar.addParseError(t, "Illegal escape sequence '\\" + ch
-                    + "' at position " + index + " of string.");
-            return retval;
-        }
-        return retval;
-    }
-    
-    private static boolean hexchar(char ch) {
-    	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
-    }
-    
-    static private int hexval(char ch) {
-        if (ch >= '0' && ch <= '9')
-            return ((int) ch) - ((int) '0');
-        if (ch >= 'A' && ch <= 'F')
-            return ((int) ch) - ((int) 'A') + 10;
-        return ((int) ch) - ((int) 'a') + 10;
-    }    
 
     static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
         try {
@@ -264,8 +118,6 @@ TOKEN :
   |
   <HASH : "#">
   |
-//  <HASH_ID : "#"<IDENTIFIER>> #HashID
-//  |
   <BACKSLASH : "\\"> #Backslash
   |
   <RIGHT_ARROW : "=>"> #RightArrow
@@ -273,8 +125,6 @@ TOKEN :
   <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
   |
   <_LEXICAL_STATE : "LEXICAL_STATE"> #JavaCCKeyWord
-//  |
-//  <UP_TO_HERE_PLUS : "=>|+"["0"-"9"]>
 }
 
 INJECT BaseNode :
@@ -1672,11 +1522,11 @@ ExpansionWithParentheses :
        |
        "+" {CURRENT_NODE = new OneOrMore();}
    ]
-   [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
    [
        SCAN ~\...\Lookahead => 
        "!" {CURRENT_NODE.setTolerantParsing(true);}
    ]
+   [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
    {
        CURRENT_NODE.copyLocationInfo(start, lastConsumedToken);
    }
@@ -1699,7 +1549,7 @@ INJECT ExpansionWithParentheses :
     }
 }
 
-ExpansionSequence #ExpansionSequence :
+ExpansionSequence# :
 {
    Expansion sub;
    Lookahead la = null;
@@ -1846,24 +1696,11 @@ INJECT Assertion :
    import com.javacc.parsegen.TokenSet;
    extends Expansion 
 {
-    private Expression semanticLookahead;
-    private LookBehind lookBehind;
-    private Expansion expansion;
-    private boolean semanticLookaheadNested, expansionNegated;
-    private String message = "Assertion failed";
-
-    public Expansion getExpansion() {return expansion;}
-    public LookBehind getLookBehind() {return lookBehind;}
-    public Expression getSemanticLookahead() {return semanticLookahead;}
-    public boolean getSemanticLookaheadNested() {return semanticLookaheadNested;}
-    public boolean getExpansionNegated() {return expansionNegated;}
-    public String getMessage() {return message;}
-    public void setSemanticLookahead(Expression semanticLookahead) {this.semanticLookahead = semanticLookahead;}
-    public void setLookBehind(LookBehind lookBehind) {this.lookBehind = lookBehind;}
-    public void setExpansion(Expansion expansion) {this.expansion = expansion;}
-    public void setExpansionNegated(boolean expansionNegated) {this.expansionNegated = expansionNegated;}
-    public void setSemanticLookaheadNested(boolean semanticLookaheadNested) {this.semanticLookaheadNested = semanticLookaheadNested;}
-    public void setMessage(String message) {this.message = message;}
+    @Property String message = "Assertion failed";
+    @Property Expression semanticLookahead;
+    @Property LookBehind lookBehind;
+    @Property Expansion expansion;
+    @Property boolean expansionNegated, semanticLookaheadNested;
 
     public boolean getRequiresScanAhead() {
         return false;
@@ -2780,7 +2617,6 @@ INJECT CodeBlock :
     public boolean isConcrete() {
         return true; //REVISIT.
     }
-
 }
 
 RegexpExpansion #void :
@@ -2993,14 +2829,7 @@ INJECT RepetitionRange :
 
 
     public boolean hasMax() {
-        for (Node n : children) {
-	   if (n instanceof Token) {
-	       Token t = (Token) n;
-               if (t.getType() == COMMA) return true;	       
-	   }
-
-        }
-        return false;
+        return firstChildOfType(COMMA) != null;
     }
     
     public RegularExpression getRegexp() { 
@@ -3008,8 +2837,7 @@ INJECT RepetitionRange :
     }
 
     public boolean matchesEmptyString() {
-        if (min ==0) return true;
-        return getRegexp().matchesEmptyString();
+        return min==0 || getRegexp().matchesEmptyString();
     }
 }
 
@@ -3039,8 +2867,7 @@ INJECT ZeroOrMoreRegexp :
    public void setRegexp(RegularExpression regexp) {
       RegularExpression current = getRegexp();
       if (current != null) {
-          addChild(indexOf(current), regexp);
-          removeChild(current);
+          replaceChild(current, regexp);
       } else {
           addChild(0, regexp);
       }
@@ -3147,4 +2974,153 @@ INJECT CharacterRange :
     public boolean isSingleChar() {
        return left == right;
     }
+}
+
+INJECT PARSER_CLASS : 
+{
+        private char character_descriptor_assign(Token t, String s) {
+        if (s.length() != 1) {
+            grammar.addParseError(t,
+                    "String in character list may contain only one character.");
+            return ' ';
+        } else {
+            return s.charAt(0);
+        }
+    }
+
+    private char character_descriptor_assign(Token t, String s, String left) {
+        if (s.length() != 1) {
+            grammar.addParseError(t,
+                    "String in character list may contain only one character.");
+            return ' ';
+        } else if ((int) (left.charAt(0)) > (int) (s.charAt(0))) {
+            grammar
+                    .addParseError(
+                            t,
+                            "Right end of character range \'"
+                                    + s
+                                    + "\' has a lower ordinal value than the left end of character range \'"
+                                    + left + "\'.");
+            return left.charAt(0);
+        } else {
+            return s.charAt(0);
+        }
+    }
+
+    private String removeEscapesAndQuotes(Token t) {
+        String retval = "";
+        String str = t.getImage();
+        int index = 1;
+        char ch, ch1;
+        int ordinal;
+        while (index < str.length() - 1) {
+            if (str.charAt(index) != '\\') {
+                retval += str.charAt(index);
+                index++;
+                continue;
+            }
+            index++;
+            ch = str.charAt(index);
+            if (ch == 'b') {
+                retval += '\b';
+                index++;
+                continue;
+            }
+            if (ch == 't') {
+                retval += '\t';
+                index++;
+                continue;
+            }
+            if (ch == 'n') {
+                retval += '\n';
+                index++;
+                continue;
+            }
+            if (ch == 'f') {
+                retval += '\f';
+                index++;
+                continue;
+            }
+            if (ch == 'r') {
+                retval += '\r';
+                index++;
+                continue;
+            }
+            if (ch == '"') {
+                retval += '\"';
+                index++;
+                continue;
+            }
+            if (ch == '\'') {
+                retval += '\'';
+                index++;
+                continue;
+            }
+            if (ch == '\\') {
+                retval += '\\';
+                index++;
+                continue;
+            }
+            if (ch >= '0' && ch <= '7') {
+                ordinal = ((int) ch) - ((int) '0');
+                index++;
+                ch1 = str.charAt(index);
+                if (ch1 >= '0' && ch1 <= '7') {
+                    ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
+                    index++;
+                    ch1 = str.charAt(index);
+                    if (ch <= '3' && ch1 >= '0' && ch1 <= '7') {
+                        ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
+                        index++;
+                    }
+                }
+                retval += (char) ordinal;
+                continue;
+            }
+            if (ch == 'u') {
+                index++;
+                ch = str.charAt(index);
+                if (hexchar(ch)) {
+                    ordinal = hexval(ch);
+                    index++;
+                    ch = str.charAt(index);
+                    if (hexchar(ch)) {
+                        ordinal = ordinal * 16 + hexval(ch);
+                        index++;
+                        ch = str.charAt(index);
+                        if (hexchar(ch)) {
+                            ordinal = ordinal * 16 + hexval(ch);
+                            index++;
+                            ch = str.charAt(index);
+                            if (hexchar(ch)) {
+                                ordinal = ordinal * 16 + hexval(ch);
+                                index++;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                grammar.addParseError(t, "Encountered non-hex character '" + ch
+                        + "' at position " + index + " of string "
+                        + "- Unicode escape must have 4 hex digits after it.");
+                return retval;
+            }
+            grammar.addParseError(t, "Illegal escape sequence '\\" + ch
+                    + "' at position " + index + " of string.");
+            return retval;
+        }
+        return retval;
+    }
+    
+    private static boolean hexchar(char ch) {
+    	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+    }
+    
+    static private int hexval(char ch) {
+        if (ch >= '0' && ch <= '9')
+            return ((int) ch) - ((int) '0');
+        if (ch >= 'A' && ch <= 'F')
+            return ((int) ch) - ((int) 'A') + 10;
+        return ((int) ch) - ((int) 'a') + 10;
+    }    
 }
