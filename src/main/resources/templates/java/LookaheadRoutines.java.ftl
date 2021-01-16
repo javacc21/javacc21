@@ -351,10 +351,12 @@
 --]
 [#macro BuildScanCode expansion]
   [#var classname=expansion.simpleName]
-  [#if classname != "ExpansionSequence"]
+  [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
   // Lookahead Code for ${classname} specified on line ${expansion.beginLine} of ${expansion.inputSource}
   [/#if]
-  [#if expansion.singleToken]
+  [#if classname = "ExpansionWithParentheses"]
+     [@BuildScanCode expansion.nestedExpansion /]
+  [#elseif expansion.singleToken]
      ${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion"]
       ${ScanCodeAssertion(expansion)} 

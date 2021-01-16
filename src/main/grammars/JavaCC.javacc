@@ -777,7 +777,7 @@ INJECT PARSER_CLASS : {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
                if (t.getType() != _PARSER_END || !isInProduction("ParserCodeDecls")) {
 	               Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
-	               t.copyLocationInfo(id);
+	               id.copyLocationInfo(t);
 	               return id;
                }
            }
@@ -1669,6 +1669,48 @@ INJECT ExpansionChoice :
    }
 }
 
+ExpansionWithParentheses :
+{
+//    Expansion nestedExpansion;
+    Token start;
+}
+   start="("
+   ExpansionChoice// {nestedExpansion = (Expansion) peekNode();}
+   ")"
+   [
+       "*" {CURRENT_NODE = new ZeroOrMore();}
+       |
+       "?" {CURRENT_NODE = new ZeroOrOne();}
+       |
+       "+" {CURRENT_NODE = new OneOrMore();}
+   ]
+   [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
+   [
+       SCAN ~\...\Lookahead => 
+       "!" {CURRENT_NODE.setTolerantParsing(true);}
+   ]
+   {
+       CURRENT_NODE.copyLocationInfo(start, lastConsumedToken);
+   }
+;
+
+INJECT ExpansionWithParentheses : 
+   import com.javacc.parsegen.TokenSet;
+   import com.javacc.parsegen.Expansion;
+   extends Expansion
+{
+    public boolean isConcrete() {return getNestedExpansion().isConcrete();}
+    public int getMaximumSize() {return getNestedExpansion().getMaximumSize();}
+    public int minimumSize(int min) {return getNestedExpansion().minimumSize(min);}
+    public boolean isPossiblyEmpty() {return getNestedExpansion().isPossiblyEmpty();}
+    public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
+    public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
+
+    public Expansion getNestedExpansion() {
+        return firstChildOfType(Expansion.class);
+    }
+}
+
 ExpansionSequence #ExpansionSequence :
 {
    Expansion sub;
@@ -2037,7 +2079,6 @@ import java.util.*;
         }
         return routineName;
     }
-
 }
 
 Lookahead LegacyLookahead #Lookahead :
@@ -2194,7 +2235,6 @@ INJECT Lookahead :
 Expansion ExpansionUnit :
 {
     Expression lhs=null;
-    Token t=lastConsumedToken;
     Expansion result=null;
     TreeBuildingAnnotation tba = null;
 }
@@ -2216,11 +2256,9 @@ Expansion ExpansionUnit :
   |
   LexicalStateSwitch {result = (Expansion) peekNode();}
   |
-  => result = ZeroOrOne [SCAN ~\...\Lookahead => UpToHere(result)]
+  result = ExpansionWithParentheses 
   |
-  => result = ZeroOrMore [SCAN ~\...\Lookahead => UpToHere(result)]
-  |
-  => result = OneOrMore [SCAN ~\...\Lookahead => UpToHere(result)]
+  result = ZeroOrOne 
   |
   SCAN [PrimaryExpression "="] (<STRING_LITERAL>|"<")
   =>
@@ -2242,14 +2280,11 @@ Expansion ExpansionUnit :
   |
   SCAN [PrimaryExpression "="]<IDENTIFIER>
   => result=NonTerminal [SCAN ~\...\Lookahead => UpToHere(result)]
-  |
-  "(" ExpansionChoice {result=(Expansion)peekNode();} ")" 
-  [SCAN ~\...\Lookahead => UpToHere(result)] 
  )
  [
      SCAN ~\...\Lookahead =>
-      {((Expansion) peekNode()).setTolerantParsing(true);}
      "!"
+     {result.setTolerantParsing(true);}
  ]
  [
      SCAN ~\...\Lookahead => 
@@ -2396,27 +2431,25 @@ INJECT NonTerminal :
      }
 }
 
-ZeroOrMore ZeroOrMore : "(" ExpansionChoice ")" "*" {return CURRENT_NODE;};
+//The following two productions are not actually used. These constructs are now 
+// handled by ExpansionWithParentheses so the following two productions
+// are not actually used. They have to be there so that the ZeroOrMore and
+// OneOrMore types get defined. REVISIT. Need a way of defining Node subtypes
+// without creating a dummy grammar rule for them.
+ZeroOrMore : "(" ExpansionChoice ")" "*";
+OneOrMore : "(" ExpansionChoice ")" "+"; 
 
-OneOrMore OneOrMore : "(" ExpansionChoice ")" "+" {return CURRENT_NODE;};
-
-ZeroOrOne ZeroOrOne : 
-{
-    (
-      "[" ExpansionChoice "]"
-      |
-      "(" ExpansionChoice ")" "?"
-    )
-    {
-       return CURRENT_NODE;
-    } 
-}
-
+//This production just matches the square bracket syntax. 
+// The (...)? syntax is handled by ExpansionWithParentheses
+ZeroOrOne : 
+    "[" ExpansionChoice "]"
+     [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
+;
 
 INJECT ZeroOrOne : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.parsegen.TokenSet;
-     extends Expansion implements Expansion.ChoicePoint;
+     extends ExpansionWithParentheses implements Expansion.ChoicePoint;
 {
     public Lookahead getLookahead() {
         return getNestedExpansion().getLookahead();
@@ -2432,10 +2465,10 @@ INJECT ZeroOrOne :
         Lookahead la = getLookahead();
         return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
     }
-
+/*
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
-    }
+    }*/
 
     public boolean getRequiresScanAhead() {
         return getNestedExpansion().getRequiresScanAhead();
@@ -2444,7 +2477,7 @@ INJECT ZeroOrOne :
     public boolean isPossiblyEmpty() {
         return true;
     }
-    
+/*    
     public TokenSet getFirstSet() {
         return getNestedExpansion().getFirstSet();
 //        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
@@ -2452,15 +2485,15 @@ INJECT ZeroOrOne :
     
     public TokenSet getFinalSet() {
         return getNestedExpansion().getFinalSet();
-    }
+    }*/
      
      public int minimumSize(int unused) {
          return 0;
      }
-
+/*
      public int getMaximumSize() {
          return getNestedExpansion().getMaximumSize();
-     }
+     }*/
      
      public boolean isConcrete() {return false;}
 }
@@ -2469,7 +2502,7 @@ INJECT ZeroOrOne :
 INJECT ZeroOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.parsegen.TokenSet;
-     extends Expansion implements Expansion.ChoicePoint;
+     extends ExpansionWithParentheses implements Expansion.ChoicePoint;
 {
      private String id;
      public String getLabel() {
@@ -2488,11 +2521,6 @@ INJECT ZeroOrMore :
         return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
     }
  
-
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-
     public boolean getRequiresScanAhead() {
         return getNestedExpansion().getRequiresScanAhead();
     }
@@ -2507,10 +2535,6 @@ INJECT ZeroOrMore :
 //            firstSet = getNestedExpansion().getLookaheadExpansion().getFirstSet();
          }
          return firstSet;
-    }
-    
-    public TokenSet getFinalSet() {
-        return getNestedExpansion().getFinalSet();
     }
      
      public int minimumSize(int unused) {
@@ -2528,7 +2552,7 @@ INJECT ZeroOrMore :
 INJECT OneOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.parsegen.TokenSet;
-     extends Expansion implements Expansion.ChoicePoint;
+     extends ExpansionWithParentheses implements Expansion.ChoicePoint;
 {
      private String id;
      public String getLabel() {
@@ -2554,27 +2578,6 @@ INJECT OneOrMore :
         }
         return getNestedExpansion().getRequiresScanAhead();
     }
-    
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-    
-    public boolean isPossiblyEmpty() {
-        return getNestedExpansion().isPossiblyEmpty();
-    }
-    
-    public TokenSet getFirstSet() {
-        return getNestedExpansion().getFirstSet();
-//        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
-    }
-    
-    public TokenSet getFinalSet() {
-         return getNestedExpansion().getFinalSet();
-    }
-     
-     public int minimumSize(int min) {
-           return getNestedExpansion().getMinimumSize();
-     }
      
      public int getMaximumSize() {
          return Integer.MAX_VALUE;

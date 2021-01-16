@@ -357,33 +357,64 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
 [#if grammar.treeBuildingEnabled]
-    public void copyLocationInfo(Node to) {
-        Node.super.copyLocationInfo(to);
-        if (to instanceof Token) {
-            Token otherTok = (Token) to;
-            otherTok.next = this.next;
-            otherTok.nextToken = this.nextToken;
-            otherTok.previousToken = this.previousToken;
+    /**
+     * Copy the location info from a Node
+     */
+    public void copyLocationInfo(Node from) {
+        Node.super.copyLocationInfo(from);
+        if (from instanceof Token) {
+            Token otherTok = (Token) from;
+            next = otherTok.next;
+            nextToken = otherTok.nextToken;
+            previousToken = otherTok.previousToken;
         [#if grammar.legacyAPI]
-            otherTok.specialToken = this.specialToken;
+            specialToken = otherTok.specialToken;
         [/#if]
         }
     }
-[#else]
-    public void copyLocationInfo(Token to) {
-        if (getInputSource()!=null && to.getInputSource()==null) {
-            to.setInputSource(getInputSource()); //REVISIT
+
+    public void copyLocationInfo(Node start, Node end) {
+        Node.super.copyLocationInfo(start, end);
+        if (start instanceof Token) {
+            previousToken = ((Token) start).previousToken;
         }
-        to.setBeginLine(this.getBeginLine());
-        to.setBeginColumn(this.getBeginColumn());
-        to.setEndLine(this.getEndLine());
-        to.setEndColumn(this.getEndColumn());
-        to.next = this.next;
-        to.nextToken = this.nextToken;
-        to.previousToken = this.previousToken;
+        if (end instanceof Token) {
+            Token endToken = (Token) end;
+            next = endToken.next;
+            nextToken = endToken.nextToken;
+        }
+    }
+[#else]
+    public void copyLocationInfo(Token from) {
+        if (getInputSource()==null && from.getInputSource()!=null) {
+            setInputSource(from.getInputSource()); //REVISIT
+        }
+        setBeginLine(from.getBeginLine());
+        setBeginColumn(from.getBeginColumn());
+        setEndLine(from.getEndLine());
+        setEndColumn(from.getEndColumn());
+        next = from.next;
+        nextToken = from.nextToken;
+        previousToken = from.previousToken;
         [#if grammar.legacyAPI]
-            to.specialToken = this.specialToken;
+            specialToken = from.specialToken;
         [/#if]
+    }
+
+    public void copyLocationInfo(Token start, Token end) {
+        if (getInputSource()==null && start.getInputSource()!=null) {
+            setInputSource(start.getInputSource()); 
+        }
+        if (getInputSource()==null && start.getInputSource()!=null) {
+            setInputSource(start.getInputSource()); 
+        }
+        setBeginLine(start.getBeginLine());
+        setBeginColumn(start.getBeginColumn());
+        setEndLine(end.getEndLine());
+        setEndColumn(end.getEndColumn());
+        previousToken = start.previousToken;
+        next = end.next;
+        nextToken = end.nextToken;
     }
 [/#if]
 
