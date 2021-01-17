@@ -805,7 +805,7 @@ INJECT Token :
    ]
    [ParserCodeDecls]
    (
-      SCAN {!grammar.getUserDefinedLexer()} =>
+      SCAN 1 {!grammar.getUserDefinedLexer()} =>
       tp=TokenProduction  {grammar.addTokenProduction(tp);}
       |
       BNFProduction
@@ -1482,12 +1482,14 @@ INJECT ExpansionChoice :
         return false;
    }
    
-   public int minimumSize(int min) {
-      for (Expansion nestedExpansion : getChoices()) {
-       	if (min<=0 || nestedExpansion instanceof Failure) break;
-        	min = Math.min(min, nestedExpansion.minimumSize(min));
-        }
-        return min;
+   public int getMinimumSize() {
+       int result = Integer.MAX_VALUE;
+       for (Expansion choice : getChoices()) {
+          int choiceMin = choice.getMinimumSize();
+          if (choiceMin ==0) return 0;
+          result = Math.min(result, choiceMin);
+       }
+       return result;
    }
 
    public int getMaximumSize() {
@@ -1539,7 +1541,7 @@ INJECT ExpansionWithParentheses :
 {
     public boolean isConcrete() {return getNestedExpansion().isConcrete();}
     public int getMaximumSize() {return getNestedExpansion().getMaximumSize();}
-    public int minimumSize(int min) {return getNestedExpansion().minimumSize(min);}
+    public int getMinimumSize() {return getNestedExpansion().getMinimumSize();}
     public boolean isPossiblyEmpty() {return getNestedExpansion().isPossiblyEmpty();}
     public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
     public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
@@ -1639,20 +1641,15 @@ INJECT ExpansionSequence :
         return true;
     }
 
-    public int minimumSize(int oldMin) {
-          int min = 0;
-          for (Expansion eseq : getUnits()) {
-              int mineseq = eseq.getMinimumSize();
-              if (min == Integer.MAX_VALUE || mineseq == Integer.MAX_VALUE) {
-                  min = Integer.MAX_VALUE; // Adding infinity to something results in infinity.
-              } else {
-                  min += mineseq;
-                  if (min > oldMin)
-                      break;
-              }
-          }
-          return min;
-   }
+    public int getMinimumSize() {
+        int result = 0;
+        for (Expansion unit : getUnits()) {
+            int minUnit = unit.getMinimumSize();
+            if (minUnit == Integer.MAX_VALUE) return Integer.MAX_VALUE;
+            result += minUnit;
+        }
+        return result;
+    }
 
     public int getMaximumSize() {
        int result = 0;
@@ -1674,15 +1671,33 @@ INJECT ExpansionSequence :
    }
 
    public boolean getHasScanLimit() {
+       boolean atStart = true;
        for (Expansion unit : getUnits()) {
            if (unit.isScanLimit()) return true;
+           if (atStart && unit instanceof NonTerminal) {
+               if (unit.getHasScanLimit()) return true;
+           }
+           /*
            else if (unit.getClass() == ExpansionWithParentheses.class) {
                ExpansionSequence sub = unit.firstChildOfType(ExpansionSequence.class);
                if (sub!= null && sub.getHasScanLimit()) return true;
-           }
+           }*/
+           if (!unit.isPossiblyEmpty()) atStart = false;
        }
        return false;
    }
+
+   public boolean getHasInnerScanLimit() {
+       return false;/*
+        for (Expansion unit : childrenOfType(Expansion.class)) {
+            if (unit instanceof NonTerminal) {
+                unit.getHasScanLimit();
+            }
+            if (!unit.isPossiblyEmpty())
+                break;
+        }
+        return false;*/
+    }
 }
 
 Lookahead Lookahead #void :
@@ -1714,13 +1729,9 @@ INJECT Assertion :
     
     public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
      
-     public int minimumSize(int unused) {
-         return 0;
-     }
+    public int getMinimumSize() {return 0;}
 
-     public int getMaximumSize() {
-         return 0;
-     }
+    public int getMaximumSize() {return 0;}
 
     public boolean isConcrete() {return false;}
 }
@@ -2195,21 +2206,15 @@ INJECT NonTerminal :
          return prod.isPossiblyEmpty();
      }
      
-     // REVISIT. Why is this necessary?
+     // REVISIT. Is this disposition really correct?
      private boolean inMinimumSize, inMaximumSize;
      
-     public int minimumSize(int oldMin) {
-            if (inMinimumSize) {
-                return Integer.MAX_VALUE;
-            }
-            int retval = Integer.MAX_VALUE;
-            inMinimumSize = true;
-            BNFProduction prod = getProduction();
-            if (prod instanceof BNFProduction) {
-                retval = prod.getExpansion().getMinimumSize();
-            }
-            inMinimumSize = false;
-            return retval;
+     public int getMinimumSize() {
+         if (inMinimumSize) return Integer.MAX_VALUE;
+         inMinimumSize = true;
+         int result = getProduction().getExpansion().getMinimumSize();
+         inMinimumSize = false;
+         return result;
      }
 
      public int getMaximumSize() {
@@ -2266,36 +2271,19 @@ INJECT ZeroOrOne :
         return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
     }
 /*
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }*/
-
     public boolean getRequiresScanAhead() {
         return getNestedExpansion().getRequiresScanAhead();
-    }
+    }*/
     
     public boolean isPossiblyEmpty() {
         return true;
     }
-/*    
-    public TokenSet getFirstSet() {
-        return getNestedExpansion().getFirstSet();
-//        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
-    }
-    
-    public TokenSet getFinalSet() {
-        return getNestedExpansion().getFinalSet();
-    }*/
-     
-     public int minimumSize(int unused) {
+
+    public int getMinimumSize() {
          return 0;
-     }
-/*
-     public int getMaximumSize() {
-         return getNestedExpansion().getMaximumSize();
-     }*/
+    }
      
-     public boolean isConcrete() {return false;}
+    public boolean isConcrete() {return false;}
 }
 
 
@@ -2337,7 +2325,7 @@ INJECT ZeroOrMore :
          return firstSet;
     }
      
-     public int minimumSize(int unused) {
+     public int getMinimumSize() {
          return 0;
      }
 
@@ -2447,8 +2435,8 @@ INJECT AttemptBlock :
         return getNestedExpansion().getFinalSet();
     }
      
-     public int minimumSize(int min) {
-           return getNestedExpansion().getMinimumSize();
+     public int getMinimumSize() {
+         return getNestedExpansion().getMinimumSize();
      }
 
      public int getMaximumSize() {
@@ -2491,7 +2479,7 @@ INJECT Failure :
     
     public int getMaximumSize() {return 0;}
 
-    public int minimumSize(int min) {return 0;}
+    public int getMinimumSize() {return 0;}
 
     public boolean isPossiblyEmpty() {return true;}
     
@@ -2512,7 +2500,7 @@ INJECT LexicalStateSwitch :
     
     public int getMaximumSize() {return 0;}
 
-    public int minimumSize(int min) {return 0;}
+    public int getMinimumSize() {return 0;}
 
     public boolean isPossiblyEmpty() {return true;}
     
@@ -2569,18 +2557,17 @@ INJECT TryBlock  :
         return getNestedExpansion().getFinalSet();
     }
      
-     public int minimumSize(int min) {
-           return getNestedExpansion().getMinimumSize();
-     }
+    public int getMinimumSize() {
+        return getNestedExpansion().getMinimumSize();
+    }
 
-     public int getMaximumSize() {
-         return getNestedExpansion().getMaximumSize();
-     }
-    @Property boolean appliesInLookahead;
-     
-     public boolean isConcrete() {
+    public int getMaximumSize() {
+        return getNestedExpansion().getMaximumSize();
+    }
+
+    public boolean isConcrete() {
           return getNestedExpansion().isConcrete();
-     }
+    }
 }
 
 
@@ -2606,13 +2593,9 @@ INJECT CodeBlock :
 
     public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
     
-    public int minimumSize(int unused) {
-        return 0;
-    }
+    public int getMinimumSize() {return 0;}
 
-    public int getMaximumSize() {
-        return 0;
-    }
+    public int getMaximumSize() {return 0;}
     
     public boolean isConcrete() {
         return true; //REVISIT.

@@ -238,22 +238,7 @@ abstract public class Expansion extends BaseNode {
         }
         if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
             return true;
-        }/*
-        if (this instanceof ExpansionChoice) {
-            for (Expansion choice : childrenOfType(Expansion.class)) {
-                if (choice.getRequiresPredicateMethod()) return true;
-            }
-        }/*
-        if (this instanceof ExpansionSequence) {
-            for (Expansion exp : childrenOfType(Expansion.class)) {
-                if (exp instanceof NonTerminal) {
-                    NonTerminal nt = (NonTerminal) exp;
-                    exp = nt.getProduction().getExpansion();
-                }
-                if (exp.getRequiresPredicateMethod()) return true;
-                if (!exp.isPossiblyEmpty()) break;
-            }
-        }*/
+        }
         return getHasGlobalSemanticActions();
     }
 
@@ -296,15 +281,6 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean getHasInnerScanLimit() {
-        if (!(this instanceof ExpansionSequence))
-            return false;
-        for (Expansion sub : childrenOfType(Expansion.class)) {
-            if (sub instanceof NonTerminal) {
-                return ((NonTerminal) sub).getProduction().getHasScanLimit();
-            }
-            if (sub.getMaximumSize() > 0)
-                break;
-        }
         return false;
     }
 
@@ -451,13 +427,6 @@ abstract public class Expansion extends BaseNode {
     abstract public boolean isPossiblyEmpty();
 
     /**
-     * Returns the minimum number of tokens that can parse to this expansion.
-     */
-    final public int getMinimumSize() {
-        return minimumSize(Integer.MAX_VALUE);
-    }
-
-    /**
      * @return whether this Expansion is always matched by exactly one token
      */
     public final boolean isSingleToken() {
@@ -467,9 +436,15 @@ abstract public class Expansion extends BaseNode {
             return false;
         return !isPossiblyEmpty() && getMaximumSize() == 1;
     }
+    /**
+     * @return the minimum number of tokens that this expansion 
+     * consumes.
+     */
+    abstract public int getMinimumSize();
 
-    abstract public int minimumSize(int oldMin);
-
+    /**
+     * @return the maximum number of tokens that this expansion consumes.
+     */
     abstract public int getMaximumSize();
 
     /**

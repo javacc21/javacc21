@@ -79,7 +79,7 @@
 [#macro BuildLookaheads]
   private final boolean scanToken(TokenType expectedType) {
      if (hitFailure) return lastLookaheadSucceeded = false;
-     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
+//     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (type != expectedType) return lastLookaheadSucceeded = false;
@@ -90,7 +90,7 @@
 
   private final boolean scanToken(EnumSet<TokenType> types) {
      if (hitFailure) return lastLookaheadSucceeded = false;
-     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
+//     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (!types.contains(type)) return lastLookaheadSucceeded = false;
@@ -139,8 +139,9 @@
          currentLookaheadToken= lastConsumedToken;
          remainingLookahead= ${lookaheadAmount};
          hitFailure = false;
-      [#if expansion.hasScanLimit || expansion.hasInnerScanLimit]
-         stopAtScanLimit= ${CU.bool(!expansion.hasExplicitNumericalLookahead && !expansion.hasSeparateSyntacticLookahead)};
+      [#if expansion.hasScanLimit]
+         stopAtScanLimit= ${CU.bool(!expansion.hasExplicitNumericalLookahead 
+                                 && !expansion.hasSeparateSyntacticLookahead)};
       [/#if]
       ${BuildPredicateCode(expansion)}
       [#if !expansion.hasSeparateSyntacticLookahead]
@@ -164,7 +165,7 @@
        lookaheadRoutineNesting++;
    [#if !expansion.insideLookahead]
      if (hitFailure) return lastLookaheadSucceeded = false;
-     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
+//     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      ${BuildPredicateCode(expansion)}
    [/#if]
      ${BuildScanCode(expansion)}
@@ -353,6 +354,7 @@
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
   // Lookahead Code for ${classname} specified on line ${expansion.beginLine} of ${expansion.inputSource}
+      if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
   [/#if]
   [#if classname = "ExpansionWithParentheses"]
      [@BuildScanCode expansion.nestedExpansion /]
@@ -386,12 +388,14 @@
 [/#macro]
 
 [#--
-   Generates the lookahead code for an ExpansionSequence
-   The count parameter is not being used right now. The original purpose
-   was to specify the maximum number of tokens 
-   we need to lookahead, so we don't generate unnecessary code. However, this
-   kind of space optimization is probably not worth the candle and makes things
-   complicated. So it is currently disabled. (May REVISIT later.)
+   Generates the lookahead code for an ExpansionSequence.
+   In legacy JavaCC there was some quite complicated logic so as 
+   not to generate unnecessary code. They actually had a longstanding bug
+   there, which was the topic of this blog post: https://javacc.com/2020/10/28/a-bugs-life/
+   I very much doubt that this kind of space optimization is worth
+   the candle nowadays and it just really complicated the code. Also, the ability
+   to scan to the end of an expansion strike me as quite useful in general, 
+   particularly for fault-tolerant.
 --]
 [#macro ScanCodeSequence sequence]
    [#list sequence.units as sub]
@@ -399,15 +403,9 @@
        [#if sub.scanLimit]
           if (hitFailure) return lastLookaheadSucceeded = false;
           if (stopAtScanLimit && lookaheadRoutineNesting <= 1) {
-         [#if sub.scanLimitPlus >0]
              remainingLookahead = ${sub.scanLimitPlus};
-         [#else]
-             return lastLookaheadSucceeded = true;
-         [/#if]
           }
        [/#if]
-       [#--set count = count - sub.minimumSize]
-       [#if count<=0][#break][/#if--]
    [/#list]
 [/#macro]
 

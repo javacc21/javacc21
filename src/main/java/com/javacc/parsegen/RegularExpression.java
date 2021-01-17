@@ -244,8 +244,8 @@ public abstract class RegularExpression extends Expansion {
     	return false;
     }
     
-    final public int minimumSize(int oldMin) {
-    	return 1;
+    final public int getMinimumSize() {
+        return 1;
     }
 
     final public int getMaximumSize() {
