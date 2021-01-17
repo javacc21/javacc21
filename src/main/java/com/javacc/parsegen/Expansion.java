@@ -134,12 +134,25 @@ abstract public class Expansion extends BaseNode {
             }
         }
     }
+/*
+    public boolean isAtChoicePoint() {
+        Node parent = getParent();
+        if (parent instanceof ChoicePoint) return true;
+        if (parent instanceof BNFProduction) return true;
+        if (beginsSequence() && parent.getParent() instanceof BNFProduction) return true;
+        return false;
+        // The expansion directly inside a BNFProduction
+        // should also be treated as a choice point, I guess,
+        // since a NonTerminal that represents it may
+        // itself be at a choice point.
+    }*/
 
     public boolean isAtChoicePoint() {
         Node parent = getParent();
         return parent instanceof ChoicePoint || parent instanceof BNFProduction;
 
     }
+
 
     public boolean beginsSequence() {
         if (getParent() instanceof ExpansionSequence) {
@@ -238,6 +251,21 @@ abstract public class Expansion extends BaseNode {
         }
         if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
             return true;
+        }
+        if (this instanceof ExpansionChoice) {
+            for (Expansion choice : childrenOfType(Expansion.class)) {
+                if (choice.getRequiresPredicateMethod()) return true;
+            }
+        }
+        if (this instanceof ExpansionSequence) {
+            for (Expansion exp : childrenOfType(Expansion.class)) {
+                if (exp instanceof NonTerminal) {
+                    NonTerminal nt = (NonTerminal) exp;
+                    exp = nt.getProduction().getExpansion();
+                }
+                if (exp.getRequiresPredicateMethod()) return true;
+                if (!exp.isPossiblyEmpty()) break;
+            }
         }
         return getHasGlobalSemanticActions();
     }
