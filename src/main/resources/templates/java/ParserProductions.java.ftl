@@ -384,6 +384,7 @@
       (${expansion.lookahead.LHS} =
    [/#if]
    [#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested]
+      [#if expansion.minimumSize >=1]${SingleTokenCondition(expansion)} && [/#if]
       (${expansion.semanticLookahead}) &&
    [/#if]
    ${expansion.predicateMethodName}()

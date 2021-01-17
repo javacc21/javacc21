@@ -79,7 +79,6 @@
 [#macro BuildLookaheads]
   private final boolean scanToken(TokenType expectedType) {
      if (hitFailure) return lastLookaheadSucceeded = false;
-     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (type != expectedType) return lastLookaheadSucceeded = false;
@@ -90,7 +89,6 @@
 
   private final boolean scanToken(EnumSet<TokenType> types) {
      if (hitFailure) return lastLookaheadSucceeded = false;
-     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (!types.contains(type)) return lastLookaheadSucceeded = false;
@@ -157,14 +155,13 @@
 
 [#macro BuildScanRoutine expansion]
  [#if !expansion.singleToken || expansion.requiresPredicateMethod]
-  // scanahead routine for expansion at: 
+  // scanahead routine for ${expansion.class.simpleName} at: 
   // ${expansion.location}
   private final boolean ${expansion.scanRoutineName}() {
     try {
        lookaheadRoutineNesting++;
    [#if !expansion.insideLookahead]
      if (hitFailure) return lastLookaheadSucceeded = false;
-     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      ${BuildPredicateCode(expansion)}
    [/#if]
      ${BuildScanCode(expansion)}
@@ -353,6 +350,7 @@
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence"]
   // Lookahead Code for ${classname} specified on line ${expansion.beginLine} of ${expansion.inputSource}
+     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
   [/#if]
   [#if expansion.singleToken]
      ${ScanSingleToken(expansion)}
@@ -441,6 +439,7 @@
 [/#macro]    
 
 [#macro ScanCodeLexicalStateSwitch switch]
+  [#-- TODO --]
    token_source.switchTo(LexicalState.${switch.lexicalStateName});
 [/#macro]
 

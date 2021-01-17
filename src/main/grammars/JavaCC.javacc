@@ -954,7 +954,7 @@ INJECT Token :
    ]
    [ParserCodeDecls]
    (
-      SCAN {!grammar.getUserDefinedLexer()} =>
+      SCAN 1 {!grammar.getUserDefinedLexer()} =>
       TokenProduction  {grammar.addTokenProduction((TokenProduction) peekNode());}
       |
       BNFProduction
