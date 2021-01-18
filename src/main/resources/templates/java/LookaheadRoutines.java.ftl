@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,6 @@
 [#macro BuildLookaheads]
   private final boolean scanToken(TokenType expectedType) {
      if (hitFailure) return lastLookaheadSucceeded = false;
-//     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (type != expectedType) return lastLookaheadSucceeded = false;
@@ -90,7 +89,6 @@
 
   private final boolean scanToken(EnumSet<TokenType> types) {
      if (hitFailure) return lastLookaheadSucceeded = false;
-//     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (!types.contains(type)) return lastLookaheadSucceeded = false;
@@ -139,10 +137,8 @@
          currentLookaheadToken= lastConsumedToken;
          remainingLookahead= ${lookaheadAmount};
          hitFailure = false;
-      [#if expansion.hasScanLimit]
          stopAtScanLimit= ${CU.bool(!expansion.hasExplicitNumericalLookahead 
                                  && !expansion.hasSeparateSyntacticLookahead)};
-      [/#if]
       ${BuildPredicateCode(expansion)}
       [#if !expansion.hasSeparateSyntacticLookahead]
          ${BuildScanCode(expansion)}
@@ -165,7 +161,6 @@
        lookaheadRoutineNesting++;
    [#if !expansion.insideLookahead]
      if (hitFailure) return lastLookaheadSucceeded = false;
-//     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      ${BuildPredicateCode(expansion)}
    [/#if]
      ${BuildScanCode(expansion)}
@@ -419,7 +414,7 @@
       [#var prevProductionVarName = "prevProduction" + CU.newID()]
       String ${prevProductionVarName} = currentLookaheadProduction;
       currentLookaheadProduction = "${nt.production.name}";
-      [#if nt.ignoreUpToHere && nt.production.expansion.hasScanLimit]
+      [#if nt.ignoreUpToHere]
          stopAtScanLimit = false;
       [/#if]
       try {
