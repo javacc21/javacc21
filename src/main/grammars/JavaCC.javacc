@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -35,7 +35,7 @@ PARSER_PACKAGE="com.javacc.parser";
 NODE_PACKAGE="com.javacc.parser.tree";
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../java";
-JDK_TARGET=11;
+//JDK_TARGET=11;
 
 INJECT PARSER_CLASS :
     import java.util.*;
@@ -50,152 +50,6 @@ INJECT PARSER_CLASS :
          this(inputSource, content);
          this.grammar = grammar;
     }
-
-   private char character_descriptor_assign(Token t, String s) {
-        if (s.length() != 1) {
-            grammar.addParseError(t,
-                    "String in character list may contain only one character.");
-            return ' ';
-        } else {
-            return s.charAt(0);
-        }
-    }
-
-    private char character_descriptor_assign(Token t, String s, String left) {
-        if (s.length() != 1) {
-            grammar.addParseError(t,
-                    "String in character list may contain only one character.");
-            return ' ';
-        } else if ((int) (left.charAt(0)) > (int) (s.charAt(0))) {
-            grammar
-                    .addParseError(
-                            t,
-                            "Right end of character range \'"
-                                    + s
-                                    + "\' has a lower ordinal value than the left end of character range \'"
-                                    + left + "\'.");
-            return left.charAt(0);
-        } else {
-            return s.charAt(0);
-        }
-    }
-
-    private String removeEscapesAndQuotes(Token t) {
-        String retval = "";
-        String str = t.getImage();
-        int index = 1;
-        char ch, ch1;
-        int ordinal;
-        while (index < str.length() - 1) {
-            if (str.charAt(index) != '\\') {
-                retval += str.charAt(index);
-                index++;
-                continue;
-            }
-            index++;
-            ch = str.charAt(index);
-            if (ch == 'b') {
-                retval += '\b';
-                index++;
-                continue;
-            }
-            if (ch == 't') {
-                retval += '\t';
-                index++;
-                continue;
-            }
-            if (ch == 'n') {
-                retval += '\n';
-                index++;
-                continue;
-            }
-            if (ch == 'f') {
-                retval += '\f';
-                index++;
-                continue;
-            }
-            if (ch == 'r') {
-                retval += '\r';
-                index++;
-                continue;
-            }
-            if (ch == '"') {
-                retval += '\"';
-                index++;
-                continue;
-            }
-            if (ch == '\'') {
-                retval += '\'';
-                index++;
-                continue;
-            }
-            if (ch == '\\') {
-                retval += '\\';
-                index++;
-                continue;
-            }
-            if (ch >= '0' && ch <= '7') {
-                ordinal = ((int) ch) - ((int) '0');
-                index++;
-                ch1 = str.charAt(index);
-                if (ch1 >= '0' && ch1 <= '7') {
-                    ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
-                    index++;
-                    ch1 = str.charAt(index);
-                    if (ch <= '3' && ch1 >= '0' && ch1 <= '7') {
-                        ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
-                        index++;
-                    }
-                }
-                retval += (char) ordinal;
-                continue;
-            }
-            if (ch == 'u') {
-                index++;
-                ch = str.charAt(index);
-                if (hexchar(ch)) {
-                    ordinal = hexval(ch);
-                    index++;
-                    ch = str.charAt(index);
-                    if (hexchar(ch)) {
-                        ordinal = ordinal * 16 + hexval(ch);
-                        index++;
-                        ch = str.charAt(index);
-                        if (hexchar(ch)) {
-                            ordinal = ordinal * 16 + hexval(ch);
-                            index++;
-                            ch = str.charAt(index);
-                            if (hexchar(ch)) {
-                                ordinal = ordinal * 16 + hexval(ch);
-                                index++;
-                                continue;
-                            }
-                        }
-                    }
-                }
-                grammar.addParseError(t, "Encountered non-hex character '" + ch
-                        + "' at position " + index + " of string "
-                        + "- Unicode escape must have 4 hex digits after it.");
-                return retval;
-            }
-            grammar.addParseError(t, "Illegal escape sequence '\\" + ch
-                    + "' at position " + index + " of string.");
-            return retval;
-        }
-        return retval;
-    }
-    
-    private static boolean hexchar(char ch) {
-    	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
-    }
-    
-    static private int hexval(char ch) {
-        if (ch >= '0' && ch <= '9')
-            return ((int) ch) - ((int) '0');
-        if (ch >= 'A' && ch <= 'F')
-            return ((int) ch) - ((int) 'A') + 10;
-        return ((int) ch) - ((int) 'a') + 10;
-    }    
 
     static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
         try {
@@ -264,8 +118,6 @@ TOKEN :
   |
   <HASH : "#">
   |
-//  <HASH_ID : "#"<IDENTIFIER>> #HashID
-//  |
   <BACKSLASH : "\\"> #Backslash
   |
   <RIGHT_ARROW : "=>"> #RightArrow
@@ -273,8 +125,6 @@ TOKEN :
   <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
   |
   <_LEXICAL_STATE : "LEXICAL_STATE"> #JavaCCKeyWord
-//  |
-//  <UP_TO_HERE_PLUS : "=>|+"["0"-"9"]>
 }
 
 INJECT BaseNode :
@@ -427,8 +277,8 @@ INJECT TypeDeclaration :
         return firstChildOfType(Identifier.class).toString();
     }
     
-    public TypeParameterList getTypeParameterList() {
-        return firstChildOfType(TypeParameterList.class);
+    public TypeParameters getTypeParameters() {
+        return firstChildOfType(TypeParameters.class);
     }
     
     public ClassOrInterfaceBody getBody() {
@@ -453,7 +303,7 @@ INJECT TypeDeclaration :
     }
 }
 
-INJECT FormalParams : 
+INJECT FormalParameters : 
    import java.util.List;
 {
     public List<FormalParameter> getParams() {
@@ -523,7 +373,7 @@ INJECT CodeBlock :
     }
 }
 
-INJECT InvocationArgs : 
+INJECT InvocationArguments : 
     import java.util.*;
 {
     public List<Expression> getArgs() {
@@ -656,7 +506,7 @@ INJECT ExtendsList :
     }
 }
 
-INJECT TypeParameterList : 
+INJECT TypeParameters : 
     import java.util.*;
 {
     // REVISIT. fix token chaining
@@ -675,7 +525,7 @@ INJECT TypeParameterList :
     }
 
     // REVISIT. fix token chaining 
-    public void add(TypeParameterList params) {
+    public void add(TypeParameters params) {
         for (TypeParameter param : params.getParameters()) {
             add(param);
         }
@@ -777,7 +627,7 @@ INJECT PARSER_CLASS : {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
                if (t.getType() != _PARSER_END || !isInProduction("ParserCodeDecls")) {
 	               Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
-	               t.copyLocationInfo(id);
+	               id.copyLocationInfo(t);
 	               return id;
                }
            }
@@ -815,12 +665,12 @@ INJECT MethodDeclaration :
         throw new IllegalStateException();
     }
     
-    public FormalParams getFormalParams() {
-        return firstChildOfType(FormalParams.class);
+    public FormalParameters getFormalParameters() {
+        return firstChildOfType(FormalParameters.class);
     }
     
     public String getFullSignature() {
-        return getName() + getFormalParams();
+        return getName() + getFormalParameters();
     }
 }
 
@@ -947,6 +797,7 @@ INJECT Token :
 #Root throws IOException #GrammarFile :
 {
     TokenManagerDecls decls;
+    TokenProduction tp;
 }
 {
    [
@@ -954,8 +805,8 @@ INJECT Token :
    ]
    [ParserCodeDecls]
    (
-      SCAN {!grammar.getUserDefinedLexer()} =>
-      TokenProduction  {grammar.addTokenProduction((TokenProduction) peekNode());}
+      SCAN 1 {!grammar.getUserDefinedLexer()} =>
+      tp=TokenProduction  {grammar.addTokenProduction(tp);}
       |
       BNFProduction
       |
@@ -1029,11 +880,14 @@ GrammarInclusion throws IOException :
 
 CodeInjection :
 {
-        boolean isInterface = false;
-        Annotation annotation = null;
-        boolean foundOptionalInitialBrace = false;
-         
-        boolean usingParentheses = false;
+    boolean isInterface = false;
+    Annotation annotation = null;
+    boolean foundOptionalInitialBrace = false;
+    boolean usingParentheses = false;
+    ImportDeclaration id;
+    ObjectType ot;
+    Annotation ann;
+    ClassOrInterfaceBody coib;
 }   
         "INJECT" ["(" {usingParentheses = true;}]
         [
@@ -1051,26 +905,27 @@ CodeInjection :
           {foundOptionalInitialBrace=true;}
         ]
         (
-            ImportDeclaration {CURRENT_NODE.importDeclarations.add((ImportDeclaration) peekNode());}
+            id=ImportDeclaration {CURRENT_NODE.importDeclarations.add(id);}
         )*
         (
-             Annotation {CURRENT_NODE.annotations.add((Annotation) peekNode());}
+            ann=Annotation {CURRENT_NODE.annotations.add(ann);}
         )*
         [
-             "extends" ClassOrInterfaceType {CURRENT_NODE.addExtendsType((ObjectType)peekNode());}
-             (SCAN {isInterface} => "," ClassOrInterfaceType {CURRENT_NODE.addExtendsType((ObjectType) peekNode());})*
+             "extends" 
+             ot=ObjectType {CURRENT_NODE.addExtendsType(ot);}
+             (SCAN {isInterface} => "," ot=ObjectType {CURRENT_NODE.addExtendsType(ot);})*
              [";"]
         ]
         [
              SCAN {!isInterface} =>
-             "implements" ClassOrInterfaceType {CURRENT_NODE.addImplementsType((ObjectType) peekNode());}
-             ("," ClassOrInterfaceType {CURRENT_NODE.addImplementsType((ObjectType) peekNode());})*
+             "implements" ot=ObjectType {CURRENT_NODE.addImplementsType(ot);}
+             ("," ot=ObjectType {CURRENT_NODE.addImplementsType(ot);})*
              [";"]
         ]
         [
            SCAN {foundOptionalInitialBrace} => "}"
         ]
-        [ClassOrInterfaceBody {CURRENT_NODE.body = (ClassOrInterfaceBody) peekNode();}]
+        [coib=ClassOrInterfaceBody {CURRENT_NODE.body = coib;}]
         {
                 if (enterIncludes) {
                     grammar.addCodeInjection(CURRENT_NODE);
@@ -1169,7 +1024,8 @@ Setting(Map settings) #Setting :
 BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
-    Token t=getToken(1);
+    Token firstToken=getToken(1), id;
+    Expansion exp;
 }
     [
         "public" | "private" | "protected"
@@ -1179,7 +1035,7 @@ BNFProduction :
        |
        "#" {CURRENT_NODE.setImplicitReturnType(true);}
     ]
-    <IDENTIFIER> {CURRENT_NODE.setName(lastConsumedToken.getImage());}
+    id=<IDENTIFIER> {CURRENT_NODE.setName(id.getImage());}
     [FormalParameters]
     [
       ThrowsList
@@ -1206,7 +1062,7 @@ BNFProduction :
         {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
     )
     {
-        CURRENT_NODE.adjustFirstToken(t);
+        CURRENT_NODE.adjustFirstToken(firstToken);
         if (tba == null && !grammar.getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName(),CURRENT_NODE.getName());
         }
@@ -1250,7 +1106,7 @@ INJECT BNFProduction :
         return this.getName();
     }
 
-    private String leadingComments;
+    private String leadingComments="";
 
     @Property Expansion expansion, recoveryExpansion;
     @Property String name;
@@ -1259,8 +1115,8 @@ INJECT BNFProduction :
         return firstChildOfType(ThrowsList.class);
     }
     
-    public FormalParams getParameterList() {
-        return firstChildOfType(FormalParams.class);
+    public FormalParameters getParameterList() {
+        return firstChildOfType(FormalParameters.class);
     }
     
     public TreeBuildingAnnotation getTreeNodeBehavior() {
@@ -1316,8 +1172,15 @@ INJECT BNFProduction :
     }
     
     public void adjustFirstToken(Token t) {
+        //FIXME later. Not very urgent.
+/*        
+        Token firstToken = firstChildOfType(Token.class);
+        if (firstToken != t) {
+
+        }
+        if (firstChildOfType(Token.class) !== t)
         this.leadingComments = t.getLeadingComments();
-//        t.setSpecialToken(null); // FIXME, I guess we need something a bit kludgy for now
+*/
     }
 
     public String getLeadingComments() {
@@ -1349,7 +1212,6 @@ INJECT BNFProduction :
     }
 }
 
-//TreeBuildingAnnotation 
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" [<IDENTIFIER>|"abstract"|"interface"|"void"]
    [
@@ -1360,9 +1222,6 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
 	      Expression()
 	   ")"
   ]
-//  {
-//          return CURRENT_NODE;
-//  }
 ;
 
 INJECT TreeBuildingAnnotation :
@@ -1524,12 +1383,9 @@ INJECT TokenProduction :
     }
 }
 
-TokenManagerDecls TokenManagerDecls :
+TokenManagerDecls :
    "TOKEN_MGR_DECLS" ":"
     ClassOrInterfaceBody
-    {
-        return CURRENT_NODE;
-    }
 ;
 
 RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
@@ -1592,7 +1448,7 @@ INJECT ExpansionChoice :
    import com.javacc.parsegen.Expansion;
    import com.javacc.parsegen.TokenSet;
    import java.util.List;
-   extends Expansion implements Expansion.ChoicePoint;
+   extends Expansion 
 {
    public List<Expansion> getChoices() {
        return childrenOfType(Expansion.class);
@@ -1602,21 +1458,16 @@ INJECT ExpansionChoice :
         if (firstSet == null) {
            firstSet = new TokenSet(getGrammar());
            for (Expansion choice : getChoices()) {
-//               firstSet.or(choice.getFirstSet());
                firstSet.or(choice.getLookaheadExpansion().getFirstSet());
            }
         }
         return firstSet;
    }
    
-   private TokenSet finalSet;
-    
    public TokenSet getFinalSet() {
-       if (finalSet == null) {
-           finalSet = new TokenSet(getGrammar());
-           for (Expansion choice : getChoices()) {
-               finalSet.or(choice.getFinalSet());
-           }
+       TokenSet finalSet = new TokenSet(getGrammar());
+       for (Expansion choice : getChoices()) {
+           finalSet.or(choice.getFinalSet());
        }
        return finalSet;
    }
@@ -1631,12 +1482,14 @@ INJECT ExpansionChoice :
         return false;
    }
    
-   public int minimumSize(int min) {
-      for (Expansion nestedExpansion : getChoices()) {
-       	if (min<=0 || nestedExpansion instanceof Failure) break;
-        	min = Math.min(min, nestedExpansion.minimumSize(min));
-        }
-        return min;
+   public int getMinimumSize() {
+       int result = Integer.MAX_VALUE;
+       for (Expansion choice : getChoices()) {
+          int choiceMin = choice.getMinimumSize();
+          if (choiceMin ==0) return 0;
+          result = Math.min(result, choiceMin);
+       }
+       return result;
    }
 
    public int getMaximumSize() {
@@ -1659,12 +1512,50 @@ INJECT ExpansionChoice :
    }
 }
 
-ExpansionSequence #ExpansionSequence :
+ExpansionWithParentheses :
+{
+    Token start;
+}
+   start="(" ExpansionChoice ")"
+   [
+       "*" {CURRENT_NODE = new ZeroOrMore();}
+       |
+       "?" {CURRENT_NODE = new ZeroOrOne();}
+       |
+       "+" {CURRENT_NODE = new OneOrMore();}
+   ]
+   [
+       SCAN ~\...\Lookahead => 
+       "!" {CURRENT_NODE.setTolerantParsing(true);}
+   ]
+   [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
+   {
+       CURRENT_NODE.copyLocationInfo(start, lastConsumedToken);
+   }
+;
+
+INJECT ExpansionWithParentheses : 
+   import com.javacc.parsegen.TokenSet;
+   import com.javacc.parsegen.Expansion;
+   extends Expansion
+{
+    public boolean isConcrete() {return getNestedExpansion().isConcrete();}
+    public int getMaximumSize() {return getNestedExpansion().getMaximumSize();}
+    public int getMinimumSize() {return getNestedExpansion().getMinimumSize();}
+    public boolean isPossiblyEmpty() {return getNestedExpansion().isPossiblyEmpty();}
+    public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
+    public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
+
+    public Expansion getNestedExpansion() {
+        return firstChildOfType(Expansion.class);
+    }
+}
+
+ExpansionSequence# :
 {
    Expansion sub;
    Lookahead la = null;
 }
-{
   [ 
     SCAN ~\...\Lookahead 
     =>
@@ -1675,13 +1566,12 @@ ExpansionSequence #ExpansionSequence :
      }
   ]
   (
-     SCAN ~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<RIGHT_ARROW>|<SLASH>|<BACKSLASH>)
-     => sub=ExpansionUnit
-      {
-          pokeNode(sub);
-      }
+     sub=ExpansionUnit
+     {
+         pokeNode(sub);
+     }
   )+
-}
+;
 
 INJECT ExpansionSequence : 
    import com.javacc.Grammar;
@@ -1690,13 +1580,6 @@ INJECT ExpansionSequence :
    import java.util.*;
    extends Expansion;
 {
-   public ExpansionSequence(Grammar grammar) {
-       setGrammar(grammar);
-   }
-
-   public ExpansionSequence() {}
-
-
    public List<Expansion> getUnits() {
        return childrenOfType(Expansion.class);
    }
@@ -1721,18 +1604,15 @@ INJECT ExpansionSequence :
        }
        return firstSet;
    }
-//   private TokenSet finalSet;
+
    public TokenSet getFinalSet() {
-       TokenSet finalSet = null; // REVISIT, not sure why this is necessary
-       if (finalSet == null) {
-           finalSet = new TokenSet(getGrammar());
-           List<Expansion> children = getUnits();
-           Collections.reverse(children);
-           for (Expansion child : children) {
-               finalSet.or(child.getFinalSet());
-               if (!child.isPossiblyEmpty()) {
-                  break;
-               }
+       TokenSet finalSet = new TokenSet(getGrammar());
+       List<Expansion> children = getUnits();
+       Collections.reverse(children);
+       for (Expansion child : children) {
+           finalSet.or(child.getFinalSet());
+           if (!child.isPossiblyEmpty()) {
+              break;
            }
        }
        return finalSet;
@@ -1759,22 +1639,17 @@ INJECT ExpansionSequence :
             }
         }
         return true;
-   }
+    }
 
-    public int minimumSize(int oldMin) {
-          int min = 0;
-          for (Expansion eseq : getUnits()) {
-              int mineseq = eseq.getMinimumSize();
-              if (min == Integer.MAX_VALUE || mineseq == Integer.MAX_VALUE) {
-                  min = Integer.MAX_VALUE; // Adding infinity to something results in infinity.
-              } else {
-                  min += mineseq;
-                  if (min > oldMin)
-                      break;
-              }
-          }
-          return min;
-   }
+    public int getMinimumSize() {
+        int result = 0;
+        for (Expansion unit : getUnits()) {
+            int minUnit = unit.getMinimumSize();
+            if (minUnit == Integer.MAX_VALUE) return Integer.MAX_VALUE;
+            result += minUnit;
+        }
+        return result;
+    }
 
     public int getMaximumSize() {
        int result = 0;
@@ -1794,22 +1669,35 @@ INJECT ExpansionSequence :
       }
       return true;
    }
-   
-   public boolean isSingleton() {
-       return getUnits().size() == 1 && getLookahead() == null;
-   }
-  /* 
-  // need to REVISIT this.
-   public String getFirstSetVarName() {
-       if (isSingleton()) {
-          NonTerminal nt = firstChildOfType(NonTerminal.class);
-          if (nt != null) {
-              return nt.getFirstSetVarName();
-          }
+
+   public boolean getHasScanLimit() {
+       boolean atStart = true;
+       for (Expansion unit : getUnits()) {
+           if (unit.isScanLimit()) return true;
+           if (atStart && unit instanceof NonTerminal) {
+               if (unit.getHasScanLimit()) return true;
+           }
+           /*
+           else if (unit.getClass() == ExpansionWithParentheses.class) {
+               ExpansionSequence sub = unit.firstChildOfType(ExpansionSequence.class);
+               if (sub!= null && sub.getHasScanLimit()) return true;
+           }*/
+           if (!unit.isPossiblyEmpty()) atStart = false;
        }
-       return super.getFirstSetVarName();
-   }*/
-   
+       return false;
+   }
+
+   public boolean getHasInnerScanLimit() {
+       return false;/*
+        for (Expansion unit : childrenOfType(Expansion.class)) {
+            if (unit instanceof NonTerminal) {
+                unit.getHasScanLimit();
+            }
+            if (!unit.isPossiblyEmpty())
+                break;
+        }
+        return false;*/
+    }
 }
 
 Lookahead Lookahead #void :
@@ -1823,24 +1711,11 @@ INJECT Assertion :
    import com.javacc.parsegen.TokenSet;
    extends Expansion 
 {
-    private Expression semanticLookahead;
-    private LookBehind lookBehind;
-    private Expansion expansion;
-    private boolean semanticLookaheadNested, expansionNegated;
-    private String message = "Assertion failed";
-
-    public Expansion getExpansion() {return expansion;}
-    public LookBehind getLookBehind() {return lookBehind;}
-    public Expression getSemanticLookahead() {return semanticLookahead;}
-    public boolean getSemanticLookaheadNested() {return semanticLookaheadNested;}
-    public boolean getExpansionNegated() {return expansionNegated;}
-    public String getMessage() {return message;}
-    public void setSemanticLookahead(Expression semanticLookahead) {this.semanticLookahead = semanticLookahead;}
-    public void setLookBehind(LookBehind lookBehind) {this.lookBehind = lookBehind;}
-    public void setExpansion(Expansion expansion) {this.expansion = expansion;}
-    public void setExpansionNegated(boolean expansionNegated) {this.expansionNegated = expansionNegated;}
-    public void setSemanticLookaheadNested(boolean semanticLookaheadNested) {this.semanticLookaheadNested = semanticLookaheadNested;}
-    public void setMessage(String message) {this.message = message;}
+    @Property String message = "Assertion failed";
+    @Property Expression semanticLookahead;
+    @Property LookBehind lookBehind;
+    @Property Expansion expansion;
+    @Property boolean expansionNegated, semanticLookaheadNested;
 
     public boolean getRequiresScanAhead() {
         return false;
@@ -1854,13 +1729,9 @@ INJECT Assertion :
     
     public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
      
-     public int minimumSize(int unused) {
-         return 0;
-     }
+    public int getMinimumSize() {return 0;}
 
-     public int getMaximumSize() {
-         return 0;
-     }
+    public int getMaximumSize() {return 0;}
 
     public boolean isConcrete() {return false;}
 }
@@ -2027,7 +1898,6 @@ import java.util.*;
         }
         return routineName;
     }
-
 }
 
 Lookahead LegacyLookahead #Lookahead :
@@ -2184,7 +2054,6 @@ INJECT Lookahead :
 Expansion ExpansionUnit :
 {
     Expression lhs=null;
-    Token t=lastConsumedToken;
     Expansion result=null;
     TreeBuildingAnnotation tba = null;
 }
@@ -2206,11 +2075,9 @@ Expansion ExpansionUnit :
   |
   LexicalStateSwitch {result = (Expansion) peekNode();}
   |
-  => result = ZeroOrOne [SCAN ~\...\Lookahead => UpToHere(result)]
+  result = ExpansionWithParentheses 
   |
-  => result = ZeroOrMore [SCAN ~\...\Lookahead => UpToHere(result)]
-  |
-  => result = OneOrMore [SCAN ~\...\Lookahead => UpToHere(result)]
+  result = ZeroOrOne 
   |
   SCAN [PrimaryExpression "="] (<STRING_LITERAL>|"<")
   =>
@@ -2232,14 +2099,11 @@ Expansion ExpansionUnit :
   |
   SCAN [PrimaryExpression "="]<IDENTIFIER>
   => result=NonTerminal [SCAN ~\...\Lookahead => UpToHere(result)]
-  |
-  "(" ExpansionChoice {result=(Expansion)peekNode();} ")" 
-  [SCAN ~\...\Lookahead => UpToHere(result)] 
  )
  [
      SCAN ~\...\Lookahead =>
-      {((Expansion) peekNode()).setTolerantParsing(true);}
      "!"
+     {result.setTolerantParsing(true);}
  ]
  [
      SCAN ~\...\Lookahead => 
@@ -2261,7 +2125,7 @@ NonTerminal NonTerminal #NonTerminal :
     |
     SCAN "(" ExpansionChoice ")" ("*"|"+"|"?") => {}
     |
-    Arguments
+    InvocationArguments
   ]
   {return CURRENT_NODE;}
 ;
@@ -2292,8 +2156,8 @@ INJECT NonTerminal :
         return getGrammar().getProductionByName(getName());
     }
 
-    public InvocationArgs getArgs() {
-        return firstChildOfType(InvocationArgs.class);
+    public InvocationArguments getArgs() {
+        return firstChildOfType(InvocationArguments.class);
     }
 
     public Expression getLHS() {
@@ -2301,15 +2165,7 @@ INJECT NonTerminal :
     }
     
     public String getName() {
-        for (Node n : children) {
-	    if (n instanceof Token) {
-	        Token t = (Token) n;
-                if (t.getType() == IDENTIFIER) {
-                    return n.toString();
-                }
-	    }
-        }
-        return null;
+        return firstChildOfType(TokenType.IDENTIFIER).getImage();
     }
     
     /**
@@ -2350,21 +2206,15 @@ INJECT NonTerminal :
          return prod.isPossiblyEmpty();
      }
      
-     // REVISIT. Why is this necessary?
+     // REVISIT. Is this disposition really correct?
      private boolean inMinimumSize, inMaximumSize;
      
-     public int minimumSize(int oldMin) {
-            if (inMinimumSize) {
-                return Integer.MAX_VALUE;
-            }
-            int retval = Integer.MAX_VALUE;
-            inMinimumSize = true;
-            BNFProduction prod = getProduction();
-            if (prod instanceof BNFProduction) {
-                retval = prod.getExpansion().getMinimumSize();
-            }
-            inMinimumSize = false;
-            return retval;
+     public int getMinimumSize() {
+         if (inMinimumSize) return Integer.MAX_VALUE;
+         inMinimumSize = true;
+         int result = getProduction().getExpansion().getMinimumSize();
+         inMinimumSize = false;
+         return result;
      }
 
      public int getMaximumSize() {
@@ -2386,27 +2236,25 @@ INJECT NonTerminal :
      }
 }
 
-ZeroOrMore ZeroOrMore : "(" ExpansionChoice ")" "*" {return CURRENT_NODE;};
+//The following two productions are not actually used. These constructs are now 
+// handled by ExpansionWithParentheses so the following two productions
+// are not actually used. They have to be there so that the ZeroOrMore and
+// OneOrMore types get defined. REVISIT. Need a way of defining Node subtypes
+// without creating a dummy grammar rule for them.
+ZeroOrMore : "(" ExpansionChoice ")" "*";
+OneOrMore : "(" ExpansionChoice ")" "+"; 
 
-OneOrMore OneOrMore : "(" ExpansionChoice ")" "+" {return CURRENT_NODE;};
-
-ZeroOrOne ZeroOrOne : 
-{
-    (
-      "[" ExpansionChoice "]"
-      |
-      "(" ExpansionChoice ")" "?"
-    )
-    {
-       return CURRENT_NODE;
-    } 
-}
-
+//This production just matches the square bracket syntax. 
+// The (...)? syntax is handled by ExpansionWithParentheses
+ZeroOrOne : 
+    "[" ExpansionChoice "]"
+     [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
+;
 
 INJECT ZeroOrOne : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.parsegen.TokenSet;
-     extends Expansion implements Expansion.ChoicePoint;
+     extends ExpansionWithParentheses 
 {
     public Lookahead getLookahead() {
         return getNestedExpansion().getLookahead();
@@ -2422,44 +2270,27 @@ INJECT ZeroOrOne :
         Lookahead la = getLookahead();
         return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
     }
-
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-
+/*
     public boolean getRequiresScanAhead() {
         return getNestedExpansion().getRequiresScanAhead();
-    }
+    }*/
     
     public boolean isPossiblyEmpty() {
         return true;
     }
-    
-    public TokenSet getFirstSet() {
-        return getNestedExpansion().getFirstSet();
-//        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
-    }
-    
-    public TokenSet getFinalSet() {
-        return getNestedExpansion().getFinalSet();
-    }
-     
-     public int minimumSize(int unused) {
-         return 0;
-     }
 
-     public int getMaximumSize() {
-         return getNestedExpansion().getMaximumSize();
-     }
+    public int getMinimumSize() {
+         return 0;
+    }
      
-     public boolean isConcrete() {return false;}
+    public boolean isConcrete() {return false;}
 }
 
 
 INJECT ZeroOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.parsegen.TokenSet;
-     extends Expansion implements Expansion.ChoicePoint;
+     extends ExpansionWithParentheses 
 {
      private String id;
      public String getLabel() {
@@ -2478,11 +2309,6 @@ INJECT ZeroOrMore :
         return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
     }
  
-
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-
     public boolean getRequiresScanAhead() {
         return getNestedExpansion().getRequiresScanAhead();
     }
@@ -2498,12 +2324,8 @@ INJECT ZeroOrMore :
          }
          return firstSet;
     }
-    
-    public TokenSet getFinalSet() {
-        return getNestedExpansion().getFinalSet();
-    }
      
-     public int minimumSize(int unused) {
+     public int getMinimumSize() {
          return 0;
      }
 
@@ -2518,7 +2340,7 @@ INJECT ZeroOrMore :
 INJECT OneOrMore : 
      import com.javacc.parsegen.Expansion;
      import com.javacc.parsegen.TokenSet;
-     extends Expansion implements Expansion.ChoicePoint;
+     extends ExpansionWithParentheses 
 {
      private String id;
      public String getLabel() {
@@ -2544,27 +2366,6 @@ INJECT OneOrMore :
         }
         return getNestedExpansion().getRequiresScanAhead();
     }
-    
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-    
-    public boolean isPossiblyEmpty() {
-        return getNestedExpansion().isPossiblyEmpty();
-    }
-    
-    public TokenSet getFirstSet() {
-        return getNestedExpansion().getFirstSet();
-//        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
-    }
-    
-    public TokenSet getFinalSet() {
-         return getNestedExpansion().getFinalSet();
-    }
-     
-     public int minimumSize(int min) {
-           return getNestedExpansion().getMinimumSize();
-     }
      
      public int getMaximumSize() {
          return Integer.MAX_VALUE;
@@ -2634,8 +2435,8 @@ INJECT AttemptBlock :
         return getNestedExpansion().getFinalSet();
     }
      
-     public int minimumSize(int min) {
-           return getNestedExpansion().getMinimumSize();
+     public int getMinimumSize() {
+         return getNestedExpansion().getMinimumSize();
      }
 
      public int getMaximumSize() {
@@ -2678,7 +2479,7 @@ INJECT Failure :
     
     public int getMaximumSize() {return 0;}
 
-    public int minimumSize(int min) {return 0;}
+    public int getMinimumSize() {return 0;}
 
     public boolean isPossiblyEmpty() {return true;}
     
@@ -2699,7 +2500,7 @@ INJECT LexicalStateSwitch :
     
     public int getMaximumSize() {return 0;}
 
-    public int minimumSize(int min) {return 0;}
+    public int getMinimumSize() {return 0;}
 
     public boolean isPossiblyEmpty() {return true;}
     
@@ -2756,18 +2557,17 @@ INJECT TryBlock  :
         return getNestedExpansion().getFinalSet();
     }
      
-     public int minimumSize(int min) {
-           return getNestedExpansion().getMinimumSize();
-     }
+    public int getMinimumSize() {
+        return getNestedExpansion().getMinimumSize();
+    }
 
-     public int getMaximumSize() {
-         return getNestedExpansion().getMaximumSize();
-     }
-    @Property boolean appliesInLookahead;
-     
-     public boolean isConcrete() {
+    public int getMaximumSize() {
+        return getNestedExpansion().getMaximumSize();
+    }
+
+    public boolean isConcrete() {
           return getNestedExpansion().isConcrete();
-     }
+    }
 }
 
 
@@ -2793,18 +2593,13 @@ INJECT CodeBlock :
 
     public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
     
-    public int minimumSize(int unused) {
-        return 0;
-    }
+    public int getMinimumSize() {return 0;}
 
-    public int getMaximumSize() {
-        return 0;
-    }
+    public int getMaximumSize() {return 0;}
     
     public boolean isConcrete() {
         return true; //REVISIT.
     }
-
 }
 
 RegexpExpansion #void :
@@ -3017,14 +2812,7 @@ INJECT RepetitionRange :
 
 
     public boolean hasMax() {
-        for (Node n : children) {
-	   if (n instanceof Token) {
-	       Token t = (Token) n;
-               if (t.getType() == COMMA) return true;	       
-	   }
-
-        }
-        return false;
+        return firstChildOfType(COMMA) != null;
     }
     
     public RegularExpression getRegexp() { 
@@ -3032,8 +2820,7 @@ INJECT RepetitionRange :
     }
 
     public boolean matchesEmptyString() {
-        if (min ==0) return true;
-        return getRegexp().matchesEmptyString();
+        return min==0 || getRegexp().matchesEmptyString();
     }
 }
 
@@ -3063,8 +2850,7 @@ INJECT ZeroOrMoreRegexp :
    public void setRegexp(RegularExpression regexp) {
       RegularExpression current = getRegexp();
       if (current != null) {
-          addChild(indexOf(current), regexp);
-          removeChild(current);
+          replaceChild(current, regexp);
       } else {
           addChild(0, regexp);
       }
@@ -3121,34 +2907,26 @@ INJECT CharacterList :
     }
 
     public boolean isNegated() {
-        for (Node n : children) {
-	    if (n instanceof Token) {
-	       Token t = (Token) n;
-               if (t.getType() == TILDE) {
-                  return true;
-               }
-	       }
-        }
-        return false;
+        return firstChildOfType(TokenType.TILDE) != null;
     }
 
-public boolean matchesEmptyString() {
-        return false;
-    }
-}
-
-CharacterRange CharacterRange #CharacterRange :
-{
-      Token imageL, imageR;
-}
-  imageL=<STRING_LITERAL>
-        {
-          String lString = removeEscapesAndQuotes(imageL);
-          CURRENT_NODE.left = character_descriptor_assign(lastConsumedToken, lString);
-          CURRENT_NODE.right = CURRENT_NODE.left;
+    public boolean matchesEmptyString() {
+            return false;
         }
-   [
-   "-"
+    }
+
+    CharacterRange CharacterRange #CharacterRange :
+    {
+        Token imageL, imageR;
+    }
+    imageL=<STRING_LITERAL>
+    {
+        String lString = removeEscapesAndQuotes(imageL);
+        CURRENT_NODE.left = character_descriptor_assign(lastConsumedToken, lString);
+        CURRENT_NODE.right = CURRENT_NODE.left;
+    }
+    [ 
+    "-"
     imageR=<STRING_LITERAL>
         {
           String rString = removeEscapesAndQuotes(imageR);
@@ -3179,4 +2957,153 @@ INJECT CharacterRange :
     public boolean isSingleChar() {
        return left == right;
     }
+}
+
+INJECT PARSER_CLASS : 
+{
+        private char character_descriptor_assign(Token t, String s) {
+        if (s.length() != 1) {
+            grammar.addParseError(t,
+                    "String in character list may contain only one character.");
+            return ' ';
+        } else {
+            return s.charAt(0);
+        }
+    }
+
+    private char character_descriptor_assign(Token t, String s, String left) {
+        if (s.length() != 1) {
+            grammar.addParseError(t,
+                    "String in character list may contain only one character.");
+            return ' ';
+        } else if ((int) (left.charAt(0)) > (int) (s.charAt(0))) {
+            grammar
+                    .addParseError(
+                            t,
+                            "Right end of character range \'"
+                                    + s
+                                    + "\' has a lower ordinal value than the left end of character range \'"
+                                    + left + "\'.");
+            return left.charAt(0);
+        } else {
+            return s.charAt(0);
+        }
+    }
+
+    private String removeEscapesAndQuotes(Token t) {
+        String retval = "";
+        String str = t.getImage();
+        int index = 1;
+        char ch, ch1;
+        int ordinal;
+        while (index < str.length() - 1) {
+            if (str.charAt(index) != '\\') {
+                retval += str.charAt(index);
+                index++;
+                continue;
+            }
+            index++;
+            ch = str.charAt(index);
+            if (ch == 'b') {
+                retval += '\b';
+                index++;
+                continue;
+            }
+            if (ch == 't') {
+                retval += '\t';
+                index++;
+                continue;
+            }
+            if (ch == 'n') {
+                retval += '\n';
+                index++;
+                continue;
+            }
+            if (ch == 'f') {
+                retval += '\f';
+                index++;
+                continue;
+            }
+            if (ch == 'r') {
+                retval += '\r';
+                index++;
+                continue;
+            }
+            if (ch == '"') {
+                retval += '\"';
+                index++;
+                continue;
+            }
+            if (ch == '\'') {
+                retval += '\'';
+                index++;
+                continue;
+            }
+            if (ch == '\\') {
+                retval += '\\';
+                index++;
+                continue;
+            }
+            if (ch >= '0' && ch <= '7') {
+                ordinal = ((int) ch) - ((int) '0');
+                index++;
+                ch1 = str.charAt(index);
+                if (ch1 >= '0' && ch1 <= '7') {
+                    ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
+                    index++;
+                    ch1 = str.charAt(index);
+                    if (ch <= '3' && ch1 >= '0' && ch1 <= '7') {
+                        ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
+                        index++;
+                    }
+                }
+                retval += (char) ordinal;
+                continue;
+            }
+            if (ch == 'u') {
+                index++;
+                ch = str.charAt(index);
+                if (hexchar(ch)) {
+                    ordinal = hexval(ch);
+                    index++;
+                    ch = str.charAt(index);
+                    if (hexchar(ch)) {
+                        ordinal = ordinal * 16 + hexval(ch);
+                        index++;
+                        ch = str.charAt(index);
+                        if (hexchar(ch)) {
+                            ordinal = ordinal * 16 + hexval(ch);
+                            index++;
+                            ch = str.charAt(index);
+                            if (hexchar(ch)) {
+                                ordinal = ordinal * 16 + hexval(ch);
+                                index++;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                grammar.addParseError(t, "Encountered non-hex character '" + ch
+                        + "' at position " + index + " of string "
+                        + "- Unicode escape must have 4 hex digits after it.");
+                return retval;
+            }
+            grammar.addParseError(t, "Illegal escape sequence '\\" + ch
+                    + "' at position " + index + " of string.");
+            return retval;
+        }
+        return retval;
+    }
+    
+    private static boolean hexchar(char ch) {
+    	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+    }
+    
+    static private int hexval(char ch) {
+        if (ch >= '0' && ch <= '9')
+            return ((int) ch) - ((int) '0');
+        if (ch >= 'A' && ch <= 'F')
+            return ((int) ch) - ((int) 'A') + 10;
+        return ((int) ch) - ((int) 'a') + 10;
+    }    
 }

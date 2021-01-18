@@ -69,7 +69,7 @@
 
 [#-- The next 100 lines are too messy and need a significant cleanup --]
 [#macro BuildCode expansion]
-   [#if expansion.simpleName != "ExpansionSequence"]
+   [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
   // Code for ${expansion.simpleName} specified at:
   // ${expansion.location}
   [/#if]
@@ -177,7 +177,9 @@
 
 [#macro BuildExpansionCode expansion]
     [#var classname=expansion.simpleName]
-    [#if classname = "CodeBlock"]
+    [#if classname = "ExpansionWithParentheses"]
+       [@BuildExpansionCode expansion.nestedExpansion/]
+    [#elseif classname = "CodeBlock"]
        ${expansion}
     [#elseif classname="LexicalStateSwitch"] 
        [@BuildCodeLexicalStateSwitch expansion /]

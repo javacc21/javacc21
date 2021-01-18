@@ -69,10 +69,6 @@ INJECT PARSER_CLASS : {
   }
 }
 
-INJECT : {
-  public class Fuck extends BaseNode {}
-}
-
 #CompilationUnit# :
   [ PackageDeclaration ]
   ( ImportDeclaration )*
@@ -130,15 +126,13 @@ Modifiers #void :
   |
    "strictfp" 
   | 
-  SCAN \MethodDeclaration =>
-   "default"
+  "default"
   |
   SCAN 2 => Annotation
  )*
 ;
 
 TypeDeclaration #abstract :
-// (
   EmptyDeclaration 
   |
   AnnotationTypeDeclaration
@@ -148,10 +142,6 @@ TypeDeclaration #abstract :
   InterfaceDeclaration
   |
   EnumDeclaration
-// )
-// {
-//        return (TypeDeclaration) peekNode();
-// }
 ;
 
 INJECT EmptyDeclaration : extends TypeDeclaration;
@@ -163,6 +153,8 @@ INJECT EnumDeclaration : extends TypeDeclaration;
 EmptyDeclaration# : ";" ;
 
 ClassDeclaration :
+// SCAN Modifiers "class" =>
+// (
  Modifiers
   "class" =>|| 
   <IDENTIFIER>
@@ -170,6 +162,7 @@ ClassDeclaration :
   [ ExtendsList]
   [ ImplementsList ]
   ClassOrInterfaceBody
+// )
 ;
 
 InterfaceDeclaration :
@@ -182,10 +175,10 @@ InterfaceDeclaration :
 ;
 
 ExtendsList : 
-   "extends" ClassOrInterfaceType
+   "extends" ObjectType
    ( 
      SCAN \InterfaceDeclaration => 
-     "," ClassOrInterfaceType 
+     "," ObjectType 
    )*
 ;
 
@@ -198,9 +191,9 @@ import java.util.List;
 }
 
 ImplementsList :
-   "implements" ClassOrInterfaceType
+   "implements" ObjectType
    ( 
-     "," ClassOrInterfaceType 
+     "," ObjectType
    )*
 ;
 
@@ -221,16 +214,16 @@ EnumBody :
 ;
 
 EnumConstant :
-  Modifiers <IDENTIFIER> [ Arguments ] [ ClassOrInterfaceBody ]
+  Modifiers <IDENTIFIER> [ InvocationArguments ] [ ClassOrInterfaceBody ]
 ;
 
-TypeParameters #TypeParameterList :
+TypeParameters :
    "<"
    TypeParameter ( "," TypeParameter )* 
    ">"
 ;
 
-INJECT TypeParameterList : 
+INJECT TypeParameters : 
   import java.util.List;
 {
     public List<TypeParameter> getParameters() {
@@ -241,7 +234,7 @@ INJECT TypeParameterList :
 TypeParameter: <IDENTIFIER> [TypeBound];
 
 TypeBound :
-   "extends" ClassOrInterfaceType ( "&" ClassOrInterfaceType )*
+   "extends" ObjectType ( "&" ObjectType )*
 ;
 
 ClassOrInterfaceBody :
@@ -253,21 +246,12 @@ ClassOrInterfaceBody :
 ;
 
 ClassOrInterfaceBodyDeclaration# :
-  {TypeDeclaration td = null;}
   (
   Initializer
   |
-  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "@")) =>
-  td=TypeDeclaration
-//  EmptyDeclaration
-//  |
-//  AnnotationTypeDeclaration
-//  |
-//  InterfaceDeclaration
-//  |
-//  EnumDeclaration
-//  |
-//  ClassDeclaration
+  // FIXME. The following lookahead should not really be necessary!
+  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "@" "interface")) =>
+  TypeDeclaration
   |
   ConstructorDeclaration
   |
@@ -296,7 +280,7 @@ ArrayInitializer :
   "{" [ VariableInitializer ( "," =>|+1 VariableInitializer )* ] [ "," ] "}"
 ;
 
-MethodDeclaration MethodDeclaration :
+#MethodDeclaration :
   Modifiers
   [ TypeParameters ]
   ReturnType
@@ -307,7 +291,7 @@ MethodDeclaration MethodDeclaration :
   {return CURRENT_NODE;}
 ;
 
-FormalParameters #FormalParams :
+FormalParameters : 
    "("
     [ FormalParameter ( "," FormalParameter )* ]
    ")"
@@ -329,9 +313,9 @@ ConstructorDeclaration :
 ;
 
 ExplicitConstructorInvocation :
-  [TypeArguments] ("this" | "super") =>|+1 Arguments ";"
+  [TypeArguments] ("this" | "super") =>|+1 InvocationArguments ";"
   |
-  [=>Name "."] [TypeArguments] "super" =>|+1 Arguments ";"
+  [=>Name "."] [TypeArguments] "super" =>|+1 InvocationArguments ";"
 ;
 
 Initializer :
@@ -356,10 +340,10 @@ INJECT PrimitiveType : extends Type;
 ReferenceType : 
    PrimitiveArrayType
    |
-   ClassOrInterfaceType (=> "[" "]" )*
+   ObjectType (=> "[" "]" )*
 ;
 
-ClassOrInterfaceType #ObjectType :
+ObjectType# :
     <IDENTIFIER>
     [ TypeArguments ]
     ( "." <IDENTIFIER> =>|| [ TypeArguments ] )*
@@ -574,15 +558,12 @@ CastExpression :
   |
   => "(" ReferenceType ")" UnaryExpressionNotPlusMinus
   |
-  => "(" ClassOrInterfaceType ("&" ClassOrInterfaceType)+ ")" UnaryExpressionNotPlusMinus 
+  => "(" ObjectType ("&" ObjectType)+ ")" UnaryExpressionNotPlusMinus 
 ;
 
-#PrimaryExpression# :
+PrimaryExpression# :
     PrimaryPrefix 
     ( SCAN 2 PrimarySuffix )*
-    {
-       return CURRENT_NODE;
-    }
 ;
 
 MemberSelector :
@@ -591,22 +572,22 @@ MemberSelector :
 
 PrimaryPrefix :
   Literal
- |
+  |
   "this"
- |
- => "super" "." [TypeArguments] <IDENTIFIER>
- |
+  |
+  => "super" "." [TypeArguments] <IDENTIFIER>
+  |
   "(" Expression ")"
- |
+  |
   AllocationExpression
- |
- => PrimitiveType "." "class"
- |
- => ReturnType "." "class"
- |
- => MethodReference
- |  
- Name
+  |
+  => PrimitiveType "." "class"
+  |
+  => ReturnType "." "class"
+  |
+  => MethodReference
+  |  
+  Name
 ;
 
 MethodReference :
@@ -629,7 +610,7 @@ PrimarySuffix :
   |
   "::" (<IDENTIFIER>|"new")
   |
-  Arguments
+  InvocationArguments
  )
 ;
 
@@ -653,21 +634,20 @@ Literal #void :
   "null"
 ;
 
-Arguments #InvocationArgs :
+InvocationArguments :
     "("
     [ Expression ("," Expression)* ]
     ")"
 ;
 
-
 AllocationExpression :
   "new" PrimitiveType =>|| ArrayDimsAndInits
   |
-  "new" ClassOrInterfaceType [ PossiblyEmptyTypeArguments ]
+  "new" ObjectType [ PossiblyEmptyTypeArguments ]
     (
       SCAN 2 ArrayDimsAndInits
       |
-      Arguments [ ClassOrInterfaceBody ]
+      InvocationArguments [ ClassOrInterfaceBody ]
     )
 ;
 
@@ -974,7 +954,7 @@ CatchBlock :
     "catch"
     "("
     ["final"]
-    ClassOrInterfaceType ("|" ClassOrInterfaceType)* VariableDeclaratorId
+    ObjectType ("|" ObjectType)* VariableDeclaratorId
     ")"
     Block 
 ;

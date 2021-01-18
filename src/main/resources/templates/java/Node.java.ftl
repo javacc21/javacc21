@@ -384,18 +384,37 @@ public interface Node extends Comparable<Node>
         return this;
     }
 
-    default void copyLocationInfo(Node to) {
-        if (getInputSource()!=null && to.getInputSource()==null) {
-            to.setInputSource(getInputSource()); //REVISIT
+    /**
+     * Copy the location info from another Node
+     */
+    default void copyLocationInfo(Node from) {
+        if (from.getInputSource()!=null && getInputSource()==null) {
+            setInputSource(from.getInputSource()); //REVISIT
         }
-        to.setBeginLine(this.getBeginLine());
-        to.setBeginColumn(this.getBeginColumn());
-        to.setEndLine(this.getEndLine());
-        to.setEndColumn(this.getEndColumn());
+        setBeginLine(from.getBeginLine());
+        setBeginColumn(from.getBeginColumn());
+        setEndLine(from.getEndLine());
+        setEndColumn(from.getEndColumn());
+    }
+
+    /**
+     * Copy the location info given a start and end Node
+     */
+    default void copyLocationInfo(Node start, Node end) {
+        if (getInputSource() == null && start.getInputSource() != null) {
+            setInputSource(start.getInputSource());
+        }
+        if (getInputSource() == null && end.getInputSource() != null) {
+            setInputSource(end.getInputSource());
+        }
+        setBeginLine(start.getBeginLine());
+        setBeginColumn(start.getBeginColumn());
+        setEndLine(end.getEndLine());
+        setEndColumn(end.getEndColumn());
     }
 
     default void replace(Node toBeReplaced) {
-        toBeReplaced.copyLocationInfo(this);
+        copyLocationInfo(toBeReplaced);
         Node parent = toBeReplaced.getParent();
         if (parent !=null) {
            int index = parent.indexOf(toBeReplaced);

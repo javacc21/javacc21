@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -99,22 +99,22 @@ public class ParserData {
         for (ExpansionSequence sequence : grammar.descendants(ExpansionSequence.class)) {
             Node parent = sequence.getParent();
             if (sequence.getHasExplicitLookahead() 
-               && !(//parent instanceof BNFProduction || //comment out for now
-                   parent instanceof Expansion.ChoicePoint
-                   || parent instanceof Lookahead)) 
+               && !(
+                   parent instanceof BNFProduction ||
+                   parent instanceof ExpansionChoice ||
+                   parent instanceof OneOrMore ||
+                   parent instanceof ZeroOrMore ||
+                   parent instanceof ZeroOrOne ||
+                   parent instanceof Lookahead)) 
             {
                 grammar.addSemanticError(sequence, "Encountered LOOKAHEAD(...) at a non-choice location." );
             }
         }
-
+/* REVISIT this later.*/
         for (Node exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {
-            Node grandparent = exp.getParent().getParent();
-            if (!(grandparent instanceof Expansion.ChoicePoint
-               || grandparent instanceof BNFProduction)) 
-            {
-                   grammar.addSemanticError(exp, "The up-to-here delimiter can only be at a choice point or at the top level of a grammar production.");
+            if (!((Expansion) exp.getParent()).isAtChoicePoint()) {
+                grammar.addSemanticError(exp, "The up-to-here delimiter can only be at a choice point.");
             }
-
         }
 
         for (ExpansionChoice choice : grammar.descendants(ExpansionChoice.class)) {

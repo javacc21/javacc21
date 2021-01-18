@@ -47,7 +47,7 @@ class CodeInjector {
     private Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
     private Map<String, List<ObjectType>> extendsLists = new HashMap<>();
     private Map<String, List<ObjectType>> implementsLists = new HashMap<>();
-    private Map<String, TypeParameterList> typeParameterLists = new HashMap<>();
+    private Map<String, TypeParameters> typeParameterLists = new HashMap<>();
     private Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
     private Set<String> overriddenMethods = new HashSet<>();
     private Set<String> typeNames = new HashSet<>();
@@ -154,13 +154,13 @@ class CodeInjector {
                     existing.add(type);
                 }
             }
-            TypeParameterList typeParameterList = dec.getTypeParameterList();
-            if (typeParameterList != null) {
-                TypeParameterList injectedList = typeParameterLists.get(name);
+            TypeParameters typeParameters = dec.getTypeParameters();
+            if (typeParameters != null) {
+                TypeParameters injectedList = typeParameterLists.get(name);
                 if (injectedList == null) {
-                    typeParameterLists.put(name, typeParameterList);
+                    typeParameterLists.put(name, typeParameters);
                 } else {
-                    injectedList.add(typeParameterList);
+                    injectedList.add(typeParameters);
                 }
             }
             List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<ClassOrInterfaceBodyDeclaration>(); 
@@ -274,9 +274,9 @@ class CodeInjector {
                     typedecl.addImplements(type);
                 }
             }
-            TypeParameterList injectedTypeParameters = typeParameterLists.get(fullName);
+            TypeParameters injectedTypeParameters = typeParameterLists.get(fullName);
             if (injectedTypeParameters != null) {
-                TypeParameterList typeParameters = typedecl.getTypeParameterList();
+                TypeParameters typeParameters = typedecl.getTypeParameters();
                 typeParameters.add(injectedTypeParameters);
             }
             Set<Annotation> annotations = this.injectedAnnotationsMap.get(fullName);

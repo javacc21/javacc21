@@ -253,7 +253,8 @@ void dumpLookaheadCallStack(PrintStream ps) {
          [#-- Since skipping the next token did not work, we will insert a virtual token --]
             Token virtualToken = Token.newToken(expectedType, "VIRTUAL", lastConsumedToken);
             virtualToken.setVirtual(true);
-            nextToken.copyLocationInfo(virtualToken);
+//            nextToken.copyLocationInfo(virtualToken);
+            virtualToken.copyLocationInfo(nextToken);
             virtualToken.setNext(nextToken);
             lastConsumedToken.setNext(virtualToken);
             return virtualToken;
