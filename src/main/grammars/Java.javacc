@@ -34,29 +34,31 @@ NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
-NODE_USES_PARSER;
 
 INCLUDE("JavaLexer.javacc")
 
 INJECT PARSER_CLASS : {
 
   private Token TOKEN_HOOK(Token tok) {
-    String img = tok.getImage();
-    if (img==null || !img.startsWith(">")) return tok;
-    boolean inGenericTypeSpec = isInProduction("TypeArguments", "TypeParameters");
-    if (inGenericTypeSpec && (img.equals(">>") || img.equals(">>>"))) {
+    TokenType type = tok.getType();
+    if (type != GT && type != RUNSIGNEDSHIFT && type != RSIGNEDSHIFT) return tok;
+    if (type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) {
+      if (isInProduction("TypeArguments", "TypeParameters")) {
         // If we've entered the TypeParameters or TypeArguments production, we need to split
         // a ">>" or ">>>" into 2 (or 3) GT tokens.
         Token gt = Token.split(tok, 1, GT, GT);
-        if (img.length() == 3) {
+        if (type == RUNSIGNEDSHIFT) {
           Token next = Token.split(gt.getNext(), 1, GT, GT);
+          gt.setNext(next);
+          gt.setNextToken(next);
         }
         return gt;
+      }
     }
-    else if (!inGenericTypeSpec && img.length() ==1) {
-      // In this case we do the reverse. We merge 2 (or 3) GT tokens into a right shift operator
+    else if (type == GT) {
       Token next = tok.getNextToken();
-      if (next != null && next.getType() == GT) {
+      if (next != null && next.getType() == GT && !isInProduction("TypeArguments", "TypeParameters")) {
+      // In this case we do the reverse. We merge 2 (or 3) GT tokens into a right shift operator
         Token nextNext = next.getNextToken();
         Token merged = Token.merge(tok, next, RSIGNEDSHIFT);
         if (nextNext != null && nextNext.getType() == GT) {
@@ -250,6 +252,7 @@ ClassOrInterfaceBodyDeclaration# :
   Initializer
   |
   // FIXME. The following lookahead should not really be necessary!
+  // Or should it? I really have to figure this out...
   SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "@" "interface")) =>
   TypeDeclaration
   |
