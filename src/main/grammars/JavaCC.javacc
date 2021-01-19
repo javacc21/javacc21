@@ -1785,7 +1785,7 @@ Assertion Assertion :
 Lookahead ScanAhead #Lookahead : 
 {
    Token amountToken=null;
-   boolean hasSemanticLookahead = false;
+   boolean hasSemanticLookahead = false, getHasExplicitNumericalLookahead=false;
    Expansion expansion = null, upToExpansion = null;
    Expression exp=null;
    Node lb = null;
@@ -1793,10 +1793,7 @@ Lookahead ScanAhead #Lookahead :
 [=>exp=PrimaryExpression "=" {CURRENT_NODE.setLHS(exp);}]
 <_SCAN>
 [
-    amountToken= <INTEGER_LITERAL>
-    {
-        CURRENT_NODE.setAmount(Integer.parseInt(amountToken.getImage()));
-    }
+    <INTEGER_LITERAL> {getHasExplicitNumericalLookahead = true;}
 ]
 [
     "{" 
@@ -1815,7 +1812,7 @@ Lookahead ScanAhead #Lookahead :
 ]*/
 [SCAN LookBehind {lb = peekNode();}]
 [
-    SCAN {amountToken == null} => 
+    SCAN {!getHasExplicitNumericalLookahead} => 
     ["~" {CURRENT_NODE.setNegated(true);}] 
     ExpansionChoice {expansion = (Expansion) peekNode();}
     <RIGHT_ARROW>
@@ -1914,23 +1911,20 @@ import java.util.*;
     }
 }
 
-Lookahead LegacyLookahead #Lookahead :
+INJECT LegacyLookahead : extends Lookahead;
+
+LegacyLookahead# :
 {
     Expansion expansion = null;
     Expression exp = null;
     boolean empty = true, commaAtEnd = false;
-    Token t= null;
 }
 {
   <_LOOKAHEAD>
   [
    "(" 
       [
-        t=<INTEGER_LITERAL>
-        {
-           CURRENT_NODE.setAmount(Integer.parseInt(t.getImage()));
-           empty = false;
-        }
+        <INTEGER_LITERAL> {empty = false;}
       ]
       [ 
         SCAN {!empty} ~<RPAREN> 
@@ -1943,9 +1937,8 @@ Lookahead LegacyLookahead #Lookahead :
         ExpansionChoice
         {
            expansion = (Expansion) peekNode();
-           empty = false; commaAtEnd = false;
            CURRENT_NODE.setNestedExpansion(expansion);
-//           expansion.setLookahead(CURRENT_NODE);
+           empty = false; commaAtEnd = false;
         }
       ]
       [ 
@@ -1957,13 +1950,6 @@ Lookahead LegacyLookahead #Lookahead :
       ]
      ")"
   ]
-  {
-     if (t == null && expansion == null && exp != null) {
-         // Legacy semantics
-         CURRENT_NODE.setAmount(0);
-     }
-     return CURRENT_NODE;
-  }
 }
 
 INJECT Lookahead :
@@ -1972,13 +1958,11 @@ INJECT Lookahead :
    import com.javacc.parsegen.TokenSet;
 {
     @Property Expression LHS;
-    @Property Expansion expansion, nestedExpansion;
+    @Property Expansion expansion, nestedExpansion, upToExpansion;
     @Property boolean negated, semanticLookaheadNested;
     @Property Expression semanticLookahead;
 
     private int amount=Integer.MAX_VALUE;
-
-    private Expansion upToExpansion;
 
     public boolean isAlwaysSuccessful() {
         return !hasSemanticLookahead() && (getAmount() == 0 || getLookaheadExpansion().isPossiblyEmpty()); 
@@ -2008,12 +1992,11 @@ INJECT Lookahead :
 
     public int getAmount() {
         IntegerLiteral it = firstChildOfType(IntegerLiteral.class);
-        return it==null ? Integer.MAX_VALUE : it.getValue();
-//        return amount;
-    }
-
-    public void setAmount(int amount) {
-        //this.amount = amount;
+        if (it!=null) return it.getValue();
+        if (this instanceof LegacyLookahead) {
+            if (getNestedExpansion() == null && hasSemanticLookahead()) return 0;
+        }
+        return Integer.MAX_VALUE;
     }
 
     public TokenSet getFirstSet() {
@@ -2045,15 +2028,6 @@ INJECT Lookahead :
     public LookBehind getLookBehind() {
         return firstChildOfType(LookBehind.class);
     }
-              
-    public Expansion getUpToExpansion() {
-        return upToExpansion;
-    }
-
-    public void setUpToExpansion(Expansion upToExpansion) {
-        this.upToExpansion = upToExpansion;
-    }
-
 }
 
 Expansion ExpansionUnit :
