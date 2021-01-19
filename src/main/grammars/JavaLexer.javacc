@@ -35,6 +35,7 @@
  */
 
 DEFAULT_LEXICAL_STATE=JAVA;
+JAVA_UNICODE_ESCAPE;
 TREE_BUILDING_ENABLED=false;
 HUGE_FILE_SUPPORT;
 
@@ -166,6 +167,60 @@ TOKEN #Literal :
   > #StringLiteral
 ;
 
+INJECT StringLiteral : 
+  import java.util.StringTokenizer;
+  extends Literal 
+{
+  /**
+   * @return the literal string unescaped without the quotes
+   */
+  public String getString() {
+    return removeEscapesAndQuotes(getImage());
+  }
+
+  @MinJDK15
+  static public String removeEscapesAndQuotes(String input) {
+    if (!input.startsWith("\"\"\"")) 
+       return input.substring(1, input.length()-1).translateEscapes();
+    String content = input.substring(3, input.length()-3);
+    return content.translateEscapes().stripIndent();
+  }
+
+  @MaxJDK14
+  static public String removeEscapesAndQuotes(String input) {
+    String content = input.substring(1, input.length()-1);
+    if (content.indexOf('\\')<0) return content;
+    StringBuilder buf = new StringBuilder();
+    StringTokenizer st = new StringTokenizer(content, "\\", true);
+    boolean lastCharSlash = false;
+    while (st.hasMoreTokens()) {
+      String tok = st.nextToken();
+      if (!lastCharSlash) {
+        if (tok.equals("\\")) 
+          lastCharSlash = true;
+        else 
+          buf.append(tok);
+      }
+      else {
+        char ch = tok.charAt(0);
+        switch (ch) {
+          case 'b' : buf.append((char) '\b'); break;
+          case 't' : buf.append((char) '\t'); break;
+          case 'n' : buf.append((char) '\n'); break;
+          case 'f' : buf.append((char) '\f'); break;
+          case 'r' : buf.append((char) '\r'); break;
+          case '\\' : buf.append((char) '\\'); break;
+          case '"' : buf.append((char) '"'); break;
+          case '\'' : buf.append((char) '"'); break;
+          default : buf.append(Integer.parseInt(tok,8));
+        }
+        lastCharSlash = false;
+      }
+    }
+    return buf.toString();
+  }
+}
+
 TOKEN #NumericalLiteral :
   < LONG_LITERAL:
         <DECIMAL_LITERAL> (["l","L"])
@@ -181,7 +236,7 @@ TOKEN #NumericalLiteral :
       | <BINARY_LITERAL>
   > #IntegerLiteral 
   |
-  < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
+  < #DECIMAL_LITERAL: "0" | (["1"-"9"]((["0"-"9","_"])*["0"-"9"])?) >
   |
   < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS> >
   |
@@ -218,7 +273,27 @@ INJECT NumericalLiteral : extends Literal;
 INJECT IntegerLiteral :
 {
    public int getValue() {
-     return Integer.valueOf(getImage());
+     String image = removeUnderscores(getImage());
+     if (image.equals("0")) return 0;
+     if (image.charAt(0) != '0') return Integer.parseInt(image);
+     char secondChar = image.charAt(1);
+     if (secondChar == 'x' || secondChar=='X') {
+       return Integer.parseInt(image.substring(2), 16);
+     }
+     if (secondChar == 'b' || secondChar == 'B') {
+       return Integer.parseInt(image.substring(2), 2);
+     }
+     return Integer.parseInt(image.substring(1), 8);
+   }
+
+   static public String removeUnderscores(String s) {
+     if (s.indexOf('-')<0) return s;
+     StringBuilder buf = new StringBuilder();
+     for (int i=0; i<s.length();i++) {
+       char ch = s.charAt(i);
+       if (ch != '_') buf.append(ch);
+     }
+     return buf.toString();
    }
 }
 

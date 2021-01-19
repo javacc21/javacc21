@@ -434,30 +434,30 @@ INJECT TypeDeclaration :
     
     public boolean isClass() {
         for (Node n : children) {
-	    if (n instanceof Token) {
-	       Token t = (Token) n;
+        if (n instanceof Token) {
+           Token t = (Token) n;
                if (t.getType() == TokenType.CLASS) {
                   return true;
                }
-	    }
+        }
         }
         return false;
     }
     
     public void addImplements(ObjectType type) {
-    	ImplementsList implementsList = getImplementsList();
-    	if (implementsList == null) {
-    	   implementsList = new ImplementsList();
-    	   ListIterator<Node> iterator = iterator();
-    	   while (iterator.hasNext()) {
-    	      Node node = iterator.next();
-    	      if (node instanceof ClassOrInterfaceBody || node instanceof EnumBody)
-    	          break; 
-    	   }
-    	   iterator.previous();
-    	   iterator.add(implementsList);
-    	}
-    	implementsList.addType(type);
+        ImplementsList implementsList = getImplementsList();
+        if (implementsList == null) {
+           implementsList = new ImplementsList();
+           ListIterator<Node> iterator = iterator();
+           while (iterator.hasNext()) {
+              Node node = iterator.next();
+              if (node instanceof ClassOrInterfaceBody || node instanceof EnumBody)
+                  break; 
+           }
+           iterator.previous();
+           iterator.add(implementsList);
+        }
+        implementsList.addType(type);
     }
 
     public void addExtends(ObjectType type) {
@@ -545,12 +545,12 @@ INJECT ClassOrInterfaceBody :
         Node n = null;
         while (iterator.hasNext()) {
             n = iterator.next();
-      	    if (n instanceof Token) {
-	          Token t = (Token) n;
+              if (n instanceof Token) {
+              Token t = (Token) n;
                if (t.getType() == TokenType.LBRACE) {
                    break;
                }
-	          }
+              }
         }
         for (ClassOrInterfaceBodyDeclaration elem : elements) {
             iterator.add(elem);
@@ -626,9 +626,9 @@ INJECT PARSER_CLASS : {
         if (javaccKeyWords.contains(t.getType())) {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
                if (t.getType() != _PARSER_END || !isInProduction("ParserCodeDecls")) {
-	               Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
-	               id.copyLocationInfo(t);
-	               return id;
+                   Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
+                   id.copyLocationInfo(t);
+                   return id;
                }
            }
         }
@@ -785,11 +785,6 @@ INJECT Token :
     }
     
     public String getNormalizedText() {
-        if (getType() == TokenType.IDENTIFIER) {
-            if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
-                return getGrammar().getCurrentNodeVariableName();
-            }
-        } 
         return image;
     }
 }
@@ -808,13 +803,13 @@ INJECT Token :
       SCAN 1 {!grammar.getUserDefinedLexer()} =>
       tp=TokenProduction  {grammar.addTokenProduction(tp);}
       |
-      BNFProduction
-      |
       decls=TokenManagerDecls {grammar.addCodeInjection(decls);}
       |
       CodeInjection2 
       |
       CodeInjection
+      |
+      BNFProduction
       |
       GrammarInclusion
   )+
@@ -901,7 +896,9 @@ CodeInjection :
         ]
         ":"
         [
-          SCAN "{"("import"|"@"|"extends"|"implements"|"}") => "{" 
+//            SCAN {getToken(1).getImage().equals("{")} ~("{" ClassOrInterfaceBodyDeclaration) => "{"
+//          SCAN "{"("import"|"@"|"extends"|"implements"|"}") => "{" 
+          SCAN "{" ("}" | "import" | "extends" | "implements" | (Annotation)* "}") => "{"
           {foundOptionalInitialBrace=true;}
         ]
         (
@@ -923,7 +920,7 @@ CodeInjection :
              [";"]
         ]
         [
-           SCAN {foundOptionalInitialBrace} => "}"
+           SCAN 0 {foundOptionalInitialBrace} => "}"
         ]
         [coib=ClassOrInterfaceBody {CURRENT_NODE.body = coib;}]
         {
@@ -959,7 +956,7 @@ CodeInjection2 :
        "}"
         {
                 if (enterIncludes) {
-    				grammar.addCodeInjection(jcu);
+                    grammar.addCodeInjection(jcu);
                 }
         }
 ;
@@ -987,10 +984,10 @@ OptionsBlock #Options :
 
 Setting(Map settings) #Setting :
 {
-	  String key;
-	  Token name, t=null;
-	  boolean inInclude = grammar.isInInclude();
-	  Object value = Boolean.TRUE;
+      String key;
+      Token name, t=null;
+      boolean inInclude = grammar.isInInclude();
+      Object value = Boolean.TRUE;
 }
   ( 
      name = <IDENTIFIER> 
@@ -999,7 +996,7 @@ Setting(Map settings) #Setting :
   )
   =>|+1
   {
-	  key = name.getImage().toUpperCase();
+      key = name.getImage().toUpperCase();
   }
   [
      "="
@@ -1008,9 +1005,9 @@ Setting(Map settings) #Setting :
         |
         t="false" {value=false;}
         |
-        t= <INTEGER_LITERAL> {value = Integer.valueOf(t.getImage());}
+        t= <INTEGER_LITERAL> {value = ((IntegerLiteral) t).getValue();}
         |
-        t= <STRING_LITERAL> {value = removeEscapesAndQuotes(t);}
+        t= <STRING_LITERAL> {value = ((StringLiteral) t).getString();}
         |
         t= <IDENTIFIER> {value = t.getImage();}
      )
@@ -1070,9 +1067,9 @@ BNFProduction :
 ;
 
 INJECT BNFProduction : 
-	import java.util.*;
-	import com.javacc.parsegen.TokenSet;
-	import com.javacc.parsegen.Expansion;
+    import java.util.*;
+    import com.javacc.parsegen.TokenSet;
+    import com.javacc.parsegen.Expansion;
 {
     @Property boolean implicitReturnType;
 //    public void CLOSE_NODE_HOOK() {} //FIXME
@@ -1215,12 +1212,12 @@ INJECT BNFProduction :
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" [<IDENTIFIER>|"abstract"|"interface"|"void"]
    [
-	   "("
-	      [
-	        ">"
-	      ]
-	      Expression()
-	   ")"
+       "("
+          [
+            ">"
+          ]
+          Expression()
+       ")"
   ]
 ;
 
@@ -1338,7 +1335,7 @@ INJECT TokenProduction :
             return new String[] {implicitLexicalState};
         }        
         if (isInAllLexStates()) {
-     	    return getGrammar().getLexicalStates();
+             return getGrammar().getLexicalStates();
         }
         Set<String> states = new LinkedHashSet<String>();
         for (Token t : childrenOfType(Token.class)) {
@@ -1360,24 +1357,24 @@ INJECT TokenProduction :
     private boolean isInAllLexStates() {
        for (Node n : children) {
           if (n instanceof Token) {
-	      Token t = (Token) n;
+          Token t = (Token) n;
               if (t.getType() == STAR) {
                   return true;
               }
-	      }
+          }
        }
        return false;
     }
 
     public String getKind() {
        for (Token t : childrenOfType(Token.class)) {
-	       switch (t.getType()) {
-	          case _MORE : return "MORE";
-	          case _SPECIAL_TOKEN : return "SPECIAL_TOKEN";
-	          case _SKIP : return "SKIP";
-	          case _TOKEN : return "TOKEN";
-	          default: 
-	       }
+           switch (t.getType()) {
+              case _MORE : return "MORE";
+              case _SPECIAL_TOKEN : return "SPECIAL_TOKEN";
+              case _SKIP : return "SKIP";
+              case _TOKEN : return "TOKEN";
+              default: 
+           }
       }
       return "TOKEN";
     }
@@ -1752,7 +1749,7 @@ INJECT Assertion :
 }
 
 
-Assertion Assertion :
+Assertion :
    {
        Expression exp = null;
        LookBehind lb = null;
@@ -1776,9 +1773,10 @@ Assertion Assertion :
        => FAIL "Assertion is empty!"
    ]
    ":" 
-   messageToken=<STRING_LITERAL> {CURRENT_NODE.setMessage(removeEscapesAndQuotes(messageToken));}
+   <STRING_LITERAL> 
    {
-       return CURRENT_NODE;
+       String message = ((StringLiteral) lastConsumedToken).getString();
+       CURRENT_NODE.setMessage(message);
    }
 ;
 
@@ -1999,32 +1997,6 @@ INJECT Lookahead :
         return Integer.MAX_VALUE;
     }
 
-    public TokenSet getFirstSet() {
-        TokenSet result = new TokenSet(getGrammar());
-        Expansion nestedExp = getNestedExpansion();
-        if (nestedExp != null) {
-            result.and(nestedExp.getFirstSet());
-        }
-        if (isNegated()) {
-            result.not();
-        }
-        result.and(getExpansion().getFirstSet());
-        return result;
-    }
-    
-    private String firstSetVarName;
-
-    public String getFirstSetVarName() {
-        if (firstSetVarName == null) {
-            firstSetVarName = getGrammar().generateUniqueIdentifier("first_set$", this);
-        }
-        return firstSetVarName;
-    }
-
-    public boolean isSingleToken() {
-        return expansion.isSingleToken() && (getNestedExpansion() == null || getNestedExpansion().isSingleToken());
-    }
-
     public LookBehind getLookBehind() {
         return firstChildOfType(LookBehind.class);
     }
@@ -2135,6 +2107,14 @@ INJECT NonTerminal :
         return getGrammar().getProductionByName(getName());
     }
 
+    public Expansion getNestedExpansion() {
+        return getProduction().getExpansion();
+    }
+
+//    public Lookahead getLookahead() {
+//        return getNestedExpansion().getLookahead();
+//    }
+
     public InvocationArguments getArgs() {
         return firstChildOfType(InvocationArguments.class);
     }
@@ -2164,7 +2144,6 @@ INJECT NonTerminal :
     
      public TokenSet getFirstSet() {
         if (firstSet == null) {
-//            firstSet = new TokenSet(getGrammar());
             firstSet = getProduction().getExpansion().getFirstSet();
         }
         return firstSet;
@@ -2337,19 +2316,18 @@ INJECT AttemptBlock :
      }
 }
 
-Failure Failure : 
-   {Token t;}
-   t="FAIL"
+Failure : 
+   {
+       String message = null;
+   }
+   "FAIL"
    [
-      t=<STRING_LITERAL>
+      <STRING_LITERAL> {message = ((StringLiteral)lastConsumedToken).getString();}
       |
       Block
    ]
    {
-       String message = "Failure: ";
-       message += removeEscapesAndQuotes(t);
-       CURRENT_NODE.setMessage(message);
-       return CURRENT_NODE;
+       CURRENT_NODE.setMessage("Failure: " + message);
    }
 ;
 
@@ -2525,31 +2503,30 @@ InPlaceRegexp #void :
   RegexpChoice {choice = (RegularExpression) peekNode();} 
   <GT>
   {
-	  if (choice instanceof RegexpRef) {
-	    RegexpSequence seq = new RegexpSequence();
-	    seq.addChild(choice);
-	    re = seq;
-	  } else {
-	    re = choice;
-	  }
-	  if (image.length() ==0 && isInProduction("BNFProduction")) {
-	     grammar.addParseError(t, "It is mandatory to label an inline regexp in a grammar production.");
-	  }
-	  re.setLabel(image);
-	  re.setGeneratedClassName(image);
-	  re.setPrivate(isPrivate); 
-	  re.setBeginLine(t.getBeginLine());
-	  re.setBeginColumn(t.getBeginColumn());
-	  pokeNode(re);
+      if (choice instanceof RegexpRef) {
+        RegexpSequence seq = new RegexpSequence();
+        seq.addChild(choice);
+        re = seq;
+      } else {
+        re = choice;
+      }
+      if (image.length() ==0 && isInProduction("BNFProduction")) {
+         grammar.addParseError(t, "It is mandatory to label an inline regexp in a grammar production.");
+      }
+      re.setLabel(image);
+      re.setGeneratedClassName(image);
+      re.setPrivate(isPrivate); 
+      re.setBeginLine(t.getBeginLine());
+      re.setBeginColumn(t.getBeginColumn());
+      pokeNode(re);
   }
 ;
 
-RegexpStringLiteral RegexpStringLiteral #RegexpStringLiteral :
+RegexpStringLiteral# :
    <STRING_LITERAL>
    {
-      String image = removeEscapesAndQuotes(lastConsumedToken);
+      String image = ((StringLiteral)lastConsumedToken).getString();
       CURRENT_NODE.setImage(image);
-      return CURRENT_NODE;
    }
 ;
 
@@ -2645,13 +2622,13 @@ INJECT RegexpChoice :
 
 RegexpSequence :
    (
-	  RegexpStringLiteral
-	  |
-	  RegexpRef
-	  |
-	  CharacterList
-	  |
-	  RepeatedRegexp
+      RegexpStringLiteral
+      |
+      RegexpRef
+      |
+      CharacterList
+      |
+      RepeatedRegexp
    )+
 ;
 
@@ -2804,32 +2781,19 @@ INJECT CharacterList :
         }
     }
 
-    CharacterRange CharacterRange #CharacterRange :
-    {
-        Token imageL, imageR;
-    }
-    imageL=<STRING_LITERAL>
-    {
-        String lString = removeEscapesAndQuotes(imageL);
-        CURRENT_NODE.left = character_descriptor_assign(lastConsumedToken, lString);
-        CURRENT_NODE.right = CURRENT_NODE.left;
-    }
+CharacterRange# :
+    <STRING_LITERAL>
     [ 
     "-"
-    imageR=<STRING_LITERAL>
-        {
-          String rString = removeEscapesAndQuotes(imageR);
-          CURRENT_NODE.right = character_descriptor_assign(lastConsumedToken, rString, lString);
-        }
+    <STRING_LITERAL>
    ]
-   {return CURRENT_NODE;}
 ;
 
 INJECT CharacterRange :
 {
     public char left, right;
     
-    public CharacterRange() {}
+    public CharacterRange() {} 
     
     public CharacterRange(char left, char right) {
         setRange(left, right);
@@ -2846,153 +2810,26 @@ INJECT CharacterRange :
     public boolean isSingleChar() {
        return left == right;
     }
-}
 
-INJECT PARSER_CLASS : 
-{
-        private char character_descriptor_assign(Token t, String s) {
-        if (s.length() != 1) {
-            grammar.addParseError(t,
+    public void close() {
+        java.util.List<StringLiteral> bounds = childrenOfType(StringLiteral.class);
+        String left = bounds.get(0).getString();
+        if (left.length()>1) {
+            getGrammar().addParseError(bounds.get(0),
                     "String in character list may contain only one character.");
-            return ' ';
-        } else {
-            return s.charAt(0);
         }
-    }
+        this.left = this.right = left.charAt(0);
 
-    private char character_descriptor_assign(Token t, String s, String left) {
-        if (s.length() != 1) {
-            grammar.addParseError(t,
-                    "String in character list may contain only one character.");
-            return ' ';
-        } else if ((int) (left.charAt(0)) > (int) (s.charAt(0))) {
-            grammar
-                    .addParseError(
-                            t,
-                            "Right end of character range \'"
-                                    + s
-                                    + "\' has a lower ordinal value than the left end of character range \'"
-                                    + left + "\'.");
-            return left.charAt(0);
-        } else {
-            return s.charAt(0);
+        if (bounds.size()>1) {
+            String right = bounds.get(1).getString();
+            if (right.length() >1) {
+                getGrammar().addParseError(bounds.get(1),
+                        "String in character list may contain only one character.");
+            }
+            this.right = right.charAt(0);
+        }
+        if (this.left>this.right) {
+            getGrammar().addParseError(this, "The left side of the character range must a lower ordinal (in Unicode) value than the right side.");
         }
     }
-
-    private String removeEscapesAndQuotes(Token t) {
-        String retval = "";
-        String str = t.getImage();
-        int index = 1;
-        char ch, ch1;
-        int ordinal;
-        while (index < str.length() - 1) {
-            if (str.charAt(index) != '\\') {
-                retval += str.charAt(index);
-                index++;
-                continue;
-            }
-            index++;
-            ch = str.charAt(index);
-            if (ch == 'b') {
-                retval += '\b';
-                index++;
-                continue;
-            }
-            if (ch == 't') {
-                retval += '\t';
-                index++;
-                continue;
-            }
-            if (ch == 'n') {
-                retval += '\n';
-                index++;
-                continue;
-            }
-            if (ch == 'f') {
-                retval += '\f';
-                index++;
-                continue;
-            }
-            if (ch == 'r') {
-                retval += '\r';
-                index++;
-                continue;
-            }
-            if (ch == '"') {
-                retval += '\"';
-                index++;
-                continue;
-            }
-            if (ch == '\'') {
-                retval += '\'';
-                index++;
-                continue;
-            }
-            if (ch == '\\') {
-                retval += '\\';
-                index++;
-                continue;
-            }
-            if (ch >= '0' && ch <= '7') {
-                ordinal = ((int) ch) - ((int) '0');
-                index++;
-                ch1 = str.charAt(index);
-                if (ch1 >= '0' && ch1 <= '7') {
-                    ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
-                    index++;
-                    ch1 = str.charAt(index);
-                    if (ch <= '3' && ch1 >= '0' && ch1 <= '7') {
-                        ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
-                        index++;
-                    }
-                }
-                retval += (char) ordinal;
-                continue;
-            }
-            if (ch == 'u') {
-                index++;
-                ch = str.charAt(index);
-                if (hexchar(ch)) {
-                    ordinal = hexval(ch);
-                    index++;
-                    ch = str.charAt(index);
-                    if (hexchar(ch)) {
-                        ordinal = ordinal * 16 + hexval(ch);
-                        index++;
-                        ch = str.charAt(index);
-                        if (hexchar(ch)) {
-                            ordinal = ordinal * 16 + hexval(ch);
-                            index++;
-                            ch = str.charAt(index);
-                            if (hexchar(ch)) {
-                                ordinal = ordinal * 16 + hexval(ch);
-                                index++;
-                                continue;
-                            }
-                        }
-                    }
-                }
-                grammar.addParseError(t, "Encountered non-hex character '" + ch
-                        + "' at position " + index + " of string "
-                        + "- Unicode escape must have 4 hex digits after it.");
-                return retval;
-            }
-            grammar.addParseError(t, "Illegal escape sequence '\\" + ch
-                    + "' at position " + index + " of string.");
-            return retval;
-        }
-        return retval;
-    }
-    
-    private static boolean hexchar(char ch) {
-    	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
-    }
-    
-    static private int hexval(char ch) {
-        if (ch >= '0' && ch <= '9')
-            return ((int) ch) - ((int) '0');
-        if (ch >= 'A' && ch <= 'F')
-            return ((int) ch) - ((int) 'A') + 10;
-        return ((int) ch) - ((int) 'a') + 10;
-    }    
 }
