@@ -47,8 +47,6 @@ abstract public class Expansion extends BaseNode {
 
     private TreeBuildingAnnotation treeNodeBehavior;
 
-    private Lookahead lookahead;
-
     private String label = "";
 
     protected TokenSet firstSet;
@@ -154,12 +152,8 @@ abstract public class Expansion extends BaseNode {
         return firstAncestorOfType(Lookahead.class) != null;
     }
 
-    public void setLookahead(Lookahead lookahead) {
-        this.lookahead = lookahead;
-    }
-
     public Lookahead getLookahead() {
-        return lookahead;
+        return null;
     }
 
     public boolean getHasExplicitLookahead() {

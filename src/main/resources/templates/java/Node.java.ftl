@@ -264,17 +264,17 @@ public interface Node extends Comparable<Node>
      void setUnparsed(boolean b);
      
     default <T extends Node>T firstChildOfType(Class<T>clazz) {
-        for (Node child : children()) {
-            if (clazz.isInstance(child)) {
-                return clazz.cast(child);
-            }
+        for (int i=0; i<getChildCount();i++) {
+            Node child = getChild(i);
+            if (clazz.isInstance(child)) return clazz.cast(child);
         }
         return null; 
-     }
+    }
 
 [#if !grammar.userDefinedLexer && grammar.tokensAreNodes]
     default Token firstDescendantOfType(${grammar.constantsClassName}.TokenType type) {
-         for (Node child : children()) {
+         for (int i=0; i<getChildCount(); i++) {
+             Node child = getChild(i);
              if (child instanceof Token) {
                  Token tok = (Token) child;
                  if (tok.getType()==type) {
@@ -289,7 +289,8 @@ public interface Node extends Comparable<Node>
     }
 
     default Token firstChildOfType(${grammar.constantsClassName}.TokenType tokenType) {
-        for (Node child : children()) {
+        for (int i=0; i<getChildCount();i++) {
+            Node child = getChild(i);
             if (child instanceof Token) {
                 Token tok = (Token) child;
                 if (tok.getType() == tokenType) return tok;
@@ -300,7 +301,8 @@ public interface Node extends Comparable<Node>
 [/#if]
 
     default <T extends Node>T firstDescendantOfType(Class<T> clazz) {
-         for (Node child : children()) {
+         for (int i=0; i<getChildCount();i++) {
+             Node child = getChild(i);
              if (clazz.isInstance(child)) return clazz.cast(child);
              else {
                  T descendant = child.firstDescendantOfType(clazz);
@@ -312,7 +314,8 @@ public interface Node extends Comparable<Node>
 
     default <T extends Node>List<T>childrenOfType(Class<T>clazz) {
         List<T>result=new java.util.ArrayList<>();
-        for (Node child : children()) {
+        for (int i=0; i< getChildCount(); i++) {
+            Node child = getChild(i);
             if (clazz.isInstance(child)) {
                 result.add(clazz.cast(child));
             }
@@ -322,7 +325,8 @@ public interface Node extends Comparable<Node>
    
    default <T extends Node> List<T> descendantsOfType(Class<T> clazz) {
         List<T> result = new ArrayList<T>();
-        for (Node child : children()) {
+        for (int i=0; i< getChildCount(); i++) {
+            Node child = getChild(i);
             if (clazz.isInstance(child)) {
                 result.add(clazz.cast(child));
             } 
@@ -512,6 +516,10 @@ public interface Node extends Comparable<Node>
 		    }
 		}
 	    return result;
+    }
+
+    default List<Node> descendants() {
+        return descendants(Node.class, null);
     }
 
     default List<Node> descendants(Predicate<Node> predicate) {

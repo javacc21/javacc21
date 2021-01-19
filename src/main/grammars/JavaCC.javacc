@@ -1580,19 +1580,19 @@ INJECT ExpansionSequence :
    import java.util.*;
    extends Expansion;
 {
-   public List<Expansion> getUnits() {
+    public List<Expansion> getUnits() {
        return childrenOfType(Expansion.class);
-   }
+    }
 
-   public boolean isAlwaysSuccessful() {
+    public boolean isAlwaysSuccessful() {
        if (!super.isAlwaysSuccessful()) return false;
        for (Expansion unit : getUnits()) {
            if (!unit.isAlwaysSuccessful()) return false;
        }
        return true;
-   }
+    }
 
-   public TokenSet getFirstSet() {
+    public TokenSet getFirstSet() {
        if (firstSet == null) {
            firstSet = new TokenSet(getGrammar());
            for (Expansion child : getUnits()) {
@@ -1631,6 +1631,14 @@ INJECT ExpansionSequence :
        Lookahead la = getLookahead();
        return la != null && la.getRequiresScanAhead();
    }
+
+   private Lookahead lookahead;
+
+   public void setLookahead(Lookahead lookahead) {
+        this.lookahead = lookahead;
+   }
+
+   public Lookahead getLookahead() {return lookahead;}
 
    public boolean isPossiblyEmpty() {
         for (Expansion e : getUnits()) {
@@ -1813,7 +1821,6 @@ Lookahead ScanAhead #Lookahead :
     <RIGHT_ARROW>
     {
        CURRENT_NODE.setNestedExpansion(expansion);
-       expansion.setLookahead(CURRENT_NODE);
     }
 ]
 (
@@ -1938,7 +1945,7 @@ Lookahead LegacyLookahead #Lookahead :
            expansion = (Expansion) peekNode();
            empty = false; commaAtEnd = false;
            CURRENT_NODE.setNestedExpansion(expansion);
-           expansion.setLookahead(CURRENT_NODE);
+//           expansion.setLookahead(CURRENT_NODE);
         }
       ]
       [ 
@@ -1971,14 +1978,8 @@ INJECT Lookahead :
 
     private int amount=Integer.MAX_VALUE;
 
-    private boolean explicitNumerical;
-    
     private Expansion upToExpansion;
 
-    public boolean getHasExplicitNumericalAmount() {
-        return explicitNumerical;
-    }
-    
     public boolean isAlwaysSuccessful() {
         return !hasSemanticLookahead() && (getAmount() == 0 || getLookaheadExpansion().isPossiblyEmpty()); 
     }
@@ -2001,21 +2002,18 @@ INJECT Lookahead :
         return expansion;
     }
 
+    public boolean getHasExplicitNumericalAmount() {
+        return firstChildOfType(TokenType.INTEGER_LITERAL) != null;
+    }
 
     public int getAmount() {
-//        if (isSingleToken()) {
-//            amount = 1;
-//        }
-        return amount;
+        IntegerLiteral it = firstChildOfType(IntegerLiteral.class);
+        return it==null ? Integer.MAX_VALUE : it.getValue();
+//        return amount;
     }
 
     public void setAmount(int amount) {
-        this.amount = amount;
-        this.explicitNumerical = true;
-    }
-
-    public boolean getHasExplicitAmount() {
-        return amount != Integer.MAX_VALUE;
+        //this.amount = amount;
     }
 
     public TokenSet getFirstSet() {
@@ -2263,33 +2261,9 @@ INJECT ZeroOrOne :
      import com.javacc.parsegen.TokenSet;
      extends ExpansionWithParentheses 
 {
-    public Lookahead getLookahead() {
-        return getNestedExpansion().getLookahead();
-    }
-
-    public boolean isAlwaysSuccessful() {
-        Lookahead la = getLookahead();
-        return la == null ? getNestedExpansion().isPossiblyEmpty() : la.isAlwaysSuccessful();
-    }
-
-
-    public Expansion getLookaheadExpansion() {
-        Lookahead la = getLookahead();
-        return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
-    }
-/*
-    public boolean getRequiresScanAhead() {
-        return getNestedExpansion().getRequiresScanAhead();
-    }*/
-    
-    public boolean isPossiblyEmpty() {
-        return true;
-    }
-
-    public int getMinimumSize() {
-         return 0;
-    }
-     
+    public boolean isAlwaysSuccessful() {return true;}
+    public boolean isPossiblyEmpty() {return true;}
+    public int getMinimumSize() {return 0;}
     public boolean isConcrete() {return false;}
 }
 
@@ -2299,48 +2273,10 @@ INJECT ZeroOrMore :
      import com.javacc.parsegen.TokenSet;
      extends ExpansionWithParentheses 
 {
-     private String id;
-     public String getLabel() {
-         if (id == null) {
-             id = getGrammar().generateUniqueIdentifier("ZeroOrMore$", this);
-         }
-         return id;
-     }
- 
-    public Lookahead getLookahead() {
-        return getNestedExpansion().getLookahead();
-    }
-
-    public Expansion getLookaheadExpansion() {
-        Lookahead la = getLookahead();
-        return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
-    }
- 
-    public boolean getRequiresScanAhead() {
-        return getNestedExpansion().getRequiresScanAhead();
-    }
-
-    public boolean isPossiblyEmpty() {
-        return true;
-    }
-    
-    public TokenSet getFirstSet() {
-         if (firstSet == null) {
-            firstSet = getNestedExpansion().getFirstSet();
-//            firstSet = getNestedExpansion().getLookaheadExpansion().getFirstSet();
-         }
-         return firstSet;
-    }
-     
-     public int getMinimumSize() {
-         return 0;
-     }
-
-     public int getMaximumSize() {
-         return Integer.MAX_VALUE;
-     }
-     
-     public boolean isConcrete() {return false;}
+    public boolean isPossiblyEmpty() {return true;}
+    public int getMinimumSize() {return 0;}
+    public int getMaximumSize() {return Integer.MAX_VALUE;}
+    public boolean isConcrete() {return false;}
 }
 
 
@@ -2349,35 +2285,7 @@ INJECT OneOrMore :
      import com.javacc.parsegen.TokenSet;
      extends ExpansionWithParentheses 
 {
-     private String id;
-     public String getLabel() {
-         if (id == null) {
-             id = getGrammar().generateUniqueIdentifier("OneOrMore$", this);
-         }
-         return id;
-     }
-     
-    public Lookahead getLookahead() {
-        return getNestedExpansion().getLookahead();
-    }
-    
-    public Expansion getLookaheadExpansion() {
-        Lookahead la = getLookahead();
-        return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
-    }
-    
-    public boolean getRequiresScanAhead(){
-        Lookahead la = getLookahead();
-        if (la != null) {
-           return la.getRequiresScanAhead();
-        }
-        return getNestedExpansion().getRequiresScanAhead();
-    }
-     
-     public int getMaximumSize() {
-         return Integer.MAX_VALUE;
-     }
- 
+     public int getMaximumSize() {return Integer.MAX_VALUE;}
      public boolean isConcrete() {return false;}
 }
 

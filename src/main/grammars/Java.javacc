@@ -84,14 +84,6 @@ INJECT PARSER_CLASS : {
   }
 ;
 
-INJECT IntegerLiteral :
-{
-   public int getValue() {
-     return Integer.valueOf(getImage());
-   }
-}
-
-
 PackageDeclaration : (Annotation)* "package" =>|| Name ";" ;
 
 INJECT PackageDeclaration :
