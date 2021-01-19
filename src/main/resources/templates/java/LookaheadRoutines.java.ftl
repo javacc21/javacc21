@@ -317,7 +317,7 @@
 [/#macro]
 
 [#macro BuildProductionLookaheadMethod production]
-   private final boolean ${production.lookaheadMethodName}() {
+   private final boolean ${production.lookaheadMethodName}(boolean usePredicate) {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}
        [/#if]
@@ -326,8 +326,12 @@
      LexicalState startingLexicalState = token_source.lexicalState;
      try {
    [/#if]
-        ${BuildScanCode(production.expansion)}
-        return lastLookaheadSucceeded = true;
+      [#var lookahead = production.lookahead]
+      [#if !lookahead?is_null] 
+         if (usePredicate && !${production.expansion.predicateMethodName}()) return lastLookaheadSucceeded = false;
+      [/#if]
+      ${BuildScanCode(production.expansion)}
+      return lastLookaheadSucceeded = true;
    [#if MULTIPLE_LEXICAL_STATE_HANDLING]
      } finally {
         if (!lastLookaheadSucceeded) {
@@ -418,7 +422,7 @@
          stopAtScanLimit = false;
       [/#if]
       try {
-          if (!${nt.production.lookaheadMethodName}()) return lastLookaheadSucceeded = false;
+          if (!${nt.production.lookaheadMethodName}(stopAtScanLimit)) return lastLookaheadSucceeded = false;
       }
       finally {
           popLookaheadStack();

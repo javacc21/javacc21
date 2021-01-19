@@ -1082,6 +1082,10 @@ INJECT BNFProduction :
         return expansion.getHasExplicitLookahead();
     }
 
+    public Lookahead getLookahead() {
+        return expansion.getLookahead();
+    }
+
     public CodeBlock getJavaCode() {
        return firstChildOfType(CodeBlock.class);
     }
@@ -1635,7 +1639,17 @@ INJECT ExpansionSequence :
         this.lookahead = lookahead;
    }
 
-   public Lookahead getLookahead() {return lookahead;}
+   public Lookahead getLookahead() {
+       if (lookahead !=null) return lookahead;
+       for (Expansion unit : getUnits()) {
+           if (unit instanceof NonTerminal) {
+               NonTerminal nt = (NonTerminal) unit;
+               return nt.getNestedExpansion().getLookahead();
+           }
+           if (unit.getMaximumSize() >0) break;
+       }
+       return null;
+    }
 
    public boolean isPossiblyEmpty() {
         for (Expansion e : getUnits()) {
@@ -2111,9 +2125,9 @@ INJECT NonTerminal :
         return getProduction().getExpansion();
     }
 
-//    public Lookahead getLookahead() {
-//        return getNestedExpansion().getLookahead();
-//    }
+    public Lookahead getLookahead() {
+        return getNestedExpansion().getLookahead();
+    }
 
     public InvocationArguments getArgs() {
         return firstChildOfType(InvocationArguments.class);
@@ -2133,6 +2147,7 @@ INJECT NonTerminal :
     public boolean getIgnoreUpToHere() {
         if (isInsideLookahead()) return true;
         ExpansionSequence parent = (ExpansionSequence) getParent();
+        if (!parent.isAtChoicePoint()) return false;
         if (parent.getHasExplicitNumericalLookahead() || parent.getHasExplicitScanLimit()) return true;
         for (Expansion exp : parent.getUnits()) {
             if (exp == this) return false;
@@ -2140,9 +2155,12 @@ INJECT NonTerminal :
         }
         return true;
     }
-    
-    
-     public TokenSet getFirstSet() {
+
+    public boolean getUsePredicate() {
+        return getIgnoreUpToHere(); // Try this for now. REVISIT.
+    }
+
+    public TokenSet getFirstSet() {
         if (firstSet == null) {
             firstSet = getProduction().getExpansion().getFirstSet();
         }

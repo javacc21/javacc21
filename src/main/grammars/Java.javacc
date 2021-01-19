@@ -147,16 +147,16 @@ INJECT EnumDeclaration : extends TypeDeclaration;
 EmptyDeclaration# : ";" ;
 
 ClassDeclaration :
-// SCAN Modifiers "class" =>
-// (
+ SCAN Modifiers "class" =>
+ (
  Modifiers
-  "class" =>|| 
+  "class" // =>|| 
   <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList]
   [ ImplementsList ]
   ClassOrInterfaceBody
-// )
+ )
 ;
 
 InterfaceDeclaration :
