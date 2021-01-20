@@ -271,6 +271,17 @@ public interface Node extends Comparable<Node>
         return null; 
     }
 
+    default <T extends Node>T firstChildOfType(Class<T> clazz, Predicate<T> pred) {
+        for (int i=0; i<getChildCount();i++) {
+            Node child = getChild(i);
+            if (clazz.isInstance(child)) {
+                T t = clazz.cast(child);
+                if (pred.test(t)) return t;
+            }
+        }
+        return null;
+    }
+
 [#if !grammar.userDefinedLexer && grammar.tokensAreNodes]
     default Token firstDescendantOfType(${grammar.constantsClassName}.TokenType type) {
          for (int i=0; i<getChildCount(); i++) {

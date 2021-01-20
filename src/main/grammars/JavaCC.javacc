@@ -1050,6 +1050,9 @@ BNFProduction :
         {CURRENT_NODE.setRecoveryExpansion((Expansion)peekNode());} 
     ]
     ":"
+    [
+        => <IDENTIFIER> ":"
+    ]
     (
         // Older syntax
         => [=>Block] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
@@ -1072,6 +1075,12 @@ INJECT BNFProduction :
     import com.javacc.parsegen.Expansion;
 {
     @Property boolean implicitReturnType;
+
+    /**
+     * The lexical state that this production
+     * needs to be scanned in.
+     */ 
+    @Property String lexicalState;
 //    public void CLOSE_NODE_HOOK() {} //FIXME
 
     public boolean getHasScanLimit() {
@@ -1585,6 +1594,32 @@ INJECT ExpansionSequence :
        return childrenOfType(Expansion.class);
     }
 
+    /**
+     * @return a List that includes child expansions that are 
+     * inside of superfluous parentheses.
+     */
+    public List<Expansion> allUnits() {
+        List<Expansion> result = new ArrayList<>();
+        for (Expansion unit : getUnits()) {
+            if (unit.superfluousParentheses()) {
+                result.addAll(unit.firstChildOfType(ExpansionSequence.class).allUnits());
+            }
+            else result.add(unit);
+        }
+        return result;
+    }
+
+    public Expansion firstNonEmpty() {
+        for (Expansion unit : getUnits()) {
+            if (unit instanceof ExpansionWithParentheses && ((ExpansionWithParentheses)unit).superfluousParentheses()) {
+                unit = unit.firstChildOfType(ExpansionSequence.class).firstNonEmpty();
+                if (unit != null) return unit;
+            }
+            else if (!unit.isPossiblyEmpty()) return unit;
+        }
+        return null;
+    }
+
     public boolean isAlwaysSuccessful() {
        if (!super.isAlwaysSuccessful()) return false;
        for (Expansion unit : getUnits()) {
@@ -1689,22 +1724,25 @@ INJECT ExpansionSequence :
       return true;
    }
 
+   /**
+    * @return whether we have a scan limit, including an implicit one inside a nested NonTerminal
+    */
    public boolean getHasScanLimit() {
        boolean atStart = true;
-       for (Expansion unit : getUnits()) {
+       for (Expansion unit : allUnits()) {
            if (unit.isScanLimit()) return true;
            if (atStart && unit instanceof NonTerminal) {
                if (unit.getHasScanLimit()) return true;
-           }/*
-           else if (unit.getClass() == ExpansionWithParentheses.class) {
-               ExpansionSequence sub = unit.firstChildOfType(ExpansionSequence.class);
-               if (sub!= null && sub.getHasScanLimit()) return true;
-           }*/
+           }
            if (!unit.isPossiblyEmpty()) atStart = false;
        }
        return false;
    }
 
+   /**
+    * @return whether we have an <em>explicit</em> scan limit,
+    * i.e. <em>not including</em> one that is inside a NonTerminal expansion.
+    */
    public boolean getHasExplicitScanLimit() {
        for (Expansion unit : getUnits()) {
            if (unit.isScanLimit()) {
@@ -2142,22 +2180,15 @@ INJECT NonTerminal :
     }
     
     /**
-     * The basic logic of when we ignore an up-to-here marker
+     * The basic logic of when we scan to the end of 
+     * a NonTerminal, ignoring any nested lookahead or scan limits.
      */
-    public boolean getIgnoreUpToHere() {
+    public boolean getScanToEnd() {
         if (isInsideLookahead()) return true;
-        ExpansionSequence parent = (ExpansionSequence) getParent();
-        if (!parent.isAtChoicePoint()) return false;
+        ExpansionSequence parent = (ExpansionSequence) getNonSuperfluousParent();
+        if (!parent.isAtChoicePoint()) return true;
         if (parent.getHasExplicitNumericalLookahead() || parent.getHasExplicitScanLimit()) return true;
-        for (Expansion exp : parent.getUnits()) {
-            if (exp == this) return false;
-            if (!exp.isPossiblyEmpty()) break;
-        }
-        return true;
-    }
-
-    public boolean getUsePredicate() {
-        return getIgnoreUpToHere(); // Try this for now. REVISIT.
+        return parent.firstNonEmpty() != this;
     }
 
     public TokenSet getFirstSet() {

@@ -264,57 +264,6 @@
     }
 [/#macro]
 
-[#macro BuildLookBehindRoutine2 lookBehind]
-    private final boolean ${lookBehind.routineName}() {
-       Iterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
-       boolean foundProduction = false;
-       [#var justSawEllipsis = false]
-       [#list lookBehind.path as element]
-          [#var elementNegated = (element[0] == "~")]
-          [#if elementNegated][#set element = element[1..]][/#if]
-          [#if element == "..."]
-             [#set justSawEllipsis = true]
-          [#elseif element = "."]
-             [#set justSawEllipsis = false]
-             if (!stackIterator.hasNext()) {
-                return lastLookaheadSucceeded = ${CU.bool(lookBehind.negated)};
-             }
-             stackIterator.next();
-         [#else]
-             [#var exclam = elementNegated?string("!", "")]
-             [#if justSawEllipsis]
-               foundProduction = false;
-               while (stackIterator.hasNext() && !foundProduction) {
-                  NonTerminalCall ntc = stackIterator.next();
-                  if (${exclam}ntc.productionName.equals("${element}")) {
-                     foundProduction = true;
-                  }
-               }
-               if (!foundProduction) {
-                  return lastLookaheadSucceeded = ${CU.bool(lookBehind.negated)};
-               }
-           [#else]
-               [#var exclam = elementNegated?string("", "!")]
-               if (!stackIterator.hasNext()) {
-                  return lastLookaheadSucceeded = ${CU.bool(lookBehind.negated)};
-               } else {
-                  NonTerminalCall ntc = stackIterator.next();
-                  if (${exclam}ntc.productionName.equals("${element}")) {
-                     return lastLookaheadSucceeded = ${CU.bool(lookBehind.negated)};
-                  }
-               }
-           [/#if]
-           [#set justSawEllipsis = false] 
-         [/#if]
-       [/#list]
-       [#if lookBehind.hasEndingSlash]
-           return lastLookaheadSucceeded = [#if !lookBehind.negated]![/#if]stackIterator.hasNext();
-       [#else]
-           return lastLookaheadSucceeded = ${CU.bool(!lookBehind.negated)};
-[/#if]
-    }
-[/#macro]
-
 [#macro BuildProductionLookaheadMethod production]
    private final boolean ${production.lookaheadMethodName}(boolean usePredicate) {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
@@ -417,7 +366,7 @@
       [#var prevProductionVarName = "prevProduction" + CU.newID()]
       String ${prevProductionVarName} = currentLookaheadProduction;
       currentLookaheadProduction = "${nt.production.name}";
-      [#if nt.ignoreUpToHere]
+      [#if nt.scanToEnd]
          scanToEnd = true;
       [/#if]
       try {

@@ -128,12 +128,34 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean isAtChoicePoint() {
-        Node parent = getParent();
+        Node parent = getNonSuperfluousParent();
         return parent instanceof ExpansionChoice
             || parent instanceof OneOrMore
             || parent instanceof ZeroOrMore
             || parent instanceof ZeroOrOne
             || parent instanceof BNFProduction;
+    }
+
+    /**
+     * @return the first ancestor that is not (directly) inside
+     * superfluous parentheses. (Yes, this is a bit hairy.) 
+     */
+
+    public Node getNonSuperfluousParent() {
+        Node parent = getParent();
+        if (!(parent instanceof Expansion) || !((Expansion) parent).superfluousParentheses()) {
+            return parent;
+        }
+        ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
+        return grandparent.getNonSuperfluousParent();
+    }
+
+    /**
+     * Is this expansion superfluous parentheses?
+     */
+    public final boolean superfluousParentheses() {
+        return this.getClass() == ExpansionWithParentheses.class 
+               && firstChildOfType(ExpansionSequence.class) != null;
     }
 
 
