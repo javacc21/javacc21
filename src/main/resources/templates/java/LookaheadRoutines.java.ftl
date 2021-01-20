@@ -137,8 +137,7 @@
          currentLookaheadToken= lastConsumedToken;
          remainingLookahead= ${lookaheadAmount};
          hitFailure = false;
-         stopAtScanLimit= ${CU.bool(!expansion.hasExplicitNumericalLookahead 
-                                 && !expansion.hasSeparateSyntacticLookahead)};
+         scanToEnd = ${CU.bool(expansion.hasExplicitNumericalLookahead||expansion.hasSeparateSyntacticLookahead)};
       ${BuildPredicateCode(expansion)}
       [#if !expansion.hasSeparateSyntacticLookahead]
          ${BuildScanCode(expansion)}
@@ -401,7 +400,7 @@
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
           if (hitFailure) return lastLookaheadSucceeded = false;
-          if (stopAtScanLimit && lookaheadRoutineNesting <= 1) {
+          if (!scanToEnd && lookaheadRoutineNesting <= 1) {
              remainingLookahead = ${sub.scanLimitPlus};
           }
        [/#if]
@@ -419,10 +418,10 @@
       String ${prevProductionVarName} = currentLookaheadProduction;
       currentLookaheadProduction = "${nt.production.name}";
       [#if nt.ignoreUpToHere]
-         stopAtScanLimit = false;
+         scanToEnd = true;
       [/#if]
       try {
-          if (!${nt.production.lookaheadMethodName}(stopAtScanLimit)) return lastLookaheadSucceeded = false;
+          if (!${nt.production.lookaheadMethodName}(scanToEnd)) return lastLookaheadSucceeded = false;
       }
       finally {
           popLookaheadStack();

@@ -76,7 +76,7 @@ private String currentlyParsedProduction, currentLookaheadProduction;
 // private TokenType upToTokenType;
 // private EnumSet<TokenType> upToFirstSet;
 private int lookaheadRoutineNesting;
-private boolean stopAtScanLimit;
+private boolean scanToEnd;
 private boolean lastLookaheadSucceeded;
 
 //private Token nextToken; //REVISIT
