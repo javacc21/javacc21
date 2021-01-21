@@ -75,14 +75,12 @@
   // ${expansion.location}
   [/#if]
     [#var nodeVarName, 
-          parseExceptionVar = CU.newVarName("parseException"),
           production, 
           treeNodeBehavior, 
           buildTreeNode=false, 
           closeCondition = "true", 
-          callStackSizeVar = CU.newVarName("callStackSize"),
-          lexicalStateVarName = CU.newVarName("previousLexicalState"),
-          lexicalStateSpecified = !expansion.specifiedLexicalState?is_null
+          parseExceptionVar = CU.newVarName("parseException"),
+          callStackSizeVar = CU.newVarName("callStackSize")
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
@@ -102,23 +100,12 @@
          try {
             if (false) throw new ParseException("Never happens!");
     [/#if]
-        [#if lexicalStateSpecified]
-             LexicalState ${lexicalStateVarName} = token_source.lexicalState; 
-             if (${lexicalStateVarName} != LexicalState.${expansion.specifiedLexicalState}) {
-                token_source.reset(lastConsumedToken, LexicalState.${expansion.specifiedLexicalState});
-             }
-        [/#if]
         [@BuildExpansionCode expansion/]
-        [#if lexicalStateSpecified]
-            if (${lexicalStateVarName} != LexicalState.${expansion.specifiedLexicalState}) {
-               token_source.reset(lastConsumedToken, ${lexicalStateVarName});
-            }
-        [/#if]
     [#var returnType = (production.returnType)!"void"]
     [#if production?? && returnType == "void"]
         if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");
     [/#if]
-    [#if buildTreeNode || lexicalStateSpecified]
+    [#if buildTreeNode] 
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
@@ -189,6 +176,14 @@
 
 [#macro BuildExpansionCode expansion]
     [#var classname=expansion.simpleName]
+    [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
+    [#if expansion.specifiedLexicalState??]
+       LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
+       if (token_source.lexicalState != LexicalState.${expansion.specifiedLexicalState}) {
+          token_source.reset(lastConsumedToken, LexicalState.${expansion.specifiedLexicalState});
+-       } 
+       try {
+    [/#if]
     [#if classname = "ExpansionWithParentheses"]
        [@BuildExpansionCode expansion.nestedExpansion/]
     [#elseif classname = "CodeBlock"]
@@ -215,6 +210,14 @@
         [@BuildCodeChoice expansion/]
     [#elseif classname = "Assertion"]
         [@BuildAssertionCode expansion/]
+    [/#if]
+    [#if expansion.specifiedLexicalState??]
+       }
+       finally {
+           if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+           token_source.reset(lastConsumedToken, ${prevLexicalStateVar});
+        }
+      }
     [/#if]
 [/#macro]
 

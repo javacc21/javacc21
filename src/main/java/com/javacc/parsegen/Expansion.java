@@ -128,7 +128,8 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean isAtChoicePoint() {
-        Node parent = getNonSuperfluousParent();
+        //Node parent = getNonSuperfluousParent();
+        Node parent = getParent();
         return parent instanceof ExpansionChoice
             || parent instanceof OneOrMore
             || parent instanceof ZeroOrMore
@@ -216,17 +217,13 @@ abstract public class Expansion extends BaseNode {
     public boolean getHasImplicitSyntacticLookahead() {
         if (getHasSeparateSyntacticLookahead())
             return false;
-        if (!this.isAtChoicePoint())
-            return false;
+//        if (!this.isAtChoicePoint())
+//            return false;
         if (this.isAlwaysSuccessful())
             return false;
         if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <=1 )
             return false;
-        if (getRequiresScanAhead())
-            return true;
-        if (getHasScanLimit())
-            return true;
-        return false;
+        return getRequiresScanAhead() || getHasScanLimit();
     }
 
     private boolean scanLimit;

@@ -1527,11 +1527,10 @@ INJECT ExpansionChoice :
 ExpansionWithParentheses :
 {
     Token lparen = null;
-//    LexicalStateSwitch lss=null;
+    LexicalStateSwitch lss=null;
 }
-//   [lss=LexicalStateSwitch]
-
-   lparen ="(" ExpansionChoice ")"
+   [lss=LexicalStateSwitch]
+   lparen ="(" =>|| ExpansionChoice ")"
    [
        "*" {CURRENT_NODE = new ZeroOrMore();}
        |
@@ -1545,8 +1544,8 @@ ExpansionWithParentheses :
    ]
    [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
    {
-//       Node startNode = lss != null ? lss : lparen;
-       CURRENT_NODE.copyLocationInfo(lparen, lastConsumedToken);
+       Node startNode = lss != null ? lss : lparen;
+       CURRENT_NODE.copyLocationInfo(startNode, lastConsumedToken);
    }
 ;
 
@@ -1689,7 +1688,7 @@ INJECT ExpansionSequence :
 
    public Lookahead getLookahead() {
        if (lookahead !=null) return lookahead;
-       for (Expansion unit : getUnits()) {
+       for (Expansion unit : allUnits()) {
            if (unit instanceof NonTerminal) {
                NonTerminal nt = (NonTerminal) unit;
                return nt.getNestedExpansion().getLookahead();
@@ -1697,6 +1696,10 @@ INJECT ExpansionSequence :
            if (unit.getMaximumSize() >0) break;
        }
        return null;
+    }
+
+    public boolean getHasExplicitLookahead() {
+        return lookahead!=null;
     }
 
    public boolean isPossiblyEmpty() {
@@ -2254,7 +2257,8 @@ OneOrMore : "(" ExpansionChoice ")" "+";
 //This production just matches the square bracket syntax. 
 // The (...)? syntax is handled by ExpansionWithParentheses
 ZeroOrOne : 
-    "[" ExpansionChoice "]"
+    [LexicalStateSwitch]
+    "[" =>|| ExpansionChoice "]"
      [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
 ;
 

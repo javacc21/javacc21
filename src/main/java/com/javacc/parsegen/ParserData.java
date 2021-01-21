@@ -97,18 +97,10 @@ public class ParserData {
          * of any real value.
          */
         for (ExpansionSequence sequence : grammar.descendants(ExpansionSequence.class)) {
-            Node parent = sequence.getParent();
             if (sequence.getHasExplicitLookahead() 
                && !sequence.isAtChoicePoint())
-/*               !(
-                   parent instanceof BNFProduction ||
-                   parent instanceof ExpansionChoice ||
-                   parent instanceof OneOrMore ||
-                   parent instanceof ZeroOrMore ||
-                   parent instanceof ZeroOrOne ||
-                   parent instanceof Lookahead)) */
             {
-                grammar.addSemanticError(sequence, "Encountered LOOKAHEAD(...) at a non-choice location." );
+                grammar.addSemanticError(sequence, "Encountered scanahead at a non-choice location." );
             }
         }
 /* REVISIT this later.*/

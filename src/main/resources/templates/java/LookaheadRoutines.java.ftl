@@ -273,22 +273,8 @@
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}
        [/#if]
-   [#if MULTIPLE_LEXICAL_STATE_HANDLING]
-     Token startingToken = currentLookaheadToken;
-     LexicalState startingLexicalState = token_source.lexicalState;
-     try {
-   [/#if]
       ${BuildScanCode(production.expansion)}
       return lastLookaheadSucceeded = true;
-   [#if MULTIPLE_LEXICAL_STATE_HANDLING]
-     } finally {
-        if (!lastLookaheadSucceeded) {
-          if (startingToken.hasCachedLexicalStateChange()) {
-             token_source.reset(startingToken, startingLexicalState);
-          }
-        }
-     }
-     [/#if]
    }
 [/#macro]
 
@@ -341,6 +327,7 @@
       [/#if]
   [/#if]
   [#if expansion.specifiedLexicalState??]
+  // KILROY MOTHERFUCKER
      }
      finally {
         if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
@@ -382,9 +369,7 @@
       [#var prevProductionVarName = "prevProduction" + CU.newID()]
       String ${prevProductionVarName} = currentLookaheadProduction;
       currentLookaheadProduction = "${nt.production.name}";
-      [#if nt.scanToEnd]
-         scanToEnd = true;
-      [/#if]
+      scanToEnd = ${CU.bool(nt.scanToEnd)};
       try {
           if (!${nt.production.lookaheadMethodName}()) return lastLookaheadSucceeded = false;
       }

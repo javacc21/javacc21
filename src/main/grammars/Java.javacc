@@ -72,6 +72,7 @@ INJECT PARSER_CLASS : {
 }
 
 #CompilationUnit# :
+  LEXICAL_STATE JAVA
   [ PackageDeclaration ]
   ( ImportDeclaration )*
   (
@@ -743,10 +744,9 @@ CodeBlock Block #CodeBlock :
    }
 ;
 
-BlockStatement : JAVA :
+BlockStatement :
   LocalVariableDeclaration ";"
   |
-//  LEXICAL_STATE JAVA
   ClassDeclaration
   |
   InterfaceDeclaration
