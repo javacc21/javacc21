@@ -1526,9 +1526,12 @@ INJECT ExpansionChoice :
 
 ExpansionWithParentheses :
 {
-    Token start;
+    Token lparen = null;
+//    LexicalStateSwitch lss=null;
 }
-   start="(" ExpansionChoice ")"
+//   [lss=LexicalStateSwitch]
+
+   lparen ="(" ExpansionChoice ")"
    [
        "*" {CURRENT_NODE = new ZeroOrMore();}
        |
@@ -1542,9 +1545,11 @@ ExpansionWithParentheses :
    ]
    [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
    {
-       CURRENT_NODE.copyLocationInfo(start, lastConsumedToken);
+//       Node startNode = lss != null ? lss : lparen;
+       CURRENT_NODE.copyLocationInfo(lparen, lastConsumedToken);
    }
 ;
+
 
 INJECT ExpansionWithParentheses : 
    import com.javacc.parsegen.TokenSet;
@@ -1558,8 +1563,14 @@ INJECT ExpansionWithParentheses :
     public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
     public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
 
+
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
+    }
+
+    public String getSpecifiedLexicalState() {
+        LexicalStateSwitch lss = firstChildOfType(LexicalStateSwitch.class);
+        return lss == null ? super.getSpecifiedLexicalState() : lss.getLexicalStateName();
     }
 }
 
@@ -2067,8 +2078,6 @@ Expansion ExpansionUnit :
   SCAN 1 ~\...\Lookahead =>
   result = Assertion
   |
-  LexicalStateSwitch {result = (Expansion) peekNode();}
-  |
   result = ExpansionWithParentheses 
   |
   result = ZeroOrOne 
@@ -2319,9 +2328,9 @@ INJECT AttemptBlock :
         return expansions.size() > 2 ? expansions.get(2) : null;
    }
    
-   public CodeBlock getRecoveryCode() {
+    public CodeBlock getRecoveryCode() {
         return firstChildOfType(CodeBlock.class); 
-   }
+    }
    
    
     public boolean isPossiblyEmpty() {
@@ -2397,29 +2406,13 @@ INJECT Failure :
     public boolean isAlwaysSuccessful() {return false;}
 }
 
-LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER>;
+LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER> ;
 
-INJECT LexicalStateSwitch : 
-   import com.javacc.parsegen.TokenSet;
-   extends com.javacc.parsegen.Expansion
-{
-    public boolean isConcrete() {return true;}
-    
-    public int getMaximumSize() {return 0;}
-
-    public int getMinimumSize() {return 0;}
-
-    public boolean isPossiblyEmpty() {return true;}
-    
-    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
-
-    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-
-    public String getLexicalStateName() {return firstChildOfType(Identifier.class).getNormalizedText();}
-
-    public boolean isAlwaysSuccessful() {return true;}
+INJECT LexicalStateSwitch : {
+   public String getLexicalStateName() {
+       return firstChildOfType(Identifier.class).getImage();
+   }
 }
-
 
 TryBlock : 
     "try" "{" ExpansionChoice "}"

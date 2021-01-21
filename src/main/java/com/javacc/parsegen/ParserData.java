@@ -99,21 +99,38 @@ public class ParserData {
         for (ExpansionSequence sequence : grammar.descendants(ExpansionSequence.class)) {
             Node parent = sequence.getParent();
             if (sequence.getHasExplicitLookahead() 
-               && !(
+               && !sequence.isAtChoicePoint())
+/*               !(
                    parent instanceof BNFProduction ||
                    parent instanceof ExpansionChoice ||
                    parent instanceof OneOrMore ||
                    parent instanceof ZeroOrMore ||
                    parent instanceof ZeroOrOne ||
-                   parent instanceof Lookahead)) 
+                   parent instanceof Lookahead)) */
             {
                 grammar.addSemanticError(sequence, "Encountered LOOKAHEAD(...) at a non-choice location." );
             }
         }
 /* REVISIT this later.*/
-        for (Node exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {
+        for (Expansion exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {
             if (!((Expansion) exp.getParent()).isAtChoicePoint()) {
                 grammar.addSemanticError(exp, "The up-to-here delimiter can only be at a choice point.");
+            }
+        }
+
+        for (BNFProduction prod : grammar.descendants(BNFProduction.class)) {
+            String lexicalStateName = prod.getLexicalState();
+            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
+                grammar.addSemanticError(prod, "Lexical state \""
+                + lexicalStateName + "\" has not been defined.");
+            }
+        }
+
+        for (Expansion exp : grammar.descendants(Expansion.class)) {
+            String lexicalStateName = exp.getSpecifiedLexicalState();
+            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
+                grammar.addSemanticError(exp, "Lexical state \""
+                + lexicalStateName + "\" has not been defined.");
             }
         }
 

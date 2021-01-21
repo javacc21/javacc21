@@ -743,9 +743,10 @@ CodeBlock Block #CodeBlock :
    }
 ;
 
-BlockStatement // : JAVA :
+BlockStatement : JAVA :
   LocalVariableDeclaration ";"
   |
+//  LEXICAL_STATE JAVA
   ClassDeclaration
   |
   InterfaceDeclaration

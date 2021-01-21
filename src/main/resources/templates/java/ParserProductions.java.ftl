@@ -193,8 +193,6 @@
        [@BuildExpansionCode expansion.nestedExpansion/]
     [#elseif classname = "CodeBlock"]
        ${expansion}
-    [#elseif classname="LexicalStateSwitch"] 
-       [@BuildCodeLexicalStateSwitch expansion /]
     [#elseif classname = "Failure"]
        [@BuildCodeFailure expansion/]
     [#elseif classname = "ExpansionSequence"]
@@ -218,10 +216,6 @@
     [#elseif classname = "Assertion"]
         [@BuildAssertionCode expansion/]
     [/#if]
-[/#macro]
-
-[#macro BuildCodeLexicalStateSwitch switch]
-    token_source.switchTo(LexicalState.${switch.lexicalStateName});
 [/#macro]
 
 [#macro BuildCodeFailure fail]
