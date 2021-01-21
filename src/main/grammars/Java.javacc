@@ -34,6 +34,7 @@ NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
+//JDK_TARGET=15;
 
 INCLUDE("JavaLexer.javacc")
 
@@ -41,7 +42,6 @@ INJECT PARSER_CLASS : {
 
   private Token TOKEN_HOOK(Token tok) {
     TokenType type = tok.getType();
-    if (type != GT && type != RUNSIGNEDSHIFT && type != RSIGNEDSHIFT) return tok;
     if (type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) {
       if (isInProduction("TypeArguments", "TypeParameters")) {
         // If we've entered the TypeParameters or TypeArguments production, we need to split

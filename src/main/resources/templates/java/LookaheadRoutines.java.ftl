@@ -179,13 +179,17 @@
      [/#if]
      [#if expansion.hasLookBehind]
        if ([#if !expansion.lookBehind.negated]![/#if]
-       ${expansion.lookBehind.routineName}()) return lastLookaheadSucceeded = false;
+       ${expansion.lookBehind.routineName}()) return false;
      [/#if]
      [#if expansion.hasSeparateSyntacticLookahead]
       if (
       [#if !expansion.lookahead.negated]![/#if]
         ${expansion.lookaheadExpansion.scanRoutineName}())
+        [#if expansion.lookahead.negated]
+        return !(lastLookaheadSucceeded = true);
+        [#else]
         return lastLookaheadSucceeded = false;
+        [/#if]
       [/#if]
 [/#macro]
 
@@ -265,7 +269,7 @@
 [/#macro]
 
 [#macro BuildProductionLookaheadMethod production]
-   private final boolean ${production.lookaheadMethodName}(boolean usePredicate) {
+   private final boolean ${production.lookaheadMethodName}() {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}
        [/#if]
@@ -274,10 +278,6 @@
      LexicalState startingLexicalState = token_source.lexicalState;
      try {
    [/#if]
-      [#var lookahead = production.lookahead]
-      [#if !lookahead?is_null] 
-         if (usePredicate && !${production.expansion.predicateMethodName}()) return lastLookaheadSucceeded = false;
-      [/#if]
       ${BuildScanCode(production.expansion)}
       return lastLookaheadSucceeded = true;
    [#if MULTIPLE_LEXICAL_STATE_HANDLING]
@@ -370,7 +370,7 @@
          scanToEnd = true;
       [/#if]
       try {
-          if (!${nt.production.lookaheadMethodName}(scanToEnd)) return lastLookaheadSucceeded = false;
+          if (!${nt.production.lookaheadMethodName}()) return lastLookaheadSucceeded = false;
       }
       finally {
           popLookaheadStack();

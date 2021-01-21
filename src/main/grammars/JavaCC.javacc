@@ -1751,17 +1751,6 @@ INJECT ExpansionSequence :
        }
        return false;
    }
-
-   public boolean getHasInnerScanLimit() {
-        for (Expansion unit : childrenOfType(Expansion.class)) {
-            if (unit instanceof NonTerminal) {
-                unit.getHasScanLimit();
-            }
-            if (!unit.isPossiblyEmpty())
-                break;
-        }
-        return false;
-    }
 }
 
 Lookahead Lookahead #void :
@@ -2430,7 +2419,7 @@ INJECT LexicalStateSwitch :
 }
 
 
-TryBlock TryBlock : 
+TryBlock : 
     "try" "{" ExpansionChoice "}"
     (
         CatchBlock
@@ -2438,9 +2427,6 @@ TryBlock TryBlock :
     [
         FinallyBlock
     ]
-    {
-       return CURRENT_NODE;
-    }
 ;
 
 INJECT TryBlock  : 
