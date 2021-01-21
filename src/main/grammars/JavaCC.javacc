@@ -1051,7 +1051,9 @@ BNFProduction :
     ]
     ":"
     [
-        => <IDENTIFIER> ":"
+        SCAN 2 => <IDENTIFIER> 
+        {CURRENT_NODE.setLexicalState(lastConsumedToken.getImage());}
+        ":"
     ]
     (
         // Older syntax

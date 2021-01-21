@@ -138,7 +138,7 @@ abstract public class Expansion extends BaseNode {
 
     /**
      * @return the first ancestor that is not (directly) inside
-     * superfluous parentheses. (Yes, this is a bit hairy.) 
+     * superfluous parentheses. (Yes, this is a bit hairy and I'm not 100% sure it's correct!) 
      */
 
     public Node getNonSuperfluousParent() {
@@ -149,6 +149,19 @@ abstract public class Expansion extends BaseNode {
         ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
         return grandparent.getNonSuperfluousParent();
     }
+
+    /**
+     * @return the lexical state to switch into to parse this expansion.
+     * At the moment this can only be specified at the production level.
+     */
+    public String getSpecifiedLexicalState() {
+        Node parent = getParent();
+        if (parent instanceof BNFProduction) {
+            return ((BNFProduction) parent).getLexicalState();
+        }
+        return null;
+    }
+
 
     /**
      * Is this expansion superfluous parentheses?

@@ -303,6 +303,14 @@
   // Lookahead Code for ${classname} specified on line ${expansion.beginLine} of ${expansion.inputSource}
       if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
   [/#if]
+  [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
+  [#if expansion.specifiedLexicalState??]
+     LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
+     try {
+        if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+           token_source.reset(currentLookaheadToken, LexicalState.${expansion.specifiedLexicalState});
+        }
+  [/#if]
   [#if classname = "ExpansionWithParentheses"]
      [@BuildScanCode expansion.nestedExpansion /]
   [#elseif expansion.singleToken]
@@ -331,6 +339,14 @@
       [#if expansion.appliesInLookahead]
       ${expansion}
       [/#if]
+  [/#if]
+  [#if expansion.specifiedLexicalState??]
+     }
+     finally {
+        if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+           token_source.reset(currentLookaheadToken, ${prevLexicalStateVar});
+        }
+     }
   [/#if]
 [/#macro]
 

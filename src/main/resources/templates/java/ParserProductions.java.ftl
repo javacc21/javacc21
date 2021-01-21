@@ -54,7 +54,7 @@
     [@CU.firstSetVar production.expansion/]
     ${production.leadingComments}
 // ${production.location}
-    final ${production.accessMod!"public"} 
+    final ${production.accessModifier}
     ${production.returnType}
     ${production.name}(${production.parameterList!}) 
     throws ParseException
@@ -63,7 +63,8 @@
      if (cancelled) throw new CancellationException();
      String prevProduction = currentlyParsedProduction;
      this.currentlyParsedProduction = "${production.name}";
-   [@BuildCode production.expansion /]
+     ${production.javaCode!}
+     [@BuildCode production.expansion /]
     }   
 [/#macro]
 
@@ -73,7 +74,16 @@
   // Code for ${expansion.simpleName} specified at:
   // ${expansion.location}
   [/#if]
-    [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, closeCondition = "true", callStackSizeVar]
+    [#var nodeVarName, 
+          parseExceptionVar = CU.newVarName("parseException"),
+          production, 
+          treeNodeBehavior, 
+          buildTreeNode=false, 
+          closeCondition = "true", 
+          callStackSizeVar = CU.newVarName("callStackSize"),
+          lexicalStateVarName = CU.newVarName("previousLexicalState"),
+          lexicalStateSpecified = !expansion.specifiedLexicalState?is_null
+    ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
@@ -83,28 +93,32 @@
                         || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
     [#if buildTreeNode]
-        [@setupTreeVariables .scope /]
+      [@setupTreeVariables .scope /]
       [@createNode treeNodeBehavior nodeVarName /]
           ParseException ${parseExceptionVar} = null;
-          [#--set callStackSizeVar = "callStackSize" + CU.newID()--]
-          [#set callStackSizeVar = CU.newVarName("callStackSize")]
           int ${callStackSizeVar} = parsingStack.size();
-        [#-- We want the very first java code block in a production 
-         to be injected *before* the try block. This is for rather hypertechnical 
-         reasons. It's that we want any variables defined up top in a production 
-         to be visible within the following catch/finally blocks.--]
-        ${(production.javaCode)!}
+    [/#if]
+    [#if buildTreeNode]
          try {
             if (false) throw new ParseException("Never happens!");
-    [#else]
-        ${(production.javaCode)!}
     [/#if]
+        [#if lexicalStateSpecified]
+             LexicalState ${lexicalStateVarName} = token_source.lexicalState; 
+             if (${lexicalStateVarName} != LexicalState.${expansion.specifiedLexicalState}) {
+                token_source.reset(lastConsumedToken, LexicalState.${expansion.specifiedLexicalState});
+             }
+        [/#if]
         [@BuildExpansionCode expansion/]
+        [#if lexicalStateSpecified]
+            if (${lexicalStateVarName} != LexicalState.${expansion.specifiedLexicalState}) {
+               token_source.reset(lastConsumedToken, ${lexicalStateVarName});
+            }
+        [/#if]
     [#var returnType = (production.returnType)!"void"]
     [#if production?? && returnType == "void"]
         if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");
     [/#if]
-    [#if buildTreeNode]
+    [#if buildTreeNode || lexicalStateSpecified]
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
@@ -136,7 +150,6 @@
     [#set nodeNumbering = nodeNumbering +1]
     [#set nodeVarName = currentProduction.name + nodeNumbering in callingScope]
     ${grammar.utils.pushNodeVariableName(callingScope.nodeVarName)!}
-    [#set parseExceptionVar = "parseException"+nodeNumbering in callingScope]
     [#if !callingScope.treeNodeBehavior??]
         [#if grammar.smartNodeCreation]
            [#set treeNodeBehavior = {"name" : callingScope.production.name, "condition" : "1", "gtNode" : true, "void" :false} in callingScope]
@@ -161,9 +174,8 @@
   [#if grammar.nodeUsesParser]
      ${nodeVarName}.setParser(this);
   [/#if]
-   
-      ${nodeVarName}.setInputSource(getInputSource());
-       openNodeScope(${nodeVarName});
+   ${nodeVarName}.setInputSource(getInputSource());
+   openNodeScope(${nodeVarName});
   }
 [/#macro]
 

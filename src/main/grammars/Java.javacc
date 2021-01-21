@@ -743,7 +743,7 @@ CodeBlock Block #CodeBlock :
    }
 ;
 
-BlockStatement :
+BlockStatement // : JAVA :
   LocalVariableDeclaration ";"
   |
   ClassDeclaration
