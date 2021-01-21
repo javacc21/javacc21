@@ -327,7 +327,6 @@
       [/#if]
   [/#if]
   [#if expansion.specifiedLexicalState??]
-  // KILROY MOTHERFUCKER
      }
      finally {
         if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {

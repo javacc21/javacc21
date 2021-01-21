@@ -181,7 +181,7 @@
        LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
        if (token_source.lexicalState != LexicalState.${expansion.specifiedLexicalState}) {
           token_source.reset(lastConsumedToken, LexicalState.${expansion.specifiedLexicalState});
--       } 
+       } 
        try {
     [/#if]
     [#if classname = "ExpansionWithParentheses"]
