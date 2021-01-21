@@ -72,7 +72,6 @@ INJECT PARSER_CLASS : {
 }
 
 #CompilationUnit# :
-  LEXICAL_STATE JAVA
   [ PackageDeclaration ]
   ( ImportDeclaration )*
   (
