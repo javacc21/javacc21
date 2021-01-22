@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
+import java.lang.ref.WeakReference;
 
 
 /**
@@ -51,22 +52,14 @@ public class FileLineMap {
 
     private static final int[] EMPTY_INT = new int[0];
 
-    static private Map<String, FileLineMap> mapsByName = new HashMap<>();
+    static private Map<String, WeakReference<FileLineMap>> mapsByName = new HashMap<>();
 
     /**
      * Get a FileLineMap by name
      */
     static public FileLineMap getFileLineMapByName(String name) {
-        return mapsByName.get(name);
-    }
-
-    /**
-     * This class maintains a lookup table of all the FileLineMap objects by name.
-     * A long-running process that reads in and parses a lot of different files 
-     * might choose to clear that map to make this data subject to garbage collection.
-     */
-    static public void clearFileLineMaps() {
-        mapsByName.clear();
+        WeakReference<FileLineMap> reference = mapsByName.get(name);
+        return reference == null ? null : reference.get();
     }
 
     // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
@@ -97,11 +90,10 @@ public class FileLineMap {
     }
 
     public FileLineMap(String inputSource, CharSequence content, int startingLine, int startingColumn) {
-        this.inputSource = inputSource;
+        setInputSource(inputSource);
         this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE});
         this.lineOffsets = createLineOffsetsTable(this.content);
         this.setStartPosition(startingLine, startingColumn);
-        mapsByName.put(inputSource, this);
    }
     
    
@@ -328,7 +320,7 @@ public class FileLineMap {
     }
     
     void setInputSource(String inputSource) {
-        mapsByName.put(inputSource, this);
+        mapsByName.put(inputSource, new WeakReference(this));
         this.inputSource = inputSource;
     }
     

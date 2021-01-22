@@ -220,10 +220,28 @@ public interface Node extends Comparable<Node>
     }
     
 [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
+     /**
+      * @return the FileLineMap from which this Node object
+      * originated. This could return null, either because
+      * the FileLineMap was GC'ed (a clear sign that this Node is <em>stale</em>).
+      * Or it could return null simply if you constructed the Node (and/or its sub-nodes)
+      * yourself, i.e. it didn't really come about via the parsing/tokenizing
+      * machinery.
+      */
      default FileLineMap getFileLineMap() {
          return FileLineMap.getFileLineMapByName(getInputSource());
      }
 
+     /**
+      * @return the original source content this Node came from
+      * a reference to the #FileLineMap that stores the source code and
+      * the start/end location info stored in the Node object itself.
+      * This method could throw a NullPointerException if #getFileLineMap
+      * returns null. Also, the return value could be spurious if 
+      * the content of the source file was changed meanwhile. But
+      * this is just the default implementation of an API and it does not 
+      * address this problem!
+      */
      default String getSource() {
         return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
     }
