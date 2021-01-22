@@ -71,10 +71,9 @@ Token lastConsumedToken = new Token(); // We start with a dummy token. REVISIT
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
-private boolean hitFailure;
+private boolean scanToEnd, hitFailure, lastLookaheadSucceeded;
 private String currentlyParsedProduction, currentLookaheadProduction;
 private int lookaheadRoutineNesting;
-private boolean scanToEnd;
 
 [#--
  REVISIT these.
