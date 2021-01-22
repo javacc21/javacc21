@@ -1,4 +1,4 @@
-[#ftl strict_vars=true]
+#ftl strict_vars=true]
 [#--
 /* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
@@ -78,23 +78,23 @@
 
 [#macro BuildLookaheads]
   private final boolean scanToken(TokenType expectedType) {
-     if (hitFailure) return lastLookaheadSucceeded = false;
+     if (hitFailure) return false;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
-     if (type != expectedType) return lastLookaheadSucceeded = false;
+     if (type != expectedType) return false;
      if (remainingLookahead != UNLIMITED) remainingLookahead--;
 //     if (type == upToTokenType) remainingLookahead = 0;
-     return lastLookaheadSucceeded = true;
+     return true;
   }
 
   private final boolean scanToken(EnumSet<TokenType> types) {
-     if (hitFailure) return lastLookaheadSucceeded = false;
+     if (hitFailure) return false;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
-     if (!types.contains(type)) return lastLookaheadSucceeded = false;
+     if (!types.contains(type)) return false;
      if (remainingLookahead != UNLIMITED) remainingLookahead--;
 //     if (type == upToTokenType) remainingLookahead = 0;
-     return lastLookaheadSucceeded = true;
+     return true;
   }
 
 //====================================
@@ -142,7 +142,7 @@
       [#if !expansion.hasSeparateSyntacticLookahead]
          ${BuildScanCode(expansion)}
       [/#if]
-      return lastLookaheadSucceeded = true;
+      return true;
       }
       finally {
         lookaheadRoutineNesting--;
@@ -159,11 +159,11 @@
     try {
        lookaheadRoutineNesting++;
    [#if !expansion.insideLookahead]
-     if (hitFailure) return lastLookaheadSucceeded = false;
+     if (hitFailure) return false;
      ${BuildPredicateCode(expansion)}
    [/#if]
      ${BuildScanCode(expansion)}
-      return lastLookaheadSucceeded = true;
+      return true;
     }
     finally {
        lookaheadRoutineNesting--;
@@ -175,7 +175,7 @@
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 [#macro BuildPredicateCode expansion]
      [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
-       if (!(${expansion.semanticLookahead})) return lastLookaheadSucceeded = false;
+       if (!(${expansion.semanticLookahead})) return false;
      [/#if]
      [#if expansion.hasLookBehind]
        if ([#if !expansion.lookBehind.negated]![/#if]
@@ -186,9 +186,9 @@
       [#if !expansion.lookahead.negated]![/#if]
         ${expansion.lookaheadExpansion.scanRoutineName}())
         [#if expansion.lookahead.negated]
-        return !(lastLookaheadSucceeded = true);
+        return false;
         [#else]
-        return lastLookaheadSucceeded = false;
+        return false;
         [/#if]
       [/#if]
 [/#macro]
@@ -209,7 +209,7 @@
         try {
           lookaheadRoutineNesting++;
           [@BuildScanCode lookahead.nestedExpansion/]
-          return lastLookaheadSucceeded = !hitFailure;
+          return !hitFailure;
         }
         finally {
            lookaheadRoutineNesting--;
@@ -229,15 +229,15 @@
           [#if elementNegated][#set element = element?substring(1)][/#if]
           [#if element = "."]
               if (!stackIterator.hasNext()) {
-                 return lastLookaheadSucceeded = false;
+                 return false;
               }
               stackIterator.next();
           [#elseif element = "..."]
              [#if element_index = lookBehind.path?size-1]
                  [#if lookBehind.hasEndingSlash]
-                      return lastLookaheadSucceeded = stackIterator.hasNext();
+                      return !stackIterator.hasNext();
                  [#else]
-                      return lastLookaheadSucceeded = true;
+                      return true;
                  [/#if]
              [#else]
                  [#var nextElement = lookBehind.path[element_index+1]]
@@ -250,20 +250,20 @@
                        stackIterator.previous();
                        break;
                     }
-                    if (!stackIterator.hasNext()) return lastLookaheadSucceeded = false;
+                    if (!stackIterator.hasNext()) return false;
                  }
              [/#if]
           [#else]
-             if (!stackIterator.hasNext()) return lastLookaheadSucceeded = false;
+             if (!stackIterator.hasNext()) return false;
              NonTerminalCall ntc = stackIterator.next();
              [#var equalityOp = elementNegated?string("==", "!=")]
-               if (ntc.productionName ${equalityOp} "${element}") return lastLookaheadSucceeded = false;
+               if (ntc.productionName ${equalityOp} "${element}") return false;
           [/#if]
        [/#list]
        [#if lookBehind.hasEndingSlash]
-           return lastLookaheadSucceeded = !stackIterator.hasNext();
+           return !stackIterator.hasNext();
        [#else]
-           return lastLookaheadSucceeded = true;
+           return true;
        [/#if]
     }
 [/#macro]
@@ -274,7 +274,7 @@
           ${production.javaCode}
        [/#if]
       ${BuildScanCode(production.expansion)}
-      return lastLookaheadSucceeded = true;
+      return true;
    }
 [/#macro]
 
@@ -287,7 +287,7 @@
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
   // Lookahead Code for ${classname} specified on line ${expansion.beginLine} of ${expansion.inputSource}
-      if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
+      if (remainingLookahead <=0) return true;
   [/#if]
   [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
   [#if expansion.specifiedLexicalState??]
@@ -350,7 +350,7 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
-          if (hitFailure) return lastLookaheadSucceeded = false;
+          if (hitFailure) return false;
           if (!scanToEnd && lookaheadRoutineNesting <= 1) {
              remainingLookahead = ${sub.scanLimitPlus};
           }
@@ -370,7 +370,7 @@
       currentLookaheadProduction = "${nt.production.name}";
       scanToEnd = ${CU.bool(nt.scanToEnd)};
       try {
-          if (!${nt.production.lookaheadMethodName}()) return lastLookaheadSucceeded = false;
+          if (!${nt.production.lookaheadMethodName}()) return false;
       }
       finally {
           popLookaheadStack();
@@ -381,9 +381,9 @@
 [#macro ScanSingleToken expansion]
     [#var firstSet = expansion.firstSet.tokenNames]
     [#if firstSet?size = 1]
-      if (!scanToken(${CU.TT}${firstSet[0]})) return lastLookaheadSucceeded = false;
+      if (!scanToken(${CU.TT}${firstSet[0]})) return false;
     [#else]
-      if (!scanToken(${expansion.firstSetVarName})) return lastLookaheadSucceeded = false;
+      if (!scanToken(${expansion.firstSetVarName})) return false;
     [/#if]
 [/#macro]    
 
@@ -410,7 +410,7 @@
         remainingLookahead = remainingLookahead${CU.newVarIndex};
         hitFailure = hitFailure${CU.newVarIndex};
      [#else]
-        return lastLookaheadSucceeded = false;
+        return false;
      [/#if]
   [/#list]
   [#list 1..choice.choices?size as unused] } [/#list]
@@ -442,7 +442,7 @@
 --]
 [#macro ScanCodeOneOrMore oom]
    if (!${CheckExpansion(oom.nestedExpansion)}) {
-      return lastLookaheadSucceeded = false;
+      return false;
    }
    [@ScanCodeZeroOrMore oom /]
 [/#macro]

@@ -531,10 +531,9 @@ PreDecrementExpression :
 UnaryExpressionNotPlusMinus :
   ( "~" | "!" ) UnaryExpression
   |
-  SCAN ~\...\NewSwitchLabel LambdaLHS
-  => LambdaExpression 
+  LambdaExpression 
   |
-  => CastExpression
+  CastExpression
   |
   PostfixExpression
   |
@@ -550,11 +549,14 @@ SwitchExpression# :
 ;
 
 CastExpression : 
+ (
   "(" PrimitiveType ")" =>|| UnaryExpression
   |
   => "(" ReferenceType ")" UnaryExpressionNotPlusMinus
   |
   => "(" ObjectType ("&" ObjectType)+ ")" UnaryExpressionNotPlusMinus 
+ )
+ =>||
 ;
 
 PrimaryExpression# :
@@ -1053,7 +1055,10 @@ AnnotationTypeMemberDeclaration :
 
 DefaultValue : "default" MemberValue ;
 
-LambdaExpression : LambdaLHS =>|| (Expression | Block) ;
+LambdaExpression : 
+  SCAN ~\...\NewSwitchLabel =>
+  LambdaLHS =>|| (Expression | Block) 
+;
 
 LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | FormalParameters) "->" =>|| ;
 

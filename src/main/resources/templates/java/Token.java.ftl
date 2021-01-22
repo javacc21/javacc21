@@ -121,45 +121,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        this.image = image;
    } 
     
-[#if !grammar.userDefinedLexer && grammar.lexerData.numLexicalStates > 1]
-    private LexicalState lexicalState, followingLexicalState;
-        
-    void setLexicalState(LexicalState state) {
-        this.lexicalState = state;
-    }
-    
-    /**
-     * The lexical state in which this Token was created
-     */ 
-    LexicalState getLexicalState() {
-        return lexicalState;
-    }
-
-    /**
-     * The lexical state that should immediately follow 
-     * this token.
-     */
-    LexicalState getFollowingLexicalState() {
-        return followingLexicalState == null ? lexicalState : followingLexicalState;
-    }
-
-    void setFollowingLexicalState(LexicalState state) {
-        this.followingLexicalState = state;
-    }
-
-    boolean hasCachedLexicalStateChange() {
-        Token token = this;
-        while (token.getNext() != null) {
-            if (token.getNext().getLexicalState() != token.getLexicalState()) {
-                return true;
-            }
-            token = token.getNext();
-        }
-        return false;
-    }
-
-[/#if]
-
 [#if grammar.legacyAPI]
 
     void setKind(int kind) {
@@ -186,7 +147,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
 
     /**
-     * The next regular (i.e. parsed) token
+     * This is the same as #getNextParsedToken
      */
     public final Token getNext() {
         return getNextParsedToken();
@@ -196,6 +157,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         setNextParsedToken(next);
     }
 
+    /**
+     * @return the next regular (i.e. parsed) token
+     */
     public Token getNextParsedToken() {
         return next;
     }
@@ -468,8 +432,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     [/#if]
 [/#if]    
     
-    
-   
     public String getLocation() {
 //         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
          return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();

@@ -896,8 +896,6 @@ CodeInjection :
         ]
         ":"
         [
-//            SCAN {getToken(1).getImage().equals("{")} ~("{" ClassOrInterfaceBodyDeclaration) => "{"
-//          SCAN "{"("import"|"@"|"extends"|"implements"|"}") => "{" 
           SCAN "{" ("}" | "import" | "extends" | "implements" | (Annotation)* "}") => "{"
           {foundOptionalInitialBrace=true;}
         ]
@@ -1837,7 +1835,7 @@ Assertion :
    }
 ;
 
-Lookahead ScanAhead #Lookahead : 
+ScanAhead #Lookahead : 
 {
    Token amountToken=null;
    boolean hasSemanticLookahead = false, getHasExplicitNumericalLookahead=false;
@@ -1880,9 +1878,7 @@ Lookahead ScanAhead #Lookahead :
     |
     SCAN {expansion != null || (exp ==null && lb == null && upToExpansion == null)} => {}
 )
-{
-    return CURRENT_NODE;
-};
+;
 
 LookBehind : 
    [<TILDE> {CURRENT_NODE.setNegated(true);}] 
@@ -2785,15 +2781,12 @@ INJECT ZeroOrOneRegexp :
    }
 }
 
-CharacterList CharacterList :
+CharacterList :
   ["~"]
   "[" [CharacterRange
         ( "," CharacterRange)*
       ]
   "]"
-   {
-      return CURRENT_NODE;
-   }
 ;
 
 INJECT CharacterList : 

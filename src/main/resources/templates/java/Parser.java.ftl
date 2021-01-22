@@ -73,15 +73,16 @@ private Token currentLookaheadToken;
 private int remainingLookahead;
 private boolean hitFailure;
 private String currentlyParsedProduction, currentLookaheadProduction;
-// private TokenType upToTokenType;
-// private EnumSet<TokenType> upToFirstSet;
 private int lookaheadRoutineNesting;
 private boolean scanToEnd;
-private boolean lastLookaheadSucceeded;
 
-//private Token nextToken; //REVISIT
-
+[#--
+ REVISIT these.
+//private Token nextToken; 
 //private EnumSet<Token> currentFollowSet;
+// private TokenType upToTokenType;
+// private EnumSet<TokenType> upToFirstSet;
+--]
 
 private boolean cancelled;
 public void cancel() {cancelled = true;}
