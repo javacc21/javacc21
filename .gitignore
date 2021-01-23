@@ -3,6 +3,7 @@
 /build/*
 /classes/*
 /target/*
+/.settings/*
 /*.jar
 \#*
 /src/main/java/com/javacc/parser/*

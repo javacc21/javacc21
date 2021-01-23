@@ -1157,6 +1157,10 @@ INJECT BNFProduction :
          return getExpansion().isPossiblyEmpty();
     }
 
+    public boolean isAlwaysSuccessful() {
+        return getExpansion().isAlwaysSuccessful();
+    }
+
     public String getAccessModifier() {
         for (Token t : childrenOfType(Token.class)) {
            TokenType type = t.getType();
@@ -1557,6 +1561,7 @@ INJECT ExpansionWithParentheses :
     public int getMaximumSize() {return getNestedExpansion().getMaximumSize();}
     public int getMinimumSize() {return getNestedExpansion().getMinimumSize();}
     public boolean isPossiblyEmpty() {return getNestedExpansion().isPossiblyEmpty();}
+    public boolean isAlwaysSuccessful() {return getNestedExpansion().isAlwaysSuccessful();}
     public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
     public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
 
@@ -2205,11 +2210,11 @@ INJECT NonTerminal :
      }
      
      public boolean isPossiblyEmpty() {
-         BNFProduction prod = this.getProduction();
-         if (prod == null) {
-             return false; // We already handle this case elsewhere, but REVISIT later maybe
-         }
-         return prod.isPossiblyEmpty();
+         return getProduction().isPossiblyEmpty();
+     }
+
+     public boolean isAlwaysSuccessful() {
+         return getProduction().isAlwaysSuccessful();
      }
      
      // REVISIT. Is this disposition really correct?
@@ -2365,7 +2370,7 @@ INJECT AttemptBlock :
      }
 }
 
-Failure : 
+Failure# : 
    {
        String message = null;
    }
