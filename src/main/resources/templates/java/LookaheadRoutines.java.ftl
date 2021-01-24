@@ -78,17 +78,14 @@
 
 [#macro BuildLookaheads]
   private final boolean scanToken(TokenType expectedType) {
-     if (hitFailure) return lastLookaheadSucceeded = false;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (type != expectedType) return lastLookaheadSucceeded = false;
      if (remainingLookahead != UNLIMITED) remainingLookahead--;
-//     if (type == upToTokenType) remainingLookahead = 0;
      return lastLookaheadSucceeded = true;
   }
 
   private final boolean scanToken(EnumSet<TokenType> types) {
-     if (hitFailure) return lastLookaheadSucceeded = false;
      currentLookaheadToken = nextToken(currentLookaheadToken);
      TokenType type = currentLookaheadToken.getType();
      if (!types.contains(type)) return lastLookaheadSucceeded = false;
@@ -159,7 +156,7 @@
     try {
        lookaheadRoutineNesting++;
    [#if !expansion.insideLookahead]
-     if (hitFailure) return lastLookaheadSucceeded = false;
+[#--    if (hitFailure) return lastLookaheadSucceeded = false;--]
      ${BuildPredicateCode(expansion)}
    [/#if]
      ${BuildScanCode(expansion)}
@@ -286,8 +283,10 @@
 [#macro BuildScanCode expansion]
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
-  // Lookahead Code for ${classname} specified on line ${expansion.beginLine} of ${expansion.inputSource}
-      if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
+[#--      if (hitFailure) return lastLookaheadSucceeded = false;
+      if (remainingLookahead <=0) return lastLookaheadSucceeded = true;--]
+      if (hitFailure || remainingLookahead<=0) return lastLookaheadSucceeded =!hitFailure;
+  // Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
   [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
   [#if expansion.specifiedLexicalState??]
@@ -355,7 +354,7 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
-          if (hitFailure) return lastLookaheadSucceeded = false;
+[#--          if (hitFailure) return lastLookaheadSucceeded = false;--]
           if (!scanToEnd && lookaheadRoutineNesting <= 1) {
              remainingLookahead = ${sub.scanLimitPlus};
           }
@@ -392,16 +391,15 @@
     [/#if]
 [/#macro]    
 
-[#macro ScanCodeLexicalStateSwitch switch]
-   token_source.switchTo(LexicalState.${switch.lexicalStateName});
-[/#macro]
-
 [#macro ScanCodeAssertion assertion]
-    
 [/#macro]
 
 [#macro ScanCodeError expansion]
-    hitFailure = true;
+    if (true) {
+      hitFailure = true;
+      return lastLookaheadSucceeded = false;
+    }
+  [#-- hitFailure=true; --]
 [/#macro]
 
 [#macro ScanCodeChoice choice]
@@ -410,11 +408,10 @@
    boolean hitFailure${CU.newVarIndex} = hitFailure;
   [#list choice.choices as subseq]
      if (!${CheckExpansion(subseq)}) {
-     [#if subseq_has_next]
-        currentLookaheadToken = token${CU.newVarIndex};
-        remainingLookahead = remainingLookahead${CU.newVarIndex};
-        hitFailure = hitFailure${CU.newVarIndex};
-     [#else]
+     currentLookaheadToken = token${CU.newVarIndex};
+     remainingLookahead=remainingLookahead${CU.newVarIndex};
+     hitFailure = hitFailure${CU.newVarIndex};
+     [#if !subseq_has_next]
         return lastLookaheadSucceeded = false;
      [/#if]
   [/#list]

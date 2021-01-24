@@ -320,7 +320,7 @@ public class FileLineMap {
     }
     
     void setInputSource(String inputSource) {
-        mapsByName.put(inputSource, new WeakReference(this));
+        mapsByName.put(inputSource, new WeakReference<>(this));
         this.inputSource = inputSource;
     }
     

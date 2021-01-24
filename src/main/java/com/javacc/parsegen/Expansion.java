@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -215,15 +215,20 @@ abstract public class Expansion extends BaseNode {
      * expansion?
      */
     public boolean getHasImplicitSyntacticLookahead() {
+        if (!this.isAtChoicePoint())
+            return false;
         if (getHasSeparateSyntacticLookahead())
             return false;
-//        if (!this.isAtChoicePoint())
-//            return false;
         if (this.isAlwaysSuccessful())
             return false;
         if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <=1 )
             return false;
-        return getRequiresScanAhead() || getHasScanLimit();
+        if (getHasScanLimit())
+            return true;
+        if (isSingleToken())
+            return false;
+        Lookahead la = getLookahead();
+        return la != null && la.getAmount()>1;
     }
 
     private boolean scanLimit;

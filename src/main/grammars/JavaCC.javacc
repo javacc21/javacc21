@@ -1495,6 +1495,14 @@ INJECT ExpansionChoice :
         }
         return false;
    }
+
+   public boolean isAlwaysSuccessful() {
+       if (!super.isAlwaysSuccessful()) return false;
+       for (Expansion choice : getChoices()) {
+           if (choice.isAlwaysSuccessful()) return true;
+       }
+       return false;
+   }
    
    public int getMinimumSize() {
        int result = Integer.MAX_VALUE;
@@ -1517,13 +1525,6 @@ INJECT ExpansionChoice :
    
    public boolean isConcrete() {return false;} 
 
-   public boolean isAlwaysSuccessful() {
-       if (!super.isAlwaysSuccessful()) return false;
-       for (Expansion choice : getChoices()) {
-           if (choice.isAlwaysSuccessful()) return true;
-       }
-       return false;
-   }
 }
 
 ExpansionWithParentheses :
@@ -1591,7 +1592,7 @@ ExpansionSequence# :
      }
   ]
   (
-     sub=ExpansionUnit
+     => sub=ExpansionUnit
      {
          pokeNode(sub);
      }
@@ -2106,6 +2107,8 @@ Expansion ExpansionUnit :
   |
   SCAN [PrimaryExpression "="]<IDENTIFIER>
   => result=NonTerminal [SCAN ~\...\Lookahead => UpToHere(result)]
+  |
+  FAIL
  )
  [
      SCAN ~\...\Lookahead =>
@@ -2281,6 +2284,7 @@ INJECT ZeroOrMore :
      extends ExpansionWithParentheses 
 {
     public boolean isPossiblyEmpty() {return true;}
+    public boolean isAlwaysSuccessful() {return true;}
     public int getMinimumSize() {return 0;}
     public int getMaximumSize() {return Integer.MAX_VALUE;}
     public boolean isConcrete() {return false;}

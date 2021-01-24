@@ -152,7 +152,7 @@ public class ParserData {
         }
 
         for (ZeroOrOne zoo : grammar.descendants(ZeroOrOne.class, zoo->zoo.getNestedExpansion().isAlwaysSuccessful())) {
-            if (zoo.getNestedExpansion() instanceof Failure) {
+            if (zoo.getNestedExpansion().firstChildOfType(Failure.class) != null) {
                 grammar.addWarning(zoo, "The FAIL inside this construct is always triggered. This may not be your intention.");
             } else {
                 grammar.addWarning(zoo, "The expansion inside this (...)? construct can be matched by the empty string so it is always matched. This may not be your intention.");
