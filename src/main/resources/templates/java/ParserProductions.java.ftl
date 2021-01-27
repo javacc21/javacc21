@@ -63,17 +63,23 @@
      if (cancelled) throw new CancellationException();
      String prevProduction = currentlyParsedProduction;
      this.currentlyParsedProduction = "${production.name}";
-     ${production.javaCode!}
      [@BuildCode production.expansion /]
     }   
 [/#macro]
 
-[#-- The next 100 lines are too messy and need a significant cleanup --]
 [#macro BuildCode expansion]
    [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
   // Code for ${expansion.simpleName} specified at:
   // ${expansion.location}
   [/#if]
+      [@CU.HandleLexicalStateChange expansion false]
+       [@HandleTreeBuilding expansion]
+        [@BuildExpansionCode expansion/]
+       [/@HandleTreeBuilding]
+      [/@CU.HandleLexicalStateChange]
+[/#macro]
+
+[#macro HandleTreeBuilding expansion]
     [#var nodeVarName, 
           production, 
           treeNodeBehavior, 
@@ -90,24 +96,35 @@
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
                         || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
-    [#if buildTreeNode]
-      [@setupTreeVariables .scope /]
-      [@createNode treeNodeBehavior nodeVarName /]
+    ${(production.javaCode)!}
+    [#if !buildTreeNode]
+      [#nested]
+    [#else]
+     [#--@setupTreeVariables .scope /--]
+     [#set nodeNumbering = nodeNumbering +1]
+     [#set nodeVarName = currentProduction.name + nodeNumbering]
+     ${grammar.utils.pushNodeVariableName(nodeVarName)!}
+      [#if !treeNodeBehavior??]
+         [#if grammar.smartNodeCreation]
+            [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false}]
+         [#else]
+            [#set treeNodeBehavior = {"name" : production.name, "condition" : null, "gtNode" : false, "void" : false}]
+         [/#if]
+      [/#if]
+      [#if treeNodeBehavior.condition?has_content]
+         [#set closeCondition = treeNodeBehavior.condition]
+         [#if treeNodeBehavior.gtNode]
+            [#set closeCondition = "nodeArity() > " + closeCondition]
+         [/#if]
+      [/#if]
+
+     [@createNode treeNodeBehavior nodeVarName false /]
+
           ParseException ${parseExceptionVar} = null;
           int ${callStackSizeVar} = parsingStack.size();
-    [/#if]
-    [#if buildTreeNode]
-         try {
+          try {
             if (false) throw new ParseException("Never happens!");
-    [/#if]
-       [@CU.HandleLexicalStateChange expansion false]
-        [@BuildExpansionCode expansion/]
-       [/@CU.HandleLexicalStateChange]
-    [#var returnType = (production.returnType)!"void"]
-    [#if production?? && returnType == "void"]
-        if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");
-    [/#if]
-    [#if buildTreeNode] 
+            [#nested]
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
@@ -134,30 +151,11 @@
     [/#if]
 [/#macro]
 
-[#--  A helper macro to set up some variables so that the BuildCode macro can be a bit more readable --]
-[#macro setupTreeVariables callingScope]
-    [#set nodeNumbering = nodeNumbering +1]
-    [#set nodeVarName = currentProduction.name + nodeNumbering in callingScope]
-    ${grammar.utils.pushNodeVariableName(callingScope.nodeVarName)!}
-    [#if !callingScope.treeNodeBehavior??]
-        [#if grammar.smartNodeCreation]
-           [#set treeNodeBehavior = {"name" : callingScope.production.name, "condition" : "1", "gtNode" : true, "void" :false} in callingScope]
-        [#else]
-           [#set treeNodeBehavior = {"name" : callingScope.production.name, "condition" : null, "gtNode" : false, "void" : false} in callingScope]
-        [/#if]
-     [/#if]
-     [#if callingScope.treeNodeBehavior.condition?has_content]
-       [#set closeCondition = callingScope.treeNodeBehavior.condition in callingScope]
-       [#if callingScope.treeNodeBehavior.gtNode]
-          [#set closeCondition = "nodeArity() > " + callingScope.closeCondition in callingScope]
-       [/#if]
-    [/#if]
-[/#macro]
-
 [#--  Boilerplate code to create the node variable --]
-[#macro createNode treeNodeBehavior nodeVarName]
+[#macro createNode treeNodeBehavior nodeVarName isAbstractType]
    [#var nodeName = nodeClassName(treeNodeBehavior)]
    ${nodeName} ${nodeVarName} = null;
+   [#if !isAbstractType]
    if (buildTree) {
      ${nodeVarName} = new ${nodeName}();
   [#if grammar.nodeUsesParser]
@@ -166,6 +164,7 @@
    ${nodeVarName}.setInputSource(getInputSource());
    openNodeScope(${nodeVarName});
   }
+  [/#if]
 [/#macro]
 
 [#function nodeClassName treeNodeBehavior]
@@ -179,13 +178,6 @@
 [#macro BuildExpansionCode expansion]
     [#var classname=expansion.simpleName]
     [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
-    [#if expansion.specifiedLexicalState??]
-       LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
-       if (token_source.lexicalState != LexicalState.${expansion.specifiedLexicalState}) {
-          token_source.reset(lastConsumedToken, LexicalState.${expansion.specifiedLexicalState});
-       } 
-       try {
-    [/#if]
     [#if classname = "ExpansionWithParentheses"]
        [@BuildExpansionCode expansion.nestedExpansion/]
     [#elseif classname = "CodeBlock"]
@@ -212,14 +204,6 @@
         [@BuildCodeChoice expansion/]
     [#elseif classname = "Assertion"]
         [@BuildAssertionCode expansion/]
-    [/#if]
-    [#if expansion.specifiedLexicalState??]
-       }
-       finally {
-           if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
-           token_source.reset(lastConsumedToken, ${prevLexicalStateVar});
-        }
-      }
     [/#if]
 [/#macro]
 

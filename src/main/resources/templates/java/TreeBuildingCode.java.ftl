@@ -157,9 +157,9 @@
 	 * constructed and they are left on the stack. 
 	 */
     public void closeNodeScope(Node n, boolean condition) {
-        n.setEndLine(lastConsumedToken.getEndLine());
-        n.setEndColumn(lastConsumedToken.getEndColumn());
-        if (condition) {
+        if (n!= null && condition) {
+            n.setEndColumn(lastConsumedToken.getEndColumn());
+            n.setEndLine(lastConsumedToken.getEndLine());
             if (trace_enabled) LOGGER.finer("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + nodeArity() + " nodes off the stack.");
             int a = nodeArity();
             currentNodeScope.close();
@@ -196,7 +196,7 @@
 [/#list]
         } else {
             currentNodeScope.close();
-            if (trace_enabled) {
+            if (trace_enabled && n!=null) {
                 LOGGER.info("Closed node scope for node of type: " + n.getClass().getName() + ", leaving " + nodeArity() + " nodes on the stack.");
                 LOGGER.info("Nesting level is : " + currentNodeScope.nestingLevel());
             }
