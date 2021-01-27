@@ -283,29 +283,20 @@
 [#macro BuildScanCode expansion]
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
-[#--      if (hitFailure) return lastLookaheadSucceeded = false;
-      if (remainingLookahead <=0) return lastLookaheadSucceeded = true;--]
       if (hitFailure || remainingLookahead<=0) return lastLookaheadSucceeded =!hitFailure;
   // Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
-  [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
-  [#if expansion.specifiedLexicalState??]
-     LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
-     try {
-        if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
-           token_source.reset(currentLookaheadToken, LexicalState.${expansion.specifiedLexicalState});
-        }
-  [/#if]
-  [#if classname = "ExpansionWithParentheses"]
-     [@BuildScanCode expansion.nestedExpansion /]
-  [#elseif expansion.singleToken]
-     ${ScanSingleToken(expansion)}
+  [@CU.HandleLexicalStateChange expansion true]
+   [#if classname = "ExpansionWithParentheses"]
+      [@BuildScanCode expansion.nestedExpansion /]
+   [#elseif expansion.singleToken]
+      ${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion"]
       ${ScanCodeAssertion(expansion)} 
    [#elseif classname = "LexicalStateSwitch"]
-      ${ScanCodeLexicalStateSwitch(expansion)}
+       ${ScanCodeLexicalStateSwitch(expansion)}
    [#elseif classname = "Failure"]
-      ${ScanCodeError(expansion)}
+         ${ScanCodeError(expansion)}
    [#elseif classname = "ExpansionSequence"]
       ${ScanCodeSequence(expansion)}
    [#elseif classname = "ZeroOrOne"]
@@ -322,22 +313,10 @@
       [@ScanCodeChoice expansion /]
    [#elseif classname = "CodeBlock"]
       [#if expansion.appliesInLookahead]
-      ${expansion}
+         ${expansion}
       [/#if]
-  [/#if]
-  [#if expansion.specifiedLexicalState??]
-     }
-     finally {
-        if (!lastLookaheadSucceeded && 
-            ${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
-[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]               
-           token_source.reset(currentLookaheadToken, ${prevLexicalStateVar});
-[#else]   
-           token_source.switchTo(${prevLexicalStateVar});
-[/#if]           
-        }
-     }
-  [/#if]
+   [/#if]
+  [/@CU.HandleLexicalStateChange]
 [/#macro]
 
 [#--

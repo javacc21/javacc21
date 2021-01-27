@@ -100,7 +100,9 @@
          try {
             if (false) throw new ParseException("Never happens!");
     [/#if]
+       [@CU.HandleLexicalStateChange expansion false]
         [@BuildExpansionCode expansion/]
+       [/@CU.HandleLexicalStateChange]
     [#var returnType = (production.returnType)!"void"]
     [#if production?? && returnType == "void"]
         if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");

@@ -104,3 +104,28 @@
 [#function bool val]
    [#return val?string("true", "false")/]
 [/#function]
+
+[#macro HandleLexicalStateChange expansion inLookahead]
+   [#if expansion.specifiedLexicalState?is_null]
+      [#nested]
+   [#else]
+      [#var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")]
+      [#var prevLexicalStateVar = newVarName("previousLexicalState")]
+         LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
+         if (token_source.lexicalState != LexicalState.${expansion.specifiedLexicalState}) {
+            token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
+         } 
+         try {
+           [#nested/]
+         }
+         finally {
+            if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+      [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]               
+           token_source.reset(${resetToken}, ${prevLexicalStateVar});
+      [#else]   
+           token_source.switchTo(${prevLexicalStateVar});
+      [/#if]           
+            }
+         }
+   [/#if]
+[/#macro]
