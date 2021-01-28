@@ -259,5 +259,4 @@ public class ${grammar.baseNodeClassName} implements Node {
         }
         return buf.toString();
     }
-    
 }

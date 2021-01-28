@@ -63,6 +63,11 @@
      if (cancelled) throw new CancellationException();
      String prevProduction = currentlyParsedProduction;
      this.currentlyParsedProduction = "${production.name}";
+     [#--${production.javaCode!}
+       This is actually inserted further down because
+       we want the prologue java code block to be able to refer to 
+       CURRENT_NODE.
+     --]
      [@BuildCode production.expansion /]
     }   
 [/#macro]
@@ -85,22 +90,23 @@
           treeNodeBehavior, 
           buildTreeNode=false, 
           closeCondition = "true", 
+          javaCodePrologue = "",
           parseExceptionVar = CU.newVarName("parseException"),
           callStackSizeVar = CU.newVarName("callStackSize")
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
+      [#set javaCodePrologue = production.javaCode!]
     [/#if]
     [#if grammar.treeBuildingEnabled]
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
                         || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
-    ${(production.javaCode)!}
     [#if !buildTreeNode]
+      ${javaCodePrologue} 
       [#nested]
     [#else]
-     [#--@setupTreeVariables .scope /--]
      [#set nodeNumbering = nodeNumbering +1]
      [#set nodeVarName = currentProduction.name + nodeNumbering]
      ${grammar.utils.pushNodeVariableName(nodeVarName)!}
@@ -118,11 +124,14 @@
          [/#if]
       [/#if]
 
-     [@createNode treeNodeBehavior nodeVarName false /]
-
-          ParseException ${parseExceptionVar} = null;
-          int ${callStackSizeVar} = parsingStack.size();
-          try {
+        [@createNode treeNodeBehavior nodeVarName false /]
+         [#-- I put this here for the hypertechnical reason
+              that I want the initial code block to be able to 
+              reference CURRENT_NODE. --]
+         ${javaCodePrologue}
+         ParseException ${parseExceptionVar} = null;
+         int ${callStackSizeVar} = parsingStack.size();
+         try {
             if (false) throw new ParseException("Never happens!");
             [#nested]
          }

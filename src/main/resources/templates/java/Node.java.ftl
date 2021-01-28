@@ -219,13 +219,11 @@ public interface Node extends Comparable<Node>
         return descendants(Token.class, t->!t.isUnparsed());
     }
     
-[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
      /**
       * @return the FileLineMap from which this Node object
-      * originated. This could return null, either because
-      * the FileLineMap was GC'ed (a clear sign that this Node is <em>stale</em>).
-      * Or it could return null simply if you constructed the Node (and/or its sub-nodes)
-      * yourself, i.e. it didn't really come about via the parsing/tokenizing
+      * originated. There is no guarantee that this doesn't return null.
+      * Most likely that would simply be because you constructed the 
+      * Node yourself, i.e. it didn't really come about via the parsing/tokenizing
       * machinery.
       */
      default FileLineMap getFileLineMap() {
@@ -245,28 +243,26 @@ public interface Node extends Comparable<Node>
      default String getSource() {
         return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
     }
-[/#if]          
       
-     int getBeginLine();
+    int getBeginLine();
      
-     int getEndLine();
+    int getEndLine();
      
-     int getBeginColumn();
+    int getBeginColumn();
      
-     int getEndColumn();
+    int getEndColumn();
      
-     void setBeginLine(int beginLine);
+    void setBeginLine(int beginLine);
      
-     void setEndLine(int endLine);
+    void setEndLine(int endLine);
      
-     void setBeginColumn(int beginColumn);
+    void setBeginColumn(int beginColumn);
      
-     void setEndColumn(int endColumn);
+    void setEndColumn(int endColumn);
      
-     default String getLocation() {
-         //return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
+    default String getLocation() {
          return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
-     }
+    }
      
      
      /**

@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
-import java.lang.ref.WeakReference;
 
 
 /**
@@ -52,14 +51,33 @@ public class FileLineMap {
 
     private static final int[] EMPTY_INT = new int[0];
 
-    static private Map<String, WeakReference<FileLineMap>> mapsByName = new HashMap<>();
+    static private Map<String, FileLineMap> mapsByName = new HashMap<>();
 
     /**
      * Get a FileLineMap by name
      */
     static public FileLineMap getFileLineMapByName(String name) {
-        WeakReference<FileLineMap> reference = mapsByName.get(name);
-        return reference == null ? null : reference.get();
+        return mapsByName.get(name);
+    }
+
+    /**
+     * There is something of a memory retention problem
+     * with this static lookup map, so this method
+     * allows you to just clear the map, assuming you
+     * know that none of the entries are needed any more.
+     *
+    static public void clearFileLineMapCache() {
+        mapsByName.clear();
+    }
+
+    /**
+     * A method to uncache a FileLineMap. There is something of a 
+     * memory retention problem, so if you know for sure that 
+     * the referenced FileLineMap is not needed, you can use 
+     * this method to allow it to be garbage collected.
+     */
+    static public FileLineMap clearFileLineMapCacheEntry(String inputSource) {
+        return mapsByName.remove(inputSource);
     }
 
     // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
@@ -320,7 +338,7 @@ public class FileLineMap {
     }
     
     void setInputSource(String inputSource) {
-        mapsByName.put(inputSource, new WeakReference<>(this));
+        mapsByName.put(inputSource, this);
         this.inputSource = inputSource;
     }
     
