@@ -124,7 +124,7 @@
          [/#if]
       [/#if]
 
-        [@createNode treeNodeBehavior nodeVarName false /]
+      [@createNode treeNodeBehavior nodeVarName false /]
          [#-- I put this here for the hypertechnical reason
               that I want the initial code block to be able to 
               reference CURRENT_NODE. --]
@@ -255,23 +255,15 @@
 
 
 [#macro BuildCodeAttemptBlock attemptBlock]
-   [#var nested=attemptBlock.nestedExpansion]
-       try {
-          stashParseState();
-          [@BuildCode nested/]
-          popParseState();
-       }
-       catch (ParseException e) {
-           restoreStashedParseState();
-           [#if attemptBlock.recoveryCode??]
-              ${attemptBlock.recoveryCode}
-           [/#if]
-           [#if attemptBlock.recoveryExpansion??]
-               [@BuildCode attemptBlock.recoveryExpansion /]
-           [#else]
-               if (false) throw new ParseException("Never happens!");
-           [/#if]
-       }
+   try {
+      stashParseState();
+      [@BuildCode attemptBlock.nestedExpansion /]
+      popParseState();
+   }
+   catch (ParseException e) {
+      restoreStashedParseState();
+      [@BuildCode attemptBlock.recoveryExpansion /]
+   }
 [/#macro]
 
 [#macro BuildCodeNonTerminal nonterminal]

@@ -2301,23 +2301,9 @@ INJECT OneOrMore :
 }
 
 
-AttemptBlock AttemptBlock : 
-{
-  boolean hasRecoverExpansion = false;
-}
-{
- "ATTEMPT"
- "(" ExpansionChoice ")"
- "RECOVER"
- (Block  | "(" ExpansionChoice {hasRecoverExpansion = true;} ")")
- [
-    SCAN {!hasRecoverExpansion} "("
-    => "(" ExpansionChoice ")"  
- ]
- {
-     return CURRENT_NODE;
- }
-}
+AttemptBlock : 
+ "ATTEMPT" ExpansionChoice "RECOVER"  (ExpansionWithParentheses | Block)
+;
 
 INJECT AttemptBlock : 
    import java.util.List;
@@ -2330,17 +2316,8 @@ INJECT AttemptBlock :
    }
    
    public Expansion getRecoveryExpansion() {
-        List<Expansion> expansions = childrenOfType(Expansion.class);
-        if (getRecoveryCode() == null) {
-            return expansions.get(1);
-        }
-        return expansions.size() > 2 ? expansions.get(2) : null;
-   }
-   
-    public CodeBlock getRecoveryCode() {
-        return firstChildOfType(CodeBlock.class); 
+       return (Expansion) getChild(3);
     }
-   
    
     public boolean isPossiblyEmpty() {
         return getNestedExpansion().isPossiblyEmpty();

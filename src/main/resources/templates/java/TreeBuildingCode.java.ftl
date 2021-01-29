@@ -109,17 +109,18 @@
     }
     
     public void openNodeScope(Node n) {
-        Token next = nextToken(lastConsumedToken);
-        n.setBeginLine(next.getBeginLine());
-        n.setBeginColumn(next.getBeginColumn());
-        n.setInputSource(this.getInputSource());
         new NodeScope();
-        n.open();
+        if (n!=null) {
+            Token next = nextToken(lastConsumedToken);
+            n.setBeginLine(next.getBeginLine());
+            n.setBeginColumn(next.getBeginColumn());
+            n.setInputSource(this.getInputSource());
+            n.open();
   [#list grammar.openNodeScopeHooks as hook]
-       ${hook}(n);
+            ${hook}(n);
   [/#list]
-        
-        if (trace_enabled) LOGGER.info("Opened node scope for node of type: " + n.getClass().getName());
+        }
+        if (trace_enabled && n!=null) LOGGER.info("Opened node scope for node of type: " + n.getClass().getName());
         if (trace_enabled) LOGGER.info("Scope nesting level is "  +  currentNodeScope.nestingLevel());
     }
 
