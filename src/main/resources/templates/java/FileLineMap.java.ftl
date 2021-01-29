@@ -39,7 +39,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.BitSet;
 
 /**
  * Rather bloody-minded implementation of a class to read in a file 
@@ -88,6 +88,17 @@ public class FileLineMap {
     private final int[] lineOffsets;
     private int startingLine, startingColumn;
     private int bufferPosition, tokenBeginOffset, tokenBeginColumn, tokenBeginLine, line, column;
+
+    private BitSet parsedLines;
+
+    /**
+     * This is used in conjunction with having a preprocessor.
+     * We set which lines are actually parsed lines and the 
+     * rest are ignored.
+     */
+    public void setParsedLines(BitSet parsedLines) {
+        this.parsedLines = parsedLines;
+    }
     
     [#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="true", JAVA_UNICODE_ESCAPE="false"]
     [#if grammar.settings.TABS_TO_SPACES??]
@@ -125,7 +136,7 @@ public class FileLineMap {
         for (int i = 0; i < amount; i++) {
             --bufferPosition;
             if (column == 1) {
-                --line;
+                backupLine();
                 column = getLineLength(line);
             } else {
                 --column;
@@ -139,9 +150,29 @@ public class FileLineMap {
             if (column < getLineLength(line)) {
                 column++;
             } else {
-                ++line;
+                advanceLine();
                 column =1;
             }
+        }
+    }
+
+    private void advanceLine() {
+        if (parsedLines == null) {
+            ++line;
+        } else {
+            do {
+                ++line;
+            } while (!parsedLines.get(line));
+        }
+    }
+
+    private void backupLine() {
+        if (parsedLines == null) {
+            --line;
+        } else {
+            do {
+                --line;
+            } while (!parsedLines.get(line));
         }
     }
     
@@ -151,7 +182,7 @@ public class FileLineMap {
         }
         int ch = content.charAt(bufferPosition++);
         if (ch == '\n') {
-            ++line;
+            advanceLine();
             column = 1;
         } else {
             ++column;
