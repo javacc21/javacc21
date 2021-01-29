@@ -1,0 +1,169 @@
+DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
+TREE_BUILDING_ENABLED=false;
+PARSER_PACKAGE="com.javacc.preprocessor";
+
+TOKEN : 
+ <#PP_WS : [" ", "\t", "\f"] >
+ |
+ <#PP_EOL : "\n" | "\r" | "\r\n" >
+ |
+ <PP_BLANK_LINE : (<PP_WS>)* <PP_EOL>>
+ |
+ <PP_REGULAR_LINE : (<PP_WS>)* (~["#","\n", "\r"]) (~["\n", "\r"])* <PP_EOL>>
+ |
+ <PP_DEF : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "def" (<PP_WS>)*> : PP_DIRECTIVE 
+ |
+ <PP_UNDEF : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "undef" (<PP_WS>)*> : PP_DIRECTIVE 
+ |
+ <PP_IF : (<PP_WS>)* "#" (<PP_WS>)* "if" (<PP_WS>)*> : PP_DIRECTIVE 
+ |
+ <PP_ELIF : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "elif" (<PP_WS>)*> : PP_DIRECTIVE 
+ |
+ <PP_ELSE : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "else" <PP_EOL_COMMENT>>
+ |
+ <PP_ENDIF : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "endif" <PP_EOL_COMMENT>>
+;
+
+<PP_DIRECTIVE> TOKEN : 
+    <PP_TRUE : "true">
+    |
+    <PP_FALSE : "false">
+    |
+    <PP_SYMBOL : (["a"-"z", "A"-"Z"])+>
+    |
+    <PP_OR : "||">
+    |
+    <PP_AND : "&&">
+    |
+    <PP_LPAREN : "(">
+    |
+    <PP_RPAREN : ")">
+    |
+    <PP_EQUALS : "==">
+    |
+    <PP_NOT_EQUALS : "!=">
+    |
+    <PP_NOT : "!"> 
+;
+
+<PP_DIRECTIVE> UNPARSED : 
+    <PP_EOL_COMMENT : ("//" (~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES
+;
+
+<PP_DIRECTIVE> SKIP : " " | "\t" | "\f" ;
+
+
+INJECT PARSER_CLASS : 
+{
+    private BitSet lineMarkers = new BitSet();
+    private Set<String> definedSymbols = new HashSet<>();
+    private boolean currentlyOnOff = true;
+
+    public BitSet getLineMarkers() {
+        return lineMarkers;
+    }
+
+    void setIgnore(int lineNumber) {
+        lineMarkers.set(lineNumber);
+    }
+}
+
+PP_Block : PP_IfBlock | PP_DefStatement | PP_UndefStatement | PP_Content ;
+
+PP_Content : 
+  {int startLine = getToken(1).getBeginLine();}
+  (
+     <PP_BLANK_LINE>  
+     | 
+     <PP_REGULAR_LINE>
+  )+
+  {
+      int endLine = lastConsumedToken.getBeginLine();
+      if (currentlyOnOff)
+         lineMarkers.set(startLine, endLine+1);
+      else 
+         lineMarkers.clear(startLine, endLine+1);
+  }
+;
+
+PP_IfBlock : 
+   { 
+      boolean alreadyHandled=false, result;
+      final boolean previouslyOnOff = currentlyOnOff;
+   }
+    <PP_IF> 
+    result=PP_Expression {
+        if (result) alreadyHandled = true;
+        currentlyOnOff = result && previouslyOnOff;
+    }
+    PP_Block {if (alreadyHandled) currentlyOnOff = false;} 
+    (
+        <PP_ELIF> result=PP_Expression 
+        {
+            if (!alreadyHandled) {
+                alreadyHandled = result;
+                currentlyOnOff = previouslyOnOff && result;
+            }
+        }
+        PP_Block
+    )* 
+    [
+        <PP_ELSE> {currentlyOnOff = !alreadyHandled && previouslyOnOff;}
+        PP_Block
+    ] 
+    {this.currentlyOnOff = previouslyOnOff;}
+;
+
+PP_DefStatement :
+  <PP_DEF> <PP_SYMBOL>
+  {definedSymbols.add(lastConsumedToken.getImage());}
+;
+
+PP_UndefStatement : 
+    <PP_UNDEF> <PP_SYMBOL> 
+    {definedSymbols.remove(lastConsumedToken.getImage());}
+;    
+
+boolean PP_Expression : 
+  {boolean result, result2;}
+   result=PP_AndExpression 
+   (<PP_OR> result2=PP_AndExpression {result = result || result2;})* 
+   {return result;}
+;
+
+boolean PP_AndExpression : 
+   {boolean result, result2;}
+   result=PP_NotExpression 
+   (<PP_AND> result2=PP_NotExpression {result = result&&result2;})*
+   {return result;}
+;   
+
+boolean PP_NotExpression : 
+   {boolean not = false, result;}
+   (<PP_NOT> {not = !not;})* 
+   result=PP_PrimaryExpression 
+   {return not ? !result : result;}
+;
+
+boolean PP_Parentheses : 
+   {boolean result;}
+   <PP_LPAREN> 
+   result=PP_Expression 
+   <PP_RPAREN> 
+   {return result;}
+;
+
+boolean PP_PrimaryExpression : 
+    {boolean result;}
+    (
+      result=PP_Parentheses
+      |
+      <PP_SYMBOL> 
+      {result = definedSymbols.contains(lastConsumedToken.getImage());}
+      |
+      <PP_TRUE> {result = true;}
+      |
+      <PP_FALSE> {result = false;}
+    )
+    {return result;}
+; 

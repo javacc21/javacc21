@@ -89,6 +89,11 @@ public class ParserData {
     // hard to understand what it does.
     public void semanticize() {
 
+        // Check that non-terminals have all been defined.
+        for (NonTerminal nt : grammar.descendants(NonTerminal.class, nt->nt.getProduction()==null)) {
+            grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
+        }
+
         /*
          * Check whether we have any LOOKAHEADs at non-choice points 
          * REVISIT: Why is this not handled in the grammar spec?
@@ -159,11 +164,6 @@ public class ParserData {
             }
         }
    
-
-        // Check that non-terminals have all been defined.
-        for (NonTerminal nt : grammar.descendants(NonTerminal.class, nt->nt.getProduction()==null)) {
-            grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
-        }
 
         // Check that no LookBehind predicates refer to an undefined Production
         for (LookBehind lb : grammar.getAllLookBehinds()) {

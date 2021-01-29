@@ -13,6 +13,7 @@
 /examples/java/org/*
 /examples/json/org/*
 /examples/csharp/org/*
+/examples/preprocessor/com/*
 /.vscode/*
 /.idea/*
 
