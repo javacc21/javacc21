@@ -1,16 +1,14 @@
 <project name="Preprocessor" default="compile" basedir=".">
-    <target name="init">
-        <uptodate property="parser.uptodate"
-        srcfile="Preprocessor.javacc"
-        targetfile="${basedir}/com/javacc/preprocessor/PreprocessorParser.java"/> 
-    </target>
+    <uptodate property="ppparser.uptodate"
+      srcfile="Preprocessor.javacc"
+      targetfile="com/javacc/preprocessor/PreprocessorParser.java"/> 
     <target name="clean">
        <delete>
           <fileset dir="${basedir}" includes="*.class"/>
        </delete>
        <delete dir="${basedir}/com"/>
    </target>
-   <target name="parser-gen" depends="init" unless="parser.uptodate">
+   <target name="parser-gen" unless="ppparser.uptodate">
         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
             <arg line="-n ${basedir}/Preprocessor.javacc"/>
         </java>
