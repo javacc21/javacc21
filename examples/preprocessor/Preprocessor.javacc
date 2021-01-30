@@ -1,6 +1,7 @@
 DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
 TREE_BUILDING_ENABLED=false;
 PARSER_PACKAGE="com.javacc.preprocessor";
+//DEBUG_PARSER;
 
 /*
  * This is an implementation of the C# preprocessor.
@@ -11,7 +12,7 @@ PARSER_PACKAGE="com.javacc.preprocessor";
  * What is supported is turning on or off parts of the source file.
  * The root production returns a java.util.BitSet that holds 
  * whether a line is "turned on" or not. The lines are 1-based.
- *
+ */
 
 INJECT PARSER_CLASS : 
 {
@@ -34,8 +35,6 @@ TOKEN :
  |
  <#PP_EOL : "\n" | "\r" | "\r\n" >
  |
- <#PP_START : (<PP_WS>)* "#" (<PP_WS>)*>
- |
  <PP_LINE : (<PP_WS>)* ((~["#","\n", "\r"]) (~["\n", "\r"])*)? <PP_EOL>>
  |
  <PP_DEFINE : <PP_START> "define" (<PP_WS>)*> : PP_DIRECTIVE 
@@ -49,8 +48,14 @@ TOKEN :
  <PP_ELSE : <PP_START> "else"> : PP_DIRECTIVE
  |
  <PP_ENDIF : <PP_START> "endif"> : PP_DIRECTIVE
- |
- <PP_INVALID_DIRECTIVE : <PP_START> (<PP_SYMBOL>)?>
+;
+
+MORE :
+  <PP_START : (<PP_WS>)* "#" (<PP_WS>)*> : PP_EAT_TO_EOL
+;
+
+<PP_EAT_TO_EOL> TOKEN :
+  <PP_FALSE_ALERT : ((~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES 
 ;
 
 <PP_DIRECTIVE> TOKEN : 
@@ -81,13 +86,11 @@ TOKEN :
 
 <PP_DIRECTIVE> SKIP : " " | "\t" | "\f" ;
 
-
-
 BitSet PP_Root : PP_Block <EOF> {return lineMarkers;};
 
 PP_Block : (PP_IfBlock | PP_DefStatement | PP_UndefStatement | PP_Content)* ;
 
-PP_Content : (<PP_LINE> {setLineMarker();})+ ;
+PP_Content : ((<PP_LINE>|<PP_FALSE_ALERT>) {setLineMarker();})+ ;
 
 PP_IfBlock : 
    { 

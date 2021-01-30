@@ -1,0 +1,13 @@
+#define foo // Always foo! Why is that?
+
+#if !foo
+
+Not this
+
+#else
+
+But ###this!
+
+#oops #undef oops
+
+#endif

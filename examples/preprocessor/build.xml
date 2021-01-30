@@ -24,7 +24,10 @@
    </target>
    <target name="test" depends="compile">
       <echo>
-            TBD
+            Now test on a file...
       </echo>
+      <java classname="PPTest" classpath="." failonerror="true">
+	      <arg value="${basedir}/testfile" />
+      </java>
    </target>
 </project>
