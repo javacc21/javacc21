@@ -2,26 +2,55 @@ DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
 TREE_BUILDING_ENABLED=false;
 PARSER_PACKAGE="com.javacc.preprocessor";
 
+/*
+ * This is an implementation of the C# preprocessor.
+ * Well, it is incomplete at the moment, because it only supports:
+ * #define and #undef and #if/#elif/#else. At the moment,
+ * it doesn't support #pragma, #region, #line or #warning etcetera
+ * It may in the future, but those are application-specific.
+ * What is supported is turning on or off parts of the source file.
+ * The root production returns a java.util.BitSet that holds 
+ * whether a line is "turned on" or not. The lines are 1-based.
+ *
+
+INJECT PARSER_CLASS : 
+{
+    private BitSet lineMarkers = new BitSet();
+    private Set<String> definedSymbols = new HashSet<>();
+    private boolean currentlyOn = true;
+
+    public BitSet getLineMarkers() {
+        return lineMarkers;
+    }
+
+    private void setLineMarker() {
+        int lineNumber = lastConsumedToken.getBeginLine();
+        if (currentlyOn) lineMarkers.set(lineNumber);
+    }
+}
+
 TOKEN : 
  <#PP_WS : [" ", "\t", "\f"] >
  |
  <#PP_EOL : "\n" | "\r" | "\r\n" >
  |
- <PP_BLANK_LINE : (<PP_WS>)* <PP_EOL>>
+ <#PP_START : (<PP_WS>)* "#" (<PP_WS>)*>
  |
- <PP_REGULAR_LINE : (<PP_WS>)* (~["#","\n", "\r"]) (~["\n", "\r"])* <PP_EOL>>
+ <PP_LINE : (<PP_WS>)* ((~["#","\n", "\r"]) (~["\n", "\r"])*)? <PP_EOL>>
  |
- <PP_DEF : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "def" (<PP_WS>)*> : PP_DIRECTIVE 
+ <PP_DEFINE : <PP_START> "define" (<PP_WS>)*> : PP_DIRECTIVE 
  |
- <PP_UNDEF : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "undef" (<PP_WS>)*> : PP_DIRECTIVE 
+ <PP_UNDEF : <PP_START> "undef" (<PP_WS>)*> : PP_DIRECTIVE 
  |
- <PP_IF : (<PP_WS>)* "#" (<PP_WS>)* "if" (<PP_WS>)*> : PP_DIRECTIVE 
+ <PP_IF : <PP_START> "if" (<PP_WS>)*> : PP_DIRECTIVE 
  |
- <PP_ELIF : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "elif" (<PP_WS>)*> : PP_DIRECTIVE 
+ <PP_ELIF : <PP_START> "elif" (<PP_WS>)*> : PP_DIRECTIVE 
  |
- <PP_ELSE : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "else" <PP_EOL_COMMENT>>
+ <PP_ELSE : <PP_START> "else"> : PP_DIRECTIVE
  |
- <PP_ENDIF : (<PP_WS>)* "#" ([" ", "\t", "\f"])* "endif" <PP_EOL_COMMENT>>
+ <PP_ENDIF : <PP_START> "endif"> : PP_DIRECTIVE
+ |
+ <PP_INVALID_DIRECTIVE : <PP_START> (<PP_SYMBOL>)?>
 ;
 
 <PP_DIRECTIVE> TOKEN : 
@@ -29,7 +58,7 @@ TOKEN :
     |
     <PP_FALSE : "false">
     |
-    <PP_SYMBOL : (["a"-"z", "A"-"Z"])+>
+    <PP_SYMBOL : (["_", "a"-"z", "A"-"Z"])(["_", "a"-"z", "A"-"Z", "0"-"9"])*>
     |
     <PP_OR : "||">
     |
@@ -53,69 +82,44 @@ TOKEN :
 <PP_DIRECTIVE> SKIP : " " | "\t" | "\f" ;
 
 
-INJECT PARSER_CLASS : 
-{
-    private BitSet lineMarkers = new BitSet();
-    private Set<String> definedSymbols = new HashSet<>();
-    private boolean currentlyOnOff = true;
 
-    public BitSet getLineMarkers() {
-        return lineMarkers;
-    }
+BitSet PP_Root : PP_Block <EOF> {return lineMarkers;};
 
-    void setIgnore(int lineNumber) {
-        lineMarkers.set(lineNumber);
-    }
-}
+PP_Block : (PP_IfBlock | PP_DefStatement | PP_UndefStatement | PP_Content)* ;
 
-PP_Block : PP_IfBlock | PP_DefStatement | PP_UndefStatement | PP_Content ;
-
-PP_Content : 
-  {int startLine = getToken(1).getBeginLine();}
-  (
-     <PP_BLANK_LINE>  
-     | 
-     <PP_REGULAR_LINE>
-  )+
-  {
-      int endLine = lastConsumedToken.getBeginLine();
-      if (currentlyOnOff)
-         lineMarkers.set(startLine, endLine+1);
-      else 
-         lineMarkers.clear(startLine, endLine+1);
-  }
-;
+PP_Content : (<PP_LINE> {setLineMarker();})+ ;
 
 PP_IfBlock : 
    { 
       boolean alreadyHandled=false, result;
-      final boolean previouslyOnOff = currentlyOnOff;
+      final boolean previouslyOn = currentlyOn;
    }
     <PP_IF> 
     result=PP_Expression {
         if (result) alreadyHandled = true;
-        currentlyOnOff = result && previouslyOnOff;
+        currentlyOn = result && previouslyOn;
     }
-    PP_Block {if (alreadyHandled) currentlyOnOff = false;} 
+    PP_Block {if (alreadyHandled) currentlyOn = false;} 
     (
         <PP_ELIF> result=PP_Expression 
         {
             if (!alreadyHandled) {
                 alreadyHandled = result;
-                currentlyOnOff = previouslyOnOff && result;
+                currentlyOn = previouslyOn && result;
             }
         }
         PP_Block
     )* 
     [
-        <PP_ELSE> {currentlyOnOff = !alreadyHandled && previouslyOnOff;}
+        <PP_ELSE> {currentlyOn = !alreadyHandled && previouslyOn;}
         PP_Block
-    ] 
-    {this.currentlyOnOff = previouslyOnOff;}
+    ]
+    <PP_ENDIF>
+    {this.currentlyOn = previouslyOn;}
 ;
 
 PP_DefStatement :
-  <PP_DEF> <PP_SYMBOL>
+  <PP_DEFINE> <PP_SYMBOL>
   {definedSymbols.add(lastConsumedToken.getImage());}
 ;
 
@@ -124,7 +128,20 @@ PP_UndefStatement :
     {definedSymbols.remove(lastConsumedToken.getImage());}
 ;    
 
-boolean PP_Expression : 
+boolean PP_Expression :
+  {boolean result, result2, inequality=false;}
+  result=PP_OrExpression
+  [
+    (<PP_EQUALS>|<PP_NOT_EQUALS>{inequality=true;}) 
+    result2=PP_OrExpression 
+    {
+        result = inequality ? result != result2 : result == result2;
+    }
+  ]
+  {return result;}
+;
+
+boolean PP_OrExpression : 
   {boolean result, result2;}
    result=PP_AndExpression 
    (<PP_OR> result2=PP_AndExpression {result = result || result2;})* 

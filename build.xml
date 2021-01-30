@@ -3,14 +3,14 @@
         <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
     </tstamp>
 
-    <target name="init">
-        <echo>Join the JavaCC 21 Discussion forum at: https://parsers.org/</echo>
-	<echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
-	<echo>JDK Version: ${java.version} on ${os.name}</echo>
-	<uptodate property="parser.uptodate"
+  <target name="init">
+    <echo>Join the JavaCC 21 Discussion forum at: https://parsers.org/</echo>
+	  <echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
+	  <echo>JDK Version: ${java.version} on ${os.name}</echo>
+	  <uptodate property="parser.uptodate"
 		targetfile="src/main/java/com/javacc/parser/JavaCCParser.java">
         <srcfiles dir="src/main/grammars" includes="*.javacc"/>
-	</uptodate>
+	  </uptodate>
 </target>
 
 <target name="restore-bootstrap-jar">

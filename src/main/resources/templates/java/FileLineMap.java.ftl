@@ -281,7 +281,7 @@ public class FileLineMap {
         StringBuilder buf = new StringBuilder();
         int index = 0;
         int col = 0;
-        // This is just to handle spaces to tabs. If you don't have that setting set, it
+        // This is just to handle tabs to spaces. If you don't have that setting set, it
         // is really unused.
         while (index < content.length()) {
             char ch = content.charAt(index++);

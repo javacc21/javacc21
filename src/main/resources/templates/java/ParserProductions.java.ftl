@@ -243,14 +243,13 @@
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock]
-   [#var nested=tryblock.nestedExpansion]
-       try {
-          [@BuildCode nested/]
-       }
+     try {
+        [@BuildCode tryblock.nestedExpansion /]
+     }
    [#list tryblock.catchBlocks as catchBlock]
-       ${catchBlock}
+     ${catchBlock}
    [/#list]
-       ${tryblock.finallyBlock!}
+     ${tryblock.finallyBlock!}
 [/#macro]
 
 

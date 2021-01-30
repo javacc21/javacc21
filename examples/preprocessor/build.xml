@@ -1,0 +1,30 @@
+<project name="Preprocessor" default="compile" basedir=".">
+    <target name="init">
+        <uptodate property="parser.uptodate"
+        srcfile="Preprocessor.javacc"
+        targetfile="${basedir}/com/javacc/preprocessor/PreprocessorParser.java"/> 
+    </target>
+    <target name="clean">
+       <delete>
+          <fileset dir="${basedir}" includes="*.class"/>
+       </delete>
+       <delete dir="${basedir}/com"/>
+   </target>
+   <target name="parser-gen" depends="init" unless="parser.uptodate">
+        <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
+            <arg line="-n ${basedir}/Preprocessor.javacc"/>
+        </java>
+   </target>
+   <target name="compile" depends="parser-gen">
+	   <javac classpath="." srcdir="." includeantruntime="off"  failonerror="true" debug="on" target="1.8" source="1.8"
+		   fork="true"/>
+       <echo>
+           test harness via: java PPTest &lt;filename&gt;
+       </echo>
+   </target>
+   <target name="test" depends="compile">
+      <echo>
+            TBD
+      </echo>
+   </target>
+</project>
