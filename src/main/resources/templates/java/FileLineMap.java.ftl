@@ -91,6 +91,10 @@ public class FileLineMap {
 
     private BitSet parsedLines;
 
+    private boolean isParsedLine(int lineNumber) {
+        return parsedLines == null || parsedLines.get(1+lineNumber-startingLine);
+    }
+
     /**
      * This is used in conjunction with having a preprocessor.
      * We set which lines are actually parsed lines and the 
@@ -132,6 +136,7 @@ public class FileLineMap {
     // SimpleCharStream class
     // This backup() method is dead simple by design and does not handle any of the messiness
     // with column numbers relating to tabs or unicode escapes. 
+/*    
     public void backup(int amount) {
         for (int i = 0; i < amount; i++) {
             --bufferPosition;
@@ -140,6 +145,17 @@ public class FileLineMap {
                 column = getLineLength(line);
             } else {
                 --column;
+            }
+        }
+    }*/
+
+    public void backup(int amount) {
+        for (int i=0; i<amount; i++) {
+            if (column == 1) {
+                backupLine();
+            } else {
+                --column;
+                --bufferPosition;
             }
         }
     }
@@ -151,28 +167,31 @@ public class FileLineMap {
                 column++;
             } else {
                 advanceLine();
-                column =1;
             }
         }
     }
-
+    
     private void advanceLine() {
-        if (parsedLines == null || line<0) {
+        do {
             ++line;
+        } while (!isParsedLine(line) && line-startingLine < lineOffsets.length); 
+        if (line-startingLine >=lineOffsets.length) {
+            bufferPosition = content.length();
         } else {
-            do {
-                ++line;
-            } while (!parsedLines.get(line) && line < lineOffsets.length);
+            bufferPosition = getLineStartOffset(line);
         }
+        column = 1;
     }
 
     private void backupLine() {
-        if (parsedLines == null) {
+        do {
             --line;
+        } while (!isParsedLine(line) && line>=startingLine);
+        if (line < startingLine) {
+            goTo(startingLine, startingColumn);
         } else {
-            do {
-                --line;
-            } while (!parsedLines.get(line) && line>=0);
+            column = getLineLength(line);
+            bufferPosition = getLineStartOffset(line) + column -1;
         }
     }
     
