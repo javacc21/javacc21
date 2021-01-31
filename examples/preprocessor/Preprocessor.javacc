@@ -145,12 +145,12 @@ PP_IfBlock :
 
 PP_DefStatement :
   <PP_DEFINE> <PP_SYMBOL>
-  {definedSymbols.add(lastConsumedToken.getImage());}
+  {if (currentlyOn) definedSymbols.add(lastConsumedToken.getImage());}
 ;
 
 PP_UndefStatement : 
     <PP_UNDEF> <PP_SYMBOL> 
-    {definedSymbols.remove(lastConsumedToken.getImage());}
+    {if (currentlyOn) definedSymbols.remove(lastConsumedToken.getImage());}
 ;    
 
 boolean PP_Expression :
