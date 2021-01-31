@@ -94,6 +94,9 @@
 
 	
   <target name="test" depends="jar">
+    <echo>Testing the JSON Parser</echo>
+    <ant antfile="build.xml" dir="examples/json" target="clean"/>
+    <ant antfile="build.xml" dir="examples/json" target="test"/>
     <echo>Testing the Preprocessor</echo>
     <ant antfile="build.xml" dir="examples/preprocessor" target="clean"/>
     <ant antfile="build.xml" dir="examples/preprocessor" target="test"/>
@@ -103,9 +106,6 @@
     <echo>Testing the newer FreeMarker parser</echo>
     <ant antfile="build.xml" dir="examples/freemarker" target="clean"/>
     <ant antfile="build.xml" dir="examples/freemarker" target="test"/>
-    <echo>Testing the JSON Parser</echo>
-    <ant antfile="build.xml" dir="examples/json" target="clean"/>
-    <ant antfile="build.xml" dir="examples/json" target="test"/>
     <echo>Running through the crufty old legacy examples</echo>
     <ant antfile="build.xml" dir="examples/legacy" target="test" />
  </target>

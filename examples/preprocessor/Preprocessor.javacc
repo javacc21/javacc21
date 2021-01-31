@@ -36,7 +36,7 @@ TOKEN :
  |
  <#PP_EOL : "\n" | "\r" | "\r\n" >
  |
- <PP_LINE : (<PP_WS>)* ((~["#","\n", "\r"]) (~["\n", "\r"])*)? <PP_EOL>>
+ <PP_LINE : (<PP_WS>)* ((~["#", " ", "\t", "\f", "\n", "\r"]) (~["\n", "\r"])*)? <PP_EOL>>
  |
  <PP_DEFINE : <PP_START> "define" (<PP_WS>)*> : PP_DIRECTIVE 
  |
@@ -63,7 +63,8 @@ UNPARSED :
 
 MORE :
 //Anything else that looks like it starts a directive,
-// we just treat (rightly or wrongly) as a line of code.
+// we just treat (rightly or wrongly) as a line of code
+// that is NOT ignored.
   <PP_START : (<PP_WS>)* "#" (<PP_WS>)*> : PP_EAT_TO_EOL
 ;
 

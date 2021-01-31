@@ -136,19 +136,6 @@ public class FileLineMap {
     // SimpleCharStream class
     // This backup() method is dead simple by design and does not handle any of the messiness
     // with column numbers relating to tabs or unicode escapes. 
-/*    
-    public void backup(int amount) {
-        for (int i = 0; i < amount; i++) {
-            --bufferPosition;
-            if (column == 1) {
-                backupLine();
-                column = getLineLength(line);
-            } else {
-                --column;
-            }
-        }
-    }*/
-
     public void backup(int amount) {
         for (int i=0; i<amount; i++) {
             if (column == 1) {
@@ -162,9 +149,9 @@ public class FileLineMap {
     
     void forward(int amount) {
         for (int i=0; i<amount; i++) {
-            ++bufferPosition;
             if (column < getLineLength(line)) {
-                column++;
+                ++bufferPosition;
+                ++column;
             } else {
                 advanceLine();
             }
@@ -210,7 +197,40 @@ public class FileLineMap {
     }
 
     String getImage() {
-        return content.subSequence(tokenBeginOffset, bufferPosition).toString();
+        CharSequence image = content.subSequence(tokenBeginOffset, bufferPosition);
+        if (tokenBeginLine == this.line || parsedLines==null) {
+            // If it is all on one line, or we don't have any 
+            // line marker bitset, then there is nothing more to do.
+            return image.toString();
+        }
+        boolean hasUnparsedLines = false;
+        for (int i=tokenBeginLine; i<=line; i++) {
+            if (!isParsedLine(i)) {
+                hasUnparsedLines = true;
+                break;
+            }
+        }
+        if (!hasUnparsedLines) {
+            // We're okay here too.
+            return image.toString();
+        }
+        return onlyRelevantPart(image, tokenBeginLine);
+    }
+    /**
+     * @return only the part of the input that is not actually not
+     * turned off by the preprocesor.
+     */
+    private String onlyRelevantPart(CharSequence input, int currentLine) {
+        StringBuilder buf = new StringBuilder();
+        boolean on = isParsedLine(currentLine);
+        for (int i=0; i<input.length(); i++) {
+            char ch = input.charAt(i);
+            if (on) buf.append(ch);
+            if (ch == '\n') {
+                on = isParsedLine(++currentLine);
+            }
+        }
+        return buf.toString();
     }
 
     String getSuffix(final int len) {
@@ -219,6 +239,9 @@ public class FileLineMap {
     }
 
     int beginToken() {
+        if (!isParsedLine(line)) {
+            advanceLine();
+        }
         tokenBeginOffset = bufferPosition;
         tokenBeginColumn = column;
         tokenBeginLine = line;
@@ -261,19 +284,32 @@ public class FileLineMap {
     private int getLineLength(int lineNumber) {
         int startOffset = getLineStartOffset(lineNumber);
         int endOffset = getLineEndOffset(lineNumber);
-        return endOffset - startOffset;
+        return 1+endOffset - startOffset;
     }
 
     private int getLineStartOffset(int lineNumber) {
         int realLineNumber = lineNumber - startingLine;
-        if (realLineNumber<0) realLineNumber = 0; //REVISIT later
+        if (realLineNumber <=0) {
+            return 0;
+        }
+        if (realLineNumber >= lineOffsets.length) {
+            return content.length();
+        }
         return lineOffsets[realLineNumber];
     }
 
     private int getLineEndOffset(int lineNumber) {
         int realLineNumber = lineNumber - startingLine;
-        int endOffset = (realLineNumber + 1 == lineOffsets.length) ? content.length() : lineOffsets[realLineNumber + 1];
-        return endOffset;
+        if (realLineNumber <0) {
+            return 0;
+        }
+        if (realLineNumber >= lineOffsets.length) {
+            return content.length();
+        }
+        if (realLineNumber == lineOffsets.length -1) {
+            return content.length() -1;
+        }
+        return lineOffsets[realLineNumber+1] -1;
     }
 
     private void setStartPosition(int line, int column) {
