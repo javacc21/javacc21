@@ -28,6 +28,16 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+   #define artsy
+
+  #undef artsy
+
+#if artsy
+   May I compare thee to a Summer's day?
+   Thou art more beautiful..
+#elif foobar && artsy
+   Yes, we have a preprocessor!
+ #else
 JAVA_UNICODE_ESCAPE;
 TREE_BUILDING_ENABLED;
 FREEMARKER_NODES;
@@ -36,6 +46,7 @@ NODE_PACKAGE="com.javacc.parser.tree";
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../java";
 //JDK_TARGET=11;
+#endif 
 
 INJECT PARSER_CLASS :
     import java.util.*;
@@ -53,6 +64,10 @@ INJECT PARSER_CLASS :
          BitSet lineMarkers = null;
          try {
              char lastChar = content.charAt(content.length()-1);
+             // The file has to end with a newline. It's very hard 
+             // to write the grammar otherwise!
+             // I think I should make appending a newline at the end of the file
+             // (if there isn't one already) a configuration setting.
              if (lastChar!='\n' && lastChar!='\r') {
                  StringBuilder buf= new StringBuilder(content);
                  buf.append((char) '\n');

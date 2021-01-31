@@ -3,10 +3,6 @@
         <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
     </tstamp>
 
-	<uptodate property="preprocessor.uptodate"
-		targetfile="src/main/java/com/javacc/preprocessor/PreprocessorParser.java"
-        srcfile="examples/preprocessor/Preprocessor.javacc"/>
-
   <target name="init">
     <echo>Join the JavaCC 21 Discussion forum at: https://parsers.org/</echo>
 	  <echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
@@ -15,6 +11,10 @@
 		targetfile="src/main/java/com/javacc/parser/JavaCCParser.java">
         <srcfiles dir="src/main/grammars" includes="*.javacc"/>
 	  </uptodate>
+    <uptodate property="preprocessor.uptodate"
+		targetfile="src/main/java/com/javacc/preprocessor/PreprocessorParser.java"
+        srcfile="examples/preprocessor/Preprocessor.javacc"/>
+
 </target>
 
 <target name="restore-bootstrap-jar">
