@@ -7,6 +7,7 @@
 /*.jar
 \#*
 /src/main/java/com/javacc/parser/*
+/src/main/java/com/javacc/preprocessor/*
 /examples/freemarker/ftl/*
 /examples/freemarker/fel/*
 /examples/legacy/test.tmp/*

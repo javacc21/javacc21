@@ -5,9 +5,10 @@ PARSER_PACKAGE="com.javacc.preprocessor";
 
 /*
  * This is an implementation of the C# preprocessor.
- * Well, it is incomplete at the moment, because it only supports:
- * #define and #undef and #if/#elif/#else. At the moment,
- * it doesn't support #pragma, #region, #line or #warning etcetera
+ * Well, it is incomplete at the moment, because it just ignores
+ * everything except:#define/#undef and #if/#elif/#else. 
+ * The other C# pre-processing directives, #pragma, #region/#endregion, 
+ * #warning/#error and #line are just treated as lines to ignore.
  * It may in the future, but those are application-specific.
  * What is supported is turning on or off parts of the source file.
  * The root production returns a java.util.BitSet that holds 
@@ -50,7 +51,19 @@ TOKEN :
  <PP_ENDIF : <PP_START> "endif"> : PP_DIRECTIVE
 ;
 
+UNPARSED :
+ <PP_IGNORED_DIRECTIVE : 
+     <PP_START> 
+// Just ignore all these for now.     
+     ("pragma" | "line" | "warning" | "error" | "region" | "endregion") 
+     (~["\n", "\r"])* 
+     <PP_EOL>>
+;
+ 
+
 MORE :
+//Anything else that looks like it starts a directive,
+// we just treat (rightly or wrongly) as a line of code.
   <PP_START : (<PP_WS>)* "#" (<PP_WS>)*> : PP_EAT_TO_EOL
 ;
 

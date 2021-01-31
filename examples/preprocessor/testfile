@@ -1,3 +1,6 @@
+#pragma // We ignore this.
+#prag //But we pass this through.
+#lines //What about this?
 #define foo // Always foo! Why is that?
 
 #if !foo
@@ -11,3 +14,4 @@ But ###this!
 #oops #undef oops
 
 #endif
+

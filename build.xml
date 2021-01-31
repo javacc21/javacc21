@@ -3,6 +3,10 @@
         <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
     </tstamp>
 
+	<uptodate property="preprocessor.uptodate"
+		targetfile="src/main/java/com/javacc/preprocessor/PreprocessorParser.java"
+        srcfile="examples/preprocessor/Preprocessor.javacc"/>
+
   <target name="init">
     <echo>Join the JavaCC 21 Discussion forum at: https://parsers.org/</echo>
 	  <echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
@@ -36,6 +40,7 @@
  	<delete file="javacc-full.jar"/>
  	<delete dir="build"/>
 	<delete dir="src/main/java/com/javacc/parser"/>
+	<delete dir="src/main/java/com/javacc/preprocessor"/>
   <delete dir="examples/java/com"/>
   <delete dir="examples/freemarker/fel"/>
   <delete dir="examples/freemarker/ftl"/>
@@ -50,8 +55,14 @@
  	   <arg line="-n -q -d ../java src/main/grammars/JavaCC.javacc"/>
  	</java>
   </target>
+<target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
+	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
+ 	<java jar="bin/javacc.jar" fork="true" failonerror="true">
+ 	   <arg line="-n -q -d ../../src/main/java examples/preprocessor/Preprocessor.javacc"/>
+ 	</java>
+  </target>
 
-<target name="compile" depends="parser-gen">
+<target name="compile" depends="parser-gen, preprocessor-gen">
   	<mkdir dir="build"/>
     <javac srcdir="src/main/java" 
  	       destdir="build"

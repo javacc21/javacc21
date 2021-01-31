@@ -43,12 +43,26 @@ INJECT PARSER_CLASS :
     import com.javacc.lexgen.*;
     import com.javacc.parsegen.*;
     import com.javacc.parser.tree.*;
+    import com.javacc.preprocessor.PreprocessorParser;
 {
     Grammar grammar;
 
     public JavaCCParser(Grammar grammar, String inputSource, CharSequence content) {
          this(inputSource, content);
          this.grammar = grammar;
+         BitSet lineMarkers = null;
+         try {
+             char lastChar = content.charAt(content.length()-1);
+             if (lastChar!='\n' && lastChar!='\r') {
+                 StringBuilder buf= new StringBuilder(content);
+                 buf.append((char) '\n');
+                 content = buf;
+             }
+             lineMarkers = new PreprocessorParser(content).PP_Root();
+         } catch(com.javacc.preprocessor.ParseException pe) {
+             throw new RuntimeException(pe);
+         }
+         token_source.input_stream.setParsedLines(lineMarkers);
     }
 
     static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
@@ -2846,3 +2860,4 @@ INJECT CharacterRange :
         }
     }
 }
+

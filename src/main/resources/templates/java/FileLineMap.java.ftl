@@ -157,12 +157,12 @@ public class FileLineMap {
     }
 
     private void advanceLine() {
-        if (parsedLines == null) {
+        if (parsedLines == null || line<0) {
             ++line;
         } else {
             do {
                 ++line;
-            } while (!parsedLines.get(line));
+            } while (!parsedLines.get(line) && line < lineOffsets.length);
         }
     }
 
@@ -172,7 +172,7 @@ public class FileLineMap {
         } else {
             do {
                 --line;
-            } while (!parsedLines.get(line));
+            } while (!parsedLines.get(line) && line>=0);
         }
     }
     
