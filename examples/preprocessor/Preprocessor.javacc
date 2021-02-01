@@ -1,0 +1,211 @@
+DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
+TREE_BUILDING_ENABLED=false;
+PARSER_PACKAGE="com.javacc.preprocessor";
+//DEBUG_PARSER;
+
+/*
+ * This is an implementation of the standard C# preprocessor.
+ * Well, it is incomplete at the moment, because it just ignores
+ * everything except:#define/#undef and #if/#elif/#else. 
+ * The other C# pre-processing directives, #pragma, #region/#endregion, 
+ * #warning/#error and #line are just treated as lines to ignore.
+ * So the only thing currently suppported is turning on or off 
+ * parts of the source file.
+ * This is very bare-bones and bloody-minded. It does not builld a
+ * tree or any of that. It just uses code actions to create a BitSet
+ * that holds whether a line is "turned on" or not. The line offsets
+ * are 1-based.
+ *
+ * All the naming in this file is prefixed with PP_, sort of using the 
+ * poor man's namespace functionality. This is because I anticipate
+ * this getting INCLUDEd and I don't want to stomp on other people's
+ * names. It is not terribly optimal and really quite ugly. Something 
+ * should eventually be done about this.
+ */
+
+INJECT PARSER_CLASS : 
+{
+    private BitSet lineMarkers = new BitSet();
+    private Set<String> definedSymbols = new HashSet<>();
+    private boolean currentlyOn = true;
+
+    public BitSet getLineMarkers() {
+        return lineMarkers;
+    }
+
+    private void setLineMarker() {
+        int lineNumber = lastConsumedToken.getBeginLine();
+        if (currentlyOn) lineMarkers.set(lineNumber);
+    }
+}
+
+TOKEN : 
+ <#PP_WS : [" ", "\t", "\f"] >
+ |
+ <#PP_EOL : "\n" | "\r" | "\r\n" >
+ |
+ <PP_LINE : (<PP_WS>)* ((~["#", " ", "\t", "\f", "\n", "\r"]) (~["\n", "\r"])*)? <PP_EOL>>
+ |
+ <PP_DEFINE : <PP_START> "define" (<PP_WS>)*> : PP_DIRECTIVE 
+ |
+ <PP_UNDEF : <PP_START> "undef" (<PP_WS>)*> : PP_DIRECTIVE 
+ |
+ <PP_IF : <PP_START> "if" (<PP_WS>)*> : PP_DIRECTIVE 
+ |
+ <PP_ELIF : <PP_START> "elif" (<PP_WS>)*> : PP_DIRECTIVE 
+ |
+ <PP_ELSE : <PP_START> "else"> : PP_DIRECTIVE
+ |
+ <PP_ENDIF : <PP_START> "endif"> : PP_DIRECTIVE
+;
+
+UNPARSED :
+ <PP_IGNORED_DIRECTIVE : 
+     <PP_START> 
+// Just ignore all these for now.     
+     ("pragma" | "line" | "warning" | "error" | "region" | "endregion") 
+     (~["\n", "\r"])* 
+     <PP_EOL>>
+;
+ 
+
+MORE :
+//Anything else that looks like it starts a directive,
+// we just treat (rightly or wrongly) as a line of code
+// that is NOT ignored.
+  <PP_START : (<PP_WS>)* "#" (<PP_WS>)*> : PP_EAT_TO_EOL
+;
+
+<PP_EAT_TO_EOL> TOKEN :
+  <PP_FALSE_ALERT : ((~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES 
+;
+
+<PP_DIRECTIVE> TOKEN : 
+    <PP_TRUE : "true">
+    |
+    <PP_FALSE : "false">
+    |
+    <PP_SYMBOL : (["_", "a"-"z", "A"-"Z"])(["_", "a"-"z", "A"-"Z", "0"-"9"])*>
+    |
+    <PP_OR : "||">
+    |
+    <PP_AND : "&&">
+    |
+    <PP_LPAREN : "(">
+    |
+    <PP_RPAREN : ")">
+    |
+    <PP_EQUALS : "==">
+    |
+    <PP_NOT_EQUALS : "!=">
+    |
+    <PP_NOT : "!"> 
+;
+
+<PP_DIRECTIVE> UNPARSED : 
+    <PP_EOL_COMMENT : ("//" (~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES
+;
+
+<PP_DIRECTIVE> SKIP : " " | "\t" | "\f" ;
+
+BitSet PP_Root : PP_Block <EOF> {return lineMarkers;};
+
+PP_Block : (PP_IfBlock | PP_DefStatement | PP_UndefStatement | PP_Content)* ;
+
+PP_Content : ((<PP_LINE>|<PP_FALSE_ALERT>) {setLineMarker();})+ ;
+
+PP_IfBlock : 
+   { 
+      boolean alreadyHandled=false, result;
+      final boolean previouslyOn = currentlyOn;
+   }
+    <PP_IF> 
+    result=PP_Expression {
+        if (result) alreadyHandled = true;
+        currentlyOn = result && previouslyOn;
+    }
+    PP_Block {if (alreadyHandled) currentlyOn = false;} 
+    (
+        <PP_ELIF> result=PP_Expression 
+        {
+            if (!alreadyHandled) {
+                alreadyHandled = result;
+                currentlyOn = previouslyOn && result;
+            }
+        }
+        PP_Block
+    )* 
+    [
+        <PP_ELSE> {currentlyOn = !alreadyHandled && previouslyOn;}
+        PP_Block
+    ]
+    <PP_ENDIF>
+    {this.currentlyOn = previouslyOn;}
+;
+
+PP_DefStatement :
+  <PP_DEFINE> <PP_SYMBOL>
+  {if (currentlyOn) definedSymbols.add(lastConsumedToken.getImage());}
+;
+
+PP_UndefStatement : 
+    <PP_UNDEF> <PP_SYMBOL> 
+    {if (currentlyOn) definedSymbols.remove(lastConsumedToken.getImage());}
+;    
+
+boolean PP_Expression :
+  {boolean result, result2, inequality=false;}
+  result=PP_OrExpression
+  [
+    (<PP_EQUALS>|<PP_NOT_EQUALS>{inequality=true;}) 
+    result2=PP_OrExpression 
+    {
+        result = inequality ? result != result2 : result == result2;
+    }
+  ]
+  {return result;}
+;
+
+boolean PP_OrExpression : 
+  {boolean result, result2;}
+   result=PP_AndExpression 
+   (<PP_OR> result2=PP_AndExpression {result = result || result2;})* 
+   {return result;}
+;
+
+boolean PP_AndExpression : 
+   {boolean result, result2;}
+   result=PP_NotExpression 
+   (<PP_AND> result2=PP_NotExpression {result = result&&result2;})*
+   {return result;}
+;   
+
+boolean PP_NotExpression : 
+   {boolean not = false, result;}
+   (<PP_NOT> {not = !not;})* 
+   result=PP_PrimaryExpression 
+   {return not ? !result : result;}
+;
+
+boolean PP_Parentheses : 
+   {boolean result;}
+   <PP_LPAREN> 
+   result=PP_Expression 
+   <PP_RPAREN> 
+   {return result;}
+;
+
+boolean PP_PrimaryExpression : 
+    {boolean result;}
+    (
+      result=PP_Parentheses
+      |
+      <PP_SYMBOL> 
+      {result = definedSymbols.contains(lastConsumedToken.getImage());}
+      |
+      <PP_TRUE> {result = true;}
+      |
+      <PP_FALSE> {result = false;}
+    )
+    {return result;}
+; 

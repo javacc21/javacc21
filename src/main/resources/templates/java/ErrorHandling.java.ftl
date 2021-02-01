@@ -29,6 +29,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
  --]
+
+ [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
  [#if grammar.debugParser]
   private boolean trace_enabled = true;
  [#else]
@@ -68,14 +70,14 @@ class NonTerminalCall {
     final int line, column;
 
     // We actually only use this when we're working with the LookaheadStack
-    final boolean stopAtScanLimit;
+    final boolean scanToEnd;
 
     NonTerminalCall(String sourceFile, String productionName, int line, int column) {
         this.sourceFile = sourceFile;
         this.productionName = productionName;
         this.line = line;
         this.column = column;
-        this.stopAtScanLimit = ${grammar.parserClassName}.this.stopAtScanLimit;
+        this.scanToEnd = ${grammar.parserClassName}.this.scanToEnd;
     }
 
     StackTraceElement createStackTraceElement() {
@@ -156,7 +158,7 @@ private final void pushOntoLookaheadStack(String methodName, String fileName, in
 
 private final void popLookaheadStack() {
     NonTerminalCall ntc = lookaheadStack.remove(lookaheadStack.size() -1);
-    this.stopAtScanLimit = ntc.stopAtScanLimit;
+    this.scanToEnd = ntc.scanToEnd;
 }
 
 void dumpLookaheadStack(PrintStream ps) {
@@ -266,12 +268,18 @@ void dumpLookaheadCallStack(PrintStream ps) {
   private class ParseState {
        Token lastConsumed;
        ArrayList<NonTerminalCall> parsingStack;
-  [#if grammar.treeBuildingEnabled]
+   [#if MULTIPLE_LEXICAL_STATE_HANDLING]
+       LexicalState lexicalState;
+   [/#if]
+   [#if grammar.treeBuildingEnabled]
        NodeScope nodeScope;
  [/#if]       
        ParseState() {
            this.lastConsumed = ${grammar.parserClassName}.this.lastConsumedToken;
            this.parsingStack = (ArrayList<NonTerminalCall>) ${grammar.parserClassName}.this.parsingStack.clone();
+[#if grammar.lexerData.numLexicalStates > 1]
+           this.lexicalState = token_source.lexicalState;
+[/#if]
 [#if grammar.treeBuildingEnabled]            
            this.nodeScope = (NodeScope) currentNodeScope.clone();
 [/#if]           
@@ -298,13 +306,10 @@ void dumpLookaheadCallStack(PrintStream ps) {
         //REVISIT
          lastConsumedToken = state.lastConsumed;
     }
-[#if grammar.lexerData.numLexicalStates > 1]     
-     token_source.switchTo(lastConsumedToken.getFollowingLexicalState());
-     if (token_source.doLexicalStateSwitch(lastConsumedToken.getType())) {
-         token_source.reset(lastConsumedToken);
-         lastConsumedToken.setNext(null);
-         lastConsumedToken.setNextToken(null);
-     }
+[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+     token_source.reset(lastConsumedToken, state.lexicalState);
+[#else]     
+     token_source.reset(lastConsumedToken);
 [/#if]          
   } 
   

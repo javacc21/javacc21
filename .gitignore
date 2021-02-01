@@ -3,15 +3,18 @@
 /build/*
 /classes/*
 /target/*
+/.settings/*
 /*.jar
 \#*
 /src/main/java/com/javacc/parser/*
+/src/main/java/com/javacc/preprocessor/*
 /examples/freemarker/ftl/*
 /examples/freemarker/fel/*
 /examples/legacy/test.tmp/*
 /examples/java/org/*
 /examples/json/org/*
 /examples/csharp/org/*
+/examples/preprocessor/com/*
 /.vscode/*
 /.idea/*
 

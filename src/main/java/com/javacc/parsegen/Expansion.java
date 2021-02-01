@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -46,8 +46,6 @@ import com.javacc.parser.tree.*;
 abstract public class Expansion extends BaseNode {
 
     private TreeBuildingAnnotation treeNodeBehavior;
-
-    private Lookahead lookahead;
 
     private String label = "";
 
@@ -130,12 +128,48 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean isAtChoicePoint() {
+        //Node parent = getNonSuperfluousParent();
         Node parent = getParent();
         return parent instanceof ExpansionChoice
             || parent instanceof OneOrMore
             || parent instanceof ZeroOrMore
             || parent instanceof ZeroOrOne
             || parent instanceof BNFProduction;
+    }
+
+    /**
+     * @return the first ancestor that is not (directly) inside
+     * superfluous parentheses. (Yes, this is a bit hairy and I'm not 100% sure it's correct!) 
+     */
+
+    public Node getNonSuperfluousParent() {
+        Node parent = getParent();
+        if (!(parent instanceof Expansion) || !((Expansion) parent).superfluousParentheses()) {
+            return parent;
+        }
+        ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
+        return grandparent.getNonSuperfluousParent();
+    }
+
+    /**
+     * @return the lexical state to switch into to parse this expansion.
+     * At the moment this can only be specified at the production level.
+     */
+    public String getSpecifiedLexicalState() {
+        Node parent = getParent();
+        if (parent instanceof BNFProduction) {
+            return ((BNFProduction) parent).getLexicalState();
+        }
+        return null;
+    }
+
+
+    /**
+     * Is this expansion superfluous parentheses?
+     */
+    public final boolean superfluousParentheses() {
+        return this.getClass() == ExpansionWithParentheses.class 
+               && firstChildOfType(ExpansionSequence.class) != null;
     }
 
 
@@ -154,12 +188,8 @@ abstract public class Expansion extends BaseNode {
         return firstAncestorOfType(Lookahead.class) != null;
     }
 
-    public void setLookahead(Lookahead lookahead) {
-        this.lookahead = lookahead;
-    }
-
     public Lookahead getLookahead() {
-        return lookahead;
+        return null;
     }
 
     public boolean getHasExplicitLookahead() {
@@ -185,19 +215,20 @@ abstract public class Expansion extends BaseNode {
      * expansion?
      */
     public boolean getHasImplicitSyntacticLookahead() {
-        if (getHasSeparateSyntacticLookahead())
-            return false;
         if (!this.isAtChoicePoint())
+            return false;
+        if (getHasSeparateSyntacticLookahead())
             return false;
         if (this.isAlwaysSuccessful())
             return false;
         if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <=1 )
             return false;
-        if (getRequiresScanAhead())
-            return true;
         if (getHasScanLimit())
             return true;
-        return false;
+        if (isSingleToken())
+            return false;
+        Lookahead la = getLookahead();
+        return la != null && la.getAmount()>1;
     }
 
     private boolean scanLimit;

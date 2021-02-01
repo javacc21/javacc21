@@ -175,7 +175,7 @@
  
  [#if multipleLexicalStates]
       if (newLexicalStates[jjmatchedKind] != null) {
-          matchedToken.setFollowingLexicalState(newLexicalStates[jjmatchedKind]);
+[#--          matchedToken.setFollowingLexicalState(newLexicalStates[jjmatchedKind]);--]
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
@@ -293,7 +293,7 @@
         t.setBeginColumn(beginColumn);
         t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
-     [#if multipleLexicalStates]
+     [#if false]
         t.setLexicalState(lexicalState);
      [/#if]        
         return t;

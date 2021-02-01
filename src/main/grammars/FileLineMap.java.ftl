@@ -89,15 +89,8 @@ public class FileLineMap {
     private int startingLine, startingColumn;
     private int bufferPosition, tokenBeginOffset, tokenBeginColumn, tokenBeginLine, line, column;
 
-
-    // If this is set, it determines 
-    // which lines in the file are actually processed.
     private BitSet parsedLines;
 
-    /**
-     * @return true if we actually actually parse this line.
-     * (Or really whether we lex it, since what happens here is pre-lexical!)
-     */
     private boolean isParsedLine(int lineNumber) {
         return parsedLines == null || parsedLines.get(1+lineNumber-startingLine);
     }
@@ -105,7 +98,7 @@ public class FileLineMap {
     /**
      * This is used in conjunction with having a preprocessor.
      * We set which lines are actually parsed lines and the 
-     * unset ones are ignored.
+     * rest are ignored.
      */
     public void setParsedLines(BitSet parsedLines) {
         this.parsedLines = parsedLines;

@@ -219,36 +219,50 @@ public interface Node extends Comparable<Node>
         return descendants(Token.class, t->!t.isUnparsed());
     }
     
-[#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
+     /**
+      * @return the FileLineMap from which this Node object
+      * originated. There is no guarantee that this doesn't return null.
+      * Most likely that would simply be because you constructed the 
+      * Node yourself, i.e. it didn't really come about via the parsing/tokenizing
+      * machinery.
+      */
      default FileLineMap getFileLineMap() {
          return FileLineMap.getFileLineMapByName(getInputSource());
      }
 
+     /**
+      * @return the original source content this Node came from
+      * a reference to the #FileLineMap that stores the source code and
+      * the start/end location info stored in the Node object itself.
+      * This method could throw a NullPointerException if #getFileLineMap
+      * returns null. Also, the return value could be spurious if 
+      * the content of the source file was changed meanwhile. But
+      * this is just the default implementation of an API and it does not 
+      * address this problem!
+      */
      default String getSource() {
         return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
     }
-[/#if]          
       
-     int getBeginLine();
+    int getBeginLine();
      
-     int getEndLine();
+    int getEndLine();
      
-     int getBeginColumn();
+    int getBeginColumn();
      
-     int getEndColumn();
+    int getEndColumn();
      
-     void setBeginLine(int beginLine);
+    void setBeginLine(int beginLine);
      
-     void setEndLine(int endLine);
+    void setEndLine(int endLine);
      
-     void setBeginColumn(int beginColumn);
+    void setBeginColumn(int beginColumn);
      
-     void setEndColumn(int endColumn);
+    void setEndColumn(int endColumn);
      
-     default String getLocation() {
-         //return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
+    default String getLocation() {
          return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
-     }
+    }
      
      
      /**
@@ -264,17 +278,28 @@ public interface Node extends Comparable<Node>
      void setUnparsed(boolean b);
      
     default <T extends Node>T firstChildOfType(Class<T>clazz) {
-        for (Node child : children()) {
-            if (clazz.isInstance(child)) {
-                return clazz.cast(child);
-            }
+        for (int i=0; i<getChildCount();i++) {
+            Node child = getChild(i);
+            if (clazz.isInstance(child)) return clazz.cast(child);
         }
         return null; 
-     }
+    }
+
+    default <T extends Node>T firstChildOfType(Class<T> clazz, Predicate<T> pred) {
+        for (int i=0; i<getChildCount();i++) {
+            Node child = getChild(i);
+            if (clazz.isInstance(child)) {
+                T t = clazz.cast(child);
+                if (pred.test(t)) return t;
+            }
+        }
+        return null;
+    }
 
 [#if !grammar.userDefinedLexer && grammar.tokensAreNodes]
     default Token firstDescendantOfType(${grammar.constantsClassName}.TokenType type) {
-         for (Node child : children()) {
+         for (int i=0; i<getChildCount(); i++) {
+             Node child = getChild(i);
              if (child instanceof Token) {
                  Token tok = (Token) child;
                  if (tok.getType()==type) {
@@ -289,7 +314,8 @@ public interface Node extends Comparable<Node>
     }
 
     default Token firstChildOfType(${grammar.constantsClassName}.TokenType tokenType) {
-        for (Node child : children()) {
+        for (int i=0; i<getChildCount();i++) {
+            Node child = getChild(i);
             if (child instanceof Token) {
                 Token tok = (Token) child;
                 if (tok.getType() == tokenType) return tok;
@@ -300,7 +326,8 @@ public interface Node extends Comparable<Node>
 [/#if]
 
     default <T extends Node>T firstDescendantOfType(Class<T> clazz) {
-         for (Node child : children()) {
+         for (int i=0; i<getChildCount();i++) {
+             Node child = getChild(i);
              if (clazz.isInstance(child)) return clazz.cast(child);
              else {
                  T descendant = child.firstDescendantOfType(clazz);
@@ -312,7 +339,8 @@ public interface Node extends Comparable<Node>
 
     default <T extends Node>List<T>childrenOfType(Class<T>clazz) {
         List<T>result=new java.util.ArrayList<>();
-        for (Node child : children()) {
+        for (int i=0; i< getChildCount(); i++) {
+            Node child = getChild(i);
             if (clazz.isInstance(child)) {
                 result.add(clazz.cast(child));
             }
@@ -322,7 +350,8 @@ public interface Node extends Comparable<Node>
    
    default <T extends Node> List<T> descendantsOfType(Class<T> clazz) {
         List<T> result = new ArrayList<T>();
-        for (Node child : children()) {
+        for (int i=0; i< getChildCount(); i++) {
+            Node child = getChild(i);
             if (clazz.isInstance(child)) {
                 result.add(clazz.cast(child));
             } 
@@ -512,6 +541,10 @@ public interface Node extends Comparable<Node>
 		    }
 		}
 	    return result;
+    }
+
+    default List<Node> descendants() {
+        return descendants(Node.class, null);
     }
 
     default List<Node> descendants(Predicate<Node> predicate) {

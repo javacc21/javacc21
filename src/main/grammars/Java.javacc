@@ -34,6 +34,7 @@ NODE_PACKAGE="org.parsers.java.ast";
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
+//JDK_TARGET=15;
 
 INCLUDE("JavaLexer.javacc")
 
@@ -41,7 +42,6 @@ INJECT PARSER_CLASS : {
 
   private Token TOKEN_HOOK(Token tok) {
     TokenType type = tok.getType();
-    if (type != GT && type != RUNSIGNEDSHIFT && type != RSIGNEDSHIFT) return tok;
     if (type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) {
       if (isInProduction("TypeArguments", "TypeParameters")) {
         // If we've entered the TypeParameters or TypeArguments production, we need to split
@@ -72,6 +72,7 @@ INJECT PARSER_CLASS : {
 }
 
 #CompilationUnit# :
+  LEXICAL_STATE JAVA
   [ PackageDeclaration ]
   ( ImportDeclaration )*
   (
@@ -83,14 +84,6 @@ INJECT PARSER_CLASS : {
     return CURRENT_NODE;
   }
 ;
-
-INJECT IntegerLiteral :
-{
-   public int getValue() {
-     return Integer.valueOf(getImage());
-   }
-}
-
 
 PackageDeclaration : (Annotation)* "package" =>|| Name ";" ;
 
@@ -155,16 +148,16 @@ INJECT EnumDeclaration : extends TypeDeclaration;
 EmptyDeclaration# : ";" ;
 
 ClassDeclaration :
-// SCAN Modifiers "class" =>
-// (
+ SCAN Modifiers "class" =>
+ (
  Modifiers
-  "class" =>|| 
+  "class" // =>|| 
   <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList]
   [ ImplementsList ]
   ClassOrInterfaceBody
-// )
+ )
 ;
 
 InterfaceDeclaration :
@@ -538,10 +531,9 @@ PreDecrementExpression :
 UnaryExpressionNotPlusMinus :
   ( "~" | "!" ) UnaryExpression
   |
-  SCAN ~\...\NewSwitchLabel LambdaLHS
-  => LambdaExpression 
+  LambdaExpression 
   |
-  => CastExpression
+  CastExpression
   |
   PostfixExpression
   |
@@ -557,11 +549,14 @@ SwitchExpression# :
 ;
 
 CastExpression : 
+ (
   "(" PrimitiveType ")" =>|| UnaryExpression
   |
   => "(" ReferenceType ")" UnaryExpressionNotPlusMinus
   |
   => "(" ObjectType ("&" ObjectType)+ ")" UnaryExpressionNotPlusMinus 
+ )
+ =>||
 ;
 
 PrimaryExpression# :
@@ -1060,7 +1055,10 @@ AnnotationTypeMemberDeclaration :
 
 DefaultValue : "default" MemberValue ;
 
-LambdaExpression : LambdaLHS =>|| (Expression | Block) ;
+LambdaExpression : 
+  SCAN ~\...\NewSwitchLabel =>
+  LambdaLHS =>|| (Expression | Block) 
+;
 
 LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | FormalParameters) "->" =>|| ;
 

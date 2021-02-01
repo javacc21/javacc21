@@ -3,14 +3,18 @@
         <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
     </tstamp>
 
-    <target name="init">
-        <echo>Join the JavaCC 21 Discussion forum at: https://parsers.org/</echo>
-	<echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
-	<echo>JDK Version: ${java.version} on ${os.name}</echo>
-	<uptodate property="parser.uptodate"
+  <target name="init">
+    <echo>Join the JavaCC 21 Discussion forum at: https://parsers.org/</echo>
+	  <echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
+	  <echo>JDK Version: ${java.version} on ${os.name}</echo>
+	  <uptodate property="parser.uptodate"
 		targetfile="src/main/java/com/javacc/parser/JavaCCParser.java">
         <srcfiles dir="src/main/grammars" includes="*.javacc"/>
-	</uptodate>
+	  </uptodate>
+    <uptodate property="preprocessor.uptodate"
+		targetfile="src/main/java/com/javacc/preprocessor/PreprocessorParser.java"
+        srcfile="examples/preprocessor/Preprocessor.javacc"/>
+
 </target>
 
 <target name="restore-bootstrap-jar">
@@ -36,10 +40,12 @@
  	<delete file="javacc-full.jar"/>
  	<delete dir="build"/>
 	<delete dir="src/main/java/com/javacc/parser"/>
+	<delete dir="src/main/java/com/javacc/preprocessor"/>
   <delete dir="examples/java/com"/>
   <delete dir="examples/freemarker/fel"/>
   <delete dir="examples/freemarker/ftl"/>
   <delete dir="examples/json/com"/>
+  <delete dir="examples/preprocessor/com/"/>
 </target>
 
 
@@ -49,8 +55,14 @@
  	   <arg line="-n -q -d ../java src/main/grammars/JavaCC.javacc"/>
  	</java>
   </target>
+<target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
+	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
+ 	<java jar="bin/javacc.jar" fork="true" failonerror="true">
+ 	   <arg line="-n -q -d ../../src/main/java examples/preprocessor/Preprocessor.javacc"/>
+ 	</java>
+  </target>
 
-<target name="compile" depends="parser-gen">
+<target name="compile" depends="parser-gen, preprocessor-gen">
   	<mkdir dir="build"/>
     <javac srcdir="src/main/java" 
  	       destdir="build"
@@ -82,15 +94,18 @@
 
 	
   <target name="test" depends="jar">
+    <echo>Testing the JSON Parser</echo>
+    <ant antfile="build.xml" dir="examples/json" target="clean"/>
+    <ant antfile="build.xml" dir="examples/json" target="test"/>
+    <echo>Testing the Preprocessor</echo>
+    <ant antfile="build.xml" dir="examples/preprocessor" target="clean"/>
+    <ant antfile="build.xml" dir="examples/preprocessor" target="test"/>
     <echo>Testing the Java parser standalone</echo>
     <ant antfile="build.xml" dir="examples/java" target="clean"/>
     <ant antfile="build.xml" dir="examples/java" target="test"/>
     <echo>Testing the newer FreeMarker parser</echo>
     <ant antfile="build.xml" dir="examples/freemarker" target="clean"/>
     <ant antfile="build.xml" dir="examples/freemarker" target="test"/>
-    <echo>Testing the JSON Parser</echo>
-    <ant antfile="build.xml" dir="examples/json" target="clean"/>
-    <ant antfile="build.xml" dir="examples/json" target="test"/>
     <echo>Running through the crufty old legacy examples</echo>
     <ant antfile="build.xml" dir="examples/legacy" target="test" />
  </target>

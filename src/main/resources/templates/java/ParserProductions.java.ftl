@@ -54,7 +54,7 @@
     [@CU.firstSetVar production.expansion/]
     ${production.leadingComments}
 // ${production.location}
-    final ${production.accessMod!"public"} 
+    final ${production.accessModifier}
     ${production.returnType}
     ${production.name}(${production.parameterList!}) 
     throws ParseException
@@ -63,48 +63,77 @@
      if (cancelled) throw new CancellationException();
      String prevProduction = currentlyParsedProduction;
      this.currentlyParsedProduction = "${production.name}";
-   [@BuildCode production.expansion /]
+     [#--${production.javaCode!}
+       This is actually inserted further down because
+       we want the prologue java code block to be able to refer to 
+       CURRENT_NODE.
+     --]
+     [@BuildCode production.expansion /]
     }   
 [/#macro]
 
-[#-- The next 100 lines are too messy and need a significant cleanup --]
 [#macro BuildCode expansion]
    [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
   // Code for ${expansion.simpleName} specified at:
   // ${expansion.location}
   [/#if]
-    [#var nodeVarName, parseExceptionVar, production, treeNodeBehavior, buildTreeNode=false, closeCondition = "true", callStackSizeVar]
+      [@CU.HandleLexicalStateChange expansion false]
+       [@HandleTreeBuilding expansion]
+        [@BuildExpansionCode expansion/]
+       [/@HandleTreeBuilding]
+      [/@CU.HandleLexicalStateChange]
+[/#macro]
+
+[#macro HandleTreeBuilding expansion]
+    [#var nodeVarName, 
+          production, 
+          treeNodeBehavior, 
+          buildTreeNode=false, 
+          closeCondition = "true", 
+          javaCodePrologue = "",
+          parseExceptionVar = CU.newVarName("parseException"),
+          callStackSizeVar = CU.newVarName("callStackSize")
+    ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
+      [#set javaCodePrologue = production.javaCode!]
     [/#if]
     [#if grammar.treeBuildingEnabled]
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
                         || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
-    [#if buildTreeNode]
-        [@setupTreeVariables .scope /]
-      [@createNode treeNodeBehavior nodeVarName /]
-          ParseException ${parseExceptionVar} = null;
-          [#--set callStackSizeVar = "callStackSize" + CU.newID()--]
-          [#set callStackSizeVar = CU.newVarName("callStackSize")]
-          int ${callStackSizeVar} = parsingStack.size();
-        [#-- We want the very first java code block in a production 
-         to be injected *before* the try block. This is for rather hypertechnical 
-         reasons. It's that we want any variables defined up top in a production 
-         to be visible within the following catch/finally blocks.--]
-        ${(production.javaCode)!}
+    [#if !buildTreeNode]
+      ${javaCodePrologue} 
+      [#nested]
+    [#else]
+     [#set nodeNumbering = nodeNumbering +1]
+     [#set nodeVarName = currentProduction.name + nodeNumbering]
+     ${grammar.utils.pushNodeVariableName(nodeVarName)!}
+      [#if !treeNodeBehavior??]
+         [#if grammar.smartNodeCreation]
+            [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false}]
+         [#else]
+            [#set treeNodeBehavior = {"name" : production.name, "condition" : null, "gtNode" : false, "void" : false}]
+         [/#if]
+      [/#if]
+      [#if treeNodeBehavior.condition?has_content]
+         [#set closeCondition = treeNodeBehavior.condition]
+         [#if treeNodeBehavior.gtNode]
+            [#set closeCondition = "nodeArity() > " + closeCondition]
+         [/#if]
+      [/#if]
+
+      [@createNode treeNodeBehavior nodeVarName false /]
+         [#-- I put this here for the hypertechnical reason
+              that I want the initial code block to be able to 
+              reference CURRENT_NODE. --]
+         ${javaCodePrologue}
+         ParseException ${parseExceptionVar} = null;
+         int ${callStackSizeVar} = parsingStack.size();
          try {
             if (false) throw new ParseException("Never happens!");
-    [#else]
-        ${(production.javaCode)!}
-    [/#if]
-        [@BuildExpansionCode expansion/]
-    [#var returnType = (production.returnType)!"void"]
-    [#if production?? && returnType == "void"]
-        if (trace_enabled) LOGGER.info("Exiting normally from ${production.name}");
-    [/#if]
-    [#if buildTreeNode]
+            [#nested]
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
@@ -131,40 +160,20 @@
     [/#if]
 [/#macro]
 
-[#--  A helper macro to set up some variables so that the BuildCode macro can be a bit more readable --]
-[#macro setupTreeVariables callingScope]
-    [#set nodeNumbering = nodeNumbering +1]
-    [#set nodeVarName = currentProduction.name + nodeNumbering in callingScope]
-    ${grammar.utils.pushNodeVariableName(callingScope.nodeVarName)!}
-    [#set parseExceptionVar = "parseException"+nodeNumbering in callingScope]
-    [#if !callingScope.treeNodeBehavior??]
-        [#if grammar.smartNodeCreation]
-           [#set treeNodeBehavior = {"name" : callingScope.production.name, "condition" : "1", "gtNode" : true, "void" :false} in callingScope]
-        [#else]
-           [#set treeNodeBehavior = {"name" : callingScope.production.name, "condition" : null, "gtNode" : false, "void" : false} in callingScope]
-        [/#if]
-     [/#if]
-     [#if callingScope.treeNodeBehavior.condition?has_content]
-       [#set closeCondition = callingScope.treeNodeBehavior.condition in callingScope]
-       [#if callingScope.treeNodeBehavior.gtNode]
-          [#set closeCondition = "nodeArity() > " + callingScope.closeCondition in callingScope]
-       [/#if]
-    [/#if]
-[/#macro]
-
 [#--  Boilerplate code to create the node variable --]
-[#macro createNode treeNodeBehavior nodeVarName]
+[#macro createNode treeNodeBehavior nodeVarName isAbstractType]
    [#var nodeName = nodeClassName(treeNodeBehavior)]
    ${nodeName} ${nodeVarName} = null;
+   [#if !isAbstractType]
    if (buildTree) {
      ${nodeVarName} = new ${nodeName}();
   [#if grammar.nodeUsesParser]
      ${nodeVarName}.setParser(this);
   [/#if]
-   
-      ${nodeVarName}.setInputSource(getInputSource());
-       openNodeScope(${nodeVarName});
+   ${nodeVarName}.setInputSource(getInputSource());
+   openNodeScope(${nodeVarName});
   }
+  [/#if]
 [/#macro]
 
 [#function nodeClassName treeNodeBehavior]
@@ -177,12 +186,11 @@
 
 [#macro BuildExpansionCode expansion]
     [#var classname=expansion.simpleName]
+    [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
     [#if classname = "ExpansionWithParentheses"]
        [@BuildExpansionCode expansion.nestedExpansion/]
     [#elseif classname = "CodeBlock"]
        ${expansion}
-    [#elseif classname="LexicalStateSwitch"] 
-       [@BuildCodeLexicalStateSwitch expansion /]
     [#elseif classname = "Failure"]
        [@BuildCodeFailure expansion/]
     [#elseif classname = "ExpansionSequence"]
@@ -206,10 +214,6 @@
     [#elseif classname = "Assertion"]
         [@BuildAssertionCode expansion/]
     [/#if]
-[/#macro]
-
-[#macro BuildCodeLexicalStateSwitch switch]
-    token_source.switchTo(LexicalState.${switch.lexicalStateName});
 [/#macro]
 
 [#macro BuildCodeFailure fail]
@@ -239,35 +243,26 @@
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock]
-   [#var nested=tryblock.nestedExpansion]
-       try {
-          [@BuildCode nested/]
-       }
+     try {
+        [@BuildCode tryblock.nestedExpansion /]
+     }
    [#list tryblock.catchBlocks as catchBlock]
-       ${catchBlock}
+     ${catchBlock}
    [/#list]
-       ${tryblock.finallyBlock!}
+     ${tryblock.finallyBlock!}
 [/#macro]
 
 
 [#macro BuildCodeAttemptBlock attemptBlock]
-   [#var nested=attemptBlock.nestedExpansion]
-       try {
-          stashParseState();
-          [@BuildCode nested/]
-          popParseState();
-       }
-       catch (ParseException e) {
-           restoreStashedParseState();
-           [#if attemptBlock.recoveryCode??]
-              ${attemptBlock.recoveryCode}
-           [/#if]
-           [#if attemptBlock.recoveryExpansion??]
-               [@BuildCode attemptBlock.recoveryExpansion /]
-           [#else]
-               if (false) throw new ParseException("Never happens!");
-           [/#if]
-       }
+   try {
+      stashParseState();
+      [@BuildCode attemptBlock.nestedExpansion /]
+      popParseState();
+   }
+   catch (ParseException e) {
+      restoreStashedParseState();
+      [@BuildCode attemptBlock.recoveryExpansion /]
+   }
 [/#macro]
 
 [#macro BuildCodeNonTerminal nonterminal]

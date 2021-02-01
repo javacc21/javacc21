@@ -71,17 +71,17 @@ Token lastConsumedToken = new Token(); // We start with a dummy token. REVISIT
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
-private boolean hitFailure;
+private boolean scanToEnd, hitFailure, lastLookaheadSucceeded;
 private String currentlyParsedProduction, currentLookaheadProduction;
+private int lookaheadRoutineNesting;
+
+[#--
+ REVISIT these.
+//private Token nextToken; 
+//private EnumSet<Token> currentFollowSet;
 // private TokenType upToTokenType;
 // private EnumSet<TokenType> upToFirstSet;
-private int lookaheadRoutineNesting;
-private boolean stopAtScanLimit;
-private boolean lastLookaheadSucceeded;
-
-//private Token nextToken; //REVISIT
-
-//private EnumSet<Token> currentFollowSet;
+--]
 
 private boolean cancelled;
 public void cancel() {cancelled = true;}
@@ -246,7 +246,7 @@ public boolean isCancelled() {return cancelled;}
   
 }
 [#list grammar.otherParserCodeDeclarations as decl]
-//Generated from code on line ${decl.beginLine}, column ${decl.beginColumn} of ${decl.inputSource}
+//Generated from code at ${decl.location}
    ${decl}
 [/#list]
 

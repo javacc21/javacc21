@@ -1,5 +1,4 @@
 <project name="JSONParser" default="compile" basedir=".">
-   <property name = "BIN_DIR" value="../../bin"/>
    <uptodate property="parser1.uptodate"
             srcfile="JSON.javacc"
             targetfile="${basedir}/org/parsers/json/JSONParser.java"/> 

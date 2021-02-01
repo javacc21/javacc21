@@ -250,6 +250,7 @@ public final void backup(int amount) {
         input_stream.goTo(t.getEndLine(), t.getEndColumn());
         input_stream.forward(1);
         t.setNext(null);
+        t.setNextToken(null);
         if (state != null) {
             switchTo(state);
         }

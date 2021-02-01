@@ -89,6 +89,11 @@ public class ParserData {
     // hard to understand what it does.
     public void semanticize() {
 
+        // Check that non-terminals have all been defined.
+        for (NonTerminal nt : grammar.descendants(NonTerminal.class, nt->nt.getProduction()==null)) {
+            grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
+        }
+
         /*
          * Check whether we have any LOOKAHEADs at non-choice points 
          * REVISIT: Why is this not handled in the grammar spec?
@@ -97,23 +102,32 @@ public class ParserData {
          * of any real value.
          */
         for (ExpansionSequence sequence : grammar.descendants(ExpansionSequence.class)) {
-            Node parent = sequence.getParent();
             if (sequence.getHasExplicitLookahead() 
-               && !(
-                   parent instanceof BNFProduction ||
-                   parent instanceof ExpansionChoice ||
-                   parent instanceof OneOrMore ||
-                   parent instanceof ZeroOrMore ||
-                   parent instanceof ZeroOrOne ||
-                   parent instanceof Lookahead)) 
+               && !sequence.isAtChoicePoint())
             {
-                grammar.addSemanticError(sequence, "Encountered LOOKAHEAD(...) at a non-choice location." );
+                grammar.addSemanticError(sequence, "Encountered scanahead at a non-choice location." );
             }
         }
 /* REVISIT this later.*/
-        for (Node exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {
+        for (Expansion exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {
             if (!((Expansion) exp.getParent()).isAtChoicePoint()) {
                 grammar.addSemanticError(exp, "The up-to-here delimiter can only be at a choice point.");
+            }
+        }
+
+        for (BNFProduction prod : grammar.descendants(BNFProduction.class)) {
+            String lexicalStateName = prod.getLexicalState();
+            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
+                grammar.addSemanticError(prod, "Lexical state \""
+                + lexicalStateName + "\" has not been defined.");
+            }
+        }
+
+        for (Expansion exp : grammar.descendants(Expansion.class)) {
+            String lexicalStateName = exp.getSpecifiedLexicalState();
+            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
+                grammar.addSemanticError(exp, "Lexical state \""
+                + lexicalStateName + "\" has not been defined.");
             }
         }
 
@@ -143,18 +157,13 @@ public class ParserData {
         }
 
         for (ZeroOrOne zoo : grammar.descendants(ZeroOrOne.class, zoo->zoo.getNestedExpansion().isAlwaysSuccessful())) {
-            if (zoo.getNestedExpansion() instanceof Failure) {
+            if (zoo.getNestedExpansion().firstChildOfType(Failure.class) != null) {
                 grammar.addWarning(zoo, "The FAIL inside this construct is always triggered. This may not be your intention.");
             } else {
                 grammar.addWarning(zoo, "The expansion inside this (...)? construct can be matched by the empty string so it is always matched. This may not be your intention.");
             }
         }
    
-
-        // Check that non-terminals have all been defined.
-        for (NonTerminal nt : grammar.descendants(NonTerminal.class, nt->nt.getProduction()==null)) {
-            grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
-        }
 
         // Check that no LookBehind predicates refer to an undefined Production
         for (LookBehind lb : grammar.getAllLookBehinds()) {
