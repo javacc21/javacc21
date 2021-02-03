@@ -89,6 +89,8 @@ public class Grammar extends BaseNode {
                          closeNodeScopeHooks = new ArrayList<>();
     private Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
 
+    private Set<String> alreadyIncluded = new HashSet<>();
+
 
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
@@ -164,8 +166,11 @@ public class Grammar extends BaseNode {
 
     public Node parse(String location, boolean enterIncludes) throws IOException, ParseException {
         File file = new File(location);
+        String canonicalPath = file.getCanonicalPath();
+        if (alreadyIncluded.contains(canonicalPath)) return null;
+        else alreadyIncluded.add(canonicalPath);
         String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
-        JavaCCParser parser = new JavaCCParser(this, file.getCanonicalPath(), content);
+        JavaCCParser parser = new JavaCCParser(this, canonicalPath, content);
         parser.setEnterIncludes(enterIncludes);
         if (!isInInclude()) {
             setFilename(location);
@@ -199,6 +204,7 @@ public class Grammar extends BaseNode {
             boolean prevIgnoreCase = this.ignoreCase;
             includeNesting++;
             Node root = parse(location, true);
+            if (root==null) return null;
             includeNesting--;
             setFilename(prevLocation);
             this.defaultLexicalState = prevDefaultLexicalState;

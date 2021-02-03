@@ -264,7 +264,7 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
-        if (getHasSeparateSyntacticLookahead() || getHasLookBehind()) {
+        if (getHasSeparateSyntacticLookahead() || getHasLookBehind() || getSpecifiedLexicalState()!=null) {
             return true;
         }
         if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
