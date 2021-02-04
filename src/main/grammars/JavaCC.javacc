@@ -30,16 +30,19 @@
 
    #define artsy
 
-  #undef artsy
+#if artsy   
+  TREE_BUILDING_ENABLED;
+#endif
+
+#undef artsy
 
 #if artsy
    May I compare thee to a Summer's day?
    Thou art more beautiful..
 #elif foobar && artsy
-   Yes, we have a preprocessor!
+   I'm just testing the preprocessor a bit!
  #else
 JAVA_UNICODE_ESCAPE;
-TREE_BUILDING_ENABLED;
 FREEMARKER_NODES;
 PARSER_PACKAGE="com.javacc.parser";
 NODE_PACKAGE="com.javacc.parser.tree";
@@ -422,10 +425,14 @@ INJECT InvocationArguments :
         }
         return buf.toString();
     }
-} 
+}
 
-
+#if false
 INCLUDE("Java.javacc")
+#else
+INCLUDE("../../../examples/java/Java.javacc")
+#endif
+
 
 INJECT TypeDeclaration : 
     import java.util.*;

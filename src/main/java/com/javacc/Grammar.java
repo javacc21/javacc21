@@ -89,6 +89,10 @@ public class Grammar extends BaseNode {
                          closeNodeScopeHooks = new ArrayList<>();
     private Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
 
+    private Set<String> alreadyIncluded = new HashSet<>();
+
+    private File includedFileDirectory;
+
 
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
@@ -164,16 +168,23 @@ public class Grammar extends BaseNode {
 
     public Node parse(String location, boolean enterIncludes) throws IOException, ParseException {
         File file = new File(location);
+        String canonicalPath = file.getCanonicalPath();
+        if (alreadyIncluded.contains(canonicalPath)) return null;
+        else alreadyIncluded.add(canonicalPath);
         String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
-        JavaCCParser parser = new JavaCCParser(this, file.getCanonicalPath(), content);
+        JavaCCParser parser = new JavaCCParser(this, canonicalPath, content);
         parser.setEnterIncludes(enterIncludes);
+        File prevIncludedFileDirectory = includedFileDirectory;
         if (!isInInclude()) {
             setFilename(location);
+        } else {
+            includedFileDirectory = file.getCanonicalFile().getParentFile();
         }
         GrammarFile rootNode = parser.Root();
+        includedFileDirectory = prevIncludedFileDirectory;
         if (!isInInclude()) {
             addChild(rootNode);
-        }
+        } 
         return rootNode;
     }
 
@@ -184,6 +195,10 @@ public class Grammar extends BaseNode {
                 file = new File(new File(this.filename).getParent(), location);
                 if (file.exists()) {
                     location = file.getPath();
+                } else {
+                    if (includedFileDirectory != null) {
+                        location = new File(includedFileDirectory, location).getPath();
+                    }
                 }
             }
         }
@@ -199,6 +214,7 @@ public class Grammar extends BaseNode {
             boolean prevIgnoreCase = this.ignoreCase;
             includeNesting++;
             Node root = parse(location, true);
+            if (root==null) return null;
             includeNesting--;
             setFilename(prevLocation);
             this.defaultLexicalState = prevDefaultLexicalState;
