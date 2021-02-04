@@ -1,7 +1,15 @@
+/*
+ * Author: Jonathan Revusky revusky@javacc.com
+ * This partial implementation of the C# Preprocessor 
+ * is free to use or adapt.
+ */
+
 DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
 TREE_BUILDING_ENABLED=false;
 PARSER_PACKAGE="com.javacc.preprocessor";
 //DEBUG_PARSER;
+
+INCLUDE ("../java/JavaIdentifierDef.javacc")
 
 /*
  * This is an implementation of the standard C# preprocessor.
@@ -63,7 +71,7 @@ UNPARSED :
  <PP_IGNORED_DIRECTIVE : 
      <PP_START> 
 // Just ignore all these for now.     
-     ("pragma" | "line" | "warning" | "error" | "region" | "endregion") 
+     ("pragma" | "line" | "warning" | "error" | "region" | "endregion" | "nullable") 
      (~["\n", "\r"])* 
      <PP_EOL>>
 ;
@@ -85,7 +93,9 @@ MORE :
     |
     <PP_FALSE : "false">
     |
-    <PP_SYMBOL : (["_", "a"-"z", "A"-"Z"])(["_", "a"-"z", "A"-"Z", "0"-"9"])*>
+//    <PP_SYMBOL : (["_", "a"-"z", "A"-"Z"])(["_", "a"-"z", "A"-"Z", "0"-"9"])*>
+//    |
+    < PP_SYMBOL : <LETTER> (<PART_LETTER>)* >
     |
     <PP_OR : "||">
     |
