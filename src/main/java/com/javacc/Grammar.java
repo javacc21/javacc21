@@ -91,6 +91,8 @@ public class Grammar extends BaseNode {
 
     private Set<String> alreadyIncluded = new HashSet<>();
 
+    private File includedFileDirectory;
+
 
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
@@ -172,13 +174,17 @@ public class Grammar extends BaseNode {
         String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
         JavaCCParser parser = new JavaCCParser(this, canonicalPath, content);
         parser.setEnterIncludes(enterIncludes);
+        File prevIncludedFileDirectory = includedFileDirectory;
         if (!isInInclude()) {
             setFilename(location);
+        } else {
+            includedFileDirectory = file.getCanonicalFile().getParentFile();
         }
         GrammarFile rootNode = parser.Root();
+        includedFileDirectory = prevIncludedFileDirectory;
         if (!isInInclude()) {
             addChild(rootNode);
-        }
+        } 
         return rootNode;
     }
 
@@ -189,6 +195,10 @@ public class Grammar extends BaseNode {
                 file = new File(new File(this.filename).getParent(), location);
                 if (file.exists()) {
                     location = file.getPath();
+                } else {
+                    if (includedFileDirectory != null) {
+                        location = new File(includedFileDirectory, location).getPath();
+                    }
                 }
             }
         }

@@ -7,16 +7,14 @@
 </target>
 
 <target name="init">
-	<uptodate property="javaparser.uptodate" srcfile="../../src/main/grammars/Java.javacc" targetfile="org/parsers/java/JavaParser.java"
+	<uptodate property="javaparser.uptodate" srcfile="Java.javacc" targetfile="org/parsers/java/JavaParser.java"
 />
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
   <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
     <arg value="-q"/>
-    <arg value="-D"/>
-    <arg value="${basedir}" />
-    <arg value="${basedir}/../../src/main/grammars/Java.javacc"/>
+    <arg value="${basedir}/Java.javacc"/>
   </java>
 </target>
  
