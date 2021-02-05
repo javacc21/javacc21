@@ -2,7 +2,7 @@
   // be part of a Java identifier. Pretty soon, we'll just 
   // be fishing stuff like this out of the jarfile.
   TOKEN : 
-    < #LETTER :
+    < #JAVA_IDENTIFIER_START :
       [  // all chars for which Character.isIdentifierStart is true
          "$", "A"-"Z", "_", "a"-"z", 
          "\u00a2"-"\u00a5", "\u00aa", "\u00b5", "\u00ba", "\u00c0"-"\u00d6",
@@ -83,7 +83,7 @@
     ]
   >
   |
-  < #PART_LETTER:
+  < #JAVA_IDENTIFIER_PART:
       [  // all chars for which Character.isIdentifierPart is true
          "\u0000"-"\u0008", "\u000e"-"\u001b",
          "$", "0"-"9", "A"-"Z", "_", "a"-"z",

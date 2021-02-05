@@ -904,7 +904,12 @@ GrammarInclusion throws IOException :
    {
       String location = t.getImage().substring(1, t.getImage().length() -1);
       if (enterIncludes) {
-          CURRENT_NODE.addChild(grammar.include(location));
+          Node included = grammar.include(location);
+          if (included!=null) {
+              CURRENT_NODE.addChild(included);
+          } else {
+              grammar.addWarning(CURRENT_NODE, "File " + location + " is already included.");
+          }
       }
    }
 ;

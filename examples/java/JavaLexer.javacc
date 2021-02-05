@@ -348,8 +348,8 @@ TOKEN #Operator :
 | < LAMBDA : "->" > 
 ;
 
-TOKEN :
-  < IDENTIFIER: <LETTER> (<PART_LETTER>)* > #Identifier
-;
-
 INCLUDE ("JavaIdentifierDef.javacc")
+
+TOKEN :
+  < IDENTIFIER: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* > #Identifier
+;
