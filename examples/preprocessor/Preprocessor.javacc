@@ -9,7 +9,6 @@ TREE_BUILDING_ENABLED=false;
 PARSER_PACKAGE="com.javacc.preprocessor";
 //DEBUG_PARSER;
 
-INCLUDE ("../java/JavaIdentifierDef.javacc")
 
 /*
  * This is an implementation of the standard C# preprocessor.
@@ -88,14 +87,14 @@ MORE :
   <PP_FALSE_ALERT : ((~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES 
 ;
 
+INCLUDE ("../java/JavaIdentifierDef.javacc")
+
 <PP_DIRECTIVE> TOKEN : 
     <PP_TRUE : "true">
     |
     <PP_FALSE : "false">
     |
-//    <PP_SYMBOL : (["_", "a"-"z", "A"-"Z"])(["_", "a"-"z", "A"-"Z", "0"-"9"])*>
-//    |
-    < PP_SYMBOL : <LETTER> (<PART_LETTER>)* >
+    <PP_SYMBOL : <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* >
     |
     <PP_OR : "||">
     |

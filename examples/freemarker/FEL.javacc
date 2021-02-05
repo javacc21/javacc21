@@ -149,9 +149,9 @@ TOKEN :
     |
     <DECIMAL : <INTEGER> "." <INTEGER>>
     |
-    <IDENTIFIER : ("@" | <LETTER>) ("@" | <PART_LETTER>)* >
+    <IDENTIFIER : ("@" | <JAVA_IDENTIFIER_START>) ("@" | <JAVA_IDENTIFIER_PART>)* >
     |
-   <STRING_LITERAL :
+    <STRING_LITERAL :
       ("\""
           ((~["\\", "\""]) | ("\\" ~[]))*
       "\"")
