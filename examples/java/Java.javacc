@@ -28,6 +28,16 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+ // This is the Java grammar that is used (via an INCLUDE) in the JavaCC 21 
+ // tool itself but it can be used on its own, and you are free to use it
+ // in your own projects. It supports the stable feature set of the Java 
+ // language up to JDK 15. 
+ // This grammar is a forward evaluation of the sample Java grammar originally 
+ // included in the legacy JavaCC distribution in 1997 or thereabouts, but is
+ // close to being a total rewrite, and serves as a kind of showcase for the latest
+ // features in JavaCC 21, so many constructs are expressed in a very clean
+ // and elegant way that is simply not possible with the legacy tool.
+
 JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE="org.parsers.java";
 NODE_PACKAGE="org.parsers.java.ast";
@@ -40,7 +50,7 @@ INCLUDE("JavaLexer.javacc")
 
 INJECT PARSER_CLASS : {
 
-  // The logic of the following routine is explained here: 
+  // The logic of the following token hook routine is explained here: 
   // https://javacc.com/2020/10/20/context-sensitive-tokenization/
 
   private Token TOKEN_HOOK(Token tok) {
@@ -379,9 +389,7 @@ PrimitiveType# :
   "boolean" | "char" | "byte" | "short" | "int" | "long" | "float" | "double"
 ;
 
-PrimitiveArrayType : 
-    PrimitiveType (=> "[" "]")+
-;
+PrimitiveArrayType : PrimitiveType (=> "[" "]")+ ;
 
 ReturnType# : "void" | Type ;
 
@@ -718,18 +726,9 @@ TryStatement #(false) :
    "try" FAIL "Expecting '{' or '(' after 'try'"
 ;
 
-AssertStatement :
-  "assert" Expression [ ":" Expression ] ";"
-;
+AssertStatement : "assert" Expression [ ":" Expression ] ";" ;
 
-CodeBlock Block #CodeBlock :
-  "{"
-  (BlockStatement)*
-  "}" 
-   {
-       return CURRENT_NODE;
-   }
-;
+Block #CodeBlock : "{" (BlockStatement)* "}" ;
 
 BlockStatement :
   LocalVariableDeclaration ";"
@@ -741,8 +740,8 @@ BlockStatement :
   Statement
 ;
 
-LocalVariableDeclaration :
-  Modifiers Type =>|+1 VariableDeclarator ( "," VariableDeclarator )*
+LocalVariableDeclaration : 
+  Modifiers Type =>|+1 VariableDeclarator ( "," VariableDeclarator )* 
 ;
 
 EmptyStatement : ";" ;
@@ -999,12 +998,15 @@ MemberValueArrayInitializer :
 /* Annotation Types. */
 
 AnnotationTypeDeclaration :
-  Modifiers
-  "@" "interface" =>|| <IDENTIFIER> AnnotationTypeBody
+  Modifiers "@" "interface" =>|| <IDENTIFIER> AnnotationTypeBody
 ;
 
 AnnotationTypeBody :
   "{" ( AnnotationTypeMemberDeclaration )* "}"
+;
+
+AnnotationMethodDeclaration :
+   Modifiers Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
 ;
 
 AnnotationTypeMemberDeclaration :
@@ -1018,7 +1020,7 @@ AnnotationTypeMemberDeclaration :
   |
   EnumDeclaration
   |
-  Modifiers Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
+  AnnotationMethodDeclaration
   |
   FieldDeclaration
 ;
