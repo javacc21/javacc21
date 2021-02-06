@@ -126,6 +126,10 @@ public boolean isCancelled() {return cancelled;}
   public ${grammar.parserClassName}(String inputSource, Path path) throws IOException {
     this(inputSource, FileLineMap.stringFromBytes(Files.readAllBytes(path)));
   }
+
+  public ${grammar.parserClassName}(Path path) throws IOException {
+    this(path.toString(), path);
+  }
  [/#if]
   public ${grammar.parserClassName}(java.io.InputStream stream) {
       this(new InputStreamReader(stream));
