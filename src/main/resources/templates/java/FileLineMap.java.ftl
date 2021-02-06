@@ -40,6 +40,7 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.BitSet;
+import java.nio.charset.Charset;
 
 /**
  * Rather bloody-minded implementation of a class to read in a file 
@@ -498,5 +499,33 @@ public class FileLineMap {
         } while (charsRead == BUF_SIZE);
         reader.close();
         return buf.toString();
+    }
+
+    /**
+     * Rather bloody-minded way of converting a byte array into a string
+     * taking into account the initial byte order mark (used by Microsoft a lot seemingly)
+     */
+    static public String stringFromBytes(byte[] bytes) {
+        int arrayLength = bytes.length;
+        int firstByte = arrayLength>0 ? Byte.toUnsignedInt(bytes[0]) : 1;
+        int secondByte = arrayLength>1 ? Byte.toUnsignedInt(bytes[1]) : 1;
+        int thirdByte = arrayLength >2 ? Byte.toUnsignedInt(bytes[2]) : 1;
+        int fourthByte = arrayLength > 3 ? Byte.toUnsignedInt(bytes[3]) : 1;
+        if (firstByte == 0xEF && secondByte == 0xBB && thirdByte == 0xBF) {
+            return new String(bytes, 3, bytes.length-3, Charset.forName("UTF-8"));
+        }
+        if (firstByte == 0 && secondByte==0 && thirdByte == 0xFE && fourthByte == 0xFF) {
+            return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32BE"));
+        }
+        if (firstByte == 0xFF && secondByte == 0xFE && thirdByte == 0 && fourthByte == 0) {
+            return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32LE"));
+        }
+        if (firstByte == 0xFE && secondByte == 0xFF) {
+            return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16BE"));
+        }
+        if (firstByte == 0xFF && secondByte == 0xFE) {
+            return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16LE"));
+        }
+        return new String(bytes, Charset.forName("UTF-8"));
     }
 }

@@ -12,6 +12,7 @@
 			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="src" path="examples/csharp"/>
 	<classpathentry kind="src" path="examples/java"/>
 	<classpathentry kind="src" path="examples/json"/>
 	<classpathentry kind="src" path="examples/preprocessor"/>
