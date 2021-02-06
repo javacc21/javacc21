@@ -46,6 +46,8 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.logging.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 [#if grammar.parserPackage?has_content]
 import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
 [/#if]
@@ -119,6 +121,10 @@ public boolean isCancelled() {return cancelled;}
 
   public ${grammar.parserClassName}(CharSequence content) {
     this("input", content);
+  }
+
+  public ${grammar.parserClassName}(String inputSource, Path path) throws IOException {
+    this(inputSource, FileLineMap.stringFromBytes(Files.readAllBytes(path)));
   }
  [/#if]
   public ${grammar.parserClassName}(java.io.InputStream stream) {

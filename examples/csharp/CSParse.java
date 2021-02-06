@@ -50,8 +50,8 @@ public class CSParse {
     }
       
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-       String content = new String(Files.readAllBytes(file.toPath()));
-       CSharpParser parser = new CSharpParser(file.toString(), content);
+//       String content = new String(Files.readAllBytes(file.toPath()));
+       CSharpParser parser = new CSharpParser(file.toString(), file.toPath());
        Node root=parser.CompilationUnit();
        if (dumpTree) {
            root.dump("");
