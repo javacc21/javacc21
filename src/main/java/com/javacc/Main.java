@@ -33,8 +33,14 @@ package com.javacc;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 
@@ -51,7 +57,8 @@ public final class Main {
     public static final String PROG_NAME = "JavaCC 21 Parser Generator";
     public static final String URL = "Go to https://javacc.com for more information.";
     private static String manifestContent = "", jarFileName = "javacc.jar";
-    private static File jarFile;
+    private static Path jarPath;
+    private static FileSystem fileSystem = FileSystems.getDefault();
 
     static {
         try {
@@ -73,8 +80,8 @@ public final class Main {
                     if (exclamIndex > 0) {
                         path = path.substring(0, exclamIndex);
                     }
-                    jarFile = new File(path);
-                    jarFileName = jarFile.getName();
+                    jarPath = fileSystem.getPath(path);
+                    jarFileName = jarPath.getFileName().toString();
                     manifestContent = content;
                     break;
                 }
@@ -85,14 +92,14 @@ public final class Main {
     }
 
     static void checkForNewer() {
-        if (jarFile != null && jarFile.exists())
+        if (jarPath != null && Files.exists(jarPath))
             try {
-                long jarLastModified = jarFile.lastModified();
+                long jarLastModified = Files.getLastModifiedTime(jarPath).toMillis();
                 if (System.currentTimeMillis() - jarLastModified < 3600000L) {
                     // If the current jarfile is less than an hour old, let's not bother.
                     return;
                 }
-                URL url = new URL("https://javacc.com/download/" + jarFile.getName());
+                URL url = new URL("https://javacc.com/download/" + jarPath.getFileName());
                 URLConnection connection = url.openConnection();
                 connection.setConnectTimeout(1000);
                 long lastUpdate = connection.getLastModified();
@@ -103,20 +110,21 @@ public final class Main {
                     String response = scanner.nextLine().trim().toLowerCase();
                     if (response.equals("y") || response.equals("yes")) {
                         boolean renamedFileSuccessfully = false;
-                        String oldFileName = jarFile.getName().replace("javacc",
+                        String oldFilename = jarPath.getFileName().toString().replace("javacc",
                                 "javacc-" + System.currentTimeMillis());
-                        File oldFile = new File(jarFile.getParentFile(), oldFileName);
+                        Path oldPath = jarPath.resolveSibling(oldFilename);
                         try {
-                            renamedFileSuccessfully = jarFile.renameTo(oldFile);
+                            Files.move(jarPath, oldPath);
+                            renamedFileSuccessfully = true;
                         } catch (Exception e) {
                             System.out.println("Failed to save older version of jarfile");
-                            System.out.println("Possibly directory " + oldFile.getParent() + " is not writeable.");
+                            System.out.println("Possibly directory " + oldPath.getParent() + " is not writeable.");
                             scanner.close();
                             return;
                         }
                         System.out.println("Updating jarfile...");
                         InputStream inputStream = url.openStream();
-                        FileOutputStream fileOS = new FileOutputStream(jarFile);
+                        OutputStream fileOS = Files.newOutputStream(jarPath);
                         byte data[] = new byte[1024];
                         int byteContent;
                         while ((byteContent = inputStream.read(data, 0, 1024)) != -1) {
@@ -126,7 +134,7 @@ public final class Main {
                         scanner.close();
                         System.out.println("Fetched newer jarfile from server.");
                         if (renamedFileSuccessfully)
-                            System.out.println("Older jarfile is at: " + oldFile);
+                            System.out.println("Older jarfile is at: " + oldPath);
                         System.out.println("Exiting...");
                         System.exit(-1);
                     }

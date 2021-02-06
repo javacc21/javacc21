@@ -1,5 +1,4 @@
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
 import org.parsers.csharp.*;
 
@@ -50,8 +49,7 @@ public class CSParse {
     }
       
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-//       String content = new String(Files.readAllBytes(file.toPath()));
-       CSharpParser parser = new CSharpParser(file.toString(), file.toPath());
+       CSharpParser parser = new CSharpParser(file.toPath());
        Node root=parser.CompilationUnit();
        if (dumpTree) {
            root.dump("");
@@ -68,7 +66,6 @@ public class CSParse {
            files.add(file);
        }
    }
-   
    
    static public void usage() {
        System.out.println("Usage: java CSParse <sourcefiles or directories>");
