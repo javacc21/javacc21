@@ -40,6 +40,9 @@ INCLUDE("JavaLexer.javacc")
 
 INJECT PARSER_CLASS : {
 
+  // The logic of the following routine is explained here: 
+  // https://javacc.com/2020/10/20/context-sensitive-tokenization/
+
   private Token TOKEN_HOOK(Token tok) {
     TokenType type = tok.getType();
     if (type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) {
@@ -123,20 +126,23 @@ Modifiers #void :
   | 
   "default"
   |
-  SCAN 2 => Annotation
+  Annotation
  )*
 ;
 
 TypeDeclaration #abstract :
-  EmptyDeclaration 
-  |
-  AnnotationTypeDeclaration
-  |
-  ClassDeclaration
-  |
-  InterfaceDeclaration
-  |
-  EnumDeclaration
+  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "@" "interface")) =>
+  (
+    EmptyDeclaration 
+    |
+    AnnotationTypeDeclaration
+    |
+    ClassDeclaration
+    |
+    InterfaceDeclaration
+    |
+    EnumDeclaration
+  )
 ;
 
 INJECT EmptyDeclaration : extends TypeDeclaration;
@@ -148,16 +154,13 @@ INJECT EnumDeclaration : extends TypeDeclaration;
 EmptyDeclaration# : ";" ;
 
 ClassDeclaration :
- SCAN Modifiers "class" =>
- (
- Modifiers
-  "class" // =>|| 
+  Modifiers
+  "class" =>|| 
   <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList]
   [ ImplementsList ]
   ClassOrInterfaceBody
- )
 ;
 
 InterfaceDeclaration :
@@ -232,21 +235,11 @@ TypeBound :
    "extends" ObjectType ( "&" ObjectType )*
 ;
 
-ClassOrInterfaceBody :
-    "{"
-    ( 
-       ClassOrInterfaceBodyDeclaration 
-    )*
-    "}"
-;
+ClassOrInterfaceBody : "{" (ClassOrInterfaceBodyDeclaration)* "}" ;
 
 ClassOrInterfaceBodyDeclaration# :
-  (
   Initializer
   |
-  // FIXME. The following lookahead should not really be necessary!
-  // Or should it? I really have to figure this out...
-  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "@" "interface")) =>
   TypeDeclaration
   |
   ConstructorDeclaration
@@ -254,7 +247,6 @@ ClassOrInterfaceBodyDeclaration# :
   FieldDeclaration
   |
   MethodDeclaration
-  )
 ;
 
 FieldDeclaration :
@@ -262,13 +254,9 @@ FieldDeclaration :
   Type VariableDeclarator =>|+1 ( "," VariableDeclarator )* ";"
 ;
 
-VariableDeclarator :
-  VariableDeclaratorId [ "=" VariableInitializer ]
-;
+VariableDeclarator : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
-VariableDeclaratorId# :
-  <IDENTIFIER> ( "[" "]" )*
-;
+VariableDeclaratorId# : <IDENTIFIER> ( "[" "]" )* ;
 
 VariableInitializer : ArrayInitializer | Expression ;
 
@@ -287,11 +275,7 @@ ArrayInitializer :
   {return CURRENT_NODE;}
 ;
 
-FormalParameters : 
-   "("
-    [ FormalParameter ( "," FormalParameter )* ]
-   ")"
-;
+FormalParameters : "(" [ FormalParameter ( "," FormalParameter )* ] ")" ;
 
 FormalParameter : Modifiers Type [ "..." ] VariableDeclaratorId ;
 
@@ -549,19 +533,19 @@ SwitchExpression# :
 ;
 
 CastExpression : 
+ =>
  (
   "(" PrimitiveType ")" =>|| UnaryExpression
   |
-  => "(" ReferenceType ")" UnaryExpressionNotPlusMinus
+  "(" ReferenceType ")" =>|| UnaryExpressionNotPlusMinus
   |
-  => "(" ObjectType ("&" ObjectType)+ ")" UnaryExpressionNotPlusMinus 
+  "(" ObjectType ("&" ObjectType)+ ")" UnaryExpressionNotPlusMinus
  )
- =>||
 ;
 
 PrimaryExpression# :
     PrimaryPrefix 
-    ( SCAN 2 PrimarySuffix )*
+    ( PrimarySuffix )*
 ;
 
 MemberSelector :
@@ -595,11 +579,12 @@ MethodReference :
 ;
 
 PrimarySuffix :
+ SCAN 2
  (
   => "." ("this"|"super")
   |
   "." =>|+1 AllocationExpression
-    |
+  |
   MemberSelector
   |
   "[" [Expression] "]"
@@ -890,27 +875,13 @@ YieldStatement :
    =>||
 ;
 
-ContinueStatement :
-  "continue" [ <IDENTIFIER> ] ";"
-;
+ContinueStatement : "continue" [ <IDENTIFIER> ] ";" ;
 
-ReturnStatement :
-  "return"
-  [
-    Expression
-  ]
-  ";"
-;
+ReturnStatement : "return" (Expression)? ";" ;
 
-ThrowStatement :
- "throw" 
-  Expression
- ";"
-;
+ThrowStatement : "throw" Expression ";" ;
 
-SynchronizedStatement :
-  "synchronized" "(" Expression ")" Block
-;
+SynchronizedStatement : "synchronized" "(" Expression ")" Block ;
 
 ClassicTryStatement :
   "try"
@@ -927,21 +898,20 @@ ClassicTryStatement :
 ;
 
 TryWithResources :
-   "try" "(" 
-   =>||
-     (
+   "try" "(" =>||
+    (
          => LocalVariableDeclaration
          |
          Name
-      )
-      (
+    )
+    (
         ";"
        [
           => LocalVariableDeclaration
           |
           Name
        ]
-     )*
+    )*
     ")"
     Block
     (CatchBlock)*
@@ -973,10 +943,10 @@ INJECT FinallyBlock :
     }
 }
 
-
 /* Annotation syntax follows. */
 
 Annotation #Annotation :
+ SCAN 2
  ( 
    NormalAnnotation
    |
