@@ -13,7 +13,7 @@ A list of the main features (in particular, wrt *legacy JavaCC*) follows:
 
 JavaCC 21 includes support for the Java language through JDK 15. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/) and [here](https://javacc.com/2020/10/25/jdk-14-now-fully-supported-new-switch-syntax/). (As of this writing, Java language support in legacy JavaCC is stalled at the JDK 7 level.)
 
-Note also that the [Java grammar that JavaCC 21 uses internally](https://github.com/JavaCC21/JavaCC21/blob/master/src/main/grammars/Java.javacc) can be used in your own projects without any restriction.
+Note also that the [Java grammar that JavaCC 21 uses internally](https://github.com/JavaCC21/JavaCC21/blob/master/examples/java/Java.javacc) can be used in your own projects without any restriction.
 
 ## Major Bugfix! Nested Syntactic Lookahead now works correctly!
 
@@ -61,9 +61,9 @@ but we believe that most people will prefer the streamlined version:
 
     SCAN 3 FooBar
 
-## New Lookbehind construct
+## Contextual Predicates
 
-*Lookbehind* refers to a way of writing predicates that check whether we are at a given point in a parse. For example:
+A *contextual predicate* is used to check whether we are at a given point in a parse. For example:
 
      SCAN \...\Foo => Bar
 
@@ -82,6 +82,10 @@ JavaCC 21 provides a much needed [INCLUDE instruction](https://doku.javacc.com/d
 The INCLUDE feature is used to very good effect in the internal code of JavaCC 21 itself. The [embedded Java grammar](https://github.com/JavaCC21/JavaCC21/blob/master/src/main/grammars/Java.javacc) is simply [INCLUDEd in the JavaCC grammar](https://github.com/JavaCC21/JavaCC21/blob/master/src/main/grammars/JavaCC.javacc#413)
 
 Since the Java grammar stands alone, it can be used freely in separate projects that require a Java grammar. 
+
+## Preprocessor
+
+JavaCC 21 now has a preprocessor that is basically identical to the preprocessor in Microsoft's C# programming language. It only implements the `#define/#undef` and `#if/#elif/#else/#endif` constructs that are used to conditionally turn on and off ranges of lines in the input file. See [here](https://javacc.com/2021/02/01/javacc-21-has-a-preprocessor/) for more information.
 
 ## Tree Building
 
