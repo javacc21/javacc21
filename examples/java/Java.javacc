@@ -215,7 +215,7 @@ EnumDeclaration :
 
 EnumBody :
    "{"
-   [ EnumConstant ( "," =>|+1 EnumConstant )* ]
+   [ EnumConstant ( SCAN 2 "," EnumConstant )* ]
    [ "," ]
    [ ";" ( ClassOrInterfaceBodyDeclaration )* ]
    "}"
@@ -271,7 +271,7 @@ VariableDeclaratorId# : <IDENTIFIER> ( "[" "]" )* ;
 VariableInitializer : ArrayInitializer | Expression ;
 
 ArrayInitializer :
-  "{" [ VariableInitializer ( "," =>|+1 VariableInitializer )* ] [ "," ] "}"
+  "{" [ VariableInitializer ( SCAN 2 "," VariableInitializer )* ] [ "," ] "}"
 ;
 
 #MethodDeclaration :
@@ -365,11 +365,7 @@ PossiblyEmptyTypeArguments #void :
    TypeArguments
 ;
 
-TypeArguments :
-   "<" =>|+1
-   TypeArgument ( "," TypeArgument )* 
-   ">"
-;
+TypeArguments : SCAN 2 "<" TypeArgument ( "," TypeArgument )* ">" ;
 
 TypeArgument :
    (Annotation)*
@@ -380,10 +376,7 @@ TypeArgument :
    )
 ;
 
-WildcardBounds :
-   ("extends" | "super") ReferenceType
-;
-
+WildcardBounds : ("extends" | "super") ReferenceType ;
 
 PrimitiveType# :
   "boolean" | "char" | "byte" | "short" | "int" | "long" | "float" | "double"
@@ -430,15 +423,14 @@ INJECT SwitchExpression : extends Expression
 AssignmentExpression :
   TernaryExpression
   [ 
-      SCAN {peekNode() instanceof PrimaryExpression} =>
-        AssignmentOperator =>|+1 Expression
+      SCAN 2 {peekNode() instanceof PrimaryExpression} =>
+        AssignmentOperator Expression
   ]
 ;
 
 AssignmentOperator #void :
-{
   "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | ">>>=" | "&=" | "^=" | "|="
-}
+;
 
 TernaryExpression :
   ConditionalOrExpression [  "?" Expression ":" Expression ]
@@ -557,7 +549,7 @@ PrimaryExpression# :
 ;
 
 MemberSelector :
-  "." =>|+2 TypeArguments <IDENTIFIER>
+  SCAN 3 "." TypeArguments <IDENTIFIER>
 ;
 
 PrimaryPrefix :
@@ -575,14 +567,14 @@ PrimaryPrefix :
   |
   => ReturnType "." "class"
   |
-  => MethodReference
+  MethodReference
   |  
   Name
 ;
 
 MethodReference :
     (Type | "super")
-     "::" 
+     "::" =>||
      (<IDENTIFIER>|"new")
 ;
 
@@ -861,17 +853,8 @@ BreakStatement :
 ;
 
 YieldStatement :
-   <IDENTIFIER>
-   [
-     SCAN {!getToken(0).getImage().equals("yield")}#
-     => FAIL "supposed to have \"yield\" here"
-     |
-     SCAN ~\...\SwitchExpression
-     => FAIL "need to be in a switch expression"
-   ]
-   Expression
-   ";" 
-   =>||
+   SCAN {getToken(1).getImage().equals("yield")} =>
+   <IDENTIFIER> Expression ";" 
 ;
 
 ContinueStatement : "continue" [ <IDENTIFIER> ] ";" ;
@@ -955,13 +938,9 @@ Annotation #Annotation :
  )
 ;
 
-NormalAnnotation #void :
-   "@" Name "(" =>|+2 [ MemberValuePairs ] ")"
-;
+NormalAnnotation #void : "@" Name "(" =>|+2 [ MemberValuePairs ] ")" ;
 
-MarkerAnnotation #void :
-  "@" Name
-;
+MarkerAnnotation #void : "@" Name ;
 
 SingleMemberAnnotation #void :
   "@" Name "(" =>|| MemberValue ")"
@@ -1035,7 +1014,8 @@ LambdaExpression :
 LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | FormalParameters) "->" =>|| ;
 
 SimpleLambdaLHS #void :
-   "(" <IDENTIFIER> =>|+1 
+   SCAN 3
+   "(" <IDENTIFIER> 
    (","<IDENTIFIER>)*
    ")"
 ;
