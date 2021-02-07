@@ -72,7 +72,8 @@ INJECT PARSER_CLASS :
              // I think I should make appending a newline at the end of the file
              // (if there isn't one already) a configuration setting.
              if (lastChar!='\n' && lastChar!='\r') {
-                 StringBuilder buf= new StringBuilder(content);
+                 StringBuilder buf= new StringBuilder(content.length()+1);
+                 buf.append(content);
                  buf.append((char) '\n');
                  content = buf;
              }
