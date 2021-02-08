@@ -91,8 +91,8 @@ KeyValuePair : <STRING_LITERAL> <COLON>! Value;
 JSONObject : 
     <OPEN_BRACE>
     [
-        KeyValuePair ("," KeyValuePair)*!
-    ]
+        KeyValuePair ("," KeyValuePair)*
+    ]!
     <CLOSE_BRACE>!
 ;
 

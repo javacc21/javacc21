@@ -402,10 +402,11 @@ abstract public class Expansion extends BaseNode {
     }
 
     public String getPredicateMethodName() {
-        if (predicateMethodName == null) {
-            predicateMethodName = getScanRoutineName().replace("check$", "scan$");
-        }
-        return predicateMethodName;
+        return getScanRoutineName().replace("check$", "scan$");
+    }
+
+    public String getRecoverMethodName() {
+        return getScanRoutineName().replace("check$", "recover$");
     }
 
     public int getFinalSetSize() {
@@ -499,5 +500,31 @@ abstract public class Expansion extends BaseNode {
         result.or(firstSet);
         result.and(otherSet);
         return result;
+    }
+
+    private Expansion getPreceding() {
+        Node parent = getParent();
+        if (parent instanceof ExpansionSequence) {
+            List<Expansion> siblings = parent.childrenOfType(Expansion.class);
+            int index = siblings.indexOf(this);
+            if (index >0) {
+                return siblings.get(index-1);
+            }
+        }
+        return null;
+    }
+
+    public boolean getRequiresRecoverMethod() {
+        if (isInsideLookahead()) {
+            return false;
+        }
+        if (getParent() instanceof BNFProduction) {
+            return true;
+        }
+        Expansion preceding = getPreceding();
+        if (preceding != null && preceding.isTolerantParsing() && !(preceding instanceof RegularExpression)) {
+            return true;
+        }
+        return (this instanceof ZeroOrMore || this instanceof OneOrMore) && this.isTolerantParsing();
     }
 }

@@ -44,6 +44,9 @@
     [#if grammar.choicePointExpansions?size !=0]
        [@BuildLookaheads /]
      [/#if]
+     [#if grammar.faultTolerant]
+       [@BuildRecoverRoutines /]
+     [/#if]
 [/#macro]
 
 
@@ -156,7 +159,6 @@
     try {
        lookaheadRoutineNesting++;
    [#if !expansion.insideLookahead]
-[#--    if (hitFailure) return lastLookaheadSucceeded = false;--]
      ${BuildPredicateCode(expansion)}
    [/#if]
      ${BuildScanCode(expansion)}
@@ -440,3 +442,15 @@
       ${expansion.scanRoutineName}()
    [/#if]
 [/#macro]
+
+[#-- Recover routines --]
+
+[#macro BuildRecoverRoutines]
+   [#list grammar.expansionsNeedingRecoverMethod as expansion]
+       private Token ${expansion.recoverMethodName}() {
+          // Coming soon... still unimplemented...
+          return null;
+       }
+   [/#list]
+[/#macro]
+

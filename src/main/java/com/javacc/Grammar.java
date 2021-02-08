@@ -171,7 +171,8 @@ public class Grammar extends BaseNode {
         String canonicalPath = file.getCanonicalPath();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
-        String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
+        byte[] bytes = Files.readAllBytes(file.toPath());
+        String content = new String(bytes, "UTF-8");
         JavaCCParser parser = new JavaCCParser(this, canonicalPath, content);
         parser.setEnterIncludes(enterIncludes);
         File prevIncludedFileDirectory = includedFileDirectory;
@@ -187,6 +188,7 @@ public class Grammar extends BaseNode {
         } 
         return rootNode;
     }
+
 
     public Node include(String location) throws IOException, ParseException {
         File file = new File(location);
@@ -404,6 +406,10 @@ public class Grammar extends BaseNode {
 
     public List<Expansion> getExpansionsNeedingPredicate() {
         return descendants(Expansion.class, Expansion::getRequiresPredicateMethod);
+    }
+
+    public List<Expansion> getExpansionsNeedingRecoverMethod() {
+        return descendants(Expansion.class, Expansion::getRequiresRecoverMethod);
     }
 
     public List<String> getLexerTokenHooks() {
@@ -902,7 +908,7 @@ public class Grammar extends BaseNode {
         return outputDir == null ? "." : outputDir.toString(); 
     }
 
-    public File getNodeOutputDirectory(String nodeName) throws IOException {
+    public File getNodeOutputDirectory() throws IOException {
         String nodePackage = getNodePackage();
         String baseSrcDir = getBaseSourceDirectory();
         if (nodePackage == null || nodePackage.equals("") || baseSrcDir.equals("")) {

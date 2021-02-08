@@ -1587,7 +1587,7 @@ ExpansionWithParentheses :
        SCAN ~\...\Lookahead => 
        "!" {CURRENT_NODE.setTolerantParsing(true);}
    ]
-   [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
+   [UpToHere(CURRENT_NODE)]
    {
        Node startNode = lss != null ? lss : lparen;
        CURRENT_NODE.copyLocationInfo(startNode, lastConsumedToken);
@@ -2145,18 +2145,13 @@ Expansion ExpansionUnit :
             grammar.addInplaceRegexp(re);
       }
   }
-  [SCAN ~\...\Lookahead => UpToHere(result)]
+  [UpToHere(result)]
   |
   SCAN [PrimaryExpression "="]<IDENTIFIER>
-  => result=NonTerminal [SCAN ~\...\Lookahead => UpToHere(result)]
+  => result=NonTerminal [UpToHere(result)]
   |
   FAIL
  )
- [
-     SCAN ~\...\Lookahead =>
-     "!"
-     {result.setTolerantParsing(true);}
- ]
  [
      SCAN ~\...\Lookahead => 
     tba=TreeNodeDescriptor
@@ -2167,7 +2162,7 @@ Expansion ExpansionUnit :
  }
 ;
 
-NonTerminal NonTerminal #NonTerminal : 
+#NonTerminal# :
   [
     => PrimaryExpression "="
   ]
@@ -2179,10 +2174,16 @@ NonTerminal NonTerminal #NonTerminal :
     |
     InvocationArguments
   ]
+  [
+     SCAN ~\...\Lookahead =>
+     "!"
+     {CURRENT_NODE.setTolerantParsing(true);}
+  ]
   {return CURRENT_NODE;}
 ;
 
 UpToHere(Expansion exp) #void :
+   SCAN ~\...\Lookahead =>
    <UP_TO_HERE>
    {
        String img = lastConsumedToken.getImage();
@@ -2305,7 +2306,8 @@ OneOrMore : "(" ExpansionChoice ")" "+";
 ZeroOrOne : 
     [LexicalStateSwitch]
     "[" =>|| ExpansionChoice "]"
-     [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
+     ["!" {CURRENT_NODE.setTolerantParsing(true);}]
+     [UpToHere(CURRENT_NODE)]
 ;
 
 INJECT ZeroOrOne : 
@@ -2536,7 +2538,16 @@ RegexpExpansion #void :
   |
   SCAN 3 {isInProduction("TokenProduction")||grammar.getUserDefinedLexer()} =>
   InPlaceRegexp 
- ) 
+ )
+ [
+      SCAN {isInProduction("BNFProduction") && !isInProduction("Lookahead")}
+      =>
+      {
+          RegularExpression regexp = (RegularExpression) peekNode();
+          regexp.setTolerantParsing(true);
+      }
+      "!" {regexp.addChild(popNode());}
+ ]
 ;
 
 
