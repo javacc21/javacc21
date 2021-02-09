@@ -193,6 +193,7 @@ public class FilesGenerator {
         try {
             JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getJdkTarget());
             JavaCodeUtils.addGetterSetters(jcu);
+            JavaCodeUtils.removeUnusedPrivateMethods(jcu);
             JavaCodeUtils.removeUnusedVariables(jcu);
             JavaFormatter formatter = new JavaFormatter();
             out.write(formatter.format(jcu));

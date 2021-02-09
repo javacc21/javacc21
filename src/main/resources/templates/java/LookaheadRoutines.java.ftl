@@ -131,6 +131,7 @@
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
   // predicate routine for expansion at: 
   // ${expansion.location}
+  // BuildPredicateRoutine macro
    private final boolean ${expansion.predicateMethodName}() {
      try {
          lookaheadRoutineNesting++;
@@ -155,6 +156,7 @@
  [#if !expansion.singleToken || expansion.requiresPredicateMethod]
   // scanahead routine for expansion at: 
   // ${expansion.location}
+  // BuildScanRoutine macro
   private final boolean ${expansion.scanRoutineName}() {
     try {
        lookaheadRoutineNesting++;
@@ -173,6 +175,7 @@
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 [#macro BuildPredicateCode expansion]
+     // BuildPredicateCode macro
      [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
        if (!(${expansion.semanticLookahead})) return lastLookaheadSucceeded = false;
      [/#if]
@@ -268,6 +271,8 @@
 [/#macro]
 
 [#macro BuildProductionLookaheadMethod production]
+   // BuildProductionLookaheadMethod macro
+
    private final boolean ${production.lookaheadMethodName}() {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}

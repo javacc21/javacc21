@@ -853,7 +853,7 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN {getToken(1).getImage().equals("yield")} =>
+   SCAN {getToken(1).getImage().equals("yield")}# =>
    <IDENTIFIER> Expression ";" 
 ;
 

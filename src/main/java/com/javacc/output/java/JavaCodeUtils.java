@@ -78,6 +78,40 @@ public class JavaCodeUtils {
         }
     }
 
+    /**
+     * Removes methods (private ones only, because that's safe!) that are never
+     * referenced anywhere in the source file.
+     * Actually, I think this method is not quite correct. It misses some 
+     * methods that are actually removable, because it doesn't deal with self-referential loops, like
+     * private method A contains an invocation of private method B and B contains an invocation of A
+     * but in reality, none of it is ever called. At some point, I'll rewrite this to be more correct.
+     * It works okay for the current purposes though. REVISIT.
+     * @param jcu
+     */
+    static public void removeUnusedPrivateMethods(CompilationUnit jcu) {
+        while (true) {
+            if (removeUnusedPrivateMethodsIteration(jcu) == 0) break;
+        }
+    }
+
+    static private int removeUnusedPrivateMethodsIteration(CompilationUnit jcu) {
+        List<Identifier> ids = jcu.descendants(Identifier.class, id->!(id.getParent() instanceof MethodDeclaration));
+        Set<String> refs = new HashSet<String>();
+        for (Identifier id : ids) {
+            refs.add(id.getImage());
+        }
+        List<MethodDeclaration> mds = jcu.descendants(MethodDeclaration.class, md->md.firstChildOfType(PRIVATE) !=null);
+        int result =0;
+        for (MethodDeclaration md : mds) {
+            String methodName = md.getName();
+            if (!refs.contains(methodName)) {
+                md.getParent().removeChild(md);
+                ++result;
+            }
+        }
+        return result;
+    }
+
     static private void removeDeclaration(Identifier id) {
         FieldDeclaration fd = id.firstAncestorOfType(FieldDeclaration.class);
         if (fd.getVariableIds().size() > 1) {
