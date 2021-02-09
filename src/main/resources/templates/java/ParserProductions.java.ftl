@@ -77,14 +77,22 @@
   // Code for ${expansion.simpleName} specified at:
   // ${expansion.location}
   [/#if]
+      [#if grammar.faultTolerant && expansion.requiresRecoverMethod]
+          if (pendingRecovery) {
+             ${expansion.recoverMethodName}();
+          }
+          pendingRecovery = false;
+      [/#if]
       [@CU.HandleLexicalStateChange expansion false]
-       [@HandleTreeBuilding expansion]
+       [@TreeBuildingAndRecovery expansion]
         [@BuildExpansionCode expansion/]
-       [/@HandleTreeBuilding]
+       [/@TreeBuildingAndRecovery]
       [/@CU.HandleLexicalStateChange]
 [/#macro]
 
-[#macro HandleTreeBuilding expansion]
+[#macro TreeBuildingAndRecovery expansion]
+[#-- This macro handles both tree building AND recovery. It doesn't seem right.
+     It should probably be two macros. Also, it is too darned big. --]
     [#var nodeVarName, 
           production, 
           treeNodeBehavior, 
@@ -92,7 +100,8 @@
           closeCondition = "true", 
           javaCodePrologue = "",
           parseExceptionVar = CU.newVarName("parseException"),
-          callStackSizeVar = CU.newVarName("callStackSize")
+          callStackSizeVar = CU.newVarName("callStackSize"),
+          canRecover = grammar.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
@@ -103,14 +112,15 @@
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
                         || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
-    [#if !buildTreeNode]
+    [#if !buildTreeNode && !canRecover]
       ${javaCodePrologue} 
       [#nested]
     [#else]
+     [#if buildTreeNode]
      [#set nodeNumbering = nodeNumbering +1]
      [#set nodeVarName = currentProduction.name + nodeNumbering]
      ${grammar.utils.pushNodeVariableName(nodeVarName)!}
-      [#if !treeNodeBehavior??]
+      [#if !treeNodeBehavior?? && !production?is_null]
          [#if grammar.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false}]
          [#else]
@@ -125,6 +135,7 @@
       [/#if]
 
       [@createNode treeNodeBehavior nodeVarName false /]
+      [/#if]
          [#-- I put this here for the hypertechnical reason
               that I want the initial code block to be able to 
               reference CURRENT_NODE. --]
@@ -137,12 +148,25 @@
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
-             throw e;
+             [#if !canRecover]
+              throw e;
+             [#else]
+             if (!isParserTolerant()) throw e;
+             this.pendingRecovery = true;
+             [#if !production?is_null && production.returnType != "void"]
+                [#var rt = production.returnType]
+                [#-- We need a return statement here or the code won't compile! --]
+                [#if rt = "int" || rt="char" || rt=="byte" || rt="short" || rt="long" || rt="float"|| rt="double"]
+                return 0;
+                [#else]
+                return null;
+                [/#if]
+             [/#if]
+          [/#if]
          }
          finally {
-             if (${parseExceptionVar} == null) {
-                restoreCallStack(${callStackSizeVar});
-             }
+             restoreCallStack(${callStackSizeVar});
+             [#if buildTreeNode]
              if (buildTree) {
                  if (${parseExceptionVar} == null) {
                      closeNodeScope(${nodeVarName}, ${closeCondition});
@@ -154,9 +178,10 @@
                      clearNodeScope();
                  }
              }
+          ${grammar.utils.popNodeVariableName()!}
+             [/#if]
              this.currentlyParsedProduction = prevProduction;
          }       
-          ${grammar.utils.popNodeVariableName()!}
     [/#if]
 [/#macro]
 
