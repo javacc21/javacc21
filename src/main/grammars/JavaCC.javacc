@@ -63,13 +63,12 @@ INJECT PARSER_CLASS :
 {
     Grammar grammar;
     
-    public JavaCCParser(Grammar grammar, Path path, Set<String> definedSymbols) throws IOException {
+    public PARSER_CLASS(Grammar grammar, Path path, Set<String> definedSymbols) throws IOException {
         this(path.toString(), path);
         this.grammar = grammar;
         BitSet lineMarkers = null;
         try {
-            PreprocessorParser ppp = new PreprocessorParser(path);
-            if (definedSymbols != null) ppp.addSymbols(definedSymbols);
+            PreprocessorParser ppp = new PreprocessorParser(path, definedSymbols);
             lineMarkers = ppp.PP_Root();
         } catch (com.javacc.preprocessor.ParseException pe) {
             throw new RuntimeException(pe);
@@ -77,22 +76,11 @@ INJECT PARSER_CLASS :
         token_source.input_stream.setParsedLines(lineMarkers);
     }
 
-    public JavaCCParser(Grammar grammar, String inputSource, CharSequence content) {
+    public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) {
          this(inputSource, content);
          this.grammar = grammar;
          BitSet lineMarkers = null;
          try {
-             char lastChar = content.charAt(content.length()-1);
-             // The file has to end with a newline. It's very hard 
-             // to write the grammar otherwise!
-             // I think I should make appending a newline at the end of the file
-             // (if there isn't one already) a configuration setting.
-             if (lastChar!='\n' && lastChar!='\r') {
-                 StringBuilder buf= new StringBuilder(content.length()+1);
-                 buf.append(content);
-                 buf.append((char) '\n');
-                 content = buf;
-             }
              lineMarkers = new PreprocessorParser(content).PP_Root();
          } catch(com.javacc.preprocessor.ParseException pe) {
              throw new RuntimeException(pe);
@@ -110,7 +98,12 @@ INJECT PARSER_CLASS :
     }
     
     static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) throws ParseException {
-        JavaCCParser parser = new JavaCCParser(inputSource, content);
+        PARSER_CLASS parser = new PARSER_CLASS(inputSource, content);
+        return parser.CompilationUnit();
+    }
+
+    static public CompilationUnit parseJavaFile(Path path) throws ParseException, IOException {
+        PARSER_CLASS parser = new PARSER_CLASS(path);
         return parser.CompilationUnit();
     }
 

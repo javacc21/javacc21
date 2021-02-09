@@ -73,6 +73,7 @@ public class Grammar extends BaseNode {
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
     private Set<String> lexicalStates = new LinkedHashSet<>();
+    private Set<String> preprocessorSymbols = new HashSet<>();
     private Map<Integer, String> tokenNames = new HashMap<>();
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
@@ -106,11 +107,12 @@ public class Grammar extends BaseNode {
     private File outputDir;
     private boolean quiet;
     
-    public Grammar(File outputDir, int jdkTarget, boolean quiet) {
+    public Grammar(File outputDir, int jdkTarget, boolean quiet, Set<String> preprocessorSymbols) {
         this();
         this.outputDir = outputDir;
         this.jdkTarget = jdkTarget;
         this.quiet = quiet;
+        this.preprocessorSymbols = preprocessorSymbols;
         parserData = new ParserData(this);
     }
 
@@ -171,9 +173,7 @@ public class Grammar extends BaseNode {
         String canonicalPath = file.getCanonicalPath();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
-        byte[] bytes = Files.readAllBytes(file.toPath());
-        String content = new String(bytes, "UTF-8");
-        JavaCCParser parser = new JavaCCParser(this, canonicalPath, content);
+        JavaCCParser parser = new JavaCCParser(this, file.getCanonicalFile().toPath(), preprocessorSymbols);
         parser.setEnterIncludes(enterIncludes);
         File prevIncludedFileDirectory = includedFileDirectory;
         if (!isInInclude()) {

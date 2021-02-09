@@ -37,6 +37,11 @@ INJECT PARSER_CLASS :
     private Set<String> definedSymbols = new HashSet<>();
     private boolean currentlyOn = true;
 
+    public PARSER_CLASS(Path path, Set<String> definedSymbols) throws IOException {
+        this(path);
+        if (definedSymbols !=null) addSymbols(definedSymbols);
+    }
+
     public BitSet getLineMarkers() {
         return lineMarkers;
     }
