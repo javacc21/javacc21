@@ -112,7 +112,7 @@ public class FileLineMap {
         this.parsedLines = parsedLines;
     }
     
-    [#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="true", JAVA_UNICODE_ESCAPE="false"]
+    [#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="true", JAVA_UNICODE_ESCAPE="false", ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")]
     [#if grammar.settings.TABS_TO_SPACES??]
        [#set TABS_TO_SPACES = grammar.settings.TABS_TO_SPACES]
     [/#if]
@@ -122,6 +122,8 @@ public class FileLineMap {
     [#if grammar.settings.JAVA_UNICODE_ESCAPE?? && grammar.settings.JAVA_UNICODE_ESCAPE]
        [#set JAVA_UNICODE_ESCAPE = "true"]
     [/#if]
+
+
     public FileLineMap(String inputSource, Reader reader, int startingLine, int startingColumn) {
         this(inputSource, readToEnd(reader), startingLine, startingColumn);
     }
@@ -132,7 +134,7 @@ public class FileLineMap {
 
     public FileLineMap(String inputSource, CharSequence content, int startingLine, int startingColumn) {
         setInputSource(inputSource);
-        this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE});
+        this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         this.lineOffsets = createLineOffsetsTable(this.content);
         this.setStartPosition(startingLine, startingColumn);
    }
@@ -338,9 +340,23 @@ public class FileLineMap {
     // Icky method to handle annoying stuff. Might make this public later if it is
     // needed elsewhere
     private static CharSequence mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
-            boolean javaUnicodeEscape) {
-        if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape)
+            boolean javaUnicodeEscape, boolean ensureFinalEndline) {
+        if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape) {
+            if (ensureFinalEndline) {
+                char lastChar = content.charAt(content.length()-1);
+                if (lastChar != '\n' && lastChar != '\r') {
+                    if (content instanceof StringBuilder) {
+                        ((StringBuilder) content).append((char)'\n');
+                    } else {
+                        StringBuilder buf = new StringBuilder(content.length()+1);
+                        buf.append(content);
+                        buf.append((char)'\n');
+                        content = buf;
+                    }
+                }
+            }
             return content;
+        }
         StringBuilder buf = new StringBuilder();
         int index = 0;
         int col = 0;
@@ -392,6 +408,10 @@ public class FileLineMap {
                 } else
                     col++;
             }
+        }
+        if (ensureFinalEndline) {
+            char lastChar = buf.charAt(buf.length()-1);
+            if (lastChar != '\n' && lastChar!='\r') buf.append((char) '\n');
         }
         return buf.toString();
     }
@@ -504,6 +524,7 @@ public class FileLineMap {
     /**
      * Rather bloody-minded way of converting a byte array into a string
      * taking into account the initial byte order mark (used by Microsoft a lot seemingly)
+     * See: https://docs.microsoft.com/es-es/globalization/encoding/byte-order-markc
      */
     static public String stringFromBytes(byte[] bytes) {
         int arrayLength = bytes.length;

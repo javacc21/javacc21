@@ -28,10 +28,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-   #define artsy
+   #define artsy // Since I couldn't be bothered to write a separate unit test for the preprocessor...
 
 #if artsy   
   TREE_BUILDING_ENABLED;
+  ENSURE_FINAL_EOL;
 #endif
 
 #undef artsy
@@ -53,6 +54,7 @@ BASE_SRC_DIR="../java";
 
 INJECT PARSER_CLASS :
     import java.util.*;
+    import java.nio.file.Path;
     import com.javacc.*;
     import com.javacc.lexgen.*;
     import com.javacc.parsegen.*;
@@ -60,6 +62,20 @@ INJECT PARSER_CLASS :
     import com.javacc.preprocessor.PreprocessorParser;
 {
     Grammar grammar;
+    
+    public JavaCCParser(Grammar grammar, Path path, Set<String> definedSymbols) throws IOException {
+        this(path.toString(), path);
+        this.grammar = grammar;
+        BitSet lineMarkers = null;
+        try {
+            PreprocessorParser ppp = new PreprocessorParser(path);
+            if (definedSymbols != null) ppp.addSymbols(definedSymbols);
+            lineMarkers = ppp.PP_Root();
+        } catch (com.javacc.preprocessor.ParseException pe) {
+            throw new RuntimeException(pe);
+        }
+        token_source.input_stream.setParsedLines(lineMarkers);
+    }
 
     public JavaCCParser(Grammar grammar, String inputSource, CharSequence content) {
          this(inputSource, content);
