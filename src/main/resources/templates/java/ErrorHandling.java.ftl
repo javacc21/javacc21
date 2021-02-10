@@ -267,6 +267,18 @@ void dumpLookaheadCallStack(PrintStream ps) {
   }
   
  [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
+
+  /**
+   * pushes the last token back.
+   */
+  private void pushLastTokenBack() {
+     [#if grammar.treeBuildingEnabled]
+        if (peekNode() == lastConsumedToken) {
+            popNode();
+        }
+     [/#if]
+     lastConsumedToken = lastConsumedToken.gePreviousToken();
+  }
  
   private class ParseState {
        Token lastConsumed;

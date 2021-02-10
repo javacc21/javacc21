@@ -331,27 +331,33 @@
      [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex +1 /]
      boolean ${inFirstVarName} = true; 
    [/#if]
-   do {
+   while (true) {
       [@BuildCode nestedExp/]
+      [#if grammar.faultTolerant && zom.requiresRecoverMethod]
+         if (pendingRecovery && isParserTolerant()) {
+            ${oom.recoverMethodName}();
+         }
+      [/#if]
       [#if nestedExp.simpleName = "ExpansionChoice"]
          ${inFirstVarName} = false;
+      [#else]
+         if (!(${ExpansionCondition(oom.nestedExpansion)})) break;
       [/#if]
-   } 
-   [#if nestedExp.simpleName = "ExpansionChoice"]
-   while (true);
-   [#else]
-   while(${ExpansionCondition(oom.nestedExpansion)});
-   [/#if]
+   }
    [#set inFirstVarName = prevInFirstVarName /]
 [/#macro]
 
 [#macro BuildCodeZeroOrMore zom]
-    [#if zom.nestedExpansion.class.simpleName = "ExpansionChoice"]
-       while (true) {
-    [#else]
-      while (${ExpansionCondition(zom.nestedExpansion)}) {
-    [/#if]
-       ${BuildCode(zom.nestedExpansion)}
+    while (true) {
+       [#if zom.nestedExpansion.class.simpleName != "ExpansionChoice"]
+         if (!(${ExpansionCondition(zom.nestedExpansion)})) break;
+       [/#if]
+       ${BuildCode(zom.nestedExpansion)} 
+       [#if grammar.faultTolerant && zom.requiresRecoverMethod]
+         if (pendingRecovery && isParserTolerant()) {
+            ${zom.recoverMethodName}();
+         }
+       [/#if]
     }
 [/#macro]
 
