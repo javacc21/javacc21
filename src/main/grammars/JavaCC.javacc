@@ -156,6 +156,8 @@ TOKEN :
   |
   < _RECOVER_TO : "RECOVER_TO"> #JavaCCKeyWord
   |
+  < _ON_ERROR : "ON_ERROR"> #JavaCCKeyWord
+  |
   < _UPTO : "UPTO"> #JavaCCKeyWord
   |
   <HASH : "#">
@@ -652,7 +654,7 @@ INJECT PARSER_CLASS : {
     private EnumSet<TokenType> javaccKeyWords = EnumSet.of(_INJECT,
        _INCLUDE, _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
        _PARSER_BEGIN, _PARSER_END, _TOKEN, _SPECIAL_TOKEN, _MORE,
-       _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _UPTO, 
+       _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR, _UPTO, 
        _LEXICAL_STATE, _EOF);
 
 

@@ -163,6 +163,15 @@ abstract public class Expansion extends BaseNode {
         return null;
     }
 
+    private CodeBlock customErrorRecoveryBlock;
+
+    public CodeBlock getCustomErrorRecoveryBlock() {
+        return customErrorRecoveryBlock;
+    }
+
+    public void setCustomErrorRecoveryBlock(CodeBlock customErrorRecoveryBlock) {
+        this.customErrorRecoveryBlock = customErrorRecoveryBlock;
+    }
 
     /**
      * Is this expansion superfluous parentheses?
