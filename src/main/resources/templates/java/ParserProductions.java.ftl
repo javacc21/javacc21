@@ -48,6 +48,9 @@
     [#set currentProduction = production]
     [@ParserProduction production/]
   [/#list]
+  [#if grammar.faultTolerant]
+    [@BuildRecoverRoutines /]
+  [/#if]
 [/#macro]
 
 [#macro ParserProduction production]
@@ -133,7 +136,6 @@
             [#set closeCondition = "nodeArity() > " + closeCondition]
          [/#if]
       [/#if]
-
       [@createNode treeNodeBehavior nodeVarName false /]
       [/#if]
          [#-- I put this here for the hypertechnical reason
@@ -481,4 +483,47 @@
        )) {
           throw new ParseException(this, "${assertion.message?j_string}");
         }
+[/#macro]
+
+[#macro BuildRecoverRoutines]
+   [#list grammar.expansionsNeedingRecoverMethod as expansion]
+       private void ${expansion.recoverMethodName}() {
+          List<Token> skippedTokens = new ArrayList<>();
+          boolean success = false;
+          while (lastConsumedToken.getType() != EOF) {
+             if (${ExpansionCondition(expansion)}) {
+                success = true;
+                break;
+             }
+             [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
+               [#var followingExpansion = expansion.followingExpansion]
+               [#list 1..1000000 as unused]
+                [#if followingExpansion.maximumSize >0] 
+                 if (${ExpansionCondition(followingExpansion)}) {
+                    success = true;
+                    break;
+                 }
+                [/#if]
+                [#if followingExpansion.minimumSize >0 || followingExpansion.followingExpansion?is_null]
+                    [#break/]
+                [/#if]
+                [#set followingExpansion = followingExpansion.followingExpansion]
+               [/#list]
+             [/#if]
+             skippedTokens.add(lastConsumedToken);
+             lastConsumedToken = nextToken(lastConsumedToken);
+          }
+          if (!success && !skippedTokens.isEmpty()) {
+             lastConsumedToken = skippedTokens.get(0);
+          } 
+          if (success&& !skippedTokens.isEmpty()) {
+             InvalidNode iv = new InvalidNode();
+             for (Token tok : skippedTokens) {
+                iv.addChild(tok);
+             }
+             pushNode(iv);
+             pendingRecovery = false;
+          }
+       }
+   [/#list]
 [/#macro]

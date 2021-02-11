@@ -66,7 +66,7 @@ abstract public class Expansion extends BaseNode {
         return firstAncestorOfType(BNFProduction.class);
     }
 
-    private String scanRoutineName, predicateMethodName, firstSetVarName, finalSetVarName, followSetVarName;
+    private String scanRoutineName, firstSetVarName, finalSetVarName, followSetVarName;
 
     public String getLabel() {
         return label;
@@ -484,32 +484,31 @@ abstract public class Expansion extends BaseNode {
      */
     abstract public boolean isConcrete();
 
-    public boolean masks(Expansion other) {
-        TokenSet firstSet = this.getFirstSet();
-        TokenSet otherSet = other.getFirstSet();
-        TokenSet set = new TokenSet(this.getGrammar());
-        set.or(firstSet);
-        set.andNot(otherSet);
-        return set.cardinality() == 0;
-    }
-
-    public TokenSet overlap(Expansion other) {
-        TokenSet firstSet = this.getFirstSet();
-        TokenSet otherSet = other.getFirstSet();
-        TokenSet result = new TokenSet(getGrammar());
-        result.or(firstSet);
-        result.and(otherSet);
-        return result;
-    }
-
     private Expansion getPreceding() {
         Node parent = getParent();
         if (parent instanceof ExpansionSequence) {
             List<Expansion> siblings = parent.childrenOfType(Expansion.class);
             int index = siblings.indexOf(this);
-            if (index >0) {
-                return siblings.get(index-1);
+            while (index >0) {
+                Expansion exp = siblings.get(index-1);
+                if (exp.getMaximumSize()>0) {
+                    return exp;
+                }
+                index--;
             }
+        }
+        return null;
+    }
+
+    public Expansion getFollowingExpansion() {
+        Node parent = getParent();
+        if (parent instanceof ExpansionSequence) {
+            List<Expansion> siblings = parent.childrenOfType(Expansion.class);
+            int index = siblings.indexOf(this);
+            if (index < siblings.size()-1) return siblings.get(index+1);
+        }
+        if (parent instanceof Expansion) {
+            return ((Expansion)parent).getFollowingExpansion();
         }
         return null;
     }
