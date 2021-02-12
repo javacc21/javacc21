@@ -277,7 +277,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
             popNode();
         }
      [/#if]
-     lastConsumedToken = lastConsumedToken.gePreviousToken();
+     lastConsumedToken = lastConsumedToken.getPreviousToken();
   }
  
   private class ParseState {
