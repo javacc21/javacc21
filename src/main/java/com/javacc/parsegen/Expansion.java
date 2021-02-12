@@ -526,13 +526,10 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead()) {
             return false;
         }
-        if (getParent() instanceof BNFProduction) {
+        if (isTolerantParsing() || getParent() instanceof BNFProduction) {
             return true;
         }
         Expansion preceding = getPreceding();
-        if (preceding != null && preceding.isTolerantParsing() && !(preceding instanceof RegularExpression)) {
-            return true;
-        }
-        return (this instanceof ZeroOrMore || this instanceof OneOrMore) && this.isTolerantParsing();
+        return preceding != null && preceding.isTolerantParsing() && !(preceding instanceof RegularExpression);
     }
 }

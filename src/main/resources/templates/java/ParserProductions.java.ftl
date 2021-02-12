@@ -81,10 +81,14 @@
   // ${expansion.location}
   [/#if]
       [#if grammar.faultTolerant && expansion.requiresRecoverMethod]
+          [#if expansion.tolerantParsing]
+             ${expansion.recoverMethodName}();
+          [#else]
           if (pendingRecovery) {
              ${expansion.recoverMethodName}();
+             pendingRecovery = false;
           }
-          pendingRecovery = false;
+          [/#if]
       [/#if]
       [@CU.HandleLexicalStateChange expansion false]
        [@TreeBuildingAndRecovery expansion]
