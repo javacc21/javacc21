@@ -12,10 +12,12 @@ public class InvalidToken extends Token {
         super(TokenType.INVALID, image, inputSource);
 [#if grammar.faultTolerant]
         super.setUnparsed(true);
+        this.setDirty(true);
 [/#if]
     }
 
     public String getNormalizedText() {
         return "Lexically Invalid Input:" + getImage();
     }
+
 }

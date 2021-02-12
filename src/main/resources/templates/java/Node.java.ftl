@@ -583,6 +583,15 @@ public interface Node extends Comparable<Node>
     default void dump() {
         dump("");
     }
+[#if grammar.faultTolerant]    
+
+    default boolean isDirty() {
+        return false;
+    }
+
+    void setDirty(boolean dirty);
+
+[/#if]    
 
     // NB: This is not thread-safe
     // If the node's children could change out from under you,

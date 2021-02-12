@@ -182,7 +182,12 @@
                      [/#list]
                  } else {
                      if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
+                  [#if grammar.faultTolerant]
+                     closeNodeScope(${nodeVarName}, true);
+                     ${nodeVarName}.setDirty(true);
+                  [#else]
                      clearNodeScope();
+                  [/#if]
                  }
              }
           ${grammar.utils.popNodeVariableName()!}
@@ -340,7 +345,7 @@
    [/#if]
    while (true) {
       [@BuildCode nestedExp/]
-      [#if grammar.faultTolerant && zom.requiresRecoverMethod]
+      [#if grammar.faultTolerant && oom.requiresRecoverMethod]
          if (pendingRecovery && isParserTolerant()) {
             ${oom.recoverMethodName}();
          }

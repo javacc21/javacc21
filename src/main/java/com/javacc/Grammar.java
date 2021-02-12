@@ -409,7 +409,16 @@ public class Grammar extends BaseNode {
     }
 
     public List<Expansion> getExpansionsNeedingRecoverMethod() {
-        return descendants(Expansion.class, Expansion::getRequiresRecoverMethod);
+        Set<String> alreadyAdded = new HashSet<>();
+        List<Expansion> result = new ArrayList<>();
+        for (Expansion exp : descendants(Expansion.class, Expansion::getRequiresRecoverMethod)) {
+            String methodName = exp.getRecoverMethodName();
+            if (!alreadyAdded.contains(methodName)) {
+                result.add(exp);
+                alreadyAdded.add(methodName);
+            }
+        }
+        return result;
     }
 
     public List<String> getLexerTokenHooks() {
