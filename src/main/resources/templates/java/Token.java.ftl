@@ -59,11 +59,26 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 
 [#if grammar.faultTolerant]
-    private boolean virtual, skipped;
+    private boolean virtual, skipped, dirty;
 
-    void setVirtual(boolean virtual) {this.virtual = virtual;}
+    void setVirtual(boolean virtual) {
+        this.virtual = virtual;
+        if (virtual) dirty = true;
+    }
 
-    void setSkipped(boolean skipped) {this.skipped = skipped;}
+    void setSkipped(boolean skipped) {
+        this.skipped = skipped;
+        if (skipped) dirty = true;
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
+    }
+
 [/#if]
 
     /**

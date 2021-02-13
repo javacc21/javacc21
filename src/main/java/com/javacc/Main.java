@@ -41,10 +41,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.util.Enumeration;
-import java.util.StringTokenizer;
-
-import java.util.Scanner;
+import java.util.*;
 
 import com.javacc.parser.ParseException;
 
@@ -154,6 +151,8 @@ public final class Main {
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
         System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 15. (Default is 8)");
         System.out.println(" -n                Suppress the check for a newer version");
+        System.out.println(" -p                Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.");
+        System.out.println("   For example:   -p debug,strict");
         System.out.println(" -q                Quieter output");
         System.out.println();
         System.out.println("As of 2021, all other options can only be set at the top of your grammar file.");
@@ -183,12 +182,24 @@ public final class Main {
         }
         File grammarFile = null, outputDirectory = null;
         int jdkTarget = 0;
+        Set<String> preprocesorSymbols = new HashSet<>();
         boolean quiet = false, noNewerCheck = false;
         for (int i=0; i<args.length;i++) {
             String arg = args[i];
             if (arg.charAt(0) == '-') {
                 if (arg.startsWith("--")) arg = arg.substring(1);
-                if (arg.equalsIgnoreCase("-d")) {
+                if (arg.equalsIgnoreCase("-p")) {
+                    if (i==args.length-1) {
+                        System.err.println("-p flag with no preprocessor symbols afterwards");
+                        System.exit(-1);
+                    }
+                    String symbols = args[++i];
+                    StringTokenizer st = new StringTokenizer(symbols, ",");
+                    while (st.hasMoreTokens()) {
+                        preprocesorSymbols.add(st.nextToken());
+                    }
+                }
+                else if (arg.equalsIgnoreCase("-d")) {
                     if (i==args.length-1) {
                         System.err.println("-d flag with no output directory");
                         System.exit(-1);
@@ -253,7 +264,7 @@ public final class Main {
                 }
             }
         }
-        int errorcode = mainProgram(grammarFile, outputDirectory, jdkTarget, quiet);
+        int errorcode = mainProgram(grammarFile, outputDirectory, jdkTarget, quiet, preprocesorSymbols);
         System.exit(errorcode);
     }
 
@@ -265,9 +276,9 @@ public final class Main {
      * @throws Exception
      */
 
-    public static int mainProgram(File grammarFile, File outputDir, int jdkTarget, boolean quiet) throws Exception {
+    public static int mainProgram(File grammarFile, File outputDir, int jdkTarget, boolean quiet, Set<String> symbols) throws Exception {
         if (!quiet) bannerLine();
-        Grammar grammar = new Grammar(outputDir, jdkTarget, quiet);
+        Grammar grammar = new Grammar(outputDir, jdkTarget, quiet, symbols);
         grammar.parse(grammarFile.toString(), true);
         try {
             grammar.createOutputDir();

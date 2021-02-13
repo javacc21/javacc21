@@ -45,8 +45,23 @@ public class TokenSet extends BitSet {
 	
 	private Grammar grammar;
 
+	private boolean incomplete;
+
 	public TokenSet(Grammar grammar) {
 		this.grammar = grammar;
+	}
+
+	public TokenSet(Grammar grammar, boolean incomplete) {
+		this.grammar=grammar;
+		this.incomplete = incomplete;
+	}
+
+	public boolean isIncomplete() {
+		return incomplete;
+	}
+
+	public void setIncomplete(boolean incomplete) {
+		this.incomplete = incomplete;
 	}
 	
 	public long[] toLongArray() {

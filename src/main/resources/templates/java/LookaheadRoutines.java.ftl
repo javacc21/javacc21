@@ -41,6 +41,7 @@
 
 [#macro Generate]
     [@firstSetVars /]
+    [#-- @followSetVars / --]
     [#if grammar.choicePointExpansions?size !=0]
        [@BuildLookaheads /]
      [/#if]
@@ -71,7 +72,7 @@
      // EnumSets that represent the various expansions' follow set (i.e. the set of tokens that can immediately follow this)
      //=================================
     [#list grammar.expansionsForFollowSet as expansion]
-          [@followSetVar expansion/]
+          [@CU.followSetVar expansion/]
     [/#list]
 [/#macro]
 
@@ -128,6 +129,7 @@
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
   // predicate routine for expansion at: 
   // ${expansion.location}
+  // BuildPredicateRoutine macro
    private final boolean ${expansion.predicateMethodName}() {
      try {
          lookaheadRoutineNesting++;
@@ -152,11 +154,11 @@
  [#if !expansion.singleToken || expansion.requiresPredicateMethod]
   // scanahead routine for expansion at: 
   // ${expansion.location}
+  // BuildScanRoutine macro
   private final boolean ${expansion.scanRoutineName}() {
     try {
        lookaheadRoutineNesting++;
    [#if !expansion.insideLookahead]
-[#--    if (hitFailure) return lastLookaheadSucceeded = false;--]
      ${BuildPredicateCode(expansion)}
    [/#if]
      ${BuildScanCode(expansion)}
@@ -171,6 +173,7 @@
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 [#macro BuildPredicateCode expansion]
+     // BuildPredicateCode macro
      [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
        if (!(${expansion.semanticLookahead})) return lastLookaheadSucceeded = false;
      [/#if]
@@ -266,6 +269,8 @@
 [/#macro]
 
 [#macro BuildProductionLookaheadMethod production]
+   // BuildProductionLookaheadMethod macro
+
    private final boolean ${production.lookaheadMethodName}() {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}
@@ -440,3 +445,5 @@
       ${expansion.scanRoutineName}()
    [/#if]
 [/#macro]
+
+

@@ -7,6 +7,7 @@
 DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
 TREE_BUILDING_ENABLED=false;
 PARSER_PACKAGE="com.javacc.preprocessor";
+ENSURE_FINAL_EOL;
 //DEBUG_PARSER;
 
 
@@ -36,6 +37,11 @@ INJECT PARSER_CLASS :
     private Set<String> definedSymbols = new HashSet<>();
     private boolean currentlyOn = true;
 
+    public PARSER_CLASS(Path path, Set<String> definedSymbols) throws IOException {
+        this(path);
+        if (definedSymbols !=null) addSymbols(definedSymbols);
+    }
+
     public BitSet getLineMarkers() {
         return lineMarkers;
     }
@@ -43,6 +49,20 @@ INJECT PARSER_CLASS :
     private void setLineMarker() {
         int lineNumber = lastConsumedToken.getBeginLine();
         if (currentlyOn) lineMarkers.set(lineNumber);
+    }
+
+    public void setSymbol(String symbol) {
+        definedSymbols.add(symbol);
+    }
+
+    public void unsetSymbol(String symbol) {
+        definedSymbols.remove(symbol);
+    }
+
+    public void addSymbols(Set<String> symbols) {
+        for (String symbol : symbols) {
+            definedSymbols.add(symbol);
+        }
     }
 }
 

@@ -186,6 +186,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
 
 [#if grammar.faultTolerant] 
     private boolean tolerantParsing = true;
+    // Are we pending a recovery routine to
+    // get back on the rails?
+    private boolean pendingRecovery;
 [/#if]    
 
     public boolean isParserTolerant() {
@@ -264,6 +267,18 @@ void dumpLookaheadCallStack(PrintStream ps) {
   }
   
  [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
+
+  /**
+   * pushes the last token back.
+   */
+  private void pushLastTokenBack() {
+     [#if grammar.treeBuildingEnabled]
+        if (peekNode() == lastConsumedToken) {
+            popNode();
+        }
+     [/#if]
+     lastConsumedToken = lastConsumedToken.getPreviousToken();
+  }
  
   private class ParseState {
        Token lastConsumed;

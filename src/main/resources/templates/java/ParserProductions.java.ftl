@@ -48,6 +48,9 @@
     [#set currentProduction = production]
     [@ParserProduction production/]
   [/#list]
+  [#if grammar.faultTolerant]
+    [@BuildRecoverRoutines /]
+  [/#if]
 [/#macro]
 
 [#macro ParserProduction production]
@@ -77,14 +80,26 @@
   // Code for ${expansion.simpleName} specified at:
   // ${expansion.location}
   [/#if]
+      [#if grammar.faultTolerant && expansion.requiresRecoverMethod]
+          [#if expansion.tolerantParsing]
+             ${expansion.recoverMethodName}();
+          [#else]
+          if (pendingRecovery) {
+             ${expansion.recoverMethodName}();
+             pendingRecovery = false;
+          }
+          [/#if]
+      [/#if]
       [@CU.HandleLexicalStateChange expansion false]
-       [@HandleTreeBuilding expansion]
+       [@TreeBuildingAndRecovery expansion]
         [@BuildExpansionCode expansion/]
-       [/@HandleTreeBuilding]
+       [/@TreeBuildingAndRecovery]
       [/@CU.HandleLexicalStateChange]
 [/#macro]
 
-[#macro HandleTreeBuilding expansion]
+[#macro TreeBuildingAndRecovery expansion]
+[#-- This macro handles both tree building AND recovery. It doesn't seem right.
+     It should probably be two macros. Also, it is too darned big. --]
     [#var nodeVarName, 
           production, 
           treeNodeBehavior, 
@@ -92,7 +107,8 @@
           closeCondition = "true", 
           javaCodePrologue = "",
           parseExceptionVar = CU.newVarName("parseException"),
-          callStackSizeVar = CU.newVarName("callStackSize")
+          callStackSizeVar = CU.newVarName("callStackSize"),
+          canRecover = grammar.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
@@ -103,14 +119,15 @@
       [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
                         || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
-    [#if !buildTreeNode]
+    [#if !buildTreeNode && !canRecover]
       ${javaCodePrologue} 
       [#nested]
     [#else]
+     [#if buildTreeNode]
      [#set nodeNumbering = nodeNumbering +1]
      [#set nodeVarName = currentProduction.name + nodeNumbering]
      ${grammar.utils.pushNodeVariableName(nodeVarName)!}
-      [#if !treeNodeBehavior??]
+      [#if !treeNodeBehavior?? && !production?is_null]
          [#if grammar.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false}]
          [#else]
@@ -123,8 +140,8 @@
             [#set closeCondition = "nodeArity() > " + closeCondition]
          [/#if]
       [/#if]
-
       [@createNode treeNodeBehavior nodeVarName false /]
+      [/#if]
          [#-- I put this here for the hypertechnical reason
               that I want the initial code block to be able to 
               reference CURRENT_NODE. --]
@@ -137,12 +154,26 @@
          }
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
-             throw e;
+             [#if !canRecover]
+              throw e;
+             [#else]
+             if (!isParserTolerant()) throw e;
+             this.pendingRecovery = true;
+             ${expansion.customErrorRecoveryBlock!}
+             [#if !production?is_null && production.returnType != "void"]
+                [#var rt = production.returnType]
+                [#-- We need a return statement here or the code won't compile! --]
+                [#if rt = "int" || rt="char" || rt=="byte" || rt="short" || rt="long" || rt="float"|| rt="double"]
+                return 0;
+                [#else]
+                return null;
+                [/#if]
+             [/#if]
+          [/#if]
          }
          finally {
-             if (${parseExceptionVar} == null) {
-                restoreCallStack(${callStackSizeVar});
-             }
+             restoreCallStack(${callStackSizeVar});
+             [#if buildTreeNode]
              if (buildTree) {
                  if (${parseExceptionVar} == null) {
                      closeNodeScope(${nodeVarName}, ${closeCondition});
@@ -151,12 +182,18 @@
                      [/#list]
                  } else {
                      if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
+                  [#if grammar.faultTolerant]
+                     closeNodeScope(${nodeVarName}, true);
+                     ${nodeVarName}.setDirty(true);
+                  [#else]
                      clearNodeScope();
+                  [/#if]
                  }
              }
+          ${grammar.utils.popNodeVariableName()!}
+             [/#if]
              this.currentlyParsedProduction = prevProduction;
          }       
-          ${grammar.utils.popNodeVariableName()!}
     [/#if]
 [/#macro]
 
@@ -306,27 +343,33 @@
      [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex +1 /]
      boolean ${inFirstVarName} = true; 
    [/#if]
-   do {
+   while (true) {
       [@BuildCode nestedExp/]
+      [#if grammar.faultTolerant && oom.requiresRecoverMethod]
+         if (pendingRecovery && isParserTolerant()) {
+            ${oom.recoverMethodName}();
+         }
+      [/#if]
       [#if nestedExp.simpleName = "ExpansionChoice"]
          ${inFirstVarName} = false;
+      [#else]
+         if (!(${ExpansionCondition(oom.nestedExpansion)})) break;
       [/#if]
-   } 
-   [#if nestedExp.simpleName = "ExpansionChoice"]
-   while (true);
-   [#else]
-   while(${ExpansionCondition(oom.nestedExpansion)});
-   [/#if]
+   }
    [#set inFirstVarName = prevInFirstVarName /]
 [/#macro]
 
 [#macro BuildCodeZeroOrMore zom]
-    [#if zom.nestedExpansion.class.simpleName = "ExpansionChoice"]
-       while (true) {
-    [#else]
-      while (${ExpansionCondition(zom.nestedExpansion)}) {
-    [/#if]
-       ${BuildCode(zom.nestedExpansion)}
+    while (true) {
+       [#if zom.nestedExpansion.class.simpleName != "ExpansionChoice"]
+         if (!(${ExpansionCondition(zom.nestedExpansion)})) break;
+       [/#if]
+       ${BuildCode(zom.nestedExpansion)} 
+       [#if grammar.faultTolerant && zom.requiresRecoverMethod]
+         if (pendingRecovery && isParserTolerant()) {
+            ${zom.recoverMethodName}();
+         }
+       [/#if]
     }
 [/#macro]
 
@@ -450,4 +493,47 @@
        )) {
           throw new ParseException(this, "${assertion.message?j_string}");
         }
+[/#macro]
+
+[#macro BuildRecoverRoutines]
+   [#list grammar.expansionsNeedingRecoverMethod as expansion]
+       private void ${expansion.recoverMethodName}() {
+          List<Token> skippedTokens = new ArrayList<>();
+          boolean success = false;
+          while (lastConsumedToken.getType() != EOF) {
+             if (${ExpansionCondition(expansion)}) {
+                success = true;
+                break;
+             }
+             [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
+               [#var followingExpansion = expansion.followingExpansion]
+               [#list 1..1000000 as unused]
+                [#if followingExpansion.maximumSize >0] 
+                 if (${ExpansionCondition(followingExpansion)}) {
+                    success = true;
+                    break;
+                 }
+                [/#if]
+                [#if followingExpansion.minimumSize >0 || followingExpansion.followingExpansion?is_null]
+                    [#break/]
+                [/#if]
+                [#set followingExpansion = followingExpansion.followingExpansion]
+               [/#list]
+             [/#if]
+             skippedTokens.add(lastConsumedToken);
+             lastConsumedToken = nextToken(lastConsumedToken);
+          }
+          if (!success && !skippedTokens.isEmpty()) {
+             lastConsumedToken = skippedTokens.get(0);
+          } 
+          if (success&& !skippedTokens.isEmpty()) {
+             InvalidNode iv = new InvalidNode();
+             for (Token tok : skippedTokens) {
+                iv.addChild(tok);
+             }
+             pushNode(iv);
+             pendingRecovery = false;
+          }
+       }
+   [/#list]
 [/#macro]

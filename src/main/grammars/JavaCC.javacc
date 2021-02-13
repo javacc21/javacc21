@@ -28,10 +28,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-   #define artsy
+   #define artsy // Since I couldn't be bothered to write a separate unit test for the preprocessor...
 
 #if artsy   
   TREE_BUILDING_ENABLED;
+  ENSURE_FINAL_EOL;
 #endif
 
 #undef artsy
@@ -53,6 +54,7 @@ BASE_SRC_DIR="../java";
 
 INJECT PARSER_CLASS :
     import java.util.*;
+    import java.nio.file.Path;
     import com.javacc.*;
     import com.javacc.lexgen.*;
     import com.javacc.parsegen.*;
@@ -60,23 +62,25 @@ INJECT PARSER_CLASS :
     import com.javacc.preprocessor.PreprocessorParser;
 {
     Grammar grammar;
+    
+    public PARSER_CLASS(Grammar grammar, Path path, Set<String> definedSymbols) throws IOException {
+        this(path.toString(), path);
+        this.grammar = grammar;
+        BitSet lineMarkers = null;
+        try {
+            PreprocessorParser ppp = new PreprocessorParser(path, definedSymbols);
+            lineMarkers = ppp.PP_Root();
+        } catch (com.javacc.preprocessor.ParseException pe) {
+            throw new RuntimeException(pe);
+        }
+        token_source.input_stream.setParsedLines(lineMarkers);
+    }
 
-    public JavaCCParser(Grammar grammar, String inputSource, CharSequence content) {
+    public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) {
          this(inputSource, content);
          this.grammar = grammar;
          BitSet lineMarkers = null;
          try {
-             char lastChar = content.charAt(content.length()-1);
-             // The file has to end with a newline. It's very hard 
-             // to write the grammar otherwise!
-             // I think I should make appending a newline at the end of the file
-             // (if there isn't one already) a configuration setting.
-             if (lastChar!='\n' && lastChar!='\r') {
-                 StringBuilder buf= new StringBuilder(content.length()+1);
-                 buf.append(content);
-                 buf.append((char) '\n');
-                 content = buf;
-             }
              lineMarkers = new PreprocessorParser(content).PP_Root();
          } catch(com.javacc.preprocessor.ParseException pe) {
              throw new RuntimeException(pe);
@@ -94,7 +98,12 @@ INJECT PARSER_CLASS :
     }
     
     static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) throws ParseException {
-        JavaCCParser parser = new JavaCCParser(inputSource, content);
+        PARSER_CLASS parser = new PARSER_CLASS(inputSource, content);
+        return parser.CompilationUnit();
+    }
+
+    static public CompilationUnit parseJavaFile(Path path) throws ParseException, IOException {
+        PARSER_CLASS parser = new PARSER_CLASS(path);
         return parser.CompilationUnit();
     }
 
@@ -146,6 +155,8 @@ TOKEN :
   < _RECOVER : "RECOVER"> #JavaCCKeyWord
   |
   < _RECOVER_TO : "RECOVER_TO"> #JavaCCKeyWord
+  |
+  < _ON_ERROR : "ON_ERROR"> #JavaCCKeyWord
   |
   < _UPTO : "UPTO"> #JavaCCKeyWord
   |
@@ -643,7 +654,7 @@ INJECT PARSER_CLASS : {
     private EnumSet<TokenType> javaccKeyWords = EnumSet.of(_INJECT,
        _INCLUDE, _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
        _PARSER_BEGIN, _PARSER_END, _TOKEN, _SPECIAL_TOKEN, _MORE,
-       _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _UPTO, 
+       _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR, _UPTO, 
        _LEXICAL_STATE, _EOF);
 
 
@@ -1587,7 +1598,7 @@ ExpansionWithParentheses :
        SCAN ~\...\Lookahead => 
        "!" {CURRENT_NODE.setTolerantParsing(true);}
    ]
-   [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
+   [UpToHere(CURRENT_NODE)]
    {
        Node startNode = lss != null ? lss : lparen;
        CURRENT_NODE.copyLocationInfo(startNode, lastConsumedToken);
@@ -2145,18 +2156,13 @@ Expansion ExpansionUnit :
             grammar.addInplaceRegexp(re);
       }
   }
-  [SCAN ~\...\Lookahead => UpToHere(result)]
+  [UpToHere(result)]
   |
   SCAN [PrimaryExpression "="]<IDENTIFIER>
-  => result=NonTerminal [SCAN ~\...\Lookahead => UpToHere(result)]
+  => result=NonTerminal [UpToHere(result)]
   |
   FAIL
  )
- [
-     SCAN ~\...\Lookahead =>
-     "!"
-     {result.setTolerantParsing(true);}
- ]
  [
      SCAN ~\...\Lookahead => 
     tba=TreeNodeDescriptor
@@ -2167,7 +2173,7 @@ Expansion ExpansionUnit :
  }
 ;
 
-NonTerminal NonTerminal #NonTerminal : 
+#NonTerminal# :
   [
     => PrimaryExpression "="
   ]
@@ -2179,10 +2185,16 @@ NonTerminal NonTerminal #NonTerminal :
     |
     InvocationArguments
   ]
+  [
+     SCAN ~\...\Lookahead =>
+     "!"
+     {CURRENT_NODE.setTolerantParsing(true);}
+  ]
   {return CURRENT_NODE;}
 ;
 
 UpToHere(Expansion exp) #void :
+   SCAN ~\...\Lookahead =>
    <UP_TO_HERE>
    {
        String img = lastConsumedToken.getImage();
@@ -2305,7 +2317,8 @@ OneOrMore : "(" ExpansionChoice ")" "+";
 ZeroOrOne : 
     [LexicalStateSwitch]
     "[" =>|| ExpansionChoice "]"
-     [SCAN ~\...\Lookahead => UpToHere(CURRENT_NODE)]
+     ["!" {CURRENT_NODE.setTolerantParsing(true);}]
+     [UpToHere(CURRENT_NODE)]
 ;
 
 INJECT ZeroOrOne : 
@@ -2536,7 +2549,16 @@ RegexpExpansion #void :
   |
   SCAN 3 {isInProduction("TokenProduction")||grammar.getUserDefinedLexer()} =>
   InPlaceRegexp 
- ) 
+ )
+ [
+      SCAN {isInProduction("BNFProduction") && !isInProduction("Lookahead")}
+      =>
+      {
+          RegularExpression regexp = (RegularExpression) peekNode();
+          regexp.setTolerantParsing(true);
+      }
+      "!" {regexp.addChild(popNode());}
+ ]
 ;
 
 

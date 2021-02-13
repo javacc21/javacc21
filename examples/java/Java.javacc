@@ -85,14 +85,10 @@ INJECT PARSER_CLASS : {
 }
 
 #CompilationUnit# :
-  LEXICAL_STATE JAVA
   [ PackageDeclaration ]
   ( ImportDeclaration )*
-  (
-     ( TypeDeclaration )+
-     |
-     <EOF>
-  )
+  ( TypeDeclaration )+
+  [<EOF>]
   {
     return CURRENT_NODE;
   }
@@ -853,7 +849,7 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN {getToken(1).getImage().equals("yield")} =>
+   SCAN {getToken(1).getImage().equals("yield")}# =>
    <IDENTIFIER> Expression ";" 
 ;
 

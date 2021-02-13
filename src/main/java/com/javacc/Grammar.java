@@ -73,6 +73,7 @@ public class Grammar extends BaseNode {
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
     private Set<String> lexicalStates = new LinkedHashSet<>();
+    private Set<String> preprocessorSymbols = new HashSet<>();
     private Map<Integer, String> tokenNames = new HashMap<>();
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
@@ -106,11 +107,12 @@ public class Grammar extends BaseNode {
     private File outputDir;
     private boolean quiet;
     
-    public Grammar(File outputDir, int jdkTarget, boolean quiet) {
+    public Grammar(File outputDir, int jdkTarget, boolean quiet, Set<String> preprocessorSymbols) {
         this();
         this.outputDir = outputDir;
         this.jdkTarget = jdkTarget;
         this.quiet = quiet;
+        this.preprocessorSymbols = preprocessorSymbols;
         parserData = new ParserData(this);
     }
 
@@ -171,8 +173,7 @@ public class Grammar extends BaseNode {
         String canonicalPath = file.getCanonicalPath();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
-        String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
-        JavaCCParser parser = new JavaCCParser(this, canonicalPath, content);
+        JavaCCParser parser = new JavaCCParser(this, file.getCanonicalFile().toPath(), preprocessorSymbols);
         parser.setEnterIncludes(enterIncludes);
         File prevIncludedFileDirectory = includedFileDirectory;
         if (!isInInclude()) {
@@ -187,6 +188,7 @@ public class Grammar extends BaseNode {
         } 
         return rootNode;
     }
+
 
     public Node include(String location) throws IOException, ParseException {
         File file = new File(location);
@@ -404,6 +406,19 @@ public class Grammar extends BaseNode {
 
     public List<Expansion> getExpansionsNeedingPredicate() {
         return descendants(Expansion.class, Expansion::getRequiresPredicateMethod);
+    }
+
+    public List<Expansion> getExpansionsNeedingRecoverMethod() {
+        Set<String> alreadyAdded = new HashSet<>();
+        List<Expansion> result = new ArrayList<>();
+        for (Expansion exp : descendants(Expansion.class, Expansion::getRequiresRecoverMethod)) {
+            String methodName = exp.getRecoverMethodName();
+            if (!alreadyAdded.contains(methodName)) {
+                result.add(exp);
+                alreadyAdded.add(methodName);
+            }
+        }
+        return result;
     }
 
     public List<String> getLexerTokenHooks() {
@@ -902,7 +917,7 @@ public class Grammar extends BaseNode {
         return outputDir == null ? "." : outputDir.toString(); 
     }
 
-    public File getNodeOutputDirectory(String nodeName) throws IOException {
+    public File getNodeOutputDirectory() throws IOException {
         String nodePackage = getNodePackage();
         String baseSrcDir = getBaseSourceDirectory();
         if (nodePackage == null || nodePackage.equals("") || baseSrcDir.equals("")) {
@@ -1033,6 +1048,11 @@ public class Grammar extends BaseNode {
         return b == null ? false : b;
     }
 
+    public boolean getEnsureFinalEOL() {
+        Boolean b = (Boolean) settings.get("ENSURE_FINAL_EOL");
+        return b== null ? false : b;
+    }
+
     public int getJdkTarget() {
         if (jdkTarget == 0) return 8;
         return jdkTarget;
@@ -1070,7 +1090,7 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = "FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,USER_DEFINED_LEXER,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,HUGE_FILE_SUPPORT,LEGACY_API,NODE_FACTORY,DEBUG_TOKEN_MANAGER,USER_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER";
+    private String booleanSettings = "FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,USER_DEFINED_LEXER,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,HUGE_FILE_SUPPORT,LEGACY_API,NODE_FACTORY,DEBUG_TOKEN_MANAGER,USER_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL";
     private String stringSettings = "PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,TOKEN_FACTORY,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY";
     private String integerSettings = "TABS_TO_SPACES,JDK_TARGET";
 

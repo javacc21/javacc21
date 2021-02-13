@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,7 +93,7 @@ public class FilesGenerator {
     		generateFileLineMap();
     	}
     	if (grammar.getFaultTolerant()) {
-    	    generateParsingProblem();
+    	    generateInvalidNode();
     	}
         
     }
@@ -130,7 +130,8 @@ public class FilesGenerator {
                     || currentFilename.equals("Token.java")
                     || currentFilename.equals("Node.java")
             		|| currentFilename.equals("InvalidToken.java")
-            		|| currentFilename.equals("FileLineMap.java")))
+            		|| currentFilename.equals("FileLineMap.java")
+                    || currentFilename.equals("InvalidNode.java")))
             {
                     templateName = "ASTNode.java.ftl";
             }
@@ -192,6 +193,7 @@ public class FilesGenerator {
         try {
             JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getJdkTarget());
             JavaCodeUtils.addGetterSetters(jcu);
+            JavaCodeUtils.removeUnusedPrivateMethods(jcu);
             JavaCodeUtils.removeUnusedVariables(jcu);
             JavaFormatter formatter = new JavaFormatter();
             out.write(formatter.format(jcu));
@@ -219,7 +221,14 @@ public class FilesGenerator {
             generate(outputFile);
         }
     }
- 
+
+    void generateInvalidNode() throws IOException, TemplateException {
+        File outputFile = new File(grammar.getParserOutputDirectory(), "InvalidNode.java");
+        if (regenerate(outputFile)) {
+            generate(outputFile);
+        }
+    }
+
     void generateToken() throws IOException, TemplateException {
         File outputFile = new File(grammar.getParserOutputDirectory(), "Token.java");
         if (regenerate(outputFile)) {
@@ -288,7 +297,6 @@ public class FilesGenerator {
     
     void generateTreeBuildingFiles() throws IOException, TemplateException {
     	generateNodeFile();
-//        Set<File> files = new LinkedHashSet<File>();
         Map<String, File> files = new LinkedHashMap<>();
         files.put(grammar.getBaseNodeClassName(), getOutputFile(grammar.getBaseNodeClassName()));
 
@@ -334,11 +342,11 @@ public class FilesGenerator {
         }
         String explicitlyDeclaredPackage = codeInjector.getExplicitlyDeclaredPackage(className);
         if (explicitlyDeclaredPackage == null) {
-            return new File(grammar.getNodeOutputDirectory(nodeName), className + ".java");            
+            return new File(grammar.getNodeOutputDirectory(), className + ".java");            
         }
         String sourceBase = grammar.getBaseSourceDirectory();
         if (sourceBase.equals("")) {
-            return new File(grammar.getNodeOutputDirectory(nodeName), className + ".java");
+            return new File(grammar.getNodeOutputDirectory(), className + ".java");
         }
         return new File(new File(sourceBase, explicitlyDeclaredPackage.replace('.', '/')), className + ".java"); 
     }

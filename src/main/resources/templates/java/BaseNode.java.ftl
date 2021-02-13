@@ -81,7 +81,21 @@ public class ${grammar.baseNodeClassName} implements Node {
     
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
-    } 
+    }
+
+[#if grammar.faultTolerant]
+
+    private boolean dirty;
+
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
+    }
+
+[/#if]
 
 [#if grammar.nodeUsesParser]    
     protected ${grammar.parserClassName} parser;

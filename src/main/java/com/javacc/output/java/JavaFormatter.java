@@ -164,7 +164,7 @@ public class JavaFormatter {
                 buf.append(", ");
                 break;
             default:
-                if (buf.length() > 0) {
+                if (buf.length() > 0 && currentToken.getType() != TokenType.EOF) {
                     char lastChar = buf.charAt(buf.length() -1);
                     char thisChar = currentToken.toString().charAt(0);
                     if ((Character.isJavaIdentifierPart(lastChar) || lastChar == ')' || lastChar == ']') 
