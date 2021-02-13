@@ -41,6 +41,7 @@
 
 [#macro Generate]
     [@firstSetVars /]
+    [#-- @followSetVars / --]
     [#if grammar.choicePointExpansions?size !=0]
        [@BuildLookaheads /]
      [/#if]
@@ -71,7 +72,7 @@
      // EnumSets that represent the various expansions' follow set (i.e. the set of tokens that can immediately follow this)
      //=================================
     [#list grammar.expansionsForFollowSet as expansion]
-          [@followSetVar expansion/]
+          [@CU.followSetVar expansion/]
     [/#list]
 [/#macro]
 

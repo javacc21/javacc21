@@ -66,7 +66,7 @@ abstract public class Expansion extends BaseNode {
         return firstAncestorOfType(BNFProduction.class);
     }
 
-    private String scanRoutineName, firstSetVarName, finalSetVarName, followSetVarName;
+    private String scanRoutineName, firstSetVarName;
 
     public String getLabel() {
         return label;
@@ -380,22 +380,19 @@ abstract public class Expansion extends BaseNode {
     }
 
     public String getFinalSetVarName() {
-        if (finalSetVarName == null) {
-            finalSetVarName = getFirstSetVarName();
-            if (finalSetVarName.startsWith("first_set$")) {
-                finalSetVarName = finalSetVarName.replaceFirst("first", "final");
-            } else {
-                finalSetVarName = finalSetVarName.replace("_FIRST_SET", "_FINAL_SET");
-            }
+        String result = getFirstSetVarName();
+        if (result.startsWith("first_set$")) {
+            return result.replaceFirst("first", "final");
         }
-        return finalSetVarName;
+        return result.replace("_FIRST_SET", "_FINAL_SET");
     }
 
     public String getFollowSetVarName() {
-        if (followSetVarName == null) {
-            followSetVarName = getGrammar().generateUniqueIdentifier("follow_set$", this);
-        }
-        return followSetVarName;
+        String result = getFirstSetVarName();
+        if (result.startsWith("first_set$")) {
+            return result.replaceFirst("first", "follow");
+        } 
+        return result.replace("_FIRST_SET", "_FOLLOW_SET");
     }
 
     public String getScanRoutineName() {
@@ -428,9 +425,6 @@ abstract public class Expansion extends BaseNode {
 
     public TokenSet getFollowSet() {
         Node parent = getParent();
-        if (parent instanceof ExpansionChoice) {
-            return ((ExpansionChoice) parent).getFollowSet();
-        }
         if (parent instanceof ExpansionSequence) {
             ExpansionSequence sequence = (ExpansionSequence) parent;
             List<Expansion> siblings = sequence.getUnits();
@@ -438,28 +432,32 @@ abstract public class Expansion extends BaseNode {
             TokenSet result = new TokenSet(getGrammar());
             boolean atEnd = false;
             for (int i = index; i < siblings.size(); i++) {
-                result.or(siblings.get(i).getFollowSet());
+                result.or(siblings.get(i).getFirstSet());
                 if (!siblings.get(i).isPossiblyEmpty()) {
                     atEnd = true;
                     break;
                 }
             }
             if (!atEnd) {
-                result.or(sequence.getFollowSet());
+                TokenSet outer = sequence.getFollowSet();
+                result.or(outer);
+                result.setIncomplete(outer.isIncomplete());
             }
             return result;
         }
         if (parent instanceof OneOrMore || parent instanceof ZeroOrMore) {
             TokenSet result = new TokenSet(getGrammar());
-            result.or(this.getFinalSet());
-            result.or(((Expansion) parent).getFollowSet());
+            result.or(((Expansion)parent).getFirstSet());
+            TokenSet outer = ((Expansion)parent).getFollowSet();
+            result.or(outer);
+            result.setIncomplete(outer.isIncomplete());
             return result;
         }
         if (parent instanceof Expansion) {
             return ((Expansion) parent).getFollowSet();
         }
         // REVISIT.
-        return new TokenSet(getGrammar());
+        return new TokenSet(getGrammar(), true);
     }
 
     /**
