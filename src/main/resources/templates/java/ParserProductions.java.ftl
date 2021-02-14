@@ -81,7 +81,7 @@
   // ${expansion.location}
   [/#if]
      [@CU.HandleLexicalStateChange expansion false]
-      [#if grammar.faultTolerant && expansion.requiresRecoverMethod && expansion.possiblyEmpty]
+      [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
           [#if expansion.tolerantParsing]
              ${expansion.recoverMethodName}();
           [#else]
@@ -155,6 +155,9 @@
          catch (ParseException e) { 
              ${parseExceptionVar} = e;
              [#if !canRecover]
+              [#if grammar.faultTolerant]
+              if (isParserTolerant()) this.pendingRecovery = true;
+              [/#if]
               throw e;
              [#else]
              if (!isParserTolerant()) throw e;
@@ -498,6 +501,7 @@
 [#macro BuildRecoverRoutines]
    [#list grammar.expansionsNeedingRecoverMethod as expansion]
        private void ${expansion.recoverMethodName}() {
+          Token initialToken = lastConsumedToken;
           List<Token> skippedTokens = new ArrayList<>();
           boolean success = false;
           while (lastConsumedToken.getType() != EOF) {
@@ -508,6 +512,7 @@
              [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
                [#var followingExpansion = expansion.followingExpansion]
                [#list 1..1000000 as unused]
+               // KILROY!!!
                 [#if followingExpansion.maximumSize >0] 
                  if (${ExpansionCondition(followingExpansion)}) {
                     success = true;
@@ -520,11 +525,11 @@
                 [#set followingExpansion = followingExpansion.followingExpansion]
                [/#list]
              [/#if]
-             skippedTokens.add(lastConsumedToken);
+             if (lastConsumedToken != initialToken) skippedTokens.add(lastConsumedToken);
              lastConsumedToken = nextToken(lastConsumedToken);
           }
           if (!success && !skippedTokens.isEmpty()) {
-             lastConsumedToken = skippedTokens.get(0);
+             lastConsumedToken = initialToken;
           } 
           if (success&& !skippedTokens.isEmpty()) {
              InvalidNode iv = new InvalidNode();
