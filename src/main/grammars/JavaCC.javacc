@@ -52,6 +52,8 @@ BASE_SRC_DIR="../java";
 //JDK_TARGET=11;
 #endif 
 
+FAULT_TOLERANT=true;
+
 INJECT PARSER_CLASS :
     import java.util.*;
     import java.nio.file.Path;

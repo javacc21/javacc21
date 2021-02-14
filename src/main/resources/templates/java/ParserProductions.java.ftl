@@ -80,7 +80,8 @@
   // Code for ${expansion.simpleName} specified at:
   // ${expansion.location}
   [/#if]
-      [#if grammar.faultTolerant && expansion.requiresRecoverMethod]
+     [@CU.HandleLexicalStateChange expansion false]
+      [#if grammar.faultTolerant && expansion.requiresRecoverMethod && expansion.possiblyEmpty]
           [#if expansion.tolerantParsing]
              ${expansion.recoverMethodName}();
           [#else]
@@ -90,11 +91,10 @@
           }
           [/#if]
       [/#if]
-      [@CU.HandleLexicalStateChange expansion false]
        [@TreeBuildingAndRecovery expansion]
         [@BuildExpansionCode expansion/]
        [/@TreeBuildingAndRecovery]
-      [/@CU.HandleLexicalStateChange]
+     [/@CU.HandleLexicalStateChange]
 [/#macro]
 
 [#macro TreeBuildingAndRecovery expansion]
