@@ -571,6 +571,12 @@ public interface Node extends Comparable<Node>
 
     default void dump(String prefix) {
         String output = (this instanceof Token) ? toString().trim() : getClass().getSimpleName();
+[#if grammar.faultTolerant]
+        if (this.isDirty()) {
+            output += " (dirty)";
+        }
+[/#if]
+
         if (output.length() >0) {
             System.out.println(prefix + output);
         }
