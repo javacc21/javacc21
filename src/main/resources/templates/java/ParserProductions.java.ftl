@@ -347,12 +347,7 @@
      boolean ${inFirstVarName} = true; 
    [/#if]
    while (true) {
-      [@BuildCode nestedExp/]
-      [#if grammar.faultTolerant && oom.requiresRecoverMethod]
-         if (pendingRecovery && isParserTolerant()) {
-            ${oom.recoverMethodName}();
-         }
-      [/#if]
+      [@RecoveryLoop oom /]
       [#if nestedExp.simpleName = "ExpansionChoice"]
          ${inFirstVarName} = false;
       [#else]
@@ -367,13 +362,22 @@
        [#if zom.nestedExpansion.class.simpleName != "ExpansionChoice"]
          if (!(${ExpansionCondition(zom.nestedExpansion)})) break;
        [/#if]
-       ${BuildCode(zom.nestedExpansion)} 
-       [#if grammar.faultTolerant && zom.requiresRecoverMethod]
-         if (pendingRecovery && isParserTolerant()) {
-            ${zom.recoverMethodName}();
-         }
-       [/#if]
+       [@RecoveryLoop zom/]
     }
+[/#macro]
+
+[#macro RecoveryLoop loopExpansion]
+   [#if !grammar.faultTolerant || !loopExpansion.requiresRecoverMethod]
+       ${BuildCode(loopExpansion.nestedExpansion)}
+   [#else]
+       try {
+          ${BuildCode(loopExpansion.nestedExpansion)}
+       } catch (ParseException pe) {
+          if (!isParserTolerant()) throw pe;
+          ${loopExpansion.recoverMethodName}();
+          if (pendingRecovery) throw pe;
+       }
+   [/#if]
 [/#macro]
 
 [#macro BuildCodeChoice choice]
