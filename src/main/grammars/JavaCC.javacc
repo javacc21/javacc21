@@ -1579,6 +1579,13 @@ INJECT ExpansionChoice :
    }
    
    public boolean isConcrete() {return false;} 
+   
+   public boolean getSpecifiesLexicalStateSwitch() {
+       for (Expansion choice : getChoices()) {
+           if (choice.getSpecifiesLexicalStateSwitch()) return true;
+       }
+       return false;
+   }
 
 }
 
@@ -1620,6 +1627,9 @@ INJECT ExpansionWithParentheses :
     public boolean isAlwaysSuccessful() {return getNestedExpansion().isAlwaysSuccessful();}
     public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
     public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
+    public boolean getSpecifiesLexicalStateSwitch() {
+        return getSpecifiedLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
+    }
 
 
     public Expansion getNestedExpansion() {
@@ -1689,6 +1699,14 @@ INJECT ExpansionSequence :
             else if (!unit.isPossiblyEmpty()) return unit;
         }
         return null;
+    }
+
+    public boolean getSpecifiesLexicalStateSwitch() {
+        for (Expansion unit : getUnits()) {
+            if (unit.getSpecifiesLexicalStateSwitch()) return true;
+            if (!unit.isPossiblyEmpty()) break;
+        }
+        return false;
     }
 
     public boolean isAlwaysSuccessful() {
@@ -2304,6 +2322,10 @@ INJECT NonTerminal :
      public boolean getHasScanLimit() {
          return getProduction().getHasScanLimit();
      }
+
+     public boolean getSpecifiesLexicalStateSwitch() {
+         return getNestedExpansion().getSpecifiesLexicalStateSwitch();
+     }
 }
 
 //The following two productions are not actually used. These constructs are now 
@@ -2406,6 +2428,10 @@ INJECT AttemptBlock :
      public boolean isConcrete() {
            return getNestedExpansion().isConcrete();
      }
+
+     public boolean getSpecifiesLexicalStateSwitch() {
+         return getNestedExpansion().getSpecifiesLexicalStateSwitch();
+     }
 }
 
 Failure# : 
@@ -2447,6 +2473,8 @@ INJECT Failure :
     public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
 
     public boolean isAlwaysSuccessful() {return false;}
+
+    public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
 
 LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER> ;
@@ -2508,6 +2536,10 @@ INJECT TryBlock  :
     public boolean isConcrete() {
           return getNestedExpansion().isConcrete();
     }
+
+    public boolean getSpecifiesLexicalStateSwitch() {
+        return getNestedExpansion().getSpecifiesLexicalStateSwitch();
+    }
 }
 
 
@@ -2540,6 +2572,8 @@ INJECT CodeBlock :
     public boolean isConcrete() {
         return true; //REVISIT.
     }
+
+    public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
 
 RegexpExpansion #void :

@@ -41,7 +41,7 @@
 
 [#macro Generate]
     [@firstSetVars /]
-    [#-- @followSetVars / --]
+    [@followSetVars /]
     [#if grammar.choicePointExpansions?size !=0]
        [@BuildLookaheads /]
      [/#if]
