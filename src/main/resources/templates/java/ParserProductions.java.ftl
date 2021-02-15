@@ -370,10 +370,18 @@
    [#if !grammar.faultTolerant || !loopExpansion.requiresRecoverMethod]
        ${BuildCode(loopExpansion.nestedExpansion)}
    [#else]
+       [#var initialTokenVarName = "initialToken" + CU.newID()]
+       Token ${initialTokenVarName} = lastConsumedToken;
        try {
           ${BuildCode(loopExpansion.nestedExpansion)}
        } catch (ParseException pe) {
           if (!isParserTolerant()) throw pe;
+          if (${initialTokenVarName} == lastConsumedToken) {
+             lastConsumedToken = nextToken(lastConsumedToken);
+             //We have to skip a token in this spot or 
+             // we'll be stuck in an infinite loop!
+             lastConsumedToken.setSkipped(true);
+          }
           ${loopExpansion.recoverMethodName}();
           if (pendingRecovery) throw pe;
        }
@@ -541,8 +549,8 @@
                 iv.addChild(tok);
              }
              pushNode(iv);
-             pendingRecovery = false;
           }
+          pendingRecovery = !success;
        }
    [/#list]
 [/#macro]
