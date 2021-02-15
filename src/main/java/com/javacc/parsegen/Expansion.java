@@ -332,7 +332,7 @@ abstract public class Expansion extends BaseNode {
     /**
      * @return whether this expansion is at the very end of the root expansion that
      *         contains it.
-     */
+     *//*
     public boolean isAtEnd() {
         Node parent = getParent();
         if (!(parent instanceof Expansion)) {
@@ -350,7 +350,7 @@ abstract public class Expansion extends BaseNode {
             }
         }
         return ((Expansion) parent).isAtEnd();
-    }
+    }*/
 
     public Expression getSemanticLookahead() {
         return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;

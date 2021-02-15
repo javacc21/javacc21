@@ -72,12 +72,16 @@ class NonTerminalCall {
     // We actually only use this when we're working with the LookaheadStack
     final boolean scanToEnd;
 
+    final EnumSet<TokenType> followSet;
+
+
     NonTerminalCall(String sourceFile, String productionName, int line, int column) {
         this.sourceFile = sourceFile;
         this.productionName = productionName;
         this.line = line;
         this.column = column;
         this.scanToEnd = ${grammar.parserClassName}.this.scanToEnd;
+        this.followSet = ${grammar.parserClassName}.this.outerFollowSet;
     }
 
     StackTraceElement createStackTraceElement() {
@@ -94,7 +98,8 @@ private final void pushOntoCallStack(String methodName, String fileName, int lin
 }
 
 private final void popCallStack() {
-    parsingStack.remove(parsingStack.size() -1);
+    NonTerminalCall ntc = parsingStack.remove(parsingStack.size() -1);
+    this.outerFollowSet = ntc.followSet;
 }
 
 private final void restoreCallStack(int prevSize) {

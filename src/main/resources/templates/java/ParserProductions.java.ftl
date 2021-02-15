@@ -307,7 +307,23 @@
 
 [#macro BuildCodeNonTerminal nonterminal]
    [#var production = nonterminal.production]
-   pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn}); 
+   pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn});
+   [#var followSet = nonterminal.followSet]
+   [#if !followSet.incomplete]
+      [#if !nonterminal.beforeLexicalStateSwitch]
+         outerFollowSet = ${nonterminal.followSetVarName};
+      [#else]
+         outerFollowSet = null;
+      [/#if]
+   [#else]
+     [#if followSet.cardinality()!=0]
+      if (outerFollowSet != null) {
+           EnumSet<TokenType> newFollowSet = ${nonterminal.followSetVarName}.clone();
+           newFollowSet.addAll(outerFollowSet);
+           outerFollowSet = newFollowSet;
+      }
+     [/#if] 
+   [/#if]
    try {
    [#if !nonterminal.LHS?is_null && production.returnType != "void"]
        ${nonterminal.LHS} = 

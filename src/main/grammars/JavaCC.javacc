@@ -862,7 +862,7 @@ INJECT Token :
       BNFProduction
       |
       GrammarInclusion
-  )+
+  )+!
   <EOF>
   {
         return CURRENT_NODE;
@@ -1031,7 +1031,7 @@ OptionsBlock #Options :
     =>||
     [":"]
     "{" 
-    ( Setting (settings) )* "}"
+    ( Setting (settings) )*! "}"
     {grammar.setSettings(settings);}
 ;
 
