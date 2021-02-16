@@ -215,7 +215,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
     }
 
       private Token consumeToken(TokenType expectedType 
-        [#if grammar.faultTolerant], boolean tolerant [/#if]
+        [#if grammar.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet [/#if]
       ) throws ParseException {
         Token oldToken = lastConsumedToken;
         Token nextToken = nextToken(lastConsumedToken);

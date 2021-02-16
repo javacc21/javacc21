@@ -271,14 +271,23 @@
 [/#macro]
 
 [#macro BuildCodeRegexp regexp]
-       [#if regexp.LHS??]
-          ${regexp.LHS} =  
-       [/#if]
+   [#var LHS = ""]
+   [#if regexp.LHS??][#set LHS = regexp.LHS + "="][/#if]
    [#if !grammar.faultTolerant]
-       consumeToken(${CU.TT}${regexp.label});
+       ${LHS} consumeToken(${CU.TT}${regexp.label});
    [#else]
        [#var tolerant = regexp.tolerantParsing?string("true", "false")]
-       consumeToken(${CU.TT}${regexp.label}, ${tolerant});
+       [#var followSetVarName = "followSet" + CU.newID()]
+       EnumSet<TokenType> ${followSetVarName} = null;
+       [#if !regexp.followSet.incomplete]
+          ${followSetVarName} = ${regexp.followSetVarName};
+       [#else]
+         if (outerFollowSet != null) {
+            ${followSetVarName} = ${regexp.followSetVarName}.clone();
+            ${followSetVarName}.addAll(outerFollowSet);
+         }
+       [/#if]
+         ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
    [/#if]
 [/#macro]
 
@@ -526,6 +535,11 @@
         }
 [/#macro]
 
+
+[#--
+   Macro to build routines that scan up to the start of an expansion
+   as part of a recovery routine
+--]
 [#macro BuildRecoverRoutines]
    [#list grammar.expansionsNeedingRecoverMethod as expansion]
        private void ${expansion.recoverMethodName}() {
@@ -540,7 +554,6 @@
              [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
                [#var followingExpansion = expansion.followingExpansion]
                [#list 1..1000000 as unused]
-               // KILROY!!!
                 [#if followingExpansion.maximumSize >0] 
                  if (${ExpansionCondition(followingExpansion)}) {
                     success = true;
