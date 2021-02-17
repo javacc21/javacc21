@@ -1668,7 +1668,7 @@ ExpansionSequence# :
      {
          pokeNode(sub);
      }
-  )+
+  )+!
 ;
 
 INJECT ExpansionSequence : 
