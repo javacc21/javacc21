@@ -220,8 +220,8 @@ void dumpLookaheadCallStack(PrintStream ps) {
         Token oldToken = lastConsumedToken;
         Token nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
-            handleUnexpectedTokenType(expectedType, nextToken
-            [#if grammar.faultTolerant], tolerant[/#if]
+            nextToken = handleUnexpectedTokenType(expectedType, nextToken
+            [#if grammar.faultTolerant], tolerant, followSet[/#if]
             ) ;
         }
         this.lastConsumedToken = nextToken;
@@ -245,29 +245,32 @@ void dumpLookaheadCallStack(PrintStream ps) {
   }
  
   private Token handleUnexpectedTokenType(TokenType expectedType, Token nextToken
-      [#if grammar.faultTolerant], boolean tolerant[/#if]
+      [#if grammar.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet[/#if]
       ) throws ParseException {
       [#if !grammar.faultTolerant]
        throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
       [#else]
-       if (!tolerant || !this.tolerantParsing) {
+       if (!this.tolerantParsing) {
           throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
        }
-         Token nextNext = nextToken(nextToken);
-         if (nextNext.getType() == expectedType) {
-             [#--] REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
+       Token nextNext = nextToken(nextToken);
+       if (nextNext.getType() == expectedType) {
+             [#-- REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
              should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
              nextToken.setSkipped(true);
+             lastConsumedToken.setNext(nextNext);
              return nextNext;
-         } 
+       }
          [#-- Since skipping the next token did not work, we will insert a virtual token --]
-            Token virtualToken = Token.newToken(expectedType, "VIRTUAL", lastConsumedToken);
-            virtualToken.setVirtual(true);
-//            nextToken.copyLocationInfo(virtualToken);
-            virtualToken.copyLocationInfo(nextToken);
-            virtualToken.setNext(nextToken);
-            lastConsumedToken.setNext(virtualToken);
-            return virtualToken;
+       if (tolerant || followSet==null || followSet.contains(nextToken.getType())) {
+           Token virtualToken = Token.newToken(expectedType, "VIRTUAL " + expectedType, lastConsumedToken);
+           virtualToken.setVirtual(true);
+           virtualToken.copyLocationInfo(nextToken);
+           virtualToken.setNext(nextToken);
+           lastConsumedToken.setNext(virtualToken);
+           return virtualToken;
+       }
+       throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
       [/#if]
   }
   

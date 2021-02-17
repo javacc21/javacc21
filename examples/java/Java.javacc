@@ -46,7 +46,7 @@ PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 //JDK_TARGET=15;
 
-FAULT_TOLERANT=true;
+//FAULT_TOLERANT=true;
 
 INCLUDE("JavaLexer.javacc")
 
@@ -87,9 +87,9 @@ INJECT PARSER_CLASS : {
 }
 
 #CompilationUnit# :
-  [ PackageDeclaration ]
-  ( ImportDeclaration )*
-  ( TypeDeclaration )+
+  [ PackageDeclaration! ]
+  ( ImportDeclaration )*!
+  ( TypeDeclaration )+!
   [<EOF>]
   {
     return CURRENT_NODE;
@@ -721,7 +721,7 @@ AssertStatement : "assert" Expression [ ":" Expression ] ";" ;
 Block #CodeBlock : "{" (BlockStatement)*! "}" ;
 
 BlockStatement :
-  LocalVariableDeclaration ";"
+  => LocalVariableDeclaration ";"
   |
   ClassDeclaration
   |
@@ -851,8 +851,9 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN {getToken(1).getImage().equals("yield")}# =>
-   <IDENTIFIER> Expression ";" 
+   SCAN {getToken(1).getImage().equals("yield") 
+        && isInProduction("SwitchExpression")}# 
+   => <IDENTIFIER> Expression ";" 
 ;
 
 ContinueStatement : "continue" [ <IDENTIFIER> ] ";" ;

@@ -82,7 +82,7 @@
   [/#if]
      [@CU.HandleLexicalStateChange expansion false]
       [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
-          [#if expansion.tolerantParsing]
+          [#if expansion.tolerantParsing && !expansion.isRegexp]
              ${expansion.recoverMethodName}();
           [#else]
           if (pendingRecovery) {
@@ -153,13 +153,13 @@
             [#nested]
          }
          catch (ParseException e) { 
-             ${parseExceptionVar} = e;
-             [#if !canRecover]
+            ${parseExceptionVar} = e;
+            [#if !canRecover]
               [#if grammar.faultTolerant]
-              if (isParserTolerant()) this.pendingRecovery = true;
+                if (isParserTolerant()) this.pendingRecovery = true;
               [/#if]
               throw e;
-             [#else]
+            [#else]
              if (!isParserTolerant()) throw e;
              this.pendingRecovery = true;
              ${expansion.customErrorRecoveryBlock!}
@@ -554,6 +554,7 @@
              [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
                [#var followingExpansion = expansion.followingExpansion]
                [#list 1..1000000 as unused]
+                [#if followingExpansion?is_null][#break/][/#if]
                 [#if followingExpansion.maximumSize >0] 
                  if (${ExpansionCondition(followingExpansion)}) {
                     success = true;

@@ -862,7 +862,7 @@ INJECT Token :
       BNFProduction
       |
       GrammarInclusion
-  )+!
+  )+
   <EOF>
   {
         return CURRENT_NODE;

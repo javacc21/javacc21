@@ -189,6 +189,7 @@ public boolean isCancelled() {return cancelled;}
       }
     }
     if (tok != null) tok.setNext(result);
+    nextTokenType=null;
     return result;
   }
 
