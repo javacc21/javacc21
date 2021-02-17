@@ -846,7 +846,7 @@ INJECT Token :
 }
 {
    [
-      OptionsBlock | Options
+      (OptionsBlock | Options)!
    ]
    [ParserCodeDecls]
    (
@@ -862,7 +862,7 @@ INJECT Token :
       BNFProduction
       |
       GrammarInclusion
-  )+
+  )+!
   <EOF>
   {
         return CURRENT_NODE;
@@ -1595,7 +1595,7 @@ ExpansionWithParentheses :
     LexicalStateSwitch lss=null;
 }
    [lss=LexicalStateSwitch]
-   lparen ="(" =>|| ExpansionChoice ")"
+   lparen ="(" =>|| ExpansionChoice {Expansion nested = (Expansion) peekNode();} ")"
    [
        "*" {CURRENT_NODE = new ZeroOrMore();}
        |
@@ -1605,7 +1605,14 @@ ExpansionWithParentheses :
    ]
    [
        SCAN ~\...\Lookahead => 
-       "!" {CURRENT_NODE.setTolerantParsing(true);}
+       "!" 
+       {
+           if (CURRENT_NODE instanceof ZeroOrOne) {
+               nested.setTolerantParsing(true);
+           } else {
+               CURRENT_NODE.setTolerantParsing(true);
+           }
+       }
    ]
    [UpToHere(CURRENT_NODE)]
    {
@@ -2340,8 +2347,8 @@ OneOrMore : "(" ExpansionChoice ")" "+";
 // The (...)? syntax is handled by ExpansionWithParentheses
 ZeroOrOne : 
     [LexicalStateSwitch]
-    "[" =>|| ExpansionChoice "]"
-     ["!" {CURRENT_NODE.setTolerantParsing(true);}]
+    "[" =>|| ExpansionChoice {Expansion exp = (Expansion) peekNode();} "]"
+     ["!" {exp.setTolerantParsing(true);}]
      [UpToHere(CURRENT_NODE)]
 ;
 

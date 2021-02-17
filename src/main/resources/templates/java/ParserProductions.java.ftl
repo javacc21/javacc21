@@ -554,7 +554,15 @@
              [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
                [#var followingExpansion = expansion.followingExpansion]
                [#list 1..1000000 as unused]
-                [#if followingExpansion?is_null][#break/][/#if]
+                [#if followingExpansion?is_null]
+                    if (outerFollowSet != null) {
+                       if outerFollowSet.contains(nextTokenType()) {
+                          success = true;
+                          break;
+                       }
+                    }
+                    [#break/]
+                [/#if]
                 [#if followingExpansion.maximumSize >0] 
                  if (${ExpansionCondition(followingExpansion)}) {
                     success = true;
