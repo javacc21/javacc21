@@ -4,7 +4,8 @@
 PARSER_PACKAGE="org.parsers.jsonc";
 PARSER_CLASS=JSONCParser;
 DEFAULT_LEXICAL_STATE=JSON;
-FAULT_TOLERANT=true;
+FAULT_TOLERANT;
+DEBUG_FAULT_TOLERANT;
 
 UNPARSED #Comment :
     <SINGLE_LINE_COMMENT : "//" (~["\n","\r"])*  ("\n"|"\r"|"\r\n") >

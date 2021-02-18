@@ -42,7 +42,7 @@
           <arg value="${basedir}/testfiles/package.nls.zh-cn.json"/>
       </java>
       <echo>
-         Now test the JSONC parser on a file with lexically invalid schmoo
+         Now test the JSONC parser on a file with errors
       </echo>
       <java classname="JSONCTest" classpath="." failonerror="true">
           <arg value="${basedir}/testfiles/invalid.json"/>

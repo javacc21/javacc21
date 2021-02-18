@@ -57,7 +57,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
 
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(${grammar.parserClassName}.class.getName());
     
-[#if grammar.debugParser]
+[#if grammar.debugParser||grammar.debugFaultTolerant]
      static {
          LOGGER.setLevel(Level.FINEST);
      }
@@ -185,6 +185,9 @@ public boolean isCancelled() {return cancelled;}
       if (!next.isUnparsed()) {
         result = next;
       } else if (next instanceof InvalidToken) {
+[#if grammar.faultTolerant]
+        if (debugFaultTolerant) LOGGER.info("Skipping invalid text: " + next.getImage() + " at: " + next.getLocation());
+[/#if]
         result = next.getNextToken();
       }
     }
