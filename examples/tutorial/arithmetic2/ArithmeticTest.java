@@ -7,7 +7,7 @@ public class ArithmeticTest {
        parser.AdditiveExpression();
        Node root = parser.rootNode();
        System.out.println("Dumping the AST...");
-       Nodes.dump(root, "  ");
+       root.dump();
        System.out.println("The result is: " + evaluate(root));
     }
     
@@ -18,7 +18,7 @@ public class ArithmeticTest {
         else if (node instanceof ParentheticalExpression) {
             return evaluate(node.getChild(1));
         }
-        Iterator<Node> iterator = Nodes.iterator(node);
+        Iterator<Node> iterator = node.iterator();
         double result = evaluate(iterator.next());
         while (iterator.hasNext()) {
             Node operator = iterator.next();
