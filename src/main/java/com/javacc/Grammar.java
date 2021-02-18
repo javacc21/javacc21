@@ -492,19 +492,14 @@ public class Grammar extends BaseNode {
         List<Expansion> result = new ArrayList<>();
         for (Expansion expansion : descendants(Expansion.class)) {
             if (expansion.getParent() instanceof BNFProduction) continue; // Handle these separately
-            BitSet set = null;
             String varName = null;            
             if (type==0) {
-                set = expansion.getFirstSet();
                 varName = expansion.getFirstSetVarName();
             } else if (type ==1) {
-                set = expansion.getFinalSet();
                 varName = expansion.getFinalSetVarName();
             } else {
-                set = expansion.getFollowSet();
                 varName = expansion.getFollowSetVarName();
             }
-            if (set == null || set.cardinality() ==0) continue;
             if (!usedNames.contains(varName)) {
                 result.add(expansion);
                 usedNames.add(varName);

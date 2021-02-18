@@ -332,7 +332,7 @@ abstract public class Expansion extends BaseNode {
     /**
      * @return whether this expansion is at the very end of the root expansion that
      *         contains it.
-     */
+     *//*
     public boolean isAtEnd() {
         Node parent = getParent();
         if (!(parent instanceof Expansion)) {
@@ -350,7 +350,7 @@ abstract public class Expansion extends BaseNode {
             }
         }
         return ((Expansion) parent).isAtEnd();
-    }
+    }*/
 
     public Expression getSemanticLookahead() {
         return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;
@@ -423,42 +423,13 @@ abstract public class Expansion extends BaseNode {
 
     abstract public TokenSet getFinalSet();
 
-    public TokenSet getFollowSet() {
-        Node parent = getParent();
-        if (parent instanceof ExpansionSequence) {
-            ExpansionSequence sequence = (ExpansionSequence) parent;
-            List<Expansion> siblings = sequence.getUnits();
-            int index = siblings.indexOf(this) + 1;
-            TokenSet result = new TokenSet(getGrammar());
-            boolean atEnd = false;
-            for (int i = index; i < siblings.size(); i++) {
-                result.or(siblings.get(i).getFirstSet());
-                if (!siblings.get(i).isPossiblyEmpty()) {
-                    atEnd = true;
-                    break;
-                }
-            }
-            if (!atEnd) {
-                TokenSet outer = sequence.getFollowSet();
-                result.or(outer);
-                result.setIncomplete(outer.isIncomplete());
-            }
-            return result;
-        }
-        if (parent instanceof OneOrMore || parent instanceof ZeroOrMore) {
-            TokenSet result = new TokenSet(getGrammar());
-            result.or(((Expansion)parent).getFirstSet());
-            TokenSet outer = ((Expansion)parent).getFollowSet();
-            result.or(outer);
-            result.setIncomplete(outer.isIncomplete());
-            return result;
-        }
-        if (parent instanceof Expansion) {
-            return ((Expansion) parent).getFollowSet();
-        }
-        // REVISIT.
-        return new TokenSet(getGrammar(), true);
+    public boolean getHasFullFollowSet() {
+        return !getFollowSet().isIncomplete();
     }
+
+    public boolean getSpecifiesLexicalStateSwitch() {
+        return getSpecifiedLexicalState() != null;
+    };
 
     /**
      * @return Can this expansion be matched by the empty string.
@@ -518,6 +489,34 @@ abstract public class Expansion extends BaseNode {
             return ((Expansion)parent).getFollowingExpansion();
         }
         return null;
+    }
+
+    public TokenSet getFollowSet() {
+        TokenSet result = new TokenSet(getGrammar());
+        Expansion following = this;
+        do {
+            following = following.getFollowingExpansion();
+            if (following == null) {
+                result.setIncomplete(true);
+                break;
+            }
+            result.or(following.getFirstSet());
+        } while (following.isPossiblyEmpty());
+        if (this instanceof ZeroOrMore || this instanceof OneOrMore) {
+            result.or(this.getFirstSet());
+        }
+        return result;
+    }
+
+    public Boolean isBeforeLexicalStateSwitch() {
+        // We return a null if we don't have full info.
+        Expansion following = this;
+        do {
+            following = following.getFollowingExpansion();
+            if (following == null) return null;
+            if (following.getSpecifiesLexicalStateSwitch()) return true;
+        } while (following.isPossiblyEmpty());
+        return false;
     }
 
     public boolean getRequiresRecoverMethod() {

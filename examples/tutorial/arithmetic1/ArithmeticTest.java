@@ -7,7 +7,7 @@ public class ArithmeticTest {
        parser.AdditiveExpression();
        Node root = parser.rootNode();
        System.out.println("Dumping the AST...");
-       Nodes.dump(root, "  ");
+       root.dump();
        System.out.println("The result is: " + evaluate(root));
     }
     

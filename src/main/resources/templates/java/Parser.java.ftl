@@ -76,6 +76,7 @@ private int remainingLookahead;
 private boolean scanToEnd, hitFailure, lastLookaheadSucceeded;
 private String currentlyParsedProduction, currentLookaheadProduction;
 private int lookaheadRoutineNesting;
+private EnumSet<TokenType> outerFollowSet;
 
 [#--
  REVISIT these.
@@ -170,6 +171,7 @@ public boolean isCancelled() {return cancelled;}
 [/#if]    
     Token previous = null;
     while (result == null) {
+      nextTokenType = null;
       Token next = token_source.getNextToken();
 [#if grammar.legacyAPI]      
       if (previous != null && !(previous instanceof InvalidToken)) {
@@ -187,6 +189,7 @@ public boolean isCancelled() {return cancelled;}
       }
     }
     if (tok != null) tok.setNext(result);
+    nextTokenType=null;
     return result;
   }
 

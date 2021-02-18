@@ -52,6 +52,8 @@ BASE_SRC_DIR="../java";
 //JDK_TARGET=11;
 #endif 
 
+FAULT_TOLERANT=true;
+
 INJECT PARSER_CLASS :
     import java.util.*;
     import java.nio.file.Path;
@@ -844,7 +846,7 @@ INJECT Token :
 }
 {
    [
-      OptionsBlock | Options
+      (OptionsBlock | Options)!
    ]
    [ParserCodeDecls]
    (
@@ -860,7 +862,7 @@ INJECT Token :
       BNFProduction
       |
       GrammarInclusion
-  )+
+  )+!
   <EOF>
   {
         return CURRENT_NODE;
@@ -1029,7 +1031,7 @@ OptionsBlock #Options :
     =>||
     [":"]
     "{" 
-    ( Setting (settings) )* "}"
+    ( Setting (settings) )*! "}"
     {grammar.setSettings(settings);}
 ;
 
@@ -1577,6 +1579,13 @@ INJECT ExpansionChoice :
    }
    
    public boolean isConcrete() {return false;} 
+   
+   public boolean getSpecifiesLexicalStateSwitch() {
+       for (Expansion choice : getChoices()) {
+           if (choice.getSpecifiesLexicalStateSwitch()) return true;
+       }
+       return false;
+   }
 
 }
 
@@ -1586,7 +1595,7 @@ ExpansionWithParentheses :
     LexicalStateSwitch lss=null;
 }
    [lss=LexicalStateSwitch]
-   lparen ="(" =>|| ExpansionChoice ")"
+   lparen ="(" =>|| ExpansionChoice {Expansion nested = (Expansion) peekNode();} ")"
    [
        "*" {CURRENT_NODE = new ZeroOrMore();}
        |
@@ -1596,7 +1605,14 @@ ExpansionWithParentheses :
    ]
    [
        SCAN ~\...\Lookahead => 
-       "!" {CURRENT_NODE.setTolerantParsing(true);}
+       "!" 
+       {
+           if (CURRENT_NODE instanceof ZeroOrOne) {
+               nested.setTolerantParsing(true);
+           } else {
+               CURRENT_NODE.setTolerantParsing(true);
+           }
+       }
    ]
    [UpToHere(CURRENT_NODE)]
    {
@@ -1618,6 +1634,9 @@ INJECT ExpansionWithParentheses :
     public boolean isAlwaysSuccessful() {return getNestedExpansion().isAlwaysSuccessful();}
     public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
     public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
+    public boolean getSpecifiesLexicalStateSwitch() {
+        return getSpecifiedLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
+    }
 
 
     public Expansion getNestedExpansion() {
@@ -1649,7 +1668,7 @@ ExpansionSequence# :
      {
          pokeNode(sub);
      }
-  )+
+  )+!
 ;
 
 INJECT ExpansionSequence : 
@@ -1687,6 +1706,14 @@ INJECT ExpansionSequence :
             else if (!unit.isPossiblyEmpty()) return unit;
         }
         return null;
+    }
+
+    public boolean getSpecifiesLexicalStateSwitch() {
+        for (Expansion unit : getUnits()) {
+            if (unit.getSpecifiesLexicalStateSwitch()) return true;
+            if (!unit.isPossiblyEmpty()) break;
+        }
+        return false;
     }
 
     public boolean isAlwaysSuccessful() {
@@ -2302,6 +2329,10 @@ INJECT NonTerminal :
      public boolean getHasScanLimit() {
          return getProduction().getHasScanLimit();
      }
+
+     public boolean getSpecifiesLexicalStateSwitch() {
+         return getNestedExpansion().getSpecifiesLexicalStateSwitch();
+     }
 }
 
 //The following two productions are not actually used. These constructs are now 
@@ -2316,8 +2347,8 @@ OneOrMore : "(" ExpansionChoice ")" "+";
 // The (...)? syntax is handled by ExpansionWithParentheses
 ZeroOrOne : 
     [LexicalStateSwitch]
-    "[" =>|| ExpansionChoice "]"
-     ["!" {CURRENT_NODE.setTolerantParsing(true);}]
+    "[" =>|| ExpansionChoice {Expansion exp = (Expansion) peekNode();} "]"
+     ["!" {exp.setTolerantParsing(true);}]
      [UpToHere(CURRENT_NODE)]
 ;
 
@@ -2404,6 +2435,10 @@ INJECT AttemptBlock :
      public boolean isConcrete() {
            return getNestedExpansion().isConcrete();
      }
+
+     public boolean getSpecifiesLexicalStateSwitch() {
+         return getNestedExpansion().getSpecifiesLexicalStateSwitch();
+     }
 }
 
 Failure# : 
@@ -2445,6 +2480,8 @@ INJECT Failure :
     public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
 
     public boolean isAlwaysSuccessful() {return false;}
+
+    public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
 
 LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER> ;
@@ -2506,6 +2543,10 @@ INJECT TryBlock  :
     public boolean isConcrete() {
           return getNestedExpansion().isConcrete();
     }
+
+    public boolean getSpecifiesLexicalStateSwitch() {
+        return getNestedExpansion().getSpecifiesLexicalStateSwitch();
+    }
 }
 
 
@@ -2538,6 +2579,8 @@ INJECT CodeBlock :
     public boolean isConcrete() {
         return true; //REVISIT.
     }
+
+    public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
 
 RegexpExpansion #void :
