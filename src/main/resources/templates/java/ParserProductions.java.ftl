@@ -82,14 +82,18 @@
   [/#if]
      [@CU.HandleLexicalStateChange expansion false]
       [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
-          [#if expansion.tolerantParsing && !expansion.isRegexp]
-             ${expansion.recoverMethodName}();
+         if (pendingRecovery) {
+            if (debugFaultTolerant) LOGGER.info("Re-synching to expansion at: ${expansion.location}");
+            ${expansion.recoverMethodName}();
+         }
+          [#--if expansion.tolerantParsing && !expansion.isRegexp]
+           ${expansion.recoverMethodName}();
           [#else]
           if (pendingRecovery) {
              ${expansion.recoverMethodName}();
              pendingRecovery = false;
           }
-          [/#if]
+          [/#if--]
       [/#if]
        [@TreeBuildingAndRecovery expansion]
         [@BuildExpansionCode expansion/]
@@ -277,17 +281,26 @@
        ${LHS} consumeToken(${CU.TT}${regexp.label});
    [#else]
        [#var tolerant = regexp.tolerantParsing?string("true", "false")]
-       [#var followSetVarName = "followSet" + CU.newID()]
-       EnumSet<TokenType> ${followSetVarName} = null;
-       [#if !regexp.followSet.incomplete]
-          ${followSetVarName} = ${regexp.followSetVarName};
-       [#else]
+       [#var followSetVarName = regexp.followSetVarName]
+       [#if regexp.followSet.incomplete]
+         [#set followSetVarName = "followSet" + CU.newID()]
+         EnumSet<TokenType> ${followSetVarName} = null;
          if (outerFollowSet != null) {
             ${followSetVarName} = ${regexp.followSetVarName}.clone();
             ${followSetVarName}.addAll(outerFollowSet);
          }
        [/#if]
-         ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
+       ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
+       [#-- REVISIT if (${followSetVarName} != null && isParserTolerant()) {
+          Token nextToken = nextToken(lastConsumedToken);
+          if (!${followSetVarName}.contains(nextToken.getType())) {
+             Token nextNext = nextToken(nextToken);
+             if (${followSetVarName}.contains(nextNext.getType())) {
+                nextToken.setSkipped(true);
+                lastConsumedToken.setNext(nextNext);
+             }
+          }
+       }--]
    [/#if]
 [/#macro]
 
@@ -401,12 +414,15 @@
           ${BuildCode(loopExpansion.nestedExpansion)}
        } catch (ParseException pe) {
           if (!isParserTolerant()) throw pe;
+          if (debugFaultTolerant) LOGGER.info("Handling exception. Last consumed token: " + lastConsumedToken.getImage() + " at: " + lastConsumedToken.getLocation());
           if (${initialTokenVarName} == lastConsumedToken) {
              lastConsumedToken = nextToken(lastConsumedToken);
              //We have to skip a token in this spot or 
              // we'll be stuck in an infinite loop!
              lastConsumedToken.setSkipped(true);
+             if (debugFaultTolerant) LOGGER.info("Skipping token " + lastConsumedToken.getImage() + " at: " + lastConsumedToken.getLocation());
           }
+          if (debugFaultTolerant) LOGGER.info("Repeat re-sync for expansion at: ${loopExpansion.location}");
           ${loopExpansion.recoverMethodName}();
           if (pendingRecovery) throw pe;
        }
@@ -555,15 +571,6 @@
                [#var followingExpansion = expansion.followingExpansion]
                [#list 1..1000000 as unused]
                 [#if followingExpansion?is_null][#break][/#if]
-                [#--if followingExpansion?is_null]
-                    if (outerFollowSet != null) {
-                       if outerFollowSet.contains(nextTokenType()) {
-                          success = true;
-                          break;
-                       }
-                    }
-                    [#break/]
-                [/#if--]
                 [#if followingExpansion.maximumSize >0] 
                  if (${ExpansionCondition(followingExpansion)}) {
                     success = true;
@@ -593,6 +600,11 @@
              for (Token tok : skippedTokens) {
                 iv.addChild(tok);
              }
+             [#if grammar.faultTolerant]
+             if (debugFaultTolerant) {
+                LOGGER.info("Skipping " + skippedTokens.size() + " tokens starting at: " + skippedTokens.get(0).getLocation());
+             }
+             [/#if]
              pushNode(iv);
           }
           pendingRecovery = !success;

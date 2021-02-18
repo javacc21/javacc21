@@ -65,9 +65,9 @@ TOKEN #Literal :
 Array :
     <OPEN_BRACKET>
     [
-      Value  (<COMMA>! Value)*
+      Value  (<COMMA> Value)*!
     ]
-    <CLOSE_BRACKET>!
+    <CLOSE_BRACKET>
 ;
 
 Value :
@@ -86,13 +86,13 @@ Value :
     JSONObject
 ;
 
-KeyValuePair : <STRING_LITERAL> <COLON>! Value;
+KeyValuePair : <STRING_LITERAL> <COLON> Value;
 
 JSONObject : 
-    <OPEN_BRACE>
+    <OPEN_BRACE>!
     [
-        KeyValuePair ("," KeyValuePair)*
-    ]!
+        KeyValuePair ("," KeyValuePair)*!
+    ]
     <CLOSE_BRACE>!
 ;
 

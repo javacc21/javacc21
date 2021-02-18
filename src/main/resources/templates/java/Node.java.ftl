@@ -573,7 +573,7 @@ public interface Node extends Comparable<Node>
         String output = (this instanceof Token) ? toString().trim() : getClass().getSimpleName();
 [#if grammar.faultTolerant]
         if (this.isDirty()) {
-            output += " (dirty)";
+            output += " (incomplete)";
         }
 [/#if]
 

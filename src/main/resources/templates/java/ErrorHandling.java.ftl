@@ -38,7 +38,7 @@
  [/#if]
  
   public void setTracingEnabled(boolean tracingEnabled) {trace_enabled = tracingEnabled;}
-  
+
  /**
  * @deprecated Use #setTracingEnabled
  */
@@ -194,6 +194,11 @@ void dumpLookaheadCallStack(PrintStream ps) {
     // Are we pending a recovery routine to
     // get back on the rails?
     private boolean pendingRecovery;
+  [#if grammar.debugFaultTolerant]
+    private boolean debugFaultTolerant = true;
+  [#else]
+    private boolean debugFaultTolerant = false;
+  [/#if]
 [/#if]    
 
     public boolean isParserTolerant() {
@@ -241,6 +246,19 @@ void dumpLookaheadCallStack(PrintStream ps) {
       }
 [/#if]
       if (trace_enabled) LOGGER.info("Consumed token of type " + lastConsumedToken.getType() + " from " + lastConsumedToken.getLocation());
+[#--if grammar.faultTolerant]
+// REVISIT LATER      
+      if (followSet != null && isParserTolerant()) {
+         nextToken = nextToken(lastConsumedToken);
+         if (!followSet.contains(nextTokenType())) {
+            Token nextNext = nextToken(nextToken);
+            if (followSet.contains(nextNext.getType())) {
+               nextToken.setSkipped(true);
+               lastConsumedToken.setNext(nextNext);
+            }
+         }
+      }
+[/#if--]      
       return lastConsumedToken;
   }
  
@@ -258,6 +276,10 @@ void dumpLookaheadCallStack(PrintStream ps) {
              [#-- REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
              should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
              nextToken.setSkipped(true);
+             if (debugFaultTolerant) LOGGER.info("Skipping token of type: " + nextToken.getType() + " at: " + nextToken.getLocation());
+[#if grammar.treeBuildingEnabled]             
+             pushNode(nextToken);
+[/#if]             
              lastConsumedToken.setNext(nextNext);
              return nextNext;
        }
@@ -268,6 +290,12 @@ void dumpLookaheadCallStack(PrintStream ps) {
            virtualToken.copyLocationInfo(nextToken);
            virtualToken.setNext(nextToken);
            lastConsumedToken.setNext(virtualToken);
+           if (debugFaultTolerant) LOGGER.info("Inserting virtual token of type: " + expectedType + " at " + virtualToken.getLocation());
+[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+           if (token_source.doLexicalStateSwitch(expectedType)) {
+              token_source.reset(virtualToken);
+           }
+[/#if]
            return virtualToken;
        }
        throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
