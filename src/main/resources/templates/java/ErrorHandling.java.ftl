@@ -241,6 +241,19 @@ void dumpLookaheadCallStack(PrintStream ps) {
       }
 [/#if]
       if (trace_enabled) LOGGER.info("Consumed token of type " + lastConsumedToken.getType() + " from " + lastConsumedToken.getLocation());
+[#--if grammar.faultTolerant]
+// REVISIT LATER      
+      if (followSet != null && isParserTolerant()) {
+         nextToken = nextToken(lastConsumedToken);
+         if (!followSet.contains(nextTokenType())) {
+            Token nextNext = nextToken(nextToken);
+            if (followSet.contains(nextNext.getType())) {
+               nextToken.setSkipped(true);
+               lastConsumedToken.setNext(nextNext);
+            }
+         }
+      }
+[/#if--]      
       return lastConsumedToken;
   }
  

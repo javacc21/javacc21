@@ -82,14 +82,17 @@
   [/#if]
      [@CU.HandleLexicalStateChange expansion false]
       [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
-          [#if expansion.tolerantParsing && !expansion.isRegexp]
-             ${expansion.recoverMethodName}();
+         if (pendingRecovery) {
+            ${expansion.recoverMethodName}();
+         }
+          [#--if expansion.tolerantParsing && !expansion.isRegexp]
+           ${expansion.recoverMethodName}();
           [#else]
           if (pendingRecovery) {
              ${expansion.recoverMethodName}();
              pendingRecovery = false;
           }
-          [/#if]
+          [/#if--]
       [/#if]
        [@TreeBuildingAndRecovery expansion]
         [@BuildExpansionCode expansion/]
@@ -277,17 +280,26 @@
        ${LHS} consumeToken(${CU.TT}${regexp.label});
    [#else]
        [#var tolerant = regexp.tolerantParsing?string("true", "false")]
-       [#var followSetVarName = "followSet" + CU.newID()]
-       EnumSet<TokenType> ${followSetVarName} = null;
-       [#if !regexp.followSet.incomplete]
-          ${followSetVarName} = ${regexp.followSetVarName};
-       [#else]
+       [#var followSetVarName = regexp.followSetVarName]
+       [#if regexp.followSet.incomplete]
+         [#set followSetVarName = "followSet" + CU.newID()]
+         EnumSet<TokenType> ${followSetVarName} = null;
          if (outerFollowSet != null) {
             ${followSetVarName} = ${regexp.followSetVarName}.clone();
             ${followSetVarName}.addAll(outerFollowSet);
          }
        [/#if]
-         ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
+       ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
+       [#-- REVISIT if (${followSetVarName} != null && isParserTolerant()) {
+          Token nextToken = nextToken(lastConsumedToken);
+          if (!${followSetVarName}.contains(nextToken.getType())) {
+             Token nextNext = nextToken(nextToken);
+             if (${followSetVarName}.contains(nextNext.getType())) {
+                nextToken.setSkipped(true);
+                lastConsumedToken.setNext(nextNext);
+             }
+          }
+       }--]
    [/#if]
 [/#macro]
 
@@ -555,15 +567,6 @@
                [#var followingExpansion = expansion.followingExpansion]
                [#list 1..1000000 as unused]
                 [#if followingExpansion?is_null][#break][/#if]
-                [#--if followingExpansion?is_null]
-                    if (outerFollowSet != null) {
-                       if outerFollowSet.contains(nextTokenType()) {
-                          success = true;
-                          break;
-                       }
-                    }
-                    [#break/]
-                [/#if--]
                 [#if followingExpansion.maximumSize >0] 
                  if (${ExpansionCondition(followingExpansion)}) {
                     success = true;
