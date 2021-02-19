@@ -83,7 +83,7 @@
      [@CU.HandleLexicalStateChange expansion false]
       [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
          if (pendingRecovery) {
-            if (debugFaultTolerant) LOGGER.info("Re-synching to expansion at: ${expansion.location}");
+            if (debugFaultTolerant) LOGGER.info("Re-synching to expansion at: ${expansion.location?j_string}");
             ${expansion.recoverMethodName}();
          }
           [#--if expansion.tolerantParsing && !expansion.isRegexp]
@@ -422,7 +422,7 @@
              lastConsumedToken.setSkipped(true);
              if (debugFaultTolerant) LOGGER.info("Skipping token " + lastConsumedToken.getImage() + " at: " + lastConsumedToken.getLocation());
           }
-          if (debugFaultTolerant) LOGGER.info("Repeat re-sync for expansion at: ${loopExpansion.location}");
+          if (debugFaultTolerant) LOGGER.info("Repeat re-sync for expansion at: ${loopExpansion.location?j_string}");
           ${loopExpansion.recoverMethodName}();
           if (pendingRecovery) throw pe;
        }
