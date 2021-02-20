@@ -389,10 +389,15 @@ Name# : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
 
 ThrowsList : "throws" Name ( "," Name )* ;
 
-#Expression#(false) :
+#Expression#abstract :
     AssignmentExpression
     {return (Expression) peekNode();}
 ;
+
+INJECT Expression :
+{
+  public boolean isMethodCall() {return false;}
+}
 
 INJECT AssignmentExpression : extends Expression
 INJECT TernaryExpression : extends Expression 
@@ -551,7 +556,7 @@ MemberSelector :
   SCAN 3 "." TypeArguments <IDENTIFIER>
 ;
 
-PrimaryPrefix :
+PrimaryPrefix#void :
   Literal
   |
   "this"
@@ -571,13 +576,42 @@ PrimaryPrefix :
   Name
 ;
 
+INJECT PrimaryExpression :
+{
+  /**
+   * Is this expression a method invocation?
+   */
+  public boolean isMethodCall() {
+    Node last = getChild(getChildCount()-1);
+    if (!(last instanceof InvocationArguments)) return false;
+    if (getChild(0) instanceof Name && getChildCount() ==2) {
+      return true;
+    }
+    Node secondLast = getChild(getChildCount()-2);
+    Node thirdLast = getChildCount() == 2 ? null : getChild(getChildCount() -3);
+    return secondLast instanceof Identifier && thirdLast instanceof Token && ((Token)thirdLast).getType() == DOT;
+  }
+
+  /**
+   * If this expression is a method invocation, we 
+   * return its name, otherwise null
+   */
+  public String getMethodName() {
+    if (!isMethodCall()) {
+      return null;
+    }
+    return getChild(getChildCount()-2).toString();
+  }
+}
+
+
 MethodReference :
     (Type | "super")
      "::" =>||
      (<IDENTIFIER>|"new")
 ;
 
-PrimarySuffix :
+PrimarySuffix#void :
  SCAN 2
  (
   => "." ("this"|"super")
