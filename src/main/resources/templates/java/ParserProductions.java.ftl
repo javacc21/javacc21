@@ -558,7 +558,11 @@
           List<Token> skippedTokens = new ArrayList<>();
           boolean success = false;
           while (lastConsumedToken.getType() != EOF) {
+            [#if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"]
+             if (${ExpansionCondition(expansion.nestedExpansion)}) {
+            [#else]
              if (${ExpansionCondition(expansion)}) {
+            [/#if]
                 success = true;
                 break;
              }
@@ -567,12 +571,17 @@
                [#list 1..1000000 as unused]
                 [#if followingExpansion?is_null][#break][/#if]
                 [#if followingExpansion.maximumSize >0] 
+                 [#if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"]
+                 if (${ExpansionCondition(followingExpansion.nestedExpansion)}) {
+                 [#else]
                  if (${ExpansionCondition(followingExpansion)}) {
+                 [/#if]
                     success = true;
                     break;
                  }
                 [/#if]
-                [#if followingExpansion.minimumSize >0 || followingExpansion.followingExpansion?is_null]
+                [#if !followingExpansion.possiblyEmpty][#break][/#if]
+                [#if followingExpansion.followingExpansion?is_null]
                  if (outerFollowSet != null) {
                    if (outerFollowSet.contains(nextTokenType())) {
                       success = true;
