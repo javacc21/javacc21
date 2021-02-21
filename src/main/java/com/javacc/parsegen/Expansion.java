@@ -232,10 +232,12 @@ abstract public class Expansion extends BaseNode {
             return false;
         if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <=1 )
             return false;
-        if (getHasScanLimit())
+        if (getHasScanLimit()) {
             return true;
-        if (isSingleToken())
+        }
+        if (getMaximumSize() <=1) {
             return false;
+        }
         Lookahead la = getLookahead();
         return la != null && la.getAmount()>1;
     }

@@ -184,7 +184,7 @@ InterfaceDeclaration :
 ExtendsList : 
    "extends" ObjectType
    ( 
-     SCAN \InterfaceDeclaration => 
+     SCAN 1 \InterfaceDeclaration => 
      "," ObjectType 
    )*
 ;
@@ -506,20 +506,28 @@ MultiplicativeExpression :
 
 UnaryExpression :
   ( "+" | "-" ) UnaryExpression
-|
+  |
   PreIncrementExpression
-|
+  |
   PreDecrementExpression
-|
+  |
   UnaryExpressionNotPlusMinus
 ;
 
 PreIncrementExpression :
   "++" PrimaryExpression
+  [
+    SCAN {!((Expression)peekNode()).isAssignableTo()}
+    => FAIL "expression after ++ is not an assignable variable"
+  ]
 ;
 
 PreDecrementExpression :
   "--" PrimaryExpression
+  [
+    SCAN {!((Expression)peekNode()).isAssignableTo()}
+    => FAIL "expression after -- is not an assignable variable"
+  ]
 ;
 
 UnaryExpressionNotPlusMinus :
@@ -535,7 +543,11 @@ UnaryExpressionNotPlusMinus :
 ;
 
 PostfixExpression :
-  PrimaryExpression [ "++" | "--" ]
+  PrimaryExpression 
+  [ 
+    SCAN 1 {((Expression)peekNode()).isAssignableTo()}
+    =>("++" | "--") 
+  ]
 ;
 
 SwitchExpression# :
@@ -793,25 +805,13 @@ LocalVariableDeclaration :
 
 EmptyStatement : ";" ;
 
-/*StatementExpression :
-  PreIncrementExpression
-  |
-  PreDecrementExpression
-  |
-  PrimaryExpression AssignmentOperator =>|| Expression #AssignmentExpression
-  |
-  PostfixExpression
-;*/
-
 StatementExpression :
-{
-  Expression lhs = null;
-}
   PreIncrementExpression
   |
   PreDecrementExpression
   |
-  PrimaryExpression {lhs = (Expression) peekNode();}
+  PrimaryExpression 
+  {Expression lhs = (Expression) peekNode();}
   (
       SCAN 0 {lhs.isAssignableTo()}=>
       (
@@ -823,7 +823,7 @@ StatementExpression :
       SCAN 0 {lhs.isMethodCall() || lhs.isAllocation()}
       =>{}
       |
-      FAIL
+      FAIL "Not a valid statement"
   )
 ;
 

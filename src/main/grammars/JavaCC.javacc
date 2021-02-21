@@ -1757,6 +1757,7 @@ INJECT ExpansionSequence :
             if (!foundNonEmpty && (unit instanceof NonTerminal)) {
                 NonTerminal nt = (NonTerminal) unit;
                 if (nt.getHasScanLimit()) return true;
+                if (nt.getProduction().getHasExplicitLookahead()) return true;
             }
             if (!unit.isPossiblyEmpty()) foundNonEmpty = true;
        }
@@ -2384,6 +2385,7 @@ INJECT OneOrMore :
 {
      public int getMaximumSize() {return Integer.MAX_VALUE;}
      public boolean isConcrete() {return false;}
+     public boolean isPossiblyEmpty() {return false;}
 }
 
 

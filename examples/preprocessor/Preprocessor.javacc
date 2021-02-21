@@ -137,13 +137,13 @@ INCLUDE ("../java/JavaIdentifierDef.javacc")
 
 <PP_DIRECTIVE> SKIP : " " | "\t" | "\f" ;
 
-BitSet PP_Root : PP_Block <EOF> {return lineMarkers;};
+BitSet PP_Root#void : PP_Block <EOF> {return lineMarkers;};
 
-PP_Block : (PP_IfBlock | PP_DefStatement | PP_UndefStatement | PP_Content)* ;
+PP_Block#void : (PP_IfBlock | PP_DefStatement | PP_UndefStatement | PP_Content)* ;
 
-PP_Content : ((<PP_LINE>|<PP_FALSE_ALERT>) {setLineMarker();})+ ;
+PP_Content#void : ((<PP_LINE>|<PP_FALSE_ALERT>) {setLineMarker();})+ ;
 
-PP_IfBlock : 
+PP_IfBlock#void : 
    { 
       boolean alreadyHandled=false, result;
       final boolean previouslyOn = currentlyOn;
@@ -172,17 +172,17 @@ PP_IfBlock :
     {this.currentlyOn = previouslyOn;}
 ;
 
-PP_DefStatement :
+PP_DefStatement#void :
   <PP_DEFINE> <PP_SYMBOL>
   {if (currentlyOn) definedSymbols.add(lastConsumedToken.getImage());}
 ;
 
-PP_UndefStatement : 
+PP_UndefStatement#void : 
     <PP_UNDEF> <PP_SYMBOL> 
     {if (currentlyOn) definedSymbols.remove(lastConsumedToken.getImage());}
 ;    
 
-boolean PP_Expression :
+boolean PP_Expression#void :
   {boolean result, result2, inequality=false;}
   result=PP_OrExpression
   [
@@ -195,28 +195,28 @@ boolean PP_Expression :
   {return result;}
 ;
 
-boolean PP_OrExpression : 
+boolean PP_OrExpression#void : 
   {boolean result, result2;}
    result=PP_AndExpression 
    (<PP_OR> result2=PP_AndExpression {result = result || result2;})* 
    {return result;}
 ;
 
-boolean PP_AndExpression : 
+boolean PP_AndExpression#void : 
    {boolean result, result2;}
    result=PP_NotExpression 
    (<PP_AND> result2=PP_NotExpression {result = result&&result2;})*
    {return result;}
 ;   
 
-boolean PP_NotExpression : 
+boolean PP_NotExpression#void : 
    {boolean not = false, result;}
    (<PP_NOT> {not = !not;})* 
    result=PP_PrimaryExpression 
    {return not ? !result : result;}
 ;
 
-boolean PP_Parentheses : 
+boolean PP_Parentheses#void : 
    {boolean result;}
    <PP_LPAREN> 
    result=PP_Expression 
@@ -224,7 +224,7 @@ boolean PP_Parentheses :
    {return result;}
 ;
 
-boolean PP_PrimaryExpression : 
+boolean PP_PrimaryExpression#void : 
     {boolean result;}
     (
       result=PP_Parentheses
