@@ -389,10 +389,17 @@ Name# : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
 
 ThrowsList : "throws" Name ( "," Name )* ;
 
-#Expression#(false) :
+#Expression#abstract :
     AssignmentExpression
     {return (Expression) peekNode();}
 ;
+
+INJECT Expression :
+{
+  public boolean isMethodCall() {return false;}
+  public boolean isAssignableTo() {return false;}
+  public boolean isAllocation() {return false;}
+}
 
 INJECT AssignmentExpression : extends Expression
 INJECT TernaryExpression : extends Expression 
@@ -414,16 +421,20 @@ INJECT PreDecrementExpression : extends Expression
 INJECT UnaryExpressionNotPlusMinus : extends Expression
 INJECT PostfixExpression : extends Expression
 INJECT CastExpression : extends Expression
-INJECT PrimaryExpression : extends Expression 
+INJECT PrimaryExpression : extends Expression
+INJECT AllocationExpression : extends Expression 
 INJECT LambdaExpression : extends Expression 
 INJECT CodeBlock : extends Expression
 INJECT SwitchExpression : extends Expression
 
 AssignmentExpression :
-  TernaryExpression
-  [ 
-      SCAN 2 {peekNode() instanceof PrimaryExpression} =>
-        AssignmentOperator Expression
+  {
+    Expression lhs;
+  }
+  TernaryExpression {lhs = (Expression) peekNode();}
+  [
+    SCAN 2 {lhs.isAssignableTo()}
+    => AssignmentOperator Expression
   ]
 ;
 
@@ -551,7 +562,7 @@ MemberSelector :
   SCAN 3 "." TypeArguments <IDENTIFIER>
 ;
 
-PrimaryPrefix :
+PrimaryPrefix#void :
   Literal
   |
   "this"
@@ -560,7 +571,7 @@ PrimaryPrefix :
   |
   "(" Expression ")"
   |
-  AllocationExpression
+  AllocationExpression 
   |
   => PrimitiveType "." "class"
   |
@@ -571,13 +582,58 @@ PrimaryPrefix :
   Name
 ;
 
+INJECT PrimaryExpression :
+{
+  /**
+   * Is this expression a method invocation?
+   */
+  public boolean isMethodCall() {
+    if (!(getLastChild() instanceof InvocationArguments)) return false;
+    if (getChild(0) instanceof Name && getChildCount() ==2) {
+      return true;
+    }
+    Node secondLast = getChild(getChildCount()-2);
+    Node thirdLast = getChildCount() == 2 ? null : getChild(getChildCount() -3);
+    return secondLast instanceof Identifier && thirdLast instanceof Token && ((Token)thirdLast).getType() == DOT;
+  }
+
+  /**
+   * If this expression is a method invocation, we 
+   * return its name, otherwise null
+   */
+  public String getMethodName() {
+    if (!isMethodCall()) {
+      return null;
+    }
+    String fullName = getChild(getChildCount()-2).toString();
+    return fullName.substring(fullName.lastIndexOf('.')+1);
+  }
+
+  public boolean isAllocation() {
+    return getLastChild() instanceof AllocationExpression;
+  }
+
+  public boolean isAssignableTo() {
+     if (getChildCount()==1) {
+       return getChild(0) instanceof Name;
+     }
+     Token lastToken = getLastToken();
+     if (lastToken.getType() == IDENTIFIER) {
+       Node secondLast = getChild(getChildCount() -2);
+       return secondLast instanceof Token && ((Token)secondLast).getType() == DOT;
+     }
+     return lastToken.getType() == RBRACKET;
+  }
+}
+
+
 MethodReference :
     (Type | "super")
      "::" =>||
      (<IDENTIFIER>|"new")
 ;
 
-PrimarySuffix :
+PrimarySuffix#void :
  SCAN 2
  (
   => "." ("this"|"super")
@@ -737,12 +793,7 @@ LocalVariableDeclaration :
 
 EmptyStatement : ";" ;
 
-StatementExpression :
-/*
- * The last expansion of this production accepts more than the legal
- * Java expansions for StatementExpression.  This expansion does not
- * use PostfixExpression for performance reasons.
- */
+/*StatementExpression :
   PreIncrementExpression
   |
   PreDecrementExpression
@@ -750,6 +801,30 @@ StatementExpression :
   PrimaryExpression AssignmentOperator =>|| Expression #AssignmentExpression
   |
   PostfixExpression
+;*/
+
+StatementExpression :
+{
+  Expression lhs = null;
+}
+  PreIncrementExpression
+  |
+  PreDecrementExpression
+  |
+  PrimaryExpression {lhs = (Expression) peekNode();}
+  (
+      SCAN 0 {lhs.isAssignableTo()}=>
+      (
+          ("++" | "--") #PostfixExpression(2)
+          |
+          AssignmentOperator Expression #AssignmentExpression(3)
+      )
+      |
+      SCAN 0 {lhs.isMethodCall() || lhs.isAllocation()}
+      =>{}
+      |
+      FAIL
+  )
 ;
 
 ExpressionStatement : StatementExpression ";" ;

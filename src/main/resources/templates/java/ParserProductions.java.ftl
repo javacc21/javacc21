@@ -491,7 +491,10 @@
 
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
-   [#if expansion.firstSet.tokenNames?size =0]
+   [#if expansion.hasSemanticLookahead]
+      (${expansion.semanticLookahead}) &&
+   [/#if]
+   [#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0]
       true 
    [#elseif expansion.firstSet.tokenNames?size < 5] 
       [#list expansion.firstSet.tokenNames as name]
