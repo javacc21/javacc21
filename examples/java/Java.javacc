@@ -600,7 +600,8 @@ INJECT PrimaryExpression :
     if (!isMethodCall()) {
       return null;
     }
-    return getChild(getChildCount()-2).toString();
+    String fullName = getChild(getChildCount()-2).toString();
+    return fullName.substring(fullName.lastIndexOf('.')+1);
   }
 }
 

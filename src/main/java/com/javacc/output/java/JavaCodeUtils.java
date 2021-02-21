@@ -29,8 +29,10 @@
 
 package com.javacc.output.java;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 import com.javacc.parser.*;
@@ -79,34 +81,52 @@ public class JavaCodeUtils {
     }
 
     /**
-     * Removes methods (private ones only, because that's safe!) that are never
-     * referenced anywhere in the source file.
-     * Actually, I think this method is not quite correct. It misses some 
-     * methods that are actually removable, because it doesn't deal with self-referential loops, like
-     * private method A contains an invocation of private method B and B contains an invocation of A
-     * but in reality, none of it is ever called. At some point, I'll rewrite this to be more correct.
-     * It works okay for the current purposes though. REVISIT.
-     * @param jcu
+     * This method removes private methods that are unused. It is not
+     * completely correct. It might miss some unused methods because
+     * it only uses the name of the method, not the full signature. For example, 
+     * if you have a private method foo(Bar) and another one foo(Bar, Baz) 
+     * and only one of the two is actually used...
+     * But, it's good enough for our internal purposes here.
      */
     static public void removeUnusedPrivateMethods(CompilationUnit jcu) {
-        while (true) {
-            if (removeUnusedPrivateMethodsIteration(jcu) == 0) break;
+        Set<String> invokedMethodNames = new HashSet<>();
+        for (PrimaryExpression pe : jcu.descendants(PrimaryExpression.class, PrimaryExpression::isMethodCall)) {
+            MethodDeclaration md = pe.firstAncestorOfType(MethodDeclaration.class);
+            if (md == null || md.firstChildOfType(PRIVATE) == null) {
+                // If the method is invoked in a non-private method
+                // or initializer or constructor, then we add its name to the list.
+                invokedMethodNames.add(pe.getMethodName());
+            }
+        }
+        List<MethodDeclaration> privateMethods = jcu.descendants(MethodDeclaration.class, md->md.firstChildOfType(PRIVATE)!=null);
+        while (addToInvokedMethodList(invokedMethodNames, privateMethods));
+        // Now remove all the methods that are still in the privateMethods set.
+        for (MethodDeclaration md : privateMethods) {
+            md.getParent().removeChild(md);
         }
     }
 
-    static private int removeUnusedPrivateMethodsIteration(CompilationUnit jcu) {
-        List<Identifier> ids = jcu.descendants(Identifier.class, id->!(id.getParent() instanceof MethodDeclaration));
-        Set<String> refs = new HashSet<String>();
-        for (Identifier id : ids) {
-            refs.add(id.getImage());
-        }
-        List<MethodDeclaration> mds = jcu.descendants(MethodDeclaration.class, md->md.firstChildOfType(PRIVATE) !=null);
-        int result =0;
-        for (MethodDeclaration md : mds) {
-            String methodName = md.getName();
-            if (!refs.contains(methodName)) {
-                md.getParent().removeChild(md);
-                ++result;
+    /**
+     * @param invokedMethodNames The set of names of methods that are definitely
+     * used somewhere.
+     * @param privateMethods The set of method declarations for which we have not 
+     * encountered any invocation.
+     * @return whether we actually removed any methods from the set of private methods.
+     * If not, we can exit the loop.
+     */
+    static private boolean addToInvokedMethodList(Set<String> invokedMethodNames, List<MethodDeclaration> privateMethods) {
+        boolean result = false;
+        for (ListIterator<MethodDeclaration> it = privateMethods.listIterator(); it.hasNext();) {
+            MethodDeclaration md = it.next();
+            if (invokedMethodNames.contains(md.getName())) {
+                it.remove();
+                result = true;
+                List<PrimaryExpression> methodCalls = md.descendants(PrimaryExpression.class, PrimaryExpression::isMethodCall);
+                for (PrimaryExpression methodCall : methodCalls) {
+                    if (!invokedMethodNames.contains(methodCall.getMethodName())) {
+                        invokedMethodNames.add(methodCall.getMethodName());
+                    }
+                }
             }
         }
         return result;
