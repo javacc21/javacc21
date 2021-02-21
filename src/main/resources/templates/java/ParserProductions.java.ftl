@@ -86,14 +86,6 @@
             if (debugFaultTolerant) LOGGER.info("Re-synching to expansion at: ${expansion.location?j_string}");
             ${expansion.recoverMethodName}();
          }
-          [#--if expansion.tolerantParsing && !expansion.isRegexp]
-           ${expansion.recoverMethodName}();
-          [#else]
-          if (pendingRecovery) {
-             ${expansion.recoverMethodName}();
-             pendingRecovery = false;
-          }
-          [/#if--]
       [/#if]
        [@TreeBuildingAndRecovery expansion]
         [@BuildExpansionCode expansion/]
@@ -592,8 +584,8 @@
                 [#set followingExpansion = followingExpansion.followingExpansion]
                [/#list]
              [/#if]
-             if (lastConsumedToken != initialToken) skippedTokens.add(lastConsumedToken);
              lastConsumedToken = nextToken(lastConsumedToken);
+             skippedTokens.add(lastConsumedToken);
           }
           if (!success && !skippedTokens.isEmpty()) {
              lastConsumedToken = initialToken;
@@ -603,11 +595,9 @@
              for (Token tok : skippedTokens) {
                 iv.addChild(tok);
              }
-             [#if grammar.faultTolerant]
              if (debugFaultTolerant) {
                 LOGGER.info("Skipping " + skippedTokens.size() + " tokens starting at: " + skippedTokens.get(0).getLocation());
              }
-             [/#if]
              pushNode(iv);
           }
           pendingRecovery = !success;
