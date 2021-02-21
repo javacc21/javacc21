@@ -371,6 +371,10 @@ public interface Node extends Comparable<Node>
         return null;
     }
 
+    default ${grammar.constantsClassName}.TokenType getTokenType() {
+        return this instanceof Token ? ((Token)this).getType() : null;
+    }
+
 [#if grammar.tokensAreNodes]
     /**
      * return the very first token that is part of this node
