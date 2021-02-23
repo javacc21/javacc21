@@ -66,7 +66,7 @@ public class FileLineMap {
      * with this static lookup map, so this method
      * allows you to just clear the map, assuming you
      * know that none of the entries are needed any more.
-     *
+     */
     static public void clearFileLineMapCache() {
         mapsByName.clear();
     }
