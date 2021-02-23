@@ -311,11 +311,6 @@ Initializer :
   [ "static" ] =>|+1 Block
 ;
 
-
-/*
- * Type, name and expression syntax follows.
- */
-
 Type :
    => ReferenceType
    |
@@ -333,8 +328,7 @@ ReferenceType :
 ;
 
 ObjectType# :
-    <IDENTIFIER>
-    [ TypeArguments ]
+    <IDENTIFIER> [ TypeArguments ]
     ( "." <IDENTIFIER> =>|| [ TypeArguments ] )*
 ;
 
@@ -397,6 +391,7 @@ ThrowsList : "throws" Name ( "," Name )* ;
 INJECT Expression :
 {
   public boolean isMethodCall() {return false;}
+  public boolean isConstructorInvocation() {return false;}
   public boolean isAssignableTo() {return false;}
   public boolean isAllocation() {return false;}
 }
@@ -420,7 +415,8 @@ INJECT PreIncrementExpression : extends Expression
 INJECT PreDecrementExpression : extends Expression
 INJECT UnaryExpressionNotPlusMinus : extends Expression
 INJECT PostfixExpression : extends Expression
-INJECT CastExpression : extends Expression
+INJECT PrimitiveCastExpression : extends Expression
+INJECT ObjectCastExpression : extends Expression
 INJECT PrimaryExpression : extends Expression
 INJECT AllocationExpression : extends Expression 
 INJECT LambdaExpression : extends Expression 
@@ -433,7 +429,7 @@ AssignmentExpression :
   }
   TernaryExpression {lhs = (Expression) peekNode();}
   [
-    SCAN 2 {lhs.isAssignableTo()}
+    SCAN 1 {lhs.isAssignableTo()}
     => AssignmentOperator Expression
   ]
 ;
@@ -514,19 +510,19 @@ UnaryExpression :
   UnaryExpressionNotPlusMinus
 ;
 
-PreIncrementExpression :
-  "++" PrimaryExpression
+PreIncrementExpression : 
+  "++" UnaryExpression
   [
-    SCAN {!((Expression)peekNode()).isAssignableTo()}
+    SCAN {currentLookaheadToken == null && !((Expression)peekNode()).isAssignableTo()}#
     => FAIL "expression after ++ is not an assignable variable"
   ]
 ;
 
-PreDecrementExpression :
-  "--" PrimaryExpression
+PreDecrementExpression : 
+  "--" UnaryExpression 
   [
-    SCAN {!((Expression)peekNode()).isAssignableTo()}
-    => FAIL "expression after -- is not an assignable variable"
+    SCAN {currentLookaheadToken == null && !((Expression)peekNode()).isAssignableTo()}#
+    => FAIL "expression after ++ is not an assignable variable"
   ]
 ;
 
@@ -535,18 +531,21 @@ UnaryExpressionNotPlusMinus :
   |
   LambdaExpression 
   |
-  CastExpression
+  SwitchExpression
+  |
+  PrimitiveCastExpression 
+  |
+  ObjectCastExpression
   |
   PostfixExpression
-  |
-  SwitchExpression
 ;
 
 PostfixExpression :
   PrimaryExpression 
   [ 
-    SCAN 1 {((Expression)peekNode()).isAssignableTo()}
-    =>("++" | "--") 
+    SCAN 1 {currentLookaheadToken != null || ((Expression)peekNode()).isAssignableTo()}#
+    =>
+    "++" | "--" 
   ]
 ;
 
@@ -554,15 +553,12 @@ SwitchExpression# :
    SwitchStatement
 ;
 
-CastExpression : 
- =>
- (
-  "(" PrimitiveType ")" =>|| UnaryExpression
-  |
-  "(" ReferenceType ")" =>|| UnaryExpressionNotPlusMinus
-  |
-  "(" ObjectType ("&" ObjectType)+ ")" UnaryExpressionNotPlusMinus
- )
+PrimitiveCastExpression :
+    "(" PrimitiveType ")" =>|| UnaryExpression
+;
+
+ObjectCastExpression :
+   "(" ReferenceType ("&" ObjectType)* ")" =>|+1 UnaryExpressionNotPlusMinus
 ;
 
 PrimaryExpression# :
@@ -606,7 +602,15 @@ INJECT PrimaryExpression :
     }
     Node secondLast = getChild(getChildCount()-2);
     Node thirdLast = getChildCount() == 2 ? null : getChild(getChildCount() -3);
-    return secondLast instanceof Identifier && thirdLast instanceof Token && ((Token)thirdLast).getType() == DOT;
+    return (secondLast instanceof Identifier && thirdLast instanceof Token && ((Token)thirdLast).getType() == DOT)
+           || secondLast instanceof MemberSelector;
+  }
+
+  public boolean isConstructorInvocation() {
+    if (!(getLastChild() instanceof InvocationArguments)) return false;
+    if (getChildCount() <2) return false;
+    CONSTANTS_CLASS.TokenType tt = getChild(getChildCount()-2).getTokenType();
+    return tt == SUPER || tt == THIS;
   }
 
   /**
@@ -628,6 +632,9 @@ INJECT PrimaryExpression :
   public boolean isAssignableTo() {
      if (getChildCount()==1) {
        return getChild(0) instanceof Name;
+     }
+     if (getChildCount() == 3 && getChild(0).getTokenType() == LPAREN && getLastChild().getTokenType() == RPAREN) {
+       return ((Expression)getChild(1)).isAssignableTo();
      }
      Token lastToken = getLastToken();
      if (lastToken.getType() == IDENTIFIER) {
@@ -813,14 +820,14 @@ StatementExpression :
   PrimaryExpression 
   {Expression lhs = (Expression) peekNode();}
   (
-      SCAN 0 {lhs.isAssignableTo()}=>
+      SCAN 1 {lhs.isAssignableTo()}=>
       (
           ("++" | "--") #PostfixExpression(2)
           |
           AssignmentOperator Expression #AssignmentExpression(3)
       )
       |
-      SCAN 0 {lhs.isMethodCall() || lhs.isAllocation()}
+      SCAN 0 {lhs.isMethodCall() || lhs.isConstructorInvocation() || lhs.isAllocation()}
       =>{}
       |
       FAIL "Not a valid statement"

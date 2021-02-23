@@ -1,5 +1,4 @@
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
 import org.parsers.java.*;
 
@@ -11,6 +10,7 @@ import org.parsers.java.*;
 public class JParse {
     
     static public ArrayList<Node> roots= new ArrayList<>();
+    static boolean tolerantParsing;
 
    static public void main(String args[]) {
       List<File> failures = new ArrayList<File>();
@@ -20,6 +20,10 @@ public class JParse {
       }
       List<File> files = new ArrayList<File>();
       for (String arg : args) {
+          if (arg.equals("-t")) {
+              tolerantParsing = true;
+              continue;
+          }
           File file = new File(arg);
           if (!file.exists()) {
               System.err.println("File " + file + " does not exist.");
@@ -51,9 +55,10 @@ public class JParse {
     }
       
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-       String content = new String(Files.readAllBytes(file.toPath()));
-       JavaParser parser = new JavaParser(file.toString(), content);
+       JavaParser parser = new JavaParser(file.toPath());
+       parser.setParserTolerant(tolerantParsing);
        Node root=parser.CompilationUnit();
+       FileLineMap.clearFileLineMapCache();
 // Uncomment the following code if you want all the parsed trees 
 //  to remain in memory. This is useful if you want to know how much
 //  memory it takes to parse all the source code in the JDK, for example.
@@ -85,6 +90,7 @@ public class JParse {
    static public void usage() {
        System.out.println("Usage: java JParse <sourcefiles or directories>");
        System.out.println("If you just pass it one java source file, it dumps the AST");
+       System.out.println("Use the -t flag to set whether to parse in tolerant mode");
        System.exit(-1);
    }
 }
