@@ -639,7 +639,7 @@ INJECT PrimaryExpression :
      Token lastToken = getLastToken();
      if (lastToken.getType() == IDENTIFIER) {
        Node secondLast = getChild(getChildCount() -2);
-       return secondLast instanceof Token && ((Token)secondLast).getType() == DOT;
+       return secondLast.getTokenType() == DOT;
      }
      return lastToken.getType() == RBRACKET;
   }
