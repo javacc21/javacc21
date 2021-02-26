@@ -257,6 +257,10 @@ public boolean isCancelled() {return cancelled;}
 
 [#if grammar.treeBuildingEnabled]
    [#embed "TreeBuildingCode.java.ftl"]
+[#else]
+  public boolean isTreeBuildingEnabled() {
+    return false;
+  } 
 [/#if]
 }
   

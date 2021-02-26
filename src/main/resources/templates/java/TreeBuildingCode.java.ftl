@@ -29,6 +29,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
  --]
+
 [#if grammar.treeBuildingDefault]
     private boolean buildTree = true;
 [#else]
@@ -44,6 +45,10 @@
 [#else]
     private boolean unparsedTokensAreNodes = false;
 [/#if]
+
+    public boolean isTreeBuildingEnabled() {
+        return buildTree;
+    }
 
     public void setUnparsedTokensAreNodes(boolean unparsedTokensAreNodes) {
         this.unparsedTokensAreNodes = unparsedTokensAreNodes;
