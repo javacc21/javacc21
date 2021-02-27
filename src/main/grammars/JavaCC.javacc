@@ -1112,7 +1112,9 @@ BNFProduction :
         // Older syntax
         => [=>Block] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
         |
-        [Block]
+        [Block {CodeBlock block = (CodeBlock) peekNode();}
+          ["#" {block.setAppliesInLookahead(true);}]
+        ]
         ExpansionChoice 
         {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
     )

@@ -109,31 +109,34 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
-Modifiers #void :
+Modifiers(EnumSet<TokenType> permissibleModifiers) #void :
  (
-   "public"
-  |
-   "static" 
-  |
-   "protected"
-  |
-   "private" 
-  |
-   "final" 
-  |
-   "abstract" 
-  |
-   "synchronized"
-  |
-   "native" 
-  |
-   "transient" 
-  |
-   "volatile" 
-  |
-   "strictfp" 
-  | 
-  "default"
+  SCAN {isParserTolerant() 
+       || permissibleModifiers.contains(getToken(1).getType())}
+  =>
+  (
+   "public"|"static"|"protected"|"private"|"final"|"abstract" 
+   |"synchronized"|"native"|"transient"|"volatile"|"strictfp" 
+   |"default"
+  )
+  {
+    switch(lastConsumedToken.getType()) {
+        case ABSTRACT :
+        case FINAL :
+           permissibleModifiers.remove(ABSTRACT);
+           permissibleModifiers.remove(FINAL);
+           break;
+        case PRIVATE :
+        case PROTECTED :
+        case PUBLIC :
+           permissibleModifiers.remove(PRIVATE);
+           permissibleModifiers.remove(PROTECTED);
+           permissibleModifiers.remove(PUBLIC);
+           break;
+        default : 
+           permissibleModifiers.remove(lastConsumedToken.getType());
+    }
+  }
   |
   Annotation
  )*
@@ -163,7 +166,7 @@ INJECT EnumDeclaration : extends TypeDeclaration;
 EmptyDeclaration# : ";" ;
 
 ClassDeclaration :
-  Modifiers
+  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
   "class" =>|| 
   <IDENTIFIER>
   [ TypeParameters ]
@@ -173,7 +176,7 @@ ClassDeclaration :
 ;
 
 InterfaceDeclaration :
-  Modifiers
+  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
   "interface" =>||
   <IDENTIFIER> 
   [ TypeParameters ]
@@ -206,7 +209,7 @@ ImplementsList :
 
 
 EnumDeclaration :
-   Modifiers
+   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
    "enum" =>|| <IDENTIFIER>
    [ImplementsList] 
    EnumBody
@@ -221,7 +224,7 @@ EnumBody :
 ;
 
 EnumConstant :
-  Modifiers <IDENTIFIER> [ InvocationArguments ] [ ClassOrInterfaceBody ]
+  (Annotation)* <IDENTIFIER> [ InvocationArguments ] [ ClassOrInterfaceBody ]
 ;
 
 TypeParameters :
@@ -259,7 +262,7 @@ ClassOrInterfaceBodyDeclaration# :
 ;
 
 FieldDeclaration :
-  Modifiers 
+  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, STATIC, FINAL, TRANSIENT, VOLATILE))
   Type VariableDeclarator =>|+1 ( "," VariableDeclarator )* ";"
 ;
 
@@ -274,7 +277,12 @@ ArrayInitializer :
 ;
 
 #MethodDeclaration :
-  Modifiers
+  (
+    SCAN \.\.\InterfaceDeclaration
+    =>Modifiers(EnumSet.of(PUBLIC,PRIVATE,ABSTRACT,STATIC,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT))
+    |
+    Modifiers(EnumSet.of(PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,FINAL,SYNCHRONIZED,NATIVE,STRICTFP))
+  )
   [ TypeParameters ]
   ReturnType
   <IDENTIFIER> 
@@ -286,12 +294,12 @@ ArrayInitializer :
 
 FormalParameters : "(" [ FormalParameter ( "," FormalParameter )* ] ")" ;
 
-FormalParameter : Modifiers Type [ "..." ] VariableDeclaratorId ;
+FormalParameter : Modifiers(EnumSet.of(FINAL)) Type [ "..." ] VariableDeclaratorId ;
 
 INJECT ConstructorDeclaration : extends ClassOrInterfaceBodyDeclaration
 
 ConstructorDeclaration :
-  Modifiers
+  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))
   [ TypeParameters ]
   <IDENTIFIER> FormalParameters =>||
   [ ThrowsList ]
@@ -807,7 +815,7 @@ BlockStatement :
 ;
 
 LocalVariableDeclaration : 
-  Modifiers Type =>|+1 VariableDeclarator ( "," VariableDeclarator )* 
+  Modifiers(EnumSet.of(FINAL)) Type =>|+1 VariableDeclarator ( "," VariableDeclarator )* 
 ;
 
 EmptyStatement : ";" ;
@@ -912,7 +920,7 @@ DoStatement :
 ForStatement :
   "for" "("
   (
-      Modifiers Type <IDENTIFIER> ":" =>|| Expression 
+      Modifiers(EnumSet.of(FINAL)) Type <IDENTIFIER> ":" =>|| Expression 
       |
       [ ForInit ] ";" [ Expression ] ";" [ StatementExpressionList ]
   )
@@ -1059,7 +1067,8 @@ MemberValueArrayInitializer :
 /* Annotation Types. */
 
 AnnotationTypeDeclaration :
-  Modifiers "@" "interface" =>|| <IDENTIFIER> AnnotationTypeBody
+  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
+  "@" "interface" =>|| <IDENTIFIER> AnnotationTypeBody
 ;
 
 AnnotationTypeBody :
@@ -1067,7 +1076,8 @@ AnnotationTypeBody :
 ;
 
 AnnotationMethodDeclaration :
-   Modifiers Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
+   Modifiers(EnumSet.of(PUBLIC,ABSTRACT))
+   Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
 ;
 
 AnnotationTypeMemberDeclaration :
