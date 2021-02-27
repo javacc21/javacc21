@@ -246,19 +246,22 @@ void dumpLookaheadCallStack(PrintStream ps) {
       }
 [/#if]
       if (trace_enabled) LOGGER.info("Consumed token of type " + lastConsumedToken.getType() + " from " + lastConsumedToken.getLocation());
-[#--if grammar.faultTolerant]
-// REVISIT LATER      
+[#if grammar.faultTolerant]
+// Check whether the very next token is in the follow set of the last consumed token
+// and if it is not, we check one token ahead to see if skipping the next token remedies
+// the problem.
       if (followSet != null && isParserTolerant()) {
          nextToken = nextToken(lastConsumedToken);
-         if (!followSet.contains(nextTokenType())) {
+         if (!followSet.contains(nextToken.getType())) {
             Token nextNext = nextToken(nextToken);
             if (followSet.contains(nextNext.getType())) {
                nextToken.setSkipped(true);
+               if (debugFaultTolerant) LOGGER.info("Skipping token " + nextToken.getType() + " at: " + nextToken.getLocation());
                lastConsumedToken.setNext(nextNext);
             }
          }
       }
-[/#if--]      
+[/#if]      
       return lastConsumedToken;
   }
  
