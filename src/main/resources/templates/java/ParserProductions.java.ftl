@@ -283,16 +283,6 @@
          }
        [/#if]
        ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
-       [#-- REVISIT if (${followSetVarName} != null && isParserTolerant()) {
-          Token nextToken = nextToken(lastConsumedToken);
-          if (!${followSetVarName}.contains(nextToken.getType())) {
-             Token nextNext = nextToken(nextToken);
-             if (${followSetVarName}.contains(nextNext.getType())) {
-                nextToken.setSkipped(true);
-                lastConsumedToken.setNext(nextNext);
-             }
-          }
-       }--]
    [/#if]
 [/#macro]
 
@@ -330,7 +320,7 @@
          outerFollowSet = null;
       [/#if]
    [#else]
-     [#if followSet.cardinality()!=0]
+     [#if !followSet.isEmpty()]
       if (outerFollowSet != null) {
            EnumSet<TokenType> newFollowSet = ${nonterminal.followSetVarName}.clone();
            newFollowSet.addAll(outerFollowSet);

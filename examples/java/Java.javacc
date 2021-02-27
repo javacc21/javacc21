@@ -575,7 +575,7 @@ PrimaryPrefix#void :
   |
   "this"
   |
-  => "super" "." [TypeArguments] <IDENTIFIER>
+  "super" "." =>|| [TypeArguments] <IDENTIFIER>
   |
   "(" Expression ")"
   |

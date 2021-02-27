@@ -128,8 +128,11 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean isAtChoicePoint() {
-        //Node parent = getNonSuperfluousParent();
-        Node parent = getParent();
+        Node parent = getNonSuperfluousParent();
+//      Node parent = getParent();
+//        if (parent instanceof ExpansionWithParentheses) {
+//            return ((Expansion)parent).isAtChoicePoint();
+//        }
         return parent instanceof ExpansionChoice
             || parent instanceof OneOrMore
             || parent instanceof ZeroOrMore
@@ -331,29 +334,6 @@ abstract public class Expansion extends BaseNode {
         return la == null ? null : la.getUpToExpansion();
     }
 
-    /**
-     * @return whether this expansion is at the very end of the root expansion that
-     *         contains it.
-     *//*
-    public boolean isAtEnd() {
-        Node parent = getParent();
-        if (!(parent instanceof Expansion)) {
-            return true;
-        }
-        if (parent instanceof ExpansionSequence) {
-            ExpansionSequence seq = (ExpansionSequence) parent;
-            if (seq.getHasExplicitLookahead()) {
-                return true;
-            }
-            List<Expansion> siblings = seq.getUnits();
-            for (int i = siblings.indexOf(this) + 1; i < siblings.size(); i++) {
-                if (!siblings.get(i).isAlwaysSuccessful())
-                    return false;
-            }
-        }
-        return ((Expansion) parent).isAtEnd();
-    }*/
-
     public Expression getSemanticLookahead() {
         return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;
     }
@@ -415,6 +395,10 @@ abstract public class Expansion extends BaseNode {
 
     public String getRecoverMethodName() {
         return getScanRoutineName().replace("check$", "recover$");
+    }
+
+    public String getRecoverToMethodName() {
+        return getScanRoutineName().replace("check$", "recover_to$");
     }
 
     public int getFinalSetSize() {
@@ -495,6 +479,9 @@ abstract public class Expansion extends BaseNode {
 
     public TokenSet getFollowSet() {
         TokenSet result = new TokenSet(getGrammar());
+        if (isAtEndOfLoop()) {
+            result.or(firstLoopAncestor().getFirstSet());
+        }
         Expansion following = this;
         do {
             following = following.getFollowingExpansion();
@@ -504,8 +491,31 @@ abstract public class Expansion extends BaseNode {
             }
             result.or(following.getFirstSet());
         } while (following.isPossiblyEmpty());
-        if (this instanceof ZeroOrMore || this instanceof OneOrMore) {
-            result.or(this.getFirstSet());
+        return result;
+    }
+
+    private boolean isAtEndOfLoop() {
+        if (this instanceof ZeroOrMore || this instanceof OneOrMore) return true;
+        Node parent = getParent();
+        if (parent instanceof ExpansionSequence) {
+            List<Expansion> siblings = parent.childrenOfType(Expansion.class);
+            int index = siblings.indexOf(this);
+            for (int i = index+1; i<siblings.size(); i++) {
+                if (!siblings.get(i).isPossiblyEmpty()) return false;
+            }
+        }
+        if (parent instanceof Expansion) {
+            return ((Expansion) parent).isAtEndOfLoop();
+        }
+        return false;
+    }
+
+    private Expansion firstLoopAncestor() {
+        Expansion result = this;
+        while (!(result instanceof ZeroOrMore || result instanceof OneOrMore)) {
+            Node parent = result.getParent();
+            if (parent instanceof Expansion) result = (Expansion) parent;
+            else return null;
         }
         return result;
     }
