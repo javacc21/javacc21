@@ -338,7 +338,6 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
-[#--          if (hitFailure) return lastLookaheadSucceeded = false;--]
           if (!scanToEnd && lookaheadRoutineNesting <= 1) {
              remainingLookahead = ${sub.scanLimitPlus};
           }

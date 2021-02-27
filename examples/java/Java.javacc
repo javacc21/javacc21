@@ -109,33 +109,54 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
+INJECT PARSER_CLASS :
+{
+  private EnumSet<TokenType> usedModifiers = EnumSet.noneOf(TokenType.class);
+  private final boolean visibilitySpecified() {
+    return usedModifiers.contains(PUBLIC) 
+          || usedModifiers.contains(PRIVATE)
+          || usedModifiers.contains(PROTECTED);
+  }
+}
+
 Modifiers #void :
+ {
+   usedModifiers.clear();
+ }#
  (
-   "public"
-  |
-   "static" 
-  |
-   "protected"
-  |
-   "private" 
-  |
-   "final" 
-  |
-   "abstract" 
-  |
-   "synchronized"
-  |
-   "native" 
-  |
-   "transient" 
-  |
-   "volatile" 
-  |
-   "strictfp" 
-  | 
-  "default"
-  |
-  Annotation
+   (
+     SCAN {isParserTolerant() || !usedModifiers.contains(STATIC)}#
+     => "static" 
+     |
+     SCAN {isParserTolerant() || !visibilitySpecified()} =>
+     (
+       "public" | "private" | "protected"
+     )
+     |
+     SCAN {isParserTolerant() || (!usedModifiers.contains(FINAL) && !usedModifiers.contains(ABSTRACT))}#
+     => 
+     ("final" | "abstract")
+     |
+     SCAN {isParserTolerant() || !usedModifiers.contains(SYNCHRONIZED)}#
+     =>"synchronized" 
+     |
+     SCAN {isParserTolerant() || !usedModifiers.contains(NATIVE)}#
+     => "native"
+     |
+     SCAN {isParserTolerant() || !usedModifiers.contains(TRANSIENT)}#
+     => "transient"
+     |
+     SCAN {isParserTolerant() || !usedModifiers.contains(VOLATILE)}#
+     => "volatile"
+     |
+     SCAN {isParserTolerant() || !usedModifiers.contains(STRICTFP)}#
+     =>"strictfp" 
+     | 
+     SCAN {isParserTolerant() || !usedModifiers.contains(_DEFAULT)}#
+     =>"default" 
+   ) {usedModifiers.add(lastConsumedToken.getType());}#
+   |
+   Annotation
  )*
 ;
 
@@ -576,7 +597,7 @@ PrimaryPrefix#void :
   "this"
   |
   "super" "." =>|| [TypeArguments] <IDENTIFIER>
-  |
+|
   "(" Expression ")"
   |
   AllocationExpression 
