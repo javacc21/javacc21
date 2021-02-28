@@ -130,9 +130,6 @@ abstract public class Expansion extends BaseNode {
     public boolean isAtChoicePoint() {
         Node parent = getNonSuperfluousParent();
 //      Node parent = getParent();
-//        if (parent instanceof ExpansionWithParentheses) {
-//            return ((Expansion)parent).isAtChoicePoint();
-//        }
         return parent instanceof ExpansionChoice
             || parent instanceof OneOrMore
             || parent instanceof ZeroOrMore
@@ -143,6 +140,7 @@ abstract public class Expansion extends BaseNode {
     /**
      * @return the first ancestor that is not (directly) inside
      * superfluous parentheses. (Yes, this is a bit hairy and I'm not 100% sure it's correct!) 
+     * I really need to take a good look at all this handling of expansions inside parentheses.
      */
 
     public Node getNonSuperfluousParent() {
