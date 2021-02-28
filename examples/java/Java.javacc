@@ -868,7 +868,8 @@ ClassicSwitchLabel :
 
 ClassicCaseStatement :
   ClassicSwitchLabel
-  (SCAN 2 // We need this because we'll spuriously enter the BlockStatement 
+  (SCAN 1 {getToken(1).getType() != _DEFAULT} 
+          // We need this because we'll spuriously enter the BlockStatement 
           // if the next token is "default", because "default" is in the 
           // BlockStatement first set. This is really quite tricky, but maybe not my
           // fault, but the Java designers for re-using keywords!
