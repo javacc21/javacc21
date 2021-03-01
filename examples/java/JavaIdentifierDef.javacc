@@ -17,6 +17,7 @@
 INCLUDE ("Java13IdentifierDef.javacc")
 #elif jdk11 || jdk12 
 // Truth is that I didn't have a JDK12 around to test.
+// I don't know if it differs in this respect from JDK11.
 INCLUDE ("Java11IdentifierDef.javacc")
 #elif jdk8 || jdk9 || jdk10 
 // Also didn't have a jdk9 or jdk10 to test
@@ -41,7 +42,7 @@ public class JavaIdDefGenerator {
         System.out.println("  <#JAVA_IDENTIFIER_PART :");
         System.out.println("    [");
         outputRanges(0, 0xffff, false);
-        System.out.println("    ]");
+        System.out.println("\n    ]");
         System.out.println("  >");
         System.out.println(";");
     }
