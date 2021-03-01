@@ -857,6 +857,7 @@ TOKEN :
         "\uffda"-"\uffdc",
         "\uffe0"-"\uffe1",
         "\uffe5"-"\uffe6",
-        "\ufff9"-"\ufffb"    ]
+        "\ufff9"-"\ufffb"
+    ]
   >
 ;

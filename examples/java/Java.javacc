@@ -32,7 +32,7 @@
  // tool itself but it can be used on its own, and you are free to use it
  // in your own projects. It supports the stable feature set of the Java 
  // language up to JDK 15. 
- // This grammar is a forward evaluation of the sample Java grammar originally 
+ // This grammar is a forward evolution of the sample Java grammar originally 
  // included in the legacy JavaCC distribution in 1997 or thereabouts, but is
  // close to being a total rewrite, and serves as a kind of showcase for the latest
  // features in JavaCC 21, so many constructs are expressed in a very clean
@@ -649,7 +649,10 @@ INJECT PrimaryExpression :
        Node secondLast = getChild(getChildCount() -2);
        return secondLast.getTokenType() == DOT;
      }
-     return lastToken.getType() == RBRACKET;
+     if (lastToken.getType() == RBRACKET) {
+       return getChild(getChildCount()-1).getTokenType() != LBRACKET;
+     }
+     return false;
   }
 }
 
