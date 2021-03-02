@@ -6,7 +6,7 @@ public class JSONCTest {
         FileReader fr = new FileReader(file);
         JSONCParser parser = new JSONCParser(fr);
         parser.setInputSource(file.toString());
-        parser.Value();
+        parser.Root();
         Node root=parser.rootNode();
         if (dumpTree) {
             root.dump();

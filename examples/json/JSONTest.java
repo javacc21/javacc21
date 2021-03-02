@@ -6,7 +6,7 @@ public class JSONTest {
         FileReader fr = new FileReader(file);
         JSONParser parser = new JSONParser(fr);
         parser.setInputSource(file.toString());
-        parser.Value();
+        parser.Root();
         Node root=parser.rootNode();
         if (dumpTree) {
             root.dump();
