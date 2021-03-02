@@ -116,7 +116,7 @@ public class NfaState {
         return epsilonMoves;
     }
     
-    boolean hasAsciiMove(char c) {
+    boolean hasAsciiMove(int c) {
         return asciiMoves.get(c);
     }
 
@@ -165,23 +165,23 @@ public class NfaState {
         if (!epsilonMoves.contains(newState)) epsilonMoves.add(newState);
     }
 
-    void addCharMove(char c) {
-        if (c < 128) {// ASCII char
+    void addCharMove(int c) {
+        if (c < 128) {// ASCII 
             asciiMoves.set(c);
         } else {
-            charMoveBuffer.append(c);
+            charMoveBuffer.appendCodePoint(c);
         }
     }
 
-    void addRange(char left, char right) {
-        for (char c = left; c <=right && c<128; c++) {
+    void addRange(int left, int right) {
+        for (int c = left; c <=right && c<128; c++) {
             asciiMoves.set(c);
         }
-        left = (char) Math.max(left, 128);
-        right = (char) Math.max(right, 128);
+        left = Math.max(left, 128);
+        right = Math.max(right, 128);
         if (right>left) {
-            rangeMoveBuffer.append(left);
-            rangeMoveBuffer.append(right);
+            rangeMoveBuffer.appendCodePoint(left);
+            rangeMoveBuffer.appendCodePoint(right);
         }
     }
 
@@ -298,19 +298,20 @@ public class NfaState {
         return epsilonMovesString;
     }
 
-    final boolean canMoveUsingChar(char c) {
+    final boolean canMoveUsingChar(int c) {
         if (c < 128) {
             return asciiMoves.get(c);
         }
-        // Just check directly if there is a move for this char
-        if (charMoveBuffer.indexOf(Character.toString(c)) >=0) {
+        // Just check directly if there is a move for this codepoint
+//        if (charMoveBuffer.indexOf(Character.toString(c)) >=0) {
+        if (charMoveBuffer.indexOf(new String(new int[]{c}, 0, 1)) >=0) {
             return true;
         }
         // For ranges, iterate thru the table to see if the current char
         // is in some range
         for (int i = 0; i < rangeMoveBuffer.length(); i += 2) {
-            char left = rangeMoveBuffer.charAt(i);
-            char right = rangeMoveBuffer.charAt(i+1);
+            int left = rangeMoveBuffer.codePointAt(i);
+            int right = rangeMoveBuffer.codePointAt(i+1);
             if (c >= left && c <= right) 
                 return true;
             else if (c < left || left == 0)
@@ -321,13 +322,13 @@ public class NfaState {
 
     int getFirstValidPos(String s, int i, int len) {
         do {
-            if (canMoveUsingChar(s.charAt(i)))
+            if (canMoveUsingChar(s.codePointAt(i)))
                 return i;
         } while (++i < len);
         return i;
     }
 
-    int moveFrom(char c, List<NfaState> newStates) {
+    int moveFrom(int c, List<NfaState> newStates) {
         if (canMoveUsingChar(c)) {
             for (int i = next.epsilonMoves.size(); i-- > 0;) {
                 newStates.add(next.epsilonMoves.get(i));

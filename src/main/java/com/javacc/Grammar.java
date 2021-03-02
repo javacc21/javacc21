@@ -301,7 +301,7 @@ public class Grammar extends BaseNode {
             if (!name.toLowerCase().endsWith("parser")) {
                 name += "Parser";
             }
-            if (Character.isLowerCase(name.charAt(0))) {
+            if (Character.isLowerCase(name.codePointAt(0))) {
                 name = name.substring(0, 1).toUpperCase() + name.substring(1);
             }
             parserClassName = name;
@@ -581,7 +581,7 @@ public class Grammar extends BaseNode {
     }
 
     public String classNameFromTokenName(String tokenName) {
-        if (Character.isDigit(tokenName.charAt(0))) {
+        if (Character.isDigit(tokenName.codePointAt(0))) {
             return null;
         }
         if (namedTokensTable.get(tokenName).isPrivate()) {
@@ -961,12 +961,12 @@ public class Grammar extends BaseNode {
 
     static public String removeNonJavaIdentifierPart(String s) {
         StringBuilder buf = new StringBuilder(s.length());
-        for (char c : s.toCharArray()) {
-            boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(c)) : Character.isJavaIdentifierPart(c);
+        for (int ch : s.codePoints().toArray()) {
+            boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(ch)) : Character.isJavaIdentifierPart(ch);
             if (addChar) {
-                buf.append(c);
+                buf.appendCodePoint(ch);
             } 
-            if (c == '.') buf.append((char) '_');
+            if (ch == '.') buf.appendCodePoint('_');
         }
         return buf.toString();
     }
@@ -1184,10 +1184,6 @@ public class Grammar extends BaseNode {
             return "\\" + Integer.toOctalString(i);
         }
 
-        public int charAt(String s, int i) {
-            return (int) s.charAt(i);
-        }
-
         public String addEscapes(String input) {
             return ParseException.addEscapes(input);
         }
@@ -1195,9 +1191,9 @@ public class Grammar extends BaseNode {
         public boolean isBitSet(long num, int bit) {
             return (num & (1L<<bit)) != 0;
         }
-        
+
         public int firstCharAsInt(String s) {
-            return (int) s.charAt(0);
+            return (int) s.codePointAt(0);
         }
         
         public String powerOfTwoInHex(int i) {

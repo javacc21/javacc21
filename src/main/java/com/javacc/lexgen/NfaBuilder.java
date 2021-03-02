@@ -118,7 +118,7 @@ public class NfaBuilder extends Node.Visitor {
 
     public void visit(RegexpStringLiteral stringLiteral) {
         NfaState state = end = start = new NfaState(lexicalState);
-        for (char ch : stringLiteral.getImage().toCharArray()) {
+        for (int ch : stringLiteral.getImage().codePoints().toArray()) {
             state.addCharMove(ch);
             if (grammar.isIgnoreCase() || ignoreCase) {//REVISIT
                 state.addCharMove(Character.toLowerCase(ch));
@@ -265,8 +265,8 @@ public class NfaBuilder extends Node.Visitor {
         List<CharacterRange> result = new ArrayList<CharacterRange>();
         for (CharacterRange range : descriptors) {
             result.add(range);
-            char l = range.left;
-            char r = range.right;
+            int l = range.left;
+            int r = range.right;
             int j = 0;
 
             /* Add ranges for which lower case is different. */
@@ -281,7 +281,7 @@ public class NfaBuilder extends Node.Visitor {
                     if (r <= diffLowerCaseRanges[j + 1]) {
                         CharacterRange crc = new CharacterRange();
                         crc.left = Character.toLowerCase(diffLowerCaseRanges[j]);
-                        crc.right = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + r - diffLowerCaseRanges[j]);
+                        crc.right = Character.toLowerCase(diffLowerCaseRanges[j]) + r - diffLowerCaseRanges[j];
                         result.add(crc);
                         break;
                     }
@@ -292,16 +292,16 @@ public class NfaBuilder extends Node.Visitor {
                 } else {
                     if (r <= diffLowerCaseRanges[j + 1]) {
                         CharacterRange cr = new CharacterRange();
-                        cr.left = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + l
-                                - diffLowerCaseRanges[j]);
-                        cr.right = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + r
-                                - diffLowerCaseRanges[j]);
+                        cr.left = Character.toLowerCase(diffLowerCaseRanges[j]) + l
+                                - diffLowerCaseRanges[j];
+                        cr.right = Character.toLowerCase(diffLowerCaseRanges[j]) + r
+                                - diffLowerCaseRanges[j];
                         result.add(cr);
                         break;
                     }
                     CharacterRange crs = new CharacterRange();
-                    crs.left = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + l
-                            - diffLowerCaseRanges[j]);
+                    crs.left = Character.toLowerCase(diffLowerCaseRanges[j]) + l
+                            - diffLowerCaseRanges[j];
                     crs.right = Character.toLowerCase(diffLowerCaseRanges[j + 1]);
                     result.add(crs);
                 }
@@ -311,8 +311,8 @@ public class NfaBuilder extends Node.Visitor {
                     if (r <= diffLowerCaseRanges[j + 1]) {
                         CharacterRange cr = new CharacterRange();
                         cr.left = Character.toLowerCase(diffLowerCaseRanges[j]);
-                        cr.right = (char) (Character.toLowerCase(diffLowerCaseRanges[j]) + r
-                                - diffLowerCaseRanges[j]);
+                        cr.right = Character.toLowerCase(diffLowerCaseRanges[j]) + r
+                                - diffLowerCaseRanges[j];
                         result.add(cr);
                         break;
                     }
@@ -337,8 +337,8 @@ public class NfaBuilder extends Node.Visitor {
                 if (r <= diffUpperCaseRanges[j + 1]) {
                     CharacterRange crs = new CharacterRange();
                     crs.left = Character.toUpperCase(diffUpperCaseRanges[j]);
-                    crs.right = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + r
-                            - diffUpperCaseRanges[j]);
+                    crs.right = Character.toUpperCase(diffUpperCaseRanges[j]) + r
+                            - diffUpperCaseRanges[j];
                     result.add(crs);
                     continue;
                 }
@@ -349,16 +349,16 @@ public class NfaBuilder extends Node.Visitor {
             } else {
                 if (r <= diffUpperCaseRanges[j + 1]) {
                     CharacterRange crs = new CharacterRange();
-                    crs.left = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + l
-                            - diffUpperCaseRanges[j]);
-                    crs.right = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + r
-                            - diffUpperCaseRanges[j]);
+                    crs.left = Character.toUpperCase(diffUpperCaseRanges[j]) + l
+                            - diffUpperCaseRanges[j];
+                    crs.right = Character.toUpperCase(diffUpperCaseRanges[j]) + r
+                            - diffUpperCaseRanges[j];
                     result.add(crs);
                     continue;
                 }
                 CharacterRange cr = new CharacterRange();
-                cr.left = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + l
-                        - diffUpperCaseRanges[j]);
+                cr.left = Character.toUpperCase(diffUpperCaseRanges[j]) + l
+                        - diffUpperCaseRanges[j];
                 cr.right = Character.toUpperCase(diffUpperCaseRanges[j + 1]);
                 result.add(cr);
             }
@@ -367,8 +367,8 @@ public class NfaBuilder extends Node.Visitor {
                 if (r <= diffUpperCaseRanges[j + 1]) {
                     CharacterRange crs = new CharacterRange();
                     crs.left = Character.toUpperCase(diffUpperCaseRanges[j]);
-                    crs.right = (char) (Character.toUpperCase(diffUpperCaseRanges[j]) + r
-                            - diffUpperCaseRanges[j]);
+                    crs.right = Character.toUpperCase(diffUpperCaseRanges[j]) + r
+                            - diffUpperCaseRanges[j];
                     result.add(crs);
                     break;
                 }
@@ -388,16 +388,16 @@ public class NfaBuilder extends Node.Visitor {
         CharacterRange lastRange = null;
         for (CharacterRange range : descriptors) {
             if (range.left >0) {
-                char begin = (lastRange == null) ? 0 : (char) (lastRange.right+1); 
-                result.add(new CharacterRange(begin, (char) (range.left -1)));
+                int begin = lastRange == null ? 0 : lastRange.right+1; 
+                result.add(new CharacterRange(begin, range.left -1));
             }
             lastRange = range;
         }
         if (lastRange !=null && lastRange.right < 0xFFFF) {
-            result.add(new CharacterRange((char) (lastRange.right+1), (char) 0xFFFF));
+            result.add(new CharacterRange(lastRange.right+1, 0xFFFF));
         }
         if (result.isEmpty()) {
-            result.add(new CharacterRange((char) 0, (char) 0xFFFF));
+            result.add(new CharacterRange(0, 0xFFFF));
         }
         return result;
     }
@@ -412,9 +412,9 @@ public class NfaBuilder extends Node.Visitor {
                 previous = range;
             } else {
                 if (previous.left == range.left) {
-                    previous.right = (char) Math.max(previous.right, range.right);
+                    previous.right = Math.max(previous.right, range.right);
                 } else if (previous.right >= range.left - 1) {
-                    previous.right = (char) Math.max(previous.right, range.right);
+                    previous.right = Math.max(previous.right, range.right);
                 } else {
                     result.add(range);
                     previous = range;
@@ -424,7 +424,7 @@ public class NfaBuilder extends Node.Visitor {
         return result;
     }
 
-    private static final char[] diffUpperCaseRanges = {
+    private static final int[] diffUpperCaseRanges = {
             97, 122, 224, 246, 248, 254, 255, 255, 257, 257, 259, 259, 261, 261, 263, 263, 265, 265, 267, 267, 269, 269,
             271, 271, 273, 273, 275, 275, 277, 277, 279, 279, 281, 281, 283, 283, 285, 285, 287, 287, 289, 289, 291,
             291, 293, 293, 295, 295, 297, 297, 299, 299, 301, 301, 303, 303, 305, 305, 307, 307, 309, 309, 311, 311,
@@ -466,7 +466,7 @@ public class NfaBuilder extends Node.Visitor {
             8060, 8061, 8064, 8071, 8080, 8087, 8096, 8103, 8112, 8113, 8115, 8115, 8131, 8131, 8144, 8145, 8160, 8161,
             8165, 8165, 8179, 8179, 8560, 8575, 9424, 9449, 65345, 65370, 65371, 0xfffe, 0xffff, 0xffff };
 
-    private static final char[] diffLowerCaseRanges = { 65, 90, 192, 214, 216, 222, 256, 256, 258, 258, 260, 260, 262,
+    private static final int[] diffLowerCaseRanges = { 65, 90, 192, 214, 216, 222, 256, 256, 258, 258, 260, 260, 262,
             262, 264, 264, 266, 266, 268, 268, 270, 270, 272, 272, 274, 274, 276, 276, 278, 278, 280, 280, 282, 282,
             284, 284, 286, 286, 288, 288, 290, 290, 292, 292, 294, 294, 296, 296, 298, 298, 300, 300, 302, 302, 304, 304, 
              306, 306, 308, 308, 310, 310, 313, 313, 315, 315, 317, 317, 319, 319, 321, 321, 323, 323, 325, 325, 327,

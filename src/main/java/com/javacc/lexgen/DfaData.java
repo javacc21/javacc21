@@ -46,7 +46,7 @@ public class DfaData {
     private BitSet singlesToSkipSet = new BitSet();
     private BitSet subStringSet = new BitSet();
     private BitSet subStringAtPosSet = new BitSet();
-    private List<Map<String, KindInfo>> stringLiteralTables = new ArrayList<>();
+    private List<Map<Integer, KindInfo>> stringLiteralTables = new ArrayList<>();
 
     DfaData(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -62,7 +62,7 @@ public class DfaData {
         return singlesToSkipSet.cardinality()>0;
     }
 
-    public List<Map<String, KindInfo>> getStringLiteralTables() {
+    public List<Map<Integer, KindInfo>> getStringLiteralTables() {
         return stringLiteralTables;
     }
 
@@ -91,24 +91,25 @@ public class DfaData {
         final int ordinal = rsLiteral.getOrdinal();
         final String stringLiteral = rsLiteral.getImage();
         final int stringLength = stringLiteral.length();
-//        this.maxStringLength = max(stringLength, maxStringLength);
         while (stringLiteralTables.size() < stringLength) {
             stringLiteralTables.add(new HashMap<>());
         }
         for (int i = 0; i < stringLength; i++) {
-            final char c = stringLiteral.charAt(i);
-            String s = Character.toString(c);
+            int c = stringLiteral.codePointAt(i);
+//            String s = stringLiteral.substring(0, 1);
+//            String s = Character.toString(c);
             if (grammar.isIgnoreCase()) {
-                s = s.toLowerCase(Locale.ROOT);
+//                s = s.toLowerCase(Locale.ROOT);
+               c = Character.toLowerCase(c);
             }
-            Map<String, KindInfo> table = stringLiteralTables.get(i);
-            if (!table.containsKey(s)) {
-                table.put(s, new KindInfo(grammar));
+            Map<Integer, KindInfo> table = stringLiteralTables.get(i);
+            if (!table.containsKey(c)) {
+                table.put(c, new KindInfo(grammar));
             }
-            KindInfo info = table.get(s);
+            KindInfo info = table.get(c);
             if (!grammar.isIgnoreCase() && rsLiteral.getIgnoreCase()) {
-                table.put(s.toLowerCase(Locale.ROOT), info);
-                table.put(s.toUpperCase(Locale.ROOT), info);
+                table.put(Character.toLowerCase(c), info);
+                table.put(Character.toLowerCase(c), info);
             }
             if (i + 1 == stringLength && ordinal > 0) { // REVISIT
                 info.insertFinalKind(ordinal);
@@ -123,14 +124,14 @@ public class DfaData {
     void generateData() {
         fillSubString();
         for (int i = 0; i < lexicalState.getMaxStringLength(); i++) {
-            Map<String, KindInfo> tab = getStringLiteralTables().get(i);
-            for (String key : tab.keySet()) {
-                generateDfaCase(key.charAt(0), tab.get(key), i);
+            Map<Integer, KindInfo> tab = getStringLiteralTables().get(i);
+            for (Integer key : tab.keySet()) {
+                generateDfaCase(key, tab.get(key), i);
             }
         }
     }
 
-    public boolean generateDfaCase(char ch, KindInfo info, int index) {
+    public boolean generateDfaCase(int ch, KindInfo info, int index) {
         int maxStringIndex = lexicalState.getMaxStringIndex();
         for (int kind = 0; kind < maxStringIndex; kind++) {
         	if (index == 0 && ch < 128 && info.getFinalKindCnt() !=0
@@ -198,9 +199,21 @@ public class DfaData {
         }
     }
 
-    static public List<String> rearrange(Map<String, KindInfo> table) {
-    	List<String> result = new ArrayList<>(table.keySet());
+    static public List<Integer> rearrange(Map<Integer, KindInfo> table) {
+    	List<Integer> result = new ArrayList<>(table.keySet());
     	Collections.sort(result);
     	return result;
+    }
+
+    // This and the following method are just temporary kludges
+    // prior to a more complete refactoring.
+    // These methods are only called from the DfaCode.java.ftl template.
+
+    public KindInfo getKindInfo(Map<Integer, KindInfo> table, int key) {
+        return table.get(key);
+    }
+
+    public String codePointAsString(int ch) {
+        return new String(new int[]{ch}, 0, 1);
     }
 }

@@ -250,7 +250,7 @@ public class NfaData {
         return result;
     }
 
-    boolean canStartNfaUsingAscii(char c) {
+    boolean canStartNfaUsingAscii(int c) {
         assert c < 128 : "This should be impossible.";
         String epsilonMovesString = initialState.getEpsilonMovesString();
         if (epsilonMovesString == null || epsilonMovesString.equals("null;"))
@@ -343,7 +343,7 @@ public class NfaData {
         }
     }
 
-    private static int moveFromSet(char c, List<NfaState> states, List<NfaState> newStates) {
+    private static int moveFromSet(int c, List<NfaState> states, List<NfaState> newStates) {
         int result = Integer.MAX_VALUE;
         for (NfaState state : states) {
             result = Math.min(result, state.moveFrom(c, newStates));

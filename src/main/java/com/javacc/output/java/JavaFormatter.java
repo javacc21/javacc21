@@ -75,7 +75,7 @@ public class JavaFormatter {
                 int idx = img.indexOf('\n');
                 if (idx == 0) break;
                 if (idx >0) {
-                    if (img.charAt(idx-1) == '\r') {
+                    if (img.codePointAt(idx-1) == '\r') {
                         eol = "\r\n";
                     }
                     break;
@@ -165,8 +165,8 @@ public class JavaFormatter {
                 break;
             default:
                 if (buf.length() > 0 && currentToken.getType() != TokenType.EOF) {
-                    char lastChar = buf.charAt(buf.length() -1);
-                    char thisChar = currentToken.toString().charAt(0);
+                    int lastChar = buf.codePointAt(buf.length() -1);
+                    int thisChar = currentToken.toString().codePointAt(0);
                     if ((Character.isJavaIdentifierPart(lastChar) || lastChar == ')' || lastChar == ']') 
                             && Character.isJavaIdentifierPart(thisChar)) {
                         buf.append(' ');

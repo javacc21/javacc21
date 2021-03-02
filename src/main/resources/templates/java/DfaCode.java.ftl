@@ -138,9 +138,9 @@
     [/#if]
       switch (curChar) {
     [#list dfaData.rearrange(table) as key]
-       [#var info=table[key]]
+       [#var info = dfaData.getKindInfo(table, key)]
+	    [#var c = dfaData.codePointAsString(key)]
        [#var ifGenerated=false]
-	   [#var c=key[0..0]]
 	   [#if dfaData.generateDfaCase(key, info, table_index)]
 	      [#-- We know key is a single character.... --]
 	      [#if grammar.ignoreCase][#--REVISIT--]
