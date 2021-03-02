@@ -202,7 +202,7 @@ INJECT StringLiteral :
           buf.append(tok);
       }
       else {
-        char ch = tok.charAt(0);
+        int ch = tok.codePointAt(0);
         switch (ch) {
           case 'b' : buf.append((char) '\b'); break;
           case 't' : buf.append((char) '\t'); break;
@@ -270,8 +270,8 @@ INJECT IntegerLiteral :
    public int getValue() {
      String image = removeUnderscores(getImage());
      if (image.equals("0")) return 0;
-     if (image.charAt(0) != '0') return Integer.parseInt(image);
-     char secondChar = image.charAt(1);
+     if (image.codePointAt(0) != '0') return Integer.parseInt(image);
+     int secondChar = image.codePointAt(1);
      if (secondChar == 'x' || secondChar=='X') {
        return Integer.parseInt(image.substring(2), 16);
      }
@@ -285,7 +285,7 @@ INJECT IntegerLiteral :
      if (s.indexOf('-')<0) return s;
      StringBuilder buf = new StringBuilder();
      for (int i=0; i<s.length();i++) {
-       char ch = s.charAt(i);
+       int ch = s.codePointAt(i);
        if (ch != '_') buf.append(ch);
      }
      return buf.toString();

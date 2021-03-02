@@ -82,7 +82,8 @@ public class FileLineMap {
     }
 
     // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
-    private final CharSequence content;
+//    private final CharSequence content;
+    private final String content;
     // Typically a filename, I suppose.
     private String inputSource;
     // A list of offsets of the beginning of lines
@@ -196,7 +197,7 @@ public class FileLineMap {
         if (bufferPosition >= content.length()) {
             return -1;
         }
-        int ch = content.charAt(bufferPosition++);
+        int ch = content.codePointAt(bufferPosition++);
         if (ch == '\n') {
             advanceLine();
             column = 1;
@@ -207,7 +208,7 @@ public class FileLineMap {
     }
 
     String getImage() {
-        CharSequence image = content.subSequence(tokenBeginOffset, bufferPosition);
+        String image = content.substring(tokenBeginOffset, bufferPosition);
         if (tokenBeginLine == this.line || parsedLines==null) {
             // If it is all on one line, or we don't have any 
             // line marker bitset, then there is nothing more to do.
@@ -230,11 +231,11 @@ public class FileLineMap {
      * @return only the part of the input that is not actually not
      * turned off by the preprocesor.
      */
-    private String onlyRelevantPart(CharSequence input, int currentLine) {
+    private String onlyRelevantPart(String input, int currentLine) {
         StringBuilder buf = new StringBuilder();
         boolean on = isParsedLine(currentLine);
         for (int i=0; i<input.length(); i++) {
-            char ch = input.charAt(i);
+            int ch = input.codePointAt(i);
             if (on) buf.append(ch);
             if (ch == '\n') {
                 on = isParsedLine(++currentLine);
@@ -339,29 +340,30 @@ public class FileLineMap {
 
     // Icky method to handle annoying stuff. Might make this public later if it is
     // needed elsewhere
-    private static CharSequence mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
+    private static String mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
             boolean javaUnicodeEscape, boolean ensureFinalEndline) {
         if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape) {
             if (ensureFinalEndline) {
-                char lastChar = content.charAt(content.length()-1);
+                int lastChar = content.charAt(content.length()-1);
                 if (lastChar != '\n' && lastChar != '\r') {
                     if (content instanceof StringBuilder) {
-                        ((StringBuilder) content).append((char)'\n');
+                        ((StringBuilder) content).appendCodePoint('\n');
                     } else {
                         StringBuilder buf = new StringBuilder(content.length()+1);
                         buf.append(content);
                         buf.append((char)'\n');
-                        content = buf;
+                        content = buf.toString();
                     }
                 }
             }
-            return content;
+            return content.toString();
         }
         StringBuilder buf = new StringBuilder();
         int index = 0;
         int col = 0;
         // This is just to handle tabs to spaces. If you don't have that setting set, it
         // is really unused.
+//        int[] codePoints = content.codePoints().toArray();
         while (index < content.length()) {
             char ch = content.charAt(index++);
             if (ch == '\\' && javaUnicodeEscape && index < content.length()) {
@@ -410,7 +412,7 @@ public class FileLineMap {
             }
         }
         if (ensureFinalEndline) {
-            char lastChar = buf.charAt(buf.length()-1);
+            int lastChar = buf.codePointAt(buf.length()-1);
             if (lastChar != '\n' && lastChar!='\r') buf.append((char) '\n');
         }
         return buf.toString();

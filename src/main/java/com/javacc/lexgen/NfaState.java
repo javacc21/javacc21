@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -345,6 +345,8 @@ public class NfaState {
      * function names for char matching using the common bit vectors. It also
      * generates code to match a char with the common bit vectors. (Need a
      * better comment).
+     * FIXME! Need to replace all the char with int
+     * Also it is long overdue to rewrite this ugly legacy code anyway!
      */
     void generateNonAsciiMoves() {
         char hiByte;

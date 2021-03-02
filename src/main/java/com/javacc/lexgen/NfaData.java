@@ -296,7 +296,7 @@ public class NfaData {
                     // Here, charOffset > 0
                     jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = intermediateMatchedPos[ordinal][charOffset - 1];
                 } else {
-                    kind = moveFromSet(image.charAt(charOffset), oldStates, newStates);
+                    kind = moveFromSet(image.codePointAt(charOffset), oldStates, newStates);
                     oldStates.clear();
                     if (lexicalState.getDfaData().getStrKind(image.substring(0, charOffset + 1)) < kind) {
                         jjmatchedPos = 0;

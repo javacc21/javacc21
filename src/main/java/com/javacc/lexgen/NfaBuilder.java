@@ -221,7 +221,7 @@ public class NfaBuilder extends Node.Visitor {
             if (curRE instanceof RegexpStringLiteral && ((RegexpStringLiteral) curRE).getImage().length() == 1) {
                 CharacterList charList = new CharacterList();
                 CharacterRange cr = new CharacterRange();
-                cr.left = cr.right = ((RegexpStringLiteral) curRE).getImage().charAt(0);
+                cr.left = cr.right = ((RegexpStringLiteral) curRE).getImage().codePointAt(0);
                 charList.addChild(cr);
                 curRE = charList;
             }
