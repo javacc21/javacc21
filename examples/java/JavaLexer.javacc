@@ -204,15 +204,15 @@ INJECT StringLiteral :
       else {
         int ch = tok.codePointAt(0);
         switch (ch) {
-          case 'b' : buf.append((char) '\b'); break;
-          case 't' : buf.append((char) '\t'); break;
-          case 'n' : buf.append((char) '\n'); break;
-          case 'f' : buf.append((char) '\f'); break;
-          case 'r' : buf.append((char) '\r'); break;
-          case '\\' : buf.append((char) '\\'); break;
-          case '"' : buf.append((char) '"'); break;
-          case '\'' : buf.append((char) '"'); break;
-          default : buf.append(Integer.parseInt(tok,8));
+          case 'b' : buf.appendCodePoint('\b'); break;
+          case 't' : buf.appendCodePoint('\t'); break;
+          case 'n' : buf.appendCodePoint('\n'); break;
+          case 'f' : buf.appendCodePoint('\f'); break;
+          case 'r' : buf.appendCodePoint('\r'); break;
+          case '\\' : buf.appendCodePoint('\\'); break;
+          case '"' : buf.appendCodePoint('"'); break;
+          case '\'' : buf.appendCodePoint('"'); break;
+          default : buf.appendCodePoint(Integer.parseInt(tok,8));
         }
         lastCharSlash = false;
       }
