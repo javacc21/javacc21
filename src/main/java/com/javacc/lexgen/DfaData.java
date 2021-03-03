@@ -46,6 +46,13 @@ public class DfaData {
     private BitSet singlesToSkipSet = new BitSet();
     private BitSet subStringSet = new BitSet();
     private BitSet subStringAtPosSet = new BitSet();
+
+    // This is a list where the index corresponds to the offset
+    // into the string literal and the items are maps of integers,
+    // codepoints actually, to KindInfo objects. The KindInfo 
+    // objects represent the set of tokens that can still be matched by
+    // that character (i.e. codepoint) and also the ones that can be
+    // terminated. (Accepting state in the Aho et al. terminology)
     private List<Map<Integer, KindInfo>> stringLiteralTables = new ArrayList<>();
 
     DfaData(LexicalStateData lexicalState) {
@@ -96,10 +103,7 @@ public class DfaData {
         }
         for (int i = 0; i < stringLength; i++) {
             int c = stringLiteral.codePointAt(i);
-//            String s = stringLiteral.substring(0, 1);
-//            String s = Character.toString(c);
             if (grammar.isIgnoreCase()) {
-//                s = s.toLowerCase(Locale.ROOT);
                c = Character.toLowerCase(c);
             }
             Map<Integer, KindInfo> table = stringLiteralTables.get(i);
@@ -111,10 +115,10 @@ public class DfaData {
                 table.put(Character.toLowerCase(c), info);
                 table.put(Character.toLowerCase(c), info);
             }
-            if (i + 1 == stringLength && ordinal > 0) { // REVISIT
+            if (i + 1 == stringLength) {
                 info.insertFinalKind(ordinal);
             }
-            else if (ordinal > 0) { // REVISIT
+            else {
                 info.insertValidKind(ordinal);
             }
         }
