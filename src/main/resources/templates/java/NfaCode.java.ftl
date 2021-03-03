@@ -51,7 +51,7 @@
         int strPos = jjmatchedPos;
         int seenUpto = curPos+1;
         input_stream.backup(seenUpto);
-        curChar = (char) input_stream.readChar(); //REVISIT, deal with error return code
+        curChar = input_stream.readChar(); //REVISIT, deal with error return code
         curPos = 0;
     [/#if]
         int startsAt = 0;
@@ -114,7 +114,7 @@
     [/#if]
             int retval = input_stream.readChar();
             if (retval >=0) {
-                 curChar = (char) retval;
+                 curChar = retval;
             }
             else  {
     [#if lexicalState.mixedCase]            
@@ -127,7 +127,8 @@
             [#if multipleLexicalStates]
                "<" + lexicalState + ">" + 
             [/#if]
-               addEscapes(String.valueOf(curChar)) + " (" + (int)curChar + ") "
+               [#-- REVISIT --]
+               addEscapes(String.valueOf(curChar)) + " (" + curChar + ") "
               + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
         }
     [#if lexicalState.mixedCase]
@@ -137,7 +138,7 @@
         int toRet = Math.max(curPos, seenUpto);
         if (curPos < toRet) {
            for (i = toRet - Math.min(curPos, seenUpto); i-- >0;) {
-                   curChar = (char) input_stream.readChar(); // REVISIT, not handling error return code
+                   curChar = input_stream.readChar(); // REVISIT, not handling error return code
            }
         }
         if (jjmatchedPos < strPos) {
@@ -461,7 +462,7 @@
         if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
          int retval = input_stream.readChar();
        if (retval >=0) {
-           curChar = (char) retval;
+           curChar = retval;
        } 
        else  { 
             return pos + 1; 
@@ -470,8 +471,9 @@
      [#if multipleLexicalStates]
             "<${lexicalState.name}>"+  
      [/#if]
+            [#-- REVISIT --]
             "Current character : " + addEscapes(String.valueOf(curChar)) 
-            + " (" + (int)curChar + ") " + "at line " + input_stream.getEndLine() 
+            + " (" + curChar + ") " + "at line " + input_stream.getEndLine() 
             + " column " + input_stream.getEndColumn());
         return jjMoveNfa_${lexicalState.name}(state, pos+1);
    }

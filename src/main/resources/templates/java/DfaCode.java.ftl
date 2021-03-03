@@ -104,7 +104,7 @@
       [/#if]
        int retval = input_stream.readChar();
        if (retval >=0) {
-           curChar = (char) retval;
+           curChar = retval;
        }
        else  {
          [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
@@ -133,8 +133,9 @@
         [#if lexerData.lexicalStates?size != 1]
            "<${lexicalState.name}>" +
         [/#if]
+        [#-- REVISIT --]
         "Current character : " + addEscapes(String.valueOf(curChar)) + " ("
-        + (int) curChar + ") at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
+        + curChar + ") at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
     [/#if]
       switch (curChar) {
     [#list dfaData.rearrange(table) as key]
@@ -265,11 +266,12 @@
                [#if lexerData.lexicalStates?size > 1]
                "<" + lexicalState + ">" + 
                [/#if]
-               "Skipping character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
+               [#-- REVISIT --]
+               "Skipping character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ")"
                [/#set] 
                if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-               curChar = (char) input_stream.beginToken();
-               if (curChar == (char) -1) {
+               curChar = input_stream.beginToken();
+               if (curChar == -1) {
                   return generateEOF();
                }
             }

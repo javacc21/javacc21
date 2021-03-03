@@ -86,7 +86,7 @@
     private final StringBuilder image = new StringBuilder();
     private int matchedCharsLength;
 
-    char curChar;
+    int curChar;
     
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
@@ -112,8 +112,8 @@
 
     EOFLoop :
     while (true) {
-        curChar = (char)  input_stream.beginToken();
-        if (curChar == (char) -1) {
+        curChar = input_stream.beginToken();
+        if (curChar == -1) {
            return generateEOF();
         }
        image.setLength(0);
@@ -140,7 +140,8 @@
         [#if multipleLexicalStates]
             "<" + lexicalState + ">" + 
         [/#if]
-        "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+        [#-- REVISIT--]
+        "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
         "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
     [/#set]
     if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
@@ -216,14 +217,15 @@
           jjmatchedKind = 0x7FFFFFFF;
           int retval = input_stream.readChar();
           if (retval >=0) {
-               curChar = (char) retval;
+               curChar = retval;
 	
 	            [#var debugOutput]
 	            [#set debugOutput]
 	              [#if multipleLexicalStates]
 	                 "<" + lexicalState + ">" + 
 	              [/#if]
-	              "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+                  [#-- REVISIT --]
+	              "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
 	              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
 	            [/#set]
 	              if (trace_enabled) LOGGER.info(${debugOutput?trim});
@@ -236,12 +238,14 @@
     int error_column = input_stream.getEndColumn();
     String error_after = null;
     error_after = curPos <= 1 ? "" : input_stream.getImage();
+    StringBuilder sb = new StringBuilder();
+    sb.appendCodePoint(curChar);
     if (invalidToken == null) {
-       invalidToken = new InvalidToken(""+ curChar, inputSource);
+       invalidToken = new InvalidToken(sb.toString(), inputSource);
        invalidToken.setBeginLine(error_line);
        invalidToken.setBeginColumn(error_column);
     } else {
-       invalidToken.setImage(invalidToken.getImage() + curChar);
+       invalidToken.setImage(invalidToken.getImage() + sb.toString());
     }
     invalidToken.setEndLine(error_line);
     invalidToken.setEndColumn(error_column);
