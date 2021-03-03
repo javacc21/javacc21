@@ -365,12 +365,14 @@ public class FileLineMap {
         // but, for now, I'm just translating the code I had working so I just
         // get the int[] array and iterate over it, like I did before with the chars
         // in the CharSequence.
+        boolean justSawUnicodeEscape = false;
         int[] codePoints = content.codePoints().toArray();
         while (index < codePoints.length) {
             int ch = codePoints[index++];
             if (ch == '\\' && javaUnicodeEscape && index < codePoints.length) {
                 ch = codePoints[index++];
                 if (ch != 'u') {
+                    justSawUnicodeEscape = false;
                     buf.appendCodePoint('\\');
                     buf.appendCodePoint(ch);
                     if (ch == '\n')
@@ -384,13 +386,23 @@ public class FileLineMap {
                     }
                     StringBuilder hexBuf = new StringBuilder(4);
                     for (int i=0; i<4; i++) hexBuf.appendCodePoint(codePoints[index++]);
-                    buf.appendCodePoint(Integer.parseInt(hexBuf.toString(), 16));
+                    char current = (char) Integer.parseInt(hexBuf.toString(), 16);
+                    char last = buf.length() >0 ? buf.charAt(buf.length()-1) : 0;
+                    if (justSawUnicodeEscape && Character.isSurrogatePair(last, current)) {
+                        buf.setLength(buf.length()-1);
+                        buf.appendCodePoint(Character.toCodePoint(last, current));
+                        justSawUnicodeEscape = false;
+                    } else {
+                        buf.append(current);
+                        justSawUnicodeEscape = true;
+                    }
                     // col +=6;
                     ++col;
                     // We're not going to be trying to track line/column information relative to the original content
                     // with tabs or unicode escape, so we just increment 1, not 6
                 }
             } else if (ch == '\r' && !preserveLines) {
+                justSawUnicodeEscape = false;
                 buf.appendCodePoint('\n');
                 if (index < codePoints.length) {
                     ch = codePoints[index++];
@@ -401,12 +413,14 @@ public class FileLineMap {
                         col = 0;
                 }
             } else if (ch == '\t' && tabsToSpaces > 0) {
+                justSawUnicodeEscape = false;
                 int spacesToAdd = tabsToSpaces - col % tabsToSpaces;
                 for (int i = 0; i < spacesToAdd; i++) {
                     buf.appendCodePoint(' ');
                     col++;
                 }
             } else {
+                justSawUnicodeEscape = false;
                 buf.appendCodePoint(ch);
                 if (ch == '\n') {
                     col = 0;
