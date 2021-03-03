@@ -112,7 +112,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   
   public static String addEscapes(String str) {
       StringBuilder retval = new StringBuilder();
-      for (char ch : str.toCharArray()) {
+      for (int ch : str.codePoints().toArray()) {
         switch (ch) {
            case '\b':
               retval.append("\\b");
@@ -143,7 +143,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
                  String s = "0000" + java.lang.Integer.toString(ch, 16);
                  retval.append("\\u" + s.substring(s.length() - 4, s.length()));
               } else {
-                 retval.append(ch);
+                 retval.appendCodePoint(ch);
               }
               continue;
         }
