@@ -400,6 +400,48 @@ public class NfaData {
                && lexicalState.getMaxStringIndex() > 0;
     }
 
+    public List<List<NfaState>> partitionStatesSetForAscii(NfaState[] states) {
+        int[] cardinalities = new int[states.length];
+        List<NfaState> original = new ArrayList<>(Arrays.asList(states));
+        List<List<NfaState>> partition = new ArrayList<>();
+        int cnt = 0;
+        for (int i = 0; i < states.length; i++) {
+            NfaState state = states[i];
+            if (!state.getAsciiMoveSet().isEmpty()) {
+                int p = state.getAsciiMoveSet().cardinality();
+                int j;
+                for (j = 0; j < i; j++) {
+                    if (cardinalities[j] <= p) break;
+                }
+                for (int k = i; k > j; k--) {
+                    cardinalities[k] = cardinalities[k - 1];
+                }
+                cardinalities[j] = p;
+                original.add(j, state);
+                cnt++;
+            }
+        }
+        original = original.subList(0, cnt);
+        while (original.size() > 0) {
+            NfaState state = original.get(0);
+            original.remove(state);
+            BitSet bitVec = (BitSet) state.getAsciiMoveSet().clone();
+            List<NfaState> subSet = new ArrayList<NfaState>();
+            subSet.add(state);
+            for (Iterator<NfaState> it = original.iterator(); it.hasNext();) {
+                NfaState otherState = it.next();
+                BitSet otherSet = (BitSet) otherState.getAsciiMoveSet().clone();
+                if (!otherSet.intersects(bitVec)) {
+                    bitVec.or(otherSet);
+                    subSet.add(otherState);
+                    it.remove();
+                }
+            }
+            partition.add(subSet);
+        }
+        return partition;
+    }
+
     public List<List<NfaState>> partitionStatesSetForAscii(NfaState[] states, int byteNum) {
         int[] cardinalities = new int[states.length];
         List<NfaState> original = new ArrayList<>(Arrays.asList(states));

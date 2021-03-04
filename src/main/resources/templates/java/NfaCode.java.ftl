@@ -90,7 +90,7 @@
                 long l2 = 1L << (curChar & 077);
 	            do {
 	                switch (jjstateSet[--i]) {
-	                    [@DumpMoves lexicalState, -1/]
+	                    [@DumpMovesNonAscii lexicalState/]
                         default : break;
                     }
                 } while(i != startsAt);
@@ -153,11 +153,29 @@
     }
 [/#macro]
 
+[#macro DumpMovesNonAscii lexicalState]
+   [#var statesDumped = utils.newBitSet()]
+   [#list lexicalState.nfaData.compositeStateTable?keys as key]
+        [@DumpCompositeStatesMovesNonAscii lexicalState, key, statesDumped/]
+   [/#list]
+   [#list lexicalState.nfaData.allStates as state]
+      [#if state.index>=0&&!statesDumped.get(state.index)&&state.hasTransitions()]
+         [#var toPrint=""]
+         [#if state.neededNonAscii]
+            ${toPrint}
+            ${statesDumped.set(state.index)!}
+            case ${state.index} :
+              [@DumpMoveNonAscii state, statesDumped /]
+         [/#if]
+      [/#if]
+   [/#list]
+[/#macro]
+
 
 [#macro DumpMoves lexicalState byteNum]
    [#var statesDumped = utils.newBitSet()]
    [#list lexicalState.nfaData.compositeStateTable?keys as key]
-      [@DumpCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
+        [@DumpCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)&&state.hasTransitions()]
@@ -166,11 +184,52 @@
             ${toPrint}
             ${statesDumped.set(state.index)!}
             case ${state.index} :
-            [@DumpMove state, byteNum, statesDumped/]
+              [@DumpMove state, byteNum, statesDumped/]
          [/#if]
       [/#if]
    [/#list]
 [/#macro]
+
+[#macro DumpCompositeStatesMovesNonAscii lexicalState key statesDumped]
+   [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
+   [#var stateIndex=lexicalState.nfaData.stateIndexFromComposite(key)]
+   [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
+   [#var neededStates=0]
+   [#var toBePrinted toPrint=""]
+   [#list stateSet as state]
+       [#if state.neededNonAscii]
+          [#set neededStates = neededStates+1]
+          [#if neededStates = 2]
+             [#break]
+          [#else]
+             [#set toBePrinted = state]
+          [/#if]
+       [#else]
+          ${statesDumped.set(state.index)!}
+       [/#if]
+   [/#list]
+   [#if neededStates = 0]
+        [#return]
+   [/#if]
+   [#if neededStates = 1]
+          ${toPrint}
+          case ${lexicalState.nfaData.stateIndexFromComposite(key)} :
+      [#if !statesDumped.get(toBePrinted.index)&&toBePrinted.inNextOf>1]
+          case ${toBePrinted.index} :
+      [/#if]
+              ${statesDumped.set(toBePrinted.index)!}
+              [@DumpMoveNonAscii toBePrinted, statesDumped/]
+      [#return] 
+   [/#if]
+              ${toPrint}
+              [#var keyState=lexicalState.nfaData.stateIndexFromComposite(key)]
+              case ${keyState} :
+              [#if keyState<lexicalState.indexedAllStates?size]
+                 ${statesDumped.set(keyState)!}
+              [/#if]
+          break;
+[/#macro]
+
 
 [#macro DumpCompositeStatesMoves lexicalState key byteNum statesDumped]
    [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
@@ -227,16 +286,10 @@
          asciiMoves=nfaState.asciiMoves 
          next=nfaState.next 
          lexicalState=nfaState.lexicalState]
-   [#if (byteNum>=0)]
-      [#if byteNum<0 || asciiMoves[byteNum] != -1]
-         [#if elseNeeded] else [/#if] if ((${utils.toHexStringL(asciiMoves[byteNum])} &l) != 0L)
-      [/#if]
-   [#else]
-              if (jjCanMove_${nonAsciiMethod}(hiByte, i1, i2, l1, l2))
-   [/#if]
-   [#if kindToPrint != MAX_INT] {
-                  if (kind > ${kindToPrint})
-                      kind = ${kindToPrint};
+         [#if elseNeeded] else [/#if] if ((${utils.toHexStringL(asciiMoves[byteNum])} &l) != 0L) {
+   [#if kindToPrint != MAX_INT]
+          kind = Math.min(kind, ${kindToPrint});
+                  //if (kind > ${kindToPrint})  kind = ${kindToPrint};
    [/#if]
    [#if !next?is_null&&next.usefulEpsilonMoves>0]
        [#var stateNames=lexicalState.nfaData.nextStatesFromKey(next.epsilonMovesString)]
@@ -266,13 +319,63 @@
            [/#if]
        [/#if]
    [/#if]
-   [#if kindToPrint != MAX_INT]
          }
-   [/#if]
 [/#macro]
 
+[#macro DumpMoveNonAscii nfaState statesDumped]
+   [#var nextIntersects=nfaState.composite || nfaState.nextIntersects]
+   [#var onlyState= false]
+   [#var lexicalState=nfaState.lexicalState]
+   [#var kindToPrint=nfaState.kindToPrint]
+   [#list nfaState.getMoveStates(-1, statesDumped) as state]
+                   case ${state.index} :
+   [/#list]
+   [#if nfaState.next?is_null || nfaState.next.usefulEpsilonMoves<=0]
+         [#var kindCheck=" && kind > "+kindToPrint]
+         [#if onlyState][#set kindCheck = ""][/#if]
+            if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2) ${kindCheck})
+            kind = ${kindToPrint};
+            break;
+         [#return]
+   [/#if]
+   [#if kindToPrint != MAX_INT]
+                    if (!jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
+                          break;
+                    kind = Math.min(kind, ${kindToPrint});
+   [#else]
+                    if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
+   [/#if]
+   [#if !nfaState.next?is_null&&nfaState.next.usefulEpsilonMoves>0]
+       [#var stateNames=lexicalState.nfaData.nextStatesFromKey(nfaState.next.epsilonMovesString)]
+       [#if nfaState.next.usefulEpsilonMoves = 1]
+          [#var name=stateNames[0]]
+          [#if nextIntersects]
+                    jjCheckNAdd(${name});
+          [#else]
+                    jjstateSet[jjnewStateCnt++] = ${name};
+          [/#if]
+       [#elseif nfaState.next.usefulEpsilonMoves = 2&&nextIntersects]
+                    jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
+       [#else]
+          [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nfaState.next.epsilonMovesString)]
+          [#var notTwo=(indices[0]+1 != indices[1])]
+          [#if nextIntersects]
+                    jjCheckNAddStates(${indices[0]}
+              [#if notTwo]
+                    , ${indices[1]}
+              [/#if]
+                    );
+          [#else]
+                    jjAddStates(${indices[0]}, ${indices[1]});
+          [/#if]
+       [/#if]
+   [/#if]
+                         break;
+
+[/#macro]
 
 [#macro DumpMove nfaState byteNum statesDumped]
+  [#if byteNum <0][@DumpMoveNonAscii nfaState, statesDumped/][#return][/#if]
    [#var nextIntersects=nfaState.composite || nfaState.nextIntersects]
    [#var onlyState=(byteNum>=0)&&nfaState.isOnlyState(byteNum)]
    [#var lexicalState=nfaState.lexicalState]
@@ -280,42 +383,30 @@
    [#list nfaState.getMoveStates(byteNum, statesDumped) as state]
                    case ${state.index} :
    [/#list]
-   [#if byteNum<0 || nfaState.asciiMoves[byteNum] != -1]
+   [#if nfaState.asciiMoves[byteNum] != -1]
       [#if nfaState.next?is_null || nfaState.next.usefulEpsilonMoves<=0]
           [#var kindCheck=" && kind > "+kindToPrint]
           [#if onlyState][#set kindCheck = ""][/#if]
-          [#if byteNum>=0]
                if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} & l) != 0L ${kindCheck})
-          [#else]
-               if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2) ${kindCheck})
-          [/#if]
                kind = ${kindToPrint};
                break;
           [#return]
       [/#if]
    [/#if]
    [#if kindToPrint != MAX_INT]
-       [#if byteNum>=0]
-          [#if nfaState.asciiMoves[byteNum] != -1]
-                    if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} &l) == 0L)
-                          break;
-          [/#if]
-       [#else]
-                    if (!jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
-                          break;
-       [/#if]
+      [#if nfaState.asciiMoves[byteNum] != -1]
+               if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} &l) == 0L)
+                     break;
+      [/#if]
        [#if onlyState]
                     kind = ${kindToPrint};
        [#else]
-                    if (kind > ${kindToPrint})
-                         kind = ${kindToPrint};
+                    kind = Math.min(kind, ${kindToPrint});
        [/#if]
-   [#elseif (byteNum>=0)]
+   [#else]
        [#if nfaState.asciiMoves[byteNum] != -1]
                     if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} & l) != 0L)
        [/#if]
-   [#else]
-                    if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
    [/#if]
    [#if !nfaState.next?is_null&&nfaState.next.usefulEpsilonMoves>0]
        [#var stateNames=lexicalState.nfaData.nextStatesFromKey(nfaState.next.epsilonMovesString)]

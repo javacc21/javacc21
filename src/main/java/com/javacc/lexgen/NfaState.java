@@ -36,7 +36,7 @@ import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
 
 /**
- * The state of a Non-deterministic Finite Automaton.
+ * The state of a Non-deterministic Finite Automaton. 🙋
  */
 public class NfaState {  
 
@@ -45,7 +45,6 @@ public class NfaState {
     private LexicalStateData lexicalState;
     private RegularExpression type;
     private List<NfaState> epsilonMoves = new ArrayList<>();
-    private BitSet asciiMoves = new BitSet();
     private List<Integer> rangeMovesLeftSide = new ArrayList<>();
     private List<Integer> rangeMovesRightSide = new ArrayList<>();
     private String epsilonMovesString;
@@ -60,6 +59,7 @@ public class NfaState {
     private int index = -1;
     private int inNextOf;
     private int[] compositeStates;
+    private BitSet asciiMoves = new BitSet();
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -107,6 +107,10 @@ public class NfaState {
             ll = Arrays.copyOf(ll, 2);
         }
         return ll;
+    }
+
+    public BitSet getAsciiMoveSet() {
+        return asciiMoves;
     }
 
     List<NfaState> getEpsilonMoves() {
@@ -157,8 +161,14 @@ public class NfaState {
     }
 
     public boolean isNeeded(int byteNum) {
-        boolean  hasAsciiMoves = byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
-        return (byteNum >= 0 && hasAsciiMoves) || (byteNum < 0 && nonAsciiMethod != -1);
+        if (byteNum < 0) {
+            return isNeededNonAscii();
+        }
+        return byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
+    }
+
+    public boolean isNeededNonAscii() {
+        return nonAsciiMethod != -1;
     }
 
     void addEpsilonMove(NfaState newState) {

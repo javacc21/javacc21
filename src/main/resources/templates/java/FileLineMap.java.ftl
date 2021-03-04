@@ -390,7 +390,9 @@ public class FileLineMap {
                     char last = buf.length() >0 ? buf.charAt(buf.length()-1) : 0;
                     if (justSawUnicodeEscape && Character.isSurrogatePair(last, current)) {
                         buf.setLength(buf.length()-1);
-                        buf.appendCodePoint(Character.toCodePoint(last, current));
+                        --col;
+//                        buf.appendCodePoint(Character.toCodePoint(last, current));
+                        buf.appendCodePoint('X');
                         justSawUnicodeEscape = false;
                     } else {
                         buf.append(current);
