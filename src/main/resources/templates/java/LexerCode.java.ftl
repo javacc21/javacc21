@@ -340,7 +340,7 @@
 	
 	[#var allBitVectors=lexerData.allBitVectors]
 	   switch(hiByte) {
-	   [#list nfaState.loByteVec! as kase]
+	   [#list nfaState.loByteVec as kase]
 	       [#if kase_index%2 = 0]       
 	      case ${kase} :
 	          return (jjbitVec${nfaState.loByteVec[kase_index+1]}[i2] &l2) != 0L;

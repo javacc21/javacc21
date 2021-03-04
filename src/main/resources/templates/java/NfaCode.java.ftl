@@ -225,7 +225,6 @@
    [#var nextIntersects=nfaState.nextIntersects]
    [#var kindToPrint=nfaState.kindToPrint 
          asciiMoves=nfaState.asciiMoves 
-         loByteVec=nfaState.loByteVec 
          next=nfaState.next 
          lexicalState=nfaState.lexicalState]
    [#if (byteNum>=0)]

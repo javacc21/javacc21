@@ -36,9 +36,9 @@ import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
 
 /**
- * The state of a Non-deterministic Finite Automaton.
+ * The state of a Non-deterministic Finite Automaton. 🙋
  */
-public class NfaState {
+public class NfaState {  
 
     private Grammar grammar;
     private LexerData lexerData;
@@ -46,8 +46,9 @@ public class NfaState {
     private RegularExpression type;
     private List<NfaState> epsilonMoves = new ArrayList<>();
     private BitSet asciiMoves = new BitSet();
-    private StringBuilder charMoveBuffer = new StringBuilder();
-    private StringBuilder rangeMoveBuffer = new StringBuilder();
+    private List<Integer> charMoveList = new ArrayList<>();
+    private List<Integer> rangeMovesLeftSide = new ArrayList<>();
+    private List<Integer> rangeMovesRightSide = new ArrayList<>();
     private String epsilonMovesString;
     private NfaState next;
     final private int id;
@@ -56,7 +57,7 @@ public class NfaState {
     private int nonAsciiMethod = -1;
     private boolean composite;
     private int[] nonAsciiMoveIndices;
-    private List<Integer> loByteVec;
+    private List<Integer> loByteVec = new ArrayList<>();
     private int index = -1;
     private int inNextOf;
     private int[] compositeStates;
@@ -169,7 +170,7 @@ public class NfaState {
         if (c < 128) {// ASCII 
             asciiMoves.set(c);
         } else {
-            charMoveBuffer.appendCodePoint(c);
+            charMoveList.add(c);
         }
     }
 
@@ -180,8 +181,8 @@ public class NfaState {
         left = Math.max(left, 128);
         right = Math.max(right, 128);
         if (right>left) {
-            rangeMoveBuffer.appendCodePoint(left);
-            rangeMoveBuffer.appendCodePoint(right);
+            rangeMovesLeftSide.add(left);
+            rangeMovesRightSide.add(right);
         }
     }
 
@@ -221,9 +222,9 @@ public class NfaState {
     }
 
     public boolean hasTransitions() {
-        return asciiMoves.cardinality() >0
-                || charMoveBuffer.length()>0
-                || rangeMoveBuffer.length()>0;
+        return !asciiMoves.isEmpty()
+                || !charMoveList.isEmpty()
+                || !rangeMovesLeftSide.isEmpty();
     }
     
     void generateCode() {
@@ -274,9 +275,9 @@ public class NfaState {
             epsilonMovesString = "{ ";
             for (NfaState epsilonMove : epsilonMoves) {
                 if (epsilonMove.hasTransitions()) {
-                    if (epsilonMove.index == -1)
+                    if (epsilonMove.index == -1) {
                         epsilonMove.generateCode();
-
+                    }
                     lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
                     stateNames[usefulEpsilonMoveCount] = epsilonMove.index;
                     epsilonMovesString += epsilonMove.index + ", ";
@@ -303,15 +304,14 @@ public class NfaState {
             return asciiMoves.get(c);
         }
         // Just check directly if there is a move for this codepoint
-//        if (charMoveBuffer.indexOf(Character.toString(c)) >=0) {
-        if (charMoveBuffer.indexOf(new String(new int[]{c}, 0, 1)) >=0) {
+        if (charMoveList.contains(c)) {
             return true;
         }
         // For ranges, iterate thru the table to see if the current char
         // is in some range
-        for (int i = 0; i < rangeMoveBuffer.length(); i += 2) {
-            int left = rangeMoveBuffer.codePointAt(i);
-            int right = rangeMoveBuffer.codePointAt(i+1);
+        for (int i=0; i<rangeMovesLeftSide.size(); i++) {
+            int left = rangeMovesLeftSide.get(i);
+            int right = rangeMovesRightSide.get(i);
             if (c >= left && c <= right) 
                 return true;
             else if (c < left || left == 0)
@@ -349,28 +349,27 @@ public class NfaState {
      * Also it is long overdue to rewrite this ugly legacy code anyway!
      */
     void generateNonAsciiMoves() {
-        char hiByte;
-        int cnt = 0;
-        long[][] loBytes = new long[256][4];
-        if ((charMoveBuffer.length() == 0) && rangeMoveBuffer.length() == 0)
+        if (charMoveList.isEmpty() && rangeMovesLeftSide.isEmpty()) {
             return;
-        for (char ch : charMoveBuffer.toString().toCharArray()) {
-            hiByte = (char) (ch >> 8);
-            loBytes[hiByte][(ch & 0xFF)/64] |= (1L << ((ch & 0xFF) %64));
         }
-        for (int i = 0; i < rangeMoveBuffer.length(); i += 2) {
-            char r = (char) (rangeMoveBuffer.charAt(i + 1) & 0xff);
-            hiByte = (char) (rangeMoveBuffer.charAt(i) >> 8);
-            if (hiByte == (char) (rangeMoveBuffer.charAt(i + 1) >> 8)) {
-                for (char c = (char) (rangeMoveBuffer.charAt(i) & 0xff); c <= r; c++) {
+        long[][] loBytes = new long[256][4];
+        for (int ch : charMoveList) {
+            ch = ch & 0xFFFF; // For now only handle 16-bit characters. REVISIT of course.
+            loBytes[ch >>8][(ch & 0xFF)/64] |= (1L << ((ch & 0xFF) %64));
+        }
+        for (int i = 0; i < rangeMovesRightSide.size(); i ++) {
+            int r = rangeMovesRightSide.get(i) & 0xff;
+            int hiByte = rangeMovesLeftSide.get(i) >> 8;
+            if (hiByte == rangeMovesRightSide.get(i) >> 8) {
+                for (int c = rangeMovesLeftSide.get(i) & 0xff; c <= r; c++) {
                     loBytes[hiByte][c / 64] |= (1L << (c % 64));
                 }
                 continue;
             }
-            for (char c = (char) (rangeMoveBuffer.charAt(i) & 0xff); c <= 0xff; c++) {
+            for (int c = rangeMovesLeftSide.get(i) & 0xff; c <= 0xff; c++) {
                 loBytes[hiByte][c / 64] |= (1L << (c % 64));
             }
-            while (++hiByte < (char) (rangeMoveBuffer.charAt(i + 1) >> 8)) {
+            while (++hiByte < rangeMovesRightSide.get(i )>> 8) {
                 loBytes[hiByte][0] |= 0xffffffffffffffffL;
                 loBytes[hiByte][1] |= 0xffffffffffffffffL;
                 loBytes[hiByte][2] |= 0xffffffffffffffffL;
@@ -380,15 +379,13 @@ public class NfaState {
                 loBytes[hiByte][c / 64] |= (1L << (c % 64));
             }
         }
-
         long[] common = null;
         boolean[] done = new boolean[256];
+        int count = 0;
         for (int i = 0; i <= 255; i++) {
-            if (done[i]
-                    || (done[i] = loBytes[i][0] == 0 && loBytes[i][1] == 0 && loBytes[i][2] == 0
-                            && loBytes[i][3] == 0))
+            if (done[i] || (done[i] = loBytes[i][0] == 0 && loBytes[i][1] == 0 && loBytes[i][2] == 0 && loBytes[i][3] == 0)) {
                 continue;
-
+            }
             for (int j = i + 1; j < 256; j++) {
                 if (done[j])
                     continue;
@@ -405,7 +402,6 @@ public class NfaState {
                     common[j / 64] |= (1L << (j % 64));
                 }
             }
-
             if (common != null) {
                 Integer ind;
                 String bitVector = "{\n   0x" + Long.toHexString(common[0]) + "L, " + "0x"
@@ -421,44 +417,36 @@ public class NfaState {
                     lexerData.incrementLohiByteCount();
                 }
                 int[] tmpIndices = lexerData.getTempIndices();
-                tmpIndices[cnt++] = ind;
-
+                tmpIndices[count++] = ind;
                 bitVector = "{\n   0x" + Long.toHexString(loBytes[i][0]) + "L, " + "0x"
                         + Long.toHexString(loBytes[i][1]) + "L, " + "0x"
                         + Long.toHexString(loBytes[i][2]) + "L, " + "0x"
                         + Long.toHexString(loBytes[i][3]) + "L}";
                 if ((ind = lohiByteTable.get(bitVector)) == null) {
                     allBitVectors.add(bitVector);
-
                     int lohiByteCount = lexerData.getLohiByteCount();
                     lohiByteTable.put(bitVector, ind = lohiByteCount);
                     lexerData.incrementLohiByteCount();
                 }
-
-                tmpIndices[cnt++] = ind;
-
+                tmpIndices[count++] = ind;
                 common = null;
             }
         }
-
-        nonAsciiMoveIndices = new int[cnt];
-        System.arraycopy(lexerData.getTempIndices(), 0, nonAsciiMoveIndices, 0, cnt);
-
+        nonAsciiMoveIndices = new int[count];
+        System.arraycopy(lexerData.getTempIndices(), 0, nonAsciiMoveIndices, 0, count);
         for (int i = 0; i < 256; i++) {
             if (done[i])
                 loBytes[i] = null;
             else {
                 // System.out.print(i + ", ");
-                String tmp;
                 Integer ind;
                 Map<String, Integer> lohiByteTable = lexerData.getLoHiByteTable();
-                tmp = "{\n   0x" + Long.toHexString(loBytes[i][0]) + "L, " + "0x"
+                String tmp = "{\n   0x" + Long.toHexString(loBytes[i][0]) + "L, " + "0x"
                         + Long.toHexString(loBytes[i][1]) + "L, " + "0x"
                         + Long.toHexString(loBytes[i][2]) + "L, " + "0x"
                         + Long.toHexString(loBytes[i][3]) + "L\n}";
 
                 List<String> allBitVectors = lexerData.getAllBitVectors();
-
                 if ((ind = lohiByteTable.get(tmp)) == null) {
                     allBitVectors.add(tmp);
 
@@ -466,10 +454,6 @@ public class NfaState {
                     lohiByteTable.put(tmp, ind = lohiByteCount);
                     lexerData.incrementLohiByteCount();
                 }
-
-                if (loByteVec == null)
-                    loByteVec = new ArrayList<>();
-
                 loByteVec.add(i);
                 loByteVec.add(ind);
             }

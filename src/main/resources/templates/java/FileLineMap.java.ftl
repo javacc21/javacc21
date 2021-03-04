@@ -361,11 +361,11 @@ public class FileLineMap {
         // This is just to handle tabs to spaces. If you don't have that setting set, it
         // is really unused.
         int col = 0;
+        boolean justSawUnicodeEscape = false;
         // There is probably some better way of doing this with this Stream API, 
         // but, for now, I'm just translating the code I had working so I just
         // get the int[] array and iterate over it, like I did before with the chars
         // in the CharSequence.
-        boolean justSawUnicodeEscape = false;
         int[] codePoints = content.codePoints().toArray();
         while (index < codePoints.length) {
             int ch = codePoints[index++];
