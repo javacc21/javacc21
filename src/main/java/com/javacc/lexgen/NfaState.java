@@ -46,7 +46,6 @@ public class NfaState {
     private RegularExpression type;
     private List<NfaState> epsilonMoves = new ArrayList<>();
     private BitSet asciiMoves = new BitSet();
-    private List<Integer> charMoveList = new ArrayList<>();
     private List<Integer> rangeMovesLeftSide = new ArrayList<>();
     private List<Integer> rangeMovesRightSide = new ArrayList<>();
     private String epsilonMovesString;
@@ -170,7 +169,8 @@ public class NfaState {
         if (c < 128) {// ASCII 
             asciiMoves.set(c);
         } else {
-            charMoveList.add(c);
+             rangeMovesLeftSide.add(c);
+             rangeMovesRightSide.add(c);
         }
     }
 
@@ -223,7 +223,6 @@ public class NfaState {
 
     public boolean hasTransitions() {
         return !asciiMoves.isEmpty()
-                || !charMoveList.isEmpty()
                 || !rangeMovesLeftSide.isEmpty();
     }
     
@@ -303,11 +302,7 @@ public class NfaState {
         if (c < 128) {
             return asciiMoves.get(c);
         }
-        // Just check directly if there is a move for this codepoint
-        if (charMoveList.contains(c)) {
-            return true;
-        }
-        // For ranges, iterate thru the table to see if the current char
+        // Iterate thru the table to see if the current char
         // is in some range
         for (int i=0; i<rangeMovesLeftSide.size(); i++) {
             int left = rangeMovesLeftSide.get(i);
@@ -349,15 +344,11 @@ public class NfaState {
      * Also it is long overdue to rewrite this ugly legacy code anyway!
      */
     void generateNonAsciiMoves() {
-        if (charMoveList.isEmpty() && rangeMovesLeftSide.isEmpty()) {
+        if (rangeMovesLeftSide.isEmpty()) {
             return;
         }
         long[][] loBytes = new long[256][4];
-        for (int ch : charMoveList) {
-            ch = ch & 0xFFFF; // For now only handle 16-bit characters. REVISIT of course.
-            loBytes[ch >>8][(ch & 0xFF)/64] |= (1L << ((ch & 0xFF) %64));
-        }
-        for (int i = 0; i < rangeMovesRightSide.size(); i ++) {
+        for (int i = 0; i < rangeMovesLeftSide.size(); i ++) {
             int r = rangeMovesRightSide.get(i) & 0xff;
             int hiByte = rangeMovesLeftSide.get(i) >> 8;
             if (hiByte == rangeMovesRightSide.get(i) >> 8) {
@@ -438,8 +429,6 @@ public class NfaState {
             if (done[i])
                 loBytes[i] = null;
             else {
-                // System.out.print(i + ", ");
-                Integer ind;
                 Map<String, Integer> lohiByteTable = lexerData.getLoHiByteTable();
                 String tmp = "{\n   0x" + Long.toHexString(loBytes[i][0]) + "L, " + "0x"
                         + Long.toHexString(loBytes[i][1]) + "L, " + "0x"
@@ -447,9 +436,9 @@ public class NfaState {
                         + Long.toHexString(loBytes[i][3]) + "L\n}";
 
                 List<String> allBitVectors = lexerData.getAllBitVectors();
-                if ((ind = lohiByteTable.get(tmp)) == null) {
+                Integer ind = lohiByteTable.get(tmp);
+                if (ind == null) {
                     allBitVectors.add(tmp);
-
                     int lohiByteCount = lexerData.getLohiByteCount();
                     lohiByteTable.put(tmp, ind = lohiByteCount);
                     lexerData.incrementLohiByteCount();
