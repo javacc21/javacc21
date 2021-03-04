@@ -1,4 +1,4 @@
-/* Copyright (c) 2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2020,2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,7 @@
 
 package com.javacc.output.java;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
-
+import java.util.*;
 import com.javacc.parser.*;
 import static com.javacc.parser.JavaCCConstants.TokenType;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
@@ -134,13 +129,28 @@ public class JavaCodeUtils {
 
     static private void removeDeclaration(Identifier id) {
         FieldDeclaration fd = id.firstAncestorOfType(FieldDeclaration.class);
-        if (fd.getVariableIds().size() > 1) {
-            // FIXME, TODO
-        } else {
+        if (fd.getVariableIds().size() == 1) {
+            // Remove the entire field declaration in this case.
             Node parent = fd.getParent();
             Node grandparent = parent.getParent();
             grandparent.removeChild(parent);
         }
+        else {
+            Node nodeToRemove = id;
+            while (nodeToRemove.getParent() != fd) {
+                nodeToRemove = nodeToRemove.getParent();
+            }
+            int index = fd.indexOf(nodeToRemove);
+            Node nextNode = fd.getChild(index+1);
+            Node previousNode = fd.getChild(index -1);
+            if (nextNode.getTokenType() == COMMA) {
+                fd.removeChild(nextNode);
+            }
+            else if (previousNode.getTokenType() == COMMA) {
+                fd.removeChild(previousNode);
+            }
+            fd.removeChild(nodeToRemove);
+        } 
     }
 
     /**

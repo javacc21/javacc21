@@ -645,8 +645,20 @@ INJECT FieldDeclaration :
    import java.util.*;
    extends ClassOrInterfaceBodyDeclaration
 {
+
+  /**
+   * @return the Identifier nodes that correspond to the 
+   *          declaration of an instance variable. 
+   */
   public List<Identifier> getVariableIds() {
-    return descendants(Identifier.class, n->n.getParent() instanceof VariableDeclaratorId);
+     return descendants(Identifier.class, FieldDeclaration::isVariableDeclarator);
+  }
+
+  static boolean isVariableDeclarator(Identifier id) {
+      Node parent = id.getParent();
+      return parent instanceof VariableDeclaratorId || 
+             parent instanceof VariableDeclarator ||
+             parent instanceof FieldDeclaration;
   }
 }
 

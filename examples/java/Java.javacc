@@ -268,7 +268,7 @@ FieldDeclaration :
 
 VariableDeclarator : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
-VariableDeclaratorId# : <IDENTIFIER> ( "[" "]" )* ;
+VariableDeclaratorId : <IDENTIFIER> ( "[" "]" )* ;
 
 VariableInitializer : ArrayInitializer | Expression ;
 
@@ -736,10 +736,6 @@ ArrayDimsAndInits :
 
 Label : <IDENTIFIER><COLON> =>|| ;
 
-/*
- * Statement syntax follows.
- */
-
 Statement  :
   (Label)*
   (
@@ -1019,8 +1015,6 @@ INJECT FinallyBlock :
     }
 }
 
-/* Annotation syntax follows. */
-
 Annotation #Annotation :
  SCAN 2
  ( 
@@ -1067,8 +1061,6 @@ MemberValueArrayInitializer :
   "{" MemberValue ( "," =>|+1 MemberValue )* [ "," ] "}"
 ;
 
-
-/* Annotation Types. */
 
 AnnotationTypeDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
