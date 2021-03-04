@@ -36,7 +36,7 @@ import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
 
 /**
- * The state of a Non-deterministic Finite Automaton. 🙋
+ * The state of a Non-deterministic Finite Automaton.
  */
 public class NfaState {  
 
@@ -175,12 +175,15 @@ public class NfaState {
     }
 
     void addRange(int left, int right) {
+        if (left == right) {
+            addCharMove(left);
+        }
         for (int c = left; c <=right && c<128; c++) {
             asciiMoves.set(c);
         }
         left = Math.max(left, 128);
         right = Math.max(right, 128);
-        if (right>left) {
+        if (right > left) {
             rangeMovesLeftSide.add(left);
             rangeMovesRightSide.add(right);
         }
@@ -347,50 +350,36 @@ public class NfaState {
         if (rangeMovesLeftSide.isEmpty()) {
             return;
         }
-        long[][] loBytes = new long[256][4];
-        for (int i = 0; i < rangeMovesLeftSide.size(); i ++) {
-            int r = rangeMovesRightSide.get(i) & 0xff;
-            int hiByte = rangeMovesLeftSide.get(i) >> 8;
-            if (hiByte == rangeMovesRightSide.get(i) >> 8) {
-                for (int c = rangeMovesLeftSide.get(i) & 0xff; c <= r; c++) {
-                    loBytes[hiByte][c / 64] |= (1L << (c % 64));
-                }
-                continue;
-            }
-            for (int c = rangeMovesLeftSide.get(i) & 0xff; c <= 0xff; c++) {
-                loBytes[hiByte][c / 64] |= (1L << (c % 64));
-            }
-            while (++hiByte < rangeMovesRightSide.get(i )>> 8) {
-                loBytes[hiByte][0] |= 0xffffffffffffffffL;
-                loBytes[hiByte][1] |= 0xffffffffffffffffL;
-                loBytes[hiByte][2] |= 0xffffffffffffffffL;
-                loBytes[hiByte][3] |= 0xffffffffffffffffL;
-            }
-            for (char c = 0; c <= r; c++) {
-                loBytes[hiByte][c / 64] |= (1L << (c % 64));
+        BitSet charMoves = new BitSet();
+        for (int i=0; i< rangeMovesLeftSide.size(); i++) {
+            int leftSide = rangeMovesLeftSide.get(i);
+            int rightSide = rangeMovesRightSide.get(i);
+            while (leftSide<=rightSide) {
+                charMoves.set(leftSide++);
             }
         }
         long[] common = null;
         boolean[] done = new boolean[256];
         int count = 0;
-        for (int i = 0; i <= 255; i++) {
-            if (done[i] || (done[i] = loBytes[i][0] == 0 && loBytes[i][1] == 0 && loBytes[i][2] == 0 && loBytes[i][3] == 0)) {
+        for (int i = 0; i <= 0xFF; i++) {
+            BitSet subSet = charMoves.get(256*i, 256*(i+1));
+            if (subSet.isEmpty()) {
+                done[i] = true;
+            }
+            if (done[i]) {
                 continue;
             }
-            for (int j = i + 1; j < 256; j++) {
-                if (done[j])
-                    continue;
-
-                if (loBytes[i][0] == loBytes[j][0] && loBytes[i][1] == loBytes[j][1]
-                        && loBytes[i][2] == loBytes[j][2] && loBytes[i][3] == loBytes[j][3]) {
-                    done[j] = true;
-                    if (common == null) {
-                        done[i] = true;
-                        common = new long[4];
-                        common[i / 64] |= (1L << (i % 64));
+            for (int j = i + 1; j <= 0xFF; j++) {
+                if (!done[j]) {
+                    if (subSet.equals(charMoves.get(256*j, 256*(j+1)))) {
+                        done[j] = true;
+                        if (common == null) {
+                            done[i] = true;
+                            common = new long[4];
+                            common[i / 64] |= (1L << (i % 64));
+                        }
+                        common[j / 64] |= (1L << (j % 64));
                     }
-
-                    common[j / 64] |= (1L << (j % 64));
                 }
             }
             if (common != null) {
@@ -409,10 +398,7 @@ public class NfaState {
                 }
                 int[] tmpIndices = lexerData.getTempIndices();
                 tmpIndices[count++] = ind;
-                bitVector = "{\n   0x" + Long.toHexString(loBytes[i][0]) + "L, " + "0x"
-                        + Long.toHexString(loBytes[i][1]) + "L, " + "0x"
-                        + Long.toHexString(loBytes[i][2]) + "L, " + "0x"
-                        + Long.toHexString(loBytes[i][3]) + "L}";
+                bitVector = bitSetToLong(subSet);
                 if ((ind = lohiByteTable.get(bitVector)) == null) {
                     allBitVectors.add(bitVector);
                     int lohiByteCount = lexerData.getLohiByteCount();
@@ -426,15 +412,10 @@ public class NfaState {
         nonAsciiMoveIndices = new int[count];
         System.arraycopy(lexerData.getTempIndices(), 0, nonAsciiMoveIndices, 0, count);
         for (int i = 0; i < 256; i++) {
-            if (done[i])
-                loBytes[i] = null;
-            else {
+            if (!done[i]) {
                 Map<String, Integer> lohiByteTable = lexerData.getLoHiByteTable();
-                String tmp = "{\n   0x" + Long.toHexString(loBytes[i][0]) + "L, " + "0x"
-                        + Long.toHexString(loBytes[i][1]) + "L, " + "0x"
-                        + Long.toHexString(loBytes[i][2]) + "L, " + "0x"
-                        + Long.toHexString(loBytes[i][3]) + "L\n}";
-
+                BitSet subSet = charMoves.get(256*i, 256*(i+1));
+                String tmp = bitSetToLong(subSet);
                 List<String> allBitVectors = lexerData.getAllBitVectors();
                 Integer ind = lohiByteTable.get(tmp);
                 if (ind == null) {
@@ -448,6 +429,15 @@ public class NfaState {
             }
         }
         updateDuplicateNonAsciiMoves();
+    }
+
+    static private String bitSetToLong(BitSet bs) {
+        long[] longs = bs.toLongArray();
+        longs = Arrays.copyOf(longs, 4);
+        return "{0x" + Long.toHexString(longs[0]) + "L,0x"
+               + Long.toHexString(longs[1]) + "L,0x"
+               + Long.toHexString(longs[2]) + "L,0x"
+               + Long.toHexString(longs[3]) + "L}";
     }
 
     private void updateDuplicateNonAsciiMoves() {
@@ -534,5 +524,4 @@ public class NfaState {
         }
         return true;
     }
- 
 }
