@@ -36,7 +36,7 @@ import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
 
 /**
- * The state of a Non-deterministic Finite Automaton. 🙋
+ * The state of a Non-deterministic Finite Automaton.
  */
 public class NfaState {  
 
@@ -185,15 +185,11 @@ public class NfaState {
     }
 
     void addRange(int left, int right) {
-        if (left == right) {
-            addCharMove(left);
-        }
         for (int c = left; c <=right && c<128; c++) {
             asciiMoves.set(c);
         }
         left = Math.max(left, 128);
-        right = Math.max(right, 128);
-        if (right > left) {
+        if (right >= left) {
             rangeMovesLeftSide.add(left);
             rangeMovesRightSide.add(right);
         }
