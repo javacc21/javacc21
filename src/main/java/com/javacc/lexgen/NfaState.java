@@ -364,35 +364,35 @@ public class NfaState {
                 charMoves.set(leftSide++);
             }
         }
-        long[] common = null;
-        boolean[] done = new boolean[256];
+        BitSet commonSet = new BitSet();
+        BitSet superfluousSubsets = new BitSet();
         int count = 0;
-        for (int i = 0; i <= 0xFF; i++) {
+        // The following 40-odd lines of code constitute a space
+        // optimization. Commenting it all out produces
+        // larger (redundant) XXXLexer.java files, but it all still works!
+        for (int i = 0; i < 0xFF; i++) {
             BitSet subSet = charMoves.get(256*i, 256*(i+1));
             if (subSet.isEmpty()) {
-                done[i] = true;
+                superfluousSubsets.set(i);
             }
-            if (done[i]) {
+            if (superfluousSubsets.get(i)) {
                 continue;
             }
             for (int j = i + 1; j <= 0xFF; j++) {
-                if (!done[j]) {
+                if (!superfluousSubsets.get(j)) {
                     if (subSet.equals(charMoves.get(256*j, 256*(j+1)))) {
-                        done[j] = true;
-                        if (common == null) {
-                            done[i] = true;
-                            common = new long[4];
-                            common[i / 64] |= (1L << (i % 64));
+                        superfluousSubsets.set(j);
+                        if (commonSet.isEmpty()) {
+                            superfluousSubsets.set(i);
+                            commonSet.set(i);
                         }
-                        common[j / 64] |= (1L << (j % 64));
+                        commonSet.set(j);
                     }
                 }
             }
-            if (common != null) {
+            if (!commonSet.isEmpty()) {
                 Integer ind;
-                String bitVector = "{\n   0x" + Long.toHexString(common[0]) + "L, " + "0x"
-                        + Long.toHexString(common[1]) + "L, " + "0x" + Long.toHexString(common[2])
-                        + "L, " + "0x" + Long.toHexString(common[3]) + "L}";
+                String bitVector = bitSetToLong(commonSet);
                 Map<String, Integer> lohiByteTable = lexerData.getLoHiByteTable();
                 List<String> allBitVectors = lexerData.getAllBitVectors();
                 if ((ind = lohiByteTable.get(bitVector)) == null) {
@@ -412,22 +412,24 @@ public class NfaState {
                     lexerData.incrementLohiByteCount();
                 }
                 tmpIndices[count++] = ind;
-                common = null;
+                commonSet.clear();
             }
         }
+// Up to here is just a space optimization. (Gradually coming to an understanding of this...)
+// Without the space optimization, the nonAsciiMoveIndices array is empty, since count is zero!        
         nonAsciiMoveIndices = new int[count];
         System.arraycopy(lexerData.getTempIndices(), 0, nonAsciiMoveIndices, 0, count);
         for (int i = 0; i < 256; i++) {
-            if (!done[i]) {
+            if (!superfluousSubsets.get(i)) {
                 Map<String, Integer> lohiByteTable = lexerData.getLoHiByteTable();
                 BitSet subSet = charMoves.get(256*i, 256*(i+1));
-                String tmp = bitSetToLong(subSet);
+                String longsString = bitSetToLong(subSet);
                 List<String> allBitVectors = lexerData.getAllBitVectors();
-                Integer ind = lohiByteTable.get(tmp);
+                Integer ind = lohiByteTable.get(longsString);
                 if (ind == null) {
-                    allBitVectors.add(tmp);
+                    allBitVectors.add(longsString);
                     int lohiByteCount = lexerData.getLohiByteCount();
-                    lohiByteTable.put(tmp, ind = lohiByteCount);
+                    lohiByteTable.put(longsString, ind = lohiByteCount);
                     lexerData.incrementLohiByteCount();
                 }
                 loByteVec.add(i);
