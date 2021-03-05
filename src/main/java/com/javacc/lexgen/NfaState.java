@@ -364,13 +364,13 @@ public class NfaState {
                 charMoves.set(leftSide++);
             }
         }
-        BitSet commonSet = new BitSet();
         BitSet superfluousSubsets = new BitSet();
-        int count = 0;
+        ArrayList<Integer> indices = new ArrayList<>();
         // The following 40-odd lines of code constitute a space
         // optimization. Commenting it all out produces
         // larger (redundant) XXXLexer.java files, but it all still works!
         for (int i = 0; i < 0xFF; i++) {
+            BitSet commonSet = new BitSet();
             BitSet subSet = charMoves.get(256*i, 256*(i+1));
             if (subSet.isEmpty()) {
                 superfluousSubsets.set(i);
@@ -402,8 +402,7 @@ public class NfaState {
                     lohiByteTable.put(bitVector, ind = lohiByteCount);
                     lexerData.incrementLohiByteCount();
                 }
-                int[] tmpIndices = lexerData.getTempIndices();
-                tmpIndices[count++] = ind;
+                indices.add(ind);
                 bitVector = bitSetToLong(subSet);
                 if ((ind = lohiByteTable.get(bitVector)) == null) {
                     allBitVectors.add(bitVector);
@@ -411,14 +410,15 @@ public class NfaState {
                     lohiByteTable.put(bitVector, ind = lohiByteCount);
                     lexerData.incrementLohiByteCount();
                 }
-                tmpIndices[count++] = ind;
-                commonSet.clear();
+                indices.add(ind);
             }
         }
 // Up to here is just a space optimization. (Gradually coming to an understanding of this...)
 // Without the space optimization, the nonAsciiMoveIndices array is empty, since count is zero!        
-        nonAsciiMoveIndices = new int[count];
-        System.arraycopy(lexerData.getTempIndices(), 0, nonAsciiMoveIndices, 0, count);
+        nonAsciiMoveIndices = new int[indices.size()];
+        for (int i =0; i<indices.size(); i++) {
+            nonAsciiMoveIndices[i] = indices.get(i);
+        }
         for (int i = 0; i < 256; i++) {
             if (!superfluousSubsets.get(i)) {
                 Map<String, Integer> lohiByteTable = lexerData.getLoHiByteTable();

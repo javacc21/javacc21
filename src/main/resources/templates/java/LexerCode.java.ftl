@@ -338,7 +338,6 @@
 	private static boolean jjCanMove_${nfaState.nonAsciiMethod}
 	   (int hiByte, int i1, int i2, long l1, long l2) {
 	
-	[#var allBitVectors=lexerData.allBitVectors]
 	   switch(hiByte) {
 	   [#list nfaState.loByteVec as kase]
 	       [#if kase_index%2 = 0]       

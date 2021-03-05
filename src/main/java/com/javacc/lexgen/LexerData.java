@@ -57,7 +57,6 @@ public class LexerData {
     private Map<String, Integer> lohiByteTable = new HashMap<>();
 
     private List<String> allBitVectors = new ArrayList<>();
-    private int[] tempIndices = new int[512];
     private Map<String, int[]> tableToDump = new HashMap<>();
     private List<int[]> orderedStateSet = new ArrayList<>();
     private int lastIndex;
@@ -242,10 +241,6 @@ public class LexerData {
 
     public List<String> getAllBitVectors() {
         return allBitVectors;
-    }
-
-    int[] getTempIndices() {
-        return tempIndices;
     }
 
     Map<String, int[]> getTableToDump() {
