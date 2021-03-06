@@ -159,7 +159,6 @@ public class NfaData {
         for (String key : compositeStateTable.keySet()) {
             if (!key.equals(stateSetString) && intersect(stateSetString, key)) {
                 int[] other = compositeStateTable.get(key);
-
                 while (toRet < nameSet.length
                         && (((indexedAllStates.get(nameSet[toRet])).getInNextOf() > 1) || arrayContains(other, nameSet[toRet]))) {
                     toRet++;
@@ -270,9 +269,10 @@ public class NfaData {
 
         statesForPos = new ArrayList<>();
         stateSetForPos = new ArrayList<>();
+        
         for (int k = 0; k < lexicalState.getMaxStringLength(); k++) {
-            statesForPos.add(null);
-            stateSetForPos.add(null);
+            statesForPos.add(new HashMap<>());
+            stateSetForPos.add(new HashMap<>());
         }
         intermediateMatchedPos = new int[lexicalState.getMaxStringIndex() + 1][];
         for (RegularExpression re : lexerData.getRegularExpressions()) {
@@ -319,10 +319,6 @@ public class NfaData {
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();
-                if (statesForPos.get(charOffset) == null) {
-                    statesForPos.set(charOffset, new HashMap<>());
-                    stateSetForPos.set(charOffset, new HashMap<>());
-                }
                 if ((actives = (statesForPos.get(charOffset).get(kind + ", " + jjmatchedPos + ", "
                         + stateSetString))) == null) {
                     actives = new long[maxKindsReqd];
@@ -366,9 +362,7 @@ public class NfaData {
 
     public int getStateSetForKind(int pos, int kind) {
         if (!lexicalState.isMixedCase() && !indexedAllStates.isEmpty()) {
-
             Map<String, long[]> allStateSets = statesForPos.get(pos);
-
             if (allStateSets == null)
                 return -1;
             for (String s : allStateSets.keySet()) {
