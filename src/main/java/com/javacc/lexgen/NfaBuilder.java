@@ -81,6 +81,7 @@ public class NfaBuilder extends Node.Visitor {
         NfaState finalState = end = new NfaState(lexicalState);
         for (CharacterRange cr : descriptors) {
             if (cr.isSingleChar()) {
+//            if (false) {
                 startState.addCharMove(cr.left);
             } else {
                 startState.addRange(cr.left, cr.right);

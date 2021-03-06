@@ -44,18 +44,29 @@ public class NfaState {
     private LexerData lexerData;
     private LexicalStateData lexicalState;
     private RegularExpression type;
-    private List<NfaState> epsilonMoves = new ArrayList<>();
+    private Set<NfaState> epsilonMoves = new LinkedHashSet<>();
+    private BitSet asciiMoves = new BitSet();
     private List<Integer> rangeMovesLeftSide = new ArrayList<>();
     private List<Integer> rangeMovesRightSide = new ArrayList<>();
-    private String epsilonMovesString;
     private NfaState next;
     private boolean isFinal;
     private int nonAsciiMethod = -1;
     private List<Integer> nonAsciiMoveIndices;
     private List<Integer> loByteVec = new ArrayList<>();
-    private int index = -1;
     private int inNextOf;
-    private BitSet asciiMoves = new BitSet();
+
+    // Really need to get rid of the following two fields.
+    // What a Rube Goldberg contraption this is!
+    // In general, any time the index value is used, 
+    // we should be using a direct reference to this NfaState object
+    // And any references to the so-called epsilonMovesString 
+    // usually as a map key should
+    // also be a reference to the NfaState object.
+    // It's as if the person who wrote this code thought that the only 
+    // key->value arrangement was String->int or String->int[]
+    // Totally bizarre.
+    private int index = -1;
+    private String epsilonMovesString;
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -106,7 +117,7 @@ public class NfaState {
         // REVISIT: The following line does not seem necessary, but I have it there
         // to replicate legacy behavior just in case.
 //        Collections.sort(epsilonMoves, (state1, state2) -> state1.index-state2.index);
-        return epsilonMoves;
+        return new ArrayList<>(epsilonMoves);
     }
     
     boolean hasAsciiMove(int c) {
@@ -255,7 +266,6 @@ public class NfaState {
     }
 
     void generateNextStatesCode() {
-//        if (next.usefulEpsilonMoveCount > 0) {
         if (next.getEpsilonMoveCount() > 0) {
             next.generateEpsilonMovesString();
         }
@@ -263,6 +273,7 @@ public class NfaState {
 
     private void generateEpsilonMovesString() {
         int[] stateNames = new int[getEpsilonMoveCount()];
+        List<NfaState> states = new ArrayList<>();
         if (getEpsilonMoveCount() > 0) {
             epsilonMovesString = "{ ";
             int idx =0;
@@ -273,6 +284,7 @@ public class NfaState {
                     }
                     lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
                     stateNames[idx] = epsilonMove.index;
+                    states.add(epsilonMove);
                     epsilonMovesString += epsilonMove.index + ", ";
                     if (idx++ > 0 && idx % 16 == 0)
                         epsilonMovesString += "\n";
@@ -282,6 +294,7 @@ public class NfaState {
         }
         if (epsilonMovesString != null) {
             lexicalState.getNfaData().getAllNextStates().put(epsilonMovesString, stateNames);
+            lexicalState.getNfaData().getAllNextStateSets().put(this, states);
         }
     }
 
@@ -309,19 +322,18 @@ public class NfaState {
         return false;
     }
 
-    int getFirstValidPos(String s, int i, int len) {
-        do {
-            if (canMoveUsingChar(s.codePointAt(i)))
+    int getFirstValidPos(String s, int start, int len) {
+        for (int i=start; i< len; i++) {
+            if (canMoveUsingChar(s.codePointAt(i))) {
                 return i;
-        } while (++i < len);
-        return i;
+            }
+        }
+        return len;
     }
 
     int moveFrom(int c, List<NfaState> newStates) {
         if (canMoveUsingChar(c)) {
-            for (int i = next.epsilonMoves.size(); i-- > 0;) {
-                newStates.add(next.epsilonMoves.get(i));
-            }
+            newStates.addAll(next.epsilonMoves);
             return getKindToPrint();
         }
         return Integer.MAX_VALUE;

@@ -45,14 +45,23 @@ public class NfaData {
     final private LexicalStateData lexicalState;
     final private Grammar grammar;
     final private LexerData lexerData;
-    private int[][] intermediateMatchedPos;
     private int dummyStateIndex = -1;
     private Map<String, int[]> compositeStateTable = new HashMap<>();
     private List<Map<String, long[]>> statesForPos;
     private List<Map<String, BitSet>> stateSetForPos;
+    // Need to replace the following with the one after it.
+    // In general, all the structures with int[] should be replaced
+    // by simply referring directly to the NfaState object
     private Map<String, int[]> allNextStates = new HashMap<>();
+    private Map<NfaState, List<NfaState>> allNextStateSets = new HashMap<>();
     private List<NfaState> allStates = new ArrayList<>();
 
+
+    // The first index is the ordinal of the regular expression type,
+    // that is always a string literal. The  second index is 
+    // character offsets into the string literal, still trying to 
+    // figure this out, but getting there...
+    private int[][] intermediateMatchedPos;
 
     List<NfaState> indexedAllStates = new ArrayList<>();
     Map<String, Integer> stateIndexFromComposite = new HashMap<>();
@@ -80,6 +89,10 @@ public class NfaData {
 
     Map<String, int[]> getAllNextStates() {
         return allNextStates;
+    }
+
+    Map<NfaState, List<NfaState>> getAllNextStateSets() {
+        return allNextStateSets;
     }
 
     public int[] nextStatesFromKey(String key) {
@@ -258,7 +271,7 @@ public class NfaData {
         return false;
     }
 
-
+//What a total Rube Goldberg contraption!
     void generateNfaStartStates() {
         Set<NfaState> seenStates = new HashSet<>();
         Map<String, String> stateSets = new HashMap<String, String>();
@@ -282,7 +295,7 @@ public class NfaData {
             }
             String image = re.getImage();
             int ordinal = re.getOrdinal();
-            List<NfaState> oldStates = new ArrayList<NfaState>(initialState.getEpsilonMoves());
+            List<NfaState> oldStates = initialState.getEpsilonMoves();
             intermediateMatchedPos[ordinal] = new int[image.length()];
             int jjmatchedPos = 0;
             int kind = Integer.MAX_VALUE;
