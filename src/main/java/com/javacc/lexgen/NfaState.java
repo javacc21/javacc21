@@ -49,23 +49,19 @@ public class NfaState {
     private List<Integer> rangeMovesRightSide = new ArrayList<>();
     private String epsilonMovesString;
     private NfaState next;
-    final private int id;
     private boolean isFinal;
     private int usefulEpsilonMoveCount;
     private int nonAsciiMethod = -1;
-    private boolean composite;
-    private int[] nonAsciiMoveIndices;
+    private List<Integer> nonAsciiMoveIndices;
     private List<Integer> loByteVec = new ArrayList<>();
     private int index = -1;
     private int inNextOf;
-    private int[] compositeStates;
     private BitSet asciiMoves = new BitSet();
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
         this.grammar = lexicalState.getGrammar();
         this.lexerData = grammar.getLexerData();
-        id = lexicalState.getNfaData().getAllStates().size();
         lexicalState.getNfaData().getAllStates().add(this);
     }
 
@@ -83,17 +79,11 @@ public class NfaState {
         this.isFinal = b;
     }
 
-    void setComposite(boolean composite) {this.composite = composite;}
-
-    int[] getCompositeStates() {return this.compositeStates;}
-
-    void setCompositeStates(int[] compositeStates) {this.compositeStates = compositeStates;}
-
     public int getNonAsciiMethod() {
         return nonAsciiMethod;
     }
 
-    public int[] getNonAsciiMoveIndices() {
+    public List<Integer> getNonAsciiMoveIndices() {
         return nonAsciiMoveIndices;
     }
 
@@ -116,7 +106,7 @@ public class NfaState {
     List<NfaState> getEpsilonMoves() {
         // REVISIT: The following line does not seem necessary, but I have it there
         // to replicate legacy behavior just in case.
-        Collections.sort(epsilonMoves, (state1, state2) -> state1.id-state2.id);
+//        Collections.sort(epsilonMoves, (state1, state2) -> state1.index-state2.index);
         return epsilonMoves;
     }
     
@@ -138,10 +128,6 @@ public class NfaState {
 
     public LexicalStateData getLexicalState() {
         return lexicalState;
-    }
-
-    public boolean isComposite() {
-        return composite;
     }
 
     public NfaState getNext() {
@@ -176,7 +162,7 @@ public class NfaState {
     }
 
     void addCharMove(int c) {
-        if (c < 128) {// ASCII 
+        if (c < 128) {
             asciiMoves.set(c);
         } else {
              rangeMovesLeftSide.add(c);
@@ -365,7 +351,7 @@ public class NfaState {
             }
         }
         BitSet superfluousSubsets = new BitSet();
-        ArrayList<Integer> indices = new ArrayList<>();
+        nonAsciiMoveIndices = new ArrayList<>();
         // The following 40-odd lines of code constitute a space
         // optimization. Commenting it all out produces
         // larger (redundant) XXXLexer.java files, but it all still works!
@@ -402,7 +388,7 @@ public class NfaState {
                     lohiByteTable.put(bitVector, ind = lohiByteCount);
                     lexerData.incrementLohiByteCount();
                 }
-                indices.add(ind);
+                nonAsciiMoveIndices.add(ind);
                 bitVector = bitSetToLong(subSet);
                 if ((ind = lohiByteTable.get(bitVector)) == null) {
                     allBitVectors.add(bitVector);
@@ -410,15 +396,11 @@ public class NfaState {
                     lohiByteTable.put(bitVector, ind = lohiByteCount);
                     lexerData.incrementLohiByteCount();
                 }
-                indices.add(ind);
+                nonAsciiMoveIndices.add(ind);
             }
         }
 // Up to here is just a space optimization. (Gradually coming to an understanding of this...)
-// Without the space optimization, the nonAsciiMoveIndices array is empty, since count is zero!        
-        nonAsciiMoveIndices = new int[indices.size()];
-        for (int i =0; i<indices.size(); i++) {
-            nonAsciiMoveIndices[i] = indices.get(i);
-        }
+// Without the space optimization, the nonAsciiMoveIndices array is empty
         for (int i = 0; i < 256; i++) {
             if (!superfluousSubsets.get(i)) {
                 Map<String, Integer> lohiByteTable = lexerData.getLoHiByteTable();
@@ -454,7 +436,7 @@ public class NfaState {
             NfaState state = nonAsciiTableForMethod.get(i);
             if (loByteVec != null && loByteVec.equals(state.loByteVec) 
                     && nonAsciiMoveIndices != null 
-                    && Arrays.equals(nonAsciiMoveIndices, state.nonAsciiMoveIndices)) {
+                    && nonAsciiMoveIndices.equals(state.nonAsciiMoveIndices)) {
                 nonAsciiMethod = i;
                 return;
             }
@@ -484,9 +466,6 @@ public class NfaState {
     }
 
     private boolean isMoveState(NfaState other, int byteNum) {
-        if (other.composite) {
-            return false;
-        }
         if (this.next.type != other.next.type) {
             return false;
         }

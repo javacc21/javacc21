@@ -52,6 +52,7 @@ public class NfaData {
     private Map<String, int[]> allNextStates = new HashMap<>();
     private List<NfaState> allStates = new ArrayList<>();
 
+
     List<NfaState> indexedAllStates = new ArrayList<>();
     Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     NfaState initialState;
@@ -137,7 +138,7 @@ public class NfaData {
             allStates.add(null);
         }
         for (NfaState state : v) {
-            if (state.getIndex() != -1 /*&& state != singlesToSkip*/)
+            if (state.getIndex() != -1)
                 allStates.set(state.getIndex(), state);
         }
     }
@@ -151,13 +152,6 @@ public class NfaData {
         if (nameSet.length == 1) {
             stateIndexFromComposite.put(stateSetString, nameSet[0]);
             return nameSet[0];
-        }
-        for (int i = 0; i < nameSet.length; i++) {
-            if (nameSet[i] != -1) {
-                NfaState state = indexedAllStates.get(nameSet[i]);
-                state.setComposite(true);
-                state.setCompositeStates(nameSet);
-            }
         }
         while (toRet < nameSet.length && (indexedAllStates.get(nameSet[toRet]).getInNextOf() > 1)) {
             toRet++;
@@ -399,6 +393,7 @@ public class NfaData {
                && !lexicalState.isMixedCase() 
                && lexicalState.getMaxStringIndex() > 0;
     }
+
 
     public List<List<NfaState>> partitionStatesSetForAscii(NfaState[] states) {
         int[] cardinalities = new int[states.length];
