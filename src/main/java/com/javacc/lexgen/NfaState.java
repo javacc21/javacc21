@@ -50,7 +50,6 @@ public class NfaState {
     private String epsilonMovesString;
     private NfaState next;
     private boolean isFinal;
-    private int usefulEpsilonMoveCount;
     private int nonAsciiMethod = -1;
     private List<Integer> nonAsciiMoveIndices;
     private List<Integer> loByteVec = new ArrayList<>();
@@ -123,7 +122,8 @@ public class NfaState {
     }
 
     boolean hasEpsilonMoves() {
-        return usefulEpsilonMoveCount > 0;
+//        return getEpsilonMovesString() != null;
+         return getEpsilonMoveCount() >0;
     }
 
     public LexicalStateData getLexicalState() {
@@ -142,8 +142,8 @@ public class NfaState {
         return next.type == null ? Integer.MAX_VALUE : next.type.getOrdinal();
     }
 
-    public int getUsefulEpsilonMoves() {
-        return usefulEpsilonMoveCount;
+    public int getEpsilonMoveCount() {
+        return epsilonMoves.size();
     }
 
     public boolean isNeeded(int byteNum) {
@@ -181,7 +181,7 @@ public class NfaState {
         }
     }
 
-    boolean closureDone = false;
+    private boolean closureDone = false;
 
     /**
      * This function computes the closure and also updates the kind so that any
@@ -248,34 +248,33 @@ public class NfaState {
         }
         for (Iterator<NfaState> it = epsilonMoves.iterator(); it.hasNext();) {
             NfaState state = it.next();
-            if (state.hasTransitions()) {
-                usefulEpsilonMoveCount++;
-            } else {
+            if (!state.hasTransitions()) {
                 it.remove();
             }
         }
     }
 
     void generateNextStatesCode() {
-        if (next.usefulEpsilonMoveCount > 0) {
+//        if (next.usefulEpsilonMoveCount > 0) {
+        if (next.getEpsilonMoveCount() > 0) {
             next.generateEpsilonMovesString();
         }
     }
 
     private void generateEpsilonMovesString() {
-        int[] stateNames = new int[usefulEpsilonMoveCount];
-        if (usefulEpsilonMoveCount > 0) {
-            usefulEpsilonMoveCount = 0;
+        int[] stateNames = new int[getEpsilonMoveCount()];
+        if (getEpsilonMoveCount() > 0) {
             epsilonMovesString = "{ ";
+            int idx =0;
             for (NfaState epsilonMove : epsilonMoves) {
                 if (epsilonMove.hasTransitions()) {
                     if (epsilonMove.index == -1) {
                         epsilonMove.generateCode();
                     }
                     lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
-                    stateNames[usefulEpsilonMoveCount] = epsilonMove.index;
+                    stateNames[idx] = epsilonMove.index;
                     epsilonMovesString += epsilonMove.index + ", ";
-                    if (usefulEpsilonMoveCount++ > 0 && usefulEpsilonMoveCount % 16 == 0)
+                    if (idx++ > 0 && idx % 16 == 0)
                         epsilonMovesString += "\n";
                 }
             }

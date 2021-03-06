@@ -37,8 +37,9 @@ import com.javacc.parser.tree.RegexpStringLiteral;
 
 /**
  * Class to hold the data for generating the NFA's for 
- * regular expressions
- */
+ * regular expressions. Each lexical state
+ * has one NfaData object.
+ */ 
 public class NfaData {
 
     final private LexicalStateData lexicalState;
