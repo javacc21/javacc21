@@ -58,30 +58,26 @@
   private int jjmatchedKind;
   private TokenType matchedType;
   private String inputSource = "input";
+
+ [#macro BitSetFromLongArray bitSet]
+      BitSet.valueOf(new long[] {
+          [#list bitSet.toLongArray() as long]
+             ${utils.toHexStringL(long)}
+             [#if long_has_next],[/#if]
+          [/#list]
+      })
+[/#macro]
   
  
-      // BitSet for TOKEN
-      static private BitSet tokenSet = BitSet.valueOf(new long[] {
-          [#list lexerData.tokenSet.toLongArray() as long]${long}L,[/#list]
-      });
+    static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
+                                specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
+                                skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
+                                moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
-      // BitSet for SKIP
-      static private BitSet skipSet = BitSet.valueOf(new long[] {
-          [#list lexerData.skipSet.toLongArray() as long]${long}L,[/#list]
-      });
+    static private final int STATE_SET_SIZE = ${lexerData.stateSetSize};
 
-      // BitSet for SPECIAL
-      static private BitSet specialSet = BitSet.valueOf(new long[] {
-          [#list lexerData.specialSet.toLongArray() as long]${long}L,[/#list]
-      });      
-
-      // BitSet for MORE
-      static private BitSet moreSet = BitSet.valueOf(new long[] {
-          [#list lexerData.moreSet.toLongArray() as long]${long}L,[/#list]
-      });      
-
-    private final int[] jjrounds = new int[${lexerData.stateSetSize}];
-    private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
+    private final int[] jjrounds = new int[STATE_SET_SIZE];
+    private final int[] jjstateSet = new int[2*STATE_SET_SIZE];
 
     private final StringBuilder image = new StringBuilder();
     private int matchedCharsLength;
@@ -391,7 +387,6 @@
   since (and I don't like it) the DumpXXX macros
   build up the lexerData.orderedStateSet structure
 --]  
-
   private static final int[] jjnextStates = {
 [#var count=0]    
 [#list lexerData.orderedStateSet as set]
@@ -403,3 +398,4 @@
     [/#list]
 [/#list]
   };
+
