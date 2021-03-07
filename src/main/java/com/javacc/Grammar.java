@@ -1188,6 +1188,11 @@ public class Grammar extends BaseNode {
             return ParseException.addEscapes(input);
         }
 
+        public long[] bitSetToLongArray(BitSet bs, int numLongs) {
+            long[] longs = bs.toLongArray();
+            return Arrays.copyOf(longs, numLongs);
+        }
+
         public boolean isBitSet(long num, int bit) {
             return (num & (1L<<bit)) != 0;
         }

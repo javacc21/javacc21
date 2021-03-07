@@ -433,7 +433,7 @@
 
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
   [#var dfaData = lexicalState.dfaData] 
-  [#var statesForPos=lexicalState.nfaData.statesForPos]
+  [#var stateSetForPos = lexicalState.nfaData.stateSetForPos]
   [#var maxKindsReqd=(1+lexicalState.maxStringIndex/64)?int]
   [#var ind=0]
   [#var maxStringIndex=lexicalState.maxStringIndex]
@@ -467,11 +467,12 @@
         if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
         switch (pos) {
   [#list 0..(maxStringLength-1) as i]
-	 [#if statesForPos[i]??]
+	 [#if stateSetForPos[i]??]
             case ${i} :
-        [#list statesForPos[i]?keys as stateSetString]
+        [#list stateSetForPos[i]?keys as stateSetString]
            [#var condGenerated=false]
-           [#var actives=statesForPos[i][stateSetString]]
+           [#var activeSet=stateSetForPos[i][stateSetString]]
+           [#var actives = utils.bitSetToLongArray(activeSet, maxKindsReqd)]
            [#list 0..(maxKindsReqd-1) as j]
              [#if actives[j] != 0]
                [#if !condGenerated]

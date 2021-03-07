@@ -110,24 +110,8 @@ public class NfaData {
         return allStates;
     }
 
-    /**
-     * Messy method to convert to the data structure
-     * used from the NfaCode.java.ftl template. FIXME
-     */
-    public List<Map<String, long[]>> getStatesForPos() {
-        List<Map<String, long[]>> result = new ArrayList<>();
-        final int maxKindsReqd = lexicalState.getMaxStringIndex() / 64 + 1;
-        for (Map<String, BitSet> map : stateSetForPos) {
-            Map<String, long[]> newMap = new HashMap<>();
-            for (String key : map.keySet()) {
-                BitSet bs = map.get(key);
-                long[] actives = bs.toLongArray();
-                actives = Arrays.copyOf(actives, maxKindsReqd);
-                newMap.put(key, actives);
-            }
-            result.add(newMap);
-        }
-        return result;
+    public List<Map<String, BitSet>> getStateSetForPos() {
+        return stateSetForPos;
     }
     
     void generateData() {
@@ -381,19 +365,13 @@ public class NfaData {
 
     public int getStateSetForKind(int pos, int kind) {
         if (!lexicalState.isMixedCase() && !indexedAllStates.isEmpty()) {
-            Map<String, long[]> allStateSets = getStatesForPos().get(pos);
-            if (allStateSets == null)
-                return -1;
-            for (String s : allStateSets.keySet()) {
-                long[] actives = allStateSets.get(s);
-
+            Map<String, BitSet> sets = stateSetForPos.get(pos);
+            for (String s: sets.keySet()) {
+                BitSet activeSet = sets.get(s);
                 s = s.substring(s.indexOf(", ") + 2);
                 s = s.substring(s.indexOf(", ") + 2);
-
-                if (s.equals("null;"))
-                    continue;
-
-                if (actives != null && (actives[kind / 64] & (1L << (kind % 64))) != 0L) {
+                if (s.equals("null;")) continue;
+                if (activeSet.get(kind)) {
                     return addStartStateSet(s);
                 }
             }

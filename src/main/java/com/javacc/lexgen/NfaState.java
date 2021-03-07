@@ -242,9 +242,14 @@ public class NfaState {
     }
 
     void optimizeEpsilonMoves() { 
-        while (!epsilonClosure());
+        while (!epsilonClosure()) ;
         epsilonMoves.removeIf(state->!state.hasTransitions());
     }
+
+    /*
+     * This method really needs to be cleaned up. Everything
+     * it does can be expressed much more economically, I'm sure.
+     */
 
     public String getEpsilonMovesString() {
         List<NfaState> states = new ArrayList<>();
