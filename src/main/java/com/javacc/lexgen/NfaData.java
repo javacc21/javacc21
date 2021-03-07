@@ -62,9 +62,9 @@ public class NfaData {
     // character offsets into the string literal, still trying to 
     // figure this out, but getting there...
     private int[][] intermediateMatchedPos;
+    private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
 
     List<NfaState> indexedAllStates = new ArrayList<>();
-    Map<String, Integer> stateIndexFromComposite = new HashMap<>();
 
 
     NfaData(LexicalStateData lexicalState) {
@@ -131,7 +131,9 @@ public class NfaData {
     }
     
     void generateData() {
-        for (NfaState state : allStates) state.optimizeEpsilonMoves();
+        for (NfaState state : allStates) {
+            state.optimizeEpsilonMoves();
+        }
         for (NfaState epsilonMove : initialState.getEpsilonMoves()) {
             epsilonMove.generateCode();
         }
@@ -230,7 +232,7 @@ public class NfaData {
 
     public int initStateName() {
         String s = initialState.getEpsilonMovesString();
-        if (initialState.hasEpsilonMoves()) {
+        if (initialState.getEpsilonMoveCount() > 0) {
             return stateIndexFromComposite.get(s);
         }
         return -1;
@@ -403,49 +405,6 @@ public class NfaData {
         return indexedAllStates.size() != 0 
                && !lexicalState.isMixedCase() 
                && lexicalState.getMaxStringIndex() > 0;
-    }
-
-
-    public List<List<NfaState>> partitionStatesSetForAscii(NfaState[] states) {
-        int[] cardinalities = new int[states.length];
-        List<NfaState> original = new ArrayList<>(Arrays.asList(states));
-        List<List<NfaState>> partition = new ArrayList<>();
-        int cnt = 0;
-        for (int i = 0; i < states.length; i++) {
-            NfaState state = states[i];
-            if (!state.getAsciiMoveSet().isEmpty()) {
-                int p = state.getAsciiMoveSet().cardinality();
-                int j;
-                for (j = 0; j < i; j++) {
-                    if (cardinalities[j] <= p) break;
-                }
-                for (int k = i; k > j; k--) {
-                    cardinalities[k] = cardinalities[k - 1];
-                }
-                cardinalities[j] = p;
-                original.add(j, state);
-                cnt++;
-            }
-        }
-        original = original.subList(0, cnt);
-        while (original.size() > 0) {
-            NfaState state = original.get(0);
-            original.remove(state);
-            BitSet bitVec = (BitSet) state.getAsciiMoveSet().clone();
-            List<NfaState> subSet = new ArrayList<NfaState>();
-            subSet.add(state);
-            for (Iterator<NfaState> it = original.iterator(); it.hasNext();) {
-                NfaState otherState = it.next();
-                BitSet otherSet = (BitSet) otherState.getAsciiMoveSet().clone();
-                if (!otherSet.intersects(bitVec)) {
-                    bitVec.or(otherSet);
-                    subSet.add(otherState);
-                    it.remove();
-                }
-            }
-            partition.add(subSet);
-        }
-        return partition;
     }
 
     public List<List<NfaState>> partitionStatesSetForAscii(NfaState[] states, int byteNum) {
