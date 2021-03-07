@@ -52,12 +52,14 @@
 <target name="parser-gen" depends="init" unless="parser.uptodate">
 	<echo>Using Bootstrap JavaCC to regenerate JavaCC parser</echo>
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
+     <assertions><enable/></assertions>
  	   <arg line="-n -q -d ../java src/main/grammars/JavaCC.javacc"/>
  	</java>
   </target>
 <target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
 	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
+     <assertions><enable/></assertions>
  	   <arg line="-n -q -d ../../src/main/java examples/preprocessor/Preprocessor.javacc"/>
  	</java>
   </target>

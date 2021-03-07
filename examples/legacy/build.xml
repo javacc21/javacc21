@@ -6,7 +6,8 @@
  <target name="test" description="run functional test cases">
 	    <delete dir="test.tmp" />
 	    <mkdir dir="test.tmp" />
-	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+			<assertions><enable/></assertions>
 	    	<arg line="-q -d ${outputdir}/CORBA-IDL ${basedir}/CORBA-IDL/IDL.javacc"/>
 		</java>
 	    <javac srcdir="${outputdir}/CORBA-IDL"
@@ -43,7 +44,8 @@
 	      </fileset>
 	    </copy>
 
-	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+			<assertions><enable/></assertions>
 	    	<arg value="-q"/>
 	    	<arg value="-d"/>
 			<arg value="${outputdir}/GUIParsing/ParserVersion"/>
@@ -63,7 +65,8 @@
 	      </fileset>
 	    </copy>
 
-	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+			<assertions><enable/></assertions>
 	    	<arg value="-q"/>
 	    	<arg value="-d"/>
 			<arg value="${outputdir}/Interpreter"/>
@@ -90,9 +93,8 @@
 	          inputstring="3"
 	          outputproperty="spl.out1"
 	    >
+		  <assertions><enable/></assertions>
 	      <arg line="test.tmp/Interpreter/fact.spl" />
-	      	                <assertions><enable/></assertions>
-
 	    </java>
 	    <echo>${spl.out1}</echo>
 	    <fail message="SPLParser fact parse failed">
@@ -126,8 +128,8 @@
 	          inputstring="9"
 	          outputproperty="spl.out3"
 	    >
+		  <assertions><enable/></assertions>
 	      <arg line="test.tmp/Interpreter/sqrt.spl" />
-   	                <assertions><enable/></assertions>
 	    </java>
 	    <echo>${spl.out3}</echo>
 	    <fail message="SPLParser sqrt parse failed">
@@ -141,7 +143,8 @@
 		<echo>Interpreter test succeeded.</echo>
 	    <echo />
 	    
-	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+		    <assertions><enable/></assertions>
 	    	<arg value="-q"/>
 	    	<arg value="-d"/>
 			<arg value="${outputdir}/TreeBuildingExamples.eg1"/>
@@ -181,6 +184,7 @@
 	    </copy>
 
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+		    <assertions><enable/></assertions>
 	    	<arg value="-q"/>
 	    	<arg value="-d"/>
 			<arg value="${outputdir}/TreeBuildingExamples.eg2"/>
@@ -219,7 +223,8 @@
 	      </fileset>
 	    </copy>
 
-	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+		    <assertions><enable/></assertions>
 	    	<arg value="-q"/>
 	    	<arg value="-d"/>
 			<arg value="${outputdir}/TreeBuildingExamples.eg3"/>
@@ -236,7 +241,7 @@
 	          inputstring="(a + b) * (c + 1);"
 	          outputproperty="jjtree.eg3.out"
 	    >
-	    	      	                <assertions><enable/></assertions>
+	    	<assertions><enable/></assertions>
 	    </java>
 	    <echo>${jjtree.eg3.out}</echo>
 	    <fail message="JJTree eg3 parse failed">
@@ -250,21 +255,24 @@
 	    
 	    <echo>TreeBuildingExamples succeeded</echo>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/Lookahead.eg1"/>
 		 <arg value="${basedir}/Lookahead/Example1.javacc"/>
 	 </java>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/Lookahead.eg2"/>
 		 <arg value="${basedir}/Lookahead/Example2.javacc"/>
 	 </java>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/Lookahead.eg4"/>
@@ -272,59 +280,66 @@
 	 </java>
 
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/Lookahead.eg5"/>
 		 <arg value="${basedir}/Lookahead/Example5.javacc"/>
 	 </java>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/Lookahead.eg6"/>
 		 <arg value="${basedir}/Lookahead/Example6.javacc"/>
 	 </java>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/Lookahead.eg7"/>
 		 <arg value="${basedir}/Lookahead/Example7.javacc"/>
 	 </java>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/Lookahead.eg8"/>
 		 <arg value="${basedir}/Lookahead/Example8.javacc"/>
 	 </java>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/Lookahead.eg9"/>
 		 <arg value="${basedir}/Lookahead/Example9.javacc"/>
 	 </java>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/Lookahead.eg10"/>
 		 <arg value="${basedir}/Lookahead/Example10.javacc"/>
-
 	 </java>
 
 	 <echo>Lookahead examples succeeded</echo>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/MailProcessing"/>
 		 <arg value="${basedir}/MailProcessing/Digest.javacc"/>
 	 </java>
 
-	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
+	    <assertions><enable/></assertions>
     	<arg value="-q"/>
     	<arg value="-d"/>
 		 <arg value="${outputdir}/MailProcessing"/>

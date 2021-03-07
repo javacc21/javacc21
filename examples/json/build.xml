@@ -13,12 +13,14 @@
    </target>
    <target name="parser1-gen" unless="parser1.uptodate">
         <mkdir dir="../../bin"/>
-        <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
+        <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" fork="true" failonerror="true">
+            <assertions><enable/></assertions>
             <arg line="-n -q ${basedir}/JSON.javacc"/>
         </java>
    </target>
    <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
-         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
+         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
+            <assertions><enable/></assertions>
             <arg line="${basedir}/JSONC.javacc -q -n"/>
         </java>
    </target>
@@ -35,7 +37,8 @@
             Now test a few files I grabbed with various non-European characters
             This might not display correctly on the terminal you are using!
       </echo>
-      <java classname="JSONTest" classpath="."  failonerror="true">
+      <java classname="JSONTest" classpath="."  failonerror="true" fork="true">
+          <assertions><enable/></assertions>
           <arg value="${basedir}/testfiles/Mono.WebAssembly.Build.targets.buildschema.json"/>
           <arg value="${basedir}/testfiles/package.nls.ko.json"/>
           <arg value="${basedir}/testfiles/package.nls.ru.json"/>
@@ -44,7 +47,8 @@
       <echo>
          Now test the JSONC parser on a file with errors
       </echo>
-      <java classname="JSONCTest" classpath="." failonerror="true">
+      <java classname="JSONCTest" classpath="." failonerror="true" fork="true">
+            <assertions><enable/></assertions>
           <arg value="${basedir}/testfiles/invalid.json"/>
       </java>
    </target>

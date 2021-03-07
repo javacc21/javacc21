@@ -13,24 +13,31 @@
 </target>
 
 <target name="build" depends="init">
-    <java failonerror="true" classname="com.javacc.Main" 
+    <java fork="true" failonerror="true" classname="com.javacc.Main" 
           classpath="${basedir}/../../build:${basedir}/../../bin/javacc.jar:${basedir}/../../bin/freemarker.jar">
       <arg line="-q -n ${basedir}/FEL.javacc"/>
+      <assertions enableSystemAssertions="true"/>
     </java>
-    <java failonerror="true" classname="com.javacc.Main" 
+    <java fork="true" failonerror="true" classname="com.javacc.Main" 
           classpath="${basedir}/../../build:${basedir}/../../bin/javacc.jar:${basedir}/../../bin/freemarker.jar">
           <arg line="-q -n ${basedir}/FTL.javacc"/>     
+            <assertions><enable/></assertions>
     </java>      
     <javac classpath="." debug="on" srcdir="." includeantruntime="no"  fork="true" failonerror="true"/>
 </target>
 
 <target name="test" depends="build">
      <echo>Here is a really simple FEL example: 2+2</echo>
-     <java fork="true" failonerror="true" classname="fel.FELParser" inputstring="2+2"/>
+     <java fork="true" failonerror="true" classname="fel.FELParser" inputstring="2+2">
+        <assertions><enable/></assertions>
+     </java>
      <echo>Okay, a bit more complex example now: x.y.z(foo, &quot;bar&quot;)?upper_case</echo>
-     <java fork="true" failonerror="true" classname="fel.FELParser" inputstring='x.y.z(foo, "bar")?upper_case'/>
+     <java fork="true" failonerror="true" classname="fel.FELParser" inputstring='x.y.z(foo, "bar")?upper_case'>
+        <assertions><enable/></assertions>
+     </java>
 	 <echo>Now let's try out the full FTL parser on the templates used in JavaCC</echo>
      <java fork="true" failonerror="true" classname="ftl.FTLParser">
+       <assertions><enable/></assertions>
      	 <arg value = "../../src/main/resources/templates/java"/>
 	 </java>
 </target>
