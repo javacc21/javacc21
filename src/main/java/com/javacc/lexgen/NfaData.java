@@ -48,7 +48,6 @@ public class NfaData {
     NfaState initialState;
     private int dummyStateIndex = -1;
     private Map<String, int[]> compositeStateTable = new HashMap<>();
-    private List<Map<String, long[]>> statesForPos;
     private List<Map<String, BitSet>> stateSetForPos;
     // Need to replace the following with the one after it.
     // In general, all the structures with int[] should be replaced
@@ -111,9 +110,25 @@ public class NfaData {
         return allStates;
     }
 
-    public List<Map<String, long[]>> getStatesForPos() {return statesForPos;}
-
-    public List<Map<String, BitSet>> getStateSetForPos() {return stateSetForPos;}
+    /**
+     * Messy method to convert to the data structure
+     * used from the NfaCode.java.ftl template. FIXME
+     */
+    public List<Map<String, long[]>> getStatesForPos() {
+        List<Map<String, long[]>> result = new ArrayList<>();
+        final int maxKindsReqd = lexicalState.getMaxStringIndex() / 64 + 1;
+        for (Map<String, BitSet> map : stateSetForPos) {
+            Map<String, long[]> newMap = new HashMap<>();
+            for (String key : map.keySet()) {
+                BitSet bs = map.get(key);
+                long[] actives = bs.toLongArray();
+                actives = Arrays.copyOf(actives, maxKindsReqd);
+                newMap.put(key, actives);
+            }
+            result.add(newMap);
+        }
+        return result;
+    }
     
     void generateData() {
         for (NfaState state : allStates) state.optimizeEpsilonMoves();
@@ -272,16 +287,11 @@ public class NfaData {
         Set<NfaState> seenStates = new HashSet<>();
         Map<String, String> stateSets = new HashMap<String, String>();
         String stateSetString = "";
-        int maxKindsReqd = lexicalState.getMaxStringIndex() / 64 + 1;
-        long[] actives;
-        BitSet activeSet = new BitSet();
         List<NfaState> newStates = new ArrayList<>();
 
-        statesForPos = new ArrayList<>();
         stateSetForPos = new ArrayList<>();
         
         for (int k = 0; k < lexicalState.getMaxStringLength(); k++) {
-            statesForPos.add(new HashMap<>());
             stateSetForPos.add(new HashMap<>());
         }
         intermediateMatchedPos = new int[lexicalState.getMaxStringIndex() + 1][];
@@ -329,15 +339,12 @@ public class NfaData {
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();
-                if ((actives = (statesForPos.get(charOffset).get(kind + ", " + jjmatchedPos + ", "
-                        + stateSetString))) == null) {
-                    actives = new long[maxKindsReqd];
-                    statesForPos.get(charOffset).put(kind + ", " + jjmatchedPos + ", " + stateSetString,
-                            actives);
-                    stateSetForPos.get(charOffset).put(kind + ", " + jjmatchedPos + ", " + stateSetString,
-                            activeSet);
+                String key =kind + ", " + jjmatchedPos + ", " + stateSetString;
+                BitSet activeSet= stateSetForPos.get(charOffset).get(key);
+                if (activeSet == null) {
+                    activeSet = new BitSet();
+                    stateSetForPos.get(charOffset).put(key, activeSet);
                 }
-                actives[ordinal / 64] |= 1L << (ordinal % 64);
                 activeSet.set(ordinal);
             }
         }
@@ -372,7 +379,7 @@ public class NfaData {
 
     public int getStateSetForKind(int pos, int kind) {
         if (!lexicalState.isMixedCase() && !indexedAllStates.isEmpty()) {
-            Map<String, long[]> allStateSets = statesForPos.get(pos);
+            Map<String, long[]> allStateSets = getStatesForPos().get(pos);
             if (allStateSets == null)
                 return -1;
             for (String s : allStateSets.keySet()) {
@@ -481,7 +488,6 @@ public class NfaData {
         }
         return partition;
     }
-
 
     static private int numberOfBitsSet(long l) {
         int ret = 0;
