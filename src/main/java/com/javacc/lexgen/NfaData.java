@@ -45,6 +45,7 @@ public class NfaData {
     final private LexicalStateData lexicalState;
     final private Grammar grammar;
     final private LexerData lexerData;
+    NfaState initialState;
     private int dummyStateIndex = -1;
     private Map<String, int[]> compositeStateTable = new HashMap<>();
     private List<Map<String, long[]>> statesForPos;
@@ -65,7 +66,6 @@ public class NfaData {
 
     List<NfaState> indexedAllStates = new ArrayList<>();
     Map<String, Integer> stateIndexFromComposite = new HashMap<>();
-    NfaState initialState;
 
 
     NfaData(LexicalStateData lexicalState) {
@@ -211,10 +211,6 @@ public class NfaData {
                 if (nameSet1[i] == nameSet2[j])
                     return true;
         return false;
-    }
-
-    boolean intersect(NfaState state1, NfaState state2) {
-        return intersect(state1.getEpsilonMovesString(), state2.getEpsilonMovesString());
     }
 
     public int initStateName() {

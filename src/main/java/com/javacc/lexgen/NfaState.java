@@ -36,7 +36,9 @@ import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
 
 /**
- * The state of a Non-deterministic Finite Automaton.
+ * Class representing the state of a Non-deterministic Finite Automaton (NFA)
+ * Note that any given lexical state is implemented as an NFA.
+ * Thus, any given NfaState object is associated with one lexical state.
  */
 public class NfaState {  
 
@@ -464,14 +466,19 @@ public class NfaState {
             epsilonMovesString = "null;";
         lexicalState.getNfaData().addStartStateSet(epsilonMovesString);
     }
+
+    public boolean intersects(NfaState other) {
+        Set<NfaState> tempSet = new HashSet<>(epsilonMoves);
+        tempSet.retainAll(other.epsilonMoves);
+        return !tempSet.isEmpty();
+    }
     
     public boolean isNextIntersects() {
         for (NfaState state : lexicalState.getNfaData().getAllStates()) {
             if (this == state || state.index == -1 || index == state.index
                     || (state.nonAsciiMethod == -1))
                 continue;
-
-            if (lexicalState.getNfaData().intersect(state.next.getEpsilonMovesString(), next.getEpsilonMovesString())) {
+            if (intersects(state.next)) {
                 return true;
             }
         }
@@ -488,14 +495,10 @@ public class NfaState {
         if (byteNum >=0 && !this.asciiMoves.equals(other.asciiMoves)) {
             return false;
         }
-//        if (this.next.getEpsilonMovesString() == null || other.next.getEpsilonMovesString() == null) {
-//            return false;
-//        }
         if (this.next.epsilonMoves.isEmpty() || other.next.epsilonMoves.isEmpty()) {
             return false;
         }
         return this.next.epsilonMoves.equals(other.next.epsilonMoves);
-//        return this.next.getEpsilonMovesString().equals(other.next.getEpsilonMovesString());
     }
 
     public List<NfaState> getMoveStates(int byteNum, BitSet statesAlreadyHandled) {
