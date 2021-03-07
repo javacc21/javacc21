@@ -87,7 +87,8 @@
 			   failonerror="true"
 		       fork="true"/>
 
-	    <java failonerror="true" fork="true" 
+	    <java failonerror="true" 
+		      fork="true" 
 	          classname="SPLParser" 
 	          classpath="${outputdir}/Interpreter/"
 	          inputstring="3"
@@ -105,7 +106,8 @@
 	     </condition>
 	    </fail>
 		<echo>Interpreter test succeeded.</echo>
-	    <java failonerror="true" fork="true" 
+	    <java failonerror="true" 
+		      fork="true" 
 	          classname="SPLParser" 
 	          classpath="test.tmp/Interpreter/"
 	          inputstring="3"
@@ -122,7 +124,8 @@
 	      </not>
 	     </condition>
 	    </fail>
-	    <java failonerror="true" fork="true" 
+	    <java failonerror="true" 
+		      fork="true" 
 	          classname="SPLParser" 
 	          classpath="test.tmp/Interpreter/"
 	          inputstring="9"
@@ -163,7 +166,7 @@
 	          inputstring="(a + b) * (c + 1);"
 	          outputproperty="jjtree.eg1.out"
 	    >
-	    	                <assertions><enable/></assertions>
+	    	<assertions><enable/></assertions>
 	    </java>
 	    <echo>${jjtree.eg1.out}</echo>
 	    <fail message="JJTree eg1 parse failed">
@@ -183,7 +186,7 @@
 	      </fileset>
 	    </copy>
 
-	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true">
+	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 		    <assertions><enable/></assertions>
 	    	<arg value="-q"/>
 	    	<arg value="-d"/>
@@ -203,7 +206,7 @@
 	          inputstring="(a + b) * (c + 1);"
 	          outputproperty="jjtree.eg2.out"
 	    >
-	    	                <assertions><enable/></assertions>
+	    	  <assertions><enable/></assertions>
 	    </java>
 	    <echo>${jjtree.eg2.out}</echo>
 	    <fail message="JJTree eg2 parse failed">

@@ -55,7 +55,6 @@ public class NfaState {
     private List<Integer> loByteVec = new ArrayList<>();
     private int inNextOf;
 
-    // Really need to get rid of the following two fields.
     // What a Rube Goldberg contraption this is!
     // In general, any time the index value is used, 
     // we should be using a direct reference to this NfaState object
@@ -66,7 +65,7 @@ public class NfaState {
     // key->value arrangement was String->int or String->int[]
     // Totally bizarre.
     private int index = -1;
-    private String epsilonMovesString;
+//    private String epsilonMovesString;
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -133,7 +132,6 @@ public class NfaState {
     }
 
     boolean hasEpsilonMoves() {
-//        return getEpsilonMovesString() != null;
          return getEpsilonMoveCount() >0;
     }
 
@@ -173,15 +171,18 @@ public class NfaState {
     }
 
     void addCharMove(int c) {
+        addRange(c, c);
+/*        
         if (c < 128) {
             asciiMoves.set(c);
         } else {
              rangeMovesLeftSide.add(c);
              rangeMovesRightSide.add(c);
-        }
+        }*/
     }
 
     void addRange(int left, int right) {
+        assert right>=left;
         for (int c = left; c <=right && c<128; c++) {
             asciiMoves.set(c);
         }
@@ -266,15 +267,26 @@ public class NfaState {
     }
 
     void generateNextStatesCode() {
-        if (next.getEpsilonMoveCount() > 0) {
-            next.generateEpsilonMovesString();
-        }
+        next.getEpsilonMovesString();
     }
 
-    private void generateEpsilonMovesString() {
-        int[] stateNames = new int[getEpsilonMoveCount()];
+    public String getEpsilonMovesString() {
         List<NfaState> states = new ArrayList<>();
+        if (getEpsilonMoveCount() > 0 && lexicalState.getNfaData().getAllNextStateSets().get(this)== null) {
+            for (NfaState epsilonMove : epsilonMoves) {
+                if (epsilonMove.hasTransitions()) {
+                    if (epsilonMove.index == -1) {
+                        epsilonMove.generateCode();
+                    }
+                    lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
+                    states.add(epsilonMove);
+                }
+            }
+            lexicalState.getNfaData().getAllNextStateSets().put(this, states);
+        }
+        String epsilonMovesString = null;
         if (getEpsilonMoveCount() > 0) {
+            int[] stateNames = new int[getEpsilonMoveCount()];
             epsilonMovesString = "{ ";
             int idx =0;
             for (NfaState epsilonMove : epsilonMoves) {
@@ -284,23 +296,13 @@ public class NfaState {
                     }
                     lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
                     stateNames[idx] = epsilonMove.index;
-                    states.add(epsilonMove);
                     epsilonMovesString += epsilonMove.index + ", ";
                     if (idx++ > 0 && idx % 16 == 0)
                         epsilonMovesString += "\n";
                 }
             }
             epsilonMovesString += "};";
-        }
-        if (epsilonMovesString != null) {
-            lexicalState.getNfaData().getAllNextStates().put(epsilonMovesString, stateNames);
-            lexicalState.getNfaData().getAllNextStateSets().put(this, states);
-        }
-    }
-
-    public String getEpsilonMovesString() {
-        if (epsilonMovesString == null) {
-            generateEpsilonMovesString();
+            lexicalState.getNfaData().getAllNextStates().put(epsilonMovesString, stateNames);            
         }
         return epsilonMovesString;
     }
@@ -457,7 +459,7 @@ public class NfaState {
     }
 
     void generateInitMoves() {
-        getEpsilonMovesString();
+        String epsilonMovesString = getEpsilonMovesString();
         if (epsilonMovesString == null)
             epsilonMovesString = "null;";
         lexicalState.getNfaData().addStartStateSet(epsilonMovesString);
@@ -469,7 +471,7 @@ public class NfaState {
                     || (state.nonAsciiMethod == -1))
                 continue;
 
-            if (lexicalState.getNfaData().intersect(state.next.epsilonMovesString, next.epsilonMovesString)) {
+            if (lexicalState.getNfaData().intersect(state.next.getEpsilonMovesString(), next.getEpsilonMovesString())) {
                 return true;
             }
         }
@@ -486,10 +488,14 @@ public class NfaState {
         if (byteNum >=0 && !this.asciiMoves.equals(other.asciiMoves)) {
             return false;
         }
-        if (this.next.epsilonMovesString == null || other.next.epsilonMovesString == null) {
+//        if (this.next.getEpsilonMovesString() == null || other.next.getEpsilonMovesString() == null) {
+//            return false;
+//        }
+        if (this.next.epsilonMoves.isEmpty() || other.next.epsilonMoves.isEmpty()) {
             return false;
         }
-        return this.next.epsilonMovesString.equals(other.next.epsilonMovesString);
+        return this.next.epsilonMoves.equals(other.next.epsilonMoves);
+//        return this.next.getEpsilonMovesString().equals(other.next.getEpsilonMovesString());
     }
 
     public List<NfaState> getMoveStates(int byteNum, BitSet statesAlreadyHandled) {

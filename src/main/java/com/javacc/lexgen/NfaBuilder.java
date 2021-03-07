@@ -77,17 +77,12 @@ public class NfaBuilder extends Node.Visitor {
         if (charList.isNegated()) {
             descriptors = removeNegation(descriptors);
         }
-        NfaState startState = start = new NfaState(lexicalState);
-        NfaState finalState = end = new NfaState(lexicalState);
+        start = new NfaState(lexicalState);
+        end = new NfaState(lexicalState);
         for (CharacterRange cr : descriptors) {
-            if (cr.isSingleChar()) {
-//            if (false) {
-                startState.addCharMove(cr.left);
-            } else {
-                startState.addRange(cr.left, cr.right);
-            }
+            start.addRange(cr.left, cr.right);
         }
-        startState.setNext(finalState);
+        start.setNext(end);
     }
 
     public void visit(OneOrMoreRegexp oom) {
