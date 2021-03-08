@@ -138,7 +138,7 @@
         + curChar + ") at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
     [/#if]
       switch (curChar) {
-    [#list dfaData.rearrange(table) as key]
+    [#list table?keys as key]
        [#var info = dfaData.getKindInfo(table, key)]
 	    [#var c = dfaData.codePointAsString(key)]
        [#var ifGenerated=false]

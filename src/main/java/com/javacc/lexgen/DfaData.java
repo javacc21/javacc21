@@ -203,16 +203,9 @@ public class DfaData {
         }
     }
 
-    static public List<Integer> rearrange(Map<Integer, KindInfo> table) {
-    	List<Integer> result = new ArrayList<>(table.keySet());
-    	Collections.sort(result);
-    	return result;
-    }
-
     // This and the following method are just temporary kludges
     // prior to a more complete refactoring.
     // These methods are only called from the DfaCode.java.ftl template.
-
     public KindInfo getKindInfo(Map<Integer, KindInfo> table, int key) {
         return table.get(key);
     }
