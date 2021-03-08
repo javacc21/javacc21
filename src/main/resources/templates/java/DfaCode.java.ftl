@@ -140,7 +140,7 @@
       switch (curChar) {
     [#list table?keys as key]
        [#var info = dfaData.getKindInfo(table, key)]
-	    [#var c = dfaData.codePointAsString(key)]
+	    [#var c = utils.codePointAsString(key)]
        [#var ifGenerated=false]
 	   [#if dfaData.generateDfaCase(key, info, table_index)]
 	      [#-- We know key is a single character.... --]

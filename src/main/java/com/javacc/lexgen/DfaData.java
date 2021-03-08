@@ -203,14 +203,11 @@ public class DfaData {
         }
     }
 
-    // This and the following method are just temporary kludges
+    // This method is just a temporary kludge
     // prior to a more complete refactoring.
-    // These methods are only called from the DfaCode.java.ftl template.
+    // It is only called from the DfaCode.java.ftl template.
     public KindInfo getKindInfo(Map<Integer, KindInfo> table, int key) {
         return table.get(key);
     }
 
-    public String codePointAsString(int ch) {
-        return new String(new int[]{ch}, 0, 1);
-    }
 }

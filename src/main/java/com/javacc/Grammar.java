@@ -1192,6 +1192,11 @@ public class Grammar extends BaseNode {
             long[] longs = bs.toLongArray();
             return Arrays.copyOf(longs, numLongs);
         }
+        
+        public String codePointAsString(int ch) {
+            return new String(new int[]{ch}, 0, 1);
+        }
+
 
         public boolean isBitSet(long num, int bit) {
             return (num & (1L<<bit)) != 0;

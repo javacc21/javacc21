@@ -55,17 +55,8 @@ public class NfaData {
     private Map<String, int[]> allNextStates = new HashMap<>();
     private Map<NfaState, List<NfaState>> allNextStateSets = new HashMap<>();
     private List<NfaState> allStates = new ArrayList<>();
-
-
-    // The first index is the ordinal of the regular expression type,
-    // that is always a string literal. The  second index is 
-    // character offsets into the string literal, still trying to 
-    // figure this out, but getting there...
-    private int[][] intermediateMatchedPos;
     private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
-
     List<NfaState> indexedAllStates = new ArrayList<>();
-
 
     NfaData(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -280,7 +271,6 @@ public class NfaData {
         for (int k = 0; k < lexicalState.getMaxStringLength(); k++) {
             stateSetForPos.add(new HashMap<>());
         }
-        intermediateMatchedPos = new int[lexicalState.getMaxStringIndex() + 1][];
         for (RegularExpression re : lexerData.getRegularExpressions()) {
             if (!lexicalState.containsRegularExpression(re) || !(re instanceof RegexpStringLiteral)) {
                 continue;
@@ -288,29 +278,28 @@ public class NfaData {
             String image = re.getImage();
             int ordinal = re.getOrdinal();
             List<NfaState> oldStates = initialState.getEpsilonMoves();
-            intermediateMatchedPos[ordinal] = new int[image.length()];
-            int jjmatchedPos = 0;
+            int[] positions = new int[image.length()];
+            int matchedPosition = 0;
             int kind = Integer.MAX_VALUE;
             for (int charOffset = 0; charOffset < image.length(); charOffset++) {
                 if (oldStates == null || oldStates.isEmpty()) {
                     // Here, charOffset > 0
-                    jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = intermediateMatchedPos[ordinal][charOffset - 1];
+                    matchedPosition = positions[charOffset] = positions[charOffset - 1];
                 } else {
                     kind = moveFromSet(image.codePointAt(charOffset), oldStates, newStates);
                     oldStates.clear();
                     if (lexicalState.getDfaData().getStrKind(image.substring(0, charOffset + 1)) < kind) {
-                        jjmatchedPos = 0;
+                        matchedPosition = 0;
                     } else if (kind != Integer.MAX_VALUE) {
-                        jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = charOffset;
+                        matchedPosition = positions[charOffset] = charOffset;
                     } 
                     else if (charOffset>0) {
-                        jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = intermediateMatchedPos[ordinal][charOffset - 1];
+                        matchedPosition = positions[charOffset] = positions[charOffset - 1];
                     }
                     stateSetString = getStateSetString(newStates);
                 }
                 if (kind == Integer.MAX_VALUE && (newStates == null || newStates.size() == 0))
                     continue;
-
                 if (stateSets.get(stateSetString) == null) {
                     stateSets.put(stateSetString, stateSetString);
                     for (NfaState state : newStates) {
@@ -325,7 +314,7 @@ public class NfaData {
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();
-                String key =kind + ", " + jjmatchedPos + ", " + stateSetString;
+                String key =kind + ", " + matchedPosition + ", " + stateSetString;
                 BitSet activeSet= stateSetForPos.get(charOffset).get(key);
                 if (activeSet == null) {
                     activeSet = new BitSet();
