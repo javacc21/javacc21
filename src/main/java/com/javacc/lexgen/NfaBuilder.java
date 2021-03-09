@@ -63,11 +63,8 @@ public class NfaBuilder extends Node.Visitor {
 
     void buildStates(RegularExpression regularExpression) {
         visit(regularExpression);
-        end.setFinal(true);
         end.setType(regularExpression);
-        NfaState initialState = lexicalState.getInitialState();
-        initialState.addEpsilonMove(start);
-//        lexicalState.getInitialState().addEpsilonMove(start);
+        lexicalState.getInitialState().addEpsilonMove(start);
     }
 
     public void visit(CharacterList charList) {
@@ -84,7 +81,7 @@ public class NfaBuilder extends Node.Visitor {
         for (CharacterRange cr : descriptors) {
             start.addRange(cr.left, cr.right);
         }
-        start.setNext(end);
+        start.setNextState(end);
     }
 
     public void visit(OneOrMoreRegexp oom) {
@@ -123,7 +120,7 @@ public class NfaBuilder extends Node.Visitor {
                 state.addCharMove(Character.toUpperCase(ch));
             }
             end = new NfaState(lexicalState);
-            state.setNext(end);
+            state.setNextState(end);
             state = end;
         }
     }

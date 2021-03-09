@@ -51,8 +51,7 @@ public class NfaState {
     private BitSet asciiMoves = new BitSet();
     private List<Integer> rangeMovesLeftSide = new ArrayList<>();
     private List<Integer> rangeMovesRightSide = new ArrayList<>();
-    private NfaState next;
-    private boolean isFinal;
+    private NfaState nextState;
     private int nonAsciiMethod = -1;
     private List<Integer> nonAsciiMoveIndices;
     private List<Integer> loByteVec = new ArrayList<>();
@@ -82,16 +81,6 @@ public class NfaState {
         return index;
     }
 
-    RegularExpression getType() {return type;}
-
-    void setType(RegularExpression type) {
-        this.type = type;
-    }
-
-    void setFinal(boolean b) {
-        this.isFinal = b;
-    }
-
     public int getNonAsciiMethod() {
         return nonAsciiMethod;
     }
@@ -116,6 +105,16 @@ public class NfaState {
         return asciiMoves;
     }
 
+    public int getInNextOf() {
+        return inNextOf;
+    }
+
+    RegularExpression getType() {return type;}
+
+    void setType(RegularExpression type) {
+        this.type = type;
+    }
+
     List<NfaState> getEpsilonMoves() {
         // REVISIT: The following line does not seem necessary, but I have it there
         // to replicate legacy behavior just in case.
@@ -127,10 +126,6 @@ public class NfaState {
         return asciiMoves.get(c);
     }
 
-    public int getInNextOf() {
-        return inNextOf;
-    }
-
     void incrementInNextOf() {
         this.inNextOf++;
     }
@@ -139,16 +134,16 @@ public class NfaState {
         return lexicalState;
     }
 
-    public NfaState getNext() {
-        return next;
+    public NfaState getNextState() {
+        return nextState;
     }
 
-    void setNext(NfaState next) {
-        this.next = next;
+    void setNextState(NfaState nextState) {
+        this.nextState = nextState;
     }
 
     public int getKindToPrint() {
-        return next.type == null ? Integer.MAX_VALUE : next.type.getOrdinal();
+        return nextState.type == null ? Integer.MAX_VALUE : nextState.type.getOrdinal();
     }
 
     public int getEpsilonMoveCount() {
@@ -222,13 +217,13 @@ public class NfaState {
     void generateCode() {
         if (index != -1)
             return;
-        if (next != null) {
-            next.generateCode();
+        if (nextState != null) {
+            nextState.generateCode();
         }
         if (index == -1 && hasTransitions()) {
             this.index = lexicalState.getIndexedAllStates().size();
             lexicalState.getIndexedAllStates().add(this);
-            next.getEpsilonMovesString();
+            nextState.getEpsilonMovesString();
         }
     }
 
@@ -302,7 +297,7 @@ public class NfaState {
 
     int moveFrom(int c, List<NfaState> newStates) {
         if (canMoveUsingChar(c)) {
-            newStates.addAll(next.epsilonMoves);
+            newStates.addAll(nextState.epsilonMoves);
             return getKindToPrint();
         }
         return Integer.MAX_VALUE;
@@ -359,23 +354,27 @@ public class NfaState {
                 }
             }
             if (!commonSet.isEmpty()) {
-                Integer ind;
                 String bitVector = bitSetToLong(commonSet);
-                Map<String, Integer> lohiByteTable = lexerData.getLoHiByteTable();
+                Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
                 List<String> allBitVectors = lexerData.getAllBitVectors();
-                if ((ind = lohiByteTable.get(bitVector)) == null) {
+                List<BitSet> allBitSets = lexerData.getAllBitSets();
+                Integer ind = lohiByteLookup.get(commonSet);
+                if (ind == null) {
                     allBitVectors.add(bitVector);
+                    allBitSets.add(commonSet);
 
                     int lohiByteCount = lexerData.getLohiByteCount();
-                    lohiByteTable.put(bitVector, ind = lohiByteCount);
+                    ind = lohiByteCount;
+                    lohiByteLookup.put(commonSet, ind);
                     lexerData.incrementLohiByteCount();
                 }
                 nonAsciiMoveIndices.add(ind);
                 bitVector = bitSetToLong(subSet);
-                if ((ind = lohiByteTable.get(bitVector)) == null) {
+                if ((ind = lohiByteLookup.get(subSet)) == null) {
                     allBitVectors.add(bitVector);
                     int lohiByteCount = lexerData.getLohiByteCount();
-                    lohiByteTable.put(bitVector, ind = lohiByteCount);
+                    ind = lohiByteCount;
+                    lohiByteLookup.put(subSet, ind);
                     lexerData.incrementLohiByteCount();
                 }
                 nonAsciiMoveIndices.add(ind);
@@ -385,15 +384,18 @@ public class NfaState {
 // Without the space optimization, the nonAsciiMoveIndices array is empty
         for (int i = 0; i < 256; i++) {
             if (!superfluousSubsets.get(i)) {
-                Map<String, Integer> lohiByteTable = lexerData.getLoHiByteTable();
+                Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
                 BitSet subSet = charMoves.get(256*i, 256*(i+1));
                 String longsString = bitSetToLong(subSet);
                 List<String> allBitVectors = lexerData.getAllBitVectors();
-                Integer ind = lohiByteTable.get(longsString);
+                List<BitSet> allBitSets = lexerData.getAllBitSets();
+                Integer ind = lohiByteLookup.get(subSet);
                 if (ind == null) {
                     allBitVectors.add(longsString);
+                    allBitSets.add(subSet);
                     int lohiByteCount = lexerData.getLohiByteCount();
-                    lohiByteTable.put(longsString, ind = lohiByteCount);
+                    ind = lohiByteCount;
+                    lohiByteLookup.put(subSet, ind);
                     lexerData.incrementLohiByteCount();
                 }
                 loByteVec.add(i);
@@ -445,7 +447,7 @@ public class NfaState {
             if (this == state || state.index == -1 || index == state.index
                     || (state.nonAsciiMethod == -1))
                 continue;
-            if (intersects(state.next)) {
+            if (intersects(state.nextState)) {
                 return true;
             }
         }
@@ -453,7 +455,7 @@ public class NfaState {
     }
 
     private boolean isMoveState(NfaState other, int byteNum) {
-        if (this.next.type != other.next.type) {
+        if (this.nextState.type != other.nextState.type) {
             return false;
         }
         if (byteNum < 0 && this.nonAsciiMethod != other.nonAsciiMethod) {
@@ -462,10 +464,10 @@ public class NfaState {
         if (byteNum >=0 && !this.asciiMoves.equals(other.asciiMoves)) {
             return false;
         }
-        if (this.next.epsilonMoves.isEmpty() || other.next.epsilonMoves.isEmpty()) {
+        if (this.nextState.epsilonMoves.isEmpty() || other.nextState.epsilonMoves.isEmpty()) {
             return false;
         }
-        return this.next.epsilonMoves.equals(other.next.epsilonMoves);
+        return this.nextState.epsilonMoves.equals(other.nextState.epsilonMoves);
     }
 
     public List<NfaState> getMoveStates(int byteNum, BitSet statesAlreadyHandled) {
