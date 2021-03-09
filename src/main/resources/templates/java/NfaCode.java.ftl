@@ -159,7 +159,7 @@
         [@DumpCompositeStatesMovesNonAscii lexicalState, key, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
-      [#if state.index>=0&&!statesDumped.get(state.index)&&state.hasTransitions()]
+      [#if state.index>=0&&!statesDumped.get(state.index)]
          [#var toPrint=""]
          [#if state.neededNonAscii]
             ${toPrint}
@@ -178,7 +178,7 @@
         [@DumpAsciiCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
-      [#if state.index>=0&&!statesDumped.get(state.index)&&state.hasTransitions()]
+      [#if state.index>=0&&!statesDumped.get(state.index)]
          [#var toPrint=""]
          [#if state.isNeeded(byteNum)]
             ${toPrint}

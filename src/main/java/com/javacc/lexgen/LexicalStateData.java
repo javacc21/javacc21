@@ -113,7 +113,7 @@ public class LexicalStateData {
     }
 
     public boolean getCreateStartNfa() {
-        return !mixedCase && nfaData.indexedAllStates.size() != 0;
+        return !mixedCase && !nfaData.indexedAllStates.isEmpty();
     }
 
     public boolean containsRegularExpression(RegularExpression re) {

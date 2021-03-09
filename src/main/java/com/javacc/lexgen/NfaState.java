@@ -194,36 +194,27 @@ public class NfaState {
      * in the epsilon moves that might have a lower kind of token number for the
      * same length.
      */
-    private boolean epsilonClosure() {
-        boolean finished = true;
+    void doEpsilonClosure() {
         if (closureDone) {
-            return finished;
+            return;
         }
         closureDone = true;
         // Recursively do closure
         for (NfaState state : new ArrayList<>(epsilonMoves)) {
-            finished = state.epsilonClosure();
+            state.doEpsilonClosure();
             if (type == null || (state.type != null && state.type.getOrdinal() < type.getOrdinal())) {
                 type = state.type;
             } 
             for (NfaState otherState : state.epsilonMoves) {
-                if (otherState.isUsefulState()) {
-                    addEpsilonMove(otherState);
-                    finished = false;
-                } 
+                addEpsilonMove(otherState);
+                otherState.doEpsilonClosure();
             }
         }
-        if (hasTransitions()) {
-            addEpsilonMove(this);
-        }
-        return finished;
+        addEpsilonMove(this);
+        epsilonMoves.removeIf(state->!state.hasTransitions());
     }
 
-    private boolean isUsefulState() {
-        return isFinal || hasTransitions();
-    }
-
-    public boolean hasTransitions() {
+    private boolean hasTransitions() {
         return !asciiMoves.isEmpty()
                 || !rangeMovesLeftSide.isEmpty();
     }
@@ -239,11 +230,6 @@ public class NfaState {
             lexicalState.getIndexedAllStates().add(this);
             next.getEpsilonMovesString();
         }
-    }
-
-    void optimizeEpsilonMoves() { 
-        while (!epsilonClosure()) ;
-        epsilonMoves.removeIf(state->!state.hasTransitions());
     }
 
     /*

@@ -32,7 +32,6 @@ package com.javacc.lexgen;
 import java.util.*;
 import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
-import com.javacc.parser.ParseException;
 import com.javacc.parser.tree.RegexpStringLiteral;
 
 /**
@@ -45,7 +44,6 @@ public class NfaData {
     final private LexicalStateData lexicalState;
     final private Grammar grammar;
     final private LexerData lexerData;
-    NfaState initialState;
     private int dummyStateIndex = -1;
     private Map<String, int[]> compositeStateTable = new HashMap<>();
     private List<Map<String, BitSet>> stateSetForPos;
@@ -57,6 +55,7 @@ public class NfaData {
     private List<NfaState> allStates = new ArrayList<>();
     private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     List<NfaState> indexedAllStates = new ArrayList<>();
+    NfaState initialState;
 
     NfaData(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -107,7 +106,7 @@ public class NfaData {
     
     void generateData() {
         for (NfaState state : allStates) {
-            state.optimizeEpsilonMoves();
+            state.doEpsilonClosure();
         }
         for (NfaState epsilonMove : initialState.getEpsilonMoves()) {
             epsilonMove.generateCode();
@@ -333,25 +332,6 @@ public class NfaData {
         return result;
     }
 
-    String getLabel(int kind) {
-        RegularExpression re = lexerData.getRegularExpression(kind);
-
-        if (re instanceof RegexpStringLiteral)
-            return " \"" + ParseException.addEscapes(re.getImage()) + "\"";
-        else if (!re.getLabel().equals(""))
-            return " <" + re.getLabel() + ">";
-        else
-            return " <token of kind " + kind + ">";
-    }
-
-    int getLine(int kind) {
-        return lexerData.getRegularExpression(kind).getBeginLine();
-    }
-
-    int getColumn(int kind) {
-        return lexerData.getRegularExpression(kind).getBeginColumn();
-    }
-
     public int getStateSetForKind(int pos, int kind) {
         if (!lexicalState.isMixedCase() && !indexedAllStates.isEmpty()) {
             Map<String, BitSet> sets = stateSetForPos.get(pos);
@@ -369,7 +349,7 @@ public class NfaData {
     }
 
     public boolean getDumpNfaStarts() {
-        return indexedAllStates.size() != 0 
+        return !indexedAllStates.isEmpty()
                && !lexicalState.isMixedCase() 
                && lexicalState.getMaxStringIndex() > 0;
     }
