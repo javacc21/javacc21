@@ -264,9 +264,7 @@ public class NfaData {
         Map<String, String> stateSets = new HashMap<String, String>();
         String stateSetString = "";
         List<NfaState> newStates = new ArrayList<>();
-
         stateSetForPos = new ArrayList<>();
-        
         for (int k = 0; k < lexicalState.getMaxStringLength(); k++) {
             stateSetForPos.add(new HashMap<>());
         }
@@ -276,12 +274,12 @@ public class NfaData {
             }
             String image = re.getImage();
             int ordinal = re.getOrdinal();
-            List<NfaState> oldStates = initialState.getEpsilonMoves();
+            List<NfaState> oldStates = new ArrayList<>(initialState.getEpsilonMoves());
             int[] positions = new int[image.length()];
             int matchedPosition = 0;
             int kind = Integer.MAX_VALUE;
             for (int charOffset = 0; charOffset < image.length(); charOffset++) {
-                if (oldStates == null || oldStates.isEmpty()) {
+                if (oldStates.isEmpty()) {
                     // Here, charOffset > 0
                     matchedPosition = positions[charOffset] = positions[charOffset - 1];
                 } else {

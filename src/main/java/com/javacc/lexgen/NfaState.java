@@ -115,11 +115,8 @@ public class NfaState {
         this.type = type;
     }
 
-    List<NfaState> getEpsilonMoves() {
-        // REVISIT: The following line does not seem necessary, but I have it there
-        // to replicate legacy behavior just in case.
-//        Collections.sort(epsilonMoves, (state1, state2) -> state1.index-state2.index);
-        return new ArrayList<>(epsilonMoves);
+    Set<NfaState> getEpsilonMoves() {
+        return epsilonMoves;
     }
     
     boolean hasAsciiMove(int c) {
@@ -256,6 +253,7 @@ public class NfaState {
             epsilonMovesString += "};";
             nfaData.getAllNextStates().put(epsilonMovesString, stateNames);            
         }
+        if (epsilonMovesString == null) epsilonMovesString = "null;";
         return epsilonMovesString;
     }
 
@@ -274,15 +272,6 @@ public class NfaState {
                 break;
         }
         return false;
-    }
-
-    int getFirstValidPos(String s, int start, int len) {
-        for (int i=start; i< len; i++) {
-            if (canMoveUsingChar(s.codePointAt(i))) {
-                return i;
-            }
-        }
-        return len;
     }
 
     int moveFrom(int c, List<NfaState> newStates) {
@@ -420,10 +409,7 @@ public class NfaState {
     }
 
     void generateInitMoves() {
-        String epsilonMovesString = getEpsilonMovesString();
-        if (epsilonMovesString == null)
-            epsilonMovesString = "null;";
-        nfaData.addStartStateSet(epsilonMovesString);
+        nfaData.addStartStateSet(getEpsilonMovesString());
     }
 
     boolean intersects(NfaState other) {
@@ -472,18 +458,14 @@ public class NfaState {
     }
 
     /**
-     * @param byteNum
-     *            either 0 or 1
+     * @param byteNum either 0 or 1
      */
     public boolean isOnlyState(int byteNum) {
         for (NfaState state : nfaData.getAllStates()) {
             BitSet bs = new BitSet();
             bs.or(asciiMoves);
             bs.and(state.asciiMoves);
-            boolean intersects = bs.cardinality() > 0;
-            if (intersects) {
-                intersects = byteNum == 0 ? bs.previousSetBit(63) >=0 : bs.nextSetBit(64) >=0;
-            }
+            boolean intersects = byteNum == 0 ? bs.previousSetBit(63) >=0 : bs.nextSetBit(64) >=0;
             if (state.index != -1 && state.index != this.index && state.isNeeded(byteNum) && intersects) {
                 return false;
             }
