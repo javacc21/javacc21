@@ -67,7 +67,7 @@ public class NfaState {
     // key->value arrangement was String->int or String->int[]
     // Totally bizarre.
     private int index = -1;
-//    private String epsilonMovesString;
+    private String epsilonMovesString;
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -231,37 +231,27 @@ public class NfaState {
      * This method really needs to be cleaned up. Everything
      * it does can be expressed much more economically, I'm sure.
      */
-
     public String getEpsilonMovesString() {
-        List<NfaState> states = new ArrayList<>();
-        if (getEpsilonMoveCount() > 0 && nfaData.getAllNextStateSets().get(this)== null) {
+        if (nfaData.getAllNextStateSets().get(this)== null) {
+            List<NfaState> states = new ArrayList<>();
             for (NfaState epsilonMove : epsilonMoves) {
-                if (epsilonMove.hasTransitions()) {
-                    if (epsilonMove.index == -1) {
-                        epsilonMove.generateCode();
-                    }
-                    lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
-                    states.add(epsilonMove);
-                }
+                epsilonMove.generateCode();
+                lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
+                states.add(epsilonMove);
             }
             nfaData.getAllNextStateSets().put(this, states);
         }
-        String epsilonMovesString = null;
-        if (getEpsilonMoveCount() > 0) {
+        if (epsilonMovesString == null && getEpsilonMoveCount() > 0) {
             int[] stateNames = new int[getEpsilonMoveCount()];
-            epsilonMovesString = "{ ";
+            epsilonMovesString = "{";
             int idx =0;
             for (NfaState epsilonMove : epsilonMoves) {
-                if (epsilonMove.hasTransitions()) {
-                    if (epsilonMove.index == -1) {
-                        epsilonMove.generateCode();
-                    }
-                    lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
-                    stateNames[idx] = epsilonMove.index;
-                    epsilonMovesString += epsilonMove.index + ", ";
-                    if (idx++ > 0 && idx % 16 == 0)
-                        epsilonMovesString += "\n";
-                }
+                epsilonMove.generateCode();
+                lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
+                stateNames[idx] = epsilonMove.index;
+                epsilonMovesString += epsilonMove.index + ",";
+                if (idx++ > 0 && idx % 16 == 0)
+                    epsilonMovesString += "\n";
             }
             epsilonMovesString += "};";
             nfaData.getAllNextStates().put(epsilonMovesString, stateNames);            

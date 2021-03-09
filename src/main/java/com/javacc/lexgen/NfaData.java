@@ -113,7 +113,7 @@ public class NfaData {
         }
         if (!indexedAllStates.isEmpty()) {
             initialState.generateCode();
-            initialState.generateInitMoves();
+            addStartStateSet(initialState.getEpsilonMovesString());
         }
         int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
         if (initialState.getType() != null && initialOrdinal != 0) {
@@ -335,13 +335,13 @@ public class NfaData {
     public int getStateSetForKind(int pos, int kind) {
         if (!lexicalState.isMixedCase() && !indexedAllStates.isEmpty()) {
             Map<String, BitSet> sets = stateSetForPos.get(pos);
-            for (String s: sets.keySet()) {
-                BitSet activeSet = sets.get(s);
-                s = s.substring(s.indexOf(", ") + 2);
-                s = s.substring(s.indexOf(", ") + 2);
-                if (s.equals("null;")) continue;
+            for (String key: sets.keySet()) {
+                BitSet activeSet = sets.get(key);
+                key = key.substring(key.indexOf(", ") + 2);
+                key = key.substring(key.indexOf(", ") + 2);
+                if (key.equals("null;")) continue;
                 if (activeSet.get(kind)) {
-                    return addStartStateSet(s);
+                    return addStartStateSet(key);
                 }
             }
         }
