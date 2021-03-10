@@ -47,11 +47,9 @@ public class NfaData {
     private int dummyStateIndex = -1;
     private Map<String, int[]> compositeStateTable = new HashMap<>();
     private List<Map<String, BitSet>> stateSetForPos;
-    // Need to replace the following with the one after it.
     // In general, all the structures with int[] should be replaced
     // by simply referring directly to the NfaState object
     private Map<String, int[]> allNextStates = new HashMap<>();
-    private Map<NfaState, List<NfaState>> allNextStateSets = new HashMap<>();
     private List<NfaState> allStates = new ArrayList<>();
     private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     List<NfaState> indexedAllStates = new ArrayList<>();
@@ -78,10 +76,6 @@ public class NfaData {
 
     Map<String, int[]> getAllNextStates() {
         return allNextStates;
-    }
-
-    Map<NfaState, List<NfaState>> getAllNextStateSets() {
-        return allNextStateSets;
     }
 
     public int[] nextStatesFromKey(String key) {

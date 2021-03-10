@@ -220,27 +220,14 @@ public class NfaState {
         }
     }
 
-    /*
-     * This method really needs to be cleaned up. Everything
-     * it does can be expressed much more economically, I'm sure.
-     */
     public String getEpsilonMovesString() {
-        if (nfaData.getAllNextStateSets().get(this)== null) {
-            List<NfaState> states = new ArrayList<>();
-            for (NfaState epsilonMove : epsilonMoves) {
-                epsilonMove.generateCode();
-                lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
-                states.add(epsilonMove);
-            }
-            nfaData.getAllNextStateSets().put(this, states);
-        }
         if (epsilonMovesString == null && !epsilonMoves.isEmpty()) {
             int[] stateNames = new int[getEpsilonMoveCount()];
             epsilonMovesString = "{";
             int idx =0;
             for (NfaState epsilonMove : epsilonMoves) {
                 epsilonMove.generateCode();
-                lexicalState.getIndexedAllStates().get(epsilonMove.index).inNextOf++;
+                epsilonMove.inNextOf++;
                 stateNames[idx++] = epsilonMove.index;
                 epsilonMovesString += epsilonMove.index + ",";
             }
@@ -400,10 +387,6 @@ public class NfaState {
         }
         nonAsciiMethod = nonAsciiTableForMethod.size();
         nonAsciiTableForMethod.add(this);
-    }
-
-    void generateInitMoves() {
-        nfaData.addStartStateSet(getEpsilonMovesString());
     }
 
     boolean intersects(NfaState other) {
