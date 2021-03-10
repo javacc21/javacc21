@@ -321,7 +321,6 @@ public class NfaState {
                 if (ind == null) {
                     allBitVectors.add(bitVector);
                     allBitSets.add(commonSet);
-
                     int lohiByteCount = lexerData.getLohiByteCount();
                     ind = lohiByteCount;
                     lohiByteLookup.put(commonSet, ind);

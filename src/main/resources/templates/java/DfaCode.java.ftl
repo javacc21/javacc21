@@ -44,9 +44,10 @@
   [#var maxStringLength=lexicalState.maxStringLength]
   [#var maxStringIndex=lexicalState.maxStringIndex]
   [#var maxStringLengthForActive=dfaData.maxStringLengthForActive]
+  [#var hasNfa = lexicalState.numStates>0]
   [#if maxStringLength = 0]
     private int jjMoveStringLiteralDfa0_${lexicalState.name}() {
-    [#if lexicalState.hasNfa()]
+    [#if hasNfa]
         return jjMoveNfa_${lexicalState.name}(${initState}, 0);
     [#else]
         return 1;        
@@ -84,7 +85,7 @@
            [/#if]
          [/#list]
          [/@ArgsList] == 0L)
-         [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
+         [#if !lexicalState.mixedCase&&hasNfa]
             return jjStartNfa_${lexicalState.name}
             [@ArgsList]
                ${table_index-2}
@@ -96,7 +97,7 @@
                  [/#if]
                [/#list]
             [/@ArgsList];
-         [#elseif lexicalState.hasNfa()]
+         [#elseif hasNfa]
             return jjMoveNfa_${lexicalState.name}(${initState}, ${table_index-1});
          [#else]
             return ${table_index};
@@ -107,7 +108,7 @@
            curChar = retval;
        }
        else  {
-         [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
+         [#if !lexicalState.mixedCase&&hasNfa]
            jjStopStringLiteralDfa_${lexicalState.name}[@ArgsList]
               ${table_index-1}
            [#list 0..maxStringIndex/64 as k]
@@ -121,7 +122,7 @@
              LOGGER.info("    Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token. ");
           }
            return ${table_index};
-         [#elseif lexicalState.hasNfa()]
+         [#elseif hasNfa]
            return jjMoveNfa_${lexicalState.name}(${initState}, ${table_index-1}); 
          [#else]
            return ${table_index};
@@ -199,7 +200,7 @@
 	           [/@ArgsList];
 	      [#else][#-- a very special case--]
 	        [#if table_index = 0&&lexicalState.mixedCase]
-	           [#if lexicalState.hasNfa()]
+	           [#if hasNfa]
 	           return jjMoveNfa_${lexicalState.name}(${initState}, 0);
 	           [#else]
 	           return 1;
@@ -215,7 +216,7 @@
     the strings at this position--]
          default : 
             if (trace_enabled) LOGGER.info("   No string literal matches possible.");
-    [#if lexicalState.hasNfa()]
+    [#if hasNfa]
        [#if table_index = 0]
             return jjMoveNfa_${lexicalState.name}(${initState}, 0);
        [#else]
@@ -228,7 +229,7 @@
       }
     [#if table_index != 0]
        [#if startNfaNeeded]
-          [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
+          [#if !lexicalState.mixedCase&&hasNfa]
             [#-- Here a string literal is successfully matched and no
                  more string literals are possible. So set the kind and t
                  state set up to and including this position for the matched
@@ -243,7 +244,7 @@
                  [/#if]
                [/#list]
             [/@ArgsList];
-          [#elseif lexicalState.hasNfa()]
+          [#elseif hasNfa]
              return jjMoveNfa_${lexicalState.name}(${initState}, ${table_index});
           [#else]
              return ${table_index+1};

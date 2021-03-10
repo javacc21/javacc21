@@ -99,10 +99,6 @@ public class LexicalStateData {
         tokenProductions.add(tokenProduction);
     }
 
-    public boolean hasNfa() {
-        return !nfaData.indexedAllStates.isEmpty();
-    }
-
     public int getNumStates() {
         return nfaData.indexedAllStates.size();
     }

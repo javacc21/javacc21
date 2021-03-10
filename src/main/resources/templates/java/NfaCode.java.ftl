@@ -40,8 +40,9 @@
 [#var MAX_INT=2147483647]
 
 [#macro DumpMoveNfa lexicalState]
+  [#var hasNfa = lexicalState.numStates>0]
     private int jjMoveNfa_${lexicalState.name}(int startState, int curPos) {
-    [#if !lexicalState.hasNfa()]
+    [#if !hasNfa]
         return curPos;
     }
        [#return]
@@ -440,13 +441,15 @@
   [#var ind=0]
   [#var maxStringIndex=lexicalState.maxStringIndex]
   [#var maxStringLength=lexicalState.maxStringLength]
+  [#var hasNfa = lexicalState.numStates>0]
+
   
     private int jjStartNfa_${lexicalState.name}(int pos, 
   [#list 0..(maxKindsReqd-1) as i]
        long active${i}[#if i_has_next], [#else]) {[/#if]
   [/#list]
   [#if lexicalState.mixedCase] [#--  FIXME! Currently no test coverage of any sort for this. --]
-    [#if lexicalState.hasNfa()]
+    [#if hasNfa]
        return jjMoveNfa_${lexicalState.name}(${lexicalState.initStateName()}, pos+1);
     [#else]
        return pos + 1;
