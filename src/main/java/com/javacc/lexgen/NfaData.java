@@ -124,7 +124,6 @@ public class NfaData {
         for (NfaState nfaState : allStates) {
             nfaState.generateNonAsciiMoves();
         }
-        lexerData.expandStateSetSize(indexedAllStates.size());
     }
 
     void generateNfaStates() {
@@ -221,10 +220,9 @@ public class NfaData {
         int[] result = lexerData.getTableToDump().get(arrayString);
         if (result == null) {
             result = new int[2];
-            int lastIndex = lexerData.getLastIndex();
-            result[0] = lastIndex;
-            result[1] = lastIndex + set.length - 1;
-            lexerData.setLastIndex(lastIndex + set.length);
+            result[0] = lexerData.lastIndex;
+            result[1] = lexerData.lastIndex + set.length - 1;
+            lexerData.lastIndex += set.length;
             lexerData.getTableToDump().put(arrayString, result);
             lexerData.getOrderedStateSet().add(set);
         }

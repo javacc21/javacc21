@@ -54,7 +54,6 @@ public class LexerData {
     private List<RegularExpression> regularExpressions = new ArrayList<>();
     private TokenSet skipSet, specialSet, moreSet, tokenSet;
     
-    private int stateSetSize;
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
     private int lohiByteCount;
@@ -65,7 +64,7 @@ public class LexerData {
     private List<BitSet> allBitSets = new ArrayList<>();
     private Map<String, int[]> tableToDump = new HashMap<>();
     private List<int[]> orderedStateSet = new ArrayList<>();
-    private int lastIndex;
+    int lastIndex;
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
@@ -226,7 +225,11 @@ public class LexerData {
     }
 
     public int getStateSetSize() {
-        return stateSetSize;
+        int result =0;
+        for (LexicalStateData lsd : getLexicalStates()) {
+            result = Math.max(result, lsd.getNumStates());
+        }
+        return result;
     }
 
     public List<NfaState> getNonAsciiTableForMethod() {
@@ -261,14 +264,6 @@ public class LexerData {
         return orderedStateSet;
     }
 
-    int getLastIndex() {
-        return lastIndex;
-    }
-
-    void setLastIndex(int i) {
-        lastIndex = i;
-    }
-
     public int getIndex(String name) {
         for (int i = 0; i < lexicalStates.size(); i++) {
             if (lexicalStates.get(i).getName().equals(name)) {
@@ -293,10 +288,6 @@ public class LexerData {
         for (RegexpChoice choice : choices) {
             checkUnmatchability(choice);
         }
-    }
-
-    void expandStateSetSize(int size) {
-        if (stateSetSize < size) stateSetSize = size;
     }
 
     //What about the case of a regexp existing in multiple lexical states? REVISIT (JR)

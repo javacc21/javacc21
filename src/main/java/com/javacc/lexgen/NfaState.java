@@ -210,17 +210,6 @@ public class NfaState {
     void generateCode() {
         if (index != -1)
             return;
-        if (nextState != null) {
-            nextState.generateCode();
-        }
-        if (index == -1 && hasTransitions()) {
-            this.index = lexicalState.getIndexedAllStates().size();
-            lexicalState.getIndexedAllStates().add(this);
-            nextState.getEpsilonMovesString();
-        }
-    }
-
-    public String getEpsilonMovesString() {
         if (epsilonMovesString == null && !epsilonMoves.isEmpty()) {
             int[] stateNames = new int[getEpsilonMoveCount()];
             epsilonMovesString = "{";
@@ -235,6 +224,16 @@ public class NfaState {
             nfaData.getAllNextStates().put(epsilonMovesString, stateNames);            
         }
         if (epsilonMovesString == null) epsilonMovesString = "null;";
+        if (nextState != null) {
+            nextState.generateCode();
+        }
+        if (index == -1 && hasTransitions()) {
+            this.index = nfaData.indexedAllStates.size();
+            nfaData.indexedAllStates.add(this);
+        }
+    }
+
+    public String getEpsilonMovesString() {
         return epsilonMovesString;
     }
 

@@ -103,8 +103,8 @@ public class LexicalStateData {
         return !nfaData.indexedAllStates.isEmpty();
     }
 
-    public List<NfaState> getIndexedAllStates() {
-        return nfaData.indexedAllStates;
+    public int getNumStates() {
+        return nfaData.indexedAllStates.size();
     }
 
     // FIXME! There is currently no testing in place for mixed case Lexical states!

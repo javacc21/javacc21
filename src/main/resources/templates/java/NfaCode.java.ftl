@@ -55,7 +55,7 @@
         curPos = 0;
     [/#if]
         int startsAt = 0;
-        jjnewStateCnt = ${lexicalState.indexedAllStates?size};
+        jjnewStateCnt = ${lexicalState.numStates};
         int i=1;
         jjstateSet[0] = startState;
         int kind = 0x7fffffff;
@@ -106,7 +106,7 @@
                 if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
                                      + tokenImage[jjmatchedKind] + " token.");
             }
-            if ((i = jjnewStateCnt) == (startsAt = ${lexicalState.indexedAllStates?size} - (jjnewStateCnt = startsAt)))
+            if ((i = jjnewStateCnt) == (startsAt = ${lexicalState.numStates} - (jjnewStateCnt = startsAt)))
     [#if lexicalState.mixedCase]
                  break;
     [#else]
@@ -224,7 +224,7 @@
               ${toPrint}
               [#var keyState=lexicalState.nfaData.stateIndexFromComposite(key)]
               case ${keyState} :
-              [#if keyState<lexicalState.indexedAllStates?size]
+              [#if keyState<lexicalState.numStates]
                  ${statesDumped.set(keyState)!}
               [/#if]
           break;
@@ -265,7 +265,7 @@
               ${toPrint}
               [#var keyState=lexicalState.nfaData.stateIndexFromComposite(key)]
               case ${keyState} :
-              [#if keyState<lexicalState.indexedAllStates?size]
+              [#if keyState<lexicalState.numStates]
                  ${statesDumped.set(keyState)!}
               [/#if]
          [#var partition=lexicalState.nfaData.partitionStatesSetForAscii(stateSet, byteNum)]
