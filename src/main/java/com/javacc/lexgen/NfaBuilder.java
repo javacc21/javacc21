@@ -81,7 +81,7 @@ public class NfaBuilder extends Node.Visitor {
         for (CharacterRange cr : descriptors) {
             start.addRange(cr.left, cr.right);
         }
-        start.setNextState(end);
+        start.nextState = end;
     }
 
     public void visit(OneOrMoreRegexp oom) {
@@ -120,7 +120,7 @@ public class NfaBuilder extends Node.Visitor {
                 state.addCharMove(Character.toUpperCase(ch));
             }
             end = new NfaState(lexicalState);
-            state.setNextState(end);
+            state.nextState = end;
             state = end;
         }
     }

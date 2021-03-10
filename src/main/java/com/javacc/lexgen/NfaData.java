@@ -108,7 +108,7 @@ public class NfaData {
         for (NfaState state : allStates) {
             state.doEpsilonClosure();
         }
-        for (NfaState epsilonMove : initialState.getEpsilonMoves()) {
+        for (NfaState epsilonMove : initialState.epsilonMoves) {
             epsilonMove.generateCode();
         }
         if (!indexedAllStates.isEmpty()) {
@@ -137,12 +137,12 @@ public class NfaData {
         if (indexedAllStates.isEmpty()) {
             return;
         }
-        List<NfaState> v = allStates;
+        List<NfaState> prevAllStates = allStates;
         allStates = new ArrayList<>();
         while (allStates.size() < indexedAllStates.size()) {
             allStates.add(null);
         }
-        for (NfaState state : v) {
+        for (NfaState state : prevAllStates) {
             if (state.getIndex() != -1)
                 allStates.set(state.getIndex(), state);
         }
@@ -191,12 +191,8 @@ public class NfaData {
     }
 
     boolean intersect(String set1, String set2) {
-        if (set1 == null || set2 == null)
-            return false;
         int[] nameSet1 = allNextStates.get(set1);
         int[] nameSet2 = allNextStates.get(set2);
-        if (nameSet1 == null || nameSet2 == null)
-            return false;
         for (int i = nameSet1.length; i-- > 0;)
             for (int j = nameSet2.length; j-- > 0;)
                 if (nameSet1[i] == nameSet2[j])
@@ -213,16 +209,13 @@ public class NfaData {
     }
     
     String getStateSetString(List<NfaState> states) {
-        if (states == null || states.size() == 0)
+        if (states.isEmpty())
             return "null;";
         int[] set = new int[states.size()];
-        String retVal = "{ ";
-        for (int i = 0; i < states.size();) {
-            int k;
-            retVal += (k = (states.get(i)).getIndex()) + ", ";
-            set[i] = k;
-            if (i++ > 0 && i % 16 == 0)
-                retVal += "\n";
+        String retVal = "{";
+        for (int i = 0; i < states.size(); i++) {
+            set[i] = states.get(i).getIndex();
+            retVal += set[i]  + ",";
         }
         retVal += "};";
         allNextStates.put(retVal, set);
@@ -274,20 +267,20 @@ public class NfaData {
             }
             String image = re.getImage();
             int ordinal = re.getOrdinal();
-            List<NfaState> oldStates = new ArrayList<>(initialState.getEpsilonMoves());
+            List<NfaState> oldStates = new ArrayList<>(initialState.epsilonMoves);
             int[] positions = new int[image.length()];
             int matchedPosition = 0;
-            int kind = Integer.MAX_VALUE;
             for (int charOffset = 0; charOffset < image.length(); charOffset++) {
+                RegularExpression reKind = null;
                 if (oldStates.isEmpty()) {
                     // Here, charOffset > 0
                     matchedPosition = positions[charOffset] = positions[charOffset - 1];
                 } else {
-                    kind = moveFromSet(image.codePointAt(charOffset), oldStates, newStates);
+                    reKind = moveFromSet(image.codePointAt(charOffset), oldStates, newStates);
                     oldStates.clear();
-                    if (lexicalState.getDfaData().getStrKind(image.substring(0, charOffset + 1)) < kind) {
+                    if (reKind != null && lexicalState.getDfaData().getStrKind(image.substring(0, charOffset + 1)) < reKind.getOrdinal()) {
                         matchedPosition = 0;
-                    } else if (kind != Integer.MAX_VALUE) {
+                    } else if (reKind != null) {
                         matchedPosition = positions[charOffset] = charOffset;
                     } 
                     else if (charOffset>0) {
@@ -295,7 +288,7 @@ public class NfaData {
                     }
                     stateSetString = getStateSetString(newStates);
                 }
-                if (kind == Integer.MAX_VALUE && (newStates == null || newStates.size() == 0))
+                if (reKind == null && newStates.isEmpty())
                     continue;
                 if (stateSets.get(stateSetString) == null) {
                     stateSets.put(stateSetString, stateSetString);
@@ -311,7 +304,8 @@ public class NfaData {
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();
-                String key =kind + ", " + matchedPosition + ", " + stateSetString;
+                int index = reKind == null ? Integer.MAX_VALUE : reKind.getOrdinal();
+                String key = index + ", " + matchedPosition + ", " + stateSetString;
                 BitSet activeSet= stateSetForPos.get(charOffset).get(key);
                 if (activeSet == null) {
                     activeSet = new BitSet();
@@ -322,10 +316,12 @@ public class NfaData {
         }
     }
 
-    private static int moveFromSet(int c, List<NfaState> states, List<NfaState> newStates) {
-        int result = Integer.MAX_VALUE;
+    private static RegularExpression moveFromSet(int c, List<NfaState> states, List<NfaState> newStates) {
+        RegularExpression result = null;
         for (NfaState state : states) {
-            result = Math.min(result, state.moveFrom(c, newStates));
+            RegularExpression re = state.moveFrom(c, newStates);
+            if (result == null) result = re;
+            if (re != null && re.getOrdinal()<result.getOrdinal()) result = re;
         }
         return result;
     }
@@ -335,8 +331,8 @@ public class NfaData {
             Map<String, BitSet> sets = stateSetForPos.get(pos);
             for (String key: sets.keySet()) {
                 BitSet activeSet = sets.get(key);
-                key = key.substring(key.indexOf(", ") + 2);
-                key = key.substring(key.indexOf(", ") + 2);
+                key = key.substring(key.indexOf(",") + 2);
+                key = key.substring(key.indexOf(",") + 2);
                 if (key.equals("null;")) continue;
                 if (activeSet.get(kind)) {
                     return addStartStateSet(key);
