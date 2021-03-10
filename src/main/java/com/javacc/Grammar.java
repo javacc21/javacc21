@@ -1213,7 +1213,17 @@ public class Grammar extends BaseNode {
         public BitSet newBitSet() {
             return new BitSet();
         }
-        
+
+        public String bitSetToLong(BitSet bs) {
+            long[] longs = bs.toLongArray();
+            longs = Arrays.copyOf(longs, 4);
+            return "{0x" + Long.toHexString(longs[0]) + "L,0x"
+                   + Long.toHexString(longs[1]) + "L,0x"
+                   + Long.toHexString(longs[2]) + "L,0x"
+                   + Long.toHexString(longs[3]) + "L}";
+        }
+    
+            
         public String getID(String name) {
             String value = id_map.get(name);
             if (value == null) {

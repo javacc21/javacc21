@@ -59,8 +59,6 @@ public class LexerData {
     private int lohiByteCount;
     private List<NfaState> nonAsciiTableForMethod = new ArrayList<>();
     private Map<BitSet, Integer> lohiByteLookup = new HashMap<>();
-
-    private List<String> allBitVectors = new ArrayList<>();
     private List<BitSet> allBitSets = new ArrayList<>();
     private Map<String, int[]> tableToDump = new HashMap<>();
     private List<int[]> orderedStateSet = new ArrayList<>();
@@ -246,10 +244,6 @@ public class LexerData {
 
     Map<BitSet, Integer> getLoHiByteLookup() {
         return lohiByteLookup;
-    }
-
-    public List<String> getAllBitVectors() {
-        return allBitVectors;
     }
 
     public List<BitSet> getAllBitSets() {

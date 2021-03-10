@@ -313,13 +313,10 @@ public class NfaState {
                 }
             }
             if (!commonSet.isEmpty()) {
-                String bitVector = bitSetToLong(commonSet);
                 Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
-                List<String> allBitVectors = lexerData.getAllBitVectors();
                 List<BitSet> allBitSets = lexerData.getAllBitSets();
                 Integer ind = lohiByteLookup.get(commonSet);
                 if (ind == null) {
-                    allBitVectors.add(bitVector);
                     allBitSets.add(commonSet);
                     int lohiByteCount = lexerData.getLohiByteCount();
                     ind = lohiByteCount;
@@ -327,9 +324,8 @@ public class NfaState {
                     lexerData.incrementLohiByteCount();
                 }
                 nonAsciiMoveIndices.add(ind);
-                bitVector = bitSetToLong(subSet);
                 if ((ind = lohiByteLookup.get(subSet)) == null) {
-                    allBitVectors.add(bitVector);
+                    allBitSets.add(subSet);
                     int lohiByteCount = lexerData.getLohiByteCount();
                     ind = lohiByteCount;
                     lohiByteLookup.put(subSet, ind);
@@ -344,12 +340,9 @@ public class NfaState {
             if (!superfluousSubsets.get(i)) {
                 Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
                 BitSet subSet = charMoves.get(256*i, 256*(i+1));
-                String longsString = bitSetToLong(subSet);
-                List<String> allBitVectors = lexerData.getAllBitVectors();
                 List<BitSet> allBitSets = lexerData.getAllBitSets();
                 Integer ind = lohiByteLookup.get(subSet);
                 if (ind == null) {
-                    allBitVectors.add(longsString);
                     allBitSets.add(subSet);
                     int lohiByteCount = lexerData.getLohiByteCount();
                     ind = lohiByteCount;
@@ -361,15 +354,6 @@ public class NfaState {
             }
         }
         updateDuplicateNonAsciiMoves();
-    }
-
-    static private String bitSetToLong(BitSet bs) {
-        long[] longs = bs.toLongArray();
-        longs = Arrays.copyOf(longs, 4);
-        return "{0x" + Long.toHexString(longs[0]) + "L,0x"
-               + Long.toHexString(longs[1]) + "L,0x"
-               + Long.toHexString(longs[2]) + "L,0x"
-               + Long.toHexString(longs[3]) + "L}";
     }
 
     private void updateDuplicateNonAsciiMoves() {
