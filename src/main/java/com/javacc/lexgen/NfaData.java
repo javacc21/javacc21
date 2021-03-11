@@ -289,7 +289,7 @@ public class NfaData {
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();
                 int index = reKind == null ? Integer.MAX_VALUE : reKind.getOrdinal();
-                String key = index + ", " + matchedPosition + ", " + stateSetString;
+                String key = index + "," + matchedPosition + "," + stateSetString;
                 BitSet activeSet= stateSetForPos.get(charOffset).get(key);
                 if (activeSet == null) {
                     activeSet = new BitSet();
@@ -316,7 +316,7 @@ public class NfaData {
             for (String key: sets.keySet()) {
                 BitSet activeSet = sets.get(key);
                 key = key.substring(key.indexOf(",") + 1);
-                key = key.substring(key.indexOf(",") + 2);
+                key = key.substring(key.indexOf(",") + 1);
                 if (key.equals("null;")) continue;
                 if (activeSet.get(kind)) {
                     return addStartStateSet(key);

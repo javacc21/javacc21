@@ -491,10 +491,10 @@
            [/#list]
            [#if condGenerated]
                ) 
-              [#set ind = stateSetString?index_of(", ")]
+              [#set ind = stateSetString?index_of(",")]
               [#var kindStr=stateSetString?substring(0, ind)]
-              [#var afterKind=stateSetString?substring(ind+2)] 
-              [#var jjmatchedPos=afterKind?substring(0, afterKind?index_of(", "))?number]
+              [#var afterKind=stateSetString?substring(ind+1)] 
+              [#var jjmatchedPos=afterKind?substring(0, afterKind?index_of(","))?number]
               [#if kindStr != "2147483647"]
                  {
                  [#if i = 0]
@@ -521,10 +521,10 @@
                     }
                  [/#if]
               [/#if]
-              [#set ind = stateSetString?index_of(", ")]
+              [#set ind = stateSetString?index_of(",")]
 			  [#set kindStr = stateSetString?substring(0, ind)]
-			  [#set afterKind = stateSetString?substring(ind+2)]
-			  [#set stateSetString = afterKind?substring(afterKind?index_of(",")+2)]
+			  [#set afterKind = stateSetString?substring(ind+1)]
+			  [#set stateSetString = afterKind?substring(afterKind?index_of(",")+1)]
               [#if stateSetString = "null;"]
                         return -1;
               [#else]
