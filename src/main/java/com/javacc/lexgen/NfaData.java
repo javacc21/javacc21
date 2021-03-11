@@ -228,15 +228,9 @@ public class NfaData {
 
     boolean canStartNfaUsingAscii(int c) {
         assert c < 128 : "This should be impossible.";
-        String epsilonMovesString = initialState.getEpsilonMovesString();
-        if (epsilonMovesString == null || epsilonMovesString.equals("null;"))
-            return false;
-//        int[] states = allNextStates.get(epsilonMovesString);
-        int[] states = initialState.getStates();
-        for (int i = 0; i < states.length; i++) {
-            NfaState state = indexedAllStates.get(states[i]);
-            if (state.hasAsciiMove(c)) 
-                return true;
+        for (NfaState state : initialState.epsilonMoves) {
+            if (state.hasAsciiMove(c))
+            return true;
         }
         return false;
     }
@@ -244,7 +238,7 @@ public class NfaData {
 //What a total Rube Goldberg contraption!
     void generateNfaStartStates() {
         Set<NfaState> seenStates = new HashSet<>();
-        Map<String, String> stateSets = new HashMap<String, String>();
+        Set<String> stateSets = new HashSet<String>();
         String stateSetString = "";
         List<NfaState> newStates = new ArrayList<>();
         stateSetForPos = new ArrayList<>();
@@ -280,8 +274,8 @@ public class NfaData {
                 }
                 if (reKind == null && newStates.isEmpty())
                     continue;
-                if (stateSets.get(stateSetString) == null) {
-                    stateSets.put(stateSetString, stateSetString);
+                if (!stateSets.contains(stateSetString)) {
+                    stateSets.add(stateSetString);
                     for (NfaState state : newStates) {
                         if (seenStates.contains(state)) state.incrementInNextOf();
                         else seenStates.add(state);
