@@ -75,8 +75,6 @@ public class LexicalStateData {
 
     public NfaData getNfaData() {return nfaData;}
 
-    public int getIndex() {return lexerData.getIndex(name);}
-
     public int getMaxStringLength() {
         int result = 0;
         for (RegularExpression re : regularExpressions) {

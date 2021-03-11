@@ -233,6 +233,15 @@ public class NfaState {
         }
     }
 
+    public int[] getStates() {
+        int[] result = new int[epsilonMoves.size()];
+        int index = 0;
+        for (NfaState state : epsilonMoves) {
+            result[index++] = state.index;
+        }
+        return result;
+    }
+
     public String getEpsilonMovesString() {
         return epsilonMovesString;
     }

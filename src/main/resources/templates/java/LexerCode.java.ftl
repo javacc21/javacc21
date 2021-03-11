@@ -367,10 +367,6 @@
          return pos + 1;
     }
     
-[#--list lexerData.allBitVectors as bitVec]
-    private static final long[] jjbitVec${bitVec_index} = ${bitVec};
-[/#list--]    
-
 [#list lexerData.allBitSets as bitSet]
     private static final long[] jjbitVec${bitSet_index} = ${utils.bitSetToLong(bitSet)};
 [/#list]    

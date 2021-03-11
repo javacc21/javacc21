@@ -289,7 +289,7 @@
           kind = Math.min(kind, ${kindToPrint});
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#var stateNames=lexicalState.nfaData.nextStatesFromKey(nextState.epsilonMovesString)]
+       [#var stateNames = nextState.states]
        [#if nextState.epsilonMoveCount = 1]
           [#var name=stateNames[0]]
           [#if nextIntersects]
@@ -303,7 +303,7 @@
            [#-- Note that the getStateSetIndicesForUse() method builds up a needed
                 data structure lexicalState.orderedStateSet, which is used to output
                 the jjnextStates vector. --]
-           [#var indices=nfaState.lexicalState.nfaData.getStateSetIndicesForUse(nextState.epsilonMovesString)]
+           [#var indices=nfaState.lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
            [#var notTwo=(indices[0]+1 != indices[1])]
            [#if nextIntersects]
                    jjCheckNAddStates(${indices[0]}
@@ -344,7 +344,7 @@
                     if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#var stateNames=lexicalState.nfaData.nextStatesFromKey(nextState.epsilonMovesString)]
+       [#var stateNames = nextState.states]
        [#if nextState.epsilonMoveCount = 1]
           [#var name=stateNames[0]]
           [#if nextIntersects]
@@ -355,7 +355,7 @@
        [#elseif nextState.epsilonMoveCount = 2&&nextIntersects]
                     jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
        [#else]
-          [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState.epsilonMovesString)]
+          [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
           [#var notTwo=(indices[0]+1 != indices[1])]
           [#if nextIntersects]
                     jjCheckNAddStates(${indices[0]}
@@ -407,7 +407,7 @@
        [/#if]
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#var stateNames=lexicalState.nfaData.nextStatesFromKey(nextState.epsilonMovesString)]
+       [#var stateNames = nextState.states]
        [#if nextState.epsilonMoveCount = 1]
           [#var name=stateNames[0]]
           [#if nextIntersects]
@@ -418,7 +418,7 @@
        [#elseif nextState.epsilonMoveCount = 2&&nextIntersects]
                     jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
        [#else]
-          [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState.epsilonMovesString)]
+          [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
           [#var notTwo=(indices[0]+1 != indices[1])]
           [#if nextIntersects]
                     jjCheckNAddStates(${indices[0]}

@@ -128,9 +128,9 @@ public class DfaData {
     void generateData() {
         fillSubString();
         for (int i = 0; i < lexicalState.getMaxStringLength(); i++) {
-            Map<Integer, KindInfo> tab = getStringLiteralTables().get(i);
-            for (Integer key : tab.keySet()) {
-                generateDfaCase(key, tab.get(key), i);
+            Map<Integer, KindInfo> table = getStringLiteralTables().get(i);
+            for (Integer key : table.keySet()) {
+                generateDfaCase(key, table.get(key), i);
             }
         }
     }

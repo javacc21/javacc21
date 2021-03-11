@@ -78,10 +78,6 @@ public class NfaData {
         return allNextStates;
     }
 
-    public int[] nextStatesFromKey(String key) {
-        return allNextStates.get(key);
-    }
-
     public int stateIndexFromComposite(String key) {
         return stateIndexFromComposite.get(key);
     }
@@ -215,8 +211,9 @@ public class NfaData {
         return retVal;
     }
 
-    public int[] getStateSetIndicesForUse(String arrayString) {
-        int[] set = allNextStates.get(arrayString);
+    public int[] getStateSetIndicesForUse(NfaState state) {
+        String arrayString = state.getEpsilonMovesString();
+        int[] set = state.getStates();
         int[] result = lexerData.getTableToDump().get(arrayString);
         if (result == null) {
             result = new int[2];
@@ -234,7 +231,8 @@ public class NfaData {
         String epsilonMovesString = initialState.getEpsilonMovesString();
         if (epsilonMovesString == null || epsilonMovesString.equals("null;"))
             return false;
-        int[] states = allNextStates.get(epsilonMovesString);
+//        int[] states = allNextStates.get(epsilonMovesString);
+        int[] states = initialState.getStates();
         for (int i = 0; i < states.length; i++) {
             NfaState state = indexedAllStates.get(states[i]);
             if (state.hasAsciiMove(c)) 
@@ -323,7 +321,7 @@ public class NfaData {
             Map<String, BitSet> sets = stateSetForPos.get(pos);
             for (String key: sets.keySet()) {
                 BitSet activeSet = sets.get(key);
-                key = key.substring(key.indexOf(",") + 2);
+                key = key.substring(key.indexOf(",") + 1);
                 key = key.substring(key.indexOf(",") + 2);
                 if (key.equals("null;")) continue;
                 if (activeSet.get(kind)) {
