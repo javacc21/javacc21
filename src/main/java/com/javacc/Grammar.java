@@ -31,11 +31,12 @@
 package com.javacc;
 
 import java.util.*;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.javacc.JavaCCError.ErrorCode;
 import com.javacc.JavaCCError.Type;
@@ -90,9 +91,9 @@ public class Grammar extends BaseNode {
                          closeNodeScopeHooks = new ArrayList<>();
     private Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
 
-    private Set<String> alreadyIncluded = new HashSet<>();
+    private Set<Path> alreadyIncluded = new HashSet<>();
 
-    private File includedFileDirectory;
+    private Path includedFileDirectory;
 
 
 
@@ -104,10 +105,10 @@ public class Grammar extends BaseNode {
 	private int semanticErrorCount;
     private int warningCount;
 
-    private File outputDir;
+    private Path outputDir;
     private boolean quiet;
     
-    public Grammar(File outputDir, int jdkTarget, boolean quiet, Set<String> preprocessorSymbols) {
+    public Grammar(Path outputDir, int jdkTarget, boolean quiet, Set<String> preprocessorSymbols) {
         this();
         this.outputDir = outputDir;
         this.jdkTarget = jdkTarget;
@@ -169,17 +170,17 @@ public class Grammar extends BaseNode {
     }
 
     public Node parse(String location, boolean enterIncludes) throws IOException, ParseException {
-        File file = new File(location);
-        String canonicalPath = file.getCanonicalPath();
+        Path file = Paths.get(location);
+        Path canonicalPath = file.normalize();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
-        JavaCCParser parser = new JavaCCParser(this, file.getCanonicalFile().toPath(), preprocessorSymbols);
+        JavaCCParser parser = new JavaCCParser(this, canonicalPath, preprocessorSymbols);
         parser.setEnterIncludes(enterIncludes);
-        File prevIncludedFileDirectory = includedFileDirectory;
+        Path prevIncludedFileDirectory = includedFileDirectory;
         if (!isInInclude()) {
             setFilename(location);
         } else {
-            includedFileDirectory = file.getCanonicalFile().getParentFile();
+            includedFileDirectory = canonicalPath.getParent();
         }
         GrammarFile rootNode = parser.Root();
         includedFileDirectory = prevIncludedFileDirectory;
@@ -190,24 +191,25 @@ public class Grammar extends BaseNode {
     }
 
 
-    public Node include(String location) throws IOException, ParseException {
-        File file = new File(location);
-        if (!file.exists()) {
-            if (!file.isAbsolute()) {
-                file = new File(new File(this.filename).getParent(), location);
-                if (file.exists()) {
-                    location = file.getPath();
-                } else {
-                    if (includedFileDirectory != null) {
-                        location = new File(includedFileDirectory, location).getPath();
-                    }
+    public Node include(String location, String... alternatives) throws IOException, ParseException {
+        Path path = Paths.get(location);
+        if (!Files.exists(path)) {
+            if (!path.isAbsolute()) {
+                path = Paths.get(this.filename).getParent();
+                path = path.resolve(location);
+            }
+            if (Files.exists(path)) {
+                location = path.toString();
+            } else {
+                if (includedFileDirectory != null) {
+                    location = includedFileDirectory.resolve(location).toString();
                 }
             }
         }
         if (location.toLowerCase().endsWith(".java") || location.endsWith(".jav")) {
-            File includeFile = new File(location);
-            String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
-            CompilationUnit cu = JavaCCParser.parseJavaFile(includeFile.getCanonicalFile().getName(), content);
+            Path includeFile = Paths.get(location);
+            String content = new String(Files.readAllBytes(path),Charset.forName("UTF-8"));
+            CompilationUnit cu = JavaCCParser.parseJavaFile(includeFile.normalize().toString(), content);
             codeInjections.add(cu);
             return cu;
         } else {
@@ -226,8 +228,8 @@ public class Grammar extends BaseNode {
     }
     
     public void createOutputDir() {
-        File outputDir = new File(".");
-        if (!outputDir.canWrite()) {
+        Path outputDir = Paths.get(".");
+        if (!Files.isWritable(outputDir)) {
             addSemanticError(null, "Cannot write to the output directory : \"" + outputDir + "\"");
         }
     }
@@ -293,7 +295,7 @@ public class Grammar extends BaseNode {
             parserClassName = (String) settings.get("PARSER_CLASS");
         }
         if (parserClassName == null) {
-            String name = new File(filename).getName();
+            String name = Paths.get(filename).getFileName().toString();
             int lastDot = name.lastIndexOf('.');
             if (lastDot >0) {
                 name = name.substring(0, lastDot);
@@ -882,26 +884,25 @@ public class Grammar extends BaseNode {
         return parserPackage;
     }
 
-    public File getParserOutputDirectory() throws IOException {
+    public Path getParserOutputDirectory() throws IOException {
         String baseSrcDir = (String) settings.get("BASE_SRC_DIR");
         if (baseSrcDir == null) {
             baseSrcDir = outputDir == null ? "." : outputDir.toString();
         }
-        File dir = new File(baseSrcDir);
+        Path dir = Paths.get(baseSrcDir);
         if (!dir.isAbsolute()){
-            File inputFileDir = new File(filename).getParentFile();
-            dir = new File(inputFileDir, baseSrcDir);
+            Path inputFileDir = Paths.get(filename).getParent();
+            dir = inputFileDir.resolve(baseSrcDir);
         }
-        if (!dir.exists()) {
-            if (!dir.mkdir())
-                throw new FileNotFoundException("Directory " + dir.getAbsolutePath() + " does not exist.");
+        if (!Files.exists(dir)) {
+            Files.createDirectories(dir);
         }
         String packageName = getParserPackage();
         if (packageName != null  && packageName.length() >0) {
             packageName = packageName.replace('.', '/');
-            dir = new File(dir, packageName);
-            if (!dir.exists()) {
-                dir.mkdir();
+            dir = dir.resolve(packageName);
+            if (!Files.exists(dir)) {
+                Files.createDirectories(dir);
             }
         }
         return dir;
@@ -912,29 +913,27 @@ public class Grammar extends BaseNode {
         return outputDir == null ? "." : outputDir.toString(); 
     }
 
-    public File getNodeOutputDirectory() throws IOException {
+    public Path getNodeOutputDirectory() throws IOException {
         String nodePackage = getNodePackage();
         String baseSrcDir = getBaseSourceDirectory();
         if (nodePackage == null || nodePackage.equals("") || baseSrcDir.equals("")) {
             return getParserOutputDirectory();
         }
-        File baseSource = new File(baseSrcDir);
+        Path baseSource = Paths.get(baseSrcDir);
         if (!baseSource.isAbsolute()) {
-            File grammarFileDir = new File(filename).getAbsoluteFile().getParentFile();
-            baseSource = new File(grammarFileDir, baseSrcDir).getAbsoluteFile();
+            Path grammarFileDir = Paths.get(filename).normalize().getParent();
+            baseSource = grammarFileDir.resolve(baseSrcDir).normalize();
         }
-        if (!baseSource.isDirectory()) {
-            if (!baseSource.exists()) {
+        if (!Files.isDirectory(baseSource)) {
+            if (!Files.exists(baseSource)) {
                 throw new FileNotFoundException("Directory " + baseSrcDir + " does not exist.");
             }
             throw new FileNotFoundException(baseSrcDir + " is not a directory.");
         }
-        File result = new File(baseSource, nodePackage.replace('.', '/')).getAbsoluteFile();
-        if (!result.exists()) {
-            if (!result.mkdirs()) {
-                throw new IOException("Could not create directory " + result);
-            }
-        } else if (!result.isDirectory()) {
+        Path result = baseSource. resolve(nodePackage.replace('.', '/')).normalize();
+        if (!Files.exists(result)) {
+            Files.createDirectories(result);
+        } else if (!Files.isDirectory(result)) {
             throw new IOException(result.toString() + " is not a directory.");
         }
         return result;
@@ -1076,7 +1075,7 @@ public class Grammar extends BaseNode {
             }
             if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {
                 if (!isInInclude() && outputDir == null)
-                    outputDir = new File((String)value);
+                    outputDir = Paths.get((String)value);
             }
             if (!isInInclude() && key.equals("JDK_TARGET") && jdkTarget ==0){
                 int jdkTarget = (Integer) value;

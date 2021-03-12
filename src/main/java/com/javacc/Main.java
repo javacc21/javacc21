@@ -30,8 +30,7 @@
 
 package com.javacc;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -40,7 +39,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
+import java.nio.file.Paths;
 import java.util.*;
 
 import com.javacc.parser.ParseException;
@@ -180,7 +179,7 @@ public final class Main {
             com.javacc.output.lint.SyntaxConverter.main(args);
             System.exit(0);
         }
-        File grammarFile = null, outputDirectory = null;
+        Path grammarFile = null, outputDirectory = null;
         int jdkTarget = 0;
         Set<String> preprocesorSymbols = new HashSet<>();
         boolean quiet = false, noNewerCheck = false;
@@ -204,7 +203,7 @@ public final class Main {
                         System.err.println("-d flag with no output directory");
                         System.exit(-1);
                     }
-                    outputDirectory = new File(args[++i]);
+                    outputDirectory = Paths.get(args[++i]);
                 }
                 else if (arg.equalsIgnoreCase("-n")) {
                     noNewerCheck = true;
@@ -229,8 +228,8 @@ public final class Main {
                 }
             } else {
                 if (grammarFile == null) {
-                    grammarFile = new File(arg);
-                    if (!grammarFile.exists()) {
+                    grammarFile = Paths.get(arg);
+                    if (!Files.exists(grammarFile)) {
                         System.err.println("File " + grammarFile + " does not exist!");
                         System.exit(-1);
                     }
@@ -248,17 +247,18 @@ public final class Main {
             System.err.println("No input file specified");
             System.exit(-1);
         }
-        if (!grammarFile.exists()) {
+        if (!Files.exists(grammarFile)) {
             System.err.println("File " + grammarFile + " does not exist!");
             System.exit(-1);
         }
         if (outputDirectory !=null) {
-            if (!outputDirectory.exists()) {
-                if (!outputDirectory.mkdirs()) {
+            if (!Files.exists(outputDirectory)) {
+                try {Files.createDirectories(outputDirectory);}
+                catch (IOException ioe) {
                     System.err.println("Cannot create directory " + outputDirectory);
                     System.exit(-1);
-                } 
-                if (!outputDirectory.canWrite()) {
+                }
+                if (!Files.isWritable(outputDirectory)) {
                     System.err.println("Cannot write to directory " + outputDirectory);
                     System.exit(-1);
                 }
@@ -276,7 +276,7 @@ public final class Main {
      * @throws Exception
      */
 
-    public static int mainProgram(File grammarFile, File outputDir, int jdkTarget, boolean quiet, Set<String> symbols) throws Exception {
+    public static int mainProgram(Path grammarFile, Path outputDir, int jdkTarget, boolean quiet, Set<String> symbols) throws Exception {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, jdkTarget, quiet, symbols);
         grammar.parse(grammarFile.toString(), true);

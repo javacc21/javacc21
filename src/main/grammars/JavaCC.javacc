@@ -444,7 +444,7 @@ INJECT InvocationArguments :
 #if false
 INCLUDE("Java.javacc")
 #else
-INCLUDE("../../../examples/java/Java.javacc")
+INCLUDE "../../../examples/java/Java.javacc"
 #endif
 
 
@@ -919,22 +919,29 @@ INJECT PARSER_CLASS : {
 
 GrammarInclusion throws IOException :
 {
-   Token t;
+   String filename;
+   List<String> fallbacks = new ArrayList<String>();
 }
    <_INCLUDE>
    (
-       t=<STRING_LITERAL>
+       <STRING_LITERAL> {filename = ((StringLiteral)lastConsumedToken).getString();}
+       (
+         "!" 
+         <STRING_LITERAL>
+         {
+           fallbacks.add(((StringLiteral) lastConsumedToken).getString());
+         }
+       )*
        |
-       "(" t=<STRING_LITERAL> ")"
+       "(" <STRING_LITERAL> {filename = ((StringLiteral)lastConsumedToken).getString();} ")" 
    )
    {
-      String location = t.getImage().substring(1, t.getImage().length() -1);
       if (enterIncludes) {
-          Node included = grammar.include(location);
+          Node included = grammar.include(filename, fallbacks.toArray(new String[0]));
           if (included!=null) {
               CURRENT_NODE.addChild(included);
           } else {
-              grammar.addWarning(CURRENT_NODE, "File " + location + " is already included.");
+              grammar.addWarning(CURRENT_NODE, "File is already included.");
           }
       }
    }
