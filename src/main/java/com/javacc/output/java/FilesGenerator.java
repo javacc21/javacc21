@@ -29,7 +29,10 @@
 
 package com.javacc.output.java;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Writer;
+import java.io.FileWriter;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
