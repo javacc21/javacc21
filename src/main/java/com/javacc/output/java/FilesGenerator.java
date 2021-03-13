@@ -97,6 +97,7 @@ public class FilesGenerator {
     	}
     	if (grammar.getFaultTolerant()) {
     	    generateInvalidNode();
+            generateParsingProblem();
     	}
         
     }
@@ -351,7 +352,6 @@ public class FilesGenerator {
         if (sourceBase.equals("")) {
             return grammar.getNodeOutputDirectory().resolve(className + ".java");
         }
-//        return new File(new File(sourceBase, explicitlyDeclaredPackage.replace('.', '/')), className + ".java").toPath(); 
         Path result = Paths.get(sourceBase);
         result = result.resolve(explicitlyDeclaredPackage.replace('.', '/'));
         return result.resolve(className + ".java");
