@@ -55,13 +55,13 @@ import freemarker.template.TemplateException;
  * information regarding a JavaCC processing job.
  */
 public class Grammar extends BaseNode {
-    private String filename,
-                   parserClassName,
+    private String parserClassName,
                    lexerClassName,
                    parserPackage,
                    constantsClassName,
                    baseNodeClassName,
                    defaultLexicalState;
+    private Path filename;
     private Map<String, Object> settings = new HashMap<>();
     private CompilationUnit parserCode;
     private ParserData parserData;
@@ -178,7 +178,7 @@ public class Grammar extends BaseNode {
         parser.setEnterIncludes(enterIncludes);
         Path prevIncludedFileDirectory = includedFileDirectory;
         if (!isInInclude()) {
-            setFilename(location);
+            setFilename(file);
         } else {
             includedFileDirectory = canonicalPath.getParent();
         }
@@ -195,7 +195,7 @@ public class Grammar extends BaseNode {
         Path path = Paths.get(location);
         if (!Files.exists(path)) {
             if (!path.isAbsolute()) {
-                path = Paths.get(this.filename).getParent();
+                path = filename.getParent();
                 path = path.resolve(location);
             }
             if (Files.exists(path)) {
@@ -213,7 +213,7 @@ public class Grammar extends BaseNode {
             codeInjections.add(cu);
             return cu;
         } else {
-            String prevLocation = this.filename;
+            Path prevLocation = this.filename;
             String prevDefaultLexicalState = this.defaultLexicalState;
             boolean prevIgnoreCase = this.ignoreCase;
             includeNesting++;
@@ -235,13 +235,13 @@ public class Grammar extends BaseNode {
     }
 
     /**
-     * The name of the grammar file being processed.
+     * The grammar file being processed.
      */
-    public String getFilename() {
+    public Path getFilename() {
         return filename;
     }
 
-    public void setFilename(String filename) {
+    public void setFilename(Path filename) {
         this.filename = filename;
     }
 
@@ -295,7 +295,7 @@ public class Grammar extends BaseNode {
             parserClassName = (String) settings.get("PARSER_CLASS");
         }
         if (parserClassName == null) {
-            String name = Paths.get(filename).getFileName().toString();
+            String name = filename.getFileName().toString();
             int lastDot = name.lastIndexOf('.');
             if (lastDot >0) {
                 name = name.substring(0, lastDot);
@@ -891,7 +891,7 @@ public class Grammar extends BaseNode {
         }
         Path dir = Paths.get(baseSrcDir);
         if (!dir.isAbsolute()){
-            Path inputFileDir = Paths.get(filename).getParent();
+            Path inputFileDir = filename.getParent();
             dir = inputFileDir.resolve(baseSrcDir);
         }
         if (!Files.exists(dir)) {
@@ -921,7 +921,7 @@ public class Grammar extends BaseNode {
         }
         Path baseSource = Paths.get(baseSrcDir);
         if (!baseSource.isAbsolute()) {
-            Path grammarFileDir = Paths.get(filename).normalize().getParent();
+            Path grammarFileDir = filename.normalize().getParent();
             baseSource = grammarFileDir.resolve(baseSrcDir).normalize();
         }
         if (!Files.isDirectory(baseSource)) {
