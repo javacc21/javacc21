@@ -30,6 +30,7 @@
 package com.javacc.output.java;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 
 import com.javacc.Grammar;
@@ -53,9 +54,9 @@ public class FilesGenerator {
 
     void initializeTemplateEngine() throws IOException {
         fmConfig = new freemarker.template.Configuration();
-        String filename = grammar.getFilename().toString();
-        File dir = new File(filename).getCanonicalFile().getParentFile();
-        TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir), 
+        Path filename = grammar.getFilename();
+        Path dir = filename.normalize().getParent();
+        TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir.toFile()), 
                                                                 new ClassTemplateLoader(this.getClass(), "/templates/java"));
         fmConfig.setTemplateLoader(templateLoader);
         fmConfig.setObjectWrapper(new BeansWrapper());
@@ -98,12 +99,12 @@ public class FilesGenerator {
         
     }
 
-    public void generate(File outputFile) throws IOException, TemplateException {
+    public void generate(Path outputFile) throws IOException, TemplateException {
         generate(null, outputFile);
     }
     
-    public void generate(String nodeName, File outputFile) throws IOException, TemplateException  {
-        this.currentFilename = outputFile.getName();
+    public void generate(String nodeName, Path outputFile) throws IOException, TemplateException  {
+        this.currentFilename = outputFile.getFileName().toString();
         String templateName = currentFilename + ".ftl";
         if (tokenSubclassFileNames.contains(currentFilename)) {
                 templateName = "ASTToken.java.ftl";
@@ -155,12 +156,12 @@ public class FilesGenerator {
         template.process(dataModel, out);
         String code = out.toString();
         if (!grammar.isQuiet()) {
-            System.out.println("Outputting: " + outputFile.getAbsolutePath());
+            System.out.println("Outputting: " + outputFile.normalize());
         }
-        if (outputFile.getName().endsWith(".java")) {
-            outputJavaFile(code, outputFile);
+        if (outputFile.getFileName().toString().endsWith(".java")) {
+            outputJavaFile(code, outputFile.toFile());
         } else {
-            FileWriter outfile = new FileWriter(outputFile);
+            FileWriter outfile = new FileWriter(outputFile.toFile());
             try {
                 outfile.write(code);
             } 
@@ -204,45 +205,45 @@ public class FilesGenerator {
     
     void generateConstantsFile() throws IOException, TemplateException {
         String filename = grammar.getConstantsClassName() + ".java";
-        File outputFile = grammar.getParserOutputDirectory().resolve(filename).toFile();
+        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
 
     void generateParseException() throws IOException, TemplateException {
-        File outputFile = grammar.getParserOutputDirectory().resolve("ParseException.java").toFile();
-        if (regenerate(outputFile)) {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("ParseException.java");
+        if (regenerate(outputFile.toFile())) {
             generate(outputFile);
         }
     }
     
     void generateParsingProblem() throws IOException, TemplateException {
-        File outputFile = grammar.getParserOutputDirectory().resolve("ParsingProblem.java").toFile();
-        if (regenerate(outputFile)) {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("ParsingProblem.java");
+        if (regenerate(outputFile.toFile())) {
             generate(outputFile);
         }
     }
 
     void generateInvalidNode() throws IOException, TemplateException {
-        File outputFile = grammar.getParserOutputDirectory().resolve("InvalidNode.java").toFile();
-        if (regenerate(outputFile)) {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("InvalidNode.java");
+        if (regenerate(outputFile.toFile())) {
             generate(outputFile);
         }
     }
 
     void generateToken() throws IOException, TemplateException {
-        File outputFile = grammar.getParserOutputDirectory().resolve("Token.java").toFile();
-        if (regenerate(outputFile)) {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("Token.java");
+        if (regenerate(outputFile.toFile())) {
             generate(outputFile);
         }
-        outputFile = grammar.getParserOutputDirectory().resolve("InvalidToken.java").toFile();
-        if (regenerate(outputFile)) {
+        outputFile = grammar.getParserOutputDirectory().resolve("InvalidToken.java");
+        if (regenerate(outputFile.toFile())) {
         	generate(outputFile);
         }
     }
     
     void generateFileLineMap() throws IOException, TemplateException {
-        File outputFile = grammar.getParserOutputDirectory().resolve("FileLineMap.java").toFile();
-        if (regenerate(outputFile)) {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("FileLineMap.java");
+        if (regenerate(outputFile.toFile())) {
             generate(outputFile);
         }
     }
@@ -252,7 +253,7 @@ public class FilesGenerator {
         if (!grammar.getUserDefinedLexer()) {
             filename = grammar.getLexerClassName() + ".java";
         }
-        File outputFile = grammar.getParserOutputDirectory().resolve(filename).toFile();
+        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
     
@@ -261,13 +262,13 @@ public class FilesGenerator {
         	throw new MetaParseException();
         }
         String filename = grammar.getParserClassName() + ".java";
-        File outputFile = grammar.getParserOutputDirectory().resolve(filename).toFile();
+        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
     
     void generateNodeFile() throws IOException, TemplateException {
-        File outputFile = grammar.getParserOutputDirectory().resolve("Node.java").toFile();
-        if (regenerate(outputFile)) {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("Node.java");
+        if (regenerate(outputFile.toFile())) {
             generate(outputFile);
         }
     }
@@ -325,7 +326,7 @@ public class FilesGenerator {
         }
         for (Map.Entry<String, File> entry : files.entrySet()) {
             if (regenerate(entry.getValue())) {
-                generate(entry.getKey(), entry.getValue());
+                generate(entry.getKey(), entry.getValue().toPath());
             }
         }
     }
