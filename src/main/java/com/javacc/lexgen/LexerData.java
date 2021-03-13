@@ -144,9 +144,11 @@ public class LexerData {
    
     static public boolean isJavaIdentifier(String s) {
         if (s.length() == 0) return false;
-        if (!Character.isJavaIdentifierStart(s.codePointAt(0))) return false;
-        for (int i=1; i<s.length(); i++) {
-            if (!Character.isJavaIdentifierPart(s.codePointAt(i))) return false;
+        for (int i=0; i<s.length(); i++) {
+            int ch = s.codePointAt(i);
+            if (i==0 && !Character.isJavaIdentifierStart(ch)) return false;
+            if (!Character.isJavaIdentifierPart(ch)) return false;
+            if (ch > 0xFFFF) i++;
         }
         return true;
     }

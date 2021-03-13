@@ -103,6 +103,7 @@ public class DfaData {
         }
         for (int i = 0; i < stringLength; i++) {
             int c = stringLiteral.codePointAt(i);
+            if (c > 0xFFFF) i++;
             if (grammar.isIgnoreCase()) {
                c = Character.toLowerCase(c);
             }

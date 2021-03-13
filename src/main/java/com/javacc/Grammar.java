@@ -303,7 +303,7 @@ public class Grammar extends BaseNode {
             if (!name.toLowerCase().endsWith("parser")) {
                 name += "Parser";
             }
-            if (Character.isLowerCase(name.codePointAt(0))) {
+            if (Character.isLowerCase(name.charAt(0))) {
                 name = name.substring(0, 1).toUpperCase() + name.substring(1);
             }
             parserClassName = name;
@@ -583,7 +583,7 @@ public class Grammar extends BaseNode {
     }
 
     public String classNameFromTokenName(String tokenName) {
-        if (Character.isDigit(tokenName.codePointAt(0))) {
+        if (Character.isDigit(tokenName.charAt(0))) {
             return null;
         }
         if (namedTokensTable.get(tokenName).isPrivate()) {

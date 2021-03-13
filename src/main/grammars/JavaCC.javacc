@@ -2036,7 +2036,7 @@ import java.util.*;
         boolean negated = false;
         for (Token t : childrenOfType(Token.class)) {
             String img = t.getImage();
-            if (img.codePointAt(0) == '\\' || img.codePointAt(0)=='/') continue;
+            if (img.charAt(0) == '\\' || img.charAt(0)=='/') continue;
             if (img.equals("~")) {
                 negated = true;
                 continue;
@@ -2248,7 +2248,7 @@ UpToHere(Expansion exp) #void :
    {
        String img = lastConsumedToken.getImage();
        exp.setScanLimit(true);
-       int lastChar = img.codePointAt(img.length() -1);
+       int lastChar = img.codePointBefore(img.length());
        if (Character.isDigit(lastChar)) {
            exp.setScanLimitPlus(lastChar - '0');
        }

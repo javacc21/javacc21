@@ -185,7 +185,7 @@ public final class Main {
         boolean quiet = false, noNewerCheck = false;
         for (int i=0; i<args.length;i++) {
             String arg = args[i];
-            if (arg.codePointAt(0) == '-') {
+            if (arg.charAt(0) == '-') {
                 if (arg.startsWith("--")) arg = arg.substring(1);
                 if (arg.equalsIgnoreCase("-p")) {
                     if (i==args.length-1) {

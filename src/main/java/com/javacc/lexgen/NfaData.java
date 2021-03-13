@@ -260,7 +260,9 @@ public class NfaData {
                     // Here, charOffset > 0
                     matchedPosition = positions[charOffset] = positions[charOffset - 1];
                 } else {
-                    reKind = moveFromSet(image.codePointAt(charOffset), oldStates, newStates);
+                    int ch = image.codePointAt(charOffset);
+                    reKind = moveFromSet(ch, oldStates, newStates);
+                    if (ch>0xFFFF) charOffset++;
                     oldStates.clear();
                     if (reKind != null && lexicalState.getDfaData().getStrKind(image.substring(0, charOffset + 1)) < reKind.getOrdinal()) {
                         matchedPosition = 0;
@@ -319,7 +321,8 @@ public class NfaData {
                 key = key.substring(key.indexOf(",") + 1);
                 if (key.equals("null;")) continue;
                 if (activeSet.get(kind)) {
-                    return addStartStateSet(key);
+//                    return addStartStateSet(key);
+                    return stateIndexFromComposite(key);
                 }
             }
         }
