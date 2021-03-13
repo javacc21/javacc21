@@ -30,7 +30,9 @@
 package com.javacc.output.java;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import com.javacc.Grammar;
@@ -159,7 +161,7 @@ public class FilesGenerator {
             System.out.println("Outputting: " + outputFile.normalize());
         }
         if (outputFile.getFileName().toString().endsWith(".java")) {
-            outputJavaFile(code, outputFile.toFile());
+            outputJavaFile(code, outputFile);
         } else {
             FileWriter outfile = new FileWriter(outputFile.toFile());
             try {
@@ -171,15 +173,15 @@ public class FilesGenerator {
         }
     }
     
-    void outputJavaFile(String code, File outputFile) throws IOException, TemplateException {
-        File dir = outputFile.getParentFile();
-        if (!dir.exists()) {
-            dir.mkdirs();
+    void outputJavaFile(String code, Path outputFile) throws IOException, TemplateException {
+        Path dir = outputFile.getParent();
+        if (Files.exists(dir)) {
+            Files.createDirectories(dir);
         }
-        FileWriter out = new FileWriter(outputFile);
+        FileWriter out = new FileWriter(outputFile.toFile());
         CompilationUnit jcu = null;
         try {
-            jcu = JavaCCParser.parseJavaFile(outputFile.getName(), code);
+            jcu = JavaCCParser.parseJavaFile(outputFile.getFileName().toString(), code);
         } catch (Exception e) {
             e.printStackTrace();
             try {
@@ -211,39 +213,39 @@ public class FilesGenerator {
 
     void generateParseException() throws IOException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("ParseException.java");
-        if (regenerate(outputFile.toFile())) {
+        if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
     
     void generateParsingProblem() throws IOException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("ParsingProblem.java");
-        if (regenerate(outputFile.toFile())) {
+        if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
 
     void generateInvalidNode() throws IOException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("InvalidNode.java");
-        if (regenerate(outputFile.toFile())) {
+        if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
 
     void generateToken() throws IOException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("Token.java");
-        if (regenerate(outputFile.toFile())) {
+        if (regenerate(outputFile)) {
             generate(outputFile);
         }
         outputFile = grammar.getParserOutputDirectory().resolve("InvalidToken.java");
-        if (regenerate(outputFile.toFile())) {
+        if (regenerate(outputFile)) {
         	generate(outputFile);
         }
     }
     
     void generateFileLineMap() throws IOException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("FileLineMap.java");
-        if (regenerate(outputFile.toFile())) {
+        if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
@@ -268,17 +270,17 @@ public class FilesGenerator {
     
     void generateNodeFile() throws IOException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("Node.java");
-        if (regenerate(outputFile.toFile())) {
+        if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
     
-    private boolean regenerate(File file) throws IOException {
-        if (!file.exists()) {
+    private boolean regenerate(Path file) throws IOException {
+        if (!Files.exists(file)) {
         	return true;
         } 
-        String ourName = file.getName();
-        String canonicalName = file.getCanonicalFile().getName();
+        String ourName = file.getFileName().toString();
+        String canonicalName = file.normalize().getFileName().toString();
        	if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
        		String msg = "You cannot have two files that differ only in case, as in " 
        	                          + ourName + " and "+ canonicalName 
@@ -286,7 +288,7 @@ public class FilesGenerator {
        	                          + " \nYou will need to rename something in your grammar!";
        		throw new IOException(msg);
         }
-        String filename = file.getName();
+        String filename = file.getFileName().toString();
         if (filename.endsWith(".java")) {
             String typename = filename.substring(0, filename.length() -5);
             if (codeInjector.hasInjectedCode(typename)) {
@@ -298,43 +300,43 @@ public class FilesGenerator {
     
     void generateTreeBuildingFiles() throws IOException, TemplateException {
     	generateNodeFile();
-        Map<String, File> files = new LinkedHashMap<>();
+        Map<String, Path> files = new LinkedHashMap<>();
         files.put(grammar.getBaseNodeClassName(), getOutputFile(grammar.getBaseNodeClassName()));
 
         for (RegularExpression re : grammar.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;
             String tokenClassName = re.getGeneratedClassName();
-            File outputFile = getOutputFile(tokenClassName);
+            Path outputFile = getOutputFile(tokenClassName);
             files.put(tokenClassName, outputFile);
-            tokenSubclassFileNames.add(outputFile.getName());
+            tokenSubclassFileNames.add(outputFile.getFileName().toString());
             String superClassName = re.getGeneratedSuperClassName();
             if (superClassName != null) {
                 outputFile = getOutputFile(superClassName);
                 files.put(superClassName, outputFile);
-                tokenSubclassFileNames.add(outputFile.getName());
+                tokenSubclassFileNames.add(outputFile.getFileName().toString());
                 superClassLookup.put(tokenClassName, superClassName);
             }
         }
         for (String nodeName : grammar.getNodeNames()) {
-            File outputFile = getOutputFile(nodeName);
-            if (tokenSubclassFileNames.contains(outputFile.getName())) {
-                String name = outputFile.getName();
+            Path outputFile = getOutputFile(nodeName);
+            if (tokenSubclassFileNames.contains(outputFile.getFileName().toString())) {
+                String name = outputFile.getFileName().toString();
                 name = name.substring(0, name.length() -5);
                 grammar.addSemanticError(null, "The name " + name + " is already used as a Token subclass.");
             }
             files.put(nodeName, outputFile);
         }
-        for (Map.Entry<String, File> entry : files.entrySet()) {
+        for (Map.Entry<String, Path> entry : files.entrySet()) {
             if (regenerate(entry.getValue())) {
-                generate(entry.getKey(), entry.getValue().toPath());
+                generate(entry.getKey(), entry.getValue());
             }
         }
     }
 
     // only used for tree-building files (a bit kludgy)
-    private File getOutputFile(String nodeName) throws IOException {
+    private Path getOutputFile(String nodeName) throws IOException {
         if (nodeName.equals(grammar.getBaseNodeClassName())) {
-            return grammar.getParserOutputDirectory().resolve(nodeName + ".java").toFile();
+            return grammar.getParserOutputDirectory().resolve(nodeName + ".java");
         }
         String className = grammar.getNodeClassName(nodeName);
         //KLUDGE
@@ -343,12 +345,15 @@ public class FilesGenerator {
         }
         String explicitlyDeclaredPackage = codeInjector.getExplicitlyDeclaredPackage(className);
         if (explicitlyDeclaredPackage == null) {
-            return grammar.getNodeOutputDirectory().resolve(className + ".java").toFile();
+            return grammar.getNodeOutputDirectory().resolve(className + ".java");
         }
         String sourceBase = grammar.getBaseSourceDirectory();
         if (sourceBase.equals("")) {
-            return grammar.getNodeOutputDirectory().resolve(className + ".java").toFile();
+            return grammar.getNodeOutputDirectory().resolve(className + ".java");
         }
-        return new File(new File(sourceBase, explicitlyDeclaredPackage.replace('.', '/')), className + ".java"); 
+//        return new File(new File(sourceBase, explicitlyDeclaredPackage.replace('.', '/')), className + ".java").toPath(); 
+        Path result = Paths.get(sourceBase);
+        result = result.resolve(explicitlyDeclaredPackage.replace('.', '/'));
+        return result.resolve(className + ".java");
     }
 }
