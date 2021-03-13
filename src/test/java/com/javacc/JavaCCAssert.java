@@ -30,6 +30,7 @@ package com.javacc;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -143,7 +144,7 @@ public class JavaCCAssert {
 	public static Node parseGrammar(String fileName, String content, JavaCCErrorReporter reporter)
 			throws IOException, ParseException {
 		Grammar grammar = new Grammar();
-		grammar.setFilename(fileName);
+		grammar.setFilename(Paths.get(fileName));
 		if (reporter != null) {
 			grammar.setReporter(reporter);
 		}
