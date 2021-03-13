@@ -112,6 +112,11 @@
         if (curChar == -1) {
            return generateEOF();
         }
+        else if (curChar >0xFFFF)  {
+          // For now, I guess we'll treat any characters
+          // beyond the BMP as invalid input.
+          return handleInvalidChar(curChar);
+        }
        image.setLength(0);
        matchedCharsLength = 0;
 
@@ -230,26 +235,27 @@
      [/#if]
    [/#if]
    }
-    int error_line = input_stream.getEndLine();
-    int error_column = input_stream.getEndColumn();
-    String error_after = null;
-    error_after = curPos <= 1 ? "" : input_stream.getImage();
-    StringBuilder sb = new StringBuilder();
-    sb.appendCodePoint(curChar);
-    if (invalidToken == null) {
-       invalidToken = new InvalidToken(sb.toString(), inputSource);
-       invalidToken.setBeginLine(error_line);
-       invalidToken.setBeginColumn(error_column);
-    } else {
-       invalidToken.setImage(invalidToken.getImage() + sb.toString());
-    }
-    invalidToken.setEndLine(error_line);
-    invalidToken.setEndColumn(error_column);
-    return invalidToken;
+    return handleInvalidChar(curChar);
 [#if lexerData.hasMore]
     }
 [/#if]
      }
+  }
+
+  private InvalidToken handleInvalidChar(int ch) {
+    int line = input_stream.getEndLine();
+    int column = input_stream.getEndColumn();
+    String img = new String(new int[] {ch}, 0, 1);
+    if (invalidToken == null) {
+       invalidToken = new InvalidToken(img, inputSource);
+       invalidToken.setBeginLine(line);
+       invalidToken.setBeginColumn(column);
+    } else {
+       invalidToken.setImage(invalidToken.getImage() + img);
+    }
+    invalidToken.setEndLine(line);
+    invalidToken.setEndColumn(column);
+    return invalidToken;
   }
 
   private void tokenLexicalActions() {

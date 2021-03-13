@@ -82,7 +82,7 @@ public class FileLineMap {
     }
 
     // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
-    private final String content;
+    private final CharSequence content;
     // Typically a filename, I suppose.
     private String inputSource;
     // A list of offsets of the beginning of lines
@@ -196,7 +196,14 @@ public class FileLineMap {
         if (bufferPosition >= content.length()) {
             return -1;
         }
-        int ch = content.codePointAt(bufferPosition++);
+        char ch = content.charAt(bufferPosition++);
+        if (Character.isHighSurrogate(ch) && bufferPosition < content.length()) {
+            char nextChar = content.charAt(bufferPosition);
+            if (Character.isLowSurrogate(nextChar)) {
+                ++bufferPosition;
+                return Character.toCodePoint(ch, nextChar);
+            }
+        }
         if (ch == '\n') {
             advanceLine();
             column = 1;
@@ -207,7 +214,7 @@ public class FileLineMap {
     }
 
     String getImage() {
-        String image = content.substring(tokenBeginOffset, bufferPosition);
+        CharSequence image = content.subSequence(tokenBeginOffset, bufferPosition);
         if (tokenBeginLine == this.line || parsedLines==null) {
             // If it is all on one line, or we don't have any 
             // line marker bitset, then there is nothing more to do.
@@ -230,11 +237,11 @@ public class FileLineMap {
      * @return only the part of the input that is not actually not
      * turned off by the preprocesor.
      */
-    private String onlyRelevantPart(String input, int currentLine) {
+    private String onlyRelevantPart(CharSequence input, int currentLine) {
         StringBuilder buf = new StringBuilder();
         boolean on = isParsedLine(currentLine);
         for (int i=0; i<input.length(); i++) {
-            int ch = input.codePointAt(i);
+            char ch = input.charAt(i);
             if (on) buf.append(ch);
             if (ch == '\n') {
                 on = isParsedLine(++currentLine);
@@ -391,8 +398,8 @@ public class FileLineMap {
                     if (justSawUnicodeEscape && Character.isSurrogatePair(last, current)) {
                         buf.setLength(buf.length()-1);
                         --col;
-//                        buf.appendCodePoint(Character.toCodePoint(last, current));
-                        buf.appendCodePoint('X');
+                        buf.appendCodePoint(Character.toCodePoint(last, current));
+//                        buf.appendCodePoint('X');
                         justSawUnicodeEscape = false;
                     } else {
                         buf.append(current);
@@ -431,32 +438,32 @@ public class FileLineMap {
             }
         }
         if (ensureFinalEndline) {
-            int lastChar = buf.codePointAt(buf.length()-1);
+            char lastChar = buf.charAt(buf.length()-1);
             if (lastChar != '\n' && lastChar!='\r') buf.append((char) '\n');
         }
         return buf.toString();
     }
 
-    private static int[] createLineOffsetsTable(String content) {
+    private static int[] createLineOffsetsTable(CharSequence content) {
         if (content.length() == 0) {
             return EMPTY_INT;
         }
         int lineCount = 0;
         int length = content.length();
         for (int i = 0; i < length; i++) {
-            int ch = content.codePointAt(i);
+            char ch = content.charAt(i);
             if (ch == '\n') {
                 lineCount++;
             }
         }
-        if (content.codePointAt(length - 1) != '\n') {
+        if (content.charAt(length - 1) != '\n') {
             lineCount++;
         }
         int[] lineOffsets = new int[lineCount];
         lineOffsets[0] = 0;
         int index = 1;
         for (int i = 0; i < length; i++) {
-            int ch = content.codePointAt(i);
+            char ch = content.charAt(i);
             if (ch == '\n') {
                 if (i + 1 == length)
                     break;
