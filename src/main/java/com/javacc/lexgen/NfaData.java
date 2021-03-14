@@ -104,14 +104,9 @@ public class NfaData {
         for (NfaState state : allStates) {
             state.doEpsilonClosure();
         }
-        for (NfaState epsilonMove : initialState.epsilonMoves) {
-            epsilonMove.generateCode();
-        }
-        if (!indexedAllStates.isEmpty()) {
-            initialState.generateCode();
-            String stateSetString = buildStateSetString(initialState.epsilonMoves);
-            addStartStateSet(stateSetString);
-        }
+        initialState.generateCode();
+        String stateSetString = buildStateSetString(initialState.epsilonMoves);
+        addStartStateSet(stateSetString);
         int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
         if (initialState.getType() != null && initialOrdinal != 0) {
             if (lexerData.getSkipSet().get(initialOrdinal)
@@ -197,8 +192,9 @@ public class NfaData {
     }
 
     public int initStateName() {
-        String stateSetString = buildStateSetString(initialState.epsilonMoves);
-        if (initialState.getEpsilonMoveCount() > 0) {
+        Set<NfaState> epsilonMoves = initialState.epsilonMoves;
+        if (!epsilonMoves.isEmpty()) {
+            String stateSetString = buildStateSetString(epsilonMoves);
             return stateIndexFromComposite.get(stateSetString);
         }
         return -1;
