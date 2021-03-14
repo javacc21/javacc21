@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2019 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -41,7 +41,12 @@ import com.javacc.parser.tree.RegexpStringLiteral;
 import com.javacc.parser.tree.TokenProduction;
 
 /**
- * Generate lexer.
+ * Base object that contains lexical data. 
+ * It contains LexicalStateData objects that contain
+ * the data for each lexical state. The LexicalStateData
+ * objects in turn contain NfaData and DfaData objects
+ * that hold the data related to generating the NFAs and DFAs
+ * for the respective lexical states.
  */
 public class LexerData {
     private Grammar grammar;
@@ -49,18 +54,15 @@ public class LexerData {
     private List<RegularExpression> regularExpressions = new ArrayList<>();
     private TokenSet skipSet, specialSet, moreSet, tokenSet;
     
-    private int stateSetSize;
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
     private int lohiByteCount;
     private List<NfaState> nonAsciiTableForMethod = new ArrayList<>();
-    private Map<String, Integer> lohiByteTable = new HashMap<>();
-
-    private List<String> allBitVectors = new ArrayList<>();
-    private int[] tempIndices = new int[512];
+    private Map<BitSet, Integer> lohiByteLookup = new HashMap<>();
+    private List<BitSet> allBitSets = new ArrayList<>();
     private Map<String, int[]> tableToDump = new HashMap<>();
     private List<int[]> orderedStateSet = new ArrayList<>();
-    private int lastIndex;
+    int lastIndex;
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
@@ -142,9 +144,11 @@ public class LexerData {
    
     static public boolean isJavaIdentifier(String s) {
         if (s.length() == 0) return false;
-        if (!Character.isJavaIdentifierStart(s.charAt(0))) return false;
-        for (int i=1; i<s.length(); i++) {
-            if (!Character.isJavaIdentifierPart(s.charAt(i))) return false;
+        for (int i=0; i<s.length(); i++) {
+            int ch = s.codePointAt(i);
+            if (i==0 && !Character.isJavaIdentifierStart(ch)) return false;
+            if (!Character.isJavaIdentifierPart(ch)) return false;
+            if (ch > 0xFFFF) i++;
         }
         return true;
     }
@@ -221,7 +225,11 @@ public class LexerData {
     }
 
     public int getStateSetSize() {
-        return stateSetSize;
+        int result =0;
+        for (LexicalStateData lsd : getLexicalStates()) {
+            result = Math.max(result, lsd.getNumStates());
+        }
+        return result;
     }
 
     public List<NfaState> getNonAsciiTableForMethod() {
@@ -236,16 +244,12 @@ public class LexerData {
         ++lohiByteCount;
     }
 
-    Map<String, Integer> getLoHiByteTable() {
-        return lohiByteTable;
+    Map<BitSet, Integer> getLoHiByteLookup() {
+        return lohiByteLookup;
     }
 
-    public List<String> getAllBitVectors() {
-        return allBitVectors;
-    }
-
-    int[] getTempIndices() {
-        return tempIndices;
+    public List<BitSet> getAllBitSets() {
+        return allBitSets;
     }
 
     Map<String, int[]> getTableToDump() {
@@ -254,14 +258,6 @@ public class LexerData {
 
     public List<int[]> getOrderedStateSet() {
         return orderedStateSet;
-    }
-
-    int getLastIndex() {
-        return lastIndex;
-    }
-
-    void setLastIndex(int i) {
-        lastIndex = i;
     }
 
     public int getIndex(String name) {
@@ -288,10 +284,6 @@ public class LexerData {
         for (RegexpChoice choice : choices) {
             checkUnmatchability(choice);
         }
-    }
-
-    void expandStateSetSize(int size) {
-        if (stateSetSize < size) stateSetSize = size;
     }
 
     //What about the case of a regexp existing in multiple lexical states? REVISIT (JR)

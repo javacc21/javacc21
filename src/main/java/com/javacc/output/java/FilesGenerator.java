@@ -29,7 +29,12 @@
 
 package com.javacc.output.java;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Writer;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import com.javacc.Grammar;
@@ -53,9 +58,9 @@ public class FilesGenerator {
 
     void initializeTemplateEngine() throws IOException {
         fmConfig = new freemarker.template.Configuration();
-        String filename = grammar.getFilename();
-        File dir = new File(filename).getCanonicalFile().getParentFile();
-        TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir), 
+        Path filename = grammar.getFilename();
+        Path dir = filename.normalize().getParent();
+        TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir.toFile()), 
                                                                 new ClassTemplateLoader(this.getClass(), "/templates/java"));
         fmConfig.setTemplateLoader(templateLoader);
         fmConfig.setObjectWrapper(new BeansWrapper());
@@ -74,7 +79,7 @@ public class FilesGenerator {
                                              codeInjections);
     }
 
-    public void generateAll() throws IOException, TemplateException, MetaParseException {
+    public void generateAll() throws IOException, TemplateException, ParseException, MetaParseException {
         if (grammar.getErrorCount() != 0) {
             throw new MetaParseException();
         }
@@ -94,16 +99,17 @@ public class FilesGenerator {
     	}
     	if (grammar.getFaultTolerant()) {
     	    generateInvalidNode();
+            generateParsingProblem();
     	}
         
     }
 
-    public void generate(File outputFile) throws IOException, TemplateException {
+    public void generate(Path outputFile) throws IOException, ParseException, TemplateException {
         generate(null, outputFile);
     }
     
-    public void generate(String nodeName, File outputFile) throws IOException, TemplateException  {
-        this.currentFilename = outputFile.getName();
+    public void generate(String nodeName, Path outputFile) throws IOException, ParseException, TemplateException  {
+        this.currentFilename = outputFile.getFileName().toString();
         String templateName = currentFilename + ".ftl";
         if (tokenSubclassFileNames.contains(currentFilename)) {
                 templateName = "ASTToken.java.ftl";
@@ -155,129 +161,114 @@ public class FilesGenerator {
         template.process(dataModel, out);
         String code = out.toString();
         if (!grammar.isQuiet()) {
-            System.out.println("Outputting: " + outputFile.getAbsolutePath());
+            System.out.println("Outputting: " + outputFile.normalize());
         }
-        if (outputFile.getName().endsWith(".java")) {
+        if (outputFile.getFileName().toString().endsWith(".java")) {
             outputJavaFile(code, outputFile);
-        } else {
-            FileWriter outfile = new FileWriter(outputFile);
-            try {
-                outfile.write(code);
-            } 
-            finally {
-                outfile.close();
-            }
+        } else try (Writer outfile = Files.newBufferedWriter(outputFile)) {
+            outfile.write(code);
         }
     }
     
-    void outputJavaFile(String code, File outputFile) throws IOException, TemplateException {
-        File dir = outputFile.getParentFile();
-        if (!dir.exists()) {
-            dir.mkdirs();
+    void outputJavaFile(String code, Path outputFile) throws IOException, ParseException, TemplateException {
+        Path dir = outputFile.getParent();
+        if (Files.exists(dir)) {
+            Files.createDirectories(dir);
         }
-        FileWriter out = new FileWriter(outputFile);
         CompilationUnit jcu = null;
-        try {
-            jcu = JavaCCParser.parseJavaFile(outputFile.getName(), code);
-        } catch (Exception e) {
-            e.printStackTrace();
-            try {
-                out.write(code);
-            } finally {
-                out.flush();
-                out.close();
-            }
-            return;
+        try (Writer out = Files.newBufferedWriter(outputFile)) {
+            jcu = JavaCCParser.parseJavaFile(outputFile.getFileName().toString(), code);
+            out.write(code);
+            out.flush();
+            out.close();
         }
-        codeInjector.injectCode(jcu);
-        try {
+        try (Writer out = Files.newBufferedWriter(outputFile)) {
+            codeInjector.injectCode(jcu);
             JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getJdkTarget());
             JavaCodeUtils.addGetterSetters(jcu);
             JavaCodeUtils.removeUnusedPrivateMethods(jcu);
             JavaCodeUtils.removeUnusedVariables(jcu);
             JavaFormatter formatter = new JavaFormatter();
             out.write(formatter.format(jcu));
-        } finally {
-            out.close();
-        }
+        } 
     }
     
-    void generateConstantsFile() throws IOException, TemplateException {
+    void generateConstantsFile() throws IOException, ParseException, TemplateException {
         String filename = grammar.getConstantsClassName() + ".java";
-        File outputFile = new File(grammar.getParserOutputDirectory(), filename);
+        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
 
-    void generateParseException() throws IOException, TemplateException {
-        File outputFile = new File(grammar.getParserOutputDirectory(), "ParseException.java");
+    void generateParseException() throws IOException, ParseException, TemplateException {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("ParseException.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
     
-    void generateParsingProblem() throws IOException, TemplateException {
-        File outputFile = new File(grammar.getParserOutputDirectory(), "ParsingProblem.java");
+    void generateParsingProblem() throws IOException, ParseException, TemplateException {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("ParsingProblem.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
 
-    void generateInvalidNode() throws IOException, TemplateException {
-        File outputFile = new File(grammar.getParserOutputDirectory(), "InvalidNode.java");
+    void generateInvalidNode() throws IOException, ParseException, TemplateException {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("InvalidNode.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
 
-    void generateToken() throws IOException, TemplateException {
-        File outputFile = new File(grammar.getParserOutputDirectory(), "Token.java");
+    void generateToken() throws IOException, ParseException, TemplateException {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("Token.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
-        outputFile = new File(grammar.getParserOutputDirectory(), "InvalidToken.java");
+        outputFile = grammar.getParserOutputDirectory().resolve("InvalidToken.java");
         if (regenerate(outputFile)) {
         	generate(outputFile);
         }
     }
     
-    void generateFileLineMap() throws IOException, TemplateException {
-        File outputFile = new File(grammar.getParserOutputDirectory(), "FileLineMap.java");
+    void generateFileLineMap() throws IOException, ParseException, TemplateException {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("FileLineMap.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
 
-    void generateLexer() throws IOException, TemplateException {
+    void generateLexer() throws IOException, ParseException, TemplateException {
         String filename = "Lexer.java";
         if (!grammar.getUserDefinedLexer()) {
             filename = grammar.getLexerClassName() + ".java";
         }
-        File outputFile = new File(grammar.getParserOutputDirectory(), filename);
+        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
     
-    void generateParser() throws MetaParseException, IOException, TemplateException {
+    void generateParser() throws MetaParseException, IOException, ParseException, TemplateException {
         if (grammar.getErrorCount() !=0) {
         	throw new MetaParseException();
         }
         String filename = grammar.getParserClassName() + ".java";
-        File outputFile = new File(grammar.getParserOutputDirectory(), filename);
+        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
     
-    void generateNodeFile() throws IOException, TemplateException {
-        File outputFile = new File(grammar.getParserOutputDirectory(), "Node.java");
+    void generateNodeFile() throws IOException, ParseException, TemplateException {
+        Path outputFile = grammar.getParserOutputDirectory().resolve("Node.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
     
-    private boolean regenerate(File file) throws IOException {
-        if (!file.exists()) {
+    private boolean regenerate(Path file) throws IOException {
+        if (!Files.exists(file)) {
         	return true;
         } 
-        String ourName = file.getName();
-        String canonicalName = file.getCanonicalFile().getName();
+        String ourName = file.getFileName().toString();
+        String canonicalName = file.normalize().getFileName().toString();
        	if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
        		String msg = "You cannot have two files that differ only in case, as in " 
        	                          + ourName + " and "+ canonicalName 
@@ -285,7 +276,7 @@ public class FilesGenerator {
        	                          + " \nYou will need to rename something in your grammar!";
        		throw new IOException(msg);
         }
-        String filename = file.getName();
+        String filename = file.getFileName().toString();
         if (filename.endsWith(".java")) {
             String typename = filename.substring(0, filename.length() -5);
             if (codeInjector.hasInjectedCode(typename)) {
@@ -295,35 +286,35 @@ public class FilesGenerator {
         return false;
     }
     
-    void generateTreeBuildingFiles() throws IOException, TemplateException {
+    void generateTreeBuildingFiles() throws IOException, ParseException, TemplateException {
     	generateNodeFile();
-        Map<String, File> files = new LinkedHashMap<>();
+        Map<String, Path> files = new LinkedHashMap<>();
         files.put(grammar.getBaseNodeClassName(), getOutputFile(grammar.getBaseNodeClassName()));
 
         for (RegularExpression re : grammar.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;
             String tokenClassName = re.getGeneratedClassName();
-            File outputFile = getOutputFile(tokenClassName);
+            Path outputFile = getOutputFile(tokenClassName);
             files.put(tokenClassName, outputFile);
-            tokenSubclassFileNames.add(outputFile.getName());
+            tokenSubclassFileNames.add(outputFile.getFileName().toString());
             String superClassName = re.getGeneratedSuperClassName();
             if (superClassName != null) {
                 outputFile = getOutputFile(superClassName);
                 files.put(superClassName, outputFile);
-                tokenSubclassFileNames.add(outputFile.getName());
+                tokenSubclassFileNames.add(outputFile.getFileName().toString());
                 superClassLookup.put(tokenClassName, superClassName);
             }
         }
         for (String nodeName : grammar.getNodeNames()) {
-            File outputFile = getOutputFile(nodeName);
-            if (tokenSubclassFileNames.contains(outputFile.getName())) {
-                String name = outputFile.getName();
+            Path outputFile = getOutputFile(nodeName);
+            if (tokenSubclassFileNames.contains(outputFile.getFileName().toString())) {
+                String name = outputFile.getFileName().toString();
                 name = name.substring(0, name.length() -5);
                 grammar.addSemanticError(null, "The name " + name + " is already used as a Token subclass.");
             }
             files.put(nodeName, outputFile);
         }
-        for (Map.Entry<String, File> entry : files.entrySet()) {
+        for (Map.Entry<String, Path> entry : files.entrySet()) {
             if (regenerate(entry.getValue())) {
                 generate(entry.getKey(), entry.getValue());
             }
@@ -331,9 +322,9 @@ public class FilesGenerator {
     }
 
     // only used for tree-building files (a bit kludgy)
-    private File getOutputFile(String nodeName) throws IOException {
+    private Path getOutputFile(String nodeName) throws IOException {
         if (nodeName.equals(grammar.getBaseNodeClassName())) {
-            return new File(grammar.getParserOutputDirectory(), nodeName + ".java");
+            return grammar.getParserOutputDirectory().resolve(nodeName + ".java");
         }
         String className = grammar.getNodeClassName(nodeName);
         //KLUDGE
@@ -342,12 +333,14 @@ public class FilesGenerator {
         }
         String explicitlyDeclaredPackage = codeInjector.getExplicitlyDeclaredPackage(className);
         if (explicitlyDeclaredPackage == null) {
-            return new File(grammar.getNodeOutputDirectory(), className + ".java");            
+            return grammar.getNodeOutputDirectory().resolve(className + ".java");
         }
         String sourceBase = grammar.getBaseSourceDirectory();
         if (sourceBase.equals("")) {
-            return new File(grammar.getNodeOutputDirectory(), className + ".java");
+            return grammar.getNodeOutputDirectory().resolve(className + ".java");
         }
-        return new File(new File(sourceBase, explicitlyDeclaredPackage.replace('.', '/')), className + ".java"); 
+        Path result = Paths.get(sourceBase);
+        result = result.resolve(explicitlyDeclaredPackage.replace('.', '/'));
+        return result.resolve(className + ".java");
     }
 }

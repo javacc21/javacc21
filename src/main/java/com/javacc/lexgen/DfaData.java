@@ -46,7 +46,14 @@ public class DfaData {
     private BitSet singlesToSkipSet = new BitSet();
     private BitSet subStringSet = new BitSet();
     private BitSet subStringAtPosSet = new BitSet();
-    private List<Map<String, KindInfo>> stringLiteralTables = new ArrayList<>();
+
+    // This is a list where the index corresponds to the offset
+    // into the string literal and the items are maps of integers,
+    // codepoints actually, to KindInfo objects. The KindInfo 
+    // objects represent the set of tokens that can still be matched by
+    // that character (i.e. codepoint) and also the ones that can be
+    // terminated. (Accepting state in the Aho et al. terminology)
+    private List<Map<Integer, KindInfo>> stringLiteralTables = new ArrayList<>();
 
     DfaData(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -62,7 +69,7 @@ public class DfaData {
         return singlesToSkipSet.cardinality()>0;
     }
 
-    public List<Map<String, KindInfo>> getStringLiteralTables() {
+    public List<Map<Integer, KindInfo>> getStringLiteralTables() {
         return stringLiteralTables;
     }
 
@@ -91,29 +98,28 @@ public class DfaData {
         final int ordinal = rsLiteral.getOrdinal();
         final String stringLiteral = rsLiteral.getImage();
         final int stringLength = stringLiteral.length();
-//        this.maxStringLength = max(stringLength, maxStringLength);
         while (stringLiteralTables.size() < stringLength) {
             stringLiteralTables.add(new HashMap<>());
         }
         for (int i = 0; i < stringLength; i++) {
-            final char c = stringLiteral.charAt(i);
-            String s = Character.toString(c);
+            int c = stringLiteral.codePointAt(i);
+            if (c > 0xFFFF) i++;
             if (grammar.isIgnoreCase()) {
-                s = s.toLowerCase(Locale.ROOT);
+               c = Character.toLowerCase(c);
             }
-            Map<String, KindInfo> table = stringLiteralTables.get(i);
-            if (!table.containsKey(s)) {
-                table.put(s, new KindInfo(grammar));
+            Map<Integer, KindInfo> table = stringLiteralTables.get(i);
+            if (!table.containsKey(c)) {
+                table.put(c, new KindInfo(grammar));
             }
-            KindInfo info = table.get(s);
+            KindInfo info = table.get(c);
             if (!grammar.isIgnoreCase() && rsLiteral.getIgnoreCase()) {
-                table.put(s.toLowerCase(Locale.ROOT), info);
-                table.put(s.toUpperCase(Locale.ROOT), info);
+                table.put(Character.toLowerCase(c), info);
+                table.put(Character.toLowerCase(c), info);
             }
-            if (i + 1 == stringLength && ordinal > 0) { // REVISIT
+            if (i + 1 == stringLength) {
                 info.insertFinalKind(ordinal);
             }
-            else if (ordinal > 0) { // REVISIT
+            else {
                 info.insertValidKind(ordinal);
             }
         }
@@ -123,18 +129,18 @@ public class DfaData {
     void generateData() {
         fillSubString();
         for (int i = 0; i < lexicalState.getMaxStringLength(); i++) {
-            Map<String, KindInfo> tab = getStringLiteralTables().get(i);
-            for (String key : tab.keySet()) {
-                generateDfaCase(key.charAt(0), tab.get(key), i);
+            Map<Integer, KindInfo> table = getStringLiteralTables().get(i);
+            for (Integer key : table.keySet()) {
+                generateDfaCase(key, table.get(key), i);
             }
         }
     }
 
-    public boolean generateDfaCase(char ch, KindInfo info, int index) {
+    public boolean generateDfaCase(int ch, KindInfo info, int index) {
         int maxStringIndex = lexicalState.getMaxStringIndex();
         for (int kind = 0; kind < maxStringIndex; kind++) {
         	if (index == 0 && ch < 128 && info.getFinalKindCnt() !=0
-        			&& (!lexicalState.hasNfa() || !lexicalState.getNfaData().canStartNfaUsingAscii(ch))) {
+        			&& (lexicalState.getNumStates()==0 || !lexicalState.getNfaData().canStartNfaUsingAscii(ch))) {
         			if (info.isFinalKind(kind) && !subStringSet.get(kind)) {
                         if (grammar.getLexerData().getSkipSet().get(kind)
         				        && !grammar.getLexerData().getSpecialSet().get(kind)
@@ -198,9 +204,11 @@ public class DfaData {
         }
     }
 
-    static public List<String> rearrange(Map<String, KindInfo> table) {
-    	List<String> result = new ArrayList<>(table.keySet());
-    	Collections.sort(result);
-    	return result;
+    // This method is just a temporary kludge
+    // prior to a more complete refactoring.
+    // It is only called from the DfaCode.java.ftl template.
+    public KindInfo getKindInfo(Map<Integer, KindInfo> table, int key) {
+        return table.get(key);
     }
+
 }

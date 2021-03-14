@@ -58,35 +58,31 @@
   private int jjmatchedKind;
   private TokenType matchedType;
   private String inputSource = "input";
+
+ [#macro BitSetFromLongArray bitSet]
+      BitSet.valueOf(new long[] {
+          [#list bitSet.toLongArray() as long]
+             ${utils.toHexStringL(long)}
+             [#if long_has_next],[/#if]
+          [/#list]
+      })
+[/#macro]
   
  
-      // BitSet for TOKEN
-      static private BitSet tokenSet = BitSet.valueOf(new long[] {
-          [#list lexerData.tokenSet.toLongArray() as long]${long}L,[/#list]
-      });
+    static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
+                                specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
+                                skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
+                                moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
-      // BitSet for SKIP
-      static private BitSet skipSet = BitSet.valueOf(new long[] {
-          [#list lexerData.skipSet.toLongArray() as long]${long}L,[/#list]
-      });
+    static private final int STATE_SET_SIZE = ${lexerData.stateSetSize};
 
-      // BitSet for SPECIAL
-      static private BitSet specialSet = BitSet.valueOf(new long[] {
-          [#list lexerData.specialSet.toLongArray() as long]${long}L,[/#list]
-      });      
-
-      // BitSet for MORE
-      static private BitSet moreSet = BitSet.valueOf(new long[] {
-          [#list lexerData.moreSet.toLongArray() as long]${long}L,[/#list]
-      });      
-
-    private final int[] jjrounds = new int[${lexerData.stateSetSize}];
-    private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
+    private final int[] jjrounds = new int[STATE_SET_SIZE];
+    private final int[] jjstateSet = new int[2*STATE_SET_SIZE];
 
     private final StringBuilder image = new StringBuilder();
     private int matchedCharsLength;
 
-    char curChar;
+    int curChar;
     
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
@@ -112,9 +108,14 @@
 
     EOFLoop :
     while (true) {
-        curChar = (char)  input_stream.beginToken();
-        if (curChar == (char) -1) {
+        curChar = input_stream.beginToken();
+        if (curChar == -1) {
            return generateEOF();
+        }
+        else if (curChar >0xFFFF)  {
+          // For now, I guess we'll treat any characters
+          // beyond the BMP as invalid input.
+          return handleInvalidChar(curChar);
         }
        image.setLength(0);
        matchedCharsLength = 0;
@@ -140,7 +141,8 @@
         [#if multipleLexicalStates]
             "<" + lexicalState + ">" + 
         [/#if]
-        "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+        [#-- REVISIT--]
+        "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
         "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
     [/#set]
     if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
@@ -216,14 +218,15 @@
           jjmatchedKind = 0x7FFFFFFF;
           int retval = input_stream.readChar();
           if (retval >=0) {
-               curChar = (char) retval;
+               curChar = retval;
 	
 	            [#var debugOutput]
 	            [#set debugOutput]
 	              [#if multipleLexicalStates]
 	                 "<" + lexicalState + ">" + 
 	              [/#if]
-	              "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ") " +
+                  [#-- REVISIT --]
+	              "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
 	              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
 	            [/#set]
 	              if (trace_enabled) LOGGER.info(${debugOutput?trim});
@@ -232,24 +235,27 @@
      [/#if]
    [/#if]
    }
-    int error_line = input_stream.getEndLine();
-    int error_column = input_stream.getEndColumn();
-    String error_after = null;
-    error_after = curPos <= 1 ? "" : input_stream.getImage();
-    if (invalidToken == null) {
-       invalidToken = new InvalidToken(""+ curChar, inputSource);
-       invalidToken.setBeginLine(error_line);
-       invalidToken.setBeginColumn(error_column);
-    } else {
-       invalidToken.setImage(invalidToken.getImage() + curChar);
-    }
-    invalidToken.setEndLine(error_line);
-    invalidToken.setEndColumn(error_column);
-    return invalidToken;
+    return handleInvalidChar(curChar);
 [#if lexerData.hasMore]
     }
 [/#if]
      }
+  }
+
+  private InvalidToken handleInvalidChar(int ch) {
+    int line = input_stream.getEndLine();
+    int column = input_stream.getEndColumn();
+    String img = new String(new int[] {ch}, 0, 1);
+    if (invalidToken == null) {
+       invalidToken = new InvalidToken(img, inputSource);
+       invalidToken.setBeginLine(line);
+       invalidToken.setBeginColumn(column);
+    } else {
+       invalidToken.setImage(invalidToken.getImage() + img);
+    }
+    invalidToken.setEndLine(line);
+    invalidToken.setEndColumn(column);
+    return invalidToken;
   }
 
   private void tokenLexicalActions() {
@@ -334,9 +340,8 @@
 	private static boolean jjCanMove_${nfaState.nonAsciiMethod}
 	   (int hiByte, int i1, int i2, long l1, long l2) {
 	
-	[#var allBitVectors=lexerData.allBitVectors]
 	   switch(hiByte) {
-	   [#list nfaState.loByteVec! as kase]
+	   [#list nfaState.loByteVec as kase]
 	       [#if kase_index%2 = 0]       
 	      case ${kase} :
 	          return (jjbitVec${nfaState.loByteVec[kase_index+1]}[i2] &l2) != 0L;
@@ -368,8 +373,8 @@
          return pos + 1;
     }
     
-[#list lexerData.allBitVectors as bitVec]
-    private static final long[] jjbitVec${bitVec_index} = ${bitVec};
+[#list lexerData.allBitSets as bitSet]
+    private static final long[] jjbitVec${bitSet_index} = ${utils.bitSetToLong(bitSet)};
 [/#list]    
 
 [#list lexerData.lexicalStates as lexicalState]
@@ -388,7 +393,6 @@
   since (and I don't like it) the DumpXXX macros
   build up the lexerData.orderedStateSet structure
 --]  
-
   private static final int[] jjnextStates = {
 [#var count=0]    
 [#list lexerData.orderedStateSet as set]
@@ -400,3 +404,4 @@
     [/#list]
 [/#list]
   };
+

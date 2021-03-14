@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -32,30 +32,28 @@ package com.javacc.lexgen;
 import java.util.*;
 import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
-import com.javacc.parser.ParseException;
 import com.javacc.parser.tree.RegexpStringLiteral;
 
 /**
  * Class to hold the data for generating the NFA's for 
- * regular expressions
- */
+ * regular expressions. Each lexical state
+ * has one NfaData object.
+ */ 
 public class NfaData {
 
     final private LexicalStateData lexicalState;
     final private Grammar grammar;
     final private LexerData lexerData;
-    private int[][] intermediateMatchedPos;
     private int dummyStateIndex = -1;
     private Map<String, int[]> compositeStateTable = new HashMap<>();
-    private List<Map<String, long[]>> statesForPos;
     private List<Map<String, BitSet>> stateSetForPos;
+    // In general, all the structures with int[] should be replaced
+    // by simply referring directly to the NfaState object
     private Map<String, int[]> allNextStates = new HashMap<>();
     private List<NfaState> allStates = new ArrayList<>();
-
+    private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     List<NfaState> indexedAllStates = new ArrayList<>();
-    Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     NfaState initialState;
-
 
     NfaData(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -80,10 +78,6 @@ public class NfaData {
         return allNextStates;
     }
 
-    public int[] nextStatesFromKey(String key) {
-        return allNextStates.get(key);
-    }
-
     public int stateIndexFromComposite(String key) {
         return stateIndexFromComposite.get(key);
     }
@@ -96,18 +90,20 @@ public class NfaData {
         return allStates;
     }
 
-    public List<Map<String, long[]>> getStatesForPos() {return statesForPos;}
-
-    public List<Map<String, BitSet>> getStateSetForPos() {return stateSetForPos;}
+    public List<Map<String, BitSet>> getStateSetForPos() {
+        return stateSetForPos;
+    }
     
     void generateData() {
-        for (NfaState state : allStates) state.optimizeEpsilonMoves();
-        for (NfaState epsilonMove : initialState.getEpsilonMoves()) {
+        for (NfaState state : allStates) {
+            state.doEpsilonClosure();
+        }
+        for (NfaState epsilonMove : initialState.epsilonMoves) {
             epsilonMove.generateCode();
         }
         if (!indexedAllStates.isEmpty()) {
             initialState.generateCode();
-            initialState.generateInitMoves();
+            addStartStateSet(initialState.getEpsilonMovesString());
         }
         int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
         if (initialState.getType() != null && initialOrdinal != 0) {
@@ -124,20 +120,19 @@ public class NfaData {
         for (NfaState nfaState : allStates) {
             nfaState.generateNonAsciiMoves();
         }
-        lexerData.expandStateSetSize(indexedAllStates.size());
     }
 
     void generateNfaStates() {
         if (indexedAllStates.isEmpty()) {
             return;
         }
-        List<NfaState> v = allStates;
+        List<NfaState> prevAllStates = allStates;
         allStates = new ArrayList<>();
         while (allStates.size() < indexedAllStates.size()) {
             allStates.add(null);
         }
-        for (NfaState state : v) {
-            if (state.getIndex() != -1 /*&& state != singlesToSkip*/)
+        for (NfaState state : prevAllStates) {
+            if (state.getIndex() != -1)
                 allStates.set(state.getIndex(), state);
         }
     }
@@ -152,20 +147,12 @@ public class NfaData {
             stateIndexFromComposite.put(stateSetString, nameSet[0]);
             return nameSet[0];
         }
-        for (int i = 0; i < nameSet.length; i++) {
-            if (nameSet[i] != -1) {
-                NfaState state = indexedAllStates.get(nameSet[i]);
-                state.setComposite(true);
-                state.setCompositeStates(nameSet);
-            }
-        }
         while (toRet < nameSet.length && (indexedAllStates.get(nameSet[toRet]).getInNextOf() > 1)) {
             toRet++;
         }
         for (String key : compositeStateTable.keySet()) {
             if (!key.equals(stateSetString) && intersect(stateSetString, key)) {
                 int[] other = compositeStateTable.get(key);
-
                 while (toRet < nameSet.length
                         && (((indexedAllStates.get(nameSet[toRet])).getInNextOf() > 1) || arrayContains(other, nameSet[toRet]))) {
                     toRet++;
@@ -193,12 +180,8 @@ public class NfaData {
     }
 
     boolean intersect(String set1, String set2) {
-        if (set1 == null || set2 == null)
-            return false;
         int[] nameSet1 = allNextStates.get(set1);
         int[] nameSet2 = allNextStates.get(set2);
-        if (nameSet1 == null || nameSet2 == null)
-            return false;
         for (int i = nameSet1.length; i-- > 0;)
             for (int j = nameSet2.length; j-- > 0;)
                 if (nameSet1[i] == nameSet2[j])
@@ -206,113 +189,95 @@ public class NfaData {
         return false;
     }
 
-    boolean intersect(NfaState state1, NfaState state2) {
-        return intersect(state1.getEpsilonMovesString(), state2.getEpsilonMovesString());
-    }
-
     public int initStateName() {
         String s = initialState.getEpsilonMovesString();
-        if (initialState.hasEpsilonMoves()) {
+        if (initialState.getEpsilonMoveCount() > 0) {
             return stateIndexFromComposite.get(s);
         }
         return -1;
     }
     
     String getStateSetString(List<NfaState> states) {
-        if (states == null || states.size() == 0)
+        if (states.isEmpty())
             return "null;";
         int[] set = new int[states.size()];
-        String retVal = "{ ";
-        for (int i = 0; i < states.size();) {
-            int k;
-            retVal += (k = (states.get(i)).getIndex()) + ", ";
-            set[i] = k;
-            if (i++ > 0 && i % 16 == 0)
-                retVal += "\n";
+        String retVal = "{";
+        for (int i = 0; i < states.size(); i++) {
+            set[i] = states.get(i).getIndex();
+            retVal += set[i]  + ",";
         }
         retVal += "};";
         allNextStates.put(retVal, set);
         return retVal;
     }
 
-    public int[] getStateSetIndicesForUse(String arrayString) {
-        int[] set = allNextStates.get(arrayString);
+    public int[] getStateSetIndicesForUse(NfaState state) {
+        String arrayString = state.getEpsilonMovesString();
+        int[] set = state.getStates();
         int[] result = lexerData.getTableToDump().get(arrayString);
         if (result == null) {
             result = new int[2];
-            int lastIndex = lexerData.getLastIndex();
-            result[0] = lastIndex;
-            result[1] = lastIndex + set.length - 1;
-            lexerData.setLastIndex(lastIndex + set.length);
+            result[0] = lexerData.lastIndex;
+            result[1] = lexerData.lastIndex + set.length - 1;
+            lexerData.lastIndex += set.length;
             lexerData.getTableToDump().put(arrayString, result);
             lexerData.getOrderedStateSet().add(set);
         }
         return result;
     }
 
-    boolean canStartNfaUsingAscii(char c) {
+    boolean canStartNfaUsingAscii(int c) {
         assert c < 128 : "This should be impossible.";
-        String epsilonMovesString = initialState.getEpsilonMovesString();
-        if (epsilonMovesString == null || epsilonMovesString.equals("null;"))
-            return false;
-        int[] states = allNextStates.get(epsilonMovesString);
-        for (int i = 0; i < states.length; i++) {
-            NfaState state = indexedAllStates.get(states[i]);
-            if (state.hasAsciiMove(c)) 
-                return true;
+        for (NfaState state : initialState.epsilonMoves) {
+            if (state.hasAsciiMove(c))
+            return true;
         }
         return false;
     }
 
-
+//What a total Rube Goldberg contraption!
     void generateNfaStartStates() {
         Set<NfaState> seenStates = new HashSet<>();
-        Map<String, String> stateSets = new HashMap<String, String>();
+        Set<String> stateSets = new HashSet<String>();
         String stateSetString = "";
-        int maxKindsReqd = lexicalState.getMaxStringIndex() / 64 + 1;
-        long[] actives;
-        BitSet activeSet = new BitSet();
         List<NfaState> newStates = new ArrayList<>();
-
-        statesForPos = new ArrayList<>();
         stateSetForPos = new ArrayList<>();
         for (int k = 0; k < lexicalState.getMaxStringLength(); k++) {
-            statesForPos.add(null);
-            stateSetForPos.add(null);
+            stateSetForPos.add(new HashMap<>());
         }
-        intermediateMatchedPos = new int[lexicalState.getMaxStringIndex() + 1][];
         for (RegularExpression re : lexerData.getRegularExpressions()) {
             if (!lexicalState.containsRegularExpression(re) || !(re instanceof RegexpStringLiteral)) {
                 continue;
             }
             String image = re.getImage();
             int ordinal = re.getOrdinal();
-            List<NfaState> oldStates = new ArrayList<NfaState>(initialState.getEpsilonMoves());
-            intermediateMatchedPos[ordinal] = new int[image.length()];
-            int jjmatchedPos = 0;
-            int kind = Integer.MAX_VALUE;
+            List<NfaState> oldStates = new ArrayList<>(initialState.epsilonMoves);
+            int[] positions = new int[image.length()];
+            int matchedPosition = 0;
             for (int charOffset = 0; charOffset < image.length(); charOffset++) {
-                if (oldStates == null || oldStates.isEmpty()) {
+                RegularExpression reKind = null;
+                if (oldStates.isEmpty()) {
                     // Here, charOffset > 0
-                    jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = intermediateMatchedPos[ordinal][charOffset - 1];
+                    matchedPosition = positions[charOffset] = positions[charOffset - 1];
                 } else {
-                    kind = moveFromSet(image.charAt(charOffset), oldStates, newStates);
+                    int ch = image.codePointAt(charOffset);
+                    reKind = moveFromSet(ch, oldStates, newStates);
+                    if (ch>0xFFFF) charOffset++;
                     oldStates.clear();
-                    if (lexicalState.getDfaData().getStrKind(image.substring(0, charOffset + 1)) < kind) {
-                        jjmatchedPos = 0;
-                    } else if (kind != Integer.MAX_VALUE) {
-                        jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = charOffset;
+                    if (reKind != null && lexicalState.getDfaData().getStrKind(image.substring(0, charOffset + 1)) < reKind.getOrdinal()) {
+                        matchedPosition = 0;
+                    } else if (reKind != null) {
+                        matchedPosition = positions[charOffset] = charOffset;
                     } 
                     else if (charOffset>0) {
-                        jjmatchedPos = intermediateMatchedPos[ordinal][charOffset] = intermediateMatchedPos[ordinal][charOffset - 1];
+                        matchedPosition = positions[charOffset] = positions[charOffset - 1];
                     }
                     stateSetString = getStateSetString(newStates);
                 }
-                if (kind == Integer.MAX_VALUE && (newStates == null || newStates.size() == 0))
+                if (reKind == null && newStates.isEmpty())
                     continue;
-
-                if (stateSets.get(stateSetString) == null) {
-                    stateSets.put(stateSetString, stateSetString);
+                if (!stateSets.contains(stateSetString)) {
+                    stateSets.add(stateSetString);
                     for (NfaState state : newStates) {
                         if (seenStates.contains(state)) state.incrementInNextOf();
                         else seenStates.add(state);
@@ -325,69 +290,39 @@ public class NfaData {
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();
-                if (statesForPos.get(charOffset) == null) {
-                    statesForPos.set(charOffset, new HashMap<>());
-                    stateSetForPos.set(charOffset, new HashMap<>());
+                int index = reKind == null ? Integer.MAX_VALUE : reKind.getOrdinal();
+                String key = index + "," + matchedPosition + "," + stateSetString;
+                BitSet activeSet= stateSetForPos.get(charOffset).get(key);
+                if (activeSet == null) {
+                    activeSet = new BitSet();
+                    stateSetForPos.get(charOffset).put(key, activeSet);
                 }
-                if ((actives = (statesForPos.get(charOffset).get(kind + ", " + jjmatchedPos + ", "
-                        + stateSetString))) == null) {
-                    actives = new long[maxKindsReqd];
-                    statesForPos.get(charOffset).put(kind + ", " + jjmatchedPos + ", " + stateSetString,
-                            actives);
-                    stateSetForPos.get(charOffset).put(kind + ", " + jjmatchedPos + ", " + stateSetString,
-                            activeSet);
-                }
-                actives[ordinal / 64] |= 1L << (ordinal % 64);
                 activeSet.set(ordinal);
             }
         }
     }
 
-    private static int moveFromSet(char c, List<NfaState> states, List<NfaState> newStates) {
-        int result = Integer.MAX_VALUE;
+    private static RegularExpression moveFromSet(int c, List<NfaState> states, List<NfaState> newStates) {
+        RegularExpression result = null;
         for (NfaState state : states) {
-            result = Math.min(result, state.moveFrom(c, newStates));
+            RegularExpression re = state.moveFrom(c, newStates);
+            if (result == null) result = re;
+            if (re != null && re.getOrdinal()<result.getOrdinal()) result = re;
         }
         return result;
     }
 
-    String getLabel(int kind) {
-        RegularExpression re = lexerData.getRegularExpression(kind);
-
-        if (re instanceof RegexpStringLiteral)
-            return " \"" + ParseException.addEscapes(re.getImage()) + "\"";
-        else if (!re.getLabel().equals(""))
-            return " <" + re.getLabel() + ">";
-        else
-            return " <token of kind " + kind + ">";
-    }
-
-    int getLine(int kind) {
-        return lexerData.getRegularExpression(kind).getBeginLine();
-    }
-
-    int getColumn(int kind) {
-        return lexerData.getRegularExpression(kind).getBeginColumn();
-    }
-
     public int getStateSetForKind(int pos, int kind) {
         if (!lexicalState.isMixedCase() && !indexedAllStates.isEmpty()) {
-
-            Map<String, long[]> allStateSets = statesForPos.get(pos);
-
-            if (allStateSets == null)
-                return -1;
-            for (String s : allStateSets.keySet()) {
-                long[] actives = allStateSets.get(s);
-
-                s = s.substring(s.indexOf(", ") + 2);
-                s = s.substring(s.indexOf(", ") + 2);
-
-                if (s.equals("null;"))
-                    continue;
-
-                if (actives != null && (actives[kind / 64] & (1L << (kind % 64))) != 0L) {
-                    return addStartStateSet(s);
+            Map<String, BitSet> sets = stateSetForPos.get(pos);
+            for (String key: sets.keySet()) {
+                BitSet activeSet = sets.get(key);
+                key = key.substring(key.indexOf(",") + 1);
+                key = key.substring(key.indexOf(",") + 1);
+                if (key.equals("null;")) continue;
+                if (activeSet.get(kind)) {
+//                    return addStartStateSet(key);
+                    return stateIndexFromComposite(key);
                 }
             }
         }
@@ -395,7 +330,7 @@ public class NfaData {
     }
 
     public boolean getDumpNfaStarts() {
-        return indexedAllStates.size() != 0 
+        return !indexedAllStates.isEmpty()
                && !lexicalState.isMixedCase() 
                && lexicalState.getMaxStringIndex() > 0;
     }
@@ -440,7 +375,6 @@ public class NfaData {
         }
         return partition;
     }
-
 
     static private int numberOfBitsSet(long l) {
         int ret = 0;

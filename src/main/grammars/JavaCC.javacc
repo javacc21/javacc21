@@ -444,7 +444,7 @@ INJECT InvocationArguments :
 #if false
 INCLUDE("Java.javacc")
 #else
-INCLUDE("../../../examples/java/Java.javacc")
+INCLUDE "../../../examples/java/Java.javacc"
 #endif
 
 
@@ -645,8 +645,20 @@ INJECT FieldDeclaration :
    import java.util.*;
    extends ClassOrInterfaceBodyDeclaration
 {
+
+  /**
+   * @return the Identifier nodes that correspond to the 
+   *          declaration of an instance variable. 
+   */
   public List<Identifier> getVariableIds() {
-    return descendants(Identifier.class, n->n.getParent() instanceof VariableDeclaratorId);
+     return descendants(Identifier.class, FieldDeclaration::isVariableDeclarator);
+  }
+
+  static boolean isVariableDeclarator(Identifier id) {
+      Node parent = id.getParent();
+      return parent instanceof VariableDeclaratorId || 
+             parent instanceof VariableDeclarator ||
+             parent instanceof FieldDeclaration;
   }
 }
 
@@ -907,22 +919,29 @@ INJECT PARSER_CLASS : {
 
 GrammarInclusion throws IOException :
 {
-   Token t;
+   String filename;
+   List<String> fallbacks = new ArrayList<String>();
 }
    <_INCLUDE>
    (
-       t=<STRING_LITERAL>
+       <STRING_LITERAL> {filename = ((StringLiteral)lastConsumedToken).getString();}
+       (
+         "!" 
+         <STRING_LITERAL>
+         {
+           fallbacks.add(((StringLiteral) lastConsumedToken).getString());
+         }
+       )*
        |
-       "(" t=<STRING_LITERAL> ")"
+       "(" <STRING_LITERAL> {filename = ((StringLiteral)lastConsumedToken).getString();} ")" 
    )
    {
-      String location = t.getImage().substring(1, t.getImage().length() -1);
       if (enterIncludes) {
-          Node included = grammar.include(location);
+          Node included = grammar.include(filename, fallbacks.toArray(new String[0]));
           if (included!=null) {
               CURRENT_NODE.addChild(included);
           } else {
-              grammar.addWarning(CURRENT_NODE, "File " + location + " is already included.");
+              grammar.addWarning(CURRENT_NODE, "File is already included.");
           }
       }
    }
@@ -2229,7 +2248,7 @@ UpToHere(Expansion exp) #void :
    {
        String img = lastConsumedToken.getImage();
        exp.setScanLimit(true);
-       char lastChar = img.charAt(img.length() -1);
+       int lastChar = img.codePointBefore(img.length());
        if (Character.isDigit(lastChar)) {
            exp.setScanLimitPlus(lastChar - '0');
        }
@@ -2915,15 +2934,15 @@ CharacterRange# :
 
 INJECT CharacterRange :
 {
-    public char left, right;
+    public int left, right;
     
     public CharacterRange() {} 
     
-    public CharacterRange(char left, char right) {
+    public CharacterRange(int left, int right) {
         setRange(left, right);
     }
     
-    public void setRange(char left, char right) {
+    public void setRange(int left, int right) {
         if (left > right) {
             throw new ArrayIndexOutOfBoundsException();
         }
@@ -2942,7 +2961,7 @@ INJECT CharacterRange :
             getGrammar().addParseError(bounds.get(0),
                     "String in character list may contain only one character.");
         }
-        this.left = this.right = left.charAt(0);
+        this.left = this.right = left.codePointAt(0);
 
         if (bounds.size()>1) {
             String right = bounds.get(1).getString();
@@ -2950,7 +2969,7 @@ INJECT CharacterRange :
                 getGrammar().addParseError(bounds.get(1),
                         "String in character list may contain only one character.");
             }
-            this.right = right.charAt(0);
+            this.right = right.codePointAt(0);
         }
         if (this.left>this.right) {
             getGrammar().addParseError(this, "The left side of the character range must a lower ordinal (in Unicode) value than the right side.");
