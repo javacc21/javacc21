@@ -233,10 +233,6 @@ public class NfaState {
         return result;
     }
 
-    public String getEpsilonMovesString() {
-        return NfaData.buildStateSetString(epsilonMoves);
-    }
-
     final boolean canMoveUsingChar(int c) {
         if (c < 128) {
             return asciiMoves.get(c);

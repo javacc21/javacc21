@@ -109,7 +109,8 @@ public class NfaData {
         }
         if (!indexedAllStates.isEmpty()) {
             initialState.generateCode();
-            addStartStateSet(initialState.getEpsilonMovesString());
+            String stateSetString = buildStateSetString(initialState.epsilonMoves);
+            addStartStateSet(stateSetString);
         }
         int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
         if (initialState.getType() != null && initialOrdinal != 0) {
@@ -196,9 +197,9 @@ public class NfaData {
     }
 
     public int initStateName() {
-        String s = initialState.getEpsilonMovesString();
+        String stateSetString = buildStateSetString(initialState.epsilonMoves);
         if (initialState.getEpsilonMoveCount() > 0) {
-            return stateIndexFromComposite.get(s);
+            return stateIndexFromComposite.get(stateSetString);
         }
         return -1;
     }
@@ -215,7 +216,7 @@ public class NfaData {
     }
 
     public int[] getStateSetIndicesForUse(NfaState state) {
-        String arrayString = state.getEpsilonMovesString();
+        String arrayString = buildStateSetString(state.epsilonMoves);
         int[] set = state.getStates();
         int[] result = lexerData.getTableToDump().get(arrayString);
         if (result == null) {
