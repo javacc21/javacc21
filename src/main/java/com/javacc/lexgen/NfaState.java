@@ -211,17 +211,13 @@ public class NfaState {
         if (index != -1)
             return;
         if (epsilonMovesString == null && !epsilonMoves.isEmpty()) {
-            int[] stateNames = new int[getEpsilonMoveCount()];
             epsilonMovesString = "{";
-            int idx =0;
             for (NfaState epsilonMove : epsilonMoves) {
                 epsilonMove.generateCode();
                 epsilonMove.inNextOf++;
-                stateNames[idx++] = epsilonMove.index;
                 epsilonMovesString += epsilonMove.index + ",";
             }
             epsilonMovesString += "};";
-            nfaData.getAllNextStates().put(epsilonMovesString, stateNames);            
         }
         if (epsilonMovesString == null) epsilonMovesString = "null;";
         if (nextState != null) {

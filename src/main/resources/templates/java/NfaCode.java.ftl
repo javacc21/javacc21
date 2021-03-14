@@ -156,7 +156,7 @@
 
 [#macro DumpMovesNonAscii lexicalState]
    [#var statesDumped = utils.newBitSet()]
-   [#list lexicalState.nfaData.compositeStateTable?keys as key]
+   [#list lexicalState.nfaData.allCompositeStates as key]
         [@DumpCompositeStatesMovesNonAscii lexicalState, key, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
@@ -175,7 +175,7 @@
 
 [#macro DumpAsciiMoves lexicalState byteNum]
    [#var statesDumped = utils.newBitSet()]
-   [#list lexicalState.nfaData.compositeStateTable?keys as key]
+   [#list lexicalState.nfaData.allCompositeStates as key]
         [@DumpAsciiCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]

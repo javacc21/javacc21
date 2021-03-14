@@ -1202,7 +1202,7 @@ public class Grammar extends BaseNode {
         }
 
         public int firstCharAsInt(String s) {
-            return (int) s.codePointAt(0);
+            return s.codePointAt(0);
         }
         
         public String powerOfTwoInHex(int i) {

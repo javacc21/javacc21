@@ -45,11 +45,8 @@ public class NfaData {
     final private Grammar grammar;
     final private LexerData lexerData;
     private int dummyStateIndex = -1;
-    private Map<String, int[]> compositeStateTable = new HashMap<>();
+    private Set<String> allCompositeStates = new HashSet<>();
     private List<Map<String, BitSet>> stateSetForPos;
-    // In general, all the structures with int[] should be replaced
-    // by simply referring directly to the NfaState object
-    private Map<String, int[]> allNextStates = new HashMap<>();
     private List<NfaState> allStates = new ArrayList<>();
     private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     List<NfaState> indexedAllStates = new ArrayList<>();
@@ -61,12 +58,12 @@ public class NfaData {
         this.lexerData = grammar.getLexerData();
     }
 
-    public Map<String, int[]> getCompositeStateTable() {
-        return compositeStateTable;
+    public Set<String> getAllCompositeStates() {
+        return allCompositeStates;
     }
 
     public NfaState[] getStateSetFromCompositeKey(String key) {
-        int[] indices = compositeStateTable.get(key);
+        int[] indices = epsilonMovesStringToIntArray(key);
         NfaState[] result = new NfaState[indices.length];
         for (int i = 0; i < indices.length; i++) {
             result[i] = allStates.get(indices[i]);
@@ -74,8 +71,17 @@ public class NfaData {
         return result;
     }
 
-    Map<String, int[]> getAllNextStates() {
-        return allNextStates;
+    static private int[] epsilonMovesStringToIntArray(String s) {
+        List<String> ints = new ArrayList<>();
+        StringTokenizer st = new StringTokenizer(s, "{},;null", false);
+        while (st.hasMoreTokens()) {
+            ints.add(st.nextToken());
+        }
+        int[] result = new int[ints.size()];
+        for (int i = 0; i<ints.size(); i++) {
+            result[i] = Integer.valueOf(ints.get(i));
+        }
+        return result;
     }
 
     public int stateIndexFromComposite(String key) {
@@ -142,7 +148,7 @@ public class NfaData {
             return stateIndexFromComposite.get(stateSetString);
         }
         int toRet = 0;
-        int[] nameSet = allNextStates.get(stateSetString);
+        int[] nameSet = epsilonMovesStringToIntArray(stateSetString);
         if (nameSet.length == 1) {
             stateIndexFromComposite.put(stateSetString, nameSet[0]);
             return nameSet[0];
@@ -150,9 +156,9 @@ public class NfaData {
         while (toRet < nameSet.length && (indexedAllStates.get(nameSet[toRet]).getInNextOf() > 1)) {
             toRet++;
         }
-        for (String key : compositeStateTable.keySet()) {
+        for (String key : allCompositeStates) {
             if (!key.equals(stateSetString) && intersect(stateSetString, key)) {
-                int[] other = compositeStateTable.get(key);
+                int[] other = epsilonMovesStringToIntArray(key);
                 while (toRet < nameSet.length
                         && (((indexedAllStates.get(nameSet[toRet])).getInNextOf() > 1) || arrayContains(other, nameSet[toRet]))) {
                     toRet++;
@@ -170,7 +176,7 @@ public class NfaData {
             result = nameSet[toRet];
         }
         stateIndexFromComposite.put(stateSetString, result);
-        compositeStateTable.put(stateSetString, nameSet);
+        allCompositeStates.add(stateSetString);
         return result;
     }
 
@@ -180,8 +186,8 @@ public class NfaData {
     }
 
     boolean intersect(String set1, String set2) {
-        int[] nameSet1 = allNextStates.get(set1);
-        int[] nameSet2 = allNextStates.get(set2);
+        int[] nameSet1 = epsilonMovesStringToIntArray(set1);
+        int[] nameSet2 = epsilonMovesStringToIntArray(set2);
         for (int i = nameSet1.length; i-- > 0;)
             for (int j = nameSet2.length; j-- > 0;)
                 if (nameSet1[i] == nameSet2[j])
@@ -207,7 +213,6 @@ public class NfaData {
             retVal += set[i]  + ",";
         }
         retVal += "};";
-        allNextStates.put(retVal, set);
         return retVal;
     }
 
