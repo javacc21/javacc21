@@ -106,8 +106,8 @@ INJECT FTLLexer :
                 return tok;
             }
         }
-        char firstChar = tok.getImage().charAt(0);
-        char lastChar = tok.getImage().charAt(tok.getImage().length() -1);
+        int firstChar = tok.getImage().codePointAt(0);
+        int lastChar = tok.getImage().codePointAt(tok.getImage().length() -1);
         boolean hasPointyDelimiter = firstChar == '<' || lastChar == '>';
         if (rightAfterHeader) {
             // chop off the newline after a <#ftl ...> header
@@ -201,7 +201,7 @@ INJECT FTLLexer :
     }
 
     private boolean possibleIdentifier(String s) {
-        for (char c : s.toCharArray()) {
+        for (int c : s.codePoints().toArray()) {
             if (c < 'a' || c > 'z') return false;
         }
         return true;

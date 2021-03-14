@@ -12,8 +12,9 @@
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
-  <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true">
-    <arg value="-q"/>
+  <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
+    <assertions><enable/></assertions>
+     <arg value="-q"/>
     <arg value="${basedir}/Java.javacc"/>
   </java>
 </target>
@@ -26,6 +27,7 @@
 
 <target name="test" depends="compile">
      <java fork="true" failonerror="true" classname="JParse">
+         <assertions><enable/></assertions>
          <arg value="org/parsers/java"/>
      </java>
      <echo>
@@ -34,6 +36,7 @@
         -------------------
      </echo>
      <java fork="true" failonerror="true" classname="JParse">
+	       <assertions><enable/></assertions>
          <arg value="org/parsers/java/ast/CompilationUnit.java"/>
      </java>
 </target>

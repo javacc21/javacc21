@@ -33,6 +33,13 @@ package com.javacc.lexgen;
 import com.javacc.parsegen.TokenSet;
 import com.javacc.Grammar;
 
+/**
+ * This object contains two BitSet objects. One is
+ * the valid set of token types that can still be 
+ * matched. The other is the set of token types
+ * that we can be terminating.
+ */
+
 public final class KindInfo {
    
   private TokenSet validKindSet, finalKindSet;

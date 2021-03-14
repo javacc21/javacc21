@@ -75,8 +75,6 @@ public class LexicalStateData {
 
     public NfaData getNfaData() {return nfaData;}
 
-    public int getIndex() {return lexerData.getIndex(name);}
-
     public int getMaxStringLength() {
         int result = 0;
         for (RegularExpression re : regularExpressions) {
@@ -99,12 +97,8 @@ public class LexicalStateData {
         tokenProductions.add(tokenProduction);
     }
 
-    public boolean hasNfa() {
-        return !nfaData.indexedAllStates.isEmpty();
-    }
-
-    public List<NfaState> getIndexedAllStates() {
-        return nfaData.indexedAllStates;
+    public int getNumStates() {
+        return nfaData.indexedAllStates.size();
     }
 
     // FIXME! There is currently no testing in place for mixed case Lexical states!
@@ -113,7 +107,7 @@ public class LexicalStateData {
     }
 
     public boolean getCreateStartNfa() {
-        return !mixedCase && nfaData.indexedAllStates.size() != 0;
+        return !mixedCase && !nfaData.indexedAllStates.isEmpty();
     }
 
     public boolean containsRegularExpression(RegularExpression re) {

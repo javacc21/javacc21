@@ -196,7 +196,14 @@ public class FileLineMap {
         if (bufferPosition >= content.length()) {
             return -1;
         }
-        int ch = content.charAt(bufferPosition++);
+        char ch = content.charAt(bufferPosition++);
+        if (Character.isHighSurrogate(ch) && bufferPosition < content.length()) {
+            char nextChar = content.charAt(bufferPosition);
+            if (Character.isLowSurrogate(nextChar)) {
+                ++bufferPosition;
+                return Character.toCodePoint(ch, nextChar);
+            }
+        }
         if (ch == '\n') {
             advanceLine();
             column = 1;
@@ -339,70 +346,91 @@ public class FileLineMap {
 
     // Icky method to handle annoying stuff. Might make this public later if it is
     // needed elsewhere
-    private static CharSequence mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
+    private static String mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
             boolean javaUnicodeEscape, boolean ensureFinalEndline) {
         if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape) {
             if (ensureFinalEndline) {
-                char lastChar = content.charAt(content.length()-1);
+                int lastChar = content.charAt(content.length()-1);
                 if (lastChar != '\n' && lastChar != '\r') {
                     if (content instanceof StringBuilder) {
-                        ((StringBuilder) content).append((char)'\n');
+                        ((StringBuilder) content).appendCodePoint('\n');
                     } else {
-                        StringBuilder buf = new StringBuilder(content.length()+1);
-                        buf.append(content);
-                        buf.append((char)'\n');
-                        content = buf;
+                        StringBuilder buf = new StringBuilder(content);
+                        buf.appendCodePoint('\n');
+                        content = buf.toString();
                     }
                 }
             }
-            return content;
+            return content.toString();
         }
         StringBuilder buf = new StringBuilder();
         int index = 0;
-        int col = 0;
         // This is just to handle tabs to spaces. If you don't have that setting set, it
         // is really unused.
-        while (index < content.length()) {
-            char ch = content.charAt(index++);
-            if (ch == '\\' && javaUnicodeEscape && index < content.length()) {
-                ch = content.charAt(index++);
+        int col = 0;
+        boolean justSawUnicodeEscape = false;
+        // There is probably some better way of doing this with this Stream API, 
+        // but, for now, I'm just translating the code I had working so I just
+        // get the int[] array and iterate over it, like I did before with the chars
+        // in the CharSequence.
+        int[] codePoints = content.codePoints().toArray();
+        while (index < codePoints.length) {
+            int ch = codePoints[index++];
+            if (ch == '\\' && javaUnicodeEscape && index < codePoints.length) {
+                ch = codePoints[index++];
                 if (ch != 'u') {
-                    buf.append((char) '\\');
-                    buf.append(ch);
+                    justSawUnicodeEscape = false;
+                    buf.appendCodePoint('\\');
+                    buf.appendCodePoint(ch);
                     if (ch == '\n')
                         col = 0;
                     else
                         col += 2;
                 } else {
-                    while (content.charAt(index) == 'u') {
+                    while (codePoints[index] == 'u') {
                         index++;
                         // col++;
                     }
-                    String hex = content.subSequence(index, index += 4).toString();
-                    buf.append((char) Integer.parseInt(hex, 16));
+                    StringBuilder hexBuf = new StringBuilder(4);
+                    for (int i=0; i<4; i++) hexBuf.appendCodePoint(codePoints[index++]);
+                    char current = (char) Integer.parseInt(hexBuf.toString(), 16);
+                    char last = buf.length() >0 ? buf.charAt(buf.length()-1) : 0;
+                    if (justSawUnicodeEscape && Character.isSurrogatePair(last, current)) {
+                        buf.setLength(buf.length()-1);
+                        --col;
+                        buf.appendCodePoint(Character.toCodePoint(last, current));
+//                        buf.appendCodePoint('X');
+                        justSawUnicodeEscape = false;
+                    } else {
+                        buf.append(current);
+                        justSawUnicodeEscape = true;
+                    }
                     // col +=6;
                     ++col;
                     // We're not going to be trying to track line/column information relative to the original content
                     // with tabs or unicode escape, so we just increment 1, not 6
                 }
             } else if (ch == '\r' && !preserveLines) {
-                buf.append((char) '\n');
-                if (index < content.length()) {
-                    ch = content.charAt(index++);
+                justSawUnicodeEscape = false;
+                buf.appendCodePoint('\n');
+                if (index < codePoints.length) {
+                    ch = codePoints[index++];
                     if (ch != '\n') {
-                        buf.append(ch);
+                        buf.appendCodePoint(ch);
                         ++col;
                     } else
                         col = 0;
                 }
             } else if (ch == '\t' && tabsToSpaces > 0) {
+                justSawUnicodeEscape = false;
                 int spacesToAdd = tabsToSpaces - col % tabsToSpaces;
                 for (int i = 0; i < spacesToAdd; i++) {
-                    buf.append((char) ' ');
+                    buf.appendCodePoint(' ');
                     col++;
                 }
             } else {
-                buf.append((char) ch);
+                justSawUnicodeEscape = false;
+                buf.appendCodePoint(ch);
                 if (ch == '\n') {
                     col = 0;
                 } else
@@ -421,10 +449,9 @@ public class FileLineMap {
             return EMPTY_INT;
         }
         int lineCount = 0;
-        char ch;
         int length = content.length();
         for (int i = 0; i < length; i++) {
-            ch = content.charAt(i);
+            char ch = content.charAt(i);
             if (ch == '\n') {
                 lineCount++;
             }
@@ -436,7 +463,7 @@ public class FileLineMap {
         lineOffsets[0] = 0;
         int index = 1;
         for (int i = 0; i < length; i++) {
-            ch = content.charAt(i);
+            char ch = content.charAt(i);
             if (ch == '\n') {
                 if (i + 1 == length)
                     break;

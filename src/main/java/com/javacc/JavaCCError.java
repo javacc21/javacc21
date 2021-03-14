@@ -31,6 +31,8 @@ package com.javacc;
 
 import static com.javacc.JavaCCError.Type.WARNING;
 
+import java.nio.file.Path;
+
 import com.javacc.parser.Node;
 
 /**
@@ -50,14 +52,14 @@ public class JavaCCError {
 		OptionValueTypeMismatch;
 	}
 
-	private final String fileName;
+	private final Path fileName;
 	private final Type type;
 	private final ErrorCode code;
 	private final Object[] arguments;
 	private final String message;
 	private final Node node;
 
-	public JavaCCError(String fileName, Type type, ErrorCode code, Object[] arguments, String message, Node node) {
+	public JavaCCError(Path fileName, Type type, ErrorCode code, Object[] arguments, String message, Node node) {
 		this.fileName = fileName;
 		this.type = type;
 		this.code = code;
@@ -67,11 +69,9 @@ public class JavaCCError {
 	}
 
 	/**
-	 * Returns the file name where the error occurs.
-	 * 
-	 * @return the file name where the error occurs.
+	 * @return the location where the error occurs.
 	 */
-	public String getFileName() {
+	public Path getFileName() {
 		return fileName;
 	}
 

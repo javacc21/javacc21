@@ -44,9 +44,10 @@
   [#var maxStringLength=lexicalState.maxStringLength]
   [#var maxStringIndex=lexicalState.maxStringIndex]
   [#var maxStringLengthForActive=dfaData.maxStringLengthForActive]
+  [#var hasNfa = lexicalState.numStates>0]
   [#if maxStringLength = 0]
     private int jjMoveStringLiteralDfa0_${lexicalState.name}() {
-    [#if lexicalState.hasNfa()]
+    [#if hasNfa]
         return jjMoveNfa_${lexicalState.name}(${initState}, 0);
     [#else]
         return 1;        
@@ -84,7 +85,7 @@
            [/#if]
          [/#list]
          [/@ArgsList] == 0L)
-         [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
+         [#if !lexicalState.mixedCase&&hasNfa]
             return jjStartNfa_${lexicalState.name}
             [@ArgsList]
                ${table_index-2}
@@ -96,7 +97,7 @@
                  [/#if]
                [/#list]
             [/@ArgsList];
-         [#elseif lexicalState.hasNfa()]
+         [#elseif hasNfa]
             return jjMoveNfa_${lexicalState.name}(${initState}, ${table_index-1});
          [#else]
             return ${table_index};
@@ -104,10 +105,10 @@
       [/#if]
        int retval = input_stream.readChar();
        if (retval >=0) {
-           curChar = (char) retval;
+           curChar = retval;
        }
        else  {
-         [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
+         [#if !lexicalState.mixedCase&&hasNfa]
            jjStopStringLiteralDfa_${lexicalState.name}[@ArgsList]
               ${table_index-1}
            [#list 0..maxStringIndex/64 as k]
@@ -121,7 +122,7 @@
              LOGGER.info("    Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token. ");
           }
            return ${table_index};
-         [#elseif lexicalState.hasNfa()]
+         [#elseif hasNfa]
            return jjMoveNfa_${lexicalState.name}(${initState}, ${table_index-1}); 
          [#else]
            return ${table_index};
@@ -133,14 +134,15 @@
         [#if lexerData.lexicalStates?size != 1]
            "<${lexicalState.name}>" +
         [/#if]
+        [#-- REVISIT --]
         "Current character : " + addEscapes(String.valueOf(curChar)) + " ("
-        + (int) curChar + ") at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
+        + curChar + ") at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
     [/#if]
       switch (curChar) {
-    [#list dfaData.rearrange(table) as key]
-       [#var info=table[key]]
+    [#list table?keys as key]
+       [#var info = dfaData.getKindInfo(table, key)]
+	    [#var c = utils.codePointAsString(key)]
        [#var ifGenerated=false]
-	   [#var c=key[0..0]]
 	   [#if dfaData.generateDfaCase(key, info, table_index)]
 	      [#-- We know key is a single character.... --]
 	      [#if grammar.ignoreCase][#--REVISIT--]
@@ -198,7 +200,7 @@
 	           [/@ArgsList];
 	      [#else][#-- a very special case--]
 	        [#if table_index = 0&&lexicalState.mixedCase]
-	           [#if lexicalState.hasNfa()]
+	           [#if hasNfa]
 	           return jjMoveNfa_${lexicalState.name}(${initState}, 0);
 	           [#else]
 	           return 1;
@@ -214,7 +216,7 @@
     the strings at this position--]
          default : 
             if (trace_enabled) LOGGER.info("   No string literal matches possible.");
-    [#if lexicalState.hasNfa()]
+    [#if hasNfa]
        [#if table_index = 0]
             return jjMoveNfa_${lexicalState.name}(${initState}, 0);
        [#else]
@@ -227,7 +229,7 @@
       }
     [#if table_index != 0]
        [#if startNfaNeeded]
-          [#if !lexicalState.mixedCase&&lexicalState.hasNfa()]
+          [#if !lexicalState.mixedCase&&hasNfa]
             [#-- Here a string literal is successfully matched and no
                  more string literals are possible. So set the kind and t
                  state set up to and including this position for the matched
@@ -242,7 +244,7 @@
                  [/#if]
                [/#list]
             [/@ArgsList];
-          [#elseif lexicalState.hasNfa()]
+          [#elseif hasNfa]
              return jjMoveNfa_${lexicalState.name}(${initState}, ${table_index});
           [#else]
              return ${table_index+1};
@@ -265,11 +267,12 @@
                [#if lexerData.lexicalStates?size > 1]
                "<" + lexicalState + ">" + 
                [/#if]
-               "Skipping character : " + addEscapes(String.valueOf(curChar)) + " (" + (int) curChar + ")"
+               [#-- REVISIT --]
+               "Skipping character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ")"
                [/#set] 
                if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-               curChar = (char) input_stream.beginToken();
-               if (curChar == (char) -1) {
+               curChar = input_stream.beginToken();
+               if (curChar == -1) {
                   return generateEOF();
                }
             }

@@ -197,6 +197,7 @@ public final void backup(int amount) {
     static public String addEscapes(String str) {
         StringBuilder retval= new StringBuilder();
         char ch;
+
         for (int i= 0; i<str.length(); i++) {
             switch(str.charAt(i)) {
                 case 0:
