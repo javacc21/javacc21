@@ -203,14 +203,12 @@ public class NfaData {
         return -1;
     }
     
-    String getStateSetString(List<NfaState> states) {
+    static String buildStateSetString(Collection<NfaState> states) {
         if (states.isEmpty())
             return "null;";
-        int[] set = new int[states.size()];
         String retVal = "{";
-        for (int i = 0; i < states.size(); i++) {
-            set[i] = states.get(i).getIndex();
-            retVal += set[i]  + ",";
+        for (NfaState state : states) {
+            retVal += state.getIndex()  + ",";
         }
         retVal += "};";
         return retVal;
@@ -277,7 +275,7 @@ public class NfaData {
                     else if (charOffset>0) {
                         matchedPosition = positions[charOffset] = positions[charOffset - 1];
                     }
-                    stateSetString = getStateSetString(newStates);
+                    stateSetString = buildStateSetString(newStates);
                 }
                 if (reKind == null && newStates.isEmpty())
                     continue;

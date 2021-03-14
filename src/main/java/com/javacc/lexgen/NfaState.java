@@ -65,7 +65,6 @@ public class NfaState {
     // key->value arrangement was String->int or String->int[]
     // Totally bizarre.
     private int index = -1;
-    private String epsilonMovesString;
     NfaState nextState;
     Set<NfaState> epsilonMoves = new HashSet<>();
 
@@ -206,20 +205,16 @@ public class NfaState {
         return !asciiMoves.isEmpty()
                 || !rangeMovesLeftSide.isEmpty();
     }
+
+    private boolean codeGenerated;
     
     void generateCode() {
-        if (index != -1)
-            return;
-        if (epsilonMovesString == null && !epsilonMoves.isEmpty()) {
-            epsilonMovesString = "{";
-            for (NfaState epsilonMove : epsilonMoves) {
-                epsilonMove.generateCode();
-                epsilonMove.inNextOf++;
-                epsilonMovesString += epsilonMove.index + ",";
-            }
-            epsilonMovesString += "};";
+        if (codeGenerated) return;
+        codeGenerated = true;
+        for (NfaState epsilonMove : epsilonMoves) {
+            epsilonMove.generateCode();
+            epsilonMove.inNextOf++;
         }
-        if (epsilonMovesString == null) epsilonMovesString = "null;";
         if (nextState != null) {
             nextState.generateCode();
         }
@@ -239,7 +234,7 @@ public class NfaState {
     }
 
     public String getEpsilonMovesString() {
-        return epsilonMovesString;
+        return NfaData.buildStateSetString(epsilonMoves);
     }
 
     final boolean canMoveUsingChar(int c) {
