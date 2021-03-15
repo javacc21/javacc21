@@ -191,7 +191,6 @@ public class NfaData {
         Set<NfaState> epsilonMoves = initialState.epsilonMoves;
         if (!epsilonMoves.isEmpty()) {
             String stateSetString = buildStateSetString(epsilonMoves);
-//            return stateIndexFromComposite.get(stateSetString);
             return getStartStateIndex(stateSetString);
         }
         return -1;
@@ -268,17 +267,15 @@ public class NfaData {
                 }
                 if (reKind == null && newStates.isEmpty())
                     continue;
-                if (!stateSets.contains(stateSetString)) {
+                if (stateSets.contains(stateSetString)) 
+                   seenStates.addAll(newStates);
+                else {
                     stateSets.add(stateSetString);
                     for (NfaState state : newStates) {
                         if (seenStates.contains(state)) state.incrementInNextOf();
                         else seenStates.add(state);
                     }
-                } else {
-                    for (NfaState state : newStates) {
-                        seenStates.add(state);
-                    }
-                }
+                } 
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();
@@ -314,7 +311,6 @@ public class NfaData {
                 if (key.equals("null;")) continue;
                 if (activeSet.get(kind)) {
                     return getStartStateIndex(key);
-//                    return stateIndexFromComposite(key);
                 }
             }
         }
