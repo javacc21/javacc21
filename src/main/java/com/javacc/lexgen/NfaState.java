@@ -73,7 +73,7 @@ public class NfaState {
         nfaData = lexicalState.getNfaData();
         this.grammar = lexicalState.getGrammar();
         this.lexerData = grammar.getLexerData();
-        nfaData.getAllStates().add(this);
+        nfaData.allStates.add(this);
     }
 
     public int getIndex() {
@@ -213,7 +213,7 @@ public class NfaState {
         }
         if (index == -1 && hasTransitions()) {
             this.index = nfaData.indexedAllStates.size();
-            nfaData.indexedAllStates.add(this);
+            nfaData.indexedAllStates.put(index, this);
         }
     }
 
@@ -364,7 +364,7 @@ public class NfaState {
     }
 
     public boolean isNextIntersects() {
-        for (NfaState state : nfaData.getAllStates()) {
+        for (NfaState state : nfaData.allStates) {
             if (this == state || state.index == -1 || index == state.index
                     || (state.nonAsciiMethod == -1))
                 continue;
@@ -393,7 +393,7 @@ public class NfaState {
 
     public List<NfaState> getMoveStates(int byteNum, BitSet statesAlreadyHandled) {
         List<NfaState> result = new ArrayList<NfaState>();
-        for (NfaState state : nfaData.getAllStates()) {
+        for (NfaState state : nfaData.allStates) {
             if (!statesAlreadyHandled.get(state.index) && isMoveState(state, byteNum)) {
                 statesAlreadyHandled.set(state.index);
                 result.add(state);
@@ -406,7 +406,7 @@ public class NfaState {
      * @param byteNum either 0 or 1
      */
     public boolean isOnlyState(int byteNum) {
-        for (NfaState state : nfaData.getAllStates()) {
+        for (NfaState state : nfaData.allStates) {
             BitSet bs = new BitSet();
             bs.or(asciiMoves);
             bs.and(state.asciiMoves);

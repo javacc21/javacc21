@@ -47,9 +47,9 @@ public class NfaData {
     private int dummyStateIndex = -1;
     private Set<String> allCompositeStates = new HashSet<>();
     private List<Map<String, BitSet>> stateSetForPos;
-    private List<NfaState> allStates = new ArrayList<>();
+    Set<NfaState> allStates = new HashSet<>();
     private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
-    List<NfaState> indexedAllStates = new ArrayList<>();
+    Map<Integer, NfaState> indexedAllStates = new HashMap<>();
     NfaState initialState;
 
     NfaData(LexicalStateData lexicalState) {
@@ -66,7 +66,7 @@ public class NfaData {
         int[] indices = epsilonMovesStringToIntArray(key);
         NfaState[] result = new NfaState[indices.length];
         for (int i = 0; i < indices.length; i++) {
-            result[i] = allStates.get(indices[i]);
+            result[i] = indexedAllStates.get(indices[i]);
         }
         return result;
     }
@@ -85,11 +85,12 @@ public class NfaData {
     }
 
     public NfaState getNfaState(int index) {
-        return allStates.get(index);
+        return indexedAllStates.get(index);
     }
 
     public List<NfaState> getAllStates() {
-        return allStates;
+//        return allStates;
+        return new ArrayList<>(indexedAllStates.values());
     }
 
     public List<Map<String, BitSet>> getStateSetForPos() {
@@ -114,24 +115,9 @@ public class NfaData {
         if (indexedAllStates.size() != 0 && !lexicalState.isMixedCase()) {
             generateNfaStartStates();
         }
-        generateNfaStates();
+        allStates.removeIf(state->state.getIndex()==-1);
         for (NfaState nfaState : allStates) {
             nfaState.generateNonAsciiMoves();
-        }
-    }
-
-    void generateNfaStates() {
-        if (indexedAllStates.isEmpty()) {
-            return;
-        }
-        List<NfaState> prevAllStates = allStates;
-        allStates = new ArrayList<>();
-        while (allStates.size() < indexedAllStates.size()) {
-            allStates.add(null);
-        }
-        for (NfaState state : prevAllStates) {
-            if (state.getIndex() != -1)
-                allStates.set(state.getIndex(), state);
         }
     }
 
