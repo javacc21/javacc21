@@ -280,7 +280,7 @@
 
 [#macro DumpAsciiMoveForCompositeState nfaState byteNum elseNeeded]
    [#var nextIntersects=nfaState.nextIntersects]
-   [#var kindToPrint=nfaState.kindToPrint 
+   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT
          asciiMoves=nfaState.asciiMoves 
          nextState=nfaState.nextState
          lexicalState=nfaState.lexicalState]
@@ -324,7 +324,7 @@
    [#var nextIntersects= nfaState.nextIntersects]
    [#var onlyState= false]
    [#var lexicalState=nfaState.lexicalState]
-   [#var kindToPrint=nfaState.kindToPrint]
+   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
    [#list nfaState.getMoveStates(-1, statesDumped) as state]
                    case ${state.index} :
    [/#list]
@@ -377,7 +377,7 @@
    [#var nextIntersects=nfaState.nextIntersects]
    [#var onlyState=(byteNum>=0)&&nfaState.isOnlyState(byteNum)]
    [#var lexicalState=nfaState.lexicalState]
-   [#var kindToPrint=nfaState.kindToPrint]
+   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
    [#list nfaState.getMoveStates(byteNum, statesDumped) as state]
                    case ${state.index} :
    [/#list]

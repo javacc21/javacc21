@@ -108,7 +108,7 @@ public class NfaState {
         return inNextOf;
     }
 
-    RegularExpression getType() {return type;}
+    public RegularExpression getType() {return type;}
 
     void setType(RegularExpression type) {
         this.type = type;
@@ -128,14 +128,6 @@ public class NfaState {
 
     public NfaState getNextState() {
         return nextState;
-    }
-
-    public int getKindToPrint() {
-        return nextState.type == null ? Integer.MAX_VALUE : nextState.type.getOrdinal();
-    }
-
-    public RegularExpression getNextStateType() {
-        return nextState.type;
     }
 
     public int getEpsilonMoveCount() {
@@ -283,10 +275,10 @@ public class NfaState {
             }
         }
         BitSet superfluousSubsets = new BitSet();
-        nonAsciiMoveIndices = new ArrayList<>();
         // The following 40-odd lines of code constitute a space
         // optimization. Commenting it all out produces
         // larger (redundant) XXXLexer.java files, but it all still works!
+        nonAsciiMoveIndices = new ArrayList<>();
         for (int i = 0; i < 0xFF; i++) {
             BitSet commonSet = new BitSet();
             BitSet subSet = charMoves.get(256*i, 256*(i+1));
@@ -354,6 +346,9 @@ public class NfaState {
 
     private void updateDuplicateNonAsciiMoves() {
         List<NfaState> nonAsciiTableForMethod = lexerData.getNonAsciiTableForMethod();
+        // The following for loop is a space optimization.
+        // If you comment it out, everything works but the generated code
+        // is somewhat larger.
         for (int i = 0; i < nonAsciiTableForMethod.size(); i++) {
             NfaState state = nonAsciiTableForMethod.get(i);
             if (loByteVec != null && loByteVec.equals(state.loByteVec) 
