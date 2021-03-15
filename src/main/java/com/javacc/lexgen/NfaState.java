@@ -363,18 +363,12 @@ public class NfaState {
         nonAsciiTableForMethod.add(this);
     }
 
-    boolean intersects(NfaState other) {
-        Set<NfaState> tempSet = new HashSet<>(epsilonMoves);
-        tempSet.retainAll(other.epsilonMoves);
-        return !tempSet.isEmpty();
-    }
-    
     public boolean isNextIntersects() {
         for (NfaState state : nfaData.getAllStates()) {
             if (this == state || state.index == -1 || index == state.index
                     || (state.nonAsciiMethod == -1))
                 continue;
-            if (intersects(state.nextState)) {
+            if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
                 return true;
             }
         }

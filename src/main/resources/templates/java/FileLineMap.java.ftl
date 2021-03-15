@@ -197,6 +197,8 @@ public class FileLineMap {
             return -1;
         }
         char ch = content.charAt(bufferPosition++);
+[#--
+    We'll turn this on when we are able to deal with extended unicode code points!
         if (Character.isHighSurrogate(ch) && bufferPosition < content.length()) {
             char nextChar = content.charAt(bufferPosition);
             if (Character.isLowSurrogate(nextChar)) {
@@ -204,6 +206,7 @@ public class FileLineMap {
                 return Character.toCodePoint(ch, nextChar);
             }
         }
+--]        
         if (ch == '\n') {
             advanceLine();
             column = 1;
@@ -403,7 +406,7 @@ public class FileLineMap {
                         justSawUnicodeEscape = false;
                     } else {
                         buf.append(current);
-                        justSawUnicodeEscape = true;
+//                        justSawUnicodeEscape = true; // For now, we don't process the high-low surrogate pairs.
                     }
                     // col +=6;
                     ++col;

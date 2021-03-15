@@ -226,13 +226,8 @@ public class NfaData {
         return result;
     }
 
-    boolean canStartNfaUsingAscii(int c) {
-        assert c < 128 : "This should be impossible.";
-        for (NfaState state : initialState.epsilonMoves) {
-            if (state.hasAsciiMove(c))
-            return true;
-        }
-        return false;
+    boolean canStartNfaUsing(int c) {
+        return initialState.epsilonMoves.stream().anyMatch(state->state.canMoveUsingChar(c));
     }
 
 //What a total Rube Goldberg contraption!
