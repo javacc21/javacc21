@@ -290,14 +290,14 @@
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
        [#var stateNames = nextState.states]
-       [#if nextState.epsilonMoveCount = 1]
+       [#if stateNames?size = 1]
           [#var name=stateNames[0]]
           [#if nextIntersects]
                    jjCheckNAdd(${name});
           [#else]
                    jjstateSet[jjnewStateCnt++] = ${name};
           [/#if]
-       [#elseif nextState.epsilonMoveCount = 2&&nextIntersects]
+       [#elseif stateNames?size = 2 && nextIntersects]
                    jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
        [#else]
            [#-- Note that the getStateSetIndicesForUse() method builds up a needed
@@ -345,14 +345,14 @@
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
        [#var stateNames = nextState.states]
-       [#if nextState.epsilonMoveCount = 1]
+       [#if stateNames?size = 1]
           [#var name=stateNames[0]]
           [#if nextIntersects]
                     jjCheckNAdd(${name});
           [#else]
                     jjstateSet[jjnewStateCnt++] = ${name};
           [/#if]
-       [#elseif nextState.epsilonMoveCount = 2&&nextIntersects]
+       [#elseif stateNames?size = 2 && nextIntersects]
                     jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
        [#else]
           [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
@@ -408,14 +408,14 @@
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
        [#var stateNames = nextState.states]
-       [#if nextState.epsilonMoveCount = 1]
+       [#if stateNames?size = 1]
           [#var name=stateNames[0]]
           [#if nextIntersects]
                     jjCheckNAdd(${name});
           [#else]
                     jjstateSet[jjnewStateCnt++] = ${name};
           [/#if]
-       [#elseif nextState.epsilonMoveCount = 2&&nextIntersects]
+       [#elseif stateNames?size = 2 && nextIntersects]
                     jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
        [#else]
           [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]

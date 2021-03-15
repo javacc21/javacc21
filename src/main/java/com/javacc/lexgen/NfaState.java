@@ -155,6 +155,7 @@ public class NfaState {
 
     void addRange(int left, int right) {
         assert right>=left;
+        assert right<=0x10FFFF;
         for (int c = left; c <=right && c<128; c++) {
             asciiMoves.set(c);
         }
