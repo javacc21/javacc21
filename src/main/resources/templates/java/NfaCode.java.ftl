@@ -161,9 +161,7 @@
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#var toPrint=""]
          [#if state.neededNonAscii]
-            ${toPrint}
             ${statesDumped.set(state.index)!}
             case ${state.index} :
               [@DumpMoveNonAscii state, statesDumped /]
@@ -180,9 +178,7 @@
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#var toPrint=""]
          [#if state.isNeeded(byteNum)]
-            ${toPrint}
             ${statesDumped.set(state.index)!}
             case ${state.index} :
               [@DumpAsciiMove state, byteNum, statesDumped/]
@@ -196,7 +192,7 @@
    [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key)]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
-   [#var toBePrinted toPrint=""]
+   [#var toBePrinted]
    [#list stateSet as state]
        [#if state.neededNonAscii]
           [#set neededStates = neededStates+1]
@@ -213,16 +209,14 @@
         [#return]
    [/#if]
    [#if neededStates = 1]
-          ${toPrint}
           case ${stateIndex} :
-      [#if !statesDumped.get(toBePrinted.index)] [#--&&toBePrinted.inNextOf>1--]
+      [#if !statesDumped.get(toBePrinted.index)]
           case ${toBePrinted.index} :
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
               [@DumpMoveNonAscii toBePrinted, statesDumped/]
       [#return] 
    [/#if]
-              ${toPrint}
               case ${stateIndex} :
               [#if stateIndex<lexicalState.numStates]
                  ${statesDumped.set(keyState)!}
@@ -236,7 +230,7 @@
    [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key)]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
-   [#var toBePrinted toPrint=""]
+   [#var toBePrinted]
    [#list stateSet as state]
        [#if state.isNeeded(byteNum)]
           [#set neededStates = neededStates+1]
@@ -253,16 +247,14 @@
         [#return]
    [/#if]
    [#if neededStates = 1]
-          ${toPrint}
           case ${stateIndex} :
-      [#if !statesDumped.get(toBePrinted.index)] [#--&&toBePrinted.inNextOf>1--]
+      [#if !statesDumped.get(toBePrinted.index)]
           case ${toBePrinted.index} :
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
               [@DumpAsciiMove toBePrinted, byteNum, statesDumped/]
       [#return] 
    [/#if]
-              ${toPrint}
               case ${stateIndex} :
               [#if stateIndex<lexicalState.numStates]
                  ${statesDumped.set(stateIndex)!}
