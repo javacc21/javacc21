@@ -179,7 +179,6 @@ public class NfaData {
 //What a total Rube Goldberg contraption!
     void generateNfaStartStates() {
         Set<NfaState> seenStates = new HashSet<>();
-        Set<String> stateSets = new HashSet<String>();
         String stateSetString = "";
         List<NfaState> newStates = new ArrayList<>();
         stateSetForPos = new ArrayList<>();
@@ -217,7 +216,6 @@ public class NfaData {
                 }
                 if (reKind == null && newStates.isEmpty())
                     continue;
-                stateSets.add(stateSetString);
                 seenStates.addAll(newStates);
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
@@ -237,9 +235,13 @@ public class NfaData {
     private static RegularExpression moveFromSet(int c, List<NfaState> states, List<NfaState> newStates) {
         RegularExpression result = null;
         for (NfaState state : states) {
-            RegularExpression re = state.moveFrom(c, newStates);
+            RegularExpression re = null;
+            if (state.canMoveUsingChar(c)) {
+                newStates.addAll(state.nextState.epsilonMoves);
+                re = state.nextState.getType();
+            }
             if (result == null) result = re;
-            if (re != null && re.getOrdinal()<result.getOrdinal()) result = re;
+            else if (re != null && re.getOrdinal()<result.getOrdinal()) result = re;
         }
         return result;
     }

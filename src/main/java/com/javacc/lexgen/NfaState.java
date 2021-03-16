@@ -212,7 +212,7 @@ public class NfaState {
         return result;
     }
 
-    final boolean canMoveUsingChar(int c) {
+    boolean canMoveUsingChar(int c) {
         if (c < 128) {
             return asciiMoves.get(c);
         }
@@ -227,14 +227,6 @@ public class NfaState {
                 break;
         }
         return false;
-    }
-
-    RegularExpression moveFrom(int c, List<NfaState> newStates) {
-        if (canMoveUsingChar(c)) {
-            newStates.addAll(nextState.epsilonMoves);
-            return nextState.type;
-        }
-        return null;
     }
 
     /*
@@ -351,8 +343,7 @@ public class NfaState {
 
     public boolean isNextIntersects() {
         for (NfaState state : nfaData.allStates) {
-            if (this == state || state.index == -1 || index == state.index
-                    || (state.nonAsciiMethod == -1))
+            if (this == state || state.index == -1 || (state.nonAsciiMethod == -1))
                 continue;
             if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
                 return true;
