@@ -53,7 +53,6 @@ public class NfaState {
     private int nonAsciiMethod = -1;
     private List<Integer> nonAsciiMoveIndices;
     private List<Integer> loByteVec = new ArrayList<>();
-    private int inNextOf;
 
     // What a Rube Goldberg contraption this is!
     // In general, any time the index value is used, 
@@ -104,22 +103,10 @@ public class NfaState {
         return asciiMoves;
     }
 
-    public int getInNextOf() {
-        return inNextOf;
-    }
-
     public RegularExpression getType() {return type;}
 
     void setType(RegularExpression type) {
         this.type = type;
-    }
-
-    boolean hasAsciiMove(int c) {
-        return asciiMoves.get(c);
-    }
-
-    void incrementInNextOf() {
-        this.inNextOf++;
     }
 
     public LexicalStateData getLexicalState() {
@@ -206,7 +193,6 @@ public class NfaState {
         codeGenerated = true;
         for (NfaState epsilonMove : epsilonMoves) {
             epsilonMove.generateCode();
-            epsilonMove.inNextOf++;
         }
         if (nextState != null) {
             nextState.generateCode();

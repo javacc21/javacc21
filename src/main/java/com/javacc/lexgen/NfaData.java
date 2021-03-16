@@ -47,8 +47,8 @@ public class NfaData {
     private int dummyStateIndex = -1;
     private Set<String> allCompositeStates = new HashSet<>();
     private List<Map<String, BitSet>> stateSetForPos;
-    Set<NfaState> allStates = new HashSet<>();
     private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
+    Set<NfaState> allStates = new HashSet<>();
     Map<Integer, NfaState> indexedAllStates = new HashMap<>();
     NfaState initialState;
 
@@ -88,9 +88,8 @@ public class NfaData {
         return indexedAllStates.get(index);
     }
 
-    public List<NfaState> getAllStates() {
-//        return allStates;
-        return new ArrayList<>(indexedAllStates.values());
+    public Collection<NfaState> getAllStates() {
+        return indexedAllStates.values();
     }
 
     public List<Map<String, BitSet>> getStateSetForPos() {
@@ -102,8 +101,6 @@ public class NfaData {
             state.doEpsilonClosure();
         }
         initialState.generateCode();
-        String stateSetString = buildStateSetString(initialState.epsilonMoves);
-        getStartStateIndex(stateSetString);
         int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
         if (initialState.getType() != null && initialOrdinal != 0) {
             if (lexerData.getSkipSet().get(initialOrdinal)
@@ -125,52 +122,19 @@ public class NfaData {
         if (stateIndexFromComposite.containsKey(stateSetString)) {
             return stateIndexFromComposite.get(stateSetString);
         }
-        int toRet = 0;
         int[] nameSet = epsilonMovesStringToIntArray(stateSetString);
         if (nameSet.length == 1) {
             stateIndexFromComposite.put(stateSetString, nameSet[0]);
             return nameSet[0];
         }
-        while (toRet < nameSet.length && (indexedAllStates.get(nameSet[toRet]).getInNextOf() > 1)) {
-            toRet++;
-        }
-        for (String key : allCompositeStates) {
-            if (!key.equals(stateSetString) && intersect(stateSetString, key)) {
-                int[] other = epsilonMovesStringToIntArray(key);
-                while (toRet < nameSet.length
-                        && (((indexedAllStates.get(nameSet[toRet])).getInNextOf() > 1) || arrayContains(other, nameSet[toRet]))) {
-                    toRet++;
-                }
-            }
-        }
-        int result;
-        if (toRet >= nameSet.length) {
-            if (dummyStateIndex == -1) {
-                result = dummyStateIndex = indexedAllStates.size();
-            } else {
-                result = ++dummyStateIndex;
-            }
+        if (dummyStateIndex == -1) {
+            dummyStateIndex = indexedAllStates.size();
         } else {
-            result = nameSet[toRet];
+            ++dummyStateIndex;
         }
-        stateIndexFromComposite.put(stateSetString, result);
+        stateIndexFromComposite.put(stateSetString, dummyStateIndex);
         allCompositeStates.add(stateSetString);
-        return result;
-    }
-
-    static private boolean arrayContains(int[] arr, int elem) {
-        for (int i : arr) if (i==elem) return true;
-        return false;
-    }
-
-    boolean intersect(String set1, String set2) {
-        int[] nameSet1 = epsilonMovesStringToIntArray(set1);
-        int[] nameSet2 = epsilonMovesStringToIntArray(set2);
-        for (int i = nameSet1.length; i-- > 0;)
-            for (int j = nameSet2.length; j-- > 0;)
-                if (nameSet1[i] == nameSet2[j])
-                    return true;
-        return false;
+        return dummyStateIndex;
     }
 
     public int initStateName() {
@@ -253,15 +217,8 @@ public class NfaData {
                 }
                 if (reKind == null && newStates.isEmpty())
                     continue;
-                if (stateSets.contains(stateSetString)) 
-                   seenStates.addAll(newStates);
-                else {
-                    stateSets.add(stateSetString);
-                    for (NfaState state : newStates) {
-                        if (seenStates.contains(state)) state.incrementInNextOf();
-                        else seenStates.add(state);
-                    }
-                } 
+                stateSets.add(stateSetString);
+                seenStates.addAll(newStates);
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();

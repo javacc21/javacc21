@@ -193,7 +193,6 @@
 
 [#macro DumpCompositeStatesMovesNonAscii lexicalState key statesDumped]
    [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
-   [#--var stateIndex=lexicalState.nfaData.stateIndexFromComposite(key)--]
    [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key)]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
@@ -216,7 +215,7 @@
    [#if neededStates = 1]
           ${toPrint}
           case ${stateIndex} :
-      [#if !statesDumped.get(toBePrinted.index)&&toBePrinted.inNextOf>1]
+      [#if !statesDumped.get(toBePrinted.index)] [#--&&toBePrinted.inNextOf>1--]
           case ${toBePrinted.index} :
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
@@ -234,7 +233,6 @@
 
 [#macro DumpAsciiCompositeStatesMoves lexicalState key byteNum statesDumped]
    [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
-   [#--var stateIndex=lexicalState.nfaData.stateIndexFromComposite(key)--]
    [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key)]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
@@ -257,7 +255,7 @@
    [#if neededStates = 1]
           ${toPrint}
           case ${stateIndex} :
-      [#if !statesDumped.get(toBePrinted.index)&&toBePrinted.inNextOf>1]
+      [#if !statesDumped.get(toBePrinted.index)] [#--&&toBePrinted.inNextOf>1--]
           case ${toBePrinted.index} :
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
@@ -450,7 +448,7 @@
   [/#list]
   [#if lexicalState.mixedCase] [#--  FIXME! Currently no test coverage of any sort for this. --]
     [#if hasNfa]
-       return jjMoveNfa_${lexicalState.name}(${lexicalState.initStateName()}, pos+1);
+       return jjMoveNfa_${lexicalState.name}(${lexicalState.nfaData.initStateName()}, pos+1);
     [#else]
        return pos + 1;
     [/#if]
