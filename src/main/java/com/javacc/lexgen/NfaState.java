@@ -53,7 +53,6 @@ public class NfaState {
     private int nonAsciiMethod = -1;
     private List<Integer> nonAsciiMoveIndices;
     private List<Integer> loByteVec = new ArrayList<>();
-    private int inNextOf;
 
     // What a Rube Goldberg contraption this is!
     // In general, any time the index value is used, 
@@ -65,7 +64,6 @@ public class NfaState {
     // key->value arrangement was String->int or String->int[]
     // Totally bizarre.
     private int index = -1;
-    private String epsilonMovesString;
     NfaState nextState;
     Set<NfaState> epsilonMoves = new HashSet<>();
 
@@ -74,7 +72,7 @@ public class NfaState {
         nfaData = lexicalState.getNfaData();
         this.grammar = lexicalState.getGrammar();
         this.lexerData = grammar.getLexerData();
-        nfaData.getAllStates().add(this);
+        nfaData.allStates.add(this);
     }
 
     public int getIndex() {
@@ -105,22 +103,10 @@ public class NfaState {
         return asciiMoves;
     }
 
-    public int getInNextOf() {
-        return inNextOf;
-    }
-
-    RegularExpression getType() {return type;}
+    public RegularExpression getType() {return type;}
 
     void setType(RegularExpression type) {
         this.type = type;
-    }
-
-    boolean hasAsciiMove(int c) {
-        return asciiMoves.get(c);
-    }
-
-    void incrementInNextOf() {
-        this.inNextOf++;
     }
 
     public LexicalStateData getLexicalState() {
@@ -129,14 +115,6 @@ public class NfaState {
 
     public NfaState getNextState() {
         return nextState;
-    }
-
-    public int getKindToPrint() {
-        return nextState.type == null ? Integer.MAX_VALUE : nextState.type.getOrdinal();
-    }
-
-    public RegularExpression getNextStateType() {
-        return nextState.type;
     }
 
     public int getEpsilonMoveCount() {
@@ -164,6 +142,7 @@ public class NfaState {
 
     void addRange(int left, int right) {
         assert right>=left;
+        assert right<=0x10FFFF;
         for (int c = left; c <=right && c<128; c++) {
             asciiMoves.set(c);
         }
@@ -206,30 +185,21 @@ public class NfaState {
         return !asciiMoves.isEmpty()
                 || !rangeMovesLeftSide.isEmpty();
     }
+
+    private boolean codeGenerated;
     
     void generateCode() {
-        if (index != -1)
-            return;
-        if (epsilonMovesString == null && !epsilonMoves.isEmpty()) {
-            int[] stateNames = new int[getEpsilonMoveCount()];
-            epsilonMovesString = "{";
-            int idx =0;
-            for (NfaState epsilonMove : epsilonMoves) {
-                epsilonMove.generateCode();
-                epsilonMove.inNextOf++;
-                stateNames[idx++] = epsilonMove.index;
-                epsilonMovesString += epsilonMove.index + ",";
-            }
-            epsilonMovesString += "};";
-            nfaData.getAllNextStates().put(epsilonMovesString, stateNames);            
+        if (codeGenerated) return;
+        codeGenerated = true;
+        for (NfaState epsilonMove : epsilonMoves) {
+            epsilonMove.generateCode();
         }
-        if (epsilonMovesString == null) epsilonMovesString = "null;";
         if (nextState != null) {
             nextState.generateCode();
         }
         if (index == -1 && hasTransitions()) {
             this.index = nfaData.indexedAllStates.size();
-            nfaData.indexedAllStates.add(this);
+            nfaData.indexedAllStates.put(index, this);
         }
     }
 
@@ -242,11 +212,7 @@ public class NfaState {
         return result;
     }
 
-    public String getEpsilonMovesString() {
-        return epsilonMovesString;
-    }
-
-    final boolean canMoveUsingChar(int c) {
+    boolean canMoveUsingChar(int c) {
         if (c < 128) {
             return asciiMoves.get(c);
         }
@@ -261,14 +227,6 @@ public class NfaState {
                 break;
         }
         return false;
-    }
-
-    RegularExpression moveFrom(int c, List<NfaState> newStates) {
-        if (canMoveUsingChar(c)) {
-            newStates.addAll(nextState.epsilonMoves);
-            return nextState.type;
-        }
-        return null;
     }
 
     /*
@@ -296,10 +254,10 @@ public class NfaState {
             }
         }
         BitSet superfluousSubsets = new BitSet();
-        nonAsciiMoveIndices = new ArrayList<>();
         // The following 40-odd lines of code constitute a space
         // optimization. Commenting it all out produces
         // larger (redundant) XXXLexer.java files, but it all still works!
+        nonAsciiMoveIndices = new ArrayList<>();
         for (int i = 0; i < 0xFF; i++) {
             BitSet commonSet = new BitSet();
             BitSet subSet = charMoves.get(256*i, 256*(i+1));
@@ -367,6 +325,9 @@ public class NfaState {
 
     private void updateDuplicateNonAsciiMoves() {
         List<NfaState> nonAsciiTableForMethod = lexerData.getNonAsciiTableForMethod();
+        // The following for loop is a space optimization.
+        // If you comment it out, everything works but the generated code
+        // is somewhat larger.
         for (int i = 0; i < nonAsciiTableForMethod.size(); i++) {
             NfaState state = nonAsciiTableForMethod.get(i);
             if (loByteVec != null && loByteVec.equals(state.loByteVec) 
@@ -380,18 +341,11 @@ public class NfaState {
         nonAsciiTableForMethod.add(this);
     }
 
-    boolean intersects(NfaState other) {
-        Set<NfaState> tempSet = new HashSet<>(epsilonMoves);
-        tempSet.retainAll(other.epsilonMoves);
-        return !tempSet.isEmpty();
-    }
-    
     public boolean isNextIntersects() {
-        for (NfaState state : nfaData.getAllStates()) {
-            if (this == state || state.index == -1 || index == state.index
-                    || (state.nonAsciiMethod == -1))
+        for (NfaState state : nfaData.allStates) {
+            if (this == state || state.index == -1 || (state.nonAsciiMethod == -1))
                 continue;
-            if (intersects(state.nextState)) {
+            if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
                 return true;
             }
         }
@@ -416,7 +370,7 @@ public class NfaState {
 
     public List<NfaState> getMoveStates(int byteNum, BitSet statesAlreadyHandled) {
         List<NfaState> result = new ArrayList<NfaState>();
-        for (NfaState state : nfaData.getAllStates()) {
+        for (NfaState state : nfaData.allStates) {
             if (!statesAlreadyHandled.get(state.index) && isMoveState(state, byteNum)) {
                 statesAlreadyHandled.set(state.index);
                 result.add(state);
@@ -429,7 +383,7 @@ public class NfaState {
      * @param byteNum either 0 or 1
      */
     public boolean isOnlyState(int byteNum) {
-        for (NfaState state : nfaData.getAllStates()) {
+        for (NfaState state : nfaData.allStates) {
             BitSet bs = new BitSet();
             bs.or(asciiMoves);
             bs.and(state.asciiMoves);
