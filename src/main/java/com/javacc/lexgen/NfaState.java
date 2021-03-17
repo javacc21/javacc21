@@ -227,10 +227,6 @@ public class NfaState {
      * function names for char matching using the common bit vectors. It also
      * generates code to match a char with the common bit vectors. (Need a
      * better comment).
-     * FIXME! Need to replace all the char with int
-     * Also it is long overdue to rewrite this ugly legacy code anyway!
-     * Im pretty sure that the following method can be written in 
-     * far fewer lines!
      */
     void generateNonAsciiMoves() {
         if (rangeMovesLeftSide.isEmpty()) {
@@ -244,8 +240,6 @@ public class NfaState {
                 charMoves.set(leftSide++);
             }
         }
-// Up to here is just a space optimization. (Gradually coming to an understanding of this...)
-// Without the space optimization, the nonAsciiMoveIndices array is empty
         for (int i = 0; i < 256; i++) {
             Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
             BitSet subSet = charMoves.get(256*i, 256*(i+1));
