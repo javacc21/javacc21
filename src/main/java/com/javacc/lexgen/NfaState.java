@@ -50,20 +50,11 @@ public class NfaState {
     private BitSet asciiMoves = new BitSet();
     private List<Integer> rangeMovesLeftSide = new ArrayList<>();
     private List<Integer> rangeMovesRightSide = new ArrayList<>();
-    private int nonAsciiMethod = -1;
     private List<Integer> nonAsciiMoveIndices;
     private List<Integer> loByteVec = new ArrayList<>();
 
-    // What a Rube Goldberg contraption this is!
-    // In general, any time the index value is used, 
-    // we should be using a direct reference to this NfaState object
-    // And any references to the so-called epsilonMovesString 
-    // usually as a map key should
-    // also be a reference to the NfaState object.
-    // It's as if the person who wrote this code thought that the only 
-    // key->value arrangement was String->int or String->int[]
-    // Totally bizarre.
     private int index = -1;
+    private int nonAsciiMethod = -1;
     NfaState nextState;
     Set<NfaState> epsilonMoves = new HashSet<>();
 
@@ -253,92 +244,25 @@ public class NfaState {
                 charMoves.set(leftSide++);
             }
         }
-        BitSet superfluousSubsets = new BitSet();
-        // The following 40-odd lines of code constitute a space
-        // optimization. Commenting it all out produces
-        // larger (redundant) XXXLexer.java files, but it all still works!
-        nonAsciiMoveIndices = new ArrayList<>();
-        for (int i = 0; i < 0xFF; i++) {
-            BitSet commonSet = new BitSet();
-            BitSet subSet = charMoves.get(256*i, 256*(i+1));
-            if (subSet.isEmpty()) {
-                superfluousSubsets.set(i);
-            }
-            if (superfluousSubsets.get(i)) {
-                continue;
-            }
-            for (int j = i + 1; j <= 0xFF; j++) {
-                if (!superfluousSubsets.get(j)) {
-                    if (subSet.equals(charMoves.get(256*j, 256*(j+1)))) {
-                        superfluousSubsets.set(j);
-                        if (commonSet.isEmpty()) {
-                            superfluousSubsets.set(i);
-                            commonSet.set(i);
-                        }
-                        commonSet.set(j);
-                    }
-                }
-            }
-            if (!commonSet.isEmpty()) {
-                Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
-                List<BitSet> allBitSets = lexerData.getAllBitSets();
-                Integer ind = lohiByteLookup.get(commonSet);
-                if (ind == null) {
-                    allBitSets.add(commonSet);
-                    int lohiByteCount = lexerData.getLohiByteCount();
-                    ind = lohiByteCount;
-                    lohiByteLookup.put(commonSet, ind);
-                    lexerData.incrementLohiByteCount();
-                }
-                nonAsciiMoveIndices.add(ind);
-                if ((ind = lohiByteLookup.get(subSet)) == null) {
-                    allBitSets.add(subSet);
-                    int lohiByteCount = lexerData.getLohiByteCount();
-                    ind = lohiByteCount;
-                    lohiByteLookup.put(subSet, ind);
-                    lexerData.incrementLohiByteCount();
-                }
-                nonAsciiMoveIndices.add(ind);
-            }
-        }
 // Up to here is just a space optimization. (Gradually coming to an understanding of this...)
 // Without the space optimization, the nonAsciiMoveIndices array is empty
         for (int i = 0; i < 256; i++) {
-            if (!superfluousSubsets.get(i)) {
-                Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
-                BitSet subSet = charMoves.get(256*i, 256*(i+1));
-                List<BitSet> allBitSets = lexerData.getAllBitSets();
-                Integer ind = lohiByteLookup.get(subSet);
-                if (ind == null) {
-                    allBitSets.add(subSet);
-                    int lohiByteCount = lexerData.getLohiByteCount();
-                    ind = lohiByteCount;
-                    lohiByteLookup.put(subSet, ind);
-                    lexerData.incrementLohiByteCount();
-                }
-                loByteVec.add(i);
-                loByteVec.add(ind);
+            Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
+            BitSet subSet = charMoves.get(256*i, 256*(i+1));
+            List<BitSet> allBitSets = lexerData.getAllBitSets();
+            Integer ind = lohiByteLookup.get(subSet);
+            if (ind == null) {
+                allBitSets.add(subSet);
+                int lohiByteCount = lexerData.getLohiByteCount();
+                ind = lohiByteCount;
+                lohiByteLookup.put(subSet, ind);
+                lexerData.incrementLohiByteCount();
             }
+            loByteVec.add(i);
+            loByteVec.add(ind);
         }
-        updateDuplicateNonAsciiMoves();
-    }
-
-    private void updateDuplicateNonAsciiMoves() {
-        List<NfaState> nonAsciiTableForMethod = lexerData.getNonAsciiTableForMethod();
-        // The following for loop is a space optimization.
-        // If you comment it out, everything works but the generated code
-        // is somewhat larger.
-        for (int i = 0; i < nonAsciiTableForMethod.size(); i++) {
-            NfaState state = nonAsciiTableForMethod.get(i);
-            if (loByteVec != null && loByteVec.equals(state.loByteVec) 
-                    && nonAsciiMoveIndices != null 
-                    && nonAsciiMoveIndices.equals(state.nonAsciiMoveIndices)) {
-                nonAsciiMethod = i;
-                return;
-            }
-        }
-        nonAsciiMethod = nonAsciiTableForMethod.size();
-        nonAsciiTableForMethod.add(this);
+        nonAsciiMethod = lexerData.getNonAsciiTableForMethod().size();
+        lexerData.getNonAsciiTableForMethod().add(this);
     }
 
     public boolean isNextIntersects() {
