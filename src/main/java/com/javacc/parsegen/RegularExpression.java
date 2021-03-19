@@ -100,12 +100,6 @@ public abstract class RegularExpression extends Expansion {
      */
     private boolean _private = false;
 
-    /**
-     * If this is a top-level regular expression (nested directly within a
-     * TokenProduction), then this field point to that TokenProduction object.
-     */
-//    public TokenProduction tpContext = null;
-
     public TokenProduction getTokenProduction() {
         return firstAncestorOfType(TokenProduction.class);
     }

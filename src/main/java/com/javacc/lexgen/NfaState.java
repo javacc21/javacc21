@@ -214,7 +214,7 @@ public class NfaState {
             int right = rangeMovesRightSide.get(i);
             if (c >= left && c <= right) 
                 return true;
-            else if (c < left || left == 0)
+            else if (c < left)
                 break;
         }
         return false;

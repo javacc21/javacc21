@@ -227,7 +227,7 @@ public class LexerData {
     public int getStateSetSize() {
         int result =0;
         for (LexicalStateData lsd : getLexicalStates()) {
-            result = Math.max(result, lsd.getNumStates());
+            result = Math.max(result, lsd.getNumNfaStates());
         }
         return result;
     }

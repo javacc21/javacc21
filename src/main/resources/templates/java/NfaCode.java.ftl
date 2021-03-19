@@ -40,7 +40,7 @@
 [#var MAX_INT=2147483647]
 
 [#macro DumpMoveNfa lexicalState]
-  [#var hasNfa = lexicalState.numStates>0]
+  [#var hasNfa = lexicalState.numNfaStates>0]
     private int jjMoveNfa_${lexicalState.name}(int startState, int curPos) {
     [#if !hasNfa]
         return curPos;
@@ -56,7 +56,7 @@
         curPos = 0;
     [/#if]
         int startsAt = 0;
-        jjnewStateCnt = ${lexicalState.numStates};
+        jjnewStateCnt = ${lexicalState.numNfaStates};
         int i=1;
         jjstateSet[0] = startState;
         int kind = 0x7fffffff;
@@ -107,7 +107,7 @@
                 if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
                                      + tokenImage[jjmatchedKind] + " token.");
             }
-            if ((i = jjnewStateCnt) == (startsAt = ${lexicalState.numStates} - (jjnewStateCnt = startsAt)))
+            if ((i = jjnewStateCnt) == (startsAt = ${lexicalState.numNfaStates} - (jjnewStateCnt = startsAt)))
     [#if lexicalState.mixedCase]
                  break;
     [#else]
@@ -218,7 +218,7 @@
       [#return] 
    [/#if]
               case ${stateIndex} :
-              [#if stateIndex<lexicalState.numStates]
+              [#if stateIndex<lexicalState.numNfaStates]
                  ${statesDumped.set(keyState)!}
               [/#if]
           break;
@@ -256,7 +256,7 @@
       [#return] 
    [/#if]
               case ${stateIndex} :
-              [#if stateIndex<lexicalState.numStates]
+              [#if stateIndex<lexicalState.numNfaStates]
                  ${statesDumped.set(stateIndex)!}
               [/#if]
          [#var partition=lexicalState.nfaData.partitionStatesSetForAscii(stateSet, byteNum)]
@@ -431,7 +431,7 @@
   [#var ind=0]
   [#var maxStringIndex=lexicalState.maxStringIndex]
   [#var maxStringLength=lexicalState.maxStringLength]
-  [#var hasNfa = lexicalState.numStates>0]
+  [#var hasNfa = lexicalState.numNfaStates>0]
 
   
     private int jjStartNfa_${lexicalState.name}(int pos, 

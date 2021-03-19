@@ -97,7 +97,7 @@ public class LexicalStateData {
         tokenProductions.add(tokenProduction);
     }
 
-    public int getNumStates() {
+    public int getNumNfaStates() {
         return nfaData.indexedAllStates.size();
     }
 
