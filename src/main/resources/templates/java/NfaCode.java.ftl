@@ -161,7 +161,7 @@
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#if state.neededNonAscii]
+         [#if state.nonAsciiMethod >=0]
             ${statesDumped.set(state.index)!}
             case ${state.index} :
               [@DumpMoveNonAscii state, statesDumped /]
@@ -194,7 +194,7 @@
    [#var neededStates=0]
    [#var toBePrinted]
    [#list stateSet as state]
-       [#if state.neededNonAscii]
+       [#if state.nonAsciiMethod >=0]
           [#set neededStates = neededStates+1]
           [#if neededStates = 2]
              [#break]

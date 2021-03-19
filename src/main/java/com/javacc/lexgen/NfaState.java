@@ -113,14 +113,8 @@ public class NfaState {
     }
 
     public boolean isNeeded(int byteNum) {
-        if (byteNum < 0) {
-            return isNeededNonAscii();
-        }
+        assert byteNum == 0 || byteNum ==1;
         return byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
-    }
-
-    public boolean isNeededNonAscii() {
-        return nonAsciiMethod != -1;
     }
 
     void addEpsilonMove(NfaState newState) {
@@ -134,9 +128,7 @@ public class NfaState {
     void addRange(int left, int right) {
         assert right>=left;
         assert right<=0x10FFFF;
-        for (int c = left; c <=right && c<128; c++) {
-            asciiMoves.set(c);
-        }
+        if (left < 128) asciiMoves.set(left, Math.min(right+1, 128));
         left = Math.max(left, 128);
         if (right >= left) {
             rangeMovesLeftSide.add(left);
@@ -261,7 +253,7 @@ public class NfaState {
 
     public boolean isNextIntersects() {
         for (NfaState state : nfaData.allStates) {
-            if (this == state || state.index == -1 || (state.nonAsciiMethod == -1))
+            if (this == state || !state.hasTransitions() || (state.nonAsciiMethod == -1))
                 continue;
             if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
                 return true;
