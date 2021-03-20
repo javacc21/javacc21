@@ -88,18 +88,12 @@ INJECT PARSER_CLASS : {
   
   private Token TOKEN_HOOK(Token tok) {
     TokenType type = tok.getType();
-    TokenType desiredType = type;
-    String image = tok.getImage();
-    if (type == RECORD && !inTypeDeclaration()) {
-      desiredType = IDENTIFIER;
+    if (type != RECORD && (type != IDENTIFIER || !tok.getImage().equals("record"))) {
+      return tok;
     }
-    else if (type == IDENTIFIER && inTypeDeclaration()) {
-      if (image.equals("record")) desiredType = RECORD;
-      // I guess a var or a yield in a type declaration can just be treated as an invalid token, no? NO!!!
-//      else if (image.equals("yield") || image.equals("var")) desiredType = INVALID;
-    }
+    TokenType desiredType = inTypeDeclaration() ? RECORD : IDENTIFIER;
     if (type == desiredType) return tok;
-    Token result = Token.newToken(desiredType, image, tok.getInputSource());
+    Token result = Token.newToken(desiredType, "record", tok.getInputSource());
     result.copyLocationInfo(tok);
     return result;
   }
@@ -209,7 +203,7 @@ ClassDeclaration :
 InterfaceDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
   "interface" =>||
-  <IDENTIFIER> 
+  <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList ] 
   ClassOrInterfaceBody
