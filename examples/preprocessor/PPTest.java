@@ -4,7 +4,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.BitSet;
-import java.util.StringTokenizer;
 
 public class PPTest {
     static public void main(String[] args) throws Exception {
@@ -17,7 +16,7 @@ public class PPTest {
            System.exit(-1);
        }
        String content = new String(Files.readAllBytes(file.toPath()),Charset.forName("UTF-8"));
-       PreprocessorParser parser = new PreprocessorParser(content);
+       PreprocessorParser parser = new PreprocessorParser(file.toPath().toString(), content);
        BitSet lines = parser.PP_Root();
        outputLines(content, lines);
     }

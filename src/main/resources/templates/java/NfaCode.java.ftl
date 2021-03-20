@@ -44,8 +44,12 @@
       rewrite this loop, then maybe the whole Rube Goldberg 
       contraption will start to unravel.--]
    [#list lexerData.nonAsciiTableForMethod as nfaState]
-      private static boolean jjCanMove_${nfaState.nonAsciiMethod}
-         (int hiByte, int i1, int i2, long l1, long l2) {
+      private static boolean jjCanMove_${nfaState.nonAsciiMethod}(int ch) {
+         int hiByte = ch >> 8;
+         int i1 = hiByte >> 6;
+         long l1 = 1L << (hiByte & 077);
+         int i2 = (ch & 0xff) >> 6;
+         long l2 = 1L << (ch & 077);
       
          switch(hiByte) {
          [#list nfaState.loByteVec as kase]
@@ -116,11 +120,11 @@
                 } while (i!= startsAt);
             }
             else {
-                int hiByte = curChar >> 8;
-                int i1 = hiByte >> 6;
-                long l1 = 1L << (hiByte & 077);
-                int i2 = (curChar & 0xff) >> 6;
-                long l2 = 1L << (curChar & 077);
+//                int hiByte = curChar >> 8;
+//                int i1 = hiByte >> 6;
+//                long l1 = 1L << (hiByte & 077);
+//                int i2 = (curChar & 0xff) >> 6;
+//                long l2 = 1L << (curChar & 077);
 	            do {
 	                switch (jjstateSet[--i]) {
 	                    [@DumpMovesNonAscii lexicalState/]
@@ -353,17 +357,17 @@
    [#if nextState?is_null || nextState.epsilonMoveCount==0]
          [#var kindCheck=" && kind > "+kindToPrint]
          [#if onlyState][#set kindCheck = ""][/#if]
-            if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2) ${kindCheck})
+            if (jjCanMove_${nfaState.nonAsciiMethod}(curChar) ${kindCheck})
             kind = ${kindToPrint};
             break;
          [#return]
    [/#if]
    [#if kindToPrint != MAX_INT]
-                    if (!jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
+                    if (!jjCanMove_${nfaState.nonAsciiMethod}(curChar))
                           break;
                     kind = Math.min(kind, ${kindToPrint});
    [#else]
-                    if (jjCanMove_${nfaState.nonAsciiMethod}(hiByte, i1, i2, l1, l2))
+                    if (jjCanMove_${nfaState.nonAsciiMethod}(curChar))
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
        [#var stateNames = nextState.states]
