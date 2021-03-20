@@ -85,18 +85,28 @@ INJECT PARSER_CLASS : {
     }
     return tok;
   }
-
+  
   private Token TOKEN_HOOK(Token tok) {
     TokenType type = tok.getType();
-    if (type != RECORD && (type != IDENTIFIER || !tok.getImage().equals("record"))) return tok;
-    String currentProduction = currentLookaheadProduction == null ? currentlyParsedProduction : currentLookaheadProduction;
-    // We can use == because the variables are interned.
-    boolean recordIsKeyword = currentProduction == "RecordDeclaration" || currentProduction == "TypeDeclaration";
-    TokenType desiredType = recordIsKeyword ? RECORD : IDENTIFIER;
-    if (desiredType == tok.getType()) return tok;
+    if (type != RECORD && (type != IDENTIFIER || !tok.getImage().equals("record"))) {
+      return tok;
+    }
+    TokenType desiredType = inTypeDeclaration() ? RECORD : IDENTIFIER;
+    if (type == desiredType) return tok;
     Token result = Token.newToken(desiredType, "record", tok.getInputSource());
     result.copyLocationInfo(tok);
     return result;
+  }
+
+  private boolean inTypeDeclaration() {
+    String currentProduction = currentLookaheadProduction == null ? currentlyParsedProduction : currentLookaheadProduction;
+    // We can use reference equality because the strings are all interned.
+    return currentProduction == "TypeDeclaration" 
+           || currentProduction == "AnnotationTypeDeclaration"
+           || currentProduction == "ClassDeclaration"
+           || currentProduction == "InterfaceDeclaration"
+           || currentProduction == "RecordDeclaration"
+           || currentProduction == "EnumDeclaration"; 
   }
 }
 
@@ -193,7 +203,7 @@ ClassDeclaration :
 InterfaceDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
   "interface" =>||
-  <IDENTIFIER> 
+  <IDENTIFIER>
   [ TypeParameters ]
   [ ExtendsList ] 
   ClassOrInterfaceBody
