@@ -85,18 +85,34 @@ INJECT PARSER_CLASS : {
     }
     return tok;
   }
-
+  
   private Token TOKEN_HOOK(Token tok) {
     TokenType type = tok.getType();
-    if (type != RECORD && (type != IDENTIFIER || !tok.getImage().equals("record"))) return tok;
-    String currentProduction = currentLookaheadProduction == null ? currentlyParsedProduction : currentLookaheadProduction;
-    // We can use == because the variables are interned.
-    boolean recordIsKeyword = currentProduction == "RecordDeclaration" || currentProduction == "TypeDeclaration";
-    TokenType desiredType = recordIsKeyword ? RECORD : IDENTIFIER;
-    if (desiredType == tok.getType()) return tok;
-    Token result = Token.newToken(desiredType, "record", tok.getInputSource());
+    TokenType desiredType = type;
+    String image = tok.getImage();
+    if (type == RECORD && !inTypeDeclaration()) {
+      desiredType = IDENTIFIER;
+    }
+    else if (type == IDENTIFIER && inTypeDeclaration()) {
+      if (image.equals("record")) desiredType = RECORD;
+      // I guess a var or a yield in a type declaration can just be treated as an invalid token, no? NO!!!
+//      else if (image.equals("yield") || image.equals("var")) desiredType = INVALID;
+    }
+    if (type == desiredType) return tok;
+    Token result = Token.newToken(desiredType, image, tok.getInputSource());
     result.copyLocationInfo(tok);
     return result;
+  }
+
+  private boolean inTypeDeclaration() {
+    String currentProduction = currentLookaheadProduction == null ? currentlyParsedProduction : currentLookaheadProduction;
+    // We can use reference equality because the strings are all interned.
+    return currentProduction == "TypeDeclaration" 
+           || currentProduction == "AnnotationTypeDeclaration"
+           || currentProduction == "ClassDeclaration"
+           || currentProduction == "InterfaceDeclaration"
+           || currentProduction == "RecordDeclaration"
+           || currentProduction == "EnumDeclaration"; 
   }
 }
 
