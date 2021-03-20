@@ -39,6 +39,38 @@
 [#var multipleLexicalStates = lexerData.lexicalStates?size >1]
 [#var MAX_INT=2147483647]
 
+[#macro OutputNfaStateMoves]  
+   [#-- There is something screwy about this. If I can 
+      rewrite this loop, then maybe the whole Rube Goldberg 
+      contraption will start to unravel.--]
+   [#list lexerData.nonAsciiTableForMethod as nfaState]
+      private static boolean jjCanMove_${nfaState.nonAsciiMethod}
+         (int hiByte, int i1, int i2, long l1, long l2) {
+      
+         switch(hiByte) {
+         [#list nfaState.loByteVec as kase]
+            [#if kase_index%2 = 0]       
+            case ${kase} :
+               return (jjbitVec${nfaState.loByteVec[kase_index+1]}[i2] &l2) != 0L;
+            [/#if]
+         [/#list]
+            default : 
+         [#if nfaState.nonAsciiMoveIndices?has_content]
+            [#var j=nfaState.nonAsciiMoveIndices?size] 
+            [#list 1..10000 as xxx]
+               if ((jjbitVec${nfaState.nonAsciiMoveIndices[j-2]}[i1] & l1) != 0L) {
+                  return (jjbitVec${nfaState.nonAsciiMoveIndices[j-1]}[i2] & l2) != 0L;
+               }
+               [#set j = j-2]
+               [#if j = 0][#break][/#if]
+               [/#list]
+         [/#if]
+                  return false;
+         }		
+      }
+   [/#list]
+[/#macro]
+
 [#macro DumpMoveNfa lexicalState]
   [#var hasNfa = lexicalState.numNfaStates>0]
     private int jjMoveNfa_${lexicalState.name}(int startState, int curPos) {

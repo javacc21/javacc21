@@ -210,5 +210,4 @@ public class DfaData {
     public KindInfo getKindInfo(Map<Integer, KindInfo> table, int key) {
         return table.get(key);
     }
-
 }

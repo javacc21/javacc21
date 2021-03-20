@@ -333,37 +333,8 @@
         jjCheckNAdd(jjnextStates[start]);
         jjCheckNAdd(jjnextStates[start + 1]);
     }
-    
-    
-[#list lexerData.nonAsciiTableForMethod as nfaState]
 
-	private static boolean jjCanMove_${nfaState.nonAsciiMethod}
-	   (int hiByte, int i1, int i2, long l1, long l2) {
-	
-	   switch(hiByte) {
-	   [#list nfaState.loByteVec as kase]
-	       [#if kase_index%2 = 0]       
-	      case ${kase} :
-	          return (jjbitVec${nfaState.loByteVec[kase_index+1]}[i2] &l2) != 0L;
-	       [/#if]
-	   [/#list]
-	   	  default : 
-	   [#if nfaState.nonAsciiMoveIndices?has_content]
-	       [#var j=nfaState.nonAsciiMoveIndices?size] 
-	       [#list 1..10000 as xxx]
-	   	     if ((jjbitVec${nfaState.nonAsciiMoveIndices[j-2]}[i1] & l1) != 0L) {
-	   	        return (jjbitVec${nfaState.nonAsciiMoveIndices[j-1]}[i2] & l2) != 0L;
-	   	     }
-		      [#set j = j-2]
-		      [#if j = 0][#break][/#if]
-	   	   [/#list]
-	    [/#if]
-	   	       return false;
-	   }		
-	}
-		
-[/#list]
-    
+   
     private int jjStopAtPos(int pos, int kind) {
          jjmatchedKind = kind;
          jjmatchedPos = pos;
@@ -375,7 +346,9 @@
     
 [#list lexerData.allBitSets as bitSet]
     private static final long[] jjbitVec${bitSet_index} = ${utils.bitSetToLong(bitSet)};
-[/#list]    
+[/#list]
+
+[@nfa.OutputNfaStateMoves/]
 
 [#list lexerData.lexicalStates as lexicalState]
   [#if lexicalState.nfaData.dumpNfaStarts]
@@ -392,16 +365,11 @@
   NB. The following must occur after the preceding loop,
   since (and I don't like it) the DumpXXX macros
   build up the lexerData.orderedStateSet structure
---]  
+  --]  
   private static final int[] jjnextStates = {
-[#var count=0]    
-[#list lexerData.orderedStateSet as set]
+  [#list lexerData.orderedStateSet as set]
     [#list set as i]
-        [#if count%16 = 0]${"
-    "}[/#if]
-        ${i}[#if set_has_next || i_has_next], [/#if]
-        [#set count = count+1]
+        ${i},
     [/#list]
 [/#list]
   };
-
