@@ -39,6 +39,12 @@
 [#var multipleLexicalStates = lexerData.lexicalStates?size >1]
 [#var MAX_INT=2147483647]
 
+[#macro NfaStateMove nfaState]
+   private static boolean canMove_${nfaState.nonAsciiMethod}(int ch) {
+//TODO!!!
+   }
+[/#macro]
+
 [#macro OutputNfaStateMoves]  
    [#-- There is something screwy about this. If I can 
       rewrite this loop, then maybe the whole Rube Goldberg 
@@ -50,7 +56,6 @@
          long l1 = 1L << (hiByte & 077);
          int i2 = (ch & 0xff) >> 6;
          long l2 = 1L << (ch & 077);
-      
          switch(hiByte) {
          [#list nfaState.loByteVec as kase]
             [#if kase_index%2 = 0]       
@@ -93,7 +98,7 @@
     [/#if]
         int startsAt = 0;
         jjnewStateCnt = ${lexicalState.numNfaStates};
-        int i=1;
+        int stateIndex=1;
         jjstateSet[0] = startState;
         int kind = 0x7fffffff;
         while (true) {
@@ -104,34 +109,28 @@
             if (curChar < 64) {
             	long l = 1L << curChar;
 	            do {
-	                switch (jjstateSet[--i]) {
+	                switch (jjstateSet[--stateIndex]) {
 	                    [@DumpAsciiMoves lexicalState, 0/]
 	                    default : break;
 	                }
-	            } while (i != startsAt);
+	            } while (stateIndex != startsAt);
             }
             else if (curChar <128) {
             	long l = 1L << (curChar & 077);
 	            do {
-	                switch (jjstateSet[--i]) {
+	                switch (jjstateSet[--stateIndex]) {
  	                    [@DumpAsciiMoves lexicalState, 1/]
                 	     default : break;
                 	}
-                } while (i!= startsAt);
+                } while (stateIndex!= startsAt);
             }
             else {
-//                int hiByte = curChar >> 8;
-//                int i1 = hiByte >> 6;
-//                long l1 = 1L << (hiByte & 077);
-//                int i2 = (curChar & 0xff) >> 6;
-//                long l2 = 1L << (curChar & 077);
 	            do {
-	                switch (jjstateSet[--i]) {
+	                switch (jjstateSet[--stateIndex]) {
 	                    [@DumpMovesNonAscii lexicalState/]
                         default : break;
                     }
-                } while(i != startsAt);
-	                
+                } while(stateIndex != startsAt);
             }
             if (kind != 0x7fffffff) {
                 jjmatchedKind = kind;
@@ -143,7 +142,10 @@
                 if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
                                      + tokenImage[jjmatchedKind] + " token.");
             }
-            if ((i = jjnewStateCnt) == (startsAt = ${lexicalState.numNfaStates} - (jjnewStateCnt = startsAt)))
+            stateIndex = jjnewStateCnt;
+            jjnewStateCnt = startsAt;
+            startsAt = ${lexicalState.numNfaStates} - startsAt;
+            if (stateIndex == startsAt)
     [#if lexicalState.mixedCase]
                  break;
     [#else]

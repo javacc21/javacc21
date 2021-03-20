@@ -10,7 +10,6 @@ PARSER_PACKAGE="com.javacc.preprocessor";
 ENSURE_FINAL_EOL;
 //DEBUG_PARSER;
 
-
 /*
  * This is an implementation of the standard C# preprocessor.
  * Well, it is incomplete at the moment, because it just ignores
