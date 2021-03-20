@@ -85,6 +85,19 @@ INJECT PARSER_CLASS : {
     }
     return tok;
   }
+
+  private Token TOKEN_HOOK(Token tok) {
+    TokenType type = tok.getType();
+    if (type != RECORD && (type != IDENTIFIER || !tok.getImage().equals("record"))) return tok;
+    String currentProduction = currentLookaheadProduction == null ? currentlyParsedProduction : currentLookaheadProduction;
+    // We can use == because the variables are interned.
+    boolean recordIsKeyword = currentProduction == "RecordDeclaration" || currentProduction == "TypeDeclaration";
+    TokenType desiredType = recordIsKeyword ? RECORD : IDENTIFIER;
+    if (desiredType == tok.getType()) return tok;
+    Token result = Token.newToken(desiredType, "record", tok.getInputSource());
+    result.copyLocationInfo(tok);
+    return result;
+  }
 }
 
 #CompilationUnit# :
@@ -143,7 +156,7 @@ Modifiers(EnumSet<TokenType> permissibleModifiers) #void :
 ;
 
 TypeDeclaration #abstract :
-  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "@" "interface")) =>
+  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "record" | "@" "interface")) =>
   (
     EmptyDeclaration 
     |
@@ -154,6 +167,8 @@ TypeDeclaration #abstract :
     InterfaceDeclaration
     |
     EnumDeclaration
+    |
+    RecordDeclaration
   )
 ;
 
@@ -221,6 +236,48 @@ EnumBody :
    [ "," ]
    [ ";" ( ClassOrInterfaceBodyDeclaration )*! ]
    "}"
+;
+
+RecordDeclaration :
+  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
+  "record" =>||
+  <IDENTIFIER>
+  [TypeParameters]
+  RecordHeader
+  [ImplementsList]
+  RecordBody
+;
+
+RecordHeader :
+   "("
+   [
+     RecordComponent
+     ("," RecordComponent)*
+   ]
+   ")"
+;
+
+RecordComponent :
+   (Annotation)* Type [(Annotation)* "..."] <IDENTIFIER>
+;
+
+RecordBody :
+  "{"
+  (
+   CompactConstructorDeclaration
+   |
+   ClassOrInterfaceBodyDeclaration
+  )*
+  "}"
+;
+
+CompactConstructorDeclaration :
+  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))
+  <IDENTIFIER>
+  "{"
+  [ => ExplicitConstructorInvocation ]
+  ( BlockStatement )*!
+  "}" 
 ;
 
 EnumConstant :
@@ -475,7 +532,12 @@ EqualityExpression :
 ;
 
 InstanceOfExpression :
-  RelationalExpression [ "instanceof" Type ]
+  RelationalExpression 
+  [ 
+    "instanceof" Type 
+    |
+    LocalVariableDeclaration // This is a stable feature in JDK 16.
+  ]
 ;
 
 RelationalExpression :
@@ -804,6 +866,11 @@ AssertStatement : "assert" Expression [ ":" Expression ] ";" ;
 Block #CodeBlock : "{" (BlockStatement)*! "}" ;
 
 BlockStatement :
+// The YieldStatement option in the Statement production will thus never
+// be matched but this doesn't seem to be a problem really.
+// We need YieldStatement up top here so it does not spuriously match LocalVariableDeclaration.
+  YieldStatement 
+  |
   => LocalVariableDeclaration ";"
   |
   ClassDeclaration
