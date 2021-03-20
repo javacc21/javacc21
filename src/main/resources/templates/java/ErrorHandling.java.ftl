@@ -99,6 +99,7 @@ private final void pushOntoCallStack(String methodName, String fileName, int lin
 
 private final void popCallStack() {
     NonTerminalCall ntc = parsingStack.remove(parsingStack.size() -1);
+    this.currentlyParsedProduction = ntc.productionName;
     this.outerFollowSet = ntc.followSet;
 }
 
@@ -163,6 +164,7 @@ private final void pushOntoLookaheadStack(String methodName, String fileName, in
 
 private final void popLookaheadStack() {
     NonTerminalCall ntc = lookaheadStack.remove(lookaheadStack.size() -1);
+    this.currentLookaheadProduction = ntc.productionName;
     this.scanToEnd = ntc.scanToEnd;
 }
 

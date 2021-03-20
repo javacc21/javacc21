@@ -107,6 +107,7 @@ TOKEN #KeyWord :
 | < PROTECTED: "protected" > 
 | < PUBLIC: "public" > 
 | < RETURN: "return" > 
+| < RECORD : "record" > 
 | < SHORT: "short" > 
 | < STATIC: "static" > 
 | < STRICTFP: "strictfp" > 
