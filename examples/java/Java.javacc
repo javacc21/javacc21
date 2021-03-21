@@ -544,9 +544,12 @@ EqualityExpression :
 InstanceOfExpression :
   RelationalExpression 
   [ 
-    "instanceof" Type 
-    |
-    LocalVariableDeclaration // This is a stable feature in JDK 16.
+    "instanceof" 
+    (
+      LocalVariableDeclaration // This is a stable feature in JDK 16.
+      |
+      Type
+    )
   ]
 ;
 
