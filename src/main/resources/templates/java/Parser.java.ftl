@@ -216,6 +216,13 @@ public boolean isCancelled() {return cancelled;}
     return nextTokenType;
   }
 
+  private void fail(String message) throws ParseException {
+    if (currentLookaheadToken == null) {
+      throw new ParseException(this, message);
+    }
+    this.hitFailure = true;
+  }
+
   /**
    *Are we in the production of the given name, either scanning ahead or parsing?
    */
