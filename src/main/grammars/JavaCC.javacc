@@ -52,7 +52,10 @@ BASE_SRC_DIR="../java";
 //JDK_TARGET=11;
 #endif 
 
+//#define fault_tolerant
+#if fault_tolerant
 FAULT_TOLERANT=true;
+#endif
 
 INJECT PARSER_CLASS :
     import java.util.*;

@@ -192,7 +192,7 @@ INJECT VarDeclaration  :
         
     public void interpret() {
         if (type == TokenType.BOOL)
-            symtab.put(name, Boolean.FALSE));
+            symtab.put(name, Boolean.FALSE);
         else
             symtab.put(name, 0);
     }
@@ -269,7 +269,7 @@ INJECT AndNode :
         }
         
         getChild(2).interpret();
-        stack[--top] = (Boolean) stack[top] && (Boolean) stack[top + 1]);
+        stack[--top] = (Boolean) stack[top] && (Boolean) stack[top + 1];
     }
 }
 
@@ -285,7 +285,7 @@ INJECT BitwiseOrNode :
         getChild(2).interpret();
 
         if (stack[top] instanceof Boolean) {
-            stack[ --top] = (Boolean) stack[top] || ((Boolean) stack[top + 1];
+            stack[--top] = (Boolean) stack[top] || (Boolean) stack[top + 1];
         } else{
             if (stack[top] instanceof Integer) {
                 stack[ --top] = (Integer) stack[top] | (Integer) stack[top + 1];
@@ -353,7 +353,7 @@ INJECT EQNode : {
         getChild(2).interpret();
 
         if (stack[top] instanceof Boolean) {
-            stack[--top] = (Boolean) stack[top] == (Boolean) stack[ top + 1]);
+            stack[--top] = (Boolean) stack[top] == (Boolean) stack[ top + 1];
         } else {
             stack[--top] = (Integer) stack[top] == (Integer) stack[top + 1];
         }
@@ -368,7 +368,7 @@ INJECT NENode : {
         if (stack[top] instanceof Boolean) {
             stack[--top] = (Boolean) stack[top] != (Boolean) stack[top + 1];
         } else {
-            stack[--top] = (Integer) stack[top]) != (Integer) stack[top + 1]);
+            stack[--top] = (Integer) stack[top] != (Integer) stack[top + 1];
         }
     }
 }
