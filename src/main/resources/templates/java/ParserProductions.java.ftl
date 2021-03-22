@@ -254,7 +254,7 @@
 
 [#macro BuildCodeFailure fail]
     [#if fail.code?is_null]
-       if (true) throw new ParseException(this, "${fail.message?j_string}");
+       fail("${fail.message?j_string}");
     [#else]
        ${fail.code}
     [/#if]

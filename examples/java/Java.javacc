@@ -361,7 +361,7 @@ ArrayInitializer :
 
 FormalParameters : "(" [ FormalParameter ( "," FormalParameter )* ] ")" ;
 
-FormalParameter : Modifiers(EnumSet.of(FINAL)) Type [ "..." ] VariableDeclaratorId ;
+FormalParameter : Modifiers(EnumSet.of(FINAL)) Type [ (Annotation)* "..." ] VariableDeclaratorId ;
 
 INJECT ConstructorDeclaration : extends ClassOrInterfaceBodyDeclaration
 

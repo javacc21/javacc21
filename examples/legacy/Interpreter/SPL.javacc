@@ -26,8 +26,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-TREE_BUILDING_ENABLED=true;
-TOKENS_ARE_NODES=true;
 BASE_NODE_CLASS="SimpleNode";
 SMART_NODE_CREATION=false;
 
@@ -194,9 +192,9 @@ INJECT VarDeclaration  :
         
     public void interpret() {
         if (type == TokenType.BOOL)
-            symtab.put(name, new Boolean(false));
+            symtab.put(name, Boolean.FALSE));
         else
-            symtab.put(name, new Integer(0));
+            symtab.put(name, 0);
     }
 }
 
@@ -245,12 +243,12 @@ INJECT OrNode :
         getChild(0).interpret();
 
         if (((Boolean) stack[top]).booleanValue()) {
-            stack[top] = new Boolean(true);
+            stack[top] = Boolean.TRUE;
             return;
         }
 
         getChild(2).interpret();
-        stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() || ((Boolean) stack[ top + 1]).booleanValue());
+        stack [--top] = (Boolean) stack[top] || (Boolean) stack[top+1];
     }
 }
 
@@ -265,14 +263,13 @@ INJECT AndNode :
     public void interpret() {
         getChild(0).interpret();
         
-        if (!((Boolean)stack[top]).booleanValue()) {
-            stack[top] = new Boolean(false);
+        if (!((Boolean)stack[top])) {
+            stack[top] = Boolean.FALSE;
             return;
         }
         
         getChild(2).interpret();
-        stack[--top] = new Boolean(((Boolean)stack[top]).booleanValue() &&
-                                ((Boolean)stack[top + 1]).booleanValue());
+        stack[--top] = (Boolean) stack[top] && (Boolean) stack[top + 1]);
     }
 }
 
@@ -288,10 +285,10 @@ INJECT BitwiseOrNode :
         getChild(2).interpret();
 
         if (stack[top] instanceof Boolean) {
-            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() | ((Boolean) stack[ top + 1]).booleanValue());
+            stack[ --top] = (Boolean) stack[top] || ((Boolean) stack[top + 1];
         } else{
             if (stack[top] instanceof Integer) {
-                stack[ --top] = new Integer(((Integer) stack[top]).intValue() | ((Integer) stack[ top + 1]).intValue());
+                stack[ --top] = (Integer) stack[top] | (Integer) stack[top + 1];
             }
         }
     }
@@ -309,10 +306,10 @@ INJECT BitwiseXorNode :
         getChild(2).interpret();
 
         if (stack[top] instanceof Boolean) {
-            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() ^ ((Boolean) stack[ top + 1]).booleanValue());
+            stack[ --top] = (Boolean) stack[top] ^ ((Boolean) stack[top + 1]);
         } else{
             if (stack[top] instanceof Integer) {
-                stack[ --top] = new Integer(((Integer) stack[top]).intValue() ^ ((Integer) stack[ top + 1]).intValue());
+                stack[--top] = (Integer) stack[top] ^ (Integer) stack[top + 1];
             }
 
  
@@ -332,10 +329,10 @@ INJECT BitwiseAndNode :
         getChild(2).interpret();
 
         if (stack[top] instanceof Boolean) {
-            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() & ((Boolean) stack[ top + 1]).booleanValue());
+            stack[ --top] = (Boolean) stack[top] & (Boolean) stack[ top + 1];
         } else{
             if (stack[top] instanceof Integer) {
-                stack[ --top] = new Integer(((Integer) stack[top]).intValue() & ((Integer) stack[ top + 1]).intValue());
+                stack[--top] = (Integer) stack[top] & (Integer) stack[ top + 1];
             }
         }
     }
@@ -356,9 +353,9 @@ INJECT EQNode : {
         getChild(2).interpret();
 
         if (stack[top] instanceof Boolean) {
-            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() == ((Boolean) stack[ top + 1]).booleanValue());
+            stack[--top] = (Boolean) stack[top] == (Boolean) stack[ top + 1]);
         } else {
-            stack[ --top] = new Boolean(((Integer) stack[top]).intValue() == ((Integer) stack[ top + 1]).intValue());
+            stack[--top] = (Integer) stack[top] == (Integer) stack[top + 1];
         }
     }
 }
@@ -369,9 +366,9 @@ INJECT NENode : {
         getChild(2).interpret();
 
         if (stack[top] instanceof Boolean) {
-            stack[ --top] = new Boolean(((Boolean) stack[top]).booleanValue() != ((Boolean) stack[ top + 1]).booleanValue());
+            stack[--top] = (Boolean) stack[top] != (Boolean) stack[top + 1];
         } else {
-            stack[ --top] = new Boolean(((Integer) stack[top]).intValue() != ((Integer) stack[ top + 1]).intValue());
+            stack[--top] = (Integer) stack[top]) != (Integer) stack[top + 1]);
         }
     }
 }
@@ -395,7 +392,7 @@ INJECT LTNode :
         getChild(0).interpret();
         getChild(2).interpret();
 
-        stack[ --top] = new Boolean(((Integer) stack[top]).intValue() < ((Integer) stack[ top + 1]).intValue());
+        stack[--top] = (Integer) stack[top] < (Integer) stack[top + 1];
     }
 }
 
@@ -406,7 +403,7 @@ INJECT LENode :
         getChild(0).interpret();
         getChild(2).interpret();
 
-        stack[ --top] = new Boolean(((Integer) stack[top]).intValue() <= ((Integer) stack[ top + 1]).intValue());
+        stack[--top] = (Integer) stack[top] <= (Integer) stack[top + 1];
     }
 }
 
@@ -415,7 +412,7 @@ INJECT GENode : {
         getChild(0).interpret();
         getChild(2).interpret();
 
-        stack[ --top] = new Boolean(((Integer) stack[top]).intValue() >= ((Integer) stack[ top + 1]).intValue());
+        stack[--top] = (Integer) stack[top] >= (Integer) stack[ top + 1];
     }
 }
 
@@ -425,8 +422,7 @@ INJECT GTNode : {
      getChild(0).interpret();
      getChild(2).interpret();
 
-     stack[--top] = new Boolean(((Integer)stack[top]).intValue() >
-                                ((Integer)stack[top + 1]).intValue());
+     stack[--top] = (Integer) stack[top] > (Integer) stack[top + 1];
   }
 }
 
@@ -445,7 +441,7 @@ INJECT AddNode :
     public void interpret() {
         getChild(0).interpret();
         getChild(2).interpret();
-        stack[--top] = new Integer(((Integer) stack[top]).intValue() + ((Integer) stack[ top + 1]).intValue());
+        stack[--top] = (Integer) stack[top] + (Integer) stack[top + 1];
     }
 }
 
@@ -454,7 +450,7 @@ INJECT SubtractNode :
     public void interpret() {
         getChild(0).interpret();
         getChild(2).interpret();
-        stack[ --top] = new Integer(((Integer) stack[top]).intValue() - ((Integer) stack[ top + 1]).intValue());
+        stack[--top] = (Integer) stack[top] - (Integer) stack[ top + 1];
     }
 }
 
@@ -475,7 +471,7 @@ INJECT MulNode :
     public void interpret() {
         getChild(0).interpret();
         getChild(2).interpret();
-        stack[ --top] = new Integer(((Integer) stack[top]).intValue() * ((Integer) stack[ top + 1]).intValue());
+        stack[ --top] = (Integer) stack[top] * (Integer) stack[top + 1];
     }
 }
 
@@ -484,7 +480,7 @@ INJECT ModNode :
     public void interpret() {
         getChild(0).interpret();
         getChild(2).interpret();
-        stack[ --top] = new Integer(((Integer) stack[top]).intValue() % ((Integer) stack[ top + 1]).intValue());
+        stack[ --top] = (Integer) stack[top] % (Integer) stack[top + 1];
     }
 }
 
@@ -494,7 +490,7 @@ INJECT DivNode :
     public void interpret() {
         getChild(0).interpret();
         getChild(2).interpret();
-        stack[ --top] = new Integer(((Integer) stack[top]).intValue() / ((Integer) stack[ top + 1]).intValue());
+        stack[ --top] = (Integer) stack[top] / (Integer) stack[top + 1];
     }
 }
 
@@ -510,7 +506,7 @@ INJECT NotNode :
 {
     public void interpret() {
         getChild(1).interpret();
-        stack[top] = new Boolean(! ((Boolean) stack[top]).booleanValue());
+        stack[top] = ! (Boolean) stack[top];
     }
 }
 
@@ -520,7 +516,7 @@ INJECT BitwiseComplNode :
   public void interpret()
   {
      getChild(1).interpret();
-     stack[top] = new Integer(~((Integer)stack[top]).intValue());
+     stack[top] = ~ (Integer) stack[top];
   }
 }
 
@@ -578,7 +574,7 @@ INJECT IntConstNode :
     int val;
     
     public void interpret() {
-        stack[++top] = new Integer(val);
+        stack[++top] = val;
     }
 }
 

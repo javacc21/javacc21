@@ -201,6 +201,28 @@ void dumpLookaheadCallStack(PrintStream ps) {
   [#else]
     private boolean debugFaultTolerant = false;
   [/#if]
+
+    /**
+     * Set whether to log the various actions used to keep going when 
+     * doing fault-tolerant parsing
+     */
+    public void setDebugFaultTolerant(boolean debugFaultTolerant) {
+        this.debugFaultTolerant = debugFaultTolerant;
+    }
+
+    private List<ParsingProblem> parsingProblems = new ArrayList<>();
+
+    public List<ParsingProblem> getParsingProblems() {
+        return parsingProblems;
+    }
+
+    public boolean hasProblems() {
+        return !parsingProblems.isEmpty();
+    }
+
+    void addParsingProblem(ParsingProblem problem) {
+        parsingProblems.add(problem);
+    }
 [/#if]    
 
     public boolean isParserTolerant() {
