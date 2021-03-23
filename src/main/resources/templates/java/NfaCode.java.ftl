@@ -46,30 +46,26 @@
 [/#macro]
 
 [#macro OutputNfaStateMoves]  
-   [#-- There is something screwy about this. If I can 
-      rewrite this loop, then maybe the whole Rube Goldberg 
-      contraption will start to unravel.--]
+   [#-- This is too bloody-minded and can be optimized a fair bit!
+      But right now, I just want to get rid of all that old Rube 
+      Rube Goldberg contraption code!--]
    [#list lexerData.lexicalStates as lexicalState]
        [#list lexicalState.nfaData.allStates as nfaState]
          [#if nfaState.nonAscii]
-            private static boolean jjCanMove_${lexicalState.name}_${nfaState.index}(int ch) {
-               int hiByte = ch >> 8;
-               int i1 = hiByte >> 6;
-               long l1 = 1L << (hiByte & 077);
-               int i2 = (ch & 0xff) >> 6;
-               long l2 = 1L << (ch & 077);
-               switch(hiByte) {
-               [#list nfaState.loByteVec as kase]
-                  [#if kase_index%2 = 0]       
-                  case ${kase} :
-                     return (jjbitVec${nfaState.loByteVec[kase_index+1]}[i2] &l2) != 0L;
+            private static boolean ${nfaState.moveMethodName}(int ch) {
+               [#var left, right]
+               [#list nfaState.moveRanges as char]
+                  [#if char_index % 2 = 0]
+                     [#set left = char]
+                  [#else]
+                     [#set right = char]
+                     if (ch < ${left}) return false;
+                     if (ch <= ${right}) return true;
                   [/#if]
                [/#list]
-                  default : 
                      return false;
-               }		
             }
-         [/#if]
+        [/#if]
        [/#list]
    [/#list]
 [/#macro]
@@ -353,17 +349,19 @@
    [#if nextState?is_null || nextState.epsilonMoveCount==0]
          [#var kindCheck=" && kind > "+kindToPrint]
          [#if onlyState][#set kindCheck = ""][/#if]
-            if (jjCanMove_${nfaState.lexicalState.name}_${nfaState.index}(curChar) ${kindCheck})
+            if (${nfaState.moveMethodName}(curChar) ${kindCheck})
+            
             kind = ${kindToPrint};
             break;
          [#return]
    [/#if]
    [#if kindToPrint != MAX_INT]
-                    if (!jjCanMove_${nfaState.lexicalState.name}_${nfaState.index}(curChar))
+                if (!${nfaState.moveMethodName}(curChar))
+         
                           break;
                     kind = Math.min(kind, ${kindToPrint});
    [#else]
-                    if (jjCanMove_${nfaState.lexicalState.name}_${nfaState.index}(curChar))
+                    if (${nfaState.moveMethodName}(curChar))
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
        [#var stateNames = nextState.states]

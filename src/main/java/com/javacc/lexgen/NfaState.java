@@ -48,8 +48,7 @@ public class NfaState {
     private final NfaData nfaData;
     private RegularExpression type;
     private BitSet asciiMoves = new BitSet();
-    private List<Integer> rangeMovesLeftSide = new ArrayList<>();
-    private List<Integer> rangeMovesRightSide = new ArrayList<>();
+    private List<Integer> moveRanges = new ArrayList<>();
     private List<Integer> loByteVec = new ArrayList<>();
 
     private int index = -1;
@@ -67,6 +66,10 @@ public class NfaState {
 
     public int getIndex() {
         return index;
+    }
+
+    public String getMoveMethodName() {
+        return "NFA_" + lexicalState.getName() + "_" + index;
     }
 
     public boolean isNonAscii() {
@@ -87,6 +90,10 @@ public class NfaState {
 
     public BitSet getAsciiMoveSet() {
         return asciiMoves;
+    }
+
+    public List<Integer> getMoveRanges() {
+        return moveRanges;
     }
 
     public RegularExpression getType() {return type;}
@@ -126,8 +133,8 @@ public class NfaState {
         if (left < 128) asciiMoves.set(left, Math.min(right+1, 128));
         left = Math.max(left, 128);
         if (right >= left) {
-            rangeMovesLeftSide.add(left);
-            rangeMovesRightSide.add(right);
+            moveRanges.add(left);
+            moveRanges.add(right);
         }
     }
 
@@ -161,7 +168,7 @@ public class NfaState {
 
     private boolean hasTransitions() {
         return !asciiMoves.isEmpty()
-                || !rangeMovesLeftSide.isEmpty();
+                || !moveRanges.isEmpty();
     }
 
     private boolean codeGenerated;
@@ -196,13 +203,11 @@ public class NfaState {
         }
         // Iterate thru the table to see if the current char
         // is in some range
-        for (int i=0; i<rangeMovesLeftSide.size(); i++) {
-            int left = rangeMovesLeftSide.get(i);
-            int right = rangeMovesRightSide.get(i);
-            if (c >= left && c <= right) 
-                return true;
-            else if (c < left)
-                break;
+        for (int i = 0; i< moveRanges.size(); i=i+2) {
+            int left = moveRanges.get(i);
+            int right = moveRanges.get(i+1);
+            if (c>=left && c<=right) return true;
+            if (c<left) return false;
         }
         return false;
     }
@@ -216,14 +221,14 @@ public class NfaState {
      * better comment).
      */
     void generateNonAsciiMoves() {
-        if (rangeMovesLeftSide.isEmpty()) {
+        if (moveRanges.isEmpty()) {
             return;
         }
         this.nonAscii = true;
         BitSet charMoves = new BitSet();
-        for (int i=0; i< rangeMovesLeftSide.size(); i++) {
-            int leftSide = rangeMovesLeftSide.get(i);
-            int rightSide = rangeMovesRightSide.get(i);
+        for (int i=0; i< moveRanges.size(); i+=2) {
+            int leftSide = moveRanges.get(i);
+            int rightSide = moveRanges.get(i+1);
             while (leftSide<=rightSide) {
                 charMoves.set(leftSide++);
             }
