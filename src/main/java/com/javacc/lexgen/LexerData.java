@@ -57,7 +57,6 @@ public class LexerData {
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
     private int lohiByteCount;
-    private List<NfaState> nonAsciiTableForMethod = new ArrayList<>();
     private Map<BitSet, Integer> lohiByteLookup = new HashMap<>();
     private List<BitSet> allBitSets = new ArrayList<>();
     private Map<String, int[]> tableToDump = new HashMap<>();
@@ -230,10 +229,6 @@ public class LexerData {
             result = Math.max(result, lsd.getNumNfaStates());
         }
         return result;
-    }
-
-    public List<NfaState> getNonAsciiTableForMethod() {
-        return nonAsciiTableForMethod;
     }
 
     int getLohiByteCount() {

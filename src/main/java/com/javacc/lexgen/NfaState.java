@@ -50,7 +50,6 @@ public class NfaState {
     private BitSet asciiMoves = new BitSet();
     private List<Integer> rangeMovesLeftSide = new ArrayList<>();
     private List<Integer> rangeMovesRightSide = new ArrayList<>();
-//    private List<Integer> nonAsciiMoveIndices;
     private List<Integer> loByteVec = new ArrayList<>();
 
     private int index = -1;
@@ -73,11 +72,6 @@ public class NfaState {
     public boolean isNonAscii() {
         return nonAscii;
     }
-/*
-    public List<Integer> getNonAsciiMoveIndices() {
-        assert nonAsciiMoveIndices == null || nonAsciiMoveIndices.isEmpty();
-        return nonAsciiMoveIndices;
-    }*/
 
     public List<Integer> getLoByteVec() {
         return loByteVec;
@@ -249,7 +243,6 @@ public class NfaState {
             loByteVec.add(i);
             loByteVec.add(ind);
         }
-        lexerData.getNonAsciiTableForMethod().add(this);
     }
 
     public boolean isNextIntersects() {

@@ -49,24 +49,28 @@
    [#-- There is something screwy about this. If I can 
       rewrite this loop, then maybe the whole Rube Goldberg 
       contraption will start to unravel.--]
-   [#list lexerData.nonAsciiTableForMethod as nfaState]
-      private static boolean jjCanMove_${nfaState.lexicalState.name}_${nfaState.index}(int ch) {
-         int hiByte = ch >> 8;
-         int i1 = hiByte >> 6;
-         long l1 = 1L << (hiByte & 077);
-         int i2 = (ch & 0xff) >> 6;
-         long l2 = 1L << (ch & 077);
-         switch(hiByte) {
-         [#list nfaState.loByteVec as kase]
-            [#if kase_index%2 = 0]       
-            case ${kase} :
-               return (jjbitVec${nfaState.loByteVec[kase_index+1]}[i2] &l2) != 0L;
-            [/#if]
-         [/#list]
-            default : 
-               return false;
-         }		
-      }
+   [#list lexerData.lexicalStates as lexicalState]
+       [#list lexicalState.nfaData.allStates as nfaState]
+         [#if nfaState.nonAscii]
+            private static boolean jjCanMove_${lexicalState.name}_${nfaState.index}(int ch) {
+               int hiByte = ch >> 8;
+               int i1 = hiByte >> 6;
+               long l1 = 1L << (hiByte & 077);
+               int i2 = (ch & 0xff) >> 6;
+               long l2 = 1L << (ch & 077);
+               switch(hiByte) {
+               [#list nfaState.loByteVec as kase]
+                  [#if kase_index%2 = 0]       
+                  case ${kase} :
+                     return (jjbitVec${nfaState.loByteVec[kase_index+1]}[i2] &l2) != 0L;
+                  [/#if]
+               [/#list]
+                  default : 
+                     return false;
+               }		
+            }
+         [/#if]
+       [/#list]
    [/#list]
 [/#macro]
 
