@@ -2954,18 +2954,25 @@ INJECT CharacterRange :
        return left == right;
     }
 
+    static private boolean isSingleChar(String s) {
+       if (s.length() == 1) return true;
+       if (s.length() == 2) {
+           return Character.isSurrogatePair(s.charAt(0), s.charAt(1));
+       }
+       return false;
+    }
+
     public void close() {
         java.util.List<StringLiteral> bounds = childrenOfType(StringLiteral.class);
         String left = bounds.get(0).getString();
-        if (left.length()>1) {
+        if (!isSingleChar(left)) {
             getGrammar().addParseError(bounds.get(0),
                     "String in character list may contain only one character.");
         }
         this.left = this.right = left.codePointAt(0);
-
         if (bounds.size()>1) {
             String right = bounds.get(1).getString();
-            if (right.length() >1) {
+            if (!isSingleChar(right)) {
                 getGrammar().addParseError(bounds.get(1),
                         "String in character list may contain only one character.");
             }

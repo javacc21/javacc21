@@ -56,9 +56,6 @@ public class LexerData {
     
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
-    private int lohiByteCount;
-    private Map<BitSet, Integer> lohiByteLookup = new HashMap<>();
-    private List<BitSet> allBitSets = new ArrayList<>();
     private Map<String, int[]> tableToDump = new HashMap<>();
     private List<int[]> orderedStateSet = new ArrayList<>();
     int lastIndex;
@@ -229,22 +226,6 @@ public class LexerData {
             result = Math.max(result, lsd.getNumNfaStates());
         }
         return result;
-    }
-
-    int getLohiByteCount() {
-        return lohiByteCount;
-    }
-
-    void incrementLohiByteCount() {
-        ++lohiByteCount;
-    }
-
-    Map<BitSet, Integer> getLoHiByteLookup() {
-        return lohiByteLookup;
-    }
-
-    public List<BitSet> getAllBitSets() {
-        return allBitSets;
     }
 
     Map<String, int[]> getTableToDump() {

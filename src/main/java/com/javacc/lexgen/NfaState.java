@@ -32,7 +32,6 @@ package com.javacc.lexgen;
 
 import java.util.*;
 
-import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
 
 /**
@@ -42,25 +41,20 @@ import com.javacc.parsegen.RegularExpression;
  */
 public class NfaState {  
 
-    private final Grammar grammar;
-    private final LexerData lexerData;
     private final LexicalStateData lexicalState;
     private final NfaData nfaData;
     private RegularExpression type;
     private BitSet asciiMoves = new BitSet();
     private List<Integer> moveRanges = new ArrayList<>();
-    private List<Integer> loByteVec = new ArrayList<>();
+    private boolean nonAscii;
 
     private int index = -1;
-    private boolean nonAscii;
     NfaState nextState;
     Set<NfaState> epsilonMoves = new HashSet<>();
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
         nfaData = lexicalState.getNfaData();
-        this.grammar = lexicalState.getGrammar();
-        this.lexerData = grammar.getLexerData();
         nfaData.allStates.add(this);
     }
 
@@ -73,15 +67,13 @@ public class NfaState {
     }
 
     public boolean isNonAscii() {
+//        return !moveRanges.isEmpty();
         return nonAscii;
     }
 
-    public List<Integer> getLoByteVec() {
-        return loByteVec;
-    }
-
     public long[] getAsciiMoves() {
-        long[] ll = asciiMoves.toLongArray();
+        BitSet bits = getAsciiMoveSet();
+        long[] ll = bits.toLongArray();
         if (ll.length !=2) {
             ll = Arrays.copyOf(ll, 2);
         }
@@ -89,7 +81,14 @@ public class NfaState {
     }
 
     public BitSet getAsciiMoveSet() {
-        return asciiMoves;
+        BitSet result = new BitSet();
+        for (int i=0; i<moveRanges.size(); i+=2) {
+            int left = moveRanges.get(i);
+            if (left > 127) break;
+            int right = Math.min(moveRanges.get(i+1), 127);
+            result.set(left, right+1);
+        }
+        return result;
     }
 
     public List<Integer> getMoveRanges() {
@@ -130,12 +129,10 @@ public class NfaState {
     void addRange(int left, int right) {
         assert right>=left;
         assert right<=0x10FFFF;
+        if (right >= 128) nonAscii = true;
         if (left < 128) asciiMoves.set(left, Math.min(right+1, 128));
-        left = Math.max(left, 128);
-        if (right >= left) {
-            moveRanges.add(left);
-            moveRanges.add(right);
-        }
+        moveRanges.add(left);
+        moveRanges.add(right);
     }
 
     private boolean closureDone = false;
@@ -212,43 +209,6 @@ public class NfaState {
         return false;
     }
 
-    /*
-     * This function generates the bit vectors of low and hi bytes for common
-     * bit vectors and returns those that are not common with anything (in
-     * loBytes) and returns an array of indices that can be used to generate the
-     * function names for char matching using the common bit vectors. It also
-     * generates code to match a char with the common bit vectors. (Need a
-     * better comment).
-     */
-    void generateNonAsciiMoves() {
-        if (moveRanges.isEmpty()) {
-            return;
-        }
-        this.nonAscii = true;
-        BitSet charMoves = new BitSet();
-        for (int i=0; i< moveRanges.size(); i+=2) {
-            int leftSide = moveRanges.get(i);
-            int rightSide = moveRanges.get(i+1);
-            while (leftSide<=rightSide) {
-                charMoves.set(leftSide++);
-            }
-        }
-        for (int i = 0; i < 256; i++) {
-            Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
-            BitSet subSet = charMoves.get(256*i, 256*(i+1));
-            List<BitSet> allBitSets = lexerData.getAllBitSets();
-            Integer ind = lohiByteLookup.get(subSet);
-            if (ind == null) {
-                allBitSets.add(subSet);
-                int lohiByteCount = lexerData.getLohiByteCount();
-                ind = lohiByteCount;
-                lohiByteLookup.put(subSet, ind);
-                lexerData.incrementLohiByteCount();
-            }
-            loByteVec.add(i);
-            loByteVec.add(ind);
-        }
-    }
 
     public boolean isNextIntersects() {
         for (NfaState state : nfaData.allStates) {

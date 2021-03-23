@@ -113,9 +113,6 @@ public class NfaData {
             generateNfaStartStates();
         }
         allStates.removeIf(state->state.getIndex()==-1);
-        for (NfaState nfaState : allStates) {
-            nfaState.generateNonAsciiMoves();
-        }
     }
 
     public int getStartStateIndex(String stateSetString) {

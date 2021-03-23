@@ -344,10 +344,6 @@
          return pos + 1;
     }
     
-[#list lexerData.allBitSets as bitSet]
-    private static final long[] jjbitVec${bitSet_index} = ${utils.bitSetToLong(bitSet)};
-[/#list]
-
 [@nfa.OutputNfaStateMoves/]
 
 [#list lexerData.lexicalStates as lexicalState]
