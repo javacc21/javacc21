@@ -176,20 +176,25 @@ public class FilesGenerator {
             Files.createDirectories(dir);
         }
         CompilationUnit jcu = null;
-        try (Writer out = Files.newBufferedWriter(outputFile)) {
+        Writer out = null;
+        try {
+            out = Files.newBufferedWriter(outputFile);
             jcu = JavaCCParser.parseJavaFile(outputFile.getFileName().toString(), code);
+        } catch (Exception e) {
             out.write(code);
+            return;
+        } finally {
             out.flush();
             out.close();
         }
-        try (Writer out = Files.newBufferedWriter(outputFile)) {
+        try (Writer output = Files.newBufferedWriter(outputFile)) {
             codeInjector.injectCode(jcu);
             JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getJdkTarget());
             JavaCodeUtils.addGetterSetters(jcu);
             JavaCodeUtils.removeUnusedPrivateMethods(jcu);
             JavaCodeUtils.removeUnusedVariables(jcu);
             JavaFormatter formatter = new JavaFormatter();
-            out.write(formatter.format(jcu));
+            output.write(formatter.format(jcu));
         } 
     }
     
