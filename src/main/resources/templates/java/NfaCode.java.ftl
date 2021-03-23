@@ -40,7 +40,7 @@
 [#var MAX_INT=2147483647]
 
 [#macro NfaStateMove nfaState]
-   private static boolean canMove_${nfaState.nonAsciiMethod}(int ch) {
+   private static boolean canMove_${nfaState.lexicalState.name}_${nfaState.index}(int ch) {
 //TODO!!!
    }
 [/#macro]
@@ -50,7 +50,7 @@
       rewrite this loop, then maybe the whole Rube Goldberg 
       contraption will start to unravel.--]
    [#list lexerData.nonAsciiTableForMethod as nfaState]
-      private static boolean jjCanMove_${nfaState.nonAsciiMethod}(int ch) {
+      private static boolean jjCanMove_${nfaState.lexicalState.name}_${nfaState.index}(int ch) {
          int hiByte = ch >> 8;
          int i1 = hiByte >> 6;
          long l1 = 1L << (hiByte & 077);
@@ -64,17 +64,7 @@
             [/#if]
          [/#list]
             default : 
-         [#if nfaState.nonAsciiMoveIndices?has_content]
-            [#var j=nfaState.nonAsciiMoveIndices?size] 
-            [#list 1..10000 as xxx]
-               if ((jjbitVec${nfaState.nonAsciiMoveIndices[j-2]}[i1] & l1) != 0L) {
-                  return (jjbitVec${nfaState.nonAsciiMoveIndices[j-1]}[i2] & l2) != 0L;
-               }
-               [#set j = j-2]
-               [#if j = 0][#break][/#if]
-               [/#list]
-         [/#if]
-                  return false;
+               return false;
          }		
       }
    [/#list]
@@ -199,7 +189,7 @@
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#if state.nonAsciiMethod >=0]
+         [#if state.nonAscii]
             ${statesDumped.set(state.index)!}
             case ${state.index} :
               [@DumpMoveNonAscii state, statesDumped /]
@@ -232,7 +222,7 @@
    [#var neededStates=0]
    [#var toBePrinted]
    [#list stateSet as state]
-       [#if state.nonAsciiMethod >=0]
+       [#if state.nonAscii]
           [#set neededStates = neededStates+1]
           [#if neededStates = 2]
              [#break]
@@ -359,17 +349,17 @@
    [#if nextState?is_null || nextState.epsilonMoveCount==0]
          [#var kindCheck=" && kind > "+kindToPrint]
          [#if onlyState][#set kindCheck = ""][/#if]
-            if (jjCanMove_${nfaState.nonAsciiMethod}(curChar) ${kindCheck})
+            if (jjCanMove_${nfaState.lexicalState.name}_${nfaState.index}(curChar) ${kindCheck})
             kind = ${kindToPrint};
             break;
          [#return]
    [/#if]
    [#if kindToPrint != MAX_INT]
-                    if (!jjCanMove_${nfaState.nonAsciiMethod}(curChar))
+                    if (!jjCanMove_${nfaState.lexicalState.name}_${nfaState.index}(curChar))
                           break;
                     kind = Math.min(kind, ${kindToPrint});
    [#else]
-                    if (jjCanMove_${nfaState.nonAsciiMethod}(curChar))
+                    if (jjCanMove_${nfaState.lexicalState.name}_${nfaState.index}(curChar))
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
        [#var stateNames = nextState.states]

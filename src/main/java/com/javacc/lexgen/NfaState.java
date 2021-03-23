@@ -50,11 +50,11 @@ public class NfaState {
     private BitSet asciiMoves = new BitSet();
     private List<Integer> rangeMovesLeftSide = new ArrayList<>();
     private List<Integer> rangeMovesRightSide = new ArrayList<>();
-    private List<Integer> nonAsciiMoveIndices;
+//    private List<Integer> nonAsciiMoveIndices;
     private List<Integer> loByteVec = new ArrayList<>();
 
     private int index = -1;
-    private int nonAsciiMethod = -1;
+    private boolean nonAscii;
     NfaState nextState;
     Set<NfaState> epsilonMoves = new HashSet<>();
 
@@ -70,13 +70,14 @@ public class NfaState {
         return index;
     }
 
-    public int getNonAsciiMethod() {
-        return nonAsciiMethod;
+    public boolean isNonAscii() {
+        return nonAscii;
     }
-
+/*
     public List<Integer> getNonAsciiMoveIndices() {
+        assert nonAsciiMoveIndices == null || nonAsciiMoveIndices.isEmpty();
         return nonAsciiMoveIndices;
-    }
+    }*/
 
     public List<Integer> getLoByteVec() {
         return loByteVec;
@@ -224,6 +225,7 @@ public class NfaState {
         if (rangeMovesLeftSide.isEmpty()) {
             return;
         }
+        this.nonAscii = true;
         BitSet charMoves = new BitSet();
         for (int i=0; i< rangeMovesLeftSide.size(); i++) {
             int leftSide = rangeMovesLeftSide.get(i);
@@ -247,13 +249,12 @@ public class NfaState {
             loByteVec.add(i);
             loByteVec.add(ind);
         }
-        nonAsciiMethod = lexerData.getNonAsciiTableForMethod().size();
         lexerData.getNonAsciiTableForMethod().add(this);
     }
 
     public boolean isNextIntersects() {
         for (NfaState state : nfaData.allStates) {
-            if (this == state || !state.hasTransitions() || (state.nonAsciiMethod == -1))
+            if (this == state || !state.hasTransitions() || !state.isNonAscii())
                 continue;
             if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
                 return true;
@@ -266,7 +267,7 @@ public class NfaState {
         if (this.nextState.type != other.nextState.type) {
             return false;
         }
-        if (byteNum < 0 && this.nonAsciiMethod != other.nonAsciiMethod) {
+        if (byteNum < 0) {
             return false;
         }
         if (byteNum >=0 && !this.asciiMoves.equals(other.asciiMoves)) {
