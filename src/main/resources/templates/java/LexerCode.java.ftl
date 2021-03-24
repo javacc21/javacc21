@@ -51,8 +51,6 @@
    private boolean[] jjbeenHere = new boolean[${numLexicalStates}];
   
   
-  private int jjnewStateCnt;
-  private int jjround;
   private int jjmatchedPos;
   //FIXME,should be an enum.
   private int jjmatchedKind;
@@ -68,21 +66,14 @@
       })
 [/#macro]
   
- 
     static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
                                 specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
                                 skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
                                 moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
-    static private final int STATE_SET_SIZE = ${lexerData.stateSetSize};
-
-    private final int[] jjrounds = new int[STATE_SET_SIZE];
-    private final int[] jjstateSet = new int[2*STATE_SET_SIZE];
-
+  
     private final StringBuilder image = new StringBuilder();
-    private int matchedCharsLength;
-
-    int curChar;
+    private int curChar, matchedCharsLength;
     
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
@@ -98,8 +89,6 @@
 [/#list]
       return eof;
     }
-
-
   
   [#--  Need to figure out how to simplify this --]
   private Token nextToken() {
@@ -276,23 +265,17 @@
     }
 
     private Token jjFillToken() {
-        final Token t;
-        final String curTokenImage;
-        final int beginLine;
-        final int endLine;
-        final int beginColumn;
-        final int endColumn;
-        curTokenImage = input_stream.getImage();
-        beginLine = input_stream.getBeginLine();
-        beginColumn = input_stream.getBeginColumn();
-        endLine = input_stream.getEndLine();
-        endColumn = input_stream.getEndColumn();
+        final String curTokenImage = input_stream.getImage();
+        final int beginLine = input_stream.getBeginLine();
+        final int beginColumn = input_stream.getBeginColumn();
+        final int endLine = input_stream.getEndLine();
+        final int endColumn = input_stream.getEndColumn();
     [#if grammar.settings.TOKEN_FACTORY??]
-        t = ${grammar.settings.TOKEN_FACTORY}.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
+        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
     [#elseif !grammar.hugeFileSupport]
-        t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, this);
+        final Token t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, this);
     [#else]
-        t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
+        final Token t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
     [/#if]
         t.setBeginLine(beginLine);
         t.setEndLine(endLine);
@@ -305,45 +288,6 @@
         return t;
     }
 
-    private void jjCheckNAdd(int state) {
-        if (jjrounds[state] != jjround) {
-            jjstateSet[jjnewStateCnt++] = state;
-            jjrounds[state] = jjround;
-        }
-    }
-    
-    private void jjAddStates(int start, int end) {
-       do {
-           jjstateSet[jjnewStateCnt++] = jjnextStates[start];
-       }   while (start++ != end);
-    }
-
-    private void jjCheckNAddTwoStates(int state1, int state2) {
-        jjCheckNAdd(state1);
-        jjCheckNAdd(state2);
-    }
-    
-    private void jjCheckNAddStates(int start, int end) {
-        do {
-            jjCheckNAdd(jjnextStates[start]);
-        } while (start++ != end);
-    }
-
-    private void jjCheckNAddStates(int start) {
-        jjCheckNAdd(jjnextStates[start]);
-        jjCheckNAdd(jjnextStates[start + 1]);
-    }
-
-   
-    private int jjStopAtPos(int pos, int kind) {
-         jjmatchedKind = kind;
-         jjmatchedPos = pos;
-         if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
-         if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos + 1) 
-                            + " characters as a " + tokenImage[jjmatchedKind] + " token.");
-         return pos + 1;
-    }
-    
 [@nfa.OutputNfaStateMoves/]
 
 [#list lexerData.lexicalStates as lexicalState]
@@ -368,4 +312,5 @@
         ${i},
     [/#list]
 [/#list]
-  };
+
+};

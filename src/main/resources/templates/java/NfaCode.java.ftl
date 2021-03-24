@@ -39,13 +39,52 @@
 [#var multipleLexicalStates = lexerData.lexicalStates?size >1]
 [#var MAX_INT=2147483647]
 
-[#macro NfaStateMove nfaState]
-   private static boolean canMove_${nfaState.lexicalState.name}_${nfaState.index}(int ch) {
-//TODO!!!
-   }
-[/#macro]
-
 [#macro OutputNfaStateMoves]  
+    static private final int STATE_SET_SIZE = ${lexerData.stateSetSize};
+    private final int[] jjrounds = new int[STATE_SET_SIZE];
+    private final int[] jjstateSet = new int[2*STATE_SET_SIZE];
+    private int jjnewStateCnt, jjround;
+
+
+    private void jjCheckNAdd(int state) {
+        if (jjrounds[state] != jjround) {
+            jjstateSet[jjnewStateCnt++] = state;
+            jjrounds[state] = jjround;
+        }
+    }
+    
+    private void jjAddStates(int start, int end) {
+       do {
+           jjstateSet[jjnewStateCnt++] = jjnextStates[start];
+       }   while (start++ != end);
+    }
+
+    private void jjCheckNAddTwoStates(int state1, int state2) {
+        jjCheckNAdd(state1);
+        jjCheckNAdd(state2);
+    }
+    
+    private void jjCheckNAddStates(int start, int end) {
+        do {
+            jjCheckNAdd(jjnextStates[start]);
+        } while (start++ != end);
+    }
+
+    private void jjCheckNAddStates(int start) {
+        jjCheckNAdd(jjnextStates[start]);
+        jjCheckNAdd(jjnextStates[start + 1]);
+    }
+
+   
+    private int jjStopAtPos(int pos, int kind) {
+         jjmatchedKind = kind;
+         jjmatchedPos = pos;
+         if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
+         if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos + 1) 
+                            + " characters as a " + tokenImage[jjmatchedKind] + " token.");
+         return pos + 1;
+    }
+
    [#list lexerData.lexicalStates as lexicalState]
        [#list lexicalState.nfaData.allStates as nfaState]
          [#if nfaState.nonAscii]
