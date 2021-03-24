@@ -46,12 +46,10 @@
 [/#macro]
 
 [#macro OutputNfaStateMoves]  
-   [#-- This is too bloody-minded and can be optimized a fair bit!
-      But right now, I just want to get rid of all that old Rube 
-      Rube Goldberg contraption code!--]
    [#list lexerData.lexicalStates as lexicalState]
        [#list lexicalState.nfaData.allStates as nfaState]
          [#if nfaState.nonAscii]
+          [#if nfaState.moveRanges?size < 15000]  
             private static boolean ${nfaState.moveMethodName}(int ch) {
                [#var left, right]
                [#list nfaState.moveRanges as char]
@@ -59,12 +57,34 @@
                      [#set left = char]
                   [#else]
                      [#set right = char]
+                     [#if left = right]
+                     if (ch == ${left}) return true;
+                     [#else]
                      if (ch < ${left}) return false;
                      if (ch <= ${right}) return true;
+                     [/#if]
                   [/#if]
                [/#list]
                      return false;
             }
+           [#else]
+            [#var arrayName = nfaState.moveMethodName?replace("NFA_", "NFA_MOVES_")]
+            static private int[] ${arrayName};
+
+            static private void ${arrayName}_populate() {
+               ${arrayName} = new int[${nfaState.moveRanges?size}];
+               [#list nfaState.moveRanges as char]
+                  ${arrayName}[${char_index}] = ${char};
+               [/#list]
+            }
+
+            private static boolean ${nfaState.moveMethodName}(int ch) {
+               if (${arrayName} == null) ${arrayName}_populate();
+               int idx = Arrays.binarySearch(${arrayName}, ch);
+               if (idx >=0) return true;
+               return (idx%2 ==0);
+            }
+           [/#if]
         [/#if]
        [/#list]
    [/#list]
