@@ -32,7 +32,6 @@ package com.javacc.lexgen;
 
 import java.util.*;
 
-import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
 
 /**
@@ -42,27 +41,13 @@ import com.javacc.parsegen.RegularExpression;
  */
 public class NfaState {  
 
-    private final Grammar grammar;
-    private final LexerData lexerData;
     private final LexicalStateData lexicalState;
     private final NfaData nfaData;
     private RegularExpression type;
     private BitSet asciiMoves = new BitSet();
-    private List<Integer> rangeMovesLeftSide = new ArrayList<>();
-    private List<Integer> rangeMovesRightSide = new ArrayList<>();
-    private int nonAsciiMethod = -1;
-    private List<Integer> nonAsciiMoveIndices;
-    private List<Integer> loByteVec = new ArrayList<>();
+    private List<Integer> moveRanges = new ArrayList<>();
+    private boolean nonAscii;
 
-    // What a Rube Goldberg contraption this is!
-    // In general, any time the index value is used, 
-    // we should be using a direct reference to this NfaState object
-    // And any references to the so-called epsilonMovesString 
-    // usually as a map key should
-    // also be a reference to the NfaState object.
-    // It's as if the person who wrote this code thought that the only 
-    // key->value arrangement was String->int or String->int[]
-    // Totally bizarre.
     private int index = -1;
     NfaState nextState;
     Set<NfaState> epsilonMoves = new HashSet<>();
@@ -70,8 +55,6 @@ public class NfaState {
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
         nfaData = lexicalState.getNfaData();
-        this.grammar = lexicalState.getGrammar();
-        this.lexerData = grammar.getLexerData();
         nfaData.allStates.add(this);
     }
 
@@ -79,20 +62,18 @@ public class NfaState {
         return index;
     }
 
-    public int getNonAsciiMethod() {
-        return nonAsciiMethod;
+    public String getMoveMethodName() {
+        return "NFA_" + lexicalState.getName() + "_" + index;
     }
 
-    public List<Integer> getNonAsciiMoveIndices() {
-        return nonAsciiMoveIndices;
-    }
-
-    public List<Integer> getLoByteVec() {
-        return loByteVec;
+    public boolean isNonAscii() {
+//        return !moveRanges.isEmpty();
+        return nonAscii;
     }
 
     public long[] getAsciiMoves() {
-        long[] ll = asciiMoves.toLongArray();
+        BitSet bits = getAsciiMoveSet();
+        long[] ll = bits.toLongArray();
         if (ll.length !=2) {
             ll = Arrays.copyOf(ll, 2);
         }
@@ -100,7 +81,18 @@ public class NfaState {
     }
 
     public BitSet getAsciiMoveSet() {
-        return asciiMoves;
+        BitSet result = new BitSet();
+        for (int i=0; i<moveRanges.size(); i+=2) {
+            int left = moveRanges.get(i);
+            if (left > 127) break;
+            int right = Math.min(moveRanges.get(i+1), 127);
+            result.set(left, right+1);
+        }
+        return result;
+    }
+
+    public List<Integer> getMoveRanges() {
+        return moveRanges;
     }
 
     public RegularExpression getType() {return type;}
@@ -122,14 +114,8 @@ public class NfaState {
     }
 
     public boolean isNeeded(int byteNum) {
-        if (byteNum < 0) {
-            return isNeededNonAscii();
-        }
+        assert byteNum == 0 || byteNum ==1;
         return byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
-    }
-
-    public boolean isNeededNonAscii() {
-        return nonAsciiMethod != -1;
     }
 
     void addEpsilonMove(NfaState newState) {
@@ -143,14 +129,10 @@ public class NfaState {
     void addRange(int left, int right) {
         assert right>=left;
         assert right<=0x10FFFF;
-        for (int c = left; c <=right && c<128; c++) {
-            asciiMoves.set(c);
-        }
-        left = Math.max(left, 128);
-        if (right >= left) {
-            rangeMovesLeftSide.add(left);
-            rangeMovesRightSide.add(right);
-        }
+        if (right >= 128) nonAscii = true;
+        if (left < 128) asciiMoves.set(left, Math.min(right+1, 128));
+        moveRanges.add(left);
+        moveRanges.add(right);
     }
 
     private boolean closureDone = false;
@@ -183,7 +165,7 @@ public class NfaState {
 
     private boolean hasTransitions() {
         return !asciiMoves.isEmpty()
-                || !rangeMovesLeftSide.isEmpty();
+                || !moveRanges.isEmpty();
     }
 
     private boolean codeGenerated;
@@ -218,132 +200,19 @@ public class NfaState {
         }
         // Iterate thru the table to see if the current char
         // is in some range
-        for (int i=0; i<rangeMovesLeftSide.size(); i++) {
-            int left = rangeMovesLeftSide.get(i);
-            int right = rangeMovesRightSide.get(i);
-            if (c >= left && c <= right) 
-                return true;
-            else if (c < left || left == 0)
-                break;
+        for (int i = 0; i< moveRanges.size(); i=i+2) {
+            int left = moveRanges.get(i);
+            int right = moveRanges.get(i+1);
+            if (c>=left && c<=right) return true;
+            if (c<left) return false;
         }
         return false;
     }
 
-    /*
-     * This function generates the bit vectors of low and hi bytes for common
-     * bit vectors and returns those that are not common with anything (in
-     * loBytes) and returns an array of indices that can be used to generate the
-     * function names for char matching using the common bit vectors. It also
-     * generates code to match a char with the common bit vectors. (Need a
-     * better comment).
-     * FIXME! Need to replace all the char with int
-     * Also it is long overdue to rewrite this ugly legacy code anyway!
-     * Im pretty sure that the following method can be written in 
-     * far fewer lines!
-     */
-    void generateNonAsciiMoves() {
-        if (rangeMovesLeftSide.isEmpty()) {
-            return;
-        }
-        BitSet charMoves = new BitSet();
-        for (int i=0; i< rangeMovesLeftSide.size(); i++) {
-            int leftSide = rangeMovesLeftSide.get(i);
-            int rightSide = rangeMovesRightSide.get(i);
-            while (leftSide<=rightSide) {
-                charMoves.set(leftSide++);
-            }
-        }
-        BitSet superfluousSubsets = new BitSet();
-        // The following 40-odd lines of code constitute a space
-        // optimization. Commenting it all out produces
-        // larger (redundant) XXXLexer.java files, but it all still works!
-        nonAsciiMoveIndices = new ArrayList<>();
-        for (int i = 0; i < 0xFF; i++) {
-            BitSet commonSet = new BitSet();
-            BitSet subSet = charMoves.get(256*i, 256*(i+1));
-            if (subSet.isEmpty()) {
-                superfluousSubsets.set(i);
-            }
-            if (superfluousSubsets.get(i)) {
-                continue;
-            }
-            for (int j = i + 1; j <= 0xFF; j++) {
-                if (!superfluousSubsets.get(j)) {
-                    if (subSet.equals(charMoves.get(256*j, 256*(j+1)))) {
-                        superfluousSubsets.set(j);
-                        if (commonSet.isEmpty()) {
-                            superfluousSubsets.set(i);
-                            commonSet.set(i);
-                        }
-                        commonSet.set(j);
-                    }
-                }
-            }
-            if (!commonSet.isEmpty()) {
-                Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
-                List<BitSet> allBitSets = lexerData.getAllBitSets();
-                Integer ind = lohiByteLookup.get(commonSet);
-                if (ind == null) {
-                    allBitSets.add(commonSet);
-                    int lohiByteCount = lexerData.getLohiByteCount();
-                    ind = lohiByteCount;
-                    lohiByteLookup.put(commonSet, ind);
-                    lexerData.incrementLohiByteCount();
-                }
-                nonAsciiMoveIndices.add(ind);
-                if ((ind = lohiByteLookup.get(subSet)) == null) {
-                    allBitSets.add(subSet);
-                    int lohiByteCount = lexerData.getLohiByteCount();
-                    ind = lohiByteCount;
-                    lohiByteLookup.put(subSet, ind);
-                    lexerData.incrementLohiByteCount();
-                }
-                nonAsciiMoveIndices.add(ind);
-            }
-        }
-// Up to here is just a space optimization. (Gradually coming to an understanding of this...)
-// Without the space optimization, the nonAsciiMoveIndices array is empty
-        for (int i = 0; i < 256; i++) {
-            if (!superfluousSubsets.get(i)) {
-                Map<BitSet, Integer> lohiByteLookup = lexerData.getLoHiByteLookup();
-                BitSet subSet = charMoves.get(256*i, 256*(i+1));
-                List<BitSet> allBitSets = lexerData.getAllBitSets();
-                Integer ind = lohiByteLookup.get(subSet);
-                if (ind == null) {
-                    allBitSets.add(subSet);
-                    int lohiByteCount = lexerData.getLohiByteCount();
-                    ind = lohiByteCount;
-                    lohiByteLookup.put(subSet, ind);
-                    lexerData.incrementLohiByteCount();
-                }
-                loByteVec.add(i);
-                loByteVec.add(ind);
-            }
-        }
-        updateDuplicateNonAsciiMoves();
-    }
-
-    private void updateDuplicateNonAsciiMoves() {
-        List<NfaState> nonAsciiTableForMethod = lexerData.getNonAsciiTableForMethod();
-        // The following for loop is a space optimization.
-        // If you comment it out, everything works but the generated code
-        // is somewhat larger.
-        for (int i = 0; i < nonAsciiTableForMethod.size(); i++) {
-            NfaState state = nonAsciiTableForMethod.get(i);
-            if (loByteVec != null && loByteVec.equals(state.loByteVec) 
-                    && nonAsciiMoveIndices != null 
-                    && nonAsciiMoveIndices.equals(state.nonAsciiMoveIndices)) {
-                nonAsciiMethod = i;
-                return;
-            }
-        }
-        nonAsciiMethod = nonAsciiTableForMethod.size();
-        nonAsciiTableForMethod.add(this);
-    }
 
     public boolean isNextIntersects() {
         for (NfaState state : nfaData.allStates) {
-            if (this == state || state.index == -1 || (state.nonAsciiMethod == -1))
+            if (this == state || !state.hasTransitions() || !state.isNonAscii())
                 continue;
             if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
                 return true;
@@ -356,7 +225,7 @@ public class NfaState {
         if (this.nextState.type != other.nextState.type) {
             return false;
         }
-        if (byteNum < 0 && this.nonAsciiMethod != other.nonAsciiMethod) {
+        if (byteNum < 0) {
             return false;
         }
         if (byteNum >=0 && !this.asciiMoves.equals(other.asciiMoves)) {

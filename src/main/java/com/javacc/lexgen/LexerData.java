@@ -56,10 +56,6 @@ public class LexerData {
     
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
-    private int lohiByteCount;
-    private List<NfaState> nonAsciiTableForMethod = new ArrayList<>();
-    private Map<BitSet, Integer> lohiByteLookup = new HashMap<>();
-    private List<BitSet> allBitSets = new ArrayList<>();
     private Map<String, int[]> tableToDump = new HashMap<>();
     private List<int[]> orderedStateSet = new ArrayList<>();
     int lastIndex;
@@ -227,29 +223,9 @@ public class LexerData {
     public int getStateSetSize() {
         int result =0;
         for (LexicalStateData lsd : getLexicalStates()) {
-            result = Math.max(result, lsd.getNumStates());
+            result = Math.max(result, lsd.getNumNfaStates());
         }
         return result;
-    }
-
-    public List<NfaState> getNonAsciiTableForMethod() {
-        return nonAsciiTableForMethod;
-    }
-
-    int getLohiByteCount() {
-        return lohiByteCount;
-    }
-
-    void incrementLohiByteCount() {
-        ++lohiByteCount;
-    }
-
-    Map<BitSet, Integer> getLoHiByteLookup() {
-        return lohiByteLookup;
-    }
-
-    public List<BitSet> getAllBitSets() {
-        return allBitSets;
     }
 
     Map<String, int[]> getTableToDump() {

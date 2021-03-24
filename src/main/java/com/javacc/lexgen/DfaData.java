@@ -140,7 +140,7 @@ public class DfaData {
         int maxStringIndex = lexicalState.getMaxStringIndex();
         for (int kind = 0; kind < maxStringIndex; kind++) {
         	if (index == 0 && ch < 128 && info.getFinalKindCnt() !=0
-        			&& (lexicalState.getNumStates()==0 || !lexicalState.getNfaData().canStartNfaUsing(ch))) {
+        			&& (lexicalState.getNumNfaStates()==0 || !lexicalState.getNfaData().canStartNfaUsing(ch))) {
         			if (info.isFinalKind(kind) && !subStringSet.get(kind)) {
                         if (grammar.getLexerData().getSkipSet().get(kind)
         				        && !grammar.getLexerData().getSpecialSet().get(kind)
@@ -210,5 +210,4 @@ public class DfaData {
     public KindInfo getKindInfo(Map<Integer, KindInfo> table, int key) {
         return table.get(key);
     }
-
 }
