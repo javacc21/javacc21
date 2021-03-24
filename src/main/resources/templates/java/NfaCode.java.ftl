@@ -44,30 +44,23 @@
     private int jjnewStateCnt;
     private BitSet checkedStates = new BitSet();
 
-    private void jjCheckNAdd(int state) {
+    private void addState(int state) {
          if (!checkedStates.get(state)) {
             jjstateSet[jjnewStateCnt++] = state;
             checkedStates.set(state);
          }
     }
     
-    private void jjAddStates(int start, int end) {
-       do {
-           jjstateSet[jjnewStateCnt++] = jjnextStates[start];
-       }   while (start++ != end);
-    }
-
-    private void jjCheckNAddStates(int start, int end) {
+    private void addStates(int start, int end) {
         do {
-            jjCheckNAdd(jjnextStates[start]);
+            addState(jjnextStates[start]);
         } while (start++ != end);
     }
 
-    private void jjCheckNAddStates(int start) {
-        jjCheckNAdd(jjnextStates[start]);
-        jjCheckNAdd(jjnextStates[start + 1]);
+    private void addStates(int start) {
+      addState(jjnextStates[start]);
+      addState(jjnextStates[start+1]);
     }
-
    
     private int jjStopAtPos(int pos, int kind) {
          jjmatchedKind = kind;
@@ -359,15 +352,10 @@
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
        [#var stateNames = nextState.states]
        [#if stateNames?size = 1]
-          [#var name=stateNames[0]]
-          [#if nextIntersects]
-                   jjCheckNAdd(${name});
-          [#else]
-                   jjstateSet[jjnewStateCnt++] = ${name};
-          [/#if]
+           addState(${stateNames[0]});
        [#elseif stateNames?size = 2 && nextIntersects]
-                   jjCheckNAdd(${stateNames[0]});
-                   jjCheckNAdd(${stateNames[1]});
+                   addState(${stateNames[0]});
+                   addState(${stateNames[1]});
        [#else]
            [#-- Note that the getStateSetIndicesForUse() method builds up a needed
                 data structure lexicalState.orderedStateSet, which is used to output
@@ -375,13 +363,13 @@
            [#var indices=nfaState.lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
            [#var notTwo=(indices[0]+1 != indices[1])]
            [#if nextIntersects]
-                   jjCheckNAddStates(${indices[0]}
+                   addStates(${indices[0]}
                [#if notTwo]
                    , ${indices[1]}
                [/#if]
                   );
            [#else]
-                   jjAddStates(${indices[0]}, ${indices[1]});
+                   addStates(${indices[0]}, ${indices[1]});
            [/#if]
        [/#if]
    [/#if]
@@ -417,26 +405,21 @@
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
        [#var stateNames = nextState.states]
        [#if stateNames?size = 1]
-          [#var name=stateNames[0]]
-          [#if nextIntersects]
-                    jjCheckNAdd(${name});
-          [#else]
-                    jjstateSet[jjnewStateCnt++] = ${name};
-          [/#if]
+          addState(${stateNames[0]});
        [#elseif stateNames?size = 2 && nextIntersects]
-                    jjCheckNAdd(${stateNames[0]});
-                    jjCheckNAdd(${stateNames[1]});
+                    addState(${stateNames[0]});
+                    addState(${stateNames[1]});
        [#else]
           [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
           [#var notTwo=(indices[0]+1 != indices[1])]
           [#if nextIntersects]
-                    jjCheckNAddStates(${indices[0]}
+                    addStates(${indices[0]}
               [#if notTwo]
                     , ${indices[1]}
               [/#if]
                     );
           [#else]
-                    jjAddStates(${indices[0]}, ${indices[1]});
+                    addStates(${indices[0]}, ${indices[1]});
           [/#if]
        [/#if]
    [/#if]
@@ -481,26 +464,21 @@
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
        [#var stateNames = nextState.states]
        [#if stateNames?size = 1]
-          [#var name=stateNames[0]]
-          [#if nextIntersects]
-                    jjCheckNAdd(${name});
-          [#else]
-                    jjstateSet[jjnewStateCnt++] = ${name};
-          [/#if]
+          addState(${stateNames[0]});
        [#elseif stateNames?size = 2 && nextIntersects]
-                    jjCheckNAdd(${stateNames[0]});
-                    jjCheckNAdd(${stateNames[1]});
+                    addState(${stateNames[0]});
+                    addState(${stateNames[1]});
        [#else]
           [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
           [#var notTwo=(indices[0]+1 != indices[1])]
           [#if nextIntersects]
-                    jjCheckNAddStates(${indices[0]}
+                    addStates(${indices[0]}
               [#if notTwo]
                     , ${indices[1]}
               [/#if]
                     );
           [#else]
-                    jjAddStates(${indices[0]}, ${indices[1]});
+                    addStates(${indices[0]}, ${indices[1]});
           [/#if]
        [/#if]
    [/#if]
