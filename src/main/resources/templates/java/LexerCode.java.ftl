@@ -46,7 +46,13 @@
 
 [#var MAX_INT=2147483647]
 
+   private int[] jjemptyLineNo = new int[${numLexicalStates}];
+   private int[] jjemptyColNo = new int[${numLexicalStates}];
+   private boolean[] jjbeenHere = new boolean[${numLexicalStates}];
+  
+  
   private int jjnewStateCnt;
+  private int jjround;
   private int jjmatchedPos;
   //FIXME,should be an enum.
   private int jjmatchedKind;
@@ -68,14 +74,19 @@
                                 skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
                                 moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
-    private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
+    static private final int STATE_SET_SIZE = ${lexerData.stateSetSize};
+
+    private final int[] jjrounds = new int[STATE_SET_SIZE];
+    private final int[] jjstateSet = new int[2*STATE_SET_SIZE];
 
     private final StringBuilder image = new StringBuilder();
-    private int curChar, matchedCharsLength;
+    private int matchedCharsLength;
+
+    int curChar;
     
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
-	    jjmatchedKind = 0;
+	   jjmatchedKind = 0;
       matchedType = TokenType.EOF;
       Token eof = jjFillToken();
       tokenLexicalActions();
@@ -294,20 +305,33 @@
         return t;
     }
 
-    private void jjCheckNAddTwoStates(int state1, int state2) {
-        jjstateSet[jjnewStateCnt++] = state1;
-        jjstateSet[jjnewStateCnt++] = state2;
+    private void jjCheckNAdd(int state) {
+        if (jjrounds[state] != jjround) {
+            jjstateSet[jjnewStateCnt++] = state;
+            jjrounds[state] = jjround;
+        }
     }
     
     private void jjAddStates(int start, int end) {
+       do {
+           jjstateSet[jjnewStateCnt++] = jjnextStates[start];
+       }   while (start++ != end);
+    }
+
+    private void jjCheckNAddTwoStates(int state1, int state2) {
+        jjCheckNAdd(state1);
+        jjCheckNAdd(state2);
+    }
+    
+    private void jjCheckNAddStates(int start, int end) {
         do {
-            jjstateSet[jjnewStateCnt++] = jjnextStates[start];
+            jjCheckNAdd(jjnextStates[start]);
         } while (start++ != end);
     }
 
-    private void jjAddStates(int start) {
-        jjstateSet[jjnewStateCnt++] = jjnextStates[start]; 
-        jjstateSet[jjnewStateCnt++] = jjnextStates[start +1];
+    private void jjCheckNAddStates(int start) {
+        jjCheckNAdd(jjnextStates[start]);
+        jjCheckNAdd(jjnextStates[start + 1]);
     }
 
    
