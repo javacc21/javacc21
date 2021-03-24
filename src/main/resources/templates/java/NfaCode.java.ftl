@@ -49,7 +49,7 @@
    [#list lexerData.lexicalStates as lexicalState]
        [#list lexicalState.nfaData.allStates as nfaState]
          [#if nfaState.nonAscii]
-          [#if nfaState.moveRanges?size < 15000]  
+          [#if nfaState.moveRanges?size < 16]  
             private static boolean ${nfaState.moveMethodName}(int ch) {
                [#var left, right]
                [#list nfaState.moveRanges as char]
@@ -60,7 +60,9 @@
                      [#if left = right]
                      if (ch == ${left}) return true;
                      [#else]
+                       [#if left >0 ]
                      if (ch < ${left}) return false;
+                       [/#if]
                      if (ch <= ${right}) return true;
                      [/#if]
                   [/#if]
