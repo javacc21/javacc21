@@ -52,7 +52,6 @@
   
   
   private int jjnewStateCnt;
-  private int jjround;
   private int jjmatchedPos;
   //FIXME,should be an enum.
   private int jjmatchedKind;
@@ -74,15 +73,12 @@
                                 skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
                                 moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
-    static private final int STATE_SET_SIZE = ${lexerData.stateSetSize};
-
-    private final int[] jjrounds = new int[STATE_SET_SIZE];
-    private final int[] jjstateSet = new int[2*STATE_SET_SIZE];
+    private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
 
     private final StringBuilder image = new StringBuilder();
     private int matchedCharsLength;
 
-    int curChar;
+    private int curChar;
     
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
@@ -306,10 +302,7 @@
     }
 
     private void jjCheckNAdd(int state) {
-        if (jjrounds[state] != jjround) {
-            jjstateSet[jjnewStateCnt++] = state;
-            jjrounds[state] = jjround;
-        }
+        jjstateSet[jjnewStateCnt++] = state;
     }
     
     private void jjAddStates(int start, int end) {

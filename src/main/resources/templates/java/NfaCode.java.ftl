@@ -83,8 +83,7 @@
             private static boolean ${nfaState.moveMethodName}(int ch) {
                if (${arrayName} == null) ${arrayName}_populate();
                int idx = Arrays.binarySearch(${arrayName}, ch);
-               if (idx >=0) return true;
-               return (idx%2 ==0);
+               return idx>=0 || idx%2 ==0;
             }
            [/#if]
         [/#if]
@@ -114,10 +113,6 @@
         jjstateSet[0] = startState;
         int kind = 0x7fffffff;
         while (true) {
-            if (++jjround == 0x7fffffff) {
-               jjround = 0x80000001;
-               Arrays.fill(jjrounds,0x80000000);
-            }
             if (curChar < 64) {
             	long l = 1L << curChar;
 	            do {
@@ -611,4 +606,3 @@
         return jjMoveNfa_${lexicalState.name}(state, pos+1);
    }
 [/#macro]
- 
