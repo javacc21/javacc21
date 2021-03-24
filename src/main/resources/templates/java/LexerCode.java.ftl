@@ -71,13 +71,11 @@
     private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
 
     private final StringBuilder image = new StringBuilder();
-    private int matchedCharsLength;
-
-    private int curChar;
+    private int curChar, matchedCharsLength;
     
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
-	   jjmatchedKind = 0;
+	    jjmatchedKind = 0;
       matchedType = TokenType.EOF;
       Token eof = jjFillToken();
       tokenLexicalActions();
@@ -296,30 +294,20 @@
         return t;
     }
 
-    private void jjCheckNAdd(int state) {
-        jjstateSet[jjnewStateCnt++] = state;
+    private void jjCheckNAddTwoStates(int state1, int state2) {
+        jjstateSet[jjnewStateCnt++] = state1;
+        jjstateSet[jjnewStateCnt++] = state2;
     }
     
     private void jjAddStates(int start, int end) {
-       do {
-           jjstateSet[jjnewStateCnt++] = jjnextStates[start];
-       }   while (start++ != end);
-    }
-
-    private void jjCheckNAddTwoStates(int state1, int state2) {
-        jjCheckNAdd(state1);
-        jjCheckNAdd(state2);
-    }
-    
-    private void jjCheckNAddStates(int start, int end) {
         do {
-            jjCheckNAdd(jjnextStates[start]);
+            jjstateSet[jjnewStateCnt++] = jjnextStates[start];
         } while (start++ != end);
     }
 
-    private void jjCheckNAddStates(int start) {
-        jjCheckNAdd(jjnextStates[start]);
-        jjCheckNAdd(jjnextStates[start + 1]);
+    private void jjAddStates(int start) {
+        jjstateSet[jjnewStateCnt++] = jjnextStates[start]; 
+        jjstateSet[jjnewStateCnt++] = jjnextStates[start +1];
     }
 
    
