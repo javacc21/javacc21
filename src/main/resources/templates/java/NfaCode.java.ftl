@@ -40,17 +40,15 @@
 [#var MAX_INT=2147483647]
 
 [#macro OutputNfaStateMoves]  
-    static private final int STATE_SET_SIZE = ${lexerData.stateSetSize};
-    private final int[] jjrounds = new int[STATE_SET_SIZE];
-    private final int[] jjstateSet = new int[2*STATE_SET_SIZE];
-    private int jjnewStateCnt, jjround;
-
+    private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
+    private int jjnewStateCnt;
+    private BitSet checkedStates = new BitSet();
 
     private void jjCheckNAdd(int state) {
-        if (jjrounds[state] != jjround) {
+         if (!checkedStates.get(state)) {
             jjstateSet[jjnewStateCnt++] = state;
-            jjrounds[state] = jjround;
-        }
+            checkedStates.set(state);
+         }
     }
     
     private void jjAddStates(int start, int end) {
@@ -152,10 +150,7 @@
         jjstateSet[0] = startState;
         int kind = 0x7fffffff;
         while (true) {
-            if (++jjround == 0x7fffffff) {
-               jjround = 0x80000001;
-               Arrays.fill(jjrounds,0x80000000);
-            }
+            checkedStates.clear();
             if (curChar < 64) {
             	long l = 1L << curChar;
 	            do {
