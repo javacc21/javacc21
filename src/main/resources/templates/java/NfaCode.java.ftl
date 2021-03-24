@@ -57,11 +57,6 @@
        }   while (start++ != end);
     }
 
-    private void jjCheckNAddTwoStates(int state1, int state2) {
-        jjCheckNAdd(state1);
-        jjCheckNAdd(state2);
-    }
-    
     private void jjCheckNAddStates(int start, int end) {
         do {
             jjCheckNAdd(jjnextStates[start]);
@@ -371,7 +366,8 @@
                    jjstateSet[jjnewStateCnt++] = ${name};
           [/#if]
        [#elseif stateNames?size = 2 && nextIntersects]
-                   jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
+                   jjCheckNAdd(${stateNames[0]});
+                   jjCheckNAdd(${stateNames[1]});
        [#else]
            [#-- Note that the getStateSetIndicesForUse() method builds up a needed
                 data structure lexicalState.orderedStateSet, which is used to output
@@ -428,7 +424,8 @@
                     jjstateSet[jjnewStateCnt++] = ${name};
           [/#if]
        [#elseif stateNames?size = 2 && nextIntersects]
-                    jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
+                    jjCheckNAdd(${stateNames[0]});
+                    jjCheckNAdd(${stateNames[1]});
        [#else]
           [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
           [#var notTwo=(indices[0]+1 != indices[1])]
@@ -491,7 +488,8 @@
                     jjstateSet[jjnewStateCnt++] = ${name};
           [/#if]
        [#elseif stateNames?size = 2 && nextIntersects]
-                    jjCheckNAddTwoStates(${stateNames[0]}, ${stateNames[1]});
+                    jjCheckNAdd(${stateNames[0]});
+                    jjCheckNAdd(${stateNames[1]});
        [#else]
           [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
           [#var notTwo=(indices[0]+1 != indices[1])]
