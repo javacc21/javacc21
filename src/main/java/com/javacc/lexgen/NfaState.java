@@ -66,8 +66,11 @@ public class NfaState {
         return "NFA_" + lexicalState.getName() + "_" + index;
     }
 
+    public String getMovesArrayName() {
+        return getMoveMethodName().replace("NFA_", "NFA_MOVES_");
+    }
+
     public boolean isNonAscii() {
-//        return !moveRanges.isEmpty();
         return nonAscii;
     }
 
@@ -246,21 +249,5 @@ public class NfaState {
             }
         }
         return result;
-    }
-
-    /**
-     * @param byteNum either 0 or 1
-     */
-    public boolean isOnlyState(int byteNum) {
-        for (NfaState state : nfaData.allStates) {
-            BitSet bs = new BitSet();
-            bs.or(asciiMoves);
-            bs.and(state.asciiMoves);
-            boolean intersects = byteNum == 0 ? bs.previousSetBit(63) >=0 : bs.nextSetBit(64) >=0;
-            if (state.index != -1 && state.index != this.index && state.isNeeded(byteNum) && intersects) {
-                return false;
-            }
-        }
-        return true;
     }
 }
