@@ -73,7 +73,7 @@
 
    [#list lexerData.lexicalStates as lexicalState]
        [#list lexicalState.nfaData.allStates as nfaState]
-         [#if nfaState.nonAscii]
+         [#--if nfaState.nonAscii--]
           [#if nfaState.moveRanges?size < 16]  
             private static boolean ${nfaState.moveMethodName}(int ch) {
                [#var left, right]
@@ -111,7 +111,7 @@
                return idx>=0 || idx%2==0;
             }
            [/#if]
-        [/#if]
+        [#--/#if--]
        [/#list]
    [/#list]
 [/#macro]
@@ -235,7 +235,7 @@
          [#if state.nonAscii]
             ${statesDumped.set(state.index)!}
             case ${state.index} :
-              [@DumpMoveNonAscii state, statesDumped /]
+              [@DumpMove state, statesDumped /]
          [/#if]
       [/#if]
    [/#list]
@@ -252,7 +252,7 @@
          [#if state.isNeeded(byteNum)]
             ${statesDumped.set(state.index)!}
             case ${state.index} :
-              [@DumpAsciiMove state, byteNum, statesDumped/]
+              [@DumpMove state, statesDumped/]
          [/#if]
       [/#if]
    [/#list]
@@ -285,7 +285,7 @@
           case ${toBePrinted.index} :
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
-              [@DumpMoveNonAscii toBePrinted, statesDumped/]
+              [@DumpMove toBePrinted, statesDumped/]
       [#return] 
    [/#if]
               case ${stateIndex} :
@@ -323,7 +323,7 @@
           case ${toBePrinted.index} :
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
-              [@DumpAsciiMove toBePrinted, byteNum, statesDumped/]
+              [@DumpMove toBePrinted, statesDumped/]
       [#return] 
    [/#if]
               case ${stateIndex} :
@@ -376,7 +376,7 @@
          }
 [/#macro]
 
-[#macro DumpMoveNonAscii nfaState statesDumped]
+[#macro DumpMove nfaState statesDumped]
    [#var nextState = nfaState.nextState]
    [#var nextIntersects= nfaState.nextIntersects]
    [#var onlyState= false]
@@ -427,63 +427,6 @@
 
 [/#macro]
 
-[#macro DumpAsciiMove nfaState byteNum statesDumped]
-   [#var nextState = nfaState.nextState]
-   [#var nextIntersects=nfaState.nextIntersects]
-   [#var onlyState=(byteNum>=0)&&nfaState.isOnlyState(byteNum)]
-   [#var lexicalState=nfaState.lexicalState]
-   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
-   [#list nfaState.getMoveStates(byteNum, statesDumped) as state]
-                   case ${state.index} :
-   [/#list]
-   [#if nfaState.asciiMoves[byteNum] != -1]
-      [#if nextState?is_null || nextState.epsilonMoveCount==0]
-          [#var kindCheck=" && kind > "+kindToPrint]
-          [#if onlyState][#set kindCheck = ""][/#if]
-               if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} & l) != 0L ${kindCheck})
-               kind = ${kindToPrint};
-               break;
-          [#return]
-      [/#if]
-   [/#if]
-   [#if kindToPrint != MAX_INT]
-      [#if nfaState.asciiMoves[byteNum] != -1]
-               if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} &l) == 0L)
-                     break;
-      [/#if]
-       [#if onlyState]
-                    kind = ${kindToPrint};
-       [#else]
-                    kind = Math.min(kind, ${kindToPrint});
-       [/#if]
-   [#else]
-       [#if nfaState.asciiMoves[byteNum] != -1]
-                    if ((${utils.toHexStringL(nfaState.asciiMoves[byteNum])} & l) != 0L)
-       [/#if]
-   [/#if]
-   [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#var stateNames = nextState.states]
-       [#if stateNames?size = 1]
-          addState(${stateNames[0]});
-       [#elseif stateNames?size = 2 && nextIntersects]
-                    addState(${stateNames[0]});
-                    addState(${stateNames[1]});
-       [#else]
-          [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
-          [#var notTwo=(indices[0]+1 != indices[1])]
-          [#if nextIntersects]
-                    addStates(${indices[0]}
-              [#if notTwo]
-                    , ${indices[1]}
-              [/#if]
-                    );
-          [#else]
-                    addStates(${indices[0]}, ${indices[1]});
-          [/#if]
-       [/#if]
-   [/#if]
-                         break;
-[/#macro]
 
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
   [#var dfaData = lexicalState.dfaData] 
