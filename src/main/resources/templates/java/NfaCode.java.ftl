@@ -140,7 +140,6 @@
         while (true) {
             checkedStates.clear();
             if (curChar < 64) {
-            	long l = 1L << curChar;
 	            do {
 	                switch (jjstateSet[--stateIndex]) {
 	                    [@DumpAsciiMoves lexicalState, 0/]
@@ -149,7 +148,6 @@
 	            } while (stateIndex != startsAt);
             }
             else if (curChar <128) {
-            	long l = 1L << (curChar & 077);
 	            do {
 	                switch (jjstateSet[--stateIndex]) {
  	                    [@DumpAsciiMoves lexicalState, 1/]
@@ -345,7 +343,8 @@
          asciiMoves=nfaState.asciiMoves 
          nextState=nfaState.nextState
          lexicalState=nfaState.lexicalState]
-         [#if elseNeeded] else [/#if] if ((${utils.toHexStringL(asciiMoves[byteNum])} &l) != 0L) {
+         [#if elseNeeded] else [/#if] 
+         if (${nfaState.moveMethodName}(curChar)) {
    [#if kindToPrint != MAX_INT]
           kind = Math.min(kind, ${kindToPrint});
    [/#if]
@@ -389,8 +388,7 @@
          [#var kindCheck=" && kind > "+kindToPrint]
          [#if onlyState][#set kindCheck = ""][/#if]
             if (${nfaState.moveMethodName}(curChar) ${kindCheck})
-            
-            kind = ${kindToPrint};
+               kind = ${kindToPrint};
             break;
          [#return]
    [/#if]
