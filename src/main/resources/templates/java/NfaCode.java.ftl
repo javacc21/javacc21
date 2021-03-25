@@ -230,11 +230,9 @@
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#if state.nonAscii]
-            ${statesDumped.set(state.index)!}
-            case ${state.index} :
-              [@DumpMove state, statesDumped /]
-         [/#if]
+         ${statesDumped.set(state.index)!}
+         case ${state.index} :
+           [@DumpMove state, statesDumped /]
       [/#if]
    [/#list]
 [/#macro]
@@ -247,11 +245,11 @@
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#if state.isNeeded(byteNum)]
+         [#--if state.isNeeded(byteNum)--]
             ${statesDumped.set(state.index)!}
             case ${state.index} :
               [@DumpMove state, statesDumped/]
-         [/#if]
+         [#--/#if--]
       [/#if]
    [/#list]
 [/#macro]
