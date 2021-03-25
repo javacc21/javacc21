@@ -75,7 +75,7 @@
    [#list lexerData.lexicalStates as lexicalState]
        [#list lexicalState.nfaData.allStates as nfaState]
           [#if nfaState.moveRanges?size < 16]  
-            private static boolean ${nfaState.moveMethodName}(int ch) {
+            private static final boolean ${nfaState.moveMethodName}(int ch) {
                [#var left, right]
                [#list nfaState.moveRanges as char]
                   [#if char_index % 2 = 0]

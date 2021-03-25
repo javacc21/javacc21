@@ -891,7 +891,7 @@ public class Grammar extends BaseNode {
         }
         Path dir = Paths.get(baseSrcDir);
         if (!dir.isAbsolute()){
-            Path inputFileDir = filename.getParent();
+            Path inputFileDir = filename.toAbsolutePath().getParent();
             dir = inputFileDir.resolve(baseSrcDir);
         }
         if (!Files.exists(dir)) {
