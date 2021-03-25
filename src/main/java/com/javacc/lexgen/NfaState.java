@@ -66,6 +66,10 @@ public class NfaState {
         return "NFA_" + lexicalState.getName() + "_" + index;
     }
 
+    public String getMovesArrayName() {
+        return getMoveMethodName().replace("NFA_", "NFA_MOVES_");
+    }
+
     public boolean isNonAscii() {
         return nonAscii;
     }

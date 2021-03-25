@@ -70,6 +70,7 @@
                             + " characters as a " + tokenImage[jjmatchedKind] + " token.");
          return pos + 1;
     }
+    [#var needNextStep = false]
 
    [#list lexerData.lexicalStates as lexicalState]
        [#list lexicalState.nfaData.allStates as nfaState]
@@ -94,7 +95,9 @@
                      return false;
             }
            [#else]
-            [#var arrayName = nfaState.moveMethodName?replace("NFA_", "NFA_MOVES_")]
+            [#set needNextStep = true]
+            [#var arrayName = nfaState.movesArrayName]
+
             static private int[] ${arrayName};
 
             static private void ${arrayName}_populate() {
@@ -104,14 +107,24 @@
                [/#list]
             }
 
-            private static boolean ${nfaState.moveMethodName}(int ch) {
-               if (${arrayName} == null) ${arrayName}_populate();
+            private static final boolean ${nfaState.moveMethodName}(int ch) {
                int idx = Arrays.binarySearch(${arrayName}, ch);
                return idx>=0 || idx%2==0;
             }
            [/#if]
        [/#list]
    [/#list]
+     [#if needNextStep]
+     static {
+       [#list lexerData.lexicalStates as lexicalState]
+        [#list lexicalState.nfaData.allStates as nfaState]
+          [#if nfaState.moveRanges?size >= 16]
+            ${nfaState.movesArrayName}_populate();
+          [/#if]
+         [/#list]
+       [/#list]
+     }
+     [/#if]
 [/#macro]
 
 [#macro DumpMoveNfa lexicalState]
