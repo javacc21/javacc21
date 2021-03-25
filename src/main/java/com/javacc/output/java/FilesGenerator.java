@@ -58,8 +58,8 @@ public class FilesGenerator {
 
     void initializeTemplateEngine() throws IOException {
         fmConfig = new freemarker.template.Configuration();
-        Path filename = grammar.getFilename();
-        Path dir = filename.normalize().getParent();
+        Path filename = grammar.getFilename().toAbsolutePath();
+        Path dir = filename.getParent();
         TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir.toFile()), 
                                                                 new ClassTemplateLoader(this.getClass(), "/templates/java"));
         fmConfig.setTemplateLoader(templateLoader);
