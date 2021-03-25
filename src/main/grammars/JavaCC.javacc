@@ -858,6 +858,7 @@ INJECT Token :
 }
 {
    [
+       SCAN 2
       (OptionsBlock | Options)!
    ]
    [ParserCodeDecls]
