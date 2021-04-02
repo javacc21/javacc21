@@ -101,14 +101,8 @@
         if (curChar == -1) {
            return generateEOF();
         }
-        else if (curChar >0xFFFF)  {
-          // For now, I guess we'll treat any characters
-          // beyond the BMP as invalid input.
-          return handleInvalidChar(curChar);
-        }
        image.setLength(0);
        matchedCharsLength = 0;
-
 [#if lexerData.hasMore]
        while (true) {
 [/#if]
