@@ -10,16 +10,15 @@ PARSER_PACKAGE="com.javacc.preprocessor";
 ENSURE_FINAL_EOL;
 //DEBUG_PARSER;
 
-
 /*
  * This is an implementation of the standard C# preprocessor.
  * Well, it is incomplete at the moment, because it just ignores
- * everything except:#define/#undef and #if/#elif/#else. 
+ * everything except #define/#undef and #if/#elif/#else. 
  * The other C# pre-processing directives, #pragma, #region/#endregion, 
  * #warning/#error and #line are just treated as lines to ignore.
  * So the only thing currently suppported is turning on or off 
  * parts of the source file.
- * This is very bare-bones and bloody-minded. It does not builld a
+ * This is very bare-bones and bloody-minded. It does not build a
  * tree or any of that. It just uses code actions to create a BitSet
  * that holds whether a line is "turned on" or not. The line offsets
  * are 1-based.
@@ -40,6 +39,7 @@ INJECT PARSER_CLASS :
     public PARSER_CLASS(Path path, Set<String> definedSymbols) throws IOException {
         this(path);
         if (definedSymbols !=null) addSymbols(definedSymbols);
+        token_source.switchTo(LexicalState.PP_SCAN_LINES);
     }
 
     public BitSet getLineMarkers() {
@@ -60,9 +60,7 @@ INJECT PARSER_CLASS :
     }
 
     public void addSymbols(Set<String> symbols) {
-        for (String symbol : symbols) {
-            definedSymbols.add(symbol);
-        }
+        definedSymbols.addAll(symbols);
     }
 }
 
