@@ -241,11 +241,11 @@
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#if state.nonAscii]
+         [#--if state.nonAscii--]
             ${statesDumped.set(state.index)!}
             case ${state.index} :
               [@DumpMove state, statesDumped /]
-         [/#if]
+         [#--/#if--]
       [/#if]
    [/#list]
 [/#macro]
@@ -281,8 +281,8 @@
           [#else]
              [#set toBePrinted = state]
           [/#if]
-       [#else]
-          ${statesDumped.set(state.index)!}
+       [#--else
+          ${statesDumped.set(state.index)!}--]
        [/#if]
    [/#list]
    [#if neededStates = 0]
@@ -392,9 +392,6 @@
    [#var onlyState= false]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
-   [#list nfaState.getMoveStates(-1, statesDumped) as state]
-                   case ${state.index} :
-   [/#list]
    [#if nextState?is_null || nextState.epsilonMoveCount==0]
          [#var kindCheck=" && kind > "+kindToPrint]
          [#if onlyState][#set kindCheck = ""][/#if]
