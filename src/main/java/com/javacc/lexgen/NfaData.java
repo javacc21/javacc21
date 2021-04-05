@@ -120,6 +120,7 @@ public class NfaData {
             return stateIndexFromComposite.get(stateSetString);
         }
         int[] nameSet = epsilonMovesStringToIntArray(stateSetString);
+        assert nameSet.length > 0;
         if (nameSet.length == 1) {
             stateIndexFromComposite.put(stateSetString, nameSet[0]);
             return nameSet[0];
