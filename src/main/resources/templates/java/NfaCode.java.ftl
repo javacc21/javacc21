@@ -236,7 +236,7 @@
 
 [#macro DumpMovesNonAscii lexicalState]
    [#var statesDumped = utils.newBitSet()]
-   [#list lexicalState.nfaData.allCompositeStates as key]
+   [#list lexicalState.nfaData.allCompositeStateStrings as key]
         [@DumpCompositeStatesMovesNonAscii lexicalState, key, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
@@ -253,7 +253,7 @@
 
 [#macro DumpAsciiMoves lexicalState byteNum]
    [#var statesDumped = utils.newBitSet()]
-   [#list lexicalState.nfaData.allCompositeStates as key]
+   [#list lexicalState.nfaData.allCompositeStateStrings as key]
         [@DumpAsciiCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
@@ -392,9 +392,6 @@
    [#var onlyState= false]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
-   [#list nfaState.getMoveStates(-1, statesDumped) as state]
-                   case ${state.index} :
-   [/#list]
    [#if nextState?is_null || nextState.epsilonMoveCount==0]
          [#var kindCheck=" && kind > "+kindToPrint]
          [#if onlyState][#set kindCheck = ""][/#if]

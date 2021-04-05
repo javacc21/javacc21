@@ -279,7 +279,8 @@ public final class Main {
     public static int mainProgram(Path grammarFile, Path outputDir, int jdkTarget, boolean quiet, Set<String> symbols) throws Exception {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, jdkTarget, quiet, symbols);
-        grammar.parse(grammarFile.toString(), true);
+//        grammar.parse(grammarFile.toString(), true);
+        grammar.parse(grammarFile, true);
         try {
             grammar.createOutputDir();
             grammar.semanticize();

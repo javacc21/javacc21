@@ -82,6 +82,21 @@
          <include name="*.ftl"/>
       </fileset>
     </copy>
+    <copy todir="build/include/java">
+      <fileset dir="examples/java">
+          <include name="*.javacc"/>
+      </fileset>
+    </copy>
+    <copy todir="build/include/preprocessor">
+      <fileset dir="examples/preprocessor">
+          <include name="*.javacc"/>
+      </fileset>
+    </copy>
+    <copy todir="build/include/json">
+      <fileset dir="examples/json">
+          <include name="*.javacc"/>
+      </fileset>
+    </copy>
 	<copy todir="build">
 	  <fileset dir="src/main/resources">
 	    <include name="*.properties"/>

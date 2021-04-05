@@ -36,6 +36,8 @@ import com.javacc.parser.tree.*;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 //import java.nio.charset.Charset;
 //import java.nio.file.Files;
 
@@ -62,7 +64,8 @@ import java.io.*;
         GrammarFile root = parser.Root();
         System.out.print(root.getSource());
         visit(root);*/
-        Node root = grammar.parse(location, false);
+        Path path = Paths.get(location);
+        Node root = grammar.parse(path, false);
         System.out.print(root);
      }
 

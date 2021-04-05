@@ -33,7 +33,11 @@ package com.javacc;
 import java.util.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -169,8 +173,7 @@ public class Grammar extends BaseNode {
         return id;
     }
 
-    public Node parse(String location, boolean enterIncludes) throws IOException, ParseException {
-        Path file = Paths.get(location);
+    public Node parse(Path file, boolean enterIncludes) throws IOException, ParseException {
         Path canonicalPath = file.normalize();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
@@ -190,23 +193,70 @@ public class Grammar extends BaseNode {
         return rootNode;
     }
 
-
-    public Node include(String location, String... alternatives) throws IOException, ParseException {
-        Path path = Paths.get(location);
-        if (!Files.exists(path)) {
-            if (!path.isAbsolute()) {
-                path = filename.getParent();
-                path = path.resolve(location);
-            }
-            if (Files.exists(path)) {
-                location = path.toString();
-            } else {
-                if (includedFileDirectory != null) {
-                    location = includedFileDirectory.resolve(location).toString();
-                }
-            }
+    private Path resolveLocation(List<String> locations) {
+        for (String location : locations) {
+            Path path = resolveLocation(location);
+            if (path != null) return path;
         }
-        if (location.toLowerCase().endsWith(".java") || location.endsWith(".jav")) {
+        return null;
+    }
+
+    private Path resolveLocation(String location) {
+        Path path = Paths.get(location);
+        if (Files.exists(path)) return path;
+        if (!path.isAbsolute()) {
+            path = filename.getParent();
+            path = path.resolve(location);
+            if (Files.exists(path)) return path;
+        }
+        if (includedFileDirectory != null) {
+            path = includedFileDirectory.resolve(location);
+            if (Files.exists(path)) return path;
+        }
+        if (LexerData.isJavaIdentifier(location)) {
+            location = resolveAlias(location);
+        }
+        URI uri = null;
+        try {
+            uri = getClass().getResource(location).toURI();
+        } catch (Exception e) {
+            return null;
+        }
+        try {
+            return Paths.get(uri);
+        } catch (FileSystemNotFoundException fsne) {
+           try {
+               FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+               return fs.getPath(location);
+           }
+           catch (Exception e) {
+               e.printStackTrace();
+           }
+        }
+        return null;
+    }
+
+    private String resolveAlias(String location) {
+        if (location.equals("JAVA")) {
+            location = "/include/java/Java.javacc";
+        }
+        else if (location.equals("JAVA_LEXER")) {
+            location = "/include/java/JavaLexer.javacc";
+        } 
+        else if (location.equals("JAVA_IDENTIFIER_DEF")) {
+            location = "/include/java/JavaIdentifierDef.javacc";
+        }
+        return location;
+    }
+
+    public Node include(List<String> locations, Node includeLocation) throws IOException, ParseException {
+        Path path = resolveLocation(locations);
+        if (path == null) {
+            addSemanticError(includeLocation, "Could not resolve location of include file");
+            throw new FileNotFoundException(includeLocation.getLocation());
+        }
+        String location = path.toString();
+        if (location.toLowerCase().endsWith(".java") || location.toLowerCase().endsWith(".jav")) {
             Path includeFile = Paths.get(location);
             String content = new String(Files.readAllBytes(path),Charset.forName("UTF-8"));
             CompilationUnit cu = JavaCCParser.parseJavaFile(includeFile.normalize().toString(), content);
@@ -217,7 +267,7 @@ public class Grammar extends BaseNode {
             String prevDefaultLexicalState = this.defaultLexicalState;
             boolean prevIgnoreCase = this.ignoreCase;
             includeNesting++;
-            Node root = parse(location, true);
+            Node root = parse(path, true);
             if (root==null) return null;
             includeNesting--;
             setFilename(prevLocation);

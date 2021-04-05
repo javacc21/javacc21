@@ -44,10 +44,7 @@ public class NfaState {
     private final LexicalStateData lexicalState;
     private final NfaData nfaData;
     private RegularExpression type;
-    private BitSet asciiMoves = new BitSet();
     private List<Integer> moveRanges = new ArrayList<>();
-    private boolean nonAscii;
-
     private int index = -1;
     NfaState nextState;
     Set<NfaState> epsilonMoves = new HashSet<>();
@@ -71,7 +68,7 @@ public class NfaState {
     }
 
     public boolean isNonAscii() {
-        return nonAscii;
+        return moveRanges.get(moveRanges.size()-1) >= 128;
     }
 
     public long[] getAsciiMoves() {
@@ -83,7 +80,7 @@ public class NfaState {
         return ll;
     }
 
-    public BitSet getAsciiMoveSet() {
+    private BitSet getAsciiMoveSet() {
         BitSet result = new BitSet();
         for (int i=0; i<moveRanges.size(); i+=2) {
             int left = moveRanges.get(i);
@@ -118,6 +115,7 @@ public class NfaState {
 
     public boolean isNeeded(int byteNum) {
         assert byteNum == 0 || byteNum ==1;
+        BitSet asciiMoves = getAsciiMoveSet();
         return byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
     }
 
@@ -130,10 +128,6 @@ public class NfaState {
     }
 
     void addRange(int left, int right) {
-        assert right>=left;
-        assert right<=0x10FFFF;
-        if (right >= 128) nonAscii = true;
-        if (left < 128) asciiMoves.set(left, Math.min(right+1, 128));
         moveRanges.add(left);
         moveRanges.add(right);
     }
@@ -167,8 +161,7 @@ public class NfaState {
     }
 
     private boolean hasTransitions() {
-        return !asciiMoves.isEmpty()
-                || !moveRanges.isEmpty();
+        return !moveRanges.isEmpty();
     }
 
     private boolean codeGenerated;
@@ -198,20 +191,10 @@ public class NfaState {
     }
 
     boolean canMoveUsingChar(int c) {
-        if (c < 128) {
-            return asciiMoves.get(c);
-        }
-        // Iterate thru the table to see if the current char
-        // is in some range
-        for (int i = 0; i< moveRanges.size(); i=i+2) {
-            int left = moveRanges.get(i);
-            int right = moveRanges.get(i+1);
-            if (c>=left && c<=right) return true;
-            if (c<left) return false;
-        }
-        return false;
+        // Check whether the character c is in some range.
+        int idx = Collections.binarySearch(moveRanges, c);
+        return idx >=0 || idx%2 ==0;
     }
-
 
     public boolean isNextIntersects() {
         for (NfaState state : nfaData.allStates) {
@@ -222,32 +205,5 @@ public class NfaState {
             }
         }
         return false;
-    }
-
-    private boolean isMoveState(NfaState other, int byteNum) {
-        if (this.nextState.type != other.nextState.type) {
-            return false;
-        }
-        if (byteNum < 0) {
-            return false;
-        }
-        if (byteNum >=0 && !this.asciiMoves.equals(other.asciiMoves)) {
-            return false;
-        }
-        if (this.nextState.epsilonMoves.isEmpty() || other.nextState.epsilonMoves.isEmpty()) {
-            return false;
-        }
-        return this.nextState.epsilonMoves.equals(other.nextState.epsilonMoves);
-    }
-
-    public List<NfaState> getMoveStates(int byteNum, BitSet statesAlreadyHandled) {
-        List<NfaState> result = new ArrayList<NfaState>();
-        for (NfaState state : nfaData.allStates) {
-            if (!statesAlreadyHandled.get(state.index) && isMoveState(state, byteNum)) {
-                statesAlreadyHandled.set(state.index);
-                result.add(state);
-            }
-        }
-        return result;
     }
 }
