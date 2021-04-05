@@ -236,16 +236,16 @@
 
 [#macro DumpMovesNonAscii lexicalState]
    [#var statesDumped = utils.newBitSet()]
-   [#list lexicalState.nfaData.allCompositeStates as key]
+   [#list lexicalState.nfaData.allCompositeStateStrings as key]
         [@DumpCompositeStatesMovesNonAscii lexicalState, key, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#--if state.nonAscii--]
+         [#if state.nonAscii]
             ${statesDumped.set(state.index)!}
             case ${state.index} :
               [@DumpMove state, statesDumped /]
-         [#--/#if--]
+         [/#if]
       [/#if]
    [/#list]
 [/#macro]
@@ -253,7 +253,7 @@
 
 [#macro DumpAsciiMoves lexicalState byteNum]
    [#var statesDumped = utils.newBitSet()]
-   [#list lexicalState.nfaData.allCompositeStates as key]
+   [#list lexicalState.nfaData.allCompositeStateStrings as key]
         [@DumpAsciiCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
@@ -281,8 +281,8 @@
           [#else]
              [#set toBePrinted = state]
           [/#if]
-       [#--else
-          ${statesDumped.set(state.index)!}--]
+       [#else]
+          ${statesDumped.set(state.index)!}
        [/#if]
    [/#list]
    [#if neededStates = 0]

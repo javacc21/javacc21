@@ -45,7 +45,7 @@ public class NfaData {
     final private Grammar grammar;
     final private LexerData lexerData;
     private int dummyStateIndex = -1;
-    private Set<String> allCompositeStates = new HashSet<>();
+    private Set<String> allCompositeStateStrings = new HashSet<>();
     private List<Map<String, BitSet>> stateSetForPos;
     private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
     Set<NfaState> allStates = new HashSet<>();
@@ -58,8 +58,8 @@ public class NfaData {
         this.lexerData = grammar.getLexerData();
     }
 
-    public Set<String> getAllCompositeStates() {
-        return allCompositeStates;
+    public Set<String> getAllCompositeStateStrings() {
+        return allCompositeStateStrings;
     }
 
     public NfaState[] getStateSetFromCompositeKey(String key) {
@@ -131,7 +131,7 @@ public class NfaData {
             ++dummyStateIndex;
         }
         stateIndexFromComposite.put(stateSetString, dummyStateIndex);
-        allCompositeStates.add(stateSetString);
+        allCompositeStateStrings.add(stateSetString);
         return dummyStateIndex;
     }
 

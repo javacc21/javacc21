@@ -80,7 +80,7 @@ public class NfaState {
         return ll;
     }
 
-    public BitSet getAsciiMoveSet() {
+    private BitSet getAsciiMoveSet() {
         BitSet result = new BitSet();
         for (int i=0; i<moveRanges.size(); i+=2) {
             int left = moveRanges.get(i);
