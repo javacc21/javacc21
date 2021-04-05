@@ -13,4 +13,4 @@ UNPARSED #Comment :
     <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
 ;
 
-INCLUDE("JSON.javacc")
+INCLUDE "/include/json/JSON.javacc"

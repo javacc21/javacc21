@@ -6,7 +6,7 @@ DEFAULT_LEXICAL_STATE=CSHARP;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 
-INCLUDE ("CSharpLexer.javacc")
+INCLUDE "CSharpLexer.javacc"
 
 #CompilationUnit# :
    (ExternAliasDirective)*
