@@ -40,7 +40,9 @@ INJECT FELParser : {
    }
 }
 
-INCLUDE ("../java/JavaIdentifierDef.javacc")
+//INCLUDE "../java/JavaIdentifierDef.javacc"
+//INCLUDE "/include/java/JavaIdentifierDef.javacc"
+INCLUDE JAVA_IDENTIFIER_DEF
 
 SKIP :
     <EXP_WHITE_SPACE : (" "|"\t"|"\n"|"\r")+>

@@ -441,12 +441,8 @@ INJECT InvocationArguments :
     }
 }
 
-#if false
-INCLUDE("Java.javacc")
-#else
-INCLUDE "../../../examples/java/Java.javacc"
-#endif
-
+//INCLUDE "/include/java/Java.javacc"
+INCLUDE JAVA
 
 INJECT TypeDeclaration : 
     import java.util.*;
@@ -914,31 +910,39 @@ INJECT ReturnType :
 }
 
 INJECT PARSER_CLASS : {
-    private boolean enterIncludes = true;
+    private boolean enterIncludes = true, isAlias = false;
     public void setEnterIncludes(boolean enterIncludes) {this.enterIncludes = enterIncludes;}
 }
 
 GrammarInclusion throws IOException :
 {
-   String filename;
-   List<String> fallbacks = new ArrayList<String>();
+   List<String> locations = new ArrayList<>();
+   Token includeToken;
 }
-   <_INCLUDE>
+   <_INCLUDE> {includeToken = lastConsumedToken;}
    (
-       <STRING_LITERAL> {filename = ((StringLiteral)lastConsumedToken).getString();}
+       (
+           <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());}
+           |
+           <IDENTIFIER> {locations.add(lastConsumedToken.getImage());}
+       )
        (
          "!" 
-         <STRING_LITERAL>
+         (<STRING_LITERAL>|<IDENTIFIER>)
          {
-           fallbacks.add(((StringLiteral) lastConsumedToken).getString());
+           if (lastConsumedToken instanceof StringLiteral) {
+              locations.add(((StringLiteral) lastConsumedToken).getString());
+           } else {
+               locations.add(lastConsumedToken.getImage());
+           }
          }
        )*
        |
-       "(" <STRING_LITERAL> {filename = ((StringLiteral)lastConsumedToken).getString();} ")" 
+       "(" <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());} ")" 
    )
    {
       if (enterIncludes) {
-          Node included = grammar.include(filename, fallbacks.toArray(new String[0]));
+          Node included = grammar.include(locations, includeToken);
           if (included!=null) {
               CURRENT_NODE.addChild(included);
           } else {
