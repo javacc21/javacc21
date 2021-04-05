@@ -248,7 +248,7 @@ TOKEN #KeyWord :
 
 // Just using the Java definition of an identifier for now.
 // I'm sure it's not quite correct!
-INCLUDE ("../java/JavaIdentifierDef.javacc")
+INCLUDE JAVA_IDENTIFIER_DEF
 
 TOKEN :
   < IDENTIFIER: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* > #Identifier
