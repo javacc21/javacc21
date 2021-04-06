@@ -56,6 +56,8 @@ public class FileLineMap {
 
     /**
      * Get a FileLineMap by name
+     * @param name the lookup name
+     * @return the FileLineMap object that is retrieved (possibly null)
      */
     static public FileLineMap getFileLineMapByName(String name) {
         return mapsByName.get(name);
@@ -76,6 +78,8 @@ public class FileLineMap {
      * memory retention problem, so if you know for sure that 
      * the referenced FileLineMap is not needed, you can use 
      * this method to allow it to be garbage collected.
+     * @param inputSource the lookup name 
+     * @return the FileLineMap object that was uncached (or null)
      */
     static public FileLineMap clearFileLineMapCacheEntry(String inputSource) {
         return mapsByName.remove(inputSource);
@@ -106,7 +110,10 @@ public class FileLineMap {
     /**
      * This is used in conjunction with having a preprocessor.
      * We set which lines are actually parsed lines and the 
-     * unset ones are ignored.
+     * unset ones are ignored. Note that this BitSet (unlike most of the rest of the API)
+     * uses zero-based (not 1-based) logic
+     * @param parsedLines a #java.util.BitSet that holds which lines
+     * are parsed (i.e. not ignored)
      */
     public void setParsedLines(BitSet parsedLines) {
         this.parsedLines = parsedLines;
@@ -123,15 +130,38 @@ public class FileLineMap {
        [#set JAVA_UNICODE_ESCAPE = "true"]
     [/#if]
 
-
+    /**
+     * This constructor may not be used much soon. Pretty soon all the generated API
+     * will tend to use #java.nio.file.Path rather than java.io classes like Reader
+     * @param inputSource the lookup name of this FileLineMap
+     * @param reader The input to read from
+     * @param startingLine location info used in error reporting, this is 1 typically, assuming
+     * we started reading at the start of the file.
+     * @param startingColumn location info used in error reporting, this is 1 typically, assuming
+     * we started reading at the start of the file.
+     */
     public FileLineMap(String inputSource, Reader reader, int startingLine, int startingColumn) {
         this(inputSource, readToEnd(reader), startingLine, startingColumn);
     }
 
+    /**
+     * Constructor that takes a String or string-like object as the input
+     * @param inputSource the lookup name of this FileLineMap
+     * @param content The input to read from
+     */
     public FileLineMap(String inputSource, CharSequence content) {
         this(inputSource, content, 1, 1);
     }
 
+    /**
+     * Constructor that takes a String or string-like object as the input
+     * @param inputSource the lookup name of this FileLineMap
+     * @param content The input to read from
+     * @param startingLine location info used in error reporting, this is 1 typically, assuming
+     * we started reading at the start of the file.
+     * @param startingColumn location info used in error reporting, this is 1 typically, assuming
+     * we started reading at the start of the file.
+     */
     public FileLineMap(String inputSource, CharSequence content, int startingLine, int startingColumn) {
         setInputSource(inputSource);
         this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
@@ -144,8 +174,12 @@ public class FileLineMap {
 
     // Now some methods to fulfill the functionality that used to be in that
     // SimpleCharStream class
-    // This backup() method is dead simple by design and does not handle any of the messiness
-    // with column numbers relating to tabs or unicode escapes. 
+    /**
+     * Backup a certain number of characters
+     * This method is dead simple by design and does not handle any of the messiness
+     * with column numbers relating to tabs or unicode escapes. 
+     * @param amount the number of characters to backup.
+     */
     public void backup(int amount) {
         for (int i=0; i<amount; i++) {
             if (column == 1) {
@@ -153,6 +187,12 @@ public class FileLineMap {
             } else {
                 --column;
                 --bufferPosition;
+                if (bufferPosition > 0 && column > 1 && Character.isLowSurrogate(content.charAt(bufferPosition))) {
+                    if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
+                        --column;
+                        --bufferPosition;
+                    }
+                }
             }
         }
     }
@@ -162,6 +202,12 @@ public class FileLineMap {
             if (column < getLineLength(line)) {
                 ++bufferPosition;
                 ++column;
+                if (Character.isLowSurrogate(content.charAt(bufferPosition))) {
+                    if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
+                        ++bufferPosition;
+                        ++column;
+                    }
+                }
             } else {
                 advanceLine();
             }
@@ -551,6 +597,9 @@ public class FileLineMap {
      * Rather bloody-minded way of converting a byte array into a string
      * taking into account the initial byte order mark (used by Microsoft a lot seemingly)
      * See: https://docs.microsoft.com/es-es/globalization/encoding/byte-order-markc
+     * @param bytes the raw byte array 
+     * @return A String taking into account the encoding in the byte order mark (if it was present). If no
+     * byte-order mark was present, it assumes the raw input is in UTF-8.
      */
     static public String stringFromBytes(byte[] bytes) {
         int arrayLength = bytes.length;

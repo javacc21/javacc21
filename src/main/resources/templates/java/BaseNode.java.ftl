@@ -40,7 +40,10 @@ import freemarker.template.*;
 [/#if]
 
 import java.util.*;
-  
+
+/**
+ * The base concrete class for non-terminal Nodes
+ */
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
     private String inputSource;
@@ -55,6 +58,14 @@ public class ${grammar.baseNodeClassName} implements Node {
     
     static private Class listClass = ArrayList.class;
 
+    /**
+     * Sets the List class that is used to store child nodes. By default,
+     * this is java.util.ArrayList. There is probably very little reason
+     * to ever use anything else, though you could use this method 
+     * to replace this with LinkedList or your own java.util.List implementation even.
+     * @param listClass the #java.util.List implementation to use internally 
+     * for the child nodes. By default #java.util.ArrayList is used.
+     */
 	static public void setListClass(Class<? extends List> listClass) {
         ${grammar.baseNodeClassName}.listClass = listClass;
     }
@@ -67,8 +78,14 @@ public class ${grammar.baseNodeClassName} implements Node {
            throw new RuntimeException(e);
         }
     }
-    
+    /**
+     * the parent node
+     */    
     protected Node parent;
+
+    /**
+     * the child nodes
+     */
     protected List<Node> children = newList();
     
     private int beginLine, beginColumn, endLine, endColumn;

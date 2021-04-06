@@ -36,7 +36,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
     /**
-     * Does this Token represent actual input or was it inserted somehow?
+     * @return whether this Token represent actual input or was it inserted somehow?
      */
     public boolean isVirtual() {
         [#if grammar.faultTolerant]
@@ -47,7 +47,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
     /**
-     * Did we skip this token in parsing?
+     * @return Did we skip this token in parsing?
      */
     public boolean isSkipped() {
         [#if grammar.faultTolerant]
@@ -126,7 +126,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     String image;
     
     /**
-     * The string image of the token.
+     * @return the string image of the token.
      */
     public String getImage() {
         return image;
@@ -163,11 +163,16 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     /**
      * This is the same as #getNextParsedToken
+     * @return the next parsed token
      */
     public final Token getNext() {
         return getNextParsedToken();
     }
-    
+
+    /**
+     * This is typically only used internally
+     * @param next the token parsed after this one
+     */
     final void setNext(Token next) {
         setNextParsedToken(next);
     }
@@ -185,7 +190,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 
     /**
-     * The next token of any sort (parsed or unparsed or invalid)
+     * @return the next token of any sort (parsed or unparsed or invalid)
      */
      public Token getNextToken() {
          return nextToken;
@@ -253,7 +258,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     //Should find a way to get rid of this.
     Token() {} 
     
-    
     public Token(int kind) {
        this(kind, null);
        this.type = TokenType.values()[kind];
@@ -266,13 +270,18 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.type = TokenType.values()[kind];
         this.image = image;;
     }
-    
+
+    /**
+     * @param type the #TokenType of the token being constructed
+     * @param image the String content of the token
+     * @param inputSource the lookup name of the object that vended this token.
+     */
     public Token(TokenType type, String image, String inputSource) {
         this.type = type;
         this.image = image;
         this.inputSource = inputSource;
     }
-    
+
     public boolean isUnparsed() {
         return unparsed;
     }
@@ -284,6 +293,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#if !grammar.userDefinedLexer]
     /** 
      * Utility method to merge two tokens into a single token of a given type.
+     * @param t1 the first token to merge
+     * @param t2 the second token to merge
+     * @param type the merged token's type
+     * @return the result of merging the two tokens
      */
     static Token merge(Token t1, Token t2, TokenType type) {
         Token merged = newToken(type, t1.getImage() + t2.getImage(), t1.getInputSource());
@@ -297,7 +310,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     /**
      * Utility method to split a token in 2. For now, it assumes that the token 
-     * is all on a single line. (Will maybe fix that later). Returns the first token.
+     * is all on a single line. (Will maybe fix that later). 
+     * @param length the point at which to split the token
+     * @param type1 the desired type of the first token
+     * @param type2 the desired type of the second token
+     * @return the first token that resulted from the split
      */ 
     static Token split(Token tok, int length, TokenType type1, TokenType type2) {
         String img1 = tok.getImage().substring(0, length);

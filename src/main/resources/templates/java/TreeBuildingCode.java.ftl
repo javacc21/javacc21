@@ -62,7 +62,7 @@
     
 
 	/** 
-	 * Returns the root node of the AST.  It only makes sense to call
+	 * @return the root node of the AST. It only makes sense to call
 	 * this after a successful parse. 
 	 */ 
     public Node rootNode() {
@@ -71,13 +71,14 @@
     
     /**
      * push a node onto the top of the node stack
+     * @param n the node to push
      */
     public void pushNode(Node n) {
         currentNodeScope.add(n);
     }
 
     /** 
-     * Returns the node on the top of the stack, and remove it from the
+     * @return the node on the top of the stack, and remove it from the
      * stack.  
      */ 
     public Node popNode() {
@@ -85,7 +86,7 @@
     }
 
     /** 
-     * Returns the node currently on the top of the stack. 
+     * @return the node currently on the top of the tree-building stack. 
      */ 
     public Node peekNode() {
         return currentNodeScope.peek();
@@ -95,13 +96,15 @@
      * Puts the node on the top of the stack. However, unlike pushNode()
      * it replaces the node that is currently on the top of the stack.
      * This is effectively equivalent to popNode() followed by pushNode(n)
+     * @param n the node to poke
      */
     public void pokeNode(Node n) {
       	currentNodeScope.poke(n);
     }
 
 
-	/** Returns the number of children on the stack in the current node
+	/** 
+     * @return the number of Nodes on the tree-building stack in the current node
 	 * scope. 
 	 */
     public int nodeArity() {

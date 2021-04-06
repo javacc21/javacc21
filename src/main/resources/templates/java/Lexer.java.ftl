@@ -140,7 +140,11 @@ public final void backup(int amount) {
   public ${grammar.parserClassName} parser;
 [/#if]
 
-    /** Switch to specified lexical state. */
+    /** 
+     * Switch to specified lexical state. 
+     * @param lexState the lexical state to switch to
+     * @return whether we switched (i.e. we weren't already in the desired lexical state)
+     */
     public boolean switchTo(LexicalState lexState) {
         if (this.lexicalState != lexState) {
            if (trace_enabled) LOGGER.info("Switching from lexical state " + this.lexicalState + " to " + lexState);
