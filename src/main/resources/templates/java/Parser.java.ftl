@@ -196,11 +196,19 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
+  /**
+   * @return the next Token off the stream. This is the same as #getToken(1)
+   */
   final public Token getNextToken() {
     return getToken(1);
   }
 
-/** Get the specific Token index ahead in the stream. */
+/**
+ * @param index how many tokens to look ahead
+ * @return the specific Token index ahead in the stream. 
+ * If we are in a lookahead, it looks ahead from the currentLookaheadToken
+ * Otherwise, it is the lastConsumedToken
+ */
   final public Token getToken(int index) {
     Token t = currentLookaheadToken == null ? lastConsumedToken : currentLookaheadToken;
     for (int i = 0; i < index; i++) {
