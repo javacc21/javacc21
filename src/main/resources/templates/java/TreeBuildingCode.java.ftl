@@ -112,11 +112,11 @@
     }
 
 
-    public void clearNodeScope() {
+    private void clearNodeScope() {
         currentNodeScope.clear();
     }
     
-    public void openNodeScope(Node n) {
+    private void openNodeScope(Node n) {
         new NodeScope();
         if (n!=null) {
             Token next = nextToken(lastConsumedToken);
@@ -137,7 +137,7 @@
 	 * made the children of the definite node.  Then the definite node
 	 * is pushed on to the stack.
 	 */
-    public void closeNodeScope(Node n, int num) {
+    private void closeNodeScope(Node n, int num) {
         n.setEndLine(lastConsumedToken.getEndLine());
         n.setEndColumn(lastConsumedToken.getEndColumn());
         if (trace_enabled) LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + num + " nodes off the stack.");
@@ -165,7 +165,7 @@
 	 * on to the stack.  If the condition is false the node is not
 	 * constructed and they are left on the stack. 
 	 */
-    public void closeNodeScope(Node n, boolean condition) {
+    private void closeNodeScope(Node n, boolean condition) {
         if (n!= null && condition) {
             n.setEndColumn(lastConsumedToken.getEndColumn());
             n.setEndLine(lastConsumedToken.getEndLine());

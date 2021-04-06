@@ -91,9 +91,6 @@ public class FilesGenerator {
             generateParseException();
             generateParser();
         }
-        if (grammar.getTreeBuildingEnabled()) {
-            generateTreeBuildingFiles();
-        }
     	if (!grammar.getHugeFileSupport()) {
     		generateFileLineMap();
     	}
@@ -101,7 +98,9 @@ public class FilesGenerator {
     	    generateInvalidNode();
             generateParsingProblem();
     	}
-        
+        if (grammar.getTreeBuildingEnabled()) {
+            generateTreeBuildingFiles();
+        }
     }
 
     public void generate(Path outputFile) throws IOException, ParseException, TemplateException {
