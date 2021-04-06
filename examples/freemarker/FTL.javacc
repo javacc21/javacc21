@@ -229,7 +229,7 @@ INJECT FTLLexer :
     }
 }
 
-INCLUDE("FEL.javacc")
+INCLUDE "FEL.javacc"
 
 TOKEN :
     <FTL_DIRECTIVE_OPEN :  "<#" | "[#" > : FTL_DIRECTIVE

@@ -14,16 +14,16 @@
 #if jdk13 || jdk14
 // JDK13 and JDK14 have identical
 // definitions of a Java identifier
-INCLUDE ("Java13IdentifierDef.javacc")
+INCLUDE "Java13IdentifierDef.javacc"
 #elif jdk11 || jdk12 
 // Truth is that I didn't have a JDK12 around to test.
 // I don't know if it differs in this respect from JDK11.
-INCLUDE ("Java11IdentifierDef.javacc")
+INCLUDE "Java11IdentifierDef.javacc"
 #elif jdk8 || jdk9 || jdk10 
 // Also didn't have a jdk9 or jdk10 to test
-INCLUDE ("Java8IdentifierDef.javacc")
+INCLUDE "Java8IdentifierDef.javacc"
 #else
-INCLUDE ("Java16IdentifierDef.javacc")
+INCLUDE "Java16IdentifierDef.javacc"
 #endif
 
 #if false
