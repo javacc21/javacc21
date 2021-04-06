@@ -854,9 +854,8 @@ INJECT Token :
 }
 {
    [
-       SCAN 2
-      (OptionsBlock | Options)!
-   ]
+      OptionsBlock | Options
+   ]!
    [ParserCodeDecls]
    (
       SCAN 1 {!grammar.getUserDefinedLexer()} =>
@@ -940,6 +939,7 @@ GrammarInclusion throws IOException :
        |
        "(" <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());} ")" 
    )
+   [";"]
    {
       if (enterIncludes) {
           Node included = grammar.include(locations, includeToken);

@@ -206,6 +206,9 @@ public class Grammar extends BaseNode {
         if (Files.exists(path)) return path;
         if (!path.isAbsolute()) {
             path = filename.getParent();
+            if (path == null) {
+                path = Paths.get(".");
+            }
             path = path.resolve(location);
             if (Files.exists(path)) return path;
         }
@@ -972,6 +975,7 @@ public class Grammar extends BaseNode {
         Path baseSource = Paths.get(baseSrcDir);
         if (!baseSource.isAbsolute()) {
             Path grammarFileDir = filename.normalize().getParent();
+            if (grammarFileDir == null) grammarFileDir = Paths.get(".");
             baseSource = grammarFileDir.resolve(baseSrcDir).normalize();
         }
         if (!Files.isDirectory(baseSource)) {
