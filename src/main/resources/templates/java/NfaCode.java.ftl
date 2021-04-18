@@ -242,12 +242,10 @@
        [@DumpCompositeStatesMovesNonAscii lexicalState, stateSet, stateIndex, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
-      [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#if state.nonAscii]
-            ${statesDumped.set(state.index)!}
-            case ${state.index} :
-              [@DumpMove state, statesDumped /]
-         [/#if]
+      [#if state.index>=0&&!statesDumped.get(state.index) && state.nonAscii]
+         ${statesDumped.set(state.index)!}
+         case ${state.index} :
+           [@DumpMove state, statesDumped /]
       [/#if]
    [/#list]
 [/#macro]
@@ -261,12 +259,10 @@
         [@DumpAsciiCompositeStatesMoves lexicalState, stateSet, stateIndex, byteNum, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
-      [#if state.index>=0&&!statesDumped.get(state.index)]
-         [#if state.isNeeded(byteNum)]
-            ${statesDumped.set(state.index)!}
-            case ${state.index} :
-              [@DumpMove state, statesDumped/]
-         [/#if]
+      [#if state.index>=0&&!statesDumped.get(state.index) && state.isNeeded(byteNum)]
+         ${statesDumped.set(state.index)!}
+          case ${state.index} :
+            [@DumpMove state, statesDumped/]
       [/#if]
    [/#list]
 [/#macro]
@@ -369,16 +365,21 @@
                 data structure lexicalState.orderedStateSet, which is used to output
                 the jjnextStates vector. --]
            [#var indices=nfaState.lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
-           [#var notTwo=(indices[0]+1 != indices[1])]
-           [#if nextIntersects]
+           [#--var needTwo=(indices[0]+1 != indices[1]) --]
+           [#if nextIntersects && indices[0]+1 == indices[1]]
+               addStates(${indices[0]});
+           [#else]
+               addStates(${indices[0]}, ${indices[1]});
+           [/#if]
+           [#-- if nextIntersects]
                    addStates(${indices[0]}
-               [#if notTwo]
+               [#if needTwo]
                    , ${indices[1]}
                [/#if]
                   );
            [#else]
                    addStates(${indices[0]}, ${indices[1]});
-           [/#if]
+           [/#if --]
        [/#if]
    [/#if]
          }
@@ -415,15 +416,10 @@
                     addState(${stateNames[1]});
        [#else]
           [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
-          [#var notTwo=(indices[0]+1 != indices[1])]
-          [#if nextIntersects]
-                    addStates(${indices[0]}
-              [#if notTwo]
-                    , ${indices[1]}
-              [/#if]
-                    );
+          [#if nextIntersects && indices[0]+1 == indices[1]]
+             addStates(${indices[0]});
           [#else]
-                    addStates(${indices[0]}, ${indices[1]});
+             addStates(${indices[0]}, ${indices[1]});
           [/#if]
        [/#if]
    [/#if]
@@ -568,4 +564,3 @@
         return jjMoveNfa_${lexicalState.name}(state, pos+1);
    }
 [/#macro]
- 
