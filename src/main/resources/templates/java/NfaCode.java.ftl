@@ -442,7 +442,7 @@
   [/#list]
   [#if lexicalState.mixedCase] [#--  FIXME! Currently no test coverage of any sort for this. --]
     [#if hasNfa]
-       return jjMoveNfa_${lexicalState.name}(${lexicalState.nfaData.initStateName()}, pos+1);
+       return jjMoveNfa_${lexicalState.name}(${lexicalState.nfaData.initialStateIndex}, pos+1);
     [#else]
        return pos + 1;
     [/#if]

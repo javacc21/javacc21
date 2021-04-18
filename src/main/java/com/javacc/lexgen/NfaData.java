@@ -111,13 +111,12 @@ public class NfaData {
         allStates.removeIf(state->state.getIndex()==-1);
     }
 
-    public int getStartStateIndex(String stateSetString, Set<NfaState> states) {
-        if (states == null) {
-            states = stateSetFromString(stateSetString);
-        }
-//        else if (stateSetString == null) {
-//            stateSetString = buildStateSetString(states);
-//        }
+    public int getStartStateIndex(String stateSetString) {
+        return getStartStateIndex(stateSetFromString(stateSetString));
+    }
+
+    public int getStartStateIndex(Set<NfaState> states) {
+        if (states.isEmpty()) return -1;
         if (stateIndexFromStateSet.containsKey(states)) {
             return stateIndexFromStateSet.get(states);
         }
@@ -138,13 +137,8 @@ public class NfaData {
         return dummyStateIndex;
     }
 
-    public int initStateName() {
-        Set<NfaState> epsilonMoves = initialState.epsilonMoves;
-        if (!epsilonMoves.isEmpty()) {
-            String stateSetString = buildStateSetString(epsilonMoves);
-            return getStartStateIndex(stateSetString, epsilonMoves);
-        }
-        return -1;
+    public int getInitialStateIndex() {
+        return getStartStateIndex(initialState.epsilonMoves);
     }
     
     static private String buildStateSetString(Collection<NfaState> states) {
@@ -267,7 +261,7 @@ public class NfaData {
                 key = key.substring(key.indexOf(",") + 1);
                 if (key.equals("null;")) continue;
                 if (activeSet.get(kind)) {
-                    return getStartStateIndex(key, null);
+                    return getStartStateIndex(key);
                 }
             }
         }
