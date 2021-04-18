@@ -58,15 +58,6 @@ public class NfaData {
         this.lexerData = grammar.getLexerData();
     }
 
-    public Set<String> getAllCompositeStateStrings() {
-        Set<String> result = new HashSet<>();
-        for (Set<NfaState> stateSet : allCompositeStateSets) {
-            String stateSetString = buildStateSetString(stateSet);
-            result.add(stateSetString);
-        }
-        return result;
-    }
-
     public Set<Set<NfaState>> getAllCompositeStateSets() {
         return allCompositeStateSets;
     }
@@ -124,13 +115,14 @@ public class NfaData {
         if (states == null) {
             states = stateSetFromString(stateSetString);
         }
-        else if (stateSetString == null) {
-            stateSetString = buildStateSetString(states);
-        }
+//        else if (stateSetString == null) {
+//            stateSetString = buildStateSetString(states);
+//        }
         if (stateIndexFromStateSet.containsKey(states)) {
             return stateIndexFromStateSet.get(states);
         }
-        List<Integer> nameSet = epsilonMovesStringToIntArray(stateSetString);
+        List<Integer> nameSet = new ArrayList<>();
+        for (NfaState state : states) nameSet.add(state.getIndex());
         assert !nameSet.isEmpty();
         if (nameSet.size() == 1) {
             stateIndexFromStateSet.put(states, nameSet.get(0));

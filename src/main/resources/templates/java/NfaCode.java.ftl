@@ -237,14 +237,9 @@
 [#macro DumpMovesNonAscii lexicalState]
    [#var statesDumped = utils.newBitSet()]
    [#list lexicalState.nfaData.allCompositeStateSets as stateSet]
-       [#var stateIndex=lexicalState.nfaData.getStartStateIndex(null, stateSet)]
+       [#var stateIndex=lexicalState.nfaData.getStartStateIndex(stateSet)]
        [@DumpCompositeStatesMovesNonAscii lexicalState, stateSet, stateIndex, statesDumped/]
    [/#list]
-   [#--list lexicalState.nfaData.allCompositeStateStrings as key]
-       [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
-       [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key, null)]
-       [@DumpCompositeStatesMovesNonAscii lexicalState, stateSet, stateIndex, statesDumped/]
-   [/#list--]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index) && state.nonAscii]
          ${statesDumped.set(state.index)!}
@@ -258,14 +253,9 @@
 [#macro DumpAsciiMoves lexicalState byteNum]
    [#var statesDumped = utils.newBitSet()]
    [#list lexicalState.nfaData.allCompositeStateSets as stateSet]
-       [#var stateIndex=lexicalState.nfaData.getStartStateIndex(null, stateSet)]
+       [#var stateIndex=lexicalState.nfaData.getStartStateIndex(stateSet)]
        [@DumpAsciiCompositeStatesMoves lexicalState, stateSet, stateIndex, byteNum, statesDumped/]
    [/#list]
-   [#--list lexicalState.nfaData.allCompositeStateStrings as key]
-        [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
-        [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key, null)]
-        [@DumpAsciiCompositeStatesMoves lexicalState, stateSet, stateIndex, byteNum, statesDumped/]
-   [/#list--]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index) && state.isNeeded(byteNum)]
          ${statesDumped.set(state.index)!}
@@ -531,7 +521,7 @@
               [#if stateSetString = "null;"]
                         return -1;
               [#else]
-                   return ${lexicalState.nfaData.getStartStateIndex(stateSetString, null)};
+                   return ${lexicalState.nfaData.getStartStateIndex(stateSetString)};
               [/#if]
               [#if kindStr != "2147483647"]
               }
