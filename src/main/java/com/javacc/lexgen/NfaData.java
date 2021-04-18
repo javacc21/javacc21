@@ -62,15 +62,6 @@ public class NfaData {
         return allCompositeStateSets;
     }
 
-    public List<NfaState> getStateSetFromCompositeKey(String key) {
-        List<Integer> indices = epsilonMovesStringToIntArray(key);
-        List<NfaState> result = new ArrayList<NfaState>();
-        for (int i = 0; i < indices.size(); i++) {
-            result.add(getNfaState(indices.get(i)));
-        }
-        return result;
-    }
-
     static private List<Integer> epsilonMovesStringToIntArray(String s) {
         List<Integer> result = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(s, "{},;null", false);
@@ -78,10 +69,6 @@ public class NfaData {
             result.add(Integer.valueOf(st.nextToken()));
         }
         return result;
-    }
-
-    private NfaState getNfaState(int index) {
-        return indexedAllStates.get(index);
     }
 
     public Collection<NfaState> getAllStates() {
