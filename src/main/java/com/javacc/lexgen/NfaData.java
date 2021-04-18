@@ -45,9 +45,10 @@ public class NfaData {
     final private Grammar grammar;
     final private LexerData lexerData;
     private int dummyStateIndex = -1;
-    private Set<String> allCompositeStateStrings = new HashSet<>();
+//    private Set<String> allCompositeStateStrings = new HashSet<>();
+    private Set<Set<NfaState>> allCompositeStates = new HashSet<>();
     private List<Map<String, BitSet>> stateSetForPos;
-    private Map<String, Integer> stateIndexFromComposite = new HashMap<>();
+    private Map<Set<NfaState>, Integer> stateIndexFromStateSet = new HashMap<>();
     Set<NfaState> allStates = new HashSet<>();
     Map<Integer, NfaState> indexedAllStates = new HashMap<>();
     NfaState initialState;
@@ -59,7 +60,13 @@ public class NfaData {
     }
 
     public Set<String> getAllCompositeStateStrings() {
-        return allCompositeStateStrings;
+        Set<String> result = new HashSet<>();
+        for (Set<NfaState> stateSet : allCompositeStates) {
+            String stateSetString = buildStateSetString(stateSet);
+            result.add(stateSetString);
+        }
+        return result;
+//        return allCompositeStateStrings;
     }
 
     public NfaState[] getStateSetFromCompositeKey(String key) {
@@ -115,14 +122,20 @@ public class NfaData {
         allStates.removeIf(state->state.getIndex()==-1);
     }
 
-    public int getStartStateIndex(String stateSetString) {
-        if (stateIndexFromComposite.containsKey(stateSetString)) {
-            return stateIndexFromComposite.get(stateSetString);
+    public int getStartStateIndex(String stateSetString, Set<NfaState> states) {
+        if (states == null) {
+            states = stateSetFromString(stateSetString);
+        }
+        else if (stateSetString == null) {
+            stateSetString = buildStateSetString(states);
+        }
+        if (stateIndexFromStateSet.containsKey(states)) {
+            return stateIndexFromStateSet.get(states);
         }
         int[] nameSet = epsilonMovesStringToIntArray(stateSetString);
         assert nameSet.length > 0;
         if (nameSet.length == 1) {
-            stateIndexFromComposite.put(stateSetString, nameSet[0]);
+            stateIndexFromStateSet.put(states, nameSet[0]);
             return nameSet[0];
         }
         if (dummyStateIndex == -1) {
@@ -130,8 +143,9 @@ public class NfaData {
         } else {
             ++dummyStateIndex;
         }
-        stateIndexFromComposite.put(stateSetString, dummyStateIndex);
-        allCompositeStateStrings.add(stateSetString);
+        stateIndexFromStateSet.put(states, dummyStateIndex);
+//        allCompositeStateStrings.add(stateSetString);
+        allCompositeStates.add(states);
         return dummyStateIndex;
     }
 
@@ -139,12 +153,12 @@ public class NfaData {
         Set<NfaState> epsilonMoves = initialState.epsilonMoves;
         if (!epsilonMoves.isEmpty()) {
             String stateSetString = buildStateSetString(epsilonMoves);
-            return getStartStateIndex(stateSetString);
+            return getStartStateIndex(stateSetString, epsilonMoves);
         }
         return -1;
     }
     
-    static String buildStateSetString(Collection<NfaState> states) {
+    static private String buildStateSetString(Collection<NfaState> states) {
         if (states.isEmpty())
             return "null;";
         String retVal = "{";
@@ -153,6 +167,17 @@ public class NfaData {
         }
         retVal += "};";
         return retVal;
+    }
+
+    private Set<NfaState> stateSetFromString(String stateSetString) {
+        Set<NfaState> result = new HashSet<>();
+        int[] indexes = epsilonMovesStringToIntArray(stateSetString);
+        for (int index : indexes) {
+            NfaState state = indexedAllStates.get(index);
+            assert state != null;
+            result.add(state);
+        }
+        return result;
     }
 
     public int[] getStateSetIndicesForUse(NfaState state) {
@@ -253,7 +278,7 @@ public class NfaData {
                 key = key.substring(key.indexOf(",") + 1);
                 if (key.equals("null;")) continue;
                 if (activeSet.get(kind)) {
-                    return getStartStateIndex(key);
+                    return getStartStateIndex(key, null);
                 }
             }
         }

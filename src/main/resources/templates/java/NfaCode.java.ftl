@@ -269,7 +269,7 @@
 
 [#macro DumpCompositeStatesMovesNonAscii lexicalState key statesDumped]
    [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
-   [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key)]
+   [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key, null)]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
    [#var toBePrinted]
@@ -307,7 +307,7 @@
 
 [#macro DumpAsciiCompositeStatesMoves lexicalState key byteNum statesDumped]
    [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
-   [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key)]
+   [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key, null)]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
    [#var toBePrinted]
@@ -456,11 +456,12 @@
     [/#if]
     }
   [#else]
-       return jjMoveNfa_${lexicalState.name}(jjStopStringLiteralDfa_${lexicalState.name}(pos, 
+       int startStateIndex = jjStopStringLiteralDfa_${lexicalState.name}(pos, 
      [#list 0..(maxKindsReqd-1) as i]
-        active${i}[#if i_has_next], [#else])[/#if]
+        active${i}[#if i_has_next], [#else]);[/#if]
      [/#list]
-        , pos+1);}
+       return jjMoveNfa_${lexicalState.name}(startStateIndex, pos+1);
+      }
    [/#if]
 
   
@@ -528,7 +529,7 @@
               [#if stateSetString = "null;"]
                         return -1;
               [#else]
-                   return ${lexicalState.nfaData.getStartStateIndex(stateSetString)};
+                   return ${lexicalState.nfaData.getStartStateIndex(stateSetString, null)};
               [/#if]
               [#if kindStr != "2147483647"]
               }
