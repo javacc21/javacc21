@@ -288,7 +288,11 @@ public class NfaData {
                && lexicalState.getMaxStringIndex() > 0;
     }
 
-    public List<List<NfaState>> partitionStatesSetForAscii(List<NfaState> states, int byteNum) {
+    public List<List<NfaState>> partitionStatesSetForAscii(Set<NfaState> states, int byteNum) {
+        return partitionStatesSetForAscii(new ArrayList<>(states), byteNum);
+    }
+
+    private List<List<NfaState>> partitionStatesSetForAscii(List<NfaState> states, int byteNum) {
         int[] cardinalities = new int[states.size()];
         List<NfaState> original = new ArrayList<>(states);
         List<List<NfaState>> partition = new ArrayList<>();
