@@ -237,7 +237,9 @@
 [#macro DumpMovesNonAscii lexicalState]
    [#var statesDumped = utils.newBitSet()]
    [#list lexicalState.nfaData.allCompositeStateStrings as key]
-        [@DumpCompositeStatesMovesNonAscii lexicalState, key, statesDumped/]
+       [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
+       [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key, null)]
+       [@DumpCompositeStatesMovesNonAscii lexicalState, stateSet, stateIndex, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
@@ -254,7 +256,9 @@
 [#macro DumpAsciiMoves lexicalState byteNum]
    [#var statesDumped = utils.newBitSet()]
    [#list lexicalState.nfaData.allCompositeStateStrings as key]
-        [@DumpAsciiCompositeStatesMoves lexicalState, key, byteNum, statesDumped/]
+        [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
+        [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key, null)]
+        [@DumpAsciiCompositeStatesMoves lexicalState, stateSet, stateIndex, byteNum, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index)]
@@ -267,9 +271,7 @@
    [/#list]
 [/#macro]
 
-[#macro DumpCompositeStatesMovesNonAscii lexicalState key statesDumped]
-   [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
-   [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key, null)]
+[#macro DumpCompositeStatesMovesNonAscii lexicalState stateSet stateIndex statesDumped]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
    [#var toBePrinted]
@@ -305,9 +307,7 @@
 [/#macro]
 
 
-[#macro DumpAsciiCompositeStatesMoves lexicalState key byteNum statesDumped]
-   [#var stateSet=lexicalState.nfaData.getStateSetFromCompositeKey(key)]
-   [#var stateIndex=lexicalState.nfaData.getStartStateIndex(key, null)]
+[#macro DumpAsciiCompositeStatesMoves lexicalState stateSet stateIndex byteNum statesDumped]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
    [#var toBePrinted]
@@ -319,7 +319,7 @@
           [#else]
              [#set toBePrinted = state]
           [/#if]
-       [#else]
+       [#elseif false]
           ${statesDumped.set(state.index)!}
        [/#if]
    [/#list]
@@ -335,10 +335,8 @@
               [@DumpMove toBePrinted, statesDumped/]
       [#return] 
    [/#if]
+         ${statesDumped.set(stateIndex)!}
               case ${stateIndex} :
-              [#if stateIndex<lexicalState.numNfaStates]
-                 ${statesDumped.set(stateIndex)!}
-              [/#if]
          [#var partition=lexicalState.nfaData.partitionStatesSetForAscii(stateSet, byteNum)]
          [#list partition as subSet]
             [#list subSet as state]

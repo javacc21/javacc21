@@ -79,27 +79,10 @@ public class NfaState {
         }
         return ll;
     }
-
-    private BitSet getAsciiMoveSet() {
-        BitSet result = new BitSet();
-        for (int i=0; i<moveRanges.size(); i+=2) {
-            int left = moveRanges.get(i);
-            if (left > 127) break;
-            int right = Math.min(moveRanges.get(i+1), 127);
-            result.set(left, right+1);
-        }
-        return result;
-    }
-
-    public List<Integer> getMoveRanges() {
-        return moveRanges;
-    }
+    
+    public List<Integer> getMoveRanges() { return moveRanges; }
 
     public RegularExpression getType() {return type;}
-
-    void setType(RegularExpression type) {
-        this.type = type;
-    }
 
     public LexicalStateData getLexicalState() {
         return lexicalState;
@@ -117,6 +100,41 @@ public class NfaState {
         assert byteNum == 0 || byteNum ==1;
         BitSet asciiMoves = getAsciiMoveSet();
         return byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
+    }
+
+    public boolean isNextIntersects() {
+        for (NfaState state : nfaData.allStates) {
+            if (this == state || !state.hasTransitions() || !state.isNonAscii())
+                continue;
+            if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int[] getStates() {
+        int[] result = new int[epsilonMoves.size()];
+        int index = 0;
+        for (NfaState state : epsilonMoves) {
+            result[index++] = state.index;
+        }
+        return result;
+    }
+
+    private BitSet getAsciiMoveSet() {
+        BitSet result = new BitSet();
+        for (int i=0; i<moveRanges.size(); i+=2) {
+            int left = moveRanges.get(i);
+            if (left > 127) break;
+            int right = Math.min(moveRanges.get(i+1), 127);
+            result.set(left, right+1);
+        }
+        return result;
+    }
+
+    void setType(RegularExpression type) {
+        this.type = type;
     }
 
     void addEpsilonMove(NfaState newState) {
@@ -181,29 +199,9 @@ public class NfaState {
         }
     }
 
-    public int[] getStates() {
-        int[] result = new int[epsilonMoves.size()];
-        int index = 0;
-        for (NfaState state : epsilonMoves) {
-            result[index++] = state.index;
-        }
-        return result;
-    }
-
     boolean canMoveUsingChar(int c) {
         // Check whether the character c is in some range.
         int idx = Collections.binarySearch(moveRanges, c);
         return idx >=0 || idx%2 ==0;
-    }
-
-    public boolean isNextIntersects() {
-        for (NfaState state : nfaData.allStates) {
-            if (this == state || !state.hasTransitions() || !state.isNonAscii())
-                continue;
-            if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
-                return true;
-            }
-        }
-        return false;
     }
 }
