@@ -30,6 +30,8 @@
 package com.javacc.lexgen;
 
 import java.util.*;
+import java.util.stream.IntStream;
+
 import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.tree.RegexpStringLiteral;
@@ -46,7 +48,7 @@ public class NfaData {
     final private LexerData lexerData;
     private int dummyStateIndex = -1;
     private Set<Set<NfaState>> allCompositeStateSets = new HashSet<>();
-    private List<Map<String, BitSet>> stateSetForPos;
+    private List<Map<String, BitSet>> stateSetForPos = new ArrayList<>();
     private Map<Set<NfaState>, Integer> stateIndexFromStateSet = new HashMap<>();
     Set<NfaState> allStates = new HashSet<>();
     Map<Integer, NfaState> indexedAllStates = new HashMap<>();
@@ -171,11 +173,9 @@ public class NfaData {
 
 //What a total Rube Goldberg contraption!
     void generateNfaStartStates() {
-        Set<NfaState> seenStates = new HashSet<>();
         String stateSetString = "";
         List<NfaState> newStates = new ArrayList<>();
-        stateSetForPos = new ArrayList<>();
-        for (int k = 0; k < lexicalState.getMaxStringLength(); k++) {
+        while(stateSetForPos.size() < lexicalState.getMaxStringLength()) {
             stateSetForPos.add(new HashMap<>());
         }
         for (RegularExpression re : lexerData.getRegularExpressions()) {
@@ -209,7 +209,6 @@ public class NfaData {
                 }
                 if (reKind == null && newStates.isEmpty())
                     continue;
-                seenStates.addAll(newStates);
                 List<NfaState> jjtmpStates = oldStates;
                 oldStates = newStates;
                 (newStates = jjtmpStates).clear();
@@ -262,18 +261,15 @@ public class NfaData {
     }
 
     public List<List<NfaState>> partitionStatesSetForAscii(Set<NfaState> states, int byteNum) {
-        return partitionStatesSetForAscii(new ArrayList<>(states), byteNum);
-    }
-
-    private List<List<NfaState>> partitionStatesSetForAscii(List<NfaState> states, int byteNum) {
-        int[] cardinalities = new int[states.size()];
-        List<NfaState> original = new ArrayList<>(states);
+        List<NfaState> stateList = new ArrayList<>(states);
+        int[] cardinalities = new int[stateList.size()];
+        List<NfaState> original = new ArrayList<>(stateList);
         List<List<NfaState>> partition = new ArrayList<>();
         int cnt = 0;
-        for (int i = 0; i < states.size(); i++) {
-            NfaState state = states.get(i);
-            if (state.getAsciiMoves()[byteNum] != 0L) {
-                int p = numberOfBitsSet(state.getAsciiMoves()[byteNum]);
+        for (int i = 0; i < stateList.size(); i++) {
+            NfaState state = stateList.get(i);
+            if (!state.getAsciiMoveSet(byteNum).isEmpty()) {
+                int p = state.getAsciiMoveSet(byteNum).cardinality();
                 int j;
                 for (j = 0; j < i; j++) {
                     if (cardinalities[j] <= p) break;
@@ -290,13 +286,13 @@ public class NfaData {
         while (original.size() > 0) {
             NfaState state = original.get(0);
             original.remove(state);
-            long bitVec = state.getAsciiMoves()[byteNum];
+            BitSet subBitSet = state.getAsciiMoveSet(byteNum);
             List<NfaState> subSet = new ArrayList<NfaState>();
             subSet.add(state);
             for (Iterator<NfaState> it = original.iterator(); it.hasNext();) {
                 NfaState otherState = it.next();
-                if ((otherState.getAsciiMoves()[byteNum] & bitVec) == 0L) {
-                    bitVec |= otherState.getAsciiMoves()[byteNum];
+                if (!otherState.getAsciiMoveSet(byteNum).intersects(subBitSet)) {
+                    subBitSet.or(otherState.getAsciiMoveSet(byteNum));
                     subSet.add(otherState);
                     it.remove();
                 }
@@ -304,13 +300,5 @@ public class NfaData {
             partition.add(subSet);
         }
         return partition;
-    }
-
-    static private int numberOfBitsSet(long l) {
-        int ret = 0;
-        for (int i = 0; i < 63; i++)
-            if (((l >> i) & 1L) != 0L)
-                ret++;
-        return ret;
     }
 }

@@ -337,7 +337,7 @@
               [@DumpAsciiMoveForCompositeState state, byteNum, state_index!=0/]
             [/#list]
          [/#list]
-             break;
+           break;
 [/#macro]
 
 [#macro DumpAsciiMoveForCompositeState nfaState byteNum elseNeeded]
