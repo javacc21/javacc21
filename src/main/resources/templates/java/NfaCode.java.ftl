@@ -238,58 +238,18 @@
    [#var statesDumped = utils.newBitSet()]
    [#list lexicalState.nfaData.allCompositeStateSets as stateSet]
        [#var stateIndex=lexicalState.nfaData.getStartStateIndex(stateSet)]
-       [#if byteNum <0]
-         [@DumpCompositeStatesMovesNonAscii lexicalState, stateSet, stateIndex, statesDumped/]
-       [#else]
-         [@DumpAsciiCompositeStatesMoves lexicalState, stateSet, stateIndex, byteNum, statesDumped/]
-       [/#if]
+       [@DumpCompositeStatesMoves lexicalState, stateSet, stateIndex, byteNum, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
       [#if state.index>=0&&!statesDumped.get(state.index) && state.isNeeded(byteNum)]
          ${statesDumped.set(state.index)!}
           case ${state.index} :
-            [@DumpMove state, statesDumped/]
+            [@DumpMove state /]
       [/#if]
    [/#list]
 [/#macro]
 
-[#macro DumpCompositeStatesMovesNonAscii lexicalState stateSet stateIndex statesDumped]
-   [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
-   [#var neededStates=0]
-   [#var toBePrinted]
-   [#list stateSet as state]
-       [#if state.nonAscii]
-          [#set neededStates = neededStates+1]
-          [#if neededStates = 2]
-             [#break]
-          [#else]
-             [#set toBePrinted = state]
-          [/#if]
-       [#else]
-          ${statesDumped.set(state.index)!}
-       [/#if]
-   [/#list]
-   [#if neededStates = 0]
-        [#return]
-   [/#if]
-   [#if neededStates = 1]
-          case ${stateIndex} :
-      [#if !statesDumped.get(toBePrinted.index)]
-          case ${toBePrinted.index} :
-      [/#if]
-              ${statesDumped.set(toBePrinted.index)!}
-              [@DumpMove toBePrinted, statesDumped/]
-      [#return] 
-   [/#if]
-              case ${stateIndex} :
-              [#if stateIndex<lexicalState.numNfaStates]
-                 ${statesDumped.set(keyState)!}
-              [/#if]
-          break;
-[/#macro]
-
-
-[#macro DumpAsciiCompositeStatesMoves lexicalState stateSet stateIndex byteNum statesDumped]
+[#macro DumpCompositeStatesMoves lexicalState stateSet stateIndex byteNum statesDumped]
    [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
    [#var toBePrinted]
@@ -312,11 +272,11 @@
           case ${toBePrinted.index} :
       [/#if]
               ${statesDumped.set(toBePrinted.index)!}
-              [@DumpMove toBePrinted, statesDumped/]
+              [@DumpMove toBePrinted /]
       [#return] 
    [/#if]
-         ${statesDumped.set(stateIndex)!}
               case ${stateIndex} :
+      [#if byteNum >=0]
          [#var partition=lexicalState.nfaData.partitionStatesSetForAscii(stateSet, byteNum)]
          [#list partition as subSet]
            //partition
@@ -325,6 +285,7 @@
               [@DumpAsciiMoveForCompositeState state, byteNum, state_index!=0/]
             [/#list]
          [/#list]
+      [/#if]
            break;
 [/#macro]
 
@@ -360,15 +321,14 @@
          }
 [/#macro]
 
-[#macro DumpMove nfaState statesDumped]
+[#macro DumpMove nfaState]
    [#var nextState = nfaState.nextState]
    [#var nextIntersects= nfaState.nextIntersects]
-   [#var onlyState= false]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
    [#if nextState?is_null || nextState.epsilonMoveCount==0]
          [#var kindCheck=" && kind > "+kindToPrint]
-         [#if onlyState][#set kindCheck = ""][/#if]
+         [#if kindToPrint == MAX_INT][#set kindCheck = ""][/#if]
             if (${nfaState.moveMethodName}(curChar) ${kindCheck})
                kind = ${kindToPrint};
             break;
@@ -376,7 +336,6 @@
    [/#if]
    [#if kindToPrint != MAX_INT]
                 if (!${nfaState.moveMethodName}(curChar))
-         
                           break;
                     kind = Math.min(kind, ${kindToPrint});
    [#else]
@@ -402,7 +361,6 @@
 
 [/#macro]
 
-
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
   [#var dfaData = lexicalState.dfaData] 
   [#var stateSetForPos = lexicalState.nfaData.stateSetForPos]
@@ -411,7 +369,6 @@
   [#var maxStringIndex=lexicalState.maxStringIndex]
   [#var maxStringLength=lexicalState.maxStringLength]
   [#var hasNfa = lexicalState.numNfaStates>0]
-
   
     private int jjStartNfa_${lexicalState.name}(int pos, 
   [#list 0..(maxKindsReqd-1) as i]
