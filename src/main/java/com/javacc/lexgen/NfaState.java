@@ -101,7 +101,7 @@ public class NfaState {
     }
 
     public boolean isNeeded(int byteNum) {
-        assert byteNum == 0 || byteNum ==1;
+        if (byteNum<0) return isNonAscii();
         BitSet asciiMoves = getAsciiMoveSet();
         return byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
     }

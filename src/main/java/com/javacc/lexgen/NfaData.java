@@ -30,7 +30,6 @@
 package com.javacc.lexgen;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
@@ -261,9 +260,9 @@ public class NfaData {
     }
 
     public List<List<NfaState>> partitionStatesSetForAscii(Set<NfaState> states, int byteNum) {
+        int[] cardinalities = new int[states.size()];
         List<NfaState> stateList = new ArrayList<>(states);
-        int[] cardinalities = new int[stateList.size()];
-        List<NfaState> original = new ArrayList<>(stateList);
+        List<NfaState> original = new ArrayList<>(states);
         List<List<NfaState>> partition = new ArrayList<>();
         int cnt = 0;
         for (int i = 0; i < stateList.size(); i++) {
