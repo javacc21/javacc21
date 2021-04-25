@@ -56,11 +56,6 @@
             addState(jjnextStates[start]);
         } while (start++ != end);
     }
-
-    private void addStates(int start) {
-      addState(jjnextStates[start]);
-      addState(jjnextStates[start+1]);
-    }
    
     private int jjStopAtPos(int pos, int kind) {
          jjmatchedKind = kind;
@@ -228,28 +223,22 @@
 [/#macro]
 
 [#macro DumpMoves lexicalState isAscii]
-   [#var statesDumped = utils.newBitSet()]
    [#list lexicalState.nfaData.allCompositeStateSets as stateSet]
        [#var stateIndex=lexicalState.nfaData.getStartStateIndex(stateSet)]
-       [@DumpCompositeStatesMoves lexicalState, stateSet, stateIndex, isAscii, statesDumped/]
+       case ${stateIndex} :
+          [#list stateSet as state]
+             [#if state.isNeeded(isAscii)]
+                [@DumpMoveForCompositeState state/]
+             [/#if]
+        [/#list]
+          break;
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
-      [#if state.index>=0&&!statesDumped.get(state.index) && state.isNeeded(isAscii)]
-         ${statesDumped.set(state.index)!}
+      [#if state.index>=0 && state.isNeeded(isAscii)]
           case ${state.index} :
             [@DumpMove state /]
       [/#if]
    [/#list]
-[/#macro]
-
-[#macro DumpCompositeStatesMoves lexicalState stateSet stateIndex isAscii statesDumped]
-    case ${stateIndex} :
-       [#list stateSet as state]
-         [#if state.isNeeded(isAscii)]
-            [@DumpMoveForCompositeState state/]
-         [/#if]
-       [/#list]
-       break;
 [/#macro]
 
 [#macro DumpMoveForCompositeState nfaState]
