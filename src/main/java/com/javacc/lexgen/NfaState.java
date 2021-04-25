@@ -106,17 +106,6 @@ public class NfaState {
         return byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
     }
 
-    public boolean isNextIntersects() {
-        for (NfaState state : nfaData.allStates) {
-            if (this == state || !state.hasTransitions() || !state.isNonAscii())
-                continue;
-            if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public int[] getStates() {
         int[] result = new int[epsilonMoves.size()];
         int index = 0;

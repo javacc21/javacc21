@@ -300,7 +300,6 @@
 
 [#macro DumpMove nfaState]
    [#var nextState = nfaState.nextState]
-   [#var nextIntersects= nfaState.nextIntersects]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
    [#if nextState?is_null || nextState.epsilonMoveCount==0]
@@ -319,22 +318,10 @@
                     if (${nfaState.moveMethodName}(curChar))
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#var stateNames = nextState.states]
-       [#if stateNames?size = 1]
-          addState(${stateNames[0]});
-       [#elseif stateNames?size = 2 && nextIntersects]
-                    addState(${stateNames[0]});
-                    addState(${stateNames[1]});
-       [#else]
-          [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
-          [#if nextIntersects && indices[0]+1 == indices[1]]
-             addStates(${indices[0]});
-          [#else]
-             addStates(${indices[0]}, ${indices[1]});
-          [/#if]
-       [/#if]
+       [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
+       addStates(${indices[0]}, ${indices[1]});
    [/#if]
-             break;
+       break;
 [/#macro]
 
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
