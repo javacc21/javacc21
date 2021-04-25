@@ -82,10 +82,6 @@ public class NfaState {
     public int getEpsilonMoveCount() {
         return epsilonMoves.size();
     }
-
-    public boolean isNeeded(boolean ascii) {
-        return ascii ? moveRanges.get(0) < 128 : moveRanges.get(moveRanges.size()-1) >=128;
-    }
     
     public int[] getStates() {
         int[] result = new int[epsilonMoves.size()];
@@ -138,11 +134,7 @@ public class NfaState {
             }
         }
         addEpsilonMove(this);
-        epsilonMoves.removeIf(state->!state.hasTransitions());
-    }
-
-    private boolean hasTransitions() {
-        return !moveRanges.isEmpty();
+        epsilonMoves.removeIf(state->state.moveRanges.isEmpty());
     }
 
     private boolean codeGenerated;
@@ -156,7 +148,7 @@ public class NfaState {
         if (nextState != null) {
             nextState.generateCode();
         }
-        if (index == -1 && hasTransitions()) {
+        if (index == -1 && !moveRanges.isEmpty()) {
             this.index = nfaData.indexedAllStates.size();
             nfaData.indexedAllStates.put(index, this);
         }

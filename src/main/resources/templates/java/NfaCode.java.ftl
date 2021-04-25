@@ -145,23 +145,12 @@
         int kind = 0x7fffffff;
         while (true) {
             checkedStates.clear();
-//            if (false) {
-            if (curChar <128) {
-	            do {
-	                switch (jjstateSet[--stateIndex]) {
- 	                    [@DumpMoves lexicalState, true/]
-                	     default : break;
-                	}
-                } while (stateIndex!= startsAt);
-            }
-            else {
-	            do {
-	                switch (jjstateSet[--stateIndex]) {
-	                    [@DumpMoves lexicalState, false/]
-                        default : break;
-                    }
-                } while(stateIndex != startsAt);
-            }
+	         do {
+	             switch (jjstateSet[--stateIndex]) {
+	                 [@DumpMoves lexicalState/]
+                     default : break;
+                }
+            } while(stateIndex != startsAt);
             if (kind != 0x7fffffff) {
                 jjmatchedKind = kind;
                 jjmatchedPos = curPos;
@@ -222,22 +211,18 @@
     }
 [/#macro]
 
-[#macro DumpMoves lexicalState isAscii]
+[#macro DumpMoves lexicalState]
    [#list lexicalState.nfaData.allCompositeStateSets as stateSet]
        [#var stateIndex=lexicalState.nfaData.getStartStateIndex(stateSet)]
        case ${stateIndex} :
-          [#list stateSet as state]
-             [#if state.isNeeded(isAscii)]
-                [@DumpMoveForCompositeState state/]
-             [/#if]
+        [#list stateSet as state]
+             [@DumpMoveForCompositeState state/]
         [/#list]
           break;
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
-      [#if state.index>=0 && state.isNeeded(isAscii)]
-          case ${state.index} :
-            [@DumpMove state /]
-      [/#if]
+       case ${state.index} :
+         [@DumpMove state /]
    [/#list]
 [/#macro]
 
