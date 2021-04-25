@@ -121,6 +121,7 @@ public class NfaData {
             ++dummyStateIndex;
         }
         stateIndexFromStateSet.put(states, dummyStateIndex);
+        assert states.size() >1;
         allCompositeStateSets.add(states);
         return dummyStateIndex;
     }
@@ -260,6 +261,7 @@ public class NfaData {
     }
 
     public List<List<NfaState>> partitionStatesSetForAscii(Set<NfaState> states, int byteNum) {
+        if (byteNum<0) return new ArrayList<>();
         int[] cardinalities = new int[states.size()];
         List<NfaState> stateList = new ArrayList<>(states);
         List<NfaState> original = new ArrayList<>(states);

@@ -256,27 +256,23 @@
    [#list stateSet as state]
        [#if state.isNeeded(byteNum)]
           [#set neededStates = neededStates+1]
-          [#if neededStates = 2]
+          [#set toBePrinted = state]
+          [#--if neededStates = 2]
              [#break]
           [#else]
              [#set toBePrinted = state]
-          [/#if]
+          [/#if--]
        [/#if]
    [/#list]
-   [#if neededStates = 0]
-        [#return]
-   [/#if]
    [#if neededStates = 1]
           case ${stateIndex} :
       [#if !statesDumped.get(toBePrinted.index)]
+          ${statesDumped.set(toBePrinted.index)!}
           case ${toBePrinted.index} :
       [/#if]
-              ${statesDumped.set(toBePrinted.index)!}
-              [@DumpMove toBePrinted /]
-      [#return] 
-   [/#if]
-              case ${stateIndex} :
-      [#if byteNum >=0]
+          [@DumpMove toBePrinted /]
+   [#elseif byteNum >=0  && neededStates!=0]
+         case ${stateIndex} :
          [#var partition=lexicalState.nfaData.partitionStatesSetForAscii(stateSet, byteNum)]
          [#list partition as subSet]
            //partition
@@ -285,16 +281,15 @@
               [@DumpAsciiMoveForCompositeState state, byteNum, state_index!=0/]
             [/#list]
          [/#list]
-      [/#if]
            break;
+   [/#if]
 [/#macro]
 
 [#macro DumpAsciiMoveForCompositeState nfaState byteNum elseNeeded]
+   [#var nextState = nfaState.nextState]
    [#var nextIntersects=nfaState.nextIntersects]
-   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT
-         asciiMoves=nfaState.asciiMoves 
-         nextState=nfaState.nextState
-         lexicalState=nfaState.lexicalState]
+   [#var lexicalState=nfaState.lexicalState]
+   [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
       if (${nfaState.moveMethodName}(curChar)) {
    [#if kindToPrint != MAX_INT]
       kind = Math.min(kind, ${kindToPrint});
@@ -325,7 +320,7 @@
    [#var nextState = nfaState.nextState]
    [#var nextIntersects= nfaState.nextIntersects]
    [#var lexicalState=nfaState.lexicalState]
-   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
+   [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
    [#if nextState?is_null || nextState.epsilonMoveCount==0]
          [#var kindCheck=" && kind > "+kindToPrint]
          [#if kindToPrint == MAX_INT][#set kindCheck = ""][/#if]
@@ -358,7 +353,6 @@
        [/#if]
    [/#if]
                          break;
-
 [/#macro]
 
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
