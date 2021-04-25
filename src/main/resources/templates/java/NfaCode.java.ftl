@@ -250,7 +250,6 @@
 [/#macro]
 
 [#macro DumpCompositeStatesMoves lexicalState stateSet stateIndex byteNum statesDumped]
-   [#if  statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
    [#var toBePrinted]
    [#list stateSet as state]
@@ -265,17 +264,17 @@
           ${statesDumped.set(toBePrinted.index)!}
           case ${toBePrinted.index} :
       [/#if]
-          [@DumpMove toBePrinted /]
+          [@DumpMoveForCompositeState toBePrinted/]
    [#elseif byteNum >=0  && neededStates!=0]
          case ${stateIndex} :
             [#list stateSet as state]
-              [@DumpAsciiMoveForCompositeState state/]
+              [@DumpMoveForCompositeState state/]
             [/#list]
            break;
    [/#if]
 [/#macro]
 
-[#macro DumpAsciiMoveForCompositeState nfaState]
+[#macro DumpMoveForCompositeState nfaState]
    [#var nextState = nfaState.nextState]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
