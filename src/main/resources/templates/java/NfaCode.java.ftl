@@ -150,18 +150,10 @@
         int kind = 0x7fffffff;
         while (true) {
             checkedStates.clear();
-            if (curChar < 64) {
+            if (curChar <128) {
 	            do {
 	                switch (jjstateSet[--stateIndex]) {
-	                    [@DumpMoves lexicalState, 0/]
-	                    default : break;
-	                }
-	            } while (stateIndex != startsAt);
-            }
-            else if (curChar <128) {
-	            do {
-	                switch (jjstateSet[--stateIndex]) {
- 	                    [@DumpMoves lexicalState, 1/]
+ 	                    [@DumpMoves lexicalState, true/]
                 	     default : break;
                 	}
                 } while (stateIndex!= startsAt);
@@ -169,7 +161,7 @@
             else {
 	            do {
 	                switch (jjstateSet[--stateIndex]) {
-	                    [@DumpMoves lexicalState, -1/]
+	                    [@DumpMoves lexicalState, false/]
                         default : break;
                     }
                 } while(stateIndex != startsAt);
@@ -234,14 +226,14 @@
     }
 [/#macro]
 
-[#macro DumpMoves lexicalState byteNum]
+[#macro DumpMoves lexicalState isAscii]
    [#var statesDumped = utils.newBitSet()]
    [#list lexicalState.nfaData.allCompositeStateSets as stateSet]
        [#var stateIndex=lexicalState.nfaData.getStartStateIndex(stateSet)]
-       [@DumpCompositeStatesMoves lexicalState, stateSet, stateIndex, byteNum, statesDumped/]
+       [@DumpCompositeStatesMoves lexicalState, stateSet, stateIndex, isAscii, statesDumped/]
    [/#list]
    [#list lexicalState.nfaData.allStates as state]
-      [#if state.index>=0&&!statesDumped.get(state.index) && state.isNeeded(byteNum)]
+      [#if state.index>=0&&!statesDumped.get(state.index) && state.isNeeded(isAscii)]
          ${statesDumped.set(state.index)!}
           case ${state.index} :
             [@DumpMove state /]
@@ -249,32 +241,32 @@
    [/#list]
 [/#macro]
 
-[#macro DumpCompositeStatesMoves lexicalState stateSet stateIndex byteNum statesDumped]
+[#macro DumpCompositeStatesMoves lexicalState stateSet stateIndex isAscii statesDumped]
    [#var neededStates=0]
    [#var toBePrinted]
    [#list stateSet as state]
-       [#if state.isNeeded(byteNum)]
+       [#if state.isNeeded(isAscii)]
           [#set neededStates = neededStates+1]
           [#set toBePrinted = state]
        [/#if]
    [/#list]
-   [#if byteNum < 0 && neededStates = 1]
+   [#if !isAscii && neededStates = 1]
           case ${stateIndex} :
       [#if !statesDumped.get(toBePrinted.index)]
           ${statesDumped.set(toBePrinted.index)!}
           case ${toBePrinted.index} :
       [/#if]
-          [@DumpMoveForCompositeState toBePrinted/]
-   [#elseif byteNum >=0  && neededStates!=0]
+          [@DumpAsciiMoveForCompositeState toBePrinted/]
+   [#elseif isAscii  && neededStates!=0]
          case ${stateIndex} :
             [#list stateSet as state]
-              [@DumpMoveForCompositeState state/]
+              [@DumpAsciiMoveForCompositeState state/]
             [/#list]
            break;
    [/#if]
 [/#macro]
 
-[#macro DumpMoveForCompositeState nfaState]
+[#macro DumpAsciiMoveForCompositeState nfaState]
    [#var nextState = nfaState.nextState]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]

@@ -67,19 +67,6 @@ public class NfaState {
         return getMoveMethodName().replace("NFA_", "NFA_MOVES_");
     }
 
-    public boolean isNonAscii() {
-        return moveRanges.get(moveRanges.size()-1) >= 128;
-    }
-
-    public long[] getAsciiMoves() {
-        BitSet bits = getAsciiMoveSet();
-        long[] ll = bits.toLongArray();
-        if (ll.length !=2) {
-            ll = Arrays.copyOf(ll, 2);
-        }
-        return ll;
-    }
-    
     public List<Integer> getMoveRanges() { return moveRanges; }
 
     public RegularExpression getType() {return type;}
@@ -96,28 +83,15 @@ public class NfaState {
         return epsilonMoves.size();
     }
 
-    public boolean isNeeded(int byteNum) {
-        if (byteNum<0) return isNonAscii();
-        BitSet asciiMoves = getAsciiMoveSet();
-        return byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
+    public boolean isNeeded(boolean ascii) {
+        return ascii ? moveRanges.get(0) < 128 : moveRanges.get(moveRanges.size()-1) >=128;
     }
-
+    
     public int[] getStates() {
         int[] result = new int[epsilonMoves.size()];
         int index = 0;
         for (NfaState state : epsilonMoves) {
             result[index++] = state.index;
-        }
-        return result;
-    }
-
-    private BitSet getAsciiMoveSet() {
-        BitSet result = new BitSet();
-        for (int i=0; i<moveRanges.size(); i+=2) {
-            int left = moveRanges.get(i);
-            if (left > 127) break;
-            int right = Math.min(moveRanges.get(i+1), 127);
-            result.set(left, right+1);
         }
         return result;
     }
