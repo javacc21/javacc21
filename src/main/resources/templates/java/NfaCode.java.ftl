@@ -150,6 +150,7 @@
         int kind = 0x7fffffff;
         while (true) {
             checkedStates.clear();
+//            if (false) {
             if (curChar <128) {
 	            do {
 	                switch (jjstateSet[--stateIndex]) {
@@ -242,31 +243,16 @@
 [/#macro]
 
 [#macro DumpCompositeStatesMoves lexicalState stateSet stateIndex isAscii statesDumped]
-   [#var neededStates=0]
-   [#var toBePrinted]
-   [#list stateSet as state]
-       [#if state.isNeeded(isAscii)]
-          [#set neededStates = neededStates+1]
-          [#set toBePrinted = state]
-       [/#if]
-   [/#list]
-   [#if !isAscii && neededStates = 1]
-          case ${stateIndex} :
-      [#if !statesDumped.get(toBePrinted.index)]
-          ${statesDumped.set(toBePrinted.index)!}
-          case ${toBePrinted.index} :
-      [/#if]
-          [@DumpAsciiMoveForCompositeState toBePrinted/]
-   [#elseif isAscii  && neededStates!=0]
-         case ${stateIndex} :
-            [#list stateSet as state]
-              [@DumpAsciiMoveForCompositeState state/]
-            [/#list]
-           break;
-   [/#if]
+    case ${stateIndex} :
+       [#list stateSet as state]
+         [#if state.isNeeded(isAscii)]
+            [@DumpMoveForCompositeState state/]
+         [/#if]
+       [/#list]
+       break;
 [/#macro]
 
-[#macro DumpAsciiMoveForCompositeState nfaState]
+[#macro DumpMoveForCompositeState nfaState]
    [#var nextState = nfaState.nextState]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
