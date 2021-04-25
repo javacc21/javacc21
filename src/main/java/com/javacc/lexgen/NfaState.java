@@ -79,10 +79,6 @@ public class NfaState {
         }
         return ll;
     }
-
-    BitSet getAsciiMoveSet(int byteNum) {
-        return byteNum == 0 ? getAsciiMoveSet().get(0,64) : getAsciiMoveSet().get(64,128);
-    }
     
     public List<Integer> getMoveRanges() { return moveRanges; }
 

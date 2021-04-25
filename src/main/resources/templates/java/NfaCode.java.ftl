@@ -268,19 +268,14 @@
           [@DumpMove toBePrinted /]
    [#elseif byteNum >=0  && neededStates!=0]
          case ${stateIndex} :
-         [#var partition=lexicalState.nfaData.partitionStatesSetForAscii(stateSet, byteNum)]
-         [#list partition as subSet]
-           //partition
-            [#list subSet as state]
-             //subpartition
-              [@DumpAsciiMoveForCompositeState state, byteNum, state_index!=0/]
+            [#list stateSet as state]
+              [@DumpAsciiMoveForCompositeState state/]
             [/#list]
-         [/#list]
            break;
    [/#if]
 [/#macro]
 
-[#macro DumpAsciiMoveForCompositeState nfaState byteNum elseNeeded]
+[#macro DumpAsciiMoveForCompositeState nfaState]
    [#var nextState = nfaState.nextState]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]

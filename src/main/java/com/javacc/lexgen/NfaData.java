@@ -259,47 +259,4 @@ public class NfaData {
                && !lexicalState.isMixedCase() 
                && lexicalState.getMaxStringIndex() > 0;
     }
-
-    public List<List<NfaState>> partitionStatesSetForAscii(Set<NfaState> states, int byteNum) {
-        if (byteNum<0) return new ArrayList<>();
-        int[] cardinalities = new int[states.size()];
-        List<NfaState> stateList = new ArrayList<>(states);
-        List<NfaState> original = new ArrayList<>(states);
-        List<List<NfaState>> partition = new ArrayList<>();
-        int cnt = 0;
-        for (int i = 0; i < stateList.size(); i++) {
-            NfaState state = stateList.get(i);
-            if (!state.getAsciiMoveSet(byteNum).isEmpty()) {
-                int p = state.getAsciiMoveSet(byteNum).cardinality();
-                int j;
-                for (j = 0; j < i; j++) {
-                    if (cardinalities[j] <= p) break;
-                }
-                for (int k = i; k > j; k--) {
-                    cardinalities[k] = cardinalities[k - 1];
-                }
-                cardinalities[j] = p;
-                original.add(j, state);
-                cnt++;
-            }
-        }
-        original = original.subList(0, cnt);
-        while (original.size() > 0) {
-            NfaState state = original.get(0);
-            original.remove(state);
-            BitSet subBitSet = state.getAsciiMoveSet(byteNum);
-            List<NfaState> subSet = new ArrayList<NfaState>();
-            subSet.add(state);
-            for (Iterator<NfaState> it = original.iterator(); it.hasNext();) {
-                NfaState otherState = it.next();
-                if (!otherState.getAsciiMoveSet(byteNum).intersects(subBitSet)) {
-                    subBitSet.or(otherState.getAsciiMoveSet(byteNum));
-                    subSet.add(otherState);
-                    it.remove();
-                }
-            }
-            partition.add(subSet);
-        }
-        return partition;
-    }
 }
