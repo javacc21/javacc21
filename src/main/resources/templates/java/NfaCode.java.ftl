@@ -250,21 +250,16 @@
 [/#macro]
 
 [#macro DumpCompositeStatesMoves lexicalState stateSet stateIndex byteNum statesDumped]
-   [#if stateSet?size = 1 || statesDumped.get(stateIndex)][#return][/#if]
+   [#if  statesDumped.get(stateIndex)][#return][/#if]
    [#var neededStates=0]
    [#var toBePrinted]
    [#list stateSet as state]
        [#if state.isNeeded(byteNum)]
           [#set neededStates = neededStates+1]
           [#set toBePrinted = state]
-          [#--if neededStates = 2]
-             [#break]
-          [#else]
-             [#set toBePrinted = state]
-          [/#if--]
        [/#if]
    [/#list]
-   [#if neededStates = 1]
+   [#if byteNum < 0 && neededStates = 1]
           case ${stateIndex} :
       [#if !statesDumped.get(toBePrinted.index)]
           ${statesDumped.set(toBePrinted.index)!}
@@ -287,7 +282,6 @@
 
 [#macro DumpAsciiMoveForCompositeState nfaState byteNum elseNeeded]
    [#var nextState = nfaState.nextState]
-   [#var nextIntersects=nfaState.nextIntersects]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
       if (${nfaState.moveMethodName}(curChar)) {
@@ -295,23 +289,11 @@
       kind = Math.min(kind, ${kindToPrint});
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#var stateNames = nextState.states]
-       [#if stateNames?size = 1]
-           addState(${stateNames[0]});
-       [#elseif stateNames?size = 2 && nextIntersects]
-                   addState(${stateNames[0]});
-                   addState(${stateNames[1]});
-       [#else]
-           [#-- Note that the getStateSetIndicesForUse() method builds up a needed
-                data structure lexicalState.orderedStateSet, which is used to output
-                the jjnextStates vector. --]
-           [#var indices=nfaState.lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
-           [#if nextIntersects && indices[0]+1 == indices[1]]
-               addStates(${indices[0]});
-           [#else]
-               addStates(${indices[0]}, ${indices[1]});
-           [/#if]
-       [/#if]
+       [#-- Note that the getStateSetIndicesForUse() method builds up a needed
+            data structure lexicalState.orderedStateSet, which is used to output
+            the jjnextStates vector. --]
+       [#var indices=nfaState.lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
+       addStates(${indices[0]}, ${indices[1]});
    [/#if]
          }
 [/#macro]
@@ -352,7 +334,7 @@
           [/#if]
        [/#if]
    [/#if]
-                         break;
+             break;
 [/#macro]
 
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
