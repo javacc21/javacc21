@@ -57,7 +57,7 @@ public class LexerData {
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
     private Map<Set<NfaState>, int[]> tableToDump = new HashMap<>();
-    private List<int[]> orderedStateSetIndices = new ArrayList<>();
+    private List<Set<NfaState>> orderedStateSets = new ArrayList<>();
     int lastIndex;
 
     public LexerData(Grammar grammar) {
@@ -232,8 +232,8 @@ public class LexerData {
         return tableToDump;
     }
 
-    public List<int[]> getOrderedStateSet() {
-        return orderedStateSetIndices;
+    public List<Set<NfaState>> getOrderedStateSets() {
+        return orderedStateSets;
     }
 
     public int getIndex(String name) {

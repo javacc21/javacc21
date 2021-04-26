@@ -110,7 +110,6 @@ public class NfaData {
         }
         List<Integer> nameSet = new ArrayList<>();
         for (NfaState state : states) nameSet.add(state.getIndex());
-        assert !nameSet.isEmpty();
         if (nameSet.size() == 1) {
             stateIndexFromStateSet.put(states, nameSet.get(0));
             return nameSet.get(0);
@@ -121,7 +120,6 @@ public class NfaData {
             ++dummyStateIndex;
         }
         stateIndexFromStateSet.put(states, dummyStateIndex);
-        assert states.size() >1;
         allCompositeStateSets.add(states);
         return dummyStateIndex;
     }
@@ -146,22 +144,20 @@ public class NfaData {
         List<Integer> indexes = epsilonMovesStringToIntArray(stateSetString);
         for (int index : indexes) {
             NfaState state = indexedAllStates.get(index);
-            assert state != null;
             result.add(state);
         }
         return result;
     }
 
     public int[] getStateSetIndicesForUse(NfaState state) {
-        int[] set = state.getStates();
         int[] result = lexerData.getTableToDump().get(state.epsilonMoves);
         if (result == null) {
             result = new int[2];
             result[0] = lexerData.lastIndex;
-            result[1] = lexerData.lastIndex + set.length - 1;
-            lexerData.lastIndex += set.length;
+            result[1] = lexerData.lastIndex + state.getEpsilonMoveCount() - 1;
+            lexerData.lastIndex += state.getEpsilonMoveCount();
             lexerData.getTableToDump().put(state.epsilonMoves, result);
-            lexerData.getOrderedStateSet().add(set);
+            lexerData.getOrderedStateSets().add(state.epsilonMoves);
         }
         assert result.length == 2;
         return result;

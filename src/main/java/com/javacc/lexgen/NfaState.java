@@ -83,15 +83,6 @@ public class NfaState {
         return epsilonMoves.size();
     }
     
-    public int[] getStates() {
-        int[] result = new int[epsilonMoves.size()];
-        int index = 0;
-        for (NfaState state : epsilonMoves) {
-            result[index++] = state.index;
-        }
-        return result;
-    }
-
     void setType(RegularExpression type) {
         this.type = type;
     }
@@ -109,18 +100,16 @@ public class NfaState {
         moveRanges.add(right);
     }
 
-    private boolean closureDone = false;
+    private boolean closureDone;
 
     /**
-     * This function computes the closure and also updates the kind so that any
+     * This function computes the closure and also updates the type so that any
      * time there is a move to this state, it can go on epsilon to a new state
      * in the epsilon moves that might have a lower kind of token number for the
      * same length.
      */
     void doEpsilonClosure() {
-        if (closureDone) {
-            return;
-        }
+        if (closureDone) return;
         closureDone = true;
         // Recursively do closure
         for (NfaState state : new ArrayList<>(epsilonMoves)) {
