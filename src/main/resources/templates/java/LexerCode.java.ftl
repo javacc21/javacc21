@@ -77,7 +77,7 @@
     
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
-	   jjmatchedKind = 0;
+	    jjmatchedKind = 0;
       matchedType = TokenType.EOF;
       Token eof = jjFillToken();
       tokenLexicalActions();
@@ -298,13 +298,13 @@
 [#--
   NB. The following must occur after the preceding loop,
   since (and I don't like it) the DumpXXX macros
-  build up the lexerData.orderedStateSet structure
+  build up the lexerData.orderedStateSets structure
   --]  
   private static final int[] jjnextStates = {
-  [#list lexerData.orderedStateSet as set]
-    [#list set as i]
-        ${i},
+  [#list lexerData.orderedStateSets as set]
+    [#list set as state]
+        ${state.index},
     [/#list]
-[/#list]
+  [/#list]
 
 };

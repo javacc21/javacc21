@@ -40,7 +40,7 @@
 
 [#macro DumpDfaCode lexicalState]
   [#var dfaData = lexicalState.dfaData]
-  [#var initState=lexicalState.nfaData.initStateName()]
+  [#var initState=lexicalState.nfaData.initialStateIndex]
   [#var maxStringLength=lexicalState.maxStringLength]
   [#var maxStringIndex=lexicalState.maxStringIndex]
   [#var maxStringLengthForActive=dfaData.maxStringLengthForActive]

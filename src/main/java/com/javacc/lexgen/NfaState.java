@@ -31,7 +31,6 @@
 package com.javacc.lexgen;
 
 import java.util.*;
-
 import com.javacc.parsegen.RegularExpression;
 
 /**
@@ -67,39 +66,9 @@ public class NfaState {
         return getMoveMethodName().replace("NFA_", "NFA_MOVES_");
     }
 
-    public boolean isNonAscii() {
-        return moveRanges.get(moveRanges.size()-1) >= 128;
-    }
-
-    public long[] getAsciiMoves() {
-        BitSet bits = getAsciiMoveSet();
-        long[] ll = bits.toLongArray();
-        if (ll.length !=2) {
-            ll = Arrays.copyOf(ll, 2);
-        }
-        return ll;
-    }
-
-    private BitSet getAsciiMoveSet() {
-        BitSet result = new BitSet();
-        for (int i=0; i<moveRanges.size(); i+=2) {
-            int left = moveRanges.get(i);
-            if (left > 127) break;
-            int right = Math.min(moveRanges.get(i+1), 127);
-            result.set(left, right+1);
-        }
-        return result;
-    }
-
-    public List<Integer> getMoveRanges() {
-        return moveRanges;
-    }
+    public List<Integer> getMoveRanges() { return moveRanges; }
 
     public RegularExpression getType() {return type;}
-
-    void setType(RegularExpression type) {
-        this.type = type;
-    }
 
     public LexicalStateData getLexicalState() {
         return lexicalState;
@@ -112,11 +81,9 @@ public class NfaState {
     public int getEpsilonMoveCount() {
         return epsilonMoves.size();
     }
-
-    public boolean isNeeded(int byteNum) {
-        assert byteNum == 0 || byteNum ==1;
-        BitSet asciiMoves = getAsciiMoveSet();
-        return byteNum == 0 ? asciiMoves.previousSetBit(63) >=0 : asciiMoves.nextSetBit(64) >=64; 
+    
+    void setType(RegularExpression type) {
+        this.type = type;
     }
 
     void addEpsilonMove(NfaState newState) {
@@ -132,18 +99,16 @@ public class NfaState {
         moveRanges.add(right);
     }
 
-    private boolean closureDone = false;
+    private boolean closureDone;
 
     /**
-     * This function computes the closure and also updates the kind so that any
+     * This function computes the closure and also updates the type so that any
      * time there is a move to this state, it can go on epsilon to a new state
      * in the epsilon moves that might have a lower kind of token number for the
      * same length.
      */
     void doEpsilonClosure() {
-        if (closureDone) {
-            return;
-        }
+        if (closureDone) return;
         closureDone = true;
         // Recursively do closure
         for (NfaState state : new ArrayList<>(epsilonMoves)) {
@@ -157,11 +122,7 @@ public class NfaState {
             }
         }
         addEpsilonMove(this);
-        epsilonMoves.removeIf(state->!state.hasTransitions());
-    }
-
-    private boolean hasTransitions() {
-        return !moveRanges.isEmpty();
+        epsilonMoves.removeIf(state->state.moveRanges.isEmpty());
     }
 
     private boolean codeGenerated;
@@ -175,35 +136,15 @@ public class NfaState {
         if (nextState != null) {
             nextState.generateCode();
         }
-        if (index == -1 && hasTransitions()) {
+        if (index == -1 && !moveRanges.isEmpty()) {
             this.index = nfaData.indexedAllStates.size();
             nfaData.indexedAllStates.put(index, this);
         }
-    }
-
-    public int[] getStates() {
-        int[] result = new int[epsilonMoves.size()];
-        int index = 0;
-        for (NfaState state : epsilonMoves) {
-            result[index++] = state.index;
-        }
-        return result;
     }
 
     boolean canMoveUsingChar(int c) {
         // Check whether the character c is in some range.
         int idx = Collections.binarySearch(moveRanges, c);
         return idx >=0 || idx%2 ==0;
-    }
-
-    public boolean isNextIntersects() {
-        for (NfaState state : nfaData.allStates) {
-            if (this == state || !state.hasTransitions() || !state.isNonAscii())
-                continue;
-            if (!Collections.disjoint(epsilonMoves, state.nextState.epsilonMoves)) {
-                return true;
-            }
-        }
-        return false;
     }
 }
