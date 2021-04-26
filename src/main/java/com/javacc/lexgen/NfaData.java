@@ -149,19 +149,17 @@ public class NfaData {
         return result;
     }
 
-    public int[] getStateSetIndicesForUse(NfaState state) {
-        int[] result = lexerData.getTableToDump().get(state.epsilonMoves);
+    public int getStartIndex(NfaState state) {
+        Integer result = lexerData.getTableToDump().get(state.epsilonMoves);
         if (result == null) {
-            result = new int[2];
-            result[0] = lexerData.lastIndex;
-            result[1] = lexerData.lastIndex + state.getEpsilonMoveCount() - 1;
+            result = lexerData.lastIndex;
             lexerData.lastIndex += state.getEpsilonMoveCount();
             lexerData.getTableToDump().put(state.epsilonMoves, result);
             lexerData.getOrderedStateSets().add(state.epsilonMoves);
         }
-        assert result.length == 2;
         return result;
     }
+
 
     boolean canStartNfaUsing(int c) {
         return initialState.epsilonMoves.stream().anyMatch(state->state.canMoveUsingChar(c));

@@ -31,7 +31,6 @@
 package com.javacc.lexgen;
 
 import java.util.*;
-
 import com.javacc.parsegen.RegularExpression;
 
 /**

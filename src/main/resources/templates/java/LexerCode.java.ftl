@@ -77,7 +77,7 @@
     
     private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
-	   jjmatchedKind = 0;
+	    jjmatchedKind = 0;
       matchedType = TokenType.EOF;
       Token eof = jjFillToken();
       tokenLexicalActions();

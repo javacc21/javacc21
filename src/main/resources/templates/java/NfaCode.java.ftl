@@ -51,10 +51,10 @@
          }
     }
     
-    private void addStates(int start, int end) {
-        do {
-            addState(jjnextStates[start]);
-        } while (start++ != end);
+    private void addStates(int start, int count) {
+        for (int i=0; i<count; i++) {
+           addState(jjnextStates[start+i]);
+        }
     }
    
     private int jjStopAtPos(int pos, int kind) {
@@ -235,11 +235,11 @@
       kind = Math.min(kind, ${kindToPrint});
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#-- Note that the getStateSetIndicesForUse() method builds up a needed
+       [#-- Note that the getStartIndex() method builds up a needed
             data structure lexicalState.orderedStateSet, which is used to output
             the jjnextStates vector. --]
-       [#var indices=nfaState.lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
-       addStates(${indices[0]}, ${indices[1]});
+       [#var index = lexicalState.nfaData.getStartIndex(nextState)]
+       addStates(${index}, ${nextState.epsilonMoveCount});
    [/#if]
          }
 [/#macro]
@@ -264,8 +264,8 @@
                     if (${nfaState.moveMethodName}(curChar))
    [/#if]
    [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#var indices=lexicalState.nfaData.getStateSetIndicesForUse(nextState)]
-       addStates(${indices[0]}, ${indices[1]});
+       [#var index = lexicalState.nfaData.getStartIndex(nextState)]
+       addStates(${index}, ${nextState.epsilonMoveCount});
    [/#if]
        break;
 [/#macro]
