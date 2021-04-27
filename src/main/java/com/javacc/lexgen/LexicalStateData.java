@@ -96,10 +96,6 @@ public class LexicalStateData {
         return getStartStateIndex(initialState.epsilonMoves);
     }
 
-    public int getStartStateIndex(String stateSetString) {
-        return getStartStateIndex(stateSetFromString(stateSetString));
-    }
-
     public int getStartStateIndex(Set<NfaState> states) {
         if (states.isEmpty()) return -1;
         if (stateIndexFromStateSet.containsKey(states)) {
@@ -119,25 +115,6 @@ public class LexicalStateData {
         stateIndexFromStateSet.put(states, dummyStateIndex);
         allCompositeStateSets.add(states);
         return dummyStateIndex;
-    }
-
-    private Set<NfaState> stateSetFromString(String stateSetString) {
-        Set<NfaState> result = new HashSet<>();
-        List<Integer> indexes = epsilonMovesStringToIntArray(stateSetString);
-        for (int index : indexes) {
-            NfaState state = indexedAllStates.get(index);
-            result.add(state);
-        }
-        return result;
-    }
-
-    static private List<Integer> epsilonMovesStringToIntArray(String s) {
-        List<Integer> result = new ArrayList<>();
-        StringTokenizer st = new StringTokenizer(s, "{},;null", false);
-        while (st.hasMoreTokens()) {
-            result.add(Integer.valueOf(st.nextToken()));
-        }
-        return result;
     }
 
     void addTokenProduction(TokenProduction tokenProduction) {
@@ -173,6 +150,8 @@ public class LexicalStateData {
     }
 
     public Set<Set<NfaState>> getAllCompositeStateSets() {
+        assert allCompositeStateSets.size() ==1;
+//        System.out.println("KILROY " + allCompositeStateSets.iterator().next().size());
         return allCompositeStateSets;
     }
 
