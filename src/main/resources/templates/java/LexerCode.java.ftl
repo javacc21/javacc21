@@ -137,13 +137,11 @@
  
  [#if multipleLexicalStates]
       if (newLexicalStates[jjmatchedKind] != null) {
-[#--          matchedToken.setFollowingLexicalState(newLexicalStates[jjmatchedKind]);--]
           switchTo(newLexicalStates[jjmatchedKind]);
       }
  [/#if]
       matchedToken.setUnparsed(specialSet.get(jjmatchedKind));
       return matchedToken;
-
      }
          [#if lexerData.hasSkip || lexerData.hasSpecial]
             [#if lexerData.hasMore]
@@ -151,7 +149,6 @@
             [#else]
           else
             [/#if]
-
           {
           [#if lexerData.hasSkipActions]
                  tokenLexicalActions();
@@ -161,7 +158,6 @@
                this.lexicalState = newLexicalStates[jjmatchedKind];
             }
           [/#if]
-
             continue EOFLoop;
           }
          [#if lexerData.hasMore]
@@ -336,31 +332,6 @@
     }
     [/#if]
 
-[#macro DumpStartWithStates lexicalState]
-    private int jjStartNfaWithStates_${lexicalState.name}(int pos, int kind, int state) {
-        jjmatchedKind = kind;
-        jjmatchedPos = pos;
-        if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
-        if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
-         int retval = input_stream.readChar();
-       if (retval >=0) {
-           curChar = retval;
-       } 
-       else  { 
-            return pos + 1; 
-        }
-        if (trace_enabled) LOGGER.info("" + 
-     [#if multipleLexicalStates]
-            "<${lexicalState.name}>"+  
-     [/#if]
-            [#-- REVISIT --]
-            "Current character : " + addEscapes(String.valueOf(curChar)) 
-            + " (" + curChar + ") " + "at line " + input_stream.getEndLine() 
-            + " column " + input_stream.getEndColumn());
-        return jjMoveNfa_${lexicalState.name}(state, pos+1);
-   }
-[/#macro]
-
 [#macro DumpMoveNfa lexicalState]
   [#var hasNfa = lexicalState.numNfaStates>0]
     private int jjMoveNfa_${lexicalState.name}(int startState, int curPos) {
@@ -368,14 +339,6 @@
         return curPos;
     }
        [#return]
-    [/#if]
-    [#if lexicalState.mixedCase]
-        int strKind = jjmatchedKind;
-        int strPos = jjmatchedPos;
-        int seenUpto = curPos+1;
-        input_stream.backup(seenUpto);
-        curChar = input_stream.readChar(); //REVISIT, deal with error return code
-        curPos = 0;
     [/#if]
         int startsAt = 0;
         jjnewStateCnt = ${lexicalState.numNfaStates};
@@ -403,22 +366,15 @@
             stateIndex = jjnewStateCnt;
             jjnewStateCnt = startsAt;
             startsAt = ${lexicalState.numNfaStates} - startsAt;
-            if (stateIndex == startsAt)
-    [#if lexicalState.mixedCase]
-                 break;
-    [#else]
-                 return curPos;
-    [/#if]
+            if (stateIndex == startsAt) {
+              return curPos;
+            }
             int retval = input_stream.readChar();
             if (retval >=0) {
                  curChar = retval;
             }
             else  {
-    [#if lexicalState.mixedCase]            
-                break;
-    [#else]
                 return curPos;
-    [/#if]
             }
             if (trace_enabled) LOGGER.info("" + 
             [#if multipleLexicalStates]
@@ -428,25 +384,6 @@
                addEscapes(String.valueOf(curChar)) + " (" + curChar + ") "
               + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
         }
-    [#if lexicalState.mixedCase]
-        if (jjmatchedPos > strPos) {
-            return curPos;
-        }
-        int toRet = Math.max(curPos, seenUpto);
-        if (curPos < toRet) {
-           for (i = toRet - Math.min(curPos, seenUpto); i-- >0;) {
-                   curChar = input_stream.readChar(); // REVISIT, not handling error return code
-           }
-        }
-        if (jjmatchedPos < strPos) {
-            jjmatchedKind = strKind;
-            jjmatchedPos = strPos;
-        }
-        else if (jjmatchedPos == strPos && jjmatchedKind > strKind) {
-            jjmatchedKind = strKind;
-        }
-        return toRet;
-    [/#if]
     }
 [/#macro]
 
@@ -510,9 +447,6 @@
 [/#macro]
 
 [#list lexerData.lexicalStates as lexicalState]
-  [#if lexicalState.createStartNfa]
-     [@DumpStartWithStates lexicalState/]
-  [/#if]
    [@DumpMoveNfa lexicalState/]
 [/#list]
 

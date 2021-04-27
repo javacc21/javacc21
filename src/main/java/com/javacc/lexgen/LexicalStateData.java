@@ -49,7 +49,6 @@ public class LexicalStateData {
     private Map<String, RegularExpression> caseSensitiveTokenTable = new HashMap<>();
     private Map<String, RegularExpression> caseInsensitiveTokenTable = new HashMap<>();
 
-    private boolean mixedCase;
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
 
     private int dummyStateIndex = -1;
@@ -147,15 +146,6 @@ public class LexicalStateData {
 
     public int getNumNfaStates() {
         return indexedAllStates.size();
-    }
-
-    // FIXME! There is currently no testing in place for mixed case Lexical states!
-    public boolean isMixedCase() {
-        return mixedCase;
-    }
-
-    public boolean getCreateStartNfa() {
-        return !mixedCase && !indexedAllStates.isEmpty();
     }
 
     public boolean containsRegularExpression(RegularExpression re) {
