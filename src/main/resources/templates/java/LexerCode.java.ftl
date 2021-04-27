@@ -30,42 +30,22 @@
  */
  --]
 
- [#--  
-        This is the one remaining template file that is still a god-awful mess and, I (JR) have to admit 
-        still quite opaque to me. The corresponding Java code is the stuff in com.javacc.lexgen package
-        that, along with this template, will eventually be cleaned up, probably a more accurate 
-        description is that it will be torn up and rewritten. 
-  --]
- [#import "NfaCode.java.ftl" as nfa]
+ [#var MAX_INT=2147483647]
  [#var lexerData=grammar.lexerData]
- [#var utils=grammar.utils]
  [#var tokenCount=lexerData.tokenCount]
  [#var numLexicalStates=lexerData.lexicalStates?size]
  [#var multipleLexicalStates = numLexicalStates>1]
 
-[#var MAX_INT=2147483647]
-
-   private int[] jjemptyLineNo = new int[${numLexicalStates}];
-   private int[] jjemptyColNo = new int[${numLexicalStates}];
-   private boolean[] jjbeenHere = new boolean[${numLexicalStates}];
-  
-  
   private int jjmatchedPos;
   //FIXME,should be an enum.
   private int jjmatchedKind;
   private TokenType matchedType;
   private String inputSource = "input";
+  private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
+  private int jjnewStateCnt;
+  private BitSet checkedStates = new BitSet();
 
- [#macro BitSetFromLongArray bitSet]
-      BitSet.valueOf(new long[] {
-          [#list bitSet.toLongArray() as long]
-             ${utils.toHexStringL(long)}
-             [#if long_has_next],[/#if]
-          [/#list]
-      })
-[/#macro]
-  
-    static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
+  static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
                                 specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
                                 skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
                                 moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
@@ -89,7 +69,6 @@
       return eof;
     }
   
-  [#--  Need to figure out how to simplify this --]
   private Token nextToken() {
     Token matchedToken;
     int curPos = 0;
@@ -105,7 +84,6 @@
 [#if lexerData.hasMore]
        while (true) {
 [/#if]
-    [#-- this also sets up the start state of the nfa --]
 [#if multipleLexicalStates]
        switch(lexicalState) {
 [/#if]
@@ -281,16 +259,275 @@
         return t;
     }
 
-[@nfa.OutputNfaStateMoves/]
+  private void addState(int state) {
+        if (!checkedStates.get(state)) {
+          jjstateSet[jjnewStateCnt++] = state;
+          checkedStates.set(state);
+        }
+  }
+  
+  private void addStates(int start, int count) {
+      for (int i=0; i<count; i++) {
+          addState(jjnextStates[start+i]);
+      }
+  }
+  
+  private int jjStopAtPos(int pos, int kind) {
+        jjmatchedKind = kind;
+        jjmatchedPos = pos;
+        if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
+        if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos + 1) 
+                          + " characters as a " + tokenImage[jjmatchedKind] + " token.");
+        return pos + 1;
+  }
+  [#var needNextStep = false]
+
+  [#list lexerData.lexicalStates as lexicalState]
+      [#list lexicalState.allStates as nfaState]
+        [#if nfaState.moveRanges?size < 16]  
+          private static final boolean ${nfaState.moveMethodName}(int ch) {
+              [#var left, right]
+              [#list nfaState.moveRanges as char]
+                [#if char_index % 2 = 0]
+                    [#set left = char]
+                [#else]
+                    [#set right = char]
+                    [#if left = right]
+                    if (ch == ${left}) return true;
+                    [#else]
+                      [#if left >0 ]
+                    if (ch < ${left}) return false;
+                      [/#if]
+                    if (ch <= ${right}) return true;
+                    [/#if]
+                [/#if]
+              [/#list]
+                    return false;
+          }
+          [#else]
+          [#set needNextStep = true]
+          [#var arrayName = nfaState.movesArrayName]
+
+          static private int[] ${arrayName};
+
+          static private void ${arrayName}_populate() {
+              ${arrayName} = new int[${nfaState.moveRanges?size}];
+              [#list nfaState.moveRanges as char]
+                ${arrayName}[${char_index}] = ${char};
+              [/#list]
+          }
+
+          private static final boolean ${nfaState.moveMethodName}(int ch) {
+              int idx = Arrays.binarySearch(${arrayName}, ch);
+              return idx>=0 || idx%2==0;
+          }
+          [/#if]
+      [/#list]
+  [/#list]
+    [#if needNextStep]
+    static {
+      [#list lexerData.lexicalStates as lexicalState]
+      [#list lexicalState.allStates as nfaState]
+        [#if nfaState.moveRanges?size >= 16]
+          ${nfaState.movesArrayName}_populate();
+        [/#if]
+        [/#list]
+      [/#list]
+    }
+    [/#if]
+
+[#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
+  [#var maxStringIndex=lexicalState.maxStringIndex]
+  [#var maxKindsReqd=(1+lexicalState.maxStringIndex/64)?int]
+    private int jjStartNfa_${lexicalState.name}(int pos, 
+  [#list 0..(maxKindsReqd-1) as i]
+       long active${i}[#if i_has_next], [#else]) {[/#if]
+  [/#list]
+     return jjMoveNfa_${lexicalState.name}(${lexicalState.initialStateIndex}, pos+1);
+  }
+[/#macro]
+
+[#macro DumpStartWithStates lexicalState]
+    private int jjStartNfaWithStates_${lexicalState.name}(int pos, int kind, int state) {
+        jjmatchedKind = kind;
+        jjmatchedPos = pos;
+        if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
+        if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos + 1) + " characters as a " + tokenImage[jjmatchedKind] + " token.");
+         int retval = input_stream.readChar();
+       if (retval >=0) {
+           curChar = retval;
+       } 
+       else  { 
+            return pos + 1; 
+        }
+        if (trace_enabled) LOGGER.info("" + 
+     [#if multipleLexicalStates]
+            "<${lexicalState.name}>"+  
+     [/#if]
+            [#-- REVISIT --]
+            "Current character : " + addEscapes(String.valueOf(curChar)) 
+            + " (" + curChar + ") " + "at line " + input_stream.getEndLine() 
+            + " column " + input_stream.getEndColumn());
+        return jjMoveNfa_${lexicalState.name}(state, pos+1);
+   }
+[/#macro]
+
+[#macro DumpMoveNfa lexicalState]
+  [#var hasNfa = lexicalState.numNfaStates>0]
+    private int jjMoveNfa_${lexicalState.name}(int startState, int curPos) {
+    [#if !hasNfa]
+        return curPos;
+    }
+       [#return]
+    [/#if]
+    [#if lexicalState.mixedCase]
+        int strKind = jjmatchedKind;
+        int strPos = jjmatchedPos;
+        int seenUpto = curPos+1;
+        input_stream.backup(seenUpto);
+        curChar = input_stream.readChar(); //REVISIT, deal with error return code
+        curPos = 0;
+    [/#if]
+        int startsAt = 0;
+        jjnewStateCnt = ${lexicalState.numNfaStates};
+        int stateIndex=1;
+        jjstateSet[0] = startState;
+        int kind = 0x7fffffff;
+        while (true) {
+            checkedStates.clear();
+	         do {
+	             switch (jjstateSet[--stateIndex]) {
+	                 [@DumpMoves lexicalState/]
+                     default : break;
+                }
+            } while(stateIndex != startsAt);
+            if (kind != 0x7fffffff) {
+                jjmatchedKind = kind;
+                jjmatchedPos = curPos;
+                kind = 0x7fffffff;
+            }
+            ++curPos;
+            if (jjmatchedKind != 0 && jjmatchedKind != 0x7fffffff) {
+                if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
+                                     + tokenImage[jjmatchedKind] + " token.");
+            }
+            stateIndex = jjnewStateCnt;
+            jjnewStateCnt = startsAt;
+            startsAt = ${lexicalState.numNfaStates} - startsAt;
+            if (stateIndex == startsAt)
+    [#if lexicalState.mixedCase]
+                 break;
+    [#else]
+                 return curPos;
+    [/#if]
+            int retval = input_stream.readChar();
+            if (retval >=0) {
+                 curChar = retval;
+            }
+            else  {
+    [#if lexicalState.mixedCase]            
+                break;
+    [#else]
+                return curPos;
+    [/#if]
+            }
+            if (trace_enabled) LOGGER.info("" + 
+            [#if multipleLexicalStates]
+               "<" + lexicalState + ">" + 
+            [/#if]
+               [#-- REVISIT --]
+               addEscapes(String.valueOf(curChar)) + " (" + curChar + ") "
+              + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
+        }
+    [#if lexicalState.mixedCase]
+        if (jjmatchedPos > strPos) {
+            return curPos;
+        }
+        int toRet = Math.max(curPos, seenUpto);
+        if (curPos < toRet) {
+           for (i = toRet - Math.min(curPos, seenUpto); i-- >0;) {
+                   curChar = input_stream.readChar(); // REVISIT, not handling error return code
+           }
+        }
+        if (jjmatchedPos < strPos) {
+            jjmatchedKind = strKind;
+            jjmatchedPos = strPos;
+        }
+        else if (jjmatchedPos == strPos && jjmatchedKind > strKind) {
+            jjmatchedKind = strKind;
+        }
+        return toRet;
+    [/#if]
+    }
+[/#macro]
+
+[#macro DumpMoves lexicalState]
+   [#list lexicalState.allCompositeStateSets as stateSet]
+       [#var stateIndex=lexicalState.getStartStateIndex(stateSet)]
+       case ${stateIndex} :
+        [#list stateSet as state]
+             [@DumpMoveForCompositeState state/]
+        [/#list]
+          break;
+   [/#list]
+   [#list lexicalState.allStates as state]
+       case ${state.index} :
+         [@DumpMove state /]
+   [/#list]
+[/#macro]
+
+[#macro DumpMoveForCompositeState nfaState]
+   [#var nextState = nfaState.nextState]
+   [#var lexicalState=nfaState.lexicalState]
+   [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
+      if (${nfaState.moveMethodName}(curChar)) {
+   [#if kindToPrint != MAX_INT]
+      kind = Math.min(kind, ${kindToPrint});
+   [/#if]
+   [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
+       [#-- Note that the getStartIndex() method builds up a needed
+            data structure lexicalState.orderedStateSet, which is used to output
+            the jjnextStates vector. --]
+       [#var index = lexicalState.getStartIndex(nextState)]
+       addStates(${index}, ${nextState.epsilonMoveCount});
+   [/#if]
+         }
+[/#macro]
+
+[#macro DumpMove nfaState]
+   [#var nextState = nfaState.nextState]
+   [#var lexicalState=nfaState.lexicalState]
+   [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
+   [#if nextState?is_null || nextState.epsilonMoveCount==0]
+         [#var kindCheck=" && kind > "+kindToPrint]
+         [#if kindToPrint == MAX_INT][#set kindCheck = ""][/#if]
+            if (${nfaState.moveMethodName}(curChar) ${kindCheck})
+               kind = ${kindToPrint};
+            break;
+         [#return]
+   [/#if]
+   [#if kindToPrint != MAX_INT]
+                if (!${nfaState.moveMethodName}(curChar))
+                          break;
+                    kind = Math.min(kind, ${kindToPrint});
+   [#else]
+                    if (${nfaState.moveMethodName}(curChar))
+   [/#if]
+   [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
+       [#var index = lexicalState.getStartIndex(nextState)]
+       addStates(${index}, ${nextState.epsilonMoveCount});
+   [/#if]
+       break;
+[/#macro]
 
 [#list lexerData.lexicalStates as lexicalState]
   [#if lexicalState.dumpNfaStarts]
-  [@nfa.DumpNfaStartStatesCode lexicalState, lexicalState_index/]
+  [@DumpNfaStartStatesCode lexicalState, lexicalState_index/]
   [/#if]
   [#if lexicalState.createStartNfa]
-     [@nfa.DumpStartWithStates lexicalState/]
+     [@DumpStartWithStates lexicalState/]
   [/#if]
-   [@nfa.DumpMoveNfa lexicalState/]
+   [@DumpMoveNfa lexicalState/]
 [/#list]
 
 [#--
@@ -306,3 +543,12 @@
   [/#list]
 
 };
+
+ [#macro BitSetFromLongArray bitSet]
+      BitSet.valueOf(new long[] {
+          [#list bitSet.toLongArray() as long]
+             ${grammar.utils.toHexStringL(long)}
+             [#if long_has_next],[/#if]
+          [/#list]
+      })
+[/#macro]
