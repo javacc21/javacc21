@@ -137,7 +137,7 @@ public class LexicalStateData {
             choices.addAll(processTokenProduction(tp, isFirst));
             isFirst = false;
         }
-        dfaData.generateData();
+//        dfaData.generateData();
         nfaData.generateData();
         return choices;
     }
@@ -156,18 +156,10 @@ public class LexicalStateData {
             if (currentRegexp.isPrivate()) {
                 continue;
             }
-            if (currentRegexp instanceof RegexpStringLiteral
-                    && !((RegexpStringLiteral) currentRegexp).getImage().equals("")) {
-                dfaData.generate((RegexpStringLiteral) currentRegexp);
-                if (!isFirst && ignoring != ignore) {
-                    mixedCase = true;
-                }
-            } else {
-                if (currentRegexp instanceof RegexpChoice) {
-                    choices.add((RegexpChoice) currentRegexp);
-                }
-                new NfaBuilder(this, ignore).buildStates(currentRegexp);
+            if (currentRegexp instanceof RegexpChoice) {
+                choices.add((RegexpChoice) currentRegexp);
             }
+            new NfaBuilder(this, ignore).buildStates(currentRegexp);
             if (respec.getNextState() != null && !respec.getNextState().equals(this.name))
                 currentRegexp.setNewLexicalState(lexerData.getLexicalState(respec.getNextState()));
 
