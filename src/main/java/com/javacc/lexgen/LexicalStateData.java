@@ -44,7 +44,7 @@ public class LexicalStateData {
     private Grammar grammar;
     private LexerData lexerData;
     private String name;
-    private DfaData dfaData;
+//    private DfaData dfaData;
     private NfaData nfaData;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
@@ -57,7 +57,7 @@ public class LexicalStateData {
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
-        this.dfaData = new DfaData(this);
+//        this.dfaData = new DfaData(this);
         this.nfaData = new NfaData(this);
         this.name = name;
         nfaData.initialState = new NfaState(this);
@@ -71,7 +71,7 @@ public class LexicalStateData {
 
     public String getName() {return name;}
 
-    public DfaData getDfaData() {return dfaData;}
+//git stat    public DfaData getDfaData() {return dfaData;}
 
     public NfaData getNfaData() {return nfaData;}
 

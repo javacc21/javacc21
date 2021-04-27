@@ -271,7 +271,6 @@
 [/#macro]
 
 [#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
-  [#var dfaData = lexicalState.dfaData] 
   [#var stateSetForPos = lexicalState.nfaData.stateSetForPos]
   [#var maxKindsReqd=(1+lexicalState.maxStringIndex/64)?int]
   [#var ind=0]
@@ -337,15 +336,8 @@
                     jjmatchedKind = ${kindStr};
                     jjmatchedPos = 0;
                  [#elseif i = jjmatchedPos]
-                    [#if dfaData.subStringAtPos[i]]
-                    if (jjmatchedPos != ${i}) {
-                        jjmatchedKind = ${kindStr};
-                        jjmatchedPos = ${i};
-                    }
-                    [#else]
                     jjmatchedKind = ${kindStr};
                     jjmatchedPos = ${i};
-                    [/#if]
                  [#else]
                     [#if jjmatchedPos>0]
                     if (jjmatchedPos < ${jjmatchedPos}) {

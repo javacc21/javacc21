@@ -191,9 +191,7 @@ public class NfaData {
                     reKind = moveFromSet(ch, oldStates, newStates);
                     if (ch>0xFFFF) charOffset++;
                     oldStates.clear();
-                    if (reKind != null && lexicalState.getDfaData().getStrKind(image.substring(0, charOffset + 1)) < reKind.getOrdinal()) {
-                        matchedPosition = 0;
-                    } else if (reKind != null) {
+                    if (reKind != null) {
                         matchedPosition = positions[charOffset] = charOffset;
                     } 
                     else if (charOffset>0) {

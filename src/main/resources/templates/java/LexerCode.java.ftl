@@ -36,7 +36,6 @@
         that, along with this template, will eventually be cleaned up, probably a more accurate 
         description is that it will be torn up and rewritten. 
   --]
- [#import "DfaCode.java.ftl" as dfa]
  [#import "NfaCode.java.ftl" as nfa]
  [#var lexerData=grammar.lexerData]
  [#var utils=grammar.utils]
@@ -112,10 +111,10 @@
 [/#if]
     
 [#list lexerData.lexicalStates as lexicalState]
+    [#var initState=lexicalState.nfaData.initialStateIndex]
     [#if multipleLexicalStates]
             case ${lexicalState.name} : 
     [/#if]
-    [@dfa.SkipSingles lexicalState.dfaData /]
     jjmatchedKind = 0x7FFFFFFF;
     matchedType = null;
     jjmatchedPos = 0;
@@ -129,7 +128,7 @@
         "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
     [/#set]
     if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-    curPos = jjMoveStringLiteralDfa0_${lexicalState.name}();
+    curPos = jjMoveNfa_${lexicalState.name}(${initState}, 0);
     [#if multipleLexicalStates]
         break;
     [/#if]
@@ -291,7 +290,6 @@
   [#if lexicalState.createStartNfa]
      [@nfa.DumpStartWithStates lexicalState/]
   [/#if]
-   [@dfa.DumpDfaCode lexicalState/]
    [@nfa.DumpMoveNfa lexicalState/]
 [/#list]
 
