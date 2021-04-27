@@ -139,10 +139,4 @@ public class NfaState {
             lexicalState.indexedAllStates.put(index, this);
         }
     }
-
-    boolean canMoveUsingChar(int c) {
-        // Check whether the character c is in some range.
-        int idx = Collections.binarySearch(moveRanges, c);
-        return idx >=0 || idx%2 ==0;
-    }
 }

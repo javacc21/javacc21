@@ -54,7 +54,6 @@ public class LexicalStateData {
 
     private int dummyStateIndex = -1;
     private Set<Set<NfaState>> allCompositeStateSets = new HashSet<>();
-    private List<Map<String, BitSet>> stateSetForPos = new ArrayList<>();
     private Map<Set<NfaState>, Integer> stateIndexFromStateSet = new HashMap<>();
     Set<NfaState> allStates = new HashSet<>();
     Map<Integer, NfaState> indexedAllStates = new HashMap<>();
@@ -187,16 +186,6 @@ public class LexicalStateData {
         return allCompositeStateSets;
     }
 
-    public List<Map<String, BitSet>> getStateSetForPos() {
-        return stateSetForPos;
-    }
-
-    public boolean getDumpNfaStarts() {
-        return !indexedAllStates.isEmpty()
-               && !isMixedCase() 
-               && getMaxStringIndex() > 0;
-    }
-    
     public int getStartIndex(NfaState state) {
         Integer result = lexerData.getTableToDump().get(state.epsilonMoves);
         if (result == null) {
@@ -232,86 +221,7 @@ public class LexicalStateData {
             else if (lexerData.getMoreSet().get(initialOrdinal))
                 lexerData.hasMoreActions = true;
         }
-        if (indexedAllStates.size() != 0 && !isMixedCase()) {
-            generateNfaStartStates();
-        }
         allStates.removeIf(state->state.getIndex()==-1);
-    }
-
-    //What a total Rube Goldberg contraption!
-    void generateNfaStartStates() {
-        String stateSetString = "";
-        List<NfaState> newStates = new ArrayList<>();
-        while(stateSetForPos.size() < getMaxStringLength()) {
-            stateSetForPos.add(new HashMap<>());
-        }
-        for (RegularExpression re : lexerData.getRegularExpressions()) {
-            if (!containsRegularExpression(re) || !(re instanceof RegexpStringLiteral)) {
-                continue;
-            }
-            String image = re.getImage();
-            int ordinal = re.getOrdinal();
-            List<NfaState> oldStates = new ArrayList<>(initialState.epsilonMoves);
-            int[] positions = new int[image.length()];
-            int matchedPosition = 0;
-            for (int charOffset = 0; charOffset < image.length(); charOffset++) {
-                RegularExpression reKind = null;
-                if (oldStates.isEmpty()) {
-                    // Here, charOffset > 0
-                    matchedPosition = positions[charOffset] = positions[charOffset - 1];
-                } else {
-                    int ch = image.codePointAt(charOffset);
-                    reKind = moveFromSet(ch, oldStates, newStates);
-                    if (ch>0xFFFF) charOffset++;
-                    oldStates.clear();
-                    if (reKind != null) {
-                        matchedPosition = positions[charOffset] = charOffset;
-                    } 
-                    else if (charOffset>0) {
-                        matchedPosition = positions[charOffset] = positions[charOffset - 1];
-                    }
-                    stateSetString = buildStateSetString(newStates);
-                }
-                if (reKind == null && newStates.isEmpty())
-                    continue;
-                List<NfaState> jjtmpStates = oldStates;
-                oldStates = newStates;
-                (newStates = jjtmpStates).clear();
-                int index = reKind == null ? Integer.MAX_VALUE : reKind.getOrdinal();
-                String key = index + "," + matchedPosition + "," + stateSetString;
-                BitSet activeSet= stateSetForPos.get(charOffset).get(key);
-                if (activeSet == null) {
-                    activeSet = new BitSet();
-                    stateSetForPos.get(charOffset).put(key, activeSet);
-                }
-                activeSet.set(ordinal);
-            }
-        }
-    }
-
-    private static RegularExpression moveFromSet(int c, List<NfaState> states, List<NfaState> newStates) {
-        RegularExpression result = null;
-        for (NfaState state : states) {
-            RegularExpression re = null;
-            if (state.canMoveUsingChar(c)) {
-                newStates.addAll(state.nextState.epsilonMoves);
-                re = state.nextState.getType();
-            }
-            if (result == null) result = re;
-            else if (re != null && re.getOrdinal()<result.getOrdinal()) result = re;
-        }
-        return result;
-    }
-
-    static private String buildStateSetString(Collection<NfaState> states) {
-        if (states.isEmpty())
-            return "null;";
-        String retVal = "{";
-        for (NfaState state : states) {
-            retVal += state.getIndex()  + ",";
-        }
-        retVal += "};";
-        return retVal;
     }
 
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {

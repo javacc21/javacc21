@@ -336,17 +336,6 @@
     }
     [/#if]
 
-[#macro DumpNfaStartStatesCode lexicalState lexicalState_index]
-  [#var maxStringIndex=lexicalState.maxStringIndex]
-  [#var maxKindsReqd=(1+lexicalState.maxStringIndex/64)?int]
-    private int jjStartNfa_${lexicalState.name}(int pos, 
-  [#list 0..(maxKindsReqd-1) as i]
-       long active${i}[#if i_has_next], [#else]) {[/#if]
-  [/#list]
-     return jjMoveNfa_${lexicalState.name}(${lexicalState.initialStateIndex}, pos+1);
-  }
-[/#macro]
-
 [#macro DumpStartWithStates lexicalState]
     private int jjStartNfaWithStates_${lexicalState.name}(int pos, int kind, int state) {
         jjmatchedKind = kind;
@@ -521,9 +510,6 @@
 [/#macro]
 
 [#list lexerData.lexicalStates as lexicalState]
-  [#if lexicalState.dumpNfaStarts]
-  [@DumpNfaStartStatesCode lexicalState, lexicalState_index/]
-  [/#if]
   [#if lexicalState.createStartNfa]
      [@DumpStartWithStates lexicalState/]
   [/#if]
