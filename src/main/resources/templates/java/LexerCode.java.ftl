@@ -111,7 +111,7 @@
 [/#if]
     
 [#list lexerData.lexicalStates as lexicalState]
-    [#var initState=lexicalState.nfaData.initialStateIndex]
+    [#var initState=lexicalState.initialStateIndex]
     [#if multipleLexicalStates]
             case ${lexicalState.name} : 
     [/#if]
@@ -284,7 +284,7 @@
 [@nfa.OutputNfaStateMoves/]
 
 [#list lexerData.lexicalStates as lexicalState]
-  [#if lexicalState.nfaData.dumpNfaStarts]
+  [#if lexicalState.dumpNfaStarts]
   [@nfa.DumpNfaStartStatesCode lexicalState, lexicalState_index/]
   [/#if]
   [#if lexicalState.createStartNfa]

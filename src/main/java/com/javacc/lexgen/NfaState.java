@@ -41,7 +41,6 @@ import com.javacc.parsegen.RegularExpression;
 public class NfaState {  
 
     private final LexicalStateData lexicalState;
-    private final NfaData nfaData;
     private RegularExpression type;
     private List<Integer> moveRanges = new ArrayList<>();
     private int index = -1;
@@ -50,8 +49,7 @@ public class NfaState {
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
-        nfaData = lexicalState.getNfaData();
-        nfaData.allStates.add(this);
+        lexicalState.allStates.add(this);
     }
 
     public int getIndex() {
@@ -137,8 +135,8 @@ public class NfaState {
             nextState.generateCode();
         }
         if (index == -1 && !moveRanges.isEmpty()) {
-            this.index = nfaData.indexedAllStates.size();
-            nfaData.indexedAllStates.put(index, this);
+            this.index = lexicalState.indexedAllStates.size();
+            lexicalState.indexedAllStates.put(index, this);
         }
     }
 
