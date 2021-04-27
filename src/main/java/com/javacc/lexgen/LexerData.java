@@ -44,7 +44,7 @@ import com.javacc.parser.tree.TokenProduction;
  * Base object that contains lexical data. 
  * It contains LexicalStateData objects that contain
  * the data for each lexical state. The LexicalStateData
- * objects in turn contain NfaData and DfaData objects
+ * objects in turn contain the NfaData object
  * that hold the data related to generating the NFAs and DFAs
  * for the respective lexical states.
  */

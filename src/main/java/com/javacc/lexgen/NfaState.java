@@ -35,7 +35,7 @@ import com.javacc.parsegen.RegularExpression;
 
 /**
  * Class representing a single state of a Non-deterministic Finite Automaton (NFA)
- * Note that any given lexical state is implemented as an NFA (and a DFA for string literals)
+ * Note that any given lexical state is implemented as an NFA.
  * Thus, any given NfaState object is associated with one lexical state.
  */
 public class NfaState {  

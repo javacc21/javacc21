@@ -44,7 +44,6 @@ public class LexicalStateData {
     private Grammar grammar;
     private LexerData lexerData;
     private String name;
-//    private DfaData dfaData;
     private NfaData nfaData;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
@@ -57,7 +56,6 @@ public class LexicalStateData {
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
-//        this.dfaData = new DfaData(this);
         this.nfaData = new NfaData(this);
         this.name = name;
         nfaData.initialState = new NfaState(this);
@@ -70,8 +68,6 @@ public class LexicalStateData {
     NfaState getInitialState() {return nfaData.initialState;}
 
     public String getName() {return name;}
-
-//git stat    public DfaData getDfaData() {return dfaData;}
 
     public NfaData getNfaData() {return nfaData;}
 
@@ -137,17 +133,12 @@ public class LexicalStateData {
             choices.addAll(processTokenProduction(tp, isFirst));
             isFirst = false;
         }
-//        dfaData.generateData();
         nfaData.generateData();
         return choices;
     }
 
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {
-        boolean ignoring = false;
         boolean ignore = tp.isIgnoreCase() || grammar.isIgnoreCase();//REVISIT
-        if (isFirst) {
-            ignoring = ignore;
-        }
         List<RegexpChoice> choices = new ArrayList<>();
         for (RegexpSpec respec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = respec.getRegexp();
