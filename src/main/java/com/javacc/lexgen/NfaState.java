@@ -127,19 +127,6 @@ public class NfaState {
         }
         addEpsilonMove(this);
         epsilonMoves.removeIf(state->state.moveRanges.isEmpty());
-    }
-
-    private boolean codeGenerated;
-    
-    void generateCode() {
-        if (codeGenerated) return;
-        codeGenerated = true;
-        for (NfaState epsilonMove : epsilonMoves) {
-            epsilonMove.generateCode();
-        }
-        if (nextState != null) {
-            nextState.generateCode();
-        }
         if (index == -1 && !moveRanges.isEmpty()) {
             this.index = lexicalState.numStates++;
         }

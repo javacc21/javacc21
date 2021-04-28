@@ -49,10 +49,10 @@
                                 moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
   
-    private final StringBuilder image = new StringBuilder();
-    private int curChar, matchedCharsLength;
+  private final StringBuilder image = new StringBuilder();
+  private int curChar, matchedCharsLength;
     
-    private Token generateEOF() {
+  private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
 	    jjmatchedKind = 0;
       matchedType = TokenType.EOF;

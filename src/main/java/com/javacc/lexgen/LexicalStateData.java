@@ -135,7 +135,6 @@ public class LexicalStateData {
         for (NfaState state : allStates) {
             state.doEpsilonClosure();
         }
-        initialState.generateCode();
         int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
         if (initialState.getType() != null && initialOrdinal != 0) {
             if (lexerData.getSkipSet().get(initialOrdinal)
