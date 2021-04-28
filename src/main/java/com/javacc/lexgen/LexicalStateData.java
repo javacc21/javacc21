@@ -75,9 +75,7 @@ public class LexicalStateData {
         tokenProductions.add(tokenProduction);
     }
 
-    public int getNumNfaStates() {
-        return numStates;
-     }
+    public int getNumNfaStates() {return numStates;}
 
     public boolean containsRegularExpression(RegularExpression re) {
         return regularExpressions.contains(re);
@@ -99,9 +97,7 @@ public class LexicalStateData {
         return result;
     }
 
-    public Collection<NfaState> getAllStates() {
-         return allStates;
-    }
+    public Collection<NfaState> getAllStates() {return allStates;}
 
     public int getStartIndex(NfaState state) {
         Integer result = lexerData.getTableToDump().get(state);
@@ -109,7 +105,7 @@ public class LexicalStateData {
             result = lexerData.lastIndex;
             lexerData.lastIndex += state.getEpsilonMoveCount();
             lexerData.getTableToDump().put(state, result);
-            lexerData.getOrderedStateSets().add(state.epsilonMoves);
+            lexerData.getOrderedStateSets().add(state.getEpsilonMoves());
         }
         return result;
     }
