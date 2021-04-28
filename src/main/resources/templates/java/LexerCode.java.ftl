@@ -32,9 +32,7 @@
 
  [#var MAX_INT=2147483647]
  [#var lexerData=grammar.lexerData]
- [#var tokenCount=lexerData.tokenCount]
- [#var numLexicalStates=lexerData.lexicalStates?size]
- [#var multipleLexicalStates = numLexicalStates>1]
+ [#var multipleLexicalStates = lexerData.lexicalStates?size>1]
 
   private int jjmatchedPos;
   //FIXME,should be an enum.
@@ -166,7 +164,6 @@
           [#else]
           matchedCharsLength += jjmatchedPos + 1;
 		  [/#if]
-		  
           [#if multipleLexicalStates]
              doLexicalStateSwitch(jjmatchedKind);
           [/#if]
@@ -266,15 +263,6 @@
       for (int i=0; i<count; i++) {
           addState(jjnextStates[start+i]);
       }
-  }
-  
-  private int jjStopAtPos(int pos, int kind) {
-        jjmatchedKind = kind;
-        jjmatchedPos = pos;
-        if (trace_enabled) LOGGER.info("   No more string literal token matches are possible.");
-        if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos + 1) 
-                          + " characters as a " + tokenImage[jjmatchedKind] + " token.");
-        return pos + 1;
   }
   [#var needNextStep = false]
 
