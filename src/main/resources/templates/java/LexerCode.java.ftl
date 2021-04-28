@@ -383,31 +383,14 @@
   //DumpMoves macro for lexicalState ${lexicalState.name}
        case ${lexicalState.initialStateIndex} :
         [#list lexicalState.initialState.epsilonMoves as state]
-             [@DumpMoveForInitialState state/]
+             [@DumpMove state/]
         [/#list]
           break;
    [#list lexicalState.allStates as state]
        case ${state.index} :
          [@DumpMove state /]
+         break;
    [/#list]
-[/#macro]
-
-[#macro DumpMoveForInitialState nfaState]
-   [#var nextState = nfaState.nextState]
-   [#var lexicalState=nfaState.lexicalState]
-   [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
-      if (${nfaState.moveMethodName}(curChar)) {
-   [#if kindToPrint != MAX_INT]
-      kind = Math.min(kind, ${kindToPrint});
-   [/#if]
-   [#var stateCount = (nextState.epsilonMoveCount)!0]
-   [#var index = (lexicalState.getStartIndex(nextState))!0]
-   [#if stateCount == 1]
-       addState(jjnextStates[${index}]);
-   [#elseif stateCount > 1]
-       addStates(${index}, ${stateCount});
-   [/#if]
-         }
 [/#macro]
 
 [#macro DumpMove nfaState]
@@ -416,27 +399,16 @@
    [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
    [#var stateCount = (nextState.epsilonMoveCount)!0]
    [#var index = (lexicalState.getStartIndex(nextState))!0]
-   [#if stateCount==0]
-         [#var kindCheck=" && kind > "+kindToPrint]
-         [#if kindToPrint == MAX_INT][#set kindCheck = ""][/#if]
-            if (${nfaState.moveMethodName}(curChar) ${kindCheck})
-               kind = ${kindToPrint};
-            break;
-         [#return]
-   [/#if]
+    if (${nfaState.moveMethodName}(curChar)) {
    [#if kindToPrint != MAX_INT]
-                if (!${nfaState.moveMethodName}(curChar))
-                          break;
-                    kind = Math.min(kind, ${kindToPrint});
-   [#else]
-                    if (${nfaState.moveMethodName}(curChar))
+       kind = Math.min(kind, ${kindToPrint});
    [/#if]
    [#if stateCount == 1]
        addState(jjnextStates[${index}]);
    [#elseif stateCount > 1]
        addStates(${index}, ${stateCount});
    [/#if]
-   break;
+   }
 [/#macro]
 
 [#list lexerData.lexicalStates as lexicalState]

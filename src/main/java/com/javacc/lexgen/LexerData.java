@@ -55,7 +55,7 @@ public class LexerData {
     
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
 
-    private Map<Set<NfaState>, Integer> tableToDump = new HashMap<>();
+    private Map<NfaState, Integer> tableToDump = new HashMap<>();
     private List<Set<NfaState>> orderedStateSets = new ArrayList<>();
     int lastIndex;
 
@@ -227,7 +227,7 @@ public class LexerData {
         return result;
     }
 
-    Map<Set<NfaState>, Integer> getTableToDump() {
+    Map<NfaState, Integer> getTableToDump() {
         return tableToDump;
     }
 

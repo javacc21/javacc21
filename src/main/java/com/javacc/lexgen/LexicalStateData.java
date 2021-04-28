@@ -51,11 +51,11 @@ public class LexicalStateData {
 
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
 
-    Set<NfaState> allStates = new HashSet<>();
-    Map<Integer, NfaState> indexedAllStates = new HashMap<>();
     private NfaState initialState;
 
-
+    Set<NfaState> allStates = new HashSet<>();
+    int numStates;
+    
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
@@ -74,7 +74,7 @@ public class LexicalStateData {
     public int getInitialStateIndex() {
         //return initialState.getIndex();
         //assert indexedAllStates.size()==allStates.size();
-        return allStates.size();
+        return numStates;
     }
 
     void addTokenProduction(TokenProduction tokenProduction) {
@@ -82,8 +82,8 @@ public class LexicalStateData {
     }
 
     public int getNumNfaStates() {
-        return allStates.size();
-    }
+        return numStates;
+     }
 
     public boolean containsRegularExpression(RegularExpression re) {
         return regularExpressions.contains(re);
@@ -106,16 +106,15 @@ public class LexicalStateData {
     }
 
     public Collection<NfaState> getAllStates() {
-//        return indexedAllStates.values();
          return allStates;
     }
 
     public int getStartIndex(NfaState state) {
-        Integer result = lexerData.getTableToDump().get(state.epsilonMoves);
+        Integer result = lexerData.getTableToDump().get(state);
         if (result == null) {
             result = lexerData.lastIndex;
             lexerData.lastIndex += state.getEpsilonMoveCount();
-            lexerData.getTableToDump().put(state.epsilonMoves, result);
+            lexerData.getTableToDump().put(state, result);
             lexerData.getOrderedStateSets().add(state.epsilonMoves);
         }
         return result;

@@ -141,8 +141,7 @@ public class NfaState {
             nextState.generateCode();
         }
         if (index == -1 && !moveRanges.isEmpty()) {
-            this.index = lexicalState.indexedAllStates.size();
-            lexicalState.indexedAllStates.put(index, this);
+            this.index = lexicalState.numStates++;
         }
     }
 }
