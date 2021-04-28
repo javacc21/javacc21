@@ -79,6 +79,8 @@ public class NfaState {
     public int getEpsilonMoveCount() {
         return epsilonMoves.size();
     }
+
+    public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
     
     void setType(RegularExpression type) {
         this.type = type;

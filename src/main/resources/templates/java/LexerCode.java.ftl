@@ -388,14 +388,12 @@
 [/#macro]
 
 [#macro DumpMoves lexicalState]
-   [#list lexicalState.allCompositeStateSets as stateSet]
-       [#var stateIndex=lexicalState.getStartStateIndex(stateSet)]
-       case ${stateIndex} :
-        [#list stateSet as state]
+  //DumpMoves macro for lexicalState ${lexicalState.name}
+       case ${lexicalState.initialStateIndex} :
+        [#list lexicalState.initialState.epsilonMoves as state]
              [@DumpMoveForCompositeState state/]
         [/#list]
           break;
-   [/#list]
    [#list lexicalState.allStates as state]
        case ${state.index} :
          [@DumpMove state /]

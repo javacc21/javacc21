@@ -51,12 +51,9 @@ public class LexicalStateData {
 
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
 
-    private int dummyStateIndex = -1;
-    private Set<Set<NfaState>> allCompositeStateSets = new HashSet<>();
-    private Map<Set<NfaState>, Integer> stateIndexFromStateSet = new HashMap<>();
     Set<NfaState> allStates = new HashSet<>();
     Map<Integer, NfaState> indexedAllStates = new HashMap<>();
-    NfaState initialState;
+    private NfaState initialState;
 
 
     public LexicalStateData(Grammar grammar, String name) {
@@ -70,7 +67,7 @@ public class LexicalStateData {
         return grammar;
     }
    
-    NfaState getInitialState() {return initialState;}
+    public NfaState getInitialState() {return initialState;}
 
     public String getName() {return name;}
 
@@ -93,28 +90,9 @@ public class LexicalStateData {
     }
 
     public int getInitialStateIndex() {
-        return getStartStateIndex(initialState.epsilonMoves);
-    }
-
-    public int getStartStateIndex(Set<NfaState> states) {
-        if (states.isEmpty()) return -1;
-        if (stateIndexFromStateSet.containsKey(states)) {
-            return stateIndexFromStateSet.get(states);
-        }
-        List<Integer> nameSet = new ArrayList<>();
-        for (NfaState state : states) nameSet.add(state.getIndex());
-        if (nameSet.size() == 1) {
-            stateIndexFromStateSet.put(states, nameSet.get(0));
-            return nameSet.get(0);
-        }
-        if (dummyStateIndex == -1) {
-            dummyStateIndex = indexedAllStates.size();
-        } else {
-            ++dummyStateIndex;
-        }
-        stateIndexFromStateSet.put(states, dummyStateIndex);
-        allCompositeStateSets.add(states);
-        return dummyStateIndex;
+        //return getStartStateIndex(initialState.epsilonMoves);
+        //return initialState.getIndex();
+        return indexedAllStates.size();
     }
 
     void addTokenProduction(TokenProduction tokenProduction) {
@@ -148,12 +126,12 @@ public class LexicalStateData {
     public Collection<NfaState> getAllStates() {
         return indexedAllStates.values();
     }
-
+/*
     public Set<Set<NfaState>> getAllCompositeStateSets() {
         assert allCompositeStateSets.size() ==1;
 //        System.out.println("KILROY " + allCompositeStateSets.iterator().next().size());
         return allCompositeStateSets;
-    }
+    }*/
 
     public int getStartIndex(NfaState state) {
         Integer result = lexerData.getTableToDump().get(state.epsilonMoves);
