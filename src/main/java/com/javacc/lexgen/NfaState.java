@@ -82,6 +82,10 @@ public class NfaState {
 
     public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
     
+    public boolean isSingleChar() {
+        return moveRanges.size() == 2 && moveRanges.get(0) == moveRanges.get(1);
+    }
+
     void setType(RegularExpression type) {
         this.type = type;
     }

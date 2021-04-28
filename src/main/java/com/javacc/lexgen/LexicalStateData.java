@@ -71,28 +71,10 @@ public class LexicalStateData {
 
     public String getName() {return name;}
 
-    public int getMaxStringLength() {
-        int result = 0;
-        for (RegularExpression re : regularExpressions) {
-            int length = re.getImage() == null ? 0 : re.getImage().length();
-            result = Math.max(result, length);
-        }
-        return result;
-    }
-    
-    public int getMaxStringIndex() {
-        int result =0;
-        for (RegularExpression re: regularExpressions) {
-            if (re instanceof RegexpStringLiteral  && re.getImage().length()>0) 
-                result = Math.max(result,re.getOrdinal()+1);
-        }
-        return result;
-    }
-
     public int getInitialStateIndex() {
-        //return getStartStateIndex(initialState.epsilonMoves);
         //return initialState.getIndex();
-        return indexedAllStates.size();
+        //assert indexedAllStates.size()==allStates.size();
+        return allStates.size();
     }
 
     void addTokenProduction(TokenProduction tokenProduction) {
@@ -100,7 +82,7 @@ public class LexicalStateData {
     }
 
     public int getNumNfaStates() {
-        return indexedAllStates.size();
+        return allStates.size();
     }
 
     public boolean containsRegularExpression(RegularExpression re) {
@@ -124,14 +106,9 @@ public class LexicalStateData {
     }
 
     public Collection<NfaState> getAllStates() {
-        return indexedAllStates.values();
+//        return indexedAllStates.values();
+         return allStates;
     }
-/*
-    public Set<Set<NfaState>> getAllCompositeStateSets() {
-        assert allCompositeStateSets.size() ==1;
-//        System.out.println("KILROY " + allCompositeStateSets.iterator().next().size());
-        return allCompositeStateSets;
-    }*/
 
     public int getStartIndex(NfaState state) {
         Integer result = lexerData.getTableToDump().get(state.epsilonMoves);

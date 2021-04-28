@@ -252,14 +252,14 @@
         return t;
     }
 
-  private void addState(int state) {
+  private final void addState(int state) {
         if (!checkedStates.get(state)) {
           jjstateSet[jjnewStateCnt++] = state;
           checkedStates.set(state);
         }
   }
   
-  private void addStates(int start, int count) {
+  private final void addStates(int start, int count) {
       for (int i=0; i<count; i++) {
           addState(jjnextStates[start+i]);
       }
@@ -268,7 +268,11 @@
 
   [#list lexerData.lexicalStates as lexicalState]
       [#list lexicalState.allStates as nfaState]
-        [#if nfaState.moveRanges?size < 16]  
+        [#if nfaState.singleChar]
+           private static final boolean ${nfaState.moveMethodName} (int ch) {
+             return ch == ${nfaState.moveRanges[0]};
+           }
+        [#elseif nfaState.moveRanges?size < 16]  
           private static final boolean ${nfaState.moveMethodName}(int ch) {
               [#var left, right]
               [#list nfaState.moveRanges as char]
@@ -379,7 +383,7 @@
   //DumpMoves macro for lexicalState ${lexicalState.name}
        case ${lexicalState.initialStateIndex} :
         [#list lexicalState.initialState.epsilonMoves as state]
-             [@DumpMoveForCompositeState state/]
+             [@DumpMoveForInitialState state/]
         [/#list]
           break;
    [#list lexicalState.allStates as state]
@@ -388,7 +392,7 @@
    [/#list]
 [/#macro]
 
-[#macro DumpMoveForCompositeState nfaState]
+[#macro DumpMoveForInitialState nfaState]
    [#var nextState = nfaState.nextState]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
@@ -396,12 +400,12 @@
    [#if kindToPrint != MAX_INT]
       kind = Math.min(kind, ${kindToPrint});
    [/#if]
-   [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#-- Note that the getStartIndex() method builds up a needed
-            data structure lexicalState.orderedStateSet, which is used to output
-            the jjnextStates vector. --]
-       [#var index = lexicalState.getStartIndex(nextState)]
-       addStates(${index}, ${nextState.epsilonMoveCount});
+   [#var stateCount = (nextState.epsilonMoveCount)!0]
+   [#var index = (lexicalState.getStartIndex(nextState))!0]
+   [#if stateCount == 1]
+       addState(jjnextStates[${index}]);
+   [#elseif stateCount > 1]
+       addStates(${index}, ${stateCount});
    [/#if]
          }
 [/#macro]
@@ -410,7 +414,9 @@
    [#var nextState = nfaState.nextState]
    [#var lexicalState=nfaState.lexicalState]
    [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
-   [#if nextState?is_null || nextState.epsilonMoveCount==0]
+   [#var stateCount = (nextState.epsilonMoveCount)!0]
+   [#var index = (lexicalState.getStartIndex(nextState))!0]
+   [#if stateCount==0]
          [#var kindCheck=" && kind > "+kindToPrint]
          [#if kindToPrint == MAX_INT][#set kindCheck = ""][/#if]
             if (${nfaState.moveMethodName}(curChar) ${kindCheck})
@@ -425,11 +431,12 @@
    [#else]
                     if (${nfaState.moveMethodName}(curChar))
    [/#if]
-   [#if !nextState?is_null&&nextState.epsilonMoveCount>0]
-       [#var index = lexicalState.getStartIndex(nextState)]
-       addStates(${index}, ${nextState.epsilonMoveCount});
+   [#if stateCount == 1]
+       addState(jjnextStates[${index}]);
+   [#elseif stateCount > 1]
+       addStates(${index}, ${stateCount});
    [/#if]
-       break;
+   break;
 [/#macro]
 
 [#list lexerData.lexicalStates as lexicalState]
@@ -450,7 +457,7 @@
 
 };
 
- [#macro BitSetFromLongArray bitSet]
+[#macro BitSetFromLongArray bitSet]
       BitSet.valueOf(new long[] {
           [#list bitSet.toLongArray() as long]
              ${grammar.utils.toHexStringL(long)}
