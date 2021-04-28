@@ -71,12 +71,6 @@ public class LexicalStateData {
 
     public String getName() {return name;}
 
-    public int getInitialStateIndex() {
-        //return initialState.getIndex();
-        //assert indexedAllStates.size()==allStates.size();
-        return numStates;
-    }
-
     void addTokenProduction(TokenProduction tokenProduction) {
         tokenProductions.add(tokenProduction);
     }

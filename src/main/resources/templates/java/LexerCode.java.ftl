@@ -87,7 +87,6 @@
 [/#if]
     
 [#list lexerData.lexicalStates as lexicalState]
-    [#var initState=lexicalState.initialStateIndex]
     [#if multipleLexicalStates]
             case ${lexicalState.name} : 
     [/#if]
@@ -104,7 +103,7 @@
         "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
     [/#set]
     if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-    curPos = jjMoveNfa_${lexicalState.name}(${initState}, 0);
+    curPos = jjMoveNfa_${lexicalState.name}(${lexicalState.numNfaStates}, 0);
     [#if multipleLexicalStates]
         break;
     [/#if]
@@ -381,7 +380,7 @@
 
 [#macro DumpMoves lexicalState]
   //DumpMoves macro for lexicalState ${lexicalState.name}
-       case ${lexicalState.initialStateIndex} :
+       case ${lexicalState.numNfaStates} :
         [#list lexicalState.initialState.epsilonMoves as state]
              [@DumpMove state/]
         [/#list]
