@@ -97,9 +97,14 @@ public class LexicalStateData {
         return result;
     }
 
-    public Collection<NfaState> getAllStates() {return allStates;}
+    public Collection<NfaState> getAllStates() {
+        List<NfaState> result = new ArrayList<>(allStates);
+        Collections.sort(result, (first,second)->first.getIndex()-second.getIndex());
+        return result;
+    }
 
     public int getStartIndex(NfaState state) {
+        if (state == null) return -1;
         Integer result = lexerData.getTableToDump().get(state);
         if (result == null) {
             result = lexerData.lastIndex;

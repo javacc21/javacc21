@@ -68,13 +68,9 @@ public class NfaState {
 
     public RegularExpression getType() {return type;}
 
-    public LexicalStateData getLexicalState() {
-        return lexicalState;
-    }
+    public LexicalStateData getLexicalState() {return lexicalState;}
 
-    public NfaState getNextState() {
-        return nextState;
-    }
+    public NfaState getNextState() {return nextState;}
 
     void setNextState(NfaState nextState) {this.nextState = nextState;}
 
@@ -108,7 +104,7 @@ public class NfaState {
     private boolean closureDone;
 
     /**
-     * This function computes the closure and also updates the type so that any
+     * This method computes the closure and also updates the type so that any
      * time there is a move to this state, it can go on epsilon to a new state
      * in the epsilon moves that might have a lower kind of token number for the
      * same length.
