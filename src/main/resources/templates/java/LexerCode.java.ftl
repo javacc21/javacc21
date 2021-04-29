@@ -381,16 +381,24 @@
         [/#list]
           break;
    [#list lexicalState.allStates as state]
+     [#if NeedDumpMove(state)]
        case ${state.index} :
          [@DumpMove state /]
          break;
+     [/#if]
    [/#list]
 [/#macro]
 
-[#macro DumpMove nfaState]
+[#function NeedDumpMove nfaState]
    [#var statesToAdd = (nfaState.nextState.epsilonMoves.size())!0]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
-   [#if statesToAdd == 0 && kindToPrint == MAX_INT][#return][/#if]
+   [#return statesToAdd>0 || kindToPrint!=MAX_INT]
+[/#function]
+
+[#macro DumpMove nfaState]
+   [#if !NeedDumpMove(nfaState)][#return][/#if]
+   [#var statesToAdd = (nfaState.nextState.epsilonMoves.size())!0]
+   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     if (${nfaState.moveMethodName}(curChar)) {
    [#if kindToPrint != MAX_INT]
        kind = Math.min(kind, ${kindToPrint});
