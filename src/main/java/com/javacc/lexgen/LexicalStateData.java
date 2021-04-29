@@ -103,18 +103,6 @@ public class LexicalStateData {
         return result;
     }
 
-    public int getStartIndex(NfaState state) {
-        if (state == null) return -1;
-        Integer result = lexerData.getTableToDump().get(state);
-        if (result == null) {
-            result = lexerData.lastIndex;
-            lexerData.lastIndex += state.getEpsilonMoveCount();
-            lexerData.getTableToDump().put(state, result);
-            lexerData.getOrderedStateSets().add(state.getEpsilonMoves());
-        }
-        return result;
-    }
-
     List<RegexpChoice> process() {
     	List<RegexpChoice> choices = new ArrayList<>();
         boolean isFirst = true;

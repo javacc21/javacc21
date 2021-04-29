@@ -32,7 +32,7 @@
 
  [#var MAX_INT=2147483647]
  [#var lexerData=grammar.lexerData]
- [#var multipleLexicalStates = lexerData.lexicalStates?size>1]
+ [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
 
   private int jjmatchedPos;
   //FIXME,should be an enum.
@@ -251,15 +251,6 @@
         return t;
     }
 
-  private final void addStates(int[] stateSet, int start, int count) {
-      for (int i=0; i< count; i++) {
-         if (!checkedStates.get(stateSet[start+i])) {
-             jjstateSet[jjnewStateCnt++] = stateSet[start+i];
-             checkedStates.set(stateSet[start+i]);
-         }
-      }
-  }
-  
   [#var needNextStep = false]
 
   [#list lexerData.lexicalStates as lexicalState]
@@ -268,7 +259,11 @@
            private static final boolean ${nfaState.moveMethodName} (int ch) {
              return ch == ${nfaState.moveRanges[0]};
            }
-        [#elseif nfaState.moveRanges?size < 16]  
+        [#elseif nfaState.moveRanges.size() == 2]
+           private static final boolean ${nfaState.moveMethodName} (int ch) {
+             return ch >= ${nfaState.moveRanges[0]} && ch <= ${nfaState.moveRanges[1]};
+           }
+        [#elseif nfaState.moveRanges.size() < 16]  
           private static final boolean ${nfaState.moveMethodName}(int ch) {
               [#var left, right]
               [#list nfaState.moveRanges as char]
@@ -295,7 +290,7 @@
           static private int[] ${arrayName};
 
           static private void ${arrayName}_populate() {
-              ${arrayName} = new int[${nfaState.moveRanges?size}];
+              ${arrayName} = new int[${nfaState.moveRanges.size()}];
               [#list nfaState.moveRanges as char]
                 ${arrayName}[${char_index}] = ${char};
               [/#list]
@@ -312,7 +307,7 @@
     static {
       [#list lexerData.lexicalStates as lexicalState]
       [#list lexicalState.allStates as nfaState]
-        [#if nfaState.moveRanges?size >= 16]
+        [#if nfaState.moveRanges.size() >= 16]
           ${nfaState.movesArrayName}_populate();
         [/#if]
         [/#list]
@@ -320,6 +315,15 @@
     }
     [/#if]
 
+  private final void addStates(int[] stateSet) {
+      for (int i=0; i< stateSet.length; i++) {
+         if (!checkedStates.get(stateSet[i])) {
+             jjstateSet[jjnewStateCnt++] = stateSet[i];
+             checkedStates.set(stateSet[i]);
+         }
+      }
+  }
+  
 [#macro DumpMoveNfa lexicalState]
     private int jjMoveNfa_${lexicalState.name}(int startState, int curPos) {
         int startsAt = 0;
@@ -373,7 +377,7 @@
   //DumpMoves macro for lexicalState ${lexicalState.name}
       case ${lexicalState.numNfaStates} :
         [#list lexicalState.initialState.epsilonMoves as state]
-             [@DumpMove state/]
+             [@DumpMove state /]
         [/#list]
           break;
    [#list lexicalState.allStates as state]
@@ -384,27 +388,22 @@
 [/#macro]
 
 [#macro DumpMove nfaState]
-  // DumpMove for nfaState ${nfaState.index}
-   [#var nextState = nfaState.nextState]
-   [#var lexicalState=nfaState.lexicalState]
-   [#var kindToPrint=(nextState.type.ordinal)!MAX_INT]
-   [#var stateCount = (nextState.epsilonMoveCount)!0]
-   [#var startIndex = lexicalState.getStartIndex(nextState)]
+   [#var statesToAdd = (nfaState.nextState.epsilonMoves.size())!0]
+   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
+   [#if statesToAdd == 0 && kindToPrint == MAX_INT][#return][/#if]
     if (${nfaState.moveMethodName}(curChar)) {
    [#if kindToPrint != MAX_INT]
        kind = Math.min(kind, ${kindToPrint});
    [/#if]
-[#--       addStates(nextStates_${lexicalState.name}_${nfaState.index}, 0, ${stateCount});--]
-       addStates(jjnextStates, ${startIndex}, ${stateCount});
+      [#if statesToAdd >0]
+       addStates(nextStates_${nfaState.lexicalState.name}_${nfaState.index});
+      [/#if]
    }
 [/#macro]
 
 [#list lexerData.lexicalStates as lexicalState]
-   [@DumpMoveNfa lexicalState/]
-[/#list]
-
-[#list lexerData.lexicalStates as lexicalState]
    [@OutputNextStates lexicalState/] 
+   [@DumpMoveNfa lexicalState/]
 [/#list]
 
 [#macro OutputNextStates lexicalState]
@@ -412,25 +411,12 @@
        static private final int[] nextStates_${lexicalState.name}_${state.index} = {
         [#var nextStateEpsilonMoves = (state.nextState.epsilonMoves)![]]
         [#list nextStateEpsilonMoves as epsilonMove]
-            ${epsilonMove.index},
+            ${epsilonMove.index}
+            [#if epsilonMove_has_next],[/#if]
         [/#list]
       };
    [/#list]
 [/#macro]
-
-[#--
-  NB. The following must occur after the preceding loop,
-  since (and I don't like it) the DumpXXX macros
-  build up the lexerData.orderedStateSets structure
-  --]  
-  private static final int[] jjnextStates = {
-  [#list lexerData.orderedStateSets as set]
-      // orderedStateSets[${set_index}]
-    [#list set as state]
-        ${state.index},
-    [/#list]
-  [/#list]
-};
 
 [#macro BitSetFromLongArray bitSet]
       BitSet.valueOf(new long[] {
