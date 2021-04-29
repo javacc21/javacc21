@@ -39,7 +39,7 @@
   private int jjmatchedKind;
   private TokenType matchedType;
   private String inputSource = "input";
-  private int[] stateSet;
+  private int[] stateSet, currentStateSet;
   private int jjnewStateCnt;
   private BitSet checkedStates = new BitSet();
 
@@ -255,13 +255,13 @@
 
   [#list lexerData.lexicalStates as lexicalState]
       [#list lexicalState.allStates as nfaState]
-        [#if nfaState.singleChar]
+        [#if nfaState.moveRanges.size() == 2]
            private static final boolean ${nfaState.moveMethodName} (int ch) {
-             return ch == ${nfaState.moveRanges[0]};
-           }
-        [#elseif nfaState.moveRanges.size() == 2]
-           private static final boolean ${nfaState.moveMethodName} (int ch) {
-             return ch >= ${nfaState.moveRanges[0]} && ch <= ${nfaState.moveRanges[1]};
+             [#if nfaState.moveRanges[0] == nfaState.moveRanges[1]]
+                return ch == ${nfaState.moveRanges[0]};
+             [#else]
+                return ch >= ${nfaState.moveRanges[0]} && ch <= ${nfaState.moveRanges[1]};
+             [/#if]
            }
         [#elseif nfaState.moveRanges.size() < 16]  
           private static final boolean ${nfaState.moveMethodName}(int ch) {
@@ -316,6 +316,7 @@
     [/#if]
 
   private final void addStates(int[] stateSet) {
+       this.currentStateSet = stateSet;
       for (int i=0; i< stateSet.length; i++) {
          if (!checkedStates.get(stateSet[i])) {
              this.stateSet[jjnewStateCnt++] = stateSet[i];
@@ -334,7 +335,7 @@
         int kind = 0x7fffffff;
         while (true) {
           checkedStates.clear();
-	         do {
+	          do {
 	             switch (stateSet[--stateIndex]) {
 	                 [@DumpMoves lexicalState/]
                      default : break;
