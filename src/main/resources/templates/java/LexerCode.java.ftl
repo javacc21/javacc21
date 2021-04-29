@@ -39,7 +39,7 @@
   private int jjmatchedKind;
   private TokenType matchedType;
   private String inputSource = "input";
-  private final int[] jjstateSet = new int[${2*lexerData.stateSetSize}];
+  private int[] stateSet;
   private int jjnewStateCnt;
   private BitSet checkedStates = new BitSet();
 
@@ -318,7 +318,7 @@
   private final void addStates(int[] stateSet) {
       for (int i=0; i< stateSet.length; i++) {
          if (!checkedStates.get(stateSet[i])) {
-             jjstateSet[jjnewStateCnt++] = stateSet[i];
+             this.stateSet[jjnewStateCnt++] = stateSet[i];
              checkedStates.set(stateSet[i]);
          }
       }
@@ -327,14 +327,15 @@
 [#macro DumpMoveNfa lexicalState]
     private int jjMoveNfa_${lexicalState.name}(int startState, int curPos) {
         int startsAt = 0;
+        stateSet = new int[${1+2*lexicalState.numNfaStates}];
         jjnewStateCnt = ${lexicalState.numNfaStates};
         int stateIndex=1;
-        jjstateSet[0] = startState;
+        stateSet[0] = startState;
         int kind = 0x7fffffff;
         while (true) {
           checkedStates.clear();
 	         do {
-	             switch (jjstateSet[--stateIndex]) {
+	             switch (stateSet[--stateIndex]) {
 	                 [@DumpMoves lexicalState/]
                      default : break;
                 }

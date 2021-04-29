@@ -216,14 +216,6 @@ public class LexerData {
         return specialSet;
     }
 
-    public int getStateSetSize() {
-        int result =0;
-        for (LexicalStateData lsd : getLexicalStates()) {
-            result = Math.max(result, lsd.getNumNfaStates());
-        }
-        return result;
-    }
-
     public int getIndex(String name) {
         for (int i = 0; i < lexicalStates.size(); i++) {
             if (lexicalStates.get(i).getName().equals(name)) {
