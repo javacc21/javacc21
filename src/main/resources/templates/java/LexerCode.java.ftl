@@ -39,9 +39,11 @@
   private int jjmatchedKind;
   private TokenType matchedType;
   private String inputSource = "input";
-  private int[] stateSet, currentStateSet;
-  private int jjnewStateCnt;
+  private BitSet currentStates = new BitSet();
   private BitSet checkedStates = new BitSet();
+  [#-- Will try to get rid of the next two variables --]
+  private int[] stateSet; 
+  private int jjnewStateCnt;
 
   static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
                                 specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
@@ -98,12 +100,11 @@
         [#if multipleLexicalStates]
             "<" + lexicalState + ">" + 
         [/#if]
-        [#-- REVISIT--]
         "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
         "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
     [/#set]
     if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-    curPos = jjMoveNfa_${lexicalState.name}(${lexicalState.numNfaStates}, 0);
+    curPos = jjMoveNfa_${lexicalState.name}();
     [#if multipleLexicalStates]
         break;
     [/#if]
@@ -128,7 +129,7 @@
       [#else]
          matchedToken = ${tokenHookMethodName}(matchedToken);
       [/#if]
-[/#list]
+ [/#list]
       tokenLexicalActions();
       jjmatchedKind = matchedToken.getType().ordinal();
  
@@ -171,7 +172,6 @@
           int retval = input_stream.readChar();
           if (retval >=0) {
                curChar = retval;
-	
 	            [#var debugOutput]
 	            [#set debugOutput]
 	              [#if multipleLexicalStates]
@@ -268,7 +268,7 @@
               [#var left, right]
               [#list nfaState.moveRanges as char]
                 [#if char_index % 2 = 0]
-                    [#set left = char]
+                   [#set left = char]
                 [#else]
                     [#set right = char]
                     [#if left = right]
@@ -315,26 +315,39 @@
     }
     [/#if]
 
-  private final void addStates(int[] stateSet) {
-       this.currentStateSet = stateSet;
-      for (int i=0; i< stateSet.length; i++) {
-         if (!checkedStates.get(stateSet[i])) {
-             this.stateSet[jjnewStateCnt++] = stateSet[i];
-             checkedStates.set(stateSet[i]);
+  private final void addStates(int[] set) {
+      for (int i=0; i< set.length; i++) {
+         if (!checkedStates.get(set[i])) {
+             this.stateSet[jjnewStateCnt++] = set[i];
+             checkedStates.set(set[i]);
          }
+         currentStates.set(set[i]);
       }
   }
   
 [#macro DumpMoveNfa lexicalState]
-    private int jjMoveNfa_${lexicalState.name}(int startState, int curPos) {
+    private int jjMoveNfa_${lexicalState.name}() {
+        int curPos = 0;
         int startsAt = 0;
         stateSet = new int[${1+2*lexicalState.numNfaStates}];
         jjnewStateCnt = ${lexicalState.numNfaStates};
+        stateSet[0] = jjnewStateCnt; //<-- FIXME
+        currentStates.set(${lexicalState.numNfaStates});
         int stateIndex=1;
-        stateSet[0] = startState;
         int kind = 0x7fffffff;
         while (true) {
-          checkedStates.clear();
+            checkedStates.clear();
+[#--
+            int nextActive = -1;
+            do {
+              nextActive = currentStates.nextSetBit(nextActive+1);
+              if (nextActive != -1) {
+                switch(nextActive) {
+                  [@DumpMoves lexicalState/]
+                  default : break;
+                }
+              }
+            } while (nextActive != -1);--]
 	          do {
 	             switch (stateSet[--stateIndex]) {
 	                 [@DumpMoves lexicalState/]
