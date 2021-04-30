@@ -39,8 +39,7 @@
   private int jjmatchedKind;
   private TokenType matchedType;
   private String inputSource = "input";
-  private BitSet currentStates = new BitSet();
-  private BitSet checkedStates = new BitSet();
+  private BitSet nextStates=new BitSet(), currentStates = new BitSet(), checkedStates;
   [#-- Will try to get rid of the next two variables --]
   private int[] stateSet; 
   private int jjnewStateCnt;
@@ -321,7 +320,7 @@
              this.stateSet[jjnewStateCnt++] = set[i];
              checkedStates.set(set[i]);
          }
-         currentStates.set(set[i]);
+         nextStates.set(set[i]);
       }
   }
   
@@ -332,13 +331,20 @@
         stateSet = new int[${1+2*lexicalState.numNfaStates}];
         jjnewStateCnt = ${lexicalState.numNfaStates};
         stateSet[0] = jjnewStateCnt; //<-- FIXME
-        currentStates.set(${lexicalState.numNfaStates});
+        checkedStates = new BitSet();
         int stateIndex=1;
         int kind = 0x7fffffff;
         while (true) {
             checkedStates.clear();
-[#--
+            currentStates = nextStates;
+            nextStates = new BitSet();
             int nextActive = -1;
+            if (curPos == 0) {
+              [#list lexicalState.initialState.epsilonMoves as state]
+                  [@DumpMove state /]
+              [/#list]
+            }
+	          else 
             do {
               nextActive = currentStates.nextSetBit(nextActive+1);
               if (nextActive != -1) {
@@ -347,13 +353,13 @@
                   default : break;
                 }
               }
-            } while (nextActive != -1);--]
-	          do {
-	             switch (stateSet[--stateIndex]) {
+            } while (nextActive != -1);
+[#--              do {
+ 	              switch (stateSet[--stateIndex]) {
 	                 [@DumpMoves lexicalState/]
                      default : break;
                 }
-            } while(stateIndex != startsAt);
+            } while(stateIndex != startsAt);--]
             if (kind != 0x7fffffff) {
                 jjmatchedKind = kind;
                 jjmatchedPos = curPos;
@@ -364,10 +370,14 @@
                 if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
                                      + tokenImage[jjmatchedKind] + " token.");
             }
+            // REVISIT
             stateIndex = jjnewStateCnt;
             jjnewStateCnt = startsAt;
             startsAt = ${lexicalState.numNfaStates} - startsAt;
-            if (stateIndex == startsAt) {
+//            if (stateIndex == startsAt) {
+//              return curPos;
+//            }
+            if (nextStates.isEmpty()) {
               return curPos;
             }
             int retval = input_stream.readChar();
@@ -390,11 +400,6 @@
 
 [#macro DumpMoves lexicalState]
   //DumpMoves macro for lexicalState ${lexicalState.name}
-      case ${lexicalState.numNfaStates} :
-        [#list lexicalState.initialState.epsilonMoves as state]
-             [@DumpMove state /]
-        [/#list]
-          break;
    [#list lexicalState.allStates as state]
      [#if NeedDumpMove(state)]
        case ${state.index} :
