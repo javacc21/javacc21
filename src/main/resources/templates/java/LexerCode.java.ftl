@@ -98,7 +98,8 @@
         "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
         "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
     [/#set]
-    if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
+    if (trace_enabled) LOGGER.info(${debugOutput?trim});
+//    moveCallCount_${lexicalState.name}++;
     curPos = jjMoveNfa_${lexicalState.name}();
     [#if multipleLexicalStates]
         break;
@@ -246,8 +247,6 @@
         return t;
     }
 
-  [#var needNextStep = false]
-
   [#list lexerData.lexicalStates as lexicalState]
       [#list lexicalState.allStates as nfaState]
         [#if nfaState.moveRanges.size() == 2]
@@ -279,16 +278,15 @@
                     return false;
           }
           [#else]
-          [#set needNextStep = true]
           [#var arrayName = nfaState.movesArrayName]
+          static private int[] ${arrayName} = ${arrayName}_init();
 
-          static private int[] ${arrayName};
-
-          static private void ${arrayName}_populate() {
-              ${arrayName} = new int[${nfaState.moveRanges.size()}];
+          static private int[] ${arrayName}_init() {
+              int[] result = new int[${nfaState.moveRanges.size()}];
               [#list nfaState.moveRanges as char]
-                ${arrayName}[${char_index}] = ${char};
+                result[${char_index}] = ${char};
               [/#list]
+              return result;
           }
 
           private static final boolean ${nfaState.moveMethodName}(int ch) {
@@ -298,18 +296,6 @@
           [/#if]
       [/#list]
   [/#list]
-    [#if needNextStep]
-    static {
-      [#list lexerData.lexicalStates as lexicalState]
-      [#list lexicalState.allStates as nfaState]
-        [#if nfaState.moveRanges.size() >= 16]
-          ${nfaState.movesArrayName}_populate();
-        [/#if]
-        [/#list]
-      [/#list]
-    }
-    [/#if]
-
   private final void addStates(int[] set) {
       for (int i=0; i< set.length; i++) {
          nextStates.set(set[i]);
@@ -317,6 +303,8 @@
   }
   
 [#macro DumpMoveNfa lexicalState]
+//    public static int moveCallCount_${lexicalState.name};
+
     private int jjMoveNfa_${lexicalState.name}() {
         int curPos = 0;
         int kind = 0x7fffffff;

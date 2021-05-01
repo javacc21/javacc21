@@ -52,6 +52,7 @@ public class JParse {
        System.out.println("\nParsed " + successes.size() + " files successfully");
        System.out.println("Failed on " + failures.size() + " files.");
        System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
+//       System.out.println("JAVA_MOVE_COUNT: " + JavaLexer.moveCallCount_JAVA);
     }
       
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
