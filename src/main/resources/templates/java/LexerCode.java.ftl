@@ -34,9 +34,9 @@
  [#var lexerData=grammar.lexerData]
  [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
 
-  private int jjmatchedPos;
+  private int matchedPos;
   //FIXME,should be an enum.
-  private int jjmatchedKind;
+  private int matchedKind;
   private TokenType matchedType;
   private String inputSource = "input";
   private BitSet nextStates=new BitSet(), currentStates = new BitSet();
@@ -51,9 +51,9 @@
     
   private Token generateEOF() {
       if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
-	    jjmatchedKind = 0;
+	    this.matchedKind = 0;
       matchedType = TokenType.EOF;
-      Token eof = jjFillToken();
+      Token eof = fillToken();
       tokenLexicalActions();
 [#list grammar.lexerTokenHooks as tokenHookMethodName]
       [#if tokenHookMethodName != "CommonTokenAction"]
@@ -79,46 +79,35 @@
 [#if lexerData.hasMore]
        while (true) {
 [/#if]
-[#if multipleLexicalStates]
        switch(lexicalState) {
-[/#if]
     
 [#list lexerData.lexicalStates as lexicalState]
-    [#if multipleLexicalStates]
             case ${lexicalState.name} : 
-    [/#if]
-    jjmatchedKind = 0x7FFFFFFF;
+    this.matchedKind = 0x7FFFFFFF;
     matchedType = null;
-    jjmatchedPos = 0;
+    this.matchedPos = 0;
     [#var debugOutput]
     [#set debugOutput]
-        [#if multipleLexicalStates]
             "<" + lexicalState + ">" + 
-        [/#if]
         "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
         "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
     [/#set]
     if (trace_enabled) LOGGER.info(${debugOutput?trim});
-//    moveCallCount_${lexicalState.name}++;
-    curPos = jjMoveNfa_${lexicalState.name}();
-    [#if multipleLexicalStates]
+    curPos = moveNfa_${lexicalState.name}();
         break;
-    [/#if]
 [/#list]
-  [#if multipleLexicalStates]
       }
-  [/#if]
-  if (jjmatchedKind != 0x7FFFFFFF) { 
-      if (jjmatchedPos + 1 < curPos) {
-        if (trace_enabled) LOGGER.info("   Putting back " + (curPos - jjmatchedPos - 1) + " characters into the input stream.");
-        input_stream.backup(curPos - jjmatchedPos - 1);
+  if (this.matchedKind != 0x7FFFFFFF) { 
+      if (this.matchedPos + 1 < curPos) {
+        if (trace_enabled) LOGGER.info("   Putting back " + (curPos - this.matchedPos - 1) + " characters into the input stream.");
+        input_stream.backup(curPos - this.matchedPos - 1);
       }
-       if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
-          + addEscapes(input_stream.getSuffix(jjmatchedPos + 2)) + ") ******\n");
+       if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[this.matchedKind] + " MATCH ("
+          + addEscapes(input_stream.getSuffix(this.matchedPos + 2)) + ") ******\n");
  
-       if (tokenSet.get(jjmatchedKind) || specialSet.get(jjmatchedKind)) {
+       if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
 
-         matchedToken = jjFillToken();
+         matchedToken = fillToken();
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
       [#if tokenHookMethodName = "CommonTokenAction"]
          ${tokenHookMethodName}(matchedToken);
@@ -127,19 +116,19 @@
       [/#if]
  [/#list]
       tokenLexicalActions();
-      jjmatchedKind = matchedToken.getType().ordinal();
+      this.matchedKind = matchedToken.getType().ordinal();
  
  [#if multipleLexicalStates]
-      if (newLexicalStates[jjmatchedKind] != null) {
-          switchTo(newLexicalStates[jjmatchedKind]);
+      if (newLexicalStates[this.matchedKind] != null) {
+          switchTo(newLexicalStates[this.matchedKind]);
       }
  [/#if]
-      matchedToken.setUnparsed(specialSet.get(jjmatchedKind));
+      matchedToken.setUnparsed(specialSet.get(this.matchedKind));
       return matchedToken;
      }
          [#if lexerData.hasSkip || lexerData.hasSpecial]
             [#if lexerData.hasMore]
-          else if (skipSet.get(jjmatchedKind))
+          else if (skipSet.get(this.matchedKind))
             [#else]
           else
             [/#if]
@@ -148,8 +137,8 @@
                  tokenLexicalActions();
           [/#if]
           [#if multipleLexicalStates]
-            if (newLexicalStates[jjmatchedKind] != null) {
-               this.lexicalState = newLexicalStates[jjmatchedKind];
+            if (newLexicalStates[this.matchedKind] != null) {
+               this.lexicalState = newLexicalStates[this.matchedKind];
             }
           [/#if]
             continue EOFLoop;
@@ -158,21 +147,19 @@
           [#if lexerData.hasMoreActions]
           tokenLexicalActions();
           [#else]
-          matchedCharsLength += jjmatchedPos + 1;
+          matchedCharsLength += this.matchedPos + 1;
 		  [/#if]
           [#if multipleLexicalStates]
-             doLexicalStateSwitch(jjmatchedKind);
+             doLexicalStateSwitch(this.matchedKind);
           [/#if]
           curPos = 0;
-          jjmatchedKind = 0x7FFFFFFF;
+          this.matchedKind = 0x7FFFFFFF;
           int retval = input_stream.readChar();
           if (retval >=0) {
                curChar = retval;
 	            [#var debugOutput]
 	            [#set debugOutput]
-	              [#if multipleLexicalStates]
 	                 "<" + lexicalState + ">" + 
-	              [/#if]
                   [#-- REVISIT --]
 	              "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
 	              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
@@ -207,14 +194,14 @@
   }
 
   private void tokenLexicalActions() {
-       switch(jjmatchedKind) {
+       switch(matchedKind) {
    [#list lexerData.regularExpressions as regexp]
         [#if regexp.codeSnippet?has_content]
 		  case ${regexp.ordinal} :
             [#if regexp.ordinal = 0]
               image.setLength(0); // For EOF no chars are matched
             [#else]
-              image.append(input_stream.getSuffix(matchedCharsLength + jjmatchedPos + 1));
+              image.append(input_stream.getSuffix(matchedCharsLength + this.matchedPos + 1));
             [/#if]
 		      ${regexp.codeSnippet.javaCode}
            break;
@@ -223,18 +210,18 @@
       }
     }
 
-    private Token jjFillToken() {
+    private Token fillToken() {
         final String curTokenImage = input_stream.getImage();
         final int beginLine = input_stream.getBeginLine();
         final int beginColumn = input_stream.getBeginColumn();
         final int endLine = input_stream.getEndLine();
         final int endColumn = input_stream.getEndColumn();
     [#if grammar.settings.TOKEN_FACTORY??]
-        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
+        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(TokenType.values()[matchedKind], curTokenImage, inputSource);
     [#elseif !grammar.hugeFileSupport]
-        final Token t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, this);
+        final Token t = Token.newToken(TokenType.values()[matchedKind], curTokenImage, this);
     [#else]
-        final Token t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
+        final Token t = Token.newToken(TokenType.values()[matchedKind], curTokenImage, inputSource);
     [/#if]
         t.setBeginLine(beginLine);
         t.setEndLine(endLine);
@@ -303,11 +290,10 @@
   }
   
 [#macro DumpMoveNfa lexicalState]
-//    public static int moveCallCount_${lexicalState.name};
-
-    private int jjMoveNfa_${lexicalState.name}() {
+    private int moveNfa_${lexicalState.name}() {
         int curPos = 0;
         int kind = 0x7fffffff;
+        nextStates = new BitSet();
         while (true) {
             currentStates = nextStates;
             nextStates = new BitSet();
@@ -317,8 +303,7 @@
                   [@DumpMove state /]
               [/#list]
             }
-	          else 
-            do {
+	          else do {
               nextActive = currentStates.nextSetBit(nextActive+1);
               if (nextActive != -1) {
                 switch(nextActive) {
@@ -328,14 +313,14 @@
               }
             } while (nextActive != -1);
             if (kind != 0x7fffffff) {
-                jjmatchedKind = kind;
-                jjmatchedPos = curPos;
+                this.matchedKind = kind;
+                this.matchedPos = curPos;
                 kind = 0x7fffffff;
             }
             ++curPos;
-            if (jjmatchedKind != 0 && jjmatchedKind != 0x7fffffff) {
-                if (trace_enabled) LOGGER.info("   Currently matched the first " + (jjmatchedPos +1) + " characters as a " 
-                                     + tokenImage[jjmatchedKind] + " token.");
+            if (matchedKind != 0 && matchedKind != 0x7fffffff) {
+                if (trace_enabled) LOGGER.info("   Currently matched the first " + (this.matchedPos +1) + " characters as a " 
+                                     + tokenImage[matchedKind] + " token.");
             }
             if (nextStates.isEmpty()) {
               return curPos;
@@ -348,9 +333,7 @@
                 return curPos;
             }
             if (trace_enabled) LOGGER.info("" + 
-            [#if multipleLexicalStates]
                "<" + lexicalState + ">" + 
-            [/#if]
                [#-- REVISIT --]
                addEscapes(String.valueOf(curChar)) + " (" + curChar + ") "
               + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
