@@ -86,46 +86,15 @@
     this.matchedKind = 0x7FFFFFFF;
     matchedType = null;
     this.matchedPos = 0;
-    [#var debugOutput]
-    [#set debugOutput]
-            "<" + lexicalState + ">" + 
-        "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
-        "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
-    [/#set]
-    if (trace_enabled) LOGGER.info(${debugOutput?trim});
     curPos = moveNfa_${lexicalState.name}();
         break;
 [/#list]
       }
-  if (this.matchedKind != 0x7FFFFFFF) { 
-      if (this.matchedPos + 1 < curPos) {
-        if (trace_enabled) LOGGER.info("   Putting back " + (curPos - this.matchedPos - 1) + " characters into the input stream.");
-        input_stream.backup(curPos - this.matchedPos - 1);
-      }
-       if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[this.matchedKind] + " MATCH ("
-          + addEscapes(input_stream.getSuffix(this.matchedPos + 2)) + ") ******\n");
- 
-       if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
+   if (this.matchedKind != 0x7FFFFFFF) { 
+      Token tok = handleMatch(curPos);
+      if (tok != null) return tok;
 
-         matchedToken = fillToken();
- [#list grammar.lexerTokenHooks as tokenHookMethodName]
-      [#if tokenHookMethodName = "CommonTokenAction"]
-         ${tokenHookMethodName}(matchedToken);
-      [#else]
-         matchedToken = ${tokenHookMethodName}(matchedToken);
-      [/#if]
- [/#list]
-      tokenLexicalActions();
-      this.matchedKind = matchedToken.getType().ordinal();
  
- [#if multipleLexicalStates]
-      if (newLexicalStates[this.matchedKind] != null) {
-          switchTo(newLexicalStates[this.matchedKind]);
-      }
- [/#if]
-      matchedToken.setUnparsed(specialSet.get(this.matchedKind));
-      return matchedToken;
-     }
          [#if lexerData.hasSkip || lexerData.hasSpecial]
             [#if lexerData.hasMore]
           else if (skipSet.get(this.matchedKind))
@@ -157,16 +126,8 @@
           int retval = input_stream.readChar();
           if (retval >=0) {
                curChar = retval;
-	            [#var debugOutput]
-	            [#set debugOutput]
-	                 "<" + lexicalState + ">" + 
-                  [#-- REVISIT --]
-	              "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
-	              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
-	            [/#set]
-	              if (trace_enabled) LOGGER.info(${debugOutput?trim});
-	          continue;
-	      }
+	             continue;
+	        }
      [/#if]
    [/#if]
    }
@@ -191,6 +152,40 @@
     invalidToken.setEndLine(line);
     invalidToken.setEndColumn(column);
     return invalidToken;
+  }
+
+  private Token handleMatch(int curPos) {
+      Token matchedToken;
+      if (this.matchedPos + 1 < curPos) {
+        if (trace_enabled) LOGGER.info("   Putting back " + (curPos - this.matchedPos - 1) + " characters into the input stream.");
+        input_stream.backup(curPos - this.matchedPos - 1);
+      }
+      if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[this.matchedKind] + " MATCH ("
+          + addEscapes(input_stream.getSuffix(this.matchedPos + 2)) + ") ******\n");
+
+       if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
+
+         matchedToken = fillToken();
+ [#list grammar.lexerTokenHooks as tokenHookMethodName]
+      [#if tokenHookMethodName = "CommonTokenAction"]
+         ${tokenHookMethodName}(matchedToken);
+      [#else]
+         matchedToken = ${tokenHookMethodName}(matchedToken);
+      [/#if]
+ [/#list]
+//      tokenLexicalActions();
+      this.matchedKind = matchedToken.getType().ordinal();
+ 
+ [#if multipleLexicalStates]
+      if (newLexicalStates[this.matchedKind] != null) {
+          switchTo(newLexicalStates[this.matchedKind]);
+      }
+ [/#if]
+      matchedToken.setUnparsed(specialSet.get(this.matchedKind));
+      tokenLexicalActions();
+      return matchedToken;
+     }
+     return null;
   }
 
   private void tokenLexicalActions() {
@@ -332,11 +327,6 @@
             else  {
                 return curPos;
             }
-            if (trace_enabled) LOGGER.info("" + 
-               "<" + lexicalState + ">" + 
-               [#-- REVISIT --]
-               addEscapes(String.valueOf(curChar)) + " (" + curChar + ") "
-              + "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn());
         }
     }
 [/#macro]
