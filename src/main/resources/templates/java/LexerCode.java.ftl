@@ -34,7 +34,7 @@
  [#var lexerData=grammar.lexerData]
  [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
 
-  private int matchedPos;
+  private int matchedPos, charsRead;
   //FIXME,should be an enum.
   private int matchedKind;
   private Token matchedToken;
@@ -66,7 +66,7 @@
   
   private Token nextToken() {
     matchedToken = null;
-    int curPos = 0;
+    //charsRead = 0;
     EOFLoop :
     while (true) {
         curChar = input_stream.beginToken();
@@ -82,12 +82,15 @@
                 this.matchedKind = 0x7FFFFFFF;
                 matchedType = null;
                 this.matchedPos = 0;
-                curPos = moveNfa_${lexicalState.name}();
+                moveNfa_${lexicalState.name}();
                 break;
 [/#list]
       }
    if (this.matchedKind != 0x7FFFFFFF) { 
-      handleMatch(curPos);
+      input_stream.backup(charsRead - this.matchedPos - 1);
+      if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
+          instantiateToken();
+      }
       tokenLexicalActions();
       if (matchedToken != null) break EOFLoop;
           if (skipSet.get(this.matchedKind))
@@ -106,7 +109,7 @@
          [#if multipleLexicalStates]
              doLexicalStateSwitch(this.matchedKind);
          [/#if]
-          curPos = 0;
+          charsRead = 0;
           this.matchedKind = 0x7FFFFFFF;
           int retval = input_stream.readChar();
           if (retval >=0) {
@@ -138,26 +141,22 @@
     return invalidToken;
   }
 
-  private void handleMatch(int curPos) {
-      matchedToken = null;
-      input_stream.backup(curPos - this.matchedPos - 1);
-      if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
-         matchedToken = fillToken();
+  private void instantiateToken() {
+       matchedToken = fillToken();
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
-      [#if tokenHookMethodName = "CommonTokenAction"]
-         ${tokenHookMethodName}(matchedToken);
-      [#else]
-         matchedToken = ${tokenHookMethodName}(matchedToken);
-      [/#if]
+    [#if tokenHookMethodName = "CommonTokenAction"]
+       ${tokenHookMethodName}(matchedToken);
+    [#else]
+       matchedToken = ${tokenHookMethodName}(matchedToken);
+    [/#if]
  [/#list]
-      this.matchedKind = matchedToken.getType().ordinal();
+    this.matchedKind = matchedToken.getType().ordinal();
  [#if multipleLexicalStates]
-      if (newLexicalStates[this.matchedKind] != null) {
-          switchTo(newLexicalStates[this.matchedKind]);
-      }
+    if (newLexicalStates[this.matchedKind] != null) {
+        switchTo(newLexicalStates[this.matchedKind]);
+    }
  [/#if]
-      matchedToken.setUnparsed(specialSet.get(this.matchedKind));
-     }
+    matchedToken.setUnparsed(specialSet.get(this.matchedKind));
   }
 
   private void tokenLexicalActions() {
@@ -195,9 +194,6 @@
         t.setBeginColumn(beginColumn);
         t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
-     [#if false]
-        t.setLexicalState(lexicalState);
-     [/#if]        
         return t;
     }
 
@@ -249,6 +245,8 @@
           }
           [/#if]
       [/#list]
+    static private Map<String,Object> memoizationCache_${lexicalState.name} = new HashMap<>();
+    static private Map<String,Integer> skipCache_${lexicalState.name} = new HashMap();
   [/#list]
 
   private final void addStates(int[] set) {
@@ -258,15 +256,15 @@
   }
   
 [#macro DumpMoveNfa lexicalState]
-    private int moveNfa_${lexicalState.name}() {
-        int curPos = 0;
+    private void moveNfa_${lexicalState.name}() {
+        charsRead = 0;
         int kind = 0x7fffffff;
         nextStates = new BitSet();
         while (true) {
             currentStates = nextStates;
             nextStates = new BitSet();
             int nextActive = -1;
-            if (curPos == 0) {
+            if (charsRead == 0) {
               [#list lexicalState.initialState.epsilonMoves as state]
                   [@DumpMove state /]
               [/#list]
@@ -282,20 +280,18 @@
             } while (nextActive != -1);
             if (kind != 0x7fffffff) {
                 this.matchedKind = kind;
-                this.matchedPos = curPos;
+                this.matchedPos = charsRead;
                 kind = 0x7fffffff;
             }
-            ++curPos;
+            ++charsRead;
             if (nextStates.isEmpty()) {
-              return curPos;
+              break;
             }
             int retval = input_stream.readChar();
             if (retval >=0) {
                  curChar = retval;
             }
-            else  {
-                return curPos;
-            }
+            else break;
         }
     }
 [/#macro]
