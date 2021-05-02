@@ -66,7 +66,6 @@
   
   private Token nextToken() {
     matchedToken = null;
-    //charsRead = 0;
     EOFLoop :
     while (true) {
         curChar = input_stream.beginToken();
@@ -82,7 +81,9 @@
                 this.matchedKind = 0x7FFFFFFF;
                 matchedType = null;
                 this.matchedPos = 0;
-                moveNfa_${lexicalState.name}();
+                if (!checkMemoization(memoizationCache_${lexicalState.name})) {
+                   moveNfa_${lexicalState.name}();
+                }
                 break;
 [/#list]
       }
@@ -195,6 +196,33 @@
         t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
         return t;
+    }
+
+    private static final int MAX_TO_CHECK = 16;
+
+    private boolean checkMemoization(Map<String, Object> cache) {
+[#if !grammar.hugeFileSupport]      
+      StringBuilder buf = new StringBuilder();
+      buf.appendCodePoint(curChar);
+      int codePointsRead = 0;
+      String key = null;
+      Object value = null;
+      int previousPosition = input_stream.getBufferPosition();
+      while (buf.length() < MAX_TO_CHECK) {
+        key = buf.toString();
+        value = cache.get(key);
+        if (value == null) {
+           int ch = input_stream.readChar();
+           if (ch >=0) {
+             codePointsRead++;
+             buf.appendCodePoint(ch);
+           } 
+           else break;
+        } else break;
+      }
+      backup(codePointsRead); 
+[/#if]      
+      return false;
     }
 
   [#list lexerData.lexicalStates as lexicalState]

@@ -247,6 +247,7 @@ public class FileLineMap {
             char nextChar = content.charAt(bufferPosition);
             if (Character.isLowSurrogate(nextChar)) {
                 ++bufferPosition;
+                column+=2;
                 return Character.toCodePoint(ch, nextChar);
             }
         }
@@ -333,6 +334,10 @@ public class FileLineMap {
         if (column == 1 && line > tokenBeginLine)
             return line - 1;
         return line;
+    }
+
+    int getBufferPosition() {
+        return bufferPosition;
     }
 
     // But there is no goto in Java!!!
