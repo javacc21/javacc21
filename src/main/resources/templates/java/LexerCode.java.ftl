@@ -37,6 +37,7 @@
   private int matchedPos;
   //FIXME,should be an enum.
   private int matchedKind;
+  private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
   private BitSet nextStates=new BitSet(), currentStates = new BitSet();
@@ -50,7 +51,6 @@
   private int curChar, matchedCharsLength;
     
   private Token generateEOF() {
-      if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
 	    this.matchedKind = 0;
       matchedType = TokenType.EOF;
       Token eof = fillToken();
@@ -65,9 +65,8 @@
     }
   
   private Token nextToken() {
-    Token matchedToken;
+    matchedToken = null;
     int curPos = 0;
-
     EOFLoop :
     while (true) {
         curChar = input_stream.beginToken();
@@ -76,35 +75,23 @@
         }
        image.setLength(0);
        matchedCharsLength = 0;
-[#if lexerData.hasMore]
-       while (true) {
-[/#if]
+       MORELoop : while (true) {
        switch(lexicalState) {
-    
 [#list lexerData.lexicalStates as lexicalState]
             case ${lexicalState.name} : 
-    this.matchedKind = 0x7FFFFFFF;
-    matchedType = null;
-    this.matchedPos = 0;
-    curPos = moveNfa_${lexicalState.name}();
-        break;
+                this.matchedKind = 0x7FFFFFFF;
+                matchedType = null;
+                this.matchedPos = 0;
+                curPos = moveNfa_${lexicalState.name}();
+                break;
 [/#list]
       }
    if (this.matchedKind != 0x7FFFFFFF) { 
-      Token tok = handleMatch(curPos);
-      if (tok != null) return tok;
-
- 
-         [#if lexerData.hasSkip || lexerData.hasSpecial]
-            [#if lexerData.hasMore]
-          else if (skipSet.get(this.matchedKind))
-            [#else]
-          else
-            [/#if]
+      handleMatch(curPos);
+      tokenLexicalActions();
+      if (matchedToken != null) break EOFLoop;
+          if (skipSet.get(this.matchedKind))
           {
-          [#if lexerData.hasSkipActions]
-                 tokenLexicalActions();
-          [/#if]
           [#if multipleLexicalStates]
             if (newLexicalStates[this.matchedKind] != null) {
                this.lexicalState = newLexicalStates[this.matchedKind];
@@ -113,29 +100,26 @@
             continue EOFLoop;
           }
          [#if lexerData.hasMore]
-          [#if lexerData.hasMoreActions]
-          tokenLexicalActions();
-          [#else]
-          matchedCharsLength += this.matchedPos + 1;
-		  [/#if]
-          [#if multipleLexicalStates]
+          [#if !lexerData.hasMoreActions]
+             matchedCharsLength += this.matchedPos + 1;
+		     [/#if]
+         [#if multipleLexicalStates]
              doLexicalStateSwitch(this.matchedKind);
-          [/#if]
+         [/#if]
           curPos = 0;
           this.matchedKind = 0x7FFFFFFF;
           int retval = input_stream.readChar();
           if (retval >=0) {
                curChar = retval;
-	             continue;
+	             continue MORELoop;
 	        }
-     [/#if]
-   [/#if]
-   }
-    return handleInvalidChar(curChar);
-[#if lexerData.hasMore]
-    }
-[/#if]
+        [/#if]
      }
+     matchedToken = handleInvalidChar(curChar);
+     break EOFLoop;
+    }
+   }
+   return matchedToken;
   }
 
   private InvalidToken handleInvalidChar(int ch) {
@@ -154,17 +138,10 @@
     return invalidToken;
   }
 
-  private Token handleMatch(int curPos) {
-      Token matchedToken;
-      if (this.matchedPos + 1 < curPos) {
-        if (trace_enabled) LOGGER.info("   Putting back " + (curPos - this.matchedPos - 1) + " characters into the input stream.");
-        input_stream.backup(curPos - this.matchedPos - 1);
-      }
-      if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[this.matchedKind] + " MATCH ("
-          + addEscapes(input_stream.getSuffix(this.matchedPos + 2)) + ") ******\n");
-
-       if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
-
+  private void handleMatch(int curPos) {
+      matchedToken = null;
+      input_stream.backup(curPos - this.matchedPos - 1);
+      if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
          matchedToken = fillToken();
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
       [#if tokenHookMethodName = "CommonTokenAction"]
@@ -173,19 +150,14 @@
          matchedToken = ${tokenHookMethodName}(matchedToken);
       [/#if]
  [/#list]
-//      tokenLexicalActions();
       this.matchedKind = matchedToken.getType().ordinal();
- 
  [#if multipleLexicalStates]
       if (newLexicalStates[this.matchedKind] != null) {
           switchTo(newLexicalStates[this.matchedKind]);
       }
  [/#if]
       matchedToken.setUnparsed(specialSet.get(this.matchedKind));
-      tokenLexicalActions();
-      return matchedToken;
      }
-     return null;
   }
 
   private void tokenLexicalActions() {
@@ -278,6 +250,7 @@
           [/#if]
       [/#list]
   [/#list]
+
   private final void addStates(int[] set) {
       for (int i=0; i< set.length; i++) {
          nextStates.set(set[i]);
@@ -313,10 +286,6 @@
                 kind = 0x7fffffff;
             }
             ++curPos;
-            if (matchedKind != 0 && matchedKind != 0x7fffffff) {
-                if (trace_enabled) LOGGER.info("   Currently matched the first " + (this.matchedPos +1) + " characters as a " 
-                                     + tokenImage[matchedKind] + " token.");
-            }
             if (nextStates.isEmpty()) {
               return curPos;
             }
