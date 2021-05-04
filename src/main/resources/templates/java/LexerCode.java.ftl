@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -230,35 +230,8 @@
 
   [#list lexerData.lexicalStates as lexicalState]
       [#list lexicalState.allStates as nfaState]
-        [#if nfaState.moveRanges.size() == 2]
-           private static final boolean ${nfaState.moveMethodName} (int ch) {
-             [#if nfaState.moveRanges[0] == nfaState.moveRanges[1]]
-                return ch == ${nfaState.moveRanges[0]};
-             [#else]
-                return ch >= ${nfaState.moveRanges[0]} && ch <= ${nfaState.moveRanges[1]};
-             [/#if]
-           }
-        [#elseif nfaState.moveRanges.size() < 16]  
-          private static final boolean ${nfaState.moveMethodName}(int ch) {
-              [#var left, right]
-              [#list nfaState.moveRanges as char]
-                [#if char_index % 2 = 0]
-                   [#set left = char]
-                [#else]
-                    [#set right = char]
-                    [#if left = right]
-                    if (ch == ${left}) return true;
-                    [#else]
-                      [#if left >0 ]
-                    if (ch < ${left}) return false;
-                      [/#if]
-                    if (ch <= ${right}) return true;
-                    [/#if]
-                [/#if]
-              [/#list]
-                    return false;
-          }
-          [#else]
+        [#var moveRanges = nfaState.moveRanges]
+        [#if moveRanges.size() >=16]
           [#var arrayName = nfaState.movesArrayName]
           static private int[] ${arrayName} = ${arrayName}_init();
 
@@ -274,18 +247,12 @@
               int idx = Arrays.binarySearch(${arrayName}, ch);
               return idx>=0 || idx%2==0;
           }
-          [/#if]
+        [/#if]
       [/#list]
     static private Map<String,Integer> memoizationCache_${lexicalState.name} = new HashMap<>();
     private Map<String,Integer> skipCache_${lexicalState.name} = new Hashtable();
   [/#list]
 
-  private final void addStates(int[] set) {
-      for (int i=0; i< set.length; i++) {
-         nextStates.set(set[i]);
-      }
-  }
-  
 [#macro DumpMoveNfa lexicalState]
     private final void moveNfa_${lexicalState.name}() {
         charsRead = 0;
@@ -357,45 +324,46 @@
 
 [#macro DumpMove nfaState]
    [#if !NeedDumpMove(nfaState)][#return][/#if]
-   [#var statesToAdd = (nfaState.nextState.epsilonMoves.size())!0]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
-    if (${nfaState.moveMethodName}(curChar)) {
+    if ([@nfaStateCondition nfaState/]) {
    [#if kindToPrint != MAX_INT]
        kind = Math.min(kind, ${kindToPrint});
    [/#if]
-      [#if statesToAdd >0]
-       addStates(nextStates_${nfaState.lexicalState.name}_${nfaState.index});
-//         nextStates.or(nextStatesSet_${nfaState.lexicalState.name}_${nfaState.index});
-      [/#if]
+   [#list (nfaState.nextState.epsilonMoves)! as epsilonMove]
+          nextStates.set(${epsilonMove.index});
+   [/#list]
    }
 [/#macro]
 
+[#macro nfaStateCondition nfaState]
+    [#var moveRanges = nfaState.moveRanges]
+    [#if moveRanges.size()==2]
+       [@rangeCondition moveRanges[0], moveRanges[1]/]
+    [#elseif moveRanges.size() <16]
+      [#list moveRanges as leftMove]
+          [#if leftMove_index % 2 == 0]
+              [@rangeCondition moveRanges[leftMove_index], moveRanges[leftMove_index+1]/]
+              [#if leftMove_index +2 != moveRanges.size()]||[/#if]
+          [/#if]
+      [/#list]
+    [#else]
+       ${nfaState.moveMethodName}(curChar)
+    [/#if]
+[/#macro]
+
+[#macro rangeCondition left right]
+   [#if left == right]
+      curChar == ${left}
+   [#elseif left +1 == right]
+      curChar == ${left} || curChar == ${right}
+   [#else]
+      curChar >= ${left} && curChar <= ${right}
+   [/#if]
+[/#macro]
+
 [#list lexerData.lexicalStates as lexicalState]
-   [@OutputNextStates lexicalState/] 
    [@DumpMoveNfa lexicalState/]
 [/#list]
-
-[#macro OutputNextStates lexicalState]
-   [#list lexicalState.allStates as state]
-      [#var nextStateEpsilonMoves = (state.nextState.epsilonMoves)![]]
-       static private final BitSet nextStatesSet_${lexicalState.name}_${state.index} = nextStatesSet_${lexicalState.name}_${state.index}_init();
-
-       static private BitSet nextStatesSet_${lexicalState.name}_${state.index}_init() {
-         BitSet bs = new BitSet();
-        [#list nextStateEpsilonMoves as epsilonMove]
-            bs.set(${epsilonMove.index});
-        [/#list]
-         return bs;
-       }
-
-       static private final int[] nextStates_${lexicalState.name}_${state.index} = {
-        [#list nextStateEpsilonMoves as epsilonMove]
-            ${epsilonMove.index}
-            [#if epsilonMove_has_next],[/#if]
-        [/#list]
-      };
-   [/#list]
-[/#macro]
 
 [#macro BitSetFromLongArray bitSet]
       BitSet.valueOf(new long[] {
