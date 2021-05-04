@@ -47,8 +47,7 @@
                                 skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
                                 moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
-  private final StringBuilder image = new StringBuilder();
-  private int curChar, matchedCharsLength;
+  private int curChar, pendingMoreChars;
     
   private Token generateEOF() {
 	    this.matchedKind = 0;
@@ -72,17 +71,18 @@
         if (curChar == -1) {
            return generateEOF();
         }
-       image.setLength(0);
-       matchedCharsLength = 0;
+        pendingMoreChars = 0;
        MORELoop : while (true) {
+       boolean hitCache = false;
        switch(lexicalState) {
 [#list lexerData.lexicalStates as lexicalState]
             case ${lexicalState.name} : 
                 this.matchedKind = 0x7FFFFFFF;
                 matchedType = null;
                 this.matchedPos = 0;
-                if (!checkMemoization(memoizationCache_${lexicalState.name})) {
-                   moveNfa_${lexicalState.name}();
+                hitCache = checkMemoization(memoizationCache_${lexicalState.name});
+                if (!hitCache) {
+                  moveNfa_${lexicalState.name}();
                 }
                 break;
 [/#list]
@@ -94,30 +94,28 @@
       }
       tokenLexicalActions();
       if (matchedToken != null) break EOFLoop;
-          if (skipSet.get(this.matchedKind))
-          {
-          [#if multipleLexicalStates]
-            if (newLexicalStates[this.matchedKind] != null) {
-               this.lexicalState = newLexicalStates[this.matchedKind];
-            }
-          [/#if]
-            continue EOFLoop;
-          }
-         [#if lexerData.hasMore]
-          [#if !lexerData.hasMoreActions]
-             matchedCharsLength += this.matchedPos + 1;
-		     [/#if]
-         [#if multipleLexicalStates]
-             doLexicalStateSwitch(this.matchedKind);
-         [/#if]
-          charsRead = 0;
-          this.matchedKind = 0x7FFFFFFF;
-          int retval = input_stream.readChar();
-          if (retval >=0) {
-               curChar = retval;
-	             continue MORELoop;
-	        }
-        [/#if]
+      if (skipSet.get(this.matchedKind))
+      {
+      [#if multipleLexicalStates]
+        if (newLexicalStates[this.matchedKind] != null) {
+            this.lexicalState = newLexicalStates[this.matchedKind];
+        }
+      [/#if]
+        continue EOFLoop;
+      }
+      [#if lexerData.hasMore]
+          pendingMoreChars += this.matchedPos + 1;
+      [#if multipleLexicalStates]
+          doLexicalStateSwitch(this.matchedKind);
+      [/#if]
+      charsRead = 0;
+      this.matchedKind = 0x7FFFFFFF;
+      int retval = input_stream.readChar();
+      if (retval >=0) {
+            curChar = retval;
+            continue MORELoop;
+      }
+     [/#if]
      }
      matchedToken = handleInvalidChar(curChar);
      break EOFLoop;
@@ -165,11 +163,6 @@
    [#list lexerData.regularExpressions as regexp]
         [#if regexp.codeSnippet?has_content]
 		  case ${regexp.ordinal} :
-            [#if regexp.ordinal = 0]
-              image.setLength(0); // For EOF no chars are matched
-            [#else]
-              image.append(input_stream.getSuffix(matchedCharsLength + this.matchedPos + 1));
-            [/#if]
 		      ${regexp.codeSnippet.javaCode}
            break;
         [/#if]
@@ -198,27 +191,37 @@
         return t;
     }
 
-    private static final int MAX_TO_CHECK = 16;
+    private static final int MAX_TO_CHECK = 10;
+    static private Integer PARTIAL_MATCH = 0xFFFFFFFF;
 
-    private boolean checkMemoization(Map<String, Object> cache) {
+    private boolean checkMemoization(Map<String, Integer> cache) {
 [#if !grammar.hugeFileSupport]      
       StringBuilder buf = new StringBuilder();
       buf.appendCodePoint(curChar);
       int codePointsRead = 0;
       String key = null;
-      Object value = null;
+      Integer value = null;
       int previousPosition = input_stream.getBufferPosition();
       while (buf.length() < MAX_TO_CHECK) {
         key = buf.toString();
         value = cache.get(key);
         if (value == null) {
+            break;
+        }
+        else if (value == PARTIAL_MATCH) {
            int ch = input_stream.readChar();
            if (ch >=0) {
              codePointsRead++;
              buf.appendCodePoint(ch);
            } 
            else break;
-        } else break;
+        } 
+        else {
+          matchedPos = (int) (value % 1000);
+          matchedKind = (int) (value/1000);
+          charsRead = codePointsRead+1;
+          return true;
+        }
       }
       backup(codePointsRead); 
 [/#if]      
@@ -273,8 +276,8 @@
           }
           [/#if]
       [/#list]
-    static private Map<String,Object> memoizationCache_${lexicalState.name} = new HashMap<>();
-    static private Map<String,Integer> skipCache_${lexicalState.name} = new HashMap();
+    static private Map<String,Integer> memoizationCache_${lexicalState.name} = new HashMap<>();
+    private Map<String,Integer> skipCache_${lexicalState.name} = new Hashtable();
   [/#list]
 
   private final void addStates(int[] set) {
@@ -284,7 +287,7 @@
   }
   
 [#macro DumpMoveNfa lexicalState]
-    private void moveNfa_${lexicalState.name}() {
+    private final void moveNfa_${lexicalState.name}() {
         charsRead = 0;
         int kind = 0x7fffffff;
         nextStates = new BitSet();
@@ -313,6 +316,17 @@
             }
             ++charsRead;
             if (nextStates.isEmpty()) {
+              if (matchedKind != 0x7FFFFFFF && pendingMoreChars == 0) {
+                int value = matchedKind * 1000 + matchedPos;
+                String image = input_stream.getImage();
+                if (image.length() <= MAX_TO_CHECK) {
+                    memoizationCache_${lexicalState.name}.put(image, value);
+                    for (int i = image.length()-1; i>=0 ; i--) {
+                       Integer previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
+                       if (previous != null) break;
+                    }
+                }
+              }
               break;
             }
             int retval = input_stream.readChar();
@@ -351,6 +365,7 @@
    [/#if]
       [#if statesToAdd >0]
        addStates(nextStates_${nfaState.lexicalState.name}_${nfaState.index});
+//         nextStates.or(nextStatesSet_${nfaState.lexicalState.name}_${nfaState.index});
       [/#if]
    }
 [/#macro]
@@ -362,8 +377,18 @@
 
 [#macro OutputNextStates lexicalState]
    [#list lexicalState.allStates as state]
+      [#var nextStateEpsilonMoves = (state.nextState.epsilonMoves)![]]
+       static private final BitSet nextStatesSet_${lexicalState.name}_${state.index} = nextStatesSet_${lexicalState.name}_${state.index}_init();
+
+       static private BitSet nextStatesSet_${lexicalState.name}_${state.index}_init() {
+         BitSet bs = new BitSet();
+        [#list nextStateEpsilonMoves as epsilonMove]
+            bs.set(${epsilonMove.index});
+        [/#list]
+         return bs;
+       }
+
        static private final int[] nextStates_${lexicalState.name}_${state.index} = {
-        [#var nextStateEpsilonMoves = (state.nextState.epsilonMoves)![]]
         [#list nextStateEpsilonMoves as epsilonMove]
             ${epsilonMove.index}
             [#if epsilonMove_has_next],[/#if]
