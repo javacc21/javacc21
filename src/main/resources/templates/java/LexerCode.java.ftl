@@ -243,7 +243,7 @@
           }
         [/#if]
       [/#list]
-    static private Map<String,Integer> memoizationCache_${lexicalState.name} = new HashMap<>();
+    static private Map<String,Integer> memoizationCache_${lexicalState.name} = new Hashtable<>();
   [/#list]
 
 [#macro DumpMoveNfa lexicalState]
@@ -321,7 +321,7 @@
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     if ([@nfaStateCondition nfaState/]) {
    [#if kindToPrint != MAX_INT]
-       if (kind > ${kindToPrint}) kind = ${kindToPrint};
+       kind = Math.min(kind, ${kindToPrint});
    [/#if]
    [#list (nfaState.nextState.epsilonMoves)! as epsilonMove]
           nextStates.set(${epsilonMove.index});
