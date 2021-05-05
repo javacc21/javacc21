@@ -60,6 +60,7 @@ public class JLex {
            ++numTokens;
        }
        while (t.getType() != TokenType.EOF);
+       FileLineMap.clearFileLineMapCache();
        return numTokens;
    }
 

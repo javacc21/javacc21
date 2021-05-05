@@ -35,53 +35,43 @@ import com.javacc.parsegen.RegularExpression;
 
 /**
  * Class representing a single state of a Non-deterministic Finite Automaton (NFA)
- * Note that any given lexical state is implemented as an NFA (and a DFA for string literals)
+ * Note that any given lexical state is implemented as an NFA.
  * Thus, any given NfaState object is associated with one lexical state.
  */
 public class NfaState {  
 
     private final LexicalStateData lexicalState;
-    private final NfaData nfaData;
     private RegularExpression type;
     private List<Integer> moveRanges = new ArrayList<>();
     private int index = -1;
-    NfaState nextState;
-    Set<NfaState> epsilonMoves = new HashSet<>();
+    private NfaState nextState;
+    private Set<NfaState> epsilonMoves = new HashSet<>();
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
-        nfaData = lexicalState.getNfaData();
-        nfaData.allStates.add(this);
+        lexicalState.allStates.add(this);
     }
 
     public int getIndex() {
         return index;
     }
 
-    public String getMoveMethodName() {
-        return "NFA_" + lexicalState.getName() + "_" + index;
-    }
-
     public String getMovesArrayName() {
-        return getMoveMethodName().replace("NFA_", "NFA_MOVES_");
+        return "NFA_MOVES" + lexicalState.getName() + "_" + index;
     }
 
     public List<Integer> getMoveRanges() { return moveRanges; }
 
     public RegularExpression getType() {return type;}
 
-    public LexicalStateData getLexicalState() {
-        return lexicalState;
-    }
+    public LexicalStateData getLexicalState() {return lexicalState;}
 
-    public NfaState getNextState() {
-        return nextState;
-    }
+    public NfaState getNextState() {return nextState;}
 
-    public int getEpsilonMoveCount() {
-        return epsilonMoves.size();
-    }
-    
+    void setNextState(NfaState nextState) {this.nextState = nextState;}
+
+    public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
+
     void setType(RegularExpression type) {
         this.type = type;
     }
@@ -102,7 +92,7 @@ public class NfaState {
     private boolean closureDone;
 
     /**
-     * This function computes the closure and also updates the type so that any
+     * This method computes the closure and also updates the type so that any
      * time there is a move to this state, it can go on epsilon to a new state
      * in the epsilon moves that might have a lower kind of token number for the
      * same length.
@@ -123,28 +113,8 @@ public class NfaState {
         }
         addEpsilonMove(this);
         epsilonMoves.removeIf(state->state.moveRanges.isEmpty());
-    }
-
-    private boolean codeGenerated;
-    
-    void generateCode() {
-        if (codeGenerated) return;
-        codeGenerated = true;
-        for (NfaState epsilonMove : epsilonMoves) {
-            epsilonMove.generateCode();
-        }
-        if (nextState != null) {
-            nextState.generateCode();
-        }
         if (index == -1 && !moveRanges.isEmpty()) {
-            this.index = nfaData.indexedAllStates.size();
-            nfaData.indexedAllStates.put(index, this);
+            this.index = lexicalState.numStates++;
         }
-    }
-
-    boolean canMoveUsingChar(int c) {
-        // Check whether the character c is in some range.
-        int idx = Collections.binarySearch(moveRanges, c);
-        return idx >=0 || idx%2 ==0;
     }
 }

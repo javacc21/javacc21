@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,56 +30,29 @@
  */
  --]
 
- [#--  
-        This is the one remaining template file that is still a god-awful mess and, I (JR) have to admit 
-        still quite opaque to me. The corresponding Java code is the stuff in com.javacc.lexgen package
-        that, along with this template, will eventually be cleaned up, probably a more accurate 
-        description is that it will be torn up and rewritten. 
-  --]
- [#import "DfaCode.java.ftl" as dfa]
- [#import "NfaCode.java.ftl" as nfa]
+ [#var MAX_INT=2147483647]
  [#var lexerData=grammar.lexerData]
- [#var utils=grammar.utils]
- [#var tokenCount=lexerData.tokenCount]
- [#var numLexicalStates=lexerData.lexicalStates?size]
- [#var multipleLexicalStates = numLexicalStates>1]
+ [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
 
-[#var MAX_INT=2147483647]
-
-   private int[] jjemptyLineNo = new int[${numLexicalStates}];
-   private int[] jjemptyColNo = new int[${numLexicalStates}];
-   private boolean[] jjbeenHere = new boolean[${numLexicalStates}];
-  
-  
-  private int jjmatchedPos;
+  private int matchedPos, charsRead;
   //FIXME,should be an enum.
-  private int jjmatchedKind;
+  private int matchedKind;
+  private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
+  private BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
- [#macro BitSetFromLongArray bitSet]
-      BitSet.valueOf(new long[] {
-          [#list bitSet.toLongArray() as long]
-             ${utils.toHexStringL(long)}
-             [#if long_has_next],[/#if]
-          [/#list]
-      })
-[/#macro]
-  
-    static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
-                                specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
-                                skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
-                                moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
+  static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
+                              specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
+                              skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
+                              moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
-  
-    private final StringBuilder image = new StringBuilder();
-    private int curChar, matchedCharsLength;
+  private int curChar, pendingMoreChars;
     
-    private Token generateEOF() {
-      if (trace_enabled) LOGGER.info("Returning the <EOF> token.");
-	    jjmatchedKind = 0;
+  private Token generateEOF() {
+	    this.matchedKind = 0;
       matchedType = TokenType.EOF;
-      Token eof = jjFillToken();
+      Token eof = fillToken();
       tokenLexicalActions();
 [#list grammar.lexerTokenHooks as tokenHookMethodName]
       [#if tokenHookMethodName != "CommonTokenAction"]
@@ -90,139 +63,63 @@
       return eof;
     }
   
-  [#--  Need to figure out how to simplify this --]
   private Token nextToken() {
-    Token matchedToken;
-    int curPos = 0;
-
+    matchedToken = null;
     EOFLoop :
     while (true) {
         curChar = input_stream.beginToken();
         if (curChar == -1) {
            return generateEOF();
         }
-       image.setLength(0);
-       matchedCharsLength = 0;
-[#if lexerData.hasMore]
-       while (true) {
-[/#if]
-    [#-- this also sets up the start state of the nfa --]
-[#if multipleLexicalStates]
+        pendingMoreChars = 0;
+       MORELoop : while (true) {
        switch(lexicalState) {
-[/#if]
-    
 [#list lexerData.lexicalStates as lexicalState]
-    [#if multipleLexicalStates]
             case ${lexicalState.name} : 
-    [/#if]
-    [@dfa.SkipSingles lexicalState.dfaData /]
-    jjmatchedKind = 0x7FFFFFFF;
-    matchedType = null;
-    jjmatchedPos = 0;
-    [#var debugOutput]
-    [#set debugOutput]
-        [#if multipleLexicalStates]
-            "<" + lexicalState + ">" + 
-        [/#if]
-        [#-- REVISIT--]
-        "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
-        "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
-    [/#set]
-    if (trace_enabled) LOGGER.info(${debugOutput?trim}); 
-    curPos = jjMoveStringLiteralDfa0_${lexicalState.name}();
-    [#if multipleLexicalStates]
-        break;
-    [/#if]
+                this.matchedKind = 0x7FFFFFFF;
+                matchedType = null;
+                this.matchedPos = 0;
+                if (!checkMemoization(memoizationCache_${lexicalState.name})) {
+                  moveNfa_${lexicalState.name}();
+                }
+                break;
 [/#list]
-  [#if multipleLexicalStates]
       }
-  [/#if]
-  if (jjmatchedKind != 0x7FFFFFFF) { 
-      if (jjmatchedPos + 1 < curPos) {
-        if (trace_enabled) LOGGER.info("   Putting back " + (curPos - jjmatchedPos - 1) + " characters into the input stream.");
-        input_stream.backup(curPos - jjmatchedPos - 1);
+   if (this.matchedKind != 0x7FFFFFFF) { 
+      input_stream.backup(charsRead - this.matchedPos - 1);
+      if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
+          instantiateToken();
       }
-       if (trace_enabled) LOGGER.info("****** FOUND A " + tokenImage[jjmatchedKind] + " MATCH ("
-          + addEscapes(input_stream.getSuffix(jjmatchedPos + 2)) + ") ******\n");
- 
-       if (tokenSet.get(jjmatchedKind) || specialSet.get(jjmatchedKind)) {
-
-         matchedToken = jjFillToken();
- [#list grammar.lexerTokenHooks as tokenHookMethodName]
-      [#if tokenHookMethodName = "CommonTokenAction"]
-         ${tokenHookMethodName}(matchedToken);
-      [#else]
-         matchedToken = ${tokenHookMethodName}(matchedToken);
-      [/#if]
-[/#list]
       tokenLexicalActions();
-      jjmatchedKind = matchedToken.getType().ordinal();
- 
- [#if multipleLexicalStates]
-      if (newLexicalStates[jjmatchedKind] != null) {
-[#--          matchedToken.setFollowingLexicalState(newLexicalStates[jjmatchedKind]);--]
-          switchTo(newLexicalStates[jjmatchedKind]);
+      if (matchedToken != null) break EOFLoop;
+      if (skipSet.get(this.matchedKind))
+      {
+      [#if multipleLexicalStates]
+        if (newLexicalStates[this.matchedKind] != null) {
+            this.lexicalState = newLexicalStates[this.matchedKind];
+        }
+      [/#if]
+        continue EOFLoop;
       }
- [/#if]
-      matchedToken.setUnparsed(specialSet.get(jjmatchedKind));
-      return matchedToken;
-
-     }
-         [#if lexerData.hasSkip || lexerData.hasSpecial]
-            [#if lexerData.hasMore]
-          else if (skipSet.get(jjmatchedKind))
-            [#else]
-          else
-            [/#if]
-
-          {
-          [#if lexerData.hasSkipActions]
-                 tokenLexicalActions();
-          [/#if]
-          [#if multipleLexicalStates]
-            if (newLexicalStates[jjmatchedKind] != null) {
-               this.lexicalState = newLexicalStates[jjmatchedKind];
-            }
-          [/#if]
-
-            continue EOFLoop;
-          }
-         [#if lexerData.hasMore]
-          [#if lexerData.hasMoreActions]
-          tokenLexicalActions();
-          [#else]
-          matchedCharsLength += jjmatchedPos + 1;
-		  [/#if]
-		  
-          [#if multipleLexicalStates]
-             doLexicalStateSwitch(jjmatchedKind);
-          [/#if]
-          curPos = 0;
-          jjmatchedKind = 0x7FFFFFFF;
-          int retval = input_stream.readChar();
-          if (retval >=0) {
-               curChar = retval;
-	
-	            [#var debugOutput]
-	            [#set debugOutput]
-	              [#if multipleLexicalStates]
-	                 "<" + lexicalState + ">" + 
-	              [/#if]
-                  [#-- REVISIT --]
-	              "Current character : " + addEscapes(String.valueOf(curChar)) + " (" + curChar + ") " +
-	              "at line " + input_stream.getEndLine() + " column " + input_stream.getEndColumn()
-	            [/#set]
-	              if (trace_enabled) LOGGER.info(${debugOutput?trim});
-	          continue;
-	      }
+      [#if lexerData.hasMore]
+          pendingMoreChars += this.matchedPos + 1;
+      [#if multipleLexicalStates]
+          doLexicalStateSwitch(this.matchedKind);
+      [/#if]
+      charsRead = 0;
+      this.matchedKind = 0x7FFFFFFF;
+      int retval = input_stream.readChar();
+      if (retval >=0) {
+            curChar = retval;
+            continue MORELoop;
+      }
      [/#if]
-   [/#if]
-   }
-    return handleInvalidChar(curChar);
-[#if lexerData.hasMore]
-    }
-[/#if]
      }
+     matchedToken = handleInvalidChar(curChar);
+     break EOFLoop;
+    }
+   }
+   return matchedToken;
   }
 
   private InvalidToken handleInvalidChar(int ch) {
@@ -241,16 +138,29 @@
     return invalidToken;
   }
 
+  private void instantiateToken() {
+       matchedToken = fillToken();
+ [#list grammar.lexerTokenHooks as tokenHookMethodName]
+    [#if tokenHookMethodName = "CommonTokenAction"]
+       ${tokenHookMethodName}(matchedToken);
+    [#else]
+       matchedToken = ${tokenHookMethodName}(matchedToken);
+    [/#if]
+ [/#list]
+    this.matchedKind = matchedToken.getType().ordinal();
+ [#if multipleLexicalStates]
+    if (newLexicalStates[this.matchedKind] != null) {
+        switchTo(newLexicalStates[this.matchedKind]);
+    }
+ [/#if]
+    matchedToken.setUnparsed(specialSet.get(this.matchedKind));
+  }
+
   private void tokenLexicalActions() {
-       switch(jjmatchedKind) {
+       switch(matchedKind) {
    [#list lexerData.regularExpressions as regexp]
         [#if regexp.codeSnippet?has_content]
 		  case ${regexp.ordinal} :
-            [#if regexp.ordinal = 0]
-              image.setLength(0); // For EOF no chars are matched
-            [#else]
-              image.append(input_stream.getSuffix(matchedCharsLength + jjmatchedPos + 1));
-            [/#if]
 		      ${regexp.codeSnippet.javaCode}
            break;
         [/#if]
@@ -258,53 +168,214 @@
       }
     }
 
-    private Token jjFillToken() {
+    private Token fillToken() {
         final String curTokenImage = input_stream.getImage();
         final int beginLine = input_stream.getBeginLine();
         final int beginColumn = input_stream.getBeginColumn();
         final int endLine = input_stream.getEndLine();
         final int endColumn = input_stream.getEndColumn();
     [#if grammar.settings.TOKEN_FACTORY??]
-        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
+        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(TokenType.values()[matchedKind], curTokenImage, inputSource);
     [#elseif !grammar.hugeFileSupport]
-        final Token t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, this);
+        final Token t = Token.newToken(TokenType.values()[matchedKind], curTokenImage, this);
     [#else]
-        final Token t = Token.newToken(TokenType.values()[jjmatchedKind], curTokenImage, inputSource);
+        final Token t = Token.newToken(TokenType.values()[matchedKind], curTokenImage, inputSource);
     [/#if]
         t.setBeginLine(beginLine);
         t.setEndLine(endLine);
         t.setBeginColumn(beginColumn);
         t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
-     [#if false]
-        t.setLexicalState(lexicalState);
-     [/#if]        
         return t;
     }
 
-[@nfa.OutputNfaStateMoves/]
+    private static final int MAX_LENGTH_TO_MEMOIZE = 32;
+    static private Integer PARTIAL_MATCH = 0xFFFFFFFF;
 
-[#list lexerData.lexicalStates as lexicalState]
-  [#if lexicalState.nfaData.dumpNfaStarts]
-  [@nfa.DumpNfaStartStatesCode lexicalState, lexicalState_index/]
-  [/#if]
-  [#if lexicalState.createStartNfa]
-     [@nfa.DumpStartWithStates lexicalState/]
-  [/#if]
-   [@dfa.DumpDfaCode lexicalState/]
-   [@nfa.DumpMoveNfa lexicalState/]
-[/#list]
+    private boolean checkMemoization(Map<String, Integer> cache) {
+[#if !grammar.hugeFileSupport]      
+      StringBuilder buf = new StringBuilder();
+      buf.appendCodePoint(curChar);
+      int codePointsRead = 0;
+      String key = null;
+      Integer value = null;
+      int previousPosition = input_stream.getBufferPosition();
+      while (buf.length() < MAX_LENGTH_TO_MEMOIZE) {
+        key = buf.toString();
+        value = cache.get(key);
+        if (value == null) {
+            break;
+        }
+        else if (value == PARTIAL_MATCH) {
+           int ch = input_stream.readChar();
+           if (ch >=0) {
+             codePointsRead++;
+             buf.appendCodePoint(ch);
+           } 
+           else break;
+        } 
+        else {
+          matchedPos = (int) (value % 1000);
+          matchedKind = (int) (value/1000);
+          charsRead = codePointsRead+1;
+          return true;
+        }
+      }
+      backup(codePointsRead); 
+[/#if]      
+      return false;
+    }
+  [#var NFA_RANGE_THRESHOLD = 16]
 
-[#--
-  NB. The following must occur after the preceding loop,
-  since (and I don't like it) the DumpXXX macros
-  build up the lexerData.orderedStateSets structure
-  --]  
-  private static final int[] jjnextStates = {
-  [#list lexerData.orderedStateSets as set]
-    [#list set as state]
-        ${state.index},
-    [/#list]
+  [#list lexerData.lexicalStates as lexicalState]
+      [#list lexicalState.allStates as nfaState]
+        [#var moveRanges = nfaState.moveRanges]
+        [#if moveRanges.size() >= NFA_RANGE_THRESHOLD]
+          [#var arrayName = nfaState.movesArrayName]
+          static private int[] ${arrayName} = ${arrayName}_init();
+
+          static private int[] ${arrayName}_init() {
+              int[] result = new int[${nfaState.moveRanges.size()}];
+              [#list nfaState.moveRanges as char]
+                result[${char_index}] = ${char};
+              [/#list]
+              return result;
+          }
+        [/#if]
+      [/#list]
+    static private Map<String,Integer> memoizationCache_${lexicalState.name} = new Hashtable<>();
   [/#list]
 
-};
+[#macro DumpMoveNfa lexicalState]
+    private final void moveNfa_${lexicalState.name}() {
+        charsRead = 0;
+        int kind = 0x7fffffff;
+        nextStates = new BitSet();
+        while (true) {
+            int temp = 0;
+            currentStates = nextStates;
+            nextStates = new BitSet();
+            int nextActive = -1;
+            if (charsRead == 0) {
+              [#list lexicalState.initialState.epsilonMoves as state]
+                  [@DumpMove state /]
+              [/#list]
+            }
+	          else do {
+              nextActive = currentStates.nextSetBit(nextActive+1);
+              if (nextActive != -1) {
+                switch(nextActive) {
+                  [@DumpMoves lexicalState/]
+                  default : break;
+                }
+              }
+            } while (nextActive != -1);
+            if (kind != 0x7fffffff) {
+                this.matchedKind = kind;
+                this.matchedPos = charsRead;
+                kind = 0x7fffffff;
+            }
+            ++charsRead;
+            if (nextStates.isEmpty()) {
+              if (matchedKind != 0x7FFFFFFF && pendingMoreChars == 0) {
+                int value = matchedKind * 1000 + matchedPos;
+                String image = input_stream.getImage();
+                if (image.length() <= MAX_LENGTH_TO_MEMOIZE) {
+                    memoizationCache_${lexicalState.name}.put(image, value);
+                    for (int i = image.length()-1; i>=0 ; i--) {
+                       Integer previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
+                       if (previous != null) break;
+                    }
+                }
+              }
+              break;
+            }
+            int retval = input_stream.readChar();
+            if (retval >=0) {
+                 curChar = retval;
+            }
+            else break;
+        }
+    }
+[/#macro]
+
+[#macro DumpMoves lexicalState]
+  //DumpMoves macro for lexicalState ${lexicalState.name}
+   [#list lexicalState.allStates as state]
+     [#if NeedDumpMove(state)]
+       case ${state.index} :
+         [@DumpMove state /]
+         break;
+     [/#if]
+   [/#list]
+[/#macro]
+
+[#function NeedDumpMove nfaState]
+   [#var statesToAdd = (nfaState.nextState.epsilonMoves.size())!0]
+   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
+   [#return statesToAdd>0 || kindToPrint!=MAX_INT]
+[/#function]
+
+[#macro DumpMove nfaState]
+   [#if !NeedDumpMove(nfaState)][#return][/#if]
+   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
+    if ([@nfaStateCondition nfaState/]) {
+   [#if kindToPrint != MAX_INT]
+       kind = Math.min(kind, ${kindToPrint});
+   [/#if]
+   [#list (nfaState.nextState.epsilonMoves)! as epsilonMove]
+          nextStates.set(${epsilonMove.index});
+   [/#list]
+   }
+[/#macro]
+
+[#macro nfaStateCondition nfaState]
+    [#var moveRanges = nfaState.moveRanges]
+    [#if moveRanges?size < NFA_RANGE_THRESHOLD]
+      [@rangesCondition nfaState.moveRanges /]
+    [#else]
+      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, curChar)) >=0 || temp%2 ==0
+    [/#if]
+[/#macro]
+
+[#-- 
+This is a recursive macro that generates the code corresponding
+to the accepting condition for an NFA state. It is used
+if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
+(which is set to 16 for now)
+--]
+[#macro rangesCondition moveRanges]
+    [#var left = moveRanges[0], right = moveRanges[1]]
+    [#var singleChar = left == right]
+    [#if moveRanges?size==2]
+       [#if singleChar]
+          curChar == ${left}
+       [#elseif left +1 == right]
+          curChar == ${left} || curChar == ${right}
+       [#else]
+          curChar >= ${left} && curChar <= ${right}
+       [/#if]
+    [#else]
+       curChar 
+       [#if singleChar]==[#else]>=[/#if]
+       ${left} 
+       [#if !singleChar]
+       && (curChar <= ${right} || ([@rangesCondition moveRanges[2..moveRanges?size-1]/]))
+       [#else]
+       || ([@rangesCondition moveRanges[2..moveRanges?size-1]/])
+       [/#if]
+    [/#if]
+[/#macro]
+
+[#list lexerData.lexicalStates as lexicalState]
+   [@DumpMoveNfa lexicalState/]
+[/#list]
+
+[#macro BitSetFromLongArray bitSet]
+      BitSet.valueOf(new long[] {
+          [#list bitSet.toLongArray() as long]
+             ${grammar.utils.toHexStringL(long)}
+             [#if long_has_next],[/#if]
+          [/#list]
+      })
+[/#macro]

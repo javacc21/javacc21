@@ -44,8 +44,7 @@ import com.javacc.parser.tree.TokenProduction;
  * Base object that contains lexical data. 
  * It contains LexicalStateData objects that contain
  * the data for each lexical state. The LexicalStateData
- * objects in turn contain NfaData and DfaData objects
- * that hold the data related to generating the NFAs and DFAs
+ * objects hold the data related to generating the NFAs 
  * for the respective lexical states.
  */
 public class LexerData {
@@ -55,9 +54,6 @@ public class LexerData {
     private TokenSet skipSet, specialSet, moreSet, tokenSet;
     
     boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
-
-    private Map<Set<NfaState>, Integer> tableToDump = new HashMap<>();
-    private List<Set<NfaState>> orderedStateSets = new ArrayList<>();
     int lastIndex;
 
     public LexerData(Grammar grammar) {
@@ -218,22 +214,6 @@ public class LexerData {
     
     public BitSet getSpecialSet() {
         return specialSet;
-    }
-
-    public int getStateSetSize() {
-        int result =0;
-        for (LexicalStateData lsd : getLexicalStates()) {
-            result = Math.max(result, lsd.getNumNfaStates());
-        }
-        return result;
-    }
-
-    Map<Set<NfaState>, Integer> getTableToDump() {
-        return tableToDump;
-    }
-
-    public List<Set<NfaState>> getOrderedStateSets() {
-        return orderedStateSets;
     }
 
     public int getIndex(String name) {
