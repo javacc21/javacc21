@@ -250,18 +250,13 @@
     private final void moveNfa_${lexicalState.name}() {
         charsRead = 0;
         int kind = 0x7fffffff;
-        nextStates = new BitSet();
+        nextStates=initialStateSet_${lexicalState.name};
         while (true) {
             int temp = 0;
             currentStates = nextStates;
             nextStates = new BitSet();
             int nextActive = -1;
-            if (charsRead == 0) {
-              [#list lexicalState.initialState.epsilonMoves as state]
-                  [@DumpMove state /]
-              [/#list]
-            }
-	          else do {
+            do {
               nextActive = currentStates.nextSetBit(nextActive+1);
               if (nextActive != -1) {
                 switch(nextActive) {
@@ -368,6 +363,14 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 [/#macro]
 
 [#list lexerData.lexicalStates as lexicalState]
+   private static BitSet initialStateSet_${lexicalState.name} = initialStateSet_${lexicalState.name}_init();
+   static private BitSet initialStateSet_${lexicalState.name}_init() {
+     BitSet bs = new BitSet();
+      [#list lexicalState.initialState.epsilonMoves as state]
+           bs.set(${state.index});
+      [/#list]
+      return bs;
+   }
    [@DumpMoveNfa lexicalState/]
 [/#list]
 
