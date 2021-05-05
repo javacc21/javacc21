@@ -153,6 +153,9 @@ public class JavaFormatter {
             case SINGLE_LINE_COMMENT : 
                 handleSingleLineComment();
                 break;
+            case ELSE :
+                buf.append("else ");
+                break;
             case FOR : 
             	buf.append("for ");
             	break;

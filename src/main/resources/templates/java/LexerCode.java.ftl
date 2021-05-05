@@ -43,9 +43,9 @@
   private BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
   static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
-                                specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
-                                skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
-                                moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
+                              specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
+                              skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
+                              moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
   private int curChar, pendingMoreChars;
     
@@ -73,15 +73,13 @@
         }
         pendingMoreChars = 0;
        MORELoop : while (true) {
-       boolean hitCache = false;
        switch(lexicalState) {
 [#list lexerData.lexicalStates as lexicalState]
             case ${lexicalState.name} : 
                 this.matchedKind = 0x7FFFFFFF;
                 matchedType = null;
                 this.matchedPos = 0;
-                hitCache = checkMemoization(memoizationCache_${lexicalState.name});
-                if (!hitCache) {
+                if (!checkMemoization(memoizationCache_${lexicalState.name})) {
                   moveNfa_${lexicalState.name}();
                 }
                 break;
@@ -191,7 +189,7 @@
         return t;
     }
 
-    private static final int MAX_TO_CHECK = 10;
+    private static final int MAX_LENGTH_TO_MEMOIZE = 32;
     static private Integer PARTIAL_MATCH = 0xFFFFFFFF;
 
     private boolean checkMemoization(Map<String, Integer> cache) {
@@ -202,7 +200,7 @@
       String key = null;
       Integer value = null;
       int previousPosition = input_stream.getBufferPosition();
-      while (buf.length() < MAX_TO_CHECK) {
+      while (buf.length() < MAX_LENGTH_TO_MEMOIZE) {
         key = buf.toString();
         value = cache.get(key);
         if (value == null) {
@@ -227,11 +225,12 @@
 [/#if]      
       return false;
     }
+  [#var NFA_RANGE_THRESHOLD = 16]
 
   [#list lexerData.lexicalStates as lexicalState]
       [#list lexicalState.allStates as nfaState]
         [#var moveRanges = nfaState.moveRanges]
-        [#if moveRanges.size() >=16]
+        [#if moveRanges.size() >= NFA_RANGE_THRESHOLD]
           [#var arrayName = nfaState.movesArrayName]
           static private int[] ${arrayName} = ${arrayName}_init();
 
@@ -242,15 +241,9 @@
               [/#list]
               return result;
           }
-
-          private static final boolean ${nfaState.moveMethodName}(int ch) {
-              int idx = Arrays.binarySearch(${arrayName}, ch);
-              return idx>=0 || idx%2==0;
-          }
         [/#if]
       [/#list]
     static private Map<String,Integer> memoizationCache_${lexicalState.name} = new HashMap<>();
-    private Map<String,Integer> skipCache_${lexicalState.name} = new Hashtable();
   [/#list]
 
 [#macro DumpMoveNfa lexicalState]
@@ -259,6 +252,7 @@
         int kind = 0x7fffffff;
         nextStates = new BitSet();
         while (true) {
+            int temp = 0;
             currentStates = nextStates;
             nextStates = new BitSet();
             int nextActive = -1;
@@ -286,7 +280,7 @@
               if (matchedKind != 0x7FFFFFFF && pendingMoreChars == 0) {
                 int value = matchedKind * 1000 + matchedPos;
                 String image = input_stream.getImage();
-                if (image.length() <= MAX_TO_CHECK) {
+                if (image.length() <= MAX_LENGTH_TO_MEMOIZE) {
                     memoizationCache_${lexicalState.name}.put(image, value);
                     for (int i = image.length()-1; i>=0 ; i--) {
                        Integer previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
@@ -327,7 +321,7 @@
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     if ([@nfaStateCondition nfaState/]) {
    [#if kindToPrint != MAX_INT]
-       kind = Math.min(kind, ${kindToPrint});
+       if (kind > ${kindToPrint}) kind = ${kindToPrint};
    [/#if]
    [#list (nfaState.nextState.epsilonMoves)! as epsilonMove]
           nextStates.set(${epsilonMove.index});
@@ -337,28 +331,40 @@
 
 [#macro nfaStateCondition nfaState]
     [#var moveRanges = nfaState.moveRanges]
-    [#if moveRanges.size()==2]
-       [@rangeCondition moveRanges[0], moveRanges[1]/]
-    [#elseif moveRanges.size() <16]
-      [#list moveRanges as leftMove]
-          [#if leftMove_index % 2 == 0]
-              [@rangeCondition moveRanges[leftMove_index], moveRanges[leftMove_index+1]/]
-              [#if leftMove_index +2 != moveRanges.size()]||[/#if]
-          [/#if]
-      [/#list]
+    [#if moveRanges?size < NFA_RANGE_THRESHOLD]
+      [@rangesCondition nfaState.moveRanges /]
     [#else]
-       ${nfaState.moveMethodName}(curChar)
+      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, curChar)) >=0 || temp%2 ==0
     [/#if]
 [/#macro]
 
-[#macro rangeCondition left right]
-   [#if left == right]
-      curChar == ${left}
-   [#elseif left +1 == right]
-      curChar == ${left} || curChar == ${right}
-   [#else]
-      curChar >= ${left} && curChar <= ${right}
-   [/#if]
+[#-- 
+This is a recursive macro that generates the code corresponding
+to the accepting condition for an NFA state. It is used
+if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
+(which is set to 16 for now)
+--]
+[#macro rangesCondition moveRanges]
+    [#var left = moveRanges[0], right = moveRanges[1]]
+    [#var singleChar = left == right]
+    [#if moveRanges?size==2]
+       [#if singleChar]
+          curChar == ${left}
+       [#elseif left +1 == right]
+          curChar == ${left} || curChar == ${right}
+       [#else]
+          curChar >= ${left} && curChar <= ${right}
+       [/#if]
+    [#else]
+       curChar 
+       [#if singleChar]==[#else]>=[/#if]
+       ${left} 
+       [#if !singleChar]
+       && (curChar <= ${right} || ([@rangesCondition moveRanges[2..moveRanges?size-1]/]))
+       [#else]
+       || ([@rangesCondition moveRanges[2..moveRanges?size-1]/])
+       [/#if]
+    [/#if]
 [/#macro]
 
 [#list lexerData.lexicalStates as lexicalState]
