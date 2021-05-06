@@ -30,9 +30,18 @@
  */
  --]
 
- [#var MAX_INT=2147483647]
- [#var lexerData=grammar.lexerData]
- [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
+[#var MAX_INT=2147483647]
+[#var lexerData=grammar.lexerData]
+[#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
+
+[#macro BitSetFromLongArray bitSet]
+      BitSet.valueOf(new long[] {
+          [#list bitSet.toLongArray() as long]
+             ${grammar.utils.toHexStringL(long)}
+             [#if long_has_next],[/#if]
+          [/#list]
+      })
+[/#macro]
 
   private int matchedPos, charsRead;
   //FIXME,should be an enum.
@@ -190,7 +199,7 @@
     }
 
     private static final int MAX_LENGTH_TO_MEMOIZE = 32;
-    static private Integer PARTIAL_MATCH = 0xFFFFFFFF;
+    static private final Integer PARTIAL_MATCH = 0xFFFFFFFF;
 
     private boolean checkMemoization(Map<String, Integer> cache) {
 [#if !grammar.hugeFileSupport]      
@@ -243,7 +252,19 @@
           }
         [/#if]
       [/#list]
+
     static private Map<String,Integer> memoizationCache_${lexicalState.name} = new Hashtable<>();
+    private static BitSet initialStateSet_${lexicalState.name} = initialStateSet_${lexicalState.name}_init();
+    static private BitSet initialStateSet_${lexicalState.name}_init() {
+     BitSet bs = new BitSet();
+      [#list lexicalState.initialState.epsilonMoves as state]
+           bs.set(${state.index});
+      [/#list]
+      return bs;
+   }
+
+   [@DumpMoveNfa lexicalState/]
+
   [/#list]
 
 [#macro DumpMoveNfa lexicalState]
@@ -359,25 +380,4 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
        || ([@rangesCondition moveRanges[2..moveRanges?size-1]/])
        [/#if]
     [/#if]
-[/#macro]
-
-[#list lexerData.lexicalStates as lexicalState]
-   private static BitSet initialStateSet_${lexicalState.name} = initialStateSet_${lexicalState.name}_init();
-   static private BitSet initialStateSet_${lexicalState.name}_init() {
-     BitSet bs = new BitSet();
-      [#list lexicalState.initialState.epsilonMoves as state]
-           bs.set(${state.index});
-      [/#list]
-      return bs;
-   }
-   [@DumpMoveNfa lexicalState/]
-[/#list]
-
-[#macro BitSetFromLongArray bitSet]
-      BitSet.valueOf(new long[] {
-          [#list bitSet.toLongArray() as long]
-             ${grammar.utils.toHexStringL(long)}
-             [#if long_has_next],[/#if]
-          [/#list]
-      })
 [/#macro]

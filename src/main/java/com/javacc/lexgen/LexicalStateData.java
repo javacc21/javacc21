@@ -54,7 +54,6 @@ public class LexicalStateData {
     private NfaState initialState;
 
     Set<NfaState> allStates = new HashSet<>();
-    int numStates;
     
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -75,7 +74,7 @@ public class LexicalStateData {
         tokenProductions.add(tokenProduction);
     }
 
-    public int getNumNfaStates() {return numStates;}
+    public int getNumNfaStates() {return allStates.size();}
 
     public boolean containsRegularExpression(RegularExpression re) {
         return regularExpressions.contains(re);
@@ -117,6 +116,12 @@ public class LexicalStateData {
     void generateData() {
         for (NfaState state : allStates) {
             state.doEpsilonClosure();
+        }
+        int idx = 0;
+        for (NfaState state : allStates) {
+            if (state.index == -1) {
+                state.index = idx++;
+            }
         }
         int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
         if (initialState.getType() != null && initialOrdinal != 0) {

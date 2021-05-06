@@ -43,9 +43,9 @@ public class NfaState {
     private final LexicalStateData lexicalState;
     private RegularExpression type;
     private List<Integer> moveRanges = new ArrayList<>();
-    private int index = -1;
     private NfaState nextState;
     private Set<NfaState> epsilonMoves = new HashSet<>();
+    int index = -1;
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -113,8 +113,5 @@ public class NfaState {
         }
         addEpsilonMove(this);
         epsilonMoves.removeIf(state->state.moveRanges.isEmpty());
-        if (index == -1 && !moveRanges.isEmpty()) {
-            this.index = lexicalState.numStates++;
-        }
     }
 }
