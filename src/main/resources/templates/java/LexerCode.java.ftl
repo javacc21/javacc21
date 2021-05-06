@@ -276,10 +276,9 @@
                 int value = matchedKind * 1000 + matchedPos;
                 String image = input_stream.getImage();
                 if (image.length() <= MAX_LENGTH_TO_MEMOIZE) {
-                    memoizationCache_${lexicalState.name}.put(image, value);
-                    for (int i = image.length()-1; i>=0 ; i--) {
-                       Integer previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
-                       if (previous != null) break;
+                    Integer previous = memoizationCache_${lexicalState.name}.put(image, value);
+                    for (int i = image.length()-1; i>=0 && previous == null ; i--) {
+                       previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
                     }
                 }
               }
