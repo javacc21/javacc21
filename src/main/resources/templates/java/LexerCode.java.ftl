@@ -199,7 +199,7 @@
     }
 
     private static final int MAX_LENGTH_TO_MEMOIZE = 32;
-    static private final Integer PARTIAL_MATCH = 0xFFFFFFFF;
+    static private final Integer PARTIAL_MATCH = new Integer(0x7FFFFFF);
 
     private boolean checkMemoization(Map<String, Integer> cache) {
 [#if !grammar.hugeFileSupport]      
@@ -215,7 +215,7 @@
         if (value == null) {
             break;
         }
-        else if (value == PARTIAL_MATCH) {
+        else if (value == 0x7FFFFFF) {
            int ch = input_stream.readChar();
            if (ch >=0) {
              codePointsRead++;
@@ -294,11 +294,11 @@
             ++charsRead;
             if (nextStates.isEmpty()) {
               if (matchedKind != 0x7FFFFFFF && pendingMoreChars == 0) {
-                int value = matchedKind * 1000 + matchedPos;
                 String image = input_stream.getImage();
                 if (image.length() <= MAX_LENGTH_TO_MEMOIZE) {
+                    int value = matchedKind * 1000 + matchedPos;
                     Integer previous = memoizationCache_${lexicalState.name}.put(image, value);
-                    for (int i = image.length()-1; i>=0 && previous == null ; i--) {
+                    for (int i = image.length()-1; i>0 && previous == null ; i--) {
                        previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
                     }
                 }
