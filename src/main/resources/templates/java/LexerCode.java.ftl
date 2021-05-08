@@ -266,17 +266,26 @@
    [@DumpMoveNfa lexicalState/]
 
   [/#list]
-
+  
 [#macro DumpMoveNfa lexicalState]
     private final void moveNfa_${lexicalState.name}() {
         charsRead = 0;
         int kind = 0x7fffffff;
-        nextStates=initialStateSet_${lexicalState.name};
-        while (true) {
+        do {
             int temp = 0;
-            currentStates = nextStates;
-            nextStates = new BitSet();
             int nextActive = -1;
+            currentStates.clear();
+            if (charsRead == 0) {
+              currentStates.or(initialStateSet_${lexicalState.name});
+            } else {
+              currentStates.or(nextStates);
+              int retval = input_stream.readChar();
+              if (retval >=0) {
+                  curChar = retval;
+              }
+              else break;
+            }
+            nextStates.clear();
             do {
               nextActive = currentStates.nextSetBit(nextActive+1);
               if (nextActive != -1) {
@@ -303,14 +312,8 @@
                     }
                 }
               }
-              break;
-            }
-            int retval = input_stream.readChar();
-            if (retval >=0) {
-                 curChar = retval;
-            }
-            else break;
-        }
+            } 
+        } while (!nextStates.isEmpty());
     }
 [/#macro]
 
