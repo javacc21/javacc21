@@ -198,8 +198,8 @@
         return t;
     }
 
-    private static final int MAX_LENGTH_TO_MEMOIZE = 32;
-    static private final Integer PARTIAL_MATCH = new Integer(0x7FFFFFF);
+    private static final int MAX_LENGTH_TO_MEMOIZE = 16;
+    static private final Integer PARTIAL_MATCH = 0x7FFFFFF;
 
     private boolean checkMemoization(Map<String, Integer> cache) {
 [#if !grammar.hugeFileSupport]      
