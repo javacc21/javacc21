@@ -45,7 +45,7 @@
 
   private int matchedPos, charsRead;
   //FIXME,should be an enum.
-  private int matchedKind;
+  private int matchedKind, matchedOrdinal;
   private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
@@ -270,7 +270,7 @@
 [#macro DumpMoveNfa lexicalState]
     private final void moveNfa_${lexicalState.name}() {
         charsRead = 0;
-        int kind = 0x7fffffff;
+        matchedOrdinal = 0x7fffffff;
         do {
             int temp = 0;
             int nextActive = -1;
@@ -295,26 +295,14 @@
                 }
               }
             } while (nextActive != -1);
-            if (kind != 0x7fffffff) {
-                this.matchedKind = kind;
+            if (matchedOrdinal != 0x7fffffff) {
+                this.matchedKind = matchedOrdinal;
                 this.matchedPos = charsRead;
-                kind = 0x7fffffff;
+                matchedOrdinal = 0x7fffffff;
             }
             ++charsRead;
-[#--            if (nextStates.isEmpty()) {
-        if (matchedKind != 0x7FFFFFFF && pendingMoreChars == 0) {
-                String image = input_stream.getImage();
-                if (image.length() <= MAX_LENGTH_TO_MEMOIZE) {
-                    int value = matchedKind * 1000 + matchedPos;
-                    Integer previous = memoizationCache_${lexicalState.name}.put(image, value);
-                    for (int i = image.length()-1; i>0 && previous == null ; i--) {
-                       previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
-                    }
-                }
-              }
-            }--]
         } while (!nextStates.isEmpty());
-        // Bloody minded cachine code follows.
+        // Bloody minded caching code follows.
         if (matchedKind != 0x7FFFFFFF && pendingMoreChars == 0) {
           String image = input_stream.getImage();
           if (image.length() <= MAX_LENGTH_TO_MEMOIZE) {
@@ -350,7 +338,7 @@
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     if ([@nfaStateCondition nfaState/]) {
    [#if kindToPrint != MAX_INT]
-       kind = Math.min(kind, ${kindToPrint});
+       matchedOrdinal = Math.min(matchedOrdinal, ${kindToPrint});
    [/#if]
    [#list (nfaState.nextState.epsilonMoves)! as epsilonMove]
           nextStates.set(${epsilonMove.index});
@@ -358,12 +346,12 @@
    }
 [/#macro]
 
-[#macro nfaStateCondition nfaState]
+[#macro nfaStateCondition nfaState chVarName="curChar"]
     [#var moveRanges = nfaState.moveRanges]
     [#if moveRanges?size < NFA_RANGE_THRESHOLD]
-      [@rangesCondition nfaState.moveRanges /]
+      [@rangesCondition nfaState.moveRanges chVarName /]
     [#else]
-      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, curChar)) >=0 || temp%2 ==0
+      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, ${chVarName})) >=0 || temp%2 ==0
     [/#if]
 [/#macro]
 
@@ -373,25 +361,31 @@ to the accepting condition for an NFA state. It is used
 if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 (which is set to 16 for now)
 --]
-[#macro rangesCondition moveRanges]
+[#macro rangesCondition moveRanges, chVarName="curChar"]
     [#var left = moveRanges[0], right = moveRanges[1]]
     [#var singleChar = left == right]
     [#if moveRanges?size==2]
        [#if singleChar]
-          curChar == ${left}
+          ${chVarName} == ${left}
        [#elseif left +1 == right]
-          curChar == ${left} || curChar == ${right}
+          ${chVarName} == ${left} || ${chVarName} == ${right}
        [#else]
-          curChar >= ${left} && curChar <= ${right}
+          ${chVarName} >= ${left} && ${chVarName} <= ${right}
        [/#if]
     [#else]
-       curChar 
+       ${chVarName}
        [#if singleChar]==[#else]>=[/#if]
        ${left} 
        [#if !singleChar]
-       && (curChar <= ${right} || ([@rangesCondition moveRanges[2..moveRanges?size-1]/]))
+       && (${chVarName} <= ${right} || ([@rangesCondition moveRanges[2..moveRanges?size-1]/]))
        [#else]
        || ([@rangesCondition moveRanges[2..moveRanges?size-1]/])
        [/#if]
     [/#if]
+[/#macro]
+
+[#macro DumpNfaMethod nfaState]
+    private void ${nfaState.methodName}(int ch) {
+
+    }
 [/#macro]

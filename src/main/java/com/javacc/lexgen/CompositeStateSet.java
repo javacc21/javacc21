@@ -29,18 +29,22 @@
 package com.javacc.lexgen;
 
 import java.util.*;
+
+import com.javacc.parsegen.TokenSet;
 import com.javacc.parser.tree.CharacterRange;
 
 public class CompositeStateSet extends NfaState {
 
     private Set<NfaState> states = new HashSet<>(); 
+    private TokenSet possibleTokenTypes;
 
     CompositeStateSet(LexicalStateData lsd) {
         super(lsd);
+        possibleTokenTypes = new TokenSet(lsd.getGrammar());
     }
 
     CompositeStateSet(Set<NfaState> states) {
-        super(states.iterator().next().getLexicalState());
+        this(states.iterator().next().getLexicalState());
         this.states = new HashSet<>(states);
     }
 

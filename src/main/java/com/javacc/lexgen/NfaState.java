@@ -67,7 +67,11 @@ public class NfaState {
     }
 
     public String getMovesArrayName() {
-        return "NFA_MOVES" + lexicalState.getName() + "_" + index;
+        return "NFA_MOVES_" + lexicalState.getName() + "_" + index;
+    }
+
+    public String getMethodName() {
+        return "NFA_" + lexicalState.getName() + "_" + index;
     }
 
     public List<Integer> getMoveRanges() { return moveRanges; }
