@@ -131,7 +131,6 @@ public class LexicalStateData {
             else if (lexerData.getMoreSet().get(initialOrdinal))
                 lexerData.hasMoreActions = true;
         }
-        allStates.removeIf(state->state.getIndex()==-1);
     }
 
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {

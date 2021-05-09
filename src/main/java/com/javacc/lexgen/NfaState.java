@@ -42,10 +42,16 @@ public class NfaState {
 
     private final LexicalStateData lexicalState;
     private RegularExpression type;
-    private List<Integer> moveRanges = new ArrayList<>();
     private NfaState nextState;
     private Set<NfaState> epsilonMoves = new HashSet<>();
     int index = -1;
+
+    // An ordered list of the ranges of characters that this 
+    // NfaState "accepts". A single character is stored as a 
+    // range in which the left side is the same as the right side.
+    // Thus, for example, the (ASCII) characters that can start an identifier would be:
+    // '$','$''A','Z','_','_',a','z'
+    List<Integer> moveRanges = new ArrayList<>();
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -54,6 +60,10 @@ public class NfaState {
 
     public int getIndex() {
         return index;
+    }
+
+    public boolean isComposite() {
+        return false;
     }
 
     public String getMovesArrayName() {
@@ -103,9 +113,11 @@ public class NfaState {
         // Recursively do closure
         for (NfaState state : new ArrayList<>(epsilonMoves)) {
             state.doEpsilonClosure();
-            if (type == null || (state.type != null && state.type.getOrdinal() < type.getOrdinal())) {
-                type = state.type;
-            } 
+//            if (type == null || (state.type != null && state.type.getOrdinal() < type.getOrdinal())) {
+//                type = state.type;
+//            } 
+// The above commented out code does not seem to be necessary, only the next line!
+            if (type == null) type = state.type;
             for (NfaState otherState : state.epsilonMoves) {
                 addEpsilonMove(otherState);
                 otherState.doEpsilonClosure();

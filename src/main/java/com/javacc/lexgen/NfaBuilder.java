@@ -397,7 +397,7 @@ public class NfaBuilder extends Node.Visitor {
         return result;
     }
 
-   static private List<CharacterRange> sortDescriptors(List<CharacterRange> descriptors) {
+   static List<CharacterRange> sortDescriptors(List<CharacterRange> descriptors) {
         Collections.sort(descriptors, (first, second) -> first.left - second.left);
         List<CharacterRange> result = new ArrayList<>();
         CharacterRange previous = null;
