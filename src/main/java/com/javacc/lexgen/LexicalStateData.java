@@ -46,6 +46,11 @@ public class LexicalStateData {
     private String name;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
+
+    private Map<Set<NfaState>, CompositeStateSet> canonicalSets = new HashMap<>();
+
+
+
     private Map<String, RegularExpression> caseSensitiveTokenTable = new HashMap<>();
     private Map<String, RegularExpression> caseInsensitiveTokenTable = new HashMap<>();
 
@@ -88,6 +93,20 @@ public class LexicalStateData {
         }
     }
 
+    CompositeStateSet getCanonicalComposite(Set<NfaState> stateSet) {
+        if (stateSet.size() < 2) return null;
+        CompositeStateSet result = canonicalSets.get(stateSet);
+        if (result == null) {
+            result = new CompositeStateSet(stateSet);
+            canonicalSets.put(stateSet, result);
+        }
+        return result;
+    }
+
+    CompositeStateSet getCanonicalComposite(NfaState state) {
+        return getCanonicalComposite(state.getEpsilonMoves());
+    }
+
     public RegularExpression getStringLiteral(String image) {
         RegularExpression result = caseSensitiveTokenTable.get(image);
         if (result == null) {
@@ -117,19 +136,33 @@ public class LexicalStateData {
         for (NfaState state : allStates) {
             state.doEpsilonClosure();
         }
-        int idx = 0;
+        indexStates();
+    }
+
+    void replaceSinglesWithComposites() {
+        Set<NfaState> newAllStates = new HashSet<>();
         for (NfaState state : allStates) {
-            if (state.index == -1) {
-                state.index = idx++;
+            CompositeStateSet css = getCanonicalComposite(state);
+            if (css != null) {
+                newAllStates.add(css);
+            } else {
+                newAllStates.add(state);
+            }
+            NfaState nextState = state.getNextState();
+            if (nextState.getEpsilonMoves().size()>1) {
+                state.setNextState(getCanonicalComposite(nextState));
             }
         }
-        int initialOrdinal = initialState.getType() == null ? -1 : initialState.getType().getOrdinal();
-        if (initialState.getType() != null && initialOrdinal != 0) {
-            if (lexerData.getSkipSet().get(initialOrdinal)
-                || (lexerData.getSpecialSet().get(initialOrdinal)))
-                lexerData.hasSkipActions = true;
-            else if (lexerData.getMoreSet().get(initialOrdinal))
-                lexerData.hasMoreActions = true;
+        this.allStates = newAllStates;
+    }
+
+    void indexStates() {
+        int idx = 0;
+        for (NfaState state : allStates) {
+            if (!state.isComposite()) state.index = idx++;
+        }
+        for (NfaState state : allStates) {
+            if (state.isComposite()) state.index++;
         }
     }
 

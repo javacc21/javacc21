@@ -45,7 +45,7 @@
 
   private int matchedPos, charsRead;
   //FIXME,should be an enum.
-  private int matchedKind;
+  private int matchedKind, kind, temp;
   private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
@@ -251,6 +251,10 @@
               return result;
           }
         [/#if]
+
+        private final void ${nfaState.methodName}() {
+          [@DumpMove nfaState/]
+        }
       [/#list]
 
     static private Map<String,Integer> memoizationCache_${lexicalState.name} = new Hashtable<>();
@@ -270,9 +274,8 @@
 [#macro DumpMoveNfa lexicalState]
     private final void moveNfa_${lexicalState.name}() {
         charsRead = 0;
-        int kind = 0x7fffffff;
+        kind = 0x7fffffff;
         do {
-            int temp = 0;
             int nextActive = -1;
             currentStates.clear();
             if (charsRead == 0) {
@@ -322,7 +325,8 @@
    [#list lexicalState.allStates as state]
      [#if NeedDumpMove(state)]
        case ${state.index} :
-         [@DumpMove state /]
+         ${state.methodName}();
+         [#--@DumpMove state /--]
          break;
      [/#if]
    [/#list]
@@ -336,14 +340,19 @@
 
 [#macro DumpMove nfaState]
    [#if !NeedDumpMove(nfaState)][#return][/#if]
+   [#var nextState = nfaState.nextState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     if ([@nfaStateCondition nfaState/]) {
    [#if kindToPrint != MAX_INT]
        kind = Math.min(kind, ${kindToPrint});
    [/#if]
-   [#list (nfaState.nextState.epsilonMoves)! as epsilonMove]
+   [#if nextState.composite]
+         nextStates.set(${nextState.index});
+   [#else]
+     [#list (nfaState.nextState.epsilonMoves)! as epsilonMove]
           nextStates.set(${epsilonMove.index});
-   [/#list]
+     [/#list]
+   [/#if]
    }
 [/#macro]
 

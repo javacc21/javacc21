@@ -30,17 +30,18 @@ package com.javacc.lexgen;
 
 import java.util.*;
 
-import com.javacc.parsegen.TokenSet;
+import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.tree.CharacterRange;
+//import com.javacc.parsegen.TokenSet;
 
 public class CompositeStateSet extends NfaState {
 
     private Set<NfaState> states = new HashSet<>(); 
-    private TokenSet possibleTokenTypes;
+    //private TokenSet possibleTokenTypes;
 
     CompositeStateSet(LexicalStateData lsd) {
         super(lsd);
-        possibleTokenTypes = new TokenSet(lsd.getGrammar());
+        //possibleTokenTypes = new TokenSet(lsd.getGrammar());
     }
 
     CompositeStateSet(Set<NfaState> states) {
@@ -52,6 +53,10 @@ public class CompositeStateSet extends NfaState {
         return true;
     }
 
+    public String getMethodName() {
+        return "NFA_COMPOSITE" + lexicalState.getName() + "_" + index;
+    }
+
     public boolean equals(Object other) {
         return (other instanceof CompositeStateSet)
                && ((CompositeStateSet)other).states.equals(this.states);
@@ -59,6 +64,22 @@ public class CompositeStateSet extends NfaState {
 
     public boolean contains(NfaState state) {
         return states.contains(state);
+    }
+
+    public Set<NfaState> getStates() {
+        return states;
+    }
+
+    public RegularExpression getType() {
+        int ordinal = Integer.MAX_VALUE;
+        for (NfaState state : states) {
+            if (state.getType() != null) {
+               if (state.getType().getOrdinal() < ordinal) {
+                   ordinal = state.getType().getOrdinal();
+               }
+            }
+        }
+        return getLexicalState().getGrammar().getLexerData().getRegularExpression(ordinal);
     }
 
     static List<Integer> combineMoves(List<Integer> first, List<Integer> second) {

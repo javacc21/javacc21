@@ -90,6 +90,7 @@ public class LexerData {
     }
 
     public RegularExpression getRegularExpression(int idx) {
+        if (idx == Integer.MAX_VALUE) return null;
         return regularExpressions.get(idx);
     }
 

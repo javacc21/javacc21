@@ -40,7 +40,7 @@ import com.javacc.parsegen.RegularExpression;
  */
 public class NfaState {  
 
-    private final LexicalStateData lexicalState;
+    final LexicalStateData lexicalState;
     private RegularExpression type;
     private NfaState nextState;
     private Set<NfaState> epsilonMoves = new HashSet<>();
@@ -67,7 +67,7 @@ public class NfaState {
     }
 
     public String getMovesArrayName() {
-        return "NFA_MOVES_" + lexicalState.getName() + "_" + index;
+        return getMethodName().replace("NFA_", "NFA_MOVES");
     }
 
     public String getMethodName() {
