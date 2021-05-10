@@ -45,7 +45,7 @@
 
   private int matchedPos, charsRead;
   //FIXME,should be an enum.
-  private int matchedKind, matchedOrdinal;
+  private int matchedKind;
   private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
@@ -198,7 +198,7 @@
         return t;
     }
 
-    private static final int MAX_LENGTH_TO_MEMOIZE = 32;
+    private static final int MAX_LENGTH_TO_MEMOIZE = 16;
     static private final Integer PARTIAL_MATCH = 0x7FFFFFF;
 
     private boolean checkMemoization(Map<String, Integer> cache) {
@@ -270,7 +270,7 @@
 [#macro DumpMoveNfa lexicalState]
     private final void moveNfa_${lexicalState.name}() {
         charsRead = 0;
-        matchedOrdinal = 0x7fffffff;
+        int kind = 0x7fffffff;
         do {
             int temp = 0;
             int nextActive = -1;
@@ -295,24 +295,25 @@
                 }
               }
             } while (nextActive != -1);
-            if (matchedOrdinal != 0x7fffffff) {
-                this.matchedKind = matchedOrdinal;
+            if (kind != 0x7fffffff) {
+                this.matchedKind = kind;
                 this.matchedPos = charsRead;
-                matchedOrdinal = 0x7fffffff;
+                kind = 0x7fffffff;
             }
             ++charsRead;
-        } while (!nextStates.isEmpty());
-        // Bloody minded caching code follows.
-        if (matchedKind != 0x7FFFFFFF && pendingMoreChars == 0) {
-          String image = input_stream.getImage();
-          if (image.length() <= MAX_LENGTH_TO_MEMOIZE) {
-              int value = matchedKind * 1000 + matchedPos;
-              Integer previous = memoizationCache_${lexicalState.name}.put(image, value);
-              for (int i = image.length()-1; i>0 && previous == null ; i--) {
-                  previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
+            if (nextStates.isEmpty()) {
+              if (matchedKind != 0x7FFFFFFF && pendingMoreChars == 0) {
+                String image = input_stream.getImage();
+                if (image.length() <= MAX_LENGTH_TO_MEMOIZE) {
+                    int value = matchedKind * 1000 + matchedPos;
+                    Integer previous = memoizationCache_${lexicalState.name}.put(image, value);
+                    for (int i = image.length()-1; i>0 && previous == null ; i--) {
+                       previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
+                    }
+                }
               }
-          }
-        }
+            } 
+        } while (!nextStates.isEmpty());
     }
 [/#macro]
 
@@ -338,7 +339,7 @@
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     if ([@nfaStateCondition nfaState/]) {
    [#if kindToPrint != MAX_INT]
-       matchedOrdinal = Math.min(matchedOrdinal, ${kindToPrint});
+       kind = Math.min(kind, ${kindToPrint});
    [/#if]
    [#list (nfaState.nextState.epsilonMoves)! as epsilonMove]
           nextStates.set(${epsilonMove.index});
@@ -346,12 +347,12 @@
    }
 [/#macro]
 
-[#macro nfaStateCondition nfaState chVarName="curChar"]
+[#macro nfaStateCondition nfaState]
     [#var moveRanges = nfaState.moveRanges]
     [#if moveRanges?size < NFA_RANGE_THRESHOLD]
-      [@rangesCondition nfaState.moveRanges chVarName /]
+      [@rangesCondition nfaState.moveRanges /]
     [#else]
-      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, ${chVarName})) >=0 || temp%2 ==0
+      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, curChar)) >=0 || temp%2 ==0
     [/#if]
 [/#macro]
 
@@ -361,31 +362,25 @@ to the accepting condition for an NFA state. It is used
 if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 (which is set to 16 for now)
 --]
-[#macro rangesCondition moveRanges, chVarName="curChar"]
+[#macro rangesCondition moveRanges]
     [#var left = moveRanges[0], right = moveRanges[1]]
     [#var singleChar = left == right]
     [#if moveRanges?size==2]
        [#if singleChar]
-          ${chVarName} == ${left}
+          curChar == ${left}
        [#elseif left +1 == right]
-          ${chVarName} == ${left} || ${chVarName} == ${right}
+          curChar == ${left} || curChar == ${right}
        [#else]
-          ${chVarName} >= ${left} && ${chVarName} <= ${right}
+          curChar >= ${left} && curChar <= ${right}
        [/#if]
     [#else]
-       ${chVarName}
+       curChar 
        [#if singleChar]==[#else]>=[/#if]
        ${left} 
        [#if !singleChar]
-       && (${chVarName} <= ${right} || ([@rangesCondition moveRanges[2..moveRanges?size-1]/]))
+       && (curChar <= ${right} || ([@rangesCondition moveRanges[2..moveRanges?size-1]/]))
        [#else]
        || ([@rangesCondition moveRanges[2..moveRanges?size-1]/])
        [/#if]
     [/#if]
-[/#macro]
-
-[#macro DumpNfaMethod nfaState]
-    private void ${nfaState.methodName}(int ch) {
-
-    }
 [/#macro]
