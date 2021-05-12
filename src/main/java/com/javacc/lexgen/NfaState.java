@@ -86,6 +86,11 @@ public class NfaState {
 
     public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
 
+    public NfaState getCanonicalState() {
+        NfaState result = lexicalState.getCanonicalComposite(epsilonMoves);
+        return result != null ? result : this;
+    }
+
     void setType(RegularExpression type) {
         this.type = type;
     }

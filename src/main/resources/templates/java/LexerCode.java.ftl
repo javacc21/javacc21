@@ -253,7 +253,13 @@
         [/#if]
 
         private final void ${nfaState.methodName}() {
-          [@DumpMove nfaState/]
+          [#if !nfaState.composite]
+            [@DumpMove nfaState/]
+          [#else]
+            [#list nfaState.states as state]
+              [@DumpMove state/]
+            [/#list]
+          [/#if]
         }
       [/#list]
 
@@ -323,10 +329,9 @@
 [#macro DumpMoves lexicalState]
   //DumpMoves macro for lexicalState ${lexicalState.name}
    [#list lexicalState.allStates as state]
-     [#if NeedDumpMove(state)]
+     [#if state.composite || NeedDumpMove(state)]
        case ${state.index} :
          ${state.methodName}();
-         [#--@DumpMove state /--]
          break;
      [/#if]
    [/#list]

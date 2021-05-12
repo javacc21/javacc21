@@ -136,24 +136,14 @@ public class LexicalStateData {
         for (NfaState state : allStates) {
             state.doEpsilonClosure();
         }
+        addCompositeStates();
         indexStates();
     }
 
-    void replaceSinglesWithComposites() {
-        Set<NfaState> newAllStates = new HashSet<>();
-        for (NfaState state : allStates) {
-            CompositeStateSet css = getCanonicalComposite(state);
-            if (css != null) {
-                newAllStates.add(css);
-            } else {
-                newAllStates.add(state);
-            }
-            NfaState nextState = state.getNextState();
-            if (nextState.getEpsilonMoves().size()>1) {
-                state.setNextState(getCanonicalComposite(nextState));
-            }
+    void addCompositeStates() {
+        for (NfaState state : new ArrayList<>(allStates)) {
+            allStates.add(state.getCanonicalState());
         }
-        this.allStates = newAllStates;
     }
 
     void indexStates() {
@@ -162,7 +152,7 @@ public class LexicalStateData {
             if (!state.isComposite()) state.index = idx++;
         }
         for (NfaState state : allStates) {
-            if (state.isComposite()) state.index++;
+            if (state.isComposite()) state.index = idx++;
         }
     }
 

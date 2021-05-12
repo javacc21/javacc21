@@ -32,7 +32,6 @@ import java.util.*;
 
 import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.tree.CharacterRange;
-//import com.javacc.parsegen.TokenSet;
 
 public class CompositeStateSet extends NfaState {
 
@@ -41,7 +40,6 @@ public class CompositeStateSet extends NfaState {
 
     CompositeStateSet(LexicalStateData lsd) {
         super(lsd);
-        //possibleTokenTypes = new TokenSet(lsd.getGrammar());
     }
 
     CompositeStateSet(Set<NfaState> states) {
@@ -54,7 +52,7 @@ public class CompositeStateSet extends NfaState {
     }
 
     public String getMethodName() {
-        return "NFA_COMPOSITE" + lexicalState.getName() + "_" + index;
+        return "NFA_COMPOSITE_" + lexicalState.getName() + "_" + index;
     }
 
     public boolean equals(Object other) {
