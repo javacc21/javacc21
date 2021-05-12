@@ -449,7 +449,12 @@ public class Grammar extends BaseNode {
     }
 
     public Collection<BNFProduction> getParserProductions() {
-        return descendantsOfType(BNFProduction.class);
+        List<BNFProduction> productions = descendantsOfType(BNFProduction.class);
+        LinkedHashMap<String, BNFProduction> map = new LinkedHashMap<>();
+        for (BNFProduction production: productions) {
+            map.put(production.getName(), production);
+        }
+        return map.values();
     }
 
     /**
