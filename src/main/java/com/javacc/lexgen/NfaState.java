@@ -67,7 +67,7 @@ public class NfaState {
     }
 
     public String getMovesArrayName() {
-        return getMethodName().replace("NFA_", "NFA_MOVES");
+        return getMethodName().replace("NFA_", "NFA_MOVES_");
     }
 
     public String getMethodName() {
@@ -87,8 +87,8 @@ public class NfaState {
     public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
 
     public NfaState getCanonicalState() {
-        NfaState result = lexicalState.getCanonicalComposite(epsilonMoves);
-        return result != null ? result : this;
+        if (this.isComposite() || epsilonMoves.size() < 2) return this;
+        return lexicalState.getCanonicalComposite(epsilonMoves);
     }
 
     void setType(RegularExpression type) {

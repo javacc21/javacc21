@@ -49,8 +49,6 @@ public class LexicalStateData {
 
     private Map<Set<NfaState>, CompositeStateSet> canonicalSets = new HashMap<>();
 
-
-
     private Map<String, RegularExpression> caseSensitiveTokenTable = new HashMap<>();
     private Map<String, RegularExpression> caseInsensitiveTokenTable = new HashMap<>();
 
@@ -59,6 +57,7 @@ public class LexicalStateData {
     private NfaState initialState;
 
     Set<NfaState> allStates = new HashSet<>();
+    Set<NfaState> allCanonicalStates = new HashSet<>();
     
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -79,7 +78,7 @@ public class LexicalStateData {
         tokenProductions.add(tokenProduction);
     }
 
-    public int getNumNfaStates() {return allStates.size();}
+//    public int getNumNfaStates() {return allStates.size();}
 
     public boolean containsRegularExpression(RegularExpression re) {
         return regularExpressions.contains(re);
@@ -93,8 +92,10 @@ public class LexicalStateData {
         }
     }
 
-    CompositeStateSet getCanonicalComposite(Set<NfaState> stateSet) {
-        if (stateSet.size() < 2) return null;
+    NfaState getCanonicalComposite(Set<NfaState> stateSet) {
+        if (stateSet.size() == 1) {
+            return stateSet.iterator().next();
+        }
         CompositeStateSet result = canonicalSets.get(stateSet);
         if (result == null) {
             result = new CompositeStateSet(stateSet);
@@ -103,7 +104,7 @@ public class LexicalStateData {
         return result;
     }
 
-    CompositeStateSet getCanonicalComposite(NfaState state) {
+    NfaState getCanonicalComposite(NfaState state) {
         return getCanonicalComposite(state.getEpsilonMoves());
     }
 
@@ -149,10 +150,10 @@ public class LexicalStateData {
     void indexStates() {
         int idx = 0;
         for (NfaState state : allStates) {
-            if (!state.isComposite()) state.index = idx++;
+            if (state.isComposite()) state.index = idx++;
         }
         for (NfaState state : allStates) {
-            if (state.isComposite()) state.index = idx++;
+            if (!state.isComposite()) state.index = idx++;
         }
     }
 

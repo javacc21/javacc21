@@ -45,18 +45,21 @@
 
   private int matchedPos, charsRead;
   //FIXME,should be an enum.
-  private int matchedKind, kind, temp;
+  private int matchedKind, kind;
   private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
   private BitSet nextStates=new BitSet(), currentStates = new BitSet();
+
+  private int nextStateIndex = -1, currentStateIndex = -1;
+
 
   static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
                               specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
                               skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
                               moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
-  private int curChar, pendingMoreChars;
+  private int curChar;
     
   private Token generateEOF() {
 	    this.matchedKind = 0;
@@ -80,7 +83,6 @@
         if (curChar == -1) {
            return generateEOF();
         }
-        pendingMoreChars = 0;
        MORELoop : while (true) {
        switch(lexicalState) {
 [#list lexerData.lexicalStates as lexicalState]
@@ -88,9 +90,7 @@
                 this.matchedKind = 0x7FFFFFFF;
                 matchedType = null;
                 this.matchedPos = 0;
-                if (!checkMemoization(memoizationCache_${lexicalState.name})) {
-                  moveNfa_${lexicalState.name}();
-                }
+                moveNfa_${lexicalState.name}();
                 break;
 [/#list]
       }
@@ -111,10 +111,9 @@
         continue EOFLoop;
       }
       [#if lexerData.hasMore]
-          pendingMoreChars += this.matchedPos + 1;
-      [#if multipleLexicalStates]
+        [#if multipleLexicalStates]
           doLexicalStateSwitch(this.matchedKind);
-      [/#if]
+        [/#if]
       charsRead = 0;
       this.matchedKind = 0x7FFFFFFF;
       int retval = input_stream.readChar();
@@ -198,42 +197,6 @@
         return t;
     }
 
-    private static final int MAX_LENGTH_TO_MEMOIZE = 16;
-    static private final Integer PARTIAL_MATCH = 0x7FFFFFF;
-
-    private boolean checkMemoization(Map<String, Integer> cache) {
-[#if !grammar.hugeFileSupport]      
-      StringBuilder buf = new StringBuilder();
-      buf.appendCodePoint(curChar);
-      int codePointsRead = 0;
-      String key = null;
-      Integer value = null;
-      int previousPosition = input_stream.getBufferPosition();
-      while (buf.length() < MAX_LENGTH_TO_MEMOIZE) {
-        key = buf.toString();
-        value = cache.get(key);
-        if (value == null) {
-            break;
-        }
-        else if (value == 0x7FFFFFF) {
-           int ch = input_stream.readChar();
-           if (ch >=0) {
-             codePointsRead++;
-             buf.appendCodePoint(ch);
-           } 
-           else break;
-        } 
-        else {
-          matchedPos = (int) (value % 1000);
-          matchedKind = (int) (value/1000);
-          charsRead = codePointsRead+1;
-          return true;
-        }
-      }
-      backup(codePointsRead); 
-[/#if]      
-      return false;
-    }
   [#var NFA_RANGE_THRESHOLD = 16]
 
   [#list lexerData.lexicalStates as lexicalState]
@@ -251,8 +214,9 @@
               return result;
           }
         [/#if]
-
-        private final void ${nfaState.methodName}() {
+        [#if NeedDumpMove(nfaState)]
+        static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
+            int kind = 0x7FFFFFFF, temp =0;
           [#if !nfaState.composite]
             [@DumpMove nfaState/]
           [#else]
@@ -260,18 +224,25 @@
               [@DumpMove state/]
             [/#list]
           [/#if]
+          return kind;
         }
+        static private ToIntBiFunction<Integer, BitSet> ${nfaState.methodName}_FUNC = ${grammar.lexerClassName}::${nfaState.methodName};
+        [/#if]
       [/#list]
 
-    static private Map<String,Integer> memoizationCache_${lexicalState.name} = new Hashtable<>();
-    private static BitSet initialStateSet_${lexicalState.name} = initialStateSet_${lexicalState.name}_init();
-    static private BitSet initialStateSet_${lexicalState.name}_init() {
-     BitSet bs = new BitSet();
-      [#list lexicalState.initialState.epsilonMoves as state]
-           bs.set(${state.index});
+    static private ToIntBiFunction<Integer,BitSet>[] NFA_FUNCTIONS_${lexicalState.name};
+
+    static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
+      NFA_FUNCTIONS_${lexicalState.name} = (ToIntBiFunction<Integer,BitSet>[]) new ToIntBiFunction[${lexicalState.allStates.size()}];
+      [#list lexicalState.allStates as state]
+        [#if NeedDumpMove(state)]
+          NFA_FUNCTIONS_${lexicalState.name}[${state.index}] = ${state.methodName}_FUNC;
+        [/#if]
       [/#list]
-      return bs;
-   }
+    }
+    static {
+      NFA_FUNCTIONS_${lexicalState.name}_init();
+    }
 
    [@DumpMoveNfa lexicalState/]
 
@@ -285,7 +256,7 @@
             int nextActive = -1;
             currentStates.clear();
             if (charsRead == 0) {
-              currentStates.or(initialStateSet_${lexicalState.name});
+               currentStates.set(${lexicalState.initialState.canonicalState.index});
             } else {
               currentStates.or(nextStates);
               int retval = input_stream.readChar();
@@ -298,10 +269,9 @@
             do {
               nextActive = currentStates.nextSetBit(nextActive+1);
               if (nextActive != -1) {
-                switch(nextActive) {
-                  [@DumpMoves lexicalState/]
-                  default : break;
-                }
+                ToIntBiFunction<Integer,BitSet> func = NFA_FUNCTIONS_${lexicalState.name}[nextActive];
+                int returnedKind = func.applyAsInt(curChar, nextStates);
+                kind = Math.min(returnedKind, kind);
               }
             } while (nextActive != -1);
             if (kind != 0x7fffffff) {
@@ -310,18 +280,6 @@
                 kind = 0x7fffffff;
             }
             ++charsRead;
-            if (nextStates.isEmpty()) {
-              if (matchedKind != 0x7FFFFFFF && pendingMoreChars == 0) {
-                String image = input_stream.getImage();
-                if (image.length() <= MAX_LENGTH_TO_MEMOIZE) {
-                    int value = matchedKind * 1000 + matchedPos;
-                    Integer previous = memoizationCache_${lexicalState.name}.put(image, value);
-                    for (int i = image.length()-1; i>0 && previous == null ; i--) {
-                       previous = memoizationCache_${lexicalState.name}.put(image.substring(0, i), PARTIAL_MATCH);
-                    }
-                }
-              }
-            } 
         } while (!nextStates.isEmpty());
     }
 [/#macro]
@@ -329,15 +287,18 @@
 [#macro DumpMoves lexicalState]
   //DumpMoves macro for lexicalState ${lexicalState.name}
    [#list lexicalState.allStates as state]
-     [#if state.composite || NeedDumpMove(state)]
+     [#if NeedDumpMove(state)]
        case ${state.index} :
-         ${state.methodName}();
+         returnedKind = NFA_FUNCTIONS_${lexicalState.name}[${state.index}].applyAsInt(curChar, nextStates);
+         kind = Math.min(kind, returnedKind);
          break;
      [/#if]
    [/#list]
 [/#macro]
 
 [#function NeedDumpMove nfaState]
+  [#if nfaState.composite][#return true][/#if]
+  [#if nfaState.canonicalState.composite][#return false][/#if]
    [#var statesToAdd = (nfaState.nextState.epsilonMoves.size())!0]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
    [#return statesToAdd>0 || kindToPrint!=MAX_INT]
@@ -345,16 +306,16 @@
 
 [#macro DumpMove nfaState]
    [#if !NeedDumpMove(nfaState)][#return][/#if]
-   [#var nextState = nfaState.nextState]
+   [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     if ([@nfaStateCondition nfaState/]) {
    [#if kindToPrint != MAX_INT]
-       kind = Math.min(kind, ${kindToPrint});
+      kind = Math.min(kind, ${kindToPrint});
    [/#if]
    [#if nextState.composite]
          nextStates.set(${nextState.index});
    [#else]
-     [#list (nfaState.nextState.epsilonMoves)! as epsilonMove]
+     [#list (nextState.epsilonMoves)! as epsilonMove]
           nextStates.set(${epsilonMove.index});
      [/#list]
    [/#if]

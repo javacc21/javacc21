@@ -48,6 +48,7 @@ import java.io.Reader;
 import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.*;
+import java.util.function.ToIntBiFunction;
 
 @SuppressWarnings("unused")
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
