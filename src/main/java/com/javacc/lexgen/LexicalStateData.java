@@ -57,7 +57,6 @@ public class LexicalStateData {
     private NfaState initialState;
 
     Set<NfaState> allStates = new HashSet<>();
-    Set<NfaState> allCanonicalStates = new HashSet<>();
     
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -77,8 +76,6 @@ public class LexicalStateData {
     void addTokenProduction(TokenProduction tokenProduction) {
         tokenProductions.add(tokenProduction);
     }
-
-//    public int getNumNfaStates() {return allStates.size();}
 
     public boolean containsRegularExpression(RegularExpression re) {
         return regularExpressions.contains(re);
@@ -102,10 +99,6 @@ public class LexicalStateData {
             canonicalSets.put(stateSet, result);
         }
         return result;
-    }
-
-    NfaState getCanonicalComposite(NfaState state) {
-        return getCanonicalComposite(state.getEpsilonMoves());
     }
 
     public RegularExpression getStringLiteral(String image) {

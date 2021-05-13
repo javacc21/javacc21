@@ -284,18 +284,6 @@
     }
 [/#macro]
 
-[#macro DumpMoves lexicalState]
-  //DumpMoves macro for lexicalState ${lexicalState.name}
-   [#list lexicalState.allStates as state]
-     [#if NeedDumpMove(state)]
-       case ${state.index} :
-         returnedKind = NFA_FUNCTIONS_${lexicalState.name}[${state.index}].applyAsInt(curChar, nextStates);
-         kind = Math.min(kind, returnedKind);
-         break;
-     [/#if]
-   [/#list]
-[/#macro]
-
 [#function NeedDumpMove nfaState]
   [#if nfaState.composite][#return true][/#if]
   [#if nfaState.canonicalState.composite][#return false][/#if]
