@@ -36,7 +36,6 @@ import com.javacc.parser.tree.CharacterRange;
 public class CompositeStateSet extends NfaState {
 
     private Set<NfaState> states = new HashSet<>(); 
-    //private TokenSet possibleTokenTypes;
 
     CompositeStateSet(LexicalStateData lsd) {
         super(lsd);
@@ -51,6 +50,11 @@ public class CompositeStateSet extends NfaState {
         return true;
     }
 
+    public boolean isMoveCodeNeeded() {
+        return states.stream().anyMatch(NfaState::isMoveCodeNeeded);
+    }
+
+
     public String getMethodName() {
         return "NFA_COMPOSITE_" + lexicalState.getName() + "_" + index;
     }
@@ -58,10 +62,6 @@ public class CompositeStateSet extends NfaState {
     public boolean equals(Object other) {
         return (other instanceof CompositeStateSet)
                && ((CompositeStateSet)other).states.equals(this.states);
-    }
-
-    public boolean contains(NfaState state) {
-        return states.contains(state);
     }
 
     public Set<NfaState> getStates() {

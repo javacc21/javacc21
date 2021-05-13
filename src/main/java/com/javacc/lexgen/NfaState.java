@@ -91,6 +91,12 @@ public class NfaState {
         return lexicalState.getCanonicalComposite(epsilonMoves);
     }
 
+    public boolean isMoveCodeNeeded() {
+        if (getCanonicalState().isComposite()) return false;
+        if (nextState == null) return false;
+        return nextState.type != null || !nextState.epsilonMoves.isEmpty();
+    }
+
     void setType(RegularExpression type) {
         this.type = type;
     }

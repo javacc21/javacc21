@@ -214,7 +214,9 @@
               return result;
           }
         [/#if]
-        [#if NeedDumpMove(nfaState)]
+        
+        [#if nfaState.moveCodeNeeded]
+
         static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
             int kind = 0x7FFFFFFF, temp =0;
           [#if !nfaState.composite]
@@ -226,7 +228,6 @@
           [/#if]
           return kind;
         }
-        static private ToIntBiFunction<Integer, BitSet> ${nfaState.methodName}_FUNC = ${grammar.lexerClassName}::${nfaState.methodName};
         [/#if]
       [/#list]
 
@@ -235,8 +236,8 @@
     static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
       NFA_FUNCTIONS_${lexicalState.name} = (ToIntBiFunction<Integer,BitSet>[]) new ToIntBiFunction[${lexicalState.allStates.size()}];
       [#list lexicalState.allStates as state]
-        [#if NeedDumpMove(state)]
-          NFA_FUNCTIONS_${lexicalState.name}[${state.index}] = ${state.methodName}_FUNC;
+        [#if state.moveCodeNeeded]
+          NFA_FUNCTIONS_${lexicalState.name}[${state.index}] = ${grammar.lexerClassName}::${state.methodName};
         [/#if]
       [/#list]
     }
@@ -253,7 +254,6 @@
         charsRead = 0;
         kind = 0x7fffffff;
         do {
-            int nextActive = -1;
             currentStates.clear();
             if (charsRead == 0) {
                currentStates.set(${lexicalState.initialState.canonicalState.index});
@@ -266,14 +266,19 @@
               else break;
             }
             nextStates.clear();
-            do {
+            [#--
+            // Why is this code so much slower simply because it uses 
+            // BitSet's stream() API? Should bring this up with Brian Goetz!
+            currentStates.stream().forEach(index->{
+              kind = Math.min(NFA_FUNCTIONS_${lexicalState.name}[index].applyAsInt(curChar, nextStates), kind);
+            });--]
+            int nextActive = currentStates.nextSetBit(0);
+            while (nextActive != -1) {
+              ToIntBiFunction<Integer,BitSet> func = NFA_FUNCTIONS_${lexicalState.name}[nextActive];
+              int returnedKind = func.applyAsInt(curChar, nextStates);
+              kind = Math.min(returnedKind, kind);
               nextActive = currentStates.nextSetBit(nextActive+1);
-              if (nextActive != -1) {
-                ToIntBiFunction<Integer,BitSet> func = NFA_FUNCTIONS_${lexicalState.name}[nextActive];
-                int returnedKind = func.applyAsInt(curChar, nextStates);
-                kind = Math.min(returnedKind, kind);
-              }
-            } while (nextActive != -1);
+            } 
             if (kind != 0x7fffffff) {
                 this.matchedKind = kind;
                 this.matchedPos = charsRead;
@@ -284,16 +289,8 @@
     }
 [/#macro]
 
-[#function NeedDumpMove nfaState]
-  [#if nfaState.composite][#return true][/#if]
-  [#if nfaState.canonicalState.composite][#return false][/#if]
-   [#var statesToAdd = (nfaState.nextState.epsilonMoves.size())!0]
-   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
-   [#return statesToAdd>0 || kindToPrint!=MAX_INT]
-[/#function]
-
 [#macro DumpMove nfaState]
-   [#if !NeedDumpMove(nfaState)][#return][/#if]
+   [#if !nfaState.moveCodeNeeded][#return][/#if]
    [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     if ([@nfaStateCondition nfaState/]) {
