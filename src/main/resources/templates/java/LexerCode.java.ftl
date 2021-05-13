@@ -51,9 +51,6 @@
   private String inputSource = "input";
   private BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
-  private int nextStateIndex = -1, currentStateIndex = -1;
-
-
   static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
                               specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
                               skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
@@ -216,18 +213,31 @@
         [/#if]
         
         [#if nfaState.moveCodeNeeded]
-
-        static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
-            int kind = 0x7FFFFFFF, temp =0;
           [#if !nfaState.composite]
-            [@DumpMove nfaState/]
-          [#else]
+            static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
+              [@DumpMove nfaState false/]
+              return 0x7FFFFFFF;
+            }
+          [#elseif true]
+            static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
+              int kind = 0x7FFFFFFF;
             [#list nfaState.states as state]
-              [@DumpMove state/]
+              [@DumpMove state true/]
             [/#list]
+             return kind;
+            }
+          [#else]
+            static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
+              int kind = 0x7FFFFFFF;
+              [#list nfaState.nonOverlappingFollowedByOverlapping as sublist]
+                 [#list sublist as state]
+                    [@DumpMove nfaState true /]
+                    [#if state_has_next] else [/#if]
+                 [/#list]
+              [/#list]
+              return kind;
+            }
           [/#if]
-          return kind;
-        }
         [/#if]
       [/#list]
 
@@ -266,12 +276,6 @@
               else break;
             }
             nextStates.clear();
-            [#--
-            // Why is this code so much slower simply because it uses 
-            // BitSet's stream() API? Should bring this up with Brian Goetz!
-            currentStates.stream().forEach(index->{
-              kind = Math.min(NFA_FUNCTIONS_${lexicalState.name}[index].applyAsInt(curChar, nextStates), kind);
-            });--]
             int nextActive = currentStates.nextSetBit(0);
             while (nextActive != -1) {
               ToIntBiFunction<Integer,BitSet> func = NFA_FUNCTIONS_${lexicalState.name}[nextActive];
@@ -289,20 +293,27 @@
     }
 [/#macro]
 
-[#macro DumpMove nfaState]
+[#macro DumpMove nfaState inComposite]
    [#if !nfaState.moveCodeNeeded][#return][/#if]
    [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
+    [#if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD]
+      int temp_${nfaState.index};
+    [/#if]
     if ([@nfaStateCondition nfaState/]) {
-   [#if kindToPrint != MAX_INT]
-      kind = Math.min(kind, ${kindToPrint});
-   [/#if]
    [#if nextState.composite]
          nextStates.set(${nextState.index});
    [#else]
      [#list (nextState.epsilonMoves)! as epsilonMove]
           nextStates.set(${epsilonMove.index});
      [/#list]
+   [/#if]
+   [#if kindToPrint != MAX_INT]
+     [#if inComposite]
+      kind = Math.min(kind, ${kindToPrint});
+     [#else]
+      return ${kindToPrint};
+     [/#if]
    [/#if]
    }
 [/#macro]
@@ -312,7 +323,7 @@
     [#if moveRanges?size < NFA_RANGE_THRESHOLD]
       [@rangesCondition nfaState.moveRanges /]
     [#else]
-      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, curChar)) >=0 || temp%2 ==0
+      (temp_${nfaState.index} = Arrays.binarySearch(${nfaState.movesArrayName}, curChar)) >=0 || temp_${nfaState.index}%2 ==0
     [/#if]
 [/#macro]
 
