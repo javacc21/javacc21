@@ -33,6 +33,7 @@
 [#var MAX_INT=2147483647]
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
+[#var NFA_RANGE_THRESHOLD = 16]
 
 [#macro BitSetFromLongArray bitSet]
       BitSet.valueOf(new long[] {
@@ -194,113 +195,144 @@
         return t;
     }
 
-  [#var NFA_RANGE_THRESHOLD = 16]
+[#--
+  Outer loop to generate all the NFA (non-deterministic finite automaton)
+  related code for all the various lexical states
+--]    
+[#list lexerData.lexicalStates as lexicalState]
+  [@GenerateNfaStateCode lexicalState/]
+  [@GenerateNfaMethod lexicalState/]
+[/#list]
 
+static {
   [#list lexerData.lexicalStates as lexicalState]
-      [#list lexicalState.allStates as nfaState]
-        [#var moveRanges = nfaState.moveRanges]
-        [#if moveRanges.size() >= NFA_RANGE_THRESHOLD]
-          [#var arrayName = nfaState.movesArrayName]
-          static private int[] ${arrayName} = ${arrayName}_init();
+    NFA_FUNCTIONS_${lexicalState.name}_init();
+  [/#list]
+}
 
-          static private int[] ${arrayName}_init() {
-              int[] result = new int[${nfaState.moveRanges.size()}];
-              [#list nfaState.moveRanges as char]
-                result[${char_index}] = ${char};
-              [/#list]
-              return result;
-          }
-        [/#if]
-        
-        [#if nfaState.moveCodeNeeded]
-          [#if !nfaState.composite]
-            static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
-              [@DumpMove nfaState false/]
-              return 0x7FFFFFFF;
-            }
-          [#elseif true]
-            static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
-              int kind = 0x7FFFFFFF;
-            [#list nfaState.states as state]
-              [@DumpMove state true/]
-            [/#list]
-             return kind;
-            }
-          [#else]
-            static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
-              int kind = 0x7FFFFFFF;
-              [#list nfaState.nonOverlappingFollowedByOverlapping as sublist]
-                 [#list sublist as state]
-                    [@DumpMove nfaState true /]
-                    [#if state_has_next] else [/#if]
-                 [/#list]
-              [/#list]
-              return kind;
-            }
-          [/#if]
-        [/#if]
-      [/#list]
-
-    static private ToIntBiFunction<Integer,BitSet>[] NFA_FUNCTIONS_${lexicalState.name};
-
-    static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
-      NFA_FUNCTIONS_${lexicalState.name} = (ToIntBiFunction<Integer,BitSet>[]) new ToIntBiFunction[${lexicalState.allStates.size()}];
-      [#list lexicalState.allStates as state]
-        [#if state.moveCodeNeeded]
-          NFA_FUNCTIONS_${lexicalState.name}[${state.index}] = ${grammar.lexerClassName}::${state.methodName};
-        [/#if]
-      [/#list]
-    }
-    static {
-      NFA_FUNCTIONS_${lexicalState.name}_init();
-    }
-
-   [@DumpMoveNfa lexicalState/]
-
+[#--
+  Generate all the NFA transition code
+  for the given lexical state
+--]
+[#macro GenerateNfaStateCode lexicalState]
+  [#list lexicalState.allStates as nfaState]
+    [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
+      [@GenerateMoveArray nfaState/]
+    [/#if]
+    [#if nfaState.moveCodeNeeded]
+      [@GenerateNfaStateMethod nfaState/]
+    [/#if]
   [/#list]
   
-[#macro DumpMoveNfa lexicalState]
-    private final void moveNfa_${lexicalState.name}() {
-        charsRead = 0;
-        kind = 0x7fffffff;
-        do {
-            currentStates.clear();
-            if (charsRead == 0) {
-               currentStates.set(${lexicalState.initialState.canonicalState.index});
-            } else {
-              currentStates.or(nextStates);
-              int retval = input_stream.readChar();
-              if (retval >=0) {
-                  curChar = retval;
-              }
-              else break;
-            }
-            nextStates.clear();
-            int nextActive = currentStates.nextSetBit(0);
-            while (nextActive != -1) {
-              ToIntBiFunction<Integer,BitSet> func = NFA_FUNCTIONS_${lexicalState.name}[nextActive];
-              int returnedKind = func.applyAsInt(curChar, nextStates);
-              kind = Math.min(returnedKind, kind);
-              nextActive = currentStates.nextSetBit(nextActive+1);
-            } 
-            if (kind != 0x7fffffff) {
-                this.matchedKind = kind;
-                this.matchedPos = charsRead;
-                kind = 0x7fffffff;
-            }
-            ++charsRead;
-        } while (!nextStates.isEmpty());
-    }
+  static private ToIntBiFunction<Integer,BitSet>[] NFA_FUNCTIONS_${lexicalState.name};
+
+  static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
+    NFA_FUNCTIONS_${lexicalState.name} = (ToIntBiFunction<Integer,BitSet>[]) new ToIntBiFunction[${lexicalState.allStates.size()}];
+    [#list lexicalState.allStates as state]
+      [#if state.moveCodeNeeded]
+        NFA_FUNCTIONS_${lexicalState.name}[${state.index}] = ${grammar.lexerClassName}::${state.methodName};
+      [/#if]
+    [/#list]
+  }
 [/#macro]
 
-[#macro DumpMove nfaState inComposite]
-   [#if !nfaState.moveCodeNeeded][#return][/#if]
+[#--
+   Generate the array representing the characters
+   that this NfaState "accepts".
+   This corresponds to the moveRanges field in 
+   com.javacc.lexgen.NfaState
+--]
+[#macro GenerateMoveArray nfaState]
+  [#var moveRanges = nfaState.moveRanges]
+  [#var arrayName = nfaState.movesArrayName]
+    static private int[] ${arrayName} = ${arrayName}_init();
+
+    static private int[] ${arrayName}_init() {
+        int[] result = new int[${nfaState.moveRanges.size()}];
+        [#list nfaState.moveRanges as char]
+          result[${char_index}] = ${char};
+        [/#list]
+        return result;
+    }
+[/#macro] 
+
+[#--
+   Generate the method that represents the transition
+   (or transitions if this is a CompositeStateSet)
+   that correspond to an instanceof com.javacc.lexgen.NfaState
+--]
+[#macro GenerateNfaStateMethod nfaState]  
+  [#if !nfaState.composite]
+    static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
+      int kind = 0x7FFFFFFF;
+      [@GenerateStateMove nfaState true /]
+      return 0x7FFFFFFF;
+    }
+  [#else]
+    static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
+      int kind = 0x7FFFFFFF;
+    [#var states = nfaState.orderedStates]
+    [#list states as state]
+      [#var jumpOut = state_has_next && state.isNonOverlapping(states.subList(state_index+1, states?size))]
+      [@GenerateStateMove state jumpOut /]
+    [/#list]
+      return kind;
+    }
+  [/#if]
+[/#macro]
+
+[#--
+  Generate the core NFA automaton method for the given lexical state
+  TODO: It is not really necessary to generate a separate method 
+  for each lexical state, since the only difference now between
+  the various move_Nfa_LEXICALSTATE_NAME methods 
+  is (a) the initial state and (b) the array of function objects
+  that encapsulate all the NFA states in a given lexical state
+--]
+[#macro GenerateNfaMethod lexicalState]
+  private final void moveNfa_${lexicalState.name}() {
+      charsRead = 0;
+      kind = 0x7fffffff;
+      do {
+          currentStates.clear();
+          if (charsRead == 0) {
+              currentStates.set(${lexicalState.initialState.canonicalState.index});
+          } else {
+            currentStates.or(nextStates);
+            int retval = input_stream.readChar();
+            if (retval >=0) {
+                curChar = retval;
+            }
+            else break;
+          }
+          nextStates.clear();
+          int nextActive = currentStates.nextSetBit(0);
+          while (nextActive != -1) {
+            ToIntBiFunction<Integer,BitSet> func = NFA_FUNCTIONS_${lexicalState.name}[nextActive];
+            int returnedKind = func.applyAsInt(curChar, nextStates);
+            kind = Math.min(returnedKind, kind);
+            nextActive = currentStates.nextSetBit(nextActive+1);
+          } 
+          if (kind != 0x7fffffff) {
+              this.matchedKind = kind;
+              this.matchedPos = charsRead;
+              kind = 0x7fffffff;
+          }
+          ++charsRead;
+      } while (!nextStates.isEmpty());
+  }
+[/#macro]
+
+[#--
+  Generates the code for an NFA state transition
+--]
+[#macro GenerateStateMove nfaState jumpOut]
    [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     [#if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD]
       int temp_${nfaState.index};
     [/#if]
-    if ([@nfaStateCondition nfaState/]) {
+    if ([@NfaStateCondition nfaState/]) {
    [#if nextState.composite]
          nextStates.set(${nextState.index});
    [#else]
@@ -309,16 +341,21 @@
      [/#list]
    [/#if]
    [#if kindToPrint != MAX_INT]
-     [#if inComposite]
       kind = Math.min(kind, ${kindToPrint});
-     [#else]
-      return ${kindToPrint};
-     [/#if]
    [/#if]
+   [#if jumpOut]
+      return kind;
+    [/#if]
    }
 [/#macro]
 
-[#macro nfaStateCondition nfaState]
+[#--
+Generate the condition part of the NFA state transition
+If the size of the moveRanges vector is greater than NFA_RANGE_THRESHOLD
+it uses the canned binary search routine. For the smaller moveRanges
+it just generates the inline conditional expression
+--]
+[#macro NfaStateCondition nfaState]
     [#var moveRanges = nfaState.moveRanges]
     [#if moveRanges?size < NFA_RANGE_THRESHOLD]
       [@rangesCondition nfaState.moveRanges /]

@@ -64,8 +64,30 @@ public class CompositeStateSet extends NfaState {
                && ((CompositeStateSet)other).states.equals(this.states);
     }
 
-    public Set<NfaState> getStates() {
-        return states;
+    /**
+     * We return the NFA states in this composite 
+     * ordered in such a way that the ones that do not
+     * overlap come first.
+     * @return sorted list of states
+     */
+    public List<NfaState> getOrderedStates() {
+        ArrayList<NfaState> result = new ArrayList<>();
+        Set<NfaState> statesCopy = new HashSet<>(states);
+        Outer:
+        while (!statesCopy.isEmpty()) {
+            for (NfaState state : statesCopy) {
+                if (state.isNonOverlapping(statesCopy)) {
+                    statesCopy.remove(state);
+                    result.add(state);
+                    continue Outer;
+                }
+            }
+            NfaState state = statesCopy.iterator().next();
+            statesCopy.remove(state);
+            result.add(state);
+        }
+        assert result.size() == states.size();
+        return result;
     }
 
     public RegularExpression getType() {
@@ -104,56 +126,9 @@ public class CompositeStateSet extends NfaState {
         return result;
     }
 
-    static BitSet moveRangesToBS(List<Integer> ranges) {
-        BitSet result = new BitSet();
-        for (int i=0; i< ranges.size(); i+=2) {
-            int left = ranges.get(i);
-            int right = ranges.get(i+1);
-            result.set(left, right+1);
-        }
-        return result;
-    }
-
-    static boolean intersect(List<Integer> moves1, List<Integer> moves2) {
-        BitSet bs1 = moveRangesToBS(moves1);
-        BitSet bs2 = moveRangesToBS(moves2);
-        return bs1.intersects(bs2);
-    }
-
     static Map<NfaState, BitSet> createStateToBitSetMap(Set<NfaState> states) {
         final Map<NfaState, BitSet> result = new HashMap<NfaState, BitSet>();
         states.stream().forEach(state -> result.put(state, moveRangesToBS(state.moveRanges)));
         return result;
     }
-
-    static boolean isNonOverlapping(NfaState state, Set<NfaState> states) {
-        for (NfaState other : states) {
-            if (state != other && intersect(state.moveRanges, other.moveRanges)) return false;
-        }
-        return true;
-    }
-
-    public List<List<NfaState>> getNonOverlappingFollowedByOverlapping() {
-        List<List<NfaState>> result = new ArrayList<>();
-        Set<NfaState> statesCopy = new HashSet<>(states);
-        List<NfaState> nonOverlapping = new ArrayList<>();
-        boolean foundNonOverlapping = true;
-        while (foundNonOverlapping) {
-            foundNonOverlapping = false;
-            for (NfaState state : statesCopy) {
-                if (isNonOverlapping(state, statesCopy)) {
-                    nonOverlapping.add(state);
-                    foundNonOverlapping = true;
-                }
-            }
-            if (foundNonOverlapping) {
-                result.add(nonOverlapping);
-                statesCopy.removeAll(nonOverlapping);
-                nonOverlapping = new ArrayList<>();
-            }
-        } 
-        result.add(new ArrayList<>(statesCopy));
-        return result;
-    }
-
 }

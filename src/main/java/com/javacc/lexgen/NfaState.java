@@ -141,4 +141,27 @@ public class NfaState {
         addEpsilonMove(this);
         epsilonMoves.removeIf(state->state.moveRanges.isEmpty());
     }
+
+    public boolean isNonOverlapping(Collection<NfaState> states) {
+        for (NfaState other : states) {
+            if (this != other && intersect(this.moveRanges, other.moveRanges)) return false;
+        }
+        return true;
+    }
+
+    static BitSet moveRangesToBS(List<Integer> ranges) {
+        BitSet result = new BitSet();
+        for (int i=0; i< ranges.size(); i+=2) {
+            int left = ranges.get(i);
+            int right = ranges.get(i+1);
+            result.set(left, right+1);
+        }
+        return result;
+    }
+
+    static boolean intersect(List<Integer> moves1, List<Integer> moves2) {
+        BitSet bs1 = moveRangesToBS(moves1);
+        BitSet bs2 = moveRangesToBS(moves2);
+        return bs1.intersects(bs2);
+    }
 }
