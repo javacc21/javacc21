@@ -331,7 +331,8 @@ static {
   method. (This is based on whether any of the moveRanges
   for later states overlap. If not, we can jump out. This 
   is only relevant if we are in a composite state, of course.)  
-  TODO: Clean this up a bit. It's a bit messy.
+  TODO: Clean this up a bit. It's a bit messy and maybe a 
+  redundant as well.
 --]
 [#macro GenerateStateMove nfaState inComposite jumpOut=true]
    [#var nextState = nfaState.nextState.canonicalState]
@@ -348,7 +349,9 @@ static {
      [/#list]
    [/#if]
    [#if !inComposite]
+     [#if kindToPrint != MAX_INT]
       return ${kindToPrint};
+     [/#if]
    [#else]
       [#if kindToPrint != MAX_INT]
           kind = Math.min(kind, ${kindToPrint});
