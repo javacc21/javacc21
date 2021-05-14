@@ -264,8 +264,7 @@ static {
 [#macro GenerateNfaStateMethod nfaState]  
   [#if !nfaState.composite]
     static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
-      int kind = 0x7FFFFFFF;
-      [@GenerateStateMove nfaState true /]
+      [@GenerateStateMove nfaState false /]
       return 0x7FFFFFFF;
     }
   [#else]
@@ -274,7 +273,7 @@ static {
     [#var states = nfaState.orderedStates]
     [#list states as state]
       [#var jumpOut = state_has_next && state.isNonOverlapping(states.subList(state_index+1, states?size))]
-      [@GenerateStateMove state jumpOut /]
+      [@GenerateStateMove state true jumpOut /]
     [/#list]
       return kind;
     }
@@ -325,8 +324,16 @@ static {
 
 [#--
   Generates the code for an NFA state transition
+  This is a bit messy. It takes the parameters:
+  inComposite means that this state move is part of
+  a CompositeStateSet. In that case, we use the jumpOut
+  parameter to decide whether we can just jump out of the 
+  method. (This is based on whether any of the moveRanges
+  for later states overlap. If not, we can jump out. This 
+  is only relevant if we are in a composite state, of course.)  
+  TODO: Clean this up a bit. It's a bit messy.
 --]
-[#macro GenerateStateMove nfaState jumpOut]
+[#macro GenerateStateMove nfaState inComposite jumpOut=true]
    [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     [#if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD]
@@ -340,12 +347,16 @@ static {
           nextStates.set(${epsilonMove.index});
      [/#list]
    [/#if]
-   [#if kindToPrint != MAX_INT]
-      kind = Math.min(kind, ${kindToPrint});
+   [#if !inComposite]
+      return ${kindToPrint};
+   [#else]
+      [#if kindToPrint != MAX_INT]
+          kind = Math.min(kind, ${kindToPrint});
+      [/#if]
+      [#if jumpOut]
+          return kind;
+      [/#if]
    [/#if]
-   [#if jumpOut]
-      return kind;
-    [/#if]
    }
 [/#macro]
 
