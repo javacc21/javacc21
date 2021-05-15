@@ -149,6 +149,8 @@ public class NfaBuilder extends Node.Visitor {
     }
 
     public void visit(RegexpRef ref) {
+        // REVISIT. Can the states generated
+        // here be reused?
         visit(ref.getRegexp());
     }
 
@@ -302,7 +304,8 @@ public class NfaBuilder extends Node.Visitor {
                 }
 
                 j += 2;
-                while (r > diffLowerCaseRanges[j]) {
+                // REVISIT later!
+                while (j+1 < diffLowerCaseRanges.length && r > diffLowerCaseRanges[j]) {
                     if (r <= diffLowerCaseRanges[j + 1]) {
                         CharacterRange cr = new CharacterRange();
                         cr.left = Character.toLowerCase(diffLowerCaseRanges[j]);
@@ -358,7 +361,8 @@ public class NfaBuilder extends Node.Visitor {
                 result.add(cr);
             }
             j += 2;
-            while (r > diffUpperCaseRanges[j]) {
+            // REVISIT later!
+            while (j+1 < diffUpperCaseRanges.length &&  r > diffUpperCaseRanges[j]) {
                 if (r <= diffUpperCaseRanges[j + 1]) {
                     CharacterRange crs = new CharacterRange();
                     crs.left = Character.toUpperCase(diffUpperCaseRanges[j]);
