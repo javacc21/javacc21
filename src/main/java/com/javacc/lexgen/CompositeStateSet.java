@@ -76,6 +76,10 @@ public class CompositeStateSet extends NfaState {
         Outer:
         while (!statesCopy.isEmpty()) {
             for (NfaState state : statesCopy) {
+                if (!state.isMoveCodeNeeded()) {
+                    statesCopy.remove(state);
+                    continue Outer;
+                }
                 if (state.isNonOverlapping(statesCopy)) {
                     statesCopy.remove(state);
                     result.add(state);
@@ -86,7 +90,6 @@ public class CompositeStateSet extends NfaState {
             statesCopy.remove(state);
             result.add(state);
         }
-        assert result.size() == states.size();
         return result;
     }
 

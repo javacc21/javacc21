@@ -264,16 +264,22 @@ static {
 [#macro GenerateNfaStateMethod nfaState]  
   [#if !nfaState.composite]
     static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
+      [#if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD]
+        int temp;
+      [/#if]
       [@GenerateStateMove nfaState false /]
       return 0x7FFFFFFF;
     }
   [#else]
     static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
-      int kind = 0x7FFFFFFF;
+      int kind = 0x7FFFFFFF, temp;
     [#var states = nfaState.orderedStates]
     [#list states as state]
       [#var jumpOut = state_has_next && state.isNonOverlapping(states.subList(state_index+1, states?size))]
       [@GenerateStateMove state true jumpOut /]
+      [#if state_has_next && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
+         else
+      [/#if]
     [/#list]
       return kind;
     }
@@ -337,9 +343,6 @@ static {
 [#macro GenerateStateMove nfaState inComposite jumpOut=true]
    [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
-    [#if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD]
-      int temp_${nfaState.index};
-    [/#if]
     if ([@NfaStateCondition nfaState/]) {
    [#if nextState.composite]
          nextStates.set(${nextState.index});
@@ -374,7 +377,7 @@ it just generates the inline conditional expression
     [#if moveRanges?size < NFA_RANGE_THRESHOLD]
       [@rangesCondition nfaState.moveRanges /]
     [#else]
-      (temp_${nfaState.index} = Arrays.binarySearch(${nfaState.movesArrayName}, curChar)) >=0 || temp_${nfaState.index}%2 ==0
+      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, curChar)) >=0 || temp%2 ==0
     [/#if]
 [/#macro]
 
