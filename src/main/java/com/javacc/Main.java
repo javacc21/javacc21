@@ -145,7 +145,7 @@ public final class Main {
         System.out.println("    java -jar " + jarFileName + " grammarfile");
         System.out.println();
         System.out.println("The following command-line flags are available:");
-        System.out.println(" -d <directory>    Specify the directory (relative or absolute) to place generated files");
+        System.out.println(" -d <directory>    Specify the directory (absolute or relative to the grammarfile location) to place generated files");
         System.out.println("   For example:   -d ../../src/generated");
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
         System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 16. (Default is 8)");
