@@ -1437,6 +1437,7 @@ INJECT TokenProduction :
         }
         Set<String> states = new LinkedHashSet<String>();
         for (Token t : childrenOfType(Token.class)) {
+            if (t.getType() == HASH) break;
             if (t.getType() == IDENTIFIER) {
                 states.add(t.getImage());
             }
