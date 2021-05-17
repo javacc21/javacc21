@@ -40,9 +40,29 @@
    [#set TT=""]
  [/#if]
 
-[#-- Defines an EnumSet for the list of token names --]
-
+[#-- 
+  Rewritten version of this macro to try to get around the Code too large problem.
+--]
 [#macro enumSet varName tokenNames]
+    static private final EnumSet<TokenType> ${varName} = ${varName}_init();
+    static private EnumSet<TokenType> ${varName}_init() {
+       [#if tokenNames?size=0]
+           return EnumSet.noneOf(TokenType.class);
+       [#else]
+           return EnumSet.of(
+             [#list tokenNames as type]
+              [#if type_index > 0],[/#if]
+              ${TT}${type} 
+             [/#list]
+           );
+       [/#if]
+    }
+[/#macro]
+
+[#--
+  Previous version of the macro that is prone to the Code too large problem.
+--]
+[#macro enumSet_PREV varName tokenNames]
    [#if tokenNames?size=0]
        static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
    [#else]
@@ -65,8 +85,7 @@
 
 [#macro followSetVar expansion]
     [@enumSet expansion.followSetVarName expansion.followSet.tokenNames/]
-[/#macro]            
-
+[/#macro]
 
 
 [#var newVarIndex=0]
