@@ -96,9 +96,10 @@ public class NfaBuilder extends Node.Visitor {
     }
 
     public void visit(RegexpChoice choice) {
-        List<RegularExpression> choices = compressCharLists(choice.getChoices());
+        List<RegularExpression> choices = choice.getChoices();
         if (choices.size() == 1) {
             visit(choices.get(0));
+            return;
         }
         NfaState startState = new NfaState(lexicalState);
         NfaState finalState = new NfaState(lexicalState);
@@ -204,58 +205,6 @@ public class NfaBuilder extends Node.Visitor {
             seq.addChild(re);
         }
         visit(seq);
-    }
-
-    private List<RegularExpression> compressCharLists(List<RegularExpression> choices) {
-        choices = expandChoices(choices); // Unroll nested choices
-        List<RegularExpression> result = new ArrayList<RegularExpression>();
-        CharacterList mergedCharList = new CharacterList();
-        mergedCharList.setGrammar(grammar);
-        for (RegularExpression curRE : choices) {
-            while (curRE instanceof RegexpRef) {
-                curRE = ((RegexpRef) curRE).getRegexp();
-            }
-            if (curRE instanceof RegexpStringLiteral && ((RegexpStringLiteral) curRE).getImage().length() == 1) {
-                CharacterList charList = new CharacterList();
-                CharacterRange cr = new CharacterRange();
-                cr.left = cr.right = ((RegexpStringLiteral) curRE).getImage().codePointAt(0);
-                charList.addChild(cr);
-                curRE = charList;
-            }
-            if (curRE instanceof CharacterList) {
-                CharacterList charList = (CharacterList) curRE;
-                List<CharacterRange> descriptors = sortDescriptors(charList.getDescriptors());
-                if (charList.isNegated()) {
-                    descriptors = removeNegation(descriptors);
-                }
-                for (CharacterRange cr : descriptors) {
-                    mergedCharList.addChild(cr);
-                }
-            } else {
-                result.add(curRE);
-            }
-        }
-        if (!mergedCharList.getDescriptors().isEmpty()) {
-            result.add(mergedCharList);
-        }
-        return result;
-    }
-
-    static private List<RegularExpression> expandChoices(List<RegularExpression> choices) {
-        List<RegularExpression> result = new ArrayList<RegularExpression>();
-        for (RegularExpression curRE : choices) {
-            while (curRE instanceof RegexpRef) {
-                curRE = ((RegexpRef) curRE).getRegexp();
-            }
-            if (curRE instanceof RegexpChoice) {
-                for (RegularExpression re : ((RegexpChoice) curRE).getChoices()) {
-                    result.add(re);
-                }
-            } else {
-                result.add(curRE);
-            }
-        }
-        return result;
     }
 
     static private List<CharacterRange> toCaseNeutral(List<CharacterRange> descriptors) {
@@ -392,7 +341,7 @@ public class NfaBuilder extends Node.Visitor {
             }
             lastRange = range;
         }
-        if (lastRange !=null && lastRange.right < 0xFFFF) {
+        if (lastRange !=null && lastRange.right < 0x10FFFF) {
             result.add(new CharacterRange(lastRange.right+1, 0x10FFFF));
         }
         if (result.isEmpty()) {
