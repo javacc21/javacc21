@@ -793,7 +793,7 @@ AllocationExpression :
   |
   "new" ObjectType [ PossiblyEmptyTypeArguments ]
     (
-      SCAN 2 ArrayDimsAndInits
+      ArrayDimsAndInits
       |
       InvocationArguments [ ClassOrInterfaceBody ]
     )
