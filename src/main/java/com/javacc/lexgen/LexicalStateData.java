@@ -33,7 +33,6 @@ import java.util.*;
 
 import com.javacc.Grammar;
 import com.javacc.parsegen.RegularExpression;
-import com.javacc.parser.tree.CodeBlock;
 import com.javacc.parser.tree.RegexpChoice;
 import com.javacc.parser.tree.RegexpSpec;
 import com.javacc.parser.tree.RegexpStringLiteral;
@@ -170,12 +169,8 @@ public class LexicalStateData {
             if (respec.getCodeSnippet() != null && !respec.getCodeSnippet().isEmpty()) {
                 currentRegexp.setCodeSnippet(respec.getCodeSnippet());
             }
-            CodeBlock tokenAction = currentRegexp.getCodeSnippet();
             String kind = tp.getKind();
             if (kind.equals("SPECIAL_TOKEN")) {
-                if (tokenAction != null || currentRegexp.getNewLexicalState() != null) {
-                    lexerData.hasSkipActions = true;
-                }
                 lexerData.hasSpecial = true;
                 if (currentRegexp.getOrdinal() >0) {
                     lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
@@ -184,13 +179,11 @@ public class LexicalStateData {
                 currentRegexp.setUnparsedToken();
             }
             else if (kind.equals("SKIP")) {
-                lexerData.hasSkipActions |= (tokenAction != null);
                 lexerData.hasSkip = true;
                 lexerData.getSkipSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setSkip();
             }
             else if (kind.equals("MORE") && currentRegexp.getOrdinal()>0) { // REVISIT
-                lexerData.hasMoreActions |= tokenAction != null;
                 lexerData.hasMore = true;
                 lexerData.getMoreSet().set(currentRegexp.getOrdinal());
                 currentRegexp.setMore();

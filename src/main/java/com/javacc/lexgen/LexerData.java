@@ -53,7 +53,7 @@ public class LexerData {
     private List<RegularExpression> regularExpressions = new ArrayList<>();
     private TokenSet skipSet, specialSet, moreSet, tokenSet;
     
-    boolean hasSkipActions, hasMoreActions, hasSpecial, hasSkip, hasMore;
+    boolean hasSpecial, hasSkip, hasMore;
     int lastIndex;
 
     public LexerData(Grammar grammar) {
@@ -185,10 +185,6 @@ public class LexerData {
         return hasSkip;
     }
 
-    public boolean getHasSkipActions() {
-        return hasSkipActions;
-    }
-
     public boolean hasTokenAction(int index) {
         return tokenSet.get(index);
     }
@@ -244,7 +240,7 @@ public class LexerData {
     }
 
     //What about the case of a regexp existing in multiple lexical states? REVISIT (JR)
-    static public void checkUnmatchability(RegexpChoice choice) {
+    static private void checkUnmatchability(RegexpChoice choice) {
         for (RegularExpression curRE : choice.getChoices()) {
             if (!(curRE).isPrivate() && curRE.getOrdinal() > 0 && curRE.getOrdinal() < choice.getOrdinal()
                     && curRE.getLexicalState() == choice.getLexicalState()) {
