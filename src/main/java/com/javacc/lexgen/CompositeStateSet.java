@@ -104,34 +104,4 @@ public class CompositeStateSet extends NfaState {
         }
         return getLexicalState().getGrammar().getLexerData().getRegularExpression(ordinal);
     }
-
-    static List<Integer> combineMoves(List<Integer> first, List<Integer> second) {
-        List<CharacterRange> combinedRangeList = moveRangesToCharacterRanges(first);
-        combinedRangeList.addAll(moveRangesToCharacterRanges(second));
-        combinedRangeList = NfaBuilder.sortDescriptors(combinedRangeList);
-        List<Integer> result = new ArrayList<>();
-        for (CharacterRange cr : combinedRangeList) {
-            result.add(cr.left);
-            result.add(cr.right);
-        }
-        return result;
-    }
-
-    static private List<CharacterRange> moveRangesToCharacterRanges(List<Integer> moveRanges) {
-        List<CharacterRange> result = new ArrayList<>();
-        for (int i =0; i< moveRanges.size()/2; i++) {
-            int left = moveRanges.get(i*2);
-            int right = moveRanges.get(i*2+1);
-            CharacterRange cr = new CharacterRange(left, right);
-            result.add(cr);
-        }
-        assert result.size() == moveRanges.size()/2;
-        return result;
-    }
-
-    static Map<NfaState, BitSet> createStateToBitSetMap(Set<NfaState> states) {
-        final Map<NfaState, BitSet> result = new HashMap<NfaState, BitSet>();
-        states.stream().forEach(state -> result.put(state, moveRangesToBS(state.moveRanges)));
-        return result;
-    }
 }

@@ -32,7 +32,6 @@ package com.javacc.lexgen;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Collections;
 import java.util.List;
 
 import com.javacc.Grammar;
@@ -69,14 +68,7 @@ public class NfaBuilder extends Node.Visitor {
     }
 
     public void visit(CharacterList charList) {
-        List<CharacterRange> descriptors = charList.getDescriptors();
-        if (ignoreCase) {
-            descriptors = toCaseNeutral(descriptors);
-        }
-        descriptors = sortDescriptors(descriptors);
-        if (charList.isNegated()) {
-            descriptors = removeNegation(descriptors);
-        }
+        List<CharacterRange> descriptors = cleanRanges(charList, ignoreCase);
         start = new NfaState(lexicalState);
         end = new NfaState(lexicalState);
         for (CharacterRange cr : descriptors) {
@@ -207,57 +199,20 @@ public class NfaBuilder extends Node.Visitor {
         visit(seq);
     }
 
-    static private List<CharacterRange> toCaseNeutral(List<CharacterRange> descriptors) {
-        BitSet bs = rangeListToBS(descriptors);
-        BitSet copy1 = (BitSet) bs.clone();
-        BitSet copy2 = (BitSet) bs.clone();
-        copy1.and(upperCaseDiffSet);
-        copy2.and(lowerCaseDiffSet);
-        copy1.stream().forEach(ch -> bs.set(Character.toUpperCase(ch)));
-        copy2.stream().forEach(ch -> bs.set(Character.toLowerCase(ch)));
+    static private List<CharacterRange> cleanRanges(CharacterList charList, boolean caseNeutral) {
+        BitSet bs = rangeListToBS(charList.getDescriptors());
+        if (caseNeutral) {
+            BitSet upperCaseDiffPoints = (BitSet) bs.clone();
+            BitSet lowerCaseDiffPoints = (BitSet) bs.clone();
+            upperCaseDiffPoints.and(upperCaseDiffSet);
+            lowerCaseDiffPoints.and(lowerCaseDiffSet);
+            upperCaseDiffPoints.stream().forEach(ch -> bs.set(Character.toUpperCase(ch)));
+            lowerCaseDiffPoints.stream().forEach(ch -> bs.set(Character.toLowerCase(ch)));
+        }
+        if (charList.isNegated()) {
+            bs.flip(0, 0x110000);
+        }
         return bsToRangeList(bs);
-    }
-
-    static private List<CharacterRange> removeNegation(List<CharacterRange> descriptors) {
-        //NB. This routine depends on the fact that the descriptors list is already sorted by sortDescriptors()
-        List<CharacterRange> result = new ArrayList<>();
-        CharacterRange lastRange = null;
-        for (CharacterRange range : descriptors) {
-            if (range.left >0) {
-                int begin = lastRange == null ? 0 : lastRange.right+1; 
-                result.add(new CharacterRange(begin, range.left -1));
-            }
-            lastRange = range;
-        }
-        if (lastRange !=null && lastRange.right < 0x10FFFF) {
-            result.add(new CharacterRange(lastRange.right+1, 0x10FFFF));
-        }
-        if (result.isEmpty()) {
-            result.add(new CharacterRange(0, 0x10FFFF));
-        }
-        return result;
-    }
-
-   static List<CharacterRange> sortDescriptors(List<CharacterRange> descriptors) {
-        Collections.sort(descriptors, (first, second) -> first.left - second.left);
-        List<CharacterRange> result = new ArrayList<>();
-        CharacterRange previous = null;
-        for (CharacterRange range : descriptors) {
-            if (previous == null) {
-                result.add(range);
-                previous = range;
-            } else {
-                if (previous.left == range.left) {
-                    previous.right = Math.max(previous.right, range.right);
-                } else if (previous.right >= range.left - 1) {
-                    previous.right = Math.max(previous.right, range.right);
-                } else {
-                    result.add(range);
-                    previous = range;
-                }
-            }
-        }
-        return result;
     }
 
     // BitSet that holds which characters are not the same in lower case
@@ -288,6 +243,7 @@ public class NfaBuilder extends Node.Visitor {
     //Convert a BitSet to a list of CharacterRange's
     static private List<CharacterRange> bsToRangeList(BitSet bs) {
         List<CharacterRange> result = new ArrayList<>();
+        if (bs.isEmpty()) return result;
         int curPos = 0;
         while (curPos >=0) {
             int left = bs.nextSetBit(curPos);
