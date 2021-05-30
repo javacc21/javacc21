@@ -209,8 +209,12 @@ public class NfaBuilder extends Node.Visitor {
 
     static private List<CharacterRange> toCaseNeutral(List<CharacterRange> descriptors) {
         BitSet bs = rangeListToBS(descriptors);
-        upperCaseDiffSet.stream().forEach(ch -> {if (bs.get(ch)) bs.set(Character.toUpperCase(ch));});
-        lowerCaseDiffSet.stream().forEach(ch -> {if (bs.get(ch)) bs.set(Character.toLowerCase(ch));});
+        BitSet copy1 = (BitSet) bs.clone();
+        BitSet copy2 = (BitSet) bs.clone();
+        copy1.and(upperCaseDiffSet);
+        copy2.and(lowerCaseDiffSet);
+        copy1.stream().forEach(ch -> bs.set(Character.toUpperCase(ch)));
+        copy2.stream().forEach(ch -> bs.set(Character.toLowerCase(ch)));
         return bsToRangeList(bs);
     }
 
