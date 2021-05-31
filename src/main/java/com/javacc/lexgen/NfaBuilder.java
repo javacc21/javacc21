@@ -68,10 +68,10 @@ public class NfaBuilder extends Node.Visitor {
     }
 
     public void visit(CharacterList charList) {
-        List<CharacterRange> descriptors = cleanRanges(charList, ignoreCase);
+        List<CharacterRange> ranges = orderedRanges(charList, ignoreCase);
         start = new NfaState(lexicalState);
         end = new NfaState(lexicalState);
-        for (CharacterRange cr : descriptors) {
+        for (CharacterRange cr : ranges) {
             start.addRange(cr.left, cr.right);
         }
         start.setNextState(end);
@@ -199,7 +199,7 @@ public class NfaBuilder extends Node.Visitor {
         visit(seq);
     }
 
-    static private List<CharacterRange> cleanRanges(CharacterList charList, boolean caseNeutral) {
+    static private List<CharacterRange> orderedRanges(CharacterList charList, boolean caseNeutral) {
         BitSet bs = rangeListToBS(charList.getDescriptors());
         if (caseNeutral) {
             BitSet upperCaseDiffPoints = (BitSet) bs.clone();

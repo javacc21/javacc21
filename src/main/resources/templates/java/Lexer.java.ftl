@@ -1,5 +1,5 @@
 [#--
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@ public final void backup(int amount) {
     input_stream.backup(amount);
 }
 
-  LexicalState lexicalState = LexicalState.${lexerData.lexicalStates[0].name};
+  LexicalState lexicalState;
  
 [#if numLexicalStates>1]
    boolean doLexicalStateSwitch(int tokenType) {
@@ -150,6 +150,8 @@ public final void backup(int amount) {
         if (this.lexicalState != lexState) {
            if (trace_enabled) LOGGER.info("Switching from lexical state " + this.lexicalState + " to " + lexState);
            this.lexicalState = lexState;
+           this.nfaFunctions = functionTableMap.get(lexState);
+           this.startStateIndex = startStateMap.get(lexState);
            return true;
         }
         return false;
