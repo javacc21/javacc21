@@ -80,86 +80,7 @@
 [/#list]
       return eof;
     }
-  
-  private Token nextToken() {
-    matchedToken = null;
-    EOFLoop :
-    while (true) {
-        curChar = input_stream.beginToken();
-        if (curChar == -1) {
-           return generateEOF();
-        }
-        MORELoop : while (true) {
-           nfaLoop();
-           if (this.matchedKind != 0x7FFFFFFF) { 
-           input_stream.backup(charsRead - this.matchedPos - 1);
-           if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
-               instantiateToken();
-           }
-           tokenLexicalActions();
-           if (matchedToken != null) break EOFLoop;
-           if (skipSet.get(this.matchedKind))
-           {
-      [#if multipleLexicalStates]
-             if (newLexicalStates[this.matchedKind] != null) {
-                this.lexicalState = newLexicalStates[this.matchedKind];
-           }
-      [/#if]
-        continue EOFLoop;
-      }
-      [#if lexerData.hasMore]
-        [#if multipleLexicalStates]
-          doLexicalStateSwitch(this.matchedKind);
-        [/#if]
-      charsRead = 0;
-      this.matchedKind = 0x7FFFFFFF;
-      int retval = input_stream.readChar();
-      if (retval >=0) {
-            curChar = retval;
-            continue MORELoop;
-      }
-     [/#if]
-     }
-     matchedToken = handleInvalidChar(curChar);
-     break EOFLoop;
-    }
-   }
-   return matchedToken;
-  }
 
-  private final void nfaLoop() {
-      this.matchedKind = 0x7FFFFFFF;
-      matchedType = null;
-      this.matchedPos = 0;
-      charsRead = 0;
-      kind = 0x7fffffff;
-      do {
-          currentStates.clear();
-          if (charsRead==0) {
-            currentStates.set(startStateIndex);
-          } else {
-            currentStates.or(nextStates);
-            int retval = input_stream.readChar();
-            if (retval >=0) {
-                curChar = retval;
-            }
-            else break;
-          }
-          nextStates.clear();
-          int nextActive = currentStates.nextSetBit(0);
-          while (nextActive != -1) {
-            int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
-            kind = Math.min(returnedKind, kind);
-            nextActive = currentStates.nextSetBit(nextActive+1);
-          } 
-          if (kind != 0x7fffffff) {
-              this.matchedKind = kind;
-              this.matchedPos = charsRead;
-              kind = 0x7fffffff;
-          }
-          ++charsRead;
-      } while (!nextStates.isEmpty());
-  }
 
 
   private InvalidToken handleInvalidChar(int ch) {
@@ -228,6 +149,92 @@
 //        t.setInputSource(this.inputSource);
         return t;
     }
+
+  [#--
+     TODO: Merge the nextToken() method with the nfaLoop() 
+     that follows. Also, need to move from using ints for the 
+     token type towards actually using the type-safe Enum TokenType,
+     as much as possible.
+  --]
+  private Token nextToken() {
+    matchedToken = null;
+    EOFLoop :
+    while (true) {
+        curChar = input_stream.beginToken();
+        if (curChar == -1) {
+           return generateEOF();
+        }
+        MORELoop : while (true) {
+          this.matchedKind = 0x7FFFFFFF;
+          matchedType = null;
+          this.matchedPos = 0;
+          charsRead = 0;
+          kind = 0x7fffffff;
+          nfaLoop();
+          if (this.matchedKind != 0x7FFFFFFF) { 
+            input_stream.backup(charsRead - this.matchedPos - 1);
+            if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
+                instantiateToken();
+            }
+           tokenLexicalActions();
+           if (matchedToken != null) break EOFLoop;
+           if (skipSet.get(this.matchedKind))
+           {
+      [#if multipleLexicalStates]
+             if (newLexicalStates[this.matchedKind] != null) {
+                this.lexicalState = newLexicalStates[this.matchedKind];
+           }
+      [/#if]
+        continue EOFLoop;
+      }
+      [#if lexerData.hasMore]
+        [#if multipleLexicalStates]
+          doLexicalStateSwitch(this.matchedKind);
+        [/#if]
+      charsRead = 0;
+      this.matchedKind = 0x7FFFFFFF;
+      int retval = input_stream.readChar();
+      if (retval >=0) {
+            curChar = retval;
+            continue MORELoop;
+      }
+     [/#if]
+     }
+     matchedToken = handleInvalidChar(curChar);
+     break EOFLoop;
+    }
+   }
+   return matchedToken;
+  }
+
+  private final void nfaLoop() {
+      do {
+          currentStates.clear();
+          if (charsRead==0) {
+            currentStates.set(startStateIndex);
+          } else {
+            currentStates.or(nextStates);
+            int retval = input_stream.readChar();
+            if (retval >=0) {
+                curChar = retval;
+            }
+            else break;
+          }
+          nextStates.clear();
+          int nextActive = currentStates.nextSetBit(0);
+          while (nextActive != -1) {
+            int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
+            kind = Math.min(returnedKind, kind);
+            nextActive = currentStates.nextSetBit(nextActive+1);
+          } 
+          if (kind != 0x7fffffff) {
+              this.matchedKind = kind;
+              this.matchedPos = charsRead;
+              kind = 0x7fffffff;
+          }
+          ++charsRead;
+      } while (!nextStates.isEmpty());
+  }
 
 [#--
   Outer loop to generate all the NFA (non-deterministic finite automaton)
