@@ -263,17 +263,16 @@ static {
       [@GenerateNfaStateMethod nfaState/]
     [/#if]
   [/#list]
-  
-  static private ToIntBiFunction<Integer,BitSet>[] NFA_FUNCTIONS_${lexicalState.name};
 
   static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
-    NFA_FUNCTIONS_${lexicalState.name} = (ToIntBiFunction<Integer,BitSet>[]) new ToIntBiFunction[${lexicalState.allStates.size()}];
+    @SuppressWarnings("unchecked") 
+    ToIntBiFunction<Integer,BitSet>[] functions = new ToIntBiFunction[${lexicalState.allStates.size()}];
     [#list lexicalState.allStates as state]
       [#if state.moveCodeNeeded]
-        NFA_FUNCTIONS_${lexicalState.name}[${state.index}] = ${grammar.lexerClassName}::${state.methodName};
+          functions[${state.index}] = ${grammar.lexerClassName}::${state.methodName};
       [/#if]
     [/#list]
-    functionTableMap.put(LexicalState.${lexicalState.name}, NFA_FUNCTIONS_${lexicalState.name});
+    functionTableMap.put(LexicalState.${lexicalState.name}, functions);
     startStateMap.put(LexicalState.${lexicalState.name}, ${lexicalState.initialState.canonicalState.index});
   }
 [/#macro]
