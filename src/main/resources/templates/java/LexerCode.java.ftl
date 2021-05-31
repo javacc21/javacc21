@@ -46,16 +46,23 @@
 
   private int matchedPos, charsRead;
   //FIXME,should be an enum.
-  private int matchedKind, kind;
+  private int matchedKind;
   private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
   private BitSet nextStates=new BitSet(), currentStates = new BitSet();
+
+  // The array of nfa functions that correspond to the current
+  // lexical state. This and the following variable that is the
+  // starting state index basically encapsulate a lexical state. 
+  // These are the variables that are used in the nfaLoop() method.
   private ToIntBiFunction<Integer,BitSet>[] nfaFunctions;
   // The starting state for the current lexical state
   private int startStateIndex;
 
-  // A lookup of the NFA function tables for the respective lexical states
+  // A lookup of the NFA function tables for the respective lexical states. 
+  // We switch effectively switch lexical state by setting the appropriate 
+  // function table and starting state.
   private static EnumMap<LexicalState,ToIntBiFunction<Integer,BitSet>[]> functionTableMap = new EnumMap<>(LexicalState.class);
   // A lookup of the start state index for each lexical state
   private static EnumMap<LexicalState, Integer> startStateMap = new EnumMap<>(LexicalState.class);
@@ -151,10 +158,10 @@
     }
 
   [#--
-     TODO: Merge the nextToken() method with the nfaLoop() 
-     that follows. Also, need to move from using ints for the 
-     token type towards actually using the type-safe Enum TokenType,
-     as much as possible.
+     TODO: The following method is still too messy. Needs cleanup.
+     Possibly it can be merged with the nfaLoop() method that follows.
+     Also, need to move from using ints for the token type towards 
+     actually using the type-safe Enum TokenType, as much as possible.
   --]
   private Token nextToken() {
     matchedToken = null;
@@ -164,12 +171,12 @@
         if (curChar == -1) {
            return generateEOF();
         }
-        MORELoop : while (true) {
+        MORELoop : 
+        while (true) {
           this.matchedKind = 0x7FFFFFFF;
           matchedType = null;
           this.matchedPos = 0;
           charsRead = 0;
-          kind = 0x7fffffff;
           nfaLoop();
           if (this.matchedKind != 0x7FFFFFFF) { 
             input_stream.backup(charsRead - this.matchedPos - 1);
@@ -209,6 +216,7 @@
 
   private final void nfaLoop() {
       do {
+          int kind = 0x7FFFFFFF;
           currentStates.clear();
           if (charsRead==0) {
             currentStates.set(startStateIndex);
@@ -224,13 +232,12 @@
           int nextActive = currentStates.nextSetBit(0);
           while (nextActive != -1) {
             int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
-            kind = Math.min(returnedKind, kind);
+            if (returnedKind < kind) kind = returnedKind;
             nextActive = currentStates.nextSetBit(nextActive+1);
           } 
-          if (kind != 0x7fffffff) {
+          if (kind != 0x7FFFFFFF) {
               this.matchedKind = kind;
               this.matchedPos = charsRead;
-              kind = 0x7fffffff;
           }
           ++charsRead;
       } while (!nextStates.isEmpty());
