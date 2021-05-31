@@ -30,23 +30,29 @@
  */
  --]
 
+[#var lexerData=grammar.lexerData]
+[#var tokenBuilderClass = grammar.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
+[#var numLexicalStates=lexerData.lexicalStates?size]
 [#var MAX_INT=2147483647]
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
 [#var NFA_RANGE_THRESHOLD = 16]
 
-[#macro BitSetFromLongArray bitSet]
-      BitSet.valueOf(new long[] {
-          [#list bitSet.toLongArray() as long]
-             ${grammar.utils.toHexStringL(long)}
-             [#if long_has_next],[/#if]
-          [/#list]
-      })
-[/#macro]
+[#list grammar.parserCodeImports as import]
+   ${import}
+[/#list]
+
+import java.io.Reader;
+import java.io.IOException;
+import java.util.logging.Logger;
+import java.util.*;
+import java.util.function.ToIntBiFunction;
+
+@SuppressWarnings("unused")
+public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
+
 
   private int matchedPos, charsRead;
-  //FIXME,should be an enum.
-  private int matchedKind;
   private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
@@ -73,9 +79,228 @@
                               moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
   private int curChar;
+
+  private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
+    [#if grammar.debugLexer]  
+  private boolean trace_enabled = true;
+    [#else]  
+  private boolean trace_enabled = false;
+    [/#if]
+    
+  private void setTracingEnabled(boolean trace_enabled) {
+     this.trace_enabled = trace_enabled;
+  }
+
+  public String getInputSource() {
+      return inputSource;
+  }
+  
+  public void setInputSource(String inputSource) {
+      this.inputSource = inputSource;
+[#if !grammar.hugeFileSupport]
+      input_stream.setInputSource(inputSource);
+[/#if]            
+  }
+   
+[#if !grammar.hugeFileSupport]
+     public ${grammar.lexerClassName}(CharSequence chars) {
+        this("input", chars);
+     }
+
+     public ${grammar.lexerClassName}(String inputSource, CharSequence chars) {
+        this(inputSource, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
+     }
+     public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
+         this.inputSource = inputSource;
+        input_stream = new ${tokenBuilderClass}(inputSource, chars, line, column);
+        switchTo(lexState);
+     }
+[/#if]
+
+    public ${grammar.lexerClassName}(Reader reader) {
+       this("input", reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
+    }
+
+    public ${grammar.lexerClassName}(String inputSource, Reader reader) {
+       this(inputSource, reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
+    }
+
+    public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
+        this.inputSource = inputSource;
+        input_stream = new ${tokenBuilderClass}(inputSource, reader, line, column);
+        switchTo(lexState);
+    }
+    
+${tokenBuilderClass} input_stream;
+
+public final void backup(int amount) {
+    input_stream.backup(amount);
+}
+
+  LexicalState lexicalState;
+ 
+[#if numLexicalStates>1]
+   boolean doLexicalStateSwitch(int tokenType) {
+       LexicalState newLexState = newLexicalStates[tokenType];
+       if (newLexState != null) {
+           return switchTo(newLexState);
+       }
+       return false;
+   }
+   
+   boolean doLexicalStateSwitch(TokenType tokenType) {
+       return doLexicalStateSwitch(tokenType.ordinal());
+   }
+  
+  private static final LexicalState[] newLexicalStates = {
+         [#list lexerData.regularExpressions as regexp]
+             [#if regexp.newLexicalState?is_null]
+                null,
+             [#else]
+                LexicalState.${regexp.newLexicalState.name},
+             [/#if]
+          [/#list]
+  };
+[/#if]
+  
+    private int tabSize = 8;
+ [#if grammar.lexerUsesParser]
+
+  public ${grammar.parserClassName} parser;
+[/#if]
+
+    /** 
+     * Switch to specified lexical state. 
+     * @param lexState the lexical state to switch to
+     * @return whether we switched (i.e. we weren't already in the desired lexical state)
+     */
+    public boolean switchTo(LexicalState lexState) {
+        if (this.lexicalState != lexState) {
+           if (trace_enabled) LOGGER.info("Switching from lexical state " + this.lexicalState + " to " + lexState);
+           this.lexicalState = lexState;
+           this.nfaFunctions = functionTableMap.get(lexState);
+           this.startStateIndex = startStateMap.get(lexState);
+           return true;
+        }
+        return false;
+    }
+[#if grammar.legacyAPI]
+    /**
+      * @deprecated Use the switchTo method that takes an Enum
+      */
+    @Deprecated
+    public boolean SwitchTo(int lexState) {
+       return switchTo(LexicalState.values()[lexState]);
+    }
+    [#if !grammar.hugeFileSupport]
+      /**
+       * This is just here for backward compatibility. It doesn't actually do anything!
+       */
+    [/#if]
+    @Deprecated
+    public void setTabSize(int  size) {this.tabSize=tabSize;}
+[/#if]
+
+  private InvalidToken invalidToken;
+  private Token previousToken; 
+  
+  public Token getNextToken() {
+      Token token = null;
+      do {
+          token = nextToken();
+      } while (token instanceof InvalidToken);
+      if (invalidToken != null) {
+          invalidToken.setNextToken(token);
+          token.setPreviousToken(invalidToken);
+          Token it = invalidToken;
+          this.invalidToken = null;
+[#if grammar.faultTolerant]
+          it.setUnparsed(true);
+[/#if]
+          return it;
+      }
+      token.setPreviousToken(previousToken);
+      if (previousToken != null) previousToken.setNextToken(token);
+      return previousToken = token;
+ }
+
+[#if grammar.productionTable?size != 0]
+    static public String addEscapes(String s) {
+        return ParseException.addEscapes(s);
+    }
+[#else]
+    static public String addEscapes(String str) {
+        StringBuilder retval= new StringBuilder();
+        char ch;
+
+        for (int i= 0; i<str.length(); i++) {
+            switch(str.charAt(i)) {
+                case 0:
+                continue;
+                case'\b':
+                retval.append("\\b");
+                continue;
+                case'\t':
+                retval.append("\\t");
+                continue;
+                case'\n':
+                retval.append("\\n");
+                continue;
+                case'\f':
+                retval.append("\\f");
+                continue;
+                case'\r':
+                retval.append("\\r");
+                continue;
+                case'\"':
+                retval.append("\\\"");
+                continue;
+                case'\'':
+                retval.append("\\\'");
+                continue;
+                case'\\':
+                retval.append("\\\\");
+                continue;
+                default:
+                if ((ch= str.charAt(i))<0x20||ch> 0x7e) {
+                    String s= "0000"+java.lang.Integer.toString(ch, 16);
+                    retval.append("\\u"+s.substring(s.length()-4, s.length()));
+                }
+                else {
+                    retval.append(ch);
+                }
+                continue;
+            }
+        }
+        return retval.toString();
+    }
+[/#if]
+
+ [#if grammar.hugeFileSupport]
+    [#embed "LegacyTokenBuilder.java.ftl"]
+ [#else]
+        // Reset the token source input
+    // to just after the Token passed in.
+    void reset(Token t, LexicalState state) {
+        input_stream.goTo(t.getEndLine(), t.getEndColumn());
+        input_stream.forward(1);
+        t.setNext(null);
+        t.setNextToken(null);
+        if (state != null) {
+            switchTo(state);
+        }
+    }
+
+    void reset(Token t) {
+        reset(t, null);
+    }
+    
+    FileLineMap getFileLineMap() {
+        return input_stream;
+    }
+ [/#if]
     
   private Token generateEOF() {
-	    this.matchedKind = 0;
       matchedType = TokenType.EOF;
       Token eof = fillToken();
       tokenLexicalActions();
@@ -87,8 +312,6 @@
 [/#list]
       return eof;
     }
-
-
 
   private InvalidToken handleInvalidChar(int ch) {
     int line = input_stream.getEndLine();
@@ -107,47 +330,48 @@
   }
 
   private void instantiateToken() {
-       matchedToken = fillToken();
+      matchedToken = fillToken();
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]
-       ${tokenHookMethodName}(matchedToken);
+      ${tokenHookMethodName}(matchedToken);
     [#else]
-       matchedToken = ${tokenHookMethodName}(matchedToken);
+      matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
-    this.matchedKind = matchedToken.getType().ordinal();
+      this.matchedType = matchedToken.getType();
+      int ordinal = matchedType.ordinal();
  [#if multipleLexicalStates]
-    if (newLexicalStates[this.matchedKind] != null) {
-        switchTo(newLexicalStates[this.matchedKind]);
-    }
+      if (newLexicalStates[ordinal] != null) {
+        switchTo(newLexicalStates[ordinal]);
+      }
  [/#if]
-    matchedToken.setUnparsed(specialSet.get(this.matchedKind));
+      matchedToken.setUnparsed(specialSet.get(ordinal));
   }
 
   private void tokenLexicalActions() {
-       switch(matchedKind) {
+    switch(matchedType) {
    [#list lexerData.regularExpressions as regexp]
         [#if regexp.codeSnippet?has_content]
-		  case ${regexp.ordinal} :
+		  case ${regexp.label} :
 		      ${regexp.codeSnippet.javaCode}
            break;
         [/#if]
    [/#list]
-      }
     }
+  }
 
-    private Token fillToken() {
+  private Token fillToken() {
         final String curTokenImage = input_stream.getImage();
         final int beginLine = input_stream.getBeginLine();
         final int beginColumn = input_stream.getBeginColumn();
         final int endLine = input_stream.getEndLine();
         final int endColumn = input_stream.getEndColumn();
     [#if grammar.settings.TOKEN_FACTORY??]
-        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(TokenType.values()[matchedKind], curTokenImage, inputSource);
+        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(matchedType, curTokenImage, inputSource);
     [#elseif !grammar.hugeFileSupport]
-        final Token t = Token.newToken(TokenType.values()[matchedKind], curTokenImage, this);
+        final Token t = Token.newToken(matchedType, curTokenImage, this);
     [#else]
-        final Token t = Token.newToken(TokenType.values()[matchedKind], curTokenImage, inputSource);
+        final Token t = Token.newToken(matchedType, curTokenImage, inputSource);
     [/#if]
         t.setBeginLine(beginLine);
         t.setEndLine(endLine);
@@ -155,13 +379,11 @@
         t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
         return t;
-    }
+  }
 
   [#--
      TODO: The following method is still too messy. Needs cleanup.
      Possibly it can be merged with the nfaLoop() method that follows.
-     Also, need to move from using ints for the token type towards 
-     actually using the type-safe Enum TokenType, as much as possible.
   --]
   private Token nextToken() {
     matchedToken = null;
@@ -173,33 +395,29 @@
         }
         MORELoop : 
         while (true) {
-          this.matchedKind = 0x7FFFFFFF;
-          matchedType = null;
-          this.matchedPos = 0;
-          charsRead = 0;
-          nfaLoop();
-          if (this.matchedKind != 0x7FFFFFFF) { 
+          this.matchedType = nfaLoop();
+          if (this.matchedType != null) {
+            int ordinal = matchedType.ordinal();
             input_stream.backup(charsRead - this.matchedPos - 1);
-            if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
+            if (tokenSet.get(ordinal) || specialSet.get(ordinal)) {
                 instantiateToken();
             }
-           tokenLexicalActions();
-           if (matchedToken != null) break EOFLoop;
-           if (skipSet.get(this.matchedKind))
-           {
+            tokenLexicalActions();
+            if (matchedToken != null) break EOFLoop;
+            if (skipSet.get(ordinal)) {
       [#if multipleLexicalStates]
-             if (newLexicalStates[this.matchedKind] != null) {
-                this.lexicalState = newLexicalStates[this.matchedKind];
+             if (newLexicalStates[ordinal] != null) {
+                this.lexicalState = newLexicalStates[ordinal];
            }
       [/#if]
         continue EOFLoop;
       }
       [#if lexerData.hasMore]
         [#if multipleLexicalStates]
-          doLexicalStateSwitch(this.matchedKind);
+          doLexicalStateSwitch(ordinal);
         [/#if]
       charsRead = 0;
-      this.matchedKind = 0x7FFFFFFF;
+      this.matchedType = null;
       int retval = input_stream.readChar();
       if (retval >=0) {
             curChar = retval;
@@ -214,9 +432,11 @@
    return matchedToken;
   }
 
-  private final void nfaLoop() {
+  private final TokenType nfaLoop() {
+      TokenType matchedType = null;
+      matchedPos = charsRead = 0;
       do {
-          int kind = 0x7FFFFFFF;
+          int matchedKind = 0x7FFFFFFF;
           currentStates.clear();
           if (charsRead==0) {
             currentStates.set(startStateIndex);
@@ -232,15 +452,16 @@
           int nextActive = currentStates.nextSetBit(0);
           while (nextActive != -1) {
             int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
-            if (returnedKind < kind) kind = returnedKind;
+            if (returnedKind < matchedKind) matchedKind = returnedKind;
             nextActive = currentStates.nextSetBit(nextActive+1);
           } 
-          if (kind != 0x7FFFFFFF) {
-              this.matchedKind = kind;
+          if (matchedKind != 0x7FFFFFFF) {
+              matchedType = TokenType.values()[matchedKind];
               this.matchedPos = charsRead;
           }
           ++charsRead;
       } while (!nextStates.isEmpty());
+      return matchedType;
   }
 
 [#--
@@ -251,11 +472,22 @@
   [@GenerateNfaStateCode lexicalState/]
 [/#list]
 
-static {
-  [#list lexerData.lexicalStates as lexicalState]
-    NFA_FUNCTIONS_${lexicalState.name}_init();
-  [/#list]
+  static {
+    [#list lexerData.lexicalStates as lexicalState]
+      NFA_FUNCTIONS_${lexicalState.name}_init();
+    [/#list]
+  }
 }
+
+[#macro BitSetFromLongArray bitSet]
+      BitSet.valueOf(new long[] {
+          [#list bitSet.toLongArray() as long]
+             ${grammar.utils.toHexStringL(long)}
+             [#if long_has_next],[/#if]
+          [/#list]
+      })
+[/#macro]
+
 
 [#--
   Generate all the NFA transition code
