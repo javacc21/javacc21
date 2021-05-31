@@ -48,11 +48,10 @@ import java.util.logging.Logger;
 import java.util.*;
 import java.util.function.ToIntBiFunction;
 
-@SuppressWarnings("unused")
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
 
-  private int matchedPos, charsRead;
+  private int matchedPos, charsRead, curChar;
   private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
@@ -65,12 +64,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // used in the nfaLoop() method
   private static EnumMap<LexicalState, Integer> startStateMap = new EnumMap<>(LexicalState.class);
 
+  // A lookup for lexical state transitions triggered by a certain token type
+  private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
+
   static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
                               specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
                               skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
                               moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
 
-  private int curChar;
 
   private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
     [#if grammar.debugLexer]  
@@ -131,31 +132,14 @@ public final void backup(int amount) {
 
   LexicalState lexicalState = LexicalState.values()[0];
  
-[#if numLexicalStates>1]
-   boolean doLexicalStateSwitch(int tokenType) {
-       LexicalState newLexState = newLexicalStates[tokenType];
-       if (newLexState != null) {
-           return switchTo(newLexState);
-       }
-       return false;
-   }
-   
+[#if multipleLexicalStates]
    boolean doLexicalStateSwitch(TokenType tokenType) {
-       return doLexicalStateSwitch(tokenType.ordinal());
+       LexicalState newState = tokenTypeToLexicalStateMap.get(tokenType);
+       if (newState == null) return false;
+       return switchTo(newState);
    }
-  
-  private static final LexicalState[] newLexicalStates = {
-         [#list lexerData.regularExpressions as regexp]
-             [#if regexp.newLexicalState?is_null]
-                null,
-             [#else]
-                LexicalState.${regexp.newLexicalState.name},
-             [/#if]
-          [/#list]
-  };
 [/#if]
   
-    private int tabSize = 8;
  [#if grammar.lexerUsesParser]
 
   public ${grammar.parserClassName} parser;
@@ -182,15 +166,10 @@ public final void backup(int amount) {
     public boolean SwitchTo(int lexState) {
        return switchTo(LexicalState.values()[lexState]);
     }
-    [#if !grammar.hugeFileSupport]
-      /**
-       * This is just here for backward compatibility. It doesn't actually do anything!
-       */
-    [/#if]
     @Deprecated
-    public void setTabSize(int  size) {this.tabSize=tabSize;}
+    public void setTabSize(int  size) {this.tabSize = size;}
 [/#if]
-
+  private int tabSize =8;
   private InvalidToken invalidToken;
   private Token previousToken; 
   
@@ -329,13 +308,10 @@ public final void backup(int amount) {
     [/#if]
  [/#list]
       this.matchedType = matchedToken.getType();
-      int ordinal = matchedType.ordinal();
  [#if multipleLexicalStates]
-      if (newLexicalStates[ordinal] != null) {
-        switchTo(newLexicalStates[ordinal]);
-      }
+      doLexicalStateSwitch(matchedType);
  [/#if]
-      matchedToken.setUnparsed(specialSet.get(ordinal));
+      matchedToken.setUnparsed(specialSet.get(matchedType.ordinal()));
   }
 
   private void tokenLexicalActions() {
@@ -385,7 +361,7 @@ public final void backup(int amount) {
         }
         MORELoop : 
         while (true) {
-          this.matchedType = nfaLoop();
+          nfaLoop();
           if (this.matchedType != null) {
             int ordinal = matchedType.ordinal();
             input_stream.backup(charsRead - this.matchedPos - 1);
@@ -396,15 +372,13 @@ public final void backup(int amount) {
             if (matchedToken != null) break EOFLoop;
             if (skipSet.get(ordinal)) {
       [#if multipleLexicalStates]
-             if (newLexicalStates[ordinal] != null) {
-                this.lexicalState = newLexicalStates[ordinal];
-           }
+            doLexicalStateSwitch(matchedType);
       [/#if]
         continue EOFLoop;
       }
       [#if lexerData.hasMore]
         [#if multipleLexicalStates]
-          doLexicalStateSwitch(ordinal);
+          doLexicalStateSwitch(matchedType);
         [/#if]
       charsRead = 0;
       this.matchedType = null;
@@ -422,8 +396,8 @@ public final void backup(int amount) {
    return matchedToken;
   }
 
-  private final TokenType nfaLoop() {
-      TokenType matchedType = null;
+  private final void nfaLoop() {
+      matchedType = null;
       matchedPos = charsRead = 0;
       // Get the NFA function table for the current lexical state
       ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
@@ -451,11 +425,10 @@ public final void backup(int amount) {
           } 
           if (matchedKind != 0x7FFFFFFF) {
               matchedType = TokenType.values()[matchedKind];
-              this.matchedPos = charsRead;
+              matchedPos = charsRead;
           }
           ++charsRead;
       } while (!nextStates.isEmpty());
-      return matchedType;
   }
 
 [#--
@@ -470,6 +443,11 @@ public final void backup(int amount) {
     [#list lexerData.lexicalStates as lexicalState]
       NFA_FUNCTIONS_${lexicalState.name}_init();
     [/#list]
+    [#list lexerData.regularExpressions as regexp]
+      [#if !regexp.newLexicalState?is_null]
+          tokenTypeToLexicalStateMap.put(TokenType.${regexp.label},LexicalState.${regexp.newLexicalState.name});
+      [/#if]
+    [/#list]
   }
 }
 
@@ -482,17 +460,16 @@ public final void backup(int amount) {
       })
 [/#macro]
 
-
 [#--
   Generate all the NFA transition code
   for the given lexical state
 --]
 [#macro GenerateNfaStateCode lexicalState]
   [#list lexicalState.allStates as nfaState]
-    [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
-      [@GenerateMoveArray nfaState/]
-    [/#if]
     [#if nfaState.moveCodeNeeded]
+      [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
+        [@GenerateMoveArray nfaState/]
+      [/#if]
       [@GenerateNfaStateMethod nfaState/]
     [/#if]
   [/#list]
@@ -573,7 +550,7 @@ public final void backup(int amount) {
   TODO: Clean this up a bit. It's a bit messy and maybe a 
   redundant as well.
 --]
-[#macro GenerateStateMove nfaState inComposite jumpOut=true]
+[#macro GenerateStateMove nfaState inComposite jumpOut]
    [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
     if ([@NfaStateCondition nfaState/]) {
