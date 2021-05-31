@@ -30,22 +30,13 @@
  */
  --]
 
+[#var lexerData=grammar.lexerData]
+[#var tokenBuilderClass = grammar.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
+[#var numLexicalStates=lexerData.lexicalStates?size]
 [#var MAX_INT=2147483647]
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
 [#var NFA_RANGE_THRESHOLD = 16]
-[#var lexerData=grammar.lexerData]
-[#var tokenBuilderClass = grammar.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
-[#var numLexicalStates=lexerData.lexicalStates?size]
-
-[#macro BitSetFromLongArray bitSet]
-      BitSet.valueOf(new long[] {
-          [#list bitSet.toLongArray() as long]
-             ${grammar.utils.toHexStringL(long)}
-             [#if long_has_next],[/#if]
-          [/#list]
-      })
-[/#macro]
 
 [#list grammar.parserCodeImports as import]
    ${import}
@@ -59,7 +50,29 @@ import java.util.function.ToIntBiFunction;
 
 @SuppressWarnings("unused")
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
-private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
+
+
+  private int matchedPos, charsRead;
+  private Token matchedToken;
+  private TokenType matchedType;
+  private String inputSource = "input";
+  private BitSet nextStates=new BitSet(), currentStates = new BitSet();
+
+  // A lookup of the NFA function tables for the respective lexical states.
+  // Used in the nfaLoop() method 
+  private static EnumMap<LexicalState,ToIntBiFunction<Integer,BitSet>[]> functionTableMap = new EnumMap<>(LexicalState.class);
+  // A lookup of the start state index for each lexical state
+  // used in the nfaLoop() method
+  private static EnumMap<LexicalState, Integer> startStateMap = new EnumMap<>(LexicalState.class);
+
+  static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
+                              specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
+                              skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
+                              moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
+
+  private int curChar;
+
+  private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
     [#if grammar.debugLexer]  
   private boolean trace_enabled = true;
     [#else]  
@@ -116,7 +129,7 @@ public final void backup(int amount) {
     input_stream.backup(amount);
 }
 
-  LexicalState lexicalState = LexicalState.${lexerData.lexicalStates[0].name};
+  LexicalState lexicalState = LexicalState.values()[0];
  
 [#if numLexicalStates>1]
    boolean doLexicalStateSwitch(int tokenType) {
@@ -146,7 +159,7 @@ public final void backup(int amount) {
  [#if grammar.lexerUsesParser]
 
   public ${grammar.parserClassName} parser;
- [/#if]
+[/#if]
 
     /** 
      * Switch to specified lexical state. 
@@ -253,7 +266,6 @@ public final void backup(int amount) {
     }
 [/#if]
 
-
  [#if grammar.hugeFileSupport]
     [#embed "LegacyTokenBuilder.java.ftl"]
  [#else]
@@ -272,31 +284,13 @@ public final void backup(int amount) {
     void reset(Token t) {
         reset(t, null);
     }
-
     
     FileLineMap getFileLineMap() {
         return input_stream;
     }
-  [/#if]
-
-
-  private int matchedPos, charsRead;
-  //FIXME,should be an enum.
-  private int matchedKind, kind;
-  private Token matchedToken;
-  private TokenType matchedType;
-  private String inputSource = "input";
-  private BitSet nextStates=new BitSet(), currentStates = new BitSet();
-
-  static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
-                              specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
-                              skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
-                              moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
-
-  private int curChar;
+ [/#if]
     
   private Token generateEOF() {
-	    this.matchedKind = 0;
       matchedType = TokenType.EOF;
       Token eof = fillToken();
       tokenLexicalActions();
@@ -308,61 +302,6 @@ public final void backup(int amount) {
 [/#list]
       return eof;
     }
-  
-  private Token nextToken() {
-    matchedToken = null;
-    EOFLoop :
-    while (true) {
-        curChar = input_stream.beginToken();
-        if (curChar == -1) {
-           return generateEOF();
-        }
-       MORELoop : while (true) {
-       switch(lexicalState) {
-[#list lexerData.lexicalStates as lexicalState]
-            case ${lexicalState.name} : 
-                this.matchedKind = 0x7FFFFFFF;
-                matchedType = null;
-                this.matchedPos = 0;
-                moveNfa_${lexicalState.name}();
-                break;
-[/#list]
-      }
-   if (this.matchedKind != 0x7FFFFFFF) { 
-      input_stream.backup(charsRead - this.matchedPos - 1);
-      if (tokenSet.get(this.matchedKind) || specialSet.get(this.matchedKind)) {
-          instantiateToken();
-      }
-      tokenLexicalActions();
-      if (matchedToken != null) break EOFLoop;
-      if (skipSet.get(this.matchedKind))
-      {
-      [#if multipleLexicalStates]
-        if (newLexicalStates[this.matchedKind] != null) {
-            this.lexicalState = newLexicalStates[this.matchedKind];
-        }
-      [/#if]
-        continue EOFLoop;
-      }
-      [#if lexerData.hasMore]
-        [#if multipleLexicalStates]
-          doLexicalStateSwitch(this.matchedKind);
-        [/#if]
-      charsRead = 0;
-      this.matchedKind = 0x7FFFFFFF;
-      int retval = input_stream.readChar();
-      if (retval >=0) {
-            curChar = retval;
-            continue MORELoop;
-      }
-     [/#if]
-     }
-     matchedToken = handleInvalidChar(curChar);
-     break EOFLoop;
-    }
-   }
-   return matchedToken;
-  }
 
   private InvalidToken handleInvalidChar(int ch) {
     int line = input_stream.getEndLine();
@@ -381,47 +320,48 @@ public final void backup(int amount) {
   }
 
   private void instantiateToken() {
-       matchedToken = fillToken();
+      matchedToken = fillToken();
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]
-       ${tokenHookMethodName}(matchedToken);
+      ${tokenHookMethodName}(matchedToken);
     [#else]
-       matchedToken = ${tokenHookMethodName}(matchedToken);
+      matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
-    this.matchedKind = matchedToken.getType().ordinal();
+      this.matchedType = matchedToken.getType();
+      int ordinal = matchedType.ordinal();
  [#if multipleLexicalStates]
-    if (newLexicalStates[this.matchedKind] != null) {
-        switchTo(newLexicalStates[this.matchedKind]);
-    }
+      if (newLexicalStates[ordinal] != null) {
+        switchTo(newLexicalStates[ordinal]);
+      }
  [/#if]
-    matchedToken.setUnparsed(specialSet.get(this.matchedKind));
+      matchedToken.setUnparsed(specialSet.get(ordinal));
   }
 
   private void tokenLexicalActions() {
-       switch(matchedKind) {
+    switch(matchedType) {
    [#list lexerData.regularExpressions as regexp]
         [#if regexp.codeSnippet?has_content]
-		  case ${regexp.ordinal} :
+		  case ${regexp.label} :
 		      ${regexp.codeSnippet.javaCode}
            break;
         [/#if]
    [/#list]
-      }
     }
+  }
 
-    private Token fillToken() {
+  private Token fillToken() {
         final String curTokenImage = input_stream.getImage();
         final int beginLine = input_stream.getBeginLine();
         final int beginColumn = input_stream.getBeginColumn();
         final int endLine = input_stream.getEndLine();
         final int endColumn = input_stream.getEndColumn();
     [#if grammar.settings.TOKEN_FACTORY??]
-        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(TokenType.values()[matchedKind], curTokenImage, inputSource);
+        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(matchedType, curTokenImage, inputSource);
     [#elseif !grammar.hugeFileSupport]
-        final Token t = Token.newToken(TokenType.values()[matchedKind], curTokenImage, this);
+        final Token t = Token.newToken(matchedType, curTokenImage, this);
     [#else]
-        final Token t = Token.newToken(TokenType.values()[matchedKind], curTokenImage, inputSource);
+        final Token t = Token.newToken(matchedType, curTokenImage, inputSource);
     [/#if]
         t.setBeginLine(beginLine);
         t.setEndLine(endLine);
@@ -429,7 +369,94 @@ public final void backup(int amount) {
         t.setEndColumn(endColumn);
 //        t.setInputSource(this.inputSource);
         return t;
+  }
+
+  [#--
+     TODO: The following method is still too messy. Needs cleanup.
+     Possibly it can be merged with the nfaLoop() method that follows.
+  --]
+  private Token nextToken() {
+    matchedToken = null;
+    EOFLoop :
+    while (true) {
+        curChar = input_stream.beginToken();
+        if (curChar == -1) {
+           return generateEOF();
+        }
+        MORELoop : 
+        while (true) {
+          this.matchedType = nfaLoop();
+          if (this.matchedType != null) {
+            int ordinal = matchedType.ordinal();
+            input_stream.backup(charsRead - this.matchedPos - 1);
+            if (tokenSet.get(ordinal) || specialSet.get(ordinal)) {
+                instantiateToken();
+            }
+            tokenLexicalActions();
+            if (matchedToken != null) break EOFLoop;
+            if (skipSet.get(ordinal)) {
+      [#if multipleLexicalStates]
+             if (newLexicalStates[ordinal] != null) {
+                this.lexicalState = newLexicalStates[ordinal];
+           }
+      [/#if]
+        continue EOFLoop;
+      }
+      [#if lexerData.hasMore]
+        [#if multipleLexicalStates]
+          doLexicalStateSwitch(ordinal);
+        [/#if]
+      charsRead = 0;
+      this.matchedType = null;
+      int retval = input_stream.readChar();
+      if (retval >=0) {
+            curChar = retval;
+            continue MORELoop;
+      }
+     [/#if]
+     }
+     matchedToken = handleInvalidChar(curChar);
+     break EOFLoop;
     }
+   }
+   return matchedToken;
+  }
+
+  private final TokenType nfaLoop() {
+      TokenType matchedType = null;
+      matchedPos = charsRead = 0;
+      // Get the NFA function table for the current lexical state
+      ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
+      // Get the start state index for the current lexical state
+      int startStateIndex = startStateMap.get(lexicalState);
+      do {
+          int matchedKind = 0x7FFFFFFF;
+          currentStates.clear();
+          if (charsRead==0) {
+            currentStates.set(startStateIndex);
+          } else {
+            currentStates.or(nextStates);
+            int retval = input_stream.readChar();
+            if (retval >=0) {
+                curChar = retval;
+            }
+            else break;
+          }
+          nextStates.clear();
+          int nextActive = currentStates.nextSetBit(0);
+          while (nextActive != -1) {
+            int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
+            if (returnedKind < matchedKind) matchedKind = returnedKind;
+            nextActive = currentStates.nextSetBit(nextActive+1);
+          } 
+          if (matchedKind != 0x7FFFFFFF) {
+              matchedType = TokenType.values()[matchedKind];
+              this.matchedPos = charsRead;
+          }
+          ++charsRead;
+      } while (!nextStates.isEmpty());
+      return matchedType;
+  }
 
 [#--
   Outer loop to generate all the NFA (non-deterministic finite automaton)
@@ -437,7 +464,6 @@ public final void backup(int amount) {
 --]    
 [#list lexerData.lexicalStates as lexicalState]
   [@GenerateNfaStateCode lexicalState/]
-  [@GenerateNfaMethod lexicalState/]
 [/#list]
 
   static {
@@ -446,6 +472,16 @@ public final void backup(int amount) {
     [/#list]
   }
 }
+
+[#macro BitSetFromLongArray bitSet]
+      BitSet.valueOf(new long[] {
+          [#list bitSet.toLongArray() as long]
+             ${grammar.utils.toHexStringL(long)}
+             [#if long_has_next],[/#if]
+          [/#list]
+      })
+[/#macro]
+
 
 [#--
   Generate all the NFA transition code
@@ -460,16 +496,17 @@ public final void backup(int amount) {
       [@GenerateNfaStateMethod nfaState/]
     [/#if]
   [/#list]
-  
-  static private ToIntBiFunction<Integer,BitSet>[] NFA_FUNCTIONS_${lexicalState.name};
 
   static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
-    NFA_FUNCTIONS_${lexicalState.name} = (ToIntBiFunction<Integer,BitSet>[]) new ToIntBiFunction[${lexicalState.allStates.size()}];
+    @SuppressWarnings("unchecked") 
+    ToIntBiFunction<Integer,BitSet>[] functions = new ToIntBiFunction[${lexicalState.allStates.size()}];
     [#list lexicalState.allStates as state]
       [#if state.moveCodeNeeded]
-        NFA_FUNCTIONS_${lexicalState.name}[${state.index}] = ${grammar.lexerClassName}::${state.methodName};
+          functions[${state.index}] = ${grammar.lexerClassName}::${state.methodName};
       [/#if]
     [/#list]
+    functionTableMap.put(LexicalState.${lexicalState.name}, functions);
+    startStateMap.put(LexicalState.${lexicalState.name}, ${lexicalState.initialState.canonicalState.index});
   }
 [/#macro]
 
@@ -523,47 +560,6 @@ public final void backup(int amount) {
   [/#if]
 [/#macro]
 
-[#--
-  Generate the core NFA automaton method for the given lexical state
-  TODO: It is not really necessary to generate a separate method 
-  for each lexical state, since the only difference now between
-  the various move_Nfa_LEXICALSTATE_NAME methods 
-  is (a) the initial state and (b) the array of function objects
-  that encapsulate all the NFA states in a given lexical state
---]
-[#macro GenerateNfaMethod lexicalState]
-  private final void moveNfa_${lexicalState.name}() {
-      charsRead = 0;
-      kind = 0x7fffffff;
-      do {
-          currentStates.clear();
-          if (charsRead == 0) {
-              currentStates.set(${lexicalState.initialState.canonicalState.index});
-          } else {
-            currentStates.or(nextStates);
-            int retval = input_stream.readChar();
-            if (retval >=0) {
-                curChar = retval;
-            }
-            else break;
-          }
-          nextStates.clear();
-          int nextActive = currentStates.nextSetBit(0);
-          while (nextActive != -1) {
-            ToIntBiFunction<Integer,BitSet> func = NFA_FUNCTIONS_${lexicalState.name}[nextActive];
-            int returnedKind = func.applyAsInt(curChar, nextStates);
-            kind = Math.min(returnedKind, kind);
-            nextActive = currentStates.nextSetBit(nextActive+1);
-          } 
-          if (kind != 0x7fffffff) {
-              this.matchedKind = kind;
-              this.matchedPos = charsRead;
-              kind = 0x7fffffff;
-          }
-          ++charsRead;
-      } while (!nextStates.isEmpty());
-  }
-[/#macro]
 
 [#--
   Generates the code for an NFA state transition
