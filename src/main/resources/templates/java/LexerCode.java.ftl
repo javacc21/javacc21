@@ -132,13 +132,15 @@ public final void backup(int amount) {
 
   LexicalState lexicalState = LexicalState.values()[0];
  
+  boolean doLexicalStateSwitch(TokenType tokenType) {
 [#if multipleLexicalStates]
-   boolean doLexicalStateSwitch(TokenType tokenType) {
        LexicalState newState = tokenTypeToLexicalStateMap.get(tokenType);
        if (newState == null) return false;
        return switchTo(newState);
-   }
+[#else]
+       return false;       
 [/#if]
+  }
   
  [#if grammar.lexerUsesParser]
 
@@ -308,10 +310,9 @@ public final void backup(int amount) {
     [/#if]
  [/#list]
       this.matchedType = matchedToken.getType();
- [#if multipleLexicalStates]
       doLexicalStateSwitch(matchedType);
- [/#if]
       matchedToken.setUnparsed(specialSet.get(matchedType.ordinal()));
+      tokenLexicalActions();
   }
 
   private void tokenLexicalActions() {
@@ -359,41 +360,26 @@ public final void backup(int amount) {
         if (curChar == -1) {
            return generateEOF();
         }
-        MORELoop : 
         while (true) {
           nfaLoop();
-          if (this.matchedType != null) {
-            int ordinal = matchedType.ordinal();
-            input_stream.backup(charsRead - this.matchedPos - 1);
-            if (tokenSet.get(ordinal) || specialSet.get(ordinal)) {
-                instantiateToken();
-            }
-            tokenLexicalActions();
-            if (matchedToken != null) break EOFLoop;
-            if (skipSet.get(ordinal)) {
-      [#if multipleLexicalStates]
-            doLexicalStateSwitch(matchedType);
-      [/#if]
-        continue EOFLoop;
-      }
-      [#if lexerData.hasMore]
-        [#if multipleLexicalStates]
+          if (matchedType == null) {
+             return handleInvalidChar(curChar);
+          }
+          int ordinal = matchedType.ordinal();
+          input_stream.backup(charsRead - this.matchedPos - 1);
+          if (tokenSet.get(ordinal) || specialSet.get(ordinal)) {
+              instantiateToken();
+              return matchedToken;
+          }
+          tokenLexicalActions();
           doLexicalStateSwitch(matchedType);
-        [/#if]
-      charsRead = 0;
-      this.matchedType = null;
-      int retval = input_stream.readChar();
-      if (retval >=0) {
-            curChar = retval;
-            continue MORELoop;
+          if (skipSet.get(ordinal)) {
+            continue EOFLoop;
+          }
+          // The following is for a MORE
+          curChar = input_stream.readChar();
       }
-     [/#if]
-     }
-     matchedToken = handleInvalidChar(curChar);
-     break EOFLoop;
     }
-   }
-   return matchedToken;
   }
 
   private final void nfaLoop() {
