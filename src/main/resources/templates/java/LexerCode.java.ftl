@@ -53,7 +53,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
-  private BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
   // A lookup of the NFA function tables for the respective lexical states.
   // Used in the nfaLoop() method 
@@ -292,17 +291,18 @@ public final void backup(int amount) {
         return t;
   }
 
+  // The following two BitSets are used to store 
+  // the current active NFA states in the core tokenization loop
+  private final BitSet nextStates=new BitSet(), currentStates = new BitSet();
+
   private Token nextToken() {
       matchedToken = null;
       boolean inMore = false;
       int matchedPos, charsRead, curChar;
+      // The core tokenization loop
       while (matchedToken == null) {
         matchedType = null;
         matchedPos = charsRead = 0;
-       // Get the NFA function table for the current lexical state
-        ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
-       // Get the start state index for the current lexical state
-        int startStateIndex = startStateMap.get(lexicalState);
         if (!inMore) {
             curChar = input_stream.beginToken();
             if (curChar == -1) {
@@ -311,6 +311,11 @@ public final void backup(int amount) {
         } else {
             curChar = input_stream.readChar();
         }
+       // Get the NFA function table and start index for the current lexical state
+       // There is some possibility that these changed since the lexicalState
+       // iteration of this loop!
+        ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
+        int startStateIndex = startStateMap.get(lexicalState);
         do {
             int matchedKind = 0x7FFFFFFF;
             currentStates.clear();
@@ -347,7 +352,7 @@ public final void backup(int amount) {
         }
         tokenLexicalActions();
         doLexicalStateSwitch(matchedType);
-        inMore = !skipSet.get(ordinal);
+        inMore = moreSet.get(ordinal);
       }
       return matchedToken;
   }
