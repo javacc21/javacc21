@@ -258,9 +258,7 @@ public final void backup(int amount) {
     [/#if]
  [/#list]
       this.matchedType = matchedToken.getType();
-      doLexicalStateSwitch(matchedType);
       matchedToken.setUnparsed(specialSet.get(matchedType.ordinal()));
-      tokenLexicalActions();
   }
 
   private void tokenLexicalActions() {
@@ -297,46 +295,47 @@ public final void backup(int amount) {
   }
 
   [#--
-     TODO: The following method is still too messy. Needs cleanup.
-     Possibly it can be merged with the nfaLoop() method that follows.
+     Possibly this method can be merged with the nfaLoop() method that follows.
   --]
   private Token nextToken() {
     matchedToken = null;
-    EOFLoop :
-    while (true) {
-        curChar = input_stream.beginToken();
-        if (curChar == -1) {
-           return generateEOF();
-        }
-        while (true) {
-          nfaLoop();
-          if (matchedType == null) {
-             return handleInvalidChar(curChar);
-          }
-          int ordinal = matchedType.ordinal();
-          input_stream.backup(charsRead - this.matchedPos - 1);
-          if (tokenSet.get(ordinal) || specialSet.get(ordinal)) {
-              instantiateToken();
-              return matchedToken;
-          }
-          tokenLexicalActions();
-          doLexicalStateSwitch(matchedType);
-          if (skipSet.get(ordinal)) {
-            continue EOFLoop;
-          }
-          // The following is for a MORE
-          curChar = input_stream.readChar();
+    boolean startNewToken = true;
+    while (matchedToken == null) {
+      nfaLoop(startNewToken);
+      if (matchedType == null) {
+         return handleInvalidChar(curChar);
       }
+      if (matchedType == TokenType.EOF) {
+        return generateEOF();
+      }
+      int ordinal = matchedType.ordinal();
+      input_stream.backup(charsRead - matchedPos - 1);
+      if (tokenSet.get(ordinal) || specialSet.get(ordinal)) {
+          instantiateToken();
+      }
+      tokenLexicalActions();
+      doLexicalStateSwitch(matchedType);
+      startNewToken = skipSet.get(ordinal);
     }
+    return matchedToken;
   }
 
-  private final void nfaLoop() {
+  private final void nfaLoop(boolean startNew) {
       matchedType = null;
       matchedPos = charsRead = 0;
       // Get the NFA function table for the current lexical state
       ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
       // Get the start state index for the current lexical state
       int startStateIndex = startStateMap.get(lexicalState);
+      if (startNew) {
+        curChar = input_stream.beginToken();
+        if (curChar == -1) {
+           matchedType = TokenType.EOF;
+           return; 
+        }
+      } else {
+        curChar = input_stream.readChar();
+      }
       do {
           int matchedKind = 0x7FFFFFFF;
           currentStates.clear();
