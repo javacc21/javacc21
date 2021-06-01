@@ -59,22 +59,6 @@
     }
 [/#macro]
 
-[#--
-  Previous version of the macro that is prone to the Code too large problem.
---]
-[#macro enumSet_PREV varName tokenNames]
-   [#if tokenNames?size=0]
-       static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
-   [#else]
-       static private final EnumSet<TokenType> ${varName} = EnumSet.of(
-       [#list tokenNames as type]
-          [#if type_index > 0],[/#if]
-          ${TT}${type} 
-       [/#list]
-     ); 
-   [/#if]
-[/#macro]
-
 [#macro firstSetVar expansion]
     [@enumSet expansion.firstSetVarName expansion.firstSet.tokenNames /]
 [/#macro]
@@ -147,4 +131,13 @@
             }
          }
    [/#if]
+[/#macro]
+
+[#macro BitSetFromLongArray bitSet]
+      BitSet.valueOf(new long[] {
+          [#list bitSet.toLongArray() as long]
+             ${grammar.utils.toHexStringL(long)}
+             [#if long_has_next],[/#if]
+          [/#list]
+      })
 [/#macro]

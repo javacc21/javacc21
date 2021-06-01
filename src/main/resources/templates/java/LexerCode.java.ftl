@@ -54,21 +54,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private TokenType matchedType;
   private String inputSource = "input";
 
-  // A lookup of the NFA function tables for the respective lexical states.
-  // Used in the nfaLoop() method 
-  private static EnumMap<LexicalState,ToIntBiFunction<Integer,BitSet>[]> functionTableMap = new EnumMap<>(LexicalState.class);
-  // A lookup of the start state index for each lexical state
-  // used in the nfaLoop() method
-  private static EnumMap<LexicalState, Integer> startStateMap = new EnumMap<>(LexicalState.class);
-
   // A lookup for lexical state transitions triggered by a certain token type
   private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
-
-  static private final BitSet tokenSet = ${BitSetFromLongArray(lexerData.tokenSet)},
-                              specialSet = ${BitSetFromLongArray(lexerData.specialSet)},
-                              skipSet = ${BitSetFromLongArray(lexerData.skipSet)},
-                              moreSet = ${BitSetFromLongArray(lexerData.moreSet)};
-
+  // Token types that are "regular" tokens that participate in parsing,
+  // i.e. declared as TOKEN
+  [@EnumSet "regularTokens" lexerData.tokenSet.tokenNames /]
+  // Token types that do not participate in parsing, a.k.a. "special" tokens in legacy JavaCC,
+  // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
+  [@EnumSet "unparsedTokens" lexerData.specialSet.tokenNames /]
+  // Tokens that are skipped, i.e. SKIP
+  [@EnumSet "skippedTokens" lexerData.skipSet.tokenNames /]
+  // Tokens that correspond to a MORE, i.e. that are pending 
+  // additional input
+  [@EnumSet "moreTokens" lexerData.moreSet.tokenNames /]
 
   private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
     [#if grammar.debugLexer]  
@@ -255,7 +253,7 @@ public final void backup(int amount) {
     [/#if]
  [/#list]
       this.matchedType = matchedToken.getType();
-      matchedToken.setUnparsed(specialSet.get(matchedType.ordinal()));
+      matchedToken.setUnparsed(unparsedTokens.contains(matchedType));
   }
 
   private void tokenLexicalActions() {
@@ -267,6 +265,7 @@ public final void backup(int amount) {
            break;
         [/#if]
    [/#list]
+      default : break;
     }
   }
 
@@ -290,6 +289,11 @@ public final void backup(int amount) {
 //        t.setInputSource(this.inputSource);
         return t;
   }
+
+  // A lookup of the NFA function tables for the respective lexical states.
+  private static EnumMap<LexicalState,ToIntBiFunction<Integer,BitSet>[]> functionTableMap = new EnumMap<>(LexicalState.class);
+  // A lookup of the start state index for each lexical state
+  private static EnumMap<LexicalState, Integer> startStateMap = new EnumMap<>(LexicalState.class);
 
   // The following two BitSets are used to store 
   // the current active NFA states in the core tokenization loop
@@ -347,12 +351,12 @@ public final void backup(int amount) {
             return handleInvalidChar(curChar);
         }
         int ordinal = matchedType.ordinal();
-        if (tokenSet.get(ordinal) || specialSet.get(ordinal)) {
+        if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             instantiateToken();
         }
         tokenLexicalActions();
         doLexicalStateSwitch(matchedType);
-        inMore = moreSet.get(ordinal);
+        inMore = moreTokens.contains(matchedType);
       }
       return matchedToken;
   }
@@ -377,13 +381,17 @@ public final void backup(int amount) {
   }
 }
 
-[#macro BitSetFromLongArray bitSet]
-      BitSet.valueOf(new long[] {
-          [#list bitSet.toLongArray() as long]
-             ${grammar.utils.toHexStringL(long)}
-             [#if long_has_next],[/#if]
-          [/#list]
-      })
+[#macro EnumSet varName tokenNames]
+   [#if tokenNames?size=0]
+       static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
+   [#else]
+       static private final EnumSet<TokenType> ${varName} = EnumSet.of(
+       [#list tokenNames as type]
+          [#if type_index > 0],[/#if]
+          TokenType.${type} 
+       [/#list]
+     ); 
+   [/#if]
 [/#macro]
 
 [#--
