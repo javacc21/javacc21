@@ -50,8 +50,6 @@ import java.util.function.ToIntBiFunction;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
-
-  private int matchedPos, charsRead, curChar;
   private Token matchedToken;
   private TokenType matchedType;
   private String inputSource = "input";
@@ -294,74 +292,64 @@ public final void backup(int amount) {
         return t;
   }
 
-  [#--
-     Possibly this method can be merged with the nfaLoop() method that follows.
-  --]
   private Token nextToken() {
-    matchedToken = null;
-    boolean startNewToken = true;
-    while (matchedToken == null) {
-      nfaLoop(startNewToken);
-      if (matchedType == null) {
-         return handleInvalidChar(curChar);
-      }
-      if (matchedType == TokenType.EOF) {
-        return generateEOF();
-      }
-      int ordinal = matchedType.ordinal();
-      input_stream.backup(charsRead - matchedPos - 1);
-      if (tokenSet.get(ordinal) || specialSet.get(ordinal)) {
-          instantiateToken();
-      }
-      tokenLexicalActions();
-      doLexicalStateSwitch(matchedType);
-      startNewToken = skipSet.get(ordinal);
-    }
-    return matchedToken;
-  }
-
-  private final void nfaLoop(boolean startNew) {
-      matchedType = null;
-      matchedPos = charsRead = 0;
-      // Get the NFA function table for the current lexical state
-      ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
-      // Get the start state index for the current lexical state
-      int startStateIndex = startStateMap.get(lexicalState);
-      if (startNew) {
-        curChar = input_stream.beginToken();
-        if (curChar == -1) {
-           matchedType = TokenType.EOF;
-           return; 
-        }
-      } else {
-        curChar = input_stream.readChar();
-      }
-      do {
-          int matchedKind = 0x7FFFFFFF;
-          currentStates.clear();
-          if (charsRead==0) {
-            currentStates.set(startStateIndex);
-          } else {
-            currentStates.or(nextStates);
-            int retval = input_stream.readChar();
-            if (retval >=0) {
-                curChar = retval;
+      matchedToken = null;
+      boolean inMore = false;
+      int matchedPos, charsRead, curChar;
+      while (matchedToken == null) {
+        matchedType = null;
+        matchedPos = charsRead = 0;
+       // Get the NFA function table for the current lexical state
+        ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
+       // Get the start state index for the current lexical state
+        int startStateIndex = startStateMap.get(lexicalState);
+        if (!inMore) {
+            curChar = input_stream.beginToken();
+            if (curChar == -1) {
+                return generateEOF();
             }
-            else break;
-          }
-          nextStates.clear();
-          int nextActive = currentStates.nextSetBit(0);
-          while (nextActive != -1) {
-            int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
-            if (returnedKind < matchedKind) matchedKind = returnedKind;
-            nextActive = currentStates.nextSetBit(nextActive+1);
-          } 
-          if (matchedKind != 0x7FFFFFFF) {
-              matchedType = TokenType.values()[matchedKind];
-              matchedPos = charsRead;
-          }
-          ++charsRead;
-      } while (!nextStates.isEmpty());
+        } else {
+            curChar = input_stream.readChar();
+        }
+        do {
+            int matchedKind = 0x7FFFFFFF;
+            currentStates.clear();
+            if (charsRead==0) {
+                currentStates.set(startStateIndex);
+            } else {
+                currentStates.or(nextStates);
+                int retval = input_stream.readChar();
+                if (retval >=0) {
+                    curChar = retval;
+                }
+                else break;
+            }
+            nextStates.clear();
+            int nextActive = currentStates.nextSetBit(0);
+            while (nextActive != -1) {
+                int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
+                if (returnedKind < matchedKind) matchedKind = returnedKind;
+                nextActive = currentStates.nextSetBit(nextActive+1);
+            } 
+            if (matchedKind != 0x7FFFFFFF) {
+                matchedType = TokenType.values()[matchedKind];
+                matchedPos = charsRead;
+            }
+            ++charsRead;
+        } while (!nextStates.isEmpty());
+        input_stream.backup(charsRead - matchedPos - 1);
+        if (matchedType == null) {
+            return handleInvalidChar(curChar);
+        }
+        int ordinal = matchedType.ordinal();
+        if (tokenSet.get(ordinal) || specialSet.get(ordinal)) {
+            instantiateToken();
+        }
+        tokenLexicalActions();
+        doLexicalStateSwitch(matchedType);
+        inMore = !skipSet.get(ordinal);
+      }
+      return matchedToken;
   }
 
 [#--
