@@ -146,16 +146,13 @@ public final void backup(int amount) {
 }
 
   LexicalState lexicalState = LexicalState.values()[0];
- 
-  boolean doLexicalStateSwitch(TokenType tokenType) {
 [#if multipleLexicalStates]
+  boolean doLexicalStateSwitch(TokenType tokenType) {
        LexicalState newState = tokenTypeToLexicalStateMap.get(tokenType);
        if (newState == null) return false;
        return switchTo(newState);
-[#else]
-       return false;       
-[/#if]
   }
+[/#if]
   
     /** 
      * Switch to specified lexical state. 

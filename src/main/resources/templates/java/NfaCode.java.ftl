@@ -36,17 +36,24 @@
 
 [#var NFA_RANGE_THRESHOLD = 16]
 [#var MAX_INT=2147483647]
+[#var multipleLexicalStates = grammar.lexerData.lexicalStates.size()>1]
 
 [#macro GenerateMainLoop]
+ [#if multipleLexicalStates]
   // A lookup of the NFA function tables for the respective lexical states.
   private static final EnumMap<LexicalState,ToIntBiFunction<Integer,BitSet>[]> functionTableMap = new EnumMap<>(LexicalState.class);
   // A lookup of the start state index for each lexical state
   private static final EnumMap<LexicalState, Integer> startStateMap = new EnumMap<>(LexicalState.class);
+ [#else]
+  // A table holding the nfa routines for the various states
+   private static ToIntBiFunction<Integer, BitSet>[] nfaFunctions;
+  // The index of the NFA machine's starting state
+   private static int startStateIndex;
+ [/#if]
 
   // The following two BitSets are used to store 
   // the current active NFA states in the core tokenization loop
-  private final BitSet nextStates=new BitSet(), currentStates = new BitSet();
-
+  private BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
 // The main method to invoke the NFA machinery
   private final Token nextToken() {
@@ -65,18 +72,22 @@
         } else {
             curChar = input_stream.readChar();
         }
+      [#if multipleLexicalStates]
        // Get the NFA function table and start index for the current lexical state
        // There is some possibility that these changed since the last
        // iteration of this loop!
         ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
         int startStateIndex = startStateMap.get(lexicalState);
+      [/#if]
         do {
             int matchedKind = 0x7FFFFFFF;
-            currentStates.clear();
-            if (charsRead==0) {
-                currentStates.set(startStateIndex);
-            } else {
-                currentStates.or(nextStates);
+            if (charsRead > 0) {
+                // Swap the nextStates and currentStates.
+                // What was nextStates on the last iteration 
+                // is now the currentStates!
+                BitSet temp = currentStates;
+                currentStates = nextStates;
+                nextStates = temp;
                 int retval = input_stream.readChar();
                 if (retval >=0) {
                     curChar = retval;
@@ -84,10 +95,11 @@
                 else break;
             }
             nextStates.clear();
-            int nextActive = currentStates.nextSetBit(0);
+            int nextActive = charsRead == 0 ? startStateIndex : currentStates.nextSetBit(0);
             while (nextActive != -1) {
                 int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
                 if (returnedKind < matchedKind) matchedKind = returnedKind;
+                if (charsRead == 0) break;
                 nextActive = currentStates.nextSetBit(nextActive+1);
             } 
             if (matchedKind != 0x7FFFFFFF) {
@@ -104,7 +116,9 @@
             instantiateToken();
         }
         tokenLexicalActions();
+     [#if multipleLexicalStates]
         doLexicalStateSwitch(matchedType);
+     [/#if]
         inMore = moreTokens.contains(matchedType);
       }
       return matchedToken;
@@ -145,8 +159,13 @@
           functions[${state.index}] = ${grammar.lexerClassName}::${state.methodName};
       [/#if]
     [/#list]
-    functionTableMap.put(LexicalState.${lexicalState.name}, functions);
-    startStateMap.put(LexicalState.${lexicalState.name}, ${lexicalState.initialState.canonicalState.index});
+    [#if multipleLexicalStates]
+      functionTableMap.put(LexicalState.${lexicalState.name}, functions);
+      startStateMap.put(LexicalState.${lexicalState.name}, ${lexicalState.initialState.canonicalState.index});
+    [#else]
+      nfaFunctions = functions;
+      startStateIndex = ${lexicalState.initialState.canonicalState.index};
+    [/#if]
   }
 [/#macro]
 
