@@ -95,23 +95,26 @@
                 else break;
             }
             nextStates.clear();
-            int nextActive = charsRead == 0 ? startStateIndex : currentStates.nextSetBit(0);
-            while (nextActive != -1) {
-                int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
-                if (returnedKind < matchedKind) matchedKind = returnedKind;
-                if (charsRead == 0) break;
-                nextActive = currentStates.nextSetBit(nextActive+1);
-            } 
+            if (charsRead == 0) {
+                matchedKind = nfaFunctions[startStateIndex].applyAsInt(curChar, nextStates);
+            } else {
+                int nextActive = currentStates.nextSetBit(0);
+                while (nextActive != -1) {
+                    int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
+                    if (returnedKind < matchedKind) matchedKind = returnedKind;
+                    nextActive = currentStates.nextSetBit(nextActive+1);
+                } 
+            }
+            ++charsRead;
             if (matchedKind != 0x7FFFFFFF) {
                 matchedType = TokenType.values()[matchedKind];
                 matchedPos = charsRead;
             }
-            ++charsRead;
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
             return handleInvalidChar(curChar);
         }
-        input_stream.backup(charsRead - matchedPos - 1);
+        input_stream.backup(charsRead - matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             instantiateToken();
         }
