@@ -1290,5 +1290,24 @@ public class Grammar extends BaseNode {
             }
             return value;
         }
+
+        /**
+         * @param ch the code point. If it is not ASCII, we just display the integer in hex.
+         * @return a String to use in generated Java code. Rather than display the integer 97, we display 'a', 
+         * for example.
+         */
+
+        public String displayChar(int ch) {
+            if (ch == '\'') return "\'\\'\'";
+            if (ch == '\\') return "\'\\\\\'";
+            if (ch == '\t') return "\'\\t\'";
+            if (ch == '\r') return "\'\\r\'";
+            if (ch == '\n') return "\'\\n\'";
+            if (ch == '\f') return "\'\\f\'";
+            if (ch == ' ') return "\' \'";
+            if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch)) return "\'" + (char) ch + "\'";
+            if (ch < 10) return "" + ch;
+            return "0x" + Integer.toHexString(ch);
+        }
     }
 }

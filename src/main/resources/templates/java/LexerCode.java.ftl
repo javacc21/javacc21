@@ -72,8 +72,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private String inputSource = "input";
  [#if grammar.lexerUsesParser]
   public ${grammar.parserClassName} parser;
-[/#if]
-
+ [/#if]
 
   // A lookup for lexical state transitions triggered by a certain token type
   private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);

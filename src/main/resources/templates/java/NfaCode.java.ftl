@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
-/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,8 @@
   // the current active NFA states in the core tokenization loop
   private final BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
+
+// The main method to invoke the NFA machinery
   private final Token nextToken() {
       matchedToken = null;
       boolean inMore = false;
@@ -108,6 +110,7 @@
       return matchedToken;
   }
 
+  // Initialize the various NFA method tables
   static {
     [#list grammar.lexerData.lexicalStates as lexicalState]
       NFA_FUNCTIONS_${lexicalState.name}_init();
@@ -161,7 +164,7 @@
     static private int[] ${arrayName}_init() {
         int[] result = new int[${nfaState.moveRanges.size()}];
         [#list nfaState.moveRanges as char]
-          result[${char_index}] = ${char};
+          result[${char_index}] = ${grammar.utils.displayChar(char)};
         [/#list]
         return result;
     }
@@ -174,7 +177,7 @@
 --]
 [#macro GenerateNfaStateMethod nfaState]  
   [#if !nfaState.composite]
-    static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
+    static int ${nfaState.methodName}(int ch, BitSet nextStates) {
       [#if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD]
         int temp;
       [/#if]
@@ -182,7 +185,7 @@
       return 0x7FFFFFFF;
     }
   [#else]
-    static int ${nfaState.methodName}(int curChar, BitSet nextStates) {
+    static int ${nfaState.methodName}(int ch, BitSet nextStates) {
       int kind = 0x7FFFFFFF, temp;
     [#var states = nfaState.orderedStates]
     [#list states as state]
@@ -222,6 +225,7 @@
    [/#if]
    [#if !inComposite]
      [#if kindToPrint != MAX_INT]
+      // ${grammar.lexerData.getTokenName(kindToPrint)}
       return ${kindToPrint};
      [/#if]
    [#else]
@@ -244,9 +248,9 @@ it just generates the inline conditional expression
 [#macro NfaStateCondition nfaState]
     [#var moveRanges = nfaState.moveRanges]
     [#if moveRanges?size < NFA_RANGE_THRESHOLD]
-      [@rangesCondition nfaState.moveRanges /]
+      [@RangesCondition nfaState.moveRanges /]
     [#else]
-      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, curChar)) >=0 || temp%2 ==0
+      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, ch)) >=0 || temp%2 ==0
     [/#if]
 [/#macro]
 
@@ -256,25 +260,27 @@ to the accepting condition for an NFA state. It is used
 if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 (which is set to 16 for now)
 --]
-[#macro rangesCondition moveRanges]
+[#macro RangesCondition moveRanges]
     [#var left = moveRanges[0], right = moveRanges[1]]
+    [#var displayLeft = grammar.utils.displayChar(left), displayRight = grammar.utils.displayChar(right)]
     [#var singleChar = left == right]
     [#if moveRanges?size==2]
        [#if singleChar]
-          curChar == ${left}
+          ch == ${displayLeft}
        [#elseif left +1 == right]
-          curChar == ${left} || curChar == ${right}
+          ch == ${displayLeft} || ch == ${displayRight}
        [#else]
-          curChar >= ${left} && curChar <= ${right}
+          ch >= ${displayLeft} && ch <= ${displayRight}
        [/#if]
     [#else]
-       curChar 
+       ch 
        [#if singleChar]==[#else]>=[/#if]
-       ${left} 
+       ${displayLeft} 
        [#if !singleChar]
-       && (curChar <= ${right} || ([@rangesCondition moveRanges[2..moveRanges?size-1]/]))
+       && (ch <= ${displayRight} || ([@RangesCondition moveRanges[2..moveRanges?size-1]/]))
        [#else]
-       || ([@rangesCondition moveRanges[2..moveRanges?size-1]/])
+       || ([@RangesCondition moveRanges[2..moveRanges?size-1]/])
        [/#if]
     [/#if]
 [/#macro]
+
