@@ -174,7 +174,7 @@ public class LexicalStateData {
                 lexerData.hasSpecial = true;
                 if (currentRegexp.getOrdinal() >0) {
                     lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
-                    lexerData.getSkipSet().set(currentRegexp.getOrdinal());
+//                    lexerData.getSkipSet().set(currentRegexp.getOrdinal());
                 }
                 currentRegexp.setUnparsedToken();
             }

@@ -440,6 +440,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
               case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, image, inputSource);
             [/#if]
            [/#list]
+              case INVALID : return new InvalidToken(image, inputSource);
            default : return new Token(type, image, inputSource);
            }
        [#else]
