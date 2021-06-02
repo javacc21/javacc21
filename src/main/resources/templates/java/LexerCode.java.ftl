@@ -78,15 +78,15 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
   // Token types that are "regular" tokens that participate in parsing,
   // i.e. declared as TOKEN
-  [@EnumSet "regularTokens" lexerData.tokenSet.tokenNames /]
+  [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames /]
   // Token types that do not participate in parsing, a.k.a. "special" tokens in legacy JavaCC,
   // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
-  [@EnumSet "unparsedTokens" lexerData.specialSet.tokenNames /]
+  [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames /]
   // Tokens that are skipped, i.e. SKIP
-  [@EnumSet "skippedTokens" lexerData.skipSet.tokenNames /]
+  [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames /]
   // Tokens that correspond to a MORE, i.e. that are pending 
   // additional input
-  [@EnumSet "moreTokens" lexerData.moreSet.tokenNames /]
+  [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
 
   private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
     [#if grammar.debugLexer]  
@@ -303,7 +303,7 @@ public final void backup(int amount) {
         t.setEndLine(endLine);
         t.setBeginColumn(beginColumn);
         t.setEndColumn(endColumn);
-//        t.setInputSource(this.inputSource);
+        t.setInputSource(this.inputSource);
         return t;
   }
 

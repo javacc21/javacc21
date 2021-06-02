@@ -170,26 +170,25 @@ public class LexicalStateData {
                 currentRegexp.setCodeSnippet(respec.getCodeSnippet());
             }
             String kind = tp.getKind();
-            if (kind.equals("SPECIAL_TOKEN")) {
+            if (kind.equals("UNPARSED")) {
                 lexerData.hasSpecial = true;
                 if (currentRegexp.getOrdinal() >0) {
-                    lexerData.getSpecialSet().set(currentRegexp.getOrdinal());
-//                    lexerData.getSkipSet().set(currentRegexp.getOrdinal());
+                    lexerData.getUnparsedTokens().set(currentRegexp.getOrdinal());
                 }
                 currentRegexp.setUnparsedToken();
             }
             else if (kind.equals("SKIP")) {
                 lexerData.hasSkip = true;
-                lexerData.getSkipSet().set(currentRegexp.getOrdinal());
+                lexerData.getSkippedTokens().set(currentRegexp.getOrdinal());
                 currentRegexp.setSkip();
             }
             else if (kind.equals("MORE") && currentRegexp.getOrdinal()>0) { // REVISIT
                 lexerData.hasMore = true;
-                lexerData.getMoreSet().set(currentRegexp.getOrdinal());
+                lexerData.getMoreTokens().set(currentRegexp.getOrdinal());
                 currentRegexp.setMore();
             }
             else if (currentRegexp.getOrdinal() >0) { // REVISIT
-                lexerData.getTokenSet().set(currentRegexp.getOrdinal());
+                lexerData.getRegularTokens().set(currentRegexp.getOrdinal());
                 currentRegexp.setRegularToken();
             }
         }

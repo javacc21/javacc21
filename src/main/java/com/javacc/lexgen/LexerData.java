@@ -51,17 +51,17 @@ public class LexerData {
     private Grammar grammar;
     private List<LexicalStateData> lexicalStates = new ArrayList<>();
     private List<RegularExpression> regularExpressions = new ArrayList<>();
-    private TokenSet skipSet, specialSet, moreSet, tokenSet;
+    private TokenSet skippedTokens, unparsedSet, moreTokens, regularTokens;
     
     boolean hasSpecial, hasSkip, hasMore;
     int lastIndex;
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
-        skipSet = new TokenSet(grammar);
-        specialSet = new TokenSet(grammar);
-        moreSet = new TokenSet(grammar);
-        tokenSet = new TokenSet(grammar);
+        skippedTokens = new TokenSet(grammar);
+        unparsedSet = new TokenSet(grammar);
+        moreTokens = new TokenSet(grammar);
+        regularTokens = new TokenSet(grammar);
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
         reof.setLabel("EOF");
@@ -168,58 +168,21 @@ public class LexerData {
     public int getTokenCount() {
         return regularExpressions.size();
     }
-
-    public boolean getHasMore() {
-        return hasMore;
-    }
-
-    public boolean getHasMoreActions() {
-        return moreSet.cardinality() >0;
-    }
-
-    public boolean getHasSpecial() {
-        return hasSpecial;
-    }
-
-    public boolean getHasSkip() {
-        return hasSkip;
-    }
-
-    public boolean hasTokenAction(int index) {
-        return tokenSet.get(index);
-    }
-
-    public boolean hasMoreAction(int index) {
-        return moreSet.get(index);
-    }
-
-    public boolean hasSkipAction(int index) { 
-        return skipSet.get(index);
-    }
-
-    public BitSet getMoreSet() {
-        return moreSet;
+    
+    public TokenSet getMoreTokens() {
+        return moreTokens;
     } 
 
-    public BitSet getTokenSet() {
-        return tokenSet;
+    public TokenSet getRegularTokens() {
+        return regularTokens;
     }
     
-    public BitSet getSkipSet() {
-        return skipSet;
+    public TokenSet getSkippedTokens() {
+        return skippedTokens;
     }
     
-    public BitSet getSpecialSet() {
-        return specialSet;
-    }
-
-    public int getIndex(String name) {
-        for (int i = 0; i < lexicalStates.size(); i++) {
-            if (lexicalStates.get(i).getName().equals(name)) {
-                return i;
-            }
-        }
-        return -1;
+    public TokenSet getUnparsedTokens() {
+        return unparsedSet;
     }
 
     public void buildData() {
@@ -229,7 +192,7 @@ public class LexerData {
                 lexState.addTokenProduction(tokenProduction);
             }
         }
-        tokenSet.set(0);
+        regularTokens.set(0);
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
         for (LexicalStateData lexState : lexicalStates) {
             choices.addAll(lexState.process());

@@ -1469,7 +1469,7 @@ INJECT TokenProduction :
        for (Token t : childrenOfType(Token.class)) {
            switch (t.getType()) {
               case _MORE : return "MORE";
-              case _SPECIAL_TOKEN : return "SPECIAL_TOKEN";
+              case _SPECIAL_TOKEN : return "UNPARSED";
               case _SKIP : return "SKIP";
               case _TOKEN : return "TOKEN";
               default: 

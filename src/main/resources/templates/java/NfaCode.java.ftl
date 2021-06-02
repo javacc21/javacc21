@@ -114,7 +114,7 @@
         if (matchedType == null) {
             return handleInvalidChar(curChar);
         }
-        input_stream.backup(charsRead - matchedPos);
+        if (charsRead > matchedPos) input_stream.backup(charsRead - matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             instantiateToken();
         }
