@@ -141,9 +141,24 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     
 ${tokenBuilderClass} input_stream;
 
-public final void backup(int amount) {
+  public final void backup(int amount) {
     input_stream.backup(amount);
-}
+    truncateCharBuff(charBuff, amount);
+  }
+
+  /**
+   * Truncate a StringBuilder by a certain number of code points
+   * @param buf the buffer
+   * @param amount the number of code points to truncate
+   */
+  static final void truncateCharBuff(StringBuilder buf, int amount) {
+    int idx = buf.length();
+    while (idx > 0 && amount-- > 0) {
+      char ch = buf.charAt(--idx);
+      if (Character.isLowSurrogate(ch)) --idx;
+    }
+    buf.setLength(idx);
+  }
 
   LexicalState lexicalState = LexicalState.values()[0];
 [#if multipleLexicalStates]
@@ -287,7 +302,8 @@ public final void backup(int amount) {
   }
 
   private Token fillToken() {
-        final String curTokenImage = input_stream.getImage();
+//        final String curTokenImage = input_stream.getImage();
+        final String curTokenImage = charBuff.toString();
         final int beginLine = input_stream.getBeginLine();
         final int beginColumn = input_stream.getBeginColumn();
         final int endLine = input_stream.getEndLine();

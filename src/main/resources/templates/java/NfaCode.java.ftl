@@ -55,6 +55,9 @@
   // the current active NFA states in the core tokenization loop
   private BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
+  // Holder for the pending characters we read from the input stream
+  private final StringBuilder charBuff = new StringBuilder();
+
 // The main method to invoke the NFA machinery
   private final Token nextToken() {
       matchedToken = null;
@@ -65,12 +68,15 @@
         matchedType = null;
         matchedPos = charsRead = 0;
         if (!inMore) {
+            charBuff.setLength(0);
             curChar = input_stream.beginToken();
             if (curChar == -1) {
                 return generateEOF();
             }
+            charBuff.appendCodePoint(curChar);
         } else {
             curChar = input_stream.readChar();
+            charBuff.appendCodePoint(curChar);
         }
       [#if multipleLexicalStates]
        // Get the NFA function table and start index for the current lexical state
@@ -79,10 +85,10 @@
         ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
         int startStateIndex = startStateMap.get(lexicalState);
       [/#if]
+      // the core NFA loop
         do {
             int matchedKind = 0x7FFFFFFF;
             if (charsRead > 0) {
-                // Swap the nextStates and currentStates.
                 // What was nextStates on the last iteration 
                 // is now the currentStates!
                 BitSet temp = currentStates;
@@ -91,6 +97,7 @@
                 int retval = input_stream.readChar();
                 if (retval >=0) {
                     curChar = retval;
+                    charBuff.appendCodePoint(curChar);
                 }
                 else break;
             }
@@ -108,13 +115,14 @@
             ++charsRead;
             if (matchedKind != 0x7FFFFFFF) {
                 matchedType = TokenType.values()[matchedKind];
+                inMore = moreTokens.contains(matchedType);
                 matchedPos = charsRead;
             }
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
             return handleInvalidChar(curChar);
         }
-        if (charsRead > matchedPos) input_stream.backup(charsRead - matchedPos);
+        if (charsRead > matchedPos) backup(charsRead-matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             instantiateToken();
         }
@@ -122,7 +130,6 @@
      [#if multipleLexicalStates]
         doLexicalStateSwitch(matchedType);
      [/#if]
-        inMore = moreTokens.contains(matchedType);
       }
       return matchedToken;
   }

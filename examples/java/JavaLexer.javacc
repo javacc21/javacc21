@@ -48,7 +48,7 @@ UNPARSED :  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA;
 MORE :
   "//" : IN_SINGLE_LINE_COMMENT
 |
-  <"/**" ~["/"]> { input_stream.backup(1); } : IN_FORMAL_COMMENT
+  <"/**" ~["/"]> { backup(1); } : IN_FORMAL_COMMENT
 |
   "/*" : IN_MULTI_LINE_COMMENT
 ;

@@ -53,25 +53,7 @@ private class TokenBuilder {
         } 
     }
 
-
-    public String getImage() {
-          StringBuilder buf = new StringBuilder();
-          for (int i =tokenBegin; i<= bufpos; i++) {
-              buf.append(getCharAt(i));
-          }
-          return buf.toString();
-    }
-    
-    String getSuffix(final int len) {
-         StringBuilder buf = new StringBuilder();
-         int startPos = bufpos - len +1;
-         for (int i=0; i<len; i++) {
-             buf.append(getCharAt(startPos +i));
-        }
-        return buf.toString();
-    } 
-
-     int readChar() {
+    int readChar() {
         ++bufpos;
         if (backupAmount > 0) {
            --backupAmount;

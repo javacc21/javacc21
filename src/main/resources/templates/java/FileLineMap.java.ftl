@@ -260,48 +260,6 @@ public class FileLineMap {
         return ch;
     }
 
-    String getImage() {
-        CharSequence image = content.subSequence(tokenBeginOffset, bufferPosition);
-        if (tokenBeginLine == this.line || parsedLines==null) {
-            // If it is all on one line, or we don't have any 
-            // line marker bitset, then there is nothing more to do.
-            return image.toString();
-        }
-        boolean hasUnparsedLines = false;
-        for (int i=tokenBeginLine; i<=line; i++) {
-            if (!isParsedLine(i)) {
-                hasUnparsedLines = true;
-                break;
-            }
-        }
-        if (!hasUnparsedLines) {
-            // We're okay here too.
-            return image.toString();
-        }
-        return onlyRelevantPart(image, tokenBeginLine);
-    }
-    /**
-     * @return only the part of the input that is not actually not
-     * turned off by the preprocesor.
-     */
-    private String onlyRelevantPart(CharSequence input, int currentLine) {
-        StringBuilder buf = new StringBuilder();
-        boolean on = isParsedLine(currentLine);
-        for (int i=0; i<input.length(); i++) {
-            char ch = input.charAt(i);
-            if (on) buf.append(ch);
-            if (ch == '\n') {
-                on = isParsedLine(++currentLine);
-            }
-        }
-        return buf.toString();
-    }
-
-    String getSuffix(final int len) {
-        int startPos = bufferPosition - len + 1;
-        return content.subSequence(startPos, bufferPosition).toString();
-    }
-
     int beginToken() {
         if (!isParsedLine(line)) {
             advanceLine();
@@ -334,10 +292,6 @@ public class FileLineMap {
         if (column == 1 && line > tokenBeginLine)
             return line - 1;
         return line;
-    }
-
-    int getBufferPosition() {
-        return bufferPosition;
     }
 
     // But there is no goto in Java!!!
