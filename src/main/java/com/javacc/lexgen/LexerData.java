@@ -98,6 +98,10 @@ public class LexerData {
         return regularExpressions;
     }
 
+    public boolean getHasLexicalStateTransitions() {
+        return regularExpressions.stream().anyMatch(re->re.getNewLexicalState()!=null);
+    }
+
     public int getLexicalStateIndex(String lexicalStateName) {
         for (int i = 0; i < lexicalStates.size(); i++) {
             LexicalStateData state = lexicalStates.get(i);

@@ -58,7 +58,6 @@
 [/#list]
 
 import java.io.Reader;
-import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.*;
 import java.util.function.ToIntBiFunction;
@@ -401,7 +400,8 @@ ${tokenBuilderClass} input_stream;
       return matchedToken;
   }
 
-  // Generate the map for lexical state transitions from the various token types
+  // Generate the map for lexical state transitions from the various token types (if necessary)
+[#if lexerData.hasLexicalStateTransitions]
   static {
     [#list grammar.lexerData.regularExpressions as regexp]
       [#if !regexp.newLexicalState?is_null]
@@ -409,4 +409,5 @@ ${tokenBuilderClass} input_stream;
       [/#if]
     [/#list]
   }
+[/#if]
 }
