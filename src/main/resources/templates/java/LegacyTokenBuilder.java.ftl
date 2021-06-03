@@ -69,7 +69,7 @@ private class TokenBuilder {
   
     int beginToken() {
          if (backupAmount > 0) {
-              --backupAmount;
+            --backupAmount;
             ++bufpos;
             tokenBegin = bufpos;
             return getCharAt(bufpos);

@@ -92,7 +92,7 @@ public class FileLineMap {
     // A list of offsets of the beginning of lines
     private final int[] lineOffsets;
     private int startingLine, startingColumn;
-    private int bufferPosition, tokenBeginOffset, tokenBeginColumn, tokenBeginLine, line, column;
+    private int bufferPosition, tokenBeginColumn, tokenBeginLine, line, column;
 
 
     // If this is set, it determines 
@@ -260,23 +260,12 @@ public class FileLineMap {
         return ch;
     }
 
-    int beginToken() {
-        if (!isParsedLine(line)) {
-            advanceLine();
-        }
-        tokenBeginOffset = bufferPosition;
-        tokenBeginColumn = column;
-        tokenBeginLine = line;
-        return readChar();
+    int getLine() {
+        if (!isParsedLine(line)) advanceLine();
+        return line;
     }
 
-    int getBeginColumn() {
-        return tokenBeginColumn;
-    }
-
-    int getBeginLine() {
-        return tokenBeginLine;
-    }
+    int getColumn() {return column;}
 
     int getEndColumn() {
         if (column == 1) {

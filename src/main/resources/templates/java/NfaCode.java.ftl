@@ -54,6 +54,10 @@
   // Holder for the pending characters we read from the input stream
   private final StringBuilder charBuff = new StringBuilder();
 
+  // Just used to "bookmark" the starting location for a token
+  // for when we put in the location info at the end.
+  private int tokenBeginLine, tokenBeginColumn;
+
 // The main method to invoke the NFA machinery
   private final Token nextToken() {
       matchedToken = null;
@@ -65,9 +69,20 @@
         matchedPos = charsRead = 0;
         if (!inMore) {
             charBuff.setLength(0);
+[#-- The following is a temporary kludge. Need to rewrite the LegacyTokenBuilder
+     that the hugeFileSupport option uses. 
+     It's surely broken in various ways, like wrt full Unicode etc.--]            
+[#if grammar.hugeFileSupport]            
             curChar = input_stream.beginToken();
+            tokenBeginLine = input_stream.getBeginLine();
+            tokenBeginColumn = input_stream.getBeginColumn();
+[#else]
+            tokenBeginLine = input_stream.getLine();
+            tokenBeginColumn = input_stream.getColumn();
+            curChar = input_stream.readChar();
+[/#if]            
             if (curChar == -1) {
-                return generateEOF();
+                return instantiateToken(TokenType.EOF);
             }
             charBuff.appendCodePoint(curChar);
         } else {
@@ -119,9 +134,10 @@
         }
         if (charsRead > matchedPos) backup(charsRead-matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
-            instantiateToken();
+            instantiateToken(matchedType);
+        } else {
+           tokenLexicalActions();
         }
-        tokenLexicalActions();
      [#if multipleLexicalStates]
         doLexicalStateSwitch(matchedType);
      [/#if]
@@ -305,4 +321,3 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
        [/#if]
     [/#if]
 [/#macro]
-

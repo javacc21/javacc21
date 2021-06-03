@@ -247,19 +247,6 @@ ${tokenBuilderClass} input_stream;
     }
  [/#if]
     
-  private Token generateEOF() {
-      matchedType = TokenType.EOF;
-      Token eof = fillToken();
-      tokenLexicalActions();
-[#list grammar.lexerTokenHooks as tokenHookMethodName]
-      [#if tokenHookMethodName != "CommonTokenAction"]
-         eof =
-      [/#if]
-      ${tokenHookMethodName}(eof);
-[/#list]
-      return eof;
-    }
-
   private InvalidToken handleInvalidChar(int ch) {
     int line = input_stream.getEndLine();
     int column = input_stream.getEndColumn();
@@ -276,8 +263,22 @@ ${tokenBuilderClass} input_stream;
     return invalidToken;
   }
 
-  private void instantiateToken() {
-      matchedToken = fillToken();
+  private Token instantiateToken(TokenType type) {
+    this.matchedType  = type;
+//    matchedToken = fillToken();
+    String tokenImage = charBuff.toString();
+    [#if grammar.settings.TOKEN_FACTORY??]
+        matchedToken = ${grammar.settings.TOKEN_FACTORY}.newToken(type, tokenImage, inputSource);
+    [#elseif !grammar.hugeFileSupport]
+        matchedToken = Token.newToken(type, tokenImage, this);
+    [#else]
+        matchedToken = Token.newToken(type, tokenImage, inputSource);
+    [/#if]
+        matchedToken.setBeginLine(tokenBeginLine);
+        matchedToken.setEndLine(input_stream.getEndLine());
+        matchedToken.setBeginColumn(tokenBeginColumn);
+        matchedToken.setEndColumn(input_stream.getEndColumn());
+        matchedToken.setInputSource(this.inputSource);
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]
       ${tokenHookMethodName}(matchedToken);
@@ -287,6 +288,8 @@ ${tokenBuilderClass} input_stream;
  [/#list]
       this.matchedType = matchedToken.getType();
       matchedToken.setUnparsed(unparsedTokens.contains(matchedType));
+      tokenLexicalActions();
+      return matchedToken;
   }
 
   private void tokenLexicalActions() {
@@ -302,36 +305,13 @@ ${tokenBuilderClass} input_stream;
     }
   }
 
-  private Token fillToken() {
-//        final String curTokenImage = input_stream.getImage();
-        final String curTokenImage = charBuff.toString();
-        final int beginLine = input_stream.getBeginLine();
-        final int beginColumn = input_stream.getBeginColumn();
-        final int endLine = input_stream.getEndLine();
-        final int endColumn = input_stream.getEndColumn();
-    [#if grammar.settings.TOKEN_FACTORY??]
-        final Token t = ${grammar.settings.TOKEN_FACTORY}.newToken(matchedType, curTokenImage, inputSource);
-    [#elseif !grammar.hugeFileSupport]
-        final Token t = Token.newToken(matchedType, curTokenImage, this);
-    [#else]
-        final Token t = Token.newToken(matchedType, curTokenImage, inputSource);
-    [/#if]
-        t.setBeginLine(beginLine);
-        t.setEndLine(endLine);
-        t.setBeginColumn(beginColumn);
-        t.setEndColumn(endColumn);
-        t.setInputSource(this.inputSource);
-        return t;
-  }
-
-
 [@nfa.GenerateMainLoop/]
 
 [#--
   Outer loop to generate all the NFA (non-deterministic finite automaton)
   related code for all the various lexical states
 --]    
-[#list lexerData.lexicalStates as lexicalState]
-  [@nfa.GenerateStateCode lexicalState/]
-[/#list]
+ [#list lexerData.lexicalStates as lexicalState]
+   [@nfa.GenerateStateCode lexicalState/]
+ [/#list]
 }
