@@ -394,6 +394,14 @@ public class Grammar extends BaseNode {
         return lexerClassName;
     }
 
+    public String getNfaDataClassName() {
+        String lexerClassName = getLexerClassName();
+        if (lexerClassName.contains("Lexer")) {
+            return lexerClassName.replace("Lexer", "NfaData");
+        }
+        return lexerClassName + "NfaData";
+    }
+
     public String getDefaultLexicalState() {
         return this.defaultLexicalState;
     }

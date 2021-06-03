@@ -86,6 +86,9 @@ public class FilesGenerator {
         initializeTemplateEngine();
         generateToken();
         generateLexer();
+        if (!grammar.getUserDefinedLexer()) {
+            generateNfaData();
+        }
         generateConstantsFile();
         if (!grammar.getProductionTable().isEmpty()) {
             generateParseException();
@@ -122,6 +125,9 @@ public class FilesGenerator {
         else if (currentFilename.endsWith("Lexer.java")
                  || currentFilename.equals(grammar.getLexerClassName() + ".java")) {
             templateName = "Lexer.java.ftl";
+        }
+        else if (currentFilename.endsWith("NfaData.java") || currentFilename.equals(grammar.getNfaDataClassName() +".java")) {
+            templateName = "NfaData.java.ftl";
         }
         else if (currentFilename.endsWith(".html")) {
             templateName = "doc.html.ftl";
@@ -247,6 +253,12 @@ public class FilesGenerator {
         if (!grammar.getUserDefinedLexer()) {
             filename = grammar.getLexerClassName() + ".java";
         }
+        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
+        generate(outputFile);
+    }
+
+    void generateNfaData() throws IOException, ParseException, TemplateException {
+        String filename = grammar.getNfaDataClassName() + ".java";
         Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }

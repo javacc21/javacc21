@@ -36,8 +36,6 @@
     are in the imported template NfaCode.java.ftl
  --]
 
-[#import "NfaCode.java.ftl" as nfa]
-[#var lexerData=grammar.lexerData]
 [#var tokenBuilderClass = grammar.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
@@ -305,13 +303,110 @@ ${tokenBuilderClass} input_stream;
     }
   }
 
-[@nfa.GenerateMainLoop/]
+  // The following two BitSets are used to store 
+  // the current active NFA states in the core tokenization loop
+  private BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
-[#--
-  Outer loop to generate all the NFA (non-deterministic finite automaton)
-  related code for all the various lexical states
---]    
- [#list lexerData.lexicalStates as lexicalState]
-   [@nfa.GenerateStateCode lexicalState/]
- [/#list]
+  // Holder for the pending characters we read from the input stream
+  private final StringBuilder charBuff = new StringBuilder();
+
+  // Just used to "bookmark" the starting location for a token
+  // for when we put in the location info at the end.
+  private int tokenBeginLine, tokenBeginColumn;
+
+// The main method to invoke the NFA machinery
+  private final Token nextToken() {
+      matchedToken = null;
+      boolean inMore = false;
+      int matchedPos, charsRead, curChar;
+      // The core tokenization loop
+      while (matchedToken == null) {
+        matchedType = null;
+        matchedPos = charsRead = 0;
+        if (!inMore) {
+            charBuff.setLength(0);
+[#-- The following is a temporary kludge. Need to rewrite the LegacyTokenBuilder
+     that the hugeFileSupport option uses. 
+     It's surely broken in various ways, like wrt full Unicode etc.--]            
+[#if grammar.hugeFileSupport]            
+            curChar = input_stream.beginToken();
+            tokenBeginLine = input_stream.getBeginLine();
+            tokenBeginColumn = input_stream.getBeginColumn();
+[#else]
+            tokenBeginLine = input_stream.getLine();
+            tokenBeginColumn = input_stream.getColumn();
+            curChar = input_stream.readChar();
+[/#if]            
+            if (curChar == -1) {
+                return instantiateToken(TokenType.EOF);
+            }
+            charBuff.appendCodePoint(curChar);
+        } else {
+            curChar = input_stream.readChar();
+            charBuff.appendCodePoint(curChar);
+        }
+      [#if multipleLexicalStates]
+       // Get the NFA function table current lexical state
+       // There is some possibility that there was a lexical state change
+       // since the last iteration of this loop!
+      [/#if]
+        ToIntBiFunction<Integer,BitSet>[] nfaFunctions = ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
+      // the core NFA loop
+        do {
+            int matchedKind = 0x7FFFFFFF;
+            if (charsRead > 0) {
+                // What was nextStates on the last iteration 
+                // is now the currentStates!
+                BitSet temp = currentStates;
+                currentStates = nextStates;
+                nextStates = temp;
+                int retval = input_stream.readChar();
+                if (retval >=0) {
+                    curChar = retval;
+                    charBuff.appendCodePoint(curChar);
+                }
+                else break;
+            }
+            nextStates.clear();
+            if (charsRead == 0) {
+              matchedKind = nfaFunctions[0].applyAsInt(curChar, nextStates);
+            } else {
+                int nextActive = currentStates.nextSetBit(0);
+                while (nextActive != -1) {
+                    int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
+                    if (returnedKind < matchedKind) matchedKind = returnedKind;
+                    nextActive = currentStates.nextSetBit(nextActive+1);
+                } 
+            }
+            ++charsRead;
+            if (matchedKind != 0x7FFFFFFF) {
+                matchedType = TokenType.values()[matchedKind];
+                inMore = moreTokens.contains(matchedType);
+                matchedPos = charsRead;
+            }
+        } while (!nextStates.isEmpty());
+        if (matchedType == null) {
+            return handleInvalidChar(curChar);
+        }
+        if (charsRead > matchedPos) backup(charsRead-matchedPos);
+        if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
+            instantiateToken(matchedType);
+        } else {
+           tokenLexicalActions();
+        }
+     [#if multipleLexicalStates]
+        doLexicalStateSwitch(matchedType);
+     [/#if]
+      }
+      return matchedToken;
+  }
+
+  // Generate the map for lexical state transitions from the various token types
+  static {
+    [#list grammar.lexerData.regularExpressions as regexp]
+      [#if !regexp.newLexicalState?is_null]
+          tokenTypeToLexicalStateMap.put(TokenType.${regexp.label},LexicalState.${regexp.newLexicalState.name});
+      [/#if]
+    [/#list]
+  }
 }
