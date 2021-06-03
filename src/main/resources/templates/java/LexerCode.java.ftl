@@ -148,11 +148,12 @@ ${tokenBuilderClass} input_stream;
 
   /**
    * Truncate a StringBuilder by a certain number of code points
-   * @param buf the buffer
+   * @param buf the StringBuilder
    * @param amount the number of code points to truncate
    */
   static final void truncateCharBuff(StringBuilder buf, int amount) {
     int idx = buf.length();
+    if (idx <= amount) idx = 0;
     while (idx > 0 && amount-- > 0) {
       char ch = buf.charAt(--idx);
       if (Character.isLowSurrogate(ch)) --idx;

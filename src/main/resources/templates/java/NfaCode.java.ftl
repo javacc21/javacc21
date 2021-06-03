@@ -42,13 +42,9 @@
  [#if multipleLexicalStates]
   // A lookup of the NFA function tables for the respective lexical states.
   private static final EnumMap<LexicalState,ToIntBiFunction<Integer,BitSet>[]> functionTableMap = new EnumMap<>(LexicalState.class);
-  // A lookup of the start state index for each lexical state
-  private static final EnumMap<LexicalState, Integer> startStateMap = new EnumMap<>(LexicalState.class);
  [#else]
   // A table holding the nfa routines for the various states
    private static ToIntBiFunction<Integer, BitSet>[] nfaFunctions;
-  // The index of the NFA machine's starting state
-   private static int startStateIndex;
  [/#if]
 
   // The following two BitSets are used to store 
@@ -79,11 +75,10 @@
             charBuff.appendCodePoint(curChar);
         }
       [#if multipleLexicalStates]
-       // Get the NFA function table and start index for the current lexical state
-       // There is some possibility that these changed since the last
-       // iteration of this loop!
+       // Get the NFA function table current lexical state
+       // There is some possibility that there was a lexical state change
+       // since the last iteration of this loop!
         ToIntBiFunction<Integer,BitSet>[] nfaFunctions = functionTableMap.get(lexicalState);
-        int startStateIndex = startStateMap.get(lexicalState);
       [/#if]
       // the core NFA loop
         do {
@@ -103,7 +98,7 @@
             }
             nextStates.clear();
             if (charsRead == 0) {
-                matchedKind = nfaFunctions[startStateIndex].applyAsInt(curChar, nextStates);
+              matchedKind = nfaFunctions[0].applyAsInt(curChar, nextStates);
             } else {
                 int nextActive = currentStates.nextSetBit(0);
                 while (nextActive != -1) {
@@ -171,10 +166,8 @@
     [/#list]
     [#if multipleLexicalStates]
       functionTableMap.put(LexicalState.${lexicalState.name}, functions);
-      startStateMap.put(LexicalState.${lexicalState.name}, ${lexicalState.initialState.canonicalState.index});
     [#else]
       nfaFunctions = functions;
-      startStateIndex = ${lexicalState.initialState.canonicalState.index};
     [/#if]
   }
 [/#macro]
