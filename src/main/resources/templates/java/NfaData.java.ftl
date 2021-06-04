@@ -47,13 +47,17 @@
 import java.util.*;
 import java.util.function.ToIntBiFunction;
 
+/**
+ * Holder class for the data used by ${grammar.lexerClassName}
+ * to do the NFA thang
+ */
 class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 
  [#if multipleLexicalStates]
   // A lookup of the NFA function tables for the respective lexical states.
   private static final EnumMap<LexicalState,ToIntBiFunction<Integer,BitSet>[]> functionTableMap = new EnumMap<>(LexicalState.class);
  [#else]
-  // We don't need the above lookup if there is only one lexical state.
+  [#-- We don't need the above lookup if there is only one lexical state.--]
    static private ToIntBiFunction<Integer, BitSet>[] nfaFunctions;
  [/#if]
 
@@ -168,11 +172,12 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 
 [#--
   Generates the code for an NFA state transition
-  This is a bit messy. It takes the parameters:
-  inComposite means that this state move is part of
-  a CompositeStateSet. In that case, we use the jumpOut
-  parameter to decide whether we can just jump out of the 
-  method. (This is based on whether any of the moveRanges
+  This is still a bit complicated and can probably 
+  be simplified further. The parameter inComposite means 
+  that this state move is part of a CompositeStateSet. 
+  In that case, we use the jumpOut parameter to decide 
+  whether we can just jump out of the method. 
+  (This is based on whether any of the moveRanges
   for later states overlap. If not, we can jump out. This 
   is only relevant if we are in a composite state, of course.)  
   TODO: Clean this up a bit. It's a bit messy and maybe a 
@@ -180,7 +185,6 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 --]
 [#macro GenerateStateMove nfaState inComposite jumpOut]
    [#var nextState = nfaState.nextState.canonicalState]
-   [#--var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT--]
    [#var kindToPrint = nfaState.nextState.ordinal]
     if ([@NfaStateCondition nfaState/]) {
    [#if nextState.composite]

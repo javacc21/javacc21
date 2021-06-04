@@ -75,6 +75,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
   // Holder for the pending characters we read from the input stream
   private final StringBuilder charBuff = new StringBuilder();
+[#--  
+  // Holder for invalid characters, i.e. that cannot be matched as part of a token
+  private final StringBuilder pendingInvalidChars = new StringBuilder();--]
 
   // Just used to "bookmark" the starting location for a token
   // for when we put in the location info at the end.
@@ -260,7 +263,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             }
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
-            return handleInvalidChar(curChar);
+            backup(charsRead-1);
+            return handleInvalidChar(charBuff.codePointAt(0));
         }
         if (charsRead > matchedPos) backup(charsRead-matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
