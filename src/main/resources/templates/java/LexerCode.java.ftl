@@ -108,6 +108,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private int tabSize =8;
   private InvalidToken invalidToken;
   private Token previousToken;
+  // The source of the raw characters that we are scanning  
+  ${tokenBuilderClass} input_stream;
     
   private void setTracingEnabled(boolean trace_enabled) {
      this.trace_enabled = trace_enabled;
@@ -200,7 +202,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       while (matchedToken == null) {
         matchedType = null;
         matchedPos = charsRead = 0;
-        if (!inMore) {
+        if (inMore) {
+            curChar = input_stream.readChar();
+            if (curChar >= 0) charBuff.appendCodePoint(curChar);
+        }
+        else {
             charBuff.setLength(0);
 [#-- The following is a temporary kludge. Need to rewrite the LegacyTokenBuilder
      that the hugeFileSupport option uses. 
@@ -215,21 +221,18 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             curChar = input_stream.readChar();
 [/#if]            
             if (curChar == -1) {
-                return instantiateToken(TokenType.EOF);
+              matchedType = TokenType.EOF;
             }
-            charBuff.appendCodePoint(curChar);
-        } else {
-            curChar = input_stream.readChar();
-            charBuff.appendCodePoint(curChar);
-        }
+            else charBuff.appendCodePoint(curChar);
+        } 
       [#if multipleLexicalStates]
        // Get the NFA function table current lexical state
        // There is some possibility that there was a lexical state change
        // since the last iteration of this loop!
       [/#if]
         ToIntBiFunction<Integer,BitSet>[] nfaFunctions = ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
-      // the core NFA loop
-        do {
+        if (matchedType != TokenType.EOF) 
+        do {// the core NFA loop
             int matchedKind = 0x7FFFFFFF;
             if (charsRead > 0) {
                 // What was nextStates on the last iteration 
@@ -279,9 +282,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       }
       return matchedToken;
    }
-
-  // The source of the raw characters that we are scanning  
-  ${tokenBuilderClass} input_stream;
 
   public final void backup(int amount) {
     input_stream.backup(amount);

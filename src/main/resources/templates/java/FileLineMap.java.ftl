@@ -100,7 +100,7 @@ public class FileLineMap {
     private BitSet parsedLines;
 
     /**
-     * @return true if we actually actually parse this line.
+     * @return true if we actually parse this line.
      * (Or really whether we lex it, since what happens here is pre-lexical!)
      */
     private boolean isParsedLine(int lineNumber) {
