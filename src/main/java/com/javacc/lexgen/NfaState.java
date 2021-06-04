@@ -76,7 +76,7 @@ public class NfaState {
 
     public List<Integer> getMoveRanges() { return moveRanges; }
 
-    public RegularExpression getType() {return type;}
+    public int getOrdinal() {return type == null ? Integer.MAX_VALUE : type.getOrdinal();}
 
     public LexicalStateData getLexicalState() {return lexicalState;}
 

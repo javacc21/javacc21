@@ -61,6 +61,10 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   // This data holder class is never instantiated
   private ${grammar.nfaDataClassName}() {}
 
+  /**
+   * @param the lexical state
+   * @return the table of function pointers that implement the lexical state
+   */
   static final ToIntBiFunction<Integer,BitSet>[] getFunctionTableMap(LexicalState lexicalState) {
     [#if multipleLexicalStates]
       return functionTableMap.get(lexicalState);
@@ -176,7 +180,8 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 --]
 [#macro GenerateStateMove nfaState inComposite jumpOut]
    [#var nextState = nfaState.nextState.canonicalState]
-   [#var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT]
+   [#--var kindToPrint=(nfaState.nextState.type.ordinal)!MAX_INT--]
+   [#var kindToPrint = nfaState.nextState.ordinal]
     if ([@NfaStateCondition nfaState/]) {
    [#if nextState.composite]
          nextStates.set(${nextState.index});
@@ -231,8 +236,13 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
           ch == ${displayLeft}
        [#elseif left +1 == right]
           ch == ${displayLeft} || ch == ${displayRight}
+       [#elseif left > 0]
+          ch >= ${displayLeft} 
+          [#if right < 1114111]
+             && ch <= ${displayRight}
+          [/#if]
        [#else]
-          ch >= ${displayLeft} && ch <= ${displayRight}
+           ch <= ${displayRight}
        [/#if]
     [#else]
        ch 

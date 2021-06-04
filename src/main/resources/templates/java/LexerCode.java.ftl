@@ -57,6 +57,7 @@
    ${import}
 [/#list]
 
+import java.io.IOException;
 import java.io.Reader;
 import java.util.logging.Logger;
 import java.util.*;
@@ -64,15 +65,25 @@ import java.util.function.ToIntBiFunction;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
-  private Token matchedToken;
-  private TokenType matchedType;
   private String inputSource = "input";
  [#if grammar.lexerUsesParser]
   public ${grammar.parserClassName} parser;
  [/#if]
+  // The following two BitSets are used to store 
+  // the current active NFA states in the core tokenization loop
+  private BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
+  // Holder for the pending characters we read from the input stream
+  private final StringBuilder charBuff = new StringBuilder();
+
+  // Just used to "bookmark" the starting location for a token
+  // for when we put in the location info at the end.
+  private int tokenBeginLine, tokenBeginColumn;
+
+[#if lexerData.hasLexicalStateTransitions]
   // A lookup for lexical state transitions triggered by a certain token type
   private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
+[/#if]
   // Token types that are "regular" tokens that participate in parsing,
   // i.e. declared as TOKEN
   [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames /]
@@ -91,6 +102,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [#else]  
   private boolean trace_enabled = false;
     [/#if]
+  private int tabSize =8;
+  private InvalidToken invalidToken;
+  private Token previousToken;
     
   private void setTracingEnabled(boolean trace_enabled) {
      this.trace_enabled = trace_enabled;
@@ -135,51 +149,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         input_stream = new ${tokenBuilderClass}(inputSource, reader, line, column);
         switchTo(lexState);
     }
-    
-${tokenBuilderClass} input_stream;
 
-  public final void backup(int amount) {
-    input_stream.backup(amount);
-    truncateCharBuff(charBuff, amount);
-  }
-
-  /**
-   * Truncate a StringBuilder by a certain number of code points
-   * @param buf the StringBuilder
-   * @param amount the number of code points to truncate
-   */
-  static final void truncateCharBuff(StringBuilder buf, int amount) {
-    int idx = buf.length();
-    if (idx <= amount) idx = 0;
-    while (idx > 0 && amount-- > 0) {
-      char ch = buf.charAt(--idx);
-      if (Character.isLowSurrogate(ch)) --idx;
-    }
-    buf.setLength(idx);
-  }
-
-  LexicalState lexicalState = LexicalState.values()[0];
-[#if multipleLexicalStates]
-  boolean doLexicalStateSwitch(TokenType tokenType) {
-       LexicalState newState = tokenTypeToLexicalStateMap.get(tokenType);
-       if (newState == null) return false;
-       return switchTo(newState);
-  }
-[/#if]
-  
-    /** 
-     * Switch to specified lexical state. 
-     * @param lexState the lexical state to switch to
-     * @return whether we switched (i.e. we weren't already in the desired lexical state)
-     */
-    public boolean switchTo(LexicalState lexState) {
-        if (this.lexicalState != lexState) {
-           if (trace_enabled) LOGGER.info("Switching from lexical state " + this.lexicalState + " to " + lexState);
-           this.lexicalState = lexState;
-           return true;
-        }
-        return false;
-    }
 [#if grammar.legacyAPI]
     /**
       * @deprecated Use the switchTo method that takes an Enum
@@ -191,9 +161,6 @@ ${tokenBuilderClass} input_stream;
     @Deprecated
     public void setTabSize(int  size) {this.tabSize = size;}
 [/#if]
-  private int tabSize =8;
-  private InvalidToken invalidToken;
-  private Token previousToken;
 
   /**
    * The public method for getting the next token.
@@ -219,103 +186,11 @@ ${tokenBuilderClass} input_stream;
       if (previousToken != null) previousToken.setNextToken(token);
       return previousToken = token;
  }
- 
- [#if grammar.hugeFileSupport]
-    [#embed "LegacyTokenBuilder.java.ftl"]
- [#else]
-        // Reset the token source input
-    // to just after the Token passed in.
-    void reset(Token t, LexicalState state) {
-        input_stream.goTo(t.getEndLine(), t.getEndColumn());
-        input_stream.forward(1);
-        t.setNext(null);
-        t.setNextToken(null);
-        if (state != null) {
-            switchTo(state);
-        }
-    }
-
-    void reset(Token t) {
-        reset(t, null);
-    }
-    
-    FileLineMap getFileLineMap() {
-        return input_stream;
-    }
- [/#if]
-    
-  private InvalidToken handleInvalidChar(int ch) {
-    int line = input_stream.getEndLine();
-    int column = input_stream.getEndColumn();
-    String img = new String(new int[] {ch}, 0, 1);
-    if (invalidToken == null) {
-       invalidToken = new InvalidToken(img, inputSource);
-       invalidToken.setBeginLine(line);
-       invalidToken.setBeginColumn(column);
-    } else {
-       invalidToken.setImage(invalidToken.getImage() + img);
-    }
-    invalidToken.setEndLine(line);
-    invalidToken.setEndColumn(column);
-    return invalidToken;
-  }
-
-  private Token instantiateToken(TokenType type) {
-    this.matchedType  = type;
-//    matchedToken = fillToken();
-    String tokenImage = charBuff.toString();
-    [#if grammar.settings.TOKEN_FACTORY??]
-        matchedToken = ${grammar.settings.TOKEN_FACTORY}.newToken(type, tokenImage, inputSource);
-    [#elseif !grammar.hugeFileSupport]
-        matchedToken = Token.newToken(type, tokenImage, this);
-    [#else]
-        matchedToken = Token.newToken(type, tokenImage, inputSource);
-    [/#if]
-        matchedToken.setBeginLine(tokenBeginLine);
-        matchedToken.setEndLine(input_stream.getEndLine());
-        matchedToken.setBeginColumn(tokenBeginColumn);
-        matchedToken.setEndColumn(input_stream.getEndColumn());
-        matchedToken.setInputSource(this.inputSource);
- [#list grammar.lexerTokenHooks as tokenHookMethodName]
-    [#if tokenHookMethodName = "CommonTokenAction"]
-      ${tokenHookMethodName}(matchedToken);
-    [#else]
-      matchedToken = ${tokenHookMethodName}(matchedToken);
-    [/#if]
- [/#list]
-      this.matchedType = matchedToken.getType();
-      matchedToken.setUnparsed(unparsedTokens.contains(matchedType));
-      tokenLexicalActions();
-      return matchedToken;
-  }
-
-  private void tokenLexicalActions() {
-    switch(matchedType) {
-   [#list lexerData.regularExpressions as regexp]
-        [#if regexp.codeSnippet?has_content]
-		  case ${regexp.label} :
-		      ${regexp.codeSnippet.javaCode}
-           break;
-        [/#if]
-   [/#list]
-      default : break;
-    }
-  }
-
-  // The following two BitSets are used to store 
-  // the current active NFA states in the core tokenization loop
-  private BitSet nextStates=new BitSet(), currentStates = new BitSet();
-
-  // Holder for the pending characters we read from the input stream
-  private final StringBuilder charBuff = new StringBuilder();
-
-  // Just used to "bookmark" the starting location for a token
-  // for when we put in the location info at the end.
-  private int tokenBeginLine, tokenBeginColumn;
 
 // The main method to invoke the NFA machinery
-  private final Token nextToken() {
-      matchedToken = null;
+   private final Token nextToken() {
+      TokenType matchedType;
+      Token matchedToken = null;
       boolean inMore = false;
       int matchedPos, charsRead, curChar;
       // The core tokenization loop
@@ -389,19 +264,147 @@ ${tokenBuilderClass} input_stream;
         }
         if (charsRead > matchedPos) backup(charsRead-matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
-            instantiateToken(matchedType);
-        } else {
-           tokenLexicalActions();
+            matchedToken = instantiateToken(matchedType);
         }
+     [#if lexerData.hasTokenActions]
+        matchedToken = tokenLexicalActions(matchedToken, matchedType);
+     [/#if]
      [#if multipleLexicalStates]
         doLexicalStateSwitch(matchedType);
      [/#if]
       }
       return matchedToken;
+   }
+
+  // The source of the raw characters that we are scanning  
+  ${tokenBuilderClass} input_stream;
+
+  public final void backup(int amount) {
+    input_stream.backup(amount);
+    truncateCharBuff(charBuff, amount);
   }
 
+  /**
+   * Truncate a StringBuilder by a certain number of code points
+   * @param buf the StringBuilder
+   * @param amount the number of code points to truncate
+   */
+  static final void truncateCharBuff(StringBuilder buf, int amount) {
+    int idx = buf.length();
+    if (idx <= amount) idx = 0;
+    while (idx > 0 && amount-- > 0) {
+      char ch = buf.charAt(--idx);
+      if (Character.isLowSurrogate(ch)) --idx;
+    }
+    buf.setLength(idx);
+  }
+
+  LexicalState lexicalState = LexicalState.values()[0];
+[#if multipleLexicalStates]
+  boolean doLexicalStateSwitch(TokenType tokenType) {
+       LexicalState newState = tokenTypeToLexicalStateMap.get(tokenType);
+       if (newState == null) return false;
+       return switchTo(newState);
+  }
+[/#if]
+  
+    /** 
+     * Switch to specified lexical state. 
+     * @param lexState the lexical state to switch to
+     * @return whether we switched (i.e. we weren't already in the desired lexical state)
+     */
+    public boolean switchTo(LexicalState lexState) {
+        if (this.lexicalState != lexState) {
+           if (trace_enabled) LOGGER.info("Switching from lexical state " + this.lexicalState + " to " + lexState);
+           this.lexicalState = lexState;
+           return true;
+        }
+        return false;
+    }
+ 
+ [#if grammar.hugeFileSupport]
+    [#embed "LegacyTokenBuilder.java.ftl"]
+ [#else]
+        // Reset the token source input
+    // to just after the Token passed in.
+    void reset(Token t, LexicalState state) {
+        input_stream.goTo(t.getEndLine(), t.getEndColumn());
+        input_stream.forward(1);
+        t.setNext(null);
+        t.setNextToken(null);
+        if (state != null) {
+            switchTo(state);
+        }
+    }
+
+    void reset(Token t) {
+        reset(t, null);
+    }
+    
+    FileLineMap getFileLineMap() {
+        return input_stream;
+    }
+ [/#if]
+    
+  private InvalidToken handleInvalidChar(int ch) {
+    int line = input_stream.getEndLine();
+    int column = input_stream.getEndColumn();
+    String img = new String(new int[] {ch}, 0, 1);
+    if (invalidToken == null) {
+       invalidToken = new InvalidToken(img, inputSource);
+       invalidToken.setBeginLine(line);
+       invalidToken.setBeginColumn(column);
+    } else {
+       invalidToken.setImage(invalidToken.getImage() + img);
+    }
+    invalidToken.setEndLine(line);
+    invalidToken.setEndColumn(column);
+    return invalidToken;
+  }
+
+  private Token instantiateToken(TokenType type) {
+    String tokenImage = charBuff.toString();
+    [#if grammar.settings.TOKEN_FACTORY??]
+        Token matchedToken = ${grammar.settings.TOKEN_FACTORY}.newToken(type, tokenImage, inputSource);
+    [#elseif !grammar.hugeFileSupport]
+        Token matchedToken = Token.newToken(type, tokenImage, this);
+    [#else]
+        Token matchedToken = Token.newToken(type, tokenImage, inputSource);
+    [/#if]
+        matchedToken.setBeginLine(tokenBeginLine);
+        matchedToken.setEndLine(input_stream.getEndLine());
+        matchedToken.setBeginColumn(tokenBeginColumn);
+        matchedToken.setEndColumn(input_stream.getEndColumn());
+        matchedToken.setInputSource(this.inputSource);
+ [#list grammar.lexerTokenHooks as tokenHookMethodName]
+    [#if tokenHookMethodName = "CommonTokenAction"]
+      ${tokenHookMethodName}(matchedToken);
+    [#else]
+      matchedToken = ${tokenHookMethodName}(matchedToken);
+    [/#if]
+ [/#list]
+      matchedToken.setUnparsed(unparsedTokens.contains(type));
+      return matchedToken;
+  }
+
+ [#if lexerData.hasTokenActions]
+  private Token tokenLexicalActions(Token matchedToken, TokenType matchedType) {
+    switch(matchedType) {
+   [#list lexerData.regularExpressions as regexp]
+        [#if regexp.codeSnippet?has_content]
+		  case ${regexp.label} :
+		      ${regexp.codeSnippet.javaCode}
+           break;
+        [/#if]
+   [/#list]
+      default : break;
+    }
+    return matchedToken;
+  }
+ [/#if]
+
   // Generate the map for lexical state transitions from the various token types (if necessary)
-[#if lexerData.hasLexicalStateTransitions]
+ [#if lexerData.hasLexicalStateTransitions]
   static {
     [#list grammar.lexerData.regularExpressions as regexp]
       [#if !regexp.newLexicalState?is_null]
@@ -409,5 +412,5 @@ ${tokenBuilderClass} input_stream;
       [/#if]
     [/#list]
   }
-[/#if]
+ [/#if]
 }

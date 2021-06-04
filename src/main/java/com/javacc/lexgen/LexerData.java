@@ -99,7 +99,12 @@ public class LexerData {
     }
 
     public boolean getHasLexicalStateTransitions() {
-        return regularExpressions.stream().anyMatch(re->re.getNewLexicalState()!=null);
+        return getNumLexicalStates() > 1 && 
+               regularExpressions.stream().anyMatch(re->re.getNewLexicalState()!=null);
+    }
+
+    public boolean getHasTokenActions() {
+        return regularExpressions.stream().anyMatch(re->re.getCodeSnippet()!=null);
     }
 
     public int getLexicalStateIndex(String lexicalStateName) {

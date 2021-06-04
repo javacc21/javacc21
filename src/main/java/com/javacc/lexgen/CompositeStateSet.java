@@ -31,7 +31,6 @@ package com.javacc.lexgen;
 import java.util.*;
 
 import com.javacc.parsegen.RegularExpression;
-import com.javacc.parser.tree.CharacterRange;
 
 public class CompositeStateSet extends NfaState {
 
@@ -51,7 +50,8 @@ public class CompositeStateSet extends NfaState {
     }
 
     public boolean isMoveCodeNeeded() {
-        return states.stream().anyMatch(NfaState::isMoveCodeNeeded);
+//        return states.stream().anyMatch(NfaState::isMoveCodeNeeded);
+        return true;
     }
 
 
@@ -93,15 +93,14 @@ public class CompositeStateSet extends NfaState {
         return result;
     }
 
-    public RegularExpression getType() {
-        int ordinal = Integer.MAX_VALUE;
+    /**
+     * @return the ordinal of the highest priority match
+     */
+    public int getOrdinal() {
+        int result = Integer.MAX_VALUE;
         for (NfaState state : states) {
-            if (state.getType() != null) {
-               if (state.getType().getOrdinal() < ordinal) {
-                   ordinal = state.getType().getOrdinal();
-               }
-            }
+            result = Math.min(result, state.getOrdinal());
         }
-        return getLexicalState().getGrammar().getLexerData().getRegularExpression(ordinal);
+        return result;
     }
 }

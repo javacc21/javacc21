@@ -141,13 +141,14 @@ public class LexicalStateData {
 
     void indexStates() {
         // Make sure that the index of the starting state is zero.
-        initialState.getCanonicalState().index = 0;
+        initialState = initialState.getCanonicalState();
+        initialState.index = 0;
         int idx = 1;
         for (NfaState state : allStates) {
             if (state.index!=0 && state.isComposite()) state.index = idx++;
         }
         for (NfaState state : allStates) {
-            if (state.index!=0 && !state.isComposite()) state.index = idx++;
+            if (state.index!=0 && !state.isComposite()&&state.isMoveCodeNeeded()) state.index = idx++;
         }
     }
 
