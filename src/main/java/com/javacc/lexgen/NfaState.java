@@ -71,10 +71,36 @@ public class NfaState {
     }
 
     public String getMethodName() {
-        return "NFA_" + lexicalState.getName() + "_" + index;
+        return "NFA_" + lexicalState.getName() + "_" + index; 
     }
 
     public List<Integer> getMoveRanges() { return moveRanges; }
+
+    public List<Integer> getAsciiMoveRanges() {
+        List<Integer> result = new ArrayList<>();
+        for (int i = 0; i<moveRanges.size(); i+=2) {
+            int left = moveRanges.get(i);
+            int right = moveRanges.get(i+1);
+            if (left >= 128) break;
+            result.add(left);
+            result.add(right);
+            if (right >=128) break;
+        }
+        return result;
+    }
+
+    public List<Integer> getNonAsciiMoveRanges() {
+        return moveRanges.subList(getAsciiMoveRanges().size(), moveRanges.size());
+    }
+
+    public boolean getHasAsciiMoves() {
+        return moveRanges.get(0) < 128;
+    }
+
+    public boolean getHasNonAsciiMoves() {
+        return moveRanges.get(moveRanges.size()-1) >= 128;
+
+    }
 
     public int getOrdinal() {return type == null ? Integer.MAX_VALUE : type.getOrdinal();}
 

@@ -85,6 +85,13 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
     [/#list]
   }
 
+  // Just use the canned binary search to check whether the char
+  // is in one of the intervals
+  private static final boolean checkIntervals(int[] ranges, int ch) {
+    int temp;
+    return (temp = Arrays.binarySearch(ranges, ch)) >=0 || temp%2 == 0;
+  }
+
  [#list grammar.lexerData.lexicalStates as lexicalState]
    [@GenerateStateCode lexicalState/]
  [/#list]  
@@ -148,15 +155,12 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 [#macro GenerateNfaStateMethod nfaState]  
   [#if !nfaState.composite]
     static int ${nfaState.methodName}(int ch, BitSet nextStates) {
-      [#if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD]
-        int temp;
-      [/#if]
       [@GenerateStateMove nfaState false /]
       return 0x7FFFFFFF;
     }
   [#else]
     static int ${nfaState.methodName}(int ch, BitSet nextStates) {
-      int kind = 0x7FFFFFFF, temp;
+      int kind = 0x7FFFFFFF;
     [#var states = nfaState.orderedStates]
     [#list states as state]
       [#var jumpOut = state_has_next && state.isNonOverlapping(states.subList(state_index+1, states?size))]
@@ -186,7 +190,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 [#macro GenerateStateMove nfaState inComposite jumpOut]
    [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint = nfaState.nextState.ordinal]
-    if ([@NfaStateCondition nfaState/]) {
+    if ([@NfaStateCondition nfaState /]) {
    [#if nextState.composite]
          nextStates.set(${nextState.index});
    [#else]
@@ -217,11 +221,13 @@ it uses the canned binary search routine. For the smaller moveRanges
 it just generates the inline conditional expression
 --]
 [#macro NfaStateCondition nfaState]
-    [#var moveRanges = nfaState.moveRanges]
-    [#if moveRanges?size < NFA_RANGE_THRESHOLD]
+    [#if nfaState.moveRanges?size < NFA_RANGE_THRESHOLD]
       [@RangesCondition nfaState.moveRanges /]
+    [#elseif nfaState.hasAsciiMoves && nfaState.hasNonAsciiMoves]
+      ([@RangesCondition nfaState.asciiMoveRanges/])
+      || ch >=128 && checkIntervals(${nfaState.movesArrayName}, ch) 
     [#else]
-      (temp = Arrays.binarySearch(${nfaState.movesArrayName}, ch)) >=0 || temp%2 ==0
+      checkIntervals(${nfaState.movesArrayName}, ch)
     [/#if]
 [/#macro]
 
