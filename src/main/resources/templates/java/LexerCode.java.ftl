@@ -231,9 +231,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        // since the last iteration of this loop!
       [/#if]
         BiFunction<Integer,BitSet,TokenType>[] nfaFunctions = ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
-        if (matchedType != TokenType.EOF) 
-        do {// the core NFA loop
-            int matchedKind = 0x7FFFFFFF;
+        // the core NFA loop
+        if (matchedType != TokenType.EOF) do {
+            [#-- A bit weird that I'm definining another variable in this inner loop REVISIT
+            --]
+            // Holder for the new type (if any) matched on this iteration
+            TokenType newType = null;
             if (charsRead > 0) {
                 // What was nextStates on the last iteration 
                 // is now the currentStates!
@@ -249,22 +252,20 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             }
             nextStates.clear();
             if (charsRead == 0) {
-              TokenType type = nfaFunctions[0].apply(curChar, nextStates);
-              if (type != null) matchedKind = type.ordinal();
+                newType = nfaFunctions[0].apply(curChar, nextStates);
             } else {
                 int nextActive = currentStates.nextSetBit(0);
                 while (nextActive != -1) {
-                    TokenType type = nfaFunctions[nextActive].apply(curChar, nextStates);
-                    if (type != null && type.ordinal() < matchedKind) {
-                      matchedKind = type.ordinal();
+                    TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates);
+                    if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
+                      newType = returnedType;
                     }
-//                    if (returnedKind < matchedKind) matchedKind = returnedKind;
                     nextActive = currentStates.nextSetBit(nextActive+1);
                 } 
             }
             ++charsRead;
-            if (matchedKind != 0x7FFFFFFF) {
-                matchedType = TokenType.values()[matchedKind];
+            if (newType != null) {
+                matchedType = newType;
                 inMore = moreTokens.contains(matchedType);
                 matchedPos = charsRead;
             }
