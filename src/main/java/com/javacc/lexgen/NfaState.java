@@ -154,10 +154,6 @@ public class NfaState {
         // Recursively do closure
         for (NfaState state : new ArrayList<>(epsilonMoves)) {
             state.doEpsilonClosure();
-//            if (type == null || (state.type != null && state.type.getOrdinal() < type.getOrdinal())) {
-//                type = state.type;
-//            } 
-// The above commented out code does not seem to be necessary, only the next line!
             if (type == null) type = state.type;
             for (NfaState otherState : state.epsilonMoves) {
                 addEpsilonMove(otherState);

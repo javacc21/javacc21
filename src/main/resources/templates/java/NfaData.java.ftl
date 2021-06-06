@@ -184,10 +184,8 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   (This is based on whether any of the moveRanges
   for later states overlap. If not, we can jump out. This 
   is only relevant if we are in a composite state, of course.)  
-  TODO: Clean this up a bit. It's a bit messy and maybe a 
-  redundant as well.
 --]
-[#macro GenerateStateMove nfaState inComposite jumpOut]
+[#macro GenerateStateMove nfaState inComposite jumpOut=false]
    [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint = nfaState.nextState.ordinal]
     if ([@NfaStateCondition nfaState /]) {
@@ -198,18 +196,21 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
           nextStates.set(${epsilonMove.index});
      [/#list]
    [/#if]
+   [#if kindToPrint != MAX_INT]
+    // ${grammar.lexerData.getTokenName(kindToPrint)}
+   [/#if]
    [#if !inComposite]
      [#if kindToPrint != MAX_INT]
-      // ${grammar.lexerData.getTokenName(kindToPrint)}
-      return ${kindToPrint};
+        return ${kindToPrint};
      [/#if]
-   [#else]
-      [#if kindToPrint != MAX_INT]
-          kind = Math.min(kind, ${kindToPrint});
-      [/#if]
-      [#if jumpOut]
-          return kind;
-      [/#if]
+   [#elseif jumpOut]
+     [#if kindToPrint == MAX_INT]
+        return 0x7FFFFFFF;
+     [#else]
+        return ${kindToPrint};
+     [/#if]
+   [#elseif kindToPrint != MAX_INT]
+        kind = ${kindToPrint};
    [/#if]
    }
 [/#macro]

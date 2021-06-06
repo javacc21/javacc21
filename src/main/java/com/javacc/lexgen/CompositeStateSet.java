@@ -30,8 +30,6 @@ package com.javacc.lexgen;
 
 import java.util.*;
 
-import com.javacc.parsegen.RegularExpression;
-
 public class CompositeStateSet extends NfaState {
 
     private Set<NfaState> states = new HashSet<>(); 
@@ -66,31 +64,14 @@ public class CompositeStateSet extends NfaState {
 
     /**
      * We return the NFA states in this composite 
-     * ordered in such a way that the ones that do not
-     * overlap come first.
+     * in order (decreasing) of the ordinal of the nextState
      * @return sorted list of states
      */
     public List<NfaState> getOrderedStates() {
-        ArrayList<NfaState> result = new ArrayList<>();
-        Set<NfaState> statesCopy = new HashSet<>(states);
-        Outer:
-        while (!statesCopy.isEmpty()) {
-            for (NfaState state : statesCopy) {
-                if (!state.isMoveCodeNeeded()) {
-                    statesCopy.remove(state);
-                    continue Outer;
-                }
-                if (state.isNonOverlapping(statesCopy)) {
-                    statesCopy.remove(state);
-                    result.add(state);
-                    continue Outer;
-                }
-            }
-            NfaState state = statesCopy.iterator().next();
-            statesCopy.remove(state);
-            result.add(state);
-        }
-        return result;
+        ArrayList<NfaState> result = new ArrayList<>(states);
+        Collections.sort(result, 
+                         (state1, state2) -> state2.getNextState().getOrdinal()-state1.getNextState().getOrdinal());
+        return result;    
     }
 
     /**
