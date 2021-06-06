@@ -104,6 +104,8 @@ public class NfaState {
 
     public int getOrdinal() {return type == null ? Integer.MAX_VALUE : type.getOrdinal();}
 
+    public RegularExpression getType() {return type;}
+
     public LexicalStateData getLexicalState() {return lexicalState;}
 
     public NfaState getNextState() {return nextState;}

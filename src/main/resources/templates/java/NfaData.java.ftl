@@ -45,7 +45,7 @@
     package ${grammar.parserPackage};
 [/#if]
 import java.util.*;
-import java.util.function.ToIntBiFunction;
+import java.util.function.BiFunction;
 
 /**
  * Holder class for the data used by ${grammar.lexerClassName}
@@ -55,10 +55,10 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 
  [#if multipleLexicalStates]
   // A lookup of the NFA function tables for the respective lexical states.
-  private static final EnumMap<LexicalState,ToIntBiFunction<Integer,BitSet>[]> functionTableMap = new EnumMap<>(LexicalState.class);
+  private static final EnumMap<LexicalState,BiFunction<Integer,BitSet,TokenType>[]> functionTableMap = new EnumMap<>(LexicalState.class);
  [#else]
   [#-- We don't need the above lookup if there is only one lexical state.--]
-   static private ToIntBiFunction<Integer, BitSet>[] nfaFunctions;
+   static private BiFunction<Integer, BitSet, TokenType>[] nfaFunctions;
  [/#if]
 
 
@@ -69,7 +69,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
    * @param the lexical state
    * @return the table of function pointers that implement the lexical state
    */
-  static final ToIntBiFunction<Integer,BitSet>[] getFunctionTableMap(LexicalState lexicalState) {
+  static final BiFunction<Integer,BitSet,TokenType>[] getFunctionTableMap(LexicalState lexicalState) {
     [#if multipleLexicalStates]
       return functionTableMap.get(lexicalState);
     [#else]
@@ -113,7 +113,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 
   static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
     @SuppressWarnings("unchecked") 
-    ToIntBiFunction<Integer,BitSet>[] functions = new ToIntBiFunction[${lexicalState.allStates.size()}];
+    BiFunction<Integer,BitSet,TokenType>[] functions = new BiFunction[${lexicalState.allStates.size()}];
     [#list lexicalState.allStates as state]
       [#if state.moveCodeNeeded]
           functions[${state.index}] = ${grammar.nfaDataClassName}::${state.methodName};
@@ -154,13 +154,13 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 --]
 [#macro GenerateNfaStateMethod nfaState]  
   [#if !nfaState.composite]
-    static int ${nfaState.methodName}(int ch, BitSet nextStates) {
+    static TokenType ${nfaState.methodName}(int ch, BitSet nextStates) {
       [@GenerateStateMove nfaState false /]
-      return 0x7FFFFFFF;
+      return null;
     }
   [#else]
-    static int ${nfaState.methodName}(int ch, BitSet nextStates) {
-      int kind = 0x7FFFFFFF;
+    static TokenType ${nfaState.methodName}(int ch, BitSet nextStates) {
+      TokenType type = null;
     [#var states = nfaState.orderedStates]
     [#list states as state]
       [#var jumpOut = state_has_next && state.isNonOverlapping(states.subList(state_index+1, states?size))]
@@ -169,7 +169,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
          else
       [/#if]
     [/#list]
-      return kind;
+      return type;
     }
   [/#if]
 [/#macro]
@@ -188,6 +188,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 [#macro GenerateStateMove nfaState inComposite jumpOut=false]
    [#var nextState = nfaState.nextState.canonicalState]
    [#var kindToPrint = nfaState.nextState.ordinal]
+   [#var type = nfaState.nextState.type]
     if ([@NfaStateCondition nfaState /]) {
    [#if nextState.composite]
          nextStates.set(${nextState.index});
@@ -196,21 +197,18 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
           nextStates.set(${epsilonMove.index});
      [/#list]
    [/#if]
-   [#if kindToPrint != MAX_INT]
-    // ${grammar.lexerData.getTokenName(kindToPrint)}
-   [/#if]
    [#if !inComposite]
-     [#if kindToPrint != MAX_INT]
-        return ${kindToPrint};
+     [#if type??]
+        return TokenType.${type.label};
      [/#if]
    [#elseif jumpOut]
-     [#if kindToPrint == MAX_INT]
-        return 0x7FFFFFFF;
+     [#if type?is_null]
+        return null;
      [#else]
-        return ${kindToPrint};
+        return TokenType.${type.label};
      [/#if]
-   [#elseif kindToPrint != MAX_INT]
-        kind = ${kindToPrint};
+   [#elseif type??]
+        type = TokenType.${type.label};
    [/#if]
    }
 [/#macro]

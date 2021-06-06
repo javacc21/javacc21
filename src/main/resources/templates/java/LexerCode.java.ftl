@@ -61,7 +61,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.logging.Logger;
 import java.util.*;
-import java.util.function.ToIntBiFunction;
+import java.util.function.BiFunction;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
@@ -230,7 +230,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        // There is some possibility that there was a lexical state change
        // since the last iteration of this loop!
       [/#if]
-        ToIntBiFunction<Integer,BitSet>[] nfaFunctions = ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
+        BiFunction<Integer,BitSet,TokenType>[] nfaFunctions = ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
         if (matchedType != TokenType.EOF) 
         do {// the core NFA loop
             int matchedKind = 0x7FFFFFFF;
@@ -249,12 +249,16 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             }
             nextStates.clear();
             if (charsRead == 0) {
-              matchedKind = nfaFunctions[0].applyAsInt(curChar, nextStates);
+              TokenType type = nfaFunctions[0].apply(curChar, nextStates);
+              if (type != null) matchedKind = type.ordinal();
             } else {
                 int nextActive = currentStates.nextSetBit(0);
                 while (nextActive != -1) {
-                    int returnedKind = nfaFunctions[nextActive].applyAsInt(curChar, nextStates);
-                    if (returnedKind < matchedKind) matchedKind = returnedKind;
+                    TokenType type = nfaFunctions[nextActive].apply(curChar, nextStates);
+                    if (type != null && type.ordinal() < matchedKind) {
+                      matchedKind = type.ordinal();
+                    }
+//                    if (returnedKind < matchedKind) matchedKind = returnedKind;
                     nextActive = currentStates.nextSetBit(nextActive+1);
                 } 
             }
