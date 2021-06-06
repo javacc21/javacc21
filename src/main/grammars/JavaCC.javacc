@@ -136,6 +136,8 @@ TOKEN :
   |
   < _IGNORE_CASE: "IGNORE_CASE" > #JavaCCKeyWord
   |
+  < _NO_NFA : "NO_NFA"> #JavaCCKeyWord
+  |
   < _PARSER_BEGIN: "PARSER_BEGIN" > #JavaCCKeyWord
   |
   < _PARSER_END: "PARSER_END" > #JavaCCKeyWord
@@ -662,7 +664,7 @@ INJECT FieldDeclaration :
 INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> javaccKeyWords = EnumSet.of(_INJECT,
-       _INCLUDE, _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
+       _INCLUDE, _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, _NO_NFA, 
        _PARSER_BEGIN, _PARSER_END, _TOKEN, _SPECIAL_TOKEN, _MORE,
        _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR, _UPTO, 
        _LEXICAL_STATE, _EOF);
@@ -1367,10 +1369,9 @@ TokenProduction #TokenProduction :
     Token t = null;
     String tokenClassName = null;
     String firstSpecifiedLexicalState = null;
-    boolean multipleStatesSpecified = false, useBraces = false;
+    boolean multipleStatesSpecified = false, useBraces = false, noNfa = false;;
     boolean ignoreCase = false;
 }
-{
   [
     => "<" "*" ">" {multipleStatesSpecified = true;} 
     |
@@ -1384,13 +1385,13 @@ TokenProduction #TokenProduction :
   ]
   (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP")
   [
-    "[" "IGNORE_CASE" {ignoreCase = true;} "]"
+    "[" ("IGNORE_CASE" {ignoreCase = true;} | "NO_NFA" {noNfa=true;})"]"
   ]
   ["#" t = <IDENTIFIER> {tokenClassName=t.getImage();}] 
   ":"
   ["{" {useBraces = true;}]
-   RegexpSpec(CURRENT_NODE, tokenClassName)
-   ( "|" RegexpSpec(CURRENT_NODE, tokenClassName) )*
+   RegexpSpec(CURRENT_NODE, tokenClassName, noNfa)
+   ( "|" RegexpSpec(CURRENT_NODE, tokenClassName, noNfa) )*
    (
       SCAN {useBraces} => "}" 
       | 
@@ -1404,15 +1405,16 @@ TokenProduction #TokenProduction :
           CURRENT_NODE.setImplicitLexicalState(firstSpecifiedLexicalState);
       }
       CURRENT_NODE.setIgnoreCase(ignoreCase || grammar.isIgnoreCase());
+      CURRENT_NODE.setNoNfa(noNfa);
    }
-}
+;
 
 INJECT TokenProduction :
     import java.util.*;
     import com.javacc.lexgen.LexerData;
     import com.javacc.lexgen.LexicalStateData;
 {
-   @Property private boolean explicit=true, ignoreCase;
+   @Property private boolean explicit=true, ignoreCase, noNfa;
 
     private String implicitLexicalState;
     
@@ -1484,11 +1486,11 @@ TokenManagerDecls :
     ClassOrInterfaceBody
 ;
 
-RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
+RegexpSpec(TokenProduction p, String tokenClassName, boolean noNfa) #RegexpSpec :
 {
     RegularExpression regexp;
 }
-  RegexpExpansion 
+  RegexpExpansion(noNfa)
   {
       regexp = (RegularExpression) peekNode();
       CURRENT_NODE.addChild(popNode());
@@ -2202,7 +2204,7 @@ Expansion ExpansionUnit :
     lhs=PrimaryExpression
     "="
   ]
-  RegexpExpansion
+  RegexpExpansion(false)
   {
       RegularExpression re = (RegularExpression) peekNode();
       result = re;
@@ -2612,14 +2614,14 @@ INJECT CodeBlock :
     public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
 
-RegexpExpansion #void :
+RegexpExpansion(boolean noNfa) #void :
  (
-  RegexpStringLiteral 
+  RegexpStringLiteral {((RegexpStringLiteral)peekNode()).setNoNfa(noNfa);}
   |
-  SCAN ~\.\TokenProduction =>
+  SCAN {!noNfa} ~\.\TokenProduction =>
   (RegexpRef|EndOfFile)
   |
-  SCAN 3 {isInProduction("TokenProduction")||grammar.getUserDefinedLexer()} =>
+  SCAN 3 {!noNfa && (isInProduction("TokenProduction")||grammar.getUserDefinedLexer())} =>
   InPlaceRegexp 
  )
  [
@@ -2688,6 +2690,7 @@ INJECT RegexpStringLiteral :
    extends RegularExpression;
 {
   @Property String image;
+  @Property boolean noNfa;
   
 
   public String toString() {
