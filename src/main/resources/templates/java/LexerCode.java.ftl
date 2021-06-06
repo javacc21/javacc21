@@ -194,13 +194,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
 // The main method to invoke the NFA machinery
    private final Token nextToken() {
-      TokenType matchedType;
       Token matchedToken = null;
       boolean inMore = false;
       int matchedPos, charsRead, curChar;
       // The core tokenization loop
       while (matchedToken == null) {
-        matchedType = null;
+        TokenType matchedType = null;
         matchedPos = charsRead = 0;
         if (inMore) {
             curChar = input_stream.readChar();
@@ -233,8 +232,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         BiFunction<Integer,BitSet,TokenType>[] nfaFunctions = ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
         // the core NFA loop
         if (matchedType != TokenType.EOF) do {
-            [#-- A bit weird that I'm definining another variable in this inner loop REVISIT
-            --]
             // Holder for the new type (if any) matched on this iteration
             TokenType newType = null;
             if (charsRead > 0) {

@@ -47,7 +47,9 @@
     import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
     [#set TT=""]
 [/#if]
-import java.util.*;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.EnumMap;
 import java.util.function.BiFunction;
 
 /**
@@ -190,7 +192,6 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 --]
 [#macro GenerateStateMove nfaState inComposite jumpOut=false]
    [#var nextState = nfaState.nextState.canonicalState]
-   [#var kindToPrint = nfaState.nextState.ordinal]
    [#var type = nfaState.nextState.type]
     if ([@NfaStateCondition nfaState /]) {
    [#if nextState.composite]
