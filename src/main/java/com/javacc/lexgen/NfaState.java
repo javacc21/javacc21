@@ -118,7 +118,10 @@ public class NfaState {
     public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
 
     public NfaState getCanonicalState() {
-        if (this.isComposite() || epsilonMoves.size() < 2) return this;
+        if (this.isComposite() || epsilonMoves.isEmpty()) return this;
+        if (epsilonMoves.size() == 1) {
+            return epsilonMoves.iterator().next();
+        }
         return lexicalState.getCanonicalComposite(epsilonMoves);
     }
 
@@ -153,7 +156,7 @@ public class NfaState {
                 addRange(lower, lower);
             if (c != upper && c!= lower)
                 addRange(c, c);
-            if (moveRanges.size() >1)
+            if (moveRanges.size() >2)
                 Collections.sort(moveRanges);
         }
     }

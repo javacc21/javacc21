@@ -200,13 +200,9 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
    [#var nextState = nfaState.nextState.canonicalState]
    [#var type = nfaState.nextState.type]
     if ([@NfaStateCondition nfaState /]) {
-   [#if nextState.composite]
+      [#if nextState.index >= 0]
          nextStates.set(${nextState.index});
-   [#else]
-     [#list (nextState.epsilonMoves)! as epsilonMove]
-          nextStates.set(${epsilonMove.index});
-     [/#list]
-   [/#if]
+      [/#if]
    [#if !inComposite]
      [#if type??]
         return ${TT}${type.label};
@@ -266,10 +262,4 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     [#else]
        ([@RangesCondition moveRanges[0..1]/])||([@RangesCondition moveRanges[2..moveRanges?size-1]/])
     [/#if]
-[/#macro]
-
-[#macro outputRanges ranges]
-   [#list ranges as x]
-    //  ${x}, [#t]
-   [/#list]
 [/#macro]
