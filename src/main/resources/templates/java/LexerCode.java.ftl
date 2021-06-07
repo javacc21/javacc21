@@ -61,7 +61,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.logging.Logger;
 import java.util.*;
-import java.util.function.BiFunction;
+//import java.util.function.BiFunction;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
@@ -237,7 +237,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        // There is some possibility that there was a lexical state change
        // since the last iteration of this loop!
       [/#if]
-        BiFunction<Integer,BitSet,TokenType>[] nfaFunctions = ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
+        ${grammar.nfaDataClassName}.NfaFunction[] nfaFunctions= ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
         // the core NFA loop
         if (matchedType != TokenType.EOF) do {
             // Holder for the new type (if any) matched on this iteration
@@ -258,11 +258,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             }
             nextStates.clear();
             if (charsRead == 0) {
-                newType = nfaFunctions[0].apply(curChar, nextStates);
+                newType = nfaFunctions[0].accept(curChar, nextStates);
             } else {
                 int nextActive = currentStates.nextSetBit(0);
                 while (nextActive != -1) {
-                    TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates);
+                    TokenType returnedType = nfaFunctions[nextActive].accept(curChar, nextStates);
                     if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                       newType = returnedType;
                       if (trace_enabled && newType!=null) 

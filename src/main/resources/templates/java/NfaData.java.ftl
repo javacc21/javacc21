@@ -50,7 +50,6 @@
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.EnumMap;
-import java.util.function.BiFunction;
 
 /**
  * Holder class for the data used by ${grammar.lexerClassName}
@@ -58,12 +57,18 @@ import java.util.function.BiFunction;
  */
 class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 
+  // The functional interface that represents 
+  // the acceptance method of an NFA state
+  static interface NfaFunction {
+    TokenType accept(int ch, BitSet bs);
+  }
+
  [#if multipleLexicalStates]
   // A lookup of the NFA function tables for the respective lexical states.
-  private static final EnumMap<LexicalState,BiFunction<Integer,BitSet,TokenType>[]> functionTableMap = new EnumMap<>(LexicalState.class);
+  private static final EnumMap<LexicalState,NfaFunction[]> functionTableMap = new EnumMap<>(LexicalState.class);
  [#else]
   [#-- We don't need the above lookup if there is only one lexical state.--]
-   static private BiFunction<Integer, BitSet, TokenType>[] nfaFunctions;
+   static private NfaFunction[] nfaFunctions;
  [/#if]
 
 
@@ -74,7 +79,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
    * @param the lexical state
    * @return the table of function pointers that implement the lexical state
    */
-  static final BiFunction<Integer,BitSet,TokenType>[] getFunctionTableMap(LexicalState lexicalState) {
+  static final NfaFunction[] getFunctionTableMap(LexicalState lexicalState) {
     [#if multipleLexicalStates]
       return functionTableMap.get(lexicalState);
     [#else]
@@ -117,8 +122,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   [/#list]
 
   static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
-    @SuppressWarnings("unchecked") 
-    BiFunction<Integer,BitSet,TokenType>[] functions = new BiFunction[${lexicalState.allStates.size()}];
+    NfaFunction[] functions = new NfaFunction[${lexicalState.allStates.size()}];
     [#list lexicalState.allStates as state]
       [#if state.moveCodeNeeded]
           functions[${state.index}] = ${grammar.nfaDataClassName}::${state.methodName};
