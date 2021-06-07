@@ -44,8 +44,10 @@
  
 [#if grammar.parserPackage?has_content]
     package ${grammar.parserPackage};
+  [#if !grammar.legacyAPI]    
     import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
     [#set TT=""]
+  [/#if]
 [/#if]
 import java.util.Arrays;
 import java.util.BitSet;
@@ -262,13 +264,12 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
            ch <= ${displayRight}
        [/#if]
     [#else]
-       ch 
-       [#if singleChar]==[#else]>=[/#if]
-       ${displayLeft} 
-       [#if !singleChar]
-       && (ch <= ${displayRight} || ([@RangesCondition moveRanges[2..moveRanges?size-1]/]))
-       [#else]
-       || ([@RangesCondition moveRanges[2..moveRanges?size-1]/])
-       [/#if]
+       ([@RangesCondition moveRanges[0..1]/])||([@RangesCondition moveRanges[2..moveRanges?size-1]/])
     [/#if]
+[/#macro]
+
+[#macro outputRanges ranges]
+   [#list ranges as x]
+    //  ${x}, [#t]
+   [/#list]
 [/#macro]

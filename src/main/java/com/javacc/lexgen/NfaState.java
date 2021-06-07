@@ -136,13 +136,26 @@ public class NfaState {
         epsilonMoves.add(newState);
     }
 
-    void addCharMove(int c) {
-        addRange(c, c);
-    }
-
     void addRange(int left, int right) {
         moveRanges.add(left);
         moveRanges.add(right);
+    }
+
+    void setCharMove(int c, boolean ignoreCase) {
+        moveRanges.clear();
+        if (!ignoreCase) {
+            addRange(c, c);
+        } else {//REVISIT, kinda messy
+            int upper = Character.toUpperCase(c);
+            int lower = Character.toLowerCase(c);
+            addRange(upper, upper);
+            if (upper != lower)
+                addRange(lower, lower);
+            if (c != upper && c!= lower)
+                addRange(c, c);
+            if (moveRanges.size() >1)
+                Collections.sort(moveRanges);
+        }
     }
 
     private boolean closureDone;
