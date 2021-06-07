@@ -99,7 +99,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
 
-  private static final Logger LOGGER = Logger.getLogger("${grammar.parserClassName}");
+  private static final Logger LOGGER = Logger.getLogger(${grammar.parserClassName}.class.getName());
     [#if grammar.debugLexer]  
   private boolean trace_enabled = true;
     [#else]  
@@ -218,11 +218,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             tokenBeginLine = input_stream.getLine();
             tokenBeginColumn = input_stream.getColumn();
             curChar = input_stream.readChar();
-[/#if]            
+[/#if]
+            if (trace_enabled) 
+                LOGGER.info("Starting new token on line: " + tokenBeginLine + ", column: " + tokenBeginColumn);
             if (curChar == -1) {
+              if (trace_enabled) 
+                LOGGER.info("Reached end of input");
               matchedType = TokenType.EOF;
             }
-            else charBuff.appendCodePoint(curChar);
+            else {
+              if (trace_enabled) 
+                LOGGER.info("Read character " + ${grammar.constantsClassName}.displayChar(curChar));
+              charBuff.appendCodePoint(curChar);
+            }
         } 
       [#if multipleLexicalStates]
        // Get the NFA function table current lexical state
@@ -241,6 +249,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 currentStates = nextStates;
                 nextStates = temp;
                 int retval = input_stream.readChar();
+                if (trace_enabled) LOGGER.info("Read character " + ${grammar.constantsClassName}.displayChar(retval));
                 if (retval >=0) {
                     curChar = retval;
                     charBuff.appendCodePoint(curChar);
@@ -256,6 +265,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                     TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates);
                     if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                       newType = returnedType;
+                      if (trace_enabled && newType!=null) 
+                         LOGGER.info("Potential match: " + newType);
                     }
                     nextActive = currentStates.nextSetBit(nextActive+1);
                 } 
@@ -269,11 +280,16 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
             backup(charsRead-1);
+            if (trace_enabled) 
+               LOGGER.info("Invalid input: " + ${grammar.constantsClassName}.displayChar(charBuff.codePointAt(0)));
             return handleInvalidChar(charBuff.codePointAt(0));
+        } else {
+          if (trace_enabled)
+              LOGGER.info("Matched pattern of type: " + matchedType + ": " + ${grammar.constantsClassName}.addEscapes(charBuff.toString()));
         }
         if (charsRead > matchedPos) backup(charsRead-matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
-            matchedToken = instantiateToken(matchedType);
+            matchedToken = instantiateToken(matchedType);            
         }
      [#if lexerData.hasTokenActions]
         matchedToken = tokenLexicalActions(matchedToken, matchedType);
@@ -289,6 +305,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     input_stream.backup(amount);
     truncateCharBuff(charBuff, amount);
   }
+
 
   /**
    * Truncate a StringBuilder by a certain number of code points

@@ -89,6 +89,7 @@ public class LexicalStateData {
     }
 
     NfaState getCanonicalComposite(Set<NfaState> stateSet) {
+        assert stateSet.size() >1;
         if (stateSet.size() == 1) {
             return stateSet.iterator().next();
         }
@@ -134,8 +135,12 @@ public class LexicalStateData {
     }
 
     void addCompositeStates() {
-        for (NfaState state : new ArrayList<>(allStates)) {
-            allStates.add(state.getCanonicalState());
+        for (NfaState state : new ArrayList<>(allStates))  {
+            NfaState canonicalState = state.getCanonicalState();
+            if (state != canonicalState) {
+                allStates.add(state.getCanonicalState());
+                allStates.remove(state);
+            }
         }
     }
 

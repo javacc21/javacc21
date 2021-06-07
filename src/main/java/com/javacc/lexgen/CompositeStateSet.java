@@ -54,7 +54,7 @@ public class CompositeStateSet extends NfaState {
 
 
     public String getMethodName() {
-        return "NFA_COMPOSITE_" + lexicalState.getName() + "_" + index;
+        return super.getMethodName().replace("NFA_", "NFA_COMPOSITE_");
     }
 
     public boolean equals(Object other) {
@@ -80,7 +80,8 @@ public class CompositeStateSet extends NfaState {
     public int getOrdinal() {
         int result = Integer.MAX_VALUE;
         for (NfaState state : states) {
-            result = Math.min(result, state.getOrdinal());
+            if (state.getType() !=null)
+                result = Math.min(result, state.getOrdinal());
         }
         return result;
     }

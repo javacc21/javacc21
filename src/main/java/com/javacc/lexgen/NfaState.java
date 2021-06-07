@@ -50,7 +50,7 @@ public class NfaState {
     // NfaState "accepts". A single character is stored as a 
     // range in which the left side is the same as the right side.
     // Thus, for example, the (ASCII) characters that can start an identifier would be:
-    // '$','$''A','Z','_','_',a','z'
+    // '$','$','A','Z','_','_',a','z'
     List<Integer> moveRanges = new ArrayList<>();
 
     NfaState(LexicalStateData lexicalState) {
@@ -71,7 +71,10 @@ public class NfaState {
     }
 
     public String getMethodName() {
-        return "NFA_" + lexicalState.getName() + "_" + index; 
+        String lexicalStateName = lexicalState.getName();
+        if (lexicalStateName.equals("DEFAULT")) 
+            return "NFA_" + index;
+        return "NFA_" + lexicalStateName + "_" + index; 
     }
 
     public List<Integer> getMoveRanges() { return moveRanges; }

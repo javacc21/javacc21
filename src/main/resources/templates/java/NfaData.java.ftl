@@ -168,9 +168,9 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
       TokenType type = null;
     [#var states = nfaState.orderedStates]
     [#list states as state]
-      [#var jumpOut = state_has_next && state.isNonOverlapping(states.subList(state_index+1, states?size))]
+      [#var jumpOut = state.isNonOverlapping(states.subList(state_index+1, states?size))]
       [@GenerateStateMove state true jumpOut /]
-      [#if state_has_next && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
+      [#if !jumpOut && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
          else
       [/#if]
     [/#list]
@@ -228,7 +228,7 @@ it just generates the inline conditional expression
       [@RangesCondition nfaState.moveRanges /]
     [#elseif nfaState.hasAsciiMoves && nfaState.hasNonAsciiMoves]
       ([@RangesCondition nfaState.asciiMoveRanges/])
-      || ch >=128 && checkIntervals(${nfaState.movesArrayName}, ch) 
+      || (ch >=128 && checkIntervals(${nfaState.movesArrayName}, ch))
     [#else]
       checkIntervals(${nfaState.movesArrayName}, ch)
     [/#if]

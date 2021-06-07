@@ -48,6 +48,62 @@ String[] tokenImage = {
       [/#list]
     [/#list]
   };
+
+  static String displayChar(int ch) {
+    if (ch == '\'') return "\'\\'\'";
+    if (ch == '\\') return "\'\\\\\'";
+    if (ch == '\t') return "\'\\t\'";
+    if (ch == '\r') return "\'\\r\'";
+    if (ch == '\n') return "\'\\n\'";
+    if (ch == '\f') return "\'\\f\'";
+    if (ch == ' ') return "\' \'";
+    if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch)) return "\'" + (char) ch + "\'";
+    if (ch < 10) return "" + ch;
+    return "0x" + Integer.toHexString(ch);
+}
+
+
+
+ static String addEscapes(String str) {
+      StringBuilder retval = new StringBuilder();
+      for (int ch : str.codePoints().toArray()) {
+        switch (ch) {
+           case '\b':
+              retval.append("\\b");
+              continue;
+           case '\t':
+              retval.append("\\t");
+              continue;
+           case '\n':
+              retval.append("\\n");
+              continue;
+           case '\f':
+              retval.append("\\f");
+              continue;
+           case '\r':
+              retval.append("\\r");
+              continue;
+           case '\"':
+              retval.append("\\\"");
+              continue;
+           case '\'':
+              retval.append("\\\'");
+              continue;
+           case '\\':
+              retval.append("\\\\");
+              continue;
+           default:
+              if (Character.isISOControl(ch)) {
+                 String s = "0000" + java.lang.Integer.toString(ch, 16);
+                 retval.append("\\u" + s.substring(s.length() - 4, s.length()));
+              } else {
+                 retval.appendCodePoint(ch);
+              }
+              continue;
+        }
+      }
+      return retval.toString();
+   }
 }
 
 [#macro output_regexp regexp]

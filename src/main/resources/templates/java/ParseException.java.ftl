@@ -85,7 +85,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
      }
      String content = token.getImage();
      if (content.length() > 32) content = content.substring(0, 32) + "...";
-     buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
+     buf.append("\nFound string \"" + ${grammar.constantsClassName}.addEscapes(content) + "\" of type " + token.getType());
      return buf.toString();
   }
   
@@ -106,50 +106,10 @@ public class ParseException extends Exception implements ${grammar.constantsClas
    * 
    * @return the token which causes the parse error and null otherwise.
    */
-  public Token getToken() {
-    return token;
-  }
-  
-  public static String addEscapes(String str) {
-      StringBuilder retval = new StringBuilder();
-      for (int ch : str.codePoints().toArray()) {
-        switch (ch) {
-           case '\b':
-              retval.append("\\b");
-              continue;
-           case '\t':
-              retval.append("\\t");
-              continue;
-           case '\n':
-              retval.append("\\n");
-              continue;
-           case '\f':
-              retval.append("\\f");
-              continue;
-           case '\r':
-              retval.append("\\r");
-              continue;
-           case '\"':
-              retval.append("\\\"");
-              continue;
-           case '\'':
-              retval.append("\\\'");
-              continue;
-           case '\\':
-              retval.append("\\\\");
-              continue;
-           default:
-              if (Character.isISOControl(ch)) {
-                 String s = "0000" + java.lang.Integer.toString(ch, 16);
-                 retval.append("\\u" + s.substring(s.length() - 4, s.length()));
-              } else {
-                 retval.appendCodePoint(ch);
-              }
-              continue;
-        }
-      }
-      return retval.toString();
+   public Token getToken() {
+      return token;
    }
+  
   
    private void adjustStackTrace() {
       if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;

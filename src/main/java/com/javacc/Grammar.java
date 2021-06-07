@@ -52,6 +52,7 @@ import com.javacc.parsegen.ParserData;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
+import freemarker.core.builtins.StringTransformations.Java;
 import freemarker.template.TemplateException;
 
 /**
@@ -1251,7 +1252,8 @@ public class Grammar extends BaseNode {
         }
 
         public String addEscapes(String input) {
-            return ParseException.addEscapes(input);
+//            return ParseException.addEscapes(input);
+            return JavaCCConstants.addEscapes(input);
         }
 
         public long[] bitSetToLongArray(BitSet bs, int numLongs) {
