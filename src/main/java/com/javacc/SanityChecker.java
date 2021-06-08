@@ -28,13 +28,14 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.parsegen;
+package com.javacc;
 
 import java.util.*;
 
-import com.javacc.Grammar;
 import com.javacc.lexgen.LexerData;
 import com.javacc.lexgen.LexicalStateData;
+import com.javacc.parsegen.Expansion;
+import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
@@ -44,14 +45,16 @@ import com.javacc.parser.tree.*;
  * The way JavaCC21 works increasingly is simply to expose the 
  * various data structures to the FreeMarker templates. Most
  * of what this class contains now is a bunch of various sanity checks.
+ * There will be a general tendency for this class to shrink and hopefully,
+ * to eventually just melt away completely.
  */
-public class ParserData {
+public class SanityChecker {
 
     private Grammar grammar;
 
     private LexerData lexerData;
 
-    public ParserData(Grammar grammar) {
+    public SanityChecker(Grammar grammar) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
     }
@@ -87,7 +90,7 @@ public class ParserData {
     // to clean this up because it presents a significant obstacle
     // to progress, since the original code is written in such an opaque manner that it is
     // hard to understand what it does.
-    public void semanticize() {
+    public void doChecks() {
 
         // Check that non-terminals have all been defined.
         for (NonTerminal nt : grammar.descendants(NonTerminal.class, nt->nt.getProduction()==null)) {
@@ -226,7 +229,8 @@ public class ParserData {
          * The following code checks for duplicate string literal
          * tokens in the same lexical state. This is the result 
          * of refactoring some really grotesque legacy code.
-         * This may need to be revisited. (REVISIT)
+         * Though significantly cleaned up, it is still horrible!
+         * TODO: Rewrite this in a simpler manner!
          */
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
@@ -248,22 +252,8 @@ public class ParserData {
                             }
                             lsd.addStringLiteral(stringLiteral);
                         } 
-                        else {
-                            if (tp.isExplicit()) {
-                                // This is an error even if the first occurrence
-                                // was implicit.
-                                if (name.equals(grammar.getDefaultLexicalState())) {
-                                    grammar.addSemanticError(stringLiteral,
-                                            "(2) Duplicate definition of string token \""
-                                                    + image + "\".");
-                                } else {
-                                    grammar.addSemanticError(stringLiteral,
-                                            "(3) Duplicate definition of string token \""
-                                                    + image
-                                                    + "\" in lexical state \""
-                                                    + name + "\".");
-                                }
-                            } else if (alreadyPresent.getTokenProduction() != null && !alreadyPresent.getTokenProduction().getKind().equals("TOKEN")) {
+                        else if (!tp.isExplicit()) {
+                            if (alreadyPresent.getTokenProduction() != null && !alreadyPresent.getTokenProduction().getKind().equals("TOKEN")) {
                                 String kind = alreadyPresent.getTokenProduction().getKind();
                                 grammar.addSemanticError(stringLiteral,
                                         "String token \""

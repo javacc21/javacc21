@@ -48,11 +48,9 @@ import com.javacc.lexgen.LexerData;
 import com.javacc.output.java.FilesGenerator;
 import com.javacc.parsegen.RegularExpression;
 import com.javacc.parsegen.Expansion;
-import com.javacc.parsegen.ParserData;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
-import freemarker.core.builtins.StringTransformations.Java;
 import freemarker.template.TemplateException;
 
 /**
@@ -69,7 +67,6 @@ public class Grammar extends BaseNode {
     private Path filename;
     private Map<String, Object> settings = new HashMap<>();
     private CompilationUnit parserCode;
-    private ParserData parserData;
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;  
 
@@ -119,7 +116,6 @@ public class Grammar extends BaseNode {
         this.jdkTarget = jdkTarget;
         this.quiet = quiet;
         this.preprocessorSymbols = preprocessorSymbols;
-        parserData = new ParserData(this);
     }
 
     public Grammar() {  
@@ -303,14 +299,14 @@ public class Grammar extends BaseNode {
         lexerData.buildData();
     }
 
-    public void semanticize() throws MetaParseException {
+    public void doSanityChecks() throws MetaParseException {
         if (defaultLexicalState == null) {
             setDefaultLexicalState("DEFAULT");
         }
         for (String lexicalState : lexicalStates) {
             lexerData.addLexicalState(lexicalState);
         }
-        parserData.semanticize();
+        new SanityChecker(this).doChecks();
         if (getErrorCount() != 0) {
             throw new MetaParseException();
         }
@@ -324,10 +320,6 @@ public class Grammar extends BaseNode {
 
     public LexerData getLexerData() {
         return lexerData;
-    }
-
-    public ParserData getParserData() {
-        return parserData;
     }
 
     public String getConstantsClassName() {
@@ -1252,7 +1244,6 @@ public class Grammar extends BaseNode {
         }
 
         public String addEscapes(String input) {
-//            return ParseException.addEscapes(input);
             return JavaCCConstants.addEscapes(input);
         }
 

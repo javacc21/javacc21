@@ -88,6 +88,14 @@ public class LexicalStateData {
         }
     }
 
+    public RegularExpression getStringLiteral(String image) {
+        RegularExpression result = caseSensitiveTokenTable.get(image);
+        if (result == null) {
+            result = caseInsensitiveTokenTable.get(image.toUpperCase());
+        }
+        return result;
+    }
+
     NfaState getCanonicalComposite(Set<NfaState> stateSet) {
         assert stateSet.size() >1;
         if (stateSet.size() == 1) {
@@ -97,14 +105,6 @@ public class LexicalStateData {
         if (result == null) {
             result = new CompositeStateSet(stateSet);
             canonicalSets.put(stateSet, result);
-        }
-        return result;
-    }
-
-    public RegularExpression getStringLiteral(String image) {
-        RegularExpression result = caseSensitiveTokenTable.get(image);
-        if (result == null) {
-            result = caseInsensitiveTokenTable.get(image.toUpperCase());
         }
         return result;
     }

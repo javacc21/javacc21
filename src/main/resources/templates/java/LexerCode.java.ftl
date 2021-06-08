@@ -61,7 +61,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.logging.Logger;
 import java.util.*;
-//import java.util.function.BiFunction;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 

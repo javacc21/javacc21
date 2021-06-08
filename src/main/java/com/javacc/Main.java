@@ -283,7 +283,7 @@ public final class Main {
         grammar.parse(grammarFile, true);
         try {
             grammar.createOutputDir();
-            grammar.semanticize();
+            grammar.doSanityChecks();
 
             if (!grammar.getUserDefinedLexer() && grammar.getErrorCount() == 0) {
                 grammar.generateLexer();

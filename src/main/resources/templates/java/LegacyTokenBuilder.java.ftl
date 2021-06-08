@@ -3,6 +3,8 @@
 [#--  This file used to be used to build a separate class called SimpleCharStream
       that should never have been exposed as public.
       Now the contents of this file are an include from Lexer.java.ftl.
+      FIXME: This file does not handle supplementary unicode characters
+      which means that if HUGE_FILE_SUPPORT is on, we don't have full unicode!
   --]
 
 [#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS=true, JAVA_UNICODE_ESCAPE=false]
@@ -45,12 +47,10 @@ private class TokenBuilder {
     }
 
    
-     public void backup(int amount) {
+    public void backup(int amount) {
         backupAmount += amount;
         bufpos -= amount;
-        if (bufpos  < 0) {
-                throw new RuntimeException("Should never get here, I don't think!");
-        } 
+        assert bufpos>=0 : "Should never get here, I don't think!";
     }
 
     int readChar() {
@@ -59,10 +59,10 @@ private class TokenBuilder {
            --backupAmount;
            return getCharAt(bufpos);
         }
-         int ch = read();
-         if (ch < 0) {
+        int ch = read();
+        if (ch < 0) {
            if (bufpos >0) --bufpos;
-         }
+        }
         return ch;
     }
 
@@ -99,7 +99,6 @@ private class TokenBuilder {
        
    
     private int nextChar()  {
-
         if (lookaheadIndex<charsReadLast) {
             return lookaheadBuffer[lookaheadIndex++];
         }
@@ -196,7 +195,7 @@ private class TokenBuilder {
                 return '\\';
            }
            if (nextChar != 'u') {
-               pushBackBuffer.append((char) nextChar);
+               pushBackBuffer.appendCodePoint(nextChar);
                lastCharWasUnicodeEscape = false;
                return '\\';
            }

@@ -51,7 +51,9 @@
 [/#if]
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.EnumMap;
+[#if multipleLexicalStates]
+  import java.util.EnumMap;
+[/#if]
 
 /**
  * Holder class for the data used by ${grammar.lexerClassName}
