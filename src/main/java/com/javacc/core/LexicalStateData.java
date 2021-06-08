@@ -27,7 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 package com.javacc.core;
 
 import java.util.*;
@@ -175,10 +175,6 @@ public class LexicalStateData {
 
             if (respec.getCodeSnippet() != null && !respec.getCodeSnippet().isEmpty()) {
                 currentRegexp.setCodeSnippet(respec.getCodeSnippet());
-            }
-            String kind = tp.getKind();
-            if (currentRegexp.getOrdinal() >0 && !kind.equals("UNPARSED") && !kind.equals("SKIP") && !kind.equals("MORE")) { // REVISIT
-                lexerData.getRegularTokens().set(currentRegexp.getOrdinal());
             }
         }
         return choices;

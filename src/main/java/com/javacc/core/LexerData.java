@@ -49,11 +49,9 @@ public class LexerData {
     private Grammar grammar;
     private List<LexicalStateData> lexicalStates = new ArrayList<>();
     private List<RegularExpression> regularExpressions = new ArrayList<>();
-    private TokenSet regularTokens;
     
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
-        regularTokens = new TokenSet(grammar);
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
         reof.setLabel("EOF");
@@ -158,7 +156,7 @@ public class LexerData {
     public String getStringLiteralLabel(String image) {
         for (RegularExpression regexp : regularExpressions) {
             if (regexp instanceof RegexpStringLiteral) {
-                if (((RegexpStringLiteral) regexp).getImage().equals(image)) {
+                if (regexp.getImage().equals(image)) {
                     return regexp.getLabel();
                 }
             }
@@ -170,10 +168,6 @@ public class LexerData {
         return regularExpressions.size();
     }
     
-    public TokenSet getRegularTokens() {
-        return regularTokens;
-    }
-
     public TokenSet getMoreTokens() {
         return getTokensOfKind("MORE");
     } 
@@ -184,6 +178,16 @@ public class LexerData {
     
     public TokenSet getUnparsedTokens() {
         return getTokensOfKind("UNPARSED");
+    }
+
+    public TokenSet getRegularTokens() {
+        TokenSet result = getTokensOfKind("TOKEN");
+        for (RegularExpression re : regularExpressions) {
+            if (re.getTokenProduction() == null) {
+                result.set(re.getOrdinal());
+            }
+        }
+        return result;
     }
 
     private TokenSet getTokensOfKind(String kind) {
@@ -204,7 +208,6 @@ public class LexerData {
                 lexState.addTokenProduction(tokenProduction);
             }
         }
-        regularTokens.set(0);
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
         for (LexicalStateData lexState : lexicalStates) {
             choices.addAll(lexState.process());
