@@ -30,7 +30,7 @@
 package com.javacc.output.lint;
 
 import com.javacc.*;
-import com.javacc.parsegen.Expansion;
+import com.javacc.core.Expansion;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;

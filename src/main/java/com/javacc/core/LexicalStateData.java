@@ -27,12 +27,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */ 
-package com.javacc.lexgen;
+package com.javacc.core;
 
 import java.util.*;
 
 import com.javacc.Grammar;
-import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.tree.RegexpChoice;
 import com.javacc.parser.tree.RegexpSpec;
 import com.javacc.parser.tree.RegexpStringLiteral;

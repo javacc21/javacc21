@@ -28,15 +28,13 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.lexgen;
+package com.javacc.core;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
 import com.javacc.Grammar;
-
-import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.Node;
 import com.javacc.parser.tree.*;
 

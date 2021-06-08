@@ -32,10 +32,10 @@ package com.javacc;
 
 import java.util.*;
 
-import com.javacc.lexgen.LexerData;
-import com.javacc.lexgen.LexicalStateData;
-import com.javacc.parsegen.Expansion;
-import com.javacc.parsegen.RegularExpression;
+import com.javacc.core.Expansion;
+import com.javacc.core.LexerData;
+import com.javacc.core.LexicalStateData;
+import com.javacc.core.RegularExpression;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 

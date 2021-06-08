@@ -144,7 +144,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
    Generate the array representing the characters
    that this NfaState "accepts".
    This corresponds to the moveRanges field in 
-   com.javacc.lexgen.NfaState
+   com.javacc.core.NfaState
 --]
 [#macro GenerateMoveArray nfaState]
   [#var moveRanges = nfaState.moveRanges]
@@ -163,7 +163,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 [#--
    Generate the method that represents the transition
    (or transitions if this is a CompositeStateSet)
-   that correspond to an instanceof com.javacc.lexgen.NfaState
+   that correspond to an instanceof com.javacc.core.NfaState
 --]
 [#macro GenerateNfaStateMethod nfaState]  
   [#if !nfaState.composite]

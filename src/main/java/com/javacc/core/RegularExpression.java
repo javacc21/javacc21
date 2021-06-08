@@ -28,12 +28,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.parsegen;
+package com.javacc.core;
 
 import java.util.*;
 
 import com.javacc.Grammar;
-import com.javacc.lexgen.LexicalStateData;
 import com.javacc.parser.tree.CodeBlock;
 import com.javacc.parser.tree.Expression;
 import com.javacc.parser.tree.GrammarFile;

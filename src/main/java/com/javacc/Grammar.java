@@ -44,10 +44,10 @@ import java.nio.file.Paths;
 
 import com.javacc.JavaCCError.ErrorCode;
 import com.javacc.JavaCCError.Type;
-import com.javacc.lexgen.LexerData;
+import com.javacc.core.Expansion;
+import com.javacc.core.LexerData;
+import com.javacc.core.RegularExpression;
 import com.javacc.output.java.FilesGenerator;
-import com.javacc.parsegen.RegularExpression;
-import com.javacc.parsegen.Expansion;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 

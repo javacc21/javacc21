@@ -28,7 +28,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.parsegen;
+package com.javacc.core;
 
 import java.util.List;
 
@@ -80,16 +80,19 @@ abstract public class Expansion extends BaseNode {
         this.label = label;
     }
 
-
     private boolean tolerantParsing;
 
     /**
-     * If we hit a parsing error in this expansion, do we 
-     * try to recover? This is only used in fault-tolerant mode, of course!
+     * If we hit a parsing error in this expansion, do we try to recover? This is
+     * only used in fault-tolerant mode, of course!
      */
-    public boolean isTolerantParsing() {return tolerantParsing;}
+    public boolean isTolerantParsing() {
+        return tolerantParsing;
+    }
 
-    public void setTolerantParsing(boolean tolerantParsing) {this.tolerantParsing = tolerantParsing;}
+    public void setTolerantParsing(boolean tolerantParsing) {
+        this.tolerantParsing = tolerantParsing;
+    }
 
     public String toString() {
         String result = "[" + getSimpleName() + " on line " + getBeginLine() + ", column " + getBeginColumn();
@@ -129,18 +132,16 @@ abstract public class Expansion extends BaseNode {
 
     public boolean isAtChoicePoint() {
         Node parent = getNonSuperfluousParent();
-//      Node parent = getParent();
-        return parent instanceof ExpansionChoice
-            || parent instanceof OneOrMore
-            || parent instanceof ZeroOrMore
-            || parent instanceof ZeroOrOne
-            || parent instanceof BNFProduction;
+        // Node parent = getParent();
+        return parent instanceof ExpansionChoice || parent instanceof OneOrMore || parent instanceof ZeroOrMore
+                || parent instanceof ZeroOrOne || parent instanceof BNFProduction;
     }
 
     /**
-     * @return the first ancestor that is not (directly) inside
-     * superfluous parentheses. (Yes, this is a bit hairy and I'm not 100% sure it's correct!) 
-     * I really need to take a good look at all this handling of expansions inside parentheses.
+     * @return the first ancestor that is not (directly) inside superfluous
+     *         parentheses. (Yes, this is a bit hairy and I'm not 100% sure it's
+     *         correct!) I really need to take a good look at all this handling of
+     *         expansions inside parentheses.
      */
 
     public Node getNonSuperfluousParent() {
@@ -153,8 +154,8 @@ abstract public class Expansion extends BaseNode {
     }
 
     /**
-     * @return the lexical state to switch into to parse this expansion.
-     * At the moment this can only be specified at the production level.
+     * @return the lexical state to switch into to parse this expansion. At the
+     *         moment this can only be specified at the production level.
      */
     public String getSpecifiedLexicalState() {
         Node parent = getParent();
@@ -178,17 +179,17 @@ abstract public class Expansion extends BaseNode {
      * Is this expansion superfluous parentheses?
      */
     public final boolean superfluousParentheses() {
-        return this.getClass() == ExpansionWithParentheses.class 
-               && firstChildOfType(ExpansionSequence.class) != null;
+        return this.getClass() == ExpansionWithParentheses.class && firstChildOfType(ExpansionSequence.class) != null;
     }
-
 
     public boolean beginsSequence() {
         if (getParent() instanceof ExpansionSequence) {
             ExpansionSequence seq = (ExpansionSequence) getParent();
             for (Expansion child : seq.childrenOfType(Expansion.class)) {
-                if (child == this) return true;
-                if (!child.isPossiblyEmpty()) return false;
+                if (child == this)
+                    return true;
+                if (!child.isPossiblyEmpty())
+                    return false;
             }
         }
         return false;
@@ -231,16 +232,16 @@ abstract public class Expansion extends BaseNode {
             return false;
         if (this.isAlwaysSuccessful())
             return false;
-        if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <=1 )
+        if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <= 1)
             return false;
         if (getHasScanLimit()) {
             return true;
         }
-        if (getMaximumSize() <=1) {
+        if (getMaximumSize() <= 1) {
             return false;
         }
         Lookahead la = getLookahead();
-        return la != null && la.getAmount()>1;
+        return la != null && la.getAmount() > 1;
     }
 
     private boolean scanLimit;
@@ -276,7 +277,7 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
-        if (getHasSeparateSyntacticLookahead() || getHasLookBehind() || getSpecifiedLexicalState()!=null) {
+        if (getHasSeparateSyntacticLookahead() || getHasLookBehind() || getSpecifiedLexicalState() != null) {
             return true;
         }
         if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
@@ -320,7 +321,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean getHasScanLimit() {
-        return false; //Only an ExpansionSequence can have a scan limit.
+        return false; // Only an ExpansionSequence can have a scan limit.
     }
 
     public boolean getHasInnerScanLimit() {
@@ -371,7 +372,7 @@ abstract public class Expansion extends BaseNode {
         String result = getFirstSetVarName();
         if (result.startsWith("first_set$")) {
             return result.replaceFirst("first", "follow");
-        } 
+        }
         return result.replace("_FIRST_SET", "_FOLLOW_SET");
     }
 
@@ -430,9 +431,9 @@ abstract public class Expansion extends BaseNode {
             return false;
         return !isPossiblyEmpty() && getMaximumSize() == 1;
     }
+
     /**
-     * @return the minimum number of tokens that this expansion 
-     * consumes.
+     * @return the minimum number of tokens that this expansion consumes.
      */
     abstract public int getMinimumSize();
 
@@ -451,9 +452,9 @@ abstract public class Expansion extends BaseNode {
         if (parent instanceof ExpansionSequence) {
             List<Expansion> siblings = parent.childrenOfType(Expansion.class);
             int index = siblings.indexOf(this);
-            while (index >0) {
-                Expansion exp = siblings.get(index-1);
-                if (exp.getMaximumSize()>0) {
+            while (index > 0) {
+                Expansion exp = siblings.get(index - 1);
+                if (exp.getMaximumSize() > 0) {
                     return exp;
                 }
                 index--;
@@ -467,10 +468,11 @@ abstract public class Expansion extends BaseNode {
         if (parent instanceof ExpansionSequence) {
             List<Expansion> siblings = parent.childrenOfType(Expansion.class);
             int index = siblings.indexOf(this);
-            if (index < siblings.size()-1) return siblings.get(index+1);
+            if (index < siblings.size() - 1)
+                return siblings.get(index + 1);
         }
         if (parent instanceof Expansion) {
-            return ((Expansion)parent).getFollowingExpansion();
+            return ((Expansion) parent).getFollowingExpansion();
         }
         return null;
     }
@@ -493,13 +495,15 @@ abstract public class Expansion extends BaseNode {
     }
 
     private boolean isAtEndOfLoop() {
-        if (this instanceof ZeroOrMore || this instanceof OneOrMore) return true;
+        if (this instanceof ZeroOrMore || this instanceof OneOrMore)
+            return true;
         Node parent = getParent();
         if (parent instanceof ExpansionSequence) {
             List<Expansion> siblings = parent.childrenOfType(Expansion.class);
             int index = siblings.indexOf(this);
-            for (int i = index+1; i<siblings.size(); i++) {
-                if (!siblings.get(i).isPossiblyEmpty()) return false;
+            for (int i = index + 1; i < siblings.size(); i++) {
+                if (!siblings.get(i).isPossiblyEmpty())
+                    return false;
             }
         }
         if (parent instanceof Expansion) {
@@ -512,8 +516,10 @@ abstract public class Expansion extends BaseNode {
         Expansion result = this;
         while (!(result instanceof ZeroOrMore || result instanceof OneOrMore)) {
             Node parent = result.getParent();
-            if (parent instanceof Expansion) result = (Expansion) parent;
-            else return null;
+            if (parent instanceof Expansion)
+                result = (Expansion) parent;
+            else
+                return null;
         }
         return result;
     }
@@ -523,8 +529,10 @@ abstract public class Expansion extends BaseNode {
         Expansion following = this;
         do {
             following = following.getFollowingExpansion();
-            if (following == null) return null;
-            if (following.getSpecifiesLexicalStateSwitch()) return true;
+            if (following == null)
+                return null;
+            if (following.getSpecifiesLexicalStateSwitch())
+                return true;
         } while (following.isPossiblyEmpty());
         return false;
     }

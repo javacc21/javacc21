@@ -26,7 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.lexgen;
+package com.javacc.core;
 
 import java.util.*;
 
