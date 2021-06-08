@@ -167,17 +167,14 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 --]
 [#macro GenerateNfaStateMethod nfaState]  
   [#if !nfaState.composite]
-    static TokenType ${nfaState.methodName}(int ch, BitSet nextStates) {
-      [@GenerateStateMove nfaState false /]
-      return null;
-    }
+     [@GenerateSimpleNfaMethod nfaState/]
   [#else]
     static TokenType ${nfaState.methodName}(int ch, BitSet nextStates) {
       TokenType type = null;
     [#var states = nfaState.orderedStates]
     [#list states as state]
       [#var jumpOut = state.isNonOverlapping(states.subList(state_index+1, states?size))]
-      [@GenerateStateMove state true jumpOut /]
+      [@GenerateStateMove state jumpOut /]
       [#if !jumpOut && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
          else
       [/#if]
@@ -189,36 +186,48 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 
 [#--
   Generates the code for an NFA state transition
-  This is still a bit complicated and can probably 
-  be simplified further. The parameter inComposite means 
-  that this state move is part of a CompositeStateSet. 
-  In that case, we use the jumpOut parameter to decide 
+  within a composite state. The jumpOut parameter says 
   whether we can just jump out of the method. 
   (This is based on whether any of the moveRanges
-  for later states overlap. If not, we can jump out. This 
-  is only relevant if we are in a composite state, of course.)  
+  for later states overlap. If not, we can jump out.)
 --]
-[#macro GenerateStateMove nfaState inComposite jumpOut=false]
-   [#var nextState = nfaState.nextState.canonicalState]
-   [#var type = nfaState.nextState.type]
+[#macro GenerateStateMove nfaState jumpOut]
+  [#var nextState = nfaState.nextState.canonicalState]
+  [#var type = nfaState.nextState.type]
     if ([@NfaStateCondition nfaState /]) {
       [#if nextState.index >= 0]
          nextStates.set(${nextState.index});
       [/#if]
-   [#if !inComposite]
-     [#if type??]
-        return ${TT}${type.label};
-     [/#if]
-   [#elseif jumpOut]
+   [#if jumpOut]
+     return
      [#if type?is_null]
-        return null;
+        null;
      [#else]
-        return ${TT}${type.label};
+        ${TT}${type.label};
      [/#if]
    [#elseif type??]
         type = ${TT}${type.label};
    [/#if]
    }
+[/#macro]
+
+[#-- 
+  Generate the code for a simple (non-composite) NFA state
+--]
+[#macro GenerateSimpleNfaMethod nfaState]
+  static TokenType ${nfaState.methodName}(int ch, BitSet nextStates) {
+    [#var nextState = nfaState.nextState.canonicalState]
+    [#var type = nfaState.nextState.type]
+      if ([@NfaStateCondition nfaState /]) {
+        [#if nextState.index >= 0]
+          nextStates.set(${nextState.index});
+        [/#if]
+      [#if type??]
+        return ${TT}${type.label};
+      [/#if]
+    }
+    return null;
+  }
 [/#macro]
 
 [#--

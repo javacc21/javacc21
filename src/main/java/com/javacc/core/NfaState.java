@@ -104,7 +104,10 @@ public class NfaState {
 
     }
 
-    public int getOrdinal() {return type == null ? Integer.MAX_VALUE : type.getOrdinal();}
+    public int getOrdinal() {
+        assert !isComposite();
+        return type == null ? Integer.MAX_VALUE : type.getOrdinal();
+    }
 
     public RegularExpression getType() {return type;}
 

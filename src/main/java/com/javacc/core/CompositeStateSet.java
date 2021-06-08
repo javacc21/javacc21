@@ -69,20 +69,36 @@ public class CompositeStateSet extends NfaState {
      */
     public List<NfaState> getOrderedStates() {
         ArrayList<NfaState> result = new ArrayList<>(states);
-        Collections.sort(result, 
-                         (state1, state2) -> state2.getNextState().getOrdinal()-state1.getNextState().getOrdinal());
+        Collections.sort(result, CompositeStateSet::comparator);
         return result;    
     }
 
-    /**
-     * @return the ordinal of the highest priority match
-     */
-    public int getOrdinal() {
-        int result = Integer.MAX_VALUE;
-        for (NfaState state : states) {
-            if (state.getType() !=null)
-                result = Math.min(result, state.getOrdinal());
+    public List<List<NfaState>> getOrderedStateLists() {
+        List<List<NfaState>> result = new ArrayList<>();
+        List<NfaState> sortedStates = new ArrayList<>(states);
+        Collections.sort(sortedStates, CompositeStateSet::comparator);
+        List<Integer> lastRanges = null;
+        List<NfaState> currentSubList = new ArrayList<>();
+        for (NfaState state : sortedStates) {
+            if (!state.moveRanges.equals(lastRanges)) {
+                lastRanges = state.moveRanges;
+                result.add(currentSubList = new ArrayList<>());
+            }
+            currentSubList.add(state);
         }
+        return result;    
+    }
+
+
+    static int comparator(NfaState state1, NfaState state2) {
+        int result = state2.getNextState().getOrdinal() - state1.getNextState().getOrdinal();
+        if (result == 0)
+           result = (state1.moveRanges.get(0) - state2.moveRanges.get(0));
+        if (result == 0)
+           result = (state1.moveRanges.get(1) - state2.moveRanges.get(1));
+        if (result ==0)
+           result = state2.moveRanges.size() - state1.moveRanges.size();
         return result;
     }
+
 }
