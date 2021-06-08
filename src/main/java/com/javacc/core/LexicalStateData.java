@@ -71,15 +71,21 @@ public class LexicalStateData {
 
     public String getName() {return name;}
 
+    public Collection<NfaState> getAllNfaStates() {
+        List<NfaState> result = new ArrayList<>(allStates);
+        Collections.sort(result, (first,second)->first.getIndex()-second.getIndex());
+        return result;
+    }
+
     void addTokenProduction(TokenProduction tokenProduction) {
         tokenProductions.add(tokenProduction);
     }
 
-    public boolean containsRegularExpression(RegularExpression re) {
+    boolean containsRegularExpression(RegularExpression re) {
         return regularExpressions.contains(re);
     }
 
-    public void addStringLiteral(RegexpStringLiteral re) {
+    void addStringLiteral(RegexpStringLiteral re) {
         if (re.getIgnoreCase()) {
             caseInsensitiveTokenTable.put(re.getImage().toUpperCase(), re);
         } else {
@@ -87,7 +93,7 @@ public class LexicalStateData {
         }
     }
 
-    public RegularExpression getStringLiteral(String image) {
+    RegularExpression getStringLiteral(String image) {
         RegularExpression result = caseSensitiveTokenTable.get(image);
         if (result == null) {
             result = caseInsensitiveTokenTable.get(image.toUpperCase());
@@ -105,12 +111,6 @@ public class LexicalStateData {
             result = new CompositeStateSet(stateSet);
             canonicalSets.put(stateSet, result);
         }
-        return result;
-    }
-
-    public Collection<NfaState> getAllStates() {
-        List<NfaState> result = new ArrayList<>(allStates);
-        Collections.sort(result, (first,second)->first.getIndex()-second.getIndex());
         return result;
     }
 
@@ -182,21 +182,17 @@ public class LexicalStateData {
                 if (currentRegexp.getOrdinal() >0) {
                     lexerData.getUnparsedTokens().set(currentRegexp.getOrdinal());
                 }
-                currentRegexp.setUnparsedToken();
             }
             else if (kind.equals("SKIP")) {
                 lexerData.hasSkip = true;
                 lexerData.getSkippedTokens().set(currentRegexp.getOrdinal());
-                currentRegexp.setSkip();
             }
             else if (kind.equals("MORE") && currentRegexp.getOrdinal()>0) { // REVISIT
                 lexerData.hasMore = true;
                 lexerData.getMoreTokens().set(currentRegexp.getOrdinal());
-                currentRegexp.setMore();
             }
             else if (currentRegexp.getOrdinal() >0) { // REVISIT
                 lexerData.getRegularTokens().set(currentRegexp.getOrdinal());
-                currentRegexp.setRegularToken();
             }
         }
         return choices;

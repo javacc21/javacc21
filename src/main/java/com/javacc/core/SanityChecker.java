@@ -28,14 +28,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc;
+package com.javacc.core;
 
 import java.util.*;
 
-import com.javacc.core.Expansion;
-import com.javacc.core.LexerData;
-import com.javacc.core.LexicalStateData;
-import com.javacc.core.RegularExpression;
+import com.javacc.Grammar;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 

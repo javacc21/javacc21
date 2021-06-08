@@ -47,6 +47,7 @@ import com.javacc.JavaCCError.Type;
 import com.javacc.core.Expansion;
 import com.javacc.core.LexerData;
 import com.javacc.core.RegularExpression;
+import com.javacc.core.SanityChecker;
 import com.javacc.output.java.FilesGenerator;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;

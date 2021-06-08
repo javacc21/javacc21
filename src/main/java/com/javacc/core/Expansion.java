@@ -72,7 +72,7 @@ abstract public class Expansion extends BaseNode {
         return label;
     }
 
-    public final boolean hasLabel() {
+    final boolean hasLabel() {
         return label.length() > 0;
     }
 

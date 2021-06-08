@@ -116,7 +116,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   for the given lexical state
 --]
 [#macro GenerateStateCode lexicalState]
-  [#list lexicalState.allStates as nfaState]
+  [#list lexicalState.allNfaStates as nfaState]
     [#if nfaState.moveCodeNeeded]
       [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
         [@GenerateMoveArray nfaState/]
@@ -126,8 +126,8 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   [/#list]
 
   static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
-    NfaFunction[] functions = new NfaFunction[${lexicalState.allStates.size()}];
-    [#list lexicalState.allStates as state]
+    NfaFunction[] functions = new NfaFunction[${lexicalState.allNfaStates.size()}];
+    [#list lexicalState.allNfaStates as state]
       [#if state.moveCodeNeeded]
           functions[${state.index}] = ${grammar.nfaDataClassName}::${state.methodName};
       [/#if]

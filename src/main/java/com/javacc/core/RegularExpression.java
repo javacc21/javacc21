@@ -35,7 +35,6 @@ import java.util.*;
 import com.javacc.Grammar;
 import com.javacc.parser.tree.CodeBlock;
 import com.javacc.parser.tree.Expression;
-import com.javacc.parser.tree.GrammarFile;
 import com.javacc.parser.tree.TokenProduction;
 
 /**
@@ -45,12 +44,6 @@ import com.javacc.parser.tree.TokenProduction;
 
 public abstract class RegularExpression extends Expansion {
 
-    private static final int REGULAR_TOKEN = 0;
-    private final int UNPARSED_TOKEN = 1;
-    private static final int SKIP = 2;
-    private static final int MORE = 3;
-
-
     public RegularExpression(Grammar grammar) {
         super(grammar);
     }
@@ -58,7 +51,7 @@ public abstract class RegularExpression extends Expansion {
     public RegularExpression() {
     }
     
-    private int type;
+//    private int type;
     
    /**
      * The ordinal value assigned to the regular expression. It is used for
@@ -76,11 +69,11 @@ public abstract class RegularExpression extends Expansion {
         return codeSnippet;
     }
 
-    public void setCodeSnippet(CodeBlock codeSnippet) {
+    void setCodeSnippet(CodeBlock codeSnippet) {
         this.codeSnippet = codeSnippet;
     }
 
-    public boolean getIgnoreCase() {
+    protected boolean getIgnoreCase() {
         TokenProduction tp = firstAncestorOfType(TokenProduction.class);
         if (tp !=null) return tp.isIgnoreCase();
         return getGrammar().isIgnoreCase();//REVISIT
@@ -99,7 +92,7 @@ public abstract class RegularExpression extends Expansion {
      */
     private boolean _private = false;
 
-    public TokenProduction getTokenProduction() {
+    protected TokenProduction getTokenProduction() {
         return firstAncestorOfType(TokenProduction.class);
     }
 
@@ -118,7 +111,7 @@ public abstract class RegularExpression extends Expansion {
         return id;
     }
 
-    public final void setOrdinal(int id) {
+    protected final void setOrdinal(int id) {
         this.id =  id;
     }
 
@@ -148,38 +141,6 @@ public abstract class RegularExpression extends Expansion {
 
     public LexicalStateData getNewLexicalState() {
         return newLexicalState;
-    }
-
-    public boolean isRegularToken() {
-        return type == REGULAR_TOKEN;
-    }
-    
-    boolean isUnparsedToken() {
-        return type == UNPARSED_TOKEN;
-    }
-    
-    boolean isSkip() {
-        return type == SKIP || type == UNPARSED_TOKEN;
-    }
-    
-    boolean isMore() {
-        return type == MORE;
-    }
-    
-    public void setRegularToken() {
-        this.type = REGULAR_TOKEN;
-    }
-    
-    public void setUnparsedToken() {
-        this.type = UNPARSED_TOKEN;
-    }
-    
-    public void setMore() {
-        this.type = MORE;
-    }
-    
-    public void setSkip() {
-        this.type = SKIP;
     }
  
     public boolean isPrivate() {
