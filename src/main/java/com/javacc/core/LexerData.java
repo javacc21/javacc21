@@ -49,16 +49,10 @@ public class LexerData {
     private Grammar grammar;
     private List<LexicalStateData> lexicalStates = new ArrayList<>();
     private List<RegularExpression> regularExpressions = new ArrayList<>();
-    private TokenSet skippedTokens, unparsedSet, moreTokens, regularTokens;
+    private TokenSet regularTokens;
     
-    boolean hasSpecial, hasSkip, hasMore;
-    int lastIndex;
-
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
-        skippedTokens = new TokenSet(grammar);
-        unparsedSet = new TokenSet(grammar);
-        moreTokens = new TokenSet(grammar);
         regularTokens = new TokenSet(grammar);
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
@@ -176,20 +170,31 @@ public class LexerData {
         return regularExpressions.size();
     }
     
-    public TokenSet getMoreTokens() {
-        return moreTokens;
-    } 
-
     public TokenSet getRegularTokens() {
         return regularTokens;
     }
-    
+
+    public TokenSet getMoreTokens() {
+        return getTokensOfKind("MORE");
+    } 
+
     public TokenSet getSkippedTokens() {
-        return skippedTokens;
+        return getTokensOfKind("SKIP");
     }
     
     public TokenSet getUnparsedTokens() {
-        return unparsedSet;
+        return getTokensOfKind("UNPARSED");
+    }
+
+    private TokenSet getTokensOfKind(String kind) {
+        TokenSet result = new TokenSet(grammar);
+        for (RegularExpression re : regularExpressions) {
+            TokenProduction tp = re.getTokenProduction();
+            if (tp != null && tp.getKind().equals(kind)) {
+                result.set(re.getOrdinal());
+            } 
+        }
+        return result;
     }
 
     public void buildData() {

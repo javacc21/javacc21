@@ -26,7 +26,8 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
+ 
 package com.javacc.core;
 
 import java.util.*;
@@ -162,7 +163,6 @@ public class LexicalStateData {
         for (RegexpSpec respec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = respec.getRegexp();
             regularExpressions.add(currentRegexp);
-//            currentRegexp.setIgnoreCase(ignore);
             if (currentRegexp.isPrivate()) {
                 continue;
             }
@@ -177,21 +177,7 @@ public class LexicalStateData {
                 currentRegexp.setCodeSnippet(respec.getCodeSnippet());
             }
             String kind = tp.getKind();
-            if (kind.equals("UNPARSED")) {
-                lexerData.hasSpecial = true;
-                if (currentRegexp.getOrdinal() >0) {
-                    lexerData.getUnparsedTokens().set(currentRegexp.getOrdinal());
-                }
-            }
-            else if (kind.equals("SKIP")) {
-                lexerData.hasSkip = true;
-                lexerData.getSkippedTokens().set(currentRegexp.getOrdinal());
-            }
-            else if (kind.equals("MORE") && currentRegexp.getOrdinal()>0) { // REVISIT
-                lexerData.hasMore = true;
-                lexerData.getMoreTokens().set(currentRegexp.getOrdinal());
-            }
-            else if (currentRegexp.getOrdinal() >0) { // REVISIT
+            if (currentRegexp.getOrdinal() >0 && !kind.equals("UNPARSED") && !kind.equals("SKIP") && !kind.equals("MORE")) { // REVISIT
                 lexerData.getRegularTokens().set(currentRegexp.getOrdinal());
             }
         }
