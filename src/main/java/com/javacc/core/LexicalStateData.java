@@ -167,6 +167,7 @@ public class LexicalStateData {
         for (NfaState state : statesInComposite) {
             state.index = idx++;
         }
+        allStates.removeIf(state->state.index<0);
     }
 
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {
