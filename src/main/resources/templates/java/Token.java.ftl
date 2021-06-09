@@ -268,7 +268,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      */
     public Token(int kind, String image) {
         this.type = TokenType.values()[kind];
-        this.image = image;;
+        this.image = image;
     }
 
     /**
