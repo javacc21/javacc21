@@ -173,7 +173,7 @@
          finally {
              restoreCallStack(${callStackSizeVar});
              [#if buildTreeNode]
-             if (buildTree) {
+             if (${nodeVarName}!=null) {
                  if (${parseExceptionVar} == null) {
                      closeNodeScope(${nodeVarName}, ${closeCondition});
                      [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
