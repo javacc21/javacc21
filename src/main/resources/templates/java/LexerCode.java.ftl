@@ -313,8 +313,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
    */
   static final void truncateCharBuff(StringBuilder buf, int amount) {
     int idx = buf.length();
-    if (idx <= amount) idx = 0;
-    while (idx > 0 && amount-- > 0) {
+    int am = amount;
+    if (idx <= am) idx = 0;
+    while (idx > 0 && am-- > 0) {
       char ch = buf.charAt(--idx);
       if (Character.isLowSurrogate(ch)) --idx;
     }
