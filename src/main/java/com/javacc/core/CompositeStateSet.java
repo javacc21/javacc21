@@ -73,23 +73,6 @@ public class CompositeStateSet extends NfaState {
         return result;    
     }
 
-    public List<List<NfaState>> getOrderedStateLists() {
-        List<List<NfaState>> result = new ArrayList<>();
-        List<NfaState> sortedStates = new ArrayList<>(states);
-        Collections.sort(sortedStates, CompositeStateSet::comparator);
-        List<Integer> lastRanges = null;
-        List<NfaState> currentSubList = new ArrayList<>();
-        for (NfaState state : sortedStates) {
-            if (!state.moveRanges.equals(lastRanges)) {
-                lastRanges = state.moveRanges;
-                result.add(currentSubList = new ArrayList<>());
-            }
-            currentSubList.add(state);
-        }
-        return result;    
-    }
-
-
     static int comparator(NfaState state1, NfaState state2) {
         int result = state2.getNextState().getOrdinal() - state1.getNextState().getOrdinal();
         if (result == 0)
@@ -100,5 +83,4 @@ public class CompositeStateSet extends NfaState {
            result = state2.moveRanges.size() - state1.moveRanges.size();
         return result;
     }
-
 }

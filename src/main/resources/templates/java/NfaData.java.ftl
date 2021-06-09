@@ -173,9 +173,18 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
       TokenType type = null;
     [#var states = nfaState.orderedStates]
     [#list states as state]
-      [#var jumpOut = state.isNonOverlapping(states.subList(state_index+1, states?size))]
-      [@GenerateStateMove state jumpOut /]
-      [#if !jumpOut && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
+      [#var isFirstOfGroup=true, isLastOfGroup=true, jumpOut = !state_has_next]
+      [#if state_index!=0]
+         [#set isFirstOfGroup = !states[state_index-1].moveRanges.equals(state.moveRanges)]
+      [/#if]
+      [#if state_has_next]
+         [#set isLastOfGroup = !states[state_index+1].moveRanges.equals(state.moveRanges)]
+         [#if isLastOfGroup]
+            [#set jumpOut = state.isNonOverlapping(states.subList(state_index+1, states?size))]
+         [/#if]
+      [/#if]
+      [@GenerateStateMove state isFirstOfGroup isLastOfGroup jumpOut/]
+      [#if state_has_next && !jumpOut && isLastOfGroup && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
          else
       [/#if]
     [/#list]
@@ -191,24 +200,28 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   (This is based on whether any of the moveRanges
   for later states overlap. If not, we can jump out.)
 --]
-[#macro GenerateStateMove nfaState jumpOut]
+[#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup jumpOut]
   [#var nextState = nfaState.nextState.canonicalState]
   [#var type = nfaState.nextState.type]
+    [#if isFirstOfGroup]
     if ([@NfaStateCondition nfaState /]) {
+    [/#if]
       [#if nextState.index >= 0]
          nextStates.set(${nextState.index});
       [/#if]
-   [#if jumpOut]
-     return
-     [#if type?is_null]
-        null;
-     [#else]
-        ${TT}${type.label};
-     [/#if]
-   [#elseif type??]
+   [#if isLastOfGroup]
+      [#if jumpOut]
+        return
+        [#if type??]
+           ${TT}${type.label};
+        [#else]
+           null;
+        [/#if]
+      [#elseif type??]
         type = ${TT}${type.label};
+     [/#if]
+    }
    [/#if]
-   }
 [/#macro]
 
 [#-- 
