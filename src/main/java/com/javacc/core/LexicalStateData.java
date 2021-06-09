@@ -149,11 +149,23 @@ public class LexicalStateData {
         initialState = initialState.getCanonicalState();
         initialState.index = 0;
         int idx = 1;
+        Set<NfaState> statesInComposite = new HashSet<>();
         for (NfaState state : allStates) {
-            if (state.index!=0 && state.isComposite()) state.index = idx++;
+            if (state.index!=0 && state.isComposite()) {
+                state.index = idx++;
+                statesInComposite.addAll(((CompositeStateSet) state).states);
+            }
         }
         for (NfaState state : allStates) {
-            if (state.index!=0 && !state.isComposite()&&state.isMoveCodeNeeded()) state.index = idx++;
+            if (state.index!=0 
+                && !state.isComposite()
+                &&state.isMoveCodeNeeded() 
+                && !statesInComposite.contains(state)) {
+                   state.index = idx++;
+            }
+        }
+        for (NfaState state : statesInComposite) {
+            state.index = idx++;
         }
     }
 
@@ -162,10 +174,10 @@ public class LexicalStateData {
         List<RegexpChoice> choices = new ArrayList<>();
         for (RegexpSpec respec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = respec.getRegexp();
-            regularExpressions.add(currentRegexp);
             if (currentRegexp.isPrivate()) {
                 continue;
             }
+            regularExpressions.add(currentRegexp);
             if (currentRegexp instanceof RegexpChoice) {
                 choices.add((RegexpChoice) currentRegexp);
             }

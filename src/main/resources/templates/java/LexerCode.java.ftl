@@ -257,11 +257,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             }
             nextStates.clear();
             if (charsRead == 0) {
-                newType = nfaFunctions[0].accept(curChar, nextStates);
+                newType = nfaFunctions[0].apply(curChar, nextStates);
             } else {
                 int nextActive = currentStates.nextSetBit(0);
                 while (nextActive != -1) {
-                    TokenType returnedType = nfaFunctions[nextActive].accept(curChar, nextStates);
+                    TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates);
                     if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                       newType = returnedType;
                       if (trace_enabled && newType!=null) 

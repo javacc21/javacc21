@@ -32,7 +32,7 @@ import java.util.*;
 
 public class CompositeStateSet extends NfaState {
 
-    private Set<NfaState> states = new HashSet<>(); 
+    Set<NfaState> states = new HashSet<>(); 
 
     CompositeStateSet(LexicalStateData lsd) {
         super(lsd);

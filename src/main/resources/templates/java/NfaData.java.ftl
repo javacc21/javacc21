@@ -64,7 +64,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   // The functional interface that represents 
   // the acceptance method of an NFA state
   static interface NfaFunction {
-    TokenType accept(int ch, BitSet bs);
+    TokenType apply(int ch, BitSet bs);
   }
 
  [#if multipleLexicalStates]
@@ -121,7 +121,9 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
       [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
         [@GenerateMoveArray nfaState/]
       [/#if]
-      [@GenerateNfaStateMethod nfaState/]
+      [#if nfaState.moveCodeNeeded]
+        [@GenerateNfaStateMethod nfaState/]
+      [/#if]
     [/#if]
   [/#list]
 
