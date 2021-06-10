@@ -47,7 +47,7 @@ import com.javacc.parser.tree.*;
  */
 public class SanityChecker {
 
-    private Grammar grammar;
+    Grammar grammar;
 
     private LexerData lexerData;
 
