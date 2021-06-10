@@ -183,7 +183,7 @@
                      if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
                   [#if grammar.faultTolerant]
                      closeNodeScope(${nodeVarName}, true);
-                     ${nodeVarName}.setDirty(true);
+                     if (${nodeVarName} != null) ${nodeVarName}.setDirty(true);
                   [#else]
                      clearNodeScope();
                   [/#if]
