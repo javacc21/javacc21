@@ -264,7 +264,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                     TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates);
                     if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                       newType = returnedType;
-                      if (trace_enabled && newType!=null) 
+                      if (trace_enabled) 
                          LOGGER.info("Potential match: " + newType);
                     }
                     nextActive = currentStates.nextSetBit(nextActive+1);
