@@ -74,6 +74,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
   // Holder for the pending characters we read from the input stream
   private final StringBuilder charBuff = new StringBuilder();
+
+  private EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
 [#--  
   // Holder for invalid characters, i.e. that cannot be matched as part of a token
   private final StringBuilder pendingInvalidChars = new StringBuilder();--]
@@ -165,6 +167,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     @Deprecated
     public void setTabSize(int  size) {this.tabSize = size;}
 [/#if]
+
+  private final boolean activateTokenType(TokenType type) {
+    return activeTokenTypes.add(type);
+  }
+
+  private final boolean deactivateTokenType(TokenType type) {
+    return activeTokenTypes.remove(type);
+  }
 
   /**
    * The public method for getting the next token.
@@ -262,7 +272,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 int nextActive = currentStates.nextSetBit(0);
                 while (nextActive != -1) {
                     TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates);
-                    if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
+                    if (activeTokenTypes.contains(returnedType) && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                       newType = returnedType;
                       if (trace_enabled) 
                          LOGGER.info("Potential match: " + newType);
