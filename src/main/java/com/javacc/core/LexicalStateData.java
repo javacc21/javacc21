@@ -26,7 +26,8 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
+
 package com.javacc.core;
 
 import java.util.*;
@@ -148,12 +149,25 @@ public class LexicalStateData {
         initialState = initialState.getCanonicalState();
         initialState.index = 0;
         int idx = 1;
+        Set<NfaState> statesInComposite = new HashSet<>();
         for (NfaState state : allStates) {
-            if (state.index!=0 && state.isComposite()) state.index = idx++;
+            if (state.index!=0 && state.isComposite()) {
+                state.index = idx++;
+                statesInComposite.addAll(((CompositeStateSet) state).states);
+            }
         }
         for (NfaState state : allStates) {
-            if (state.index!=0 && !state.isComposite()&&state.isMoveCodeNeeded()) state.index = idx++;
+            if (state.index!=0 
+                && !state.isComposite()
+                &&state.isMoveCodeNeeded() 
+                && !statesInComposite.contains(state)) {
+                   state.index = idx++;
+            }
         }
+        for (NfaState state : statesInComposite) {
+            state.index = idx++;
+        }
+        allStates.removeIf(state->state.index<0);
     }
 
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {
@@ -161,11 +175,10 @@ public class LexicalStateData {
         List<RegexpChoice> choices = new ArrayList<>();
         for (RegexpSpec respec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = respec.getRegexp();
-            regularExpressions.add(currentRegexp);
-//            currentRegexp.setIgnoreCase(ignore);
             if (currentRegexp.isPrivate()) {
                 continue;
             }
+            regularExpressions.add(currentRegexp);
             if (currentRegexp instanceof RegexpChoice) {
                 choices.add((RegexpChoice) currentRegexp);
             }
@@ -175,24 +188,6 @@ public class LexicalStateData {
 
             if (respec.getCodeSnippet() != null && !respec.getCodeSnippet().isEmpty()) {
                 currentRegexp.setCodeSnippet(respec.getCodeSnippet());
-            }
-            String kind = tp.getKind();
-            if (kind.equals("UNPARSED")) {
-                lexerData.hasSpecial = true;
-                if (currentRegexp.getOrdinal() >0) {
-                    lexerData.getUnparsedTokens().set(currentRegexp.getOrdinal());
-                }
-            }
-            else if (kind.equals("SKIP")) {
-                lexerData.hasSkip = true;
-                lexerData.getSkippedTokens().set(currentRegexp.getOrdinal());
-            }
-            else if (kind.equals("MORE") && currentRegexp.getOrdinal()>0) { // REVISIT
-                lexerData.hasMore = true;
-                lexerData.getMoreTokens().set(currentRegexp.getOrdinal());
-            }
-            else if (currentRegexp.getOrdinal() >0) { // REVISIT
-                lexerData.getRegularTokens().set(currentRegexp.getOrdinal());
             }
         }
         return choices;

@@ -51,14 +51,11 @@ public abstract class RegularExpression extends Expansion {
     public RegularExpression() {
     }
     
-//    private int type;
-    
    /**
      * The ordinal value assigned to the regular expression. It is used for
      * internal processing and passing information between the parser and the
      * lexical analyzer.
      */
-//    private int id = -1; //REVISIT
     private int id;
 
     private LexicalStateData newLexicalState;

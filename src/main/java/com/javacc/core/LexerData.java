@@ -49,17 +49,9 @@ public class LexerData {
     private Grammar grammar;
     private List<LexicalStateData> lexicalStates = new ArrayList<>();
     private List<RegularExpression> regularExpressions = new ArrayList<>();
-    private TokenSet skippedTokens, unparsedSet, moreTokens, regularTokens;
     
-    boolean hasSpecial, hasSkip, hasMore;
-    int lastIndex;
-
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
-        skippedTokens = new TokenSet(grammar);
-        unparsedSet = new TokenSet(grammar);
-        moreTokens = new TokenSet(grammar);
-        regularTokens = new TokenSet(grammar);
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
         reof.setLabel("EOF");
@@ -164,7 +156,7 @@ public class LexerData {
     public String getStringLiteralLabel(String image) {
         for (RegularExpression regexp : regularExpressions) {
             if (regexp instanceof RegexpStringLiteral) {
-                if (((RegexpStringLiteral) regexp).getImage().equals(image)) {
+                if (regexp.getImage().equals(image)) {
                     return regexp.getLabel();
                 }
             }
@@ -177,19 +169,36 @@ public class LexerData {
     }
     
     public TokenSet getMoreTokens() {
-        return moreTokens;
+        return getTokensOfKind("MORE");
     } 
 
-    public TokenSet getRegularTokens() {
-        return regularTokens;
-    }
-    
     public TokenSet getSkippedTokens() {
-        return skippedTokens;
+        return getTokensOfKind("SKIP");
     }
     
     public TokenSet getUnparsedTokens() {
-        return unparsedSet;
+        return getTokensOfKind("UNPARSED");
+    }
+
+    public TokenSet getRegularTokens() {
+        TokenSet result = getTokensOfKind("TOKEN");
+        for (RegularExpression re : regularExpressions) {
+            if (re.getTokenProduction() == null) {
+                result.set(re.getOrdinal());
+            }
+        }
+        return result;
+    }
+
+    private TokenSet getTokensOfKind(String kind) {
+        TokenSet result = new TokenSet(grammar);
+        for (RegularExpression re : regularExpressions) {
+            TokenProduction tp = re.getTokenProduction();
+            if (tp != null && tp.getKind().equals(kind)) {
+                result.set(re.getOrdinal());
+            } 
+        }
+        return result;
     }
 
     public void buildData() {
@@ -199,7 +208,6 @@ public class LexerData {
                 lexState.addTokenProduction(tokenProduction);
             }
         }
-        regularTokens.set(0);
         List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
         for (LexicalStateData lexState : lexicalStates) {
             choices.addAll(lexState.process());

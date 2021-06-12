@@ -104,7 +104,10 @@ public class NfaState {
 
     }
 
-    public int getOrdinal() {return type == null ? Integer.MAX_VALUE : type.getOrdinal();}
+    public int getOrdinal() {
+        assert !isComposite();
+        return type == null ? Integer.MAX_VALUE : type.getOrdinal();
+    }
 
     public RegularExpression getType() {return type;}
 
@@ -124,7 +127,7 @@ public class NfaState {
         return lexicalState.getCanonicalComposite(epsilonMoves);
     }
 
-    public boolean isMoveCodeNeeded() {
+    boolean isMoveCodeNeeded() {
         if (getCanonicalState().isComposite()) return false;
         if (nextState == null) return false;
         return nextState.type != null || !nextState.epsilonMoves.isEmpty();
