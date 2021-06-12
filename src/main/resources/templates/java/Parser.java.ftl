@@ -141,6 +141,7 @@ public boolean isCancelled() {return cancelled;}
       token_source.parser = this;
       [/#if]
   }
+
 [/#if]
 
 [#if grammar.userDefinedLexer]
@@ -222,6 +223,30 @@ public boolean isCancelled() {return cancelled;}
     }
     return nextTokenType;
   }
+
+[#if !grammar.userDefinedLexer]  
+  boolean activateTokenType(TokenType type) {
+    boolean result = token_source.activeTokenTypes.add(type);
+  [#if !grammar.hugeFileSupport]
+    if (result) {
+      token_source.reset(getToken(0));
+      nextTokenType = null;
+    }
+  [/#if]
+    return result;
+  }
+
+  boolean deactivateTokenType(TokenType type) {
+    boolean result = token_source.activeTokenTypes.remove(type);
+  [#if !grammar.hugeFileSupport]
+    if (result) {
+      token_source.reset(getToken(0));
+      nextTokenType = null;
+    }
+  [/#if]
+    return result;
+  }
+[/#if]
 
   private void fail(String message) throws ParseException {
     if (currentLookaheadToken == null) {
