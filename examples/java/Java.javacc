@@ -262,10 +262,7 @@ EnumConstant :
 ;
 
 TypeParameters :
-  {
-    deactivateTokenType(RSIGNEDSHIFT);
-    deactivateTokenType(RUNSIGNEDSHIFT);
-  }#
+   DEACTIVATE_TOKEN_TYPE(RSIGNEDSHIFT, RUNSIGNEDSHIFT)
    "<"
    TypeParameter ( "," TypeParameter )* 
    ">"
@@ -410,11 +407,9 @@ PossiblyEmptyTypeArguments #void :
 ;
 
 TypeArguments : 
-{
-  deactivateTokenType(RSIGNEDSHIFT);
-  deactivateTokenType(RUNSIGNEDSHIFT);
-}#
-  SCAN 2 "<" TypeArgument ( "," TypeArgument )* ">" ;
+  SCAN 2
+  DEACTIVATE_TOKEN_TYPE(RSIGNEDSHIFT,RUNSIGNEDSHIFT)
+  "<" TypeArgument ( "," TypeArgument )* ">" ;
 
 TypeArgument :
    (Annotation)*
@@ -550,10 +545,7 @@ RelationalExpression :
 
 ShiftExpression :
    AdditiveExpression
-   {
-      activateTokenType(RSIGNEDSHIFT);
-      activateTokenType(RUNSIGNEDSHIFT);
-   }#
+   ACTIVATE_TOKEN_TYPE(RSIGNEDSHIFT,RUNSIGNEDSHIFT)
    (
       ("<<" | ">>" | ">>>")
       AdditiveExpression

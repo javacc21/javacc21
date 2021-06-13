@@ -225,8 +225,11 @@ public boolean isCancelled() {return cancelled;}
   }
 
 [#if !grammar.userDefinedLexer]  
-  boolean activateTokenType(TokenType type) {
+  boolean activateTokenType(TokenType type, TokenType... types) {
     boolean result = token_source.activeTokenTypes.add(type);
+    for (TokenType tt : types) {
+      result |= token_source.activeTokenTypes.add(tt);
+    }
   [#if !grammar.hugeFileSupport]
     if (result) {
       token_source.reset(getToken(0));
@@ -236,8 +239,11 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
-  boolean deactivateTokenType(TokenType type) {
+  boolean deactivateTokenType(TokenType type, TokenType... types) {
     boolean result = token_source.activeTokenTypes.remove(type);
+    for (TokenType tt : types) {
+      result |= token_source.activeTokenTypes.remove(tt);
+    }
   [#if !grammar.hugeFileSupport]
     if (result) {
       token_source.reset(getToken(0));
