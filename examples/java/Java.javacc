@@ -264,7 +264,8 @@ EnumConstant :
 TypeParameters :
    "<"
    TypeParameter ( "," TypeParameter )* 
-   DEACTIVATE_TOKENS(RSIGNEDSHIFT, RUNSIGNEDSHIFT) ">"
+   DEACTIVATE_TOKENS(RSIGNEDSHIFT, RUNSIGNEDSHIFT) 
+   ">"
 ;
 
 INJECT TypeParameters : 
@@ -275,7 +276,7 @@ INJECT TypeParameters :
     }
 }
 
-TypeParameter: <IDENTIFIER> [TypeBound];
+TypeParameter: (Annotation)* <IDENTIFIER> =>|| [TypeBound];
 
 TypeBound :
    "extends" ObjectType ( "&" ObjectType )*
@@ -408,15 +409,14 @@ PossiblyEmptyTypeArguments #void :
 TypeArguments : 
   SCAN 2
   "<" TypeArgument ( "," TypeArgument )* 
-  DEACTIVATE_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT) ">" ;
+  DEACTIVATE_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT) 
+  ">" 
+;
 
 TypeArgument :
-   (Annotation)*
-   (
-      ReferenceType
-      |
-      "?" [ WildcardBounds ]
-   )
+  ReferenceType
+  |
+  "?" [ WildcardBounds ]
 ;
 
 WildcardBounds : ("extends" | "super") ReferenceType ;
@@ -701,7 +701,7 @@ INJECT PrimaryExpression :
        return secondLast.getTokenType() == DOT;
      }
      if (lastToken.getType() == RBRACKET) {
-       return getChild(getChildCount()-1).getTokenType() != LBRACKET;
+       return getChild(getChildCount()-2).getTokenType() != LBRACKET;
      }
      return false;
   }
