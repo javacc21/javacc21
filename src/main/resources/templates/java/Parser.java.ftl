@@ -225,7 +225,7 @@ public boolean isCancelled() {return cancelled;}
   }
 
 [#if !grammar.userDefinedLexer]  
-  boolean activateTokenType(TokenType type, TokenType... types) {
+  boolean activateTokenTypes(TokenType type, TokenType... types) {
     boolean result = token_source.activeTokenTypes.add(type);
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.add(tt);
@@ -239,7 +239,7 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
-  boolean deactivateTokenType(TokenType type, TokenType... types) {
+  boolean deactivateTokenTypes(TokenType type, TokenType... types) {
     boolean result = token_source.activeTokenTypes.remove(type);
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.remove(tt);

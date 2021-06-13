@@ -264,9 +264,9 @@
 
 [#macro BuildCodeTokenTypeActivation activation]
     [#if activation.deactivate]
-       deactivateTokenType(
+       deactivateTokenTypes(
     [#else]
-       activateTokenType(
+       activateTokenTypes(
     [/#if]
     [#list activation.tokenNames as name]
        ${CU.TT}${name} [#if name_has_next],[/#if]
