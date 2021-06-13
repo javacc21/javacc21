@@ -262,10 +262,9 @@ EnumConstant :
 ;
 
 TypeParameters :
-   DEACTIVATE_TOKENS(RSIGNEDSHIFT, RUNSIGNEDSHIFT)
    "<"
    TypeParameter ( "," TypeParameter )* 
-   ">"
+   DEACTIVATE_TOKENS(RSIGNEDSHIFT, RUNSIGNEDSHIFT) ">"
 ;
 
 INJECT TypeParameters : 
@@ -408,8 +407,8 @@ PossiblyEmptyTypeArguments #void :
 
 TypeArguments : 
   SCAN 2
-  DEACTIVATE_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT)
-  "<" TypeArgument ( "," TypeArgument )* ">" ;
+  "<" TypeArgument ( "," TypeArgument )* 
+  DEACTIVATE_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT) ">" ;
 
 TypeArgument :
    (Annotation)*
