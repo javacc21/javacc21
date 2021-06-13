@@ -129,9 +129,9 @@ TOKEN :
   |
   < _FAIL : "FAIL" > #JavaCCKeyWord
   |
-  < _ACTIVATE_TOKEN_TYPE : "ACTIVATE_TOKEN_TYPE"> #JavaCCKeyWord
+  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #JavaCCKeyWord
   |
-  < _DEACTIVATE_TOKEN_TYPE : "DEACTIVATE_TOKEN_TYPE"> #JavaCCKeyWord
+  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #JavaCCKeyWord
   |
   < _ENSURE : "ASSERT"> #JavaCCKeyWord
   |
@@ -2478,9 +2478,9 @@ INJECT AttemptBlock :
 
 TokenTypeActivation :
   (
-   "ACTIVATE_TOKEN_TYPE" 
+   "ACTIVATE_TOKENS" 
    |
-   "DEACTIVATE_TOKEN_TYPE" {CURRENT_NODE.setDeactivate(true);}
+   "DEACTIVATE_TOKENS" {CURRENT_NODE.setDeactivate(true);}
   )
   "(" <IDENTIFIER> ("," <IDENTIFIER>)* ")"
 ;
