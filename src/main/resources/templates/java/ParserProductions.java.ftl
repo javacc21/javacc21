@@ -229,6 +229,8 @@
        ${expansion}
     [#elseif classname = "Failure"]
        [@BuildCodeFailure expansion/]
+    [#elseif classname = "TokenTypeActivation"]
+       [@BuildCodeTokenTypeActivation expansion/]
     [#elseif classname = "ExpansionSequence"]
        [@BuildCodeSequence expansion/]
     [#elseif classname = "NonTerminal"]
@@ -258,6 +260,18 @@
     [#else]
        ${fail.code}
     [/#if]
+[/#macro]
+
+[#macro BuildCodeTokenTypeActivation activation]
+    [#if activation.deactivate]
+       deactivateTokenTypes(
+    [#else]
+       activateTokenTypes(
+    [/#if]
+    [#list activation.tokenNames as name]
+       ${CU.TT}${name} [#if name_has_next],[/#if]
+    [/#list]
+       );
 [/#macro]
 
 [#macro BuildCodeSequence expansion]

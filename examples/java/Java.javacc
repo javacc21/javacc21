@@ -53,39 +53,6 @@ INCLUDE "JavaLexer.javacc"
 
 INJECT PARSER_CLASS : {
 
-  // The logic of the following token hook routine is explained here: 
-  // https://javacc.com/2020/10/20/context-sensitive-tokenization/
-
-  private Token TOKEN_HOOK(Token tok) {
-    TokenType type = tok.getType();
-    if (type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) {
-      if (isInProduction("TypeArguments", "TypeParameters")) {
-        // If we've entered the TypeParameters or TypeArguments production, we need to split
-        // a ">>" or ">>>" into 2 (or 3) GT tokens.
-        Token gt = Token.split(tok, 1, GT, GT);
-        if (type == RUNSIGNEDSHIFT) {
-          Token next = Token.split(gt.getNext(), 1, GT, GT);
-          gt.setNext(next);
-          gt.setNextToken(next);
-        }
-        return gt;
-      }
-    }
-    else if (type == GT) {
-      Token next = tok.getNextToken();
-      if (next != null && next.getType() == GT && !isInProduction("TypeArguments", "TypeParameters")) {
-      // In this case we do the reverse. We merge 2 (or 3) GT tokens into a right shift operator
-        Token nextNext = next.getNextToken();
-        Token merged = Token.merge(tok, next, RSIGNEDSHIFT);
-        if (nextNext != null && nextNext.getType() == GT) {
-            merged = Token.merge(merged, nextNext, RUNSIGNEDSHIFT);
-        } 
-        return merged;
-      }
-    }
-    return tok;
-  }
-  
   private Token TOKEN_HOOK(Token tok) {
     TokenType type = tok.getType();
     if (type != RECORD && (type != IDENTIFIER || !tok.getImage().equals("record"))) {
@@ -297,6 +264,7 @@ EnumConstant :
 TypeParameters :
    "<"
    TypeParameter ( "," TypeParameter )* 
+   DEACTIVATE_TOKENS(RSIGNEDSHIFT, RUNSIGNEDSHIFT) 
    ">"
 ;
 
@@ -308,7 +276,7 @@ INJECT TypeParameters :
     }
 }
 
-TypeParameter: <IDENTIFIER> [TypeBound];
+TypeParameter: (Annotation)* <IDENTIFIER> =>|| [TypeBound];
 
 TypeBound :
    "extends" ObjectType ( "&" ObjectType )*
@@ -438,15 +406,17 @@ PossiblyEmptyTypeArguments #void :
    TypeArguments
 ;
 
-TypeArguments : SCAN 2 "<" TypeArgument ( "," TypeArgument )* ">" ;
+TypeArguments : 
+  SCAN 2
+  "<" TypeArgument ( "," TypeArgument )* 
+  DEACTIVATE_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT) 
+  ">" 
+;
 
 TypeArgument :
-   (Annotation)*
-   (
-      ReferenceType
-      |
-      "?" [ WildcardBounds ]
-   )
+  ReferenceType
+  |
+  "?" [ WildcardBounds ]
 ;
 
 WildcardBounds : ("extends" | "super") ReferenceType ;
@@ -574,6 +544,7 @@ RelationalExpression :
 
 ShiftExpression :
    AdditiveExpression
+   ACTIVATE_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT)
    (
       ("<<" | ">>" | ">>>")
       AdditiveExpression
@@ -730,7 +701,7 @@ INJECT PrimaryExpression :
        return secondLast.getTokenType() == DOT;
      }
      if (lastToken.getType() == RBRACKET) {
-       return getChild(getChildCount()-1).getTokenType() != LBRACKET;
+       return getChild(getChildCount()-2).getTokenType() != LBRACKET;
      }
      return false;
   }

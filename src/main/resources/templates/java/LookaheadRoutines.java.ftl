@@ -302,6 +302,8 @@
        ${ScanCodeLexicalStateSwitch(expansion)}
    [#elseif classname = "Failure"]
          ${ScanCodeError(expansion)}
+   [#elseif classname = "TokenTypeActivation"]
+         ${ScanCodeTokenActivation(expansion)}
    [#elseif classname = "ExpansionSequence"]
       ${ScanCodeSequence(expansion)}
    [#elseif classname = "ZeroOrOne"]
@@ -375,6 +377,7 @@
 [/#macro]    
 
 [#macro ScanCodeAssertion assertion]
+   TODO!!!
 [/#macro]
 
 [#macro ScanCodeError expansion]
@@ -382,8 +385,19 @@
       hitFailure = true;
       return lastLookaheadSucceeded = false;
     }
-  [#-- hitFailure=true; --]
 [/#macro]
+
+[#macro ScanCodeTokenActivation activation]
+    [#if activation.deactivate]
+       deactivateTokenTypes(
+    [#else]
+       activateTokenTypes(
+    [/#if]
+    [#list activation.tokenNames as name]
+       ${CU.TT}${name} [#if name_has_next],[/#if]
+    [/#list]
+       );
+[/#macro]]
 
 [#macro ScanCodeChoice choice]
    [@CU.newVar "Token", "currentLookaheadToken"/]

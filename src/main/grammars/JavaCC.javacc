@@ -129,6 +129,10 @@ TOKEN :
   |
   < _FAIL : "FAIL" > #JavaCCKeyWord
   |
+  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #JavaCCKeyWord
+  |
+  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #JavaCCKeyWord
+  |
   < _ENSURE : "ASSERT"> #JavaCCKeyWord
   |
   < _SCAN : "SCAN" > #JavaCCKeyWord
@@ -442,7 +446,6 @@ INJECT InvocationArguments :
     }
 }
 
-//INCLUDE "/include/java/Java.javacc"
 INCLUDE JAVA
 
 INJECT TypeDeclaration : 
@@ -2177,10 +2180,13 @@ Expansion ExpansionUnit :
     TreeBuildingAnnotation tba = null;
 }
  (
-  SCAN ~\...\Lookahead => 
+  SCAN 1 ~\...\Lookahead => 
   result = Failure
   |
-  SCAN ~\...\Lookahead =>
+  SCAN 1 ~\...\Lookahead =>
+  result=TokenTypeActivation
+  |
+  SCAN 1 ~\...\Lookahead =>
   result=Block ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
   SCAN 1 ~\...\Lookahead =>
@@ -2220,7 +2226,7 @@ Expansion ExpansionUnit :
   FAIL
  )
  [
-     SCAN ~\...\Lookahead => 
+     SCAN 1 ~\...\Lookahead => 
     tba=TreeNodeDescriptor
  ]
  {
@@ -2468,6 +2474,44 @@ INJECT AttemptBlock :
      public boolean getSpecifiesLexicalStateSwitch() {
          return getNestedExpansion().getSpecifiesLexicalStateSwitch();
      }
+}
+
+TokenTypeActivation :
+  (
+   "ACTIVATE_TOKENS" 
+   |
+   "DEACTIVATE_TOKENS" {CURRENT_NODE.setDeactivate(true);}
+  )
+  "(" <IDENTIFIER> ("," <IDENTIFIER>)* ")"
+;
+
+INJECT TokenTypeActivation :
+  import java.util.ArrayList;
+  import java.util.List;
+  import com.javacc.core.TokenSet;
+  extends com.javacc.core.Expansion
+{
+   @Property public boolean deactivate;
+   public List<String> getTokenNames() {
+       List<String> result = new ArrayList<>();
+       for (Identifier id : childrenOfType(Identifier.class)) result.add(id.getImage());
+       return result;
+   }
+   public boolean isConcrete() {return true;}
+
+   public int getMaximumSize() {return 0;}
+
+   public int getMinimumSize() {return 0;}
+
+   public boolean isPossiblyEmpty() {return true;}
+    
+   public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+
+   public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+
+   public boolean isAlwaysSuccessful() {return false;}
+
+   public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
 
 Failure# : 

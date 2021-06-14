@@ -74,6 +74,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
   // Holder for the pending characters we read from the input stream
   private final StringBuilder charBuff = new StringBuilder();
+
+  EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
 [#--  
   // Holder for invalid characters, i.e. that cannot be matched as part of a token
   private final StringBuilder pendingInvalidChars = new StringBuilder();--]
@@ -134,7 +136,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         this(inputSource, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
      }
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
-         this.inputSource = inputSource;
+        this.inputSource = inputSource;
         input_stream = new ${tokenBuilderClass}(inputSource, chars, line, column);
         switchTo(lexState);
      }
@@ -258,11 +260,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             nextStates.clear();
             if (charsRead == 0) {
                 newType = nfaFunctions[0].apply(curChar, nextStates);
+                if (!activeTokenTypes.contains(newType)) newType = null;
             } else {
                 int nextActive = currentStates.nextSetBit(0);
                 while (nextActive != -1) {
                     TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates);
-                    if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
+                    if (activeTokenTypes.contains(returnedType) && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                       newType = returnedType;
                       if (trace_enabled) 
                          LOGGER.info("Potential match: " + newType);
@@ -362,7 +365,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     void reset(Token t) {
         reset(t, null);
     }
-    
+
     FileLineMap getFileLineMap() {
         return input_stream;
     }
