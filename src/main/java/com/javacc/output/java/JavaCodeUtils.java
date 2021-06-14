@@ -94,7 +94,7 @@ public class JavaCodeUtils {
             }
         }
         List<MethodDeclaration> privateMethods = jcu.descendants(MethodDeclaration.class, md->md.firstChildOfType(PRIVATE)!=null);
-        while (addToInvokedMethodList(invokedMethodNames, privateMethods));
+        addToInvokedMethodList(invokedMethodNames, privateMethods);
         // Now remove all the methods that are still in the privateMethods set.
         for (MethodDeclaration md : privateMethods) {
             md.getParent().removeChild(md);
@@ -102,29 +102,34 @@ public class JavaCodeUtils {
     }
 
     /**
+     * Remove any methods from the set of private methods.
+     * 
      * @param invokedMethodNames The set of names of methods that are definitely
      * used somewhere.
      * @param privateMethods The set of method declarations for which we have not 
      * encountered any invocation.
-     * @return whether we actually removed any methods from the set of private methods.
-     * If not, we can exit the loop.
      */
-    static private boolean addToInvokedMethodList(Set<String> invokedMethodNames, List<MethodDeclaration> privateMethods) {
-        boolean result = false;
-        for (ListIterator<MethodDeclaration> it = privateMethods.listIterator(); it.hasNext();) {
+    static private void addToInvokedMethodList(Set<String> invokedMethodNames, List<MethodDeclaration> privateMethods) {
+        boolean loopAgain = true;
+        while (loopAgain) {
+          loopAgain = false;
+          // need to look deeper at a potential optimization, depending on the sizes of the set and the list:
+          // the loops make iterating again and again on privateMethods
+          for (ListIterator<MethodDeclaration> it = privateMethods.listIterator(); it.hasNext();) {
             MethodDeclaration md = it.next();
             if (invokedMethodNames.contains(md.getName())) {
-                it.remove();
-                result = true;
-                List<PrimaryExpression> methodCalls = md.descendants(PrimaryExpression.class, PrimaryExpression::isMethodCall);
-                for (PrimaryExpression methodCall : methodCalls) {
-                    if (!invokedMethodNames.contains(methodCall.getMethodName())) {
-                        invokedMethodNames.add(methodCall.getMethodName());
-                    }
-                }
+              it.remove();
+              loopAgain = true;
+              List<PrimaryExpression> methodCalls = md.descendants(PrimaryExpression.class, PrimaryExpression::isMethodCall);
+              for (PrimaryExpression methodCall : methodCalls) {
+                // add() does the check itself, so avoid 2 method calls (and getMethodName() is not a getter :-()
+//                if (!invokedMethodNames.contains(methodCall.getMethodName())) {
+                  invokedMethodNames.add(methodCall.getMethodName());
+//                }
+              }
             }
+          }
         }
-        return result;
     }
 
     static private void removeDeclaration(Identifier id) {
