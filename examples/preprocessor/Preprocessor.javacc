@@ -6,9 +6,13 @@
 
 DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
 TREE_BUILDING_ENABLED=false;
-PARSER_PACKAGE="com.javacc.preprocessor";
 ENSURE_FINAL_EOL;
 //DEBUG_PARSER;
+#if localtest
+PARSER_PACKAGE="org.parsers.preprocessor";
+#else
+PARSER_PACKAGE="com.javacc.preprocessor";
+#endif
 
 /*
  * This is an implementation of the standard C# preprocessor.
