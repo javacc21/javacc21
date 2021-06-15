@@ -14,7 +14,7 @@
 /examples/java/org/*
 /examples/json/org/*
 /examples/csharp/org/*
-/examples/preprocessor/com/*
+/examples/preprocessor/org/*
 /.vscode/*
 /.idea/*
 

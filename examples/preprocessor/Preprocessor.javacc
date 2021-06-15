@@ -20,7 +20,7 @@ PARSER_PACKAGE="com.javacc.preprocessor";
  * everything except #define/#undef and #if/#elif/#else. 
  * The other C# pre-processing directives, #pragma, #region/#endregion, 
  * #warning/#error and #line are just treated as lines to ignore.
- * So the only thing currently suppported is turning on or off 
+ * So the only thing currently supported is turning on or off 
  * parts of the source file.
  * This is very bare-bones and bloody-minded. It does not build a
  * tree or any of that. It just uses code actions to create a BitSet

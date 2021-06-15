@@ -354,7 +354,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
  [/#if]       
        ParseState() {
            this.lastConsumed = ${grammar.parserClassName}.this.lastConsumedToken;
-           this.parsingStack = (ArrayList<NonTerminalCall>) ${grammar.parserClassName}.this.parsingStack.clone();
+          @SuppressWarnings("unchecked")
+           ArrayList<NonTerminalCall> parsingStack = (ArrayList<NonTerminalCall>) ${grammar.parserClassName}.this.parsingStack.clone();
+           this.parsingStack = parsingStack;
 [#if grammar.lexerData.numLexicalStates > 1]
            this.lexicalState = token_source.lexicalState;
 [/#if]
