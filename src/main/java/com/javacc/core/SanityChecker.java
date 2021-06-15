@@ -230,9 +230,14 @@ public class SanityChecker {
          * TODO: Rewrite this in a simpler manner!
          */
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
+            Set<RegularExpression> privateRegexps = new HashSet<>();
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression regexp = res.getRegexp();
                 if (regexp instanceof RegexpRef) continue;
+                if (regexp.isPrivate()) {
+                    privateRegexps.add(regexp);
+                    continue;
+                }
                 if (!(regexp instanceof RegexpStringLiteral)) {
                     lexerData.addRegularExpression(res.getRegexp());
                 } else {
@@ -258,7 +263,7 @@ public class SanityChecker {
                                                 + "\" has been defined as a \""
                                                 + kind
                                                 + "\" token.");
-                            } else if (alreadyPresent.isPrivate()) {
+                            } else if (privateRegexps.contains(alreadyPresent)) {
                                 grammar.addSemanticError(stringLiteral,   
                                      "String token \"" + image
                                      + "\" has been defined as a private regular expression.");

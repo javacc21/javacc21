@@ -626,9 +626,7 @@ public class Grammar extends BaseNode {
      * XXXConstants.java file)
      */
     public List<RegularExpression> getOrderedNamedTokens() {
-        List<RegularExpression> result = new ArrayList<RegularExpression>();
-        result.addAll(namedTokensTable.values());
-        return result;
+        return new ArrayList<RegularExpression>(namedTokensTable.values());
     }
 
     /**
