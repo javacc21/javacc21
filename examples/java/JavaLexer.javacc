@@ -46,11 +46,11 @@ UNPARSED :  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA;
 
 
 MORE :
-  "//" : IN_SINGLE_LINE_COMMENT
+  <SINGLE_LINE_COMMENT_START: "//"> : IN_SINGLE_LINE_COMMENT
 |
-  <"/**" ~["/"]> { backup(1); } : IN_FORMAL_COMMENT
+  <FORMAL_COMMENT_START: "/**" ~["/"]> { backup(1); } : IN_FORMAL_COMMENT
 |
-  "/*" : IN_MULTI_LINE_COMMENT
+  <MULTI_LINE_COMMENT_START : "/*"> : IN_MULTI_LINE_COMMENT
 ;
 
 <IN_SINGLE_LINE_COMMENT>
@@ -66,7 +66,7 @@ UNPARSED :
 INJECT JavaDocComment : extends Comment;
 
 <IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
-MORE : < ~[] >;
+MORE : < ANY_CHAR : ~[] >;
 
 TOKEN #KeyWord :
   < ABSTRACT: "abstract" > 

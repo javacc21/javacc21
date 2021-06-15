@@ -59,8 +59,7 @@
    ${import}
 [/#list]
 
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.util.logging.Logger;
 import java.util.*;
 
