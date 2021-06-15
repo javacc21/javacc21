@@ -39,11 +39,13 @@
  // and elegant way that is simply not possible with the legacy tool.
 
 JAVA_UNICODE_ESCAPE;
-PARSER_PACKAGE="org.parsers.java";
-NODE_PACKAGE="org.parsers.java.ast";
+PARSER_PACKAGE=org.parsers.java;
+NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
+// The following is actually unnecessary. I just include it to
+// be able to check that the feature is working!
 DEACTIVATE_TOKENS=RUNSIGNEDSHIFT,RSIGNEDSHIFT;
 //JDK_TARGET=15;
 

@@ -1,7 +1,7 @@
 /*
  * A JSONC (JSON with comments) grammar 
  */
-PARSER_PACKAGE="org.parsers.jsonc";
+PARSER_PACKAGE=org.parsers.jsonc;
 PARSER_CLASS=JSONCParser;
 DEFAULT_LEXICAL_STATE=JSON;
 FAULT_TOLERANT;
