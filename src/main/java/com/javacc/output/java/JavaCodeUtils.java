@@ -118,9 +118,7 @@ public class JavaCodeUtils {
                 result = true;
                 List<PrimaryExpression> methodCalls = md.descendants(PrimaryExpression.class, PrimaryExpression::isMethodCall);
                 for (PrimaryExpression methodCall : methodCalls) {
-                    if (!invokedMethodNames.contains(methodCall.getMethodName())) {
-                        invokedMethodNames.add(methodCall.getMethodName());
-                    }
+                    invokedMethodNames.add(methodCall.getMethodName());
                 }
             }
         }

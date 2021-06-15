@@ -694,7 +694,6 @@ public interface Node extends Comparable<Node>
             output += " (incomplete)";
         }
 [/#if]
-
         if (output.length() >0) {
             System.out.println(prefix + output);
         }

@@ -1050,7 +1050,7 @@ Options #Options :
 ;
 
 OptionsBlock #Options :
-    {HashMap<String, Object> settings = new HashMap<>();} 
+    {Map<String, Object> settings = new HashMap<>();} 
     <IDENTIFIER> 
     [
         SCAN {!getToken(0).getImage().equalsIgnoreCase("options")}#
@@ -1063,10 +1063,10 @@ OptionsBlock #Options :
     {grammar.setSettings(settings);}
 ;
 
-Setting(Map settings) #Setting :
+Setting(Map<String,Object> settings) #Setting :
 {
       String key;
-      Token name, t=null;
+      Token name;
       boolean inInclude = grammar.isInInclude();
       Object value = Boolean.TRUE;
 }
@@ -1074,6 +1074,8 @@ Setting(Map settings) #Setting :
      name = <IDENTIFIER> 
      | 
      name = <_IGNORE_CASE>
+     |
+     name = <_DEACTIVATE_TOKENS>
   )
   =>|+1
   {
@@ -1082,15 +1084,19 @@ Setting(Map settings) #Setting :
   [
      "="
      (
-        t="true" {value=true;}
+        "true" {value=true;}
         |
-        t="false" {value=false;}
+        "false" {value=false;}
         |
-        t= <INTEGER_LITERAL> {value = ((IntegerLiteral) t).getValue();}
+        <INTEGER_LITERAL> {value = ((IntegerLiteral) lastConsumedToken).getValue();}
         |
-        t= <STRING_LITERAL> {value = ((StringLiteral) t).getString();}
+        <STRING_LITERAL> {value = ((StringLiteral) lastConsumedToken).getString();}
         |
-        t= <IDENTIFIER> {value = t.getImage();}
+        SCAN <IDENTIFIER> "."
+        =>Name {value = peekNode().toString();}
+        |
+        <IDENTIFIER> {value = lastConsumedToken.getImage();} 
+           ("," {value+=",";} <IDENTIFIER> {value+=lastConsumedToken.getImage();})* 
      )
   ]  
   ";"

@@ -98,6 +98,8 @@ public class Grammar extends BaseNode {
 
     private Path includedFileDirectory;
 
+    private List<String> tokensOffByDefault = new ArrayList<>();
+
 
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
@@ -1118,13 +1120,17 @@ public class Grammar extends BaseNode {
         return jdkTarget;
     }
 
+    public List<String> getDeactivatedTokens() {
+        return tokensOffByDefault;
+    }
+
     private boolean ignoreCase;
     public boolean isIgnoreCase() {return ignoreCase;}
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
 
     public void setSettings(Map<String, Object> settings) {
         typeCheckSettings(settings);
-        sanityCheck();
+        sanityCheckSettings();
         if (!isInInclude()) this.settings = settings;
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
@@ -1134,7 +1140,13 @@ public class Grammar extends BaseNode {
             else if (key.equals("DEFAULT_LEXICAL_STATE")) {
                 setDefaultLexicalState((String) value);
             }
-            if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {
+            else if (key.equals("DEACTIVATE_TOKENS")) {
+                String tokens = (String) settings.get(key);
+                for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens();) {
+                    this.tokensOffByDefault.add(st.nextToken());
+                }
+            }
+            else if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {
                 if (!isInInclude() && outputDir == null)
                     outputDir = Paths.get((String)value);
             }
@@ -1151,7 +1163,7 @@ public class Grammar extends BaseNode {
     }
     private int jdkTarget = 8;
     private String booleanSettings = "FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,USER_DEFINED_LEXER,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,HUGE_FILE_SUPPORT,LEGACY_API,NODE_FACTORY,DEBUG_TOKEN_MANAGER,USER_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL";
-    private String stringSettings = "PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,TOKEN_FACTORY,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY";
+    private String stringSettings = "PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,TOKEN_FACTORY,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS";
     private String integerSettings = "TABS_TO_SPACES,JDK_TARGET";
 
     private void typeCheckSettings(Map<String, Object> settings) {
@@ -1183,7 +1195,7 @@ public class Grammar extends BaseNode {
     /**
      * Some warnings if incompatible options are set.
      */
-    private void sanityCheck() {
+    private void sanityCheckSettings() {
         if (!getTreeBuildingEnabled()) {
             String msg = "You have specified the OPTION_NAME option but it is "
                     + "meaningless unless the TREE_BUILDING_ENABLED is set to true."

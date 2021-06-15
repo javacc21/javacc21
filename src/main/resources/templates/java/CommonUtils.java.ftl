@@ -44,19 +44,26 @@
   Rewritten version of this macro to try to get around the Code too large problem.
 --]
 [#macro enumSet varName tokenNames]
+   [#if tokenNames?size = 0]
+     static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
+   [#elseif tokenNames?size <8]
+    static private final EnumSet<TokenType> ${varName} = EnumSet.of(
+       [#list tokenNames as type]
+         [#if type_index > 0],[/#if]
+         ${TT}${type}
+       [/#list]
+    );
+   [#else]
     static private final EnumSet<TokenType> ${varName} = ${varName}_init();
     static private EnumSet<TokenType> ${varName}_init() {
-       [#if tokenNames?size=0]
-           return EnumSet.noneOf(TokenType.class);
-       [#else]
-           return EnumSet.of(
-             [#list tokenNames as type]
-              [#if type_index > 0],[/#if]
-              ${TT}${type} 
-             [/#list]
-           );
-       [/#if]
+       return EnumSet.of(
+         [#list tokenNames as type]
+          [#if type_index > 0],[/#if]
+           ${TT}${type} 
+         [/#list]
+       );
     }
+   [/#if]
 [/#macro]
 
 [#macro firstSetVar expansion]

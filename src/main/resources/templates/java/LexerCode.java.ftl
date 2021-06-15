@@ -36,6 +36,8 @@
     are in the imported template NfaCode.java.ftl
  --]
 
+ [#import "CommonUtils.java.ftl" as CU  ]
+
 [#var tokenBuilderClass = grammar.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
@@ -76,6 +78,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private final StringBuilder charBuff = new StringBuilder();
 
   EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
+  [#if grammar.deactivatedTokens?size>0]
+     {
+       [#list grammar.deactivatedTokens as token]
+          activeTokenTypes.remove(${CU.TT}${token});
+       [/#list]
+     }
+  [/#if]
 [#--  
   // Holder for invalid characters, i.e. that cannot be matched as part of a token
   private final StringBuilder pendingInvalidChars = new StringBuilder();--]
