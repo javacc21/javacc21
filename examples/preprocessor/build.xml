@@ -1,12 +1,12 @@
 <project name="Preprocessor" default="compile" basedir=".">
     <uptodate property="ppparser.uptodate"
       srcfile="Preprocessor.javacc"
-      targetfile="com/javacc/preprocessor/PreprocessorParser.java"/> 
+	    targetfile="org/parsers/preprocessor/PreprocessorParser.java"/> 
     <target name="clean">
        <delete>
           <fileset dir="${basedir}" includes="*.class"/>
        </delete>
-       <delete dir="${basedir}/com"/>
+       <delete dir="${basedir}/org"/>
    </target>
    <target name="parser-gen" unless="ppparser.uptodate">
         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
