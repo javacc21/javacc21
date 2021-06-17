@@ -109,7 +109,7 @@ public class LexicalStateData {
         }
         CompositeStateSet result = canonicalSets.get(stateSet);
         if (result == null) {
-            result = new CompositeStateSet(stateSet);
+            result = new CompositeStateSet(stateSet, this);
             canonicalSets.put(stateSet, result);
         }
         return result;

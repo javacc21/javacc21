@@ -34,12 +34,8 @@ public class CompositeStateSet extends NfaState {
 
     Set<NfaState> states = new HashSet<>(); 
 
-    CompositeStateSet(LexicalStateData lsd) {
+    CompositeStateSet(Set<NfaState> states, LexicalStateData lsd) {
         super(lsd);
-    }
-
-    CompositeStateSet(Set<NfaState> states) {
-        this(states.iterator().next().getLexicalState());
         this.states = new HashSet<>(states);
     }
 

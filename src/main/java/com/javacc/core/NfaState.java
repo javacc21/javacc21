@@ -177,6 +177,7 @@ public class NfaState {
         // Recursively do closure
         for (NfaState state : new ArrayList<>(epsilonMoves)) {
             state.doEpsilonClosure();
+            assert type == null || state.type == null || type == state.type;
             if (type == null) type = state.type;
             for (NfaState otherState : state.epsilonMoves) {
                 addEpsilonMove(otherState);

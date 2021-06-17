@@ -38,16 +38,6 @@ public interface ${grammar.constantsClassName} {
   [/#list]
    }
 [/#if]
-   
-String[] tokenImage = {
-      "<EOF>",
-    [#list grammar.allTokenProductions as tokenProduction]
-      [#list tokenProduction.regexpSpecs as regexpSpec]
-      [@output_regexp regexpSpec.regexp/][#rt]
-      [#if tokenProduction_has_next || regexpSpec_has_next],[/#if][#lt]
-      [/#list]
-    [/#list]
-  };
 
   static String displayChar(int ch) {
     if (ch == '\'') return "\'\\'\'";
@@ -61,8 +51,6 @@ String[] tokenImage = {
     if (ch < 10) return "" + ch;
     return "0x" + Integer.toHexString(ch);
 }
-
-
 
  static String addEscapes(String str) {
       StringBuilder retval = new StringBuilder();
@@ -106,12 +94,3 @@ String[] tokenImage = {
    }
 }
 
-[#macro output_regexp regexp]
-   [#if regexp.class.name?ends_with("StringLiteral")]
-      "\"${grammar.utils.addEscapes(regexp.image)}\""   
-   [#elseif regexp.label != ""]
-      "<${regexp.label}>"
-   [#else]
-      "<token of kind ${regexp.ordinal}>"
-   [/#if]
-[/#macro]
