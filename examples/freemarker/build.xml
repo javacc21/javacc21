@@ -38,7 +38,7 @@
 	 <echo>Now let's try out the full FTL parser on the templates used in JavaCC</echo>
      <java fork="true" failonerror="true" classname="ftl.FTLParser">
        <assertions><enable/></assertions>
-     	 <arg value = "../../src/main/resources/templates/java"/>
+     	 <arg value = "../../src/ftl/java"/>
 	 </java>
 </target>
 

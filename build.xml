@@ -8,11 +8,11 @@
 	  <echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
 	  <echo>JDK Version: ${java.version} on ${os.name}</echo>
 	  <uptodate property="parser.uptodate"
-		targetfile="src/main/java/com/javacc/parser/JavaCCParser.java">
-        <srcfiles dir="src/main/grammars" includes="*.javacc"/>
+		targetfile="src/java/com/javacc/parser/JavaCCParser.java">
+        <srcfiles dir="src/javacc" includes="*.javacc"/>
 	  </uptodate>
     <uptodate property="preprocessor.uptodate"
-		targetfile="src/main/java/com/javacc/preprocessor/PreprocessorParser.java"
+		targetfile="src/java/com/javacc/preprocessor/PreprocessorParser.java"
         srcfile="examples/preprocessor/Preprocessor.javacc"/>
 
 </target>
@@ -39,8 +39,8 @@
  	<delete file="javacc.jar"/>
  	<delete file="javacc-full.jar"/>
  	<delete dir="build"/>
-	<delete dir="src/main/java/com/javacc/parser"/>
-	<delete dir="src/main/java/com/javacc/preprocessor"/>
+	<delete dir="src/java/com/javacc/parser"/>
+	<delete dir="src/java/com/javacc/preprocessor"/>
   <delete dir="examples/java/com"/>
   <delete dir="examples/freemarker/fel"/>
   <delete dir="examples/freemarker/ftl"/>
@@ -53,20 +53,20 @@
 	<echo>Using Bootstrap JavaCC to regenerate JavaCC parser</echo>
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
      <assertions><enable/></assertions>
- 	   <arg line="-n -q -d ../java src/main/grammars/JavaCC.javacc"/>
+ 	   <arg line="-n -q -d ../java src/javacc/JavaCC.javacc"/>
  	</java>
   </target>
 <target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
 	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
      <assertions><enable/></assertions>
- 	   <arg line="-n -q -d ../../src/main/java examples/preprocessor/Preprocessor.javacc"/>
+ 	   <arg line="-n -q -d ../../src/java examples/preprocessor/Preprocessor.javacc"/>
  	</java>
   </target>
 
 <target name="compile" depends="parser-gen, preprocessor-gen">
   	<mkdir dir="build"/>
-    <javac srcdir="src/main/java" 
+    <javac srcdir="src/java" 
  	       destdir="build"
  	       deprecation="off"
  	       debug="on"
@@ -78,7 +78,7 @@
 	    target="1.8" source="1.8"
     />
      <copy todir="build/templates/java">
-      <fileset dir="src/main/resources/templates/java">
+      <fileset dir="src/ftl/java">
          <include name="*.ftl"/>
       </fileset>
     </copy>
@@ -98,7 +98,7 @@
       </fileset>
     </copy>
 	<copy todir="build">
-	  <fileset dir="src/main/resources">
+	  <fileset dir="src/ftl">
 	    <include name="*.properties"/>
 	  </fileset>
 	</copy>

@@ -47,7 +47,7 @@ import com.javacc.parser.tree.*;
  */
 public class SanityChecker {
 
-    Grammar grammar;
+    private Grammar grammar;
 
     private LexerData lexerData;
 
@@ -61,7 +61,6 @@ public class SanityChecker {
      * Regexp reference. It is a much more terse, readable replacement
      * for some ugly legacy code.
      * @author revusky
-     *
      */
     public class RegexpVisitor extends Node.Visitor {
 
