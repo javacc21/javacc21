@@ -956,10 +956,10 @@ NewCaseStatement :
      |
      ThrowStatement
      |
-     SCAN \.\.\SwitchExpression
+     SCAN 0 \.\.\SwitchExpression
      => Expression ";"
      |
-     SCAN ~\.\.\SwitchExpression
+     SCAN 0 ~\.\.\SwitchExpression
      => BlockStatement
    )
 ;
