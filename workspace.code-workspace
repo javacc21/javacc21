@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"java.project.sourcePaths": [
+			"src/java",
+			"examples/java",
+			"examples/json",
+			"examples/freemarker"
+		],
+		"java.project.referencedLibraries": [
+			"bin/freemarker.jar"
+		]
+	}
+}
