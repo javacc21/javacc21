@@ -44,6 +44,8 @@ import java.util.*;
 
 import com.javacc.parser.ParseException;
 
+import freemarker.template.TemplateException;
+
 
 /**
  * Entry point.
@@ -276,43 +278,37 @@ public final class Main {
      * @throws Exception
      */
 
-    public static int mainProgram(Path grammarFile, Path outputDir, int jdkTarget, boolean quiet, Set<String> symbols) throws Exception {
+    public static int mainProgram(Path grammarFile, Path outputDir, int jdkTarget, boolean quiet, Set<String> symbols) 
+      throws IOException, ParseException, TemplateException {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, jdkTarget, quiet, symbols);
-//        grammar.parse(grammarFile.toString(), true);
         grammar.parse(grammarFile, true);
-        try {
-            grammar.createOutputDir();
-            grammar.doSanityChecks();
-
-            if (!grammar.getUserDefinedLexer() && grammar.getErrorCount() == 0) {
-                grammar.generateLexer();
-            }
-
-            grammar.generateFiles();
-
-            if ((grammar.getErrorCount() == 0)) {
-                if (grammar.getWarningCount() == 0 && !quiet) {
-                    System.out.println("Parser generated successfully.");
-                } else if (grammar.getWarningCount()>0) {
-                    System.out.println("Parser generated with 0 errors and " 
-                                        + grammar.getWarningCount() + " warnings.");
-                }
-                return 0;
-            } else {
-                System.out.println("Detected " + grammar.getErrorCount() + " errors and " + grammar.getWarningCount()
-                        + " warnings.");
-                return (grammar.getErrorCount() == 0) ? 0 : 1;
-            }
-        } catch (MetaParseException e) {
-            System.out.println("Detected " + grammar.getErrorCount() + " errors and " + grammar.getWarningCount()
-                    + " warnings.");
+        grammar.createOutputDir();
+        grammar.doSanityChecks();
+        if (grammar.getErrorCount() > 0) {
+            outputErrors(grammar);
             return 1;
-        } catch (ParseException e) {
-            System.out.println(e.toString());
-            System.out.println("Detected " + (grammar.getErrorCount() + 1) + " errors and " + grammar.getWarningCount()
-                    + " warnings.");
-            return 1;
+        }
+        if (!grammar.getUserDefinedLexer()) {
+            grammar.generateLexer();
+        }
+        grammar.generateFiles();
+        if (grammar.getWarningCount() == 0 && !quiet) {
+            System.out.println("Parser generated successfully.");
+        } else if (grammar.getWarningCount()>0) {
+            System.out.println("Parser generated with 0 errors and " 
+                                + grammar.getWarningCount() + " warnings.");
+        }
+        outputErrors(grammar);
+        return (grammar.getErrorCount() == 0) ? 0 : 1;
+    }
+
+    static void outputErrors(Grammar grammar) {
+        for (String error : grammar.errorMessages) {
+            System.err.println(error);
+        }
+        for (String warning : grammar.warningMessages) {
+            System.err.println(warning);
         }
     }
     

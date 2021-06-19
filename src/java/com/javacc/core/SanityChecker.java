@@ -75,7 +75,7 @@ public class SanityChecker {
                     currentlyVisiting.remove(referredTo);
                 } else {
                     alreadyVisited.add(referredTo);
-                    grammar.addSemanticError(ref, "Self-referential loop detected");
+                    grammar.addError(ref, "Self-referential loop detected");
                 }
             }
         }
@@ -90,7 +90,7 @@ public class SanityChecker {
 
         // Check that non-terminals have all been defined.
         for (NonTerminal nt : grammar.descendants(NonTerminal.class, nt->nt.getProduction()==null)) {
-            grammar.addSemanticError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
+            grammar.addError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
         }
 
         /*
@@ -104,20 +104,20 @@ public class SanityChecker {
             if (sequence.getHasExplicitLookahead() 
                && !sequence.isAtChoicePoint())
             {
-                grammar.addSemanticError(sequence, "Encountered scanahead at a non-choice location." );
+                grammar.addError(sequence, "Encountered scanahead at a non-choice location." );
             }
         }
 /* REVISIT this later.*/
         for (Expansion exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {
             if (!((Expansion) exp.getParent()).isAtChoicePoint()) {
-                grammar.addSemanticError(exp, "The up-to-here delimiter can only be at a choice point.");
+                grammar.addError(exp, "The up-to-here delimiter can only be at a choice point.");
             }
         }
 
         for (BNFProduction prod : grammar.descendants(BNFProduction.class)) {
             String lexicalStateName = prod.getLexicalState();
             if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
-                grammar.addSemanticError(prod, "Lexical state \""
+                grammar.addError(prod, "Lexical state \""
                 + lexicalStateName + "\" has not been defined.");
             }
         }
@@ -125,7 +125,7 @@ public class SanityChecker {
         for (Expansion exp : grammar.descendants(Expansion.class)) {
             String lexicalStateName = exp.getSpecifiedLexicalState();
             if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
-                grammar.addSemanticError(exp, "Lexical state \""
+                grammar.addError(exp, "Lexical state \""
                 + lexicalStateName + "\" has not been defined.");
             }
         }
@@ -137,7 +137,7 @@ public class SanityChecker {
                 if (unit.isAlwaysSuccessful()) {
                     int numFollowing = choices.size() - i -1;
                     String msg = (numFollowing ==1) ? " The expansion that follows " : "The following " + numFollowing + " expansions ";
-                    grammar.addSemanticError(unit, "This expansion can match the empty string." + msg + "can never be matched.");
+                    grammar.addError(unit, "This expansion can match the empty string." + msg + "can never be matched.");
                 }
             }
         }
@@ -148,9 +148,9 @@ public class SanityChecker {
             if (exp.getNestedExpansion().isAlwaysSuccessful()) {
                 Failure failure = exp.getNestedExpansion().firstChildOfType(Failure.class);
                 if (failure != null) {
-                    grammar.addSemanticError(exp, "Expansion inside " + starOrPlus + " always fails! This cannot be right!");
+                    grammar.addError(exp, "Expansion inside " + starOrPlus + " always fails! This cannot be right!");
                 } else {
-                  grammar.addSemanticError(exp, "Expansion inside " + starOrPlus + " can be matched by the empty string, so it would produce an infinite loop!");
+                  grammar.addError(exp, "Expansion inside " + starOrPlus + " can be matched by the empty string, so it would produce an infinite loop!");
                 }
             }
         }
@@ -169,7 +169,7 @@ public class SanityChecker {
             for (String name: lb.getPath()) {
                 if (Character.isJavaIdentifierStart(name.codePointAt(0))) {
                     if (grammar.getProductionByName(name) == null) {
-                        grammar.addSemanticError(lb, "Predicate refers to undefined Non-terminal: " + name);
+                        grammar.addError(lb, "Predicate refers to undefined Non-terminal: " + name);
                     }
                 }
             }
@@ -178,7 +178,7 @@ public class SanityChecker {
         for (Lookahead la : grammar.getAllLookaheads()) {
             Expansion exp = la.getUpToExpansion();
             if (exp != null && !exp.isSingleToken()) {
-                grammar.addSemanticError(exp, "The expansion after UPTO here must be matched by exactly one token.");
+                grammar.addError(exp, "The expansion after UPTO here must be matched by exactly one token.");
             }
          }
 
@@ -186,14 +186,14 @@ public class SanityChecker {
         for (RegexpSpec res : grammar.descendants(RegexpSpec.class)) {
             String nextLexicalState = res.getNextState();
             if (nextLexicalState != null && lexerData.getLexicalState(nextLexicalState) == null) {
-                grammar.addSemanticError(res.getNsTok(), "Lexical state \""
+                grammar.addError(res.getNsTok(), "Lexical state \""
                 + nextLexicalState + "\" has not been defined.");
             }
         }
 
         for (RegexpSpec regexpSpec : grammar.descendants(RegexpSpec.class)) {
             if (regexpSpec.getRegexp().matchesEmptyString()) {
-                grammar.addSemanticError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
+                grammar.addError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
             }
         }
 
@@ -213,7 +213,7 @@ public class SanityChecker {
                     String label = re.getLabel();
                     RegularExpression regexp = grammar.addNamedToken(label, re);
                     if (regexp != null) {
-                        grammar.addSemanticError(res.getRegexp(),
+                        grammar.addError(res.getRegexp(),
                                 "Multiply defined lexical token name \"" + label
                                 + "\".");
                     } 
@@ -256,14 +256,14 @@ public class SanityChecker {
                         else if (!tp.isExplicit()) {
                             if (alreadyPresent.getTokenProduction() != null && !alreadyPresent.getTokenProduction().getKind().equals("TOKEN")) {
                                 String kind = alreadyPresent.getTokenProduction().getKind();
-                                grammar.addSemanticError(stringLiteral,
+                                grammar.addError(stringLiteral,
                                         "String token \""
                                                 + image
                                                 + "\" has been defined as a \""
                                                 + kind
                                                 + "\" token.");
                             } else if (privateRegexps.contains(alreadyPresent)) {
-                                grammar.addSemanticError(stringLiteral,   
+                                grammar.addError(stringLiteral,   
                                      "String token \"" + image
                                      + "\" has been defined as a private regular expression.");
                             } else {
@@ -299,12 +299,12 @@ public class SanityChecker {
                 String label = ref.getLabel();
                 RegularExpression referenced = grammar.getNamedToken(label);
                 if (referenced == null) {// && !ref.getLabel().equals("EOF")) {
-                    grammar.addSemanticError(ref,  "Undefined lexical token name \"" + label + "\".");
+                    grammar.addError(ref,  "Undefined lexical token name \"" + label + "\".");
                 } else if (ref.getTokenProduction() == null || !ref.getTokenProduction().isExplicit()) {
                     if (referenced.isPrivate()) {
-                        grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
+                        grammar.addError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
                     }   else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
-                        grammar.addSemanticError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
+                        grammar.addError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
                     } 
                 } 
             }

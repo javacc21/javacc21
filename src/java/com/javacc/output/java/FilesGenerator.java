@@ -38,7 +38,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import com.javacc.Grammar;
-import com.javacc.MetaParseException;
 import com.javacc.core.RegularExpression;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.CompilationUnit;
@@ -79,9 +78,9 @@ public class FilesGenerator {
                                              codeInjections);
     }
 
-    public void generateAll() throws IOException, TemplateException, ParseException, MetaParseException {
+    public void generateAll() throws IOException, TemplateException, ParseException {
         if (grammar.getErrorCount() != 0) {
-            throw new MetaParseException();
+            throw new ParseException();
         }
         initializeTemplateEngine();
         generateToken();
@@ -263,9 +262,9 @@ public class FilesGenerator {
         generate(outputFile);
     }
     
-    void generateParser() throws MetaParseException, IOException, ParseException, TemplateException {
+    void generateParser() throws ParseException, IOException, TemplateException {
         if (grammar.getErrorCount() !=0) {
-        	throw new MetaParseException();
+        	throw new ParseException();
         }
         String filename = grammar.getParserClassName() + ".java";
         Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
@@ -326,7 +325,7 @@ public class FilesGenerator {
             if (tokenSubclassFileNames.contains(outputFile.getFileName().toString())) {
                 String name = outputFile.getFileName().toString();
                 name = name.substring(0, name.length() -5);
-                grammar.addSemanticError(null, "The name " + name + " is already used as a Token subclass.");
+                grammar.addError("The name " + name + " is already used as a Token subclass.");
             }
             files.put(nodeName, outputFile);
         }

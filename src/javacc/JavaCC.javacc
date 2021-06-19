@@ -2713,7 +2713,7 @@ InPlaceRegexp #void :
         re = choice;
       }
       if (image.length() ==0 && isInProduction("BNFProduction")) {
-         grammar.addParseError(t, "It is mandatory to label an inline regexp in a grammar production.");
+         grammar.addError(t, "It is mandatory to label an inline regexp in a grammar production.");
       }
       re.setLabel(image);
       re.setGeneratedClassName(image);
@@ -3020,20 +3020,20 @@ INJECT CharacterRange :
         java.util.List<StringLiteral> bounds = childrenOfType(StringLiteral.class);
         String left = bounds.get(0).getString();
         if (!isSingleChar(left)) {
-            getGrammar().addParseError(bounds.get(0),
+            getGrammar().addError(bounds.get(0),
                     "String in character list may contain only one character.");
         }
         this.left = this.right = left.codePointAt(0);
         if (bounds.size()>1) {
             String right = bounds.get(1).getString();
             if (!isSingleChar(right)) {
-                getGrammar().addParseError(bounds.get(1),
+                getGrammar().addError(bounds.get(1),
                         "String in character list may contain only one character.");
             }
             this.right = right.codePointAt(0);
         }
         if (this.left>this.right) {
-            getGrammar().addParseError(this, "The left side of the character range must a lower ordinal (in Unicode) value than the right side.");
+            getGrammar().addError(this, "The left side of the character range must a lower ordinal (in Unicode) value than the right side.");
         }
     }
 }

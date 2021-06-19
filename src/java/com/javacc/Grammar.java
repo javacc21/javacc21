@@ -42,8 +42,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.javacc.JavaCCError.ErrorCode;
-import com.javacc.JavaCCError.Type;
 import com.javacc.core.Expansion;
 import com.javacc.core.LexerData;
 import com.javacc.core.RegularExpression;
@@ -100,12 +98,12 @@ public class Grammar extends BaseNode {
 
     private List<String> tokensOffByDefault = new ArrayList<>();
 
-
-
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
+    List<String> errorMessages = new ArrayList<>(), warningMessages = new ArrayList<>();
+
     // JavaCC error reporter.
-    private JavaCCErrorReporter reporter;
+//    private JavaCCErrorReporter reporter;
 	private int parseErrorCount;
 	private int semanticErrorCount;
     private int warningCount;
@@ -114,19 +112,13 @@ public class Grammar extends BaseNode {
     private boolean quiet;
     
     public Grammar(Path outputDir, int jdkTarget, boolean quiet, Set<String> preprocessorSymbols) {
-        this();
         this.outputDir = outputDir;
         this.jdkTarget = jdkTarget;
         this.quiet = quiet;
         this.preprocessorSymbols = preprocessorSymbols;
     }
 
-    public Grammar() {  
-    	setReporter(JavaCCErrorReporter.DEFAULT);
-    	this.parseErrorCount = 0;;
-    	this.semanticErrorCount = 0;
-    	this.warningCount = 0;
-    }
+    public Grammar() {}
 
     public boolean isQuiet() {return quiet;}
 
@@ -255,7 +247,7 @@ public class Grammar extends BaseNode {
     public Node include(List<String> locations, Node includeLocation) throws IOException, ParseException {
         Path path = resolveLocation(locations);
         if (path == null) {
-            addSemanticError(includeLocation, "Could not resolve location of include file");
+            addError(includeLocation, "Could not resolve location of include file");
             throw new FileNotFoundException(includeLocation.getLocation());
         }
         String location = path.toString();
@@ -283,7 +275,7 @@ public class Grammar extends BaseNode {
     public void createOutputDir() {
         Path outputDir = Paths.get(".");
         if (!Files.isWritable(outputDir)) {
-            addSemanticError(null, "Cannot write to the output directory : \"" + outputDir + "\"");
+            addError(null, "Cannot write to the output directory : \"" + outputDir + "\"");
         }
     }
 
@@ -302,7 +294,8 @@ public class Grammar extends BaseNode {
         lexerData.buildData();
     }
 
-    public void doSanityChecks() throws MetaParseException {
+
+    public void doSanityChecks() {
         if (defaultLexicalState == null) {
             setDefaultLexicalState("DEFAULT");
         }
@@ -310,8 +303,8 @@ public class Grammar extends BaseNode {
             lexerData.addLexicalState(lexicalState);
         }
         new SanityChecker(this).doChecks();
-        if (getErrorCount() != 0) {
-            throw new MetaParseException();
+        if (getErrorCount() > 0) {
+            return;
         }
         lexerData.ensureStringLabels();
         resolveStringLiterals();
@@ -440,7 +433,7 @@ public class Grammar extends BaseNode {
             if (parserPackage != null) {
                 if (!parserPackage.equals(specifiedPackageName)) {
                     String msg = "PARSER_PACKAGE was specified in the options directory as " + parserPackage + " but is specified in the PARSER_BEGIN/PARSER_END section as " + specifiedPackageName +".";
-                    addSemanticError(null, msg);
+                    addError(null, msg);
                 }
             }
             parserPackage = specifiedPackageName;
@@ -688,126 +681,28 @@ public class Grammar extends BaseNode {
 		return semanticErrorCount;
 	}
 
+    public void addError(String errorMessage) {
+        errorMessages.add(errorMessage);
+    }
+
+    public void addError(Node location, String errorMessage) {
+        errorMessages.add("Error: " + location.getLocation() + ":" + errorMessage);
+    }
+
+    public void addWarning(String warningMessage) {
+        warningMessages.add(warningMessage);
+    }
+
+    public void addWarning(Node location, String warningMessage) {
+        String message = "Warning: " + location.getLocation() + ":" + warningMessage;
+        warningMessages.add(message);
+    }
+
 	/**
-	 * Returns the total error count during grammar parsing.
-	 * 
 	 * @return the total error count during grammar parsing.
 	 */
 	public int getErrorCount() {
-		return getParseErrorCount() + getSemanticErrorCount();
-	}
-
-	/**
-	 * Add semantic error.
-	 * 
-	 * @param node    the node which causes the error and null otherwise.
-	 * @param message the semantic message error.
-	 */
-//	@Deprecated
-	public void addSemanticError(Node node, String message) {
-		addError(node, JavaCCError.Type.SEMANTIC, JavaCCError.ErrorCode.Unknown, message);
-	}
-
-	/**
-	 * Add semantic error.
-	 * 
-	 * @param node    the node which causes the error and null otherwise.
-	 * @param code      the error code.
-	 * @param arguments the arguments for the error message and null otherwise.
-	 */
-	public void addSemanticError(Node node, JavaCCError.ErrorCode code, Object... arguments) {
-		addError(node, JavaCCError.Type.SEMANTIC, code, null, arguments);
-	}
-
-	/**
-	 * Add parse error.
-	 * 
-	 * @param node    the node which causes the error and null otherwise.
-	 * @param message the parse message error.
-	 */
-	@Deprecated
-	public void addParseError(Node node, String message) {
-		addError(node, JavaCCError.Type.PARSE, JavaCCError.ErrorCode.Unknown, message);
-	}
-
-	/**
-	 * Add parse error.
-	 * 
-	 * @param node      the node which causes the error and null otherwise.
-	 * @param code      the error code.
-	 * @param arguments the arguments for the error message and null otherwise.
-	 */
-	public void addParseError(Node node, JavaCCError.ErrorCode code, Object... arguments) {
-		addError(node, JavaCCError.Type.PARSE, code, null, arguments);
-	}
-
-	/**
-	 * Add warning.
-	 * 
-	 * @param node    the node which causes the warning and null otherwise.
-	 * @param message the warning message error.
-	 */
-//	@Deprecated
-	public void addWarning(Node node, String message) {
-		addError(node, JavaCCError.Type.WARNING, JavaCCError.ErrorCode.Unknown, message);
-	}
-
-	/**
-	 * Add warning.
-	 * 
-	 * @param node      the node which causes the warning and null otherwise.
-	 * @param code      the error code.
-	 * @param arguments the arguments for the error message and null otherwise.
-	 */
-	public void addWarning(Node node, JavaCCError.ErrorCode code, Object... arguments) {
-		addError(node, JavaCCError.Type.WARNING, code, null, arguments);
-	}
-
-	/**
-	 * Add error.
-	 * 
-	 * @param node      the node which causes the error and null otherwise.
-	 * @param type      the error type.
-	 * @param code      the error code.
-	 * @param message   the error message.
-	 * @param arguments the error arguments.
-	 */
-	private void addError(Node node, JavaCCError.Type type, JavaCCError.ErrorCode code, String message,
-			Object... arguments) {
-		if (message == null) {
-			message = Messages.getMessage(code.name(), arguments);
-		}
-		JavaCCError error = new JavaCCError(this.getFilename(), type, code, arguments, message, node);
-		reporter.reportError(error);
-		switch (type) {
-		case PARSE:
-			parseErrorCount++;
-			break;
-		case SEMANTIC:
-			semanticErrorCount++;
-			break;
-		case WARNING:
-			warningCount++;
-			break;
-		}
-	}
-
-	/**
-	 * Set the JavaCC error reporter.
-	 * 
-	 * @param reporter the JavaCC error reporter
-	 */
-	public void setReporter(JavaCCErrorReporter reporter) {
-		this.reporter = reporter;
-	}
-
-	/**
-	 * Returns the JavaCC error reporter.
-	 * 
-	 * @return the JavaCC error reporter
-	 */
-	public JavaCCErrorReporter getReporter() {
-		return reporter;
+        return errorMessages.size();
 	}
 
     public Set<String> getNodeNames() {
@@ -1169,21 +1064,21 @@ public class Grammar extends BaseNode {
             Object value = settings.get(key);
             if (booleanSettings.indexOf(key)>=0) {
                 if (!(value instanceof Boolean)) {
-                    addError(null, Type.SEMANTIC, ErrorCode.OptionValueTypeMismatch, "The option " + key + " is supposed to be a boolean (true/false) type");
+                    errorMessages.add("The option " + key + " is supposed to be a boolean (true/false) type");
                 }
             }
             else if (stringSettings.indexOf(key)>=0) {
                 if (!(value instanceof String)) {
-                    addError(null, Type.SEMANTIC, ErrorCode.OptionValueTypeMismatch, "The option " + key + " is supposed to be a string");
+                    errorMessages.add("The option " + key + " is supposed to be a string");
                 }
             }
             else if (integerSettings.indexOf(key)>=0) {
                 if (!(value instanceof Integer)) {
-                    addError(null, Type.SEMANTIC, ErrorCode.OptionValueTypeMismatch, "The option " + key + " is supposed to be an integer");
+                    errorMessages.add("The option " + key + " is supposed to be an integer");
                 }
             }
             else {
-                addError(null, Type.WARNING, ErrorCode.UnrecognizedOption, "The option " + key + " is not recognized and will be ignored.");
+                warningMessages.add("The option " + key + " is not recognized and will be ignored.");
             }
         }
     }
