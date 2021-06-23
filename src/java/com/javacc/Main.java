@@ -152,7 +152,10 @@ public final class Main {
         System.out.println(" -d <directory>    Specify the directory (absolute or relative to the grammarfile location) to place generated files");
         System.out.println("   For example:   -d ../../src/generated");
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
+        System.out.println(" -lang <language>  Specify the language to generate code in (the default is 'java')");
+        System.out.println("                     (valid choices are currently 'java' or 'python')");
         System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 16. (Default is 8)");
+        System.out.println("                     (this is only useful when the code generation is in Java)");
         System.out.println(" -n                Suppress the check for a newer version");
         System.out.println(" -p                Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.");
         System.out.println("   For example:   -p debug,strict");
@@ -184,6 +187,7 @@ public final class Main {
             System.exit(0);
         }
         Path grammarFile = null, outputDirectory = null;
+        String codeLang = "java";
         int jdkTarget = 0;
         Map<String, String> preprocessorSymbols = new HashMap<>();
         boolean quiet = false, noNewerCheck = false;
@@ -227,7 +231,25 @@ public final class Main {
                 else if (arg.equalsIgnoreCase("-q") || arg.equalsIgnoreCase("-quiet")) {
                     quiet = true;
                 }
+                else if (arg.toLowerCase().equals("-lang")) {
+                    String candidate = args[++i];
+                    if (candidate.equalsIgnoreCase("python")) {
+                        codeLang = "python";
+                        if (jdkTarget != 0) {
+                            System.err.println("The -jdk flag isn't compatible with a Python target.");
+                            System.exit(-1);
+                        }
+                    }
+                    else if (!candidate.equalsIgnoreCase("java")) {
+                        System.err.println("Only Python and Java are supported for -lang.");
+                        System.exit(-1);
+                    }
+                }
                 else if (arg.toLowerCase().startsWith("-jdk")) {
+                    if (!codeLang.equals("java")) {
+                        System.err.println("The -jdk flag isn't compatible with a Python target.");
+                        System.exit(-1);
+                    }
                     String number = arg.substring(4);
                     try {
                        jdkTarget = Integer.valueOf(number);
@@ -280,7 +302,7 @@ public final class Main {
                 }
             }
         }
-        int errorcode = mainProgram(grammarFile, outputDirectory, jdkTarget, quiet, preprocessorSymbols);
+        int errorcode = mainProgram(grammarFile, outputDirectory, codeLang, jdkTarget, quiet, preprocessorSymbols);
         System.exit(errorcode);
     }
 
@@ -292,10 +314,10 @@ public final class Main {
      * @throws Exception
      */
 
-    public static int mainProgram(Path grammarFile, Path outputDir, int jdkTarget, boolean quiet, Map<String, String> symbols) 
+    public static int mainProgram(Path grammarFile, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols) 
       throws IOException, ParseException, TemplateException {
         if (!quiet) bannerLine();
-        Grammar grammar = new Grammar(outputDir, jdkTarget, quiet, symbols);
+        Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
         grammar.parse(grammarFile, true);
         grammar.createOutputDir();
         grammar.doSanityChecks();

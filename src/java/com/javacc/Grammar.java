@@ -1,5 +1,6 @@
 /* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
+ * Copyright (c) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk - changes for Python support.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,14 +47,18 @@ import com.javacc.core.Expansion;
 import com.javacc.core.LexerData;
 import com.javacc.core.RegularExpression;
 import com.javacc.core.SanityChecker;
+import com.javacc.output.Sequencer;
 import com.javacc.output.java.FilesGenerator;
+import com.javacc.output.java.CodeInjector;
+import com.javacc.output.Translator;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
 import freemarker.template.TemplateException;
+import org.w3c.dom.html.HTMLMapElement;
 
 /**
- * This object is the root Node of the data structure that contains all the 
+ * This object is the root Node of the data structure that contains all the
  * information regarding a JavaCC processing job.
  */
 public class Grammar extends BaseNode {
@@ -110,9 +115,12 @@ public class Grammar extends BaseNode {
 
     private Path outputDir;
     private boolean quiet;
+    private String codeLang;
+    private Translator translator;
     
-    public Grammar(Path outputDir, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
+    public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
         this.outputDir = outputDir;
+        this.codeLang = codeLang;
         this.jdkTarget = jdkTarget;
         this.quiet = quiet;
         this.preprocessorSymbols = preprocessorSymbols;
@@ -121,6 +129,9 @@ public class Grammar extends BaseNode {
     public Grammar() {}
 
     public boolean isQuiet() {return quiet;}
+
+    public String getCodeLang() { return codeLang; }
+    public Translator getTranslator() { return translator; }
 
     public String[] getLexicalStates() {
         return lexicalStates.toArray(new String[]{});
@@ -148,18 +159,32 @@ public class Grammar extends BaseNode {
         }
     }
     
+    private String separatorString() {
+        // Temporary solution. Use capital sigma for Python, for now
+        return codeLang.equals("java") ? "$": "\u03A3";
+    }
+
+    public String generateIdentifierPrefix(String basePrefix) {
+        StringBuilder sb = new StringBuilder(basePrefix);
+
+        sb.append(separatorString());
+        return sb.toString();
+    }
+
     public String generateUniqueIdentifier(String prefix, Node exp) {
         String inputSource = exp.getInputSource();
+        String sep = separatorString();
+
         if (inputSource != null) {
             int lastSlash = Math.max(inputSource.lastIndexOf('\\'), inputSource.lastIndexOf('/'));
             if (lastSlash+1<inputSource.length()) inputSource = inputSource.substring(lastSlash+1);
         } else {
             inputSource = "";
         }
-        String id = prefix + inputSource + "$" + exp.getBeginLine() + "$" + exp.getBeginColumn();
+        String id = prefix + inputSource + sep + exp.getBeginLine() + sep + exp.getBeginColumn();
         id = removeNonJavaIdentifierPart(id);
         while (usedIdentifiers.contains(id)) {
-            id += "$";
+            id += sep;
         }
         usedIdentifiers.add(id);
         return id;
@@ -321,7 +346,8 @@ public class Grammar extends BaseNode {
     }
 
     public void generateFiles() throws ParseException, IOException, TemplateException {
-        new FilesGenerator(this, codeInjections).generateAll();
+        translator = Translator.getTranslatorFor(this);
+        new FilesGenerator(this, codeLang, codeInjections).generateAll();
     }
 
     public LexerData getLexerData() {
@@ -408,6 +434,13 @@ public class Grammar extends BaseNode {
     public void setDefaultLexicalState(String defaultLexicalState) {
         this.defaultLexicalState = defaultLexicalState;
         addLexicalState(defaultLexicalState);
+    }
+
+    public CodeInjector getInjector() {
+        return new CodeInjector(parserClassName, lexerClassName,
+                                constantsClassName, baseNodeClassName,
+                                parserPackage, getNodePackage(),
+                                codeInjections);
     }
 
     public List<Node> getOtherParserCodeDeclarations() {
@@ -807,7 +840,8 @@ public class Grammar extends BaseNode {
             if (sig != null) {
                 String methodName = new StringTokenizer(sig, "(\n ").nextToken();
                 if (className.equals(lexerClassName)) {
-                    if (methodName.startsWith("tokenHook$") || methodName.equals("tokenHook") || methodName.equals("CommonTokenAction")) {
+                    String prefix = generateIdentifierPrefix("tokenHook");
+                    if (methodName.startsWith(prefix) || methodName.equals("tokenHook") || methodName.equals("CommonTokenAction")) {
                         lexerTokenHooks.add(methodName);
                     }
                 }
@@ -864,10 +898,24 @@ public class Grammar extends BaseNode {
         }
         String packageName = getParserPackage();
         if (packageName != null  && packageName.length() >0) {
-            packageName = packageName.replace('.', '/');
-            dir = dir.resolve(packageName);
-            if (!Files.exists(dir)) {
-                Files.createDirectories(dir);
+            if (codeLang.equals("java")) {
+                packageName = packageName.replace('.', '/');
+                dir = dir.resolve(packageName);
+                if (!Files.exists(dir)) {
+                    Files.createDirectories(dir);
+                }
+            }
+            else { // Python. Use last part of package, append "parser"
+                int dotPosition = packageName.lastIndexOf('.');
+
+                if (dotPosition >= 0) {
+                    packageName = packageName.substring(dotPosition + 1);
+                }
+                packageName = packageName.concat("parser");
+                dir = dir.resolve(packageName);
+                if (!Files.exists(dir)) {
+                    Files.createDirectories(dir);
+                }
             }
         }
         return dir;
@@ -1151,6 +1199,7 @@ public class Grammar extends BaseNode {
     public Utils getUtils() {return utils;}
 
     public class Utils {
+
         public void pushNodeVariableName(String jjtThis) {
             nodeVariableNameStack.add(jjtThis);
         }
@@ -1241,6 +1290,367 @@ public class Grammar extends BaseNode {
             if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch)) return "\'" + (char) ch + "\'";
             if (ch < 10) return "" + ch;
             return "0x" + Integer.toHexString(ch);
+        }
+
+        /**
+         * This method is only here to help with debugging NFA state-related logic in templates.
+         * Sometimes, you want to see ASCII rather than code points.
+         *
+         * @param char_array a list of code points.
+         * @return a String to use in generated template code.
+         */
+        public String displayChars(int[] char_array) {
+            StringBuilder sb = new StringBuilder();
+            int n = char_array.length;
+
+            sb.append('[');
+            for (int i = 0; i < n; i++) {
+                sb.append(displayChar(char_array[i]));
+                if (i < (n - 1)) {
+                    sb.append(", ");
+                }
+            }
+            sb.append(']');
+            return sb.toString();
+        }
+
+        /*
+         * The methods below are temporary, while the Python support
+         * gets fleshed out. Once we start to generalize over other
+         * languages, it makes sense to move this sort of stuff to
+         * dedicated e.g. XXXTranslator classes, with the appropriate
+         * one being selected via the codeLang attribute.
+         */
+
+        public String tokenSubClasses(boolean namesOnly) {
+            StringBuilder result = new StringBuilder();
+            Map<String, String> tokenClassMap = new HashMap<>();
+            Map<String, String> superClassMap = new HashMap<>();
+            List<String> classes = new ArrayList<>();
+
+            for (RegularExpression re : Grammar.this.getOrderedNamedTokens()) {
+                if (re.isPrivate()) continue;
+                String tokenClassName = re.getGeneratedClassName();
+                String superClassName = re.getGeneratedSuperClassName();
+
+                if (superClassName == null) {
+                    superClassName = "Token";
+                }
+                else {
+                    if (!superClassMap.containsKey(superClassName)) {
+                        classes.add(superClassName);
+                        superClassMap.put(superClassName, null); // TODO not always!
+                    }
+                }
+                if (!tokenClassMap.containsKey(tokenClassName)) {
+                    classes.add(tokenClassName);
+                    tokenClassMap.put(tokenClassName, superClassName);
+                }
+            }
+            // Sort out superclasses' superclasses
+            CodeInjector injector = Grammar.this.getInjector();
+            String pkg = injector.getNodePackage();
+            Map<String, List<ObjectType>> extendsLists = injector.getExtendsLists();
+            for (String key: superClassMap.keySet()) {
+                String qualifiedName = String.format("%s.%s", pkg, key);
+                List<ObjectType> extendsList = extendsLists.get(qualifiedName);
+
+                if ((extendsList == null) || (extendsList.size() == 0)) {
+                    superClassMap.put(key, "Token");
+                }
+                else {
+                    superClassMap.put(key, extendsList.get(0).toString());
+                }
+            }
+            tokenClassMap.putAll(superClassMap);
+
+            // Topologically sort classes
+            Sequencer seq = new Sequencer();
+            for (Map.Entry<String, String> entry : tokenClassMap.entrySet()) {
+                seq.addNode(entry.getKey());
+                seq.addNode(entry.getValue());
+                seq.add(entry.getKey(), entry.getValue());
+            }
+            List<String> sorted = seq.steps("Token");
+            sorted.remove(0);
+            if (namesOnly) {
+
+            }
+            else {
+
+            }
+            int n = sorted.size();
+            for (int i = 0; i < n; i++) {
+                String cn = sorted.get(i);
+
+                if (namesOnly) {
+                    result.append("    '");
+                    result.append(cn);
+                    result.append("',");
+                }
+                else {
+                    result.append("class ");
+                    result.append(cn);
+                    result.append('(');
+                    result.append(tokenClassMap.get(cn));
+                    result.append("): pass\n");
+                }
+                if (i < (n - 1)) {
+                    result.append('\n');
+                }
+            }
+            return result.toString();
+        }
+
+        public String translateParameters(String parameterList) throws ParseException {
+            StringBuilder sb = new StringBuilder();
+            // First construct the parameter list with parentheses, so
+            // that we can parse it and get the AST
+            sb.append('(');
+            sb.append(parameterList);
+            sb.append(')');
+            JavaCCParser parser = new JavaCCParser(sb.toString());
+            parser.FormalParameters();
+            List<FormalParameter> parameters = ((FormalParameters) parser.rootNode()).getParams();
+            int n = parameters.size();
+            // Now build the result
+            sb.setLength(0);
+            for (int i = 0; i < n; i++) {
+                FormalParameter param = parameters.get(i);
+                sb.append(Grammar.this.translator.translateIdentifier(param.getName()));
+                if (i < (n - 1)) {
+                    sb.append(", ");
+                }
+            }
+            return sb.toString();
+        }
+
+        public String translateExpression(Node expr) {
+            StringBuilder result = new StringBuilder();
+            Grammar.this.translator.translateExpression((Expression) expr, result);
+            return result.toString();
+        }
+
+        public String translateString(String expr) throws ParseException {
+            // For debugging. Just parse the passed string as an expression
+            // and output the translation.
+            JavaCCParser parser = new JavaCCParser(expr);
+            parser.Expression();
+            StringBuilder result = new StringBuilder();
+            Grammar.this.translator.translateExpression((Expression) parser.rootNode(), result);
+            return result.toString();
+        }
+
+        private void translateStatements(Node node, int indent, StringBuilder result) {
+            if (node instanceof Statement) {
+                Grammar.this.translator.translateStatement(node, indent, result);
+            }
+            else {
+                for (int i = 0; i < node.getChildCount(); i++) {
+                    Node child = node.getChild(i);
+                    if (child instanceof Delimiter) {
+                        continue;   // could put in more checks here
+                    }
+                    Grammar.this.translator.translateStatement(child, indent, result);
+                }
+            }
+        }
+
+        public Set<String> getTokenNames() {
+            HashSet<String> result = new HashSet<>();
+            for (RegularExpression re : lexerData.getRegularExpressions()) {
+                result.add(re.getLabel());
+            }
+            return result;
+        }
+
+        public String translateCodeNode(Node node, int indent) {
+            StringBuilder result = new StringBuilder();
+            translateStatements(node, indent, result);
+            return result.toString();
+        }
+
+        private void addIndent(int amount, StringBuilder result) {
+            for (int i = 0; i < amount; i++) {
+                result.append(' ');
+            }
+        }
+
+        public String translateCodeBlock(String cb, int indent) throws ParseException {
+            StringBuilder result = new StringBuilder();
+            cb = cb.trim();
+            if (cb.length() == 0) { // must add a "pass"
+                addIndent(indent, result);
+                result.append("pass\n");
+            }
+            else {
+                String block = "{" + cb + "}";
+                JavaCCParser parser = new JavaCCParser(block);
+                parser.Block();
+                Node node = parser.rootNode();
+                Translator.SymbolTable syms = new Translator.SymbolTable();
+                translator.pushSymbols(syms);
+                translateStatements(node, indent, result);
+                translator.popSymbols();
+            }
+            return result.toString();
+        }
+
+        public String translateNonterminalArgs(String args) {
+            StringBuilder result = new StringBuilder();
+
+            if (args != null) {
+                String[] parts = args.replace("EnumSet.of(", "").replace(")", "").split(",");
+                result.append("Set({");
+                if ((parts.length > 0) && (parts[0].trim().length() > 0)) {
+                    for (int i = 0; i < parts.length; i++) {
+                        result.append("TokenType.");
+                        result.append(parts[i].trim());
+                        if (i < (parts.length - 1)) {
+                            result.append(", ");
+                        }
+                    }
+                }
+                result.append("})");
+            }
+            return result.toString();
+        }
+
+        public String translateInjectedClass(CodeInjector injector, String name) throws ParseException {
+            StringBuilder result = new StringBuilder();
+            Map<String, List<ObjectType>> extendsLists = injector.getExtendsLists();
+            Map<String, List<ObjectType>> implementsLists = injector.getImplementsLists();
+            Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = injector.getBodyDeclarations();
+            Map<String, TypeParameters> typeParameterLists = injector.getTypeParameterLists();
+            String qualifiedName = String.format("%s.%s", injector.getNodePackage(), name);
+            List<ObjectType> extendsList = extendsLists.get(qualifiedName);
+            List<ObjectType> implementsList = implementsLists.get(qualifiedName);
+            List<String> nameList = new ArrayList<>();
+
+            if (extendsList.isEmpty() && implementsList.isEmpty()) {
+                 nameList.add(injector.getBaseNodeClassName());
+            }
+            else {
+                for (int i = 0; i < extendsList.size(); i++) {
+                    ObjectType ot = extendsList.get(i);
+                    nameList.add(ot.toString());
+                }
+                for (int i = 0; i < implementsList.size(); i++) {
+                    ObjectType ot = implementsList.get(i);
+                    nameList.add(ot.toString());
+                }
+            }
+            result.append("class ");
+            result.append(name);
+            result.append('(');
+            for (int i = 0; i < nameList.size(); i++) {
+                result.append(nameList.get(i));
+                if (i < (nameList.size() - 1)) {
+                    result.append(", ");
+                }
+            }
+            result.append("):");
+            List<ClassOrInterfaceBodyDeclaration> decls = bodyDeclarations.get(qualifiedName);
+            if (decls.size() == 0) {
+                result.append(" pass\n");
+            }
+            else {
+                int n = decls.size();
+                int idx = 0;
+                result.append('\n');
+                for (ClassOrInterfaceBodyDeclaration decl : decls) {
+                    for (int i = 0; i < decl.getChildCount(); i++) {
+                        Node child = decl.getChild(i);
+
+                        if (child instanceof MethodDeclaration) {
+                            Grammar.this.translator.translateStatement((MethodDeclaration) child, 4, result);
+                        }
+                        else {
+                            throw new UnsupportedOperationException();
+                        }
+                    }
+//                    if (idx < (n - 1)) {
+//                        result.append('\n');
+//                    }
+                    idx++;
+                }
+            }
+            return result.toString();
+        }
+
+        public String translateLexerInjections(CodeInjector injector, boolean fields) {
+            StringBuilder result = new StringBuilder();
+            Translator t = Grammar.this.translator;
+            if (fields) {
+                translator.clearFields();
+            }
+            Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = injector.getBodyDeclarations();
+            List<ClassOrInterfaceBodyDeclaration> declsToProcess;
+            String key = String.format("%s.%s", Grammar.this.getParserPackage(),
+                    Grammar.this.getLexerClassName());
+            declsToProcess = bodyDeclarations.get(key);
+            int indent = 8;
+            if (declsToProcess != null) {
+                for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
+                    Node child = decl.getFirstChild();
+                    boolean process = (fields != (child instanceof MethodDeclaration));
+                    if (process) {
+                        if (child instanceof FieldDeclaration || child instanceof CodeBlock) {
+                            Grammar.this.translator.translateStatement(child, indent, result);
+                        }
+                        else if (child instanceof MethodDeclaration) {
+                            Grammar.this.translator.translateStatement((MethodDeclaration) child, 4, result);
+                        }
+                        else {
+                            throw new UnsupportedOperationException();
+                        }
+                    }
+                }
+            }
+            return result.toString();
+        }
+
+        public String translateParserInjections(CodeInjector injector, boolean fields) {
+            StringBuilder result = new StringBuilder();
+            return result.toString();
+        }
+
+        public List<String> getSortedNodeClassNames() {
+            Sequencer seq = new Sequencer();
+            CodeInjector injector = getInjector();
+            Map<String, List<ObjectType>> extendsMap = injector.getExtendsLists();
+            Map<String, List<ObjectType>> implementsMap = injector.getImplementsLists();
+            String pkg = injector.getNodePackage();
+            String bnn = injector.getBaseNodeClassName();
+
+            seq.addNode(bnn);
+            for (String cn : getNodeNames()) {
+                String qn = String.format("%s.%s", pkg, cn);
+                List<ObjectType> elist = extendsMap.get(qn);
+                List<ObjectType> ilist = implementsMap.get(qn);
+                List<String> preds = new ArrayList<>();
+                if (elist != null) {
+                    for (ObjectType ot : elist) {
+                        preds.add(ot.toString());
+                    }
+                }
+                if (ilist != null) {
+                    for (ObjectType ot : ilist) {
+                        preds.add(ot.toString());
+                    }
+                }
+                if (preds.isEmpty()) {
+                    preds.add(bnn);
+                }
+                for (String pn : preds) {
+                    seq.addNode(pn);
+                    seq.addNode(cn);
+                    seq.add(cn, pn);  // Add in reverse order
+                }
+            }
+            List<String> result = seq.steps(bnn);
+            result.remove(0); // The bnn value
+            return result;
         }
     }
 }

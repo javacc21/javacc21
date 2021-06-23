@@ -54,21 +54,40 @@ public class FilesGenerator {
     private CodeInjector codeInjector;
     private Set<String> tokenSubclassFileNames = new HashSet<>();
     private HashMap<String, String> superClassLookup = new HashMap<>();
+    private final String codeLang;
 
     void initializeTemplateEngine() throws IOException {
         fmConfig = new freemarker.template.Configuration();
         Path filename = grammar.getFilename().toAbsolutePath();
         Path dir = filename.getParent();
-        TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir.toFile()), 
-                                                                new ClassTemplateLoader(this.getClass(), "/templates/java"));
+        //
+        // The first two loaders are really for developers - templates
+        // are looked for in the grammar's directory, and then in a
+        // templates subdirectory below that, which could, of course, be
+        // a symlink to somewhere else.
+        // We check for the templates subdirectory existing, because otherwise
+        // FreeMarker will raise an exception.
+        //
+        TemplateLoader templateLoader;
+        String templateFolder = "/templates/".concat(codeLang);
+        Path altDir = dir.resolve(templateFolder.substring(1));
+        ArrayList<TemplateLoader> loaders = new ArrayList<>();
+        loaders.add(new FileTemplateLoader(dir.toFile()));
+        if (Files.exists(altDir)) {
+            loaders.add(new FileTemplateLoader(altDir.toFile()));
+        }
+        loaders.add(new ClassTemplateLoader(this.getClass(), templateFolder));
+        templateLoader = new MultiTemplateLoader(loaders.toArray(new TemplateLoader[0]));
+
         fmConfig.setTemplateLoader(templateLoader);
         fmConfig.setObjectWrapper(new BeansWrapper());
         fmConfig.setNumberFormat("computer");
         fmConfig.setArithmeticEngine(freemarker.core.ast.ArithmeticEngine.CONSERVATIVE_ENGINE);
     }
 
-    public FilesGenerator(Grammar grammar, List<Node> codeInjections) {
+    public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
         this.grammar = grammar;
+        this.codeLang = codeLang;
         this.codeInjector = new CodeInjector(grammar.getParserClassName(), 
                                              grammar.getLexerClassName(),
                                              grammar.getConstantsClassName(), 
@@ -83,25 +102,49 @@ public class FilesGenerator {
             throw new ParseException();
         }
         initializeTemplateEngine();
-        generateToken();
-        generateLexer();
-        if (!grammar.getUserDefinedLexer()) {
-            generateNfaData();
+        if (codeLang.equals("java")) {
+            generateToken();
+            generateLexer();
+            if (!grammar.getUserDefinedLexer()) {
+                generateNfaData();
+            }
+            generateConstantsFile();
+            if (!grammar.getProductionTable().isEmpty()) {
+                generateParseException();
+                generateParser();
+            }
+            if (!grammar.getHugeFileSupport()) {
+                generateFileLineMap();
+            }
+            if (grammar.getFaultTolerant()) {
+                generateInvalidNode();
+                generateParsingProblem();
+            }
+            if (grammar.getTreeBuildingEnabled()) {
+                generateTreeBuildingFiles();
+            }
         }
-        generateConstantsFile();
-        if (!grammar.getProductionTable().isEmpty()) {
-            generateParseException();
-            generateParser();
-        }
-    	if (!grammar.getHugeFileSupport()) {
-    		generateFileLineMap();
-    	}
-    	if (grammar.getFaultTolerant()) {
-    	    generateInvalidNode();
-            generateParsingProblem();
-    	}
-        if (grammar.getTreeBuildingEnabled()) {
-            generateTreeBuildingFiles();
+        else {  // Python
+            // Hardcoded for now, could make configurable later
+            String[] paths = new String[] {
+                "__init__.py",
+                "utils.py",
+                "tokens.py",
+                "lexer.py",
+                "parser.py"
+            };
+            Path outDir = grammar.getParserOutputDirectory();
+            for (String p : paths) {
+                if (p.equals("lexer.py")) {
+                    if (grammar.getUserDefinedLexer()) {
+                        continue;   // no need to generate
+                    }
+                }
+                Path outputFile = outDir.resolve(p);
+                // Could check if regeneration is needed, but for now
+                // always (re)generate
+                generate(outputFile);
+            }
         }
     }
 
@@ -112,38 +155,40 @@ public class FilesGenerator {
     public void generate(String nodeName, Path outputFile) throws IOException, ParseException, TemplateException  {
         this.currentFilename = outputFile.getFileName().toString();
         String templateName = currentFilename + ".ftl";
-        if (tokenSubclassFileNames.contains(currentFilename)) {
-                templateName = "ASTToken.java.ftl";
-        }
-        else if (currentFilename.equals(grammar.getParserClassName() + ".java")) {
-            templateName = "Parser.java.ftl";
-        }
-        else if (currentFilename.equals(grammar.getConstantsClassName() + ".java")) {
-            templateName = "Constants.java.ftl";
-        }
-        else if (currentFilename.endsWith("Lexer.java")
-                 || currentFilename.equals(grammar.getLexerClassName() + ".java")) {
-            templateName = "Lexer.java.ftl";
-        }
-        else if (currentFilename.endsWith("NfaData.java") || currentFilename.equals(grammar.getNfaDataClassName() +".java")) {
-            templateName = "NfaData.java.ftl";
-        }
-        else if (currentFilename.endsWith(".html")) {
-            templateName = "doc.html.ftl";
-        }
-        else if (currentFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
-            templateName = "BaseNode.java.ftl";
-        }
-        else if (currentFilename.startsWith(grammar.getNodePrefix())) {
-            if (!(currentFilename.equals("ParseException.java") 
-                    || currentFilename.equals("ParsingProblem.java")
-                    || currentFilename.equals("Token.java")
-                    || currentFilename.equals("Node.java")
-            		|| currentFilename.equals("InvalidToken.java")
-            		|| currentFilename.equals("FileLineMap.java")
-                    || currentFilename.equals("InvalidNode.java")))
-            {
-                    templateName = "ASTNode.java.ftl";
+        if (codeLang.equals("java")) {
+            if (tokenSubclassFileNames.contains(currentFilename)) {
+                    templateName = "ASTToken.java.ftl";
+            }
+            else if (currentFilename.equals(grammar.getParserClassName() + ".java")) {
+                templateName = "Parser.java.ftl";
+            }
+            else if (currentFilename.equals(grammar.getConstantsClassName() + ".java")) {
+                templateName = "Constants.java.ftl";
+            }
+            else if (currentFilename.endsWith("Lexer.java")
+                     || currentFilename.equals(grammar.getLexerClassName() + ".java")) {
+                templateName = "Lexer.java.ftl";
+            }
+            else if (currentFilename.endsWith("NfaData.java") || currentFilename.equals(grammar.getNfaDataClassName() +".java")) {
+                templateName = "NfaData.java.ftl";
+            }
+            else if (currentFilename.endsWith(".html")) {
+                templateName = "doc.html.ftl";
+            }
+            else if (currentFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
+                templateName = "BaseNode.java.ftl";
+            }
+            else if (currentFilename.startsWith(grammar.getNodePrefix())) {
+                if (!(currentFilename.equals("ParseException.java") 
+                        || currentFilename.equals("ParsingProblem.java")
+                        || currentFilename.equals("Token.java")
+                        || currentFilename.equals("Node.java")
+                        || currentFilename.equals("InvalidToken.java")
+                        || currentFilename.equals("FileLineMap.java")
+                        || currentFilename.equals("InvalidNode.java")))
+                {
+                        templateName = "ASTNode.java.ftl";
+                }
             }
         }
         HashMap<String, Object> dataModel = new HashMap<String, Object>();
@@ -236,7 +281,7 @@ public class FilesGenerator {
         }
         outputFile = grammar.getParserOutputDirectory().resolve("InvalidToken.java");
         if (regenerate(outputFile)) {
-        	generate(outputFile);
+            generate(outputFile);
         }
     }
     
@@ -292,11 +337,21 @@ public class FilesGenerator {
        		throw new IOException(msg);
         }
         String filename = file.getFileName().toString();
-        if (filename.endsWith(".java")) {
-            String typename = filename.substring(0, filename.length() -5);
+        // Changes here to allow different rules to be used for different
+        // languages. At the moment there are no non-Java code injections
+        String extn = codeLang.equals("java") ? ".java" : ".py";
+        if (filename.endsWith(extn)) {
+            String typename = filename.substring(0, filename.length()  - extn.length());
             if (codeInjector.hasInjectedCode(typename)) {
                 return true;
             }
+        }
+        //
+        // For now regenerate() isn't called for generating Python files
+        // but I'll leave this here for now
+        //
+        if (extn.equals(".py")) {
+            return true;    // for now, always regenerate
         }
         return false;
     }

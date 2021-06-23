@@ -354,6 +354,19 @@ INJECT TypeDeclaration :
     }
 }
 
+INJECT FormalParameter : 
+{
+    public String getName() {
+        String result = null;
+        Node last = getLastChild();
+
+        if (last instanceof Identifier) {
+            result = ((Identifier) last).getImage();
+        }
+        return result;
+    }
+}
+
 INJECT FormalParameters : 
    import java.util.List;
 {
@@ -781,19 +794,22 @@ INJECT Identifier :
         }
         if (image.equals("TOKEN_HOOK")) {
             if (tokenHookName ==null) {
-                tokenHookName = getGrammar().generateUniqueIdentifier("tokenHook$", this);
+                String prefix = getGrammar().generateIdentifierPrefix("tokenHook");
+                tokenHookName = getGrammar().generateUniqueIdentifier(prefix, this);
             }
             return tokenHookName;
         }
         if (image.equals("OPEN_NODE_HOOK")) {
             if (openHookName == null) {
-                openHookName = getGrammar().generateUniqueIdentifier("openNodeHook$", this);
+                String prefix = getGrammar().generateIdentifierPrefix("openNodeHook");
+                openHookName = getGrammar().generateUniqueIdentifier(prefix, this);
             }
             return openHookName;
         }
         if (image.equals("CLOSE_NODE_HOOK")) {
             if (closeHookName == null) {
-                closeHookName = getGrammar().generateUniqueIdentifier("closeNodeHook$", this);
+                String prefix = getGrammar().generateIdentifierPrefix("closeNodeHook");
+                closeHookName = getGrammar().generateUniqueIdentifier(prefix, this);
             }
             return closeHookName;
         }
@@ -1238,7 +1254,7 @@ INJECT BNFProduction :
     }
 
     public String getLookaheadMethodName() {
-        return "check$" + name;
+        return getGrammar().generateIdentifierPrefix("check") + name;
     }
 
     /**
@@ -2086,7 +2102,8 @@ import java.util.*;
     
     public String getRoutineName() {
         if (routineName == null) {
-            routineName = getGrammar().generateUniqueIdentifier("backscan$", this);
+            String prefix = getGrammar().generateIdentifierPrefix("backscan");
+            routineName = getGrammar().generateUniqueIdentifier(prefix, this);
         }
         return routineName;
     }
