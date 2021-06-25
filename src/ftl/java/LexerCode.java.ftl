@@ -36,7 +36,7 @@
     are in the imported template NfaCode.java.ftl
  --]
 
- [#import "CommonUtils.java.ftl" as CU  ]
+[#import "CommonUtils.java.ftl" as CU  ]
 
 [#var tokenBuilderClass = grammar.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
 [#var lexerData=grammar.lexerData]
@@ -108,7 +108,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
 
-  private static final Logger LOGGER = Logger.getLogger(${grammar.parserClassName}.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(${grammar.constantsClassName}.class.getName());
     [#if grammar.debugLexer]  
   private boolean trace_enabled = true;
     [#else]  
@@ -316,7 +316,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     truncateCharBuff(charBuff, amount);
   }
 
-
   /**
    * Truncate a StringBuilder by a certain number of code points
    * @param buf the StringBuilder
@@ -325,7 +324,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   static final void truncateCharBuff(StringBuilder buf, int amount) {
     int idx = buf.length();
     if (idx <= amount) idx = 0;
-    while (idx > 0 && amount -- > 0) {
+    while (idx > 0 && amount-- > 0) {
       char ch = buf.charAt(--idx);
       if (Character.isLowSurrogate(ch)) --idx;
     }

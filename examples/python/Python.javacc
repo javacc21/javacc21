@@ -1,0 +1,192 @@
+/*
+ * Unfinished work on a Python grammar. I am working from the information in
+ * following two web pages:
+ * https://docs.python.org/3/reference/grammar.html
+ * https://docs.python.org/3/reference/lexical_analysis.html#indentation
+ * This is Python 3.9.5, which I presume is the latest spec. 
+ * (I do not anticipate supporting any older versions of the language.)
+ */
+
+PARSER_PACKAGE = org.parsers.python;
+NODE_PACKAGE = org.parsers.python.ast;
+DEFAULT_LEXICAL_STATE = PYTHON;
+TABS_TO_SPACES=8;
+PRESERVE_LINE_ENDINGS=false;
+
+UNPARSED : 
+   <WHITESPACE : (" "| "\n"| "\f")+> #Whitespace
+   |
+   <COMMENT: "#" (~["\n"])* "\n" > #Comment  
+;
+
+TOKEN #Delimiter :
+   <ASSIGN : "=">
+   |
+   <COLON : ":" >
+   |
+   <COMMA : ",">
+   |
+   <LBRACE: "{" > 
+   | 
+   <RBRACE: "}" > 
+   |
+   <LBRACKET : "[">
+   |
+   <RBRACKET : "]">
+   |
+   <LPAREN : "(">
+   |
+   <RPAREN : ")" >
+   |
+   <SEMICOLON : ";">
+   |
+   <STAR : "*"> 
+   |
+   <STAR_STAR : "**">
+;
+
+TOKEN #Operator :
+   <AT : "@">
+   |
+   <BIT_AND : "&">
+   |
+   <BIT_OR : "|">
+   |
+   <XOR : "^">
+   |
+   <TILDE : "~">
+   |
+   <COLONEQUALS : ":=">
+   |
+   <DOT : ".">
+   |
+   <ELLIPSIS : "...">
+   |
+   <EQ : "==">
+   | 
+   <LE: "<=" > 
+   | 
+   <GE: ">=" > 
+   | 
+   <NE: "!=" > 
+   |
+   <GT: ">" > 
+   | 
+   <LT: "<" > 
+   |
+   <MINUS : "-">
+   |
+   <PLUS : "+">
+   |
+   <SLASH : "/">
+   |
+   <PERCENT : "%">
+   |
+   <MINUSASSIGN : "-=">
+   |
+   <PLUSASSIGN : "+=">
+   |
+   <STARASSIGN : "*=">
+   |
+   <ATASSIGN : "@=">
+   |
+   <SLASHASSIGN : "/=">
+   |
+   <REMASSIGN : "%=">
+   |
+   <ANDASSIGN : "&=">
+   |
+   <ORASSIGN : "|=">
+   |
+   <XORASSIGN : "^=">
+   |
+   <LSHIFT : "<<">
+   |
+   <RSHIFT : ">>">
+   |
+   <LSHIFTASSIGN : "<<=">
+   |
+   <RSHIFTASSIGN : ">>=">
+   |
+   <STARSTARASSIGN : "**=">
+   |
+   <SLASHSLASHASSIGN : "//=">
+   |
+   <RARROW : "->">
+   |
+   <HOOK : "? ">
+;
+
+TOKEN #Keyword :
+   <AND : "and">
+   |
+   <AS : "as">
+   |
+   <_ASSERT : "assert">
+   |
+   <BREAK : "break">
+   |
+   <CLASS : "class">
+   |
+   <CONTINUE : "continue">
+   |
+   <DEF : "def">
+   |
+   <DEL : "del">
+   |
+   <EXCEPT : "except">
+   |
+   <FINALLY : "finally">
+   |
+   <FOR : "for">
+   |
+   <FROM : "from">
+   |
+   <GLOBAL : "global">
+   |
+   <IF : "if">
+   |
+   <IN : "in">
+   |
+   <IS : "is">
+   |
+   <ELIF : "elif">
+   |
+   <ELSE : "else">
+   |
+   <FALSE : "False">
+   |
+   <IMPORT : "import">
+   |
+   <LAMBDA : "lambda">
+   |
+   <NONLOCAL : "nonlocal">
+   |
+   <NONE : "None">
+   |
+   <NOT : "not">
+   |
+   <OR : "or">
+   |
+   <PASS : "pass">
+   |
+   <PEG_PARSER : "__peg_parser__">
+   |
+   <RAISE : "raise">
+   |
+   <RETURN : "return">
+   |
+   <TRUE : "True">   
+   |
+   <TRY : "try">
+   |
+   <WHILE : "while">
+   |
+   <WITH : "with">
+   |
+   <YIELD : "yield">
+;   
+   
+
+
+
