@@ -1067,7 +1067,6 @@ Setting(Map<String,Object> settings) #Setting :
 {
       String key;
       Token name;
-      boolean inInclude = grammar.isInInclude();
       Object value = Boolean.TRUE;
 }
   ( 

@@ -17,7 +17,10 @@ public interface ${grammar.constantsClassName} {
 [/#if]  
   public enum TokenType {
      [#list grammar.lexerData.regularExpressions as regexp]
-     ${regexp.label},
+       ${regexp.label},
+     [/#list]
+     [#list grammar.extraTokens as extraToken]
+       ${extraToken},
      [/#list]
      INVALID
   }
