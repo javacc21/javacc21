@@ -19,6 +19,12 @@ UNPARSED :
    <COMMENT: "#" (~["\n"])* "\n" > #Comment  
 ;
 
+INCLUDE "PythonIdentifierDef.javacc"
+
+TOKEN :
+  <NAME : <PYTHON_IDENTIFIER_START> (<PYTHON_IDENTIFIER_PART>)* > #Name
+;
+
 TOKEN #Delimiter :
    <ASSIGN : "=">
    |
@@ -124,6 +130,10 @@ TOKEN #Keyword :
    |
    <_ASSERT : "assert">
    |
+   <ASYNC : "asynch">
+   |
+   <AWAIT : "await">
+   |
    <BREAK : "break">
    |
    <CLASS : "class">
@@ -186,7 +196,37 @@ TOKEN #Keyword :
    |
    <YIELD : "yield">
 ;   
-   
+
+// The following is lifted from the Pydev code. See:
+// https://github.com/fabioz/Pydev/blob/master/plugins/org.python.pydev.parser/src/org/python/pydev/parser/grammar38/python.jjt#L392-L411
+// I think this is fair use. I don't anticipate anybody complaining. Besides, they most likely lifted this 
+// from somewhere else!
+TOKEN #NumericalLiteral : 
+    <DECNUMBER:
+        ["1"-"9"] ((["_"])?["0"-"9"])* (["l", "L"])?
+      | "0"
+      >
+    |   
+    <HEXNUMBER: "0" ["x","X"] ((["_"])? ["0"-"9","a"-"f","A"-"F"])+ (["l","L"])? >
+    |   
+    <OCTNUMBER: "0" ["o","O"] ((["_"])? ["0"-"7"])* (["l","L"])? >
+    |   
+    <BINNUMBER: "0" (["b","B"])? ((["_"])? ["0"-"1"])* (["l","L"])? >
+    |
+    <FLOAT:
+        ["0"-"9"]((["_"])?["0"-"9"])* "." ((["_"])?["0"-"9"])* (<EXPONENT>)?
+      | "." ["0"-"9"]((["_"])?["0"-"9"])* (<EXPONENT>)?
+      | ["0"-"9"]((["_"])?["0"-"9"])* <EXPONENT>
+      >
+    |
+    <COMPLEX: (<DECNUMBER> | <FLOAT> | "0" <DECNUMBER> ) ["j", "J"]>
+    |
+    <#EXPONENT: ["e","E"] (["+","-"])? ["0"-"9"]((["_"])?["0"-"9"])* >
+    |   
+    <#DIGIT: ["0" - "9"] >
+;
+
+Number#void : <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX> ;
 
 
 
