@@ -29,7 +29,8 @@
 
 package com.javacc.output.java;
 
-import static com.javacc.parser.JavaCCConstants.*;
+import static com.javacc.parser.JavaCCConstants.TokenType;
+import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
@@ -167,7 +168,7 @@ public class JavaFormatter {
                 buf.append(", ");
                 break;
             default:
-                if (buf.length() > 0 && currentToken.getType() != TokenType.EOF) {
+                if (buf.length() > 0 && currentToken.getType() != EOF) {
                     int lastChar = buf.codePointBefore(buf.length());
                     int thisChar = currentToken.toString().codePointAt(0);
                     if ((Character.isJavaIdentifierPart(lastChar) || lastChar == ')' || lastChar == ']') 
@@ -177,10 +178,10 @@ public class JavaFormatter {
                 }
                 buf.append(currentToken);
                 TokenType type = currentToken.getType();
-                if (type == TokenType.IF || type == TokenType.WHILE || type == TokenType.GT || type == TokenType.EQ || type == TokenType.ASSIGN) {
+                if (type == IF || type == WHILE || type == GT || type == EQ || type == ASSIGN) {
                     buf.append(' ');
                 }
-                if (type == TokenType.IDENTIFIER && parent instanceof Annotation && parent.indexOf(currentToken) == parent.getChildCount()-1) {
+                if (type == IDENTIFIER && parent instanceof Annotation && parent.indexOf(currentToken) == parent.getChildCount()-1) {
                     newLine();
                 }
         }
