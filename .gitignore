@@ -15,6 +15,7 @@
 /examples/json/org/*
 /examples/csharp/org/*
 /examples/preprocessor/org/*
+/examples/python/org/*
 /personal.code-workspace
 /.vscode/*
 /.idea/*

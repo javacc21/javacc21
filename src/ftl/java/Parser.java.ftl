@@ -54,7 +54,7 @@ import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*
 @SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
 
-    private static final java.util.logging.Logger LOGGER = Logger.getLogger(${grammar.parserClassName}.class.getName());
+    private static final java.util.logging.Logger LOGGER = Logger.getLogger(${grammar.constantsClassName}.class.getName());
     
 [#if grammar.debugParser||grammar.debugLexer||grammar.debugFaultTolerant]
      static {
