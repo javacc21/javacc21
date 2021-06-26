@@ -77,10 +77,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private final StringBuilder charBuff = new StringBuilder();
 
   EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
-  [#if grammar.deactivatedTokens?size>0]
+  [#if grammar.deactivatedTokens?size>0 || grammar.extraTokens?size >0]
      {
        [#list grammar.deactivatedTokens as token]
           activeTokenTypes.remove(${CU.TT}${token});
+       [/#list]
+       [#list grammar.extraTokens as token]
+          regularTokens.add(${CU.TT}${token});
        [/#list]
      }
   [/#if]
