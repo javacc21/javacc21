@@ -41,11 +41,11 @@
  	<delete dir="build"/>
 	<delete dir="src/java/com/javacc/parser"/>
 	<delete dir="src/java/com/javacc/preprocessor"/>
-  <delete dir="examples/java/com"/>
+  <delete dir="examples/java/org"/>
   <delete dir="examples/freemarker/fel"/>
   <delete dir="examples/freemarker/ftl"/>
-  <delete dir="examples/json/com"/>
-  <delete dir="examples/preprocessor/com/"/>
+  <delete dir="examples/json/org"/>
+  <delete dir="examples/preprocessor/org/"/>
 </target>
 
 
