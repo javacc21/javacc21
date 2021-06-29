@@ -1,0 +1,34 @@
+<project name="Python" default="compile" basedir=".">
+    <uptodate property="parser.uptodate"
+	    targetfile="org/parsers/python/PythonParser.java"> 
+        <srcfiles dir="." includes="*.javacc"/>
+    </uptodate>
+    <target name="clean">
+       <delete>
+          <fileset dir="${basedir}" includes="*.class"/>
+       </delete>
+       <delete dir="${basedir}/org"/>
+   </target>
+   <target name="parser-gen" unless="parser.uptodate">
+        <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
+            <assertions><enable/></assertions>
+            <arg line="-n ${basedir}/Python.javacc"/>
+        </java>
+   </target>
+   <target name="compile" depends="parser-gen">
+	   <javac classpath="." srcdir="." includeantruntime="off"  failonerror="true" debug="on" target="1.8" source="1.8"
+		   fork="true"/>
+       <echo>
+           test harness via: java PyTest &lt;filename&gt;
+       </echo>
+   </target>
+   <target name="test" depends="compile">
+      <echo>
+            Now test on a file...
+      </echo>
+      <java classname="PyTest" classpath="." failonerror="true" fork="true">
+          <assertions><enable/></assertions>
+	      <arg value="${basedir}/testfile" />
+      </java>
+   </target>
+</project>
