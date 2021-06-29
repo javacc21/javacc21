@@ -45,7 +45,7 @@ AtomicExpression :
 
 Expression : AtomicExpression ;
 
-Statement : SimpleStatement ;
+Statement : SimpleStatement | CompoundStatement ;
            
 SimpleStatement : 
    ReturnStatement 
@@ -65,6 +65,12 @@ SimpleStatement :
    RaiseStatement
 ;
 
+CompoundStatement :
+    WhileStatement
+    |
+    TryStatement
+;    
+
 ReturnStatement : "return" ;
 
 GlobalStatement : "global" <NAME> ("," <NAME>)* ;
@@ -81,3 +87,21 @@ Block :
     <NEWLINE><INDENT>(Statement)+<DEDENT>
 ;    
 
+ElseBlock : "else" ":" Block ;
+
+ExceptBlock : "except" [ Expression ["as" <NAME>] ] ":" Block ;
+
+FinallyBlock : "finally" ":" Block ;
+
+TryStatement : 
+   "try" ":" Block 
+   (
+       FinallyBlock
+       | 
+       ((ExceptBlock)+ [ElseBlock] [FinallyBlock])
+   )
+;
+
+NamedExpression : [ <NAME> ":=" ] Expression ;
+
+WhileStatement : "while" NamedExpression ":" Block [ElseBlock] ;
