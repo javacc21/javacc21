@@ -74,7 +74,7 @@ public class LexicalStateData {
 
     public Collection<NfaState> getAllNfaStates() {
         List<NfaState> result = new ArrayList<>(allStates);
-        Collections.sort(result, (first,second)->first.getIndex()-second.getIndex());
+        Collections.sort(result, (first,second)->first.index-second.index);
         return result;
     }
 

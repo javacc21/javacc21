@@ -438,8 +438,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   }
  [/#if]
 
-  // Generate the map for lexical state transitions from the various token types (if necessary)
  [#if lexerData.hasLexicalStateTransitions]
+  // Generate the map for lexical state transitions from the various token types
   static {
     [#list grammar.lexerData.regularExpressions as regexp]
       [#if !regexp.newLexicalState?is_null]

@@ -1040,13 +1040,19 @@ public class Grammar extends BaseNode {
             else if (key.equals("DEACTIVATE_TOKENS")) {
                 String tokens = (String) settings.get(key);
                 for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens();) {
-                    this.tokensOffByDefault.add(st.nextToken());
+                    String tokenName = st.nextToken();
+                    if (!tokensOffByDefault.contains(tokenName)) {
+                        tokensOffByDefault.add(tokenName);
+                    }
                 }
             }
             else if (key.equals("EXTRA_TOKENS")) {
                 String tokens = (String) settings.get(key);
                 for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens();) {
-                    this.extraTokens.add(st.nextToken());
+                    String tokenName = st.nextToken();
+                    if (!extraTokens.contains(tokenName)) {
+                        extraTokens.add(tokenName);
+                    }
                 }
             }
             else if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {

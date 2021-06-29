@@ -2,30 +2,38 @@
  * The lexical grammar of the still unfunished Python parser
  */
 
+PARSER_PACKAGE = org.parsers.pylexer;
 DEFAULT_LEXICAL_STATE = PYTHON;
 TABS_TO_SPACES=8;
 PRESERVE_LINE_ENDINGS=false;
 EXTRA_TOKENS=INDENT,DEDENT;
 
-INJECT LEXER_CLASS :
-  import NODE_PACKAGE.Whitespace;
-{
-    private List<Integer> indentationStack = new ArrayList<>();
+INJECT LEXER_CLASS : {
+   private int indentation=1;
+   private List<Integer> indentationStack = new ArrayList<>();
+   private boolean inContinuation;
 
+   void indent(int amount) {
+	    indentationStack.add(indentation);
+	    indentation = amount;
+   }
 
-    Token TOKEN_HOOK(Token token) {
-        Token prevToken = token.getPreviousToken();
-        if (prevToken instanceof Whitespace) {
-            // Do something here to deal with indentation
-        }
-        return token;
-    }
+   void dedent() {
+	    indentation = indentationStack.remove(indentationStack.size()-1);
+   }
 }
 
+
+SKIP : <" " | "\f"> ;
+
 UNPARSED : 
-   <WHITESPACE : (" "| "\n"| "\f")+> #Whitespace
+   <CONTINUE_LINE : "\\\n"> #Whitespace
    |
    <COMMENT: "#" (~["\n"])* "\n" > #Comment  
+;
+
+TOKEN : 
+   <NEWLINE : "\n"> #Newline
 ;
 
 INCLUDE "PythonIdentifierDef.javacc"
