@@ -49,7 +49,7 @@
        static final EnumSet<TokenType> ${varName} = EnumSet.of(
        [#list tokenNames as type]
           [#if type_index > 0],[/#if]
-          TokenType.${type} 
+          ${CU.TT}${type} 
        [/#list]
      ); 
    [/#if]
