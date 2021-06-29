@@ -36,6 +36,7 @@ INJECT LEXER_CLASS : {
          case LBRACKET : bracketNesting++; break;
          case RBRACKET : bracketNesting--; break;
          case NEWLINE : return handleNewline(tok);
+         default :
       }
       if (!tok.isUnparsed() && startsLine(tok)) {
              return handleIndentation(tok);      

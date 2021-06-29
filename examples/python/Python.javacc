@@ -11,11 +11,73 @@ PARSER_PACKAGE = org.parsers.python;
 NODE_PACKAGE = org.parsers.python.ast;
 DEFAULT_LEXICAL_STATE = PYTHON;
 TABS_TO_SPACES=8;
+ENSURE_FINAL_EOL;
 PRESERVE_LINE_ENDINGS=false;
 
 INCLUDE "PythonLexer.javacc" 
 
+PythonFile : (Statement)+ <EOF> ;
+
 Number#void : <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX> ;
 
+Strings : (<STRING_LITERAL>)+ ;
 
+AtomicExpression : 
+    <NAME> 
+    | 
+    Number 
+    | 
+    Strings
+    | 
+    "True" 
+    | 
+    "False" 
+    | 
+    "None" 
+    | 
+    "__peg_parser__" 
+    |
+    "..."
+ // | (tuple | group | genexp)
+ //   | (list | listcomp)
+//    | (dict | set | dictcomp | setcomp);
+;
+
+Expression : AtomicExpression ;
+
+Statement : SimpleStatement ;
+           
+SimpleStatement : 
+   ReturnStatement 
+   |
+   GlobalStatement
+   |
+   NonlocalStatement
+   |
+   "break"
+   |
+   "continue"
+   |
+   "pass"
+   |
+   AssertStatement
+   |
+   RaiseStatement
+;
+
+ReturnStatement : "return" ;
+
+GlobalStatement : "global" <NAME> ("," <NAME>)* ;
+
+NonlocalStatement : "nonlocal" <NAME> ("," <NAME>)* ;
+
+AssertStatement : "assert" Expression ("," Expression)* ;
+
+RaiseStatement : "raise" [ Expression ["from" Expression ] ];
+
+Block :
+    SimpleStatement
+    |
+    <NEWLINE><INDENT>(Statement)+<DEDENT>
+;    
 
