@@ -28,8 +28,6 @@ INJECT LEXER_CLASS : {
 
    Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
-      Token prevToken = tok.getPreviousToken();
-
       switch (type) {
          case LBRACE : braceNesting++; break;
          case RBRACE : braceNesting--; break;
@@ -38,9 +36,9 @@ INJECT LEXER_CLASS : {
          case LBRACKET : bracketNesting++; break;
          case RBRACKET : bracketNesting--; break;
          case NEWLINE : return handleNewline(tok);
-         default : if (!tok.isUnparsed() && startsLine(tok)) {
-             return handleIndentation(tok);
-         }
+      }
+      if (!tok.isUnparsed() && startsLine(tok)) {
+             return handleIndentation(tok);      
       }
       return tok;
    }
@@ -58,6 +56,11 @@ INJECT LEXER_CLASS : {
 
    Token handleNewline(Token tok) {
        if (lineJoiningOn()) {
+         tok.setUnparsed(true);
+         return tok;
+       }
+       Token prevToken = tok.getPreviousToken();
+       if (prevToken == null || (prevToken.getType() == COMMENT && startsLine(prevToken))) {
          tok.setUnparsed(true);
        }
        return tok;
