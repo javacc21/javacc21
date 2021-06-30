@@ -73,6 +73,8 @@ CompoundStatement :
     TryStatement
     |
     ClassDefinition
+    |
+    FunctionDefinition
 ;    
 
 ReturnStatement : "return" [StarExpressions] ;
@@ -115,6 +117,10 @@ TryStatement :
 ;
 
 NamedExpression : [ <NAME> ":=" ] Expression ;
+
+DottedName : <NAME> (=> "." <NAME>)* ;
+
+ImportName : "import" DottedName ("," DottedName)* ;
 
 StarNamedExpression : 
      "*" BitwiseOr
@@ -194,4 +200,16 @@ ClassDefinition :
     <NAME> [InvocationArguments] 
     ":"
     Block
+;
+
+FunctionDefinition :
+    [Decorators]
+    ["async"]
+    "def" =>||
+    <NAME>
+    "("
+    // Params TODO
+    ")"
+    ["->" Expression]
+    ":" Block
 ;
