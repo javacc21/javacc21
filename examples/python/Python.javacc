@@ -43,8 +43,6 @@ AtomicExpression :
 //    | (dict | set | dictcomp | setcomp);
 ;
 
-Expression : AtomicExpression ;
-
 Statement : SimpleStatement | CompoundStatement ;
            
 SimpleStatement : 
@@ -71,7 +69,7 @@ CompoundStatement :
     TryStatement
 ;    
 
-ReturnStatement : "return" ;
+ReturnStatement : "return" [StarExpressions] ;
 
 GlobalStatement : "global" <NAME> ("," <NAME>)* ;
 
@@ -93,6 +91,8 @@ ExceptBlock : "except" [ Expression ["as" <NAME>] ] ":" Block ;
 
 FinallyBlock : "finally" ":" Block ;
 
+WhileStatement : "while" NamedExpression ":" Block [ElseBlock] ;
+
 TryStatement : 
    "try" ":" Block 
    (
@@ -104,7 +104,22 @@ TryStatement :
 
 NamedExpression : [ <NAME> ":=" ] Expression ;
 
-WhileStatement : "while" NamedExpression ":" Block [ElseBlock] ;
+StarNamedExpression : 
+     "*" BitwiseOr
+     |
+     NamedExpression 
+;
+
+StarExpression :
+    "*" BitwiseOr
+    |
+    Expression
+;
+
+StarExpressions : StarExpression ("," StarExpression)* [","] ;
+
+StarNamedExpressions : StarNamedExpression ("," StarNamedExpression)* [","] ;
+
 
 BitwiseOr : BitwiseXor ("|" BitwiseXor)* ;
 
@@ -125,3 +140,22 @@ Power : AwaitPrimary ["**" Factor] ;
 AwaitPrimary : ["await"] Primary ;
 
 Primary : AtomicExpression ; // TODO
+
+Expression : AtomicExpression ; //TODO
+
+YieldExpression : 
+    "yield" "from" =>|| Expression 
+    |
+    "yield" [StarExpressions]
+;    
+
+YieldStatement# : YieldExpression ;
+
+AnnotatedRhs : YieldExpression | StarExpressions ;
+
+Decorators : "@" NamedExpression <NEWLINE> ;
+
+Annotation : ":" Expression ;
+
+Default : "=" Expression ;
+ 
