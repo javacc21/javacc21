@@ -38,7 +38,9 @@ AtomicExpression :
     "__peg_parser__" 
     |
     "..."
- // | (tuple | group | genexp)
+    |
+    (Tuple | Group)
+    //(tuple | group | genexp)
  //   | (list | listcomp)
 //    | (dict | set | dictcomp | setcomp);
 ;
@@ -154,11 +156,15 @@ Factor : Power (("+"|"-"|"~") Power)* ;
 
 Power : AwaitPrimary ["**" Factor] ;
 
+Tuple : "(" [StarNamedExpression "," [StarNamedExpressions]] ")" ;
+
+Group : "(" (YieldExpression | NamedExpression) ")" ;
+
 AwaitPrimary : ["await"] Primary ;
 
 Primary : AtomicExpression ; // TODO
 
-Expression : AtomicExpression ; //TODO
+Expression : Disjunction ["if" Disjunction "else" Expression] ; //TODO
 
 YieldExpression : 
     "yield" "from" =>|| Expression 
@@ -195,6 +201,20 @@ KeywordOrStarred : ((<NAME> "=") | "*") Expression;
 
 KeywordOrDoubleStarred : ((<NAME> "=") | "**") Expression;
 
+KeyValuePair : Expression ":" Expression ;
+
+DoubleStarredKeyValuePair : 
+    "*" BitwiseOr
+    |
+    KeyValuePair
+;
+
+DoubleStarredKeyValuePairs : DoubleStarredKeyValuePair ("," DoubleStarredKeyValuePair)* [","] ;
+
+PyDict : "{" [DoubleStarredKeyValuePairs] "}" ;
+
+PySet : "{" StarNamedExpressions "}" ;
+
 ClassDefinition :
     [Decorators] "class" =>||
     <NAME> [InvocationArguments] 
@@ -213,3 +233,11 @@ FunctionDefinition :
     ["->" Expression]
     ":" Block
 ;
+
+Disjunction : Conjunction ("or" Conjunction)* ;
+
+Conjunction : Inversion ("and" Inversion)* ;
+
+Inversion : ("not")* Comparison ;
+
+Comparison : BitwiseOr ; // TODO
