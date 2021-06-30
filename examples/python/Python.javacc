@@ -61,12 +61,18 @@ SimpleStatement :
    AssertStatement
    |
    RaiseStatement
+   |
+   YieldStatement
 ;
 
 CompoundStatement :
+    IfStatement
+    |
     WhileStatement
     |
     TryStatement
+    |
+    ClassDefinition
 ;    
 
 ReturnStatement : "return" [StarExpressions] ;
@@ -88,6 +94,12 @@ Block :
 ElseBlock : "else" ":" Block ;
 
 ExceptBlock : "except" [ Expression ["as" <NAME>] ] ":" Block ;
+
+IfStatement : 
+    "if" NamedExpression ":" Block 
+     ("elif" NamedExpression ":" Block)* 
+     ["else" NamedExpression ":" Block]
+;     
 
 FinallyBlock : "finally" ":" Block ;
 
@@ -119,7 +131,6 @@ StarExpression :
 StarExpressions : StarExpression ("," StarExpression)* [","] ;
 
 StarNamedExpressions : StarNamedExpression ("," StarNamedExpression)* [","] ;
-
 
 BitwiseOr : BitwiseXor ("|" BitwiseXor)* ;
 
@@ -158,4 +169,29 @@ Decorators : "@" NamedExpression <NEWLINE> ;
 Annotation : ":" Expression ;
 
 Default : "=" Expression ;
- 
+
+InvocationArguments : "(" [Args] ")" ;
+
+Args : 
+   (StarExpression | NamedExpression) ("," (StarExpression | NamedExpression))* ["," KeywordArgs]
+   |
+   KeywordArgs
+;
+
+KeywordArgs : 
+     KeywordOrStarred ("," KeywordOrStarred)* ["," KeywordOrDoubleStarred ("," KeywordOrDoubleStarred)*] 
+     |
+     KeywordOrDoubleStarred ("," KeywordOrDoubleStarred)* 
+;
+
+
+KeywordOrStarred : ((<NAME> "=") | "*") Expression;
+
+KeywordOrDoubleStarred : ((<NAME> "=") | "**") Expression;
+
+ClassDefinition :
+    [Decorators] "class" =>||
+    <NAME> [InvocationArguments] 
+    ":"
+    Block
+;
