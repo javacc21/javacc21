@@ -105,3 +105,23 @@ TryStatement :
 NamedExpression : [ <NAME> ":=" ] Expression ;
 
 WhileStatement : "while" NamedExpression ":" Block [ElseBlock] ;
+
+BitwiseOr : BitwiseXor ("|" BitwiseXor)* ;
+
+BitwiseXor : BitwiseAnd ("^" BitwiseAnd)* ;
+
+BitwiseAnd : ShiftExpression ("&" ShiftExpression)* ;
+
+ShiftExpression : Sum (("<<" | ">>") Sum)* ;
+
+Sum : Term (("+"|"-") Term)* ;
+
+Term : Factor (("*"|"/"|"//"|"%"|"@") Factor)* ;
+
+Factor : Power (("+"|"-"|"~") Power)* ;
+
+Power : AwaitPrimary ["**" Factor] ;
+
+AwaitPrimary : ["await"] Primary ;
+
+Primary : AtomicExpression ; // TODO
