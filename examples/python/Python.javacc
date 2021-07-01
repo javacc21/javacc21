@@ -37,12 +37,13 @@ AtomicExpression :
     | 
     "__peg_parser__" 
     |
-    "..."
+    (Tuple | Group | GenExp)
     |
-    (Tuple | Group)
-    //(tuple | group | genexp)
- //   | (list | listcomp)
-//    | (dict | set | dictcomp | setcomp);
+    (PyList | ListComp)
+    |
+    (PyDict | PySet | DictComp | SetComp)
+    |
+    "..."
 ;
 
 Statement : SimpleStatement | CompoundStatement ;
@@ -213,7 +214,11 @@ DoubleStarredKeyValuePairs : DoubleStarredKeyValuePair ("," DoubleStarredKeyValu
 
 PyDict : "{" [DoubleStarredKeyValuePairs] "}" ;
 
+DictComp : "{" KeyValuePair (ForIfClause)+ "}" ;
+
 PySet : "{" StarNamedExpressions "}" ;
+
+SetComp : "{" NamedExpression (ForIfClause)+ "}" ;
 
 ClassDefinition :
     [Decorators] "class" =>||
@@ -234,6 +239,10 @@ FunctionDefinition :
     ":" Block
 ;
 
+//LambdaDefinition : "lambda" ":" [LambdaParameters] ":" Expression ;
+
+//LambdaParameters : Params ; //TODO
+
 Disjunction : Conjunction ("or" Conjunction)* ;
 
 Conjunction : Inversion ("and" Inversion)* ;
@@ -241,3 +250,34 @@ Conjunction : Inversion ("and" Inversion)* ;
 Inversion : ("not")* Comparison ;
 
 Comparison : BitwiseOr ; // TODO
+
+StarTarget : ["*"] TargetWithStarAtom ;
+
+StarTargets : StarTarget ("," StarTarget)* ;
+
+ForIfClause : ["async"] "for" StarTargets "in" Disjunction ("if" Disjunction)* ;
+
+GenExp : "(" NamedExpression (ForIfClause)+ ")" ;
+
+PyList : "[" [StarNamedExpressions] "]" ;
+
+ListComp : "[" NamedExpression (ForIfClause)+ "]" ;
+
+TargetWithStarAtom : 
+     // TODO
+     StarAtom 
+;
+
+StarAtom :
+    <NAME>
+    |
+    "(" TargetWithStarAtom ")"
+    // | TODO
+;
+
+PrimarySuffix :
+   "." <NAME>
+   // | TODO
+;
+
+PrimaryExpression : AtomicExpression (PrimarySuffix)* ;
