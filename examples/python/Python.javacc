@@ -46,6 +46,14 @@ AtomicExpression :
     "..."
 ;
 
+Slice :
+    Expression 
+    |
+    [Expression] ":" [Expression] [":" [Expression]]
+;
+
+Slices : Slice ("," Slice)* [","] ;
+
 Statement : SimpleStatement | CompoundStatement ;
            
 SimpleStatement : 
@@ -161,11 +169,11 @@ Tuple : "(" [StarNamedExpression "," [StarNamedExpressions]] ")" ;
 
 Group : "(" (YieldExpression | NamedExpression) ")" ;
 
-AwaitPrimary : ["await"] Primary ;
+AwaitPrimary : ["await"] PrimaryExpression ;
 
-Primary : AtomicExpression ; // TODO
+PrimaryExpression : AtomicExpression ; // TODO
 
-Expression : Disjunction ["if" Disjunction "else" Expression] ; //TODO
+Expression : Disjunction ["if" Disjunction "else" Expression] ; //TODO lambdas
 
 YieldExpression : 
     "yield" "from" =>|| Expression 
