@@ -171,9 +171,18 @@ Group : "(" (YieldExpression | NamedExpression) ")" ;
 
 AwaitPrimary : ["await"] PrimaryExpression ;
 
-PrimaryExpression : AtomicExpression ; // TODO
+PrimaryExpression : AtomicExpression (PrimarySuffix)* ;
 
-Expression : Disjunction ["if" Disjunction "else" Expression] ; //TODO lambdas
+PrimarySuffix :
+    "." <NAME> 
+    |
+    GenExp
+    |
+    "(" [ Args [","] ] ")"
+    |
+    "[" Slices "]"
+;
+
 
 YieldExpression : 
     "yield" "from" =>|| Expression 
@@ -251,13 +260,28 @@ FunctionDefinition :
 
 //LambdaParameters : Params ; //TODO
 
+/*
+ * Expression grammar follows
+ */
+
+Expression : Disjunction ["if" Disjunction "else" Expression] ; //TODO lambdas 
+
 Disjunction : Conjunction ("or" Conjunction)* ;
 
 Conjunction : Inversion ("and" Inversion)* ;
 
 Inversion : ("not")* Comparison ;
 
-Comparison : BitwiseOr ; // TODO
+Comparison : BitwiseOr (ComparisonOperator BitwiseOr)* ;
+
+ComparisonOperator#void :
+   "<" | ">" | "==" | ">=" | "<=" | "!=" 
+   | 
+   ["not"] "in" 
+   |
+   "is" ["not"]
+;
+
 
 StarTarget : ["*"] TargetWithStarAtom ;
 
@@ -283,9 +307,3 @@ StarAtom :
     // | TODO
 ;
 
-PrimarySuffix :
-   "." <NAME>
-   // | TODO
-;
-
-PrimaryExpression : AtomicExpression (PrimarySuffix)* ;
