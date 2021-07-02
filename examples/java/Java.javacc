@@ -628,29 +628,34 @@ PrimaryExpression# :
     ( PrimarySuffix )*
 ;
 
-MemberSelector :
-  SCAN 3 "." TypeArguments <IDENTIFIER>
-;
+MemberSelector : "." =>|+1 TypeArguments <IDENTIFIER> ;
 
 PrimaryPrefix#void :
   Literal
   |
   "this"
   |
-  "super" "." =>|| [TypeArguments] <IDENTIFIER>
+  "super" 
   |
-  "(" Expression ")"
+  Parentheses
   |
   AllocationExpression 
   |
-  => PrimitiveType "." "class"
-  |
-  => ReturnType "." "class"
+  ClassLiteral
   |
   MethodReference
-  |  
+  | 
   Name
-;
+ ;
+
+Parentheses : "(" Expression ")" ;
+
+INJECT Parentheses : {
+  public Expression getNestedExpression() {return (Expression) getChild(1);}
+  public boolean isAssignableTo() {return getNestedExpression().isAssignableTo();}
+}
+
+ClassLiteral : ("void" | Type) "." "class" =>|| ;
 
 INJECT PrimaryExpression :
 {
@@ -693,10 +698,10 @@ INJECT PrimaryExpression :
 
   public boolean isAssignableTo() {
      if (getChildCount()==1) {
-       return getChild(0) instanceof Name;
-     }
-     if (getChildCount() == 3 && getChild(0).getTokenType() == LPAREN && getLastChild().getTokenType() == RPAREN) {
-       return ((Expression)getChild(1)).isAssignableTo();
+       Node child = getChild(0);
+       if (child instanceof Name) return true;
+       if (child instanceof Parentheses) return ((Parentheses) child).isAssignableTo();
+       return false;
      }
      Token lastToken = getLastToken();
      if (lastToken.getType() == IDENTIFIER) {
@@ -709,7 +714,6 @@ INJECT PrimaryExpression :
      return false;
   }
 }
-
 
 MethodReference :
     (Type | "super")
@@ -730,7 +734,7 @@ PrimarySuffix#void :
   |
   "." <IDENTIFIER>
   |
-  "::" (<IDENTIFIER>|"new")
+  "::" [TypeArguments] (<IDENTIFIER>|"new") 
   |
   InvocationArguments
  )
