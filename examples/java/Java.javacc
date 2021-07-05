@@ -306,7 +306,7 @@ FieldDeclaration :
 
 VariableDeclarator : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
-VariableDeclaratorId : <IDENTIFIER> ( "[" "]" )* ;
+VariableDeclaratorId : <IDENTIFIER> ( (Annotation)* "[" "]" )* ;
 
 VariableInitializer : ArrayInitializer | Expression ;
 
@@ -329,7 +329,7 @@ ArrayInitializer :
   [ TypeParameters ]
   ReturnType
   <IDENTIFIER> 
-  =>|+1 FormalParameters ( "[" "]" )*
+  =>|+1 FormalParameters ( (Annotation)* "[" "]" )*
   [ ThrowsList ]
   ( Block | ";" )
   {return CURRENT_NODE;}
@@ -375,12 +375,13 @@ INJECT PrimitiveType : extends Type;
 ReferenceType : 
    PrimitiveArrayType
    |
-   ObjectType (=> "[" "]" )*
+   ObjectType (=> (Annotation)* "[" "]" )*
 ;
 
 ObjectType# :
+    (Annotation)*
     <IDENTIFIER> [ TypeArguments ]
-    ( "." <IDENTIFIER> =>|| [ TypeArguments ] )*
+    ( "." (Annotation)* <IDENTIFIER> =>|| [ TypeArguments ] )*
 ;
 
 INJECT ObjectType : extends Type 
@@ -425,10 +426,12 @@ TypeArgument :
 WildcardBounds : ("extends" | "super") ReferenceType ;
 
 PrimitiveType# :
+  (Annotation)*
   "boolean" | "char" | "byte" | "short" | "int" | "long" | "float" | "double"
+  =>||
 ;
 
-PrimitiveArrayType : PrimitiveType (=> "[" "]")+ ;
+PrimitiveArrayType : PrimitiveType (=> (Annotation)* "[" "]")+ ;
 
 ReturnType# : "void" | Type ;
 
@@ -783,11 +786,11 @@ ArrayDimsAndInits :
     "[" =>|+1 Expression "]" 
   )+ 
   ( 
-    => "[" "]" 
+    => (Annotation)* "[" "]" 
   )*
   |
   ( 
-    "[" "]" 
+    (Annotation)* "[" "]" 
   )+ 
   ArrayInitializer
 ;
