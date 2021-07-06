@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.*;
 
 import com.javacc.parser.ParseException;
 
@@ -57,6 +58,7 @@ public final class Main {
     private static String manifestContent = "", jarFileName = "javacc.jar";
     private static Path jarPath;
     private static FileSystem fileSystem = FileSystems.getDefault();
+    private static final Pattern symbolPattern = Pattern.compile("^(\\w+)(=(\\w+))?$");
 
     static {
         try {
@@ -183,7 +185,7 @@ public final class Main {
         }
         Path grammarFile = null, outputDirectory = null;
         int jdkTarget = 0;
-        Set<String> preprocesorSymbols = new HashSet<>();
+        Map<String, String> preprocessorSymbols = new HashMap<>();
         boolean quiet = false, noNewerCheck = false;
         for (int i=0; i<args.length;i++) {
             String arg = args[i];
@@ -197,7 +199,19 @@ public final class Main {
                     String symbols = args[++i];
                     StringTokenizer st = new StringTokenizer(symbols, ",");
                     while (st.hasMoreTokens()) {
-                        preprocesorSymbols.add(st.nextToken());
+                        String s = st.nextToken().trim();
+                        Matcher m = symbolPattern.matcher(s);
+
+                        if (!m.find()) {
+                            System.err.println(String.format("-p flag with invalid argument '%s'", s));
+                            System.exit(-1);
+                        }
+                        String name = m.group(1);
+                        String value = m.group(3);
+                        if (value == null) {
+                            value = "1";
+                        }
+                        preprocessorSymbols.put(name, value);
                     }
                 }
                 else if (arg.equalsIgnoreCase("-d")) {
@@ -266,7 +280,7 @@ public final class Main {
                 }
             }
         }
-        int errorcode = mainProgram(grammarFile, outputDirectory, jdkTarget, quiet, preprocesorSymbols);
+        int errorcode = mainProgram(grammarFile, outputDirectory, jdkTarget, quiet, preprocessorSymbols);
         System.exit(errorcode);
     }
 
@@ -278,7 +292,7 @@ public final class Main {
      * @throws Exception
      */
 
-    public static int mainProgram(Path grammarFile, Path outputDir, int jdkTarget, boolean quiet, Set<String> symbols) 
+    public static int mainProgram(Path grammarFile, Path outputDir, int jdkTarget, boolean quiet, Map<String, String> symbols) 
       throws IOException, ParseException, TemplateException {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, jdkTarget, quiet, symbols);

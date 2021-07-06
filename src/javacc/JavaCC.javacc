@@ -64,12 +64,12 @@ INJECT PARSER_CLASS :
 {
     Grammar grammar;
     
-    public PARSER_CLASS(Grammar grammar, Path path, Set<String> definedSymbols) throws IOException {
+    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
         this(path.toString(), path);
         this.grammar = grammar;
         BitSet lineMarkers = null;
         try {
-            PreprocessorParser ppp = new PreprocessorParser(path, definedSymbols);
+            PreprocessorParser ppp = new PreprocessorParser(path, definedSymbols, false);
             lineMarkers = ppp.PP_Root();
         } catch (com.javacc.preprocessor.ParseException pe) {
             throw new RuntimeException(pe);

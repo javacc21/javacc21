@@ -75,7 +75,7 @@ public class Grammar extends BaseNode {
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
     private Set<String> lexicalStates = new LinkedHashSet<>();
-    private Set<String> preprocessorSymbols = new HashSet<>();
+    private Map<String, String> preprocessorSymbols = new HashMap<>();
     private Map<Integer, String> tokenNames = new HashMap<>();
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
@@ -111,7 +111,7 @@ public class Grammar extends BaseNode {
     private Path outputDir;
     private boolean quiet;
     
-    public Grammar(Path outputDir, int jdkTarget, boolean quiet, Set<String> preprocessorSymbols) {
+    public Grammar(Path outputDir, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
         this.outputDir = outputDir;
         this.jdkTarget = jdkTarget;
         this.quiet = quiet;
