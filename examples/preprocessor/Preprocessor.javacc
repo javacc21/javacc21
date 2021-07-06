@@ -1,6 +1,7 @@
 /*
- * Author: Jonathan Revusky revusky@javacc.com
- * This partial implementation of the C# Preprocessor 
+ * Authors: Jonathan Revusky revusky@javacc.com
+ *          Vinay Sajip vinay_sajip@yahoo.co.uk - adapted to allow string values for symbols
+ * This partial implementation of the C# Preprocessor
  * is free to use or adapt.
  */
 
@@ -36,12 +37,14 @@ PARSER_PACKAGE="com.javacc.preprocessor";
 
 INJECT PARSER_CLASS : 
 {
-    private BitSet lineMarkers = new BitSet();
-    private Set<String> definedSymbols = new HashSet<>();
+    private final BitSet lineMarkers = new BitSet();
+    private final Map<String, String> definedSymbols = new HashMap<>();
     private boolean currentlyOn = true;
+    private boolean csharpMode = false;
 
-    public PARSER_CLASS(Path path, Set<String> definedSymbols) throws IOException {
+    public PARSER_CLASS(Path path, Map<String, String> definedSymbols, boolean csharpMode) throws IOException {
         this(path);
+        this.csharpMode = csharpMode;
         if (definedSymbols !=null) addSymbols(definedSymbols);
         token_source.switchTo(LexicalState.PP_SCAN_LINES);
     }
@@ -55,16 +58,21 @@ INJECT PARSER_CLASS :
         if (currentlyOn) lineMarkers.set(lineNumber);
     }
 
-    public void setSymbol(String symbol) {
-        definedSymbols.add(symbol);
+    public void setSymbol(String symbol, String value) {
+        definedSymbols.put(symbol, value);
     }
 
     public void unsetSymbol(String symbol) {
-        definedSymbols.remove(symbol);
+        definedSymbols.put(symbol, "0");
     }
 
-    public void addSymbols(Set<String> symbols) {
-        definedSymbols.addAll(symbols);
+    public void addSymbols(Map<String, String> symbols) {
+        definedSymbols.putAll(symbols);
+    }
+
+    private static class Expression {
+        boolean booleanValue;
+        String symbol;
     }
 }
 
@@ -126,6 +134,8 @@ INCLUDE NON_EXISTENT ! JAVA_IDENTIFIER_DEF
     |
     <PP_RPAREN : ")">
     |
+    <PP_ASSIGN : "=">
+    |
     <PP_EQUALS : "==">
     |
     <PP_NOT_EQUALS : "!=">
@@ -145,23 +155,24 @@ PP_Block#void : (PP_IfBlock | PP_DefStatement | PP_UndefStatement | PP_Content)*
 
 PP_Content#void : ((<PP_LINE>|<PP_FALSE_ALERT>) {setLineMarker();})+ ;
 
-PP_IfBlock#void : 
-   { 
-      boolean alreadyHandled=false, result;
+PP_IfBlock#void :
+   {
+      boolean alreadyHandled = false;
+      Expression result;
       final boolean previouslyOn = currentlyOn;
    }
-    <PP_IF> 
-    result=PP_Expression {
-        if (result) alreadyHandled = true;
-        currentlyOn = result && previouslyOn;
+    <PP_IF>
+    result = PP_Expression {
+        if (result.booleanValue) alreadyHandled = true;
+        currentlyOn = result.booleanValue && previouslyOn;
     }
     PP_Block {if (alreadyHandled) currentlyOn = false;} 
     (
         <PP_ELIF> result=PP_Expression 
         {
             if (!alreadyHandled) {
-                alreadyHandled = result;
-                currentlyOn = previouslyOn && result;
+                alreadyHandled = result.booleanValue;
+                currentlyOn = previouslyOn && result.booleanValue;
             }
         }
         PP_Block
@@ -175,8 +186,24 @@ PP_IfBlock#void :
 ;
 
 PP_DefStatement#void :
+{
+    String value = "1";
+}
   <PP_DEFINE> <PP_SYMBOL>
-  {if (currentlyOn) definedSymbols.add(lastConsumedToken.getImage());}
+  [
+    <PP_ASSIGN>
+    <PP_SYMBOL> {
+      if (csharpMode) {
+        throw new ParseException("Symbols cannot have defined values in C# mode.");
+      }
+      value = lastConsumedToken.getImage();
+    }
+  ]
+  {
+    if (currentlyOn) {
+      definedSymbols.put(lastConsumedToken.getImage(), value);
+    }
+  }
 ;
 
 PP_UndefStatement#void : 
@@ -184,59 +211,99 @@ PP_UndefStatement#void :
     {if (currentlyOn) definedSymbols.remove(lastConsumedToken.getImage());}
 ;    
 
-boolean PP_Expression#void :
-  {boolean result, result2, inequality=false;}
+Expression PP_Expression#void :
+  {
+    Expression result, result2;
+    boolean inequality = false;
+  }
   result=PP_OrExpression
   [
     (<PP_EQUALS>|<PP_NOT_EQUALS>{inequality=true;}) 
     result2=PP_OrExpression 
     {
-        result = inequality ? result != result2 : result == result2;
+      if (csharpMode || result.symbol == null || result2.symbol == null) {
+        result.booleanValue = inequality == (result.booleanValue != result2.booleanValue);
+      }
+      else {
+        // Not C# mode, and LHS and RHS are symbols
+        String key = result.symbol;
+        String value = result2.symbol;
+
+        result.symbol = null;   // don't propagate further
+        result2.symbol = null;
+        if (!definedSymbols.containsKey(key)) {
+          if (!definedSymbols.containsKey(value)) {
+            // neither LHS nor RHS appears to be defined, so both are
+            // logically false, so ...
+            result.booleanValue = !inequality;
+          }
+          else {
+            // LHS isn't defined, so logically false. RHS is defined,
+            // but its value might be "0" because it was undef'ed.
+            result.booleanValue = inequality != definedSymbols.get(value).equals("0");
+          }
+        }
+        else {
+          String keyValue = definedSymbols.get(key);
+          result.booleanValue = inequality != value.equals(keyValue);
+        }
+      }
     }
   ]
   {return result;}
 ;
 
-boolean PP_OrExpression#void : 
-  {boolean result, result2;}
+Expression PP_OrExpression#void :
+  { Expression result, result2; }
    result=PP_AndExpression 
-   (<PP_OR> result2=PP_AndExpression {result = result || result2;})* 
+  (<PP_OR> result2 = PP_AndExpression { result.booleanValue = result.booleanValue || result2.booleanValue; })*
    {return result;}
 ;
 
-boolean PP_AndExpression#void : 
-   {boolean result, result2;}
+Expression PP_AndExpression#void :
+  { Expression result, result2; }
    result=PP_NotExpression 
-   (<PP_AND> result2=PP_NotExpression {result = result&&result2;})*
+  (<PP_AND> result2 = PP_NotExpression { result.booleanValue = result.booleanValue && result2.booleanValue; })*
    {return result;}
 ;   
 
-boolean PP_NotExpression#void : 
-   {boolean not = false, result;}
+Expression PP_NotExpression#void :
+  {
+    boolean not = false;
+    Expression result;
+  }
    (<PP_NOT> {not = !not;})* 
    result=PP_PrimaryExpression 
-   {return not ? !result : result;}
+  {
+     if (not) {
+       result.booleanValue = !result.booleanValue;
+     }
+     return result;
+  }
 ;
 
-boolean PP_Parentheses#void : 
-   {boolean result;}
+Expression PP_Parentheses#void :
+   { Expression result; }
    <PP_LPAREN> 
    result=PP_Expression 
    <PP_RPAREN> 
    {return result;}
 ;
 
-boolean PP_PrimaryExpression#void : 
-    {boolean result;}
+Expression PP_PrimaryExpression#void :
+    { Expression result = new Expression(); }
     (
       result=PP_Parentheses
       |
       <PP_SYMBOL> 
-      {result = definedSymbols.contains(lastConsumedToken.getImage());}
+      {
+        result.symbol = lastConsumedToken.getImage();
+        result.booleanValue = definedSymbols.containsKey(result.symbol);
+      }
       |
-      <PP_TRUE> {result = true;}
+      <PP_TRUE> { result.booleanValue = true; }
       |
-      <PP_FALSE> {result = false;}
+      <PP_FALSE> { result.booleanValue = false; }
     )
     {return result;}
 ; 
