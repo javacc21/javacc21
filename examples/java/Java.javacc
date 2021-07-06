@@ -373,7 +373,7 @@ INJECT PrimitiveArrayType : extends Type;
 INJECT PrimitiveType : extends Type;
 
 ReferenceType : 
-   PrimitiveArrayType
+   => PrimitiveArrayType
    |
    ObjectType (=> (Annotation)* "[" "]" )*
 ;
@@ -418,9 +418,9 @@ TypeArguments :
 ;
 
 TypeArgument :
-  ReferenceType
+  (Annotation)* "?" =>|| [ WildcardBounds ]
   |
-  "?" [ WildcardBounds ]
+  ReferenceType
 ;
 
 WildcardBounds : ("extends" | "super") ReferenceType ;
