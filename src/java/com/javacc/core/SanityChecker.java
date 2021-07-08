@@ -89,9 +89,11 @@ public class SanityChecker {
     public void doChecks() {
 
         // Check that non-terminals have all been defined.
-        for (NonTerminal nt : grammar.descendants(NonTerminal.class, nt->nt.getProduction()==null)) {
+        List<NonTerminal> undefinedNTs = grammar.descendants(NonTerminal.class, nt->nt.getProduction() == null);
+        for (NonTerminal nt : undefinedNTs) {
             grammar.addError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
         }
+        if (!undefinedNTs.isEmpty()) return;
 
         /*
          * Check whether we have any LOOKAHEADs at non-choice points 

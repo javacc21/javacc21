@@ -55,9 +55,17 @@ Slice :
 Slices : Slice ("," Slice)* [","] ;
 
 Statement : SimpleStatement | CompoundStatement ;
+
+SimpleStatement : SmallStatement (";" SmallStatement)* <NEWLINE> ; 
            
-SimpleStatement : 
-   ReturnStatement 
+SmallStatement : 
+   Assignment
+   |
+   StarExpressions
+   |
+   ReturnStatement
+   |
+   ImportStatement 
    |
    GlobalStatement
    |
@@ -69,6 +77,8 @@ SimpleStatement :
    |
    "pass"
    |
+   DelStatement
+   |
    AssertStatement
    |
    RaiseStatement
@@ -77,7 +87,11 @@ SimpleStatement :
 ;
 
 CompoundStatement :
+    FunctionDefinition
+    |
     IfStatement
+    |
+    ClassDefinition
     |
     WhileStatement
     |
@@ -127,11 +141,21 @@ TryStatement :
    )
 ;
 
+DelStatement : "del" TargetPrimary ("," TargetPrimary)* [","] ; 
+
 NamedExpression : [ <NAME> ":=" ] Expression ;
 
 DottedName : <NAME> (=> "." <NAME>)* ;
 
 ImportName : "import" DottedName ("," DottedName)* ;
+
+ImportStatement : ImportName | ImportFrom1 ImportFrom2 ;
+
+ImportFrom1 : "from" ("." | "...")* DottedName =>|| "import"  ImportFromTargets ;
+
+ImportFrom2 : "from" ("." | "...")+ "import" =>|| ImportFromTargets ; 
+
+ImportFromTargets : <NAME> ["as" <NAME>] ("," <NAME> ["as" <NAME>])* ;
 
 StarNamedExpression : 
      "*" BitwiseOr
@@ -250,21 +274,19 @@ FunctionDefinition :
     "def" =>||
     <NAME>
     "("
-    // Params TODO
+    Parameters
     ")"
     ["->" Expression]
     ":" Block
 ;
 
-//LambdaDefinition : "lambda" ":" [LambdaParameters] ":" Expression ;
-
-//LambdaParameters : Params ; //TODO
+LambdaDefinition : "lambda" Parameters ":" Expression ;
 
 /*
  * Expression grammar follows
  */
 
-Expression : Disjunction ["if" Disjunction "else" Expression] ; //TODO lambdas 
+Expression : Disjunction ["if" Disjunction "else" Expression] | LambdaDefinition ; 
 
 Disjunction : Conjunction ("or" Conjunction)* ;
 
@@ -283,7 +305,7 @@ ComparisonOperator#void :
 ;
 
 
-StarTarget : ["*"] TargetWithStarAtom ;
+StarTarget : ["*"] TargetPrimary ;
 
 StarTargets : StarTarget ("," StarTarget)* ;
 
@@ -295,15 +317,71 @@ PyList : "[" [StarNamedExpressions] "]" ;
 
 ListComp : "[" NamedExpression (ForIfClause)+ "]" ;
 
-TargetWithStarAtom : 
-     // TODO
-     StarAtom 
+StarEtc :
+   KeyWords
+   |
+   "*" "," =>|| ParamMaybeDefault ("," ParamMaybeDefault)* [KeyWords]
+   |
+   "*" <NAME> [":" Expression] ("," ParamMaybeDefault)* [KeyWords]
 ;
 
-StarAtom :
-    <NAME>
-    |
-    "(" TargetWithStarAtom ")"
-    // | TODO
+ParamMaybeDefault : <NAME> [":" Expression] ["=" Expression] ;
+
+KeyWords :
+   "**" <NAME> 
+   [ 
+       // This annotation is apparently disallowed in a lambda, but we'll deal with these details later.
+       ":" Expression
+   ]
 ;
 
+INJECT PARSER_CLASS : {private boolean firstParam;}
+
+Parameters :
+    {firstParam = true;}#
+    (<NAME> [":" Expression] [SCAN {firstParam}# "/" => "/"] {firstParam = false;}#)* 
+    (<NAME> [":" Expression] "=" Expression [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
+    [StarEtc]
+;
+
+TargetPrimary :
+   AtomicExpression
+   [
+       "." <NAME>
+       |
+       "[" Slices "]"
+       |
+       GenExp
+       |
+       InvocationArguments
+   ]
+;
+
+DeleteTarget :
+   TargetPrimary // Can I get away with this? 
+;
+
+AssignOp#void :
+    "+=" | "-=" | "*=" | "@=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" 
+    | ">>=" | "**=" | "//=" 
+;
+
+SimpleAssignTarget :
+   TargetPrimary
+   |
+   "(" SimpleAssignTarget ")"
+;
+
+Assignment :
+  (  <NAME> ":" Expression ["=" AnnotatedRhs ] )
+  |
+  SimpleAssignTarget ":" Expression ["=" AnnotatedRhs]
+  |
+  (StarTargets "=")+ (YieldExpression | StarExpressions)
+  |
+  (
+   SimpleAssignTarget 
+   AssignOp 
+   (YieldExpression | StarExpressions)
+  )
+;
