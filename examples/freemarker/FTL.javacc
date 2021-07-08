@@ -131,7 +131,7 @@ INJECT FTLLexer :
                      tok.setType(TokenType.PRINTABLE_CHARS);
                  }
                  else {
-                     if (tok.getType() == TokenType.FTL_DIRECTIVE_OPEN) switchTo(LexicalState.FTL_DIRECTIVE);
+                     if (tok.getType() == FTL_DIRECTIVE_OPEN) switchTo(LexicalState.FTL_DIRECTIVE);
                      else {
                          noWhitespaceInExpression = true;
                          switchTo(LexicalState.FTL_EXPRESSION);
