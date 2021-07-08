@@ -199,8 +199,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [/#if]
           return it;
       }
+[#if false]      
+     I moved this code elsewhere because, for my python indent/dedent handling,
+     I need this token chaining to happen at earlier point in the cycle.
+     Everything seems okay, but all this token chaining is excessively intricate.
+     I think there is a need for a general cleanup/simplification of all that.
       token.setPreviousToken(previousToken);
       if (previousToken != null) previousToken.setNextToken(token);
+[/#if]
       return previousToken = token;
  }
 
@@ -411,6 +417,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         matchedToken.setBeginColumn(tokenBeginColumn);
         matchedToken.setEndColumn(input_stream.getEndColumn());
         matchedToken.setInputSource(this.inputSource);
+        if (previousToken != null) {
+            matchedToken.setPreviousToken(this.previousToken);
+            previousToken.setNextToken(matchedToken);
+        }
+        matchedToken.setUnparsed(unparsedTokens.contains(type));
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]
       ${tokenHookMethodName}(matchedToken);
@@ -418,7 +429,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
-      matchedToken.setUnparsed(unparsedTokens.contains(type));
       return matchedToken;
   }
 

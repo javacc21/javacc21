@@ -1,4 +1,5 @@
 /*
+
  * The lexical grammar of the still unfunished Python parser
  */
 
@@ -14,19 +15,9 @@ INJECT LEXER_CLASS : {
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = new ArrayList<>();
 
-   void indent(int offset) {
-	    indentationStack.add(indentation);
-	    indentation = offset;
-      //TODO: Check whether the offset is greater than the last
-      // indentation
-   }
-
-   void dedent(int offset) {
-	    indentation = indentationStack.remove(indentationStack.size()-1);
-      //TODO deal with invalid dedentation, also multiple dedents
-   }
-
    Token TOKEN_HOOK(Token tok) {
+      System.err.println(tok.getType());
+      System.err.println(tok.getLocation());
       TokenType type = tok.getType();
       switch (type) {
          case LBRACE : braceNesting++; break;
@@ -45,14 +36,57 @@ INJECT LEXER_CLASS : {
    }
 
    Token handleIndentation(Token tok) {
-       int offset = tok.getBeginColumn();
-       if (offset > indentation) {
-         indent(offset);
-       } 
-       else if (offset < indentation) {
-         dedent(offset);
+       final int offset = tok.getBeginColumn();
+       if (offset == indentation) {
+          return tok;
        }
-    return tok; // TODO: various stuff
+       if (offset > indentation) {
+          indentationStack.add(offset);
+          this.indentation = offset;
+          String img = spaces(offset - indentation);
+          Token indent = Token.newToken(INDENT, img, getInputSource());
+          setLocationInfo(indent, tok.getPreviousToken(), tok);
+          return indent;
+       }
+       // Now deal with dedent.
+       int dedentIndex = indentationStack.indexOf(offset);
+       if (dedentIndex <0) {
+          Token invalidDedent = new InvalidToken("Invalid Dedent", getInputSource());
+          setLocationInfo(invalidDedent, tok.getPreviousToken(), tok);
+          return invalidDedent;
+       }
+       this.indentation = offset;
+       List<Integer> dedents = indentationStack.subList(dedentIndex, indentationStack.size());
+       Token firstDedent = null, lastDedent = null;
+       for (int dedentOffset : dedents) {
+          Token dedent = Token.newToken(DEDENT, "", getInputSource());
+          if (firstDedent == null) firstDedent = dedent;
+          Token prev = lastDedent != null ? lastDedent : tok.getPreviousToken();
+          setLocationInfo(dedent, prev, tok);
+          lastDedent = dedent;
+          indentationStack.remove(indentationStack.size()-1);
+       }
+       return firstDedent; 
+   }
+
+   private void setLocationInfo(Token indentDedent, Token prevToken, Token tok) {
+      if (prevToken != null) {
+         prevToken.setNext(indentDedent);
+         prevToken.setNextToken(indentDedent);
+      }
+      indentDedent.setNextToken(tok);
+      indentDedent.setNext(tok);
+      tok.setPreviousToken(indentDedent);
+      tok.copyLocationInfo(indentDedent);
+      indentDedent.setBeginColumn(1);
+      indentDedent.setEndColumn(tok.getBeginColumn()-1);
+      indentDedent.setEndLine(indentDedent.getBeginLine());
+   }
+
+   static private String spaces(int num) {
+      StringBuilder buf = new StringBuilder(num);
+      for (int i = 0; i<num; i++) buf.append((char) ' ');
+      return buf.toString();
    }
 
    Token handleNewline(Token tok) {
@@ -61,9 +95,9 @@ INJECT LEXER_CLASS : {
          return tok;
        }
        Token prevToken = tok.getPreviousToken();
-       if (prevToken == null || (prevToken.getType() == COMMENT && startsLine(prevToken))) {
+       if (prevToken == null || prevToken.getImage() == null || (prevToken.getType() == COMMENT && startsLine(prevToken))) {
          tok.setUnparsed(true);
-       }
+       } 
        return tok;
    }
 
@@ -91,12 +125,6 @@ UNPARSED :
 
 TOKEN : 
    <NEWLINE : "\n"> #Newline
-;
-
-INCLUDE "PythonIdentifierDef.javacc"
-
-TOKEN :
-  <NAME : <PYTHON_IDENTIFIER_START> (<PYTHON_IDENTIFIER_PART>)* > #Name
 ;
 
 TOKEN #Delimiter :
@@ -326,4 +354,10 @@ TOKEN #StringLiteral :
    <#STRING_ESCAPE: "\\" ~[] >
    |
    <#BYTES_ESCAPE : "\\" ["\u0000"-"\u00FF"]>
+;
+
+INCLUDE "PythonIdentifierDef.javacc"
+
+TOKEN :
+  <NAME : <PYTHON_IDENTIFIER_START> (<PYTHON_IDENTIFIER_PART>)* > #Name
 ;

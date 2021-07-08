@@ -77,6 +77,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
          }
      }
      String content = token.getImage();
+     if (content == null) content = "";
      if (content.length() > 32) content = content.substring(0, 32) + "...";
      buf.append("\nFound string \"" + ${grammar.constantsClassName}.addEscapes(content) + "\" of type " + token.getType());
      return buf.toString();
