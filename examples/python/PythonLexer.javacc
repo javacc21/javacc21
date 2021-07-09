@@ -91,6 +91,10 @@ INJECT LEXER_CLASS : {
    }
 
    Token handleNewline(Token tok) {
+       if (tok.getBeginColumn()==1) {
+          tok.setUnparsed(true);
+          return tok;
+       }
        if (lineJoiningOn()) {
          tok.setUnparsed(true);
          return tok;
@@ -108,6 +112,7 @@ INJECT LEXER_CLASS : {
 
    boolean startsLine(Token tok) {
        if (lineJoiningOn()) return false;
+       if (tok.getBeginColumn() ==1) return true;
        Token prevToken = tok.getPreviousToken();
        if (prevToken == null) return true;
        if (prevToken.getType() == CONTINUE_LINE) return false;
@@ -116,7 +121,7 @@ INJECT LEXER_CLASS : {
 }
 
 
-SKIP : <SPACE : " " | "\f"> ;
+SKIP : <SPACE : (" " | "\f")+> ;
 
 UNPARSED : 
    <CONTINUE_LINE : "\\\n"> #Whitespace
@@ -125,7 +130,7 @@ UNPARSED :
 ;
 
 TOKEN : 
-   <NEWLINE : "\n"> #Newline
+   <NEWLINE : (<SPACE>)? "\n"> #Newline
 ;
 
 TOKEN #Delimiter :

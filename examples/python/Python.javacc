@@ -18,7 +18,7 @@ PRESERVE_LINE_ENDINGS=false;
 
 INCLUDE "PythonLexer.javacc" 
 
-PythonFile : (Statement)+ <EOF> ;
+PythonFile : (Statement)* <EOF> ;
 
 Number#void : <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX> ;
 
@@ -381,15 +381,11 @@ SimpleAssignTarget :
 ;
 
 Assignment :
-  (  <NAME> ":" Expression ["=" AnnotatedRhs ] )
+  <NAME> ":" =>|| Expression ["=" AnnotatedRhs ] 
   |
-  SimpleAssignTarget ":" Expression ["=" AnnotatedRhs]
+  SimpleAssignTarget ":" =>|| Expression ["=" AnnotatedRhs]
   |
-  (StarTargets "=")+ (YieldExpression | StarExpressions)
+  SimpleAssignTarget AssignOp =>|| (YieldExpression | StarExpressions)
   |
-  (
-   SimpleAssignTarget 
-   AssignOp 
-   (YieldExpression | StarExpressions)
-  )
+  (=>StarTargets "=")+ (YieldExpression | StarExpressions)
 ;
