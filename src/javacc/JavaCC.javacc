@@ -446,7 +446,8 @@ INJECT InvocationArguments :
     }
 }
 
-INCLUDE JAVA
+//INCLUDE JAVA
+INCLUDE "../../examples/java/Java.javacc"
 
 INJECT TypeDeclaration : 
     import java.util.*;

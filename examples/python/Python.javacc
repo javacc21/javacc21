@@ -58,7 +58,7 @@ Slices : Slice ("," Slice)* [","] ;
 
 Statement : SimpleStatement | CompoundStatement ;
 
-SimpleStatement : SmallStatement (";" SmallStatement)* <NEWLINE> ; 
+SimpleStatement#(>2) : SmallStatement (";" SmallStatement)* <NEWLINE> ; 
            
 SmallStatement : 
    Assignment
@@ -149,15 +149,21 @@ NamedExpression : [ <NAME> ":=" ] Expression ;
 
 DottedName : <NAME> (=> "." <NAME>)* ;
 
-ImportName : "import" DottedName ("," DottedName)* ;
+ImportStatement : ImportName | ImportFrom1 | ImportFrom2 ;
 
-ImportStatement : ImportName | ImportFrom1 ImportFrom2 ;
+ImportName#void : "import" DottedName ("," DottedName)* ;
 
-ImportFrom1 : "from" ("." | "...")* DottedName =>|| "import"  ImportFromTargets ;
+ImportFrom1#void : "from" ("." | "...")* DottedName =>|| "import"  ImportFromTargets ;
 
-ImportFrom2 : "from" ("." | "...")+ "import" =>|| ImportFromTargets ; 
+ImportFrom2#void : "from" ("." | "...")+ "import" =>|| ImportFromTargets ; 
 
-ImportFromTargets : <NAME> ["as" <NAME>] ("," <NAME> ["as" <NAME>])* ;
+ImportFromTargets : 
+   "*"
+   |
+   <NAME> ["as" <NAME>] ("," <NAME> ["as" <NAME>])* 
+   |
+   "(" <NAME> ["as" <NAME>] ("," <NAME> ["as" <NAME>])* [","] ")"
+;
 
 StarNamedExpression : 
      "*" BitwiseOr
