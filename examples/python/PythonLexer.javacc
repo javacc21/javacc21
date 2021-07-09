@@ -17,9 +17,8 @@ INJECT LEXER_CLASS : {
    {indentationStack.add(1);}
 
    Token TOKEN_HOOK(Token tok) {
-//      System.err.println(tok.getType());
-//      System.err.println(tok.getLocation());
       TokenType type = tok.getType();
+      boolean lineJoiningOn = lineJoiningOn();
       switch (type) {
          case LBRACE : braceNesting++; break;
          case RBRACE : braceNesting--; break;
@@ -30,7 +29,7 @@ INJECT LEXER_CLASS : {
          case NEWLINE : return handleNewline(tok);
          default :
       }
-      if (!tok.isUnparsed() && startsLine(tok)) {
+      if (!tok.isUnparsed() && !lineJoiningOn && startsLine(tok)) {
              return handleIndentation(tok);      
       }
       return tok;

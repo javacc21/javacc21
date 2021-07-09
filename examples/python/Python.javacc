@@ -39,9 +39,9 @@ AtomicExpression :
     | 
     "__peg_parser__" 
     |
-    (Tuple | Group | GenExp)
+    (Tuple | GenExp | Group)
     |
-    (PyList | ListComp)
+    (ListComp | PyList)
     |
     (PyDict | PySet | DictComp | SetComp)
     |
@@ -49,9 +49,9 @@ AtomicExpression :
 ;
 
 Slice :
-    Expression 
+    [Expression] ":" =>|| [Expression] [":" [Expression]]
     |
-    [Expression] ":" [Expression] [":" [Expression]]
+    Expression
 ;
 
 Slices : Slice ("," Slice)* [","] ;
@@ -145,7 +145,7 @@ TryStatement :
 
 DelStatement : "del" TargetPrimary ("," TargetPrimary)* [","] ; 
 
-NamedExpression : [ <NAME> ":=" ] Expression ;
+NamedExpression : [ => <NAME> ":=" ] Expression ;
 
 DottedName : <NAME> (=> "." <NAME>)* ;
 
@@ -197,7 +197,10 @@ Factor : Power (("+"|"-"|"~") Power)* ;
 
 Power : AwaitPrimary ["**" Factor] ;
 
-Tuple : "(" [StarNamedExpression "," [StarNamedExpressions]] ")" ;
+Tuple : 
+   SCAN "(" StarNamedExpression "," =>
+    "(" [StarNamedExpression "," [StarNamedExpressions]] ")" 
+;
 
 Group : "(" (YieldExpression | NamedExpression) ")" ;
 
@@ -234,10 +237,19 @@ Default : "=" Expression ;
 
 InvocationArguments : "(" [Args] ")" ;
 
-Args : 
-   (StarExpression | NamedExpression) ("," (StarExpression | NamedExpression))* ["," KeywordArgs]
-   |
-   KeywordArgs
+Args : // This is a lot looser than the official grammar, but for now...
+   (
+       <NAME> (":="|"=") =>|| Expression
+       |
+       ["*" | "**"] Expression
+   )
+   (
+       ","
+       (<NAME> (":="|"=") =>|| Expression)
+       |
+       ["*" | "**"] Expression
+   )*
+   [","] 
 ;
 
 KeywordArgs : 
@@ -319,11 +331,11 @@ StarTargets : StarTarget ("," StarTarget)* ;
 
 ForIfClause : ["async"] "for" StarTargets "in" Disjunction ("if" Disjunction)* ;
 
-GenExp : "(" NamedExpression (ForIfClause)+ ")" ;
+GenExp : "(" NamedExpression =>|+2 (ForIfClause)+ ")" ;
 
 PyList : "[" [StarNamedExpressions] "]" ;
 
-ListComp : "[" NamedExpression (ForIfClause)+ "]" ;
+ListComp : "[" NamedExpression =>|+2 (ForIfClause)+ "]" ;
 
 StarEtc :
    KeyWords
@@ -348,7 +360,7 @@ INJECT PARSER_CLASS : {private boolean firstParam;}
 Parameters :
     {firstParam = true;}#
     (<NAME> [":" Expression] [SCAN {firstParam}# "/" => "/"] {firstParam = false;}#)* 
-    (<NAME> [":" Expression] "=" Expression [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
+    ("," <NAME> [":" Expression] ["=" Expression] [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
     [StarEtc]
 ;
 
@@ -381,11 +393,12 @@ SimpleAssignTarget :
 ;
 
 Assignment :
-  <NAME> ":" =>|| Expression ["=" AnnotatedRhs ] 
-  |
+ SCAN (SimpleAssignTarget (":" | AssignOp)) | (StarTargets "=") =>
+ (
   SimpleAssignTarget ":" =>|| Expression ["=" AnnotatedRhs]
   |
   SimpleAssignTarget AssignOp =>|| (YieldExpression | StarExpressions)
   |
-  (=>StarTargets "=")+ (YieldExpression | StarExpressions)
+  (=>StarTargets "=")+ =>|| (YieldExpression | StarExpressions)
+ )
 ;
