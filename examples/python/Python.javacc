@@ -58,7 +58,7 @@ Slices : Slice ("," Slice)* [","] ;
 
 Statement : SimpleStatement | CompoundStatement ;
 
-SimpleStatement#(>2) : SmallStatement (";" SmallStatement)* <NEWLINE> ; 
+SimpleStatement#(>2) : SmallStatement (";" =>|+1 SmallStatement)* [";"] <NEWLINE> ; 
            
 SmallStatement : 
    Assignment
@@ -196,7 +196,7 @@ StarExpression :
     Expression
 ;
 
-StarExpressions : StarExpression ("," StarExpression)* [","] ;
+StarExpressions : StarExpression ("," =>|+1 StarExpression)* [","] ;
 
 StarNamedExpressions : StarNamedExpression ("," =>|+1 StarNamedExpression)* [","] ;
 
@@ -248,7 +248,7 @@ YieldStatement# : YieldExpression ;
 
 AnnotatedRhs : YieldExpression | StarExpressions ;
 
-Decorators : "@" NamedExpression <NEWLINE> ;
+Decorators : ("@" NamedExpression <NEWLINE>)+ ;
 
 Annotation : ":" Expression ;
 
@@ -263,7 +263,7 @@ Args : // This is a lot looser than the official grammar, but for now...
        ["*" | "**"] Expression
    )
    (
-       ","
+       "," =>|+1
        (
           <NAME> (":="|"=") =>|| Expression
           |
@@ -317,7 +317,7 @@ FunctionDefinition :
     ":" Block
 ;
 
-LambdaDefinition : "lambda" LambdaParameters ":" Expression ;
+LambdaDefinition : "lambda" [LambdaParameters] ":" Expression ;
 
 /*
  * Expression grammar follows
@@ -344,7 +344,7 @@ ComparisonOperator#void :
 
 StarTarget : ["*"] TargetPrimary ;
 
-StarTargets : StarTarget ("," StarTarget)* ;
+StarTargets : StarTarget ("," =>|+1 StarTarget)* [","];
 
 ForIfClause : ["async"] "for" StarTargets "in" Disjunction ("if" Disjunction)* ;
 
@@ -372,13 +372,16 @@ KeyWords :
    ]
 ;
 
-INJECT PARSER_CLASS : {private boolean firstParam;}
-
 Parameters : // This is quite loose in terms of the order of default expressions etc.
-    {firstParam = true;}#
     [
-      <NAME> [":" Expression] ["=" Expression] [SCAN {firstParam}# "/" => "/"] {firstParam = false;}# 
-      ("," <NAME> =>|| [SCAN 1 ~\Lambdadefinition => ":" Expression] ["=" Expression] [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
+      <NAME> [":" Expression] ["=" Expression]  
+      ("," =>|+1
+        (
+          "/"
+          | 
+          <NAME> [":" Expression] ["=" Expression] 
+        )
+      )* 
       [
           SCAN ~")" => ","
       ]

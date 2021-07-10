@@ -18,7 +18,7 @@ INJECT LEXER_CLASS : {
 
    Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
-      boolean lineJoiningOn = lineJoiningOn();
+      boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0; 
       switch (type) {
          case LBRACE : braceNesting++; break;
          case RBRACE : braceNesting--; break;
@@ -26,7 +26,7 @@ INJECT LEXER_CLASS : {
          case RPAREN : parenthesesNesting--; break;
          case LBRACKET : bracketNesting++; break;
          case RBRACKET : bracketNesting--; break;
-         case NEWLINE : return handleNewline(tok);
+         case NEWLINE : return handleNewline(tok, lineJoiningOn);
          default :
       }
       if (!tok.isUnparsed() && !lineJoiningOn && startsLine(tok)) {
@@ -89,12 +89,12 @@ INJECT LEXER_CLASS : {
       return buf.toString();
    }
 
-   Token handleNewline(Token tok) {
+   Token handleNewline(Token tok, boolean lineJoiningOn) {
        if (tok.getBeginColumn()==1) {
           tok.setUnparsed(true);
           return tok;
        }
-       if (lineJoiningOn()) {
+       if (lineJoiningOn) {
          tok.setUnparsed(true);
          return tok;
        }
@@ -105,12 +105,7 @@ INJECT LEXER_CLASS : {
        return tok;
    }
 
-   boolean lineJoiningOn() {
-       return braceNesting >0 || parenthesesNesting >0 || bracketNesting >0;
-   }
-
    boolean startsLine(Token tok) {
-       if (lineJoiningOn()) return false;
        if (tok.getBeginColumn() ==1) return true;
        Token prevToken = tok.getPreviousToken();
        if (prevToken == null) return true;
@@ -343,9 +338,9 @@ TOKEN #StringLiteral :
    |
    <#STRING_LITERAL4 : (<STRING_PREFIX>)? "\"\"\"" (~["\"","\\"] | ("\"" ~["\""]) | ("\"\"" ~["\""])|<STRING_ESCAPE>)* "\"\"\"">
    |
-   <#BYTES_LITERAL_1 : <BYTES_PREFIX> "'" ((~["\n","'"])|<BYTES_ESCAPE>)* "'">
+   <#BYTES_LITERAL_1 : <BYTES_PREFIX> "'" ((~["\n","'", "\\"])|<BYTES_ESCAPE>)* "'">
    |
-   <#BYTES_LITERAL_2 : <BYTES_PREFIX> "\"" ((~["\n","\""])|<BYTES_ESCAPE>)* "\"">
+   <#BYTES_LITERAL_2 : <BYTES_PREFIX> "\"" ((~["\n","\"","\\"])|<BYTES_ESCAPE>)* "\"">
    |
    <#BYTES_LITERAL_3 : <BYTES_PREFIX> "'''" (~["'","\\"] | ("'" ~["'"]) | ("''" ~["'"])|<BYTES_ESCAPE>)* "'''">
    |
