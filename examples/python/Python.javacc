@@ -183,7 +183,7 @@ StarExpression :
 
 StarExpressions : StarExpression ("," StarExpression)* [","] ;
 
-StarNamedExpressions : StarNamedExpression ("," StarNamedExpression)* [","] ;
+StarNamedExpressions : StarNamedExpression ("," =>|+1 StarNamedExpression)* [","] ;
 
 BitwiseOr : BitwiseXor ("|" BitwiseXor)* ;
 
@@ -352,16 +352,16 @@ KeyWords :
 
 INJECT PARSER_CLASS : {private boolean firstParam;}
 
-Parameters :
+Parameters : // This is quite loose in terms of the order of default expressions etc.
     {firstParam = true;}#
-    (<NAME> [":" Expression] [SCAN {firstParam}# "/" => "/"] {firstParam = false;}#)* 
+    (<NAME> [":" Expression] ["=" Expression] [SCAN {firstParam}# "/" => "/"] {firstParam = false;}#)* 
     ("," <NAME> [":" Expression] ["=" Expression] [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
     [StarEtc]
 ;
 
 TargetPrimary :
    AtomicExpression
-   [
+   (
        "." <NAME>
        |
        "[" Slices "]"
@@ -369,7 +369,7 @@ TargetPrimary :
        GenExp
        |
        InvocationArguments
-   ]
+   )*
 ;
 
 DeleteTarget :

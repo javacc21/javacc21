@@ -125,7 +125,7 @@ SKIP : <SPACE : (" " | "\f")+> ;
 UNPARSED : 
    <CONTINUE_LINE : "\\\n"> #Whitespace
    |
-   <COMMENT: "#" (~["\n"])* "\n" > #Comment  
+   <COMMENT: "#" (~["\n"])* > #Comment  
 ;
 
 TOKEN : 
