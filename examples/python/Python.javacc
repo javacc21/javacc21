@@ -43,7 +43,7 @@ AtomicExpression :
     |
     (ListComp | PyList)
     |
-    (SetComp | PyDict | PySet | DictComp)
+    (SetComp | DictComp | PyDict | PySet)
     |
     "..."
 ;
@@ -125,7 +125,7 @@ ExceptBlock : "except" [ Expression ["as" <NAME>] ] ":" Block ;
 IfStatement : 
     "if" NamedExpression ":" Block 
      ("elif" NamedExpression ":" Block)* 
-     ["else" NamedExpression ":" Block]
+     ["else" ":" Block]
 ;     
 
 FinallyBlock : "finally" ":" Block ;
@@ -155,7 +155,7 @@ DottedName : <NAME> (=> "." <NAME>)* ;
 
 ImportStatement : ImportName | ImportFrom1 | ImportFrom2 ;
 
-ImportName#void : "import" DottedName ("," DottedName)* ;
+ImportName#void : "import" DottedName ["as" <NAME>] ("," DottedName ["as" <NAME>])* ;
 
 ImportFrom1#void : "from" ("." | "...")* DottedName =>|| "import"  ImportFromTargets ;
 
@@ -266,11 +266,11 @@ DoubleStarredKeyValuePair :
     KeyValuePair
 ;
 
-DoubleStarredKeyValuePairs : DoubleStarredKeyValuePair ("," DoubleStarredKeyValuePair)* [","] ;
+DoubleStarredKeyValuePairs : DoubleStarredKeyValuePair ("," =>|+1 DoubleStarredKeyValuePair)* [","] ;
 
 PyDict : "{" [DoubleStarredKeyValuePairs] "}" ;
 
-DictComp : "{" KeyValuePair (ForIfClause)+ "}" ;
+DictComp : "{" KeyValuePair =>|+2 (ForIfClause)+ "}" ;
 
 PySet : "{" StarNamedExpressions "}" ;
 
@@ -354,8 +354,10 @@ INJECT PARSER_CLASS : {private boolean firstParam;}
 
 Parameters : // This is quite loose in terms of the order of default expressions etc.
     {firstParam = true;}#
-    (<NAME> [":" Expression] ["=" Expression] [SCAN {firstParam}# "/" => "/"] {firstParam = false;}#)* 
-    ("," <NAME> [SCAN 1 ~\Lambdadefinition => ":" Expression] ["=" Expression] [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
+    [
+      <NAME> [":" Expression] ["=" Expression] [SCAN {firstParam}# "/" => "/"] {firstParam = false;}# 
+      ("," <NAME> [SCAN 1 ~\Lambdadefinition => ":" Expression] ["=" Expression] [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
+    ]
     [StarEtc]
 ;
 
