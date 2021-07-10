@@ -317,7 +317,7 @@ FunctionDefinition :
     ":" Block
 ;
 
-LambdaDefinition : "lambda" [LambdaParameters] ":" Expression ;
+LambdaDefinition : "lambda" LambdaParameters ":" Expression ;
 
 /*
  * Expression grammar follows
@@ -359,7 +359,7 @@ StarEtc :
    |
    "*" "," =>|| ParamMaybeDefault ("," =>|+1 ParamMaybeDefault)* ["," KeyWords]
    |
-   "*" <NAME> [":" Expression] ("," =>|+1 ParamMaybeDefault)* ["," KeyWords]
+   "*" <NAME> [SCAN 1 ~\...\LambdaDefinition => ":" Expression] ("," =>|+1 ParamMaybeDefault)* ["," KeyWords]
 ;
 
 ParamMaybeDefault : <NAME> [":" Expression] ["=" Expression] ;
@@ -367,7 +367,7 @@ ParamMaybeDefault : <NAME> [":" Expression] ["=" Expression] ;
 KeyWords :
    "**" <NAME> 
    [ 
-       // This annotation is apparently disallowed in a lambda, but we'll deal with these details later.
+       SCAN 1 ~\...\LambdaDefinition => 
        ":" Expression
    ]
 ;
@@ -392,8 +392,24 @@ Parameters : // This is quite loose in terms of the order of default expressions
 ;
 
 LambdaParameters : // Default parameter can only be the last one, REVISIT
-    <NAME> ["=" Expression]
-    ("," <NAME> ["=" Expression])*
+    [
+      <NAME> ["=" Expression]  
+      ("," =>|+1
+        (
+          "/"
+          | 
+          <NAME> ["=" Expression] 
+        )
+      )* 
+      [
+          SCAN ~":" => ","
+      ]
+    ]
+    [
+        SCAN ~":" => StarEtc
+    ]
+//    <NAME> ["=" Expression]
+//    ("," <NAME> ["=" Expression])*
 ;    
 
 TargetPrimary :
