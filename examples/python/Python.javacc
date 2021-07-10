@@ -95,6 +95,8 @@ CompoundStatement :
     |
     ClassDefinition
     |
+    WithStatement
+    |
     WhileStatement
     |
     ForStatement
@@ -131,6 +133,19 @@ IfStatement :
 FinallyBlock : "finally" ":" Block ;
 
 WhileStatement : "while" NamedExpression ":" Block [ElseBlock] ;
+
+WithStatement : 
+    ["async"] "with" 
+    (
+        WithItem ("," WithItem)* 
+        |
+        "(" WithItem (SCAN 2 => "," WithItem)*  [","] ")"
+    )
+    ":" Block
+;
+
+WithItem : Expression ["as" StarTarget] ;
+
 
 ForStatement : 
    ["async"] "for" =>|| 
@@ -202,7 +217,7 @@ UnaryExpression : Power | ("+" | "-" | "~") UnaryExpression ;
 Power : AwaitPrimary ["**" UnaryExpression] ;
 
 Tuple : 
-   SCAN "(" StarNamedExpression "," =>
+   SCAN "(" (")" | StarNamedExpression ",") =>
     "(" [StarNamedExpression "," [StarNamedExpressions]] ")" 
 ;
 
@@ -268,7 +283,14 @@ DoubleStarredKeyValuePair :
 
 DoubleStarredKeyValuePairs : DoubleStarredKeyValuePair ("," =>|+1 DoubleStarredKeyValuePair)* [","] ;
 
-PyDict : "{" [DoubleStarredKeyValuePairs] "}" ;
+PyDict : 
+  SCAN "{" ("}" | DoubleStarredKeyValuePair) =>
+  (
+    "{" 
+    [DoubleStarredKeyValuePairs] 
+    "}" 
+  )
+;
 
 DictComp : "{" KeyValuePair =>|+2 (ForIfClause)+ "}" ;
 
@@ -335,9 +357,9 @@ ListComp : "[" NamedExpression =>|+2 (ForIfClause)+ "]" ;
 StarEtc :
    KeyWords
    |
-   "*" "," =>|| ParamMaybeDefault ("," ParamMaybeDefault)* [KeyWords]
+   "*" "," =>|| ParamMaybeDefault ("," ParamMaybeDefault)* ["," KeyWords]
    |
-   "*" <NAME> [":" Expression] ("," ParamMaybeDefault)* [KeyWords]
+   "*" <NAME> [":" Expression] ("," =>|+1 ParamMaybeDefault)* ["," KeyWords]
 ;
 
 ParamMaybeDefault : <NAME> [":" Expression] ["=" Expression] ;
@@ -356,9 +378,14 @@ Parameters : // This is quite loose in terms of the order of default expressions
     {firstParam = true;}#
     [
       <NAME> [":" Expression] ["=" Expression] [SCAN {firstParam}# "/" => "/"] {firstParam = false;}# 
-      ("," <NAME> [SCAN 1 ~\Lambdadefinition => ":" Expression] ["=" Expression] [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
+      ("," <NAME> =>|| [SCAN 1 ~\Lambdadefinition => ":" Expression] ["=" Expression] [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
+      [
+          SCAN ~")" => ","
+      ]
     ]
-    [StarEtc]
+    [
+        SCAN ~")" => StarEtc
+    ]
 ;
 
 LambdaParameters : // Default parameter can only be the last one, REVISIT
