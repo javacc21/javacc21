@@ -191,15 +191,15 @@ BitwiseXor : BitwiseAnd ("^" BitwiseAnd)* ;
 
 BitwiseAnd : ShiftExpression ("&" ShiftExpression)* ;
 
-ShiftExpression : Sum (("<<" | ">>") Sum)* ;
+ShiftExpression : AdditiveExpression (("<<" | ">>") AdditiveExpression)* ;
 
-Sum : Term (("+"|"-") Term)* ;
+AdditiveExpression : MultiplicativeExpression (("+"|"-") MultiplicativeExpression)* ;
 
-Term : Factor (("*"|"/"|"//"|"%"|"@") Factor)* ;
+MultiplicativeExpression : UnaryExpression (("*"|"/"|"//"|"%"|"@") UnaryExpression)* ;
 
-Factor : Power (("+"|"-"|"~") Power)* ;
+UnaryExpression : Power | ("+" | "-" | "~") UnaryExpression ;
 
-Power : AwaitPrimary ["**" Factor] ;
+Power : AwaitPrimary ["**" UnaryExpression] ;
 
 Tuple : 
    SCAN "(" StarNamedExpression "," =>
@@ -257,17 +257,6 @@ Args : // This is a lot looser than the official grammar, but for now...
    )*
    [","] 
 ;
-
-KeywordArgs : 
-     KeywordOrStarred ("," KeywordOrStarred)* ["," KeywordOrDoubleStarred ("," KeywordOrDoubleStarred)*] 
-     |
-     KeywordOrDoubleStarred ("," KeywordOrDoubleStarred)* 
-;
-
-
-KeywordOrStarred : ((<NAME> "=") | "*") Expression;
-
-KeywordOrDoubleStarred : ((<NAME> "=") | "**") Expression;
 
 KeyValuePair : Expression ":" Expression ;
 
