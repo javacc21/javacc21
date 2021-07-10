@@ -179,9 +179,9 @@ ImportFrom2#void : "from" ("." | "...")+ "import" =>|| ImportFromTargets ;
 ImportFromTargets : 
    "*"
    |
-   <NAME> ["as" <NAME>] ("," <NAME> ["as" <NAME>])* 
+   <NAME> ["as" <NAME>] ("," <NAME> =>|| ["as" <NAME>])* [","]
    |
-   "(" <NAME> ["as" <NAME>] ("," <NAME> ["as" <NAME>])* [","] ")"
+   "(" <NAME> ["as" <NAME>] ("," <NAME> =>|| ["as" <NAME>])* [","] ")" [","]
 ;
 
 StarNamedExpression : 
@@ -357,9 +357,9 @@ ListComp : "[" NamedExpression =>|+2 (ForIfClause)+ "]" ;
 StarEtc :
    KeyWords
    |
-   "*" "," =>|| ParamMaybeDefault ("," =>|+1 ParamMaybeDefault)* ["," KeyWords]
+   "*" "," =>|| ParamMaybeDefault ("," =>|+1 ParamMaybeDefault)* ["," [KeyWords]]
    |
-   "*" <NAME> [SCAN 1 ~\...\LambdaDefinition => ":" Expression] ("," =>|+1 ParamMaybeDefault)* ["," KeyWords]
+   "*" <NAME> [SCAN 1 ~\...\LambdaDefinition => ":" Expression] ("," =>|+1 ParamMaybeDefault)* ["," [KeyWords]]
 ;
 
 ParamMaybeDefault : <NAME> [":" Expression] ["=" Expression] ;
