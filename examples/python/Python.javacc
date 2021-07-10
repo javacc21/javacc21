@@ -295,7 +295,7 @@ FunctionDefinition :
     ":" Block
 ;
 
-LambdaDefinition : "lambda" Parameters ":" Expression ;
+LambdaDefinition : "lambda" LambdaParameters ":" Expression ;
 
 /*
  * Expression grammar follows
@@ -355,9 +355,14 @@ INJECT PARSER_CLASS : {private boolean firstParam;}
 Parameters : // This is quite loose in terms of the order of default expressions etc.
     {firstParam = true;}#
     (<NAME> [":" Expression] ["=" Expression] [SCAN {firstParam}# "/" => "/"] {firstParam = false;}#)* 
-    ("," <NAME> [":" Expression] ["=" Expression] [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
+    ("," <NAME> [SCAN 1 ~\Lambdadefinition => ":" Expression] ["=" Expression] [SCAN 1 {firstParam}# => "/"] {firstParam = false;})* 
     [StarEtc]
 ;
+
+LambdaParameters : // Default parameter can only be the last one, REVISIT
+    <NAME> ["=" Expression]
+    ("," <NAME> ["=" Expression])*
+;    
 
 TargetPrimary :
    AtomicExpression
