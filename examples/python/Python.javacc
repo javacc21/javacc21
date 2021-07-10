@@ -276,7 +276,7 @@ Args : // This is a lot looser than the official grammar, but for now...
 KeyValuePair : Expression ":" Expression ;
 
 DoubleStarredKeyValuePair : 
-    "*" BitwiseOr
+    "**" BitwiseOr
     |
     KeyValuePair
 ;
@@ -357,7 +357,7 @@ ListComp : "[" NamedExpression =>|+2 (ForIfClause)+ "]" ;
 StarEtc :
    KeyWords
    |
-   "*" "," =>|| ParamMaybeDefault ("," ParamMaybeDefault)* ["," KeyWords]
+   "*" "," =>|| ParamMaybeDefault ("," =>|+1 ParamMaybeDefault)* ["," KeyWords]
    |
    "*" <NAME> [":" Expression] ("," =>|+1 ParamMaybeDefault)* ["," KeyWords]
 ;
