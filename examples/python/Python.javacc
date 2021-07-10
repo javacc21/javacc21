@@ -43,7 +43,7 @@ AtomicExpression :
     |
     (ListComp | PyList)
     |
-    (PyDict | PySet | DictComp | SetComp)
+    (SetComp | PyDict | PySet | DictComp)
     |
     "..."
 ;
@@ -97,11 +97,9 @@ CompoundStatement :
     |
     WhileStatement
     |
+    ForStatement
+    |
     TryStatement
-    |
-    ClassDefinition
-    |
-    FunctionDefinition
 ;    
 
 ReturnStatement : "return" [StarExpressions] ;
@@ -133,6 +131,12 @@ IfStatement :
 FinallyBlock : "finally" ":" Block ;
 
 WhileStatement : "while" NamedExpression ":" Block [ElseBlock] ;
+
+ForStatement : 
+   ["async"] "for" =>|| 
+   StarTargets "in" StarExpressions ":"
+   Block [ElseBlock]
+;
 
 TryStatement : 
    "try" ":" Block 
@@ -245,9 +249,11 @@ Args : // This is a lot looser than the official grammar, but for now...
    )
    (
        ","
-       (<NAME> (":="|"=") =>|| Expression)
-       |
-       ["*" | "**"] Expression
+       (
+          <NAME> (":="|"=") =>|| Expression
+          |
+          ["*" | "**"] Expression
+       )
    )*
    [","] 
 ;
@@ -279,7 +285,7 @@ DictComp : "{" KeyValuePair (ForIfClause)+ "}" ;
 
 PySet : "{" StarNamedExpressions "}" ;
 
-SetComp : "{" NamedExpression (ForIfClause)+ "}" ;
+SetComp : "{" NamedExpression =>|+2 (ForIfClause)+ "}" ;
 
 ClassDefinition :
     [Decorators] "class" =>||
