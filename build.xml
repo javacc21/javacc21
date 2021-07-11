@@ -12,9 +12,9 @@
         <srcfiles dir="src/javacc" includes="*.javacc"/>
 	  </uptodate>
     <uptodate property="preprocessor.uptodate"
-		targetfile="src/java/com/javacc/preprocessor/PreprocessorParser.java"
-        srcfile="examples/preprocessor/Preprocessor.javacc"/>
-
+    		targetfile="src/java/com/javacc/preprocessor/PreprocessorParser.java"
+        srcfile="examples/preprocessor/Preprocessor.javacc"
+    />
 </target>
 
 <target name="restore-bootstrap-jar">
@@ -46,6 +46,7 @@
   <delete dir="examples/freemarker/ftl"/>
   <delete dir="examples/json/org"/>
   <delete dir="examples/preprocessor/org/"/>
+  <delete dir="examples/python/org/"/>
 </target>
 
 
@@ -87,6 +88,11 @@
           <include name="*.javacc"/>
       </fileset>
     </copy>
+    <copy todir="build/include/python">
+      <fileset dir="examples/python">
+        <include name="*.javacc"/>
+      </fileset>
+    </copy>
     <copy todir="build/include/preprocessor">
       <fileset dir="examples/preprocessor">
           <include name="*.javacc"/>
@@ -120,6 +126,9 @@
     <echo>Testing the Java parser standalone</echo>
     <ant antfile="build.xml" dir="examples/java" target="clean"/>
     <ant antfile="build.xml" dir="examples/java" target="test"/>
+    <echo>Building the Python parser</echo>
+    <ant antfile="build.xml" dir="examples/python" target="clean"/>
+    <ant antfile="build.xml" dir="examples/python" target="compile"/>
     <echo>Testing the newer FreeMarker parser</echo>
     <ant antfile="build.xml" dir="examples/freemarker" target="clean"/>
     <ant antfile="build.xml" dir="examples/freemarker" target="test"/>

@@ -346,7 +346,7 @@ TOKEN #StringLiteral :
    <#BYTES_ESCAPE : "\\" ["\u0000"-"\u00FF"]>
 ;
 
-INCLUDE "PythonIdentifierDef.javacc"
+INCLUDE PYTHON_IDENTIFIER_DEF
 
 TOKEN :
   <NAME : <PYTHON_IDENTIFIER_START> (<PYTHON_IDENTIFIER_PART>)* > #Name

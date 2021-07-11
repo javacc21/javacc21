@@ -1,21 +1,22 @@
 <project name="Python" default="compile" basedir=".">
-    <uptodate property="parser.uptodate"
-	    targetfile="org/parsers/python/PythonParser.java"> 
-        <srcfiles dir="." includes="*.javacc"/>
-    </uptodate>
+    <target name="parser-check">
+        <uptodate property="parser.uptodate" targetfile="org/parsers/python/PythonParser.java"> 
+            <srcfiles dir="." includes="*.javacc"/>
+         </uptodate>
+    </target>
     <target name="clean">
-       <delete>
-          <fileset dir="${basedir}" includes="*.class"/>
-       </delete>
-       <delete dir="${basedir}/org"/>
-   </target>
+        <delete>
+           <fileset dir="${basedir}" includes="*.class"/>
+        </delete>
+        <delete dir="${basedir}/org"/>
+    </target>
    <target name="parser-gen" unless="parser.uptodate">
         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
             <assertions><enable/></assertions>
             <arg line="-n ${basedir}/Python.javacc"/>
         </java>
    </target>
-   <target name="compile" depends="parser-gen">
+   <target name="compile" depends="parser-check,parser-gen">
 	   <javac classpath="." srcdir="." includeantruntime="off"  failonerror="true" debug="on" target="1.8" source="1.8"
 		   fork="true"/>
        <echo>

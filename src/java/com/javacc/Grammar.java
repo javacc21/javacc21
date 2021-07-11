@@ -231,6 +231,7 @@ public class Grammar extends BaseNode {
         return null;
     }
 
+    // TODO: This is getting big enough that we should have a proper table!
     private String resolveAlias(String location) {
         if (location.equals("JAVA")) {
             location = "/include/java/Java.javacc";
@@ -240,6 +241,15 @@ public class Grammar extends BaseNode {
         } 
         else if (location.equals("JAVA_IDENTIFIER_DEF")) {
             location = "/include/java/JavaIdentifierDef.javacc";
+        }
+        else if (location.equals("PYTHON_IDENTIFIER_DEF")) {
+            location = "/include/python/PythonIdentifierDef.javacc";
+        }
+        else if (location.equals("PYTHON_LEXER")) {
+            location = "/include/python/PythonLexer.javacc";
+        }
+        else if (location.equals("PYTHON")) {
+            location = "/include/python/Python.javacc";
         }
         return location;
     }

@@ -27,7 +27,7 @@ Number#void : <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | 
 
 Strings : (<STRING_LITERAL>)+ ;
 
-AtomicExpression : 
+AtomicExpression#void : 
     <NAME> 
     | 
     Number 
@@ -57,7 +57,7 @@ Slice :
     Expression
 ;
 
-Slices : Slice ("," =>|+1 Slice)* [","] ;
+Slices : "[" Slice ("," =>|+1 Slice)* [","] "]" ;
 
 Statement : SimpleStatement | CompoundStatement ;
 
@@ -165,7 +165,7 @@ TryStatement :
    )
 ;
 
-DelStatement : "del" TargetPrimary ("," TargetPrimary)* [","] ; 
+DelStatement : "del" PrimaryExpression ("," PrimaryExpression)* [","] ; 
 
 NamedExpression : [ => <NAME> ":=" ] Expression ;
 
@@ -228,18 +228,20 @@ Group : "(" (YieldExpression | NamedExpression) ")" ;
 
 AwaitPrimary : ["await"] PrimaryExpression ;
 
-PrimaryExpression : AtomicExpression (PrimarySuffix)* ;
-
-PrimarySuffix :
-    "." <NAME> 
-    |
-    GenExp
-    |
-    "(" [ Args ] ")"
-    |
-    "[" Slices "]"
+PrimaryExpression :
+   AtomicExpression
+   (
+       DotName 
+       |
+       Slices
+       |
+       GenExp
+       |
+       InvocationArguments
+   )*
 ;
 
+DotName : "." <NAME> ;
 
 YieldExpression : 
     "yield" "from" =>|| Expression 
@@ -260,21 +262,14 @@ Default : "=" Expression ;
 InvocationArguments : "(" [Args] ")" ;
 
 Args : // This is looser than the official grammar, but okay for now...
-   (
-       <NAME> (":="|"=") =>|| Expression
-       |
-       ["*" | "**"] Expression
-   )
-   (
-       SCAN 2
-       ","
-       (
-          <NAME> (":="|"=") =>|| Expression
-          |
-          ["*" | "**"] Expression
-       )
-   )*
+   Arg (SCAN 3 "," Arg)*
    [","] 
+;
+
+Arg : 
+   <NAME> (":=" | "=") =>|| Expression
+   |
+   ["*" | "**"] Expression
 ;
 
 KeyValuePair : Expression ":" Expression ;
@@ -346,7 +341,7 @@ ComparisonOperator#void :
 ;
 
 
-StarTarget : ["*"] TargetPrimary ;
+StarTarget : ["*"] PrimaryExpression ;
 
 StarTargets : StarTarget ("," =>|+1 StarTarget)* [","];
 
@@ -399,26 +394,13 @@ Parameters :
     [","]
 ;
 
-TargetPrimary :
-   AtomicExpression
-   (
-       "." <NAME>
-       |
-       "[" Slices "]"
-       |
-       GenExp
-       |
-       InvocationArguments
-   )*
-;
-
 AugAssign#void :
     "+=" | "-=" | "*=" | "@=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" 
     | ">>=" | "**=" | "//=" 
 ;
 
 SimpleAssignTarget :
-   TargetPrimary
+   PrimaryExpression
    |
    "(" SimpleAssignTarget ")"
 ;
