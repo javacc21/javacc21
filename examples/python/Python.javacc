@@ -1,10 +1,13 @@
 /*
- * Unfinished work on a Python grammar. I am working from the information in
+ * This Python grammar corresponds to the information on the 
  * following two web pages:
  * https://docs.python.org/3/reference/grammar.html
  * https://docs.python.org/3/reference/lexical_analysis.html#indentation
- * This is Python 3.9.5, which I presume is the latest spec. 
+ * This is Python 3.9.6, which I presume is the latest spec. 
  * (I do not anticipate supporting any older versions of the language.)
+ * Currently, the generated parser can parse the source code of Django
+ * and the Pyton standard library, with the exception of a few files
+ * deliberately 
  */
 
 PARSER_PACKAGE = org.parsers.python;
@@ -54,7 +57,7 @@ Slice :
     Expression
 ;
 
-Slices : Slice ("," Slice)* [","] ;
+Slices : Slice ("," =>|+1 Slice)* [","] ;
 
 Statement : SimpleStatement | CompoundStatement ;
 
@@ -135,7 +138,7 @@ FinallyBlock : "finally" ":" Block ;
 WhileStatement : "while" NamedExpression ":" Block [ElseBlock] ;
 
 WithStatement : 
-    ["async"] "with" 
+    ["async"] "with" =>||
     (
         WithItem ("," WithItem)* 
         |
@@ -389,6 +392,7 @@ Parameters : // This is quite loose in terms of the order of default expressions
     [
         SCAN ~")" => StarEtc
     ]
+    [ SCAN ~")" => ","]
 ;
 
 LambdaParameters : // Default parameter can only be the last one, REVISIT
