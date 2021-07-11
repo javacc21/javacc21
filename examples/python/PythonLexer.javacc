@@ -1,6 +1,5 @@
 /*
-
- * The lexical grammar of the still unfunished Python parser
+ * The Python lexical grammar 
  */
 
 PARSER_PACKAGE = org.parsers.pylexer;
@@ -10,16 +9,18 @@ PRESERVE_LINE_ENDINGS=false;
 ENSURE_FINAL_EOL;
 EXTRA_TOKENS=INDENT,DEDENT;
 
+/*
+ * The following code injection implements the various indent/dedent logic.
+ */
 INJECT LEXER_CLASS : {
    private int indentation=1;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = new ArrayList<>();
    {indentationStack.add(1);}
 
-   Token TOKEN_HOOK(Token tok) {
-      TokenType type = tok.getType();
+   private Token TOKEN_HOOK(Token tok) {
       boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0; 
-      switch (type) {
+      switch (tok.getType()) {
          case LBRACE : braceNesting++; break;
          case RBRACE : braceNesting--; break;
          case LPAREN : parenthesesNesting++; break;
@@ -35,7 +36,7 @@ INJECT LEXER_CLASS : {
       return tok;
    }
 
-   Token handleIndentation(Token tok) {
+   private Token handleIndentation(Token tok) {
        final int offset = tok.getBeginColumn();
        if (offset == indentation) {
           return tok;
@@ -43,8 +44,7 @@ INJECT LEXER_CLASS : {
        if (offset > indentation) {
           indentationStack.add(offset);
           this.indentation = offset;
-          String img = spaces(offset - indentation);
-          Token indent = Token.newToken(INDENT, img, getInputSource());
+          Token indent = Token.newToken(INDENT, "INDENT", getInputSource());
           setLocationInfo(indent, tok.getPreviousToken(), tok);
           return indent;
        }
@@ -58,7 +58,7 @@ INJECT LEXER_CLASS : {
        this.indentation = offset;
        Token firstDedent = null, lastDedent=null;
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
-          Token dedent = Token.newToken(DEDENT, "", getInputSource());
+          Token dedent = Token.newToken(DEDENT, "DEDENT", getInputSource());
           if (firstDedent == null) firstDedent = dedent;
           Token prev = lastDedent != null ? lastDedent : tok.getPreviousToken();
           setLocationInfo(dedent, prev, tok);
@@ -83,20 +83,10 @@ INJECT LEXER_CLASS : {
       indentDedent.setInputSource(getInputSource());
    }
 
-   static private String spaces(int num) {
-      StringBuilder buf = new StringBuilder(num);
-      for (int i = 0; i<num; i++) buf.append((char) ' ');
-      return buf.toString();
-   }
-
    Token handleNewline(Token tok, boolean lineJoiningOn) {
-       if (tok.getBeginColumn()==1) {
+       if (lineJoiningOn || tok.getBeginColumn()==1) {
           tok.setUnparsed(true);
           return tok;
-       }
-       if (lineJoiningOn) {
-         tok.setUnparsed(true);
-         return tok;
        }
        Token prevToken = tok.getPreviousToken();
        if (prevToken == null || prevToken.getImage() == null || (prevToken.getType() == COMMENT && startsLine(prevToken))) {

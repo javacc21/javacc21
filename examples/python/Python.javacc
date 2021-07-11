@@ -6,8 +6,8 @@
  * This is Python 3.9.6, which I presume is the latest spec. 
  * (I do not anticipate supporting any older versions of the language.)
  * Currently, the generated parser can parse the source code of Django
- * and the Pyton standard library, with the exception of a few files
- * deliberately 
+ * and the Python standard library, with the exception of a few files
+ * that are deliberately screwy.
  */
 
 PARSER_PACKAGE = org.parsers.python;
@@ -259,14 +259,15 @@ Default : "=" Expression ;
 
 InvocationArguments : "(" [Args] ")" ;
 
-Args : // This is a lot looser than the official grammar, but for now...
+Args : // This is looser than the official grammar, but okay for now...
    (
        <NAME> (":="|"=") =>|| Expression
        |
        ["*" | "**"] Expression
    )
    (
-       "," =>|+1
+       SCAN 2
+       ","
        (
           <NAME> (":="|"=") =>|| Expression
           |
@@ -320,7 +321,7 @@ FunctionDefinition :
     ":" Block
 ;
 
-LambdaDefinition : "lambda" LambdaParameters ":" Expression ;
+LambdaDefinition : "lambda" Parameters ":" Expression ;
 
 /*
  * Expression grammar follows
@@ -362,7 +363,7 @@ StarEtc :
    |
    "*" "," =>|| ParamMaybeDefault ("," =>|+1 ParamMaybeDefault)* ["," [KeyWords]]
    |
-   "*" <NAME> [SCAN 1 ~\...\LambdaDefinition => ":" Expression] ("," =>|+1 ParamMaybeDefault)* ["," [KeyWords]]
+   "*" <NAME> [SCAN 1 \.\FunctionDefinition => ":" Expression] ("," =>|+1 ParamMaybeDefault)* ["," [KeyWords]]
 ;
 
 ParamMaybeDefault : <NAME> [":" Expression] ["=" Expression] ;
@@ -375,46 +376,28 @@ KeyWords :
    ]
 ;
 
-Parameters : // This is quite loose in terms of the order of default expressions etc.
+Parameters : 
+// Using a contextual predicate, we manage to use the same production 
+// for the parameters of a function def or a lambda. 
+// NB. This production is looser than it should be. For example,
+// a default argument can only be at the end and the slash 
+// can only appear once. FIXME.
     [
-      <NAME> [":" Expression] ["=" Expression]  
+      <NAME> [SCAN 1 \FunctionDefinition => ":" Expression] ["=" Expression]  
       ("," =>|+1
         (
           "/"
           | 
-          <NAME> [":" Expression] ["=" Expression] 
+          <NAME> [SCAN 1 \FunctionDefinition => ":" Expression] ["=" Expression] 
         )
       )* 
-      [
-          SCAN ~")" => ","
-      ]
+      [ "," ]
     ]
     [
-        SCAN ~")" => StarEtc
+        SCAN ~(")"|":") => StarEtc
     ]
-    [ SCAN ~")" => ","]
+    [","]
 ;
-
-LambdaParameters : // Default parameter can only be the last one, REVISIT
-    [
-      <NAME> ["=" Expression]  
-      ("," =>|+1
-        (
-          "/"
-          | 
-          <NAME> ["=" Expression] 
-        )
-      )* 
-      [
-          SCAN ~":" => ","
-      ]
-    ]
-    [
-        SCAN ~":" => StarEtc
-    ]
-//    <NAME> ["=" Expression]
-//    ("," <NAME> ["=" Expression])*
-;    
 
 TargetPrimary :
    AtomicExpression
@@ -429,11 +412,7 @@ TargetPrimary :
    )*
 ;
 
-DeleteTarget :
-   TargetPrimary // Can I get away with this? 
-;
-
-AssignOp#void :
+AugAssign#void :
     "+=" | "-=" | "*=" | "@=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" 
     | ">>=" | "**=" | "//=" 
 ;
@@ -445,11 +424,11 @@ SimpleAssignTarget :
 ;
 
 Assignment :
- SCAN (SimpleAssignTarget (":" | AssignOp)) | (StarTargets "=") =>
+ SCAN (SimpleAssignTarget (":" | AugAssign)) | (StarTargets "=") =>
  (
   SimpleAssignTarget ":" =>|| Expression ["=" AnnotatedRhs]
   |
-  SimpleAssignTarget AssignOp =>|| (YieldExpression | StarExpressions)
+  SimpleAssignTarget AugAssign =>|| (YieldExpression | StarExpressions)
   |
   (=>StarTargets "=")+ =>|| (YieldExpression | StarExpressions)
  )
