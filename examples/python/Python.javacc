@@ -235,7 +235,7 @@ PrimarySuffix :
     |
     GenExp
     |
-    "(" [ Args [","] ] ")"
+    "(" [ Args ] ")"
     |
     "[" Slices "]"
 ;
