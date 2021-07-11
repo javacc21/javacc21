@@ -344,14 +344,18 @@ public class FileLineMap {
             boolean javaUnicodeEscape, boolean ensureFinalEndline) {
         if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape) {
             if (ensureFinalEndline) {
-                int lastChar = content.charAt(content.length()-1);
-                if (lastChar != '\n' && lastChar != '\r') {
-                    if (content instanceof StringBuilder) {
-                        ((StringBuilder) content).appendCodePoint('\n');
-                    } else {
-                        StringBuilder buf = new StringBuilder(content);
-                        buf.appendCodePoint('\n');
-                        content = buf.toString();
+                if (content.length() == 0) {
+                    content = "\n";
+                } else {
+                    int lastChar = content.charAt(content.length()-1);
+                    if (lastChar != '\n' && lastChar != '\r') {
+                        if (content instanceof StringBuilder) {
+                            ((StringBuilder) content).appendCodePoint('\n');
+                        } else {
+                            StringBuilder buf = new StringBuilder(content);
+                            buf.appendCodePoint('\n');
+                            content = buf.toString();
+                        }
                     }
                 }
             }
@@ -431,6 +435,9 @@ public class FileLineMap {
             }
         }
         if (ensureFinalEndline) {
+            if (buf.length() ==0) {
+                return "\n";
+            }
             char lastChar = buf.charAt(buf.length()-1);
             if (lastChar != '\n' && lastChar!='\r') buf.append((char) '\n');
         }
