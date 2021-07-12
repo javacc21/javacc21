@@ -446,7 +446,6 @@ ThrowsList : "throws" Name ( "," Name )* ;
 
 INJECT Expression :
 {
-  public boolean isMethodCall() {return false;}
   public boolean isConstructorInvocation() {return false;}
   public boolean isAssignableTo() {return false;}
   public boolean isAllocation() {return false;}
@@ -479,13 +478,10 @@ INJECT CodeBlock : extends Expression
 INJECT SwitchExpression : extends Expression
 INJECT DotThis : extends Expression
 INJECT DotSuper : extends Expression
+INJECT MethodCall : extends Expression 
 
 INJECT AllocationExpression : extends Expression {
   public boolean isConstructorInvocation() {return true;}
-}
-
-INJECT MethodCall : extends Expression {
-  public boolean isMethodCall() {return true;}
 }
 
 INJECT DotName : extends Expression {
@@ -647,7 +643,6 @@ ObjectCastExpression :
    "(" ReferenceType ("&" ObjectType)* ")" =>|+1 UnaryExpressionNotPlusMinus
 ;
 
-//PrimaryExpression#(!(nodeArity()==1 && (currentNodeScope.get(0) instanceof MethodCall || currentNodeScope.get(0) instanceof DotName || currentNodeScope.get(0) instanceof ArrayAccess || currentNodeScope.get(0) instanceof DotNew))) :
 PrimaryExpression#(!(nodeArity()==1 && currentNodeScope.get(0) instanceof Expression)) :
     PrimaryPrefix {assert nodeArity() == 1;}
     ( PrimarySuffix )*
@@ -704,12 +699,6 @@ ClassLiteral : ("void" | Type) "." "class" =>|| ;
 
 INJECT PrimaryExpression :
 {
-  /**
-   * Is this expression a method invocation?
-   */
-  public boolean isMethodCall() {
-    return getLastChild() instanceof MethodCall;
-  }
 
   public boolean isConstructorInvocation() {
     if (!(getLastChild() instanceof InvocationArguments)) return false;
@@ -907,7 +896,7 @@ StatementExpression :
           AssignmentOperator Expression #AssignmentExpression(3)
       )
       |
-      SCAN 0 {lhs.isMethodCall() || lhs.isConstructorInvocation() || lhs.isAllocation()}
+      SCAN 0 {lhs instanceof MethodCall || lhs.isConstructorInvocation() || lhs.isAllocation()}
       =>{}
       |
       {System.out.println("KILROY: " + lhs + "---" + lhs.getClass().getName());} FAIL "Not a valid statement"
