@@ -666,6 +666,10 @@ INJECT PrimaryExpression :
    * Is this expression a method invocation?
    */
   public boolean isMethodCall() {
+    return getLastChild() instanceof MethodCall;
+  }
+#if false
+  public boolean isMethodCall() {
     if (!(getLastChild() instanceof InvocationArguments)) return false;
     if (getChild(0) instanceof Name && getChildCount() ==2) {
       return true;
@@ -675,6 +679,7 @@ INJECT PrimaryExpression :
     return (secondLast instanceof Identifier && thirdLast instanceof Token && ((Token)thirdLast).getType() == DOT)
            || secondLast instanceof MemberSelector;
   }
+#endif
 
   public boolean isConstructorInvocation() {
     if (!(getLastChild() instanceof InvocationArguments)) return false;
@@ -739,7 +744,7 @@ PrimarySuffix#void :
   |
   "::" [TypeArguments] (<IDENTIFIER>|"new") 
   |
-  InvocationArguments
+  InvocationArguments #MethodCall(2)
  )
 ;
 
