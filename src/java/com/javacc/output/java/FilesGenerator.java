@@ -195,8 +195,8 @@ public class FilesGenerator {
             codeInjector.injectCode(jcu);
             JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getJdkTarget());
             JavaCodeUtils.addGetterSetters(jcu);
-            JavaCodeUtils.removeUnusedPrivateMethods(jcu);
-            JavaCodeUtils.removeUnusedVariables(jcu);
+  //          JavaCodeUtils.removeUnusedPrivateMethods(jcu);
+  //            JavaCodeUtils.removeUnusedVariables(jcu);
             JavaFormatter formatter = new JavaFormatter();
             output.write(formatter.format(jcu));
         } 

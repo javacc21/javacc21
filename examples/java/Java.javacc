@@ -474,10 +474,31 @@ INJECT PostfixExpression : extends Expression
 INJECT PrimitiveCastExpression : extends Expression
 INJECT ObjectCastExpression : extends Expression
 INJECT PrimaryExpression : extends Expression
-INJECT AllocationExpression : extends Expression 
 INJECT LambdaExpression : extends Expression 
 INJECT CodeBlock : extends Expression
 INJECT SwitchExpression : extends Expression
+INJECT DotThis : extends Expression
+INJECT DotSuper : extends Expression
+
+INJECT AllocationExpression : extends Expression {
+  public boolean isConstructorInvocation() {return true;}
+}
+
+INJECT MethodCall : extends Expression {
+  public boolean isMethodCall() {return true;}
+}
+
+INJECT DotName : extends Expression {
+  public boolean isAssignableTo() {return true;}
+}
+
+INJECT ArrayAccess : extends Expression {
+  public boolean isAssignableTo() {return true;}
+}
+
+INJECT DotNew : extends Expression {
+  public boolean isConstructorInvocation() {return true;}
+}
 
 AssignmentExpression :
   {
@@ -626,8 +647,9 @@ ObjectCastExpression :
    "(" ReferenceType ("&" ObjectType)* ")" =>|+1 UnaryExpressionNotPlusMinus
 ;
 
-PrimaryExpression# :
-    PrimaryPrefix 
+//PrimaryExpression#(!(nodeArity()==1 && (currentNodeScope.get(0) instanceof MethodCall || currentNodeScope.get(0) instanceof DotName || currentNodeScope.get(0) instanceof ArrayAccess || currentNodeScope.get(0) instanceof DotNew))) :
+PrimaryExpression#(!(nodeArity()==1 && currentNodeScope.get(0) instanceof Expression)) :
+    PrimaryPrefix {assert nodeArity() == 1;}
     ( PrimarySuffix )*
 ;
 
@@ -649,7 +671,27 @@ PrimaryPrefix#void :
   MethodReference
   | 
   Name
- ;
+;
+
+
+PrimarySuffix#void :
+ SCAN 2
+ (
+  => "." "this" #DotThis(3)
+  |
+  => "." "super" #DotSuper(3)
+  |
+  ("." =>|+1 AllocationExpression) #DotNew(3)
+  |
+  ("[" Expression "]") #ArrayAccess(4)
+  |
+  ("." [TypeArguments] <IDENTIFIER>) #DotName(nodeArity()+1)
+  |
+  ("::" [TypeArguments] (<IDENTIFIER>|"new")) #MethodReference(nodeArity() +1)
+  |
+  InvocationArguments #MethodCall(2)
+ )
+;
 
 Parentheses : "(" Expression ")" ;
 
@@ -668,18 +710,6 @@ INJECT PrimaryExpression :
   public boolean isMethodCall() {
     return getLastChild() instanceof MethodCall;
   }
-#if false
-  public boolean isMethodCall() {
-    if (!(getLastChild() instanceof InvocationArguments)) return false;
-    if (getChild(0) instanceof Name && getChildCount() ==2) {
-      return true;
-    }
-    Node secondLast = getChild(getChildCount()-2);
-    Node thirdLast = getChildCount() == 2 ? null : getChild(getChildCount() -3);
-    return (secondLast instanceof Identifier && thirdLast instanceof Token && ((Token)thirdLast).getType() == DOT)
-           || secondLast instanceof MemberSelector;
-  }
-#endif
 
   public boolean isConstructorInvocation() {
     if (!(getLastChild() instanceof InvocationArguments)) return false;
@@ -688,23 +718,14 @@ INJECT PrimaryExpression :
     return tt == SUPER || tt == THIS;
   }
 
-  /**
-   * If this expression is a method invocation, we 
-   * return its name, otherwise null
-   */
-  public String getMethodName() {
-    if (!isMethodCall()) {
-      return null;
-    }
-    String fullName = getChild(getChildCount()-2).toString();
-    return fullName.substring(fullName.lastIndexOf('.')+1);
-  }
-
   public boolean isAllocation() {
     return getLastChild() instanceof AllocationExpression;
   }
 
   public boolean isAssignableTo() {
+     if (getLastChild() instanceof DotName) {
+       return true;
+     }
      if (getChildCount()==1) {
        Node child = getChild(0);
        if (child instanceof Name) return true;
@@ -727,25 +748,6 @@ MethodReference :
     (Type | "super")
      "::" =>||
      (<IDENTIFIER>|"new")
-;
-
-PrimarySuffix#void :
- SCAN 2
- (
-  => "." ("this"|"super")
-  |
-  "." =>|+1 AllocationExpression
-  |
-  MemberSelector
-  |
-  "[" [Expression] "]"
-  |
-  "." <IDENTIFIER>
-  |
-  "::" [TypeArguments] (<IDENTIFIER>|"new") 
-  |
-  InvocationArguments #MethodCall(2)
- )
 ;
 
 Literal #void :
@@ -908,7 +910,7 @@ StatementExpression :
       SCAN 0 {lhs.isMethodCall() || lhs.isConstructorInvocation() || lhs.isAllocation()}
       =>{}
       |
-      FAIL "Not a valid statement"
+      {System.out.println("KILROY: " + lhs + "---" + lhs.getClass().getName());} FAIL "Not a valid statement"
   )
 ;
 
