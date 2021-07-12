@@ -1,6 +1,6 @@
 <project name="Python" default="compile" basedir=".">
     <target name="parser-check">
-        <uptodate property="parser.uptodate" targetfile="org/parsers/python/PythonParser.java"> 
+        <uptodate property="pyparser.uptodate" targetfile="org/parsers/python/PythonParser.java"> 
             <srcfiles dir="." includes="*.javacc"/>
          </uptodate>
     </target>
@@ -10,7 +10,7 @@
         </delete>
         <delete dir="${basedir}/org"/>
     </target>
-   <target name="parser-gen" unless="parser.uptodate">
+   <target name="parser-gen" unless="pyparser.uptodate">
         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
             <assertions><enable/></assertions>
             <arg line="-n ${basedir}/Python.javacc"/>
