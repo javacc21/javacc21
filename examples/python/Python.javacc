@@ -228,16 +228,16 @@ Group : "(" (YieldExpression | NamedExpression) ")" ;
 
 AwaitPrimary : ["await"] PrimaryExpression ;
 
-PrimaryExpression :
+PrimaryExpression#void :
    AtomicExpression
    (
-       DotName 
+       "." <NAME> #DotName(3)
        |
-       Slices
+       Slices #SliceExpression(2)
        |
-       GenExp
+       GenExp #GenExpression(2)
        |
-       InvocationArguments
+       InvocationArguments #FunctionCall(2)
    )*
 ;
 
