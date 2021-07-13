@@ -472,7 +472,6 @@ INJECT ObjectCastExpression : implements Expression
 INJECT PostfixExpression : implements Expression
 INJECT PreDecrementExpression : implements Expression
 INJECT PreIncrementExpression : implements Expression
-INJECT PrimaryExpression : implements Expression
 INJECT PrimitiveCastExpression : implements Expression
 INJECT RelationalExpression : implements Expression 
 INJECT ShiftExpression : implements Expression
@@ -620,7 +619,9 @@ PreIncrementExpression :
 PreDecrementExpression : 
   "--" UnaryExpression 
   [
-    SCAN {currentLookaheadToken == null && !((Expression)peekNode()).isAssignableTo()}#
+    SCAN {currentLookaheadToken!=null}# => {}
+    |
+    SCAN {!((Expression)peekNode()).isAssignableTo()}
     => FAIL "expression after ++ is not an assignable variable"
   ]
 ;
@@ -660,14 +661,8 @@ ObjectCastExpression :
    "(" ReferenceType ("&" ObjectType)* ")" =>|+1 UnaryExpressionNotPlusMinus
 ;
 
-PrimaryExpression#(!(currentNodeScope.get(0) instanceof Expression)) :
-    PrimaryPrefix
-    ( PrimarySuffix )*
-;
-
-MemberSelector : "." =>|+1 TypeArguments <IDENTIFIER> ;
-
-PrimaryPrefix#void :
+PrimaryExpression#void :
+ (
   Literal
   |
   "this"
@@ -683,11 +678,7 @@ PrimaryPrefix#void :
   MethodReference
   | 
   Name
-;
-
-
-PrimarySuffix#void :
- SCAN 2
+ )
  (
   => "." "this" #DotThis(3)
   |
@@ -702,7 +693,7 @@ PrimarySuffix#void :
   ("::" [TypeArguments] (<IDENTIFIER>|"new")) #MethodReference(nodeArity() +1)
   |
   InvocationArguments #MethodCall(2)
- )
+ )*
 ;
 
 Parentheses : "(" Expression ")" ;
@@ -713,13 +704,6 @@ INJECT Parentheses : implements Expression {
 }
 
 ClassLiteral : ("void" | Type) "." "class" =>|| ;
-
-/*INJECT PrimaryExpression :
-{
-  public boolean isAssignableTo() {
-     return getChild(0) instanceof Name;
-  }
-}*/
 
 MethodReference :
     (Type | "super")

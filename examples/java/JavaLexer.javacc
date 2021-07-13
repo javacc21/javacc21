@@ -75,7 +75,7 @@ TOKEN #KeyWord :
 | < BREAK: "break" > 
 | < BYTE: "byte" > 
 | < CASE: "case" > 
-| < CATCH: "catch" > 
+| < CATCH: "catch" >
 | < CHAR: "char" > 
 | < CLASS: "class" > 
 | < CONST: "const" > 
@@ -86,7 +86,7 @@ TOKEN #KeyWord :
 | < ELSE: "else" > 
 | < ENUM: "enum" > 
 | < EXTENDS: "extends" > 
-| < FALSE: "false" > 
+| < FALSE: "false" > #BooleanLiteral
 | < FINAL: "final" > 
 | < FINALLY: "finally" > 
 | < FLOAT: "float" > 
@@ -101,7 +101,7 @@ TOKEN #KeyWord :
 | < LONG: "long" > 
 | < NATIVE: "native" > 
 | < NEW: "new" > 
-| < NULL: "null" > 
+| < NULL: "null" > #NullLiteral
 | < PACKAGE: "package"> 
 | < PRIVATE: "private" > 
 | < PROTECTED: "protected" > 
@@ -114,11 +114,11 @@ TOKEN #KeyWord :
 | < SUPER: "super" > 
 | < SWITCH: "switch" >
 | < SYNCHRONIZED: "synchronized" > 
-| < THIS: "this" > 
+| < THIS: "this" > #ThisLiteral 
 | < THROW: "throw" > 
 | < THROWS: "throws" > 
 | < TRANSIENT: "transient" > 
-| < TRUE: "true" > 
+| < TRUE: "true" > #BooleanLiteral 
 | < TRY: "try" > 
 | < VOID: "void" > 
 | < VOLATILE: "volatile" > 
