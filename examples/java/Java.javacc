@@ -446,9 +446,7 @@ ThrowsList : "throws" Name ( "," Name )* ;
 
 INJECT Expression :
 {
-  default boolean isConstructorInvocation() {return false;}
   default boolean isAssignableTo() {return false;}
-  default boolean isAllocation() {return false;}
   default String getAsString() {return toString();}
 }
 
@@ -481,9 +479,15 @@ INJECT DotThis : implements Expression
 INJECT DotSuper : implements Expression
 INJECT MethodCall : implements Expression 
 
+//INJECT Name : implements Expression {
+//  public boolean isAssignableTo() {return true;}
+//}
+
 INJECT AllocationExpression : implements Expression {
   public boolean isConstructorInvocation() {return true;}
 }
+
+INJECT DotNew : extends AllocationExpression
 
 INJECT DotName : implements Expression {
   public boolean isAssignableTo() {return true;}
@@ -493,9 +497,6 @@ INJECT ArrayAccess : implements Expression {
   public boolean isAssignableTo() {return true;}
 }
 
-INJECT DotNew : implements Expression {
-  public boolean isConstructorInvocation() {return true;}
-}
 
 AssignmentExpression :
   {
@@ -691,7 +692,7 @@ PrimarySuffix#void :
 
 Parentheses : "(" Expression ")" ;
 
-INJECT Parentheses : {
+INJECT Parentheses : implements Expression {
   public Expression getNestedExpression() {return (Expression) getChild(1);}
   public boolean isAssignableTo() {return getNestedExpression().isAssignableTo();}
 }
@@ -700,37 +701,8 @@ ClassLiteral : ("void" | Type) "." "class" =>|| ;
 
 INJECT PrimaryExpression :
 {
-
-  public boolean isConstructorInvocation() {
-    if (!(getLastChild() instanceof InvocationArguments)) return false;
-    if (getChildCount() <2) return false;
-    CONSTANTS_CLASS.TokenType tt = getChild(getChildCount()-2).getTokenType();
-    return tt == SUPER || tt == THIS;
-  }
-
-  public boolean isAllocation() {
-    return getLastChild() instanceof AllocationExpression;
-  }
-
   public boolean isAssignableTo() {
-     if (getLastChild() instanceof DotName) {
-       return true;
-     }
-     if (getChildCount()==1) {
-       Node child = getChild(0);
-       if (child instanceof Name) return true;
-       if (child instanceof Parentheses) return ((Parentheses) child).isAssignableTo();
-       return false;
-     }
-     Token lastToken = getLastToken();
-     if (lastToken.getType() == IDENTIFIER) {
-       Node secondLast = getChild(getChildCount() -2);
-       return secondLast.getTokenType() == DOT;
-     }
-     if (lastToken.getType() == RBRACKET) {
-       return getChild(getChildCount()-2).getTokenType() != LBRACKET;
-     }
-     return false;
+     return getChild(0) instanceof Name;
   }
 }
 
@@ -897,10 +869,10 @@ StatementExpression :
           AssignmentOperator Expression #AssignmentExpression(3)
       )
       |
-      SCAN 0 {lhs instanceof MethodCall || lhs.isConstructorInvocation() || lhs.isAllocation()}
+      SCAN 0 {lhs instanceof MethodCall || lhs instanceof AllocationExpression}// || lhs.isAllocation()}
       =>{}
       |
-      {System.out.println("KILROY: " + lhs + "---" + lhs.getClass().getName());} FAIL "Not a valid statement"
+      FAIL "Not a valid statement"
   )
 ;
 

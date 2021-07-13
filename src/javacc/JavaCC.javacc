@@ -1322,7 +1322,9 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
    [
        "("
           [
+//            (">" | ">=" | "<" | "<=" | "+" | "-")
             ">"
+            {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}  
           ]
           Expression()
        ")"
@@ -1331,6 +1333,7 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
 
 INJECT TreeBuildingAnnotation :
 {
+    @Property String initialShorthand;
     /**
      * Just returns whatever comes after the hash ("#") including "void", etc.
      */
@@ -1355,7 +1358,8 @@ INJECT TreeBuildingAnnotation :
     }
     
     public boolean getGtNode() {
-        return firstChildOfType(GT) != null;
+//        return firstChildOfType(GT) != null;
+         return initialShorthand !=null;
     }
 
     public boolean isAbstract() {
@@ -1965,9 +1969,10 @@ ScanAhead #Lookahead :
    boolean hasSemanticLookahead = false, getHasExplicitNumericalLookahead=false;
    Expansion expansion = null, upToExpansion = null;
    Expression exp=null;
+   Name name = null;
    Node lb = null;
 }
-[=>exp=PrimaryExpression "=" {CURRENT_NODE.setLHS(exp);}]
+[=>name=Name "=" {CURRENT_NODE.setLHS(name);}]
 <_SCAN>
 [
     <INTEGER_LITERAL> {getHasExplicitNumericalLookahead = true;}
@@ -2132,7 +2137,7 @@ INJECT Lookahead :
    import com.javacc.core.RegularExpression;
    import com.javacc.core.TokenSet;
 {
-    @Property Expression LHS;
+    @Property Name LHS;
     @Property Expansion expansion, nestedExpansion, upToExpansion;
     @Property boolean negated, semanticLookaheadNested;
     @Property Expression semanticLookahead;
