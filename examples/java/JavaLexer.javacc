@@ -71,34 +71,34 @@ MORE : < ANY_CHAR : ~[] >;
 TOKEN #KeyWord :
   < ABSTRACT: "abstract" > 
 | < _ASSERT: "assert" > 
-| < BOOLEAN: "boolean" > 
+| < BOOLEAN: "boolean" > #Primitive
 | < BREAK: "break" > 
-| < BYTE: "byte" > 
+| < BYTE: "byte" > #Primitive
 | < CASE: "case" > 
 | < CATCH: "catch" >
-| < CHAR: "char" > 
+| < CHAR: "char" > #Primitive
 | < CLASS: "class" > 
 | < CONST: "const" > 
 | < CONTINUE: "continue" > 
 | < _DEFAULT: "default" > 
 | < DO: "do" > 
-| < DOUBLE: "double" > 
+| < DOUBLE: "double" > #Primitive
 | < ELSE: "else" > 
 | < ENUM: "enum" > 
 | < EXTENDS: "extends" > 
 | < FALSE: "false" > #BooleanLiteral
 | < FINAL: "final" > 
 | < FINALLY: "finally" > 
-| < FLOAT: "float" > 
+| < FLOAT: "float" > #Primitive
 | < FOR: "for" > 
 | < GOTO: "goto" > 
 | < IF: "if" > 
 | < IMPLEMENTS: "implements" > 
 | < IMPORT: "import" > 
 | < INSTANCEOF: "instanceof" >
-| < INT: "int" > 
+| < INT: "int" > #Primitive 
 | < INTERFACE: "interface" > 
-| < LONG: "long" > 
+| < LONG: "long" > #Primitive
 | < NATIVE: "native" > 
 | < NEW: "new" > 
 | < NULL: "null" > #NullLiteral
@@ -108,7 +108,7 @@ TOKEN #KeyWord :
 | < PUBLIC: "public" > 
 | < RETURN: "return" > 
 | < RECORD : "record" > 
-| < SHORT: "short" > 
+| < SHORT: "short" > #Primitive 
 | < STATIC: "static" > 
 | < STRICTFP: "strictfp" > 
 | < SUPER: "super" > 

@@ -362,15 +362,16 @@ Initializer :
   [ "static" ] =>|+1 Block
 ;
 
-Type :
+Type#interface :
    => ReferenceType
    |
    PrimitiveType
 ;
 
-INJECT ReferenceType : extends Type;
-INJECT PrimitiveArrayType : extends Type;
-INJECT PrimitiveType : extends Type;
+INJECT ReferenceType : implements Type
+INJECT PrimitiveArrayType : implements Type
+INJECT PrimitiveType : implements Type
+INJECT Primitive : implements Type
 
 ReferenceType : 
    => PrimitiveArrayType
@@ -384,7 +385,7 @@ ObjectType# :
     ( "." (Annotation)* <IDENTIFIER> =>|| [ TypeArguments ] )*
 ;
 
-INJECT ObjectType : extends Type 
+INJECT ObjectType : implements Type 
 {
     public boolean equals(Object obj) {
         if (obj instanceof ObjectType) {
@@ -425,7 +426,7 @@ TypeArgument :
 
 WildcardBounds : ("extends" | "super") ReferenceType ;
 
-PrimitiveType# :
+PrimitiveType :
   (Annotation)*
   "boolean" | "char" | "byte" | "short" | "int" | "long" | "float" | "double"
   =>||
@@ -484,9 +485,9 @@ INJECT Name : implements Expression {
   public boolean isAssignableTo() {return true;}
 }
 
-INJECT Identifier : implements Expression {
-  public boolean isAssignableTo() {return true;}
-}
+//INJECT Identifier : implements Expression {
+//  public boolean isAssignableTo() {return true;}
+//}
 
 
 INJECT AllocationExpression : implements Expression {
