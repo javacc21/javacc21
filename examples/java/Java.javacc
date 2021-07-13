@@ -439,60 +439,61 @@ Name# : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
 
 ThrowsList : "throws" Name ( "," Name )* ;
 
-#Expression#abstract :
+#Expression#interface :
     AssignmentExpression
     {return (Expression) peekNode();}
 ;
 
 INJECT Expression :
 {
-  public boolean isConstructorInvocation() {return false;}
-  public boolean isAssignableTo() {return false;}
-  public boolean isAllocation() {return false;}
+  default boolean isConstructorInvocation() {return false;}
+  default boolean isAssignableTo() {return false;}
+  default boolean isAllocation() {return false;}
+  default String getAsString() {return toString();}
 }
 
-INJECT AssignmentExpression : extends Expression
-INJECT TernaryExpression : extends Expression 
-INJECT ConditionalOrExpression : extends Expression 
-INJECT ConditionalAndExpression : extends Expression 
-INJECT InclusiveOrExpression : extends Expression 
-INJECT InclusiveAndExpression : extends Expression 
-INJECT ExclusiveOrExpression : extends Expression 
-INJECT AndExpression : extends Expression 
-INJECT EqualityExpression : extends Expression 
-INJECT InstanceOfExpression : extends Expression 
-INJECT RelationalExpression : extends Expression 
-INJECT ShiftExpression : extends Expression
-INJECT AdditiveExpression : extends Expression
-INJECT MultiplicativeExpression : extends Expression
-INJECT UnaryExpression : extends Expression
-INJECT PreIncrementExpression : extends Expression
-INJECT PreDecrementExpression : extends Expression
-INJECT UnaryExpressionNotPlusMinus : extends Expression
-INJECT PostfixExpression : extends Expression
-INJECT PrimitiveCastExpression : extends Expression
-INJECT ObjectCastExpression : extends Expression
-INJECT PrimaryExpression : extends Expression
-INJECT LambdaExpression : extends Expression 
-INJECT CodeBlock : extends Expression
-INJECT SwitchExpression : extends Expression
-INJECT DotThis : extends Expression
-INJECT DotSuper : extends Expression
-INJECT MethodCall : extends Expression 
+INJECT AssignmentExpression : implements Expression
+INJECT TernaryExpression : implements Expression 
+INJECT ConditionalOrExpression : implements Expression 
+INJECT ConditionalAndExpression : implements Expression 
+INJECT InclusiveOrExpression : implements Expression 
+INJECT InclusiveAndExpression : implements Expression 
+INJECT ExclusiveOrExpression : implements Expression 
+INJECT AndExpression : implements Expression 
+INJECT EqualityExpression : implements Expression 
+INJECT InstanceOfExpression : implements Expression 
+INJECT RelationalExpression : implements Expression 
+INJECT ShiftExpression : implements Expression
+INJECT AdditiveExpression : implements Expression
+INJECT MultiplicativeExpression : implements Expression
+INJECT UnaryExpression : implements Expression
+INJECT PreIncrementExpression : implements Expression
+INJECT PreDecrementExpression : implements Expression
+INJECT UnaryExpressionNotPlusMinus : implements Expression
+INJECT PostfixExpression : implements Expression
+INJECT PrimitiveCastExpression : implements Expression
+INJECT ObjectCastExpression : implements Expression
+INJECT PrimaryExpression : implements Expression
+INJECT LambdaExpression : implements Expression 
+INJECT CodeBlock : implements Expression
+INJECT SwitchExpression : implements Expression
+INJECT DotThis : implements Expression
+INJECT DotSuper : implements Expression
+INJECT MethodCall : implements Expression 
 
-INJECT AllocationExpression : extends Expression {
+INJECT AllocationExpression : implements Expression {
   public boolean isConstructorInvocation() {return true;}
 }
 
-INJECT DotName : extends Expression {
+INJECT DotName : implements Expression {
   public boolean isAssignableTo() {return true;}
 }
 
-INJECT ArrayAccess : extends Expression {
+INJECT ArrayAccess : implements Expression {
   public boolean isAssignableTo() {return true;}
 }
 
-INJECT DotNew : extends Expression {
+INJECT DotNew : implements Expression {
   public boolean isConstructorInvocation() {return true;}
 }
 
