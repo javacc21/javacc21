@@ -481,9 +481,14 @@ INJECT TernaryExpression : implements Expression
 INJECT UnaryExpression : implements Expression
 INJECT UnaryExpressionNotPlusMinus : implements Expression
 
-//INJECT Name : implements Expression {
-//  public boolean isAssignableTo() {return true;}
-//}
+INJECT Name : implements Expression {
+  public boolean isAssignableTo() {return true;}
+}
+
+INJECT Identifier : implements Expression {
+  public boolean isAssignableTo() {return true;}
+}
+
 
 INJECT AllocationExpression : implements Expression {
   public boolean isConstructorInvocation() {return true;}
@@ -498,6 +503,14 @@ INJECT DotName : implements Expression {
 INJECT ArrayAccess : implements Expression {
   public boolean isAssignableTo() {return true;}
 }
+
+
+INJECT BooleanLiteral : implements Expression
+INJECT CharacterLiteral : implements Expression 
+INJECT NullLiteral : implements Expression
+INJECT NumericalLiteral : implements Expression 
+INJECT StringLiteral : implements Expression 
+INJECT ThisLiteral : implements Expression 
 
 
 AssignmentExpression :
@@ -648,7 +661,7 @@ ObjectCastExpression :
 ;
 
 PrimaryExpression#(!(currentNodeScope.get(0) instanceof Expression)) :
-    PrimaryPrefix {assert nodeArity() == 1;}
+    PrimaryPrefix
     ( PrimarySuffix )*
 ;
 
@@ -701,12 +714,12 @@ INJECT Parentheses : implements Expression {
 
 ClassLiteral : ("void" | Type) "." "class" =>|| ;
 
-INJECT PrimaryExpression :
+/*INJECT PrimaryExpression :
 {
   public boolean isAssignableTo() {
      return getChild(0) instanceof Name;
   }
-}
+}*/
 
 MethodReference :
     (Type | "super")

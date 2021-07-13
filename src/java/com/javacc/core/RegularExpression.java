@@ -34,7 +34,7 @@ import java.util.*;
 
 import com.javacc.Grammar;
 import com.javacc.parser.tree.CodeBlock;
-import com.javacc.parser.tree.Expression;
+import com.javacc.parser.tree.Name;
 import com.javacc.parser.tree.TokenProduction;
 
 /**
@@ -80,7 +80,7 @@ public abstract class RegularExpression extends Expansion {
      * The LHS to which the token value of the regular expression is assigned.
      * This can be null.
      */
-    private Expression lhs;
+    private Name lhs;
 
     /**
      * This flag is set if the regular expression has a label prefixed with the #
@@ -112,11 +112,11 @@ public abstract class RegularExpression extends Expansion {
         this.id =  id;
     }
 
-    public Expression getLHS() {
+    public Name getLHS() {
         return lhs;
     }
     
-    public void setLHS(Expression lhs) {
+    public void setLHS(Name lhs) {
         this.lhs = lhs;
     }
 

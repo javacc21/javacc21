@@ -1326,7 +1326,7 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
             ">"
             {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}  
           ]
-          Expression()
+          Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
        ")"
   ]
 ;
@@ -1334,6 +1334,7 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
 INJECT TreeBuildingAnnotation :
 {
     @Property String initialShorthand;
+    @Property Expression condition;
     /**
      * Just returns whatever comes after the hash ("#") including "void", etc.
      */
@@ -1352,13 +1353,8 @@ INJECT TreeBuildingAnnotation :
     public boolean isNeverInstantiated() {
         return isVoid() || isAbstract() || isInterface();
     }
-
-    public Expression getCondition() {
-        return firstChildOfType(Expression.class);
-    }
     
     public boolean getGtNode() {
-//        return firstChildOfType(GT) != null;
          return initialShorthand !=null;
     }
 
@@ -2186,7 +2182,7 @@ INJECT Lookahead :
 
 Expansion ExpansionUnit :
 {
-    Expression lhs=null;
+    Name lhs=null;
     Expansion result=null;
     TreeBuildingAnnotation tba = null;
 }
@@ -2213,11 +2209,11 @@ Expansion ExpansionUnit :
   |
   result = ZeroOrOne 
   |
-  SCAN [PrimaryExpression "="] (<STRING_LITERAL>|"<")
+  SCAN [Name "="] (<STRING_LITERAL>|"<")
   =>
   [
-    SCAN ~\...\Lookahead PrimaryExpression "=" =>
-    lhs=PrimaryExpression
+    SCAN ~\...\Lookahead Name "=" =>
+    lhs = Name
     "="
   ]
   RegexpExpansion(false)
@@ -2231,7 +2227,7 @@ Expansion ExpansionUnit :
   }
   [UpToHere(result)]
   |
-  SCAN [PrimaryExpression "="]<IDENTIFIER>
+  SCAN [Name "="]<IDENTIFIER>
   => result=NonTerminal [UpToHere(result)]
   |
   FAIL
