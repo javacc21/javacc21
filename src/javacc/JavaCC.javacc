@@ -2248,7 +2248,7 @@ Expansion ExpansionUnit :
 
 #NonTerminal# :
   [
-    => PrimaryExpression "="
+    => Name {CURRENT_NODE.setLHS((Name)peekNode());} "="
   ]
   <IDENTIFIER>
   [
@@ -2284,6 +2284,7 @@ INJECT NonTerminal :
     import com.javacc.core.*;
     extends Expansion; 
 {
+    @Property Name LHS;
     /**
      * The production this non-terminal corresponds to.
      */
@@ -2304,10 +2305,6 @@ INJECT NonTerminal :
         return firstChildOfType(InvocationArguments.class);
     }
 
-    public Expression getLHS() {
-        return firstChildOfType(Expression.class);
-    }
-    
     public String getName() {
         return firstChildOfType(TokenType.IDENTIFIER).getImage();
     }
