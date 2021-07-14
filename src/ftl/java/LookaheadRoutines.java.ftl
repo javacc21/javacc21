@@ -181,6 +181,7 @@
        if ([#if !expansion.lookBehind.negated]![/#if]
        ${expansion.lookBehind.routineName}()) return lastLookaheadSucceeded = false;
      [/#if]
+     if (remainingLookahead <=0) return lastLookaheadSucceeded = true;
      [#if expansion.hasSeparateSyntacticLookahead]
       if (
       [#if !expansion.lookahead.negated]![/#if]

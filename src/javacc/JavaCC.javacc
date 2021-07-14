@@ -1318,12 +1318,18 @@ INJECT BNFProduction :
 }
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
-  "#" [<IDENTIFIER>|"abstract"|"interface"|"void"]
-   [
+  "#" 
+  (
+      SCAN \BNFProduction => 
+      (<IDENTIFIER>|"abstract"|"interface"|"void"|{})
+      |
+      <IDENTIFIER>
+  )
+  [
        "("
           [
-//            (">" | ">=" | "<" | "<=" | "+" | "-")
-            ">"
+            (">" | ">=" | "<" | "<=" | "+" | "-")
+//            ">"
             {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}  
           ]
           Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
