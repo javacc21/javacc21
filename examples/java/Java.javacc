@@ -1,4 +1,5 @@
 /* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
+ * Copyright (c) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk - changes for Python support.
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -480,6 +481,7 @@ INJECT SwitchExpression : implements Expression
 INJECT TernaryExpression : implements Expression 
 INJECT UnaryExpression : implements Expression
 INJECT UnaryExpressionNotPlusMinus : implements Expression
+INJECT LiteralExpression : implements Expression
 
 INJECT Name : implements Expression {
   public boolean isAssignableTo() {return true;}
@@ -503,15 +505,6 @@ INJECT DotName : implements Expression {
 INJECT ArrayAccess : implements Expression {
   public boolean isAssignableTo() {return true;}
 }
-
-
-INJECT BooleanLiteral : implements Expression
-INJECT CharacterLiteral : implements Expression 
-INJECT NullLiteral : implements Expression
-INJECT NumericalLiteral : implements Expression 
-INJECT StringLiteral : implements Expression 
-INJECT ThisLiteral : implements Expression 
-
 
 AssignmentExpression :
   {
@@ -664,11 +657,11 @@ ObjectCastExpression :
 
 PrimaryExpression#void :
  (
-  Literal
+  LiteralExpression
   |
-  "this"
+  "this" #LiteralExpression
   |
-  "super" 
+  "super" #LiteralExpression
   |
   Parentheses
   |
@@ -696,6 +689,8 @@ PrimaryExpression#void :
   InvocationArguments #MethodCall(2)
  )*
 ;
+
+LiteralExpression# : Literal ;
 
 Parentheses : "(" Expression ")" ;
 
