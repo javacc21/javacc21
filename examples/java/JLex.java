@@ -9,8 +9,7 @@ import org.parsers.java.JavaConstants.TokenType;
  * the command line.
  */
 public class JLex {
-    
-    static public ArrayList<Node> roots= new ArrayList<>();
+   static public ArrayList<Node> roots= new ArrayList<>();
 
    static public void main(String args[]) {
       List<File> failures = new ArrayList<File>();
@@ -31,6 +30,7 @@ public class JLex {
       int numTokens =0;
       for (File file : files) {
           try {
+//              for (int i=0;i<10;i++)
               numTokens+=tokenizeFile(file);
           } 
           catch (Exception e) {
@@ -57,6 +57,9 @@ public class JLex {
        int numTokens = 0;
        do {
            t = lexer.getNextToken();
+           if (t instanceof InvalidToken) {
+               throw new ParseException(t);
+           }
            ++numTokens;
        }
        while (t.getType() != TokenType.EOF);

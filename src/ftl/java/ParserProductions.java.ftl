@@ -121,11 +121,10 @@
     [#else]
      [#if buildTreeNode]
      [#set nodeNumbering = nodeNumbering +1]
-     [#set nodeVarName = currentProduction.name + nodeNumbering]
-     ${grammar.utils.pushNodeVariableName(nodeVarName)!}
+     [#set nodeVarName = currentProduction.name + nodeNumbering] ${grammar.utils.pushNodeVariableName(nodeVarName)!}
       [#if !treeNodeBehavior?? && !production?is_null]
          [#if grammar.smartNodeCreation]
-            [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false}]
+            [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
          [#else]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : null, "gtNode" : false, "void" : false}]
          [/#if]
@@ -133,7 +132,7 @@
       [#if treeNodeBehavior.condition?has_content]
          [#set closeCondition = treeNodeBehavior.condition]
          [#if treeNodeBehavior.gtNode]
-            [#set closeCondition = "nodeArity() > " + closeCondition]
+            [#set closeCondition = "nodeArity() " + treeNodeBehavior.initialShorthand  + closeCondition]
          [/#if]
       [/#if]
       [@createNode treeNodeBehavior nodeVarName false /]

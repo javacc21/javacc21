@@ -35,6 +35,7 @@ public class JParse {
       for (File file : files) {
           try {
              // A bit screwball, we'll dump the tree if there is only one arg. :-)
+//	     for (int i=0;i<30;i++)
               parseFile(file, files.size() == 1);
           } 
           catch (Exception e) {

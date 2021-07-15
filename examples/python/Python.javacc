@@ -165,7 +165,7 @@ TryStatement :
    )
 ;
 
-DelStatement : "del" PrimaryExpression ("," PrimaryExpression)* [","] ; 
+DelStatement : "del" PrimaryExpression (SCAN 2 "," PrimaryExpression)* [","] ; 
 
 NamedExpression : [ => <NAME> ":=" ] Expression ;
 

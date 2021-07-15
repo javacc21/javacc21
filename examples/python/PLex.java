@@ -57,6 +57,16 @@ public class PLex {
        int numTokens = 0;
        do {
            t = lexer.getNextToken();
+           while (t.getNextToken()!= null) {
+               t = t.getNextToken();
+               if (t instanceof InvalidToken) {
+                   throw new ParseException(t);
+               }
+               ++numTokens;
+           }
+           if (t instanceof InvalidToken) {
+               throw new ParseException(t);
+           }
            ++numTokens;
        }
        while (t.getType() != TokenType.EOF);

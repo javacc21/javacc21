@@ -456,6 +456,7 @@ INJECT AndExpression : implements Expression
 INJECT AssignmentExpression : implements Expression
 INJECT ConditionalAndExpression : implements Expression 
 INJECT ConditionalOrExpression : implements Expression 
+INJECT ConstructorInvocation : implements Expression 
 INJECT EqualityExpression : implements Expression 
 INJECT ExclusiveOrExpression : implements Expression 
 INJECT InclusiveAndExpression : implements Expression 
@@ -681,19 +682,22 @@ PrimaryExpression#void :
   Name
  )
  (
-  => "." "this" #DotThis(3)
+  => "." "this" #DotThis(+1)
   |
-  => "." "super" #DotSuper(3)
+  => "." "super" #DotSuper(+1)
   |
-  ("." =>|+1 AllocationExpression) #DotNew(3)
+  ("." =>|+1 AllocationExpression) #DotNew(+1)
   |
-  ("[" Expression "]") #ArrayAccess(4)
+  ("[" Expression "]") #ArrayAccess(+1) 
+  | 
+  ("." [TypeArguments] <IDENTIFIER>) #DotName(+1)
   |
-  ("." [TypeArguments] <IDENTIFIER>) #DotName(nodeArity()+1)
+  ("::" [TypeArguments] (<IDENTIFIER>|"new")) #MethodReference(+1)
   |
-  ("::" [TypeArguments] (<IDENTIFIER>|"new")) #MethodReference(nodeArity() +1)
+  SCAN 1 {lastConsumedToken.getType() == SUPER || lastConsumedToken.getType()==THIS}
+  => InvocationArguments #ConstructorInvocation(+1)
   |
-  InvocationArguments #MethodCall(2)
+  InvocationArguments #MethodCall(+1)
  )*
 ;
 
@@ -869,7 +873,7 @@ StatementExpression :
           AssignmentOperator Expression #AssignmentExpression(3)
       )
       |
-      SCAN 0 {lhs instanceof MethodCall || lhs instanceof AllocationExpression}// || lhs.isAllocation()}
+      SCAN 0 {lhs instanceof MethodCall || lhs instanceof AllocationExpression || lhs instanceof ConstructorInvocation}
       =>{}
       |
       FAIL "Not a valid statement"
