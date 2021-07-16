@@ -1329,7 +1329,6 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
        "("
           [
             (">" | ">=" | "<" | "<=" | "+" | "-")
-//            ">"
             {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}  
           ]
           Expression {CURRENT_NODE.setCondition((Expression) peekNode());}

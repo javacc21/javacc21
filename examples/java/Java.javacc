@@ -624,7 +624,7 @@ PreDecrementExpression :
     SCAN {currentLookaheadToken!=null}# => {}
     |
     SCAN {!((Expression)peekNode()).isAssignableTo()}
-    => FAIL "expression after ++ is not an assignable variable"
+    => FAIL "expression after -- is not an assignable variable"
   ]
 ;
 
