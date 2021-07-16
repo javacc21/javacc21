@@ -456,15 +456,14 @@ INJECT AndExpression : implements Expression
 INJECT AssignmentExpression : implements Expression
 INJECT ConditionalAndExpression : implements Expression 
 INJECT ConditionalOrExpression : implements Expression 
-INJECT ConstructorInvocation : implements Expression 
 INJECT EqualityExpression : implements Expression 
 INJECT ExclusiveOrExpression : implements Expression 
+INJECT ExplicitConstructorInvocation : implements Expression 
 INJECT InclusiveAndExpression : implements Expression 
 INJECT InclusiveOrExpression : implements Expression 
 INJECT InstanceOfExpression : implements Expression 
 INJECT ClassLiteral : implements Expression
 INJECT CodeBlock : implements Expression
-INJECT DotSuper : implements Expression
 INJECT DotThis : implements Expression
 INJECT LambdaExpression : implements Expression 
 INJECT MethodCall : implements Expression 
@@ -481,19 +480,13 @@ INJECT SwitchExpression : implements Expression
 INJECT TernaryExpression : implements Expression 
 INJECT UnaryExpression : implements Expression
 INJECT UnaryExpressionNotPlusMinus : implements Expression
+INJECT AllocationExpression : implements Expression;
 
 INJECT Name : implements Expression {
   public boolean isAssignableTo() {return true;}
 }
 
-//INJECT Identifier : implements Expression {
-//  public boolean isAssignableTo() {return true;}
-//}
-
-
-INJECT AllocationExpression : implements Expression {
-  public boolean isConstructorInvocation() {return true;}
-}
+INJECT AllocationExpression : implements Expression;
 
 INJECT DotNew : extends AllocationExpression
 
@@ -694,11 +687,24 @@ PrimaryExpression#void :
   |
   ("::" [TypeArguments] (<IDENTIFIER>|"new")) #MethodReference(+1)
   |
-  SCAN 1 {lastConsumedToken.getType() == SUPER || lastConsumedToken.getType()==THIS}
-  => InvocationArguments #ConstructorInvocation(+1)
+  // This really shouldn't be handled here. It's a bit kludgy
+  SCAN 1 {getToken(0).getType() == SUPER || getToken(0).getType()==THIS}# \...\ConstructorDeclaration
+  => InvocationArguments #ExplicitConstructorInvocation(+1)
   |
+// The following line is the absolutely correct condition for recent JDK's, 
+// since yield on its own cannot be a method call, though you can write this.yield(), for example.
+// For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
+// still unclear to me whether this should be caught at this point or if it is better to just do
+// a post-parse tree walk that runs over the AST and checks for these things.
+//  SCAN 1 {lastConsumedToken.getType() == IDENTIFIER && (peekNode().getChildCount() > 1 || !lastConsumedToken.getImage().equals("yield"))}
+  SCAN 1 {getToken(0).getType() == IDENTIFIER}#
+  => 
   InvocationArguments #MethodCall(+1)
  )*
+ [
+     SCAN {getToken(0).getType() == SUPER}#
+     => FAIL "Not a valid expression here"   
+ ]
 ;
 
 Parentheses : "(" Expression ")" ;
@@ -873,7 +879,7 @@ StatementExpression :
           AssignmentOperator Expression #AssignmentExpression(3)
       )
       |
-      SCAN 0 {lhs instanceof MethodCall || lhs instanceof AllocationExpression || lhs instanceof ConstructorInvocation}
+      SCAN 0 {lhs instanceof MethodCall || lhs instanceof AllocationExpression || lhs instanceof ExplicitConstructorInvocation}
       =>{}
       |
       FAIL "Not a valid statement"
@@ -981,7 +987,7 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN {getToken(1).getImage().equals("yield") 
+   SCAN 2 {getToken(1).getImage().equals("yield") 
         && isInProduction("SwitchExpression")}# 
    => <IDENTIFIER> Expression ";" 
 ;
