@@ -482,6 +482,7 @@ INJECT SwitchExpression : implements Expression
 INJECT TernaryExpression : implements Expression 
 INJECT UnaryExpression : implements Expression
 INJECT UnaryExpressionNotPlusMinus : implements Expression
+INJECT AllocationExpression : implements Expression
 INJECT LiteralExpression : implements Expression
 
 INJECT Name : implements Expression {
