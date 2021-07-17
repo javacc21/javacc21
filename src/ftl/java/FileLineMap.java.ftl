@@ -92,7 +92,7 @@ public class FileLineMap {
     // A list of offsets of the beginning of lines
     private final int[] lineOffsets;
     private int startingLine, startingColumn;
-    private int bufferPosition, tokenBeginColumn, tokenBeginLine, line, column;
+    private int bufferPosition, line, columnInCodeUnits, columnInCodePoints;
 
 
     // If this is set, it determines 
@@ -182,14 +182,15 @@ public class FileLineMap {
      */
     public void backup(int amount) {
         for (int i=0; i<amount; i++) {
-            if (column == 1) {
+            if (columnInCodeUnits == 1) {
                 backupLine();
             } else {
-                --column;
+                --columnInCodeUnits;
+                --columnInCodePoints;
                 --bufferPosition;
-                if (bufferPosition > 0 && column > 1 && Character.isLowSurrogate(content.charAt(bufferPosition))) {
+                if (bufferPosition > 0 && columnInCodeUnits > 1 && Character.isLowSurrogate(content.charAt(bufferPosition))) {
                     if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
-                        --column;
+                        --columnInCodeUnits;
                         --bufferPosition;
                     }
                 }
@@ -199,13 +200,14 @@ public class FileLineMap {
     
     void forward(int amount) {
         for (int i=0; i<amount; i++) {
-            if (column < getLineLength(line)) {
+            if (columnInCodeUnits < getLineLength(line)) {
                 ++bufferPosition;
-                ++column;
+                ++columnInCodeUnits;
+                ++columnInCodePoints;
                 if (Character.isLowSurrogate(content.charAt(bufferPosition))) {
                     if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
                         ++bufferPosition;
-                        ++column;
+                        ++columnInCodeUnits;
                     }
                 }
             } else {
@@ -223,7 +225,7 @@ public class FileLineMap {
         } else {
             bufferPosition = getLineStartOffset(line);
         }
-        column = 1;
+        columnInCodeUnits = columnInCodePoints = 1;
     }
 
     private void backupLine() {
@@ -233,8 +235,8 @@ public class FileLineMap {
         if (line < startingLine) {
             goTo(startingLine, startingColumn);
         } else {
-            column = getLineLength(line);
-            bufferPosition = getLineStartOffset(line) + column -1;
+            columnInCodeUnits = getLineLength(line); // TODO codepoints
+            bufferPosition = getLineStartOffset(line) + columnInCodeUnits -1;
         }
     }
     
@@ -247,15 +249,17 @@ public class FileLineMap {
             char nextChar = content.charAt(bufferPosition);
             if (Character.isLowSurrogate(nextChar)) {
                 ++bufferPosition;
-                column+=2;
+                columnInCodeUnits+=2;
+                columnInCodePoints++;
                 return Character.toCodePoint(ch, nextChar);
             }
         }
         if (ch == '\n') {
             advanceLine();
-            column = 1;
+            columnInCodeUnits = columnInCodePoints = 1;
         } else {
-            ++column;
+            ++columnInCodeUnits;
+            ++columnInCodePoints;
         }
         return ch;
     }
@@ -265,20 +269,17 @@ public class FileLineMap {
         return line;
     }
 
-    int getColumn() {return column;}
+    int getColumn() {return columnInCodeUnits;} // TODO codepoints
 
     int getEndColumn() {
-        if (column == 1) {
-            if (line == tokenBeginLine) {
-                return 1;
-            }
+        if (columnInCodeUnits == 1) {
             return getLineLength(line - 1);
         }
-        return column - 1;
+        return columnInCodeUnits - 1; // TODO codepoints
     }
 
     int getEndLine() {
-        if (column == 1 && line > tokenBeginLine)
+        if (columnInCodeUnits == 1)
             return line - 1;
         return line;
     }
@@ -287,7 +288,7 @@ public class FileLineMap {
     void goTo(int line, int column) {
         this.bufferPosition = getOffset(line, column);
         this.line = line;
-        this.column = column;
+        this.columnInCodeUnits = column; // TODO codepoints
     }
     
     // END API methods
@@ -327,7 +328,7 @@ public class FileLineMap {
         this.startingLine = line;
         this.startingColumn = column;
         this.line = line;
-        this.column = column;
+        columnInCodeUnits = columnInCodePoints = column; 
     }
 
     private int getOffset(int line, int column) {
@@ -483,12 +484,7 @@ public class FileLineMap {
         this.inputSource = inputSource;
     }
     
-    // ------------- TODO: unused method for the moment....
-    private int getLineCount() {
-        return lineOffsets.length;
-    }
-
-    String getText(int beginLine, int beginColumn, int endLine, int endColumn) {
+    String getText(int beginLine, int beginColumn, int endLine, int endColumn) { //TODO codepoints
         int startOffset = getOffset(beginLine, beginColumn);
         int endOffset = getOffset(endLine, endColumn);
         return getText(startOffset, endOffset);

@@ -1,3 +1,4 @@
+
 /* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
@@ -90,14 +91,16 @@ INJECT PARSER_CLASS : {
   }
 ;
 
-PackageDeclaration : (Annotation)* "package" =>|| Name ";" ;
+PackageDeclaration : 
+    (Annotation)* 
+    "package" 
+    =>|| 
+    Name {CURRENT_NODE.setPackageName(peekNode().toString());} ";" 
+;
 
 INJECT PackageDeclaration :
 {
-  public String getPackageName() {
-    Node nameNode = getChild(getChildCount()-2);
-    return nameNode.toString();
-  }
+  @Property String packageName;
 }
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
@@ -691,12 +694,12 @@ PrimaryExpression#void :
   SCAN 1 {getToken(0).getType() == SUPER || getToken(0).getType()==THIS}# \...\ConstructorDeclaration
   => InvocationArguments #ExplicitConstructorInvocation(+1)
   |
-// The following line is the absolutely correct condition for recent JDK's, 
+// The following commented-out line is the absolutely correct condition for recent JDK's, 
 // since yield on its own cannot be a method call, though you can write this.yield(), for example.
 // For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
 // still unclear to me whether this should be caught at this point or if it is better to just do
 // a post-parse tree walk that runs over the AST and checks for these things.
-//  SCAN 1 {lastConsumedToken.getType() == IDENTIFIER && (peekNode().getChildCount() > 1 || !lastConsumedToken.getImage().equals("yield"))}
+//  SCAN 1 {getToken(0).getType() == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !lastConsumedToken.getImage().equals("yield")))}#
   SCAN 1 {getToken(0).getType() == IDENTIFIER}#
   => 
   InvocationArguments #MethodCall(+1)
@@ -707,11 +710,15 @@ PrimaryExpression#void :
  ]
 ;
 
-Parentheses : "(" Expression ")" ;
+Parentheses : 
+    "(" 
+    Expression {CURRENT_NODE.setNestedExpression((Expression) peekNode());} 
+    ")" 
+;
 
 INJECT Parentheses : implements Expression {
-  public Expression getNestedExpression() {return (Expression) getChild(1);}
-  public boolean isAssignableTo() {return getNestedExpression().isAssignableTo();}
+  @Property Expression nestedExpression;
+  public boolean isAssignableTo() {return nestedExpression.isAssignableTo();}
 }
 
 ClassLiteral : ("void" | Type) "." "class" =>|| ;
@@ -1075,15 +1082,11 @@ NormalAnnotation #void : "@" Name "(" =>|+2 [ MemberValuePairs ] ")" ;
 
 MarkerAnnotation #void : "@" Name ;
 
-SingleMemberAnnotation #void :
-  "@" Name "(" =>|| MemberValue ")"
-;
+SingleMemberAnnotation #void : "@" Name "(" =>|| MemberValue ")" ;
 
 INJECT Annotation : 
 {
-  public String getName() {
-    return getChild(1).toString();
-  }
+  public String getName() {return firstChildOfType(Name.class).toString();}
 }
 
 MemberValuePairs :
