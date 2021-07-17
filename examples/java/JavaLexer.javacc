@@ -94,7 +94,7 @@ TOKEN #KeyWord :
 | < GOTO: "goto" > 
 | < IF: "if" > 
 | < IMPLEMENTS: "implements" > 
-| < IMPORT: "import" > 
+| < _IMPORT: "import" > 
 | < INSTANCEOF: "instanceof" >
 | < INT: "int" > #Primitive 
 | < INTERFACE: "interface" > 

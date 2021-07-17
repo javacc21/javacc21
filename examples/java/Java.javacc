@@ -138,7 +138,7 @@ Modifiers(EnumSet<TokenType> permissibleModifiers) #void :
  )*
 ;
 
-TypeDeclaration #abstract :
+TypeDeclaration #interface :
   SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "record" | "@" "interface")) =>
   (
     EmptyDeclaration 
@@ -155,11 +155,11 @@ TypeDeclaration #abstract :
   )
 ;
 
-INJECT EmptyDeclaration : extends TypeDeclaration;
-INJECT AnnotationTypeDeclaration : extends TypeDeclaration;
-INJECT ClassDeclaration : extends TypeDeclaration;
-INJECT InterfaceDeclaration : extends TypeDeclaration;
-INJECT EnumDeclaration : extends TypeDeclaration;
+INJECT EmptyDeclaration : implements TypeDeclaration;
+INJECT AnnotationTypeDeclaration : implements TypeDeclaration;
+INJECT ClassDeclaration : implements TypeDeclaration;
+INJECT InterfaceDeclaration : implements TypeDeclaration;
+INJECT EnumDeclaration : implements TypeDeclaration;
 
 EmptyDeclaration# : ";" ;
 

@@ -324,31 +324,31 @@ INJECT CompilationUnit :
 INJECT TypeDeclaration : 
     import java.util.*;
 {
-    public String getName() {
+    default String getName() {
         return firstChildOfType(Identifier.class).toString();
     }
     
-    public TypeParameters getTypeParameters() {
+    default TypeParameters getTypeParameters() {
         return firstChildOfType(TypeParameters.class);
     }
     
-    public ClassOrInterfaceBody getBody() {
+    default ClassOrInterfaceBody getBody() {
         return firstChildOfType(ClassOrInterfaceBody.class);
     }
     
-    public ExtendsList getExtendsList() {
+    default ExtendsList getExtendsList() {
         return firstChildOfType(ExtendsList.class);
     }
     
-    public ImplementsList getImplementsList() {
+    default ImplementsList getImplementsList() {
         return firstChildOfType(ImplementsList.class);
     }
     
-    public CompilationUnit getCompilationUnit() {
+    default CompilationUnit getCompilationUnit() {
         return firstAncestorOfType(CompilationUnit.class);
     }
     
-    public List<ImportDeclaration> getImportDeclarations() {
+    default List<ImportDeclaration> getImportDeclarations() {
         CompilationUnit jcu = getCompilationUnit();
         return jcu==null ? new ArrayList<ImportDeclaration>() : jcu.getImportDeclarations();
     }
@@ -451,8 +451,9 @@ INCLUDE "../../examples/java/Java.javacc"
 
 INJECT TypeDeclaration : 
     import java.util.*;
+    import PARSER_PACKAGE.CONSTANTS_CLASS.TokenType;
 {
-    public void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
+    default void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
         Set<String> keys = new HashSet<String>();
         for (ClassOrInterfaceBodyDeclaration decl : elements) {
             String key = decl.getFullNameSignatureIfMethod();
@@ -473,7 +474,7 @@ INJECT TypeDeclaration :
         getBody().prepend(elements);
     }
     
-   public void addAnnotations(Set<Annotation> annotations) {
+   default void addAnnotations(Set<Annotation> annotations) {
        Node parent = this.getParent();
        int index = parent.indexOf(this);
        //REVISIT. fix token chaining
@@ -483,8 +484,8 @@ INJECT TypeDeclaration :
    } 
    
     
-    public boolean isClass() {
-        for (Node n : children) {
+    default boolean isClass() {
+        for (Node n : children()) {
         if (n instanceof Token) {
            Token t = (Token) n;
                if (t.getType() == TokenType.CLASS) {
@@ -495,7 +496,7 @@ INJECT TypeDeclaration :
         return false;
     }
     
-    public void addImplements(ObjectType type) {
+    default void addImplements(ObjectType type) {
         ImplementsList implementsList = getImplementsList();
         if (implementsList == null) {
            implementsList = new ImplementsList();
@@ -511,7 +512,7 @@ INJECT TypeDeclaration :
         implementsList.addType(type);
     }
 
-    public void addExtends(ObjectType type) {
+    default void addExtends(ObjectType type) {
         ExtendsList extendsList = getExtendsList();
         if (extendsList == null) {
             extendsList = new ExtendsList();
