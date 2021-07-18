@@ -177,7 +177,10 @@ class CodeInjector {
                 existingCode.addAll(injectedCode);
             }
             for (ClassOrInterfaceBodyDeclaration decl : injectedCode) {
-                String key = decl.getFullNameSignatureIfMethod();
+                String key = null;
+                if (decl instanceof MethodDeclaration) {
+                   key = ((MethodDeclaration) decl).getFullSignature();
+                }
                 if (key != null) {
                     if (explicitPackageName != null && explicitPackageName.length()>0) {
                         key = explicitPackageName + "." + key;

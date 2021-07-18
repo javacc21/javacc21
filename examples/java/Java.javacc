@@ -1,4 +1,3 @@
-
 /* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
@@ -47,39 +46,13 @@ PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 // The following is actually unnecessary. I just include it to
 // be able to check that the feature is working!
-DEACTIVATE_TOKENS=RUNSIGNEDSHIFT,RSIGNEDSHIFT;
+DEACTIVATE_TOKENS=RUNSIGNEDSHIFT,RSIGNEDSHIFT,RECORD;
 //JDK_TARGET=15;
 
 FAULT_TOLERANT;
 DEBUG_FAULT_TOLERANT;
 
 INCLUDE "JavaLexer.javacc"
-
-INJECT PARSER_CLASS : {
-
-  private Token TOKEN_HOOK(Token tok) {
-    TokenType type = tok.getType();
-    if (type != RECORD && (type != IDENTIFIER || !tok.getImage().equals("record"))) {
-      return tok;
-    }
-    TokenType desiredType = inTypeDeclaration() ? RECORD : IDENTIFIER;
-    if (type == desiredType) return tok;
-    Token result = Token.newToken(desiredType, "record", tok.getInputSource());
-    result.copyLocationInfo(tok);
-    return result;
-  }
-
-  private boolean inTypeDeclaration() {
-    String currentProduction = currentLookaheadProduction == null ? currentlyParsedProduction : currentLookaheadProduction;
-    // We can use reference equality because the strings are all interned.
-    return currentProduction == "TypeDeclaration" 
-           || currentProduction == "AnnotationTypeDeclaration"
-           || currentProduction == "ClassDeclaration"
-           || currentProduction == "InterfaceDeclaration"
-           || currentProduction == "RecordDeclaration"
-           || currentProduction == "EnumDeclaration"; 
-  }
-}
 
 #CompilationUnit# :
   [ PackageDeclaration! ]
@@ -223,8 +196,10 @@ EnumBody :
 
 RecordDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
+  ACTIVATE_TOKENS(RECORD)
   "record" =>||
   <IDENTIFIER>
+  DEACTIVATE_TOKENS(RECORD)
   [TypeParameters]
   RecordHeader
   [ImplementsList]
@@ -263,6 +238,8 @@ CompactConstructorDeclaration :
   "}" 
 ;
 
+INJECT CompactConstructorDeclaration : extends ConstructorDeclaration
+
 EnumConstant :
   (Annotation)* <IDENTIFIER> [ InvocationArguments ] [ ClassOrInterfaceBody ]
 ;
@@ -290,7 +267,7 @@ TypeBound :
 
 ClassOrInterfaceBody : "{" (ClassOrInterfaceBodyDeclaration)*! "}" ;
 
-ClassOrInterfaceBodyDeclaration# :
+ClassOrInterfaceBodyDeclaration#interface :
   Initializer
   |
   TypeDeclaration
@@ -301,6 +278,12 @@ ClassOrInterfaceBodyDeclaration# :
   |
   MethodDeclaration
 ;
+
+INJECT TypeDeclaration : extends ClassOrInterfaceBodyDeclaration
+INJECT Initializer : implements ClassOrInterfaceBodyDeclaration
+INJECT ConstructorDeclaration : implements ClassOrInterfaceBodyDeclaration
+INJECT FieldDeclaration : implements ClassOrInterfaceBodyDeclaration
+INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
 
 FieldDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, STATIC, FINAL, TRANSIENT, VOLATILE))
@@ -341,8 +324,6 @@ ArrayInitializer :
 FormalParameters : "(" [ FormalParameter ( "," FormalParameter )* ] ")" ;
 
 FormalParameter : Modifiers(EnumSet.of(FINAL)) Type [ (Annotation)* "..." ] VariableDeclaratorId ;
-
-INJECT ConstructorDeclaration : extends ClassOrInterfaceBodyDeclaration
 
 ConstructorDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))

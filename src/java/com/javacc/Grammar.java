@@ -801,9 +801,9 @@ public class Grammar extends BaseNode {
                 }
             }
         }
-        else if (node instanceof ClassOrInterfaceBodyDeclaration) {
-            ClassOrInterfaceBodyDeclaration decl = (ClassOrInterfaceBodyDeclaration) node;
-            String sig = decl.getFullNameSignatureIfMethod();
+        else if (node instanceof MethodDeclaration) {
+            MethodDeclaration decl = (MethodDeclaration) node;
+            String sig = decl.getFullSignature();
             if (sig != null) {
                 String methodName = new StringTokenizer(sig, "(\n ").nextToken();
                 if (className.equals(lexerClassName)) {

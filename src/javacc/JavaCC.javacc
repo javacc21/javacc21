@@ -456,16 +456,15 @@ INJECT TypeDeclaration :
     default void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
         Set<String> keys = new HashSet<String>();
         for (ClassOrInterfaceBodyDeclaration decl : elements) {
-            String key = decl.getFullNameSignatureIfMethod();
-            if (key != null) {
-                keys.add(key);
+            if (decl instanceof MethodDeclaration) {
+                keys.add(((MethodDeclaration)decl).getFullSignature());
             }
         }
         //REVISIT. fix token chaining
         for (Iterator<Node> it = getBody().iterator(); it.hasNext();) {
             Node n = it.next();
-            if (n instanceof ClassOrInterfaceBodyDeclaration) {
-                String s = ((ClassOrInterfaceBodyDeclaration) n).getFullNameSignatureIfMethod();
+            if (n instanceof MethodDeclaration) {
+                String s = ((MethodDeclaration) n).getFullSignature();
                 if (keys.contains(s)) {
                     it.remove();
                 }
@@ -591,7 +590,7 @@ INJECT ClassOrInterfaceBody :
         return getInnerText();
     }
     
-    // REVISIT. fix token chaining
+    // REVISIT. fix token chaining?
     public void prepend(List<ClassOrInterfaceBodyDeclaration> elements) {
         ListIterator<Node> iterator = iterator();
         Node n = null;
@@ -616,9 +615,9 @@ INJECT ClassOrInterfaceBody :
         ListIterator<Node> decls = iterator();
         while (decls.hasNext()) {
            Node n = decls.next();
-           if (n instanceof ClassOrInterfaceBodyDeclaration) {
-               ClassOrInterfaceBodyDeclaration decl = (ClassOrInterfaceBodyDeclaration) n;
-               String sig = decl.getFullNameSignatureIfMethod();
+           if (n instanceof MethodDeclaration) {
+               MethodDeclaration decl = (MethodDeclaration) n;
+               String sig = decl.getFullSignature();
                if (sig != null) {
                     if (sigs.contains(sig)) {
                         decls.remove();
@@ -631,21 +630,8 @@ INJECT ClassOrInterfaceBody :
     }
 }
 
-INJECT ClassOrInterfaceBodyDeclaration : 
-{
-    public boolean isMethod() {
-        return firstChildOfType(MethodDeclaration.class) != null;
-    }
-    
-    public String getFullNameSignatureIfMethod() {
-        MethodDeclaration md = firstChildOfType(MethodDeclaration.class);
-        return md == null ? null : md.getFullSignature();
-    }
-}
-
 INJECT FieldDeclaration : 
    import java.util.*;
-   extends ClassOrInterfaceBodyDeclaration
 {
 
   /**
