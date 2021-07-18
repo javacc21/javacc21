@@ -246,10 +246,8 @@ TOKEN #KeyWord :
    | < WHILE : "while" > 
 ;
 
-// Just using the Java definition of an identifier for now.
-// I'm sure it's not quite correct!
-INCLUDE JAVA_IDENTIFIER_DEF
+INCLUDE "CSharpIdentifierDef.javacc"
 
 TOKEN :
-  < IDENTIFIER: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* > #Identifier
+  <IDENTIFIER : ("@")? <CSHARP_IDENTIFIER_START> (<CSHARP_IDENTIFIER_PART>)*>
 ;
