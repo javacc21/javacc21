@@ -44,8 +44,11 @@ import java.nio.charset.Charset;
 
 /**
  * Rather bloody-minded implementation of a class to read in a file 
- * and store the contents in a String, and keep track of where the 
- * lines are.
+ * and store the contents in a String, and keep track of where the lines are. 
+ * N.B. It now has a lot of ugly details relating to extended unicode, 
+ * i.e. code units vs. code points. The column locations vended to the 
+ * lexer machinery are now in terms of code points. (Which are the same as 
+ * relative to code units if you have no supplementary unicode characters!) 
  */
 @SuppressWarnings("unused")
 public class FileLineMap {
@@ -170,8 +173,6 @@ public class FileLineMap {
    }
     
    
-    // START API methods
-
     // Now some methods to fulfill the functionality that used to be in that
     // SimpleCharStream class
     /**
@@ -235,8 +236,10 @@ public class FileLineMap {
         if (line < startingLine) {
             goTo(startingLine, startingColumn);
         } else {
-            columnInCodeUnits = getLineLength(line); // TODO codepoints
-            bufferPosition = getLineStartOffset(line) + columnInCodeUnits -1;
+            int lineStartOffset = getLineStartOffset(line);
+            columnInCodeUnits = getLineLength(line); 
+            bufferPosition = lineStartOffset + columnInCodeUnits -1;
+            columnInCodePoints = columnInCodeUnits - numSupplementaryCharactersInRange(lineStartOffset, bufferPosition);
         }
     }
     
@@ -256,7 +259,6 @@ public class FileLineMap {
         }
         if (ch == '\n') {
             advanceLine();
-            columnInCodeUnits = columnInCodePoints = 1;
         } else {
             ++columnInCodeUnits;
             ++columnInCodePoints;
@@ -269,36 +271,70 @@ public class FileLineMap {
         return line;
     }
 
-    int getColumn() {return columnInCodeUnits;} // TODO codepoints
+    int getColumn() {return columnInCodePoints;}
 
     int getEndColumn() {
-        if (columnInCodeUnits == 1) {
-            return getLineLength(line - 1);
+        if (columnInCodePoints == 1) {
+            int numSupps = numSupplementaryCharactersInRange(getLineStartOffset(line-1), getLineStartOffset(line));
+            return getLineLength(line - 1)-numSupps;
         }
-        return columnInCodeUnits - 1; // TODO codepoints
+        return columnInCodePoints-1;
     }
 
     int getEndLine() {
-        if (columnInCodeUnits == 1)
-            return line - 1;
-        return line;
+        return columnInCodeUnits == 1 ? line -1 : line;
     }
 
     // But there is no goto in Java!!!
-    void goTo(int line, int column) {
-        this.bufferPosition = getOffset(line, column);
-        this.line = line;
-        this.columnInCodeUnits = column; // TODO codepoints
-    }
-    
-    // END API methods
 
+    /**
+     * @param line the line number
+     * @param column the column in code _points_
+     */
+    void goTo(int line, int column) {
+        bufferPosition = getLineStartOffset(line);
+        this.line = line;
+        columnInCodePoints = columnInCodeUnits = column;
+        for (int i=1; i<column;i++) {
+            char first = content.charAt(bufferPosition++);
+            if (Character.isHighSurrogate(first)) {
+                if (Character.isLowSurrogate(content.charAt(bufferPosition))) {
+                    ++bufferPosition;
+                    ++columnInCodeUnits;
+                }
+            }
+        }
+    }
+
+    /**
+     * @return the line length in code _units_
+     */ 
     private int getLineLength(int lineNumber) {
         int startOffset = getLineStartOffset(lineNumber);
         int endOffset = getLineEndOffset(lineNumber);
         return 1+endOffset - startOffset;
     }
 
+    /**
+     * The number of supplementary unicode characters in the specified 
+     * offset range. The range is expressed in code units
+     */
+    private int numSupplementaryCharactersInRange(int start, int end) {
+        int result =0;
+        while (start < end-1) {
+            if (Character.isHighSurrogate(content.charAt(start++))) {
+                if (Character.isLowSurrogate(content.charAt(start))) {
+                    start++;
+                    result++;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * The offset of the start of the given line. This is in code units
+     */
     private int getLineStartOffset(int lineNumber) {
         int realLineNumber = lineNumber - startingLine;
         if (realLineNumber <=0) {
@@ -310,6 +346,9 @@ public class FileLineMap {
         return lineOffsets[realLineNumber];
     }
 
+    /**
+     * The offset of the end of the given line. This is in code units.
+     */
     private int getLineEndOffset(int lineNumber) {
         int realLineNumber = lineNumber - startingLine;
         if (realLineNumber <0) {
@@ -324,16 +363,54 @@ public class FileLineMap {
         return lineOffsets[realLineNumber+1] -1;
     }
 
+    /**
+     * Given the line number and the column (in code units)
+     * @return the column in code points.
+     */
+    private int getCodePointColumn(int lineNumber, int codeUnitColumn) {
+        int startPoint = getLineStartOffset(lineNumber);
+        int finalPoint = startPoint + codeUnitColumn -1;
+        return codeUnitColumn - numSupplementaryCharactersInRange(startPoint, finalPoint);
+    }
+
+    /**
+     * Given the line number and the column in code points,
+     * returns the column in code units.
+     */
+    private int getCodeUnitColumn(int lineNumber, int codePointColumn) {
+        int startPoint = getLineStartOffset(lineNumber);
+        int suppCharsFound = 0;
+        for (int i=1; i<codePointColumn;i++) {
+            char first = content.charAt(startPoint++);
+            if (Character.isHighSurrogate(first)) {
+                char second = content.charAt(startPoint);
+                if (Character.isLowSurrogate(second)) {
+                    suppCharsFound++;
+                    startPoint++;
+                }
+            }
+        }
+        return codePointColumn + suppCharsFound;
+    }
+
     private void setStartPosition(int line, int column) {
         this.startingLine = line;
         this.startingColumn = column;
         this.line = line;
+        // For now, we just assume that there is no problem with this.
+        // In any case, the startPosition is almost always with column=1 anyway.
         columnInCodeUnits = columnInCodePoints = column; 
     }
-
+    /**
+     * @param line the line number
+     * @param column the column in code _points_
+     * @return the offset in code _units_
+     */ 
     private int getOffset(int line, int column) {
         if (line==0) line = startingLine; // REVISIT? This should not be necessary!
         int columnAdjustment = (line == startingLine) ? startingColumn : 1;
+        int codeUnitAdjustedColumn = getCodeUnitColumn(line, column);
+        columnAdjustment += (codeUnitAdjustedColumn - column);
         return lineOffsets[line - startingLine] + column - columnAdjustment;
     }
     
