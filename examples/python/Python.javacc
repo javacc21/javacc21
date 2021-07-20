@@ -16,6 +16,7 @@ DEFAULT_LEXICAL_STATE = PYTHON;
 TABS_TO_SPACES=8;
 ENSURE_FINAL_EOL;
 PRESERVE_LINE_ENDINGS=false;
+DEACTIVATE_TOKENS=MATCH,CASE;
 //DEBUG_LEXER;
 //DEBUG_PARSER;
 
@@ -415,3 +416,5 @@ Assignment :
   (=>StarTargets "=")+ =>|| (YieldExpression | StarExpressions)
  )
 ;
+
+Attribute : <NAME> ("." <NAME>)+ ;

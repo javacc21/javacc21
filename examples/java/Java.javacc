@@ -343,7 +343,7 @@ ExplicitConstructorInvocation :
   [=>Name "."] [TypeArguments] "super" =>|+1 InvocationArguments ";"
 ;
 
-Initializer :
+Initializer# :
   [ "static" ] =>|+1 Block
 ;
 

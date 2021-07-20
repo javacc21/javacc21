@@ -228,6 +228,8 @@ TOKEN #Keyword :
    |
    <BREAK : "break">
    |
+   <CASE : "case">
+   |
    <CLASS : "class">
    |
    <CONTINUE : "continue">
@@ -261,6 +263,8 @@ TOKEN #Keyword :
    <IMPORT : "import">
    |
    <LAMBDA : "lambda">
+   |
+   <MATCH : "match">
    |
    <NONLOCAL : "nonlocal">
    |

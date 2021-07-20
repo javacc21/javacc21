@@ -234,8 +234,8 @@ public final class Main {
                     } catch (NumberFormatException nfe) {
                         System.err.println("Expecting a number after 'jdk', like -jdk11");
                     }
-                    if (jdkTarget <8 || jdkTarget > 15) {
-                        System.err.println("The JDK Target currently must be between 8 and 15.");
+                    if (jdkTarget <8 || jdkTarget > 16) {
+                        System.err.println("The JDK Target currently must be between 8 and 16.");
                     }
                 }
                 else {

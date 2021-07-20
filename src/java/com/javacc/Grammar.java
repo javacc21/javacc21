@@ -1071,7 +1071,7 @@ public class Grammar extends BaseNode {
             }
             if (!isInInclude() && key.equals("JDK_TARGET") && jdkTarget ==0){
                 int jdkTarget = (Integer) value;
-                if (jdkTarget >=8 && jdkTarget <= 15) {
+                if (jdkTarget >=8 && jdkTarget <= 16) {
                     this.jdkTarget = (Integer) value; 
                 }
                 else {
