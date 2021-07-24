@@ -47,7 +47,7 @@ PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 // The following is actually unnecessary. I just include it to
 // be able to check that the feature is working!
-DEACTIVATE_TOKENS=RUNSIGNEDSHIFT,RSIGNEDSHIFT,RECORD;
+TURN_OFF_TOKENS=RUNSIGNEDSHIFT,RSIGNEDSHIFT,RECORD;
 //JDK_TARGET=15;
 
 FAULT_TOLERANT;
@@ -197,10 +197,10 @@ EnumBody :
 
 RecordDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
-  ACTIVATE_TOKENS(RECORD)
+  TURN_ON_TOKENS(RECORD)
   "record" =>||
   <IDENTIFIER>
-  DEACTIVATE_TOKENS(RECORD)
+  TURN_OFF_TOKENS(RECORD)
   [TypeParameters]
   RecordHeader
   [ImplementsList]
@@ -248,7 +248,7 @@ EnumConstant :
 TypeParameters :
    "<"
    TypeParameter ( "," TypeParameter )* 
-   DEACTIVATE_TOKENS(RSIGNEDSHIFT, RUNSIGNEDSHIFT) 
+   TURN_OFF_TOKENS(RSIGNEDSHIFT, RUNSIGNEDSHIFT) 
    ">"
 ;
 
@@ -399,7 +399,7 @@ PossiblyEmptyTypeArguments #void :
 TypeArguments : 
   SCAN 2
   "<" TypeArgument ( "," TypeArgument )* 
-  DEACTIVATE_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT) 
+  TURN_OFF_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT) 
   ">" 
 ;
 
@@ -555,7 +555,7 @@ RelationalExpression :
 
 ShiftExpression :
    AdditiveExpression
-   ACTIVATE_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT)
+   TURN_ON_TOKENS(RSIGNEDSHIFT,RUNSIGNEDSHIFT)
    (
       ("<<" | ">>" | ">>>")
       AdditiveExpression

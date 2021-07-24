@@ -1047,7 +1047,7 @@ public class Grammar extends BaseNode {
             else if (key.equals("DEFAULT_LEXICAL_STATE")) {
                 setDefaultLexicalState((String) value);
             }
-            else if (key.equals("DEACTIVATE_TOKENS")) {
+            else if (key.equals("DEACTIVATE_TOKENS") || key.equals("TURN_OFF_TOKENS")) {
                 String tokens = (String) settings.get(key);
                 for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens();) {
                     String tokenName = st.nextToken();
@@ -1082,7 +1082,7 @@ public class Grammar extends BaseNode {
     }
     private int jdkTarget = 8;
     private String booleanSettings = "FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,USER_DEFINED_LEXER,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,HUGE_FILE_SUPPORT,LEGACY_API,NODE_FACTORY,DEBUG_TOKEN_MANAGER,USER_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL";
-    private String stringSettings = "PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,TOKEN_FACTORY,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS";
+    private String stringSettings = "PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,TOKEN_FACTORY,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS";
     private String integerSettings = "TABS_TO_SPACES,JDK_TARGET";
 
     private void typeCheckSettings(Map<String, Object> settings) {
