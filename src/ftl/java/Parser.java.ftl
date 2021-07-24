@@ -162,13 +162,16 @@ public boolean isCancelled() {return cancelled;}
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
     Token result = tok == null? null : tok.getNext();
-[#if grammar.parserTokenHooks?size>0]    
     if (result != null) {
+[#if !grammar.userDefinedLexer]       
+       // The following line is a nasty kludge 
+       // that will not be necessary once token chaining is properly fixed.
+       token_source.previousToken = result;
+[/#if]       
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);
 [/#list]
     }
-[/#if]    
     Token previous = null;
     while (result == null) {
       nextTokenType = null;

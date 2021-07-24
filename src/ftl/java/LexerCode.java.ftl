@@ -119,7 +119,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [/#if]
   private int tabSize =8;
   private InvalidToken invalidToken;
-  private Token previousToken;
+  Token previousToken;
   // The source of the raw characters that we are scanning  
   ${tokenBuilderClass} input_stream;
     
@@ -199,14 +199,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [/#if]
           return it;
       }
-[#if false]      
-     I moved this code elsewhere because, for my python indent/dedent handling,
-     I need this token chaining to happen at earlier point in the cycle.
-     Everything seems okay, but all this token chaining is excessively intricate.
-     I think there is a need for a general cleanup/simplification of all that.
-      token.setPreviousToken(previousToken);
-      if (previousToken != null) previousToken.setNextToken(token);
-[/#if]
       return previousToken = token;
  }
 
