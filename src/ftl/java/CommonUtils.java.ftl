@@ -116,9 +116,7 @@
 [/#function]
 
 [#macro HandleLexicalStateChange expansion inLookahead]
-   [#if expansion.specifiedLexicalState?is_null]
-      [#nested]
-   [#else]
+   [#if expansion.specifiedLexicalState??]
       [#var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")]
       [#var prevLexicalStateVar = newVarName("previousLexicalState")]
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
@@ -137,6 +135,32 @@
       [/#if]           
             }
          }
+   [#elseif expansion.tokenActivation??]
+      [#var tokenActivation = expansion.tokenActivation]
+      [#var methodName = "activateTokenTypes"]
+      [#if tokenActivation.deactivate]
+          [#set methodName = "deactivateTokenTypes"]
+      [/#if]
+      [#var prevActives = newVarName("previousActives")]
+      [#var somethingChanged = newVarName("somethingChanged")]
+      EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(token_source.activeTokenTypes);
+      boolean ${somethingChanged} = ${methodName}(
+      [#list tokenActivation.tokenNames as tokenName]
+         ${tokenName}[#if tokenName_has_next],[/#if]
+      [/#list]
+      );
+      try {
+         [#nested/]
+      }
+      finally {
+         token_source.activeTokenTypes = ${prevActives};
+         if (${somethingChanged}) {
+             token_source.reset(getToken(0));
+             nextTokenType= null;
+         }
+      }
+   [#else]
+      [#nested/]
    [/#if]
 [/#macro]
 

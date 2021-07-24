@@ -129,10 +129,10 @@ TOKEN :
   |
   < _FAIL : "FAIL" > #JavaCCKeyWord
   |
-  < _TURN_ON_TOKENS : "TURN_ON_TOKENS"> #JavaCCKeyWord
-  |
-  < _TURN_OFF_TOKENS : "TURN_OFF_TOKENS"> #JavaCCKeyWord
-  |
+//  < _TURN_ON_TOKENS : "TURN_ON_TOKENS"> #JavaCCKeyWord
+//  |
+//  < _TURN_OFF_TOKENS : "TURN_OFF_TOKENS"> #JavaCCKeyWord
+//  |
   < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #JavaCCKeyWord
   |
   < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #JavaCCKeyWord
@@ -1067,8 +1067,8 @@ Setting(Map<String,Object> settings) #Setting :
      name = <_IGNORE_CASE>
      |
      name = <_DEACTIVATE_TOKENS>
-     |
-     name = <_TURN_OFF_TOKENS>
+//     |
+//     name = <_TURN_OFF_TOKENS>
   )
   =>|+1
   {
@@ -1629,7 +1629,7 @@ ExpansionWithParentheses :
     Token lparen = null;
     LexicalStateSwitch lss=null;
 }
-   [lss=LexicalStateSwitch]
+   [lss=LexicalStateSwitch | TokenActivation]
    lparen ="(" =>|| ExpansionChoice {Expansion nested = (Expansion) peekNode();} ")"
    [
        "*" {CURRENT_NODE = new ZeroOrMore();}
@@ -2188,9 +2188,9 @@ Expansion ExpansionUnit :
   SCAN 1 ~\...\Lookahead => 
   result = Failure
   |
-  SCAN 1 ~\...\Lookahead =>
-  result=TokenTypeActivation
-  |
+//  SCAN 1 ~\...\Lookahead =>
+//  result=TokenTypeActivation
+  //|
   SCAN 1 ~\...\Lookahead =>
   result=Block ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
@@ -2382,7 +2382,7 @@ OneOrMore : "(" ExpansionChoice ")" "+";
 //This production just matches the square bracket syntax. 
 // The (...)? syntax is handled by ExpansionWithParentheses
 ZeroOrOne : 
-    [LexicalStateSwitch]
+    [LexicalStateSwitch | TokenActivation]
     "[" =>|| ExpansionChoice {Expansion exp = (Expansion) peekNode();} "]"
      ["!" {exp.setTolerantParsing(true);}]
      [UpToHere(CURRENT_NODE)]
@@ -2478,11 +2478,12 @@ INJECT AttemptBlock :
      }
 }
 
+#if false
 TokenTypeActivation :
   (
-   ("ACTIVATE_TOKENS" | "TURN_ON_TOKENS")
+   "TURN_ON_TOKENS"
    |
-   ("DEACTIVATE_TOKENS" | "TURN_OFF_TOKENS") {CURRENT_NODE.setDeactivate(true);}
+   "TURN_OFF_TOKENS" {CURRENT_NODE.setDeactivate(true);}
   )
   "(" <IDENTIFIER> ("," <IDENTIFIER>)* ")"
 ;
@@ -2515,6 +2516,7 @@ INJECT TokenTypeActivation :
 
    public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
+#endif
 
 Failure# : 
    {
@@ -2566,6 +2568,27 @@ INJECT LexicalStateSwitch : {
        return firstChildOfType(Identifier.class).getImage();
    }
 }
+
+TokenActivation : 
+   ("ACTIVATE_TOKENS" | "DEACTIVATE_TOKENS" {CURRENT_NODE.setDeactivate(true);})
+   <IDENTIFIER>
+   ([","] <IDENTIFIER>)*
+;
+
+INJECT TokenActivation : 
+   import java.util.List;
+   import java.util.ArrayList;
+{
+    @Property boolean deactivate;
+    public List<String> getTokenNames() {
+        List<String> result = new ArrayList<>();
+        for (Identifier id : childrenOfType(Identifier.class)) {
+            result.add(id.getImage());
+        }
+        return result;
+    }
+}
+
 
 TryBlock : 
     "try" "{" ExpansionChoice "}"

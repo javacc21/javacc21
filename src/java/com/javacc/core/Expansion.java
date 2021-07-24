@@ -154,8 +154,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     /**
-     * @return the lexical state to switch into to parse this expansion. At the
-     *         moment this can only be specified at the production level.
+     * @return the lexical state to switch into to parse this expansion. 
      */
     public String getSpecifiedLexicalState() {
         Node parent = getParent();
@@ -163,6 +162,10 @@ abstract public class Expansion extends BaseNode {
             return ((BNFProduction) parent).getLexicalState();
         }
         return null;
+    }
+
+    public TokenActivation getTokenActivation() {
+        return firstChildOfType(TokenActivation.class);
     }
 
     private CodeBlock customErrorRecoveryBlock;
