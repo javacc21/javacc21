@@ -19,7 +19,13 @@ public class PLex {
         usage();
       }
       List<File> files = new ArrayList<File>();
+      boolean quiet = false;
+
       for (String arg : args) {
+          if (arg.equals("-q")) {
+              quiet = true;
+              continue;
+          }
           File file = new File(arg);
           if (!file.exists()) {
               System.err.println("File " + file + " does not exist.");
@@ -31,7 +37,7 @@ public class PLex {
       int numTokens =0;
       for (File file : files) {
           try {
-              numTokens+=tokenizeFile(file);
+              numTokens+=tokenizeFile(file, quiet);
           } 
           catch (Exception e) {
               System.err.println("Error processing file: " + file);
@@ -50,24 +56,38 @@ public class PLex {
        System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
     }
       
-   static public int tokenizeFile(File file) throws IOException, ParseException {
+   static public int tokenizeFile(File file, boolean quiet) throws IOException, ParseException {
        String content = new String(Files.readAllBytes(file.toPath()));
        PythonLexer lexer = new PythonLexer(file.toString(), content);
        Token t = null;
        int numTokens = 0;
        do {
            t = lexer.getNextToken();
-           while (t.getNextToken()!= null) {
-               t = t.getNextToken();
-               if (t instanceof InvalidToken) {
-                   throw new ParseException(t);
-               }
-               ++numTokens;
-           }
            if (t instanceof InvalidToken) {
                throw new ParseException(t);
            }
+           if (!quiet) {
+               String s = String.format("%s: %s %d %d %d %d", t.getType(),
+                                        t.getImage(),
+                                        t.getBeginLine(), t.getBeginColumn(),
+                                        t.getEndLine(), t.getEndColumn());
+               System.out.println(s);
+           }
            ++numTokens;
+           Token nt = t;
+           while ((nt = nt.getNextToken()) != null) {
+               if (nt instanceof InvalidToken) {
+                   throw new ParseException(nt);
+               }
+               if (!quiet) {
+                   String s = String.format("%s: %s %d %d %d %d", nt.getType(),
+                                            nt.getImage(),
+                                            nt.getBeginLine(), nt.getBeginColumn(),
+                                            nt.getEndLine(), nt.getEndColumn());
+                   System.out.println(s);
+               }
+               ++numTokens;
+           }
        }
        while (t.getType() != TokenType.EOF);
        FileLineMap.clearFileLineMapCache();
