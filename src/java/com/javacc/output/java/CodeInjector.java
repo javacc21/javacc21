@@ -38,7 +38,7 @@ import com.javacc.parser.tree.*;
  * Class to hold the code that comes from the grammar file
  * and is later "injected" into the output source files 
  */
-class CodeInjector {
+public class CodeInjector {
     
     private String parserPackage, nodePackage, parserClassName, lexerClassName, constantsClassName, baseNodeClassName;
     
@@ -54,13 +54,13 @@ class CodeInjector {
     private Map<String, String> explicitPackages = new HashMap<>();
     private Set<String> interfaces = new HashSet<>();
     
-    CodeInjector(String parserClassName,
-                 String lexerClassName,
-                 String constantsClassName,
-                 String baseNodeClassName,
-                 String parserPackage, 
-                 String nodePackage, 
-                 List<Node> codeInjections) {
+    public CodeInjector(String parserClassName,
+                        String lexerClassName,
+                        String constantsClassName,
+                        String baseNodeClassName,
+                        String parserPackage, 
+                        String nodePackage, 
+                        List<Node> codeInjections) {
         this.parserClassName = parserClassName;
         this.lexerClassName = lexerClassName;
         this.constantsClassName = constantsClassName;
@@ -303,7 +303,37 @@ class CodeInjector {
         }
     }
     
-    boolean hasInjectedCode(String typename) {
+    public boolean hasInjectedCode(String typename) {
         return typeNames.contains(typename);
+    }
+
+    /*
+     * Helper methods
+     */
+
+    public Map<String, List<ObjectType>> getExtendsLists() {
+        return extendsLists;
+    }
+
+    public Map<String, List<ObjectType>> getImplementsLists() {
+        return implementsLists;
+    }
+
+    public Map<String, List<ClassOrInterfaceBodyDeclaration>> getBodyDeclarations() {
+        return bodyDeclarations;
+    }
+
+    public Map<String, TypeParameters> getTypeParameterLists() {
+        return typeParameterLists;
+    }
+
+    public String getNodePackage() {
+        return nodePackage;
+    }
+
+    public String getParserPackage() { return parserPackage;}
+
+    public String getBaseNodeClassName() {
+        return baseNodeClassName;
     }
 }

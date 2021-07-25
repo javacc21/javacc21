@@ -4,6 +4,7 @@
 /classes/*
 /target/*
 /.settings/*
+__pycache__/*
 /*.jar
 \#*
 /src/java/com/javacc/parser/*

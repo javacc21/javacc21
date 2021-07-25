@@ -1,5 +1,6 @@
 /* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
+ * Copyright (c) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk - changes for Python support.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,14 +47,17 @@ import com.javacc.core.Expansion;
 import com.javacc.core.LexerData;
 import com.javacc.core.RegularExpression;
 import com.javacc.core.SanityChecker;
+import com.javacc.output.Sequencer;
 import com.javacc.output.java.FilesGenerator;
+import com.javacc.output.java.CodeInjector;
+import com.javacc.output.Translator;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
 import freemarker.template.TemplateException;
 
 /**
- * This object is the root Node of the data structure that contains all the 
+ * This object is the root Node of the data structure that contains all the
  * information regarding a JavaCC processing job.
  */
 public class Grammar extends BaseNode {
@@ -67,7 +71,7 @@ public class Grammar extends BaseNode {
     private Map<String, Object> settings = new HashMap<>();
     private CompilationUnit parserCode;
     private LexerData lexerData = new LexerData(this);
-    private int includeNesting;  
+    private int includeNesting;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
 
@@ -79,14 +83,14 @@ public class Grammar extends BaseNode {
     private Map<Integer, String> tokenNames = new HashMap<>();
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
-    // TODO use these later for Nodes that correspond to abstract 
+    // TODO use these later for Nodes that correspond to abstract
     // classes or interfaces
     private Set<String> abstractNodeNames = new HashSet<>();
     private Set<String> interfaceNodeNames = new HashSet<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
     private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
-    private List<String> lexerTokenHooks = new ArrayList<>(), 
+    private List<String> lexerTokenHooks = new ArrayList<>(),
                          parserTokenHooks = new ArrayList<>(),
                          openNodeScopeHooks = new ArrayList<>(),
                          closeNodeScopeHooks = new ArrayList<>();
@@ -110,9 +114,12 @@ public class Grammar extends BaseNode {
 
     private Path outputDir;
     private boolean quiet;
-    
-    public Grammar(Path outputDir, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
+    private String codeLang;
+    private Translator translator;
+
+    public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
         this.outputDir = outputDir;
+        this.codeLang = codeLang;
         this.jdkTarget = jdkTarget;
         this.quiet = quiet;
         this.preprocessorSymbols = preprocessorSymbols;
@@ -121,6 +128,8 @@ public class Grammar extends BaseNode {
     public Grammar() {}
 
     public boolean isQuiet() {return quiet;}
+
+    public String getCodeLang() { return codeLang; }
 
     public String[] getLexicalStates() {
         return lexicalStates.toArray(new String[]{});
@@ -140,26 +149,37 @@ public class Grammar extends BaseNode {
         res.addChild(regexp);
         tp.addChild(res);
     }
-    
+
     private void resolveStringLiterals() {
         for (RegexpStringLiteral stringLiteral : stringLiteralsToResolve) {
             String label = lexerData.getStringLiteralLabel(stringLiteral.getImage());
             stringLiteral.setLabel(label);
         }
     }
-    
+
+    private String separatorString() {
+        // Temporary solution. Use capital sigma for Python, for now
+        return codeLang.equals("java") ? "$": "\u03A3";
+    }
+
+    public String generateIdentifierPrefix(String basePrefix) {
+        return basePrefix + separatorString();
+    }
+
     public String generateUniqueIdentifier(String prefix, Node exp) {
         String inputSource = exp.getInputSource();
+        String sep = separatorString();
+
         if (inputSource != null) {
             int lastSlash = Math.max(inputSource.lastIndexOf('\\'), inputSource.lastIndexOf('/'));
             if (lastSlash+1<inputSource.length()) inputSource = inputSource.substring(lastSlash+1);
         } else {
             inputSource = "";
         }
-        String id = prefix + inputSource + "$" + exp.getBeginLine() + "$" + exp.getBeginColumn();
+        String id = prefix + inputSource + sep + exp.getBeginLine() + sep + exp.getBeginColumn();
         id = removeNonJavaIdentifierPart(id);
         while (usedIdentifiers.contains(id)) {
-            id += "$";
+            id += sep;
         }
         usedIdentifiers.add(id);
         return id;
@@ -181,7 +201,7 @@ public class Grammar extends BaseNode {
         includedFileDirectory = prevIncludedFileDirectory;
         if (!isInInclude()) {
             addChild(rootNode);
-        } 
+        }
         return rootNode;
     }
 
@@ -273,7 +293,7 @@ public class Grammar extends BaseNode {
             return root;
         }
     }
-    
+
     public void createOutputDir() {
         Path outputDir = Paths.get(".");
         if (!Files.isWritable(outputDir)) {
@@ -313,7 +333,8 @@ public class Grammar extends BaseNode {
     }
 
     public void generateFiles() throws ParseException, IOException, TemplateException {
-        new FilesGenerator(this, codeInjections).generateAll();
+        translator = Translator.getTranslatorFor(this);
+        new FilesGenerator(this, codeLang, codeInjections).generateAll();
     }
 
     public LexerData getLexerData() {
@@ -400,6 +421,13 @@ public class Grammar extends BaseNode {
     public void setDefaultLexicalState(String defaultLexicalState) {
         this.defaultLexicalState = defaultLexicalState;
         addLexicalState(defaultLexicalState);
+    }
+
+    public CodeInjector getInjector() {
+        return new CodeInjector(parserClassName, lexerClassName,
+                                constantsClassName, baseNodeClassName,
+                                parserPackage, getNodePackage(),
+                                codeInjections);
     }
 
     public List<Node> getOtherParserCodeDeclarations() {
@@ -537,15 +565,15 @@ public class Grammar extends BaseNode {
     public void addLexicalState(String name) {
         if (!lexicalStates.contains(name)) lexicalStates.add(name);
     }
-    
+
     public List<Expansion> getExpansionsForFirstSet() {
         return getExpansionsForSet(0);
     }
-    
+
     public List<Expansion> getExpansionsForFinalSet() {
         return getExpansionsForSet(1);
     }
-    
+
     public List<Expansion> getExpansionsForFollowSet() {
         return getExpansionsForSet(2);
     }
@@ -555,7 +583,7 @@ public class Grammar extends BaseNode {
         List<Expansion> result = new ArrayList<>();
         for (Expansion expansion : descendants(Expansion.class)) {
             if (expansion.getParent() instanceof BNFProduction) continue; // Handle these separately
-            String varName = null;            
+            String varName = null;
             if (type==0) {
                 varName = expansion.getFirstSetVarName();
             } else if (type ==1) {
@@ -586,7 +614,7 @@ public class Grammar extends BaseNode {
 
     public List<LookBehind> getAllLookBehinds() {
         return this.descendants(LookBehind.class);
-    } 
+    }
 
     public void addTokenProduction(TokenProduction tp) {
         tokenProductions.add(tp);
@@ -609,7 +637,7 @@ public class Grammar extends BaseNode {
         namedTokensTable.put(name, regexp);
         return null;
     }
-    
+
     public boolean hasTokenOfName(String name) {
         return namedTokensTable.containsKey(name);
     }
@@ -658,7 +686,7 @@ public class Grammar extends BaseNode {
 
 	/**
 	 * Returns the warning count during grammar parsing.
-	 * 
+	 *
 	 * @return the warning count during grammar parsing.
 	 */
 	public int getWarningCount() {
@@ -667,7 +695,7 @@ public class Grammar extends BaseNode {
 
 	/**
 	 * Returns the parse error count during grammar parsing.
-	 * 
+	 *
 	 * @return the parse error count during grammar parsing.
 	 */
 	public int getParseErrorCount() {
@@ -676,7 +704,7 @@ public class Grammar extends BaseNode {
 
 	/**
 	 * Returns the semantic error count during grammar parsing.
-	 * 
+	 *
 	 * @return the semantic error count during grammar parsing.
 	 */
 	public int getSemanticErrorCount() {
@@ -710,7 +738,7 @@ public class Grammar extends BaseNode {
     public Set<String> getNodeNames() {
         return nodeNames;
     }
-    
+
     public String getNodePrefix() {
         String nodePrefix = (String) settings.get("NODE_PREFIX");
         if (nodePrefix == null) nodePrefix = "";
@@ -759,7 +787,7 @@ public class Grammar extends BaseNode {
     private void checkForHooks(Node node, String className) {
         if (node == null || null instanceof Token) {
             return;
-        } 
+        }
         else if (node instanceof TokenManagerDecls) {
             ClassOrInterfaceBody body = node.childrenOfType(ClassOrInterfaceBody.class).get(0);
             checkForHooks(body, getLexerClassName());
@@ -774,14 +802,14 @@ public class Grammar extends BaseNode {
             CodeInjection ci = (CodeInjection) node;
             if (ci.name.equals(getLexerClassName())) {
                 checkForHooks(ci.body, lexerClassName);
-            } 
+            }
             else if (ci.name.equals(getParserClassName())) {
                 checkForHooks(ci.body, parserClassName);
             }
         }
         else if (node instanceof TypeDeclaration) {
             TypeDeclaration typeDecl = (TypeDeclaration) node;
-            String typeName = typeDecl.getName(); 
+            String typeName = typeDecl.getName();
             if (typeName.equals(getLexerClassName()) || typeName.endsWith("." +lexerClassName)) {
                 for (Iterator<Node> it = typeDecl.iterator(); it.hasNext();) {
                     checkForHooks(it.next(), lexerClassName);
@@ -799,7 +827,8 @@ public class Grammar extends BaseNode {
             if (sig != null) {
                 String methodName = new StringTokenizer(sig, "(\n ").nextToken();
                 if (className.equals(lexerClassName)) {
-                    if (methodName.startsWith("tokenHook$") || methodName.equals("tokenHook") || methodName.equals("CommonTokenAction")) {
+                    String prefix = generateIdentifierPrefix("tokenHook");
+                    if (methodName.startsWith(prefix) || methodName.equals("tokenHook") || methodName.equals("CommonTokenAction")) {
                         lexerTokenHooks.add(methodName);
                     }
                 }
@@ -856,10 +885,29 @@ public class Grammar extends BaseNode {
         }
         String packageName = getParserPackage();
         if (packageName != null  && packageName.length() >0) {
-            packageName = packageName.replace('.', '/');
-            dir = dir.resolve(packageName);
-            if (!Files.exists(dir)) {
-                Files.createDirectories(dir);
+            if (codeLang.equals("java")) {
+                packageName = packageName.replace('.', '/');
+                dir = dir.resolve(packageName);
+                if (!Files.exists(dir)) {
+                    Files.createDirectories(dir);
+                }
+            }
+            else if (codeLang.equals("python")) { // Use last part of package, append "parser"
+                int dotPosition = packageName.lastIndexOf('.');
+
+                if (dotPosition >= 0) {
+                    packageName = packageName.substring(dotPosition + 1);
+                }
+                packageName = packageName.concat("parser");
+                // Use a user-specified value if available
+                packageName = preprocessorSymbols.getOrDefault("py.package", packageName);
+                dir = dir.resolve(packageName);
+                if (!Files.exists(dir)) {
+                    Files.createDirectories(dir);
+                }
+            }
+            else {
+                throw new UnsupportedOperationException(String.format("Code generation in '%s' is not currently supported.", codeLang));
             }
         }
         return dir;
@@ -867,7 +915,7 @@ public class Grammar extends BaseNode {
 
     //FIXME.
     public String getBaseSourceDirectory() {
-        return outputDir == null ? "." : outputDir.toString(); 
+        return outputDir == null ? "." : outputDir.toString();
     }
 
     public Path getNodeOutputDirectory() throws IOException {
@@ -918,7 +966,7 @@ public class Grammar extends BaseNode {
             boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(ch)) : Character.isJavaIdentifierPart(ch);
             if (addChar) {
                 buf.appendCodePoint(ch);
-            } 
+            }
             if (ch == '.') buf.appendCodePoint('_');
         }
         return buf.toString();
@@ -1116,10 +1164,11 @@ public class Grammar extends BaseNode {
 
     private final Utils utils = new Utils();
     private List<String> nodeVariableNameStack = new ArrayList<>();
-    
+
     public Utils getUtils() {return utils;}
 
     public class Utils {
+
         public void pushNodeVariableName(String jjtThis) {
             nodeVariableNameStack.add(jjtThis);
         }
@@ -1131,7 +1180,7 @@ public class Grammar extends BaseNode {
 
         private Map<String, String> id_map = new HashMap<String, String>();
         private int id = 1;
-        
+
         public String toHexString(int i) {
             return "0x" + Integer.toHexString(i);
         }
@@ -1152,7 +1201,7 @@ public class Grammar extends BaseNode {
             long[] longs = bs.toLongArray();
             return Arrays.copyOf(longs, numLongs);
         }
-        
+
         public String codePointAsString(int ch) {
             return new String(new int[]{ch}, 0, 1);
         }
@@ -1165,11 +1214,11 @@ public class Grammar extends BaseNode {
         public int firstCharAsInt(String s) {
             return s.codePointAt(0);
         }
-        
+
         public String powerOfTwoInHex(int i) {
             return toHexStringL(1L << i);
         }
-        
+
         public String getID(String name) {
             String value = id_map.get(name);
             if (value == null) {
@@ -1179,17 +1228,20 @@ public class Grammar extends BaseNode {
             return value;
         }
 
+        // For use from templates.
         public String getPreprocessorSymbol(String key, String defaultValue) {
             return preprocessorSymbols.getOrDefault(key, defaultValue);
         }
 
         /**
          * @param ch the code point. If it is not ASCII, we just display the integer in hex.
-         * @return a String to use in generated Java code. Rather than display the integer 97, we display 'a', 
+         * @return a String to use in generated Java code. Rather than display the integer 97, we display 'a',
          * for example.
          */
 
         public String displayChar(int ch) {
+            String s;
+
             if (ch == '\'') return "\'\\'\'";
             if (ch == '\\') return "\'\\\\\'";
             if (ch == '\t') return "\'\\t\'";
@@ -1198,8 +1250,363 @@ public class Grammar extends BaseNode {
             if (ch == '\f') return "\'\\f\'";
             if (ch == ' ') return "\' \'";
             if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch)) return "\'" + (char) ch + "\'";
-            if (ch < 10) return "" + ch;
-            return "0x" + Integer.toHexString(ch);
+            s = "0x" + Integer.toHexString(ch);
+            if (Grammar.this.codeLang.equals("python")) {
+                s = String.format("as_chr(%s)", s);
+            }
+            return s;
+        }
+
+        /**
+         * This method is only here to help with debugging NFA state-related logic in templates.
+         * Sometimes, you want to see ASCII rather than code points.
+         *
+         * @param char_array a list of code points.
+         * @return a String to use in generated template code.
+         */
+        public String displayChars(int[] char_array) {
+            StringBuilder sb = new StringBuilder();
+            int n = char_array.length;
+
+            sb.append('[');
+            for (int i = 0; i < n; i++) {
+                sb.append(displayChar(char_array[i]));
+                if (i < (n - 1)) {
+                    sb.append(", ");
+                }
+            }
+            sb.append(']');
+            return sb.toString();
+        }
+
+        // The following methods added for supporting generation in languages other than Java.
+
+        public Map<String, Object> tokenSubClassInfo() {
+            Map<String, String> tokenClassMap = new HashMap<>();
+            Map<String, String> superClassMap = new HashMap<>();
+            //List<String> classes = new ArrayList<>();
+
+            for (RegularExpression re : Grammar.this.getOrderedNamedTokens()) {
+                if (re.isPrivate()) continue;
+                String tokenClassName = re.getGeneratedClassName();
+                String superClassName = re.getGeneratedSuperClassName();
+
+                if (superClassName == null) {
+                    superClassName = "Token";
+                }
+                else {
+                    if (!superClassMap.containsKey(superClassName)) {
+                        //classes.add(superClassName);
+                        superClassMap.put(superClassName, null); // TODO not always!
+                    }
+                }
+                if (!tokenClassMap.containsKey(tokenClassName)) {
+                    //classes.add(tokenClassName);
+                    tokenClassMap.put(tokenClassName, superClassName);
+                }
+            }
+            // Sort out superclasses' superclasses
+            CodeInjector injector = Grammar.this.getInjector();
+            String pkg = injector.getNodePackage();
+            Map<String, List<ObjectType>> extendsLists = injector.getExtendsLists();
+            for (String key: superClassMap.keySet()) {
+                String qualifiedName = String.format("%s.%s", pkg, key);
+                List<ObjectType> extendsList = extendsLists.get(qualifiedName);
+
+                if ((extendsList == null) || (extendsList.size() == 0)) {
+                    superClassMap.put(key, "Token");
+                }
+                else {
+                    superClassMap.put(key, extendsList.get(0).toString());
+                }
+            }
+            tokenClassMap.putAll(superClassMap);
+
+            // Topologically sort classes
+            Sequencer seq = new Sequencer();
+            for (Map.Entry<String, String> entry : tokenClassMap.entrySet()) {
+                seq.addNode(entry.getKey());
+                seq.addNode(entry.getValue());
+                seq.add(entry.getKey(), entry.getValue());
+            }
+            List<String> sorted = seq.steps("Token");
+            sorted.remove(0);
+            HashMap<String, Object> result = new HashMap<>();
+            result.put("sortedNames", sorted);
+            result.put("tokenClassMap", tokenClassMap);
+            return result;
+        }
+
+        public String translateParameters(String parameterList) throws ParseException {
+            StringBuilder sb = new StringBuilder();
+            // First construct the parameter list with parentheses, so
+            // that we can parse it and get the AST
+            Translator translator = Grammar.this.translator;
+            sb.append('(');
+            sb.append(parameterList);
+            sb.append(')');
+            JavaCCParser parser = new JavaCCParser(sb.toString());
+            parser.FormalParameters();
+            List<FormalParameter> parameters = ((FormalParameters) parser.rootNode()).getParams();
+            int n = parameters.size();
+            // Now build the result
+            sb.setLength(0);
+            for (int i = 0; i < n; i++) {
+                FormalParameter param = parameters.get(i);
+                String name = param.getName();
+                translator.addParameterName(name);
+                sb.append(translator.translateIdentifier(name));
+                if (i < (n - 1)) {
+                    sb.append(", ");
+                }
+            }
+            return sb.toString();
+        }
+
+        public String clearParameters() {
+            Grammar.this.translator.clearParameterNames();
+            return "";      // so it can be easily called from a template
+        }
+
+        public String translateExpression(Node expr) {
+            StringBuilder result = new StringBuilder();
+            Grammar.this.translator.translateExpression(expr, result);
+            return result.toString();
+        }
+
+        public String translateString(String expr) throws ParseException {
+            // For debugging. Just parse the passed string as an expression
+            // and output the translation.
+            JavaCCParser parser = new JavaCCParser(expr);
+            parser.Expression();
+            StringBuilder result = new StringBuilder();
+            Grammar.this.translator.translateExpression(parser.rootNode(), result);
+            return result.toString();
+        }
+
+        private void translateStatements(Node node, int indent, StringBuilder result) {
+            if (node instanceof Statement) {
+                Grammar.this.translator.translateStatement(node, indent, result);
+            }
+            else {
+                for (int i = 0; i < node.getChildCount(); i++) {
+                    Node child = node.getChild(i);
+                    if (child instanceof Delimiter) {
+                        continue;   // could put in more checks here
+                    }
+                    Grammar.this.translator.translateStatement(child, indent, result);
+                }
+            }
+        }
+
+        public Set<String> getTokenNames() {
+            HashSet<String> result = new HashSet<>();
+            for (RegularExpression re : lexerData.getRegularExpressions()) {
+                result.add(re.getLabel());
+            }
+            return result;
+        }
+
+        private void addIndent(int amount, StringBuilder result) {
+            for (int i = 0; i < amount; i++) {
+                result.append(' ');
+            }
+        }
+
+        public String translateCodeBlock(String cb, int indent) throws ParseException {
+            StringBuilder result = new StringBuilder();
+            if (cb != null) {
+                cb = cb.trim();
+                if (cb.length() == 0) { // must add a "pass"
+                    addIndent(indent, result);
+                    result.append("pass  # empty code block\n");
+                }
+                else {
+                    String block = "{" + cb + "}";
+                    JavaCCParser parser = new JavaCCParser(block);
+                    parser.Block();
+                    Node node = parser.rootNode();
+                    Translator.SymbolTable syms = new Translator.SymbolTable();
+                    translator.pushSymbols(syms);
+                    translateStatements(node, indent, result);
+                    translator.popSymbols();
+                }
+            }
+            return result.toString();
+        }
+
+        public String translateNonterminalArgs(String args) {
+            StringBuilder result = new StringBuilder();
+
+            if (args != null) {
+                String[] parts = args.replace("EnumSet.of(", "").replace(")", "").split(",");
+                result.append("_Set({");
+                if (!args.equals("null")) {
+                    if ((parts.length > 0) && (parts[0].trim().length() > 0)) {
+                        for (int i = 0; i < parts.length; i++) {
+                            result.append("TokenType.");
+                            result.append(parts[i].trim());
+                            if (i < (parts.length - 1)) {
+                                result.append(", ");
+                            }
+                        }
+                    }
+                }
+                result.append("})");
+            }
+            return result.toString();
+        }
+
+        public String translateInjectedClass(CodeInjector injector, String name) {
+            StringBuilder result = new StringBuilder();
+            Map<String, List<ObjectType>> extendsLists = injector.getExtendsLists();
+            Map<String, List<ObjectType>> implementsLists = injector.getImplementsLists();
+            Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = injector.getBodyDeclarations();
+            String qualifiedName = String.format("%s.%s", injector.getNodePackage(), name);
+            List<ObjectType> extendsList = extendsLists.get(qualifiedName);
+            List<ObjectType> implementsList = implementsLists.get(qualifiedName);
+            List<String> nameList = new ArrayList<>();
+
+            if (extendsList.isEmpty() && implementsList.isEmpty()) {
+                 nameList.add(injector.getBaseNodeClassName());
+            }
+            else {
+                for (ObjectType ot : extendsList) {
+                    nameList.add(ot.toString());
+                }
+                for (ObjectType ot : implementsList) {
+                    nameList.add(ot.toString());
+                }
+            }
+            result.append("class ");
+            result.append(name);
+            result.append('(');
+            for (int i = 0; i < nameList.size(); i++) {
+                result.append(nameList.get(i));
+                if (i < (nameList.size() - 1)) {
+                    result.append(", ");
+                }
+            }
+            result.append("):");
+            List<ClassOrInterfaceBodyDeclaration> decls = bodyDeclarations.get(qualifiedName);
+            if (decls.size() == 0) {
+                result.append(" pass\n");
+            }
+            else {
+                int n = decls.size();
+                result.append('\n');
+                // Collect all the field declarations
+                List<FieldDeclaration> fieldDecls = new ArrayList<>();
+                for (ClassOrInterfaceBodyDeclaration decl : decls) {
+                    if (decl instanceof FieldDeclaration) {
+                        fieldDecls.add((FieldDeclaration) decl);
+                    }
+                }
+                translator.clearFields();
+                if (!fieldDecls.isEmpty()) {
+                    result.append("    def __init__(self, input_source=None):\n");
+                    result.append("        super().__init__(input_source)\n");
+                    for (FieldDeclaration fd : fieldDecls) {
+                        translator.translateStatement(fd, 8, result);
+                    }
+                    result.append('\n');
+                }
+                translator.translateProperties(name, 4, result);
+                for (ClassOrInterfaceBodyDeclaration decl : decls) {
+                    if (decl instanceof MethodDeclaration) {
+                        Grammar.this.translator.translateStatement((MethodDeclaration) decl, 4, result);
+                    }
+                    else if (decl instanceof FieldDeclaration) {
+                        continue;
+                    }
+                    else {
+                        throw new UnsupportedOperationException();
+                    }
+//                    if (idx < (n - 1)) {
+//                        result.append('\n');
+//                    }
+                }
+            }
+            return result.toString();
+        }
+
+        public String translateInjections(String className, CodeInjector injector, boolean fields) {
+            StringBuilder result = new StringBuilder();
+            Translator t = Grammar.this.translator;
+            if (fields) {
+                translator.clearFields();
+            }
+            Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = injector.getBodyDeclarations();
+            List<ClassOrInterfaceBodyDeclaration> declsToProcess;
+            declsToProcess = bodyDeclarations.get(className);
+            int indent = 8;
+            if (declsToProcess != null) {
+                for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
+                    boolean process = (fields != (decl instanceof MethodDeclaration));
+                    if (process) {
+                        if (decl instanceof FieldDeclaration || decl instanceof CodeBlock || decl instanceof Initializer) {
+                            Grammar.this.translator.translateStatement(decl, indent, result);
+                        }
+                        else if (decl instanceof MethodDeclaration) {
+                            Grammar.this.translator.translateStatement((MethodDeclaration) decl, 4, result);
+                        }
+                        else {
+                            throw new UnsupportedOperationException();
+                        }
+                    }
+                }
+            }
+            return result.toString();
+        }
+
+        public String translateLexerInjections(CodeInjector injector, boolean fields) {
+            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
+                    Grammar.this.getLexerClassName());
+            return translateInjections(className, injector, fields);
+        }
+
+        public String translateParserInjections(CodeInjector injector, boolean fields) {
+            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
+                    Grammar.this.getParserClassName());
+            return translateInjections(className, injector, fields);
+        }
+
+        public List<String> getSortedNodeClassNames() {
+            Sequencer seq = new Sequencer();
+            CodeInjector injector = getInjector();
+            Map<String, List<ObjectType>> extendsMap = injector.getExtendsLists();
+            Map<String, List<ObjectType>> implementsMap = injector.getImplementsLists();
+            String pkg = injector.getNodePackage();
+            String bnn = injector.getBaseNodeClassName();
+
+            seq.addNode(bnn);
+            for (String cn : getNodeNames()) {
+                String qn = String.format("%s.%s", pkg, cn);
+                List<ObjectType> elist = extendsMap.get(qn);
+                List<ObjectType> ilist = implementsMap.get(qn);
+                List<String> preds = new ArrayList<>();
+                if (elist != null) {
+                    for (ObjectType ot : elist) {
+                        preds.add(ot.toString());
+                    }
+                }
+                if (ilist != null) {
+                    for (ObjectType ot : ilist) {
+                        preds.add(ot.toString());
+                    }
+                }
+                if (preds.isEmpty()) {
+                    preds.add(bnn);
+                }
+                for (String pn : preds) {
+                    seq.addNode(pn);
+                    seq.addNode(cn);
+                    seq.add(cn, pn);  // Add in reverse order
+                }
+            }
+            List<String> result = seq.steps(bnn);
+            result.remove(0); // The bnn value
+            return result;
         }
     }
 }

@@ -360,7 +360,10 @@ abstract public class Expansion extends BaseNode {
             if (this.getParent() instanceof BNFProduction) {
                 firstSetVarName = ((BNFProduction) getParent()).getFirstSetVarName();
             } else {
-                firstSetVarName = getGrammar().generateUniqueIdentifier("first_set$", this);
+                Grammar g = getGrammar();
+                String prefix = g.generateIdentifierPrefix("first_set");
+
+                firstSetVarName = g.generateUniqueIdentifier(prefix, this);
             }
         }
         return firstSetVarName;
@@ -368,7 +371,9 @@ abstract public class Expansion extends BaseNode {
 
     public String getFinalSetVarName() {
         String result = getFirstSetVarName();
-        if (result.startsWith("first_set$")) {
+        String prefix = getGrammar().generateIdentifierPrefix("first_set");
+
+        if (result.startsWith(prefix)) {
             return result.replaceFirst("first", "final");
         }
         return result.replace("_FIRST_SET", "_FINAL_SET");
@@ -376,7 +381,9 @@ abstract public class Expansion extends BaseNode {
 
     public String getFollowSetVarName() {
         String result = getFirstSetVarName();
-        if (result.startsWith("first_set$")) {
+        String prefix = getGrammar().generateIdentifierPrefix("first_set");
+
+        if (result.startsWith(prefix)) {
             return result.replaceFirst("first", "follow");
         }
         return result.replace("_FIRST_SET", "_FOLLOW_SET");
@@ -388,22 +395,34 @@ abstract public class Expansion extends BaseNode {
                 BNFProduction prod = (BNFProduction) getParent();
                 scanRoutineName = prod.getLookaheadMethodName();
             } else {
-                scanRoutineName = getGrammar().generateUniqueIdentifier("check$", this);
+                Grammar g = getGrammar();
+                String prefix = g.generateIdentifierPrefix("check");
+
+                scanRoutineName = g.generateUniqueIdentifier(prefix, this);
             }
         }
         return scanRoutineName;
     }
 
     public String getPredicateMethodName() {
-        return getScanRoutineName().replace("check$", "scan$");
+        Grammar g = getGrammar();
+        String checkPrefix = g.generateIdentifierPrefix("check");
+        String scanPrefix = g.generateIdentifierPrefix("scan");
+        return getScanRoutineName().replace(checkPrefix, scanPrefix);
     }
 
     public String getRecoverMethodName() {
-        return getScanRoutineName().replace("check$", "recover$");
+        Grammar g = getGrammar();
+        String checkPrefix = g.generateIdentifierPrefix("check");
+        String recoverPrefix = g.generateIdentifierPrefix("recover");
+        return getScanRoutineName().replace(checkPrefix, recoverPrefix);
     }
 
     public String getRecoverToMethodName() {
-        return getScanRoutineName().replace("check$", "recover_to$");
+        Grammar g = getGrammar();
+        String checkPrefix = g.generateIdentifierPrefix("check");
+        String recoverToPrefix = g.generateIdentifierPrefix("recover_to");
+        return getScanRoutineName().replace(checkPrefix, recoverToPrefix);
     }
 
     public int getFinalSetSize() {
