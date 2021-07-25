@@ -235,11 +235,11 @@ abstract public class Expansion extends BaseNode {
             return false;
         if (this.isAlwaysSuccessful())
             return false;
-        if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <= 1)
-            return false;
         if (getHasScanLimit()) {
             return true;
         }
+        if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <= 1)
+            return false;
         if (getMaximumSize() <= 1) {
             return false;
         }
@@ -280,7 +280,7 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
-        if (getHasSeparateSyntacticLookahead() || getHasLookBehind() || getSpecifiedLexicalState() != null) {
+        if (getHasTokenActivation() || getHasSeparateSyntacticLookahead() || getHasLookBehind() || getSpecifiedLexicalState() != null) {
             return true;
         }
         if (getHasSemanticLookahead() && getLookahead().isSemanticLookaheadNested()) {
@@ -419,8 +419,15 @@ abstract public class Expansion extends BaseNode {
     }
 
     public boolean getSpecifiesLexicalStateSwitch() {
+        if (getHasTokenActivation()) {
+            return true;
+        }
         return getSpecifiedLexicalState() != null;
     };
+
+    public boolean getHasTokenActivation() {
+        return firstChildOfType(TokenActivation.class) != null;
+    }
 
     /**
      * @return Can this expansion be matched by the empty string.

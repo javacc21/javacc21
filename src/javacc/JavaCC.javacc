@@ -1673,7 +1673,6 @@ INJECT ExpansionWithParentheses :
         return getSpecifiedLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
     }
 
-
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
     }
@@ -1798,6 +1797,14 @@ INJECT ExpansionSequence :
        }
        Lookahead la = getLookahead();
        return la != null && la.getRequiresScanAhead();
+   }
+
+   public boolean getHasTokenActivation() {
+       for (Expansion unit : getUnits()) {
+           if (unit.getHasTokenActivation()) return true;
+           if (!unit.isPossiblyEmpty()) break;
+       }
+       return false;
    }
 
    private Lookahead lookahead;
@@ -2289,6 +2296,10 @@ INJECT NonTerminal :
 
     public Expansion getNestedExpansion() {
         return getProduction().getExpansion();
+    }
+
+    public boolean getHasTokenActivation() {
+        return getNestedExpansion().getHasTokenActivation();
     }
 
     public Lookahead getLookahead() {
