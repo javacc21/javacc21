@@ -47,8 +47,8 @@ PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 // The following is actually unnecessary. I just include it to
 // be able to check that the feature is working!
-DEACTIVATE_TOKENS=RUNSIGNEDSHIFT,RSIGNEDSHIFT,RECORD;
-//JDK_TARGET=15;
+DEACTIVATE_TOKENS=RSIGNEDSHIFT, RUNSIGNEDSHIFT, RECORD;
+//JDK_TARGET=16;
 
 FAULT_TOLERANT;
 DEBUG_FAULT_TOLERANT;
@@ -113,7 +113,7 @@ Modifiers(EnumSet<TokenType> permissibleModifiers) #void :
 ;
 
 TypeDeclaration #interface :
-  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "record" | "@" "interface")) =>
+  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "record" | "@" "interface")) | RecordLA =>
   (
     EmptyDeclaration 
     |
@@ -206,6 +206,15 @@ RecordDeclaration :
   RecordBody
 ;
 
+// This is a production that is only used as a lookahead. It's kludgy, but it's
+// necessary because, when we scan ahead to see whether to enter TypeDeclaration,
+// the RECORD token type is deactivated. This kind of thing is slightly kludgy.
+RecordLA :
+   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
+   (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)
+;   
+
+
 RecordHeader :
    "("
    [
@@ -247,7 +256,7 @@ EnumConstant :
 TypeParameters :
    "<"
    TypeParameter ( "," TypeParameter )* 
-   DEACTIVATE_TOKENS RSIGNEDSHIFT RUNSIGNEDSHIFT ( ">" )
+   ">"
 ;
 
 INJECT TypeParameters : 
@@ -397,7 +406,7 @@ PossiblyEmptyTypeArguments #void :
 TypeArguments : 
   SCAN 2
   "<" TypeArgument ( "," TypeArgument )* 
-  DEACTIVATE_TOKENS RSIGNEDSHIFT RUNSIGNEDSHIFT ( ">" )
+  ">" 
 ;
 
 TypeArgument :
