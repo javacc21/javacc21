@@ -22,7 +22,8 @@ DEACTIVATE_TOKENS=MATCH,CASE;
 
 INCLUDE "PythonLexer.javacc" 
 
-PythonFile : (Statement)* <EOF> ;
+// Can't call it Module, as it clashes with java.lang.Module
+PyModule : (Statement)* <EOF> ;
 
 Number#void : <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX> ;
 
