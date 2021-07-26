@@ -471,16 +471,13 @@ INJECT SwitchExpression : implements Expression
 INJECT TernaryExpression : implements Expression 
 INJECT UnaryExpression : implements Expression
 INJECT UnaryExpressionNotPlusMinus : implements Expression
-INJECT AllocationExpression : implements Expression;
+INJECT AllocationExpression : implements Expression
 INJECT LiteralExpression : implements Expression
+INJECT DotNew : extends AllocationExpression
 
 INJECT Name : implements Expression {
   public boolean isAssignableTo() {return true;}
 }
-
-INJECT AllocationExpression : implements Expression;
-
-INJECT DotNew : extends AllocationExpression
 
 INJECT DotName : implements Expression {
   public boolean isAssignableTo() {return true;}
