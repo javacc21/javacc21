@@ -38,15 +38,25 @@
 package ${grammar.parserPackage};
 [/#if]
 
-[#if grammar.nodePackage?has_content && grammar.parserPackage! != grammar.nodePackage]
-import ${grammar.nodePackage}.*;  
-[/#if]
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.logging.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+[#if grammar.nodePackage?has_content && grammar.parserPackage! != grammar.nodePackage]
+[#list grammar.nodeNames as node]
+import ${grammar.nodePackage}.${node};
+[/#list]
+
+[/#if]
 [#if grammar.parserPackage?has_content]
 import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
 [/#if]

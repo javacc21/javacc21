@@ -2,7 +2,6 @@
 [#if grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
 [/#if]
-import java.util.*;
 [#if grammar.nodePackage?has_content && grammar.nodePackage != grammar.parserPackage]
 import ${grammar.nodePackage}.*;
 [/#if]
@@ -473,7 +472,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#if grammar.treeBuildingEnabled]
     
     private Node parent;
-    private Map<String,Object> attributes; 
+    private java.util.Map<String,Object> attributes; 
 
     public void setChild(int i, Node n) {
         throw new UnsupportedOperationException();
@@ -511,8 +510,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return null;
     }
     
-    public List<Node> children() {
-        return Collections.emptyList();
+    public java.util.List<Node> children() {
+        return java.util.Collections.emptyList();
     }
 
     public void open() {}
@@ -526,7 +525,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      
     public void setAttribute(String name, Object value) {
         if (attributes == null) {
-            attributes = new HashMap<String, Object>();
+            attributes = new java.util.HashMap<String, Object>();
         }
         attributes.put(name, value);
     }
@@ -535,8 +534,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return attributes == null ? false : attributes.containsKey(name);
     }
      
-    public Set<String> getAttributeNames() {
-        if (attributes == null) return Collections.emptySet();
+    public java.util.Set<String> getAttributeNames() {
+        if (attributes == null) return java.util.Collections.emptySet();
         return attributes.keySet();
     }
 

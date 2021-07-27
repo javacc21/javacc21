@@ -33,7 +33,12 @@
 [#if grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
 [/#if]
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.lang.reflect.*;
 import java.util.function.Predicate;
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]

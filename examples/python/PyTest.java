@@ -50,7 +50,7 @@ public class PyTest {
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
        PythonParser parser = new PythonParser(file.toPath());
 //       parser.setParserTolerant(tolerantParsing);
-       parser.PyModule();
+       parser.Module();
        Node root = parser.rootNode();
        FileLineMap.clearFileLineMapCache();
        if (dumpTree) {

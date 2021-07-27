@@ -210,9 +210,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
         this.debugFaultTolerant = debugFaultTolerant;
     }
 
-    private List<ParsingProblem> parsingProblems = new ArrayList<>();
+    private java.util.List<ParsingProblem> parsingProblems = new java.util.ArrayList<>();
 
-    public List<ParsingProblem> getParsingProblems() {
+    public java.util.List<ParsingProblem> getParsingProblems() {
         return parsingProblems;
     }
 
