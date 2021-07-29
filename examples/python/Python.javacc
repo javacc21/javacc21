@@ -47,7 +47,7 @@ AtomicExpression#void :
     |
     (ListComp | List)
     |
-    (SetComp | DictComp | PyDict | PySet)
+    (SetComp | DictComp | Dict | Set)
     |
     "..."
 ;
@@ -283,7 +283,7 @@ DoubleStarredKeyValuePair :
 
 DoubleStarredKeyValuePairs : DoubleStarredKeyValuePair ("," =>|+1 DoubleStarredKeyValuePair)* [","] ;
 
-PyDict : 
+Dict :
   SCAN "{" ("}" | DoubleStarredKeyValuePair) =>
   (
     "{" 
@@ -294,7 +294,7 @@ PyDict :
 
 DictComp : "{" KeyValuePair =>|+2 (ForIfClause)+ "}" ;
 
-PySet : "{" StarNamedExpressions "}" ;
+Set : "{" StarNamedExpressions "}" ;
 
 SetComp : "{" NamedExpression =>|+2 (ForIfClause)+ "}" ;
 
