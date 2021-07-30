@@ -356,3 +356,22 @@ INCLUDE PYTHON_IDENTIFIER_DEF
 TOKEN :
   <NAME : <PYTHON_IDENTIFIER_START> (<PYTHON_IDENTIFIER_PART>)* > #Name
 ;
+
+TOKEN :
+  <BADNAME :
+    [
+       "a"-"z",
+       "A"-"Z",
+       "_",
+       "\u0080"-"\uffff"
+    ]
+    (
+        [
+           "a"-"z",
+           "A"-"Z",
+           "0"-"9",
+           "_",
+           "\u0080"-"\uffff"
+        ]
+    )* >
+;
