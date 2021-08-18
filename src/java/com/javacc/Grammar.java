@@ -1216,6 +1216,10 @@ public class Grammar extends BaseNode {
             return value;
         }
 
+        public String getPreprocessorSymbol(String key, String defaultValue) {
+            return preprocessorSymbols.getOrDefault(key, defaultValue);
+        }
+
         /**
          * @param ch the code point. If it is not ASCII, we just display the integer in hex.
          * @return a String to use in generated Java code. Rather than display the integer 97, we display 'a', 
