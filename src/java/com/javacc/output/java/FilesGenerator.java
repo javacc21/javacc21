@@ -50,7 +50,6 @@ public class FilesGenerator {
 
     private Configuration fmConfig;
     private Grammar grammar;
-    private String currentFilename;
     private CodeInjector codeInjector;
     private Set<String> tokenSubclassFileNames = new HashSet<>();
     private HashMap<String, String> superClassLookup = new HashMap<>();
@@ -110,7 +109,7 @@ public class FilesGenerator {
     }
     
     public void generate(String nodeName, Path outputFile) throws IOException, ParseException, TemplateException  {
-        this.currentFilename = outputFile.getFileName().toString();
+        String currentFilename = outputFile.getFileName().toString();
         String templateName = currentFilename + ".ftl";
         if (tokenSubclassFileNames.contains(currentFilename)) {
                 templateName = "ASTToken.java.ftl";
