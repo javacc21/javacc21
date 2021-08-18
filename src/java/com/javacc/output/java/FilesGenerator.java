@@ -107,44 +107,51 @@ public class FilesGenerator {
     public void generate(Path outputFile) throws IOException, ParseException, TemplateException {
         generate(null, outputFile);
     }
-    
-    public void generate(String nodeName, Path outputFile) throws IOException, ParseException, TemplateException  {
-        String currentFilename = outputFile.getFileName().toString();
-        String templateName = currentFilename + ".ftl";
-        if (tokenSubclassFileNames.contains(currentFilename)) {
-                templateName = "ASTToken.java.ftl";
+
+    private String getTemplateName(String outputFilename) {
+        String result = outputFilename + ".ftl";
+
+        if (tokenSubclassFileNames.contains(outputFilename)) {
+            result = "ASTToken.java.ftl";
         }
-        else if (currentFilename.equals(grammar.getParserClassName() + ".java")) {
-            templateName = "Parser.java.ftl";
+        else if (outputFilename.equals(grammar.getParserClassName() + ".java")) {
+            result = "Parser.java.ftl";
         }
-        else if (currentFilename.equals(grammar.getConstantsClassName() + ".java")) {
-            templateName = "Constants.java.ftl";
+        else if (outputFilename.equals(grammar.getConstantsClassName() + ".java")) {
+            result = "Constants.java.ftl";
         }
-        else if (currentFilename.endsWith("Lexer.java")
-                 || currentFilename.equals(grammar.getLexerClassName() + ".java")) {
-            templateName = "Lexer.java.ftl";
+        else if (outputFilename.endsWith("Lexer.java")
+                || outputFilename.equals(grammar.getLexerClassName() + ".java")) {
+            result = "Lexer.java.ftl";
         }
-        else if (currentFilename.endsWith("NfaData.java") || currentFilename.equals(grammar.getNfaDataClassName() +".java")) {
-            templateName = "NfaData.java.ftl";
+        else if (outputFilename.endsWith("NfaData.java") ||
+                    outputFilename.equals(grammar.getNfaDataClassName() +".java")) {
+            result = "NfaData.java.ftl";
         }
-        else if (currentFilename.endsWith(".html")) {
-            templateName = "doc.html.ftl";
+        else if (outputFilename.endsWith(".html")) {
+            result = "doc.html.ftl";
         }
-        else if (currentFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
-            templateName = "BaseNode.java.ftl";
+        else if (outputFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
+            result = "BaseNode.java.ftl";
         }
-        else if (currentFilename.startsWith(grammar.getNodePrefix())) {
-            if (!(currentFilename.equals("ParseException.java") 
-                    || currentFilename.equals("ParsingProblem.java")
-                    || currentFilename.equals("Token.java")
-                    || currentFilename.equals("Node.java")
-            		|| currentFilename.equals("InvalidToken.java")
-            		|| currentFilename.equals("FileLineMap.java")
-                    || currentFilename.equals("InvalidNode.java")))
+        else if (outputFilename.startsWith(grammar.getNodePrefix())) {
+            if (!(outputFilename.equals("ParseException.java")
+                    || outputFilename.equals("ParsingProblem.java")
+                    || outputFilename.equals("Token.java")
+                    || outputFilename.equals("Node.java")
+                    || outputFilename.equals("InvalidToken.java")
+                    || outputFilename.equals("FileLineMap.java")
+                    || outputFilename.equals("InvalidNode.java")))
             {
-                    templateName = "ASTNode.java.ftl";
+                result = "ASTNode.java.ftl";
             }
         }
+        return result;
+    }
+
+    public void generate(String nodeName, Path outputFile) throws IOException, ParseException, TemplateException  {
+        String currentFilename = outputFile.getFileName().toString();
+        String templateName = getTemplateName(currentFilename);
         HashMap<String, Object> dataModel = new HashMap<String, Object>();
         dataModel.put("grammar", grammar);
         dataModel.put("filename", currentFilename);
