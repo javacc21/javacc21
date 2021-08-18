@@ -108,6 +108,18 @@ public class FilesGenerator {
         generate(null, outputFile);
     }
 
+    private Set<String> nonNodeNames = new HashSet<String>() {
+        {
+            add("ParseException.java");
+            add("ParsingProblem.java");
+            add("Token.java");
+            add("InvalidToken.java");
+            add("Node.java");
+            add("InvalidNode.java");
+            add("FileLineMap.java");
+        }
+    };
+
     private String getTemplateName(String outputFilename) {
         String result = outputFilename + ".ftl";
 
@@ -135,13 +147,7 @@ public class FilesGenerator {
             result = "BaseNode.java.ftl";
         }
         else if (outputFilename.startsWith(grammar.getNodePrefix())) {
-            if (!(outputFilename.equals("ParseException.java")
-                    || outputFilename.equals("ParsingProblem.java")
-                    || outputFilename.equals("Token.java")
-                    || outputFilename.equals("Node.java")
-                    || outputFilename.equals("InvalidToken.java")
-                    || outputFilename.equals("FileLineMap.java")
-                    || outputFilename.equals("InvalidNode.java")))
+            if (!nonNodeNames.contains(outputFilename))
             {
                 result = "ASTNode.java.ftl";
             }
