@@ -58,7 +58,7 @@ public final class Main {
     private static String manifestContent = "", jarFileName = "javacc.jar";
     private static Path jarPath;
     private static FileSystem fileSystem = FileSystems.getDefault();
-    private static final Pattern symbolPattern = Pattern.compile("^(\\w+)(=(\\w+))?$");
+    private static final Pattern symbolPattern = Pattern.compile("^(\\w+(\\.\\w+)*)(=(\\w+(\\.\\w+)*))?$");
 
     static {
         try {
@@ -207,7 +207,7 @@ public final class Main {
                             System.exit(-1);
                         }
                         String name = m.group(1);
-                        String value = m.group(3);
+                        String value = m.group(4);
                         if (value == null) {
                             value = "1";
                         }
