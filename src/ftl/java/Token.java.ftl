@@ -12,25 +12,25 @@ import freemarker.template.*;
 [/#if]
 
  [#var extendsNode = ""]
- 
+
  [#if grammar.treeBuildingEnabled]
     [#set extendsNode =", Node"]
  [/#if]
- 
+
 public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     private TokenType type;
-    
+
     private String inputSource;
-    
+
     public String getInputSource() {return inputSource;}
-    
+
     public void setInputSource(String inputSource) {this.inputSource = inputSource;}
 
     public TokenType getType() {
         return type;
     }
-    
+
     void setType(TokenType type) {
         this.type=type;
     }
@@ -86,62 +86,62 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * of this token; endLine and endColumn describe the position of the
      * last character of this token.
      */
-[#if grammar.legacyAPI]public[#else]private[/#if]      
+[#if grammar.legacyAPI]public[#else]private[/#if]
     int beginLine, beginColumn, endLine, endColumn;
 
-    
+
     public void setBeginColumn(int beginColumn) {
         this.beginColumn = beginColumn;
-    }	
-    
+    }
+
     public void setEndColumn(int endColumn) {
         this.endColumn = endColumn;
-    }	
-    
+    }
+
     public void setBeginLine(int beginLine) {
         this.beginLine = beginLine;
-    }	
-    
+    }
+
     public void setEndLine(int endLine) {
         this.endLine = endLine;
-    }	
-    
+    }
+
     public int getBeginLine() {
         return beginLine;
     }
-    
+
     public int getBeginColumn() {
         return beginColumn;
     }
-    
+
     public int getEndLine() {
         return endLine;
     }
-    
+
     public int getEndColumn() {
         return endColumn;
     }
 
-[#if grammar.legacyAPI]public[#else]private[/#if]      
+[#if grammar.legacyAPI]public[#else]private[/#if]
     String image;
-    
+
     /**
      * @return the string image of the token.
      */
     public String getImage() {
         return image;
     }
-    
+
    public void setImage(String image) {
        this.image = image;
-   } 
-    
+   }
+
 [#if grammar.legacyAPI]
 
     void setKind(int kind) {
         this.type = TokenType.values()[kind];
     }
-    
+
     int getKind() {
         return type.ordinal();
     }
@@ -159,7 +159,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [/#if]
     Token next;
     private Token previousToken, nextToken;
-    
+
 
     /**
      * This is the same as #getNextParsedToken
@@ -219,7 +219,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
          return FileLineMap.getFileLineMapByName(getInputSource());
      }
     [/#if]
-     
+
     public String getSource() {
          if (type == TokenType.EOF) return "";
          return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
@@ -246,18 +246,18 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public Token getSpecialToken() {
            return specialToken;
     }
-    
-    @Deprecated 
+
+    @Deprecated
     public void setSpecialToken(Token specialToken) {
          this.specialToken = specialToken;
     }
-[/#if]    
-    
+[/#if]
+
     private boolean unparsed;
 
     //Should find a way to get rid of this.
-    Token() {} 
-    
+    Token() {}
+
     public Token(int kind) {
        this(kind, null);
        this.type = TokenType.values()[kind];
@@ -285,13 +285,13 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public boolean isUnparsed() {
         return unparsed;
     }
-    
+
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
     }
 
 [#if !grammar.userDefinedLexer]
-    /** 
+    /**
      * Utility method to merge two tokens into a single token of a given type.
      * @param t1 the first token to merge
      * @param t2 the second token to merge
@@ -300,7 +300,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      */
     static Token merge(Token t1, Token t2, TokenType type) {
         Token merged = newToken(type, t1.getImage() + t2.getImage(), t1.getInputSource());
-        t1.copyLocationInfo(merged);
+        merged.copyLocationInfo(t1);
         merged.setEndColumn(t2.getEndColumn());
         merged.setEndLine(t2.getEndLine());
         merged.setNext(t2.getNext());
@@ -309,18 +309,18 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
     /**
-     * Utility method to split a token in 2. For now, it assumes that the token 
-     * is all on a single line. (Will maybe fix that later). 
+     * Utility method to split a token in 2. For now, it assumes that the token
+     * is all on a single line. (Will maybe fix that later).
      * @param length the point at which to split the token
      * @param type1 the desired type of the first token
      * @param type2 the desired type of the second token
      * @return the first token that resulted from the split
-     */ 
+     */
     static Token split(Token tok, int length, TokenType type1, TokenType type2) {
         String img1 = tok.getImage().substring(0, length);
         String img2 = tok.getImage().substring(length);
         Token t1 = newToken(type1, img1, tok.getInputSource());
-        Token t2 = newToken(type2, img2, tok.getInputSource()); 
+        Token t2 = newToken(type2, img2, tok.getInputSource());
         t1.setBeginColumn(tok.getBeginColumn());
         t1.setEndColumn(tok.getBeginColumn() + length -1);
         t1.setBeginLine(tok.getBeginLine());
@@ -337,17 +337,17 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         t2.setNextToken(tok.getNextToken());
         return t1;
     }
-[/#if]   
+[/#if]
 
     public void clearChildren() {}
-    
+
     public String getNormalizedText() {
         if (getType() == TokenType.EOF) {
             return "EOF";
         }
         return getImage();
     }
-    
+
     public String toString() {
         return getNormalizedText();
     }
@@ -399,10 +399,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     public void copyLocationInfo(Token start, Token end) {
         if (getInputSource()==null && start.getInputSource()!=null) {
-            setInputSource(start.getInputSource()); 
+            setInputSource(start.getInputSource());
         }
         if (getInputSource()==null && start.getInputSource()!=null) {
-            setInputSource(start.getInputSource()); 
+            setInputSource(start.getInputSource());
         }
         setBeginLine(start.getBeginLine());
         setBeginColumn(start.getBeginColumn());
@@ -414,7 +414,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 [/#if]
 
-[#if grammar.legacyAPI]    
+[#if grammar.legacyAPI]
     public static Token newToken(int ofKind, String image) {
        [#if grammar.treeBuildingEnabled]
            switch(ofKind) {
@@ -426,10 +426,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
               default: return new Token(ofKind, image);
            }
        [#else]
-       return new Token(ofKind, image); 
+       return new Token(ofKind, image);
        [/#if]
     }
-[/#if]   
+[/#if]
 [#if !grammar.userDefinedLexer]
     public static Token newToken(TokenType type, String image, String inputSource) {
            [#--if !grammar.hugeFileSupport]image = null;[/#if--]
@@ -444,7 +444,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
            default : return new Token(type, image, inputSource);
            }
        [#else]
-         return new Token(type, image, inputSource);      
+         return new Token(type, image, inputSource);
        [/#if]
     }
 
@@ -452,28 +452,28 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return newToken(type, image, lexer.getInputSource());
     }
 
-    [#if grammar.productionTable?size != 0]    
+    [#if grammar.productionTable?size != 0]
         public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
             return newToken(type, image, parser.getInputSource());
-        } 
-    [/#if]    
-    
+        }
+    [/#if]
+
     [#if grammar.treeBuildingEnabled]
         public static Token newToken(TokenType type, String image, Node node) {
             return newToken(type, image, node.getInputSource());
         }
     [/#if]
-[/#if]    
-    
+[/#if]
+
     public String getLocation() {
 //         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
          return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
      }
-    
+
 [#if grammar.treeBuildingEnabled]
-    
+
     private Node parent;
-    private Map<String,Object> attributes; 
+    private Map<String,Object> attributes;
 
     public void setChild(int i, Node n) {
         throw new UnsupportedOperationException();
@@ -482,11 +482,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void addChild(Node n) {
         throw new UnsupportedOperationException();
     }
-    
+
     public void addChild(int i, Node n) {
         throw new UnsupportedOperationException();
     }
-    
+
     public Node removeChild(int i) {
         throw new UnsupportedOperationException();
     }
@@ -502,15 +502,15 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void setParent(Node parent) {
         this.parent = parent;
     }
-    
+
     public int getChildCount() {
         return 0;
     }
-    
+
     public Node getChild(int i) {
         return null;
     }
-    
+
     public List<Node> children() {
         return Collections.emptyList();
     }
@@ -518,23 +518,23 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void open() {}
 
     public void close() {}
-    
-    
+
+
     public Object getAttribute(String name) {
-        return attributes == null ? null : attributes.get(name); 
+        return attributes == null ? null : attributes.get(name);
     }
-     
+
     public void setAttribute(String name, Object value) {
         if (attributes == null) {
             attributes = new HashMap<String, Object>();
         }
         attributes.put(name, value);
     }
-     
+
     public boolean hasAttribute(String name) {
         return attributes == null ? false : attributes.containsKey(name);
     }
-     
+
     public Set<String> getAttributeNames() {
         if (attributes == null) return Collections.emptySet();
         return attributes.keySet();
@@ -544,23 +544,23 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public TemplateNodeModel getParentNode() {
         return parent;
     }
-  
+
     public TemplateSequenceModel getChildNodes() {
         return null;
     }
-  
+
     public String getNodeName() {
         return getType().toString();
     }
-  
+
     public String getNodeType() {
         return getClass().getSimpleName();
     }
-  
+
     public String getNodeNamespace() {
         return null;
     }
-  
+
     public String getAsString() {
         return getNormalizedText();
     }
