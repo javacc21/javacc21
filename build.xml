@@ -163,4 +163,22 @@
     <chmod file="javacc-full.jar" perm="+x"/>
 </target>
 
+  <target name="update-bootstrap">
+    <!-- 
+      Update the bootstrap javacc.jar using the current javacc.jar built from the current
+      source. To cater for template changes, the process, the process needs to be repeated
+      once to ensure that the templates are up to date, and again to ensure that any
+      generated code is using the updated templates.
+    -->
+    <echo>Ensuring templates are up to date in the bootstrap jar ...</echo>
+    <antcall target="clean"></antcall>
+    <antcall target="jar"></antcall>
+    <echo>Copying current jar to bootstrap location ...</echo>
+    <copy file="javacc.jar" todir="bin"/>
+    <echo>Ensuring any generated code is up to date in the bootstrap jar ...</echo>
+    <antcall target="clean"></antcall>
+    <antcall target="jar"></antcall>
+    <echo>Copying current jar to bootstrap location ...</echo>
+    <copy file="javacc.jar" todir="bin"/>
+  </target>
 </project>
