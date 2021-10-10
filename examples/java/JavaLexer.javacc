@@ -69,7 +69,8 @@ INJECT JavaDocComment : extends Comment;
 MORE : < ANY_CHAR : ~[] >;
 
 TOKEN #KeyWord :
-  < ABSTRACT: "abstract" > 
+  <UNDERSCORE : "_">
+|  < ABSTRACT: "abstract" > 
 | < _ASSERT: "assert" > 
 | < BOOLEAN: "boolean" > #Primitive
 | < BREAK: "break" > 

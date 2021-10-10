@@ -137,10 +137,24 @@ INJECT EnumDeclaration : implements TypeDeclaration;
 
 EmptyDeclaration# : ";" ;
 
+TypeIdentifier#void :
+   <IDENTIFIER>
+   [
+      SCAN {getToken(0).getImage().equals("record") 
+// Should finally deal with the var contextual keyword properly
+//           || getToken(0).getImage().equals("var") 
+           || getToken(0).getImage().equals("permits")
+           || getToken(0).getImage().equals("sealed")
+           || getToken(0).getImage().equals("yield")}#
+      => FAIL "Illegal type name"
+   ]
+   =>||
+;
+
 ClassDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
   "class" =>|| 
-  <IDENTIFIER>
+  TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList]
   [ ImplementsList ]
@@ -150,7 +164,7 @@ ClassDeclaration :
 InterfaceDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
   "interface" =>||
-  <IDENTIFIER>
+  TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList ] 
   ClassOrInterfaceBody
@@ -182,7 +196,8 @@ ImplementsList :
 
 EnumDeclaration :
    Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
-   "enum" =>|| <IDENTIFIER>
+   "enum" =>|| 
+   TypeIdentifier
    [ImplementsList] 
    EnumBody
 ;
@@ -199,7 +214,7 @@ RecordDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
   ACTIVATE_TOKENS RECORD ("record")
   =>||
-  <IDENTIFIER>
+  TypeIdentifier
   [TypeParameters]
   RecordHeader
   [ImplementsList]
@@ -240,7 +255,7 @@ RecordBody :
 
 CompactConstructorDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))
-  <IDENTIFIER>
+  TypeIdentifier
   "{"
   [ => ExplicitConstructorInvocation ]
   ( BlockStatement )*!
@@ -267,7 +282,7 @@ INJECT TypeParameters :
     }
 }
 
-TypeParameter: (Annotation)* <IDENTIFIER> =>|| [TypeBound];
+TypeParameter: (Annotation)* TypeIdentifier =>|| [TypeBound];
 
 TypeBound :
    "extends" ObjectType ( "&" ObjectType )*
@@ -336,7 +351,7 @@ FormalParameter : Modifiers(EnumSet.of(FINAL)) Type [ (Annotation)* "..." ] Vari
 ConstructorDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))
   [ TypeParameters ]
-  <IDENTIFIER> FormalParameters =>||
+  TypeIdentifier FormalParameters =>||
   [ ThrowsList ]
   "{"
   [ => ExplicitConstructorInvocation ]
@@ -373,7 +388,7 @@ ReferenceType :
 
 ObjectType# :
     (Annotation)*
-    <IDENTIFIER> [ TypeArguments ]
+    TypeIdentifier [ TypeArguments ]
     ( "." (Annotation)* <IDENTIFIER> =>|| [ TypeArguments ] )*
 ;
 
@@ -1094,7 +1109,7 @@ MemberValueArrayInitializer :
 
 AnnotationTypeDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
-  "@" "interface" =>|| <IDENTIFIER> AnnotationTypeBody
+  "@" "interface" =>|| TypeIdentifier AnnotationTypeBody
 ;
 
 AnnotationTypeBody :
@@ -1129,7 +1144,7 @@ LambdaExpression :
   LambdaLHS =>|| (Expression | Block) 
 ;
 
-LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | FormalParameters) "->" =>|| ;
+LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | LambdaParameters) "->" =>|| ;
 
 SimpleLambdaLHS #void :
    SCAN 3
@@ -1138,3 +1153,6 @@ SimpleLambdaLHS #void :
    ")"
 ;
 
+LambdaParameters : "(" [ LambdaParameter ( "," LambdaParameter )* ] ")" ;
+
+LambdaParameter : Type VariableDeclaratorId ;
