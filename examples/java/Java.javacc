@@ -221,7 +221,7 @@ RecordDeclaration :
 
 // This is a production that is only used as a lookahead. It's kludgy, but it's
 // necessary because, when we scan ahead to see whether to enter TypeDeclaration,
-// the RECORD token type is deactivated. This kind of thing is slightly kludgy.
+// the RECORD token type is deactivated. This kind of detail is quite tricky.
 RecordLA :
    Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
    (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)

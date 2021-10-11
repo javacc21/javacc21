@@ -32,7 +32,8 @@ RealNumber#void :
 
 SignedNumber : 
   ["-"]
-  RealNumber
+  Number
+  [("+"|"-") <COMPLEX>]
 ;
 
 ComplexNumberPattern :
@@ -73,7 +74,14 @@ Slice :
 
 Slices : "[" Slice ("," =>|+1 Slice)* [","] "]" ;
 
-Statement : SimpleStatement | CompoundStatement ;
+Statement : 
+   SCAN MatchStatementLA =>
+   MatchStatement 
+   | 
+   SimpleStatement 
+   | 
+   CompoundStatement 
+;
 
 SimpleStatement#(>2) : SmallStatement (";" =>|+1 SmallStatement)* [";"] <NEWLINE> ; 
            
@@ -119,11 +127,20 @@ CompoundStatement :
     ForStatement
     |
     TryStatement
-    |
-    MatchStatement
+//    |
+//    SCAN MatchStatementLA =>
+//    MatchStatement
 ;
 
- 
+MatchStatementLA :
+    <NAME>
+    [
+        SCAN {!getToken(0).getImage().equals("match")}#
+        => FAIL
+    ]
+    SubjectExpression ":"
+;    
+     
 
 ReturnStatement : "return" [StarExpressions] ;
 
@@ -438,8 +455,6 @@ Assignment :
 // At this moment, this is quite untested!
 
 MatchStatement :
-   SCAN 0 {getToken(1).getImage().equals("match")}#
-   =>
    ACTIVATE_TOKENS MATCH ("match") 
    SubjectExpression
    ":" <NEWLINE> <INDENT>
@@ -484,9 +499,9 @@ ClosedPattern :
    |
    <UNDERSCORE>
    |
-   Attribute
+   ValuePattern
    |
-   GroupPattern
+   =>GroupPattern
    |
    SequencePattern
    |
@@ -495,16 +510,25 @@ ClosedPattern :
    ClassPattern
 ;
 
+ValuePattern :
+   Attribute
+   [
+       SCAN {getToken(1).getType() == DOT || getToken(1).getType() == LPAREN || getToken(1).getType() == ASSIGN}#
+       => FAIL
+   ]
+   =>||
+;   
+
 GroupPattern : "(" Pattern ")" ;
 
 KeyValuePattern: (LiteralPattern | Attribute) ":" Pattern ;
 
-ItemsPattern : KeyValuePattern ("," KeyValuePattern)* ;
+ItemsPattern : KeyValuePattern ("," =>|+1 KeyValuePattern)* ;
 
 MappingPattern :
   "{"
      [
-         ItemsPattern ["," DoubleStarPattern] [","]
+         ItemsPattern ["," =>|+1 DoubleStarPattern] [","]
          |
          DoubleStarPattern [","]
      ]
@@ -520,15 +544,15 @@ LiteralPattern :
    | 
    "False"
    |
-   ComplexNumberPattern
-   |
    SignedNumber
+   |
+   ComplexNumberPattern
    |
    Strings
 ;
 
 MaybeSequencePattern :
-   MaybeStarPattern ("," MaybeStarPattern)* [","]
+   MaybeStarPattern ("," =>|+1 MaybeStarPattern)* [","]
 ;
 
 OpenSequencePattern :
@@ -542,30 +566,40 @@ SequencePattern :
 ;    
 
 ClassPattern :
-   Attribute
+   NameOrAttribute
    "("
       [
-          PositionalPatterns ["," KeywordPatterns] [","]
-          |
+          SCAN <NAME> "=" =>
           KeywordPatterns [","]
+          |
+          PositionalPatterns ["," =>|+1 KeywordPatterns] [","]
       ]
    ")"
 ;
 
-PositionalPatterns : Pattern ("," Pattern)* ;
+PositionalPatterns : 
+   Pattern 
+   (
+       // KLUDGE!!!!
+       SCAN 0 {getToken(1).getType()==COMMA && !( getToken(2).getType()==NAME && getToken(3).getType()==ASSIGN)}#
+       => "," Pattern
+   )* 
+;
 
 KeywordPattern : <NAME> "=" Pattern ;
 
-KeywordPatterns : KeywordPattern ("," KeywordPattern)* ;
+KeywordPatterns : KeywordPattern ("," =>|+2 KeywordPattern)* ;
 
 OrPattern : ClosedPattern ("|" ClosedPattern)* ;
 
 Pattern : OrPattern ["as" CapturePattern] ;
 
 SubjectExpression : 
-   StarNamedExpression "," [StarNamedExpressions]
+   StarNamedExpression "," =>|| [StarNamedExpressions]
    |
    NamedExpression
 ;
 
-Attribute : <NAME> ("." <NAME>)* ;
+Attribute : <NAME> ("." <NAME>)+ ;
+
+NameOrAttribute : <NAME> ("." <NAME>)* ;
