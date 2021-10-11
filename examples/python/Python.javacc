@@ -112,8 +112,6 @@ CompoundStatement :
     |
     ClassDefinition
     |
-    MatchStatement
-    |
     WithStatement
     |
     WhileStatement
@@ -121,6 +119,8 @@ CompoundStatement :
     ForStatement
     |
     TryStatement
+    |
+    MatchStatement
 ;
 
  
@@ -438,7 +438,7 @@ Assignment :
 // At this moment, this is quite untested!
 
 MatchStatement :
-   SCAN {getToken(0).getImage().equals("match")}#
+   SCAN 0 {getToken(1).getImage().equals("match")}#
    =>
    ACTIVATE_TOKENS MATCH ("match") 
    SubjectExpression
@@ -448,7 +448,7 @@ MatchStatement :
 ;
 
 CaseBlock :
-    SCAN {getToken(0).getImage().equals("case")}#
+    SCAN 0 {getToken(1).getImage().equals("case")}#
     =>
     ACTIVATE_TOKENS CASE ("case")
     ACTIVATE_TOKENS UNDERSCORE (Patterns)
@@ -465,7 +465,7 @@ Patterns :
 ;
 
 CapturePattern :
-    SCAN {getToken(2).getType() != DOT && getToken(2).getType() != LPAREN && getToken(2).getType()!= ASSIGN}
+    SCAN 0 {getToken(1).getType()== NAME && getToken(2).getType() != DOT && getToken(2).getType() != LPAREN && getToken(2).getType()!= ASSIGN}
     =>
     <NAME>
 ;    
