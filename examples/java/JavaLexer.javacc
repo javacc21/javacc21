@@ -120,10 +120,12 @@ TOKEN #KeyWord :
 | < THROWS: "throws" > 
 | < TRANSIENT: "transient" > 
 | < TRUE: "true" > #BooleanLiteral 
-| < TRY: "try" > 
+| < TRY: "try" >
+| < VAR: "var" > 
 | < VOID: "void" > 
 | < VOLATILE: "volatile" > 
 | < WHILE: "while" > 
+| < YIELD : "yield" > 
 ;
 
 TOKEN #Literal :

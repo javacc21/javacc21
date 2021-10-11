@@ -45,9 +45,7 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
-// The following is actually unnecessary. I just include it to
-// be able to check that the feature is working!
-DEACTIVATE_TOKENS=RSIGNEDSHIFT, RUNSIGNEDSHIFT, RECORD;
+DEACTIVATE_TOKENS=RSIGNEDSHIFT, RUNSIGNEDSHIFT, RECORD, VAR, YIELD;
 //JDK_TARGET=16;
 
 FAULT_TOLERANT;
@@ -850,7 +848,7 @@ BlockStatement :
 // We need YieldStatement up top here so it does not spuriously match LocalVariableDeclaration.
   YieldStatement 
   |
-  => LocalVariableDeclaration ";"
+  LocalVariableDeclaration ";"
   |
   ClassDeclaration
   |
@@ -860,7 +858,15 @@ BlockStatement :
 ;
 
 LocalVariableDeclaration : 
-  Modifiers(EnumSet.of(FINAL)) Type =>|+1 VariableDeclarator ( "," VariableDeclarator )* 
+  SCAN Modifiers ("var"|Type) <IDENTIFIER> =>
+  Modifiers(EnumSet.of(FINAL)) 
+  (
+    SCAN 0 {getToken(1).getImage().equals("var") && getToken(2).getType()==IDENTIFIER}#
+    => 
+    ACTIVATE_TOKENS VAR ("var") VariableDeclarator
+    |
+    Type VariableDeclarator ("," VariableDeclarator)*
+  )
 ;
 
 EmptyStatement : ";" ;
@@ -989,7 +995,7 @@ BreakStatement :
 YieldStatement :
    SCAN 2 {getToken(1).getImage().equals("yield") 
         && isInProduction("SwitchExpression")}# 
-   => <IDENTIFIER> Expression ";" 
+   => ACTIVATE_TOKENS YIELD ("yield") Expression ";" 
 ;
 
 ContinueStatement : "continue" [ <IDENTIFIER> ] ";" ;
@@ -1017,14 +1023,14 @@ ClassicTryStatement :
 TryWithResources :
    "try" "(" =>||
     (
-         => LocalVariableDeclaration
+         LocalVariableDeclaration
          |
          Name
     )
     (
         ";"
        [
-          => LocalVariableDeclaration
+          LocalVariableDeclaration
           |
           Name
        ]
@@ -1155,4 +1161,12 @@ SimpleLambdaLHS #void :
 
 LambdaParameters : "(" [ LambdaParameter ( "," LambdaParameter )* ] ")" ;
 
-LambdaParameter : Type VariableDeclaratorId ;
+LambdaParameter : 
+    (
+      SCAN {getToken(1).getImage().equals("var")}
+      => ACTIVATE_TOKENS VAR ("var")
+      |
+      Type
+    )
+    VariableDeclaratorId 
+;
