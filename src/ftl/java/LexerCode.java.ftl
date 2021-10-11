@@ -268,13 +268,17 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             }
             nextStates.clear();
             if (charsRead == 0) {
-                newType = nfaFunctions[0].apply(curChar, nextStates);
-                if (!activeTokenTypes.contains(newType)) newType = null;
+                TokenType returnedType = nfaFunctions[0].apply(curChar, nextStates, activeTokenTypes);
+                if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
+                  newType = returnedType;
+                  if (trace_enabled) 
+                    LOGGER.info("Potential match: " + newType);
+                } 
             } else {
                 int nextActive = currentStates.nextSetBit(0);
                 while (nextActive != -1) {
-                    TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates);
-                    if (activeTokenTypes.contains(returnedType) && (newType == null || returnedType.ordinal() < newType.ordinal())) {
+                    TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes);
+                    if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                       newType = returnedType;
                       if (trace_enabled) 
                          LOGGER.info("Potential match: " + newType);

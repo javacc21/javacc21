@@ -48,6 +48,7 @@
 [/#if]
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.EnumSet;
 [#if multipleLexicalStates]
   import java.util.EnumMap;
 [/#if]
@@ -61,7 +62,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   // The functional interface that represents 
   // the acceptance method of an NFA state
   static interface NfaFunction {
-    TokenType apply(int ch, BitSet bs);
+    TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes);
   }
 
  [#if multipleLexicalStates]
@@ -162,7 +163,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   [#if !nfaState.composite]
      [@GenerateSimpleNfaMethod nfaState/]
   [#else]
-    static TokenType ${nfaState.methodName}(int ch, BitSet nextStates) {
+    static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates]
     [#list states as state]
@@ -176,6 +177,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
             [#set jumpOut = state.isNonOverlapping(states.subList(state_index+1, states?size))]
          [/#if]
       [/#if]
+      [#set jumpOut = false]
       [@GenerateStateMove state isFirstOfGroup isLastOfGroup jumpOut/]
       [#if state_has_next && !jumpOut && isLastOfGroup && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
          else
@@ -208,12 +210,13 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
       [#if jumpOut]
         return
         [#if type??]
-           ${TT}${type.label};
+           validTypes.contains(${TT}${type.label}) ? ${TT}${type.label} : null;
         [#else]
            null;
         [/#if]
       [#elseif type??]
-        type = ${TT}${type.label};
+        if (validTypes.contains(${TT}${type.label}))
+           type = ${TT}${type.label};
      [/#if]
     }
    [/#if]
@@ -223,7 +226,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   Generate the code for a simple (non-composite) NFA state
 --]
 [#macro GenerateSimpleNfaMethod nfaState]
-  static TokenType ${nfaState.methodName}(int ch, BitSet nextStates) {
+  static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
     [#var nextState = nfaState.nextState.canonicalState]
     [#var type = nfaState.nextState.type]
       if ([@NfaStateCondition nfaState /]) {
@@ -231,7 +234,8 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
           nextStates.set(${nextState.index});
         [/#if]
       [#if type??]
-        return ${TT}${type.label};
+        if (validTypes.contains(${TT}${type.label}))
+           return ${TT}${type.label};
       [/#if]
     }
     return null;

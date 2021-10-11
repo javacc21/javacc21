@@ -285,6 +285,8 @@ TOKEN #Keyword :
    |
    <TRY : "try">
    |
+   <UNDERSCORE : "_">
+   |
    <WHILE : "while">
    |
    <WITH : "with">
