@@ -558,7 +558,7 @@
    [#list grammar.expansionsNeedingRecoverMethod as expansion]
        private void ${expansion.recoverMethodName}() {
           Token initialToken = lastConsumedToken;
-          List<Token> skippedTokens = new ArrayList<>();
+          java.util.List<Token> skippedTokens = new java.util.ArrayList<>();
           boolean success = false;
           while (lastConsumedToken.getType() != EOF) {
             [#if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"]

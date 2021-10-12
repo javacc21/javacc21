@@ -61,7 +61,11 @@
 
 import java.io.*;
 import java.util.logging.Logger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.List;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 

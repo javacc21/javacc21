@@ -22,7 +22,7 @@ DEACTIVATE_TOKENS=MATCH,CASE,UNDERSCORE;
 
 INCLUDE "PythonLexer.javacc" 
 
-PythonFile : (Statement)* <EOF> ;
+Module : (Statement)* <EOF> ;
 
 Number#void : <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX> ;
 
@@ -55,9 +55,9 @@ AtomicExpression#void :
     |
     (Tuple | GenExp | Group)
     |
-    (ListComp | PyList)
+    (ListComp | List)
     |
-    (SetComp | DictComp | PyDict | PySet)
+    (SetComp | DictComp | Dict | Set)
     |
     "..."
 ;
@@ -312,7 +312,7 @@ DoubleStarredKeyValuePair :
 
 DoubleStarredKeyValuePairs : DoubleStarredKeyValuePair ("," =>|+1 DoubleStarredKeyValuePair)* [","] ;
 
-PyDict : 
+Dict :
   SCAN "{" ("}" | DoubleStarredKeyValuePair) =>
   (
     "{" 
@@ -323,7 +323,7 @@ PyDict :
 
 DictComp : "{" KeyValuePair =>|+2 (ForIfClause)+ "}" ;
 
-PySet : "{" StarNamedExpressions "}" ;
+Set : "{" StarNamedExpressions "}" ;
 
 SetComp : "{" NamedExpression =>|+2 (ForIfClause)+ "}" ;
 
@@ -379,7 +379,7 @@ ForIfClause : ["async"] "for" StarTargets "in" Disjunction ("if" Disjunction)* ;
 
 GenExp : "(" NamedExpression =>|+2 (ForIfClause)+ ")" ;
 
-PyList : "[" [StarNamedExpressions] "]" ;
+List : "[" [StarNamedExpressions] "]" ;
 
 ListComp : "[" NamedExpression =>|+2 (ForIfClause)+ "]" ;
 
