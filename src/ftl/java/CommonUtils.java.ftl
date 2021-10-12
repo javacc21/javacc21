@@ -116,8 +116,8 @@
 [/#function]
 
 [#macro HandleLexicalStateChange expansion inLookahead]
+   [#var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")]
    [#if expansion.specifiedLexicalState??]
-      [#var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")]
       [#var prevLexicalStateVar = newVarName("previousLexicalState")]
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
          if (token_source.lexicalState != LexicalState.${expansion.specifiedLexicalState}) {
@@ -155,7 +155,7 @@
       finally {
          token_source.activeTokenTypes = ${prevActives};
          if (${somethingChanged}) {
-             token_source.reset(getToken(0));
+             token_source.reset(${resetToken});
              nextTokenType= null;
          }
       }

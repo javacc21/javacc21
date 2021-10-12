@@ -45,9 +45,7 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
-// The following is actually unnecessary. I just include it to
-// be able to check that the feature is working!
-DEACTIVATE_TOKENS=RSIGNEDSHIFT, RUNSIGNEDSHIFT, RECORD;
+DEACTIVATE_TOKENS=RSIGNEDSHIFT, RUNSIGNEDSHIFT, RECORD, VAR, YIELD;
 //JDK_TARGET=16;
 
 FAULT_TOLERANT;
@@ -137,10 +135,24 @@ INJECT EnumDeclaration : implements TypeDeclaration;
 
 EmptyDeclaration# : ";" ;
 
+TypeIdentifier#void :
+   <IDENTIFIER>
+   [
+      SCAN {getToken(0).getImage().equals("record") 
+// Should finally deal with the var contextual keyword properly
+//           || getToken(0).getImage().equals("var") 
+           || getToken(0).getImage().equals("permits")
+           || getToken(0).getImage().equals("sealed")
+           || getToken(0).getImage().equals("yield")}#
+      => FAIL "Illegal type name"
+   ]
+   =>||
+;
+
 ClassDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
   "class" =>|| 
-  <IDENTIFIER>
+  TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList]
   [ ImplementsList ]
@@ -150,7 +162,7 @@ ClassDeclaration :
 InterfaceDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
   "interface" =>||
-  <IDENTIFIER>
+  TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList ] 
   ClassOrInterfaceBody
@@ -182,7 +194,8 @@ ImplementsList :
 
 EnumDeclaration :
    Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
-   "enum" =>|| <IDENTIFIER>
+   "enum" =>|| 
+   TypeIdentifier
    [ImplementsList] 
    EnumBody
 ;
@@ -199,7 +212,7 @@ RecordDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
   ACTIVATE_TOKENS RECORD ("record")
   =>||
-  <IDENTIFIER>
+  TypeIdentifier
   [TypeParameters]
   RecordHeader
   [ImplementsList]
@@ -208,7 +221,7 @@ RecordDeclaration :
 
 // This is a production that is only used as a lookahead. It's kludgy, but it's
 // necessary because, when we scan ahead to see whether to enter TypeDeclaration,
-// the RECORD token type is deactivated. This kind of thing is slightly kludgy.
+// the RECORD token type is deactivated. This kind of detail is quite tricky.
 RecordLA :
    Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
    (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)
@@ -240,7 +253,7 @@ RecordBody :
 
 CompactConstructorDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))
-  <IDENTIFIER>
+  TypeIdentifier
   "{"
   [ => ExplicitConstructorInvocation ]
   ( BlockStatement )*!
@@ -267,7 +280,7 @@ INJECT TypeParameters :
     }
 }
 
-TypeParameter: (Annotation)* <IDENTIFIER> =>|| [TypeBound];
+TypeParameter: (Annotation)* TypeIdentifier =>|| [TypeBound];
 
 TypeBound :
    "extends" ObjectType ( "&" ObjectType )*
@@ -336,7 +349,7 @@ FormalParameter : Modifiers(EnumSet.of(FINAL)) Type [ (Annotation)* "..." ] Vari
 ConstructorDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))
   [ TypeParameters ]
-  <IDENTIFIER> FormalParameters =>||
+  TypeIdentifier FormalParameters =>||
   [ ThrowsList ]
   "{"
   [ => ExplicitConstructorInvocation ]
@@ -373,7 +386,7 @@ ReferenceType :
 
 ObjectType# :
     (Annotation)*
-    <IDENTIFIER> [ TypeArguments ]
+    TypeIdentifier [ TypeArguments ]
     ( "." (Annotation)* <IDENTIFIER> =>|| [ TypeArguments ] )*
 ;
 
@@ -835,7 +848,7 @@ BlockStatement :
 // We need YieldStatement up top here so it does not spuriously match LocalVariableDeclaration.
   YieldStatement 
   |
-  => LocalVariableDeclaration ";"
+  LocalVariableDeclaration ";"
   |
   ClassDeclaration
   |
@@ -845,7 +858,15 @@ BlockStatement :
 ;
 
 LocalVariableDeclaration : 
-  Modifiers(EnumSet.of(FINAL)) Type =>|+1 VariableDeclarator ( "," VariableDeclarator )* 
+  SCAN Modifiers ("var"|Type) <IDENTIFIER> =>
+  Modifiers(EnumSet.of(FINAL)) 
+  (
+    SCAN 0 {getToken(1).getImage().equals("var") && getToken(2).getType()==IDENTIFIER}#
+    => 
+    ACTIVATE_TOKENS VAR ("var") VariableDeclarator
+    |
+    Type VariableDeclarator ("," VariableDeclarator)*
+  )
 ;
 
 EmptyStatement : ";" ;
@@ -974,7 +995,7 @@ BreakStatement :
 YieldStatement :
    SCAN 2 {getToken(1).getImage().equals("yield") 
         && isInProduction("SwitchExpression")}# 
-   => <IDENTIFIER> Expression ";" 
+   => ACTIVATE_TOKENS YIELD ("yield") Expression ";" 
 ;
 
 ContinueStatement : "continue" [ <IDENTIFIER> ] ";" ;
@@ -1002,14 +1023,14 @@ ClassicTryStatement :
 TryWithResources :
    "try" "(" =>||
     (
-         => LocalVariableDeclaration
+         LocalVariableDeclaration
          |
          Name
     )
     (
         ";"
        [
-          => LocalVariableDeclaration
+          LocalVariableDeclaration
           |
           Name
        ]
@@ -1094,7 +1115,7 @@ MemberValueArrayInitializer :
 
 AnnotationTypeDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
-  "@" "interface" =>|| <IDENTIFIER> AnnotationTypeBody
+  "@" "interface" =>|| TypeIdentifier AnnotationTypeBody
 ;
 
 AnnotationTypeBody :
@@ -1129,7 +1150,7 @@ LambdaExpression :
   LambdaLHS =>|| (Expression | Block) 
 ;
 
-LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | FormalParameters) "->" =>|| ;
+LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | LambdaParameters) "->" =>|| ;
 
 SimpleLambdaLHS #void :
    SCAN 3
@@ -1138,3 +1159,14 @@ SimpleLambdaLHS #void :
    ")"
 ;
 
+LambdaParameters : "(" [ LambdaParameter ( "," LambdaParameter )* ] ")" ;
+
+LambdaParameter : 
+    (
+      SCAN {getToken(1).getImage().equals("var")}
+      => ACTIVATE_TOKENS VAR ("var")
+      |
+      Type
+    )
+    VariableDeclaratorId 
+;

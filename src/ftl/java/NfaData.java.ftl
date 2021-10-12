@@ -48,6 +48,7 @@
 [/#if]
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.EnumSet;
 [#if multipleLexicalStates]
   import java.util.EnumMap;
 [/#if]
@@ -61,7 +62,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   // The functional interface that represents 
   // the acceptance method of an NFA state
   static interface NfaFunction {
-    TokenType apply(int ch, BitSet bs);
+    TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes);
   }
 
  [#if multipleLexicalStates]
@@ -162,22 +163,19 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   [#if !nfaState.composite]
      [@GenerateSimpleNfaMethod nfaState/]
   [#else]
-    static TokenType ${nfaState.methodName}(int ch, BitSet nextStates) {
+    static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates]
     [#list states as state]
-      [#var isFirstOfGroup=true, isLastOfGroup=true, jumpOut = !state_has_next]
+      [#var isFirstOfGroup=true, isLastOfGroup=true]
       [#if state_index!=0]
          [#set isFirstOfGroup = !states[state_index-1].moveRanges.equals(state.moveRanges)]
       [/#if]
       [#if state_has_next]
          [#set isLastOfGroup = !states[state_index+1].moveRanges.equals(state.moveRanges)]
-         [#if isLastOfGroup]
-            [#set jumpOut = state.isNonOverlapping(states.subList(state_index+1, states?size))]
-         [/#if]
       [/#if]
-      [@GenerateStateMove state isFirstOfGroup isLastOfGroup jumpOut/]
-      [#if state_has_next && !jumpOut && isLastOfGroup && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
+      [@GenerateStateMove state isFirstOfGroup isLastOfGroup /]
+      [#if state_has_next && isLastOfGroup && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
          else
       [/#if]
     [/#list]
@@ -190,12 +188,9 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   Generates the code for an NFA state transition
   within a composite state. This code is a bit tricky
   because it consolidates more than one condition in 
-  a single conditional block. The jumpOut parameter says 
-  whether we can just jump out of the method. 
-  (This is based on whether any of the moveRanges
-  for later states overlap. If not, we can jump out.)
+  a single conditional block. 
 --]
-[#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup jumpOut]
+[#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup]
   [#var nextState = nfaState.nextState.canonicalState]
   [#var type = nfaState.nextState.type]
     [#if isFirstOfGroup]
@@ -205,15 +200,9 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
          nextStates.set(${nextState.index});
       [/#if]
    [#if isLastOfGroup]
-      [#if jumpOut]
-        return
-        [#if type??]
-           ${TT}${type.label};
-        [#else]
-           null;
-        [/#if]
-      [#elseif type??]
-        type = ${TT}${type.label};
+      [#if type??]
+        if (validTypes.contains(${TT}${type.label}))
+           type = ${TT}${type.label};
      [/#if]
     }
    [/#if]
@@ -223,7 +212,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   Generate the code for a simple (non-composite) NFA state
 --]
 [#macro GenerateSimpleNfaMethod nfaState]
-  static TokenType ${nfaState.methodName}(int ch, BitSet nextStates) {
+  static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
     [#var nextState = nfaState.nextState.canonicalState]
     [#var type = nfaState.nextState.type]
       if ([@NfaStateCondition nfaState /]) {
@@ -231,7 +220,8 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
           nextStates.set(${nextState.index});
         [/#if]
       [#if type??]
-        return ${TT}${type.label};
+        if (validTypes.contains(${TT}${type.label}))
+           return ${TT}${type.label};
       [/#if]
     }
     return null;

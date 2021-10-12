@@ -16,7 +16,7 @@ DEFAULT_LEXICAL_STATE = PYTHON;
 TABS_TO_SPACES=8;
 ENSURE_FINAL_EOL;
 PRESERVE_LINE_ENDINGS=false;
-DEACTIVATE_TOKENS=MATCH,CASE;
+DEACTIVATE_TOKENS=MATCH,CASE,UNDERSCORE;
 //DEBUG_LEXER;
 //DEBUG_PARSER;
 
@@ -25,6 +25,16 @@ INCLUDE "PythonLexer.javacc"
 Module : (Statement)* <EOF> ;
 
 Number#void : <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX> ;
+
+RealNumber#void :
+  <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT>
+;  
+
+SignedNumber : 
+  ["-"]
+  Number
+  [("+"|"-") <COMPLEX>]
+;
 
 Strings : (<STRING_LITERAL>)+ ;
 
@@ -60,7 +70,14 @@ Slice :
 
 Slices : "[" Slice ("," =>|+1 Slice)* [","] "]" ;
 
-Statement : SimpleStatement | CompoundStatement ;
+Statement : 
+   SCAN MatchStatementLA =>
+   MatchStatement 
+   | 
+   SimpleStatement 
+   | 
+   CompoundStatement 
+;
 
 SimpleStatement#(>2) : SmallStatement (";" =>|+1 SmallStatement)* [";"] <NEWLINE> ; 
            
@@ -106,7 +123,19 @@ CompoundStatement :
     ForStatement
     |
     TryStatement
+;
+
+// This production is only used 
+// for lookahead
+MatchStatementLA :
+    <NAME>
+    [
+        SCAN {!getToken(0).getImage().equals("match")}#
+        => FAIL
+    ]
+    SubjectExpression ":"
 ;    
+     
 
 ReturnStatement : "return" [StarExpressions] ;
 
@@ -417,4 +446,154 @@ Assignment :
  )
 ;
 
+// Below this point, this is the new 3.10 pattern matching stuff
+// At this moment, this is quite untested!
+
+MatchStatement :
+   ACTIVATE_TOKENS MATCH ("match") 
+   SubjectExpression
+   ":" <NEWLINE> <INDENT>
+   (CaseBlock)+
+   <DEDENT>
+;
+
+CaseBlock :
+    SCAN 0 {getToken(1).getImage().equals("case")}#
+    =>
+    ACTIVATE_TOKENS CASE ("case")
+    ACTIVATE_TOKENS UNDERSCORE (Patterns)
+    ["if" NamedExpression]
+    ":"
+    Block
+;
+
+
+Patterns :
+   OpenSequencePattern
+   |
+   Pattern
+;
+
+CapturePattern :
+    SCAN 0 {getToken(1).getType()== NAME && getToken(2).getType() != DOT && getToken(2).getType() != LPAREN && getToken(2).getType()!= ASSIGN}
+    =>
+    <NAME>
+;    
+
+StarPattern :
+   "*"
+   (<UNDERSCORE> | CapturePattern)
+;
+
+MaybeStarPattern : StarPattern | Pattern ;
+
+ClosedPattern :
+   ClassPattern 
+   |
+   LiteralPattern 
+   |
+   CapturePattern
+   |
+   <UNDERSCORE>
+   |
+   ValuePattern
+   |
+   =>GroupPattern
+   |
+   SequencePattern
+   |
+   MappingPattern
+;
+
+ValuePattern :
+   Attribute
+   [
+       SCAN {getToken(1).getType() == DOT || getToken(1).getType() == LPAREN || getToken(1).getType() == ASSIGN}#
+       => FAIL
+   ]
+   =>||
+;   
+
+GroupPattern : "(" Pattern ")" ;
+
+KeyValuePattern: (LiteralPattern | Attribute) ":" Pattern ;
+
+ItemsPattern : KeyValuePattern ("," =>|+1 KeyValuePattern)* ;
+
+MappingPattern :
+  "{"
+     [
+         ItemsPattern ["," =>|+1 DoubleStarPattern] [","]
+         |
+         DoubleStarPattern [","]
+     ]
+  "}"
+;
+
+DoubleStarPattern : "**" CapturePattern ;
+
+LiteralPattern :
+   "None" 
+   | 
+   "True" 
+   | 
+   "False"
+   |
+   SignedNumber
+   |
+   Strings
+;
+
+MaybeSequencePattern :
+   MaybeStarPattern ("," =>|+1 MaybeStarPattern)* [","]
+;
+
+OpenSequencePattern :
+   MaybeStarPattern "," =>|| [MaybeSequencePattern]
+;
+
+SequencePattern :
+    "[" [MaybeSequencePattern] "]"
+    |
+    "(" [OpenSequencePattern] ")"
+;    
+
+ClassPattern :
+   NameOrAttribute
+   "("
+   =>||
+      [
+          SCAN <NAME> "=" =>
+          KeywordPatterns [","]
+          |
+          PositionalPatterns ["," =>|+1 KeywordPatterns] [","]
+      ]
+   ")"
+;
+
+PositionalPatterns : 
+   Pattern 
+   (
+       // KLUDGE!!!!
+       SCAN 0 {getToken(1).getType()==COMMA && !( getToken(2).getType()==NAME && getToken(3).getType()==ASSIGN)}#
+       => "," Pattern
+   )* 
+;
+
+KeywordPattern : <NAME> "=" Pattern ;
+
+KeywordPatterns : KeywordPattern ("," =>|+2 KeywordPattern)* ;
+
+OrPattern : ClosedPattern ("|" ClosedPattern)* ;
+
+Pattern : OrPattern ["as" CapturePattern] ;
+
+SubjectExpression : 
+   StarNamedExpression "," =>|| [StarNamedExpressions]
+   |
+   NamedExpression
+;
+
 Attribute : <NAME> ("." <NAME>)+ ;
+
+NameOrAttribute #Attribute(>1) : <NAME> ("." <NAME>)* ;

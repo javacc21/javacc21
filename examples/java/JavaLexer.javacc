@@ -69,7 +69,8 @@ INJECT JavaDocComment : extends Comment;
 MORE : < ANY_CHAR : ~[] >;
 
 TOKEN #KeyWord :
-  < ABSTRACT: "abstract" > 
+  <UNDERSCORE : "_">
+|  < ABSTRACT: "abstract" > 
 | < _ASSERT: "assert" > 
 | < BOOLEAN: "boolean" > #Primitive
 | < BREAK: "break" > 
@@ -119,10 +120,12 @@ TOKEN #KeyWord :
 | < THROWS: "throws" > 
 | < TRANSIENT: "transient" > 
 | < TRUE: "true" > #BooleanLiteral 
-| < TRY: "try" > 
+| < TRY: "try" >
+| < VAR: "var" > 
 | < VOID: "void" > 
 | < VOLATILE: "volatile" > 
 | < WHILE: "while" > 
+| < YIELD : "yield" > 
 ;
 
 TOKEN #Literal :

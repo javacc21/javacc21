@@ -231,27 +231,19 @@ public class Grammar extends BaseNode {
         return null;
     }
 
-    // TODO: This is getting big enough that we should have a proper table!
+    private static Map<String, String> locationAliases = new HashMap<String, String>() {
+        {
+            put("JAVA_IDENTIFIER_DEF", "/include/java/JavaIdentifierDef.javacc");
+            put("JAVA_LEXER", "/include/java/JavaLexer.javacc");
+            put("JAVA", "/include/java/Java.javacc");
+            put("PYTHON_IDENTIFIER_DEF", "/include/python/PythonIdentifierDef.javacc");
+            put("PYTHON_LEXER", "/include/python/PythonLexer.javacc");
+            put("PYTHON", "/include/python/Python.javacc");
+        }
+    };
+
     private String resolveAlias(String location) {
-        if (location.equals("JAVA")) {
-            location = "/include/java/Java.javacc";
-        }
-        else if (location.equals("JAVA_LEXER")) {
-            location = "/include/java/JavaLexer.javacc";
-        } 
-        else if (location.equals("JAVA_IDENTIFIER_DEF")) {
-            location = "/include/java/JavaIdentifierDef.javacc";
-        }
-        else if (location.equals("PYTHON_IDENTIFIER_DEF")) {
-            location = "/include/python/PythonIdentifierDef.javacc";
-        }
-        else if (location.equals("PYTHON_LEXER")) {
-            location = "/include/python/PythonLexer.javacc";
-        }
-        else if (location.equals("PYTHON")) {
-            location = "/include/python/Python.javacc";
-        }
-        return location;
+        return locationAliases.getOrDefault(location, location);
     }
 
     public Node include(List<String> locations, Node includeLocation) throws IOException, ParseException {
@@ -913,10 +905,6 @@ public class Grammar extends BaseNode {
         return nodePackage;
     }
 
-    public BitSet newBitSetForTokens() {
-        return new BitSet(getLexerData().getTokenCount());
-    }
-
     public String getCurrentNodeVariableName() {
         if (nodeVariableNameStack.isEmpty())
             return "null";
@@ -1201,20 +1189,6 @@ public class Grammar extends BaseNode {
             return toHexStringL(1L << i);
         }
         
-        public BitSet newBitSet() {
-            return new BitSet();
-        }
-
-        public String bitSetToLong(BitSet bs) {
-            long[] longs = bs.toLongArray();
-            longs = Arrays.copyOf(longs, 4);
-            return "{0x" + Long.toHexString(longs[0]) + "L,0x"
-                   + Long.toHexString(longs[1]) + "L,0x"
-                   + Long.toHexString(longs[2]) + "L,0x"
-                   + Long.toHexString(longs[3]) + "L}";
-        }
-    
-            
         public String getID(String name) {
             String value = id_map.get(name);
             if (value == null) {
@@ -1222,6 +1196,10 @@ public class Grammar extends BaseNode {
               id_map.put(name, value);
             }
             return value;
+        }
+
+        public String getPreprocessorSymbol(String key, String defaultValue) {
+            return preprocessorSymbols.getOrDefault(key, defaultValue);
         }
 
         /**

@@ -170,9 +170,12 @@ public class FileLineMap {
         this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         this.lineOffsets = createLineOffsetsTable(this.content);
         this.setStartPosition(startingLine, startingColumn);
-   }
+    }
+
+    public int getLineCount() {
+        return lineOffsets.length;
+    }
     
-   
     // Now some methods to fulfill the functionality that used to be in that
     // SimpleCharStream class
     /**
