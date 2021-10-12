@@ -16,7 +16,7 @@ DEFAULT_LEXICAL_STATE = PYTHON;
 TABS_TO_SPACES=8;
 ENSURE_FINAL_EOL;
 PRESERVE_LINE_ENDINGS=false;
-DEACTIVATE_TOKENS=MATCH,CASE,UNDERSCORE;
+DEACTIVATE_TOKENS=MATCH,CASE;
 //DEBUG_LEXER;
 //DEBUG_PARSER;
 
@@ -129,7 +129,14 @@ CompoundStatement :
 // I suppose looking ahead to the colon makes sense
 MatchStatementLA :
     <NAME>
+    // The following construct is a verbose way
+    // of having an assertion. At some point soon, we will
+    // actually have assertions, so this ort of thing
+    // will be expressed much more tersely! Meanwhile...
     [
+        //We use a semantic predicate here because we 
+        // cannot actually use the MATCH token in this lookahead
+        // since it is not activated. (This is really still a bit too tricky.)
         SCAN {!getToken(0).getImage().equals("match")}#
         => FAIL
     ]
@@ -446,7 +453,8 @@ Assignment :
  )
 ;
 
-// Below this point, this is the new 3.10 pattern matching stuff
+// Below this point is the new pattern matching stuff
+// introduced in Python 3.10
 
 MatchStatement :
    ACTIVATE_TOKENS MATCH ("match") 
@@ -457,10 +465,12 @@ MatchStatement :
 ;
 
 CaseBlock :
+    // NB. The lookahead cannot actually refer to the CASE token
+    // because the token is not activated until we actually enter the production!
     SCAN 0 {getToken(1).getImage().equals("case")}#
     =>
     ACTIVATE_TOKENS CASE ("case")
-    ACTIVATE_TOKENS UNDERSCORE (Patterns)
+    Patterns
     ["if" NamedExpression]
     ":"
     Block
@@ -473,29 +483,18 @@ Patterns :
    Pattern
 ;
 
-CapturePattern :
-    SCAN 0 {getToken(1).getType()== NAME && getToken(2).getType() != DOT && getToken(2).getType() != LPAREN && getToken(2).getType()!= ASSIGN}
-    =>
-    <NAME>
-;    
-
 StarPattern :
-   "*"
-   (<UNDERSCORE> | CapturePattern)
+   "*" <NAME>
 ;
 
-MaybeStarPattern : StarPattern | Pattern ;
+MaybeStarPattern#void : StarPattern | Pattern ;
 
 ClosedPattern :
    ClassPattern 
    |
    LiteralPattern 
    |
-   CapturePattern
-   |
-   <UNDERSCORE>
-   |
-   ValuePattern
+   NameOrAttribute
    |
    =>GroupPattern
    |
@@ -503,15 +502,6 @@ ClosedPattern :
    |
    MappingPattern
 ;
-
-ValuePattern :
-   Attribute
-   [
-       SCAN {getToken(1).getType() == DOT || getToken(1).getType() == LPAREN || getToken(1).getType() == ASSIGN}#
-       => FAIL
-   ]
-   =>||
-;   
 
 GroupPattern : "(" Pattern ")" ;
 
@@ -529,7 +519,7 @@ MappingPattern :
   "}"
 ;
 
-DoubleStarPattern : "**" CapturePattern ;
+DoubleStarPattern : "**" <NAME> ;
 
 LiteralPattern :
    "None" 
@@ -573,7 +563,8 @@ ClassPattern :
 PositionalPatterns : 
    Pattern 
    (
-       // KLUDGE!!!!
+       // If the next three tokens are a comma, identifier, and =, we need to end this
+       // production and go into KeywordPatterns. This has a bit of a kludgy feel to it.
        SCAN 0 {getToken(1).getType()==COMMA && !( getToken(2).getType()==NAME && getToken(3).getType()==ASSIGN)}#
        => "," Pattern
    )* 
@@ -585,7 +576,7 @@ KeywordPatterns : KeywordPattern ("," =>|+2 KeywordPattern)* ;
 
 OrPattern : ClosedPattern ("|" ClosedPattern)* ;
 
-Pattern : OrPattern ["as" CapturePattern] ;
+Pattern : OrPattern ["as" <NAME>] ;
 
 SubjectExpression : 
    StarNamedExpression "," =>|| [StarNamedExpressions]
