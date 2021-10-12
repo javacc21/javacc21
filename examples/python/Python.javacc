@@ -36,10 +36,6 @@ SignedNumber :
   [("+"|"-") <COMPLEX>]
 ;
 
-ComplexNumberPattern :
-   SignedNumber ("+" | "-") RealNumber
-;
-
 Strings : (<STRING_LITERAL>)+ ;
 
 AtomicExpression#void : 
@@ -127,11 +123,10 @@ CompoundStatement :
     ForStatement
     |
     TryStatement
-//    |
-//    SCAN MatchStatementLA =>
-//    MatchStatement
 ;
 
+// This production is only used 
+// for lookahead
 MatchStatementLA :
     <NAME>
     [
@@ -493,6 +488,8 @@ StarPattern :
 MaybeStarPattern : StarPattern | Pattern ;
 
 ClosedPattern :
+   ClassPattern 
+   |
    LiteralPattern 
    |
    CapturePattern
@@ -506,8 +503,6 @@ ClosedPattern :
    SequencePattern
    |
    MappingPattern
-   |
-   ClassPattern
 ;
 
 ValuePattern :
@@ -546,8 +541,6 @@ LiteralPattern :
    |
    SignedNumber
    |
-   ComplexNumberPattern
-   |
    Strings
 ;
 
@@ -568,6 +561,7 @@ SequencePattern :
 ClassPattern :
    NameOrAttribute
    "("
+   =>||
       [
           SCAN <NAME> "=" =>
           KeywordPatterns [","]
@@ -602,4 +596,4 @@ SubjectExpression :
 
 Attribute : <NAME> ("." <NAME>)+ ;
 
-NameOrAttribute : <NAME> ("." <NAME>)* ;
+NameOrAttribute #Attribute(>1) : <NAME> ("." <NAME>)* ;
