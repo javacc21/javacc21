@@ -47,7 +47,7 @@ PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=RECORD, VAR, YIELD, RUNSIGNEDSHIFT, RSIGNEDSHIFT;
+DEACTIVATE_TOKENS=RECORD, VAR, YIELD;
 //JDK_TARGET=16;
 
 FAULT_TOLERANT;
@@ -271,7 +271,7 @@ EnumConstant :
 TypeParameters :
    "<"
    TypeParameter ( "," TypeParameter )* 
-   ">"
+   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">")
 ;
 
 INJECT TypeParameters : 
@@ -421,7 +421,7 @@ PossiblyEmptyTypeArguments #void :
 TypeArguments : 
   SCAN 2
   "<" TypeArgument ( "," TypeArgument )* 
-  ">"
+   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">")
 ;
 
 TypeArgument :
@@ -573,8 +573,13 @@ RelationalExpression :
 
 ShiftExpression :
    AdditiveExpression
+   [
+     // Under certain conditions we scanned forward 
+     // and (incorrectly) scanned a >>, so we uncache 
+     // the tokens and end up rescanning!
+     SCAN ">" (">"|">>") => UNCACHE_TOKENS
+   ]
    (
-      ACTIVATE_TOKENS RUNSIGNEDSHIFT, RSIGNEDSHIFT
       ("<<" | ">>" | ">>>")
       AdditiveExpression
    )*

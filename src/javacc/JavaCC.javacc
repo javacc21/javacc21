@@ -2517,26 +2517,24 @@ INJECT UncacheTokens :
 
 Failure# : 
    {
-       String message = null;
+       Expression exp = null;
    }
    "FAIL"
    [
-      <STRING_LITERAL> {message = ((StringLiteral)lastConsumedToken).getString();}
+      exp=Expression 
       |
       Block
    ]
    {
-       CURRENT_NODE.setMessage("Failure: " + message);
+       CURRENT_NODE.setExp(exp);
    }
 ;
-
-
 
 INJECT Failure :
    import com.javacc.core.TokenSet;
    extends com.javacc.core.Expansion
 {
-    @Property String message;
+    @Property Expression exp;
     public CodeBlock getCode() {
         return firstChildOfType(CodeBlock.class);
     }

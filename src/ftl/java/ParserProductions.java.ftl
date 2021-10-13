@@ -257,7 +257,11 @@
 
 [#macro BuildCodeFailure fail]
     [#if fail.code?is_null]
-       fail("${fail.message?j_string}");
+      [#if fail.exp??]
+       fail("Failure: " + ${fail.exp});
+      [#else]
+       fail("Failure");
+      [/#if]
     [#else]
        ${fail.code}
     [/#if]

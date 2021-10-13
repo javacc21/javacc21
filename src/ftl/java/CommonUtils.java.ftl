@@ -120,9 +120,11 @@
    [#if expansion.specifiedLexicalState??]
       [#var prevLexicalStateVar = newVarName("previousLexicalState")]
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
-         if (token_source.lexicalState != LexicalState.${expansion.specifiedLexicalState}) {
-            token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
-         } 
+      [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]               
+           token_source.reset(${resetToken}, ${prevLexicalStateVar});
+      [#else]   
+           token_source.switchTo(${prevLexicalStateVar});
+      [/#if]           
          try {
            [#nested/]
          }
@@ -155,7 +157,9 @@
       finally {
          token_source.activeTokenTypes = ${prevActives};
          if (${somethingChanged}) {
+            [#if !grammar.hugeFileSupport]
              token_source.reset(${resetToken});
+            [/#if]
              nextTokenType= null;
          }
       }
