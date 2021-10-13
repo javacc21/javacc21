@@ -45,7 +45,9 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
-DEACTIVATE_TOKENS=RSIGNEDSHIFT, RUNSIGNEDSHIFT, RECORD, VAR, YIELD;
+// The following tokens are only activated at key points whether
+// they are needed.
+DEACTIVATE_TOKENS=RECORD, VAR, YIELD, RUNSIGNEDSHIFT, RSIGNEDSHIFT;
 //JDK_TARGET=16;
 
 FAULT_TOLERANT;
@@ -419,7 +421,7 @@ PossiblyEmptyTypeArguments #void :
 TypeArguments : 
   SCAN 2
   "<" TypeArgument ( "," TypeArgument )* 
-  ">" 
+  ">"
 ;
 
 TypeArgument :
@@ -571,8 +573,8 @@ RelationalExpression :
 
 ShiftExpression :
    AdditiveExpression
-   ACTIVATE_TOKENS RSIGNEDSHIFT,RUNSIGNEDSHIFT 
    (
+      ACTIVATE_TOKENS RUNSIGNEDSHIFT, RSIGNEDSHIFT
       ("<<" | ">>" | ">>>")
       AdditiveExpression
    )*

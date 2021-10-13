@@ -244,10 +244,8 @@ public boolean isCancelled() {return cancelled;}
       result |= token_source.activeTokenTypes.add(tt);
     }
   [#if !grammar.hugeFileSupport]
-    if (result) {
-      token_source.reset(getToken(0));
-      nextTokenType = null;
-    }
+    token_source.reset(getToken(0));
+    nextTokenType = null;
   [/#if]
     return result;
   }
@@ -258,10 +256,8 @@ public boolean isCancelled() {return cancelled;}
       result |= token_source.activeTokenTypes.remove(tt);
     }
   [#if !grammar.hugeFileSupport]
-    if (result) {
-      token_source.reset(getToken(0));
-      nextTokenType = null;
-    }
+    token_source.reset(getToken(0));
+    nextTokenType = null;
   [/#if]
     return result;
   }

@@ -142,9 +142,8 @@
           [#set methodName = "deactivateTokenTypes"]
       [/#if]
       [#var prevActives = newVarName("previousActives")]
-      [#var somethingChanged = newVarName("somethingChanged")]
       EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(token_source.activeTokenTypes);
-      boolean ${somethingChanged} = ${methodName}(
+      ${methodName}(
       [#list tokenActivation.tokenNames as tokenName]
          ${tokenName}[#if tokenName_has_next],[/#if]
       [/#list]
@@ -154,10 +153,8 @@
       }
       finally {
          token_source.activeTokenTypes = ${prevActives};
-         if (${somethingChanged}) {
-             token_source.reset(${resetToken});
-             nextTokenType= null;
-         }
+         token_source.reset(${resetToken});
+         nextTokenType= null;
       }
    [#else]
       [#nested/]

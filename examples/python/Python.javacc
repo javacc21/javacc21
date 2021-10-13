@@ -465,7 +465,7 @@ MatchStatement :
 ;
 
 CaseBlock :
-    // NB. The lookahead cannot actually refer to the CASE token
+    // NB. The lookahead cannot actually refer to the CASE token type
     // because the token is not activated until we actually enter the production!
     SCAN 0 {getToken(1).getImage().equals("case")}#
     =>

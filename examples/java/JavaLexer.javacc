@@ -352,8 +352,8 @@ TOKEN #Operator :
 | < LAMBDA : "->" > 
 ;
 
-//INCLUDE JAVA_IDENTIFIER_DEF
-INCLUDE "Java16IdentifierDef.javacc"
+INCLUDE JAVA_IDENTIFIER_DEF
+//INCLUDE "Java16IdentifierDef.javacc"
 
 TOKEN :
   < IDENTIFIER: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* > #Identifier
