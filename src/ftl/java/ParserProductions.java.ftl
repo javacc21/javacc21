@@ -226,6 +226,8 @@
        [@BuildExpansionCode expansion.nestedExpansion/]
     [#elseif classname = "CodeBlock"]
        ${expansion}
+    [#elseif classname = "UncacheTokens"]
+         uncacheTokens();
     [#elseif classname = "Failure"]
        [@BuildCodeFailure expansion/]
     [#elseif classname = "TokenTypeActivation"]

@@ -250,6 +250,12 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
+  [#if !grammar.hugeFileSupport]  
+    private void uncacheTokens() {
+       token_source.reset(getToken(0));
+    }
+  [/#if]
+
   boolean deactivateTokenTypes(TokenType type, TokenType... types) {
     boolean result = token_source.activeTokenTypes.remove(type);
     for (TokenType tt : types) {

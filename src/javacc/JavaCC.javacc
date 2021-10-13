@@ -129,6 +129,8 @@ TOKEN :
   |
   < _FAIL : "FAIL" > #JavaCCKeyWord
   |
+  < _UNCACHE_TOKENS : "UNCACHE_TOKENS"> #JavaCCKeyWord
+  |
   < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #JavaCCKeyWord
   |
   < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #JavaCCKeyWord
@@ -1065,8 +1067,6 @@ Setting(Map<String,Object> settings) #Setting :
      name = <_IGNORE_CASE>
      |
      name = <_DEACTIVATE_TOKENS>
-//     |
-//     name = <_TURN_OFF_TOKENS>
   )
   =>|+1
   {
@@ -2189,12 +2189,11 @@ Expansion ExpansionUnit :
     TreeBuildingAnnotation tba = null;
 }
  (
+  result=UncacheTokens
+  |
   SCAN 1 ~\...\Lookahead => 
   result = Failure
   |
-//  SCAN 1 ~\...\Lookahead =>
-//  result=TokenTypeActivation
-  //|
   SCAN 1 ~\...\Lookahead =>
   result=Block ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
@@ -2486,45 +2485,35 @@ INJECT AttemptBlock :
      }
 }
 
-#if false
-TokenTypeActivation :
-  (
-   "TURN_ON_TOKENS"
-   |
-   "TURN_OFF_TOKENS" {CURRENT_NODE.setDeactivate(true);}
-  )
-  "(" <IDENTIFIER> ("," <IDENTIFIER>)* ")"
-;
+UncacheTokens# :
+   "UNCACHE_TOKENS"
+;   
 
-INJECT TokenTypeActivation :
-  import java.util.ArrayList;
-  import java.util.List;
-  import com.javacc.core.TokenSet;
-  extends com.javacc.core.Expansion
+INJECT UncacheTokens :
+   import com.javacc.core.TokenSet;
+   extends com.javacc.core.Expansion
 {
-   @Property public boolean deactivate;
-   public List<String> getTokenNames() {
-       List<String> result = new ArrayList<>();
-       for (Identifier id : childrenOfType(Identifier.class)) result.add(id.getImage());
-       return result;
-   }
-   public boolean isConcrete() {return true;}
+    public CodeBlock getCode() {
+        return firstChildOfType(CodeBlock.class);
+    }
 
-   public int getMaximumSize() {return 0;}
-
-   public int getMinimumSize() {return 0;}
-
-   public boolean isPossiblyEmpty() {return true;}
+    public boolean isConcrete() {return true;}
     
-   public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+    public int getMaximumSize() {return 0;}
 
-   public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+    public int getMinimumSize() {return 0;}
 
-   public boolean isAlwaysSuccessful() {return false;}
+    public boolean isPossiblyEmpty() {return true;}
+    
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
 
-   public boolean getSpecifiesLexicalStateSwitch() {return false;}
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+
+    public boolean isAlwaysSuccessful() {return true;}
+
+    public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
-#endif
+
 
 Failure# : 
    {

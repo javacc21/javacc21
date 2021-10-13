@@ -305,6 +305,8 @@
        ${ScanCodeLexicalStateSwitch(expansion)}
    [#elseif classname = "Failure"]
          ${ScanCodeError(expansion)}
+   [#elseif classname = "UncacheTokens"]
+         uncacheTokens();
    [#elseif classname = "TokenTypeActivation"]
          ${ScanCodeTokenActivation(expansion)}
    [#elseif classname = "ExpansionSequence"]
