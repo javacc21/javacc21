@@ -126,6 +126,9 @@ TOKEN #KeyWord :
 | < VOLATILE: "volatile" > 
 | < WHILE: "while" > 
 | < YIELD : "yield" > 
+| < SEALED : "sealed">
+| < NON_SEALED : "non-sealed">
+| < PERMITS : "permits">
 ;
 
 TOKEN #Literal :

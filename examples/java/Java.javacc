@@ -47,7 +47,7 @@ PRESERVE_LINE_ENDINGS=false;
 TABS_TO_SPACES=8;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=RECORD, VAR, YIELD;
+DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 //JDK_TARGET=16;
 
 FAULT_TOLERANT;
@@ -82,12 +82,12 @@ ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 Modifiers(EnumSet<TokenType> permissibleModifiers) #void :
  (
   SCAN {isParserTolerant() 
-       || permissibleModifiers.contains(getToken(1).getType())}
+       || permissibleModifiers.contains(getToken(1).getType()) }
   =>
   (
    "public"|"static"|"protected"|"private"|"final"|"abstract" 
    |"synchronized"|"native"|"transient"|"volatile"|"strictfp" 
-   |"default"
+   |"default" 
   )
   {
     switch(lastConsumedToken.getType()) {
@@ -112,8 +112,55 @@ Modifiers(EnumSet<TokenType> permissibleModifiers) #void :
  )*
 ;
 
+INJECT PARSER_CLASS : {
+  private EnumSet<TokenType> permissibleModifiers = null;
+}
+
+TypeModifiers(EnumSet<TokenType> permissibleModifiers) #void :
+ (
+  SCAN {
+        isParserTolerant() 
+       || permissibleModifiers.contains(getToken(1).getType())
+       || getToken(1).getImage().equals("sealed")
+       || getToken(1).getImage().equals("non") && getToken(2).getImage().equals("-") && getToken(3).getImage().equals("sealed")
+       }
+  =>
+  ACTIVATE_TOKENS SEALED, NON_SEALED
+  (
+   "public"|"static"|"protected"|"private"|"final"|"abstract" 
+   |"synchronized"|"native"|"transient"|"volatile"|"strictfp" 
+   |"default" | "sealed" | "non-sealed"
+  )
+  {
+    switch(lastConsumedToken.getType()) {
+        case ABSTRACT :
+        case FINAL :
+           permissibleModifiers.remove(ABSTRACT);
+           permissibleModifiers.remove(FINAL);
+           break;
+        case PRIVATE :
+        case PROTECTED :
+        case PUBLIC :
+           permissibleModifiers.remove(PRIVATE);
+           permissibleModifiers.remove(PROTECTED);
+           permissibleModifiers.remove(PUBLIC);
+           break;
+        case NON_SEALED :
+        case SEALED :
+           permissibleModifiers.remove(NON_SEALED);
+           permissibleModifiers.remove(SEALED);
+           break;
+        default : 
+           permissibleModifiers.remove(lastConsumedToken.getType());
+    }
+  }
+  |
+  Annotation
+ )*
+;
+
 TypeDeclaration #interface :
-  SCAN ";" | (Modifiers ("class" | "enum" | "interface" | "record" | "@" "interface")) | RecordLA =>
+  SCAN ";" | (TypeModifiers ("class" | "enum" | "interface" | "record" | "@" "interface")) | RecordLA =>
   (
     EmptyDeclaration 
     |
@@ -152,22 +199,32 @@ TypeIdentifier#void :
 ;
 
 ClassDeclaration :
-  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
+  TypeModifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP, SEALED, NON_SEALED))
   "class" =>|| 
   TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList]
   [ ImplementsList ]
+  [ PermitsList ]
   ClassOrInterfaceBody
 ;
 
 InterfaceDeclaration :
-  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
+  TypeModifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP, SEALED, NON_SEALED))
   "interface" =>||
   TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList ] 
+  [ PermitsList ]
   ClassOrInterfaceBody
+;
+
+PermitsList :
+   SCAN 0 {getToken(1).getImage().equals("permits")}
+   =>
+   ACTIVATE_TOKENS PERMITS ("permits")
+   ObjectType
+   ("," ObjectType)*
 ;
 
 ExtendsList : 
@@ -225,6 +282,9 @@ RecordDeclaration :
 // necessary because, when we scan ahead to see whether to enter TypeDeclaration,
 // the RECORD token type is deactivated. This kind of detail is quite tricky.
 RecordLA :
+   [
+     SCAN {currentLookaheadToken == null}# => FAIL "This production can only be used when in lookahead."
+   ]
    Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
    (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)
 ;   
@@ -256,7 +316,7 @@ RecordBody :
 CompactConstructorDeclaration :
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))
   TypeIdentifier
-  "{"
+  "{" =>||
   [ => ExplicitConstructorInvocation ]
   ( BlockStatement )*!
   "}" 

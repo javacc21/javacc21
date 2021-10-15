@@ -69,6 +69,8 @@ import java.util.List;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
+  final Token DUMMY_START_TOKEN = new Token();
+
   private String inputSource = "input";
  [#if grammar.lexerUsesParser]
   public ${grammar.parserClassName} parser;
@@ -370,7 +372,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     // to just after the Token passed in.
     void reset(Token t, LexicalState state) {
         input_stream.goTo(t.getEndLine(), t.getEndColumn());
-        input_stream.forward(1);
+        if (t != DUMMY_START_TOKEN) input_stream.forward(1);
         t.setNext(null);
         t.setNextToken(null);
         if (state != null) {

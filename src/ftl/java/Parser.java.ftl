@@ -77,8 +77,8 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
     }
 static final int UNLIMITED = Integer.MAX_VALUE;    
-// The last token successfully "consumed"     
-Token lastConsumedToken = new Token(); // We start with a dummy token. REVISIT
+// The last token successfully "consumed"
+Token lastConsumedToken;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
@@ -165,6 +165,9 @@ public boolean isCancelled() {return cancelled;}
       [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
+    [#if !grammar.userDefinedLexer]
+      lastConsumedToken = lexer.DUMMY_START_TOKEN;
+    [/#if]
       lastConsumedToken.setInputSource(lexer.getInputSource());
   }
 
@@ -172,6 +175,14 @@ public boolean isCancelled() {return cancelled;}
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
     Token result = tok == null? null : tok.getNext();
+  [#if !grammar.userDefinedLexer && !grammar.hugeFileSupport]  
+    // If the cached next token is not currently active, we
+    // throw it away and go back to the XXXLexer
+    if (result != null && !token_source.activeTokenTypes.contains(result.getType())) {
+      token_source.reset(tok);
+      result = null;
+    }
+  [/#if]
     if (result != null) {
 [#if !grammar.userDefinedLexer]       
        // The following line is a nasty kludge 

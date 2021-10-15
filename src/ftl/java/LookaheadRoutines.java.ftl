@@ -295,9 +295,17 @@
   // Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
   [@CU.HandleLexicalStateChange expansion true]
+   [#--
+   // Building scan code for: ${classname}
+   // at: ${expansion.location}
+   --]
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion /]
-   [#elseif expansion.singleToken]
+   [#--elseif expansion.singleToken]
+     REVISIT later
+     // Building scan code for single token
+      ${ScanSingleToken(expansion)} --]
+   [#elseif expansion.isRegexp]
       ${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion"]
       ${ScanCodeAssertion(expansion)} 
