@@ -48,7 +48,6 @@ TABS_TO_SPACES=8;
 // The following tokens are only activated at key points whether
 // they are needed.
 DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
-//JDK_TARGET=16;
 
 FAULT_TOLERANT;
 DEBUG_FAULT_TOLERANT;
@@ -160,7 +159,8 @@ TypeModifiers(EnumSet<TokenType> permissibleModifiers) #void :
 ;
 
 TypeDeclaration #interface :
-  SCAN ";" | (TypeModifiers ("class" | "enum" | "interface" | "record" | "@" "interface")) | RecordLA =>
+//  SCAN ";" | (TypeModifiers ("class" | "enum" | "interface" | "record" | "@" "interface")) | RecordLA =>
+  SCAN TypeDeclarationLA =>
   (
     EmptyDeclaration 
     |
@@ -176,6 +176,16 @@ TypeDeclaration #interface :
   )
 ;
 
+TypeDeclarationLA#void :
+   ";"
+   |
+   (TypeModifiers(null) ("class" | "enum" | "interface" | "record" | "@" "interface")) 
+   | 
+   RecordLA
+;   
+
+
+
 INJECT EmptyDeclaration : implements TypeDeclaration;
 INJECT AnnotationTypeDeclaration : implements TypeDeclaration;
 INJECT ClassDeclaration : implements TypeDeclaration;
@@ -188,12 +198,11 @@ TypeIdentifier#void :
    <IDENTIFIER>
    [
       SCAN {getToken(0).getImage().equals("record") 
-// Should finally deal with the var contextual keyword properly
-//           || getToken(0).getImage().equals("var") 
+           || getToken(0).getImage().equals("var") 
            || getToken(0).getImage().equals("permits")
            || getToken(0).getImage().equals("sealed")
            || getToken(0).getImage().equals("yield")}#
-      => FAIL "Illegal type name"
+      => FAIL "Illegal type name" + getToken(0)
    ]
    =>||
 ;
@@ -281,10 +290,7 @@ RecordDeclaration :
 // This is a production that is only used as a lookahead. It's kludgy, but it's
 // necessary because, when we scan ahead to see whether to enter TypeDeclaration,
 // the RECORD token type is deactivated. This kind of detail is quite tricky.
-RecordLA :
-   [
-     SCAN {currentLookaheadToken == null}# => FAIL "This production can only be used when in lookahead."
-   ]
+RecordLA#void :
    Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
    (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)
 ;   
@@ -924,16 +930,36 @@ BlockStatement :
   Statement
 ;
 
-LocalVariableDeclaration : 
-  SCAN Modifiers ("var"|Type) <IDENTIFIER> =>
-  Modifiers(EnumSet.of(FINAL)) 
-  (
-    SCAN 0 {getToken(1).getImage().equals("var") && getToken(2).getType()==IDENTIFIER}#
-    => 
-    ACTIVATE_TOKENS VAR ("var") VariableDeclarator
-    |
-    Type VariableDeclarator ("," VariableDeclarator)*
-  )
+LocalVariableDeclaration :
+   SCAN LocalVariableDeclarationLA
+   =>
+   (
+     NoVarDeclaration
+     |
+     VarDeclaration
+   )
+;   
+
+NoVarDeclaration #void : 
+   Modifiers(EnumSet.of(FINAL))
+   Type =>|| VariableDeclarator ( "," VariableDeclarator )*    
+;
+
+VarDeclaration #void :
+  Modifiers(EnumSet.of(FINAL))
+  ACTIVATE_TOKENS VAR ("var") =>||
+  <IDENTIFIER> 
+  "=" Expression
+;
+
+LocalVariableDeclarationLA :
+   Modifiers(EnumSet.of(FINAL))
+   (
+     Type 
+     |
+     <IDENTIFIER> [SCAN 0 {!getToken(0).getImage().equals("var")} => FAIL]
+   )
+   <IDENTIFIER>
 ;
 
 EmptyStatement : ";" ;
@@ -1038,7 +1064,7 @@ DoStatement :
 ForStatement :
   "for" "("
   (
-      Modifiers(EnumSet.of(FINAL)) Type <IDENTIFIER> ":" =>|| Expression 
+      Modifiers(EnumSet.of(FINAL)) ACTIVATE_TOKENS VAR (Type | "var") <IDENTIFIER> ":" =>|| Expression 
       |
       [ ForInit ] ";" [ Expression ] ";" [ StatementExpressionList ]
   )
