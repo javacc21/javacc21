@@ -371,10 +371,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         // Reset the token source input
     // to just after the Token passed in.
     void reset(Token t, LexicalState state) {
-        input_stream.goTo(t.getEndLine(), t.getEndColumn());
-        if (t != DUMMY_START_TOKEN) input_stream.forward(1);
-        t.setNext(null);
-        t.setNextToken(null);
+        if (t != DUMMY_START_TOKEN) { // Is this 100% correct? REVISIT
+            input_stream.goTo(t.getEndLine(), t.getEndColumn());
+            input_stream.forward(1);
+            t.setNext(null);
+            t.setNextToken(null);
+        }
         if (state != null) {
             switchTo(state);
         }
