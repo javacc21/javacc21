@@ -3,7 +3,7 @@
  * following two web pages:
  * https://docs.python.org/3/reference/grammar.html
  * https://docs.python.org/3/reference/lexical_analysis.html#indentation
- * This is Python 3.9.6, which I presume is the latest spec. 
+ * This is Python 3.10.0, which latest spec at this moment.
  * (I do not anticipate supporting any older versions of the language.)
  * Currently, the generated parser can parse the source code of Django
  * and the Python standard library, with the exception of a few files
@@ -127,7 +127,7 @@ CompoundStatement :
 
 // This production is only used for lookahead. 
 // I suppose looking ahead to the colon makes sense
-MatchStatementLA :
+MatchStatementLA#void :
     <NAME>
     // The following construct is a verbose way
     // of having an assertion. At some point soon, we will

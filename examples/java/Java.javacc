@@ -159,7 +159,6 @@ TypeModifiers(EnumSet<TokenType> permissibleModifiers) #void :
 ;
 
 TypeDeclaration #interface :
-//  SCAN ";" | (TypeModifiers ("class" | "enum" | "interface" | "record" | "@" "interface")) | RecordLA =>
   SCAN TypeDeclarationLA =>
   (
     EmptyDeclaration 
@@ -277,9 +276,9 @@ EnumBody :
 ;
 
 RecordDeclaration :
+ SCAN RecordLA =>
   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
   ACTIVATE_TOKENS RECORD ("record")
-  =>||
   TypeIdentifier
   [TypeParameters]
   RecordHeader
@@ -952,7 +951,7 @@ VarDeclaration #void :
   "=" Expression
 ;
 
-LocalVariableDeclarationLA :
+LocalVariableDeclarationLA#void :
    Modifiers(EnumSet.of(FINAL))
    (
      Type 
