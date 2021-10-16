@@ -178,12 +178,12 @@ TypeDeclaration #interface :
 TypeDeclarationLA#void :
    ";"
    |
-   (TypeModifiers(null) ("class" | "enum" | "interface" | "record" | "@" "interface")) 
+   Modifiers(null) ("enum" | ("@" "interface"))
+   |
+   TypeModifiers(null) ("class" | "interface")
    | 
    RecordLA
 ;   
-
-
 
 INJECT EmptyDeclaration : implements TypeDeclaration;
 INJECT AnnotationTypeDeclaration : implements TypeDeclaration;
@@ -228,9 +228,7 @@ InterfaceDeclaration :
 ;
 
 PermitsList :
-   SCAN 0 {getToken(1).getImage().equals("permits")}
-   =>
-   ACTIVATE_TOKENS PERMITS ("permits")
+   ACTIVATE_TOKENS PERMITS ("permits") =>||
    ObjectType
    ("," ObjectType)*
 ;

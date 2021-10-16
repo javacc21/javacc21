@@ -130,8 +130,13 @@
          }
          finally {
             if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
-      [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]               
-           token_source.reset(${resetToken}, ${prevLexicalStateVar});
+      [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
+           if (${resetToken}.getNext()!=null) {
+               token_source.reset(${resetToken}, ${prevLexicalStateVar});
+           }
+           else {
+              token_source.switchTo(${prevLexicalStateVar});
+           }
       [#else]   
            token_source.switchTo(${prevLexicalStateVar});
       [/#if]           
@@ -156,7 +161,7 @@
       }
       finally {
          token_source.activeTokenTypes = ${prevActives};
-         if (${somethingChanged}) {
+         if (${somethingChanged} && ${resetToken}.getNext() != null) {
             [#if !grammar.hugeFileSupport]
              token_source.reset(${resetToken});
             [/#if]
