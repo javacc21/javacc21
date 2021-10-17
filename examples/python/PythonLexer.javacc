@@ -329,9 +329,13 @@ TOKEN #StringLiteral :
    |
    <#STRING_LITERAL2 : (<STRING_PREFIX>)? "'" ((~["'", "\\", "\n"])|<STRING_ESCAPE>)* "'">
    |
-   <#STRING_LITERAL3 : (<STRING_PREFIX>)? "'''" (~["'","\\"] | ("'" ~["'"]) | ("''" ~["'"])|<STRING_ESCAPE>)* "'''">
+   <#STRING_LITERAL3 : (<STRING_PREFIX>)? "'''" (<INSIDE_SL_3>)* "'''">
+   |  
+   <#STRING_LITERAL4 : (<STRING_PREFIX>)? "\"\"\"" (<INSIDE_SL_4>)* "\"\"\"">
    |
-   <#STRING_LITERAL4 : (<STRING_PREFIX>)? "\"\"\"" (~["\"","\\"] | ("\"" ~["\""]) | ("\"\"" ~["\""])|<STRING_ESCAPE>)* "\"\"\"">
+   <#INSIDE_SL_3 : ("'" | "''")? (<STRING_ESCAPE> | (~["'"]))>
+   |
+   <#INSIDE_SL_4 : ("\"" | "\"\"")? (<STRING_ESCAPE> | (~["\""]))>
    |
    <#BYTES_LITERAL_1 : <BYTES_PREFIX> "'" ((~["\n","'", "\\"])|<BYTES_ESCAPE>)* "'">
    |
