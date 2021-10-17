@@ -65,7 +65,7 @@ AtomicExpression#void :
 Slice :
     [Expression] ":" =>|| [Expression] [":" [Expression]]
     |
-    Expression
+    [=> <NAME> ":="] Expression
 ;
 
 Slices : "[" Slice ("," =>|+1 Slice)* [","] "]" ;
