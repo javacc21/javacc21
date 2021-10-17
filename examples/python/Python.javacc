@@ -177,12 +177,14 @@ WhileStatement : "while" NamedExpression ":" Block [ElseBlock] ;
 WithStatement : 
     ["async"] "with" =>||
     (
-        WithItem ("," WithItem)* 
+        SCAN WithItemsInParentheses ":" => WithItemsInParentheses
         |
-        "(" WithItem (SCAN 2 => "," WithItem)*  [","] ")"
+        WithItem ("," WithItem)* 
     )
     ":" Block
 ;
+
+WithItemsInParentheses#void : "(" WithItem (SCAN 2 "," WithItem)* [","] ")" ;
 
 WithItem : Expression ["as" StarTarget] ;
 
