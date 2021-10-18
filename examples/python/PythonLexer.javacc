@@ -341,9 +341,13 @@ TOKEN #StringLiteral :
    |
    <#BYTES_LITERAL_2 : <BYTES_PREFIX> "\"" ((~["\n","\"","\\"])|<BYTES_ESCAPE>)* "\"">
    |
-   <#BYTES_LITERAL_3 : <BYTES_PREFIX> "'''" (~["'","\\"] | ("'" ~["'"]) | ("''" ~["'"])|<BYTES_ESCAPE>)* "'''">
+   <#BYTES_LITERAL_3 : <BYTES_PREFIX> "'''" (<INSIDE_BL_3>)* "'''">
    |
-   <#BYTES_LITERAL_4 : <BYTES_PREFIX> "\"\"\"" (~["\"","\\"] | ("\"" ~["\""]) | ("\"\"" ~["\""])|<BYTES_ESCAPE>)* "\"\"\"">
+   <#BYTES_LITERAL_4 : <BYTES_PREFIX> "\"\"\"" (<INSIDE_BL_4>)* "\"\"\"">
+   |
+   <#INSIDE_BL_3 : ("'" ("'")? )? (<BYTES_ESCAPE> | (~["'"]))>
+   |
+   <#INSIDE_BL_4 : ("\"" ("\"")? )? (<BYTES_ESCAPE> | (~["\""]))>
    |
    <#STRING_PREFIX : "r" | "u" | "R" | "U" | "f" | "F"
                      | "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF">
