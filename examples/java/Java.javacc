@@ -78,10 +78,10 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
-Modifiers(EnumSet<TokenType> permissibleModifiers) #void :
+Modifiers#void : 
  (
-  SCAN {isParserTolerant() 
-       || permissibleModifiers.contains(getToken(1).getType()) }
+  SCAN {isParserTolerant() || permissibleModifiers == null  
+       || permissibleModifiers.contains(getToken(1).getType())}#
   =>
   (
    "public"|"static"|"protected"|"private"|"final"|"abstract" 
@@ -109,10 +109,11 @@ Modifiers(EnumSet<TokenType> permissibleModifiers) #void :
   |
   Annotation
  )*
+ {permissibleModifiers = null;}#
 ;
 
 INJECT PARSER_CLASS : {
-  private EnumSet<TokenType> permissibleModifiers = null;
+  private EnumSet<TokenType> permissibleModifiers;
 }
 
 TypeModifiers(EnumSet<TokenType> permissibleModifiers) #void :
@@ -178,7 +179,7 @@ TypeDeclaration #interface :
 TypeDeclarationLA#void :
    ";"
    |
-   Modifiers(null) ("enum" | ("@" "interface"))
+   Modifiers ("enum" | ("@" "interface"))
    |
    TypeModifiers(null) ("class" | "interface")
    | 
@@ -258,7 +259,8 @@ ImplementsList :
 
 
 EnumDeclaration :
-   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
+   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}
+   Modifiers
    "enum" =>|| 
    TypeIdentifier
    [ImplementsList] 
@@ -275,7 +277,8 @@ EnumBody :
 
 RecordDeclaration :
  SCAN RecordLA =>
-  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}
+  Modifiers
   ACTIVATE_TOKENS RECORD ("record")
   TypeIdentifier
   [TypeParameters]
@@ -288,7 +291,8 @@ RecordDeclaration :
 // necessary because, when we scan ahead to see whether to enter TypeDeclaration,
 // the RECORD token type is deactivated. This kind of detail is quite tricky.
 RecordLA#void :
-   Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP))
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}
+   Modifiers
    (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)
 ;   
 
@@ -317,7 +321,8 @@ RecordBody :
 ;
 
 CompactConstructorDeclaration :
-  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
+  Modifiers
   TypeIdentifier
   "{" =>||
   [ => ExplicitConstructorInvocation ]
@@ -372,7 +377,8 @@ INJECT FieldDeclaration : implements ClassOrInterfaceBodyDeclaration
 INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
 
 FieldDeclaration :
-  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, STATIC, FINAL, TRANSIENT, VOLATILE))
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, STATIC, FINAL, TRANSIENT, VOLATILE);}
+  Modifiers
   Type VariableDeclarator =>|+1 ( "," VariableDeclarator )* ";"
 ;
 
@@ -388,15 +394,20 @@ ArrayInitializer :
 
 #MethodDeclaration :
   (
-    SCAN \.\.\InterfaceDeclaration
-    =>Modifiers(EnumSet.of(PUBLIC,PRIVATE,ABSTRACT,STATIC,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT))
+    SCAN 0 \.\.\InterfaceDeclaration
+    =>
+    {permissibleModifiers = EnumSet.of(PUBLIC,PRIVATE,ABSTRACT,STATIC,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT);}
+    Modifiers
     |
-    SCAN ~\...\TypeDeclaration // This is a kludge to support the code injection feature in JavaCC
+    SCAN 0 ~\...\TypeDeclaration // This is a kludge to support the code injection feature in JavaCC
                                // If we're not in a TypeDeclaration (most likely because we are in a JavaCC code injection)
                                // we just accept all the possible modifiers.
-    => Modifiers(EnumSet.of(PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,FINAL,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT))
+    => 
+    {permissibleModifiers = EnumSet.of(PUBLIC,PRIVATE,ABSTRACT,STATIC,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT);}
+    Modifiers
     |
-    Modifiers(EnumSet.of(PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,FINAL,SYNCHRONIZED,NATIVE,STRICTFP))
+    {permissibleModifiers = EnumSet.of(PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,FINAL,SYNCHRONIZED,NATIVE,STRICTFP);}
+    Modifiers
   )
   [ TypeParameters ]
   ReturnType
@@ -409,10 +420,11 @@ ArrayInitializer :
 
 FormalParameters : "(" [ FormalParameter ( "," FormalParameter )* ] ")" ;
 
-FormalParameter : Modifiers(EnumSet.of(FINAL)) Type [ (Annotation)* "..." ] VariableDeclaratorId ;
+FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);} Modifiers Type [ (Annotation)* "..." ] VariableDeclaratorId ;
 
 ConstructorDeclaration :
-  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE))
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
+  Modifiers
   [ TypeParameters ]
   TypeIdentifier FormalParameters =>||
   [ ThrowsList ]
@@ -938,19 +950,22 @@ LocalVariableDeclaration :
 ;   
 
 NoVarDeclaration #void : 
-   Modifiers(EnumSet.of(FINAL))
+   {permissibleModifiers = EnumSet.of(FINAL);}
+   Modifiers
    Type =>|| VariableDeclarator ( "," VariableDeclarator )*    
 ;
 
 VarDeclaration #void :
-  Modifiers(EnumSet.of(FINAL))
+  {permissibleModifiers = EnumSet.of(FINAL);}
+  Modifiers
   ACTIVATE_TOKENS VAR ("var") =>||
   <IDENTIFIER> 
   "=" Expression
 ;
 
 LocalVariableDeclarationLA#void :
-   Modifiers(EnumSet.of(FINAL))
+   {permissibleModifiers = EnumSet.of(FINAL);}
+   Modifiers
    (
      Type 
      |
@@ -1061,7 +1076,9 @@ DoStatement :
 ForStatement :
   "for" "("
   (
-      Modifiers(EnumSet.of(FINAL)) ACTIVATE_TOKENS VAR (Type | "var") <IDENTIFIER> ":" =>|| Expression 
+      {permissibleModifiers = EnumSet.of(FINAL);}
+      Modifiers 
+      ACTIVATE_TOKENS VAR (Type | "var") <IDENTIFIER> ":" =>|| Expression 
       |
       [ ForInit ] ";" [ Expression ] ";" [ StatementExpressionList ]
   )
@@ -1204,7 +1221,8 @@ MemberValueArrayInitializer :
 
 
 AnnotationTypeDeclaration :
-  Modifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP))
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP);}
+  Modifiers
   "@" "interface" =>|| TypeIdentifier AnnotationTypeBody
 ;
 
@@ -1213,7 +1231,8 @@ AnnotationTypeBody :
 ;
 
 AnnotationMethodDeclaration :
-   Modifiers(EnumSet.of(PUBLIC,ABSTRACT))
+   {permissibleModifiers = EnumSet.of(PUBLIC, ABSTRACT);}
+   Modifiers
    Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
 ;
 
