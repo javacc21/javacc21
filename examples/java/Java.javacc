@@ -259,7 +259,7 @@ ImplementsList :
 
 
 EnumDeclaration :
-   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}
+   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}#
    Modifiers
    "enum" =>|| 
    TypeIdentifier
@@ -291,7 +291,7 @@ RecordDeclaration :
 // necessary because, when we scan ahead to see whether to enter TypeDeclaration,
 // the RECORD token type is deactivated. This kind of detail is quite tricky.
 RecordLA#void :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}#
    Modifiers
    (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)
 ;   
@@ -321,7 +321,7 @@ RecordBody :
 ;
 
 CompactConstructorDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
   Modifiers
   TypeIdentifier
   "{" =>||
@@ -377,7 +377,7 @@ INJECT FieldDeclaration : implements ClassOrInterfaceBodyDeclaration
 INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
 
 FieldDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, STATIC, FINAL, TRANSIENT, VOLATILE);}
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, STATIC, FINAL, TRANSIENT, VOLATILE);}#
   Modifiers
   Type VariableDeclarator =>|+1 ( "," VariableDeclarator )* ";"
 ;
@@ -394,12 +394,12 @@ ArrayInitializer :
 
 #MethodDeclaration :
   (
-    SCAN 0 \.\.\InterfaceDeclaration
+    SCAN \.\.\InterfaceDeclaration
     =>
     {permissibleModifiers = EnumSet.of(PUBLIC,PRIVATE,ABSTRACT,STATIC,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT);}
     Modifiers
     |
-    SCAN 0 ~\...\TypeDeclaration // This is a kludge to support the code injection feature in JavaCC
+    SCAN ~\...\TypeDeclaration // This is a kludge to support the code injection feature in JavaCC
                                // If we're not in a TypeDeclaration (most likely because we are in a JavaCC code injection)
                                // we just accept all the possible modifiers.
     => 
@@ -420,10 +420,10 @@ ArrayInitializer :
 
 FormalParameters : "(" [ FormalParameter ( "," FormalParameter )* ] ")" ;
 
-FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);} Modifiers Type [ (Annotation)* "..." ] VariableDeclaratorId ;
+FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);}# Modifiers Type [ (Annotation)* "..." ] VariableDeclaratorId ;
 
 ConstructorDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
   Modifiers
   [ TypeParameters ]
   TypeIdentifier FormalParameters =>||
@@ -950,13 +950,13 @@ LocalVariableDeclaration :
 ;   
 
 NoVarDeclaration #void : 
-   {permissibleModifiers = EnumSet.of(FINAL);}
+   {permissibleModifiers = EnumSet.of(FINAL);}#
    Modifiers
    Type =>|| VariableDeclarator ( "," VariableDeclarator )*    
 ;
 
 VarDeclaration #void :
-  {permissibleModifiers = EnumSet.of(FINAL);}
+  {permissibleModifiers = EnumSet.of(FINAL);}#
   Modifiers
   ACTIVATE_TOKENS VAR ("var") =>||
   <IDENTIFIER> 
@@ -964,12 +964,12 @@ VarDeclaration #void :
 ;
 
 LocalVariableDeclarationLA#void :
-   {permissibleModifiers = EnumSet.of(FINAL);}
+   {permissibleModifiers = EnumSet.of(FINAL);}#
    Modifiers
    (
      Type 
      |
-     <IDENTIFIER> [SCAN 0 {!getToken(0).getImage().equals("var")} => FAIL]
+     <IDENTIFIER> [SCAN 0 {!getToken(0).getImage().equals("var")}# => FAIL]
    )
    <IDENTIFIER>
 ;
@@ -1076,7 +1076,7 @@ DoStatement :
 ForStatement :
   "for" "("
   (
-      {permissibleModifiers = EnumSet.of(FINAL);}
+      {permissibleModifiers = EnumSet.of(FINAL);}#
       Modifiers 
       ACTIVATE_TOKENS VAR (Type | "var") <IDENTIFIER> ":" =>|| Expression 
       |
@@ -1221,7 +1221,7 @@ MemberValueArrayInitializer :
 
 
 AnnotationTypeDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP);}
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP);}#
   Modifiers
   "@" "interface" =>|| TypeIdentifier AnnotationTypeBody
 ;
@@ -1231,7 +1231,7 @@ AnnotationTypeBody :
 ;
 
 AnnotationMethodDeclaration :
-   {permissibleModifiers = EnumSet.of(PUBLIC, ABSTRACT);}
+   {permissibleModifiers = EnumSet.of(PUBLIC, ABSTRACT);}#
    Modifiers
    Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
 ;
