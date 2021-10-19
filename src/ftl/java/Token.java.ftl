@@ -200,19 +200,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      }
 
      public Token getPreviousToken() {
-         [#if grammar.hugeFileSupport]
-           throw new UnsupportedOperationException("With HUGE_FILE_SUPPORT turned on, the previousToken is not cached");
-         [#else]
-           return previousToken;
-         [/#if]
+        return previousToken;
      }
 
      void setPreviousToken(Token previousToken) {
-         [#if grammar.hugeFileSupport] if (previousToken == null || previousToken.isUnparsed())[/#if]
          this.previousToken = previousToken;
      }
 
- [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
+ [#if !grammar.userDefinedLexer]
     [#if !grammar.treeBuildingEnabled]
      public FileLineMap getFileLineMap() {
          return FileLineMap.getFileLineMapByName(getInputSource());
@@ -431,7 +426,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [/#if]
 [#if !grammar.userDefinedLexer]
     public static Token newToken(TokenType type, String image, String inputSource) {
-           [#--if !grammar.hugeFileSupport]image = null;[/#if--]
+           [#--image = null;[/#if--]
            [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]

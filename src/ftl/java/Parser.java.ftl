@@ -121,7 +121,6 @@ public boolean isCancelled() {return cancelled;}
  //=================================
 
 [#if !grammar.userDefinedLexer]
- [#if !grammar.hugeFileSupport]
    public ${grammar.parserClassName}(String inputSource, CharSequence content) {
        this(new ${grammar.lexerClassName}(inputSource, content));
       [#if grammar.lexerUsesParser]
@@ -140,7 +139,7 @@ public boolean isCancelled() {return cancelled;}
   public ${grammar.parserClassName}(Path path) throws IOException {
     this(path.toString(), path);
   }
- [/#if]
+
   public ${grammar.parserClassName}(java.io.InputStream stream) {
       this(new InputStreamReader(stream));
   }
@@ -175,7 +174,7 @@ public boolean isCancelled() {return cancelled;}
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
     Token result = tok == null? null : tok.getNext();
-  [#if !grammar.userDefinedLexer && !grammar.hugeFileSupport]  
+  [#if !grammar.userDefinedLexer]
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
     if (result != null && !token_source.activeTokenTypes.contains(result.getType())) {
@@ -254,28 +253,22 @@ public boolean isCancelled() {return cancelled;}
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.add(tt);
     }
-  [#if !grammar.hugeFileSupport]
     token_source.reset(getToken(0));
     nextTokenType = null;
-  [/#if]
     return result;
   }
 
-  [#if !grammar.hugeFileSupport]  
     private void uncacheTokens() {
        token_source.reset(getToken(0));
     }
-  [/#if]
 
   boolean deactivateTokenTypes(TokenType type, TokenType... types) {
     boolean result = token_source.activeTokenTypes.remove(type);
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.remove(tt);
     }
-  [#if !grammar.hugeFileSupport]
     token_source.reset(getToken(0));
     nextTokenType = null;
-  [/#if]
     return result;
   }
 [/#if]

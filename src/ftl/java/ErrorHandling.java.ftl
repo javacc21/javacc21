@@ -329,7 +329,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
       [/#if]
   }
   
- [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
+ [#if !grammar.userDefinedLexer]
 
   /**
    * pushes the last token back.

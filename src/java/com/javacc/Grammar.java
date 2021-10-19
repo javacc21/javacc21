@@ -975,12 +975,6 @@ public class Grammar extends BaseNode {
         return b== null ? false : b;
     }
 
-    public boolean getHugeFileSupport() {
-        Boolean b = (Boolean) settings.get("HUGE_FILE_SUPPORT");
-        if (b == null) b = false;
-        return b && !getTreeBuildingEnabled() && !getFaultTolerant();
-    }
-
     public boolean getDebugParser() {
         Boolean b = (Boolean) settings.get("DEBUG_PARSER");
         return b == null ? false : b;
@@ -1121,14 +1115,6 @@ public class Grammar extends BaseNode {
             }
             if (getNodeUsesParser()) {
                 addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
-            }
-        }
-        if (getHugeFileSupport()) {
-            if (getTreeBuildingEnabled()) {
-                addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because TREE_BUILDING_ENABLED is set.");
-            }
-            if (getFaultTolerant()) {
-                addWarning(null, "HUGE_FILE_SUPPORT setting is ignored because FAULT_TOLERANT is set.");
             }
         }
     }

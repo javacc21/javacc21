@@ -38,7 +38,6 @@
 
 [#import "CommonUtils.java.ftl" as CU  ]
 
-[#var tokenBuilderClass = grammar.hugeFileSupport?string("TokenBuilder", "FileLineMap")]
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
 
@@ -127,7 +126,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private InvalidToken invalidToken;
   Token previousToken;
   // The source of the raw characters that we are scanning  
-  ${tokenBuilderClass} input_stream;
+  FileLineMap input_stream;
     
   private void setTracingEnabled(boolean trace_enabled) {
      this.trace_enabled = trace_enabled;
@@ -137,14 +136,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       return inputSource;
   }
   
-  public void setInputSource(String inputSource) {
+    public void setInputSource(String inputSource) {
       this.inputSource = inputSource;
-[#if !grammar.hugeFileSupport]
       input_stream.setInputSource(inputSource);
-[/#if]            
-  }
+    }
    
-[#if !grammar.hugeFileSupport]
      public ${grammar.lexerClassName}(CharSequence chars) {
         this("input", chars);
      }
@@ -154,10 +150,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      }
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
         this.inputSource = inputSource;
-        input_stream = new ${tokenBuilderClass}(inputSource, chars, line, column);
+        input_stream = new FileLineMap(inputSource, chars, line, column);
         switchTo(lexState);
      }
-[/#if]
 
     public ${grammar.lexerClassName}(Reader reader) {
        this("input", reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
@@ -169,7 +164,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
     public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
         this.inputSource = inputSource;
-        input_stream = new ${tokenBuilderClass}(inputSource, reader, line, column);
+        input_stream = new FileLineMap(inputSource, reader, line, column);
         switchTo(lexState);
     }
 
@@ -223,18 +218,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         }
         else {
             charBuff.setLength(0);
-[#-- The following is a temporary kludge. Need to rewrite the LegacyTokenBuilder
-     that the hugeFileSupport option uses. 
-     It's surely broken in various ways, like wrt full Unicode etc.--]            
-[#if grammar.hugeFileSupport]            
-            curChar = input_stream.beginToken();
-            tokenBeginLine = input_stream.getBeginLine();
-            tokenBeginColumn = input_stream.getBeginColumn();
-[#else]
             tokenBeginLine = input_stream.getLine();
             tokenBeginColumn = input_stream.getColumn();
             curChar = input_stream.readChar();
-[/#if]
             if (trace_enabled) 
                 LOGGER.info("Starting new token on line: " + tokenBeginLine + ", column: " + tokenBeginColumn);
             if (curChar == -1) {
@@ -365,9 +351,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         return false;
     }
  
- [#if grammar.hugeFileSupport]
-    [#embed "LegacyTokenBuilder.java.ftl"]
- [#else]
         // Reset the token source input
     // to just after the Token passed in.
     void reset(Token t, LexicalState state) {
@@ -389,7 +372,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     FileLineMap getFileLineMap() {
         return input_stream;
     }
- [/#if]
     
   private InvalidToken handleInvalidChar(int ch) {
     int line = input_stream.getEndLine();
@@ -411,10 +393,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     String tokenImage = charBuff.toString();
     [#if grammar.settings.TOKEN_FACTORY??]
         Token matchedToken = ${grammar.settings.TOKEN_FACTORY}.newToken(type, tokenImage, inputSource);
-    [#elseif !grammar.hugeFileSupport]
-        Token matchedToken = Token.newToken(type, tokenImage, this);
     [#else]
-        Token matchedToken = Token.newToken(type, tokenImage, inputSource);
+        Token matchedToken = Token.newToken(type, tokenImage, this);
     [/#if]
         matchedToken.setBeginLine(tokenBeginLine);
         matchedToken.setEndLine(input_stream.getEndLine());

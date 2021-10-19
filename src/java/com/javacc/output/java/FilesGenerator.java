@@ -84,6 +84,7 @@ public class FilesGenerator {
         initializeTemplateEngine();
         generateToken();
         generateLexer();
+        generateFileLineMap();
         if (!grammar.getUserDefinedLexer()) {
             generateNfaData();
         }
@@ -92,9 +93,6 @@ public class FilesGenerator {
             generateParseException();
             generateParser();
         }
-    	if (!grammar.getHugeFileSupport()) {
-    		generateFileLineMap();
-    	}
     	if (grammar.getFaultTolerant()) {
     	    generateInvalidNode();
             generateParsingProblem();

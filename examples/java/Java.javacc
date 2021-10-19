@@ -201,7 +201,7 @@ TypeIdentifier#void :
            || getToken(0).getImage().equals("permits")
            || getToken(0).getImage().equals("sealed")
            || getToken(0).getImage().equals("yield")}#
-      => FAIL "Illegal type name" + getToken(0)
+      => FAIL "Illegal type name " + getToken(0)
    ]
    =>||
 ;

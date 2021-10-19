@@ -356,7 +356,7 @@ TOKEN #StringLiteral :
    |
    <#STRING_ESCAPE: "\\" ~[] >
    |
-   <#BYTES_ESCAPE : "\\" ["\u0000"-"\u00FF"]>
+   <#BYTES_ESCAPE : "\\" ["\u0000"-"\u007F"]>
 ;
 
 INCLUDE PYTHON_IDENTIFIER_DEF
