@@ -207,18 +207,16 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
          this.previousToken = previousToken;
      }
 
- [#if !grammar.userDefinedLexer]
-    [#if !grammar.treeBuildingEnabled]
+ [#if !grammar.treeBuildingEnabled]
      public FileLineMap getFileLineMap() {
          return FileLineMap.getFileLineMapByName(getInputSource());
      }
-    [/#if]
+ [/#if]
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
          return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
     }
- [/#if]
 
     /**
      * This field is used to access special tokens that occur prior to this
@@ -284,7 +282,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.unparsed = unparsed;
     }
 
-[#if !grammar.userDefinedLexer]
     /**
      * Utility method to merge two tokens into a single token of a given type.
      * @param t1 the first token to merge
@@ -331,7 +328,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         t2.setNextToken(tok.getNextToken());
         return t1;
     }
-[/#if]
 
     public void clearChildren() {}
 
@@ -424,10 +420,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        [/#if]
     }
 [/#if]
-[#if !grammar.userDefinedLexer]
+
     public static Token newToken(TokenType type, String image, String inputSource) {
            [#--image = null;[/#if--]
-           [#if grammar.treeBuildingEnabled]
+        [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
@@ -457,7 +453,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
             return newToken(type, image, node.getInputSource());
         }
     [/#if]
-[/#if]
 
     public String getLocation() {
 //         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();

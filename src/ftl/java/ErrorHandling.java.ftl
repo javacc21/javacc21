@@ -257,9 +257,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
         this.nextTokenType = null;
 [#if grammar.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
-  [#if grammar.userDefinedLexer]
-          lastConsumedToken.setInputSource(getInputSource());
-  [/#if]
   [#list grammar.openNodeScopeHooks as hook]
      ${hook}(lastConsumedToken);
   [/#list]
@@ -329,8 +326,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
       [/#if]
   }
   
- [#if !grammar.userDefinedLexer]
-
   /**
    * pushes the last token back.
    */
@@ -393,4 +388,3 @@ void dumpLookaheadCallStack(PrintStream ps) {
 [/#if]          
   } 
   
-[/#if] 

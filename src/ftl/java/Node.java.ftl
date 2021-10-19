@@ -412,7 +412,7 @@ public interface Node extends Comparable<Node>
         return null;
     }
 
-[#if !grammar.userDefinedLexer && grammar.tokensAreNodes]
+[#if grammar.tokensAreNodes]
     default Token firstDescendantOfType(${grammar.constantsClassName}.TokenType type) {
          for (int i=0; i<getChildCount(); i++) {
              Node child = getChild(i);

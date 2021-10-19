@@ -98,11 +98,6 @@ private EnumSet<TokenType> outerFollowSet;
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
-[#if grammar.userDefinedLexer]
-  /** User defined Lexer. */
-  public Lexer token_source;
-  String inputSource = "input";
-[#else]
   /** Generated Lexer. */
   public ${grammar.lexerClassName} token_source;
   
@@ -110,8 +105,6 @@ public boolean isCancelled() {return cancelled;}
       token_source.setInputSource(inputSource);
   }
   
-[/#if]
-
   String getInputSource() {
       return token_source.getInputSource();
   }
@@ -120,7 +113,6 @@ public boolean isCancelled() {return cancelled;}
  // Generated constructors
  //=================================
 
-[#if !grammar.userDefinedLexer]
    public ${grammar.parserClassName}(String inputSource, CharSequence content) {
        this(new ${grammar.lexerClassName}(inputSource, content));
       [#if grammar.lexerUsesParser]
@@ -151,22 +143,14 @@ public boolean isCancelled() {return cancelled;}
       [/#if]
   }
 
-[/#if]
 
-[#if grammar.userDefinedLexer]
-  /** Constructor with user supplied Lexer. */
-  public ${grammar.parserClassName}(Lexer lexer) {
-[#else]
   /** Constructor with user supplied Lexer. */
   public ${grammar.parserClassName}(${grammar.lexerClassName} lexer) {
-[/#if]
     token_source = lexer;
       [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
-    [#if !grammar.userDefinedLexer]
       lastConsumedToken = lexer.DUMMY_START_TOKEN;
-    [/#if]
       lastConsumedToken.setInputSource(lexer.getInputSource());
   }
 
@@ -174,20 +158,16 @@ public boolean isCancelled() {return cancelled;}
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
     Token result = tok == null? null : tok.getNext();
-  [#if !grammar.userDefinedLexer]
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
     if (result != null && !token_source.activeTokenTypes.contains(result.getType())) {
       token_source.reset(tok);
       result = null;
     }
-  [/#if]
     if (result != null) {
-[#if !grammar.userDefinedLexer]       
        // The following line is a nasty kludge 
        // that will not be necessary once token chaining is properly fixed.
        token_source.previousToken = result;
-[/#if]       
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);
 [/#list]
@@ -247,7 +227,6 @@ public boolean isCancelled() {return cancelled;}
     return nextTokenType;
   }
 
-[#if !grammar.userDefinedLexer]  
   boolean activateTokenTypes(TokenType type, TokenType... types) {
     boolean result = token_source.activeTokenTypes.add(type);
     for (TokenType tt : types) {
@@ -271,7 +250,6 @@ public boolean isCancelled() {return cancelled;}
     nextTokenType = null;
     return result;
   }
-[/#if]
 
   private void fail(String message) throws ParseException {
     if (currentLookaheadToken == null) {

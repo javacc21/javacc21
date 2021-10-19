@@ -854,7 +854,6 @@ INJECT Token :
    ]!
    [ParserCodeDecls]
    (
-      SCAN 1 {!grammar.getUserDefinedLexer()} =>
       tp=TokenProduction  {grammar.addTokenProduction(tp);}
       |
       decls=TokenManagerDecls {grammar.addCodeInjection(decls);}
@@ -2683,7 +2682,7 @@ RegexpExpansion #void :
   SCAN ~\.\TokenProduction =>
   (RegexpRef|EndOfFile)
   |
-  SCAN 3 {isInProduction("TokenProduction")||grammar.getUserDefinedLexer()} =>
+  SCAN 3 {isInProduction("TokenProduction")} =>
   InPlaceRegexp 
  )
  [

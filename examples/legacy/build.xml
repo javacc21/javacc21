@@ -38,7 +38,7 @@
 
 	    <echo>Corba test succeeded</echo>
 	    
-	    <copy todir="test.tmp/GUIParsing/ParserVersion">
+	    <!--copy todir="test.tmp/GUIParsing/ParserVersion">
 	      <fileset dir="GUIParsing/ParserVersion">
 	        <include name="*.java" />
 	      </fileset>
@@ -57,7 +57,7 @@
 			   failonerror="true"
 			   fork="true"/>
 
-	    <echo>GUIParsing test succeeded</echo>
+	    <echo>GUIParsing test succeeded</echo-->
 	    
 	    <copy todir="${outputdir}/Interpreter">
 	      <fileset dir="Interpreter">

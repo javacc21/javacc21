@@ -296,95 +296,42 @@ public class SanityChecker {
          * from "rexprlist". 
          */
 
-        if (!grammar.getUserDefinedLexer()) {
-            for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
-                String label = ref.getLabel();
-                if (grammar.getExtraTokens().contains(label)) continue;
-                RegularExpression referenced = grammar.getNamedToken(label);
-                if (referenced == null) {// && !ref.getLabel().equals("EOF")) {
-                    grammar.addError(ref,  "Undefined lexical token name \"" + label + "\".");
-                } else if (ref.getTokenProduction() == null || !ref.getTokenProduction().isExplicit()) {
-                    if (referenced.isPrivate()) {
-                        grammar.addError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
-                    }   else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
-                        grammar.addError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
-                    } 
+        for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
+            String label = ref.getLabel();
+            if (grammar.getExtraTokens().contains(label)) continue;
+            RegularExpression referenced = grammar.getNamedToken(label);
+            if (referenced == null) {// && !ref.getLabel().equals("EOF")) {
+                grammar.addError(ref,  "Undefined lexical token name \"" + label + "\".");
+            } else if (ref.getTokenProduction() == null || !ref.getTokenProduction().isExplicit()) {
+                if (referenced.isPrivate()) {
+                    grammar.addError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
+                }   else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
+                    grammar.addError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
                 } 
-            }
-            for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
-                for (RegexpRef ref : tp.descendants(RegexpRef.class)) {
-                    RegularExpression rexp = grammar.getNamedToken(ref.getLabel());
-                    if (rexp != null) {
-                        ref.setOrdinal(rexp.getOrdinal());
-                        ref.setRegexp(rexp);
-                    }
+            } 
+        }
+        for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
+            for (RegexpRef ref : tp.descendants(RegexpRef.class)) {
+                RegularExpression rexp = grammar.getNamedToken(ref.getLabel());
+                if (rexp != null) {
+                    ref.setOrdinal(rexp.getOrdinal());
+                    ref.setRegexp(rexp);
                 }
             }
-            
-            for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
-                for (RegexpSpec res : tp.getRegexpSpecs()) {
-                    if (res.getRegexp() instanceof RegexpRef) {
-                        tp.removeChild(res);
-                    }
+        }
+        
+        for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
+            for (RegexpSpec res : tp.getRegexpSpecs()) {
+                if (res.getRegexp() instanceof RegexpRef) {
+                    tp.removeChild(res);
                 }
             }
         }
 
-        /*
-         * This code applies to the user-defined lexer case. It
-         * visits all top-level RegexpRefs (ignores RegexpRefs nested within
-         * regular expressions). Since regular expressions are optional in this
-         * case, RegexpRef's without corresponding regular expressions are
-         * given ordinal values here. If a "RegexpRef" refers to a named regular
-         * expression, its ordinal value is set to reflect this. All but one
-         * RegexpRef node is removed from the lists by the end of execution of
-         * this code.
-         */
-        if (grammar.getUserDefinedLexer()) {
-            for (TokenProduction tp : grammar.getAllTokenProductions()) {
-                List<RegexpSpec> respecs = tp.getRegexpSpecs();
-                for (RegexpSpec res : respecs) {
-                    if (res.getRegexp() instanceof RegexpRef) {
-                        RegexpRef jn = (RegexpRef) res.getRegexp();
-                        RegularExpression rexp = grammar.getNamedToken(jn.getLabel());
-                        if (rexp == null) {
-                            lexerData.addRegularExpression(jn);
-                            grammar.addNamedToken(jn.getLabel(), jn);
-                            grammar.addTokenName(jn.getOrdinal(), jn.getLabel());
-                        } else {
-                            jn.setOrdinal(rexp.getOrdinal());
-                            tp.removeChild(res);
-                        }
-                    }
-                }
-            }
-        }
-
-        /*
-         * The following code is executed only if
-         * grammar.getOptions().getUserDefinedLexer() is set to true. This loop
-         * labels any unlabeled regular expression and prints a warning that it
-         * is doing so. These labels are added to "ordered_named_tokens" so that
-         * they may be generated into the ...Constants file.
-         */
-        if (grammar.getUserDefinedLexer()) {
-            for (TokenProduction tp : grammar.getAllTokenProductions()) {
-                List<RegexpSpec> respecs = tp.getRegexpSpecs();
-                for (RegexpSpec res : respecs) {
-                    if (grammar.getTokenName(res.getRegexp().getOrdinal()) == null) {
-                        grammar.addWarning(res.getRegexp(),
-                                "Unlabeled regular expression cannot be referred to by "
-                                        + "user generated token manager.");
-                    }
-                }
-            }
-        }
         // Check for self-referential loops in regular expressions
-        if (!grammar.getUserDefinedLexer()) {
-            RegexpVisitor reVisitor = new RegexpVisitor();
-            for (TokenProduction tp : grammar.getAllTokenProductions()) {
-                reVisitor.visit(tp);
-            }
+        RegexpVisitor reVisitor = new RegexpVisitor();
+        for (TokenProduction tp : grammar.getAllTokenProductions()) {
+            reVisitor.visit(tp);
         }
     }
 }

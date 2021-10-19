@@ -25,7 +25,6 @@ public interface ${grammar.constantsClassName} {
      INVALID
   }
   
-[#if !grammar.userDefinedLexer]
   /**
    * Lexical States
    */
@@ -40,7 +39,6 @@ public interface ${grammar.constantsClassName} {
      ${lexicalState.name},
   [/#list]
    }
-[/#if]
 
   static String displayChar(int ch) {
     if (ch == '\'') return "\'\\'\'";

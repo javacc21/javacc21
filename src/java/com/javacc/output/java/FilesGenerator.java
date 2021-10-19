@@ -85,9 +85,7 @@ public class FilesGenerator {
         generateToken();
         generateLexer();
         generateFileLineMap();
-        if (!grammar.getUserDefinedLexer()) {
-            generateNfaData();
-        }
+        generateNfaData();
         generateConstantsFile();
         if (!grammar.getProductionTable().isEmpty()) {
             generateParseException();
@@ -258,10 +256,7 @@ public class FilesGenerator {
     }
 
     void generateLexer() throws IOException, ParseException, TemplateException {
-        String filename = "Lexer.java";
-        if (!grammar.getUserDefinedLexer()) {
-            filename = grammar.getLexerClassName() + ".java";
-        }
+        String filename = grammar.getLexerClassName() + ".java";
         Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }

@@ -303,9 +303,7 @@ public final class Main {
             outputErrors(grammar);
             return 1;
         }
-        if (!grammar.getUserDefinedLexer()) {
-            grammar.generateLexer();
-        }
+        grammar.generateLexer();
         grammar.generateFiles();
         if (grammar.getWarningCount() == 0 && !quiet) {
             System.out.println("Parser generated successfully.");

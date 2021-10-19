@@ -35,7 +35,7 @@
 [#import "CommonUtils.java.ftl" as CU]
 
 [#var UNLIMITED=2147483647]
-[#var MULTIPLE_LEXICAL_STATE_HANDLING = grammar.lexerData.numLexicalStates>1 && !grammar.userDefinedLexer]
+[#var MULTIPLE_LEXICAL_STATE_HANDLING = grammar.lexerData.numLexicalStates>1]
 [#set MULTIPLE_LEXICAL_STATE_HANDLING = false]
 
 
