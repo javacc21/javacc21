@@ -37,7 +37,6 @@
 DEFAULT_LEXICAL_STATE=JAVA;
 JAVA_UNICODE_ESCAPE;
 TREE_BUILDING_ENABLED=false;
-//HUGE_FILE_SUPPORT;
 
 UNPARSED : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
 
