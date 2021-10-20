@@ -227,8 +227,8 @@ public boolean isCancelled() {return cancelled;}
     return nextTokenType;
   }
 
-  boolean activateTokenTypes(TokenType type, TokenType... types) {
-    boolean result = token_source.activeTokenTypes.add(type);
+  boolean activateTokenTypes(TokenType... types) {
+    boolean result = false;
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.add(tt);
     }
@@ -241,8 +241,8 @@ public boolean isCancelled() {return cancelled;}
        token_source.reset(getToken(0));
     }
 
-  boolean deactivateTokenTypes(TokenType type, TokenType... types) {
-    boolean result = token_source.activeTokenTypes.remove(type);
+  boolean deactivateTokenTypes(TokenType... types) {
+    boolean result = false;
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.remove(tt);
     }
