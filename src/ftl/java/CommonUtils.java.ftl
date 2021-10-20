@@ -120,26 +120,18 @@
    [#if expansion.specifiedLexicalState??]
       [#var prevLexicalStateVar = newVarName("previousLexicalState")]
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
-      [#if !grammar.userDefinedLexer]               
            token_source.reset(${resetToken}, ${prevLexicalStateVar});
-      [#else]   
-           token_source.switchTo(${prevLexicalStateVar});
-      [/#if]           
          try {
            [#nested/]
          }
          finally {
             if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
-      [#if !grammar.userDefinedLexer]
-           if (${resetToken}.getNext()!=null) {
-               token_source.reset(${resetToken}, ${prevLexicalStateVar});
-           }
-           else {
-              token_source.switchTo(${prevLexicalStateVar});
-           }
-      [#else]   
-           token_source.switchTo(${prevLexicalStateVar});
-      [/#if]           
+                if (${resetToken}.getNext()!=null) {
+                    token_source.reset(${resetToken}, ${prevLexicalStateVar});
+                }
+                else {
+                    token_source.switchTo(${prevLexicalStateVar});
+                }
             }
          }
    [#elseif expansion.tokenActivation??]
