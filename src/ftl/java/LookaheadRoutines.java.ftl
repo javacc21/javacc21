@@ -301,11 +301,10 @@
    --]
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion /]
-   [#--elseif expansion.singleToken]
-     REVISIT later
-     // Building scan code for single token
-      ${ScanSingleToken(expansion)} --]
+   [#elseif expansion.singleToken]
+      ${ScanSingleToken(expansion)}
    [#elseif expansion.isRegexp]
+     // This code should actually be unreachable now!
       ${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion"]
       ${ScanCodeAssertion(expansion)} 

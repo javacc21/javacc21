@@ -1719,10 +1719,10 @@ INJECT ExpansionSequence :
     public List<Expansion> allUnits() {
         List<Expansion> result = new ArrayList<>();
         for (Expansion unit : getUnits()) {
+            result.add(unit);
             if (unit.superfluousParentheses()) {
                 result.addAll(unit.firstChildOfType(ExpansionSequence.class).allUnits());
             }
-            else result.add(unit);
         }
         return result;
     }

@@ -436,13 +436,25 @@ abstract public class Expansion extends BaseNode {
 
     /**
      * @return whether this Expansion is always matched by exactly one token
+     * AND there is no funny business like lexical state switches a FAIL
+     * or an up-to-here marker
      */
     public final boolean isSingleToken() {
+        if (isPossiblyEmpty())
+            return false;
+        if (getMaximumSize() > 1)
+            return false;
         if (firstChildOfType(Failure.class) != null)
             return false; // Maybe a bit kludgy. REVISIT.
         if (getHasScanLimit())
             return false;
-        return !isPossiblyEmpty() && getMaximumSize() == 1;
+        if (!descendants(TokenActivation.class).isEmpty())
+            return false;
+        if (getSpecifiesLexicalStateSwitch()) 
+            return false;
+        if (!descendants(Expansion.class, exp->exp.getSpecifiesLexicalStateSwitch()).isEmpty())
+            return false;
+        return true;
     }
 
     /**
