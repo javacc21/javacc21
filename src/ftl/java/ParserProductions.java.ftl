@@ -535,24 +535,22 @@
 [/#macro]
 
 [#macro BuildAssertionCode assertion]
-    [#var empty = true]
-       if (!(
-       [#if !assertion.semanticLookahead?is_null]
-          (${assertion.semanticLookahead})
-          [#set empty = false /]
-       [/#if]
-       [#if !assertion.lookBehind?is_null]
-          [#if !empty] && [/#if]
-          !${assertion.lookBehind.routineName}()
-       [/#if]
-       [#if !assertion.expansion?is_null]
-           [#if !empty] && [/#if]
-           [#if assertion.expansionNegated] ! [/#if]
-           ${assertion.expansion.scanRoutineName}()
-       [/#if]
-       )) {
-          throw new ParseException(this, "${assertion.message?j_string}");
-        }
+   [#var optionalPart = ""]
+   [#if assertion.messageExpression??]
+      [#set optionalPart = " + " + assertion.messageExpression]
+   [/#if]
+   [#var assertionMessage = "Assertion at: " + assertion.location + " failed. "]
+   [#if assertion.assertionExpression??]
+      if (!(${assertion.assertionExpression})) {
+         fail("${assertionMessage}"${optionalPart});
+      }
+   [/#if]
+   [#if assertion.expansion??]
+      if ( [#if !assertion.expansionNegated]![/#if]
+      ${assertion.expansion.scanRoutineName}()) {
+         fail("${assertionMessage}"${optionalPart});
+      }
+   [/#if]
 [/#macro]
 
 

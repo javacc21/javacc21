@@ -1883,52 +1883,33 @@ Lookahead Lookahead #void :
     return (Lookahead) peekNode();
 };
 
-INJECT Assertion : 
+INJECT Assertion :
    import com.javacc.core.Expansion;
-   import com.javacc.core.TokenSet;
    extends com.javacc.core.EmptyExpansion 
 {
-    @Property String message = "Assertion failed";
-    @Property Expression semanticLookahead;
-    @Property LookBehind lookBehind;
+    @Property Expression assertionExpression, messageExpression;
     @Property Expansion expansion;
     @Property boolean expansionNegated, semanticLookaheadNested;
-
-    public boolean getRequiresScanAhead() {
-        return false;
-    }
 }
 
 
 Assertion :
-   {
-       Expression exp = null;
-       LookBehind lb = null;
-       Expansion expansion = null;
-       Token messageToken;
-   }
    "ASSERT"
-   [
+   (
     "{" 
-    exp=Expression {CURRENT_NODE.setSemanticLookahead(exp);}
+       Expression 
+       {CURRENT_NODE.setAssertionExpression((Expression) peekNode());}
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
-   ]  
-   [=>LookBehind {lb = (LookBehind) peekNode(); CURRENT_NODE.setLookBehind(lb);}]
-   [
+    |
+    "("
        ["~" {CURRENT_NODE.setExpansionNegated(true);}] 
-       ExpansionChoice {expansion = (Expansion) peekNode(); CURRENT_NODE.setExpansion(expansion);}
-   ]
+       ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
+    ")"
+   )
    [
-       SCAN {exp == null && lb == null && expansion == null}
-       => FAIL "Assertion is empty!"
+       ":" Expression {CURRENT_NODE.setMessageExpression((Expression)peekNode());}
    ]
-   ":" 
-   <STRING_LITERAL> 
-   {
-       String message = ((StringLiteral) lastConsumedToken).getString();
-       CURRENT_NODE.setMessage(message);
-   }
 ;
 
 ScanAhead #Lookahead : 

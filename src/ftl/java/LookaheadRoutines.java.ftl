@@ -105,6 +105,9 @@
         ${BuildScanRoutine(expansion)}
       [/#if]
    [/#list]
+   [#list grammar.assertionExpansions as expansion]
+      ${BuildAssertionRoutine(expansion)}
+   [/#list]
    [#list grammar.expansionsNeedingPredicate as expansion]
        ${BuildPredicateRoutine(expansion)}
    [/#list]
@@ -172,6 +175,31 @@
   }
  [/#if]
 [/#macro]
+
+[#macro BuildAssertionRoutine expansion]
+  // scanahead routine for assertion at: 
+  // ${expansion.parent.location}
+  // BuildAssertionRoutine macro
+    private final boolean ${expansion.scanRoutineName}() {
+     [#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")]
+       remainingLookahead = UNLIMITED;
+       scanToEnd=true;
+       Token ${storeCurrentLookaheadVar} = currentLookaheadToken;
+       if (currentLookaheadToken == null) {
+          currentLookaheadToken = lastConsumedToken;
+       }
+    try {
+      lookaheadRoutineNesting++;
+      ${BuildScanCode(expansion)}
+      return lastLookaheadSucceeded = true;
+    }
+    finally {
+       lookaheadRoutineNesting--;
+       currentLookaheadToken = ${storeCurrentLookaheadVar};
+    }
+  }
+[/#macro]
+
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 [#macro BuildPredicateCode expansion]
@@ -389,7 +417,20 @@
 [/#macro]    
 
 [#macro ScanCodeAssertion assertion]
-   TODO!!!
+   [#if assertion.assertionExpression?? && assertion.semanticLookaheadNested]
+      if (!(${assertion.assertionExpression})) {
+         hitFailure = true;
+         return lastLookaheadSucceeded = false;
+      }
+   [/#if]
+   [#if assertion.expansion??]
+      if ([#if !assertion.expansionNegated]![/#if] 
+         ${assertion.expansion.scanRoutineName}()
+      ) {
+        hitFailure = true;
+        return lastLookaheadSucceeded = false;
+      }
+   [/#if]
 [/#macro]
 
 [#macro ScanCodeError expansion]
