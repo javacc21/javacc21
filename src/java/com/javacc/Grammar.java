@@ -463,6 +463,10 @@ public class Grammar extends BaseNode {
         return descendants(Expansion.class, Expansion::isAtChoicePoint);
     }
 
+    public List<Expansion> getAssertionExpansions() {
+        return descendants(Expansion.class, exp->exp.getParent() instanceof Assertion);
+    }
+
     public List<Expansion> getExpansionsNeedingPredicate() {
         return descendants(Expansion.class, Expansion::getRequiresPredicateMethod);
     }

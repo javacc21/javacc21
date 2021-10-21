@@ -1302,9 +1302,6 @@ INJECT BNFProduction :
           return finalSet;
     }
     
-    public boolean isConcrete() {
-       return getExpansion().isConcrete();
-    }
 }
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
@@ -1609,8 +1606,6 @@ INJECT ExpansionChoice :
        return result;
    }
    
-   public boolean isConcrete() {return false;} 
-   
    public boolean getSpecifiesLexicalStateSwitch() {
        for (Expansion choice : getChoices()) {
            if (choice.getSpecifiesLexicalStateSwitch()) return true;
@@ -1658,7 +1653,6 @@ INJECT ExpansionWithParentheses :
    import com.javacc.core.Expansion;
    extends Expansion
 {
-    public boolean isConcrete() {return getNestedExpansion().isConcrete();}
     public int getMaximumSize() {return getNestedExpansion().getMaximumSize();}
     public int getMinimumSize() {return getNestedExpansion().getMinimumSize();}
     public boolean isPossiblyEmpty() {return getNestedExpansion().isPossiblyEmpty();}
@@ -1854,15 +1848,6 @@ INJECT ExpansionSequence :
        return result;
    }
    
-   public boolean isConcrete() {
-      for (Expansion exp : getUnits()) {
-         if (!exp.isConcrete()) {
-            return false;
-         }
-      }
-      return true;
-   }
-
    /**
     * @return whether we have a scan limit, including an implicit one inside a nested NonTerminal
     */
@@ -1901,7 +1886,7 @@ Lookahead Lookahead #void :
 INJECT Assertion : 
    import com.javacc.core.Expansion;
    import com.javacc.core.TokenSet;
-   extends Expansion 
+   extends com.javacc.core.EmptyExpansion 
 {
     @Property String message = "Assertion failed";
     @Property Expression semanticLookahead;
@@ -1912,20 +1897,6 @@ INJECT Assertion :
     public boolean getRequiresScanAhead() {
         return false;
     }
-    
-    public boolean isPossiblyEmpty() {
-        return true;
-    }
-    
-    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
-    
-    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-     
-    public int getMinimumSize() {return 0;}
-
-    public int getMaximumSize() {return 0;}
-
-    public boolean isConcrete() {return false;}
 }
 
 
@@ -2364,10 +2335,6 @@ INJECT NonTerminal :
          return result;
      }
      
-     public boolean isConcrete() {
-        return getProduction().isConcrete();
-     }
-
      public boolean getHasScanLimit() {
          return getProduction().getHasScanLimit();
      }
@@ -2402,7 +2369,6 @@ INJECT ZeroOrOne :
     public boolean isAlwaysSuccessful() {return true;}
     public boolean isPossiblyEmpty() {return true;}
     public int getMinimumSize() {return 0;}
-    public boolean isConcrete() {return false;}
 }
 
 
@@ -2415,7 +2381,6 @@ INJECT ZeroOrMore :
     public boolean isAlwaysSuccessful() {return true;}
     public int getMinimumSize() {return 0;}
     public int getMaximumSize() {return Integer.MAX_VALUE;}
-    public boolean isConcrete() {return false;}
 }
 
 
@@ -2425,7 +2390,6 @@ INJECT OneOrMore :
      extends ExpansionWithParentheses 
 {
      public int getMaximumSize() {return Integer.MAX_VALUE;}
-     public boolean isConcrete() {return false;}
      public boolean isPossiblyEmpty() {return false;}
 }
 
@@ -2475,44 +2439,14 @@ INJECT AttemptBlock :
          return getNestedExpansion().getMaximumSize();
      }
      
-     public boolean isConcrete() {
-           return getNestedExpansion().isConcrete();
-     }
-
      public boolean getSpecifiesLexicalStateSwitch() {
          return getNestedExpansion().getSpecifiesLexicalStateSwitch();
      }
 }
 
-UncacheTokens# :
-   "UNCACHE_TOKENS"
-;   
+UncacheTokens# : "UNCACHE_TOKENS" ;   
 
-INJECT UncacheTokens :
-   import com.javacc.core.TokenSet;
-   extends com.javacc.core.Expansion
-{
-    public CodeBlock getCode() {
-        return firstChildOfType(CodeBlock.class);
-    }
-
-    public boolean isConcrete() {return true;}
-    
-    public int getMaximumSize() {return 0;}
-
-    public int getMinimumSize() {return 0;}
-
-    public boolean isPossiblyEmpty() {return true;}
-    
-    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
-
-    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-
-    public boolean isAlwaysSuccessful() {return true;}
-
-    public boolean getSpecifiesLexicalStateSwitch() {return false;}
-}
-
+INJECT UncacheTokens : extends com.javacc.core.EmptyExpansion;
 
 Failure# : 
    {
@@ -2530,29 +2464,14 @@ Failure# :
 ;
 
 INJECT Failure :
-   import com.javacc.core.TokenSet;
-   extends com.javacc.core.Expansion
+   extends com.javacc.core.EmptyExpansion
 {
     @Property Expression exp;
     public CodeBlock getCode() {
         return firstChildOfType(CodeBlock.class);
     }
 
-    public boolean isConcrete() {return true;}
-    
-    public int getMaximumSize() {return 0;}
-
-    public int getMinimumSize() {return 0;}
-
-    public boolean isPossiblyEmpty() {return true;}
-    
-    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
-
-    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-
     public boolean isAlwaysSuccessful() {return false;}
-
-    public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
 
 LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER> ;
@@ -2632,10 +2551,6 @@ INJECT TryBlock  :
         return getNestedExpansion().getMaximumSize();
     }
 
-    public boolean isConcrete() {
-          return getNestedExpansion().isConcrete();
-    }
-
     public boolean getSpecifiesLexicalStateSwitch() {
         return getNestedExpansion().getSpecifiesLexicalStateSwitch();
     }
@@ -2643,8 +2558,7 @@ INJECT TryBlock  :
 
 
 INJECT CodeBlock :
-   import com.javacc.core.TokenSet;
-   extends com.javacc.core.Expansion;
+   extends com.javacc.core.EmptyExpansion;
 {
     @Property boolean appliesInLookahead;
 
@@ -2655,24 +2569,6 @@ INJECT CodeBlock :
     public boolean isPossiblyEmpty() {
        return true;
     }
-    
-    /**
-     * These are here to fullfil the superclass contract. They are never used. 
-     */
-
-    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
-
-    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-    
-    public int getMinimumSize() {return 0;}
-
-    public int getMaximumSize() {return 0;}
-    
-    public boolean isConcrete() {
-        return true; //REVISIT.
-    }
-
-    public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
 
 RegexpExpansion #void :
@@ -3048,4 +2944,3 @@ INJECT CharacterRange :
         }
     }
 }
-

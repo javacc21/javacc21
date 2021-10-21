@@ -203,10 +203,6 @@ public abstract class RegularExpression extends Expansion {
         return 1;
     }
     
-    final public boolean isConcrete() {
-       return true; 
-    }
-
     abstract public boolean matchesEmptyString();
 }
 

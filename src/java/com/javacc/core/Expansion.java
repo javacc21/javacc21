@@ -470,7 +470,7 @@ abstract public class Expansion extends BaseNode {
     /**
      * @return Does this expansion resolve to a fixed sequence of Tokens?
      */
-    abstract public boolean isConcrete();
+//    final public boolean isConcrete() {return false;}
 
     private Expansion getPreceding() {
         Node parent = getParent();
