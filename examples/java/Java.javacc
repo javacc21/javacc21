@@ -235,7 +235,8 @@ PermitsList :
 ;
 
 ExtendsList : 
-   "extends" ObjectType
+   "extends" 
+   ObjectType
    ( 
      SCAN 1 \InterfaceDeclaration => 
      "," ObjectType 
@@ -293,7 +294,8 @@ RecordDeclaration :
 RecordLA#void :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}#
    Modifiers
-   (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)
+   ASSERT {getToken(1).getImage().equals("record")}#
+//   (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)
 ;   
 
 

@@ -71,7 +71,6 @@ Slice :
 Slices : "[" Slice ("," =>|+1 Slice)* [","] "]" ;
 
 Statement : 
-   SCAN MatchStatementLA =>
    MatchStatement 
    | 
    SimpleStatement 
@@ -126,21 +125,11 @@ CompoundStatement :
 ;
 
 // This production is only used for lookahead. 
-// I suppose looking ahead to the colon makes sense
+// I suppose looking ahead to the colon makes sense. Is that right?
 MatchStatementLA#void :
     <NAME>
-    // The following construct is a verbose way
-    // of having an assertion. At some point soon, we will
-    // actually have assertions, so this ort of thing
-    // will be expressed much more tersely! Meanwhile...
-    [
-        //We use a semantic predicate here because we 
-        // cannot actually use the MATCH token in this lookahead
-        // since it is not activated. (This is really still a bit too tricky.)
-        SCAN {!getToken(0).getImage().equals("match")}#
-        => FAIL
-    ]
-    SubjectExpression ":"
+    ASSERT {getToken(0).getImage().equals("match")}#
+    SubjectExpression ":" 
 ;    
      
 
@@ -458,10 +447,11 @@ Assignment :
 // Below this point is the new pattern matching stuff
 // introduced in Python 3.10
 
-MatchStatement :
+MatchStatement : SCAN MatchStatementLA =>
    ACTIVATE_TOKENS MATCH ("match") 
-   SubjectExpression
-   ":" <NEWLINE> <INDENT>
+   SubjectExpression 
+   ":"
+   <NEWLINE> <INDENT>
    (CaseBlock)+
    <DEDENT>
 ;
