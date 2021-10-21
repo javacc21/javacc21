@@ -294,8 +294,7 @@ RecordDeclaration :
 RecordLA#void :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}#
    Modifiers
-   ASSERT {getToken(1).getImage().equals("record")}#
-//   (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> | FAIL)
+   (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> <IDENTIFIER> | FAIL)
 ;   
 
 
@@ -932,11 +931,15 @@ BlockStatement :
 // We need YieldStatement up top here so it does not spuriously match LocalVariableDeclaration.
   YieldStatement 
   |
+  RecordDeclaration
+  |
   LocalVariableDeclaration ";"
   |
   ClassDeclaration
   |
   InterfaceDeclaration
+  |
+  EnumDeclaration
   |
   Statement
 ;
