@@ -450,8 +450,8 @@ INJECT InvocationArguments :
 
 // In general, it is probably better to INCLUDE the (more stable) Java grammar
 // that is in the bootstrap jarfile.
-INCLUDE JAVA
-//INCLUDE "../../examples/java/Java.javacc"
+//INCLUDE JAVA
+INCLUDE "../../examples/java/Java.javacc"
 
 INJECT TypeDeclaration : 
     import java.util.*;
