@@ -125,8 +125,10 @@ CompoundStatement :
 ;
 
 // This production is only used for lookahead. 
+// That is what the #scan annotation means. So no
+// actual parsing code is generated, only lookahead
 // I suppose looking ahead to the colon makes sense. Is that right?
-MatchStatementLA#void :
+MatchStatementLA#scan :
     <NAME>
     ASSERT {getToken(0).getImage().equals("match")}#
     SubjectExpression ":" 

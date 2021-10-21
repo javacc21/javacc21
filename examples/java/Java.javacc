@@ -176,7 +176,7 @@ TypeDeclaration #interface :
   )
 ;
 
-TypeDeclarationLA#void :
+TypeDeclarationLA#scan :
    ";"
    |
    Modifiers ("enum" | ("@" "interface"))
@@ -291,7 +291,7 @@ RecordDeclaration :
 // This is a production that is only used as a lookahead. It's kludgy, but it's
 // necessary because, when we scan ahead to see whether to enter TypeDeclaration,
 // the RECORD token type is deactivated. This kind of detail is quite tricky.
-RecordLA#void :
+RecordLA#scan :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}#
    Modifiers
    (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> <IDENTIFIER> | FAIL)

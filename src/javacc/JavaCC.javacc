@@ -1162,7 +1162,6 @@ INJECT BNFProduction :
      * needs to be scanned in.
      */ 
     @Property String lexicalState;
-//    public void CLOSE_NODE_HOOK() {} //FIXME
 
     public boolean getHasScanLimit() {
         return expansion instanceof ExpansionSequence && ((ExpansionSequence) expansion).getHasScanLimit();
@@ -1183,6 +1182,11 @@ INJECT BNFProduction :
     public TreeBuildingAnnotation getTreeBuildingAnnotation() {
         return firstChildOfType(TreeBuildingAnnotation.class);
     }
+
+    public boolean isOnlyForLookahead() {
+        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
+        return tba!=null && "scan".equals(tba.getNodeName());
+    }
     
     public String getNodeName() {
         TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
@@ -1190,7 +1194,8 @@ INJECT BNFProduction :
              String nodeName = tba.getNodeName();
              if (nodeName != null && !nodeName.equals("abstract") 
                  && !nodeName.equals("interface")
-                 && !nodeName.equals("void")) {
+                 && !nodeName.equals("void")
+                 && !nodeName.equals("scan")) {
                 return nodeName;
              }
         }
