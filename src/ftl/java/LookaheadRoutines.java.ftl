@@ -119,11 +119,6 @@
    [#list grammar.allLookBehinds as lookBehind]
       ${BuildLookBehindRoutine(lookBehind)}
    [/#list]
-   [#--list grammar.allAssertions as assertion]
-     [#if !assertion.expansion?is_null]
-      ${BuildLookaheadRoutine(assertion.expansion)}
-     [/#if]
-   [/#list--]
    [#list grammar.parserProductions as production]
       ${BuildProductionLookaheadMethod(production)}
    [/#list]
@@ -204,7 +199,7 @@
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 [#macro BuildPredicateCode expansion]
      // BuildPredicateCode macro
-     [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
+     [#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
        if (!(${expansion.semanticLookahead})) return lastLookaheadSucceeded = false;
      [/#if]
      [#if expansion.hasLookBehind]
@@ -359,7 +354,7 @@
    [#elseif classname = "ExpansionChoice"]
       [@ScanCodeChoice expansion /]
    [#elseif classname = "CodeBlock"]
-      [#if expansion.appliesInLookahead]
+      [#if expansion.appliesInLookahead || expansion.containingProduction.onlyForLookahead]
          ${expansion}
       [/#if]
    [/#if]
@@ -417,7 +412,7 @@
 [/#macro]    
 
 [#macro ScanCodeAssertion assertion]
-   [#if assertion.assertionExpression?? && assertion.semanticLookaheadNested]
+   [#if assertion.assertionExpression?? && (assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
       if (!(${assertion.assertionExpression})) {
          hitFailure = true;
          return lastLookaheadSucceeded = false;
@@ -511,5 +506,3 @@
       ${expansion.scanRoutineName}()
    [/#if]
 [/#macro]
-
-

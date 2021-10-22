@@ -467,11 +467,6 @@ abstract public class Expansion extends BaseNode {
      */
     abstract public int getMaximumSize();
 
-    /**
-     * @return Does this expansion resolve to a fixed sequence of Tokens?
-     */
-//    final public boolean isConcrete() {return false;}
-
     private Expansion getPreceding() {
         Node parent = getParent();
         if (parent instanceof ExpansionSequence) {
@@ -564,6 +559,9 @@ abstract public class Expansion extends BaseNode {
 
     public boolean getRequiresRecoverMethod() {
         if (isInsideLookahead()) {
+            return false;
+        }
+        if (getContainingProduction() != null && getContainingProduction().isOnlyForLookahead()) {
             return false;
         }
         if (isTolerantParsing() || getParent() instanceof BNFProduction) {

@@ -1907,8 +1907,8 @@ Assertion :
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
     |
+    ["~" {CURRENT_NODE.setExpansionNegated(true);}] 
     "("
-       ["~" {CURRENT_NODE.setExpansionNegated(true);}] 
        ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
     ")"
    )
@@ -2440,6 +2440,7 @@ Failure# :
    }
    "FAIL"
    [
+     [":"]
       exp=Expression 
       |
       Block
