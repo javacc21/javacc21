@@ -12,7 +12,10 @@ EXTRA_TOKENS=INDENT,DEDENT;
 /*
  * The following code injection implements the various indent/dedent logic.
  */
-INJECT LEXER_CLASS : {
+INJECT LEXER_CLASS : 
+   import java.util.List;
+   import java.util.ArrayList;
+{
    private int indentation=1;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = new ArrayList<>();

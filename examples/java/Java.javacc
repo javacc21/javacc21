@@ -89,7 +89,7 @@ Modifiers#void :
    |"default" 
   )
   {
-    switch(lastConsumedToken.getType()) {
+    switch(getToken(0).getType()) {
         case ABSTRACT :
         case FINAL :
            permissibleModifiers.remove(ABSTRACT);
@@ -104,6 +104,21 @@ Modifiers#void :
            break;
         default : 
            permissibleModifiers.remove(lastConsumedToken.getType());
+    }
+  }
+  |
+  SCAN {permissibleModifiers == null
+        || permissibleModifiers.contains(SEALED) && "sealed".equals(getToken(1).getImage())
+        || permissibleModifiers.contains(NON_SEALED) 
+           && "non".equals(getToken(1).getImage())
+           && "-".equals(getToken(2).getImage())
+           && "sealed".equals(getToken(3).getImage())}#
+  => 
+  ACTIVATE_TOKENS SEALED, NON_SEALED ("sealed"|"non-sealed") 
+  {
+    if (permissibleModifiers!=null) {
+      permissibleModifiers.remove(SEALED);
+      permissibleModifiers.remove(NON_SEALED);
     }
   }
   |
@@ -115,49 +130,6 @@ Modifiers#void :
 INJECT PARSER_CLASS : {
   private EnumSet<TokenType> permissibleModifiers;
 }
-
-TypeModifiers(EnumSet<TokenType> permissibleModifiers) #void :
- (
-  SCAN {
-        isParserTolerant() 
-       || permissibleModifiers.contains(getToken(1).getType())
-       || getToken(1).getImage().equals("sealed")
-       || getToken(1).getImage().equals("non") && getToken(2).getImage().equals("-") && getToken(3).getImage().equals("sealed")
-       }
-  =>
-  ACTIVATE_TOKENS SEALED, NON_SEALED
-  (
-   "public"|"static"|"protected"|"private"|"final"|"abstract" 
-   |"synchronized"|"native"|"transient"|"volatile"|"strictfp" 
-   |"default" | "sealed" | "non-sealed"
-  )
-  {
-    switch(lastConsumedToken.getType()) {
-        case ABSTRACT :
-        case FINAL :
-           permissibleModifiers.remove(ABSTRACT);
-           permissibleModifiers.remove(FINAL);
-           break;
-        case PRIVATE :
-        case PROTECTED :
-        case PUBLIC :
-           permissibleModifiers.remove(PRIVATE);
-           permissibleModifiers.remove(PROTECTED);
-           permissibleModifiers.remove(PUBLIC);
-           break;
-        case NON_SEALED :
-        case SEALED :
-           permissibleModifiers.remove(NON_SEALED);
-           permissibleModifiers.remove(SEALED);
-           break;
-        default : 
-           permissibleModifiers.remove(lastConsumedToken.getType());
-    }
-  }
-  |
-  Annotation
- )*
-;
 
 TypeDeclaration #interface :
   SCAN TypeDeclarationLA =>
@@ -179,9 +151,7 @@ TypeDeclaration #interface :
 TypeDeclarationLA#scan :
    ";"
    |
-   Modifiers ("enum" | ("@" "interface"))
-   |
-   TypeModifiers(null) ("class" | "interface")
+   Modifiers ("class" | "interface" | "enum" | ("@" "interface"))
    | 
    RecordLA
 ;   
@@ -208,7 +178,8 @@ TypeIdentifier#void :
 ;
 
 ClassDeclaration :
-  TypeModifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP, SEALED, NON_SEALED))
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP, SEALED, NON_SEALED);}#
+  Modifiers
   "class" =>|| 
   TypeIdentifier
   [ TypeParameters ]
@@ -219,7 +190,8 @@ ClassDeclaration :
 ;
 
 InterfaceDeclaration :
-  TypeModifiers(EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP, SEALED, NON_SEALED))
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP, SEALED, NON_SEALED);}#
+  Modifiers
   "interface" =>||
   TypeIdentifier
   [ TypeParameters ]
@@ -926,6 +898,8 @@ AssertStatement : "assert" Expression [ ":" Expression ] ";" ;
 Block #CodeBlock : "{" (BlockStatement)*! "}" ;
 
 BlockStatement :
+ ASSERT ~(("final"|Annotation)* ("public"|"private"|"protected"|"static")) : "Cannot declare anything to be public, private, protected, or static  in a local context"
+ (
 // The YieldStatement option in the Statement production will thus never
 // be matched but this doesn't seem to be a problem really.
 // We need YieldStatement up top here so it does not spuriously match LocalVariableDeclaration.
@@ -942,6 +916,7 @@ BlockStatement :
   EnumDeclaration
   |
   Statement
+ )
 ;
 
 LocalVariableDeclaration :
