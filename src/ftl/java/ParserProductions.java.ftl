@@ -541,7 +541,7 @@
    [#if assertion.messageExpression??]
       [#set optionalPart = " + " + assertion.messageExpression]
    [/#if]
-   [#var assertionMessage = "Assertion at: " + assertion.location + " failed. "]
+   [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "]
    [#if assertion.assertionExpression??]
       if (!(${assertion.assertionExpression})) {
          fail("${assertionMessage}"${optionalPart});
