@@ -83,6 +83,11 @@
          <include name="*.ftl"/>
       </fileset>
     </copy>
+    <copy todir="build/templates/python">
+      <fileset dir="src/ftl/python">
+         <include name="*.ftl"/>
+      </fileset>
+    </copy>
     <copy todir="build/include/java">
       <fileset dir="examples/java">
           <include name="*.javacc"/>
@@ -180,5 +185,11 @@
     <antcall target="jar"></antcall>
     <echo>Copying current jar to bootstrap location ...</echo>
     <copy file="javacc.jar" todir="bin"/>
+  </target>
+
+  <target name="test-python" depends="jar">
+    <exec executable="python3" dir="${basedir}" failonerror="true">
+      <arg line="-u python_tests.py"/>
+    </exec>
   </target>
 </project>

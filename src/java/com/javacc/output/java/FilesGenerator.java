@@ -53,21 +53,40 @@ public class FilesGenerator {
     private CodeInjector codeInjector;
     private Set<String> tokenSubclassFileNames = new HashSet<>();
     private HashMap<String, String> superClassLookup = new HashMap<>();
+    private final String codeLang;
 
     void initializeTemplateEngine() throws IOException {
         fmConfig = new freemarker.template.Configuration();
         Path filename = grammar.getFilename().toAbsolutePath();
         Path dir = filename.getParent();
-        TemplateLoader templateLoader = new MultiTemplateLoader(new FileTemplateLoader(dir.toFile()), 
-                                                                new ClassTemplateLoader(this.getClass(), "/templates/java"));
+        //
+        // The first two loaders are really for developers - templates
+        // are looked for in the grammar's directory, and then in a
+        // templates subdirectory below that, which could, of course, be
+        // a symlink to somewhere else.
+        // We check for the templates subdirectory existing, because otherwise
+        // FreeMarker will raise an exception.
+        //
+        TemplateLoader templateLoader;
+        String templateFolder = "/templates/".concat(codeLang);
+        Path altDir = dir.resolve(templateFolder.substring(1));
+        ArrayList<TemplateLoader> loaders = new ArrayList<>();
+        loaders.add(new FileTemplateLoader(dir.toFile()));
+        if (Files.exists(altDir)) {
+            loaders.add(new FileTemplateLoader(altDir.toFile()));
+        }
+        loaders.add(new ClassTemplateLoader(this.getClass(), templateFolder));
+        templateLoader = new MultiTemplateLoader(loaders.toArray(new TemplateLoader[0]));
+
         fmConfig.setTemplateLoader(templateLoader);
         fmConfig.setObjectWrapper(new BeansWrapper());
         fmConfig.setNumberFormat("computer");
         fmConfig.setArithmeticEngine(freemarker.core.ast.ArithmeticEngine.CONSERVATIVE_ENGINE);
     }
 
-    public FilesGenerator(Grammar grammar, List<Node> codeInjections) {
+    public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
         this.grammar = grammar;
+        this.codeLang = codeLang;
         this.codeInjector = new CodeInjector(grammar.getParserClassName(), 
                                              grammar.getLexerClassName(),
                                              grammar.getConstantsClassName(), 
@@ -82,21 +101,43 @@ public class FilesGenerator {
             throw new ParseException();
         }
         initializeTemplateEngine();
-        generateToken();
-        generateLexer();
-        generateFileLineMap();
-        generateNfaData();
-        generateConstantsFile();
-        if (!grammar.getProductionTable().isEmpty()) {
-            generateParseException();
-            generateParser();
+        if (codeLang.equals("java")) {
+            generateToken();
+            generateLexer();
+            generateFileLineMap();
+            generateNfaData();
+            generateConstantsFile();
+            if (!grammar.getProductionTable().isEmpty()) {
+                generateParseException();
+                generateParser();
+            }
+            if (grammar.getFaultTolerant()) {
+                generateInvalidNode();
+                generateParsingProblem();
+            }
+            if (grammar.getTreeBuildingEnabled()) {
+                generateTreeBuildingFiles();
+            }
         }
-    	if (grammar.getFaultTolerant()) {
-    	    generateInvalidNode();
-            generateParsingProblem();
-    	}
-        if (grammar.getTreeBuildingEnabled()) {
-            generateTreeBuildingFiles();
+        else if (codeLang.equals("python")) {
+            // Hardcoded for now, could make configurable later
+            String[] paths = new String[] {
+                "__init__.py",
+                "utils.py",
+                "tokens.py",
+                "lexer.py",
+                "parser.py"
+            };
+            Path outDir = grammar.getParserOutputDirectory();
+            for (String p : paths) {
+                Path outputFile = outDir.resolve(p);
+                // Could check if regeneration is needed, but for now
+                // always (re)generate
+                generate(outputFile);
+            }
+        }
+        else {
+            throw new UnsupportedOperationException(String.format("Code generation in '%s' is currently not supported.", codeLang));
         }
     }
 
@@ -119,33 +160,27 @@ public class FilesGenerator {
     private String getTemplateName(String outputFilename) {
         String result = outputFilename + ".ftl";
 
-        if (tokenSubclassFileNames.contains(outputFilename)) {
-            result = "ASTToken.java.ftl";
-        }
-        else if (outputFilename.equals(grammar.getParserClassName() + ".java")) {
-            result = "Parser.java.ftl";
-        }
-        else if (outputFilename.equals(grammar.getConstantsClassName() + ".java")) {
-            result = "Constants.java.ftl";
-        }
-        else if (outputFilename.endsWith("Lexer.java")
-                || outputFilename.equals(grammar.getLexerClassName() + ".java")) {
-            result = "Lexer.java.ftl";
-        }
-        else if (outputFilename.endsWith("NfaData.java") ||
-                    outputFilename.equals(grammar.getNfaDataClassName() +".java")) {
-            result = "NfaData.java.ftl";
-        }
-        else if (outputFilename.endsWith(".html")) {
-            result = "doc.html.ftl";
-        }
-        else if (outputFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
-            result = "BaseNode.java.ftl";
-        }
-        else if (outputFilename.startsWith(grammar.getNodePrefix())) {
-            if (!nonNodeNames.contains(outputFilename))
-            {
-                result = "ASTNode.java.ftl";
+        if (codeLang.equals("java")) {
+            if (tokenSubclassFileNames.contains(outputFilename)) {
+                result = "ASTToken.java.ftl";
+            } else if (outputFilename.equals(grammar.getParserClassName() + ".java")) {
+                result = "Parser.java.ftl";
+            } else if (outputFilename.equals(grammar.getConstantsClassName() + ".java")) {
+                result = "Constants.java.ftl";
+            } else if (outputFilename.endsWith("Lexer.java")
+                    || outputFilename.equals(grammar.getLexerClassName() + ".java")) {
+                result = "Lexer.java.ftl";
+            } else if (outputFilename.endsWith("NfaData.java") ||
+                    outputFilename.equals(grammar.getNfaDataClassName() + ".java")) {
+                result = "NfaData.java.ftl";
+            } else if (outputFilename.endsWith(".html")) {
+                result = "doc.html.ftl";
+            } else if (outputFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
+                result = "BaseNode.java.ftl";
+            } else if (outputFilename.startsWith(grammar.getNodePrefix())) {
+                if (!nonNodeNames.contains(outputFilename)) {
+                    result = "ASTNode.java.ftl";
+                }
             }
         }
         return result;
@@ -244,7 +279,7 @@ public class FilesGenerator {
         }
         outputFile = grammar.getParserOutputDirectory().resolve("InvalidToken.java");
         if (regenerate(outputFile)) {
-        	generate(outputFile);
+            generate(outputFile);
         }
     }
     
@@ -297,11 +332,21 @@ public class FilesGenerator {
        		throw new IOException(msg);
         }
         String filename = file.getFileName().toString();
-        if (filename.endsWith(".java")) {
-            String typename = filename.substring(0, filename.length() -5);
+        // Changes here to allow different rules to be used for different
+        // languages. At the moment there are no non-Java code injections
+        String extn = codeLang.equals("java") ? ".java" : ".py";
+        if (filename.endsWith(extn)) {
+            String typename = filename.substring(0, filename.length()  - extn.length());
             if (codeInjector.hasInjectedCode(typename)) {
                 return true;
             }
+        }
+        //
+        // For now regenerate() isn't called for generating Python files
+        // but I'll leave this here for now
+        //
+        if (extn.equals(".py")) {
+            return true;    // for now, always regenerate
         }
         return false;
     }

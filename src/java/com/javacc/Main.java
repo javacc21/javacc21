@@ -144,7 +144,27 @@ public final class Main {
             }
     }
 
+    // Currently only Python for now, but we know other languages will be coming, so ...
+    private static String [] otherSupportedLanguages = new String[] {
+        "python"
+    };
+
     static void usage() {
+        ArrayList<String> validChoices = new ArrayList<>(Arrays.asList(otherSupportedLanguages));
+        validChoices.add(0, "java");
+        StringBuilder sb = new StringBuilder();
+        int n = validChoices.size();
+
+        for (int i = 0; i < n; i++) {
+            sb.append(String.format("'%s'", validChoices.get(i)));
+            if (i < (n - 2)) {
+                sb.append(", ");
+            }
+            else if (i == (n - 2)) {
+                sb.append(" and ");
+            }
+        }
+
         System.out.println("Usage:");
         System.out.println("    java -jar " + jarFileName + " grammarfile");
         System.out.println();
@@ -152,7 +172,10 @@ public final class Main {
         System.out.println(" -d <directory>    Specify the directory (absolute or relative to the grammarfile location) to place generated files");
         System.out.println("   For example:   -d ../../src/generated");
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
+        System.out.println(" -lang <language>  Specify the language to generate code in (the default is 'java')");
+        System.out.println("                     (valid choices are currently " + sb.toString() + ")");
         System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 16. (Default is 8)");
+        System.out.println("                     (this is only useful when the code generation is in Java)");
         System.out.println(" -n                Suppress the check for a newer version");
         System.out.println(" -p                Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.");
         System.out.println("   For example:   -p debug,strict");
@@ -184,6 +207,7 @@ public final class Main {
             System.exit(0);
         }
         Path grammarFile = null, outputDirectory = null;
+        String codeLang = "java";
         int jdkTarget = 0;
         Map<String, String> preprocessorSymbols = new HashMap<>();
         boolean quiet = false, noNewerCheck = false;
@@ -227,7 +251,26 @@ public final class Main {
                 else if (arg.equalsIgnoreCase("-q") || arg.equalsIgnoreCase("-quiet")) {
                     quiet = true;
                 }
+                else if (arg.toLowerCase().equals("-lang")) {
+                    String candidate = args[++i];
+
+                    if (!candidate.equals("java")) {
+                        if (!Arrays.asList(otherSupportedLanguages).contains(candidate.toLowerCase())) {
+                            System.err.println(String.format("Not a supported code generation language: '%s'", candidate));
+                            System.exit(-1);
+                        }
+                        codeLang = candidate.toLowerCase();
+                        if (jdkTarget != 0) {
+                            System.err.println("The -jdk flag is only compatible with a Java target.");
+                            System.exit(-1);
+                        }
+                    }
+                }
                 else if (arg.toLowerCase().startsWith("-jdk")) {
+                    if (!codeLang.equals("java")) {
+                        System.err.println("The -jdk flag is only compatible with a Java target.");
+                        System.exit(-1);
+                    }
                     String number = arg.substring(4);
                     try {
                        jdkTarget = Integer.valueOf(number);
@@ -280,7 +323,7 @@ public final class Main {
                 }
             }
         }
-        int errorcode = mainProgram(grammarFile, outputDirectory, jdkTarget, quiet, preprocessorSymbols);
+        int errorcode = mainProgram(grammarFile, outputDirectory, codeLang, jdkTarget, quiet, preprocessorSymbols);
         System.exit(errorcode);
     }
 
@@ -292,10 +335,10 @@ public final class Main {
      * @throws Exception
      */
 
-    public static int mainProgram(Path grammarFile, Path outputDir, int jdkTarget, boolean quiet, Map<String, String> symbols) 
+    public static int mainProgram(Path grammarFile, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
       throws IOException, ParseException, TemplateException {
         if (!quiet) bannerLine();
-        Grammar grammar = new Grammar(outputDir, jdkTarget, quiet, symbols);
+        Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
         grammar.parse(grammarFile, true);
         grammar.createOutputDir();
         grammar.doSanityChecks();
@@ -308,7 +351,7 @@ public final class Main {
         if (grammar.getWarningCount() == 0 && !quiet) {
             System.out.println("Parser generated successfully.");
         } else if (grammar.getWarningCount()>0) {
-            System.out.println("Parser generated with 0 errors and " 
+            System.out.println("Parser generated with 0 errors and "
                                 + grammar.getWarningCount() + " warnings.");
         }
         outputErrors(grammar);
@@ -323,7 +366,7 @@ public final class Main {
             System.err.println(warning);
         }
     }
-    
+
     /**
      * This prints the banner line when the various tools are invoked. This
      * takes as argument the tool's full name and its version.
@@ -335,8 +378,8 @@ public final class Main {
         System.out.println("(type \"java -jar javacc.jar\" with no arguments for help)\n");
         System.out.println();
     }
-    
-    
+
+
     static private String getBuiltOnString() {
     	if (manifestContent == "") {
     		return "";
@@ -356,5 +399,5 @@ public final class Main {
     	return " (" + jarFileName + " built by " + builtBy + " on " + buildDate + ")";
     }
 }
-    
+
 
