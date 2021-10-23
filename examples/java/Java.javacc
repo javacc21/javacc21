@@ -654,20 +654,14 @@ UnaryExpression :
 
 PreIncrementExpression : 
   "++" UnaryExpression
-  [
-    SCAN {currentLookaheadToken == null && !((Expression)peekNode()).isAssignableTo()}#
-    => FAIL "expression after ++ is not an assignable variable"
-  ]
+  ASSERT {((Expression)peekNode()).isAssignableTo()}
+  : "Expression after ++ is not an assignable variable."
 ;
 
 PreDecrementExpression : 
   "--" UnaryExpression 
-  [
-    SCAN {currentLookaheadToken!=null}# => {}
-    |
-    SCAN {!((Expression)peekNode()).isAssignableTo()}
-    => FAIL "expression after -- is not an assignable variable"
-  ]
+  ASSERT {((Expression)peekNode()).isAssignableTo()}
+  : "expression after -- is not an assignable variable"
 ;
 
 UnaryExpressionNotPlusMinus :
@@ -972,10 +966,10 @@ StatementExpression :
           AssignmentOperator Expression #AssignmentExpression(3)
       )
       |
-      SCAN 0 {lhs instanceof MethodCall || lhs instanceof AllocationExpression || lhs instanceof ExplicitConstructorInvocation}
-      =>{}
-      |
-      FAIL "Not a valid statement"
+      ASSERT {lhs instanceof MethodCall 
+               || lhs instanceof AllocationExpression 
+               || lhs instanceof ExplicitConstructorInvocation}
+      : "Not a valid statement."
   )
 ;
 
