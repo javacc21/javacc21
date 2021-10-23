@@ -86,6 +86,7 @@ private boolean scanToEnd, hitFailure, lastLookaheadSucceeded;
 private String currentlyParsedProduction, currentLookaheadProduction;
 private int lookaheadRoutineNesting;
 private EnumSet<TokenType> outerFollowSet;
+private String temp;
 
 [#--
  REVISIT these.

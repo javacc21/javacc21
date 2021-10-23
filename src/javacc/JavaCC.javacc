@@ -463,8 +463,8 @@ INJECT InvocationArguments :
 
 // In general, it is probably better to INCLUDE the (more stable) Java grammar
 // that is in the bootstrap jarfile.
-//INCLUDE JAVA
-INCLUDE "../../examples/java/Java.javacc"
+INCLUDE JAVA
+//INCLUDE "../../examples/java/Java.javacc"
 
 INJECT TypeDeclaration : 
     import java.util.*;
@@ -1924,13 +1924,15 @@ Assertion :
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
     |
     ["~" {CURRENT_NODE.setExpansionNegated(true);}] 
-    "("
-       ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
+    "(" 
+    ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
     ")"
    )
    [
        ":" Expression {CURRENT_NODE.setMessageExpression((Expression)peekNode());}
+       [":"]
    ]
+   [UpToHere(CURRENT_NODE)]
 ;
 
 ScanAhead #Lookahead : 

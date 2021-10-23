@@ -108,7 +108,8 @@ Modifiers#void :
   }
   |
   SCAN {permissibleModifiers == null
-        || permissibleModifiers.contains(SEALED) && "sealed".equals(getToken(1).getImage())
+        || permissibleModifiers.contains(SEALED) 
+           && "sealed".equals(getToken(1).getImage())
         || permissibleModifiers.contains(NON_SEALED) 
            && "non".equals(getToken(1).getImage())
            && "-".equals(getToken(2).getImage())
@@ -165,15 +166,14 @@ INJECT EnumDeclaration : implements TypeDeclaration;
 EmptyDeclaration# : ";" ;
 
 TypeIdentifier#void :
-   <IDENTIFIER>
-   [
-      SCAN {getToken(0).getImage().equals("record") 
-           || getToken(0).getImage().equals("var") 
-           || getToken(0).getImage().equals("permits")
-           || getToken(0).getImage().equals("sealed")
-           || getToken(0).getImage().equals("yield")}#
-      => FAIL "Illegal type name " + getToken(0)
-   ]
+   <IDENTIFIER> 
+   {temp = getToken(0).getImage();}#
+   ASSERT {!temp.equals("record") 
+           && !temp.equals("var") 
+           && !temp.equals("permits")
+           && !temp.equals("sealed")
+           && !temp.equals("yield")}#
+          : "Illegal type name " + temp 
    =>||
 ;
 
@@ -201,7 +201,8 @@ InterfaceDeclaration :
 ;
 
 PermitsList :
-   ACTIVATE_TOKENS PERMITS ("permits") =>||
+   SCAN 0 {getToken(1).getImage().equals("permits")}# =>
+   ACTIVATE_TOKENS PERMITS ("permits") 
    ObjectType
    ("," ObjectType)*
 ;
@@ -744,7 +745,7 @@ PrimaryExpression#void :
 // For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
 // still unclear to me whether this should be caught at this point or if it is better to just do
 // a post-parse tree walk that runs over the AST and checks for these things.
-//  SCAN 1 {getToken(0).getType() == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !lastConsumedToken.getImage().equals("yield")))}#
+//  SCAN 1 {getToken(0).getType() == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !getToken(0).getImage().equals("yield")))}#
   SCAN 1 {getToken(0).getType() == IDENTIFIER}#
   => 
   InvocationArguments #MethodCall(+1)
