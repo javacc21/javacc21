@@ -390,8 +390,6 @@ ${ScanCodeAssertion(expansion, indent)}
 ${ScanCodeError(expansion, indent)}
    [#elseif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
-   [#elseif classname = "TokenTypeActivation"]
-${ScanCodeTokenActivation(expansion, indent)}
    [#elseif classname = "ExpansionSequence"]
 ${ScanCodeSequence(expansion, indent)}
    [#elseif classname = "ZeroOrOne"]
@@ -509,17 +507,6 @@ ${is}self.last_lookahead_succeeded = False
 ${is}return False
 [#-- ${is}# DBG < ScanCodeError ${indent} --]
 [/#macro]
-
-[#macro ScanCodeTokenActivation activation indent]
-[#var is=""?right_pad(indent)]
-[#-- ${is}# DBG > ScanCodeTokenActivation ${indent} --]
-${is}self.[#if activation.deactivate]de[/#if]activate_token_types(
-[#list activation.tokenNames as name]
-${is}    ${name}[#if name_has_next],[/#if]
-[/#list]
-${is})
-[#-- ${is}# DBG < ScanCodeTokenActivation ${indent} --]
-[/#macro]]
 
 [#macro ScanCodeChoice choice indent]
 [#var is=""?right_pad(indent)]
