@@ -138,21 +138,6 @@ TypeDeclaration #interface :
   (
     EmptyDeclaration 
     |
-    SCAN 0 {foundType == AT}
-    => AnnotationTypeDeclaration
-    |
-    SCAN 0 {foundType == CLASS} 
-    => ClassDeclaration
-    |
-    SCAN 0 {foundType == INTERFACE}
-    => InterfaceDeclaration
-    |
-    SCAN 0 {foundType == ENUM}
-    => EnumDeclaration
-    |
-    SCAN 0 {foundType == RECORD}
-    => RecordDeclaration
-    |
     AnnotationTypeDeclaration
     |
     ClassDeclaration
@@ -163,25 +148,21 @@ TypeDeclaration #interface :
     |
     RecordDeclaration
   )
-  {foundType = null;}#
 ;
 
-INJECT PARSER_CLASS : {
-  private TokenType foundType;
-}
 
 TypeDeclarationLA#scan :
    ";"
    |
    Modifiers 
    (
-     "class" {foundType = CLASS;}
-     | "interface" {foundType = INTERFACE;}
-     | "enum" {foundType = ENUM;}
-     | "@" "interface" {foundType = AT;}
+     "class" 
+     | "interface" 
+     | "enum" 
+     | "@" "interface" 
      | <IDENTIFIER> 
        ASSERT {currentLookaheadToken.getImage().equals("record")} 
-       <IDENTIFIER> {foundType = RECORD;}
+       <IDENTIFIER> 
    )
 ;   
 
@@ -192,6 +173,8 @@ INJECT InterfaceDeclaration : implements TypeDeclaration;
 INJECT EnumDeclaration : implements TypeDeclaration;
 
 EmptyDeclaration# : ";" ;
+
+INJECT PARSER_CLASS : {private String temp;}
 
 TypeIdentifier#void :
    <IDENTIFIER> 
