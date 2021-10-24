@@ -539,7 +539,7 @@ ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
 [#if assertion.messageExpression??]
   [#set optionalPart = " + " + grammar.utils.translateExpression(assertion.messageExpression)]
 [/#if]
-[#var assertionMessage = "Assertion at: " + assertion.location + " failed."]
+[#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed."]
 [#if assertion.assertionExpression??]
 ${is}if not (${grammar.utils.translateExpression(assertion.assertionExpression)}):
 ${is}    self.fail("${assertionMessage}"${optionalPart})
