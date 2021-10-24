@@ -57,6 +57,7 @@ INCLUDE "JavaLexer.javacc"
 #CompilationUnit# :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
+  [SCAN TypeDeclarationLA => {}]
   ( TypeDeclaration )+!
   [<EOF>]
   {
@@ -137,6 +138,21 @@ TypeDeclaration #interface :
   (
     EmptyDeclaration 
     |
+    SCAN 0 {foundType == AT}
+    => AnnotationTypeDeclaration
+    |
+    SCAN 0 {foundType == CLASS} 
+    => ClassDeclaration
+    |
+    SCAN 0 {foundType == INTERFACE}
+    => InterfaceDeclaration
+    |
+    SCAN 0 {foundType == ENUM}
+    => EnumDeclaration
+    |
+    SCAN 0 {foundType == RECORD}
+    => RecordDeclaration
+    |
     AnnotationTypeDeclaration
     |
     ClassDeclaration
@@ -147,14 +163,26 @@ TypeDeclaration #interface :
     |
     RecordDeclaration
   )
+  {foundType = null;}#
 ;
+
+INJECT PARSER_CLASS : {
+  private TokenType foundType;
+}
 
 TypeDeclarationLA#scan :
    ";"
    |
-   Modifiers ("class" | "interface" | "enum" | ("@" "interface"))
-   | 
-   RecordLA
+   Modifiers 
+   (
+     "class" {foundType = CLASS;}
+     | "interface" {foundType = INTERFACE;}
+     | "enum" {foundType = ENUM;}
+     | "@" "interface" {foundType = AT;}
+     | <IDENTIFIER> 
+       ASSERT {currentLookaheadToken.getImage().equals("record")} 
+       <IDENTIFIER> {foundType = RECORD;}
+   )
 ;   
 
 INJECT EmptyDeclaration : implements TypeDeclaration;
@@ -250,9 +278,10 @@ EnumBody :
 ;
 
 RecordDeclaration :
- SCAN RecordLA =>
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}
   Modifiers
+  ASSERT {getToken(1).getImage().equals("record") && getToken(2).getType() == IDENTIFIER}#
+  =>||
   ACTIVATE_TOKENS RECORD ("record")
   TypeIdentifier
   [TypeParameters]
@@ -260,17 +289,6 @@ RecordDeclaration :
   [ImplementsList]
   RecordBody
 ;
-
-// This is a production that is only used as a lookahead. It's kludgy, but it's
-// necessary because, when we scan ahead to see whether to enter TypeDeclaration,
-// the RECORD token type is deactivated. This kind of detail is quite tricky.
-RecordLA#scan :
-   Modifiers
-   <IDENTIFIER>
-   ASSERT {currentLookaheadToken.getImage().equals("record")}
-   <IDENTIFIER>
-;   
-
 
 RecordHeader :
    "("
@@ -931,7 +949,8 @@ NoVarDeclaration #void :
 VarDeclaration #void :
   {permissibleModifiers = EnumSet.of(FINAL);}#
   Modifiers
-  ACTIVATE_TOKENS VAR ("var") =>||
+  ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType()==IDENTIFIER} =>||
+  ACTIVATE_TOKENS VAR ("var")
   <IDENTIFIER> 
   "=" Expression
 ;
