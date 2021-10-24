@@ -13,7 +13,7 @@
    <target name="parser-gen" unless="pyparser.uptodate">
         <java classpath="../../build:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
             <assertions><enable/></assertions>
-            <arg line="-n ${basedir}/Python.javacc"/>
+            <arg line="-n -q ${basedir}/Python.javacc"/>
         </java>
    </target>
    <target name="compile" depends="parser-check,parser-gen">

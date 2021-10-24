@@ -107,14 +107,14 @@ Modifiers#void :
     }
   }
   |
-  SCAN {permissibleModifiers == null
-        || permissibleModifiers.contains(SEALED) 
-           && "sealed".equals(getToken(1).getImage())
-        || permissibleModifiers.contains(NON_SEALED) 
-           && "non".equals(getToken(1).getImage())
-           && "-".equals(getToken(2).getImage())
-           && "sealed".equals(getToken(3).getImage())}#
-  => 
+  SCAN {
+    ((permissibleModifiers == null || permissibleModifiers.contains(SEALED))
+      && "sealed".equals(getToken(1).getImage()))
+    || ((permissibleModifiers == null || permissibleModifiers.contains(NON_SEALED))
+      && "non".equals(getToken(1).getImage())
+      && "-".equals(getToken(2).getImage())
+      && "sealed".equals(getToken(3).getImage()))
+  }# =>
   ACTIVATE_TOKENS SEALED, NON_SEALED ("sealed"|"non-sealed") 
   {
     if (permissibleModifiers!=null) {
@@ -265,9 +265,10 @@ RecordDeclaration :
 // necessary because, when we scan ahead to see whether to enter TypeDeclaration,
 // the RECORD token type is deactivated. This kind of detail is quite tricky.
 RecordLA#scan :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}#
    Modifiers
-   (SCAN {getToken(1).getImage().equals("record")}# => <IDENTIFIER> <IDENTIFIER> | FAIL)
+   <IDENTIFIER>
+   ASSERT {currentLookaheadToken.getImage().equals("record")}
+   <IDENTIFIER>
 ;   
 
 
@@ -681,7 +682,7 @@ UnaryExpressionNotPlusMinus :
 PostfixExpression :
   PrimaryExpression 
   [ 
-    SCAN 1 {currentLookaheadToken != null || ((Expression)peekNode()).isAssignableTo()}#
+    SCAN {((Expression)peekNode()).isAssignableTo()}
     =>
     "++" | "--" 
   ]
@@ -744,10 +745,7 @@ PrimaryExpression#void :
   => 
   InvocationArguments #MethodCall(+1)
  )*
- [
-     SCAN {getToken(0).getType() == SUPER}#
-     => FAIL "Not a valid expression here"   
- ]
+ ASSERT {getToken(0).getType() != SUPER}# : "Not a valid expression here"
 ;
 
 LiteralExpression : Literal #LiteralExpression;
@@ -938,13 +936,14 @@ VarDeclaration #void :
   "=" Expression
 ;
 
-LocalVariableDeclarationLA#void :
-   {permissibleModifiers = EnumSet.of(FINAL);}#
+LocalVariableDeclarationLA#scan :
+   {permissibleModifiers = EnumSet.of(FINAL);}
    Modifiers
    (
      Type 
      |
-     <IDENTIFIER> [SCAN 0 {!getToken(0).getImage().equals("var")}# => FAIL]
+     <IDENTIFIER> 
+     ASSERT {currentLookaheadToken.getImage().equals("var")}
    )
    <IDENTIFIER>
 ;
@@ -1077,7 +1076,8 @@ BreakStatement :
 YieldStatement :
    SCAN 2 {getToken(1).getImage().equals("yield") 
         && isInProduction("SwitchExpression")}# 
-   => ACTIVATE_TOKENS YIELD ("yield") Expression ";" 
+   => ACTIVATE_TOKENS YIELD ("yield") 
+   Expression ";" 
 ;
 
 ContinueStatement : "continue" [ <IDENTIFIER> ] ";" ;

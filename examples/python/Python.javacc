@@ -130,7 +130,7 @@ CompoundStatement :
 // I suppose looking ahead to the colon makes sense. Is that right?
 MatchStatementLA#scan :
     <NAME>
-    ASSERT {getToken(0).getImage().equals("match")}#
+    ASSERT {getToken(0).getImage().equals("match")}
     SubjectExpression ":" 
 ;    
      
