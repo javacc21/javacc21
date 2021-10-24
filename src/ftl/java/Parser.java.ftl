@@ -38,6 +38,7 @@
 package ${grammar.parserPackage};
 [/#if]
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -257,6 +258,24 @@ public boolean isCancelled() {return cancelled;}
       throw new ParseException(this, message);
     }
     this.hitFailure = true;
+  }
+
+  private static HashMap<TokenType[], EnumSet<TokenType>> enumSetCache = new HashMap<>();
+
+  private static EnumSet tokenTypeSet(TokenType first, TokenType... rest) {
+    TokenType[] key = new TokenType[1 + rest.length];
+
+    key[0] = first;
+    if (rest.length > 0) {
+      System.arraycopy(rest, 0, key, 1, rest.length);
+    }
+    Arrays.sort(key);
+    if (enumSetCache.containsKey(key)) {
+      return enumSetCache.get(key);
+    }
+    EnumSet<TokenType> result = (rest.length == 0) ? EnumSet.of(first) : EnumSet.of(first, rest);
+    enumSetCache.put(key, result);
+    return result;
   }
 
   /**
