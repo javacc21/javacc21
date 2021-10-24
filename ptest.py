@@ -27,6 +27,9 @@ def python_dump_node(stream, node, level=0):
         python_dump_node(stream, child, level + 1)
 
 if IS_JAVA:
+    import java.io
+    from java.nio.charset import StandardCharsets
+
     def node_repr(node):
         if isinstance(node, Token):
             return node.image
@@ -41,6 +44,16 @@ if IS_JAVA:
         stream.print(s)
         for child in node.children():
             java_dump_node(stream, child, level + 1)
+
+    def get_reader(p):
+        fis = java.io.FileInputStream(p)
+        isr = java.io.InputStreamReader(fis, StandardCharsets.UTF_8)
+        return java.io.BufferedReader(isr)
+
+    def get_writer(p):
+        fos = java.io.FileOutputStream(p)
+        osw = java.io.BufferedWriter(java.io.OutputStreamWriter(fos, StandardCharsets.UTF_8))
+        return java.io.PrintWriter(osw, True)
 
 def main():
     fn = os.path.expanduser('~/logs/ptest.log')
@@ -105,8 +118,8 @@ def main():
             try:
                 if IS_JAVA:
                     import java.io
-                    f = java.io.FileReader(p)
-                    outf = java.io.PrintWriter(java.io.FileWriter(ofn))
+                    f = get_reader(p)
+                    outf = get_writer(ofn)
                     if options.parser:
                         parser = Parser(f)
                         parser.inputSource = p

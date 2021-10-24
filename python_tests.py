@@ -175,6 +175,8 @@ def test_grammar(gdata):
 
     cmd = ['diff', os.path.join('testfiles', 'results', 'java'),
            os.path.join('testfiles', 'results', 'python')]
+    if os.name == 'nt':
+        cmd.insert(1, '-b')
     p = subprocess.run(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('Test results differ - '
@@ -197,7 +199,7 @@ def main():
     aa('--langs', default='all', metavar='LANG1,LANG2...', help='Languages to test')
     options = ap.parse_args()
     # Check that jython is available
-    check = False  # For now, no need to check
+    check = 'JYTHONDIR' in os.environ
     if not check:
         global JYTHON_PATH
         JYTHON_PATH = os.path.expanduser('~/bin/jython.jar')
