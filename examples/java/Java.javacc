@@ -358,7 +358,7 @@ FieldDeclaration :
   Type VariableDeclarator =>|+1 ( "," VariableDeclarator )* ";"
 ;
 
-VariableDeclarator : VariableDeclaratorId [ "=" VariableInitializer ] ;
+VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
 VariableDeclaratorId : <IDENTIFIER> ( (Annotation)* "[" "]" )* ;
 

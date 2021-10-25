@@ -466,6 +466,8 @@ INJECT InvocationArguments :
 INCLUDE JAVA
 //INCLUDE "../../examples/java/Java.javacc"
 
+VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
+
 INJECT TypeDeclaration : 
     import java.util.*;
     import PARSER_PACKAGE.CONSTANTS_CLASS.TokenType;
@@ -724,12 +726,7 @@ INJECT CaseStatement :
 INJECT MethodDeclaration : 
 {
     public String getName() {
-        for (Node n : children) {
-            if (n instanceof Identifier) {
-                return n.toString();
-            }
-        }
-        throw new IllegalStateException();
+        return firstChildOfType(Identifier.class).toString();
     }
     
     public FormalParameters getFormalParameters() {
@@ -739,6 +736,12 @@ INJECT MethodDeclaration :
     public String getFullSignature() {
         return getName() + getFormalParameters();
     }
+}
+
+INJECT VariableDeclarator : {
+   public String getName() {
+       return firstDescendantOfType(Identifier.class).getImage();
+   }
 }
 
 INJECT ThrowsList : 

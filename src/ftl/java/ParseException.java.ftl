@@ -23,7 +23,7 @@ public class ParseException extends Exception implements ${grammar.constantsClas
   }
   
   public ParseException(Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
-      this.token = token;
+      this.token = token.getNext() != null ? token.getNext() : token;
       this.expectedTypes = expectedTypes;
       this.callStack = new ArrayList<>(callStack);
   }

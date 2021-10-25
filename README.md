@@ -11,7 +11,7 @@ A list of the main features (in particular, wrt *legacy JavaCC*) follows:
 
 ## Up-to-date Java language support
 
-JavaCC 21 includes support for the Java language through JDK ~~8~~ ~~13~~ ~~15~~ 16. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/) and [here](https://javacc.com/2020/10/25/jdk-14-now-fully-supported-new-switch-syntax/). (As of this writing, Java language support in legacy JavaCC is stalled at the JDK 7 level.)
+JavaCC 21 includes support for the Java language through JDK ~~8~~ ~~13~~ ~~15~~ ~~16~~ 17. See [here](https://javacc.com/2020/03/22/milestone-javacc-21-now-supports-the-java-language-up-to-jdk-13/), [here](https://javacc.com/2020/10/25/jdk-14-now-fully-supported-new-switch-syntax/) and [here](https://javacc.com/2021/10/16/announcement-jdk17-python310/). (As of this writing, Java language support in legacy JavaCC is stalled at the JDK 7 level.)
 
 Note also that the [Java grammar that JavaCC 21 uses internally](https://github.com/JavaCC21/JavaCC21/blob/master/examples/java/Java.javacc) can be used in your own projects without any restriction.
 
@@ -114,6 +114,10 @@ The current JavaCC 21 codebase itself is the result of a massive refactoring/cle
 ## Assorted Usability Enhancements
 
 In general, JavaCC 21 has more sensible default settings and is [much more usable out-of-the-box](https://doku.javacc.com/doku.php?id=convention_over_configuration).
+
+## Robust Up-to-date Python Grammar/Parser
+
+JavaCC 21 includes a robust, [up-to-date grammar](https://github.com/javacc21/javacc21/blob/master/examples/python/Python.javacc) for the latest stable version of the Python language (3.10) and, like the aforementioned Java grammar, it can be used and adapted in your own projects without any restriction.
 
 ## JavaCC 21 is actively developed!
 
