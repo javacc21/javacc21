@@ -22,6 +22,19 @@ jobs:
       with:
         java-version: ${{ matrix.java-version }}
         distribution: 'adopt'
+    - name: Create test directories (POSIX)
+      if: ${{ matrix.os != 'windows-latest' }}
+      run: |
+        mkdir -p ~/bin ~/logs
+    - name: Create test directories (Windows)
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: |
+        $dirs = "${env:USERPROFILE}/bin", "${env:USERPROFILE}/logs"
+        foreach ($d in $dirs) {
+          if (!(test-path $d)) {
+            mkdir $d
+          }
+        }
     - name: Cache Jython (POSIX)
       if: ${{ (matrix.os != 'windows-latest') }}
       id: cache-jython-posix
@@ -32,7 +45,6 @@ jobs:
     - name: Setup Jython 2.7.2 (POSIX)
       if: ${{ (matrix.os != 'windows-latest') && (steps.cache-jython-posix.outputs.cache-hit != 'true') }}
       run: |
-        mkdir -p ~/bin ~/logs
         wget https://repo1.maven.org/maven2/org/python/jython-standalone/2.7.2/jython-standalone-2.7.2.jar -O ~/bin/jython.jar
     - name: Cache Jython (Windows)
       if: ${{ (matrix.os == 'windows-latest') }}
@@ -44,12 +56,6 @@ jobs:
     - name: Setup Jython 2.7.2 (Windows)
       if: ${{ matrix.os == 'windows-latest' && (steps.cache-jython-windows.outputs.cache-hit != 'true') }}
       run: |
-        $dirs = "${env:USERPROFILE}/bin", "${env:USERPROFILE}/logs"
-        foreach ($d in $dirs) {
-          if (!(test-path $d)) {
-            mkdir $d
-          }
-        }
         $source = 'https://repo1.maven.org/maven2/org/python/jython-standalone/2.7.2/jython-standalone-2.7.2.jar'
         $destination = "${env:USERPROFILE}/bin/jython.jar"
         Invoke-WebRequest -Uri $source -OutFile $destination
