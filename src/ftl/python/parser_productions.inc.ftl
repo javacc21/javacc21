@@ -58,7 +58,6 @@
 [/#macro]
 
 [#macro ParserProduction production]
-    [@CU.firstSetVar production.expansion/]
     ${production.leadingComments}
     # ${production.location}
     def parse_${production.name}(self[#if production.parameterList?has_content], ${grammar.utils.translateParameters(production.parameterList)}[/#if]):

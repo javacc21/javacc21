@@ -47,7 +47,7 @@
    [#if tokenNames?size = 0]
      static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
    [#elseif tokenNames?size <8]
-    static private final EnumSet<TokenType> ${varName} = EnumSet.of(
+    static private final EnumSet<TokenType> ${varName} = tokenTypeSet(
        [#list tokenNames as type]
          [#if type_index > 0],[/#if]
          ${TT}${type}
@@ -56,7 +56,7 @@
    [#else]
     static private final EnumSet<TokenType> ${varName} = ${varName}_init();
     static private EnumSet<TokenType> ${varName}_init() {
-       return EnumSet.of(
+       return tokenTypeSet(
          [#list tokenNames as type]
           [#if type_index > 0],[/#if]
            ${TT}${type} 
