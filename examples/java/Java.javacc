@@ -57,6 +57,7 @@ INCLUDE "JavaLexer.javacc"
 #CompilationUnit# :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
+  [SCAN TypeDeclarationLA => {}]
   ( TypeDeclaration )+!
   [<EOF>]
   {
@@ -149,12 +150,20 @@ TypeDeclaration #interface :
   )
 ;
 
+
 TypeDeclarationLA#scan :
    ";"
    |
-   Modifiers ("class" | "interface" | "enum" | ("@" "interface"))
-   | 
-   RecordLA
+   Modifiers 
+   (
+     "class" 
+     | "interface" 
+     | "enum" 
+     | "@" "interface" 
+     | <IDENTIFIER> 
+       ASSERT {currentLookaheadToken.getImage().equals("record")} 
+       <IDENTIFIER> 
+   )
 ;   
 
 INJECT EmptyDeclaration : implements TypeDeclaration;
@@ -164,6 +173,8 @@ INJECT InterfaceDeclaration : implements TypeDeclaration;
 INJECT EnumDeclaration : implements TypeDeclaration;
 
 EmptyDeclaration# : ";" ;
+
+INJECT PARSER_CLASS : {private String temp;}
 
 TypeIdentifier#void :
    <IDENTIFIER> 
@@ -250,9 +261,10 @@ EnumBody :
 ;
 
 RecordDeclaration :
- SCAN RecordLA =>
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}
   Modifiers
+  ASSERT {getToken(1).getImage().equals("record") && getToken(2).getType() == IDENTIFIER}#
+  =>||
   ACTIVATE_TOKENS RECORD ("record")
   TypeIdentifier
   [TypeParameters]
@@ -260,17 +272,6 @@ RecordDeclaration :
   [ImplementsList]
   RecordBody
 ;
-
-// This is a production that is only used as a lookahead. It's kludgy, but it's
-// necessary because, when we scan ahead to see whether to enter TypeDeclaration,
-// the RECORD token type is deactivated. This kind of detail is quite tricky.
-RecordLA#scan :
-   Modifiers
-   <IDENTIFIER>
-   ASSERT {currentLookaheadToken.getImage().equals("record")}
-   <IDENTIFIER>
-;   
-
 
 RecordHeader :
    "("
@@ -931,7 +932,8 @@ NoVarDeclaration #void :
 VarDeclaration #void :
   {permissibleModifiers = EnumSet.of(FINAL);}#
   Modifiers
-  ACTIVATE_TOKENS VAR ("var") =>||
+  ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType()==IDENTIFIER} =>||
+  ACTIVATE_TOKENS VAR ("var")
   <IDENTIFIER> 
   "=" Expression
 ;
