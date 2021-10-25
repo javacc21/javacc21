@@ -1566,12 +1566,15 @@ public class Grammar extends BaseNode {
             List<ClassOrInterfaceBodyDeclaration> declsToProcess = bodyDeclarations.get(className);
             if (declsToProcess != null) {
                 for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
-                    if (decl instanceof FieldDeclaration) {
+                    if (decl instanceof MethodDeclaration) {
+                        continue;
+                    }
+                    else if (decl instanceof FieldDeclaration) {
                         Identifier name = decl.firstChildOfType(Identifier.class);
 
                         result.add(translator.translateIdentifier(name.getImage()));
                     }
-                    else if (decl instanceof Initializer) {
+                    else {
                         throw new UnsupportedOperationException();
                     }
                 }
