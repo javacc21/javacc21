@@ -261,7 +261,7 @@ public boolean isCancelled() {return cancelled;}
 
   private static HashMap<TokenType[], EnumSet<TokenType>> enumSetCache = new HashMap<>();
 
-  private static EnumSet tokenTypeSet(TokenType first, TokenType... rest) {
+  private static EnumSet<TokenType> tokenTypeSet(TokenType first, TokenType... rest) {
     TokenType[] key = new TokenType[1 + rest.length];
 
     key[0] = first;
