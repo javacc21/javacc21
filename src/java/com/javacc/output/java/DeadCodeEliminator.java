@@ -32,24 +32,45 @@ package com.javacc.output.java;
 import java.util.*;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
+import com.javacc.parser.JavaCCConstants.TokenType;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
+/**
+ * A visitor that eliminates unused code.
+ * It is not absolutely correct, in the sense of catching all 
+ * unused methods or fields, but works for our purposes.
+ * For example, it does not take account overloaded methods, so
+ * if the method name is referenced somewhere, it is assumed to be used.
+ * However, it might be a reference to a method with the same name
+ * with different arguments.
+ * Also variable names can be in a sense overloaded by being defined
+ * in inner classes, but we don't bother about that either.
+ */
 public class DeadCodeEliminator extends Node.Visitor {
     private Set<String> usedNames = new HashSet<String>();
     private Set<Node> alreadyVisited = new HashSet<Node>();
     private CompilationUnit jcu;
 
-    public DeadCodeEliminator(CompilationUnit jcu) {
+    DeadCodeEliminator(CompilationUnit jcu) {
         this.jcu = jcu;
     }
 
-    public void process() {
+    void stripUnused() {
         int previousUsedNamesSize = -1;
         // Visit the tree over and over until
-        // now names are added. Then we can stop.
+        // nothing is added to usedNames. Then we can stop.
         while (usedNames.size() > previousUsedNamesSize) {
             previousUsedNamesSize = usedNames.size();
             visit(jcu);
+        }
+        // If the name of the method is not in usedNames, we delete it.
+        for (MethodDeclaration md : jcu.descendants(MethodDeclaration.class, md->!usedNames.contains(md.getName()))) {
+            md.getParent().removeChild(md);
+        }
+        // We go through all the private FieldDeclarations and get rid of any variables that 
+        // are not in usedNames
+        for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, fd->fd.firstChildOfType(PRIVATE)!=null)) {
+            stripUnusedVars(fd);
         }
     }
 
@@ -91,25 +112,43 @@ public class DeadCodeEliminator extends Node.Visitor {
         alreadyVisited.add(cd);
     }
 
-    static public void eliminateUnused(CompilationUnit jcu) {
-        DeadCodeEliminator deadCodeEliminator = new DeadCodeEliminator(jcu);
-        deadCodeEliminator.process();
-        Set<String> usedNames = deadCodeEliminator.usedNames;
-        for (MethodDeclaration md : jcu.descendants(MethodDeclaration.class, md->!usedNames.contains(md.getName()))) {
-            md.getParent().removeChild(md);
+    // Get rid of any variable declarations where the variable name 
+    // is not in usedNames. The only complicated case is if the field
+    // has more than one variable declaration comma-separated
+    private void stripUnusedVars(FieldDeclaration fd) {
+        boolean removedSomething = false;
+        for (VariableDeclarator vd : fd.childrenOfType(VariableDeclarator.class)) {
+            if (!usedNames.contains(vd.getName())) {
+                fd.removeChild(vd);
+                removedSomething = true;
+            }
         }
-        for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, fd->shouldEliminate(fd, usedNames))) {
-            fd.getParent().removeChild(fd);
+        if (removedSomething) {
+            if (fd.firstChildOfType(VariableDeclarator.class) != null) {
+                removeExtraCommas(fd);
+            }
+            else {
+                fd.getParent().removeChild(fd);
+            }
         }
     }
 
-    static boolean shouldEliminate(FieldDeclaration fd, Set<String> usedNames) {
-        if (fd.firstChildOfType(PRIVATE) ==null) {
-            return false;
+    // A mop-up operation if we've eliminated some (but not all) 
+    // of the variables in a FieldDeclaration
+    static private void removeExtraCommas(FieldDeclaration fd) {
+        List<Token> toBeRemoved = new ArrayList<Token>();
+        for (int i=0; i< fd.getChildCount()-1; i++) {
+            Node current = fd.getChild(i);
+            Node next = fd.getChild(i+1);
+            if (current instanceof Token && next instanceof Token) {
+                Token curToken = (Token) current;
+                TokenType nextTokenType = ((Token) next).getType();
+                if (curToken.getType() == COMMA && (nextTokenType == COMMA || nextTokenType == SEMICOLON))
+                    toBeRemoved.add((Token) current);
+            }
         }
-        for (VariableDeclarator vd : fd.childrenOfType(VariableDeclarator.class)) {
-            if (usedNames.contains(vd.getName())) return false;
+        for (Token comma : toBeRemoved) {
+            fd.removeChild(comma);
         }
-        return true;
     }
 }

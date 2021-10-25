@@ -132,6 +132,14 @@ public class JavaCodeUtils {
         }
     }
 
+    /**
+     * Uses the DeadCodeEliminator visitor class to get rid of
+     * unused private methods and fields
+     */
+    static public void stripUnused(CompilationUnit jcu) {
+        new DeadCodeEliminator(jcu).stripUnused();
+    }
+
     static private final String capitalizeFirstLetter(String s) {
         return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
