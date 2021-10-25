@@ -1537,8 +1537,7 @@ public class Grammar extends BaseNode {
                 translator.clearFields();
             }
             Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = injector.getBodyDeclarations();
-            List<ClassOrInterfaceBodyDeclaration> declsToProcess;
-            declsToProcess = bodyDeclarations.get(className);
+            List<ClassOrInterfaceBodyDeclaration> declsToProcess = bodyDeclarations.get(className);
             int indent = 8;
             if (declsToProcess != null) {
                 for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
@@ -1557,6 +1556,27 @@ public class Grammar extends BaseNode {
                 }
             }
             return result.toString();
+        }
+
+        public List<String> injectedParserFieldNames(CodeInjector injector) {
+            ArrayList<String> result = new ArrayList<>();
+            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
+                    Grammar.this.getParserClassName());
+            Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = injector.getBodyDeclarations();
+            List<ClassOrInterfaceBodyDeclaration> declsToProcess = bodyDeclarations.get(className);
+            if (declsToProcess != null) {
+                for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
+                    if (decl instanceof FieldDeclaration) {
+                        Identifier name = decl.firstChildOfType(Identifier.class);
+
+                        result.add(translator.translateIdentifier(name.getImage()));
+                    }
+                    else if (decl instanceof Initializer) {
+                        throw new UnsupportedOperationException();
+                    }
+                }
+            }
+            return result;
         }
 
         public String translateLexerInjections(CodeInjector injector, boolean fields) {

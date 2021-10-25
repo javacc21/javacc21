@@ -225,7 +225,13 @@ class Parser:
         'parsing_problems',
         'currently_parsed_production',
         'current_lookahead_production',
-        'permissible_modifiers'
+[#var injectedFields = grammar.utils.injectedParserFieldNames(injector)]
+[#if injectedFields?size > 0]
+        # injected fields
+[#list injectedFields as fieldName]
+        '${fieldName}',
+[/#list]
+[/#if]
     )
 
     def __init__(self, input_source, stream_or_lexer=None):
