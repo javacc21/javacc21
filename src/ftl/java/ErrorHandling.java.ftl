@@ -58,8 +58,9 @@
 ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
 private ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 
-
-private EnumSet<TokenType> currentFollowSet;
+[#if grammar.faultTolerant]
+  private EnumSet<TokenType> currentFollowSet;
+[/#if]
 
 /**
  * Inner class that represents entering a grammar production
@@ -71,8 +72,9 @@ class NonTerminalCall {
 
     // We actually only use this when we're working with the LookaheadStack
     final boolean scanToEnd;
-
+   [#if grammar.faultTolerant]
     final EnumSet<TokenType> followSet;
+   [/#if]
 
 
     NonTerminalCall(String sourceFile, String productionName, int line, int column) {
@@ -81,7 +83,9 @@ class NonTerminalCall {
         this.line = line;
         this.column = column;
         this.scanToEnd = ${grammar.parserClassName}.this.scanToEnd;
+      [#if grammar.faultTolerant]
         this.followSet = ${grammar.parserClassName}.this.outerFollowSet;
+      [/#if]
     }
 
     StackTraceElement createStackTraceElement() {
@@ -100,7 +104,9 @@ private final void pushOntoCallStack(String methodName, String fileName, int lin
 private final void popCallStack() {
     NonTerminalCall ntc = parsingStack.remove(parsingStack.size() -1);
     this.currentlyParsedProduction = ntc.productionName;
+   [#if grammar.faultTolerant]
     this.outerFollowSet = ntc.followSet;
+   [/#if]
 }
 
 private final void restoreCallStack(int prevSize) {
