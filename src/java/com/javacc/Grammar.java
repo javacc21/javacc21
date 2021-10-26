@@ -1570,9 +1570,25 @@ public class Grammar extends BaseNode {
                         continue;
                     }
                     else if (decl instanceof FieldDeclaration) {
-                        Identifier name = decl.firstChildOfType(Identifier.class);
-
-                        result.add(translator.translateIdentifier(name.getImage()));
+                        String name = null;
+                        for (Node child : decl.children()) {
+                            if (child instanceof Identifier) {
+                                name = ((Identifier) child).getImage();
+                                break;
+                            }
+                            else if (child instanceof VariableDeclarator) {
+                                Identifier ident = child.firstChildOfType(Identifier.class);
+                                if (ident == null) {
+                                    throw new UnsupportedOperationException();
+                                }
+                                name = ident.getImage();
+                                break;
+                            }
+                        }
+                        if (name == null) {
+                            throw new UnsupportedOperationException();
+                        }
+                        result.add(translator.translateIdentifier(name));
                     }
                     else {
                         throw new UnsupportedOperationException();

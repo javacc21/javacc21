@@ -352,20 +352,20 @@ ${is}# DBG < BuildCodeAttemptBlock ${indent}
 [#-- ${is}# DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
    [#var production = nonterminal.production]
 ${is}self.push_onto_call_stack('${nonterminal.containingProduction.name}', '${nonterminal.inputSource?j_string}', ${nonterminal.beginLine}, ${nonterminal.beginColumn})
-   [#var followSet = nonterminal.followSet]
-   [#if !followSet.incomplete]
-      [#if !nonterminal.beforeLexicalStateSwitch]
+[#if grammar.faultTolerant]
+  [#var followSet = nonterminal.followSet]
+  [#if !followSet.incomplete]
+    [#if !nonterminal.beforeLexicalStateSwitch]
 ${is}self.outer_follow_set = self.${nonterminal.followSetVarName}
-      [#else]
+    [#else]
 ${is}self.outer_follow_set = None
-      [/#if]
-   [#else]
-     [#if !followSet.isEmpty()]
+    [/#if]
+  [#elseif !followSet.isEmpty()]
 ${is}if self.outer_follow_set is not None:
 ${is}    new_follow_set = set(self.${nonterminal.followSetVarName}) | self.outer_follow_set
 ${is}    self.outer_follow_set = new_follow_set
-     [/#if]
-   [/#if]
+  [/#if]
+[/#if]
 ${is}try:
    [#if !nonterminal.LHS?is_null && production.returnType != "void"]
 ${is}    ${nonterminal.LHS} =
