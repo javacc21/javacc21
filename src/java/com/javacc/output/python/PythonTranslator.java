@@ -35,8 +35,6 @@ import java.util.Set;
 
 import com.javacc.Grammar;
 import com.javacc.output.Translator;
-import com.javacc.parser.tree.IfStatement;
-import com.javacc.parser.tree.ReturnStatement;
 
 public class PythonTranslator extends Translator {
     public PythonTranslator(Grammar grammar) {
@@ -107,10 +105,9 @@ public class PythonTranslator extends Translator {
         if (getterName.startsWith("is")) {
             return translateIdentifier(getterName);
         }
-        StringBuilder result = new StringBuilder();
-        result.append(Character.toLowerCase(getterName.charAt(3)));
-        result.append(getterName.substring(4));
-        return translateIdentifier(result.toString());
+        String result = Character.toLowerCase(getterName.charAt(3)) +
+                getterName.substring(4);
+        return translateIdentifier(result);
     }
 
     public boolean needsParentheses(ASTExpression expr) {
@@ -243,7 +240,7 @@ public class PythonTranslator extends Translator {
         result.append(')');
     }
 
-    @Override protected void translateTernaryExpression(ASTTernaryExpession expr, StringBuilder result) {
+    @Override protected void translateTernaryExpression(ASTTernaryExpression expr, StringBuilder result) {
         boolean parens = needsParentheses(expr);
         ASTExpression condition = expr.getCondition();
         ASTExpression trueValue = expr.getTrueValue();

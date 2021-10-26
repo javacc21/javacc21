@@ -77,10 +77,9 @@ public class Translator {
 
     protected class ASTTypeExpression extends ASTPrimaryExpression {
         public boolean isNumeric() {
-            boolean result = ((literal != null) || name.equals("Integer") ||
+            return ((literal != null) || name.equals("Integer") ||
                               name.equals("Long") || name.equals("Float") ||
                               name.equals("Double") || name.equals("BigInteger"));
-            return result;
         }
     }
 
@@ -126,7 +125,7 @@ public class Translator {
         }
     }
 
-    protected class ASTTernaryExpession extends ASTExpression {
+    protected class ASTTernaryExpression extends ASTExpression {
         private ASTExpression condition;
         private ASTExpression trueValue;
         private ASTExpression falseValue;
@@ -707,7 +706,7 @@ public class Translator {
             }
         }
         else if (node instanceof TernaryExpression) {
-            ASTTernaryExpession resultNode = new ASTTernaryExpession();
+            ASTTernaryExpression resultNode = new ASTTernaryExpression();
             result = resultNode;
             resultNode.condition = (ASTExpression) transformTree(node.getFirstChild());
             resultNode.trueValue = (ASTExpression) transformTree(node.getChild(2));
@@ -986,7 +985,7 @@ public class Translator {
         fail();
     }
 
-    protected void translateTernaryExpression(ASTTernaryExpession expr, StringBuilder result) {
+    protected void translateTernaryExpression(ASTTernaryExpression expr, StringBuilder result) {
         fail();
     }
 
@@ -1008,8 +1007,8 @@ public class Translator {
         else if (expr instanceof ASTBinaryExpression) {
             translateBinaryExpression((ASTBinaryExpression) expr, result);
         }
-        else if (expr instanceof ASTTernaryExpession) {
-            translateTernaryExpression((ASTTernaryExpession) expr, result);
+        else if (expr instanceof ASTTernaryExpression) {
+            translateTernaryExpression((ASTTernaryExpression) expr, result);
         }
         else if (expr instanceof ASTInvocation) {
             translateInvocation((ASTInvocation) expr, result);
