@@ -141,8 +141,16 @@ class NodeScope(list):
 #
 class NonTerminalCall:
 
-    __slots__ = ('source_file', 'parser', 'production_name',
-                 'line', 'column', 'scan_to_end', 'follow_set')
+    __slots__ = (
+        'source_file',
+        'parser',
+        'production_name',
+        'line', 'column',
+        'scan_to_end',
+[#if grammar.faultTolerant]
+        'follow_set',
+[/#if]
+    )
 
     def __init__(self, parser, filename, prodname, line, column):
         self.parser = parser
@@ -152,7 +160,9 @@ class NonTerminalCall:
         self.column = column
         # We actually only use this when we're working with the LookaheadStack
         self.scan_to_end = parser.scan_to_end
+[#if grammar.faultTolerant]
         self.follow_set = parser.outer_follow_set
+[/#if]
 
     def create_stack_trace_element(self):
         return (type(self.parser).__name__,  self.production_name, self.source_file, self.line)
@@ -210,7 +220,9 @@ class Parser:
         'last_lookahead_succeeded',
         'lookahead_routine_nesting',
         'outer_follow_set',
+[#if grammar.faultTolerant]
         'current_follow_set',
+[/#if]
         'parsing_stack',
         'lookahead_stack',
         'trace_enabled',
@@ -254,7 +266,6 @@ ${grammar.utils.translateParserInjections(injector, true)}
         self.current_lookahead_production = ''
         self.lookahead_routine_nesting = 0
         self.outer_follow_set = set()
-        self.current_follow_set = set()
         self.parsing_stack = []
         self.lookahead_stack = []
         self.trace_enabled = ${CU.bool(grammar.debugParser)}
@@ -267,6 +278,7 @@ ${grammar.utils.translateParserInjections(injector, true)}
 [/#if]
         self.parse_state_stack = []
 [#if grammar.faultTolerant]
+        self.current_follow_set = set()
         self.tolerant_parsing = True
         self.pending_recovery = False
         self.debug_fault_tolerant = ${CU.bool(grammar.debugFaultTolerant)}
@@ -329,7 +341,9 @@ ${grammar.utils.translateParserInjections(injector, true)}
     def pop_call_stack(self):
         ntc = self.parsing_stack.pop()
         self.currently_parsed_production = ntc.production_name
+[#if grammar.faultTolerant]
         self.outer_follow_set = ntc.follow_set
+[/#if]
 
     def restore_call_stack(self, prev_size):
         while len(self.parsing_stack) > prev_size:

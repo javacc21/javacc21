@@ -809,7 +809,7 @@ public class Translator {
                 }
                 else if (child instanceof VariableDeclarator) {
                     name = (ASTPrimaryExpression) transformTree(child.getFirstChild());
-                    initializer = (ASTExpression) transformTree(child.getLastChild());
+                    initializer = (child.getChildCount() == 1) ? null : (ASTExpression) transformTree(child.getLastChild());
                     resultNode.addNameAndInitializer(name, initializer);
                 }
                 else if (child instanceof MarkerAnnotation) {
