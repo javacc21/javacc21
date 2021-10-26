@@ -583,6 +583,36 @@ public class Grammar extends BaseNode {
         List<Expansion> result = new ArrayList<>();
         for (Expansion expansion : descendants(Expansion.class)) {
             if (expansion.getParent() instanceof BNFProduction) continue; // Handle these separately
+            // Skip any sets which are related to the lexer
+            if (type == 0) {    // first sets
+                if ((expansion instanceof RegexpStringLiteral) ||
+                        (expansion instanceof ZeroOrMoreRegexp) ||
+                        (expansion instanceof ZeroOrOneRegexp) ||
+                        (expansion instanceof OneOrMoreRegexp) ||
+                        (expansion instanceof RegexpChoice) ||
+                        (expansion instanceof RegexpSequence) ||
+                        (expansion instanceof RegexpRef) ||
+                        (expansion instanceof CodeBlock) ||
+                        (expansion instanceof CharacterList)) {
+                    continue;
+                }
+            }
+//            else if (type == 1) {   // final sets
+//
+//            }
+            else if (type == 2) {   // follow sets
+                if ((expansion instanceof ZeroOrMoreRegexp) ||
+                        (expansion instanceof ZeroOrOneRegexp) ||
+                        (expansion instanceof OneOrMoreRegexp) ||
+                        (expansion instanceof RegexpChoice) ||
+                        (expansion instanceof RegexpSequence) ||
+                        // Allow RegexpRef as they are referring to tokens, which will often happen in the parser
+                        // (expansion instanceof RegexpRef) ||
+                        (expansion instanceof CodeBlock) ||
+                        (expansion instanceof CharacterList)) {
+                    continue;
+                }
+            }
             String varName = null;
             if (type==0) {
                 varName = expansion.getFirstSetVarName();
