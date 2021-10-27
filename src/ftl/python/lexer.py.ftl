@@ -186,7 +186,7 @@ def ${nfaState.methodName}(ch, next_states, valid_types):
          [#set isLastOfGroup = !states[state_index+1].moveRanges.equals(state.moveRanges)]
       [/#if]
       [@GenerateStateMove state isFirstOfGroup isLastOfGroup useElif /]
-      [#if state_has_next && isLastOfGroup && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
+      [#if state_has_next && isLastOfGroup && !states[state_index+1].overlaps(states.subList(0, state_index+1))]
         [#set useElif = true]
       [#else]
         [#set useElif = false]

@@ -113,6 +113,8 @@ public class NfaState {
 
     public LexicalStateData getLexicalState() {return lexicalState;}
 
+    public NfaState getNextState() {return nextState;}
+
     public RegularExpression getNextStateType() {return nextState.getType();}
 
     public int getNextStateIndex() {return nextState.getCanonicalState().getIndex();}
