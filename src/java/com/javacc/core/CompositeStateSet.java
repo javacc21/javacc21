@@ -44,7 +44,6 @@ public class CompositeStateSet extends NfaState {
     }
 
     public boolean isMoveCodeNeeded() {
-//        return states.stream().anyMatch(NfaState::isMoveCodeNeeded);
         return true;
     }
 
@@ -65,18 +64,8 @@ public class CompositeStateSet extends NfaState {
      */
     public List<NfaState> getOrderedStates() {
         ArrayList<NfaState> result = new ArrayList<>(states);
-        Collections.sort(result, CompositeStateSet::comparator);
+        Collections.sort(result, NfaState::comparator);
         return result;    
     }
 
-    static int comparator(NfaState state1, NfaState state2) {
-        int result = state2.getNextState().getOrdinal() - state1.getNextState().getOrdinal();
-        if (result == 0)
-           result = (state1.moveRanges.get(0) - state2.moveRanges.get(0));
-        if (result == 0)
-           result = (state1.moveRanges.get(1) - state2.moveRanges.get(1));
-        if (result ==0)
-           result = state2.moveRanges.size() - state1.moveRanges.size();
-        return result;
-    }
 }

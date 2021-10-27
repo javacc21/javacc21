@@ -118,7 +118,11 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
     [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
       [@GenerateMoveArray nfaState/]
     [/#if]
-    [@GenerateNfaStateMethod nfaState/]
+    [#if nfaState.composite]
+       [@GenerateCompositeNfaMethod nfaState/]
+    [#else]
+       [@GenerateSimpleNfaMethod nfaState /]
+    [/#if]
   [/#list]
 
   static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
@@ -155,57 +159,42 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 [/#macro] 
 
 [#--
-   Generate the method that represents the transition
-   (or transitions if this is a CompositeStateSet)
-   that correspond to an instanceof com.javacc.core.NfaState
+   Generate the method that represents the transitions
+   that correspond to an instanceof com.javacc.core.CompositeNfaState
 --]
-[#macro GenerateNfaStateMethod nfaState]  
-  [#if !nfaState.composite]
-     [@GenerateSimpleNfaMethod nfaState/]
-  [#else]
+[#macro GenerateCompositeNfaMethod nfaState]  
     static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
       TokenType type = null;
-    [#var states = nfaState.orderedStates]
+    [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
     [#list states as state]
-      [#var isFirstOfGroup=true, isLastOfGroup=true]
-      [#if state_index!=0]
-         [#set isFirstOfGroup = !states[state_index-1].moveRanges.equals(state.moveRanges)]
+      [#if state_index ==0 || !state.moveRanges.equals(states[state_index-1].moveRanges)]
+          [#-- In this case we need a new if or possibly else if --]
+         [#if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))]
+           [#-- If there is overlap between this state and any of the states
+                 handled since the last lone if, we start a new if-else 
+                 If not, we continue in the same if-else block as before. --]
+           [#set lastBlockStartIndex = state_index]
+               if
+         [#else]
+               else if
+         [/#if]    
+           ([@NfaStateCondition state /]) {
       [/#if]
-      [#if state_has_next]
-         [#set isLastOfGroup = !states[state_index+1].moveRanges.equals(state.moveRanges)]
+      [#if state.nextStateIndex >= 0]
+         nextStates.set(${state.nextStateIndex});
       [/#if]
-      [@GenerateStateMove state isFirstOfGroup isLastOfGroup /]
-      [#if state_has_next && isLastOfGroup && states[state_index+1].isNonOverlapping(states.subList(0, state_index+1))]
-         else
+      [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
+        [#-- We've reached the end of the block. --]
+          [#var type = state.nextStateType]
+          [#if type??]
+            if (validTypes.contains(${TT}${type.label}))
+              type = ${TT}${type.label};
+          [/#if]
+        }
       [/#if]
     [/#list]
       return type;
     }
-  [/#if]
-[/#macro]
-
-[#--
-  Generates the code for an NFA state transition
-  within a composite state. This code is a bit tricky
-  because it consolidates more than one condition in 
-  a single conditional block. 
---]
-[#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup]
-  [#var nextState = nfaState.nextState.canonicalState]
-  [#var type = nfaState.nextState.type]
-    [#if isFirstOfGroup]
-    if ([@NfaStateCondition nfaState /]) {
-    [/#if]
-      [#if nextState.index >= 0]
-         nextStates.set(${nextState.index});
-      [/#if]
-   [#if isLastOfGroup]
-      [#if type??]
-        if (validTypes.contains(${TT}${type.label}))
-           type = ${TT}${type.label};
-     [/#if]
-    }
-   [/#if]
 [/#macro]
 
 [#-- 
@@ -213,11 +202,10 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 --]
 [#macro GenerateSimpleNfaMethod nfaState]
   static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
-    [#var nextState = nfaState.nextState.canonicalState]
-    [#var type = nfaState.nextState.type]
+    [#var type = nfaState.nextStateType]
       if ([@NfaStateCondition nfaState /]) {
-        [#if nextState.index >= 0]
-          nextStates.set(${nextState.index});
+        [#if nfaState.nextStateIndex >= 0]
+          nextStates.set(${nfaState.nextStateIndex});
         [/#if]
       [#if type??]
         if (validTypes.contains(${TT}${type.label}))

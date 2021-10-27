@@ -77,10 +77,7 @@ public class DeadCodeEliminator extends Node.Visitor {
     public void visit(MethodDeclaration md) {
         if (alreadyVisited.contains(md)) return;
         if (md.firstChildOfType(PRIVATE) == null || usedNames.contains(md.getName())) {
-            usedNames.add(md.getName());
-            for (Identifier id : md.descendants(Identifier.class)) {
-                usedNames.add(id.getImage());
-            }
+            md.descendants(Identifier.class).stream().forEach(id->usedNames.add(id.getImage()));
             alreadyVisited.add(md);
         }
     }

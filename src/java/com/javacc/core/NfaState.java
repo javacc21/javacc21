@@ -113,7 +113,9 @@ public class NfaState {
 
     public LexicalStateData getLexicalState() {return lexicalState;}
 
-    public NfaState getNextState() {return nextState;}
+    public RegularExpression getNextStateType() {return nextState.getType();}
+
+    public int getNextStateIndex() {return nextState.getCanonicalState().getIndex();}
 
     void setNextState(NfaState nextState) {this.nextState = nextState;}
 
@@ -188,14 +190,15 @@ public class NfaState {
         epsilonMoves.removeIf(state->state.moveRanges.isEmpty());
     }
 
-    public boolean isNonOverlapping(Collection<NfaState> states) {
-        for (NfaState other : states) {
-            if (this != other && intersect(this.moveRanges, other.moveRanges)) return false;
-        }
-        return true;
+    public boolean overlaps(Collection<NfaState> states) {
+        return states.stream().anyMatch(state->overlaps(state));
     }
 
-    static BitSet moveRangesToBS(List<Integer> ranges) {
+    private boolean overlaps(NfaState other) {
+        return this == other || intersect(this.moveRanges, other.moveRanges);
+    }
+
+    static private BitSet moveRangesToBS(List<Integer> ranges) {
         BitSet result = new BitSet();
         for (int i=0; i< ranges.size(); i+=2) {
             int left = ranges.get(i);
@@ -205,9 +208,20 @@ public class NfaState {
         return result;
     }
 
-    static boolean intersect(List<Integer> moves1, List<Integer> moves2) {
+    static private boolean intersect(List<Integer> moves1, List<Integer> moves2) {
         BitSet bs1 = moveRangesToBS(moves1);
         BitSet bs2 = moveRangesToBS(moves2);
         return bs1.intersects(bs2);
+    }
+
+    static int comparator(NfaState state1, NfaState state2) {
+        int result = state2.nextState.getOrdinal() - state1.nextState.getOrdinal();
+        if (result == 0)
+           result = (state1.moveRanges.get(0) - state2.moveRanges.get(0));
+        if (result == 0)
+           result = (state1.moveRanges.get(1) - state2.moveRanges.get(1));
+        if (result ==0)
+           result = state2.moveRanges.size() - state1.moveRanges.size();
+        return result;
     }
 }
