@@ -101,7 +101,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
   // Just used to "bookmark" the starting location for a token
   // for when we put in the location info at the end.
-  private int tokenBeginLine, tokenBeginColumn;
+  private int tokenBeginLine, tokenBeginColumn, tokenBeginOffset;
 
 [#if lexerData.hasLexicalStateTransitions]
   // A lookup for lexical state transitions triggered by a certain token type
@@ -223,6 +223,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             charBuff.setLength(0);
             tokenBeginLine = input_stream.getLine();
             tokenBeginColumn = input_stream.getColumn();
+            tokenBeginOffset = input_stream.getBufferPosition();
             curChar = input_stream.readChar();
             if (trace_enabled) 
                 LOGGER.info("Starting new token on line: " + tokenBeginLine + ", column: " + tokenBeginColumn);
@@ -379,16 +380,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private InvalidToken handleInvalidChar(int ch) {
     int line = input_stream.getEndLine();
     int column = input_stream.getEndColumn();
+    int offset = input_stream.getBufferPosition();
     String img = new String(new int[] {ch}, 0, 1);
     if (invalidToken == null) {
        invalidToken = new InvalidToken(img, inputSource);
        invalidToken.setBeginLine(line);
        invalidToken.setBeginColumn(column);
+       invalidToken.setBeginOffset(offset-1); [#-- Is this right? --]
     } else {
        invalidToken.setImage(invalidToken.getImage() + img);
     }
     invalidToken.setEndLine(line);
     invalidToken.setEndColumn(column);
+    invalidToken.setEndOffset(offset);
     return invalidToken;
   }
 
@@ -403,6 +407,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         matchedToken.setEndLine(input_stream.getEndLine());
         matchedToken.setBeginColumn(tokenBeginColumn);
         matchedToken.setEndColumn(input_stream.getEndColumn());
+        matchedToken.setBeginOffset(tokenBeginOffset);
+        matchedToken.setEndOffset(input_stream.getBufferPosition());
         matchedToken.setInputSource(this.inputSource);
         if (previousToken != null) {
             matchedToken.setPreviousToken(this.previousToken);

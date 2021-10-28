@@ -37,9 +37,10 @@ package ${grammar.parserPackage};
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.BitSet;
 import java.nio.charset.Charset;
 
 /**
@@ -276,6 +277,8 @@ public class FileLineMap {
 
     int getColumn() {return columnInCodePoints;}
 
+    int getBufferPosition() {return bufferPosition;}
+
     int getEndColumn() {
         if (columnInCodePoints == 1) {
             int numSupps = numSupplementaryCharactersInRange(getLineStartOffset(line-1), getLineStartOffset(line));
@@ -307,6 +310,17 @@ public class FileLineMap {
                 }
             }
         }
+    }
+
+    void goTo(int offset) {
+        this.bufferPosition = offset;
+        int bsearchResult = Arrays.binarySearch(lineOffsets, offset);
+        boolean atLineStart = bsearchResult >=0;
+        int line = atLineStart ? bsearchResult : -1 * bsearchResult;
+        int lineStartOffset = lineOffsets[line];
+        this.columnInCodeUnits = 1 + bufferPosition - lineStartOffset;
+        this.columnInCodePoints = columnInCodeUnits = numSupplementaryCharactersInRange(lineStartOffset, bufferPosition);
+        this.line = line + startingLine -1;
     }
 
     /**

@@ -122,6 +122,7 @@
             Token next = nextToken(lastConsumedToken);
             n.setBeginLine(next.getBeginLine());
             n.setBeginColumn(next.getBeginColumn());
+            n.setBeginOffset(next.getBeginOffset());
             n.setInputSource(this.getInputSource());
             n.open();
   [#list grammar.openNodeScopeHooks as hook]
@@ -140,6 +141,7 @@
     private void closeNodeScope(Node n, int num) {
         n.setEndLine(lastConsumedToken.getEndLine());
         n.setEndColumn(lastConsumedToken.getEndColumn());
+        n.setEndOffset(lastConsumedToken.getEndOffset());
         if (trace_enabled) LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + num + " nodes off the stack.");
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();

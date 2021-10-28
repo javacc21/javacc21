@@ -370,6 +370,30 @@ public interface Node extends Comparable<Node>
     void setEndColumn(int endColumn);
 
     /**
+     * @return the offset in the input source where the token begins,
+     * expressed in code units.
+     */
+    int getBeginOffset();
+
+    /**
+     * @return the offset in the input source where the token ends,
+     * expressed in code units. This is actually the offset where the 
+     * very next token would begin.
+     */
+     int getEndOffset();
+
+     /**
+      * Set the offset where the token begins, expressed in code units. 
+      */
+      void setBeginOffset(int beginOffset);
+
+     /**
+      * Set the offset where the token ends, actually the location where
+      * the very next token should begin.
+      */
+      void setEndOffset(int endOffet);
+
+    /**
      * @return a String that gives the starting location of this Node. This is a default
      * implementation that could be overridden 
      */
@@ -545,6 +569,8 @@ public interface Node extends Comparable<Node>
         setBeginColumn(from.getBeginColumn());
         setEndLine(from.getEndLine());
         setEndColumn(from.getEndColumn());
+        setBeginOffset(from.getBeginOffset());
+        setEndOffset(from.getEndOffset());
     }
 
     /**

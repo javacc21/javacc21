@@ -88,7 +88,7 @@ public class ${grammar.baseNodeClassName} implements Node {
      */
     protected List<Node> children = newList();
     
-    private int beginLine, beginColumn, endLine, endColumn;
+    private int beginLine, beginColumn, endLine, endColumn, beginOffset, endOffset;
     private Map<String,Object> attributes;
     private boolean unparsed;
     
@@ -245,6 +245,24 @@ public class ${grammar.baseNodeClassName} implements Node {
     public void setEndColumn(int endColumn) {
         this.endColumn = endColumn;
     }
+
+    public int getBeginOffset() {
+        return beginOffset;
+    }
+
+    public void setBeginOffset(int beginOffset) {
+        this.beginOffset = beginOffset;
+    }
+
+    public int getEndOffset() {
+        return endOffset;
+    }
+
+    public void setEndOffset(int endOffset) {
+        this.endOffset = endOffset;
+    }
+
+
      
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
     public TemplateSequenceModel getChildNodes() {

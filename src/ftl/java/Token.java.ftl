@@ -26,6 +26,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     public void setInputSource(String inputSource) {this.inputSource = inputSource;}
 
+    private int beginOffset, endOffset;
+
     public TokenType getType() {
         return type;
     }
@@ -105,6 +107,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.endLine = endLine;
     }
 
+    public void setBeginOffset(int beginOffset) {
+        this.beginOffset = beginOffset;
+    }
+
+    public void setEndOffset(int endOffset) {
+        this.endOffset = endOffset;
+    }
+
     public int getBeginLine() {
         return beginLine;
     }
@@ -119,6 +129,14 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     public int getEndColumn() {
         return endColumn;
+    }
+
+    public int getBeginOffset() {
+        return beginOffset;
+    }
+
+    public int getEndOffset() {
+        return endOffset;
     }
 
 [#if grammar.legacyAPI]public[#else]private[/#if]
@@ -377,8 +395,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         }
         setBeginLine(from.getBeginLine());
         setBeginColumn(from.getBeginColumn());
+        setBeginOffset(from.getBeginOffset());
         setEndLine(from.getEndLine());
         setEndColumn(from.getEndColumn());
+        setEndOffset(from.getEndOffset());
         next = from.next;
         nextToken = from.nextToken;
         previousToken = from.previousToken;
