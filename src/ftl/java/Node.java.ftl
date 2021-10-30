@@ -245,18 +245,6 @@ public interface Node extends Comparable<Node>
          return result;
       }
 
-     // The following 3 methods will typically delegate
-     // straightforwardly to a Map<String, Object> object-s get/set/containsKey/keySet methods.
-          
-     Object getAttribute(String name);
-     
-     void setAttribute(String name, Object value);
-     
-     boolean hasAttribute(String name);
-     
-     java.util.Set<String> getAttributeNames();
-
-
     /**
      * @return a List containing all the tokens in a Node
      * @param includeCommentTokens Whether to include comment tokens
@@ -322,7 +310,8 @@ public interface Node extends Comparable<Node>
       * address this problem!
       */
      default String getSource() {
-        return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
+//        return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
+        return getFileLineMap().getText(getBeginOffset(), getEndOffset());
     }
 
     /**

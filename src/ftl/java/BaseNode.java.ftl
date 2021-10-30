@@ -89,7 +89,6 @@ public class ${grammar.baseNodeClassName} implements Node {
     protected List<Node> children = newList();
     
     private int beginLine, beginColumn, endLine, endColumn, beginOffset, endOffset;
-    private Map<String,Object> attributes;
     private boolean unparsed;
     
     public boolean isUnparsed() {
@@ -166,26 +165,6 @@ public class ${grammar.baseNodeClassName} implements Node {
     
     public List<Node> children() {
         return Collections.unmodifiableList(children);
-    }
-    
-    public Object getAttribute(String name) {
-        return attributes == null ? null : attributes.get(name); 
-    }
-     
-    public void setAttribute(String name, Object value) {
-        if (attributes == null) {
-            attributes = new HashMap<String, Object>();
-        }
-        attributes.put(name, value);
-    }
-     
-    public boolean hasAttribute(String name) {
-        return attributes == null ? false : attributes.containsKey(name);
-    }
-     
-    public Set<String> getAttributeNames() {
-        if (attributes == null) return Collections.emptySet();
-        return attributes.keySet();
     }
     
     public int getBeginLine() {

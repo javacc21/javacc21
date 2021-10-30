@@ -41,10 +41,8 @@
  
 [#if grammar.parserPackage?has_content]
     package ${grammar.parserPackage};
-  [#if !grammar.legacyAPI]    
     import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
     [#set TT=""]
-  [/#if]
 [/#if]
 import java.util.Arrays;
 import java.util.BitSet;

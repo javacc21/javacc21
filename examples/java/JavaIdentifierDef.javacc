@@ -23,6 +23,7 @@ INCLUDE "Java11IdentifierDef.javacc"
 // Also didn't have a jdk9 or jdk10 to test
 INCLUDE "Java8IdentifierDef.javacc"
 #else
+// JDK17 is unchanged.
 INCLUDE "Java16IdentifierDef.javacc"
 #endif
 

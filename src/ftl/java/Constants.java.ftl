@@ -7,14 +7,8 @@ package ${grammar.parserPackage};
  * Token literal values and constants.
  */
 
-public interface ${grammar.constantsClassName} {
+  public interface ${grammar.constantsClassName} {
 
-[#if grammar.legacyAPI]
-  int INVALID = ${grammar.lexerData.tokenCount}; // Used for Lexically invalid input
-  [#list grammar.lexerData.regularExpressions as regexp]
-  int ${regexp.label} = ${regexp.ordinal};
-  [/#list]
-[/#if]  
   public enum TokenType {
      [#list grammar.lexerData.regularExpressions as regexp]
        ${regexp.label},
@@ -28,11 +22,6 @@ public interface ${grammar.constantsClassName} {
   /**
    * Lexical States
    */
-[#if grammar.legacyAPI]
- [#list grammar.lexerData.lexicalStates as lexicalState]
-  int ${lexicalState.name} = ${lexicalState_index};
- [/#list]
-[/#if]
 
   public enum LexicalState {
   [#list grammar.lexerData.lexicalStates as lexicalState]

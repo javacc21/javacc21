@@ -87,8 +87,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * of this token; endLine and endColumn describe the position of the
      * last character of this token.
      */
-[#if grammar.legacyAPI]public[#else]private[/#if]
-    int beginLine, beginColumn, endLine, endColumn;
+    private int beginLine, beginColumn, endLine, endColumn;
 
 
     public void setBeginColumn(int beginColumn) {
@@ -139,8 +138,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return endOffset;
     }
 
-[#if grammar.legacyAPI]public[#else]private[/#if]
-    String image;
+    private String image;
 
     /**
      * @return the string image of the token.
@@ -153,29 +151,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        this.image = image;
    }
 
-[#if grammar.legacyAPI]
-
-    void setKind(int kind) {
-        this.type = TokenType.values()[kind];
-    }
-
-    int getKind() {
-        return type.ordinal();
-    }
-
-    /**
-     * A reference to the next regular (non-special) token from the input
-     * stream.  If this is the last token from the input stream, or if the
-     * token manager has not read tokens beyond this one, this field is
-     * set to null.  This is true only if this token is also a regular
-     * token.  Otherwise, see below for a description of the contents of
-     * this field.
-     */
-[#else]
-    private
-[/#if]
-    Token next;
-    private Token previousToken, nextToken;
+    private Token next, previousToken, nextToken;
 
 
     /**
@@ -233,35 +209,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
-         return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
+//         return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
+         return getFileLineMap().getText(getBeginOffset(), getEndOffset());
     }
-
-    /**
-     * This field is used to access special tokens that occur prior to this
-     * token, but after the immediately preceding regular (non-special) token.
-     * If there are no such special tokens, this field is set to null.
-     * When there are more than one such special token, this field refers
-     * to the last of these special tokens, which in turn refers to the next
-     * previous special token through its specialToken field, and so on
-     * until the first special token (whose specialToken field is null).
-     * The next fields of special tokens refer to other special tokens that
-     * immediately follow it (without an intervening regular token).  If there
-     * is no such token, this field is null.
-     */
-[#if grammar.legacyAPI]
-
-    public Token specialToken;
-
-    @Deprecated
-    public Token getSpecialToken() {
-           return specialToken;
-    }
-
-    @Deprecated
-    public void setSpecialToken(Token specialToken) {
-         this.specialToken = specialToken;
-    }
-[/#if]
 
     private boolean unparsed;
 
@@ -371,9 +321,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
             next = otherTok.next;
             nextToken = otherTok.nextToken;
             previousToken = otherTok.previousToken;
-        [#if grammar.legacyAPI]
-            specialToken = otherTok.specialToken;
-        [/#if]
         }
     }
 
@@ -402,9 +349,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         next = from.next;
         nextToken = from.nextToken;
         previousToken = from.previousToken;
-        [#if grammar.legacyAPI]
-            specialToken = from.specialToken;
-        [/#if]
     }
 
     public void copyLocationInfo(Token start, Token end) {
@@ -421,23 +365,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         previousToken = start.previousToken;
         next = end.next;
         nextToken = end.nextToken;
-    }
-[/#if]
-
-[#if grammar.legacyAPI]
-    public static Token newToken(int ofKind, String image) {
-       [#if grammar.treeBuildingEnabled]
-           switch(ofKind) {
-           [#list grammar.orderedNamedTokens as re]
-            [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(ofKind, image);
-            [/#if]
-           [/#list]
-              default: return new Token(ofKind, image);
-           }
-       [#else]
-       return new Token(ofKind, image);
-       [/#if]
     }
 [/#if]
 
@@ -482,7 +409,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#if grammar.treeBuildingEnabled]
 
     private Node parent;
-    private java.util.Map<String,Object> attributes;
 
     public void setChild(int i, Node n) {
         throw new UnsupportedOperationException();
@@ -528,26 +454,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     public void close() {}
 
-
-    public Object getAttribute(String name) {
-        return attributes == null ? null : attributes.get(name);
-    }
-
-    public void setAttribute(String name, Object value) {
-        if (attributes == null) {
-            attributes = new java.util.HashMap<String, Object>();
-        }
-        attributes.put(name, value);
-    }
-
-    public boolean hasAttribute(String name) {
-        return attributes == null ? false : attributes.containsKey(name);
-    }
-
-    public java.util.Set<String> getAttributeNames() {
-        if (attributes == null) return java.util.Collections.emptySet();
-        return attributes.keySet();
-    }
 
    [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
     public TemplateNodeModel getParentNode() {

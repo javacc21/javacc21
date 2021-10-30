@@ -171,18 +171,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         switchTo(lexState);
     }
 
-[#if grammar.legacyAPI]
-    /**
-      * @deprecated Use the switchTo method that takes an Enum
-      */
-    @Deprecated
-    public boolean SwitchTo(int lexState) {
-       return switchTo(LexicalState.values()[lexState]);
-    }
-    @Deprecated
-    public void setTabSize(int  size) {this.tabSize = size;}
-[/#if]
-
   /**
    * The public method for getting the next token.
    * Most of the work is done in the private method
@@ -422,6 +410,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
+      assert matchedToken.getImage().length() == matchedToken.getEndOffset() - matchedToken.getBeginOffset();
       return matchedToken;
   }
 

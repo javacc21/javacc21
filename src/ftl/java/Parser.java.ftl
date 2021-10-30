@@ -177,11 +177,6 @@ public boolean isCancelled() {return cancelled;}
     while (result == null) {
       nextTokenType = null;
       Token next = token_source.getNextToken();
-[#if grammar.legacyAPI]      
-      if (previous != null && !(previous instanceof InvalidToken)) {
-        next.setSpecialToken(previous);
-      }
-[/#if]      
       previous = next;
 [#list grammar.parserTokenHooks as methodName] 
       next = ${methodName}(next);

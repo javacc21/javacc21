@@ -554,8 +554,8 @@ public class FileLineMap {
         return getText(startOffset, endOffset);
     }
 
-    private String getText(int startOffset, int endOffset) {
-        return content.subSequence(startOffset, endOffset+1).toString();
+    String getText(int startOffset, int endOffset) {
+        return content.subSequence(startOffset, endOffset).toString();
     }
 
     static private int BUF_SIZE = 0x10000;
