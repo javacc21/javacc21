@@ -373,14 +373,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     String img = new String(new int[] {ch}, 0, 1);
     if (invalidToken == null) {
        invalidToken = new InvalidToken(img, inputSource);
-[#--       invalidToken.setBeginLine(line);
-       invalidToken.setBeginColumn(column);--]
        invalidToken.setBeginOffset(offset-1); [#-- Is this right? --]
     } else {
        invalidToken.setImage(invalidToken.getImage() + img);
     }
-[#--    invalidToken.setEndLine(line);
-    invalidToken.setEndColumn(column);--]
     invalidToken.setEndOffset(offset);
     return invalidToken;
   }
@@ -392,10 +388,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [#else]
         Token matchedToken = Token.newToken(type, tokenImage, this);
     [/#if]
-[#--        matchedToken.setBeginLine(tokenBeginLine);
-        matchedToken.setEndLine(input_stream.getEndLine());
-        matchedToken.setBeginColumn(tokenBeginColumn);
-        matchedToken.setEndColumn(input_stream.getEndColumn());--]
         matchedToken.setBeginOffset(tokenBeginOffset);
         matchedToken.setEndOffset(input_stream.getBufferPosition());
         matchedToken.setInputSource(this.inputSource);

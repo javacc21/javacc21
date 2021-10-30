@@ -209,22 +209,6 @@ public class ${grammar.baseNodeClassName} implements Node {
         return endColumn;
     }
      
-    public void setBeginLine(int beginLine) {
-        this.beginLine = beginLine;
-    }
-     
-    public void setEndLine(int endLine) {
-        this.endLine = endLine;
-    }
-     
-    public void setBeginColumn(int beginColumn) {
-        this.beginColumn = beginColumn;
-    }
-     
-    public void setEndColumn(int endColumn) {
-        this.endColumn = endColumn;
-    }
-
     public int getBeginOffset() {
         return beginOffset;
     }

@@ -78,10 +78,6 @@ INJECT LEXER_CLASS :
       }
       indentDedent.setNextToken(tok);
       indentDedent.setNext(tok);
-//      indentDedent.setBeginColumn(1);
-//      indentDedent.setEndColumn(tok.getBeginColumn()-1);
-//      indentDedent.setBeginLine(tok.getBeginLine());
-//      indentDedent.setEndLine(tok.getBeginLine());--]
       indentDedent.setBeginOffset(prevToken.getEndOffset());
       indentDedent.setEndOffset(tok.getBeginOffset());
       indentDedent.setInputSource(getInputSource());

@@ -341,31 +341,7 @@ public interface Node extends Comparable<Node>
     default int getEndColumn() {
         return getFileLineMap().getCodePointColumnFromOffset(getEndOffset());
     }
-[#--
-    /**
-     * Set the line offset (1-based) where this Node starts (usually only used internally)
-     * @param beginLine the line offset
-     */
-    void setBeginLine(int beginLine);
-
-    /**
-     * Set the line offset (1-based) where this Node ends (usually only used internally)
-     * @param endLine the line offset
-     */
-    void setEndLine(int endLine);
-
-    /**
-     * Set column offset (1-based) where this Node begins
-     * @param beginColumn the column offset
-     */
-    void setBeginColumn(int beginColumn);
-     
-    /**
-     * Set column offset (1-based) where this Node ends
-     * @param endColumn the column offset
-     */
-    void setEndColumn(int endColumn);
---]
+    
     /**
      * @return the offset in the input source where the token begins,
      * expressed in code units.
@@ -562,10 +538,6 @@ public interface Node extends Comparable<Node>
         if (from.getInputSource()!=null && getInputSource()==null) {
             setInputSource(from.getInputSource()); //REVISIT
         }
-[#--        setBeginLine(from.getBeginLine());
-        setBeginColumn(from.getBeginColumn());
-        setEndLine(from.getEndLine());
-        setEndColumn(from.getEndColumn());--]
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
     }
@@ -582,10 +554,6 @@ public interface Node extends Comparable<Node>
         if (getInputSource() == null && end.getInputSource() != null) {
             setInputSource(end.getInputSource());
         }
-[#--        setBeginLine(start.getBeginLine());
-        setBeginColumn(start.getBeginColumn());
-        setEndLine(end.getEndLine());
-        setEndColumn(end.getEndColumn());--]
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
     }

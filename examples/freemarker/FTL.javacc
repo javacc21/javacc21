@@ -97,7 +97,6 @@ INJECT FTLLexer :
         if (noWhitespaceInExpression && parenthesisNesting ==0 && braceNesting==0 && tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
             if (tok.getPreviousToken().getImage().trim().length() == 0) {
                 Token copy = cloneToken(tok);
-//                copy.setSpecialToken(null);
                 copyFieldsOfToken(tok.getPreviousToken(), tok);
                 tok.setType(TokenType.BLANK);
                 tok.setNext(copy);
@@ -119,8 +118,6 @@ INJECT FTLLexer :
                 if (idx >=0) {
                     tok.setImage(img.substring(++idx));
                     tok.setBeginOffset(tok.getBeginOffset()+idx);
-//                    tok.setBeginLine(tok.getBeginLine()+1);
-//                    tok.setBeginColumn(1);
                 }
             }
         }
@@ -213,16 +210,11 @@ INJECT FTLLexer :
         dest.setType(src.getType());
         dest.setImage(src.getImage());
         dest.setPreviousToken(src.getPreviousToken());
-//        dest.setSpecialToken(src.getSpecialToken());
         Token next = src.getNext();
         dest.setNext(next);
         dest.setBeginOffset(src.getBeginOffset());
         dest.setEndOffset(src.getEndOffset());
-//        dest.setBeginLine(src.getBeginLine());
-//        dest.setBeginColumn(src.getBeginColumn());
- //       dest.setEndLine(src.getEndLine());
-//        dest.setEndColumn(src.getEndColumn());
-//        dest.setInputSource(src.getInputSource());
+        dest.setInputSource(src.getInputSource());
     }
 
     private Token cloneToken(Token t) {

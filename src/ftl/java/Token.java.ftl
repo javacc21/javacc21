@@ -82,29 +82,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 [/#if]
 
-    /**
-     * beginLine and beginColumn describe the position of the first character
-     * of this token; endLine and endColumn describe the position of the
-     * last character of this token.
-     */
-[#--    private int beginLine, beginColumn, endLine, endColumn;
-
-
-    public void setBeginColumn(int beginColumn) {
-        this.beginColumn = beginColumn;
-    }
-
-    public void setEndColumn(int endColumn) {
-        this.endColumn = endColumn;
-    }
-
-    public void setBeginLine(int beginLine) {
-        this.beginLine = beginLine;
-    }
-
-    public void setEndLine(int endLine) {
-        this.endLine = endLine;
-    }--]
 
     public void setBeginOffset(int beginOffset) {
         this.beginOffset = beginOffset;
@@ -263,54 +240,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
     }
-[#--
-    /**
-     * Utility method to merge two tokens into a single token of a given type.
-     * @param t1 the first token to merge
-     * @param t2 the second token to merge
-     * @param type the merged token's type
-     * @return the result of merging the two tokens
-     */
-    static Token merge(Token t1, Token t2, TokenType type) {
-        Token merged = newToken(type, t1.getImage() + t2.getImage(), t1.getInputSource());
-        merged.copyLocationInfo(t1);
-        merged.setEndColumn(t2.getEndColumn());
-        merged.setEndLine(t2.getEndLine());
-        merged.setEndOffset(t)
-        merged.setNext(t2.getNext());
-        merged.setNextToken(t2.getNextToken());
-        return merged;
-    }
-    /**
-     * Utility method to split a token in 2. For now, it assumes that the token
-     * is all on a single line. (Will maybe fix that later).
-     * @param length the point at which to split the token
-     * @param type1 the desired type of the first token
-     * @param type2 the desired type of the second token
-     * @return the first token that resulted from the split
-     */
-    static Token split(Token tok, int length, TokenType type1, TokenType type2) {
-        String img1 = tok.getImage().substring(0, length);
-        String img2 = tok.getImage().substring(length);
-        Token t1 = newToken(type1, img1, tok.getInputSource());
-        Token t2 = newToken(type2, img2, tok.getInputSource());
-        t1.setBeginColumn(tok.getBeginColumn());
-        t1.setEndColumn(tok.getBeginColumn() + length -1);
-        t1.setBeginLine(tok.getBeginLine());
-        t1.setEndLine(tok.getBeginLine());
-        t1.setPreviousToken(tok.getPreviousToken());
-        t2.setBeginColumn(t1.getEndColumn() +1);
-        t2.setEndColumn(tok.getEndColumn());
-        t2.setBeginLine(tok.getBeginLine());
-        t2.setEndLine(tok.getEndLine());
-        t1.setNext(t2);
-        t1.setNextToken(t2);
-        t2.setPreviousToken(t1);
-        t2.setNext(tok.getNext());
-        t2.setNextToken(tok.getNextToken());
-        return t1;
-    }
---]
 
     public void clearChildren() {}
 
@@ -355,10 +284,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         if (getInputSource()==null && from.getInputSource()!=null) {
             setInputSource(from.getInputSource()); //REVISIT
         }
-[#--        setBeginLine(from.getBeginLine());
-        setBeginColumn(from.getBeginColumn());
-        setEndLine(from.getEndLine());
-        setEndColumn(from.getEndColumn());--]
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
         next = from.next;
@@ -373,10 +298,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         if (getInputSource()==null && start.getInputSource()!=null) {
             setInputSource(start.getInputSource());
         }
-[#--        setBeginLine(start.getBeginLine());
-        setBeginColumn(start.getBeginColumn());
-        setEndLine(end.getEndLine());
-        setEndColumn(end.getEndColumn());--]
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
         previousToken = start.previousToken;
