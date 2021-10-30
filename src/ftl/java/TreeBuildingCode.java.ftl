@@ -120,7 +120,7 @@
         new NodeScope();
         if (n!=null) {
             Token next = nextToken(lastConsumedToken);
-            n.setBeginOffset(next.beginOffset());
+            n.setBeginOffset(next.getBeginOffset());
             n.setInputSource(next.getInputSource());
             n.open();
   [#list grammar.openNodeScopeHooks as hook]
