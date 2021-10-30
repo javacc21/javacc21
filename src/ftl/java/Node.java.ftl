@@ -295,9 +295,9 @@ public interface Node extends Comparable<Node>
       * Node yourself, i.e. it didn't really come about via the parsing/tokenizing
       * machinery.
       */
-     default FileLineMap getFileLineMap() {
-         return FileLineMap.getFileLineMapByName(getInputSource());
-     }
+     FileLineMap getFileLineMap();
+
+     void setFileLineMap(FileLineMap fileLineMap);
 
      /**
       * @return the original source content this Node came from
@@ -540,6 +540,7 @@ public interface Node extends Comparable<Node>
         }
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
+        setFileLineMap(from.getFileLineMap());
     }
 
     /**

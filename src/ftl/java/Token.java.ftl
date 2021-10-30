@@ -22,11 +22,22 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     private String inputSource;
 
+    private FileLineMap fileLineMap;
+
     public String getInputSource() {return inputSource;}
 
     public void setInputSource(String inputSource) {this.inputSource = inputSource;}
 
     private int beginOffset, endOffset;
+
+    public FileLineMap getFileLineMap() {
+        return this.fileLineMap;
+    }
+
+    public void setFileLineMap(FileLineMap fileLineMap) {
+        this.fileLineMap = fileLineMap;
+    }
+
 
     public TokenType getType() {
         return type;
@@ -192,12 +203,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
          this.previousToken = previousToken;
      }
 
- [#if !grammar.treeBuildingEnabled]
-     public FileLineMap getFileLineMap() {
-         return FileLineMap.getFileLineMapByName(getInputSource());
-     }
- [/#if]
-
     public String getSource() {
          if (type == TokenType.EOF) return "";
 //         return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
@@ -266,6 +271,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
             nextToken = otherTok.nextToken;
             previousToken = otherTok.previousToken;
         }
+        setFileLineMap(from.getFileLineMap());
     }
 
     public void copyLocationInfo(Node start, Node end) {
@@ -340,6 +346,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     public String getLocation() {
 //         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
+         if (fileLineMap == null) {
+             System.out.println("KILROY: " + getType());
+             return "FUCK A DUCK";
+         }
          return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
      }
 

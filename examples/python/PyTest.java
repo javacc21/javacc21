@@ -65,7 +65,7 @@ public class PyTest {
         // parser.setParserTolerant(tolerantParsing);
         parser.Module();
         Node root = parser.rootNode();
-        FileLineMap.clearFileLineMapCache();
+        //FileLineMap.clearFileLineMapCache();
         if (dumpTree) {
             root.dump("");
         }

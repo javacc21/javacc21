@@ -47,6 +47,8 @@ import java.util.*;
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
     private String inputSource;
+
+    private FileLineMap fileLineMap;
     
     public String getInputSource() {
         return inputSource;
@@ -54,6 +56,14 @@ public class ${grammar.baseNodeClassName} implements Node {
     
     public void setInputSource(String inputSource) {
         this.inputSource = inputSource;
+    }
+
+    public FileLineMap getFileLineMap() {
+        return fileLineMap;
+    }
+
+    public void setFileLineMap(FileLineMap fileLineMap) {
+        this.fileLineMap = fileLineMap;
     }
     
     static private Class listClass = ArrayList.class;

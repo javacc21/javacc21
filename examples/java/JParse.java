@@ -73,7 +73,7 @@ public class JParse {
         JavaParser parser = new JavaParser(file.toPath());
         parser.setParserTolerant(tolerantParsing);
         Node root = parser.CompilationUnit();
-        FileLineMap.clearFileLineMapCache();
+        //FileLineMap.clearFileLineMapCache();
         // Uncomment the following code if you want all the parsed trees
         // to remain in memory. This is useful if you want to know how much
         // memory it takes to parse all the source code in the JDK, for example.

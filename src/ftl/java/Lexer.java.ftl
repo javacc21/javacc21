@@ -183,6 +183,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       } while (token instanceof InvalidToken);
       if (invalidToken != null) {
           invalidToken.setNextToken(token);
+          invalidToken.setFileLineMap(input_stream);
           token.setPreviousToken(invalidToken);
           Token it = invalidToken;
           this.invalidToken = null;
@@ -391,6 +392,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         matchedToken.setBeginOffset(tokenBeginOffset);
         matchedToken.setEndOffset(input_stream.getBufferPosition());
         matchedToken.setInputSource(this.inputSource);
+        matchedToken.setFileLineMap(this.input_stream);
         if (previousToken != null) {
             matchedToken.setPreviousToken(this.previousToken);
             previousToken.setNextToken(matchedToken);

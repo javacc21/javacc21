@@ -56,7 +56,7 @@ public class FileLineMap {
 
     private static final int[] EMPTY_INT = new int[0];
 
-    static private Map<String, FileLineMap> mapsByName = new HashMap<>();
+[#--    static private Map<String, FileLineMap> mapsByName = new HashMap<>();
 
     /**
      * Get a FileLineMap by name
@@ -87,7 +87,7 @@ public class FileLineMap {
      */
     static public FileLineMap clearFileLineMapCacheEntry(String inputSource) {
         return mapsByName.remove(inputSource);
-    }
+    }--]
 
     // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
     private final CharSequence content;
@@ -548,7 +548,7 @@ public class FileLineMap {
     }
     
     void setInputSource(String inputSource) {
-        mapsByName.put(inputSource, this);
+//        mapsByName.put(inputSource, this);
         this.inputSource = inputSource;
     }
     
