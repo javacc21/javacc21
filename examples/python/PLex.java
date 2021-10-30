@@ -90,7 +90,6 @@ public class PLex {
            }
        }
        while (t.getType() != TokenType.EOF);
-       //FileLineMap.clearFileLineMapCache();
        return numTokens;
    }
 

@@ -678,19 +678,6 @@ INJECT PARSER_CLASS : {
        _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR, _UPTO, 
        _LEXICAL_STATE, _EOF);
 
-/*
-    private Token TOKEN_HOOK(Token tok) {
-        TokenType type = tok.getType();
-        if ((type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) && !isInProduction("Expression")) {
-          Token gt = Token.split(tok, 1, GT, GT);
-          if (type == RUNSIGNEDSHIFT) {
-              Token.split(gt.getNextToken(), 1, GT, GT);
-          }
-          return gt;
-        } 
-        return tok;
-    }*/
-
     private Token TOKEN_HOOK(Token t) {
         if (javaccKeyWords.contains(t.getType())) {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {

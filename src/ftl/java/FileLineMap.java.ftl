@@ -54,41 +54,6 @@ import java.nio.charset.Charset;
 @SuppressWarnings("unused")
 public class FileLineMap {
 
-    private static final int[] EMPTY_INT = new int[0];
-
-[#--    static private Map<String, FileLineMap> mapsByName = new HashMap<>();
-
-    /**
-     * Get a FileLineMap by name
-     * @param name the lookup name
-     * @return the FileLineMap object that is retrieved (possibly null)
-     */
-    static public FileLineMap getFileLineMapByName(String name) {
-        return mapsByName.get(name);
-    }
-
-    /**
-     * There is something of a memory retention problem
-     * with this static lookup map, so this method
-     * allows you to just clear the map, assuming you
-     * know that none of the entries are needed any more.
-     */
-    static public void clearFileLineMapCache() {
-        mapsByName.clear();
-    }
-
-    /**
-     * A method to uncache a FileLineMap. There is something of a 
-     * memory retention problem, so if you know for sure that 
-     * the referenced FileLineMap is not needed, you can use 
-     * this method to allow it to be garbage collected.
-     * @param inputSource the lookup name 
-     * @return the FileLineMap object that was uncached (or null)
-     */
-    static public FileLineMap clearFileLineMapCacheEntry(String inputSource) {
-        return mapsByName.remove(inputSource);
-    }--]
-
     // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
     private final CharSequence content;
     // Typically a filename, I suppose.
@@ -515,7 +480,7 @@ public class FileLineMap {
 
     private static int[] createLineOffsetsTable(CharSequence content) {
         if (content.length() == 0) {
-            return EMPTY_INT;
+            return new int[0];
         }
         int lineCount = 0;
         int length = content.length();
