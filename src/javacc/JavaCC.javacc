@@ -2636,8 +2636,7 @@ InPlaceRegexp #void :
       re.setLabel(image);
       re.setGeneratedClassName(image);
       re.setPrivate(isPrivate); 
-      re.setBeginLine(t.getBeginLine());
-      re.setBeginColumn(t.getBeginColumn());
+      re.setBeginOffset(t.getBeginOffset());
       pokeNode(re);
   }
 ;
