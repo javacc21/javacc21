@@ -6,7 +6,7 @@ import org.parsers.python.*;
  * A test harness for parsing Python files from the command line.
  */
 public class PyTest {
-    static final boolean PARALLEL_PARSING = true;
+    static final boolean PARALLEL_PARSING = false;
 
     static public void main(String args[]) {
         List<File> failures = new ArrayList<File>();
