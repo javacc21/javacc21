@@ -96,7 +96,7 @@ public class FileLineMap {
     // A list of offsets of the beginning of lines
     private final int[] lineOffsets;
     private int startingLine, startingColumn;
-    private int bufferPosition, line, columnInCodeUnits, columnInCodePoints;
+    private int bufferPosition;// line, columnInCodeUnits, columnInCodePoints;
 
 
     // If this is set, it determines 
@@ -176,6 +176,36 @@ public class FileLineMap {
     public int getLineCount() {
         return lineOffsets.length;
     }
+
+    private int getLineFromOffset(int pos) {
+        if (pos >= content.length()) {
+            if (content.charAt(content.length()-1) == '\n') {
+                return startingLine + lineOffsets.length;
+            }
+            return startingLine + lineOffsets.length-1;
+        }
+        int bsearchResult = Arrays.binarySearch(lineOffsets, pos);
+        if (bsearchResult>=0) {
+            return startingLine + bsearchResult;
+        }
+        return startingLine-(bsearchResult+2);
+    }
+
+    private int getCodeUnitColumnFromOffset(int pos) {
+        if (pos >= content.length()) return 1;
+        int line = getLineFromOffset(pos)-startingLine;
+        return 1+pos-lineOffsets[line];
+    }
+
+    private int getCodePointColumnFromOffset(int pos) {
+        if (pos >= content.length()) return 1;
+        int line = getLineFromOffset(pos)-startingLine;
+        int lineStart = lineOffsets[line];
+        int numSupps = numSupplementaryCharactersInRange(lineStart, pos);
+        return 1+pos-lineOffsets[line]-numSupps;
+    }
+
+
     
     // Now some methods to fulfill the functionality that used to be in that
     // SimpleCharStream class
@@ -187,17 +217,11 @@ public class FileLineMap {
      */
     public void backup(int amount) {
         for (int i=0; i<amount; i++) {
-            if (columnInCodeUnits == 1) {
-                backupLine();
-            } else {
-                --columnInCodeUnits;
-                --columnInCodePoints;
-                --bufferPosition;
-                if (bufferPosition > 0 && columnInCodeUnits > 1 && Character.isLowSurrogate(content.charAt(bufferPosition))) {
-                    if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
-                        --columnInCodeUnits;
-                        --bufferPosition;
-                    }
+            --bufferPosition;
+            char ch = content.charAt(bufferPosition);
+            if (bufferPosition > 0 && Character.isLowSurrogate(ch)) {
+                if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
+                    --bufferPosition;
                 }
             }
         }
@@ -205,46 +229,18 @@ public class FileLineMap {
     
     void forward(int amount) {
         for (int i=0; i<amount; i++) {
-            if (columnInCodeUnits < getLineLength(line)) {
-                ++bufferPosition;
-                ++columnInCodeUnits;
-                ++columnInCodePoints;
-                if (Character.isLowSurrogate(content.charAt(bufferPosition))) {
-                    if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
-                        ++bufferPosition;
-                        ++columnInCodeUnits;
-                    }
+            ++bufferPosition;
+            char ch = content.charAt(bufferPosition);
+            if (Character.isLowSurrogate(ch)) {
+                if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
+                    ++bufferPosition;
                 }
-            } else {
-                advanceLine();
-            }
+            } 
         }
-    }
-    
-    private void advanceLine() {
-        do {
-            ++line;
-        } while (!isParsedLine(line) && line-startingLine < lineOffsets.length); 
-        if (line-startingLine >=lineOffsets.length) {
-            bufferPosition = content.length();
-        } else {
-            bufferPosition = getLineStartOffset(line);
-        }
-        columnInCodeUnits = columnInCodePoints = 1;
     }
 
-    private void backupLine() {
-        do {
-            --line;
-        } while (!isParsedLine(line) && line>=startingLine);
-        if (line < startingLine) {
-            goTo(startingLine, startingColumn);
-        } else {
-            int lineStartOffset = getLineStartOffset(line);
-            columnInCodeUnits = getLineLength(line); 
-            bufferPosition = lineStartOffset + columnInCodeUnits -1;
-            columnInCodePoints = columnInCodeUnits - numSupplementaryCharactersInRange(lineStartOffset, bufferPosition);
-        }
+    int getEndColumn() {
+        return getCodePointColumnFromOffset(bufferPosition-1);
     }
     
     int readChar() {
@@ -256,39 +252,40 @@ public class FileLineMap {
             char nextChar = content.charAt(bufferPosition);
             if (Character.isLowSurrogate(nextChar)) {
                 ++bufferPosition;
-                columnInCodeUnits+=2;
-                columnInCodePoints++;
                 return Character.toCodePoint(ch, nextChar);
             }
         }
-        if (ch == '\n') {
-            advanceLine();
-        } else {
-            ++columnInCodeUnits;
-            ++columnInCodePoints;
+        if (ch == '\n' && parsedLines != null) {
+            skipUnparsedLines();
         }
         return ch;
     }
 
-    int getLine() {
-        if (!isParsedLine(line)) advanceLine();
-        return line;
+    private void skipUnparsedLines() {
+        int  line = getLineFromOffset(bufferPosition) - startingLine;
+        int nextParsedLine = parsedLines.nextSetBit(line);
+        if (nextParsedLine == -1) {
+            bufferPosition = content.length();
+        }
+        else {
+            bufferPosition = lineOffsets[nextParsedLine];
+        }
     }
 
-    int getColumn() {return columnInCodePoints;}
+    int getLine() {
+        return getLineFromOffset(bufferPosition);
+    }
+
+    int getColumn() {
+        return getCodePointColumnFromOffset(bufferPosition);
+    }
 
     int getBufferPosition() {return bufferPosition;}
 
-    int getEndColumn() {
-        if (columnInCodePoints == 1) {
-            int numSupps = numSupplementaryCharactersInRange(getLineStartOffset(line-1), getLineStartOffset(line));
-            return getLineLength(line - 1)-numSupps;
-        }
-        return columnInCodePoints-1;
-    }
-
     int getEndLine() {
-        return columnInCodeUnits == 1 ? line -1 : line;
+        int line = getLineFromOffset(bufferPosition);
+        int column = getCodePointColumnFromOffset(bufferPosition);
+        return column == 1 ? line -1 : line;
     }
 
     // But there is no goto in Java!!!
@@ -299,28 +296,14 @@ public class FileLineMap {
      */
     void goTo(int line, int column) {
         bufferPosition = getLineStartOffset(line);
-        this.line = line;
-        columnInCodePoints = columnInCodeUnits = column;
         for (int i=1; i<column;i++) {
             char first = content.charAt(bufferPosition++);
             if (Character.isHighSurrogate(first)) {
                 if (Character.isLowSurrogate(content.charAt(bufferPosition))) {
                     ++bufferPosition;
-                    ++columnInCodeUnits;
                 }
             }
         }
-    }
-
-    void goTo(int offset) {
-        this.bufferPosition = offset;
-        int bsearchResult = Arrays.binarySearch(lineOffsets, offset);
-        boolean atLineStart = bsearchResult >=0;
-        int line = atLineStart ? bsearchResult : -1 * bsearchResult;
-        int lineStartOffset = lineOffsets[line];
-        this.columnInCodeUnits = 1 + bufferPosition - lineStartOffset;
-        this.columnInCodePoints = columnInCodeUnits = numSupplementaryCharactersInRange(lineStartOffset, bufferPosition);
-        this.line = line + startingLine -1;
     }
 
     /**
@@ -413,11 +396,8 @@ public class FileLineMap {
     private void setStartPosition(int line, int column) {
         this.startingLine = line;
         this.startingColumn = column;
-        this.line = line;
-        // For now, we just assume that there is no problem with this.
-        // In any case, the startPosition is almost always with column=1 anyway.
-        columnInCodeUnits = columnInCodePoints = column; 
     }
+
     /**
      * @param line the line number
      * @param column the column in code _points_
