@@ -87,7 +87,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * of this token; endLine and endColumn describe the position of the
      * last character of this token.
      */
-    private int beginLine, beginColumn, endLine, endColumn;
+[#--    private int beginLine, beginColumn, endLine, endColumn;
 
 
     public void setBeginColumn(int beginColumn) {
@@ -104,7 +104,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     public void setEndLine(int endLine) {
         this.endLine = endLine;
-    }
+    }--]
 
     public void setBeginOffset(int beginOffset) {
         this.beginOffset = beginOffset;
@@ -114,21 +114,35 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.endOffset = endOffset;
     }
 
+[#if !grammar.treeBuildingEnabled]
+    /**
+     * @return the (1-based) line location where this Token starts
+     */      
     public int getBeginLine() {
-        return beginLine;
-    }
+        return getFileLineMap().getLineFromOffset(getBeginOffset());                
+    };
 
-    public int getBeginColumn() {
-        return beginColumn;
-    }
-
+    /**
+     * @return the (1-based) line location where this Token ends
+     */
     public int getEndLine() {
-        return endLine;
-    }
+        return getFileLineMap().getLineFromOffset(getEndOffset()-1);
+    };
 
+    /**
+     * @return the (1-based) column where this Token starts
+     */
+    public int getBeginColumn() {
+        return getFileLineMap().getCodePointColumnFromOffset(getBeginOffset());        
+    };
+
+    /**
+     * @return the (1-based) column offset where this Token ends
+     */ 
     public int getEndColumn() {
-        return endColumn;
+        return getFileLineMap().getCodePointColumnFromOffset(getEndOffset());
     }
+[/#if]    
 
     public int getBeginOffset() {
         return beginOffset;
@@ -249,7 +263,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
     }
-
+[#--
     /**
      * Utility method to merge two tokens into a single token of a given type.
      * @param t1 the first token to merge
@@ -262,11 +276,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         merged.copyLocationInfo(t1);
         merged.setEndColumn(t2.getEndColumn());
         merged.setEndLine(t2.getEndLine());
+        merged.setEndOffset(t)
         merged.setNext(t2.getNext());
         merged.setNextToken(t2.getNextToken());
         return merged;
     }
-
     /**
      * Utility method to split a token in 2. For now, it assumes that the token
      * is all on a single line. (Will maybe fix that later).
@@ -296,6 +310,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         t2.setNextToken(tok.getNextToken());
         return t1;
     }
+--]
 
     public void clearChildren() {}
 
@@ -340,11 +355,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         if (getInputSource()==null && from.getInputSource()!=null) {
             setInputSource(from.getInputSource()); //REVISIT
         }
-        setBeginLine(from.getBeginLine());
+[#--        setBeginLine(from.getBeginLine());
         setBeginColumn(from.getBeginColumn());
-        setBeginOffset(from.getBeginOffset());
         setEndLine(from.getEndLine());
-        setEndColumn(from.getEndColumn());
+        setEndColumn(from.getEndColumn());--]
+        setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
         next = from.next;
         nextToken = from.nextToken;
@@ -358,10 +373,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         if (getInputSource()==null && start.getInputSource()!=null) {
             setInputSource(start.getInputSource());
         }
-        setBeginLine(start.getBeginLine());
+[#--        setBeginLine(start.getBeginLine());
         setBeginColumn(start.getBeginColumn());
         setEndLine(end.getEndLine());
-        setEndColumn(end.getEndColumn());
+        setEndColumn(end.getEndColumn());--]
+        setBeginOffset(start.getBeginOffset());
+        setEndOffset(end.getEndOffset());
         previousToken = start.previousToken;
         next = end.next;
         nextToken = end.nextToken;
@@ -369,7 +386,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [/#if]
 
     public static Token newToken(TokenType type, String image, String inputSource) {
-           [#--image = null;[/#if--]
         [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]

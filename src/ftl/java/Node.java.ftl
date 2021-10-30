@@ -317,23 +317,31 @@ public interface Node extends Comparable<Node>
     /**
      * @return the (1-based) line location where this Node starts
      */      
-    int getBeginLine();
+    default int getBeginLine() {
+        return getFileLineMap().getLineFromOffset(getBeginOffset());                
+    };
 
     /**
      * @return the (1-based) line location where this Node ends
      */
-    int getEndLine();
+    default int getEndLine() {
+        return getFileLineMap().getLineFromOffset(getEndOffset()-1);
+    };
 
     /**
      * @return the (1-based) column where this Node starts
      */
-    int getBeginColumn();
+    default int getBeginColumn() {
+        return getFileLineMap().getCodePointColumnFromOffset(getBeginOffset());        
+    };
 
     /**
      * @return the (1-based) column offset where this Node ends
      */ 
-    int getEndColumn();
-
+    default int getEndColumn() {
+        return getFileLineMap().getCodePointColumnFromOffset(getEndOffset());
+    }
+[#--
     /**
      * Set the line offset (1-based) where this Node starts (usually only used internally)
      * @param beginLine the line offset
@@ -357,7 +365,7 @@ public interface Node extends Comparable<Node>
      * @param endColumn the column offset
      */
     void setEndColumn(int endColumn);
-
+--]
     /**
      * @return the offset in the input source where the token begins,
      * expressed in code units.
@@ -554,10 +562,10 @@ public interface Node extends Comparable<Node>
         if (from.getInputSource()!=null && getInputSource()==null) {
             setInputSource(from.getInputSource()); //REVISIT
         }
-        setBeginLine(from.getBeginLine());
+[#--        setBeginLine(from.getBeginLine());
         setBeginColumn(from.getBeginColumn());
         setEndLine(from.getEndLine());
-        setEndColumn(from.getEndColumn());
+        setEndColumn(from.getEndColumn());--]
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
     }
@@ -574,10 +582,12 @@ public interface Node extends Comparable<Node>
         if (getInputSource() == null && end.getInputSource() != null) {
             setInputSource(end.getInputSource());
         }
-        setBeginLine(start.getBeginLine());
+[#--        setBeginLine(start.getBeginLine());
         setBeginColumn(start.getBeginColumn());
         setEndLine(end.getEndLine());
-        setEndColumn(end.getEndColumn());
+        setEndColumn(end.getEndColumn());--]
+        setBeginOffset(start.getBeginOffset());
+        setEndOffset(end.getEndOffset());
     }
 
     default void replace(Node toBeReplaced) {

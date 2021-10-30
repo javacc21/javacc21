@@ -170,7 +170,7 @@ public class FileLineMap {
         return lineOffsets.length;
     }
 
-    private int getLineFromOffset(int pos) {
+    int getLineFromOffset(int pos) {
         if (pos >= content.length()) {
             if (content.charAt(content.length()-1) == '\n') {
                 return startingLine + lineOffsets.length;
@@ -184,13 +184,13 @@ public class FileLineMap {
         return startingLine-(bsearchResult+2);
     }
 
-    private int getCodeUnitColumnFromOffset(int pos) {
+    int getCodeUnitColumnFromOffset(int pos) {
         if (pos >= content.length()) return 1;
         int line = getLineFromOffset(pos)-startingLine;
         return 1+pos-lineOffsets[line];
     }
 
-    private int getCodePointColumnFromOffset(int pos) {
+    int getCodePointColumnFromOffset(int pos) {
         if (pos >= content.length()) return 1;
         int line = getLineFromOffset(pos)-startingLine;
         int lineStart = lineOffsets[line];
@@ -309,6 +309,10 @@ public class FileLineMap {
                 }
             }
         }
+    }
+
+    void goTo(int offset) {
+        this.bufferPosition = offset;
     }
 
     /**

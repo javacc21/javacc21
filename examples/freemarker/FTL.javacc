@@ -118,8 +118,9 @@ INJECT FTLLexer :
                 if (idx <0) idx = img.indexOf('\r');
                 if (idx >=0) {
                     tok.setImage(img.substring(++idx));
-                    tok.setBeginLine(tok.getBeginLine()+1);
-                    tok.setBeginColumn(1);
+                    tok.setBeginOffset(tok.getBeginOffset()+idx);
+//                    tok.setBeginLine(tok.getBeginLine()+1);
+//                    tok.setBeginColumn(1);
                 }
             }
         }
@@ -164,7 +165,7 @@ INJECT FTLLexer :
                  tok.setType(TokenType.CLOSE_TAG);
                  if (tok.getType() == TokenType.GTE) {
                       tok.setImage(">");
-                      tok.setEndColumn(tok.getEndColumn()-1);
+                      tok.setEndOffset(tok.getEndOffset()-1);
                       input_stream.backup(1);
                  }
                   switchTo(LexicalState.TEMPLATE_TEXT);
@@ -215,10 +216,12 @@ INJECT FTLLexer :
 //        dest.setSpecialToken(src.getSpecialToken());
         Token next = src.getNext();
         dest.setNext(next);
-        dest.setBeginLine(src.getBeginLine());
-        dest.setBeginColumn(src.getBeginColumn());
-        dest.setEndLine(src.getEndLine());
-        dest.setEndColumn(src.getEndColumn());
+        dest.setBeginOffset(src.getBeginOffset());
+        dest.setEndOffset(src.getEndOffset());
+//        dest.setBeginLine(src.getBeginLine());
+//        dest.setBeginColumn(src.getBeginColumn());
+ //       dest.setEndLine(src.getEndLine());
+//        dest.setEndColumn(src.getEndColumn());
 //        dest.setInputSource(src.getInputSource());
     }
 

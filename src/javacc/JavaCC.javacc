@@ -678,7 +678,7 @@ INJECT PARSER_CLASS : {
        _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR, _UPTO, 
        _LEXICAL_STATE, _EOF);
 
-
+/*
     private Token TOKEN_HOOK(Token tok) {
         TokenType type = tok.getType();
         if ((type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) && !isInProduction("Expression")) {
@@ -689,7 +689,7 @@ INJECT PARSER_CLASS : {
           return gt;
         } 
         return tok;
-    }
+    }*/
 
     private Token TOKEN_HOOK(Token t) {
         if (javaccKeyWords.contains(t.getType())) {
@@ -1397,7 +1397,7 @@ TokenProduction #TokenProduction :
     boolean ignoreCase = false;
 }
   [
-    => "<" "*" ">" {multipleStatesSpecified = true;} 
+    => "<" "*" ">"  {multipleStatesSpecified = true;} 
     |
     "<"
       <IDENTIFIER>{
@@ -1405,7 +1405,7 @@ TokenProduction #TokenProduction :
           grammar.addLexicalState(firstSpecifiedLexicalState);
       }
       ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.getImage());})*
-    ">"
+     ">" 
   ]
   (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP")
   [
@@ -2680,7 +2680,7 @@ RegexpRef RegexpRef :
 }
     "<"
     t=<IDENTIFIER> =>||
-    ">" 
+    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">") 
     {
        CURRENT_NODE.setLabel(t.getImage());
        return CURRENT_NODE;
