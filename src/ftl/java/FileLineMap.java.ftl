@@ -96,20 +96,12 @@ public class FileLineMap {
     // A list of offsets of the beginning of lines
     private final int[] lineOffsets;
     private int startingLine, startingColumn;
-    private int bufferPosition;// line, columnInCodeUnits, columnInCodePoints;
+    private int bufferPosition;
 
 
     // If this is set, it determines 
     // which lines in the file are actually processed.
     private BitSet parsedLines;
-
-    /**
-     * @return true if we actually parse this line.
-     * (Or really whether we lex it, since what happens here is pre-lexical!)
-     */
-    private boolean isParsedLine(int lineNumber) {
-        return parsedLines == null || parsedLines.get(1+lineNumber-startingLine);
-    }
 
     /**
      * This is used in conjunction with having a preprocessor.
@@ -205,8 +197,6 @@ public class FileLineMap {
         int numSupps = numSupplementaryCharactersInRange(lineStart, pos);
         return 1+pos-lineOffsets[line]-numSupps;
     }
-
-
     
     // Now some methods to fulfill the functionality that used to be in that
     // SimpleCharStream class
