@@ -170,7 +170,8 @@ public class FileLineMap {
         setInputSource(inputSource);
         this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         this.lineOffsets = createLineOffsetsTable(this.content);
-        this.setStartPosition(startingLine, startingColumn);
+        this.startingLine = startingLine;
+        this.startingColumn = startingColumn;
     }
 
     public int getLineCount() {
@@ -224,18 +225,21 @@ public class FileLineMap {
                     --bufferPosition;
                 }
             }
+            if (ch == '\n' && parsedLines != null) skipUnparsedLinesBackward();
         }
     }
     
     void forward(int amount) {
         for (int i=0; i<amount; i++) {
+            boolean eol = content.charAt(bufferPosition) == '\n';
             ++bufferPosition;
             char ch = content.charAt(bufferPosition);
             if (Character.isLowSurrogate(ch)) {
                 if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
                     ++bufferPosition;
                 }
-            } 
+            }
+            if (eol && parsedLines != null) skipUnparsedLinesForward();
         }
     }
 
@@ -256,19 +260,30 @@ public class FileLineMap {
             }
         }
         if (ch == '\n' && parsedLines != null) {
-            skipUnparsedLines();
+            skipUnparsedLinesForward();
         }
         return ch;
     }
 
-    private void skipUnparsedLines() {
-        int  line = getLineFromOffset(bufferPosition) - startingLine;
+    private void skipUnparsedLinesForward() {
+        int line = getLineFromOffset(bufferPosition);
         int nextParsedLine = parsedLines.nextSetBit(line);
         if (nextParsedLine == -1) {
             bufferPosition = content.length();
         }
         else {
-            bufferPosition = lineOffsets[nextParsedLine];
+            bufferPosition = lineOffsets[nextParsedLine-startingLine];
+        }
+    }
+
+    private void skipUnparsedLinesBackward() {
+        int  line = getLineFromOffset(bufferPosition);
+        int prevParsedLine = parsedLines.previousSetBit(line);
+        if (prevParsedLine == -1) {
+            bufferPosition =0;
+        }
+        else {
+            bufferPosition = lineOffsets[1+prevParsedLine-startingLine] -1;
         }
     }
 
@@ -364,16 +379,6 @@ public class FileLineMap {
     }
 
     /**
-     * Given the line number and the column (in code units)
-     * @return the column in code points.
-     */
-    private int getCodePointColumn(int lineNumber, int codeUnitColumn) {
-        int startPoint = getLineStartOffset(lineNumber);
-        int finalPoint = startPoint + codeUnitColumn -1;
-        return codeUnitColumn - numSupplementaryCharactersInRange(startPoint, finalPoint);
-    }
-
-    /**
      * Given the line number and the column in code points,
      * returns the column in code units.
      */
@@ -391,11 +396,6 @@ public class FileLineMap {
             }
         }
         return codePointColumn + suppCharsFound;
-    }
-
-    private void setStartPosition(int line, int column) {
-        this.startingLine = line;
-        this.startingColumn = column;
     }
 
     /**
@@ -566,22 +566,6 @@ public class FileLineMap {
 
     private String getText(int startOffset, int endOffset) {
         return content.subSequence(startOffset, endOffset+1).toString();
-    }
-
-    private String getLine(int lineNumber) {
-        int realLineNumber = lineNumber - startingLine;
-        int startOffset = lineOffsets[realLineNumber];
-        int endOffset = (realLineNumber + 1 == lineOffsets.length) ? content.length() : lineOffsets[realLineNumber + 1];
-        return getText(startOffset, endOffset);
-    }
-
-    private int getLineNumber(int offset) {
-        int i = 0;
-        while (offset >= lineOffsets[i++]) {
-            if (i == lineOffsets.length)
-                break;
-        }
-        return i + startingLine - 1;
     }
 
     static private int BUF_SIZE = 0x10000;
