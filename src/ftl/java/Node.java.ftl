@@ -339,7 +339,7 @@ public interface Node extends Comparable<Node>
      * @return the (1-based) column offset where this Node ends
      */ 
     default int getEndColumn() {
-        return getFileLineMap().getCodePointColumnFromOffset(getEndOffset());
+        return getFileLineMap().getCodePointColumnFromOffset(getEndOffset()-1);
     }
     
     /**

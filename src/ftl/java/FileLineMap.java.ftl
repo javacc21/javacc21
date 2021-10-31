@@ -157,6 +157,7 @@ public class FileLineMap {
 
     int getCodePointColumnFromOffset(int pos) {
         if (pos >= content.length()) return 1;
+        if (Character.isLowSurrogate(content.charAt(pos))) --pos;
         int line = getLineFromOffset(pos)-startingLine;
         int lineStart = lineOffsets[line];
         int numSupps = numSupplementaryCharactersInRange(lineStart, pos);

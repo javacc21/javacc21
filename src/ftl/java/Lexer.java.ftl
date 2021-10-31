@@ -7,7 +7,7 @@
  *
  *     * Redistributions of source code must retain the above copyright notices,
  *       this list of conditions and the following disclaimer.
- *     * Redistributions in binary formnt must reproduce the above copyright
+ *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
@@ -101,7 +101,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
   // Just used to "bookmark" the starting location for a token
   // for when we put in the location info at the end.
-  private int tokenBeginLine, tokenBeginColumn, tokenBeginOffset;
+  private int tokenBeginOffset;
 
 [#if lexerData.hasLexicalStateTransitions]
   // A lookup for lexical state transitions triggered by a certain token type
@@ -125,7 +125,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [#else]  
   private boolean trace_enabled = false;
     [/#if]
-  private int tabSize =8;
   private InvalidToken invalidToken;
   Token previousToken;
   // The source of the raw characters that we are scanning  
@@ -210,12 +209,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         }
         else {
             charBuff.setLength(0);
-            tokenBeginLine = input_stream.getLine();
-            tokenBeginColumn = input_stream.getColumn();
             tokenBeginOffset = input_stream.getBufferPosition();
             curChar = input_stream.readChar();
-            if (trace_enabled) 
+            if (trace_enabled)  {
+                int tokenBeginLine = input_stream.getLine();
+                int tokenBeginColumn = input_stream.getColumn();
                 LOGGER.info("Starting new token on line: " + tokenBeginLine + ", column: " + tokenBeginColumn);
+            }
             if (curChar == -1) {
               if (trace_enabled) 
                 LOGGER.info("Reached end of input");
@@ -405,6 +405,17 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
+ [#--]
+      if (matchedToken.getType() != TokenType.EOF && tokenImage.indexOf('\n')==-1) {
+        assert tokenImage.length() == matchedToken.getEndOffset() - matchedToken.getBeginOffset();
+        if (tokenImage.length() != 1+matchedToken.getEndColumn() - matchedToken.getBeginColumn()) {
+          System.out.println("KILROY! " + matchedToken.getType() + " " + matchedToken.getLocation());
+          System.out.println("KILROY " + tokenImage.length());
+          System.out.println("KILROY " + matchedToken.getBeginColumn());
+          System.out.println("KILROY " + matchedToken.getEndColumn());
+
+        }--]
+      }--]
       return matchedToken;
   }
 

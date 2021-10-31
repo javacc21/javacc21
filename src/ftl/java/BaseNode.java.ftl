@@ -59,6 +59,12 @@ public class ${grammar.baseNodeClassName} implements Node {
     }
 
     public FileLineMap getFileLineMap() {
+        if (fileLineMap==null) {
+            for (Node child : children()) {
+                fileLineMap = child.getFileLineMap();
+                if (fileLineMap != null) break;
+            }
+        }
         return fileLineMap;
     }
 
@@ -98,7 +104,8 @@ public class ${grammar.baseNodeClassName} implements Node {
      */
     protected List<Node> children = newList();
     
-    private int beginLine, beginColumn, endLine, endColumn, beginOffset, endOffset;
+    //private int beginLine, beginColumn, endLine, endColumn, 
+    private int beginOffset, endOffset;
     private boolean unparsed;
     
     public boolean isUnparsed() {
@@ -177,48 +184,6 @@ public class ${grammar.baseNodeClassName} implements Node {
         return Collections.unmodifiableList(children);
     }
     
-    public int getBeginLine() {
-        if (beginLine <= 0) {
-            if (!children.isEmpty()) {
-                beginLine = children.get(0).getBeginLine();
-                beginColumn = children.get(0).getBeginColumn();
-            }
-        }
-        return beginLine;
-    }
-     
-    public int getEndLine() {
-        if (endLine <=0) {
-            if (!children.isEmpty()) {
-                Node last = children.get(children.size()-1);
-                endLine = last.getEndLine();
-                endColumn = last.getEndColumn();
-            }
-        }
-        return endLine;
-    }
-    
-    public int getBeginColumn() {
-        if (beginColumn <= 0) {
-            if (!children.isEmpty()) {
-                beginLine = children.get(0).getBeginLine();
-                beginColumn = children.get(0).getBeginColumn();
-            }
-        }
-        return beginColumn;
-    }
-    
-    public int getEndColumn() {
-        if (endColumn <=0) {
-            if (!children.isEmpty()) {
-                Node last = children.get(children.size()-1);
-                endLine = last.getEndLine();
-                endColumn = last.getEndColumn();
-            }
-        }
-        return endColumn;
-    }
-     
     public int getBeginOffset() {
         return beginOffset;
     }

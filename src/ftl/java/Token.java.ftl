@@ -345,12 +345,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     [/#if]
 
     public String getLocation() {
-//         return "line " + getBeginLine() + ", column " + getBeginColumn() + " of " + getInputSource();
-         if (fileLineMap == null) {
-             System.out.println("KILROY: " + getType());
-             return "FUCK A DUCK";
-         }
-         return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
+        return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
      }
 
 [#if grammar.treeBuildingEnabled]
