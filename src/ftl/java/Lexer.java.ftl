@@ -348,8 +348,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     // to just after the Token passed in.
     void reset(Token t, LexicalState state) {
         if (t != DUMMY_START_TOKEN) { // Is this 100% correct? REVISIT
-//            input_stream.goTo(t.getEndLine(), t.getEndColumn());
-//            input_stream.forward(1);
             input_stream.goTo(t.getEndOffset());
             t.setNext(null);
             t.setNextToken(null);
@@ -414,7 +412,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           System.out.println("KILROY " + matchedToken.getBeginColumn());
           System.out.println("KILROY " + matchedToken.getEndColumn());
 
-        }--]
+        }
       }--]
       return matchedToken;
   }
