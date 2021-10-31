@@ -9,8 +9,8 @@ package ${grammar.parserPackage};
 public class InvalidToken extends Token 
 [#if grammar.faultTolerant] implements ParsingProblem [/#if] {
 
-    public InvalidToken(String image, String inputSource) {
-        super(TokenType.INVALID, image, inputSource);
+    public InvalidToken(String image, FileLineMap fileLineMap) {
+        super(TokenType.INVALID, image, fileLineMap);
 [#if grammar.faultTolerant]
         super.setUnparsed(true);
         this.setDirty(true);

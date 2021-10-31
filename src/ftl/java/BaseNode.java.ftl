@@ -46,18 +46,10 @@ import java.util.*;
  */
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
-    private String inputSource;
+//    private String inputSource;
 
     private FileLineMap fileLineMap;
     
-    public String getInputSource() {
-        return inputSource;
-    }
-    
-    public void setInputSource(String inputSource) {
-        this.inputSource = inputSource;
-    }
-
     public FileLineMap getFileLineMap() {
         if (fileLineMap==null) {
             for (Node child : children()) {
@@ -104,7 +96,6 @@ public class ${grammar.baseNodeClassName} implements Node {
      */
     protected List<Node> children = newList();
     
-    //private int beginLine, beginColumn, endLine, endColumn, 
     private int beginOffset, endOffset;
     private boolean unparsed;
     

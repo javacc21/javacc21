@@ -24,10 +24,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     private FileLineMap fileLineMap;
 
-    public String getInputSource() {return inputSource;}
-
-    public void setInputSource(String inputSource) {this.inputSource = inputSource;}
-
     private int beginOffset, endOffset;
 
     public FileLineMap getFileLineMap() {
@@ -130,6 +126,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     public int getEndColumn() {
         return getFileLineMap().getCodePointColumnFromOffset(getEndOffset());
     }
+
+    public String getInputSource() {
+        return getFileLineMap().getInputSource();
+    }
 [/#if]    
 
     public int getBeginOffset() {
@@ -214,25 +214,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     //Should find a way to get rid of this.
     Token() {}
 
-    public Token(int kind) {
-       this(kind, null);
-       this.type = TokenType.values()[kind];
-    }
-
-    /**
-     * Constructs a new token for the specified Image and Kind.
-     */
-    public Token(int kind, String image) {
-        this.type = TokenType.values()[kind];
-        this.image = image;
-    }
-
     /**
      * @param type the #TokenType of the token being constructed
      * @param image the String content of the token
-     * @param inputSource the lookup name of the object that vended this token.
+     * @param fileLineMap the object that vended this token.
      */
-    public Token(TokenType type, String image, String inputSource) {
+    public Token(TokenType type, String image, FileLineMap fileLineMap) {
         this.type = type;
         this.image = image;
         this.inputSource = inputSource;
@@ -287,9 +274,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 [#else]
     public void copyLocationInfo(Token from) {
-        if (getInputSource()==null && from.getInputSource()!=null) {
-            setInputSource(from.getInputSource()); //REVISIT
-        }
+        setFileLineMap(from.getFileLineMap());
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
         next = from.next;
@@ -298,12 +283,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
     public void copyLocationInfo(Token start, Token end) {
-        if (getInputSource()==null && start.getInputSource()!=null) {
-            setInputSource(start.getInputSource());
-        }
-        if (getInputSource()==null && start.getInputSource()!=null) {
-            setInputSource(start.getInputSource());
-        }
+        setFileLineMap(start.getFileLineMap());
+        if (fileLineMap == null) setFileLineMap(end.getFileLineMap());
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
         previousToken = start.previousToken;
@@ -312,35 +293,35 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 [/#if]
 
-    public static Token newToken(TokenType type, String image, String inputSource) {
+    public static Token newToken(TokenType type, String image, FileLineMap fileLineMap) {
         [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, image, inputSource);
+              case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, image, fileLineMap);
             [/#if]
            [/#list]
-              case INVALID : return new InvalidToken(image, inputSource);
-           default : return new Token(type, image, inputSource);
+              case INVALID : return new InvalidToken(image, fileLineMap);
+           default : return new Token(type, image, fileLineMap);
            }
        [#else]
-         return new Token(type, image, inputSource);
+         return new Token(type, image, fileLineMap);
        [/#if]
     }
 
     public static Token newToken(TokenType type, String image, ${grammar.lexerClassName} lexer) {
-        return newToken(type, image, lexer.getInputSource());
+        return newToken(type, image, lexer.input_stream);
     }
 
     [#if grammar.productionTable?size != 0]
         public static Token newToken(TokenType type, String image, ${grammar.parserClassName} parser) {
-            return newToken(type, image, parser.getInputSource());
+            return newToken(type, image, parser.token_source);
         }
     [/#if]
 
     [#if grammar.treeBuildingEnabled]
         public static Token newToken(TokenType type, String image, Node node) {
-            return newToken(type, image, node.getInputSource());
+            return newToken(type, image, node.getFileLineMap());
         }
     [/#if]
 

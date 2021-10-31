@@ -53,7 +53,7 @@ import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*
 
 @SuppressWarnings("unused")
 public class ${classname} extends ${superclass} {
-    public ${classname}(TokenType type, String image, String inputSource) {
-        super(type, image, inputSource);
+    public ${classname}(TokenType type, String image, FileLineMap fileLineMap) {
+        super(type, image, fileLineMap);
     }
 }

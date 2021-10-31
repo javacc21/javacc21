@@ -207,7 +207,6 @@
   [#if grammar.nodeUsesParser]
      ${nodeVarName}.setParser(this);
   [/#if]
-   ${nodeVarName}.setInputSource(getInputSource());
    openNodeScope(${nodeVarName});
   }
   [/#if]

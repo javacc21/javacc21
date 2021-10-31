@@ -371,7 +371,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     int offset = input_stream.getBufferPosition();
     String img = new String(new int[] {ch}, 0, 1);
     if (invalidToken == null) {
-       invalidToken = new InvalidToken(img, inputSource);
+       invalidToken = new InvalidToken(img, input_stream);
        invalidToken.setBeginOffset(offset-1); [#-- Is this right? --]
     } else {
        invalidToken.setImage(invalidToken.getImage() + img);
@@ -383,13 +383,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private Token instantiateToken(TokenType type) {
     String tokenImage = charBuff.toString();
     [#if grammar.settings.TOKEN_FACTORY??]
-        Token matchedToken = ${grammar.settings.TOKEN_FACTORY}.newToken(type, tokenImage, inputSource);
+        Token matchedToken = ${grammar.settings.TOKEN_FACTORY}.newToken(type, tokenImage, input_stream);
     [#else]
         Token matchedToken = Token.newToken(type, tokenImage, this);
     [/#if]
         matchedToken.setBeginOffset(tokenBeginOffset);
         matchedToken.setEndOffset(input_stream.getBufferPosition());
-        matchedToken.setInputSource(this.inputSource);
+//        matchedToken.setInputSource(this.inputSource);
         matchedToken.setFileLineMap(this.input_stream);
         if (previousToken != null) {
             matchedToken.setPreviousToken(this.previousToken);
@@ -403,17 +403,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
- [#--]
-      if (matchedToken.getType() != TokenType.EOF && tokenImage.indexOf('\n')==-1) {
-        assert tokenImage.length() == matchedToken.getEndOffset() - matchedToken.getBeginOffset();
-        if (tokenImage.length() != 1+matchedToken.getEndColumn() - matchedToken.getBeginColumn()) {
-          System.out.println("KILROY! " + matchedToken.getType() + " " + matchedToken.getLocation());
-          System.out.println("KILROY " + tokenImage.length());
-          System.out.println("KILROY " + matchedToken.getBeginColumn());
-          System.out.println("KILROY " + matchedToken.getEndColumn());
-
-        }
-      }--]
       return matchedToken;
   }
 

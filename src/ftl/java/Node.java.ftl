@@ -65,16 +65,11 @@ public interface Node extends Comparable<Node>
     /**
      * @return the input source (usually a filename) from which this Node came from
      */
-    String getInputSource();
+    default String getInputSource() {
+        return getFileLineMap().getInputSource();
+    }
 
-    /**
-     * Set the input source, typically only used internally
-     * @param name The name of the "input source", mostly useful for generating error messages
-     */
-    void setInputSource(String name);
-
-    
-    /**
+   /**
      * Returns whether this node has any children.
      * 
      * @return Returns <code>true</code> if this node has any children,
@@ -310,7 +305,6 @@ public interface Node extends Comparable<Node>
       * address this problem!
       */
      default String getSource() {
-//        return getFileLineMap().getText(getBeginLine(), getBeginColumn(), getEndLine(), getEndColumn());
         return getFileLineMap().getText(getBeginOffset(), getEndOffset());
     }
 
@@ -535,9 +529,7 @@ public interface Node extends Comparable<Node>
      * @param from the Node to copy the info from 
      */
     default void copyLocationInfo(Node from) {
-        if (from.getInputSource()!=null && getInputSource()==null) {
-            setInputSource(from.getInputSource()); //REVISIT
-        }
+        setFileLineMap(from.getFileLineMap());
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
         setFileLineMap(from.getFileLineMap());
@@ -549,12 +541,8 @@ public interface Node extends Comparable<Node>
      * @param end the end node
      */
     default void copyLocationInfo(Node start, Node end) {
-        if (getInputSource() == null && start.getInputSource() != null) {
-            setInputSource(start.getInputSource());
-        }
-        if (getInputSource() == null && end.getInputSource() != null) {
-            setInputSource(end.getInputSource());
-        }
+        setFileLineMap(start.getFileLineMap());
+        if (getFileLineMap()==null) setFileLineMap(end.getFileLineMap());
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
     }

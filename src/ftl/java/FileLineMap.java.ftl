@@ -170,7 +170,7 @@ public class FileLineMap {
      * Backup a certain number of characters
      * This method is dead simple by design and does not handle any of the messiness
      * with column numbers relating to tabs or unicode escapes. 
-     * @param amount the number of characters to backup.
+     * @param amount the number of characters (code points) to backup.
      */
     public void backup(int amount) {
         for (int i=0; i<amount; i++) {
@@ -260,22 +260,6 @@ public class FileLineMap {
     }
 
     // But there is no goto in Java!!!
-
-    /**
-     * @param line the line number
-     * @param column the column in code _points_
-     */
-    void goTo(int line, int column) {
-        bufferPosition = getLineStartOffset(line);
-        for (int i=1; i<column;i++) {
-            char first = content.charAt(bufferPosition++);
-            if (Character.isHighSurrogate(first)) {
-                if (Character.isLowSurrogate(content.charAt(bufferPosition))) {
-                    ++bufferPosition;
-                }
-            }
-        }
-    }
 
     void goTo(int offset) {
         this.bufferPosition = offset;
@@ -514,16 +498,13 @@ public class FileLineMap {
     }
     
     void setInputSource(String inputSource) {
-//        mapsByName.put(inputSource, this);
         this.inputSource = inputSource;
     }
-    
-    String getText(int beginLine, int beginColumn, int endLine, int endColumn) { //TODO codepoints
-        int startOffset = getOffset(beginLine, beginColumn);
-        int endOffset = getOffset(endLine, endColumn);
-        return getText(startOffset, endOffset);
-    }
 
+    /**
+     * @return the text between startOffset (inclusive)
+     * and endOffset(exclusive)
+     */
     String getText(int startOffset, int endOffset) {
         return content.subSequence(startOffset, endOffset).toString();
     }

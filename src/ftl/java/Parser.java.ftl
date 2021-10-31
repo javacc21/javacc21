@@ -152,7 +152,7 @@ public boolean isCancelled() {return cancelled;}
       token_source.parser = this;
       [/#if]
       lastConsumedToken = lexer.DUMMY_START_TOKEN;
-      lastConsumedToken.setInputSource(lexer.getInputSource());
+      lastConsumedToken.setFileLineMap(lexer.input_stream);
   }
 
   // If tok already has a next field set, it returns that

@@ -122,7 +122,7 @@
             Token next = nextToken(lastConsumedToken);
             n.setFileLineMap(lastConsumedToken.getFileLineMap());
             n.setBeginOffset(next.getBeginOffset());
-            n.setInputSource(next.getInputSource());
+//            n.setInputSource(next.getInputSource());
             n.open();
   [#list grammar.openNodeScopeHooks as hook]
             ${hook}(n);
