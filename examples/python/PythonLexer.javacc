@@ -47,21 +47,21 @@ INJECT LEXER_CLASS :
        if (offset > indentation) {
           indentationStack.add(offset);
           this.indentation = offset;
-          Token indent = Token.newToken(INDENT, "INDENT", getInputSource());
+          Token indent = Token.newToken(INDENT, "INDENT", this);
           setLocationInfo(indent, tok.getPreviousToken(), tok);
           return indent;
        }
        // Now deal with dedent.
        int dedentIndex = indentationStack.indexOf(offset);
        if (dedentIndex <0) {
-          Token invalidDedent = new InvalidToken("Invalid Dedent", getInputSource());
+          Token invalidDedent = new InvalidToken("Invalid Dedent", input_stream);
           setLocationInfo(invalidDedent, tok.getPreviousToken(), tok);
           return invalidDedent;
        }
        this.indentation = offset;
        Token firstDedent = null, lastDedent=null;
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
-          Token dedent = Token.newToken(DEDENT, "DEDENT", getInputSource());
+          Token dedent = Token.newToken(DEDENT, "DEDENT", this);
           if (firstDedent == null) firstDedent = dedent;
           Token prev = lastDedent != null ? lastDedent : tok.getPreviousToken();
           setLocationInfo(dedent, prev, tok);
@@ -80,7 +80,7 @@ INJECT LEXER_CLASS :
       indentDedent.setNext(tok);
       indentDedent.setBeginOffset(prevToken.getEndOffset());
       indentDedent.setEndOffset(tok.getBeginOffset());
-      indentDedent.setInputSource(getInputSource());
+      indentDedent.setFileLineMap(prevToken.getFileLineMap());
    }
 
    Token handleNewline(Token tok, boolean lineJoiningOn) {

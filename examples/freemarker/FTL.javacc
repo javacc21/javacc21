@@ -66,7 +66,7 @@ INJECT FTLParser :
         try {
             FileReader reader = new FileReader(inputFile);
             parser = new FTLParser(reader);
-            parser.setInputSource(inputFile.toString());
+            //parser.setInputSource(inputFile.toString());
             parser.Root();
         }
         catch (Exception e) {
@@ -214,7 +214,7 @@ INJECT FTLLexer :
         dest.setNext(next);
         dest.setBeginOffset(src.getBeginOffset());
         dest.setEndOffset(src.getEndOffset());
-        dest.setInputSource(src.getInputSource());
+        dest.setFileLineMap(src.getFileLineMap());
     }
 
     private Token cloneToken(Token t) {
