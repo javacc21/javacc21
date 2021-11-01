@@ -60,7 +60,14 @@ public class FileLineMap {
     private String inputSource;
     // A list of offsets of the beginning of lines
     private final int[] lineOffsets;
+
+    // The starting line and column, usually 1,1
+    // that is used to report a file position 
+    // in 1-based line/column terms
     private int startingLine, startingColumn;
+
+    // The offset in the internal buffer to the very
+    // next character that the readChar method returns
     private int bufferPosition;
 
 
@@ -71,8 +78,7 @@ public class FileLineMap {
     /**
      * This is used in conjunction with having a preprocessor.
      * We set which lines are actually parsed lines and the 
-     * unset ones are ignored. Note that this BitSet (unlike most of the rest of the API)
-     * uses zero-based (not 1-based) logic
+     * unset ones are ignored. 
      * @param parsedLines a #java.util.BitSet that holds which lines
      * are parsed (i.e. not ignored)
      */
@@ -131,10 +137,9 @@ public class FileLineMap {
         this.startingColumn = startingColumn;
     }
 
-    public int getLineCount() {
-        return lineOffsets.length;
-    }
-
+    /**
+     * @return the line number from the absolute offset passed in as a parameter
+     */
     int getLineFromOffset(int pos) {
         if (pos >= content.length()) {
             if (content.charAt(content.length()-1) == '\n') {
@@ -181,7 +186,7 @@ public class FileLineMap {
                     --bufferPosition;
                 }
             }
-            if (ch == '\n' && parsedLines != null) skipUnparsedLinesBackward();
+            if (ch == '\n') skipUnparsedLinesBackward();
         }
     }
     
@@ -195,7 +200,7 @@ public class FileLineMap {
                     ++bufferPosition;
                 }
             }
-            if (eol && parsedLines != null) skipUnparsedLinesForward();
+            if (eol) skipUnparsedLinesForward();
         }
     }
 
@@ -215,13 +220,19 @@ public class FileLineMap {
                 return Character.toCodePoint(ch, nextChar);
             }
         }
-        if (ch == '\n' && parsedLines != null) {
+        if (ch == '\n') {
             skipUnparsedLinesForward();
         }
         return ch;
     }
 
+    /**
+      * If our current bufferPosition corresponds
+      * to a line that is to be skipped,
+      * we scan forward to the next line that is not skipped
+      */
     private void skipUnparsedLinesForward() {
+        if (parsedLines == null) return;
         int line = getLineFromOffset(bufferPosition);
         int nextParsedLine = parsedLines.nextSetBit(line);
         if (nextParsedLine == -1) {
@@ -232,7 +243,13 @@ public class FileLineMap {
         }
     }
 
+    /**
+     * If our current bufferPosition corresponds
+     * to a line that is to be skipped,
+     * we scan forward to the next line that is not skipped
+     */
     private void skipUnparsedLinesBackward() {
+        if (parsedLines == null) return;
         int  line = getLineFromOffset(bufferPosition);
         int prevParsedLine = parsedLines.previousSetBit(line);
         if (prevParsedLine == -1) {
@@ -408,8 +425,8 @@ public class FileLineMap {
                     if (content.charAt(i) == 'u') numConsecutiveUs++;
                     else break;
                 }
-                String nextFour = content.subSequence(index+numConsecutiveUs, index+numConsecutiveUs+4).toString();
-                buf.append((char) Integer.parseInt(nextFour, 16));
+                String fourHexDigits = content.subSequence(index+numConsecutiveUs, index+numConsecutiveUs+4).toString();
+                buf.append((char) Integer.parseInt(fourHexDigits, 16));
                 index+=(numConsecutiveUs +4);
             }
             else if (!preserveLines && ch == '\r') {
@@ -419,7 +436,6 @@ public class FileLineMap {
                     col = 0;
                 }
             } else if (ch == '\t' && tabsToSpaces > 0) {
-                //justSawUnicodeEscape = false;
                 int spacesToAdd = tabsToSpaces - col % tabsToSpaces;
                 for (int i = 0; i < spacesToAdd; i++) {
                     buf.append((char) ' ');
