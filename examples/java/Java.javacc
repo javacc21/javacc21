@@ -373,18 +373,16 @@ ArrayInitializer :
     SCAN \.\.\InterfaceDeclaration
     =>
     {permissibleModifiers = EnumSet.of(PUBLIC,PRIVATE,ABSTRACT,STATIC,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT);}
-    Modifiers
     |
     SCAN ~\...\TypeDeclaration // This is a kludge to support the code injection feature in JavaCC
                                // If we're not in a TypeDeclaration (most likely because we are in a JavaCC code injection)
                                // we just accept all the possible modifiers.
     => 
     {permissibleModifiers = EnumSet.of(PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT);}
-    Modifiers
     |
     {permissibleModifiers = EnumSet.of(PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,FINAL,SYNCHRONIZED,NATIVE,STRICTFP);}
-    Modifiers
   )
+  Modifiers
   [ TypeParameters ]
   ReturnType
   <IDENTIFIER> 
