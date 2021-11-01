@@ -179,8 +179,7 @@ public class FileLineMap {
      */
     public void backup(int amount) {
         for (int i=0; i<amount; i++) {
-            --bufferPosition;
-            char ch = content.charAt(bufferPosition);
+            char ch = content.charAt(--bufferPosition);
             if (bufferPosition > 0 && Character.isLowSurrogate(ch)) {
                 if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
                     --bufferPosition;
@@ -253,7 +252,7 @@ public class FileLineMap {
         int  line = getLineFromOffset(bufferPosition);
         int prevParsedLine = parsedLines.previousSetBit(line);
         if (prevParsedLine == -1) {
-            bufferPosition =0;
+            skipUnparsedLinesForward();
         }
         else {
             bufferPosition = lineOffsets[1+prevParsedLine-startingLine] -1;
