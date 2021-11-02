@@ -125,10 +125,18 @@ public boolean isCancelled() {return cancelled;}
     this("input", content);
   }
 
+  /**
+   * @param inputSource just the name of the input source (typically the filename) that 
+   * will be used in error messages and so on.
+   * @param path The location (typically the filename) from which to get the input to parse
+   */
   public ${grammar.parserClassName}(String inputSource, Path path) throws IOException {
     this(inputSource, FileLineMap.stringFromBytes(Files.readAllBytes(path)));
   }
 
+  /**
+   * @param path The location (typically the filename) from which to get the input to parse
+   */
   public ${grammar.parserClassName}(Path path) throws IOException {
     this(path.toString(), path);
   }
@@ -140,7 +148,7 @@ public boolean isCancelled() {return cancelled;}
   public ${grammar.parserClassName}(java.io.InputStream stream) {
       this(new InputStreamReader(stream));
   }
-  
+
   /**
    * @Deprecated Use the constructor that takes a #java.nio.files.Path or just 
    * a String (i.e. CharSequence) directly.
