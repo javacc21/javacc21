@@ -133,10 +133,18 @@ public boolean isCancelled() {return cancelled;}
     this(path.toString(), path);
   }
 
+  /**
+   * @Deprecated Use the constructor that takes a #java.nio.files.Path or just 
+   * a String (i.e. CharSequence) directly.
+   */
   public ${grammar.parserClassName}(java.io.InputStream stream) {
       this(new InputStreamReader(stream));
   }
   
+  /**
+   * @Deprecated Use the constructor that takes a #java.nio.files.Path or just 
+   * a String (i.e. CharSequence) directly.
+   */
   public ${grammar.parserClassName}(Reader reader) {
     this(new ${grammar.lexerClassName}("input", reader));
       [#if grammar.lexerUsesParser]

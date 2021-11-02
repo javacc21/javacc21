@@ -46,6 +46,18 @@
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
 
+[#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="true", JAVA_UNICODE_ESCAPE="false", ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")]
+[#if grammar.settings.TABS_TO_SPACES??]
+    [#set TABS_TO_SPACES = grammar.settings.TABS_TO_SPACES]
+[/#if]
+[#if grammar.settings.PRESERVE_LINE_ENDINGS?? && !grammar.settings.PRESERVE_LINE_ENDINGS]
+    [#set PRESERVE_LINE_ENDINGS = "false"]
+[/#if]
+[#if grammar.settings.JAVA_UNICODE_ESCAPE?? && grammar.settings.JAVA_UNICODE_ESCAPE]
+       [#set JAVA_UNICODE_ESCAPE = "true"]
+[/#if]
+
+
 [#macro EnumSet varName tokenNames]
    [#if tokenNames?size=0]
        static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
@@ -150,9 +162,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars) {
         this(inputSource, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
      }
+
      public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
         this.inputSource = inputSource;
-        input_stream = new FileLineMap(inputSource, chars, line, column);
+        CharSequence content = FileLineMap.mungeContent(chars, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+        input_stream = new FileLineMap(inputSource, content, line, column);
         switchTo(lexState);
      }
 
@@ -165,8 +179,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     }
 
     public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
-        this.inputSource = inputSource;
-        input_stream = new FileLineMap(inputSource, reader, line, column);
+        this(inputSource, FileLineMap.readToEnd(reader), lexState, line, column);
+        //this.inputSource = inputSource;
+        //input_stream = new FileLineMap(inputSource, reader, line, column);
         switchTo(lexState);
     }
 
@@ -366,13 +381,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     }
     
   private InvalidToken handleInvalidChar(int ch) {
-    int line = input_stream.getEndLine();
-    int column = input_stream.getEndColumn();
     int offset = input_stream.getBufferPosition();
     String img = new String(new int[] {ch}, 0, 1);
     if (invalidToken == null) {
        invalidToken = new InvalidToken(img, input_stream);
-       invalidToken.setBeginOffset(offset-1); [#-- Is this right? --]
+       invalidToken.setBeginOffset(offset-img.length());
     } else {
        invalidToken.setImage(invalidToken.getImage() + img);
     }
@@ -388,8 +401,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         Token matchedToken = Token.newToken(type, tokenImage, this);
     [/#if]
         matchedToken.setBeginOffset(tokenBeginOffset);
-        matchedToken.setEndOffset(input_stream.getBufferPosition());
-//        matchedToken.setInputSource(this.inputSource);
+        if (type == TokenType.EOF) {
+          [#-- I think this is right... --]
+          matchedToken.setEndOffset(tokenBeginOffset);
+        } else {
+          matchedToken.setEndOffset(input_stream.getBufferPosition());
+        }
         matchedToken.setFileLineMap(this.input_stream);
         if (previousToken != null) {
             matchedToken.setPreviousToken(this.previousToken);

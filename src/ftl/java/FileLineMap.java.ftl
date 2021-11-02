@@ -8,7 +8,7 @@
  *
  *     * Redistributions of source code must retain the above copyright notices,
  *       this list of conditions and the following disclaimer.
- *     * Redistributions in binary formnt must reproduce the above copyright
+ *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky
@@ -44,12 +44,13 @@ import java.util.Map;
 import java.nio.charset.Charset;
 
 /**
- * Rather bloody-minded implementation of a class to read in a file 
- * and store the contents in a String, and keep track of where the lines are. 
- * N.B. It now has a lot of ugly details relating to extended unicode, 
- * i.e. code units vs. code points. The column locations vended to the 
- * lexer machinery are now in terms of code points. (Which are the same as 
- * relative to code units if you have no supplementary unicode characters!) 
+ * Rather bloody-minded implementation of a class to store the input and keep 
+ * track of where the lines are. Generally speaking, it takes care of all the
+ * pre-lexical details, like character encodings, code units vs. code points,
+ * and also (if the case applies) keeping track of which regions of the input
+ * are turned off by a preprocessor. 
+ * N.B. This class is not (any longer) some kind of input stream. It just 
+ * pretends that it is by having these #readChar, #backup and #forward methods.
  */
 @SuppressWarnings("unused")
 public class FileLineMap {
@@ -86,17 +87,7 @@ public class FileLineMap {
         this.parsedLines = parsedLines;
     }
     
-    [#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="true", JAVA_UNICODE_ESCAPE="false", ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")]
-    [#if grammar.settings.TABS_TO_SPACES??]
-       [#set TABS_TO_SPACES = grammar.settings.TABS_TO_SPACES]
-    [/#if]
-    [#if grammar.settings.PRESERVE_LINE_ENDINGS?? && !grammar.settings.PRESERVE_LINE_ENDINGS]
-       [#set PRESERVE_LINE_ENDINGS = "false"]
-    [/#if]
-    [#if grammar.settings.JAVA_UNICODE_ESCAPE?? && grammar.settings.JAVA_UNICODE_ESCAPE]
-       [#set JAVA_UNICODE_ESCAPE = "true"]
-    [/#if]
-
+    
     /**
      * This constructor may not be used much soon. Pretty soon all the generated API
      * will tend to use #java.nio.file.Path rather than java.io classes like Reader
@@ -106,10 +97,10 @@ public class FileLineMap {
      * we started reading at the start of the file.
      * @param startingColumn location info used in error reporting, this is 1 typically, assuming
      * we started reading at the start of the file.
-     */
+     *//*
     public FileLineMap(String inputSource, Reader reader, int startingLine, int startingColumn) {
         this(inputSource, readToEnd(reader), startingLine, startingColumn);
-    }
+    }*/
 
     /**
      * Constructor that takes a String or string-like object as the input
@@ -131,7 +122,7 @@ public class FileLineMap {
      */
     public FileLineMap(String inputSource, CharSequence content, int startingLine, int startingColumn) {
         setInputSource(inputSource);
-        this.content = mungeContent(content, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+        this.content = content;
         this.lineOffsets = createLineOffsetsTable(this.content);
         this.startingLine = startingLine;
         this.startingColumn = startingColumn;
@@ -372,89 +363,6 @@ public class FileLineMap {
         return lineOffsets[line - startingLine] + column - columnAdjustment;
     }
     
-    // ------------- private utilities method
-
-    // Icky method to handle annoying stuff. Might make this public later if it is
-    // needed elsewhere
-    private static String mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
-            boolean javaUnicodeEscape, boolean ensureFinalEndline) {
-        if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape) {
-            if (ensureFinalEndline) {
-                if (content.length() == 0) {
-                    content = "\n";
-                } else {
-                    int lastChar = content.charAt(content.length()-1);
-                    if (lastChar != '\n' && lastChar != '\r') {
-                        if (content instanceof StringBuilder) {
-                            ((StringBuilder) content).append((char) '\n');
-                        } else {
-                            StringBuilder buf = new StringBuilder(content);
-                            buf.append((char) '\n');
-                            content = buf.toString();
-                        }
-                    }
-                }
-            }
-            return content.toString();
-        }
-        StringBuilder buf = new StringBuilder();
-        // This is just to handle tabs to spaces. If you don't have that setting set, it
-        // is really unused.
-        int col = 0;
-        int index = 0, contentLength = content.length();
-        while (index < contentLength) {
-            char ch = content.charAt(index++);
-            if (ch == '\n') {
-                buf.append(ch);
-                ++col;
-            }
-            else if (javaUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
-                int numPrecedingSlashes = 0;
-                for (int i = index-1; i>=0; i--) {
-                    if (content.charAt(i) == '\\') 
-                        numPrecedingSlashes++;
-                    else break;
-                }
-                if (numPrecedingSlashes % 2 == 0) {
-                    buf.append((char) '\\');
-                    index++;
-                    continue;
-                }
-                int numConsecutiveUs = 0;
-                for (int i = index; i<contentLength; i++) {
-                    if (content.charAt(i) == 'u') numConsecutiveUs++;
-                    else break;
-                }
-                String fourHexDigits = content.subSequence(index+numConsecutiveUs, index+numConsecutiveUs+4).toString();
-                buf.append((char) Integer.parseInt(fourHexDigits, 16));
-                index+=(numConsecutiveUs +4);
-            }
-            else if (!preserveLines && ch == '\r') {
-                buf.append((char)'\n');
-                if (index < contentLength && content.charAt(index) == '\n') {
-                    ++index;
-                    col = 0;
-                }
-            } else if (ch == '\t' && tabsToSpaces > 0) {
-                int spacesToAdd = tabsToSpaces - col % tabsToSpaces;
-                for (int i = 0; i < spacesToAdd; i++) {
-                    buf.append((char) ' ');
-                    col++;
-                }
-            } else {
-                buf.append(ch);
-                if (!Character.isLowSurrogate(ch)) col++;
-            }
-        }
-        if (ensureFinalEndline) {
-            if (buf.length() ==0) {
-                return "\n";
-            }
-            char lastChar = buf.charAt(buf.length()-1);
-            if (lastChar != '\n' && lastChar!='\r') buf.append((char) '\n');
-        }
-        return buf.toString();
-    }
 
     private static int[] createLineOffsetsTable(CharSequence content) {
         if (content.length() == 0) {
@@ -501,70 +409,5 @@ public class FileLineMap {
     String getText(int startOffset, int endOffset) {
         return content.subSequence(startOffset, endOffset).toString();
     }
-
-    static private int BUF_SIZE = 0x10000;
-
-    // Annoying kludge really...
-    static String readToEnd(Reader reader) {
-        try {
-            return readFully(reader);
-        } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
-    }
-
-    static String readFully(Reader reader) throws IOException {
-        char[] block = new char[BUF_SIZE];
-        int charsRead = reader.read(block);
-        if (charsRead < 0) {
-            throw new IOException("No input");
-        } else if (charsRead < BUF_SIZE) {
-            char[] result = new char[charsRead];
-            System.arraycopy(block, 0, result, 0, charsRead);
-            reader.close();
-            return new String(block, 0, charsRead);
-        }
-        StringBuilder buf = new StringBuilder();
-        buf.append(block);
-        do {
-            charsRead = reader.read(block);
-            if (charsRead > 0) {
-                buf.append(block, 0, charsRead);
-            }
-        } while (charsRead == BUF_SIZE);
-        reader.close();
-        return buf.toString();
-    }
-
-    /**
-     * Rather bloody-minded way of converting a byte array into a string
-     * taking into account the initial byte order mark (used by Microsoft a lot seemingly)
-     * See: https://docs.microsoft.com/es-es/globalization/encoding/byte-order-markc
-     * @param bytes the raw byte array 
-     * @return A String taking into account the encoding in the byte order mark (if it was present). If no
-     * byte-order mark was present, it assumes the raw input is in UTF-8.
-     */
-    static public String stringFromBytes(byte[] bytes) {
-        int arrayLength = bytes.length;
-        int firstByte = arrayLength>0 ? Byte.toUnsignedInt(bytes[0]) : 1;
-        int secondByte = arrayLength>1 ? Byte.toUnsignedInt(bytes[1]) : 1;
-        int thirdByte = arrayLength >2 ? Byte.toUnsignedInt(bytes[2]) : 1;
-        int fourthByte = arrayLength > 3 ? Byte.toUnsignedInt(bytes[3]) : 1;
-        if (firstByte == 0xEF && secondByte == 0xBB && thirdByte == 0xBF) {
-            return new String(bytes, 3, bytes.length-3, Charset.forName("UTF-8"));
-        }
-        if (firstByte == 0 && secondByte==0 && thirdByte == 0xFE && fourthByte == 0xFF) {
-            return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32BE"));
-        }
-        if (firstByte == 0xFF && secondByte == 0xFE && thirdByte == 0 && fourthByte == 0) {
-            return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32LE"));
-        }
-        if (firstByte == 0xFE && secondByte == 0xFF) {
-            return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16BE"));
-        }
-        if (firstByte == 0xFF && secondByte == 0xFE) {
-            return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16LE"));
-        }
-        return new String(bytes, Charset.forName("UTF-8"));
-    }
+ [#embed "InputUtils.java.ftl"]
 }
