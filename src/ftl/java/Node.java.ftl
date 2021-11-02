@@ -510,20 +510,7 @@ public interface Node extends Comparable<Node>
         return last.getLastToken();
     }
 [/#if]    
-
-    default Node findNodeAt(int line, int column) {
-        if (!isIncluded(line, column)) {
-            return null;
-        }
-        for (Node child : children()) {
-            Node match = child.findNodeAt(line, column);
-            if (match != null) {
-                return match;
-            }
-        }
-        return this;
-    }
-
+    
     /**
      * Copy the location info from another Node
      * @param from the Node to copy the info from 
@@ -557,31 +544,6 @@ public interface Node extends Comparable<Node>
     }
     
     /**
-     * Returns true if the given position (line,column) is included in the given
-     * node and false otherwise.
-     * 
-     * @param line   the line position
-     * @param column the column position
-     * @return true if the given position (line,column) is included in the given
-     *         node and false otherwise.
-     */
-    default boolean isIncluded(int line, int column) {
-        return isIncluded(getBeginLine(), getBeginColumn(),getEndLine(), getEndColumn(), line,
-                column);
-    }
-
-    default boolean isIncluded(int beginLine, int beginColumn, int endLine, int endColumn, int line,
-            int column) {
-        if (beginLine == line && beginColumn == column) {
-            return true;
-        }
-        if (endLine == line && endColumn == column) {
-            return true;
-        }            
-        return !isAfter(beginLine, beginColumn, line, column) && isAfter(endLine, endColumn, line, column);
-    }
-    
-    /**
      * Returns the first child of this node. If there is no such node, this returns
      * <code>null</code>.
      * 
@@ -605,18 +567,6 @@ public interface Node extends Comparable<Node>
         return count>0 ? getChild(count-1): null;
     }
 
-
-    static boolean isAfter(int line1,int column1,int line2,int column2) {
-        if (line1>line2) {
-            return true;
-        }
-        if (line1==line2) {
-            return column1>=column2;
-        }
-        return false;
-    }
-    
-      
     default Node getRoot() {
         Node parent = this;
         while (parent.getParent() != null ) {
