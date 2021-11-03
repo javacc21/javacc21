@@ -228,7 +228,7 @@ public class FileLineMap {
         if (nextParsedLine == -1) {
             bufferPosition = content.length();
         }
-        else {
+        else if (nextParsedLine != line) {
             bufferPosition = lineOffsets[nextParsedLine-startingLine];
         }
     }
@@ -245,7 +245,7 @@ public class FileLineMap {
         if (prevParsedLine == -1) {
             skipUnparsedLinesForward();
         }
-        else {
+        else if (prevParsedLine != line) {
             bufferPosition = lineOffsets[1+prevParsedLine-startingLine] -1;
         }
     }
@@ -270,6 +270,7 @@ public class FileLineMap {
 
     void goTo(int offset) {
         this.bufferPosition = offset;
+        skipUnparsedLinesForward();
     }
 
     /**
