@@ -155,29 +155,55 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       input_stream.setInputSource(inputSource);
     }
    
-     public ${grammar.lexerClassName}(CharSequence chars) {
-        this("input", chars);
+     public ${grammar.lexerClassName}(CharSequence input) {
+        this("input", input);
      }
 
-     public ${grammar.lexerClassName}(String inputSource, CharSequence chars) {
-        this(inputSource, chars, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
+
+     /**
+      * @param inputSource just the naem of the input source (typically the filename)
+      * that will be used in error messages and so on.
+      * @param input the input
+      */
+     public ${grammar.lexerClassName}(String inputSource, CharSequence input) {
+        this(inputSource, input, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
      }
 
-     public ${grammar.lexerClassName}(String inputSource, CharSequence chars, LexicalState lexState, int line, int column) {
+     /**
+      * @param inputSource just the name of the input source (typically the filename) that 
+      * will be used in error messages and so on.
+      * @param input the input
+      * @param line The line number at which we are starting for the purposes of location/error messages. In most 
+      * normal usage, this is 1.
+      * @param column number at which we are starting for the purposes of location/error messages. In most normal
+      * usages this is 1.
+      */
+     public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int line, int column) {
         this.inputSource = inputSource;
-        CharSequence content = FileLineMap.mungeContent(chars, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+        CharSequence content = FileLineMap.mungeContent(input, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         input_stream = new FileLineMap(inputSource, content, line, column);
         switchTo(lexState);
      }
 
+    /**
+     * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
+     * depending on your use case
+     */
     public ${grammar.lexerClassName}(Reader reader) {
        this("input", reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
     }
-
+    /**
+     * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
+     * depending on your use case
+     */
     public ${grammar.lexerClassName}(String inputSource, Reader reader) {
        this(inputSource, reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
     }
 
+    /**
+     * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
+     * depending on your use case
+     */
     public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
         this(inputSource, FileLineMap.readToEnd(reader), lexState, line, column);
         //this.inputSource = inputSource;
