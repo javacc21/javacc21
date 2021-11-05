@@ -78,13 +78,11 @@ INJECT LEXER_CLASS :
    private void setLocationInfo(Token indentDedent, Token prevToken, Token tok) {
       if (prevToken != null) {
          prevToken.setNext(indentDedent);
-         prevToken.setNextToken(indentDedent);
       }
-      indentDedent.setNextToken(tok);
       indentDedent.setNext(tok);
       indentDedent.setBeginOffset(prevToken.getEndOffset());
       indentDedent.setEndOffset(tok.getBeginOffset());
-      indentDedent.setFileLineMap(prevToken.getFileLineMap());
+      indentDedent.setFileLineMap(input_stream);
    }
 
    Token handleNewline(Token tok, boolean lineJoiningOn) {

@@ -153,7 +153,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        this.image = image;
    }
 
-    private Token next, previousToken, nextToken;
+    private Token next, previousToken;
 
 
     /**
@@ -190,12 +190,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      */
      public Token getNextToken() {
          return getFileLineMap().getCachedToken(getEndOffset());
-//         return nextToken;
-     }
-
-     void setNextToken(Token nextToken) {
-         if (nextToken!= null) getFileLineMap().cacheToken(nextToken);
-         this.nextToken = nextToken;
      }
 
      public Token getPreviousToken() {
@@ -258,7 +252,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         if (from instanceof Token) {
             Token otherTok = (Token) from;
             next = otherTok.next;
-            nextToken = otherTok.nextToken;
             previousToken = otherTok.previousToken;
         }
         setFileLineMap(from.getFileLineMap());
@@ -272,7 +265,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         if (end instanceof Token) {
             Token endToken = (Token) end;
             next = endToken.next;
-            nextToken = endToken.nextToken;
         }
     }
 [#else]
@@ -281,7 +273,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
         next = from.next;
-        nextToken = from.nextToken;
         previousToken = from.previousToken;
     }
 
@@ -292,7 +283,6 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         setEndOffset(end.getEndOffset());
         previousToken = start.previousToken;
         next = end.next;
-        nextToken = end.nextToken;
     }
 [/#if]
 
