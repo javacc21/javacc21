@@ -153,7 +153,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
        this.image = image;
    }
 
-    private Token next, previousToken;
+    private Token next;
+
+  [#if grammar.legacyTokenChaining]  
+    private Token previousToken;
+  [/#if]    
 
 
     /**
@@ -189,16 +193,23 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * @return the next token of any sort (parsed or unparsed or invalid)
      */
      public Token getNextToken() {
-         return getFileLineMap().getCachedToken(getEndOffset());
+        if (getFileLineMap()==null) return null;
+        return getFileLineMap().getCachedToken(getEndOffset());
      }
 
      public Token getPreviousToken() {
-        return previousToken;
+      [#if grammar.legacyTokenChaining]
+        if (previousToken !=null) return previousToken;
+      [/#if]
+        if (getFileLineMap()==null) return null;
+        return getFileLineMap().getPreviousCachedToken(getBeginOffset());
      }
-
+     
+ [#if grammar.legacyTokenChaining]
      void setPreviousToken(Token previousToken) {
          this.previousToken = previousToken;
      }
+ [/#if]
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
@@ -252,16 +263,20 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         if (from instanceof Token) {
             Token otherTok = (Token) from;
             next = otherTok.next;
+[#if grammar.legacyTokenChaining]            
             previousToken = otherTok.previousToken;
+[/#if]            
         }
         setFileLineMap(from.getFileLineMap());
     }
 
     public void copyLocationInfo(Node start, Node end) {
         Node.super.copyLocationInfo(start, end);
+[#if grammar.legacyTokenChaining]        
         if (start instanceof Token) {
             previousToken = ((Token) start).previousToken;
         }
+[/#if]        
         if (end instanceof Token) {
             Token endToken = (Token) end;
             next = endToken.next;
@@ -273,7 +288,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
         next = from.next;
+[#if grammar.legacyTokenChaining]        
         previousToken = from.previousToken;
+[/#if]        
     }
 
     public void copyLocationInfo(Token start, Token end) {
@@ -281,7 +298,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         if (fileLineMap == null) setFileLineMap(end.getFileLineMap());
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
+[#if grammar.legacyTokenChaining]        
         previousToken = start.previousToken;
+[/#if]        
         next = end.next;
     }
 [/#if]

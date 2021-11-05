@@ -427,5 +427,11 @@ public class FileLineMap {
     Token getCachedToken(int offset) {
 	     return tokenOffsets.get(offset) ? offsetToTokenMap.get(offset) : null;
     } 
+
+    Token getPreviousCachedToken(int offset) {
+        int prevOffset = tokenOffsets.previousSetBit(offset-1);
+        return prevOffset == -1 ? null : offsetToTokenMap.get(prevOffset);
+    }
+    
     [#embed "InputUtils.java.ftl"]
 }

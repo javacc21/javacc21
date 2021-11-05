@@ -215,7 +215,7 @@ INJECT LEXER_CLASS :
     private void copyFieldsOfToken (Token src, Token dest) {
         dest.setType(src.getType());
         dest.setImage(src.getImage());
-        dest.setPreviousToken(src.getPreviousToken());
+//        dest.setPreviousToken(src.getPreviousToken());
         Token next = src.getNext();
         dest.setNext(next);
         dest.setBeginOffset(src.getBeginOffset());

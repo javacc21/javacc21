@@ -213,7 +213,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       } while (token instanceof InvalidToken);
       if (invalidToken != null) {
           invalidToken.setFileLineMap(input_stream);
+[#if grammar.legacyTokenChaining]          
           token.setPreviousToken(invalidToken);
+[/#if]          
           Token it = invalidToken;
           this.invalidToken = null;
 [#if grammar.faultTolerant]
@@ -436,9 +438,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           matchedToken.setEndOffset(input_stream.getBufferPosition());
         }
         matchedToken.setFileLineMap(this.input_stream);
+[#if grammar.legacyTokenChaining]
         if (previousToken != null) {
             matchedToken.setPreviousToken(this.previousToken);
         }
+[/#if]        
         //matchedToken.setUnparsed(unparsedTokens.contains(type));
         matchedToken.setUnparsed(!regularTokens.contains(type));
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
