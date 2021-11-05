@@ -15,6 +15,8 @@ PARSER_PACKAGE="org.parsers.preprocessor";
 PARSER_PACKAGE="com.javacc.preprocessor";
 #endif
 
+LEGACY_TOKEN_CHAINING;
+
 /*
  * This is an implementation of the standard C# preprocessor.
  * Well, it is incomplete at the moment, because it just ignores

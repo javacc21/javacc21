@@ -213,7 +213,9 @@ public boolean isCancelled() {return cancelled;}
         result = next.getNextToken();
       }
     }
+[#if grammar.legacyTokenChaining]    
     if (tok != null) tok.setNext(result);
+[/#if]    
     nextTokenType=null;
     return result;
   }

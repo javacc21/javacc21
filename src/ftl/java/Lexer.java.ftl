@@ -394,7 +394,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         if (t != DUMMY_START_TOKEN) { // Is this 100% correct? REVISIT
             input_stream.goTo(t.getEndOffset());
             input_stream.uncacheTokens(t);
+[#if grammar.legacyTokenChaining]
             t.setNext(null);
+[/#if]            
         }
         if (state != null) {
             switchTo(state);
