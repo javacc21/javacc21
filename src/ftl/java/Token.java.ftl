@@ -184,14 +184,17 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
 
+
     /**
      * @return the next token of any sort (parsed or unparsed or invalid)
      */
      public Token getNextToken() {
-         return nextToken;
+         return getFileLineMap().getCachedToken(getEndOffset());
+//         return nextToken;
      }
 
      void setNextToken(Token nextToken) {
+         if (nextToken!= null) getFileLineMap().cacheToken(nextToken);
          this.nextToken = nextToken;
      }
 

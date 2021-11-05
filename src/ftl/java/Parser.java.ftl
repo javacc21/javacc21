@@ -175,6 +175,12 @@ public boolean isCancelled() {return cancelled;}
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
     Token result = tok == null? null : tok.getNext();
+[#--    
+    Token result = tok == null ? null : token_source.getNextToken(tok);
+    while (result.isUnparsed()) {
+      result = token_source.getNextToken(result);
+    }
+--]    
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
     if (result != null && !token_source.activeTokenTypes.contains(result.getType())) {
@@ -249,9 +255,10 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
-    private void uncacheTokens() {
-       token_source.reset(getToken(0));
-    }
+  private void uncacheTokens() {
+      token_source.reset(getToken(0));
+      token_source.input_stream.uncacheTokens(getToken(0));
+  }
 
   boolean deactivateTokenTypes(TokenType... types) {
     boolean result = false;

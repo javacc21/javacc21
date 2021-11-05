@@ -409,5 +409,23 @@ public class FileLineMap {
     String getText(int startOffset, int endOffset) {
         return content.subSequence(startOffset, endOffset).toString();
     }
- [#embed "InputUtils.java.ftl"]
+    private BitSet tokenOffsets = new BitSet();
+    private Map<Integer, Token> offsetToTokenMap = new HashMap<>();
+
+    void cacheToken(Token tok) {
+	    int offset = tok.getBeginOffset();
+	    tokenOffsets.set(offset);
+	    offsetToTokenMap.put(offset, tok);
+    }
+
+    void uncacheTokens(Token lastToken) {
+        if (lastToken.getEndOffset() < tokenOffsets.length()) { //REVISIT
+            tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
+        }
+    }
+
+    Token getCachedToken(int offset) {
+	     return tokenOffsets.get(offset) ? offsetToTokenMap.get(offset) : null;
+    } 
+    [#embed "InputUtils.java.ftl"]
 }

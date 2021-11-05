@@ -206,8 +206,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      */
     public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
         this(inputSource, FileLineMap.readToEnd(reader), lexState, line, column);
-        //this.inputSource = inputSource;
-        //input_stream = new FileLineMap(inputSource, reader, line, column);
         switchTo(lexState);
     }
 
@@ -232,7 +230,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [/#if]
           return it;
       }
+      input_stream.cacheToken(token);
       return previousToken = token;
+ }
+
+ public Token getNextToken(Token tok) {
+    int offset = tok.getEndOffset();
+    Token cachedToken = input_stream.getCachedToken(offset);
+    return cachedToken != null ? cachedToken : lex(offset);
+ }
+
+ public Token lex(int offset) {
+     input_stream.goTo(offset);
+     return getNextToken();
  }
 
 // The main method to invoke the NFA machinery
@@ -390,6 +400,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     void reset(Token t, LexicalState state) {
         if (t != DUMMY_START_TOKEN) { // Is this 100% correct? REVISIT
             input_stream.goTo(t.getEndOffset());
+            input_stream.uncacheTokens(t);
             t.setNext(null);
             t.setNextToken(null);
         }
@@ -411,6 +422,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     String img = new String(new int[] {ch}, 0, 1);
     if (invalidToken == null) {
        invalidToken = new InvalidToken(img, input_stream);
+       invalidToken.setFileLineMap(input_stream);
        invalidToken.setBeginOffset(offset-img.length());
     } else {
        invalidToken.setImage(invalidToken.getImage() + img);
@@ -438,7 +450,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             matchedToken.setPreviousToken(this.previousToken);
             previousToken.setNextToken(matchedToken);
         }
-        matchedToken.setUnparsed(unparsedTokens.contains(type));
+        //matchedToken.setUnparsed(unparsedTokens.contains(type));
+        matchedToken.setUnparsed(!regularTokens.contains(type));
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]
       ${tokenHookMethodName}(matchedToken);
@@ -475,5 +488,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [/#list]
   }
  [/#if]
+
+
 }
 
