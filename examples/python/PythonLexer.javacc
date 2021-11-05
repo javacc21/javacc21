@@ -9,6 +9,10 @@ PRESERVE_LINE_ENDINGS=false;
 ENSURE_FINAL_EOL;
 EXTRA_TOKENS=INDENT,DEDENT;
 
+// Temporary measure to keep this working
+// until the whole issue is really fixed for real
+LEGACY_TOKEN_CHAINING;
+
 /*
  * The following code injection implements the various indent/dedent logic.
  */

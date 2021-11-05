@@ -1068,6 +1068,26 @@ public class Grammar extends BaseNode {
         return b== null ? false : b;
     }
 
+    public boolean getLegacyTokenChaining() {
+        Boolean b = (Boolean) settings.get("LEGACY_TOKEN_CHAINING");
+        return b== null ? false : b;
+    }
+
+    public boolean getPreserveLineEndings() {
+        Boolean b = (Boolean) settings.get("PRESERVE_LINE_ENDINGS");
+        return b== null ? true : b;
+    }
+
+    public boolean getJavaUnicodeEscape() {
+        Boolean b = (Boolean) settings.get("JAVA_UNICODE_ESCAPE");
+        return b== null ? false : b;
+    }
+
+    public int getTabsToSpaces() {
+        Integer i = (Integer) settings.get("TABS_TO_SPACES");
+        return i==null ? 0 : i;
+    }
+
     public int getJdkTarget() {
         if (jdkTarget == 0) return 8;
         return jdkTarget;
@@ -1131,7 +1151,7 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = "FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,DEBUG_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL";
+    private String booleanSettings = "FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,DEBUG_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,LEGACY_TOKEN_CHAINING";
     private String stringSettings = "PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,TOKEN_FACTORY,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS";
     private String integerSettings = "TABS_TO_SPACES,JDK_TARGET";
 

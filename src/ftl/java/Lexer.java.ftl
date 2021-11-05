@@ -46,17 +46,9 @@
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
 
-[#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="true", JAVA_UNICODE_ESCAPE="false", ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")]
-[#if grammar.settings.TABS_TO_SPACES??]
-    [#set TABS_TO_SPACES = grammar.settings.TABS_TO_SPACES]
-[/#if]
-[#if grammar.settings.PRESERVE_LINE_ENDINGS?? && !grammar.settings.PRESERVE_LINE_ENDINGS]
-    [#set PRESERVE_LINE_ENDINGS = "false"]
-[/#if]
-[#if grammar.settings.JAVA_UNICODE_ESCAPE?? && grammar.settings.JAVA_UNICODE_ESCAPE]
-       [#set JAVA_UNICODE_ESCAPE = "true"]
-[/#if]
-
+[#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("true", "false")
+      JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("true", "false")
+      ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")]
 
 [#macro EnumSet varName tokenNames]
    [#if tokenNames?size=0]
@@ -180,7 +172,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       */
      public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int line, int column) {
         this.inputSource = inputSource;
-        CharSequence content = FileLineMap.mungeContent(input, ${TABS_TO_SPACES}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+        CharSequence content = FileLineMap.mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         input_stream = new FileLineMap(inputSource, content, line, column);
         switchTo(lexState);
      }

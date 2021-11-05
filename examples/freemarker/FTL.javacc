@@ -30,6 +30,7 @@
 PARSER_PACKAGE="ftl";
 NODE_PACKAGE="ftl.ast";
 DEFAULT_LEXICAL_STATE="TEMPLATE_TEXT";
+LEGACY_TOKEN_CHAINING;
 
 INJECT FTLParser :
     import java.io.*;
@@ -150,12 +151,14 @@ INJECT LEXER_CLASS :
              else switchTo(LexicalState.TEMPLATE_TEXT);
              break;
 
-             //case END_DIRECTIVE :
-             //if (olderSyntax!=hasPointyDelimiter) tok.setType(TokenType.PRINTABLE_CHARS);
-             //else switchTo(LexicalState.TEMPLATE_TEXT);
-             //break;
+             case END_DIRECTIVE1 :
+             case END_DIRECTIVE2 :
+               if (olderSyntax!=hasPointyDelimiter) tok.setType(TokenType.PRINTABLE_CHARS);
+               else switchTo(LexicalState.TEMPLATE_TEXT);
+               break;
 
-             case END_USER_DIRECTIVE :
+             case END_USER_DIRECTIVE1 :
+             case END_USER_DIRECTIVE2 :
              if (hasPointyDelimiter != olderSyntax) tok.setType(TokenType.PRINTABLE_CHARS);
              break;
 
@@ -230,10 +233,6 @@ INJECT LEXER_CLASS :
 INCLUDE "FEL.javacc"
 
 TOKEN :
-//    <FTL_DIRECTIVE_OPEN :  "<#" | "[#" > : FTL_DIRECTIVE
-//    |
-//    <USER_DIRECTIVE_OPEN : "<@" | "[@"> : FTL_EXPRESSION
-//    |
     <FTL_DIRECTIVE_OPEN1 : "<#"> : FTL_DIRECTIVE
     |
     <FTL_DIRECTIVE_OPEN2 : "[#"> : FTL_DIRECTIVE
@@ -252,17 +251,15 @@ TOKEN :
     |
     <PRINTABLE_CHARS : (~["$", "<", "[", "\n", "\r", "\t", " "])+>
     |
-//    <END_DIRECTIVE : <END_DIRECTIVE1> | <END_DIRECTIVE2>>
+//    <END_USER_DIRECTIVE : <END_USER_DIRECTIVE1> | <END_USER_DIRECTIVE2>>
 //    |
-    <END_USER_DIRECTIVE : <END_USER_DIRECTIVE1> | <END_USER_DIRECTIVE2>>
-    |
     <END_DIRECTIVE1 : "[/#" (<IDENTIFIER>)? (<BLANK>)* "]">
     |
     <END_DIRECTIVE2 : "</#" (<IDENTIFIER>)? (<BLANK>)* ">">
     |
-    <#END_USER_DIRECTIVE1 : "[/@" (<IDENTIFIER>(<DOT><IDENTIFIER>)*)? (<BLANK>)* "]">
+    <END_USER_DIRECTIVE1 : "[/@" (<IDENTIFIER>(<DOT><IDENTIFIER>)*)? (<BLANK>)* "]">
     |
-    <#END_USER_DIRECTIVE2 : "</@" (<IDENTIFIER>(<DOT><IDENTIFIER>)*)? (<BLANK>)* ">">
+    <END_USER_DIRECTIVE2 : "</@" (<IDENTIFIER>(<DOT><IDENTIFIER>)*)? (<BLANK>)* ">">
 ;
 
 <FTL_DIRECTIVE> TOKEN :
@@ -837,7 +834,7 @@ UserDirective :
        (
           <CLOSE_TAG>
           Block
-          <END_USER_DIRECTIVE>
+          (<END_USER_DIRECTIVE1>|<END_USER_DIRECTIVE2>)
        )
     )
 ;

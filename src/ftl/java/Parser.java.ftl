@@ -174,13 +174,14 @@ public boolean isCancelled() {return cancelled;}
   // If tok already has a next field set, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
+   [#if grammar.legacyTokenChaining]
     Token result = tok == null? null : tok.getNext();
-[#--    
+   [#else]
     Token result = tok == null ? null : token_source.getNextToken(tok);
     while (result.isUnparsed()) {
       result = token_source.getNextToken(result);
     }
---]    
+   [/#if]
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
     if (result != null && !token_source.activeTokenTypes.contains(result.getType())) {

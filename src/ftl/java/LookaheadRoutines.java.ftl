@@ -34,8 +34,6 @@
 
 [#import "CommonUtils.java.ftl" as CU]
 
-[#var UNLIMITED=2147483647]
-
 [#macro Generate]
     [@firstSetVars /]
     [@followSetVars /]
