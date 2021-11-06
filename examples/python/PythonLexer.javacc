@@ -52,14 +52,14 @@ INJECT LEXER_CLASS :
           indentationStack.add(offset);
           this.indentation = offset;
           Token indent = Token.newToken(INDENT, "INDENT", this);
-          setLocationInfo(indent, tok.getPreviousToken(), tok);
+          setLocationInfo(indent, previousToken(tok), tok);
           return indent;
        }
        // Now deal with dedent.
        int dedentIndex = indentationStack.indexOf(offset);
        if (dedentIndex <0) {
           Token invalidDedent = new InvalidToken("Invalid Dedent", input_stream);
-          setLocationInfo(invalidDedent, tok.getPreviousToken(), tok);
+          setLocationInfo(invalidDedent, previousToken(tok), tok);
           return invalidDedent;
        }
        this.indentation = offset;
@@ -67,7 +67,7 @@ INJECT LEXER_CLASS :
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           Token dedent = Token.newToken(DEDENT, "DEDENT", this);
           if (firstDedent == null) firstDedent = dedent;
-          Token prev = lastDedent != null ? lastDedent : tok.getPreviousToken();
+          Token prev = lastDedent != null ? lastDedent : previousToken(tok);
           setLocationInfo(dedent, prev, tok);
           lastDedent = dedent;
           indentationStack.remove(indentationStack.size()-1);
@@ -85,24 +85,33 @@ INJECT LEXER_CLASS :
       indentDedent.setFileLineMap(input_stream);
    }
 
-   Token handleNewline(Token tok, boolean lineJoiningOn) {
+   private Token handleNewline(Token tok, boolean lineJoiningOn) {
        if (lineJoiningOn || tok.getBeginColumn()==1) {
           tok.setUnparsed(true);
           return tok;
        }
-       Token prevToken = tok.getPreviousToken();
+       Token prevToken = previousToken(tok);
        if (prevToken == null || prevToken.getImage() == null || (prevToken.getType() == COMMENT && startsLine(prevToken))) {
          tok.setUnparsed(true);
        } 
        return tok;
    }
 
-   boolean startsLine(Token tok) {
+   private boolean startsLine(Token tok) {
        if (tok.getBeginColumn() ==1) return true;
-       Token prevToken = tok.getPreviousToken();
+       Token prevToken = previousToken(tok);
        if (prevToken == null) return true;
        if (prevToken.getType() == CONTINUE_LINE) return false;
        return prevToken.getEndLine() != tok.getBeginLine();
+   }
+
+   // Tweak to keep things working for now
+   private Token previousToken(Token t)  {
+      Token result = t.getPreviousToken();
+      if (result.getType() == SPACE) {
+         result = result.getPreviousToken();
+      }
+      return result;
    }
 }
 

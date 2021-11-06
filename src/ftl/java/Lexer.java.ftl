@@ -99,9 +99,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        [/#list]
      }
   [/#if]
-[#--  
-  // Holder for invalid characters, i.e. that cannot be matched as part of a token
-  private final StringBuilder pendingInvalidChars = new StringBuilder();--]
 
   // Just used to "bookmark" the starting location for a token
   // for when we put in the location info at the end.
@@ -117,8 +114,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // Token types that do not participate in parsing, a.k.a. "special" tokens in legacy JavaCC,
   // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
   [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames /]
-  // Tokens that are skipped, i.e. SKIP
-  [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames /]
+  [#-- // Tokens that are skipped, i.e. SKIP
+  N.B. This concept is being eliminated!
+  [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames / --]
   // Tokens that correspond to a MORE, i.e. that are pending 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
@@ -221,6 +219,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [#if grammar.faultTolerant]
           it.setUnparsed(true);
 [/#if]
+          input_stream.cacheToken(it);
           return it;
       }
       input_stream.cacheToken(token);
@@ -391,16 +390,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         // Reset the token source input
     // to just after the Token passed in.
     void reset(Token t, LexicalState state) {
-        if (t != DUMMY_START_TOKEN) { // Is this 100% correct? REVISIT
-            input_stream.goTo(t.getEndOffset());
-            input_stream.uncacheTokens(t);
+        input_stream.goTo(t.getEndOffset());
+        input_stream.uncacheTokens(t);
 [#if grammar.legacyTokenChaining]
-            t.setNext(null);
+        t.setNext(null);
 [/#if]            
-        }
         if (state != null) {
             switchTo(state);
         }
+[#if multipleLexicalStates] 
+        else {
+          doLexicalStateSwitch(t.getType());
+        }
+[/#if]        
     }
 
     void reset(Token t) {
@@ -426,6 +428,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   }
 
   private Token instantiateToken(TokenType type) {
+    int bufLength = charBuff.length();
     String tokenImage = charBuff.toString();
     [#if grammar.settings.TOKEN_FACTORY??]
         Token matchedToken = ${grammar.settings.TOKEN_FACTORY}.newToken(type, tokenImage, input_stream);
@@ -437,7 +440,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           [#-- I think this is right... --]
           matchedToken.setEndOffset(tokenBeginOffset);
         } else {
-          matchedToken.setEndOffset(input_stream.getBufferPosition());
+          matchedToken.setEndOffset(tokenBeginOffset+bufLength);
         }
         matchedToken.setFileLineMap(this.input_stream);
 [#if grammar.legacyTokenChaining]

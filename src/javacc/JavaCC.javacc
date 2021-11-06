@@ -149,12 +149,12 @@ TOKEN :
   |
   < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #JavaCCKeyWord
   |
-  < _SPECIAL_TOKEN: "SPECIAL_TOKEN" | "UNPARSED"> #JavaCCKeyWord
+  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" | "SKIP"> #JavaCCKeyWord
   |
   < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #JavaCCKeyWord
   |
-  < _SKIP: "SKIP" > #JavaCCKeyWord
-  |
+  //< _SKIP: "SKIP" > #JavaCCKeyWord
+  //|
   <_EOF : "EOF"> #JavaCCKeyWord
   |
   < _TOKEN_MGR_DECLS: "TOKEN_MGR_DECLS" > #JavaCCKeyWord
@@ -674,8 +674,8 @@ INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> javaccKeyWords = EnumSet.of(_INJECT,
        _INCLUDE, _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
-       _PARSER_BEGIN, _PARSER_END, _TOKEN, _SPECIAL_TOKEN, _MORE,
-       _SKIP, _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR, _UPTO, 
+       _PARSER_BEGIN, _PARSER_END, _TOKEN, _UNPARSED, _MORE,
+       _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR, _UPTO, 
        _LEXICAL_STATE, _EOF);
 
     private Token TOKEN_HOOK(Token t) {
@@ -1394,7 +1394,7 @@ TokenProduction #TokenProduction :
       ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.getImage());})*
      ">" 
   ]
-  (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP")
+  (<_TOKEN> | <_UNPARSED> | <_MORE>)
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
   ]
@@ -1481,8 +1481,8 @@ INJECT TokenProduction :
        for (Token t : childrenOfType(Token.class)) {
            switch (t.getType()) {
               case _MORE : return "MORE";
-              case _SPECIAL_TOKEN : return "UNPARSED";
-              case _SKIP : return "SKIP";
+              case _UNPARSED : return "UNPARSED";
+//              case _SKIP : return "SKIP";
               case _TOKEN : return "TOKEN";
               default: 
            }

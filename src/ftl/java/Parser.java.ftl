@@ -175,9 +175,9 @@ public boolean isCancelled() {return cancelled;}
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
    [#if grammar.legacyTokenChaining]
-    Token result = tok == null? null : tok.getNext();
+    Token result = tok.getNext();
    [#else]
-    Token result = tok == null ? null : token_source.getNextToken(tok);
+    Token result = token_source.getNextToken(tok);
     while (result.isUnparsed()) {
       result = token_source.getNextToken(result);
     }
@@ -214,8 +214,8 @@ public boolean isCancelled() {return cancelled;}
       }
     }
 [#if grammar.legacyTokenChaining]    
-    if (tok != null) tok.setNext(result);
-[/#if]    
+    tok.setNext(result);
+[/#if]
     nextTokenType=null;
     return result;
   }

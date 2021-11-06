@@ -171,10 +171,12 @@ public class LexerData {
     public TokenSet getMoreTokens() {
         return getTokensOfKind("MORE");
     } 
-
+/*
+N.B. The distinction between skipped and unparsed
+is going away!
     public TokenSet getSkippedTokens() {
         return getTokensOfKind("SKIP");
-    }
+    }*/
     
     public TokenSet getUnparsedTokens() {
         return getTokensOfKind("UNPARSED");
