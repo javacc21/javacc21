@@ -128,9 +128,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private boolean trace_enabled = false;
     [/#if]
   private InvalidToken invalidToken;
-  Token previousToken;
   // The source of the raw characters that we are scanning  
   FileLineMap input_stream;
+
+  [#if grammar.legacyTokenChaining]
+      Token previousToken;
+  [/#if]
     
   private void setTracingEnabled(boolean trace_enabled) {
      this.trace_enabled = trace_enabled;
@@ -220,14 +223,21 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           return it;
       }
       input_stream.cacheToken(token);
-      return previousToken = token;
+[#if grammar.legacyTokenChaining]
+      previousToken = token;
+[/#if]      
+      return token;
  }
 
  public Token getNextToken(Token tok) {
-    int offset = tok.getEndOffset();
-//    Token cachedToken = input_stream.getCachedToken(offset);
     Token cachedToken = tok.getNextToken();
-    return cachedToken != null ? cachedToken : lex(offset);
+    // If the cached next token is not currently active, we
+    // throw it away and go back to the XXXLexer
+    if (cachedToken != null && !activeTokenTypes.contains(cachedToken.getType())) {
+      reset(tok);
+      cachedToken = null;
+    }
+    return cachedToken != null ? cachedToken : lex(tok.getEndOffset());
  }
 
  public Token lex(int offset) {

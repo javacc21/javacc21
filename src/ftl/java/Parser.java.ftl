@@ -171,45 +171,23 @@ public boolean isCancelled() {return cancelled;}
       lastConsumedToken.setFileLineMap(lexer.input_stream);
   }
 
-  // If tok already has a next field set, it returns that
+  // If the next token is cached, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
     Token result = token_source.getNextToken(tok);
     while (result.isUnparsed()) {
+     [#list grammar.parserTokenHooks as methodName] 
+      result = ${methodName}(result);
+     [/#list]
       result = token_source.getNextToken(result);
     }
-    // If the cached next token is not currently active, we
-    // throw it away and go back to the XXXLexer
-    if (result != null && !token_source.activeTokenTypes.contains(result.getType())) {
-      token_source.reset(tok);
-      result = null;
-    }
-    if (result != null) {
-       // The following line is a nasty kludge 
-       // that will not be necessary once token chaining is properly fixed.
-       token_source.previousToken = result;
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);
 [/#list]
-    }
-    Token previous = null;
-    while (result == null) {
-      nextTokenType = null;
-      Token next = token_source.getNextToken();
-      previous = next;
-[#list grammar.parserTokenHooks as methodName] 
-      next = ${methodName}(next);
-[/#list]
-      if (!next.isUnparsed()) {
-        result = next;
-      } else if (next instanceof InvalidToken) {
-[#if grammar.faultTolerant]
-        if (debugFaultTolerant) LOGGER.info("Skipping invalid text: " + next.getImage() + " at: " + next.getLocation());
-[/#if]
-        result = next.getNextToken();
-      }
-    }
 [#if grammar.legacyTokenChaining]    
+    // The following line is a nasty kludge 
+    // that will not be necessary once token chaining is properly fixed.
+    token_source.previousToken = result;
     tok.setNext(result);
 [/#if]
     nextTokenType=null;
