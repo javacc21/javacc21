@@ -448,7 +448,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             matchedToken.setPreviousToken(this.previousToken);
         }
 [/#if]        
-        //matchedToken.setUnparsed(unparsedTokens.contains(type));
         matchedToken.setUnparsed(!regularTokens.contains(type));
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]
