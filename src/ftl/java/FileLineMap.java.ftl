@@ -422,6 +422,7 @@ public class FileLineMap {
         if (lastToken.getEndOffset() < tokenOffsets.length()) { //REVISIT
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
         }
+        lastToken.setNextChainedToken(null); //undo special chaining as well.
     }
 
     Token getCachedToken(int offset) {

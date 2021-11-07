@@ -211,9 +211,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       } while (token instanceof InvalidToken);
       if (invalidToken != null) {
           invalidToken.setFileLineMap(input_stream);
-[#if grammar.legacyTokenChaining]          
-          token.setPreviousToken(invalidToken);
-[/#if]          
           Token it = invalidToken;
           this.invalidToken = null;
 [#if grammar.faultTolerant]
@@ -393,9 +390,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     void reset(Token t, LexicalState state) {
         input_stream.goTo(t.getEndOffset());
         input_stream.uncacheTokens(t);
-[#if grammar.legacyTokenChaining]
-        t.setNext(null);
-[/#if]            
         if (state != null) {
             switchTo(state);
         }
