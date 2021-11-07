@@ -228,7 +228,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
  public Token getNextToken(Token tok) {
     int offset = tok.getEndOffset();
-    Token cachedToken = input_stream.getCachedToken(offset);
+//    Token cachedToken = input_stream.getCachedToken(offset);
+    Token cachedToken = tok.getNextToken();
     return cachedToken != null ? cachedToken : lex(offset);
  }
 
