@@ -38,28 +38,28 @@ INJECT LEXER_CLASS :
          default :
       }
       if (!tok.isUnparsed() && !lineJoiningOn && startsLine(tok)) {
-             return handleIndentation(tok);      
+          int offset = tok.getBeginColumn();
+          if (offset > indentation) return handleIndent(tok, offset);
+          if (offset < indentation) return handleDedents(tok, offset);
       }
       return tok;
    }
 
-   private Token handleIndentation(Token tok) {
-       final int offset = tok.getBeginColumn();
-       if (offset == indentation) {
-          return tok;
-       }
-       if (offset > indentation) {
-          indentationStack.add(offset);
-          this.indentation = offset;
-          Token indent = Token.newToken(INDENT, "INDENT", this);
-          setLocationInfo(indent, previousToken(tok), tok);
-          return indent;
-       }
-       // Now deal with dedent.
+   private Token handleIndent(Token tok, final int offset) {
+      indentationStack.add(offset);
+      this.indentation = offset;
+      Token indent = Token.newToken(INDENT, "INDENT", this);
+      tok.prependToken(indent);
+      //setLocationInfo(indent, previousToken(tok), tok);
+      return indent;
+   }
+
+   private Token handleDedents(Token tok, final int offset) {
        int dedentIndex = indentationStack.indexOf(offset);
        if (dedentIndex <0) {
           Token invalidDedent = new InvalidToken("Invalid Dedent", input_stream);
-          setLocationInfo(invalidDedent, previousToken(tok), tok);
+          tok.prependToken(invalidDedent);
+          //setLocationInfo(invalidDedent, previousToken(tok), tok);
           return invalidDedent;
        }
        this.indentation = offset;
@@ -67,9 +67,10 @@ INJECT LEXER_CLASS :
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           Token dedent = Token.newToken(DEDENT, "DEDENT", this);
           if (firstDedent == null) firstDedent = dedent;
-          Token prev = lastDedent != null ? lastDedent : previousToken(tok);
-          setLocationInfo(dedent, prev, tok);
-          lastDedent = dedent;
+          //Token prev = lastDedent != null ? lastDedent : previousToken(tok);
+          //setLocationInfo(dedent, prev, tok);
+          //lastDedent = dedent;
+          tok.prependToken(dedent);
           indentationStack.remove(indentationStack.size()-1);
        }
        return firstDedent; 
@@ -85,7 +86,7 @@ INJECT LEXER_CLASS :
       indentDedent.setFileLineMap(input_stream);
    }
 
-   private Token handleNewline(Token tok, boolean lineJoiningOn) {
+   private Token handleNewline(final Token tok, boolean lineJoiningOn) {
        if (lineJoiningOn || tok.getBeginColumn()==1) {
           tok.setUnparsed(true);
           return tok;
@@ -115,10 +116,9 @@ INJECT LEXER_CLASS :
    }
 }
 
-
-SKIP : <SPACE : (" " | "\f")+> ;
-
 UNPARSED : 
+   <SPACE : (" " | "\f")+> #Whitespace
+   |
    <CONTINUE_LINE : "\\\n"> #Whitespace
    |
    <COMMENT: "#" (~["\n"])* > #Comment  

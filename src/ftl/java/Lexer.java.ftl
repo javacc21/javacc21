@@ -450,7 +450,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         matchedToken.setFileLineMap(this.input_stream);
 [#if grammar.legacyTokenChaining]
         if (previousToken != null) {
-            matchedToken.setPreviousToken(this.previousToken);
+            matchedToken.prependToken(this.previousToken);
         }
 [/#if]        
         matchedToken.setUnparsed(!regularTokens.contains(type));

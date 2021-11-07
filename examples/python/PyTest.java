@@ -24,7 +24,7 @@ public class PyTest {
             addFilesRecursively(files, file);
         }
         long startTime = System.currentTimeMillis();
-        if (PARALLEL_PARSING)
+        if (PARALLEL_PARSING && files.size() >1)
             files.parallelStream().forEach(file -> {
                 try {
                     // A bit screwball, we'll dump the tree if there is only one arg. :-)

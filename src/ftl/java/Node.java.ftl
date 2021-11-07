@@ -66,7 +66,8 @@ public interface Node extends Comparable<Node>
      * @return the input source (usually a filename) from which this Node came from
      */
     default String getInputSource() {
-        return getFileLineMap().getInputSource();
+        FileLineMap flm = getFileLineMap();
+        return flm == null ? "input" : flm.getInputSource();
     }
 
    /**
@@ -312,28 +313,32 @@ public interface Node extends Comparable<Node>
      * @return the (1-based) line location where this Node starts
      */      
     default int getBeginLine() {
-        return getFileLineMap().getLineFromOffset(getBeginOffset());                
+        FileLineMap flm = getFileLineMap();
+        return flm == null ? 0 : flm.getLineFromOffset(getBeginOffset());                
     };
 
     /**
      * @return the (1-based) line location where this Node ends
      */
     default int getEndLine() {
-        return getFileLineMap().getLineFromOffset(getEndOffset()-1);
+        FileLineMap flm = getFileLineMap();
+        return flm == null ? 0 : flm.getLineFromOffset(getEndOffset()-1);
     };
 
     /**
      * @return the (1-based) column where this Node starts
      */
     default int getBeginColumn() {
-        return getFileLineMap().getCodePointColumnFromOffset(getBeginOffset());        
+        FileLineMap flm = getFileLineMap();
+        return flm == null ? 0 : flm.getCodePointColumnFromOffset(getBeginOffset());        
     };
 
     /**
      * @return the (1-based) column offset where this Node ends
      */ 
     default int getEndColumn() {
-        return getFileLineMap().getCodePointColumnFromOffset(getEndOffset()-1);
+        FileLineMap flm = getFileLineMap();
+        return flm == null ? 0 : flm.getCodePointColumnFromOffset(getEndOffset()-1);
     }
     
     /**

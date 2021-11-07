@@ -20,7 +20,7 @@ DEACTIVATE_TOKENS=MATCH,CASE;
 
 // Temporary measure to keep this working
 // until the whole issue is really fixed for real
-LEGACY_TOKEN_CHAINING;
+//LEGACY_TOKEN_CHAINING;
 
 //DEBUG_LEXER;
 //DEBUG_PARSER;
