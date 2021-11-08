@@ -183,30 +183,33 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return result;
     }
 
-    void appendToken(Token appendedToken) {
-        this.appendedToken = appendedToken;
-        if (appendedToken != null) {
-            appendedToken.prependedToken = this;
-            appendedToken.inserted = true;
-        }
-    }
-
     /**
      * @return the next token of any sort (parsed or unparsed or invalid)
      */
-     public Token getNextToken() {
+    public Token getNextToken() {
         if (appendedToken != null) return appendedToken;
         if (getFileLineMap()==null) return null;
         return getFileLineMap().getCachedToken(getEndOffset());
-     }
+    }
 
-     public Token getPreviousToken() {
+    public Token getPreviousToken() {
         if (prependedToken !=null) return prependedToken;
         if (getFileLineMap()==null) return null;
         return getFileLineMap().getPreviousCachedToken(getBeginOffset());
      }
 
-     void prependToken(Token prependedToken) {
+    void insertAfter(Token appendedToken) {
+        this.appendedToken = appendedToken;
+        if (appendedToken != null) {
+            appendedToken.prependedToken = this;
+            appendedToken.beginOffset = appendedToken.endOffset = this.endOffset;
+            appendedToken.inserted = true;
+        }
+    }
+
+
+
+     void insertBefore(Token prependedToken) {
          if (prependedToken == this.prependedToken) return;
          prependedToken.appendedToken = this;
          Token existingPreviousToken = this.getPreviousToken();
@@ -215,6 +218,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
              prependedToken.prependedToken = existingPreviousToken;
          }
          prependedToken.inserted = true;
+         prependedToken.beginOffset = prependedToken.endOffset = this.beginOffset;
          this.prependedToken = prependedToken;
      }
 

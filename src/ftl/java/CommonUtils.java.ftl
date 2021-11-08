@@ -153,7 +153,7 @@
       }
       finally {
          token_source.activeTokenTypes = ${prevActives};
-         if (${somethingChanged} && ${resetToken}.getNext() != null) {
+         if (${somethingChanged}) {
              token_source.reset(${resetToken});
              nextTokenType= null;
          }

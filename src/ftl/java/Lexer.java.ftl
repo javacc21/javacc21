@@ -131,10 +131,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // The source of the raw characters that we are scanning  
   FileLineMap input_stream;
 
-  [#if grammar.legacyTokenChaining]
-      Token previousToken;
-  [/#if]
-    
   private void setTracingEnabled(boolean trace_enabled) {
      this.trace_enabled = trace_enabled;
   }
@@ -223,9 +219,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           return it;
       }
       input_stream.cacheToken(token);
-[#if grammar.legacyTokenChaining]
-      previousToken = token;
-[/#if]      
       return token;
  }
 
@@ -448,11 +441,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           matchedToken.setEndOffset(tokenBeginOffset+bufLength);
         }
         matchedToken.setFileLineMap(this.input_stream);
-[#if grammar.legacyTokenChaining]
-        if (previousToken != null) {
-            matchedToken.prependToken(this.previousToken);
-        }
-[/#if]        
         matchedToken.setUnparsed(!regularTokens.contains(type));
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]

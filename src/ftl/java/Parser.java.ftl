@@ -184,12 +184,6 @@ public boolean isCancelled() {return cancelled;}
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);
 [/#list]
-[#if grammar.legacyTokenChaining]    
-    // The following line is a nasty kludge 
-    // that will not be necessary once token chaining is properly fixed.
-    token_source.previousToken = result;
-    tok.setNext(result);
-[/#if]
     nextTokenType=null;
     return result;
   }

@@ -9,10 +9,6 @@ PRESERVE_LINE_ENDINGS=false;
 ENSURE_FINAL_EOL;
 EXTRA_TOKENS=INDENT,DEDENT;
 
-// Temporary measure to keep this working
-// until the whole issue is really fixed for real
-LEGACY_TOKEN_CHAINING;
-
 /*
  * The following code injection implements the various indent/dedent logic.
  */
@@ -49,8 +45,7 @@ INJECT LEXER_CLASS :
       indentationStack.add(offset);
       this.indentation = offset;
       Token indent = Token.newToken(INDENT, "INDENT", this);
-      tok.prependToken(indent);
-      //setLocationInfo(indent, previousToken(tok), tok);
+      tok.insertBefore(indent);
       return indent;
    }
 
@@ -58,32 +53,18 @@ INJECT LEXER_CLASS :
        int dedentIndex = indentationStack.indexOf(offset);
        if (dedentIndex <0) {
           Token invalidDedent = new InvalidToken("Invalid Dedent", input_stream);
-          tok.prependToken(invalidDedent);
-          //setLocationInfo(invalidDedent, previousToken(tok), tok);
+          tok.insertBefore(invalidDedent);
           return invalidDedent;
        }
        this.indentation = offset;
-       Token firstDedent = null, lastDedent=null;
+       Token firstDedent = null;
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           Token dedent = Token.newToken(DEDENT, "DEDENT", this);
           if (firstDedent == null) firstDedent = dedent;
-          //Token prev = lastDedent != null ? lastDedent : previousToken(tok);
-          //setLocationInfo(dedent, prev, tok);
-          //lastDedent = dedent;
-          tok.prependToken(dedent);
+          tok.insertBefore(dedent);
           indentationStack.remove(indentationStack.size()-1);
        }
        return firstDedent; 
-   }
-
-   private void setLocationInfo(Token indentDedent, Token prevToken, Token tok) {
-      if (prevToken != null) {
-         prevToken.setNext(indentDedent);
-      }
-      indentDedent.setNext(tok);
-      indentDedent.setBeginOffset(prevToken.getEndOffset());
-      indentDedent.setEndOffset(tok.getBeginOffset());
-      indentDedent.setFileLineMap(input_stream);
    }
 
    private Token handleNewline(final Token tok, boolean lineJoiningOn) {

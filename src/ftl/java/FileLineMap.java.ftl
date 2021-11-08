@@ -413,23 +413,24 @@ public class FileLineMap {
     private Map<Integer, Token> offsetToTokenMap = new HashMap<>();
 
     void cacheToken(Token tok) {
-        if (tok.isInserted()) return;
+        if (tok.isInserted()) {
+            Token next = tok.getNextToken();
+            if (next != null) cacheToken(next);
+            return;
+        }
 	    int offset = tok.getBeginOffset();
 	    tokenOffsets.set(offset);
 	    offsetToTokenMap.put(offset, tok);
     }
 
     void uncacheTokens(Token lastToken) {
-        if (lastToken.isInserted()) {
-            lastToken.appendToken(null);
-            return;
-        }
+        lastToken.insertAfter(null);
         int endOffset = lastToken.getEndOffset();
         if (endOffset < tokenOffsets.length()) { //REVISIT
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
         }
 
-        lastToken.appendToken(null); //undo special chaining as well.
+        lastToken.insertAfter(null); //undo special chaining as well.
     }
 
     Token getCachedToken(int offset) {
