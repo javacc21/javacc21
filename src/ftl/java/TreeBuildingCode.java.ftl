@@ -178,12 +178,12 @@
             for (Node child : nodes) {
                 if (unparsedTokensAreNodes && child instanceof Token) {
                     Token tok = (Token) child;
-                    while (tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
-                        tok = tok.getPreviousToken();
+                    while (tok.previousCachedToken() != null && tok.previousCachedToken().isUnparsed()) {
+                        tok = tok.previousCachedToken();
                     }
                     while (tok.isUnparsed()) {
                         n.addChild(tok);
-                        tok = tok.getNextToken();
+                        tok = tok.nextCachedToken();
                     }
                 }
                 n.addChild(child);

@@ -157,28 +157,20 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 
     /**
-     * This is the same as #getNextParsedToken
-     * @return the next parsed token
+     * @return the next _cached_ regular (i.e. parsed) token
+     * or null
      */
     public final Token getNext() {
         return getNextParsedToken();
     }
 
     /**
-     * This is typically only used internally
-     * @param next the token parsed after this one
-     */
-    final void setNext(Token next) {
-        this.appendedToken = next;
-    }
-
-    /**
      * @return the next regular (i.e. parsed) token
      */
-    public Token getNextParsedToken() {
-        Token result = getNextToken();
+    private Token getNextParsedToken() {
+        Token result = nextCachedToken();
         while (result != null && result.isUnparsed()) {
-            result = result.getNextToken();
+            result = result.nextCachedToken();
         }
         return result;
     }
@@ -186,17 +178,21 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     /**
      * @return the next token of any sort (parsed or unparsed or invalid)
      */
-    public Token getNextToken() {
+    public Token nextCachedToken() {
         if (appendedToken != null) return appendedToken;
         if (getFileLineMap()==null) return null;
-        return getFileLineMap().getCachedToken(getEndOffset());
+        return getFileLineMap().nextCachedToken(getEndOffset());
     }
 
-    public Token getPreviousToken() {
+    public Token previousCachedToken() {
         if (prependedToken !=null) return prependedToken;
         if (getFileLineMap()==null) return null;
-        return getFileLineMap().getPreviousCachedToken(getBeginOffset());
-     }
+        return getFileLineMap().previousCachedToken(getBeginOffset());
+    }
+
+    Token getPreviousToken() {
+        return previousCachedToken();
+    }
 
     void insertAfter(Token appendedToken) {
         this.appendedToken = appendedToken;
@@ -207,12 +203,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         }
     }
 
-
-
-     void insertBefore(Token prependedToken) {
+    void insertBefore(Token prependedToken) {
          if (prependedToken == this.prependedToken) return;
          prependedToken.appendedToken = this;
-         Token existingPreviousToken = this.getPreviousToken();
+         Token existingPreviousToken = this.previousCachedToken();
          if (existingPreviousToken != null) {
              existingPreviousToken.appendedToken = prependedToken;
              prependedToken.prependedToken = existingPreviousToken;

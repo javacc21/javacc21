@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -99,7 +99,7 @@ INJECT LEXER_CLASS :
                 Token copy = cloneToken(tok);
                 tok.copyLocationInfo(tok.getPreviousToken());
                 tok.setType(TokenType.BLANK);
-                tok.setNext(copy);
+                //tok.setNext(copy);
                 noWhitespaceInExpression = false;
                 lastMatchedTokenType = tok.getType();
                 return tok;

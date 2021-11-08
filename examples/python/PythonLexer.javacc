@@ -89,9 +89,9 @@ INJECT LEXER_CLASS :
 
    // Tweak to keep things working for now
    private Token previousToken(Token t)  {
-      Token result = t.getPreviousToken();
+      Token result = t.previousCachedToken();
       if (result.getType() == SPACE) {
-         result = result.getPreviousToken();
+         result = result.previousCachedToken();
       }
       return result;
    }

@@ -75,7 +75,7 @@ public class PLex {
            }
            ++numTokens;
            Token nt = t;
-           while ((nt = nt.getNextToken()) != null) {
+           while ((nt = nt.nextCachedToken()) != null) {
                if (nt instanceof InvalidToken) {
                    throw new ParseException(nt);
                }

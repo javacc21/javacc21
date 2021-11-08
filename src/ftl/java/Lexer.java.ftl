@@ -223,7 +223,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
  }
 
  public Token getNextToken(Token tok) {
-    Token cachedToken = tok.getNextToken();
+    Token cachedToken = tok.nextCachedToken();
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
     if (cachedToken != null && !activeTokenTypes.contains(cachedToken.getType())) {

@@ -414,7 +414,7 @@ public class FileLineMap {
 
     void cacheToken(Token tok) {
         if (tok.isInserted()) {
-            Token next = tok.getNextToken();
+            Token next = tok.nextCachedToken();
             if (next != null) cacheToken(next);
             return;
         }
@@ -433,11 +433,12 @@ public class FileLineMap {
         lastToken.insertAfter(null); //undo special chaining as well.
     }
 
-    Token getCachedToken(int offset) {
-	    return tokenOffsets.get(offset) ? offsetToTokenMap.get(offset) : null;
+    Token nextCachedToken(int offset) {
+        int nextOffset = tokenOffsets.nextSetBit(offset);
+	    return nextOffset != -1 ? offsetToTokenMap.get(nextOffset) : null;
     } 
 
-    Token getPreviousCachedToken(int offset) {
+    Token previousCachedToken(int offset) {
         int prevOffset = tokenOffsets.previousSetBit(offset-1);
         return prevOffset == -1 ? null : offsetToTokenMap.get(prevOffset);
     }

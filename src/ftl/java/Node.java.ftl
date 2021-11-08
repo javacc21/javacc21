@@ -256,11 +256,11 @@ public interface Node extends Comparable<Node>
                 }
                 if (includeCommentTokens) {
                     ArrayList<Token> comments = null;
-                    Token prev = token.getPreviousToken();
+                    Token prev = token.previousCachedToken();
                     while (prev != null && prev.isUnparsed()) {
                         if (comments == null) comments = new ArrayList<>();
                         comments.add(prev);
-                        prev = prev.getPreviousToken();
+                        prev = prev.previousCachedToken();
                     }
                     if (comments !=null) {
                         Collections.reverse(comments);
@@ -497,9 +497,8 @@ public interface Node extends Comparable<Node>
         if (first == null) return null;
         if (first instanceof Token) {
             Token tok = (Token) first;
-            while (tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
-                tok = tok.getPreviousToken();
-
+            while (tok.previousCachedToken() != null && tok.previousCachedToken().isUnparsed()) {
+                tok = tok.previousCachedToken();
             }
            return tok;
         }

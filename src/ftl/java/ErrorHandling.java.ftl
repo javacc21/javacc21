@@ -284,7 +284,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
             if (followSet.contains(nextNext.getType())) {
                nextToken.setSkipped(true);
                if (debugFaultTolerant) LOGGER.info("Skipping token " + nextToken.getType() + " at: " + nextToken.getLocation());
-               lastConsumedToken.setNext(nextNext);
+               //lastConsumedToken.setNext(nextNext);
             }
          }
       }
@@ -310,7 +310,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
 [#if grammar.treeBuildingEnabled]             
              pushNode(nextToken);
 [/#if]             
-             lastConsumedToken.setNext(nextNext);
+             //lastConsumedToken.setNext(nextNext);
              return nextNext;
        }
          [#-- Since skipping the next token did not work, we will insert a virtual token --]
@@ -318,8 +318,8 @@ void dumpLookaheadCallStack(PrintStream ps) {
            Token virtualToken = Token.newToken(expectedType, "VIRTUAL " + expectedType, lastConsumedToken);
            virtualToken.setVirtual(true);
            virtualToken.copyLocationInfo(nextToken);
-           virtualToken.setNext(nextToken);
-           lastConsumedToken.setNext(virtualToken);
+           //virtualToken.setNext(nextToken);
+           //lastConsumedToken.setNext(virtualToken);
            if (debugFaultTolerant) LOGGER.info("Inserting virtual token of type: " + expectedType + " at " + virtualToken.getLocation());
 [#if MULTIPLE_LEXICAL_STATE_HANDLING]
            if (token_source.doLexicalStateSwitch(expectedType)) {
@@ -341,7 +341,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
             popNode();
         }
      [/#if]
-     lastConsumedToken = lastConsumedToken.getPreviousToken();
+     lastConsumedToken = lastConsumedToken.previousCachedToken();
   }
  
   private class ParseState {
