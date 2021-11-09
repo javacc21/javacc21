@@ -746,7 +746,8 @@ public class Grammar extends BaseNode {
     }
 
     public void addError(Node location, String errorMessage) {
-        errorMessages.add("Error: " + location.getLocation() + ":" + errorMessage);
+        String locationString = location == null ? "" : location.getLocation();
+        errorMessages.add("Error: " + locationString + ":" + errorMessage);
     }
 
     public void addWarning(String warningMessage) {
@@ -754,8 +755,8 @@ public class Grammar extends BaseNode {
     }
 
     public void addWarning(Node location, String warningMessage) {
-        String message = "Warning: " + location.getLocation() + ":" + warningMessage;
-        warningMessages.add(message);
+        String locationString = location == null ? "" : location.getLocation();
+        warningMessages.add("Warning: " + locationString + ":" + warningMessage);
     }
 
 	/**
@@ -1102,8 +1103,10 @@ public class Grammar extends BaseNode {
 
     public void setSettings(Map<String, Object> settings) {
         typeCheckSettings(settings);
-        sanityCheckSettings();
-        if (!isInInclude()) this.settings = settings;
+        if (!isInInclude()) {
+            this.settings = settings;
+            sanityCheckSettings();
+        }
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
             if (key.equals("IGNORE_CASE")) {
@@ -1184,19 +1187,19 @@ public class Grammar extends BaseNode {
             String msg = "You have specified the OPTION_NAME option but it is "
                     + "meaningless unless the TREE_BUILDING_ENABLED is set to true."
                     + " This option will be ignored.\n";
-            if (getTokensAreNodes()) {
+            if (settings.get("TOKENS_ARE_NODES") != null) {
                 addWarning(null, msg.replace("OPTION_NAME", "TOKENS_ARE_NODES"));
             }
-            if (getUnparsedTokensAreNodes()) {
+            if (settings.get("UNPARSED_TOKENS_ARE_NODES") != null) {
                 addWarning(null, msg.replace("OPTION_NAME", "UNPARSED_TOKENS_ARE_NODES"));
             }
-            if (getSmartNodeCreation()) {
+            if (settings.get("SMART_NODE_CREATION") != null) {
                 addWarning(null, msg.replace("OPTION_NAME", "SMART_NODE_CREATION"));
             }
-            if (getNodeDefaultVoid()) {
+            if (settings.get("NODE_DEFAULT_VOID") != null) {
                 addWarning(null, msg.replace("OPTION_NAME", "NODE_DEFAULT_VOID"));
             }
-            if (getNodeUsesParser()) {
+            if (settings.get("NODE_USES_PARSER") != null) {
                 addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
             }
         }
