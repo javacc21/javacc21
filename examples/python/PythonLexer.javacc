@@ -44,7 +44,8 @@ INJECT LEXER_CLASS :
    private Token handleIndent(Token tok, final int offset) {
       indentationStack.add(offset);
       this.indentation = offset;
-      Token indent = Token.newToken(INDENT, "INDENT", this);
+      Token indent = Token.newToken(INDENT, this.input_stream, 0,0);
+      indent.setImage("INDENT");
       tok.insertBefore(indent);
       return indent;
    }
@@ -52,14 +53,16 @@ INJECT LEXER_CLASS :
    private Token handleDedents(Token tok, final int offset) {
        int dedentIndex = indentationStack.indexOf(offset);
        if (dedentIndex <0) {
-          Token invalidDedent = new InvalidToken("Invalid Dedent", input_stream);
+          Token invalidDedent = new InvalidToken(input_stream, 0,0);
+          invalidDedent.setImage("Invalid Dedent");
           tok.insertBefore(invalidDedent);
           return invalidDedent;
        }
        this.indentation = offset;
        Token firstDedent = null;
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
-          Token dedent = Token.newToken(DEDENT, "DEDENT", this);
+          Token dedent = Token.newToken(DEDENT, input_stream, 0, 0);
+          dedent.setImage("DEDENT");
           if (firstDedent == null) firstDedent = dedent;
           tok.insertBefore(dedent);
           indentationStack.remove(indentationStack.size()-1);

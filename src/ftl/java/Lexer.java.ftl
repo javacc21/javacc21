@@ -411,13 +411,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     int offset = input_stream.getBufferPosition();
     String img = new String(new int[] {ch}, 0, 1);
     if (invalidToken == null) {
-       invalidToken = new InvalidToken(img, input_stream);
-       invalidToken.setFileLineMap(input_stream);
-       invalidToken.setBeginOffset(offset-img.length());
+       invalidToken = new InvalidToken(input_stream, offset-img.length(), offset);
     } else {
-       invalidToken.setImage(invalidToken.getImage() + img);
+       invalidToken.setEndOffset(invalidToken.getEndOffset() + img.length());
     }
-    invalidToken.setEndOffset(offset);
     return invalidToken;
   }
 

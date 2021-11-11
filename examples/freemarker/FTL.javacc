@@ -212,7 +212,7 @@ INJECT LEXER_CLASS :
 
 
     private Token cloneToken(Token t) {
-        Token result = Token.newToken(t.getType(), t.getImage(), this);
+        Token result = Token.newToken(t.getType(), input_stream, 0, 0);
         result.copyLocationInfo(t);
         return result;
     }
