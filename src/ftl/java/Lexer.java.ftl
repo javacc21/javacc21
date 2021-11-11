@@ -403,13 +403,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [/#if]        
     }
 
-    void reset(Token t) {
-        reset(t, null);
-    }
-
-    FileLineMap getFileLineMap() {
-        return input_stream;
-    }
+  void reset(Token t) {
+      reset(t, null);
+  }
     
   private InvalidToken handleInvalidChar(int ch) {
     int offset = input_stream.getBufferPosition();
@@ -426,18 +422,17 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   }
 
   private Token instantiateToken(TokenType type) {
-    int bufLength = charBuff.length();
-    String tokenImage = charBuff.toString();
-        Token matchedToken = Token.newToken(type, null, this);
-        matchedToken.setBeginOffset(tokenBeginOffset);
-        if (type == TokenType.EOF) {
+    Token matchedToken = Token.newToken(type, 
+                                        this.input_stream, 
+                                        tokenBeginOffset,
+                                        tokenBeginOffset+charBuff.length());
+    //matchedToken.setBeginOffset(tokenBeginOffset);
+    if (type == TokenType.EOF) {
           [#-- I think this is right... --]
           matchedToken.setEndOffset(tokenBeginOffset);
-        } else {
-          matchedToken.setEndOffset(tokenBeginOffset+bufLength);
-        }
-        matchedToken.setFileLineMap(this.input_stream);
-        matchedToken.setUnparsed(!regularTokens.contains(type));
+    }
+    matchedToken.setFileLineMap(this.input_stream);
+    matchedToken.setUnparsed(!regularTokens.contains(type));
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]
       ${tokenHookMethodName}(matchedToken);
@@ -445,7 +440,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
-      return matchedToken;
+    return matchedToken;
   }
 
  [#if lexerData.hasTokenActions]
@@ -474,7 +469,4 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [/#list]
   }
  [/#if]
-
-
 }
-

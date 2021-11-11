@@ -17,6 +17,14 @@ public class InvalidToken extends Token
 [/#if]
     }
 
+    public InvalidToken(FileLineMap fileLineMap) {
+        this(null, fileLineMap);
+    }
+
+    public InvalidToken(FileLineMap fileLineMap, int beginOffset, int endOffset) {
+        super(TokenType.INVALID, fileLineMap, beginOffset, endOffset);
+    }
+
     public String getNormalizedText() {
         return "Lexically Invalid Input:" + getImage();
     }
