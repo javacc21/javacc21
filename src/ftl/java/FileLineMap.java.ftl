@@ -72,9 +72,20 @@ public class FileLineMap {
     private int bufferPosition;
 
 
-    // If this is set, it determines 
-    // which lines in the file are actually processed.
-    private BitSet parsedLines;
+// Just a dummy Token value that we put in the tokenLocationTable
+// to indicate that this location in the file is ignored.
+    static final private Token IGNORED = new Token();
+
+// A BitSet that stores where the tokens are located.
+// This is not strictly necessary, I suppose...
+    private BitSet tokenOffsets;
+
+// Just a very simple, bloody minded approach, just store the
+// Token objects in a table where the offsets are the code unit 
+// positions in the content buffer. If the Token at a given offset is
+// the dummy or marker type IGNORED, then the location is skipped via
+// whatever preprocessor logic.    
+    private Token[] tokenLocationTable;
 
     /**
      * This is used in conjunction with having a preprocessor.
@@ -84,7 +95,16 @@ public class FileLineMap {
      * are parsed (i.e. not ignored)
      */
     public void setParsedLines(BitSet parsedLines) {
-        this.parsedLines = parsedLines;
+//        this.parsedLines = parsedLines;
+        for (int i=0; i < lineOffsets.length; i++) {
+            if (!parsedLines.get(i+1)) {
+                int lineOffset = lineOffsets[i];
+                int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i+1] : content.length();
+                for (int offset = lineOffset; offset < nextLineOffset; offset++) {
+                    tokenLocationTable[offset] = IGNORED;
+                }
+            }
+        }
     }
     
     
@@ -124,6 +144,8 @@ public class FileLineMap {
         setInputSource(inputSource);
         this.content = content;
         this.lineOffsets = createLineOffsetsTable(this.content);
+        tokenLocationTable = new Token[content.length()+1];
+        tokenOffsets = new BitSet(content.length() +1);
         this.startingLine = startingLine;
         this.startingColumn = startingColumn;
     }
@@ -145,12 +167,6 @@ public class FileLineMap {
         return startingLine-(bsearchResult+2);
     }
 
-    int getCodeUnitColumnFromOffset(int pos) {
-        if (pos >= content.length()) return 1;
-        int line = getLineFromOffset(pos)-startingLine;
-        return 1+pos-lineOffsets[line];
-    }
-
     int getCodePointColumnFromOffset(int pos) {
         if (pos >= content.length()) return 1;
         if (Character.isLowSurrogate(content.charAt(pos))) --pos;
@@ -169,28 +185,37 @@ public class FileLineMap {
      * @param amount the number of characters (code points) to backup.
      */
     public void backup(int amount) {
-        for (int i=0; i<amount; i++) {
-            char ch = content.charAt(--bufferPosition);
-            if (bufferPosition > 0 && Character.isLowSurrogate(ch)) {
-                if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
+        int pointsRetreated = 0;
+        while (pointsRetreated < amount) {
+            if (bufferPosition<=0) break;
+            if (tokenLocationTable[--bufferPosition] == IGNORED) {
+                continue;
+            }
+            char ch = content.charAt(bufferPosition);
+            if (Character.isLowSurrogate(ch)) {
+                char prevChar = bufferPosition >= 0 ? content.charAt(bufferPosition) : 0;
+                if (Character.isHighSurrogate(prevChar)) {
                     --bufferPosition;
                 }
             }
-            if (ch == '\n') skipUnparsedLinesBackward();
+            ++pointsRetreated;
         }
     }
     
     void forward(int amount) {
-        for (int i=0; i<amount; i++) {
-            boolean eol = content.charAt(bufferPosition) == '\n';
-            ++bufferPosition;
-            char ch = content.charAt(bufferPosition);
-            if (Character.isLowSurrogate(ch)) {
-                if (Character.isHighSurrogate(content.charAt(bufferPosition-1))) {
-                    ++bufferPosition;
-                }
+        int pointsAdvanced = 0;
+        while (pointsAdvanced < amount) {
+            if (bufferPosition >= content.length()) break;
+            if (tokenLocationTable[bufferPosition] == IGNORED) {
+                ++bufferPosition;
+                continue;
             }
-            if (eol) skipUnparsedLinesForward();
+            char ch = content.charAt(bufferPosition++);
+            if (Character.isHighSurrogate(ch)) {
+                char nextChar = bufferPosition < content.length() ? content.charAt(bufferPosition) : 0;
+                if (Character.isLowSurrogate(nextChar)) ++bufferPosition;
+            }
+            ++pointsAdvanced;
         }
     }
 
@@ -199,6 +224,9 @@ public class FileLineMap {
     }
     
     int readChar() {
+        while (tokenLocationTable[bufferPosition] == IGNORED && bufferPosition < content.length()) {
+            ++bufferPosition;
+        }
         if (bufferPosition >= content.length()) {
             return -1;
         }
@@ -210,44 +238,7 @@ public class FileLineMap {
                 return Character.toCodePoint(ch, nextChar);
             }
         }
-        if (ch == '\n') {
-            skipUnparsedLinesForward();
-        }
         return ch;
-    }
-
-    /**
-      * If our current bufferPosition corresponds
-      * to a line that is to be skipped,
-      * we scan forward to the next line that is not skipped
-      */
-    private void skipUnparsedLinesForward() {
-        if (parsedLines == null) return;
-        int line = getLineFromOffset(bufferPosition);
-        int nextParsedLine = parsedLines.nextSetBit(line);
-        if (nextParsedLine == -1) {
-            bufferPosition = content.length();
-        }
-        else if (nextParsedLine != line) {
-            bufferPosition = lineOffsets[nextParsedLine-startingLine];
-        }
-    }
-
-    /**
-     * If our current bufferPosition corresponds
-     * to a line that is to be skipped,
-     * we scan forward to the next line that is not skipped
-     */
-    private void skipUnparsedLinesBackward() {
-        if (parsedLines == null) return;
-        int  line = getLineFromOffset(bufferPosition);
-        int prevParsedLine = parsedLines.previousSetBit(line);
-        if (prevParsedLine == -1) {
-            skipUnparsedLinesForward();
-        }
-        else if (prevParsedLine != line) {
-            bufferPosition = lineOffsets[1+prevParsedLine-startingLine] -1;
-        }
     }
 
     int getLine() {
@@ -269,8 +260,10 @@ public class FileLineMap {
     // But there is no goto in Java!!!
 
     void goTo(int offset) {
+        while (tokenLocationTable[offset] == IGNORED && offset < content.length()) {
+            ++offset;
+        }
         this.bufferPosition = offset;
-        skipUnparsedLinesForward();
     }
 
     /**
@@ -334,36 +327,6 @@ public class FileLineMap {
      * Given the line number and the column in code points,
      * returns the column in code units.
      */
-    private int getCodeUnitColumn(int lineNumber, int codePointColumn) {
-        int startPoint = getLineStartOffset(lineNumber);
-        int suppCharsFound = 0;
-        for (int i=1; i<codePointColumn;i++) {
-            char first = content.charAt(startPoint++);
-            if (Character.isHighSurrogate(first)) {
-                char second = content.charAt(startPoint);
-                if (Character.isLowSurrogate(second)) {
-                    suppCharsFound++;
-                    startPoint++;
-                }
-            }
-        }
-        return codePointColumn + suppCharsFound;
-    }
-
-    /**
-     * @param line the line number
-     * @param column the column in code _points_
-     * @return the offset in code _units_
-     */ 
-    private int getOffset(int line, int column) {
-        if (line==0) line = startingLine; // REVISIT? This should not be necessary!
-        int columnAdjustment = (line == startingLine) ? startingColumn : 1;
-        int codeUnitAdjustedColumn = getCodeUnitColumn(line, column);
-        columnAdjustment += (codeUnitAdjustedColumn - column);
-        return lineOffsets[line - startingLine] + column - columnAdjustment;
-    }
-    
-
     private static int[] createLineOffsetsTable(CharSequence content) {
         if (content.length() == 0) {
             return new int[0];
@@ -407,10 +370,14 @@ public class FileLineMap {
      * and endOffset(exclusive)
      */
     String getText(int startOffset, int endOffset) {
-        return content.subSequence(startOffset, endOffset).toString();
+        StringBuilder buf = new StringBuilder();
+        for (int offset = startOffset; offset < endOffset; offset++) {
+            if (tokenLocationTable[offset] != IGNORED) {
+                buf.append(content.charAt(offset));
+            }
+        }
+        return buf.toString();
     }
-    private BitSet tokenOffsets = new BitSet();
-    private Map<Integer, Token> offsetToTokenMap = new HashMap<>();
 
     void cacheToken(Token tok) {
         if (tok.isInserted()) {
@@ -420,7 +387,7 @@ public class FileLineMap {
         }
 	    int offset = tok.getBeginOffset();
 	    tokenOffsets.set(offset);
-	    offsetToTokenMap.put(offset, tok);
+	    tokenLocationTable[offset] = tok;
     }
 
     void uncacheTokens(Token lastToken) {
@@ -429,18 +396,17 @@ public class FileLineMap {
         if (endOffset < tokenOffsets.length()) { //REVISIT
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
         }
-
-        lastToken.insertAfter(null); //undo special chaining as well.
+        lastToken.insertAfter(null); // undo special chaining as well.
     }
 
     Token nextCachedToken(int offset) {
         int nextOffset = tokenOffsets.nextSetBit(offset);
-	    return nextOffset != -1 ? offsetToTokenMap.get(nextOffset) : null;
+	    return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
     } 
 
     Token previousCachedToken(int offset) {
         int prevOffset = tokenOffsets.previousSetBit(offset-1);
-        return prevOffset == -1 ? null : offsetToTokenMap.get(prevOffset);
+        return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
     }
     
     [#embed "InputUtils.java.ftl"]

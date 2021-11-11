@@ -606,7 +606,7 @@ public interface Node extends Comparable<Node>
         return descendants(Node.class, null);
     }
 
-    default List<Node> descendants(Predicate<Node> predicate) {
+    default List<Node> descendants(Predicate<? super Node> predicate) {
         return descendants(Node.class, predicate);
     }
 
@@ -614,7 +614,7 @@ public interface Node extends Comparable<Node>
         return descendants(clazz, null);
     }
 
-    default <T extends Node> List<T> descendants(Class<T> clazz, Predicate<T> predicate) {
+    default <T extends Node> List<T> descendants(Class<T> clazz, Predicate<? super T> predicate) {
        List<T> result = new ArrayList<>();
        for (Node child : children()) {
           if (clazz.isInstance(child)) {
