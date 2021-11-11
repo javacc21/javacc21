@@ -1149,24 +1149,24 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = "FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,DEBUG_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL";
-    private String stringSettings = "PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,TOKEN_FACTORY,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS";
-    private String integerSettings = "TABS_TO_SPACES,JDK_TARGET";
+    private String booleanSettings = ",FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,DEBUG_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,";
+    private String stringSettings = ",PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
+    private String integerSettings = ",TABS_TO_SPACES,JDK_TARGET,";
 
     private void typeCheckSettings(Map<String, Object> settings) {
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
-            if (booleanSettings.indexOf(key)>=0) {
+            if (booleanSettings.indexOf(","+key+",")>=0) {
                 if (!(value instanceof Boolean)) {
                     errorMessages.add("The option " + key + " is supposed to be a boolean (true/false) type");
                 }
             }
-            else if (stringSettings.indexOf(key)>=0) {
+            else if (stringSettings.indexOf(","+key+",")>=0) {
                 if (!(value instanceof String)) {
                     errorMessages.add("The option " + key + " is supposed to be a string");
                 }
             }
-            else if (integerSettings.indexOf(key)>=0) {
+            else if (integerSettings.indexOf(","+key+",")>=0) {
                 if (!(value instanceof Integer)) {
                     errorMessages.add("The option " + key + " is supposed to be an integer");
                 }

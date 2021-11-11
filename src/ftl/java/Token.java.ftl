@@ -146,7 +146,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * @return the string image of the token.
      */
     public String getImage() {
-        return image;
+        return image != null ? image : getSource();
     }
 
    public void setImage(String image) {

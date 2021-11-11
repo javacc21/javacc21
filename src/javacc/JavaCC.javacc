@@ -845,7 +845,7 @@ INJECT Token :
     }
     
     public String getNormalizedText() {
-        return image;
+        return getImage();
     }
 }
 

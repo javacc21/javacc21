@@ -428,11 +428,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private Token instantiateToken(TokenType type) {
     int bufLength = charBuff.length();
     String tokenImage = charBuff.toString();
-    [#if grammar.settings.TOKEN_FACTORY??]
-        Token matchedToken = ${grammar.settings.TOKEN_FACTORY}.newToken(type, tokenImage, input_stream);
-    [#else]
-        Token matchedToken = Token.newToken(type, tokenImage, this);
-    [/#if]
+        Token matchedToken = Token.newToken(type, null, this);
         matchedToken.setBeginOffset(tokenBeginOffset);
         if (type == TokenType.EOF) {
           [#-- I think this is right... --]
