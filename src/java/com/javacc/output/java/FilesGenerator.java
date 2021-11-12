@@ -151,6 +151,7 @@ public class FilesGenerator {
             add("ParsingProblem.java");
             add("Token.java");
             add("InvalidToken.java");
+            add("Indentation.java");
             add("Node.java");
             add("InvalidNode.java");
             add("FileLineMap.java");
@@ -280,6 +281,12 @@ public class FilesGenerator {
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
+        if (grammar.getPythonIndentation()) {
+            outputFile = grammar.getParserOutputDirectory().resolve("Indentation.java");
+            if (regenerate(outputFile)) {
+                generate(outputFile);
+            }
+        }
     }
     
     void generateFileLineMap() throws IOException, ParseException, TemplateException {
@@ -316,7 +323,7 @@ public class FilesGenerator {
             generate(outputFile);
         }
     }
-    
+
     private boolean regenerate(Path file) throws IOException {
         if (!Files.exists(file)) {
         	return true;
@@ -368,6 +375,11 @@ public class FilesGenerator {
                 tokenSubclassFileNames.add(outputFile.getFileName().toString());
                 superClassLookup.put(tokenClassName, superClassName);
             }
+        }
+        for (String tokenName : grammar.getExtraTokens()) {
+            Path outputFile = getOutputFile(tokenName);
+            files.put(tokenName, outputFile);
+            tokenSubclassFileNames.add(outputFile.getFileName().toString());
         }
         for (String nodeName : grammar.getNodeNames()) {
             Path outputFile = getOutputFile(nodeName);

@@ -7,7 +7,7 @@ DEFAULT_LEXICAL_STATE = PYTHON;
 TABS_TO_SPACES=8;
 PRESERVE_LINE_ENDINGS=false;
 ENSURE_FINAL_EOL;
-EXTRA_TOKENS=INDENT,DEDENT;
+PYTHON_INDENTATION;
 
 /*
  * The following code injection implements the various indent/dedent logic.
@@ -42,12 +42,9 @@ INJECT LEXER_CLASS :
    }
 
    private Token handleIndent(Token tok, final int offset) {
-      indentationStack.add(offset);
       this.indentation = offset;
-      Token indent = Token.newToken(INDENT, this.input_stream, 0,0);
-      indent.setImage("INDENT");
-      tok.insertBefore(indent);
-      return indent;
+      indentationStack.add(offset);
+      return new Indentation(tok, indentationStack, false);
    }
 
    private Token handleDedents(Token tok, final int offset) {
@@ -61,10 +58,8 @@ INJECT LEXER_CLASS :
        this.indentation = offset;
        Token firstDedent = null;
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
-          Token dedent = Token.newToken(DEDENT, input_stream, 0, 0);
-          dedent.setImage("DEDENT");
+          Token dedent = new Indentation(tok, indentationStack, true);
           if (firstDedent == null) firstDedent = dedent;
-          tok.insertBefore(dedent);
           indentationStack.remove(indentationStack.size()-1);
        }
        return firstDedent; 

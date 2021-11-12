@@ -55,13 +55,21 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     private int beginOffset, endOffset;
 
     public FileLineMap getFileLineMap() {
-        return this.fileLineMap;
+        FileLineMap flm = this.fileLineMap;
+        if (flm == null) {
+            if (prependedToken != null) {
+                flm = prependedToken.getFileLineMap();
+            }
+            if (flm == null && appendedToken != null) {
+                flm = appendedToken.getFileLineMap();
+            }
+        }
+        return flm;
     }
 
     public void setFileLineMap(FileLineMap fileLineMap) {
         this.fileLineMap = fileLineMap;
     }
-
 
     public TokenType getType() {
         return type;
@@ -347,8 +355,11 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
               case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, fileLineMap, beginOffset, endOffset);
             [/#if]
            [/#list]
+           [#list grammar.extraTokens as tokenName]
+              case ${tokenName} : return new ${grammar.nodePrefix}${tokenName}(TokenType.${tokenName}, fileLineMap, beginOffset, endOffset);
+           [/#list]
               case INVALID : return new InvalidToken(fileLineMap, beginOffset, endOffset);
-           default : return new Token(type, fileLineMap, beginOffset, endOffset);
+              default : return new Token(type, fileLineMap, beginOffset, endOffset);
            }
        [#else]
          return new Token(type, fileLineMap, beginOffset, endOffset);

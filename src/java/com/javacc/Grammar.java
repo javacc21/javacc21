@@ -100,9 +100,9 @@ public class Grammar extends BaseNode {
 
     private Path includedFileDirectory;
 
-    private List<String> tokensOffByDefault = new ArrayList<>();
+    private Set<String> tokensOffByDefault = new LinkedHashSet<>();
 
-    private List<String> extraTokens = new ArrayList<>();
+    private Set<String> extraTokens = new LinkedHashSet<>();
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
@@ -1079,6 +1079,11 @@ public class Grammar extends BaseNode {
         return b== null ? false : b;
     }
 
+    public boolean getPythonIndentation() {
+        Boolean b = (Boolean) settings.get("PYTHON_INDENTATION");
+        return b== null ? false : b;
+    }
+
     public int getTabsToSpaces() {
         Integer i = (Integer) settings.get("TABS_TO_SPACES");
         return i==null ? 0 : i;
@@ -1089,11 +1094,11 @@ public class Grammar extends BaseNode {
         return jdkTarget;
     }
 
-    public List<String> getDeactivatedTokens() {
+    public Set<String> getDeactivatedTokens() {
         return tokensOffByDefault;
     }
 
-    public List<String> getExtraTokens() {
+    public Set<String> getExtraTokens() {
         return extraTokens;
     }
 
@@ -1119,19 +1124,19 @@ public class Grammar extends BaseNode {
                 String tokens = (String) settings.get(key);
                 for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens();) {
                     String tokenName = st.nextToken();
-                    if (!tokensOffByDefault.contains(tokenName)) {
-                        tokensOffByDefault.add(tokenName);
-                    }
+                    tokensOffByDefault.add(tokenName);
                 }
             }
             else if (key.equals("EXTRA_TOKENS")) {
                 String tokens = (String) settings.get(key);
                 for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens();) {
                     String tokenName = st.nextToken();
-                    if (!extraTokens.contains(tokenName)) {
-                        extraTokens.add(tokenName);
-                    }
+                    extraTokens.add(tokenName);
                 }
+            }
+            else if (key.equals("PYTHON_INDENTATION")) {
+                extraTokens.add("INDENT");
+                extraTokens.add("DEDENT");
             }
             else if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {
                 if (!isInInclude() && outputDir == null)
@@ -1149,7 +1154,7 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = ",FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,DEBUG_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,";
+    private String booleanSettings = ",FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,DEBUG_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,PYTHON_INDENTATION,";
     private String stringSettings = ",PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
     private String integerSettings = ",TABS_TO_SPACES,JDK_TARGET,";
 

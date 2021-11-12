@@ -133,7 +133,7 @@
     <ant antfile="build.xml" dir="examples/java" target="test"/>
     <echo>Building the Python parser</echo>
     <ant antfile="build.xml" dir="examples/python" target="clean"/>
-    <ant antfile="build.xml" dir="examples/python" target="compile"/>
+    <ant antfile="build.xml" dir="examples/python" target="test"/>
     <echo>Testing the newer FreeMarker parser</echo>
     <ant antfile="build.xml" dir="examples/freemarker" target="clean"/>
     <ant antfile="build.xml" dir="examples/freemarker" target="test"/>

@@ -29,7 +29,7 @@
       </echo>
       <java classname="PyTest" classpath="." failonerror="true" fork="true">
           <assertions><enable/></assertions>
-	      <arg value="${basedir}/testfile" />
+	      <arg value="${basedir}/testfiles" />
       </java>
    </target>
 </project>
