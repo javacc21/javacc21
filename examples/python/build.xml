@@ -25,7 +25,7 @@
    </target>
    <target name="test" depends="compile">
       <echo>
-            Now test on a file...
+            Now test on a few files..
       </echo>
       <java classname="PyTest" classpath="." failonerror="true" fork="true">
           <assertions><enable/></assertions>

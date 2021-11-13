@@ -391,7 +391,7 @@ public class FileLineMap {
     }
 
     void uncacheTokens(Token lastToken) {
-        lastToken.insertAfter(null);
+//        lastToken.insertAfter(null);
         int endOffset = lastToken.getEndOffset();
         if (endOffset < tokenOffsets.length()) { //REVISIT
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());

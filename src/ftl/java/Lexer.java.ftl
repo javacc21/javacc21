@@ -139,14 +139,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       return inputSource;
   }
   
-    public void setInputSource(String inputSource) {
+  public void setInputSource(String inputSource) {
       this.inputSource = inputSource;
       input_stream.setInputSource(inputSource);
-    }
+  }
    
-     public ${grammar.lexerClassName}(CharSequence input) {
-        this("input", input);
-     }
+  public ${grammar.lexerClassName}(CharSequence input) {
+    this("input", input);
+  }
 
 
      /**
@@ -387,13 +387,17 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         }
         return false;
     }
- 
-        // Reset the token source input
+
+    // Reset the token source input
     // to just after the Token passed in.
     void reset(Token t, LexicalState state) {
-        input_stream.goTo(t.getEndOffset());
-        input_stream.uncacheTokens(t);
-        if (state != null) {
+[#if grammar.pythonIndentation]
+      restoreIndentation(t);
+      resetToIndent = (t instanceof Indentation) ? (Indentation) t : null;
+[/#if]
+      input_stream.goTo(t.getEndOffset());
+      input_stream.uncacheTokens(t);
+      if (state != null) {
             switchTo(state);
         }
 [#if multipleLexicalStates] 
