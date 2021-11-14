@@ -748,7 +748,7 @@ INJECT ThrowsList :
 
 INJECT Identifier : 
 {
-    private String tokenHookName, openHookName, closeHookName;
+    private String tokenHookName, resetTokenHookName, openHookName, closeHookName;
 
    public String getNormalizedText() {
         String image = getImage();
@@ -779,6 +779,13 @@ INJECT Identifier :
                 tokenHookName = getGrammar().generateUniqueIdentifier(prefix, this);
             }
             return tokenHookName;
+        }
+        if (image.equals("RESET_TOKEN_HOOK")) {
+            if (resetTokenHookName == null) {
+                String prefix = getGrammar().generateIdentifierPrefix("resetTokenHook");
+                resetTokenHookName = getGrammar().generateUniqueIdentifier(prefix, this);
+            }
+            return resetTokenHookName;
         }
         if (image.equals("OPEN_NODE_HOOK")) {
             if (openHookName == null) {

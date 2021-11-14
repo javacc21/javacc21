@@ -151,7 +151,6 @@ public class FilesGenerator {
             add("ParsingProblem.java");
             add("Token.java");
             add("InvalidToken.java");
-            add("Indentation.java");
             add("Node.java");
             add("InvalidNode.java");
             add("FileLineMap.java");
@@ -280,12 +279,6 @@ public class FilesGenerator {
         outputFile = grammar.getParserOutputDirectory().resolve("InvalidToken.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
-        }
-        if (grammar.getPythonIndentation()) {
-            outputFile = grammar.getParserOutputDirectory().resolve("Indentation.java");
-            if (regenerate(outputFile)) {
-                generate(outputFile);
-            }
         }
     }
     

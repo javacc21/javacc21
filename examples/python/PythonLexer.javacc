@@ -7,7 +7,7 @@ DEFAULT_LEXICAL_STATE = PYTHON;
 TABS_TO_SPACES=8;
 PRESERVE_LINE_ENDINGS=false;
 ENSURE_FINAL_EOL;
-PYTHON_INDENTATION;
+EXTRA_TOKENS = INDENT, DEDENT;
 
 /*
  * The following code injection implements the various indent/dedent logic.
@@ -15,8 +15,10 @@ PYTHON_INDENTATION;
 INJECT LEXER_CLASS : 
    import java.util.List;
    import java.util.ArrayList;
-{
-   private Indentation danglingIndentation;
+   import NODE_PACKAGE.INDENT;
+   import NODE_PACKAGE.DEDENT;
+{ 
+   private Token danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = new ArrayList<>();
    {indentationStack.add(1);}
@@ -47,9 +49,8 @@ INJECT LEXER_CLASS :
 
    private Token handleIndent(Token tok, final int offset) {
       int indentation = indentationStack.get(indentationStack.size()-1);
-      int indentAmount = offset-indentation;
       indentationStack.add(offset);
-      return new Indentation(tok, indentationStack, indentAmount);
+      return new INDENT(tok, indentationStack);
    }
 
    private Token handleDedents(Token tok, final int offset) {
@@ -62,14 +63,14 @@ INJECT LEXER_CLASS :
        }
        Token firstDedent = null;
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
-          int dedentAmount = indentationStack.get(i-1) - indentationStack.get(i);
+          int dedentAmount = indentationStack.get(i) - indentationStack.get(i-1);
           indentationStack.remove(i);
-          Token dedent = new Indentation(tok, indentationStack, dedentAmount);
+          Token dedent = new DEDENT(tok, indentationStack, dedentAmount);
           if (firstDedent == null) firstDedent = dedent;
        }
        return firstDedent; 
    }
-
+ 
    private Token handleNewline(final Token tok, boolean lineJoiningOn) {
        if (lineJoiningOn || tok.getBeginColumn()==1) {
           tok.setUnparsed(true);
@@ -99,11 +100,11 @@ INJECT LEXER_CLASS :
       return result;
    }
 
-   private void RESET_HOOK(Token tok) {
+   private void RESET_TOKEN_HOOK(Token tok) {
       braceNesting = bracketNesting = parenthesesNesting = 0;
-      if (tok instanceof Indentation) {
-         danglingIndentation = (Indentation) tok;
-         indentationStack = danglingIndentation.getIndents();
+      if (tok.getType() == INDENT || tok.getType() == DEDENT) {
+         danglingIndentation = tok;
+         indentationStack = tok.getIndents();
          return;
       }
       java.util.Iterator<Token> precedingTokens = tok.precedingTokens();
@@ -121,11 +122,76 @@ INJECT LEXER_CLASS :
             case DEDENT : break outer;
          }
       }
-      if (previous instanceof Indentation) {
-         indentationStack = ((Indentation) previous).getIndents();
+      if (previous.getType() == INDENT || previous.getType() == DEDENT) {
+         indentationStack = previous.getIndents();
       }
    }
 }
+
+INJECT Token : {
+   protected java.util.List<Integer> getIndents() {
+      return null;
+   }
+}
+
+INJECT DEDENT : 
+   import java.util.List;
+   import java.util.ArrayList;
+{
+   private List<Integer> indents;
+   private int dedentAmount;
+
+   public DEDENT(Token followingToken, List<Integer> indents, int dedentAmount) {
+      super(TokenType.DEDENT, followingToken.getFileLineMap(), followingToken.getBeginOffset(), followingToken.getBeginOffset());
+      this.indents = new ArrayList<Integer>(indents.size());
+      this.indents.addAll(indents);
+      this.dedentAmount = dedentAmount;
+      followingToken.insertBefore(this);
+   }
+
+   public List<Integer> getIndents() { return new ArrayList<>(indents);}
+
+   public boolean isVirtual() {
+      return true;
+   }
+
+   public String toString() {
+       return "DEDENT";
+   }
+
+   public int getDedentAmount() {
+      return dedentAmount;
+   }
+}
+
+INJECT INDENT : 
+   import java.util.List;
+   import java.util.ArrayList;
+{
+   private List<Integer> indents;
+
+   public INDENT(Token followingToken, List<Integer> indents) {
+      super(TokenType.INDENT, followingToken.getFileLineMap(), followingToken.getBeginOffset(), followingToken.getBeginOffset());
+      this.indents = new ArrayList<Integer>(indents.size());
+      this.indents.addAll(indents);
+      followingToken.insertBefore(this);
+   }
+
+   public List<Integer> getIndents() { return new ArrayList<>(indents);}
+
+   public boolean isVirtual() {
+      return true;
+   }
+
+   public String toString() {
+       return "INDENT";
+   }
+
+   public int getIndentAmount() {
+      return indents.get(indents.size()-1) - indents.get(indents.size()-2);
+   }
+}
+
 
 UNPARSED : 
    <SPACE : (" " | "\f")+> #Whitespace

@@ -391,9 +391,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     // Reset the token source input
     // to just after the Token passed in.
     void reset(Token t, LexicalState state) {
-[#if grammar.pythonIndentation]
-      RESET_HOOK(t);
-[/#if]
+[#list grammar.resetTokenHooks as resetTokenHookMethodName]
+      ${resetTokenHookMethodName}(t);
+[/#list]
       input_stream.goTo(t.getEndOffset());
       input_stream.uncacheTokens(t);
       if (state != null) {

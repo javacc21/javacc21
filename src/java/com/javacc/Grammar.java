@@ -93,7 +93,8 @@ public class Grammar extends BaseNode {
     private List<String> lexerTokenHooks = new ArrayList<>(),
                          parserTokenHooks = new ArrayList<>(),
                          openNodeScopeHooks = new ArrayList<>(),
-                         closeNodeScopeHooks = new ArrayList<>();
+                         closeNodeScopeHooks = new ArrayList<>(),
+                         resetTokenHooks = new ArrayList<>();
     private Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
 
     private Set<Path> alreadyIncluded = new HashSet<>();
@@ -520,6 +521,10 @@ public class Grammar extends BaseNode {
         return parserTokenHooks;
     }
 
+    public List<String> getResetTokenHooks() {
+        return resetTokenHooks;
+    }
+
     public List<String> getOpenNodeScopeHooks() {
         return openNodeScopeHooks;
     }
@@ -862,6 +867,9 @@ public class Grammar extends BaseNode {
                     if (methodName.startsWith(prefix) || methodName.equals("tokenHook") || methodName.equals("CommonTokenAction")) {
                         lexerTokenHooks.add(methodName);
                     }
+                    else if (methodName.startsWith("resetTokenHook$")) {
+                        resetTokenHooks.add(methodName);
+                    }
                 }
                 else if (className.equals(parserClassName)) {
                     if (methodName.startsWith("tokenHook$")) {
@@ -1079,11 +1087,6 @@ public class Grammar extends BaseNode {
         return b== null ? false : b;
     }
 
-    public boolean getPythonIndentation() {
-        Boolean b = (Boolean) settings.get("PYTHON_INDENTATION");
-        return b== null ? false : b;
-    }
-
     public int getTabsToSpaces() {
         Integer i = (Integer) settings.get("TABS_TO_SPACES");
         return i==null ? 0 : i;
@@ -1134,10 +1137,6 @@ public class Grammar extends BaseNode {
                     extraTokens.add(tokenName);
                 }
             }
-            else if (key.equals("PYTHON_INDENTATION")) {
-                extraTokens.add("INDENT");
-                extraTokens.add("DEDENT");
-            }
             else if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {
                 if (!isInInclude() && outputDir == null)
                     outputDir = Paths.get((String)value);
@@ -1154,7 +1153,7 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = ",FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,DEBUG_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,PYTHON_INDENTATION,";
+    private String booleanSettings = ",FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,DEBUG_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,";
     private String stringSettings = ",PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
     private String integerSettings = ",TABS_TO_SPACES,JDK_TARGET,";
 
