@@ -231,13 +231,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return previousCachedToken();
     }
 
-    void insertAfter(Token appendedToken) {
-        this.appendedToken = appendedToken;
-        if (appendedToken != null) {
-            appendedToken.prependedToken = this;
-            appendedToken.beginOffset = appendedToken.endOffset = this.endOffset;
-            appendedToken.inserted = true;
-        }
+    void unsetAppendedToken() {
+        this.appendedToken = null;
     }
 
     void insertBefore(Token prependedToken) {
@@ -302,6 +297,34 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     public String toString() {
         return getNormalizedText();
+    }
+
+    public java.util.Iterator<Token> precedingTokens() {
+        return new java.util.Iterator<Token>() {
+            Token currentPoint = Token.this;
+            public boolean hasNext() {
+                return currentPoint.previousCachedToken() != null;
+            }
+            public Token next() {
+                Token previous = currentPoint.previousCachedToken();
+                if (previous == null) throw new java.util.NoSuchElementException("No previous token!");
+                return currentPoint = previous;
+            }
+        };
+    }
+
+    public java.util.Iterator<Token> followingTokens() {
+        return new java.util.Iterator<Token>() {
+            Token currentPoint = Token.this;
+            public boolean hasNext() {
+                return currentPoint.nextCachedToken() != null;
+            }
+            public Token next() {
+                Token next = currentPoint.nextCachedToken();
+                if (next == null) throw new java.util.NoSuchElementException("No next token!");
+                return currentPoint = next;
+            }
+        };
     }
 
 [#if grammar.treeBuildingEnabled]

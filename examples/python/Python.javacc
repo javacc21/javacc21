@@ -126,17 +126,6 @@ CompoundStatement :
     TryStatement
 ;
 
-// This production is only used for lookahead. 
-// That is what the #scan annotation means. So no
-// actual parsing code is generated, only lookahead
-// I suppose looking ahead to the colon makes sense. Is that right?
-MatchStatementLA#scan :
-    <NAME>
-    ASSERT {getToken(0).getImage().equals("match")}
-    SubjectExpression ":" 
-;    
-     
-
 ReturnStatement : "return" [StarExpressions] ;
 
 GlobalStatement : "global" <NAME> ("," <NAME>)* ;
@@ -451,10 +440,11 @@ Assignment :
 // Below this point is the new pattern matching stuff
 // introduced in Python 3.10
 
-MatchStatement : SCAN MatchStatementLA =>
+MatchStatement : 
+   ASSERT {getToken(1).getImage().equals("match")}#
    ACTIVATE_TOKENS MATCH ("match") 
    SubjectExpression 
-   ":"
+   ":" =>||
    <NEWLINE> <INDENT>
    (CaseBlock)+
    <DEDENT>

@@ -391,12 +391,11 @@ public class FileLineMap {
     }
 
     void uncacheTokens(Token lastToken) {
-//        lastToken.insertAfter(null);
         int endOffset = lastToken.getEndOffset();
         if (endOffset < tokenOffsets.length()) { //REVISIT
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
         }
-        lastToken.insertAfter(null); // undo special chaining as well.
+        lastToken.unsetAppendedToken();
     }
 
     Token nextCachedToken(int offset) {
@@ -408,6 +407,6 @@ public class FileLineMap {
         int prevOffset = tokenOffsets.previousSetBit(offset-1);
         return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
     }
-    
+
     [#embed "InputUtils.java.ftl"]
 }

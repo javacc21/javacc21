@@ -32,6 +32,9 @@
 package ${grammar.parserPackage};
 [/#if]
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * Token subclass to represent the virtual token type of INDENT 
  * or DEDENT in python style indentation/dedentation
@@ -42,20 +45,23 @@ package ${grammar.parserPackage};
        return true;
     }
 
-    private int indent;
+    private List<Integer> indents;
+    private int offset;
 
-    public Indentation(Token followingToken, int indent) {
-        this.indent = indent;
+    public Indentation(Token followingToken, List<Integer> indents, int offset) {
+        this.indents = new ArrayList<Integer>(indents.size());
+        this.indents.addAll(indents);
+        this.offset = offset;
         followingToken.insertBefore(this);
     }
 
-    public int getOffset() { return indent;}
+    public List<Integer> getIndents() { return new ArrayList<>(indents);}
 
     public String toString() {
-        return indent > 0 ? "INDENT" : "DEDENT";
+        return offset > 0 ? "INDENT" : "DEDENT";
     }
 
     public TokenType getType() {
-        return indent >0 ? TokenType.INDENT : TokenType.DEDENT;
+        return offset <0 ? TokenType.DEDENT : TokenType.INDENT;
     }
 }

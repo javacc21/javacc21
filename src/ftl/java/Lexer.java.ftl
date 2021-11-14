@@ -392,8 +392,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     // to just after the Token passed in.
     void reset(Token t, LexicalState state) {
 [#if grammar.pythonIndentation]
-      restoreIndentation(t);
-      resetToIndent = (t instanceof Indentation) ? (Indentation) t : null;
+      RESET_HOOK(t);
 [/#if]
       input_stream.goTo(t.getEndOffset());
       input_stream.uncacheTokens(t);

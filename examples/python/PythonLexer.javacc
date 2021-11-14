@@ -16,18 +16,12 @@ INJECT LEXER_CLASS :
    import java.util.List;
    import java.util.ArrayList;
 {
-   private Token lastHandledToken;
-   private Indentation resetToIndent;
+   private Indentation danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = new ArrayList<>();
    {indentationStack.add(1);}
 
    private Token TOKEN_HOOK(Token tok) {
-      if (resetToIndent != null) {
-         tok.resetIndentation(resetToIndent);
-         resetToIndent = null;
-         return lastHandledToken = tok;
-      }
       boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0; 
       switch (tok.getType()) {
          case LBRACE : braceNesting++; break;
@@ -37,22 +31,25 @@ INJECT LEXER_CLASS :
          case LBRACKET : bracketNesting++; break;
          case RBRACKET : bracketNesting--; break;
          case NEWLINE : return handleNewline(tok, lineJoiningOn);
-         default :
       }
-      if (!tok.isUnparsed() && !lineJoiningOn && startsLine(tok)) {
+      if (danglingIndentation != null) {
+         tok.insertBefore(danglingIndentation);
+         danglingIndentation = null;
+      }
+      else if (!lineJoiningOn && !tok.isUnparsed() && startsLine(tok)) {
           int offset = tok.getBeginColumn();
           int indentation = indentationStack.get(indentationStack.size()-1);
           if (offset > indentation) tok = handleIndent(tok, offset);
           if (offset < indentation) tok = handleDedents(tok, offset);
       }
-      return lastHandledToken = tok;
+      return tok;
    }
 
    private Token handleIndent(Token tok, final int offset) {
       int indentation = indentationStack.get(indentationStack.size()-1);
       int indentAmount = offset-indentation;
       indentationStack.add(offset);
-      return new Indentation(tok, indentAmount);
+      return new Indentation(tok, indentationStack, indentAmount);
    }
 
    private Token handleDedents(Token tok, final int offset) {
@@ -66,8 +63,8 @@ INJECT LEXER_CLASS :
        Token firstDedent = null;
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           int dedentAmount = indentationStack.get(i-1) - indentationStack.get(i);
-          Token dedent = new Indentation(tok, dedentAmount);
           indentationStack.remove(i);
+          Token dedent = new Indentation(tok, indentationStack, dedentAmount);
           if (firstDedent == null) firstDedent = dedent;
        }
        return firstDedent; 
@@ -102,30 +99,31 @@ INJECT LEXER_CLASS :
       return result;
    }
 
-   private void restoreIndentation(Token tok) {
-        Token t = lastHandledToken;
-        while (t != null && t!= tok && t.getBeginOffset() >= tok.getEndOffset()) {
-          switch(t.getType()) {
-            case LBRACE : braceNesting--; break;
-            case RBRACE : braceNesting++; break;
-            case LPAREN : parenthesesNesting--; break;
-            case RPAREN : parenthesesNesting++; break;
-            case LBRACKET : bracketNesting--; break;
-            case RBRACKET : bracketNesting++; break;
-            case INDENT : indentationStack.remove(indentationStack.size()-1); break; 
-            case DEDENT : indentationStack.add(indentationStack.get(indentationStack.size()-1) - ((Indentation) t).getOffset());
-            default : break;
-          }
-          t = t.previousCachedToken();
-        } 
-        lastHandledToken = tok;
-   }
-}
-
-INJECT Token : {
-   void resetIndentation(Indentation indentation) {
-      ((Token)indentation).appendedToken = this;
-      this.prependedToken = indentation;
+   private void RESET_HOOK(Token tok) {
+      braceNesting = bracketNesting = parenthesesNesting = 0;
+      if (tok instanceof Indentation) {
+         danglingIndentation = (Indentation) tok;
+         indentationStack = danglingIndentation.getIndents();
+         return;
+      }
+      java.util.Iterator<Token> precedingTokens = tok.precedingTokens();
+      Token previous = null;
+      outer : while (precedingTokens.hasNext()) {
+         previous = precedingTokens.next();
+         switch(previous.getType()) {
+            case LBRACE : braceNesting++; break;
+            case RBRACE : braceNesting--; break;
+            case LPAREN : parenthesesNesting++; break;
+            case RPAREN : parenthesesNesting--; break;
+            case LBRACKET : bracketNesting++; break;
+            case RBRACKET : bracketNesting--; break;
+            case INDENT :
+            case DEDENT : break outer;
+         }
+      }
+      if (previous instanceof Indentation) {
+         indentationStack = ((Indentation) previous).getIndents();
+      }
    }
 }
 
