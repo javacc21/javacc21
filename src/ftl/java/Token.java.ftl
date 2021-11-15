@@ -36,6 +36,8 @@ package ${grammar.parserPackage};
 import ${grammar.nodePackage}.*;
 [/#if]
 
+import java.util.Iterator;
+
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
 import freemarker.template.*;
 [/#if]
@@ -299,8 +301,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return getNormalizedText();
     }
 
-    public java.util.Iterator<Token> precedingTokens() {
-        return new java.util.Iterator<Token>() {
+    public Iterator<Token> precedingTokens() {
+        return new Iterator<Token>() {
             Token currentPoint = Token.this;
             public boolean hasNext() {
                 return currentPoint.previousCachedToken() != null;
@@ -313,7 +315,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         };
     }
 
-    public java.util.Iterator<Token> followingTokens() {
+    public Iterator<Token> followingTokens() {
         return new java.util.Iterator<Token>() {
             Token currentPoint = Token.this;
             public boolean hasNext() {

@@ -228,7 +228,6 @@ public boolean isCancelled() {return cancelled;}
 
   private void uncacheTokens() {
       token_source.reset(getToken(0));
-      token_source.input_stream.uncacheTokens(getToken(0));
   }
 
   boolean deactivateTokenTypes(TokenType... types) {

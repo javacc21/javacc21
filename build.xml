@@ -47,6 +47,7 @@
   <delete dir="examples/json/org"/>
   <delete dir="examples/preprocessor/org/"/>
   <delete dir="examples/python/org/"/>
+  <delete dir="examples/legacy/test.tmp"/>
 </target>
 
 

@@ -239,8 +239,6 @@ TOKEN :
     |
     <PRINTABLE_CHARS : (~["$", "<", "[", "\n", "\r", "\t", " "])+>
     |
-//    <END_USER_DIRECTIVE : <END_USER_DIRECTIVE1> | <END_USER_DIRECTIVE2>>
-//    |
     <END_DIRECTIVE1 : "[/#" (<IDENTIFIER>)? (<BLANK>)* "]">
     |
     <END_DIRECTIVE2 : "</#" (<IDENTIFIER>)? (<BLANK>)* ">">
