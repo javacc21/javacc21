@@ -440,25 +440,25 @@ Assignment :
 // introduced in Python 3.10
 
 MatchStatement : 
-   ASSERT {getToken(1).getImage().equals("match")}#
    ACTIVATE_TOKENS MATCH ("match") 
+   =>|+1
    SubjectExpression 
-   ":" =>||
-   <NEWLINE> <INDENT>
-   (CaseBlock)+
+   ":" 
+   <NEWLINE>
+   <INDENT>
+   ACTIVATE_TOKENS CASE (CaseBlock)+
    <DEDENT>
 ;
 
 CaseBlock :
-    // NB. The lookahead cannot actually refer to the CASE token type
-    // because the token is not activated until we actually enter the production!
-    SCAN 0 {getToken(1).getImage().equals("case")}#
-    =>
-    ACTIVATE_TOKENS CASE ("case")
-    Patterns
-    ["if" NamedExpression]
-    ":"
-    Block
+    "case"
+    DEACTIVATE_TOKENS CASE 
+    (
+      Patterns
+      ["if" NamedExpression]
+      ":"
+      Block
+    )
 ;
 
 

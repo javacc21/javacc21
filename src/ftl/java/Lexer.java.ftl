@@ -397,8 +397,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       input_stream.goTo(t.getEndOffset());
       input_stream.uncacheTokens(t);
       if (state != null) {
-            switchTo(state);
-        }
+          switchTo(state);
+      }
 [#if multipleLexicalStates] 
         else {
           doLexicalStateSwitch(t.getType());

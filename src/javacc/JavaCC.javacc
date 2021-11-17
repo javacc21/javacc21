@@ -721,7 +721,13 @@ INJECT MethodDeclaration :
     }
     
     public String getFullSignature() {
-        return getName() + getFormalParameters();
+        StringBuilder buf = new StringBuilder();
+        buf.append(getName());
+        for (Type type : getFormalParameters().childrenOfType(Type.class)) {
+            buf.append("#");
+            buf.append(type);
+        }
+        return buf.toString();
     }
 }
 

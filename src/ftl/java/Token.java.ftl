@@ -237,7 +237,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.appendedToken = null;
     }
 
-    public void insertBefore(Token prependedToken) {
+    public void preInsert(Token prependedToken) {
          if (prependedToken == this.prependedToken) return;
          prependedToken.appendedToken = this;
          Token existingPreviousToken = this.previousCachedToken();

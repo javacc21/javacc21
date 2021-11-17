@@ -109,12 +109,17 @@ Modifiers#void :
   }
   |
   SCAN {
-    ((permissibleModifiers == null || permissibleModifiers.contains(SEALED))
-      && "sealed".equals(getToken(1).getImage()))
-    || ((permissibleModifiers == null || permissibleModifiers.contains(NON_SEALED))
-      && "non".equals(getToken(1).getImage())
-      && "-".equals(getToken(2).getImage())
-      && "sealed".equals(getToken(3).getImage()))
+    permissibleModifiers == null 
+    ||
+    permissibleModifiers.contains(SEALED)
+    &&
+    (
+       "sealed".equals(getToken(1).getImage())
+       ||
+       "non".equals(getToken(1).getImage())
+         && "-".equals(getToken(2).getImage())
+         && "sealed".equals(getToken(3).getImage())  
+    )
   }# =>
   ACTIVATE_TOKENS SEALED, NON_SEALED ("sealed"|"non-sealed") 
   {

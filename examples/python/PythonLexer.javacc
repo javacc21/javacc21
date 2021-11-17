@@ -38,13 +38,13 @@ INJECT LEXER_CLASS :
                          return tok;
       }
       if (danglingIndentation != null) {
-         tok.insertBefore(danglingIndentation);
-         danglingIndentation = null;
+         tok.preInsert(danglingIndentation);
+      }
+      if (lineJoiningOn || tok.isUnparsed() 
+        || danglingIndentation == null && !tok.startsLine()) {
          return tok;
       }
-      if (lineJoiningOn || tok.isUnparsed() || !tok.startsLine()) {
-         return tok;
-      }
+      danglingIndentation = null;
       int beginColumn = tok.getBeginColumn();
       int indentation = indentationStack.get(indentationStack.size()-1);
       if (beginColumn > indentation) {
@@ -62,7 +62,7 @@ INJECT LEXER_CLASS :
        if (dedentIndex <0) {
           Token invalidDedent = new InvalidToken(input_stream, 0,0);
           invalidDedent.setImage("Invalid Dedent");
-          tok.insertBefore(invalidDedent);
+          tok.preInsert(invalidDedent);
           return invalidDedent;
        }
        Token firstDedent = null;
@@ -127,7 +127,7 @@ INJECT DEDENT :
       this.indents = new ArrayList<Integer>(indents.size());
       this.indents.addAll(indents);
       this.dedentAmount = dedentAmount;
-      followingToken.insertBefore(this);
+      followingToken.preInsert(this);
    }
 
    public List<Integer> getIndents() { return new ArrayList<>(indents);}
@@ -155,7 +155,7 @@ INJECT INDENT :
       super(TokenType.INDENT, followingToken.getFileLineMap(), followingToken.getBeginOffset(), followingToken.getBeginOffset());
       this.indents = new ArrayList<Integer>(indents.size());
       this.indents.addAll(indents);
-      followingToken.insertBefore(this);
+      followingToken.preInsert(this);
    }
 
    public List<Integer> getIndents() { return new ArrayList<>(indents);}
