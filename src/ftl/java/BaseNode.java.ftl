@@ -46,8 +46,6 @@ import java.util.*;
  */
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
-//    private String inputSource;
-
     private FileLineMap fileLineMap;
     
     public FileLineMap getFileLineMap() {
@@ -126,11 +124,6 @@ public class ${grammar.baseNodeClassName} implements Node {
 
     public void setParser(${grammar.parserClassName} parser) {this.parser = parser;}
 [/#if]
-
-    public void open() {
-    }
-
-    public void close() {}
 
     public void setParent(Node n) {
         parent = n;

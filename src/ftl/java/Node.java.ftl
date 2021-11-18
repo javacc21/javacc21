@@ -53,13 +53,13 @@ public interface Node extends Comparable<Node>
     /** Life-cycle hook method called after the node has been made the current
 	 *  node 
 	 */
-    void open();
+    default void open() {}
 
   	/** 
   	 * Life-cycle hook method called after all the child nodes have been
      * added. 
      */
-    void close();
+    default void close() {}
 
 
     /**

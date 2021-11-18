@@ -141,7 +141,7 @@ public class FileLineMap {
      */
     public FileLineMap(String inputSource, CharSequence content, int startingLine, int startingColumn) {
         setInputSource(inputSource);
-        this.content = content;
+        this.content = content.toString();
         this.lineOffsets = createLineOffsetsTable(this.content);
         tokenLocationTable = new Token[content.length()+1];
         tokenOffsets = new BitSet(content.length() +1);
