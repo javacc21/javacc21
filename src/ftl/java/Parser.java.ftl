@@ -168,7 +168,7 @@ public boolean isCancelled() {return cancelled;}
       token_source.parser = this;
       [/#if]
       lastConsumedToken = lexer.DUMMY_START_TOKEN;
-      lastConsumedToken.setFileLineMap(lexer.input_stream);
+      lastConsumedToken.setFileLineMap(lexer);
   }
 
   // If the next token is cached, it returns that

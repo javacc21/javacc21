@@ -168,7 +168,7 @@ INJECT LEXER_CLASS :
                  if (tok.getType() == TokenType.GTE) {
                       tok.setImage(">");
                       tok.setEndOffset(tok.getEndOffset()-1);
-                      input_stream.backup(1);
+                      backup(1);
                  }
                   switchTo(LexicalState.TEMPLATE_TEXT);
              }
@@ -212,7 +212,7 @@ INJECT LEXER_CLASS :
 
 
     private Token cloneToken(Token t) {
-        Token result = Token.newToken(t.getType(), input_stream, 0, 0);
+        Token result = Token.newToken(t.getType(), this, 0, 0);
         result.copyLocationInfo(t);
         return result;
     }

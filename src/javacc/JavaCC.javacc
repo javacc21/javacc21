@@ -682,7 +682,7 @@ INJECT PARSER_CLASS : {
         if (javaccKeyWords.contains(t.getType())) {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
                if (t.getType() != _PARSER_END || !isInProduction("ParserCodeDecls")) {
-                   Token id = Token.newToken(IDENTIFIER, t.getImage(), token_source.input_stream);
+                   Token id = Token.newToken(IDENTIFIER, t.getImage(), token_source);
                    id.copyLocationInfo(t);
                    return id;
                }

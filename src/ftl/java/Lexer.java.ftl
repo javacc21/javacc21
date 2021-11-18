@@ -73,11 +73,10 @@ import java.util.BitSet;
 import java.util.EnumMap;
 import java.util.EnumSet;
 
-public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
+public class ${grammar.lexerClassName} extends FileLineMap implements ${grammar.constantsClassName} {
 
   final Token DUMMY_START_TOKEN = new Token();
 
-  private String inputSource = "input";
  [#if grammar.lexerUsesParser]
   public ${grammar.parserClassName} parser;
  [/#if]
@@ -129,7 +128,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     [/#if]
   private InvalidToken invalidToken;
   // The source of the raw characters that we are scanning  
-  FileLineMap input_stream;
 
   private void setTracingEnabled(boolean trace_enabled) {
      this.trace_enabled = trace_enabled;
@@ -141,7 +139,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   
   public void setInputSource(String inputSource) {
       this.inputSource = inputSource;
-      input_stream.setInputSource(inputSource);
   }
    
   public ${grammar.lexerClassName}(CharSequence input) {
@@ -167,12 +164,20 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       * @param column number at which we are starting for the purposes of location/error messages. In most normal
       * usages this is 1.
       */
-     public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int line, int column) {
+     public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
         this.inputSource = inputSource;
-        CharSequence content = FileLineMap.mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
-        input_stream = new FileLineMap(inputSource, content, line, column);
+        this.content = mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+        //input_stream = new FileLineMap(inputSource, content, line, column);
+        this.inputSource = inputSource;
+        this.lineOffsets = createLineOffsetsTable(this.content);
+        tokenLocationTable = new Token[content.length()+1];
+        tokenOffsets = new BitSet(content.length() +1);
+        this.startingLine = startingLine;
+        this.startingColumn = startingColumn;
         switchTo(lexState);
      }
+
+     FileLineMap input_stream = this;
 
     /**
      * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
@@ -194,7 +199,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      * depending on your use case
      */
     public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
-        this(inputSource, FileLineMap.readToEnd(reader), lexState, line, column);
+        this(inputSource, readToEnd(reader), lexState, line, column);
         switchTo(lexState);
     }
 
@@ -209,16 +214,16 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           token = nextToken();
       } while (token instanceof InvalidToken);
       if (invalidToken != null) {
-          invalidToken.setFileLineMap(input_stream);
+          invalidToken.setFileLineMap(this);
           Token it = invalidToken;
           this.invalidToken = null;
 [#if grammar.faultTolerant]
           it.setUnparsed(true);
 [/#if]
-          input_stream.cacheToken(it);
+          cacheToken(it);
           return it;
       }
-      input_stream.cacheToken(token);
+      cacheToken(token);
       return token;
  }
 
@@ -234,7 +239,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
  }
 
  public Token lex(int offset) {
-     input_stream.goTo(offset);
+     goTo(offset);
      return getNextToken();
  }
 
@@ -248,16 +253,16 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         TokenType matchedType = null;
         matchedPos = charsRead = 0;
         if (inMore) {
-            curChar = input_stream.readChar();
+            curChar = readChar();
             if (curChar >= 0) charBuff.appendCodePoint(curChar);
         }
         else {
             charBuff.setLength(0);
-            tokenBeginOffset = input_stream.getBufferPosition();
-            curChar = input_stream.readChar();
+            tokenBeginOffset = getBufferPosition();
+            curChar = readChar();
             if (trace_enabled)  {
-                int tokenBeginLine = input_stream.getLine();
-                int tokenBeginColumn = input_stream.getColumn();
+                int tokenBeginLine = getLine();
+                int tokenBeginColumn = getColumn();
                 LOGGER.info("Starting new token on line: " + tokenBeginLine + ", column: " + tokenBeginColumn);
             }
             if (curChar == -1) {
@@ -287,7 +292,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 BitSet temp = currentStates;
                 currentStates = nextStates;
                 nextStates = temp;
-                int retval = input_stream.readChar();
+                int retval = readChar();
                 if (trace_enabled) LOGGER.info("Read character " + ${grammar.constantsClassName}.displayChar(retval));
                 if (retval >=0) {
                     curChar = retval;
@@ -346,7 +351,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
    }
 
   public final void backup(int amount) {
-    input_stream.backup(amount);
+    super.backup(amount);
     truncateCharBuff(charBuff, amount);
   }
 
@@ -394,8 +399,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 [#list grammar.resetTokenHooks as resetTokenHookMethodName]
       ${resetTokenHookMethodName}(t);
 [/#list]
-      input_stream.goTo(t.getEndOffset());
-      input_stream.uncacheTokens(t);
+      goTo(t.getEndOffset());
+      uncacheTokens(t);
       if (state != null) {
           switchTo(state);
       }
@@ -411,10 +416,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   }
     
   private InvalidToken handleInvalidChar(int ch) {
-    int offset = input_stream.getBufferPosition();
+    int offset = getBufferPosition();
     String img = new String(new int[] {ch}, 0, 1);
     if (invalidToken == null) {
-       invalidToken = new InvalidToken(input_stream, offset-img.length(), offset);
+       invalidToken = new InvalidToken(this, offset-img.length(), offset);
     } else {
        invalidToken.setEndOffset(invalidToken.getEndOffset() + img.length());
     }
@@ -423,7 +428,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
   private Token instantiateToken(TokenType type) {
     Token matchedToken = Token.newToken(type, 
-                                        this.input_stream, 
+                                        this, 
                                         tokenBeginOffset,
                                         tokenBeginOffset+charBuff.length());
     //matchedToken.setBeginOffset(tokenBeginOffset);
@@ -431,7 +436,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           [#-- I think this is right... --]
           matchedToken.setEndOffset(tokenBeginOffset);
     }
-    matchedToken.setFileLineMap(this.input_stream);
+    matchedToken.setFileLineMap(this);
     matchedToken.setUnparsed(!regularTokens.contains(type));
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]

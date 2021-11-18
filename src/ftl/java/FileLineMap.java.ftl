@@ -55,17 +55,17 @@ import java.nio.charset.Charset;
 @SuppressWarnings("unused")
 public class FileLineMap {
 
-    // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
-    private final CharSequence content;
+   // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
+    CharSequence content;
     // Typically a filename, I suppose.
-    private String inputSource;
+    String inputSource = "input";
     // A list of offsets of the beginning of lines
-    private final int[] lineOffsets;
+    int[] lineOffsets;
 
     // The starting line and column, usually 1,1
     // that is used to report a file position 
     // in 1-based line/column terms
-    private int startingLine, startingColumn;
+    int startingLine, startingColumn;
 
     // The offset in the internal buffer to the very
     // next character that the readChar method returns
@@ -78,14 +78,14 @@ public class FileLineMap {
 
 // A BitSet that stores where the tokens are located.
 // This is not strictly necessary, I suppose...
-    private BitSet tokenOffsets;
+    BitSet tokenOffsets;
 
 // Just a very simple, bloody minded approach, just store the
 // Token objects in a table where the offsets are the code unit 
 // positions in the content buffer. If the Token at a given offset is
 // the dummy or marker type IGNORED, then the location is skipped via
 // whatever preprocessor logic.    
-    private Token[] tokenLocationTable;
+    Token[] tokenLocationTable;
 
     /**
      * This is used in conjunction with having a preprocessor.
@@ -105,40 +105,9 @@ public class FileLineMap {
             }
         }
     }
-    
-    
-    /**
-     * This constructor may not be used much soon. Pretty soon all the generated API
-     * will tend to use #java.nio.file.Path rather than java.io classes like Reader
-     * @param inputSource the lookup name of this FileLineMap
-     * @param reader The input to read from
-     * @param startingLine location info used in error reporting, this is 1 typically, assuming
-     * we started reading at the start of the file.
-     * @param startingColumn location info used in error reporting, this is 1 typically, assuming
-     * we started reading at the start of the file.
-     *//*
-    public FileLineMap(String inputSource, Reader reader, int startingLine, int startingColumn) {
-        this(inputSource, readToEnd(reader), startingLine, startingColumn);
-    }*/
 
-    /**
-     * Constructor that takes a String or string-like object as the input
-     * @param inputSource the lookup name of this FileLineMap
-     * @param content The input to read from
-     */
-    public FileLineMap(String inputSource, CharSequence content) {
-        this(inputSource, content, 1, 1);
-    }
-
-    /**
-     * Constructor that takes a String or string-like object as the input
-     * @param inputSource the lookup name of this FileLineMap
-     * @param content The input to read from
-     * @param startingLine location info used in error reporting, this is 1 typically, assuming
-     * we started reading at the start of the file.
-     * @param startingColumn location info used in error reporting, this is 1 typically, assuming
-     * we started reading at the start of the file.
-     */
+    FileLineMap(){}
+    
     public FileLineMap(String inputSource, CharSequence content, int startingLine, int startingColumn) {
         setInputSource(inputSource);
         this.content = content.toString();
@@ -326,7 +295,7 @@ public class FileLineMap {
      * Given the line number and the column in code points,
      * returns the column in code units.
      */
-    private static int[] createLineOffsetsTable(CharSequence content) {
+    static int[] createLineOffsetsTable(CharSequence content) {
         if (content.length() == 0) {
             return new int[0];
         }
