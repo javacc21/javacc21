@@ -91,7 +91,7 @@ INJECT PARSER_CLASS :
 
     static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
         try {
-            String content = FileLineMap.readFully(input);
+            String content = LEXER_CLASS.readFully(input);
             return parseJavaFile(inputSource, content);
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);

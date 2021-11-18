@@ -69,13 +69,47 @@
 
 import java.io.*;
 import java.util.logging.Logger;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.nio.charset.Charset;
 
-public class ${grammar.lexerClassName} extends FileLineMap implements ${grammar.constantsClassName} {
+public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
   final Token DUMMY_START_TOKEN = new Token();
+// Just a dummy Token value that we put in the tokenLocationTable
+// to indicate that this location in the file is ignored.
+  static final private Token IGNORED = new Token();
+
+   // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
+    private CharSequence content;
+    // Typically a filename, I suppose.
+    private String inputSource = "input";
+    // A list of offsets of the beginning of lines
+    private int[] lineOffsets;
+
+    // The starting line and column, usually 1,1
+    // that is used to report a file position 
+    // in 1-based line/column terms
+    private int startingLine, startingColumn;
+
+    // The offset in the internal buffer to the very
+    // next character that the readChar method returns
+    private int bufferPosition;
+
+
+// A BitSet that stores where the tokens are located.
+// This is not strictly necessary, I suppose...
+    private BitSet tokenOffsets;
+
+// Just a very simple, bloody minded approach, just store the
+// Token objects in a table where the offsets are the code unit 
+// positions in the content buffer. If the Token at a given offset is
+// the dummy or marker type IGNORED, then the location is skipped via
+// whatever preprocessor logic.    
+    private Token[] tokenLocationTable;
+
 
  [#if grammar.lexerUsesParser]
   public ${grammar.parserClassName} parser;
@@ -243,7 +277,7 @@ public class ${grammar.lexerClassName} extends FileLineMap implements ${grammar.
  }
 
 // The main method to invoke the NFA machinery
-   private final Token nextToken() {
+ private final Token nextToken() {
       Token matchedToken = null;
       boolean inMore = false;
       int matchedPos, charsRead, curChar;
@@ -349,10 +383,50 @@ public class ${grammar.lexerClassName} extends FileLineMap implements ${grammar.
       return matchedToken;
    }
 
-  public final void backup(int amount) {
-    super.backup(amount);
-    truncateCharBuff(charBuff, amount);
-  }
+    /**
+     * Backup a certain number of characters
+     * This method is dead simple by design and does not handle any of the messiness
+     * with column numbers relating to tabs or unicode escapes. 
+     * @param amount the number of characters (code points) to backup.
+     */
+    public void backup(int amount) {
+        int pointsRetreated = 0;
+        while (pointsRetreated < amount) {
+            if (bufferPosition<=0) break;
+            if (tokenLocationTable[--bufferPosition] == IGNORED) {
+                continue;
+            }
+            char ch = content.charAt(bufferPosition);
+            if (Character.isLowSurrogate(ch)) {
+                char prevChar = bufferPosition >= 0 ? content.charAt(bufferPosition) : 0;
+                if (Character.isHighSurrogate(prevChar)) {
+                    --bufferPosition;
+                }
+            }
+            ++pointsRetreated;
+        }
+        truncateCharBuff(charBuff, amount);
+    }
+
+    // Now some methods to fulfill the functionality that used to be in that
+    // SimpleCharStream class
+    void forward(int amount) {
+        int pointsAdvanced = 0;
+        while (pointsAdvanced < amount) {
+            if (bufferPosition >= content.length()) break;
+            if (tokenLocationTable[bufferPosition] == IGNORED) {
+                ++bufferPosition;
+                continue;
+            }
+            char ch = content.charAt(bufferPosition++);
+            if (Character.isHighSurrogate(ch)) {
+                char nextChar = bufferPosition < content.length() ? content.charAt(bufferPosition) : 0;
+                if (Character.isLowSurrogate(nextChar)) ++bufferPosition;
+            }
+            ++pointsAdvanced;
+        }
+    }
+    
 
   /**
    * Truncate a StringBuilder by a certain number of code points
@@ -473,4 +547,381 @@ public class ${grammar.lexerClassName} extends FileLineMap implements ${grammar.
     [/#list]
   }
  [/#if]
+
+    /**
+     * The offset of the end of the given line. This is in code units.
+     */
+    private int getLineEndOffset(int lineNumber) {
+        int realLineNumber = lineNumber - startingLine;
+        if (realLineNumber <0) {
+            return 0;
+        }
+        if (realLineNumber >= lineOffsets.length) {
+            return content.length();
+        }
+        if (realLineNumber == lineOffsets.length -1) {
+            return content.length() -1;
+        }
+        return lineOffsets[realLineNumber+1] -1;
+    }
+
+    // But there is no goto in Java!!!
+    private void goTo(int offset) {
+        while (tokenLocationTable[offset] == IGNORED && offset < content.length()) {
+            ++offset;
+        }
+        this.bufferPosition = offset;
+    }
+
+    /**
+     * @return the line length in code _units_
+     */ 
+    private int getLineLength(int lineNumber) {
+        int startOffset = getLineStartOffset(lineNumber);
+        int endOffset = getLineEndOffset(lineNumber);
+        return 1+endOffset - startOffset;
+    }
+
+    /**
+     * The number of supplementary unicode characters in the specified 
+     * offset range. The range is expressed in code units
+     */
+    private int numSupplementaryCharactersInRange(int start, int end) {
+        int result =0;
+        while (start < end-1) {
+            if (Character.isHighSurrogate(content.charAt(start++))) {
+                if (Character.isLowSurrogate(content.charAt(start))) {
+                    start++;
+                    result++;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * The offset of the start of the given line. This is in code units
+     */
+    private int getLineStartOffset(int lineNumber) {
+        int realLineNumber = lineNumber - startingLine;
+        if (realLineNumber <=0) {
+            return 0;
+        }
+        if (realLineNumber >= lineOffsets.length) {
+            return content.length();
+        }
+        return lineOffsets[realLineNumber];
+    }
+
+    private int readChar() {
+        while (tokenLocationTable[bufferPosition] == IGNORED && bufferPosition < content.length()) {
+            ++bufferPosition;
+        }
+        if (bufferPosition >= content.length()) {
+            return -1;
+        }
+        char ch = content.charAt(bufferPosition++);
+        if (Character.isHighSurrogate(ch) && bufferPosition < content.length()) {
+            char nextChar = content.charAt(bufferPosition);
+            if (Character.isLowSurrogate(nextChar)) {
+                ++bufferPosition;
+                return Character.toCodePoint(ch, nextChar);
+            }
+        }
+        return ch;
+    }
+
+    private int getLine() {
+        return getLineFromOffset(bufferPosition);
+    }
+
+    private int getColumn() {
+        return getCodePointColumnFromOffset(bufferPosition);
+    }
+
+    private int getBufferPosition() {return bufferPosition;}
+
+    private int getEndLine() {
+        int line = getLineFromOffset(bufferPosition);
+        int column = getCodePointColumnFromOffset(bufferPosition);
+        return column == 1 ? line -1 : line;
+    }
+
+
+    /**
+     * This is used in conjunction with having a preprocessor.
+     * We set which lines are actually parsed lines and the 
+     * unset ones are ignored. 
+     * @param parsedLines a #java.util.BitSet that holds which lines
+     * are parsed (i.e. not ignored)
+     */
+    public void setParsedLines(BitSet parsedLines) {
+        for (int i=0; i < lineOffsets.length; i++) {
+            if (!parsedLines.get(i+1)) {
+                int lineOffset = lineOffsets[i];
+                int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i+1] : content.length();
+                for (int offset = lineOffset; offset < nextLineOffset; offset++) {
+                    tokenLocationTable[offset] = IGNORED;
+                }
+            }
+        }
+    }
+
+    /**
+     * @return the line number from the absolute offset passed in as a parameter
+     */
+    int getLineFromOffset(int pos) {
+        if (pos >= content.length()) {
+            if (content.charAt(content.length()-1) == '\n') {
+                return startingLine + lineOffsets.length;
+            }
+            return startingLine + lineOffsets.length-1;
+        }
+        int bsearchResult = Arrays.binarySearch(lineOffsets, pos);
+        if (bsearchResult>=0) {
+            return startingLine + bsearchResult;
+        }
+        return startingLine-(bsearchResult+2);
+    }
+
+    int getCodePointColumnFromOffset(int pos) {
+        if (pos >= content.length()) return 1;
+        if (Character.isLowSurrogate(content.charAt(pos))) --pos;
+        int line = getLineFromOffset(pos)-startingLine;
+        int lineStart = lineOffsets[line];
+        int numSupps = numSupplementaryCharactersInRange(lineStart, pos);
+        return 1+pos-lineOffsets[line]-numSupps;
+    }
+    
+    private int getEndColumn() {
+        return getCodePointColumnFromOffset(bufferPosition-1);
+    }
+    
+    /**
+     * @return the text between startOffset (inclusive)
+     * and endOffset(exclusive)
+     */
+    String getText(int startOffset, int endOffset) {
+        StringBuilder buf = new StringBuilder();
+        for (int offset = startOffset; offset < endOffset; offset++) {
+            if (tokenLocationTable[offset] != IGNORED) {
+                buf.append(content.charAt(offset));
+            }
+        }
+        return buf.toString();
+    }
+
+    void cacheToken(Token tok) {
+[#if !grammar.minimalToken]        
+        if (tok.isInserted()) {
+            Token next = tok.nextCachedToken();
+            if (next != null) cacheToken(next);
+            return;
+        }
+[/#if]        
+	    int offset = tok.getBeginOffset();
+	    tokenOffsets.set(offset);
+	    tokenLocationTable[offset] = tok;
+    }
+
+    void uncacheTokens(Token lastToken) {
+        int endOffset = lastToken.getEndOffset();
+        if (endOffset < tokenOffsets.length()) {
+            tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
+        }
+      [#if !grammar.minimalToken]
+        lastToken.unsetAppendedToken();
+      [/#if]
+    }
+
+    Token nextCachedToken(int offset) {
+      int nextOffset = tokenOffsets.nextSetBit(offset);
+	    return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
+    } 
+
+    Token previousCachedToken(int offset) {
+        int prevOffset = tokenOffsets.previousSetBit(offset-1);
+        return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
+    }
+
+    /**
+     * Given the line number and the column in code points,
+     * returns the column in code units.
+     */
+    private static int[] createLineOffsetsTable(CharSequence content) {
+        if (content.length() == 0) {
+            return new int[0];
+        }
+        int lineCount = 0;
+        int length = content.length();
+        for (int i = 0; i < length; i++) {
+            char ch = content.charAt(i);
+            if (ch == '\n') {
+                lineCount++;
+            }
+        }
+        if (content.charAt(length - 1) != '\n') {
+            lineCount++;
+        }
+        int[] lineOffsets = new int[lineCount];
+        lineOffsets[0] = 0;
+        int index = 1;
+        for (int i = 0; i < length; i++) {
+            char ch = content.charAt(i);
+            if (ch == '\n') {
+                if (i + 1 == length)
+                    break;
+                lineOffsets[index++] = i + 1;
+            }
+        }
+        return lineOffsets;
+    }
+ 
+// Icky method to handle annoying stuff. Might make this public later if it is
+// needed elsewhere
+  private static String mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
+        boolean javaUnicodeEscape, boolean ensureFinalEndline) {
+    if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape) {
+        if (ensureFinalEndline) {
+            if (content.length() == 0) {
+                content = "\n";
+            } else {
+                int lastChar = content.charAt(content.length()-1);
+                if (lastChar != '\n' && lastChar != '\r') {
+                    if (content instanceof StringBuilder) {
+                        ((StringBuilder) content).append((char) '\n');
+                    } else {
+                        StringBuilder buf = new StringBuilder(content);
+                        buf.append((char) '\n');
+                        content = buf.toString();
+                    }
+                }
+            }
+        }
+        return content.toString();
+    }
+    StringBuilder buf = new StringBuilder();
+    // This is just to handle tabs to spaces. If you don't have that setting set, it
+    // is really unused.
+    int col = 0;
+    int index = 0, contentLength = content.length();
+    while (index < contentLength) {
+        char ch = content.charAt(index++);
+        if (ch == '\n') {
+            buf.append(ch);
+            ++col;
+        }
+        else if (javaUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
+            int numPrecedingSlashes = 0;
+            for (int i = index-1; i>=0; i--) {
+                if (content.charAt(i) == '\\') 
+                    numPrecedingSlashes++;
+                else break;
+            }
+            if (numPrecedingSlashes % 2 == 0) {
+                buf.append((char) '\\');
+                index++;
+                continue;
+            }
+            int numConsecutiveUs = 0;
+            for (int i = index; i<contentLength; i++) {
+                if (content.charAt(i) == 'u') numConsecutiveUs++;
+                else break;
+            }
+            String fourHexDigits = content.subSequence(index+numConsecutiveUs, index+numConsecutiveUs+4).toString();
+            buf.append((char) Integer.parseInt(fourHexDigits, 16));
+            index+=(numConsecutiveUs +4);
+        }
+        else if (!preserveLines && ch == '\r') {
+            buf.append((char)'\n');
+            if (index < contentLength && content.charAt(index) == '\n') {
+                ++index;
+                col = 0;
+            }
+        } else if (ch == '\t' && tabsToSpaces > 0) {
+            int spacesToAdd = tabsToSpaces - col % tabsToSpaces;
+            for (int i = 0; i < spacesToAdd; i++) {
+                buf.append((char) ' ');
+                col++;
+            }
+        } else {
+            buf.append(ch);
+            if (!Character.isLowSurrogate(ch)) col++;
+        }
+    }
+    if (ensureFinalEndline) {
+        if (buf.length() ==0) {
+            return "\n";
+        }
+        char lastChar = buf.charAt(buf.length()-1);
+        if (lastChar != '\n' && lastChar!='\r') buf.append((char) '\n');
+    }
+    return buf.toString();
+}
+
+static private int BUF_SIZE = 0x10000;
+
+// Annoying kludge really...
+  static String readToEnd(Reader reader) {
+    try {
+        return readFully(reader);
+    } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+    }
+  }
+
+  static String readFully(Reader reader) throws IOException {
+    char[] block = new char[BUF_SIZE];
+    int charsRead = reader.read(block);
+    if (charsRead < 0) {
+        throw new IOException("No input");
+    } else if (charsRead < BUF_SIZE) {
+        char[] result = new char[charsRead];
+        System.arraycopy(block, 0, result, 0, charsRead);
+        reader.close();
+        return new String(block, 0, charsRead);
+    }
+    StringBuilder buf = new StringBuilder();
+    buf.append(block);
+    do {
+        charsRead = reader.read(block);
+        if (charsRead > 0) {
+            buf.append(block, 0, charsRead);
+        }
+    } while (charsRead == BUF_SIZE);
+    reader.close();
+    return buf.toString();
+  }
+
+  /**
+    * Rather bloody-minded way of converting a byte array into a string
+    * taking into account the initial byte order mark (used by Microsoft a lot seemingly)
+    * See: https://docs.microsoft.com/es-es/globalization/encoding/byte-order-markc
+    * @param bytes the raw byte array 
+    * @return A String taking into account the encoding in the byte order mark (if it was present). If no
+    * byte-order mark was present, it assumes the raw input is in UTF-8.
+    */
+  static public String stringFromBytes(byte[] bytes) {
+    int arrayLength = bytes.length;
+    int firstByte = arrayLength>0 ? Byte.toUnsignedInt(bytes[0]) : 1;
+    int secondByte = arrayLength>1 ? Byte.toUnsignedInt(bytes[1]) : 1;
+    int thirdByte = arrayLength >2 ? Byte.toUnsignedInt(bytes[2]) : 1;
+    int fourthByte = arrayLength > 3 ? Byte.toUnsignedInt(bytes[3]) : 1;
+    if (firstByte == 0xEF && secondByte == 0xBB && thirdByte == 0xBF) {
+        return new String(bytes, 3, bytes.length-3, Charset.forName("UTF-8"));
+    }
+    if (firstByte == 0 && secondByte==0 && thirdByte == 0xFE && fourthByte == 0xFF) {
+        return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32BE"));
+    }
+    if (firstByte == 0xFF && secondByte == 0xFE && thirdByte == 0 && fourthByte == 0) {
+        return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32LE"));
+    }
+    if (firstByte == 0xFE && secondByte == 0xFF) {
+        return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16BE"));
+    }
+    if (firstByte == 0xFF && secondByte == 0xFE) {
+        return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16LE"));
+    }
+    return new String(bytes, Charset.forName("UTF-8"));
+  }
 }
