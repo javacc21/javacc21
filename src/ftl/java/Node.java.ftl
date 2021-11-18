@@ -66,7 +66,7 @@ public interface Node extends Comparable<Node>
      * @return the input source (usually a filename) from which this Node came from
      */
     default String getInputSource() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? "input" : flm.getInputSource();
     }
 
@@ -285,35 +285,35 @@ public interface Node extends Comparable<Node>
     }
     
      /**
-      * @return the #FileLineMap from which this Node object
+      * @return the #${grammar.lexerClassName} from which this Node object
       * originated. There is no guarantee that this doesn't return null.
       * Most likely that would simply be because you constructed the 
       * Node yourself, i.e. it didn't really come about via the parsing/tokenizing
       * machinery.
       */
-     FileLineMap getFileLineMap();
+     ${grammar.lexerClassName} getTokenSource();
 
-     void setFileLineMap(FileLineMap fileLineMap);
+     void setTokenSource(${grammar.lexerClassName} tokenSource);
 
      /**
       * @return the original source content this Node came from
-      * a reference to the #FileLineMap that stores the source code and
+      * a reference to the #${grammar.lexerClassName} that stores the source code and
       * the start/end location info stored in the Node object itself.
-      * This method could throw a NullPointerException if #getFileLineMap
+      * This method could throw a NullPointerException if #getTokenSource
       * returns null. Also, the return value could be spurious if 
       * the content of the source file was changed meanwhile. But
       * this is just the default implementation of an API and it does not 
       * address this problem!
       */
      default String getSource() {
-        return getFileLineMap().getText(getBeginOffset(), getEndOffset());
+        return getTokenSource().getText(getBeginOffset(), getEndOffset());
     }
 
     /**
      * @return the (1-based) line location where this Node starts
      */      
     default int getBeginLine() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getBeginOffset());                
     };
 
@@ -321,7 +321,7 @@ public interface Node extends Comparable<Node>
      * @return the (1-based) line location where this Node ends
      */
     default int getEndLine() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getEndOffset()-1);
     };
 
@@ -329,7 +329,7 @@ public interface Node extends Comparable<Node>
      * @return the (1-based) column where this Node starts
      */
     default int getBeginColumn() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getBeginOffset());        
     };
 
@@ -337,7 +337,7 @@ public interface Node extends Comparable<Node>
      * @return the (1-based) column offset where this Node ends
      */ 
     default int getEndColumn() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getEndOffset()-1);
     }
     
@@ -520,10 +520,10 @@ public interface Node extends Comparable<Node>
      * @param from the Node to copy the info from 
      */
     default void copyLocationInfo(Node from) {
-        setFileLineMap(from.getFileLineMap());
+        setTokenSource(from.getTokenSource());
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
-        setFileLineMap(from.getFileLineMap());
+        setTokenSource(from.getTokenSource());
     }
 
     /**
@@ -532,8 +532,8 @@ public interface Node extends Comparable<Node>
      * @param end the end node
      */
     default void copyLocationInfo(Node start, Node end) {
-        setFileLineMap(start.getFileLineMap());
-        if (getFileLineMap()==null) setFileLineMap(end.getFileLineMap());
+        setTokenSource(start.getTokenSource());
+        if (getTokenSource()==null) setTokenSource(end.getTokenSource());
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
     }

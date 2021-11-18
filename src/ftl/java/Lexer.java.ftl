@@ -167,7 +167,6 @@ public class ${grammar.lexerClassName} extends FileLineMap implements ${grammar.
      public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
         this.inputSource = inputSource;
         this.content = mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
-        //input_stream = new FileLineMap(inputSource, content, line, column);
         this.inputSource = inputSource;
         this.lineOffsets = createLineOffsetsTable(this.content);
         tokenLocationTable = new Token[content.length()+1];
@@ -177,7 +176,7 @@ public class ${grammar.lexerClassName} extends FileLineMap implements ${grammar.
         switchTo(lexState);
      }
 
-     FileLineMap input_stream = this;
+     ${grammar.lexerClassName} input_stream = this;
 
     /**
      * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
@@ -214,7 +213,7 @@ public class ${grammar.lexerClassName} extends FileLineMap implements ${grammar.
           token = nextToken();
       } while (token instanceof InvalidToken);
       if (invalidToken != null) {
-          invalidToken.setFileLineMap(this);
+          invalidToken.setTokenSource(this);
           Token it = invalidToken;
           this.invalidToken = null;
 [#if grammar.faultTolerant]
@@ -436,7 +435,7 @@ public class ${grammar.lexerClassName} extends FileLineMap implements ${grammar.
           [#-- I think this is right... --]
           matchedToken.setEndOffset(tokenBeginOffset);
     }
-    matchedToken.setFileLineMap(this);
+    matchedToken.setTokenSource(this);
     matchedToken.setUnparsed(!regularTokens.contains(type));
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]

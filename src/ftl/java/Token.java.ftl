@@ -55,7 +55,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     private TokenType type;
 
-    private FileLineMap fileLineMap;
+    private ${grammar.lexerClassName} tokenSource;
 
     private int beginOffset, endOffset;
     
@@ -100,16 +100,16 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     /**
      * @param type the #TokenType of the token being constructed
      * @param image the String content of the token
-     * @param fileLineMap the object that vended this token.
+     * @param tokenSource the object that vended this token.
      */
-    public Token(TokenType type, String image, FileLineMap fileLineMap) {
+    public Token(TokenType type, String image, ${grammar.lexerClassName} tokenSource) {
         this.type = type;
         this.image = image;
-        this.fileLineMap = fileLineMap;
+        this.tokenSource = tokenSource;
     }
 
-    public static Token newToken(TokenType type, String image, FileLineMap fileLineMap) {
-        Token result = newToken(type, fileLineMap, 0, 0);
+    public static Token newToken(TokenType type, String image, ${grammar.lexerClassName} tokenSource) {
+        Token result = newToken(type, tokenSource, 0, 0);
         result.setImage(image);
         return result;
     }
@@ -134,22 +134,22 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
     /**
-     * @return the FileLineMap object that handles 
+     * @return the ${grammar.lexerClassName} object that handles 
      * location info for the tokens. 
      */
-    public FileLineMap getFileLineMap() {
+    public ${grammar.lexerClassName} getTokenSource() {
       [#if grammar.minimalToken] 
-        return this.fileLineMap; 
+        return this.tokenSource; 
       [#else]
-        FileLineMap flm = this.fileLineMap;
+        ${grammar.lexerClassName} flm = this.tokenSource;
         // If this is null and we have chained tokens,
         // we try to get it from there! (Why not?)
         if (flm == null) {
             if (prependedToken != null) {
-                flm = prependedToken.getFileLineMap();
+                flm = prependedToken.getTokenSource();
             }
             if (flm == null && appendedToken != null) {
-                flm = appendedToken.getFileLineMap();
+                flm = appendedToken.getTokenSource();
             }
         }
         return flm;
@@ -160,8 +160,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * It should be exceedingly rare that an application
      * programmer needs to use this method.
      */
-    public void setFileLineMap(FileLineMap fileLineMap) {
-        this.fileLineMap = fileLineMap;
+    public void setTokenSource(${grammar.lexerClassName} tokenSource) {
+        this.tokenSource = tokenSource;
     }
 
     /**
@@ -229,7 +229,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * @return the (1-based) line location where this Token starts
      */      
     public int getBeginLine() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getBeginOffset());                
     };
 
@@ -237,7 +237,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * @return the (1-based) line location where this Token ends
      */
     public int getEndLine() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getEndOffset()-1);
     };
 
@@ -245,7 +245,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * @return the (1-based) column where this Token starts
      */
     public int getBeginColumn() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getBeginOffset());        
     };
 
@@ -253,12 +253,12 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * @return the (1-based) column offset where this Token ends
      */ 
     public int getEndColumn() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getEndOffset());
     }
 
     public String getInputSource() {
-        FileLineMap flm = getFileLineMap();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm != null ? flm.getInputSource() : "input";
     }
 [/#if]    
@@ -308,16 +308,16 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#if !grammar.minimalToken]        
         if (appendedToken != null) return appendedToken;
 [/#if]        
-        if (getFileLineMap()==null) return null;
-        return getFileLineMap().nextCachedToken(getEndOffset());
+        if (getTokenSource()==null) return null;
+        return getTokenSource().nextCachedToken(getEndOffset());
     }
 
     public Token previousCachedToken() {
 [#if !grammar.minimalToken]        
         if (prependedToken !=null) return prependedToken;
 [/#if]        
-        if (getFileLineMap()==null) return null;
-        return getFileLineMap().previousCachedToken(getBeginOffset());
+        if (getTokenSource()==null) return null;
+        return getTokenSource().previousCachedToken(getBeginOffset());
     }
 
     Token getPreviousToken() {
@@ -325,7 +325,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
     public Token replaceType(TokenType type) {
-        Token result = newToken(getType(), getFileLineMap(), getBeginOffset(), getEndOffset());
+        Token result = newToken(getType(), getTokenSource(), getBeginOffset(), getEndOffset());
 [#if !grammar.minimalToken]        
         result.prependedToken = this.prependedToken;
         result.appendedToken = this.appendedToken;
@@ -337,10 +337,10 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
             result.prependedToken.appendedToken = result;
         }
         if (!result.inserted) {
-            getFileLineMap().cacheToken(result);
+            getTokenSource().cacheToken(result);
         }
 [#else]
-        getFileLineMap().cacheToken(result);
+        getTokenSource().cacheToken(result);
 [/#if]        
 
         return result;
@@ -348,7 +348,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
-         FileLineMap flm = getFileLineMap();
+         ${grammar.lexerClassName} flm = getTokenSource();
          return flm == null ? null : flm.getText(getBeginOffset(), getEndOffset());
     }
 
@@ -357,9 +357,9 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     //Should find a way to get rid of this.
     Token() {}
 
-    public Token(TokenType type, FileLineMap fileLineMap, int beginOffset, int endOffset) {
+    public Token(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         this.type = type;
-        this.fileLineMap = fileLineMap;
+        this.tokenSource = tokenSource;
         this.beginOffset = beginOffset;
         this.endOffset = endOffset;
     }
@@ -430,7 +430,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
             appendedToken = otherTok.appendedToken;
             prependedToken = otherTok.prependedToken;
         }
-        setFileLineMap(from.getFileLineMap());
+        setTokenSource(from.getTokenSource());
     }
     
     public void copyLocationInfo(Node start, Node end) {
@@ -445,7 +445,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 [#else]
     public void copyLocationInfo(Token from) {
-        setFileLineMap(from.getFileLineMap());
+        setTokenSource(from.getTokenSource());
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
     [#if !grammar.minimalToken]    
@@ -455,8 +455,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
     public void copyLocationInfo(Token start, Token end) {
-        setFileLineMap(start.getFileLineMap());
-        if (fileLineMap == null) setFileLineMap(end.getFileLineMap());
+        setTokenSource(start.getTokenSource());
+        if (tokenSource == null) setTokenSource(end.getTokenSource());
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
     [#if !grammar.minimalToken]
@@ -466,22 +466,22 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 [/#if]
 
-    public static Token newToken(TokenType type, FileLineMap fileLineMap, int beginOffset, int endOffset) {
+    public static Token newToken(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
-              case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, fileLineMap, beginOffset, endOffset);
+              case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
             [/#if]
            [/#list]
            [#list grammar.extraTokens as tokenName]
-              case ${tokenName} : return new ${grammar.nodePrefix}${tokenName}(TokenType.${tokenName}, fileLineMap, beginOffset, endOffset);
+              case ${tokenName} : return new ${grammar.nodePrefix}${tokenName}(TokenType.${tokenName}, tokenSource, beginOffset, endOffset);
            [/#list]
-              case INVALID : return new InvalidToken(fileLineMap, beginOffset, endOffset);
-              default : return new Token(type, fileLineMap, beginOffset, endOffset);
+              case INVALID : return new InvalidToken(tokenSource, beginOffset, endOffset);
+              default : return new Token(type, tokenSource, beginOffset, endOffset);
            }
        [#else]
-         return new Token(type, fileLineMap, beginOffset, endOffset);
+         return new Token(type, tokenSource, beginOffset, endOffset);
        [/#if]
     }
 

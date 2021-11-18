@@ -38,8 +38,8 @@ package ${grammar.parserPackage};
 public class InvalidToken extends Token 
 [#if grammar.faultTolerant] implements ParsingProblem [/#if] {
 
-    public InvalidToken(FileLineMap fileLineMap, int beginOffset, int endOffset) {
-        super(TokenType.INVALID, fileLineMap, beginOffset, endOffset);
+    public InvalidToken(${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
+        super(TokenType.INVALID, tokenSource, beginOffset, endOffset);
 [#if grammar.faultTolerant]
         super.setUnparsed(true);
         this.setDirty(true);

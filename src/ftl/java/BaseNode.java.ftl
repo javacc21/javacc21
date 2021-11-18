@@ -46,20 +46,20 @@ import java.util.*;
  */
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
-    private FileLineMap fileLineMap;
+    private ${grammar.lexerClassName} tokenSource;
     
-    public FileLineMap getFileLineMap() {
-        if (fileLineMap==null) {
+    public ${grammar.lexerClassName} getTokenSource() {
+        if (tokenSource==null) {
             for (Node child : children()) {
-                fileLineMap = child.getFileLineMap();
-                if (fileLineMap != null) break;
+                tokenSource = child.getTokenSource();
+                if (tokenSource != null) break;
             }
         }
-        return fileLineMap;
+        return tokenSource;
     }
 
-    public void setFileLineMap(FileLineMap fileLineMap) {
-        this.fileLineMap = fileLineMap;
+    public void setTokenSource(${grammar.lexerClassName} tokenSource) {
+        this.tokenSource = tokenSource;
     }
     
     static private Class listClass = ArrayList.class;

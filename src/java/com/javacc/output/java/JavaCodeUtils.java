@@ -79,7 +79,7 @@ public class JavaCodeUtils {
             }
         }
         Type type = fd.firstChildOfType(Type.class);
-        Token privateToken = Token.newToken(PRIVATE, "private", fd.getFileLineMap());
+        Token privateToken = Token.newToken(PRIVATE, "private", fd.getTokenSource());
         fd.addChild(fd.indexOf(type), privateToken);
     }
 

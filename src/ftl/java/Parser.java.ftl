@@ -131,7 +131,7 @@ public boolean isCancelled() {return cancelled;}
    * @param path The location (typically the filename) from which to get the input to parse
    */
   public ${grammar.parserClassName}(String inputSource, Path path) throws IOException {
-    this(inputSource, FileLineMap.stringFromBytes(Files.readAllBytes(path)));
+    this(inputSource, ${grammar.lexerClassName}.stringFromBytes(Files.readAllBytes(path)));
   }
 
   /**
@@ -168,7 +168,7 @@ public boolean isCancelled() {return cancelled;}
       token_source.parser = this;
       [/#if]
       lastConsumedToken = lexer.DUMMY_START_TOKEN;
-      lastConsumedToken.setFileLineMap(lexer);
+      lastConsumedToken.setTokenSource(lexer);
   }
 
   // If the next token is cached, it returns that

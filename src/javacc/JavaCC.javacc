@@ -410,7 +410,7 @@ INJECT ImplementsList :
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements", this.getFileLineMap()));
+            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements", this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         } else {
@@ -418,7 +418,7 @@ INJECT ImplementsList :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(TokenType.COMMA, ",", this.getFileLineMap()));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         }
@@ -542,7 +542,7 @@ INJECT TypeDeclaration :
                 }
             }
             iterator.previous();
-            iterator.add(Token.newToken(TokenType.WHITESPACE, " ", this.getFileLineMap()));
+            iterator.add(Token.newToken(TokenType.WHITESPACE, " ", this.getTokenSource()));
             iterator.next();
             iterator.add(extendsList);
         }
@@ -561,7 +561,7 @@ INJECT ExtendsList :
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(TokenType.EXTENDS, "extends", this.getFileLineMap()));
+            iterator.add(Token.newToken(TokenType.EXTENDS, "extends", this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         } else {
@@ -569,7 +569,7 @@ INJECT ExtendsList :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(TokenType.COMMA, ",", this.getFileLineMap()));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         }
@@ -588,7 +588,7 @@ INJECT TypeParameters :
                 iterator.next();
             }
             iterator.previous();
-            iterator.add(Token.newToken(TokenType.COMMA, ",", this.getFileLineMap()));
+            iterator.add(Token.newToken(TokenType.COMMA, ",", this.getTokenSource()));
             iterator.next();
             iterator.add(param);
         }

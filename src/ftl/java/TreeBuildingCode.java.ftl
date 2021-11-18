@@ -120,7 +120,7 @@
         new NodeScope();
         if (n!=null) {
             Token next = nextToken(lastConsumedToken);
-            n.setFileLineMap(lastConsumedToken.getFileLineMap());
+            n.setTokenSource(lastConsumedToken.getTokenSource());
             n.setBeginOffset(next.getBeginOffset());
 //            n.setInputSource(next.getInputSource());
             n.open();
