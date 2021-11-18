@@ -291,11 +291,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         }
         else {
             charBuff.setLength(0);
-            tokenBeginOffset = getBufferPosition();
+            tokenBeginOffset = this.bufferPosition;
             curChar = readChar();
             if (trace_enabled)  {
-                int tokenBeginLine = getLine();
-                int tokenBeginColumn = getColumn();
+                int tokenBeginLine = getLineFromOffset(bufferPosition);
+                int tokenBeginColumn = getCodePointColumnFromOffset(bufferPosition);
                 LOGGER.info("Starting new token on line: " + tokenBeginLine + ", column: " + tokenBeginColumn);
             }
             if (curChar == -1) {
@@ -389,7 +389,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      * with column numbers relating to tabs or unicode escapes. 
      * @param amount the number of characters (code points) to backup.
      */
-    public void backup(int amount) {
+    void backup(int amount) {
         int pointsRetreated = 0;
         while (pointsRetreated < amount) {
             if (bufferPosition<=0) break;
@@ -407,9 +407,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         }
         truncateCharBuff(charBuff, amount);
     }
-
-    // Now some methods to fulfill the functionality that used to be in that
-    // SimpleCharStream class
+    /**
+     * Advance a certain number of characters (code points)
+     */
     void forward(int amount) {
         int pointsAdvanced = 0;
         while (pointsAdvanced < amount) {
@@ -489,10 +489,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   }
     
   private InvalidToken handleInvalidChar(int ch) {
-    int offset = getBufferPosition();
     String img = new String(new int[] {ch}, 0, 1);
     if (invalidToken == null) {
-       invalidToken = new InvalidToken(this, offset-img.length(), offset);
+       invalidToken = new InvalidToken(this, bufferPosition-img.length(), bufferPosition);
     } else {
        invalidToken.setEndOffset(invalidToken.getEndOffset() + img.length());
     }
@@ -631,23 +630,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         return ch;
     }
 
-    private int getLine() {
-        return getLineFromOffset(bufferPosition);
-    }
-
-    private int getColumn() {
-        return getCodePointColumnFromOffset(bufferPosition);
-    }
-
-    private int getBufferPosition() {return bufferPosition;}
-
-    private int getEndLine() {
-        int line = getLineFromOffset(bufferPosition);
-        int column = getCodePointColumnFromOffset(bufferPosition);
-        return column == 1 ? line -1 : line;
-    }
-
-
     /**
      * This is used in conjunction with having a preprocessor.
      * We set which lines are actually parsed lines and the 
@@ -691,10 +673,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         int lineStart = lineOffsets[line];
         int numSupps = numSupplementaryCharactersInRange(lineStart, pos);
         return 1+pos-lineOffsets[line]-numSupps;
-    }
-    
-    private int getEndColumn() {
-        return getCodePointColumnFromOffset(bufferPosition-1);
     }
     
     /**
