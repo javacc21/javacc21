@@ -112,6 +112,14 @@ INJECT Token : {
       }
       return true;
    }
+   
+   public Token getPreviousToken() {
+        return previousCachedToken();
+    }
+
+   public void setImage(String image) {
+      this.image = image;
+   }
 
 }
 

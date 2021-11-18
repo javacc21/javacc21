@@ -95,7 +95,6 @@ public class FileLineMap {
      * are parsed (i.e. not ignored)
      */
     public void setParsedLines(BitSet parsedLines) {
-//        this.parsedLines = parsedLines;
         for (int i=0; i < lineOffsets.length; i++) {
             if (!parsedLines.get(i+1)) {
                 int lineOffset = lineOffsets[i];
@@ -380,11 +379,13 @@ public class FileLineMap {
     }
 
     void cacheToken(Token tok) {
+[#if !grammar.minimalToken]        
         if (tok.isInserted()) {
             Token next = tok.nextCachedToken();
             if (next != null) cacheToken(next);
             return;
         }
+[/#if]        
 	    int offset = tok.getBeginOffset();
 	    tokenOffsets.set(offset);
 	    tokenLocationTable[offset] = tok;
@@ -395,7 +396,9 @@ public class FileLineMap {
         if (endOffset < tokenOffsets.length()) {
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
         }
+      [#if !grammar.minimalToken]
         lastToken.unsetAppendedToken();
+      [/#if]
     }
 
     Token nextCachedToken(int offset) {
