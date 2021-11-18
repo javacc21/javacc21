@@ -672,7 +672,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         int line = getLineFromOffset(pos)-startingLine;
         int lineStart = lineOffsets[line];
         int numSupps = numSupplementaryCharactersInRange(lineStart, pos);
-        return 1+pos-lineOffsets[line]-numSupps;
+        int startColumnAdjustment = line > 0 ? 1 : startingColumn;
+        return startColumnAdjustment+pos-lineOffsets[line]-numSupps;
     }
     
     /**
