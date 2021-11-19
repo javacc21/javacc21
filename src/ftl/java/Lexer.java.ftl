@@ -210,7 +210,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         switchTo(lexState);
      }
 
-     ${grammar.lexerClassName} input_stream = this;
+//     ${grammar.lexerClassName} input_stream = this;
 
     /**
      * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,

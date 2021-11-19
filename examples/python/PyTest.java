@@ -6,7 +6,9 @@ import org.parsers.python.*;
  * A test harness for parsing Python files from the command line.
  */
 public class PyTest {
+    
     static final boolean PARALLEL_PARSING = true;
+    static public List<Node> roots = new ArrayList<Node>();
 
     static public void main(String args[]) {
         List<File> failures = new ArrayList<File>();
@@ -65,6 +67,9 @@ public class PyTest {
         // parser.setParserTolerant(tolerantParsing);
         parser.Module();
         Node root = parser.rootNode();
+        // Uncomment the following line if you want all the 
+        // AST's to remain in memory
+        // roots.add(root);
         if (dumpTree) {
             root.dump("");
         }

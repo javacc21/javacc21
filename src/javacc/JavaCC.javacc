@@ -74,7 +74,7 @@ INJECT PARSER_CLASS :
         } catch (com.javacc.preprocessor.ParseException pe) {
             throw new RuntimeException(pe);
         }
-        token_source.input_stream.setParsedLines(lineMarkers);
+        token_source.setParsedLines(lineMarkers);
     }
 
     public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) {
@@ -86,7 +86,7 @@ INJECT PARSER_CLASS :
          } catch(com.javacc.preprocessor.ParseException pe) {
              throw new RuntimeException(pe);
          }
-         token_source.input_stream.setParsedLines(lineMarkers);
+         token_source.setParsedLines(lineMarkers);
     }
 
     static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {

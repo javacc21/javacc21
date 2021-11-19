@@ -1080,9 +1080,9 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN 2 {getToken(1).getImage().equals("yield") 
-        && isInProduction("SwitchExpression")}# 
-   => ACTIVATE_TOKENS YIELD ("yield") 
+   ASSERT {getToken(1).getImage().equals("yield")&&isInProduction("SwitchExpression")}#
+   ACTIVATE_TOKENS YIELD ("yield") 
+   =>|| 
    Expression ";" 
 ;
 
