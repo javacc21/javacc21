@@ -18,18 +18,17 @@ ENSURE_FINAL_EOL;
 PRESERVE_LINE_ENDINGS=false;
 DEACTIVATE_TOKENS=MATCH,CASE;
 
-//DEBUG_LEXER;
-//DEBUG_PARSER;
-
 INCLUDE "PythonLexer.javacc" 
 
-Module : (Statement)* <EOF> ;
+#Module : 
+   (Statement)* 
+   <EOF> 
+   {return CURRENT_NODE;}
+;
 
-Number#void : <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX> ;
-
-RealNumber#void :
-  <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT>
-;  
+Number#void : 
+  <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX> 
+;
 
 SignedNumber : 
   ["-"]

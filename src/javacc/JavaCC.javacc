@@ -88,15 +88,6 @@ INJECT PARSER_CLASS :
          }
          token_source.setParsedLines(lineMarkers);
     }
-
-    static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
-        try {
-            String content = LEXER_CLASS.readFully(input);
-            return parseJavaFile(inputSource, content);
-        } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
-    }
     
     static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) throws ParseException {
         PARSER_CLASS parser = new PARSER_CLASS(inputSource, content);

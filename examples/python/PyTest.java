@@ -1,93 +1,91 @@
-import java.io.*;
-import java.util.*;
-import org.parsers.python.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+import org.parsers.python.Node;
+import org.parsers.python.PythonParser;
 
 /**
  * A test harness for parsing Python files from the command line.
  */
 public class PyTest {
-    
-    static final boolean PARALLEL_PARSING = true;
-    static public List<Node> roots = new ArrayList<Node>();
+    static List<Node> roots = new ArrayList<>();
+    static private List<Path> paths = new ArrayList<Path>(),
+                              failures = new ArrayList<Path>(),
+                              successes = new ArrayList<Path>();
+    static private boolean parallelParsing, retainInMemory;
+    static private FileSystem fileSystem = FileSystems.getDefault();
 
     static public void main(String args[]) {
-        List<File> failures = new ArrayList<File>();
-        List<File> successes = new ArrayList<File>();
-        if (args.length == 0) {
-            usage();
-        }
-        List<File> files = new ArrayList<File>();
         for (String arg : args) {
-            File file = new File(arg);
-            if (!file.exists()) {
-                System.err.println("File " + file + " does not exist.");
+            if (arg.equals("-p")) {
+                parallelParsing = true;
+                roots = Collections.synchronizedList(roots);
                 continue;
             }
-            addFilesRecursively(files, file);
-        }
-        long startTime = System.currentTimeMillis();
-        if (PARALLEL_PARSING && files.size() >1)
-            files.parallelStream().forEach(file -> {
-                try {
-                    // A bit screwball, we'll dump the tree if there is only one arg. :-)
-                    parseFile(file, files.size() == 1);
-                } catch (Exception e) {
-                    System.err.println("Error processing file: " + file);
-                    e.printStackTrace();
-                    failures.add(file);
-                    return;
-                }
-                System.out.println(file.getName() + " parsed successfully.");
-                successes.add(file);
-            });
-        else
-            for (File file : files) {
-                try {
-                    // A bit screwball, we'll dump the tree if there is only one arg. :-)
-                    parseFile(file, files.size() == 1);
-                } catch (Exception e) {
-                    System.err.println("Error processing file: " + file);
-                    e.printStackTrace();
-                    failures.add(file);
-                    continue;
-                }
-                System.out.println(file.getName() + " parsed successfully.");
-                successes.add(file);
+            if (arg.equals("-r")) {
+                retainInMemory = true;
+                continue;
             }
-        for (File file : failures) {
-            System.out.println("Parse failed on: " + file);
+            Path path = fileSystem.getPath(arg);
+            if (!Files.exists(path)) {
+                System.err.println("File " + path + " does not exist.");
+                continue;
+            }
+            try {
+                Files.walk(path).forEach(p->{
+                    if (p.toString().endsWith(".py")) {
+                        paths.add(p);
+                    }
+                });
+            } catch (IOException e) {throw new RuntimeException(e);}
+        }
+        if (paths.isEmpty()) usage();
+        long startTime = System.currentTimeMillis();
+        Stream<Path> stream = parallelParsing
+                               ? paths.parallelStream() 
+                               :  paths.stream();
+        stream.forEach(path -> parseFile(path));
+        for (Path path : failures) {
+            System.out.println("Parse failed on: " + path);
         }
         System.out.println("\nParsed " + successes.size() + " files successfully");
         System.out.println("Failed on " + failures.size() + " files.");
         System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
     }
 
-    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-        PythonParser parser = new PythonParser(file.toPath());
-        // parser.setParserTolerant(tolerantParsing);
-        parser.Module();
-        Node root = parser.rootNode();
-        // Uncomment the following line if you want all the 
-        // AST's to remain in memory
-        // roots.add(root);
-        if (dumpTree) {
-            root.dump("");
-        }
-    }
-
-    static public void addFilesRecursively(List<File> files, File file) {
-        if (file.isDirectory()) {
-            for (File f : file.listFiles()) {
-                addFilesRecursively(files, f);
+    static public void parseFile(Path path) {
+        try {  
+            Node root = new PythonParser(path).Module();
+            if (retainInMemory) roots.add(root);
+            if (paths.size()==1) {
+                root.dump("");
             }
-        } else if (file.getName().endsWith(".py")) {
-            files.add(file);
+            System.out.println(path.getFileName().toString() + " parsed successfully.");
+            successes.add(path);
+            if (successes.size() % 1000 == 0) {
+                System.out.println("-----------------------------------------------");
+                System.out.println("Successfully parsed " + successes.size() + " files.");
+                System.out.println("-----------------------------------------------");
+            }
+        }
+        catch (Exception e) {
+          System.err.println("Error processing file: " + path);
+          failures.add(path);
+          e.printStackTrace();
         }
     }
 
     static public void usage() {
         System.out.println("Usage: java PyTest <sourcefiles or directories>");
-        System.out.println("If you just pass it one python source file, it dumps the AST");
+        System.out.println("If you just pass it one java source file, it dumps the AST");
+        System.out.println("Use the -p flag to set whether to parse in multiple threads");
+        System.out.println("Use the -r flag to retain all the parsed AST's in memory");
         System.exit(-1);
     }
 }

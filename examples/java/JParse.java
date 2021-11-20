@@ -1,11 +1,12 @@
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
-import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+import java.nio.file.Path;
 import org.parsers.java.JavaParser;
 import org.parsers.java.Node;
 
@@ -13,11 +14,10 @@ import org.parsers.java.Node;
  * A test harness for parsing Java files from the command line.
  */
 public class JParse {
-
-    static ArrayList<Node> roots = new ArrayList<>();
+    static List<Node> roots = new ArrayList<>();
     static private List<Path> paths = new ArrayList<Path>(),
-                      failures = new ArrayList<Path>(),
-                      successes = new ArrayList<Path>();
+                              failures = new ArrayList<Path>(),
+                              successes = new ArrayList<Path>();
     static private boolean tolerantParsing, parallelParsing, retainInMemory;
     static private FileSystem fileSystem = FileSystems.getDefault();
 
@@ -29,6 +29,7 @@ public class JParse {
             }
             if (arg.equals("-p")) {
                 parallelParsing = true;
+                roots = Collections.synchronizedList(roots);
                 continue;
             }
             if (arg.equals("-r")) {
@@ -50,7 +51,7 @@ public class JParse {
         }
         if (paths.isEmpty()) usage();
         long startTime = System.currentTimeMillis();
-        Stream<Path> stream = parallelParsing && paths.size() > 10
+        Stream<Path> stream = parallelParsing
                                ? paths.parallelStream() 
                                :  paths.stream();
         stream.forEach(path -> parseFile(path));
