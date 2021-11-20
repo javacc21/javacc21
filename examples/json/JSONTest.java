@@ -3,9 +3,7 @@ import org.parsers.json.*;
 
 public class JSONTest {
     static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-        FileReader fr = new FileReader(file);
-        JSONParser parser = new JSONParser(fr);
-        parser.setInputSource(file.toString());
+        JSONParser parser = new JSONParser(file.toPath());
         parser.Root();
         Node root=parser.rootNode();
         if (dumpTree) {

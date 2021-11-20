@@ -3,9 +3,7 @@ import org.parsers.jsonc.*;
 
 public class JSONCTest {
     static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-        FileReader fr = new FileReader(file);
-        JSONCParser parser = new JSONCParser(fr);
-        parser.setInputSource(file.toString());
+        JSONCParser parser = new JSONCParser(file.toPath());
         parser.Root();
         Node root=parser.rootNode();
         if (dumpTree) {
