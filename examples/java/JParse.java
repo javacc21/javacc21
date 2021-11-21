@@ -21,7 +21,7 @@ public class JParse {
     static private boolean tolerantParsing, parallelParsing, retainInMemory;
     static private FileSystem fileSystem = FileSystems.getDefault();
 
-    static public void main(String args[]) {
+    static public void main(String args[]) throws IOException {
         for (String arg : args) {
             if (arg.equals("-t")) {
                 tolerantParsing = true;
@@ -30,6 +30,8 @@ public class JParse {
             if (arg.equals("-p")) {
                 parallelParsing = true;
                 roots = Collections.synchronizedList(roots);
+                failures = Collections.synchronizedList(failures);
+                successes = Collections.synchronizedList(successes);
                 continue;
             }
             if (arg.equals("-r")) {
@@ -41,13 +43,11 @@ public class JParse {
                 System.err.println("File " + path + " does not exist.");
                 continue;
             }
-            try {
-                Files.walk(path).forEach(p->{
-                    if (p.toString().endsWith(".java")&&!p.toString().endsWith("-info.java")) {
-                        paths.add(p);
-                    }
-                });
-            } catch (IOException e) {throw new RuntimeException(e);}
+            Files.walk(path).forEach(p->{
+                if (p.toString().endsWith(".java")&&!p.toString().endsWith("-info.java")) {
+                    paths.add(p);
+                }
+            });
         }
         if (paths.isEmpty()) usage();
         long startTime = System.currentTimeMillis();
@@ -64,7 +64,7 @@ public class JParse {
     }
 
     static public void parseFile(Path path) {
-        try {  
+        try {   
             JavaParser parser = new JavaParser(path);
             parser.setParserTolerant(tolerantParsing);
             Node root = parser.CompilationUnit();

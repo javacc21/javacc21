@@ -21,11 +21,13 @@ public class PyTest {
     static private boolean parallelParsing, retainInMemory;
     static private FileSystem fileSystem = FileSystems.getDefault();
 
-    static public void main(String args[]) {
+    static public void main(String args[]) throws IOException {
         for (String arg : args) {
             if (arg.equals("-p")) {
                 parallelParsing = true;
                 roots = Collections.synchronizedList(roots);
+                failures = Collections.synchronizedList(failures);
+                successes = Collections.synchronizedList(successes);
                 continue;
             }
             if (arg.equals("-r")) {
@@ -37,13 +39,11 @@ public class PyTest {
                 System.err.println("File " + path + " does not exist.");
                 continue;
             }
-            try {
-                Files.walk(path).forEach(p->{
-                    if (p.toString().endsWith(".py")) {
-                        paths.add(p);
-                    }
-                });
-            } catch (IOException e) {throw new RuntimeException(e);}
+            Files.walk(path).forEach(p->{
+                if (p.toString().endsWith(".py")) {
+                    paths.add(p);
+                }
+            });
         }
         if (paths.isEmpty()) usage();
         long startTime = System.currentTimeMillis();
