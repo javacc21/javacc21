@@ -131,7 +131,7 @@ public boolean isCancelled() {return cancelled;}
    * @param path The location (typically the filename) from which to get the input to parse
    */
   public ${grammar.parserClassName}(String inputSource, Path path) throws IOException {
-    this(inputSource, ${grammar.lexerClassName}.stringFromBytes(Files.readAllBytes(path)));
+    this(inputSource, ${grammar.constantsClassName}.stringFromBytes(Files.readAllBytes(path)));
   }
 
   /**

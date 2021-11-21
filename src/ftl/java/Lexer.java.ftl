@@ -73,7 +73,6 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.EnumMap;
 import java.util.EnumSet;
-import java.nio.charset.Charset;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
@@ -132,10 +131,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        [/#list]
      }
   [/#if]
-
-  // Just used to "bookmark" the starting location for a token
-  // for when we put in the location info at the end.
-  private int tokenBeginOffset;
 
 [#if lexerData.hasLexicalStateTransitions]
   // A lookup for lexical state transitions triggered by a certain token type
@@ -232,7 +227,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      * depending on your use case
      */
     public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
-        this(inputSource, readToEnd(reader), lexState, line, column);
+        this(inputSource, ${grammar.constantsClassName}.readToEnd(reader), lexState, line, column);
         switchTo(lexState);
     }
 
@@ -280,7 +275,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
  private final Token nextToken() {
       Token matchedToken = null;
       boolean inMore = false;
-      int matchedPos, charsRead, curChar;
+      int matchedPos, charsRead, curChar, tokenBeginOffset = this.bufferPosition;
       // The core tokenization loop
       while (matchedToken == null) {
         TokenType matchedType = null;
@@ -364,14 +359,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             backup(charsRead-1);
             if (trace_enabled) 
                LOGGER.info("Invalid input: " + ${grammar.constantsClassName}.displayChar(charBuff.codePointAt(0)));
-            return handleInvalidChar(charBuff.codePointAt(0));
+            return new InvalidToken(this, tokenBeginOffset, bufferPosition);
         } else {
           if (trace_enabled)
               LOGGER.info("Matched pattern of type: " + matchedType + ": " + ${grammar.constantsClassName}.addEscapes(charBuff.toString()));
         }
         if (charsRead > matchedPos) backup(charsRead-matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
-            matchedToken = instantiateToken(matchedType);            
+            matchedToken = instantiateToken(matchedType, tokenBeginOffset);            
         }
      [#if lexerData.hasTokenActions]
         matchedToken = tokenLexicalActions(matchedToken, matchedType);
@@ -488,22 +483,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       reset(t, null);
   }
     
-  private InvalidToken handleInvalidChar(int ch) {
-    String img = new String(new int[] {ch}, 0, 1);
-    if (invalidToken == null) {
-       invalidToken = new InvalidToken(this, bufferPosition-img.length(), bufferPosition);
-    } else {
-       invalidToken.setEndOffset(invalidToken.getEndOffset() + img.length());
-    }
-    return invalidToken;
-  }
-
-  private Token instantiateToken(TokenType type) {
+  private Token instantiateToken(TokenType type, int tokenBeginOffset) {
     Token matchedToken = Token.newToken(type, 
                                         this, 
                                         tokenBeginOffset,
                                         tokenBeginOffset+charBuff.length());
-    //matchedToken.setBeginOffset(tokenBeginOffset);
     if (type == TokenType.EOF) {
           [#-- I think this is right... --]
           matchedToken.setEndOffset(tokenBeginOffset);
@@ -836,71 +820,5 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         if (lastChar != '\n' && lastChar!='\r') buf.append((char) '\n');
     }
     return buf.toString();
-}
-
-static private int BUF_SIZE = 0x10000;
-
-// Annoying kludge really...
-  static String readToEnd(Reader reader) {
-    try {
-        return readFully(reader);
-    } catch (IOException ioe) {
-        throw new RuntimeException(ioe);
-    }
-  }
-
-  static String readFully(Reader reader) throws IOException {
-    char[] block = new char[BUF_SIZE];
-    int charsRead = reader.read(block);
-    if (charsRead < 0) {
-        throw new IOException("No input");
-    } else if (charsRead < BUF_SIZE) {
-        char[] result = new char[charsRead];
-        System.arraycopy(block, 0, result, 0, charsRead);
-        reader.close();
-        return new String(block, 0, charsRead);
-    }
-    StringBuilder buf = new StringBuilder();
-    buf.append(block);
-    do {
-        charsRead = reader.read(block);
-        if (charsRead > 0) {
-            buf.append(block, 0, charsRead);
-        }
-    } while (charsRead == BUF_SIZE);
-    reader.close();
-    return buf.toString();
-  }
-
-  /**
-    * Rather bloody-minded way of converting a byte array into a string
-    * taking into account the initial byte order mark (used by Microsoft a lot seemingly)
-    * See: https://docs.microsoft.com/es-es/globalization/encoding/byte-order-markc
-    * @param bytes the raw byte array 
-    * @return A String taking into account the encoding in the byte order mark (if it was present). If no
-    * byte-order mark was present, it assumes the raw input is in UTF-8.
-    */
-  static public String stringFromBytes(byte[] bytes) {
-    int arrayLength = bytes.length;
-    int firstByte = arrayLength>0 ? Byte.toUnsignedInt(bytes[0]) : 1;
-    int secondByte = arrayLength>1 ? Byte.toUnsignedInt(bytes[1]) : 1;
-    int thirdByte = arrayLength >2 ? Byte.toUnsignedInt(bytes[2]) : 1;
-    int fourthByte = arrayLength > 3 ? Byte.toUnsignedInt(bytes[3]) : 1;
-    if (firstByte == 0xEF && secondByte == 0xBB && thirdByte == 0xBF) {
-        return new String(bytes, 3, bytes.length-3, Charset.forName("UTF-8"));
-    }
-    if (firstByte == 0 && secondByte==0 && thirdByte == 0xFE && fourthByte == 0xFF) {
-        return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32BE"));
-    }
-    if (firstByte == 0xFF && secondByte == 0xFE && thirdByte == 0 && fourthByte == 0) {
-        return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32LE"));
-    }
-    if (firstByte == 0xFE && secondByte == 0xFF) {
-        return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16BE"));
-    }
-    if (firstByte == 0xFF && secondByte == 0xFE) {
-        return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16LE"));
-    }
-    return new String(bytes, Charset.forName("UTF-8"));
   }
 }
