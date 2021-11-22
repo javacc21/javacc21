@@ -33,8 +33,9 @@ DEFAULT_LEXICAL_STATE="FTL_EXPRESSION";
 FAULT_TOLERANT=true;
 
 INJECT FELParser : {
-   static public void main(String[] args) throws ParseException {
-       FELParser parser = new FELParser(new java.io.InputStreamReader(System.in));
+   static public void main(String[] args) throws ParseException, IOException {
+       String input = CONSTANTS_CLASS.readFully(new java.io.InputStreamReader(System.in));
+       FELParser parser = new FELParser(input);
        Node n = parser.Input();
        n.dump("  ");
    }

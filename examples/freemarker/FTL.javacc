@@ -64,9 +64,7 @@ INJECT FTLParser :
     static public void checkFTLFile(File inputFile, boolean dumpTree) {
         FTLParser parser = null;
         try {
-            FileReader reader = new FileReader(inputFile);
-            parser = new FTLParser(reader);
-            //parser.setInputSource(inputFile.toString());
+            parser = new FTLParser(inputFile.toPath());
             parser.Root();
         }
         catch (Exception e) {

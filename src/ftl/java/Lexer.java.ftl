@@ -285,11 +285,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
  private final Token nextToken() {
       Token matchedToken = null;
       boolean inMore = false;
-      int matchedPos, charsRead, curChar, tokenBeginOffset = this.bufferPosition;
+      int tokenBeginOffset = this.bufferPosition;
       // The core tokenization loop
       while (matchedToken == null) {
+        int curChar, charsRead=0, matchedPos=0;  
         TokenType matchedType = null;
-        matchedPos = charsRead = 0;
         if (inMore) {
             curChar = readChar();
             if (curChar >= 0) charBuff.appendCodePoint(curChar);
@@ -394,7 +394,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      * with column numbers relating to tabs or unicode escapes. 
      * @param amount the number of characters (code points) to backup.
      */
-    void backup(int amount) {
+    private void backup(int amount) {
         int pointsRetreated = 0;
         while (pointsRetreated < amount) {
             if (bufferPosition<=0) break;
