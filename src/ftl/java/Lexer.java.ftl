@@ -117,6 +117,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // the current active NFA states in the core tokenization loop
   private BitSet nextStates=new BitSet(), currentStates = new BitSet();
 
+  // Holder for the pending characters we read from the input stream
+  private final StringBuilder charBuff = new StringBuilder();
+
   EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
   [#if grammar.deactivatedTokens?size>0 || grammar.extraTokens?size >0]
      {
@@ -139,6 +142,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // Token types that do not participate in parsing, a.k.a. "special" tokens in legacy JavaCC,
   // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
   [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames /]
+  [#-- // Tokens that are skipped, i.e. SKIP
+  N.B. This concept is being eliminated!
+  [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames / --]
   // Tokens that correspond to a MORE, i.e. that are pending 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
@@ -150,6 +156,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   private boolean trace_enabled = false;
     [/#if]
   private InvalidToken invalidToken;
+  // The source of the raw characters that we are scanning  
 
   private void setTracingEnabled(boolean trace_enabled) {
      this.trace_enabled = trace_enabled;
@@ -187,6 +194,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       * usages this is 1.
       */
      public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
+        this.inputSource = inputSource;
         this.content = mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         this.inputSource = inputSource;
         this.lineOffsets = createLineOffsetsTable(this.content);
@@ -196,6 +204,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         this.startingColumn = startingColumn;
         switchTo(lexState);
      }
+
+//     ${grammar.lexerClassName} input_stream = this;
 
     /**
      * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
@@ -265,17 +275,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
  private final Token nextToken() {
       Token matchedToken = null;
       boolean inMore = false;
-      int matchedPos, charsRead, curChar, firstChar=0, tokenBeginOffset = this.bufferPosition;
+      int matchedPos, charsRead, curChar, tokenBeginOffset = this.bufferPosition;
       // The core tokenization loop
       while (matchedToken == null) {
         TokenType matchedType = null;
         matchedPos = charsRead = 0;
         if (inMore) {
             curChar = readChar();
+            if (curChar >= 0) charBuff.appendCodePoint(curChar);
         }
         else {
+            charBuff.setLength(0);
             tokenBeginOffset = this.bufferPosition;
-            firstChar = curChar = readChar();
+            curChar = readChar();
             if (trace_enabled)  {
                 int tokenBeginLine = getLineFromOffset(bufferPosition);
                 int tokenBeginColumn = getCodePointColumnFromOffset(bufferPosition);
@@ -289,6 +301,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             else {
               if (trace_enabled) 
                 LOGGER.info("Read character " + ${grammar.constantsClassName}.displayChar(curChar));
+              charBuff.appendCodePoint(curChar);
             }
         } 
       [#if multipleLexicalStates]
@@ -311,6 +324,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 if (trace_enabled) LOGGER.info("Read character " + ${grammar.constantsClassName}.displayChar(retval));
                 if (retval >=0) {
                     curChar = retval;
+                    charBuff.appendCodePoint(curChar);
                 }
                 else break;
             }
@@ -343,13 +357,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
             backup(charsRead-1);
-            if (trace_enabled) {
-               LOGGER.info("Invalid input: " + ${grammar.constantsClassName}.displayChar(firstChar));
-            }
+            if (trace_enabled) 
+               LOGGER.info("Invalid input: " + ${grammar.constantsClassName}.displayChar(charBuff.codePointAt(0)));
             return new InvalidToken(this, tokenBeginOffset, bufferPosition);
         } else {
           if (trace_enabled)
-              LOGGER.info("Matched pattern of type: " + matchedType + ": " + ${grammar.constantsClassName}.addEscapes(getText(tokenBeginOffset, bufferPosition)));
+              LOGGER.info("Matched pattern of type: " + matchedType + ": " + ${grammar.constantsClassName}.addEscapes(charBuff.toString()));
         }
         if (charsRead > matchedPos) backup(charsRead-matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
@@ -387,6 +400,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             }
             ++pointsRetreated;
         }
+        truncateCharBuff(charBuff, amount);
     }
     /**
      * Advance a certain number of characters (code points)
@@ -407,6 +421,22 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             ++pointsAdvanced;
         }
     }
+    
+
+  /**
+   * Truncate a StringBuilder by a certain number of code points
+   * @param buf the StringBuilder
+   * @param amount the number of code points to truncate
+   */
+  static final void truncateCharBuff(StringBuilder buf, int amount) {
+    int idx = buf.length();
+    if (idx <= amount) idx = 0;
+    while (idx > 0 && amount-- > 0) {
+      char ch = buf.charAt(--idx);
+      if (Character.isLowSurrogate(ch)) --idx;
+    }
+    buf.setLength(idx);
+  }
 
   LexicalState lexicalState = LexicalState.values()[0];
 [#if multipleLexicalStates]
@@ -457,7 +487,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     Token matchedToken = Token.newToken(type, 
                                         this, 
                                         tokenBeginOffset,
-                                        bufferPosition);
+                                        tokenBeginOffset+charBuff.length());
     if (type == TokenType.EOF) {
           [#-- I think this is right... --]
           matchedToken.setEndOffset(tokenBeginOffset);
