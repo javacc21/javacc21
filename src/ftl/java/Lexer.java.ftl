@@ -205,8 +205,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         switchTo(lexState);
      }
 
-//     ${grammar.lexerClassName} input_stream = this;
-
     /**
      * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
      * depending on your use case
@@ -231,12 +229,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         switchTo(lexState);
     }
 
-  /**
-   * The public method for getting the next token.
-   * Most of the work is done in the private method
-   * nextToken, which invokes the NFA machinery
-   */ 
-  public Token getNextToken() {
+    private Token getNextToken() {
       Token token = null;
       do {
           token = nextToken();
@@ -253,23 +246,40 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       }
       cacheToken(token);
       return token;
- }
+    }
 
- public Token getNextToken(Token tok) {
-    Token cachedToken = tok.nextCachedToken();
+  /**
+   * The public method for getting the next token.
+   * If the tok parameter is null, it just tokenizes 
+   * starting at the internal bufferPosition
+   * Otherwise, it checks whether we have already cached
+   * the token after this one. If not, it finally goes 
+   * to the NFA machinery
+   */ 
+    public Token getNextToken(Token tok) {
+       if(tok == null) {
+           return getNextToken();
+       }
+       Token cachedToken = tok.nextCachedToken();
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
-    if (cachedToken != null && !activeTokenTypes.contains(cachedToken.getType())) {
-      reset(tok);
-      cachedToken = null;
+       if (cachedToken != null && !activeTokenTypes.contains(cachedToken.getType())) {
+           reset(tok);
+           cachedToken = null;
+       }
+       return cachedToken != null ? cachedToken : getNextToken(tok.getEndOffset());
     }
-    return cachedToken != null ? cachedToken : lex(tok.getEndOffset());
- }
 
- public Token lex(int offset) {
-     goTo(offset);
-     return getNextToken();
- }
+    /**
+     * A lower level method to tokenize, that takes the absolute
+     * offset into the content buffer as a parameter
+     * @param offset where to start
+     * @return the token that results from scanning from the given starting point 
+     */
+    public Token getNextToken(int offset) {
+        goTo(offset);
+        return getNextToken();
+    }
 
 // The main method to invoke the NFA machinery
  private final Token nextToken() {
@@ -402,26 +412,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         }
         truncateCharBuff(charBuff, amount);
     }
-    /**
-     * Advance a certain number of characters (code points)
-     */
-    void forward(int amount) {
-        int pointsAdvanced = 0;
-        while (pointsAdvanced < amount) {
-            if (bufferPosition >= content.length()) break;
-            if (tokenLocationTable[bufferPosition] == IGNORED) {
-                ++bufferPosition;
-                continue;
-            }
-            char ch = content.charAt(bufferPosition++);
-            if (Character.isHighSurrogate(ch)) {
-                char nextChar = bufferPosition < content.length() ? content.charAt(bufferPosition) : 0;
-                if (Character.isLowSurrogate(nextChar)) ++bufferPosition;
-            }
-            ++pointsAdvanced;
-        }
-    }
-    
 
   /**
    * Truncate a StringBuilder by a certain number of code points
