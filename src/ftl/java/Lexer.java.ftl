@@ -117,9 +117,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // the current active NFA states in the core tokenization loop
   private BitSet nextStates=new BitSet(${lexerData.maxNfaStates}), currentStates = new BitSet(${lexerData.maxNfaStates});
 
-  // Holder for the pending characters we read from the input stream
-  private final StringBuilder charBuff = new StringBuilder();
-
   EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
   [#if grammar.deactivatedTokens?size>0 || grammar.extraTokens?size >0]
      {
@@ -288,17 +285,15 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       int tokenBeginOffset = this.bufferPosition, firstChar =0;
       // The core tokenization loop
       while (matchedToken == null) {
-        int curChar, codeUnitsRead=0, codePointsRead = 0, matchedPos=0;
+        int curChar, codeUnitsRead=0, matchedPos=0;
         TokenType matchedType = null;
         // The nfaLoopStart should be the same as tokenBeginOffset
         // if we are not in a MORE.
         int nfaLoopStart = this.bufferPosition;
         if (inMore) {
             curChar = readChar();
-            if (curChar >= 0) charBuff.appendCodePoint(curChar);
         }
         else {
-            charBuff.setLength(0);
             tokenBeginOffset = this.bufferPosition;
             firstChar = curChar = readChar();
             if (trace_enabled)  {
@@ -307,14 +302,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 LOGGER.info("Starting new token on line: " + tokenBeginLine + ", column: " + tokenBeginColumn);
             }
             if (curChar == -1) {
-              if (trace_enabled) 
+              if (trace_enabled) {
                 LOGGER.info("Reached end of input");
+              }
               matchedType = TokenType.EOF;
             }
             else {
               if (trace_enabled) 
                 LOGGER.info("Read character " + ${grammar.constantsClassName}.displayChar(curChar));
-              charBuff.appendCodePoint(curChar);
             }
         } 
       [#if multipleLexicalStates]
@@ -337,7 +332,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 if (trace_enabled) LOGGER.info("Read character " + ${grammar.constantsClassName}.displayChar(retval));
                 if (retval >=0) {
                     curChar = retval;
-                    charBuff.appendCodePoint(curChar);
                 }
                 else break;
             }
@@ -362,35 +356,28 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 } 
             }
             ++codeUnitsRead;
-            ++codePointsRead;
             if (curChar>0xFFFF) ++codeUnitsRead;
             if (newType != null) {
                 matchedType = newType;
                 inMore = moreTokens.contains(matchedType);
-                //matchedPos = codePointsRead;
                 matchedPos= codeUnitsRead;
             }
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
             bufferPosition = tokenBeginOffset+1;
             if (firstChar>0xFFFF) ++bufferPosition;
-            charBuff.setLength(0);
-            charBuff.appendCodePoint(firstChar);
             if (trace_enabled) {
                LOGGER.info("Invalid input: " + ${grammar.constantsClassName}.displayChar(firstChar));
             }
             return new InvalidToken(this, tokenBeginOffset, bufferPosition);
         } else {
-          if (trace_enabled)
-              LOGGER.info("Matched pattern of type: " + matchedType + ": " + ${grammar.constantsClassName}.addEscapes(charBuff.toString()));
+          if (trace_enabled) {
+              String input = getText(tokenBeginOffset, tokenBeginOffset+matchedPos);
+              LOGGER.info("Matched pattern of type: " + matchedType + ": " + ${grammar.constantsClassName}.addEscapes(input));
+          }
         }
-        if (codeUnitsRead > matchedPos) {
-            int backupAmount = codeUnitsRead - matchedPos;
-            bufferPosition -= backupAmount;
-            charBuff.setLength(charBuff.length() - backupAmount);
-        }
+        bufferPosition -= (codeUnitsRead - matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
-            //matchedToken = instantiateToken(matchedType, tokenBeginOffset);            
             matchedToken = Token.newToken(matchedType, 
                                         this, 
                                         tokenBeginOffset,
@@ -460,23 +447,6 @@ lexState the lexical state to switch to
       reset(t, null);
   }
     
-  private Token instantiateToken(TokenType type, int tokenBeginOffset) {
-    Token matchedToken = Token.newToken(type, 
-                                        this, 
-                                        tokenBeginOffset,
-                                        bufferPosition);
-//                                        tokenBeginOffset+charBuff.length());
-    matchedToken.setUnparsed(!regularTokens.contains(type));
- [#list grammar.lexerTokenHooks as tokenHookMethodName]
-    [#if tokenHookMethodName = "CommonTokenAction"]
-      ${tokenHookMethodName}(matchedToken);
-    [#else]
-      matchedToken = ${tokenHookMethodName}(matchedToken);
-    [/#if]
- [/#list]
-    return matchedToken;
-  }
-
  [#if lexerData.hasTokenActions]
   private Token tokenLexicalActions(Token matchedToken, TokenType matchedType) {
     switch(matchedType) {
