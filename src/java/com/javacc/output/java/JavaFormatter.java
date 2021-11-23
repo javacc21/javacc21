@@ -145,7 +145,6 @@ public class JavaFormatter {
                     newLine();
                 }
                 break;
-            case FORMAL_COMMENT :
             case MULTI_LINE_COMMENT :
                 newLine();
                 buf.append(currentToken);

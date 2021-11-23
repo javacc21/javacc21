@@ -115,7 +115,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
  [/#if]
   // The following two BitSets are used to store 
   // the current active NFA states in the core tokenization loop
-  private BitSet nextStates=new BitSet(), currentStates = new BitSet();
+  private BitSet nextStates=new BitSet(${lexerData.maxNfaStates}), currentStates = new BitSet(${lexerData.maxNfaStates});
 
   // Holder for the pending characters we read from the input stream
   private final StringBuilder charBuff = new StringBuilder();
@@ -288,8 +288,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       int tokenBeginOffset = this.bufferPosition, firstChar =0;
       // The core tokenization loop
       while (matchedToken == null) {
-        int curChar, charsRead=0, codePointsRead = 0, matchedPos=0;  
+        int curChar, codeUnitsRead=0, codePointsRead = 0, matchedPos=0;
         TokenType matchedType = null;
+        // The nfaLoopStart should be the same as tokenBeginOffset
+        // if we are not in a MORE.
+        int nfaLoopStart = this.bufferPosition;
         if (inMore) {
             curChar = readChar();
             if (curChar >= 0) charBuff.appendCodePoint(curChar);
@@ -324,7 +327,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         if (matchedType != TokenType.EOF) do {
             // Holder for the new type (if any) matched on this iteration
             TokenType newType = null;
-            if (charsRead > 0) {
+            if (codeUnitsRead > 0) {
                 // What was nextStates on the last iteration 
                 // is now the currentStates!
                 BitSet temp = currentStates;
@@ -339,7 +342,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 else break;
             }
             nextStates.clear();
-            if (charsRead == 0) {
+            if (codeUnitsRead == 0) {
                 TokenType returnedType = nfaFunctions[0].apply(curChar, nextStates, activeTokenTypes);
                 if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                   newType = returnedType;
@@ -358,14 +361,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                     nextActive = currentStates.nextSetBit(nextActive+1);
                 } 
             }
-            ++charsRead;
+            ++codeUnitsRead;
             ++codePointsRead;
-            if (curChar>0xFFFF) ++charsRead;
+            if (curChar>0xFFFF) ++codeUnitsRead;
             if (newType != null) {
                 matchedType = newType;
                 inMore = moreTokens.contains(matchedType);
                 //matchedPos = codePointsRead;
-                matchedPos= charsRead;
+                matchedPos= codeUnitsRead;
             }
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
@@ -381,8 +384,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           if (trace_enabled)
               LOGGER.info("Matched pattern of type: " + matchedType + ": " + ${grammar.constantsClassName}.addEscapes(charBuff.toString()));
         }
-        if (charsRead > matchedPos) {
-            backup(codePointsRead-matchedPos);
+        if (codeUnitsRead > matchedPos) {
+            int backupAmount = codeUnitsRead - matchedPos;
+            bufferPosition -= backupAmount;
+            charBuff.setLength(charBuff.length() - backupAmount);
         }
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             matchedToken = instantiateToken(matchedType, tokenBeginOffset);            
@@ -397,50 +402,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       return matchedToken;
    }
 
-    /**
-     * Backup a certain number of characters
-     * This method is dead simple by design and does not handle any of the messiness
-     * with column numbers relating to tabs or unicode escapes. 
-     * @param amount the number of characters (code points) to backup.
-     */
-    private void backup(int amount) {
-        int pointsRetreated = 0;
-        while (pointsRetreated < amount) {
-            [#--
-            if (bufferPosition<=0) break;
-            if (tokenLocationTable[--bufferPosition] == IGNORED) {
-                assert false;
-                continue;
-            }--]
-            char ch = content.charAt(--bufferPosition);
-            if (Character.isLowSurrogate(ch)) {
-                char prevChar = bufferPosition >= 0 ? content.charAt(bufferPosition) : 0;
-                if (Character.isHighSurrogate(prevChar)) {
-                    --bufferPosition;
-                }
-            }
-            ++pointsRetreated;
-        }
-        truncateCharBuff(charBuff, amount);
-    }
-
-  /**
-   * Truncate a StringBuilder by a certain number of code points
-   * @param buf the StringBuilder
-   * @param amount the number of code points to truncate
-   */
-  static final void truncateCharBuff(StringBuilder buf, int amount) {
-      assert amount <=buf.length();
-    int idx = buf.length();
-    //if (idx <= amount) idx = 0;
-    while (amount-- > 0) {
-      char ch = buf.charAt(--idx);
-      if (Character.isLowSurrogate(ch)) --idx;
-    }
-    buf.setLength(idx);
-  }
-
-  LexicalState lexicalState = LexicalState.values()[0];
+   LexicalState lexicalState = LexicalState.values()[0];
 [#if multipleLexicalStates]
   boolean doLexicalStateSwitch(TokenType tokenType) {
        LexicalState newState = tokenTypeToLexicalStateMap.get(tokenType);
@@ -451,7 +413,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   
     /** 
      * Switch to specified lexical state. 
-     * @param lexState the lexical state to switch to
+     * @param  private final Token nextToken() {
+lexState the lexical state to switch to
      * @return whether we switched (i.e. we weren't already in the desired lexical state)
      */
     public boolean switchTo(LexicalState lexState) {
@@ -490,11 +453,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                                         this, 
                                         tokenBeginOffset,
                                         tokenBeginOffset+charBuff.length());
-    if (type == TokenType.EOF) {
-          [#-- I think this is right... --]
+[#--    if (type == TokenType.EOF) {
           matchedToken.setEndOffset(tokenBeginOffset);
-    }
-    matchedToken.setTokenSource(this);
+    }--]
     matchedToken.setUnparsed(!regularTokens.contains(type));
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]

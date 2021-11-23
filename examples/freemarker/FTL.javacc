@@ -166,7 +166,7 @@ INJECT LEXER_CLASS :
                  if (tok.getType() == TokenType.GTE) {
                       tok.setImage(">");
                       tok.setEndOffset(tok.getEndOffset()-1);
-                      backup(1);
+                      --bufferPosition;
                  }
                   switchTo(LexicalState.TEMPLATE_TEXT);
              }

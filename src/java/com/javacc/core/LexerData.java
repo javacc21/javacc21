@@ -79,6 +79,14 @@ public class LexerData {
         return null;
     }
 
+    public int getMaxNfaStates() {
+        int result = 0;
+        for (LexicalStateData lsd : lexicalStates) {
+            result = Math.max(result, lsd.allStates.size());
+        }
+        return result;
+    }
+
     public RegularExpression getRegularExpression(int idx) {
         if (idx == Integer.MAX_VALUE) return null;
         return regularExpressions.get(idx);
