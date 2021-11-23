@@ -285,10 +285,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
  private final Token nextToken() {
       Token matchedToken = null;
       boolean inMore = false;
-      int tokenBeginOffset = this.bufferPosition;
+      int tokenBeginOffset = this.bufferPosition, firstChar =0;
       // The core tokenization loop
       while (matchedToken == null) {
-        int curChar, charsRead=0, matchedPos=0;  
+        int curChar, charsRead=0, codePointsRead = 0, matchedPos=0;  
         TokenType matchedType = null;
         if (inMore) {
             curChar = readChar();
@@ -297,7 +297,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         else {
             charBuff.setLength(0);
             tokenBeginOffset = this.bufferPosition;
-            curChar = readChar();
+            firstChar = curChar = readChar();
             if (trace_enabled)  {
                 int tokenBeginLine = getLineFromOffset(bufferPosition);
                 int tokenBeginColumn = getCodePointColumnFromOffset(bufferPosition);
@@ -359,22 +359,31 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 } 
             }
             ++charsRead;
+            ++codePointsRead;
+            if (curChar>0xFFFF) ++charsRead;
             if (newType != null) {
                 matchedType = newType;
                 inMore = moreTokens.contains(matchedType);
-                matchedPos = charsRead;
+                //matchedPos = codePointsRead;
+                matchedPos= charsRead;
             }
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
-            backup(charsRead-1);
-            if (trace_enabled) 
-               LOGGER.info("Invalid input: " + ${grammar.constantsClassName}.displayChar(charBuff.codePointAt(0)));
+            bufferPosition = tokenBeginOffset+1;
+            if (firstChar>0xFFFF) ++bufferPosition;
+            charBuff.setLength(0);
+            charBuff.appendCodePoint(firstChar);
+            if (trace_enabled) {
+               LOGGER.info("Invalid input: " + ${grammar.constantsClassName}.displayChar(firstChar));
+            }
             return new InvalidToken(this, tokenBeginOffset, bufferPosition);
         } else {
           if (trace_enabled)
               LOGGER.info("Matched pattern of type: " + matchedType + ": " + ${grammar.constantsClassName}.addEscapes(charBuff.toString()));
         }
-        if (charsRead > matchedPos) backup(charsRead-matchedPos);
+        if (charsRead > matchedPos) {
+            backup(codePointsRead-matchedPos);
+        }
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             matchedToken = instantiateToken(matchedType, tokenBeginOffset);            
         }
@@ -397,11 +406,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     private void backup(int amount) {
         int pointsRetreated = 0;
         while (pointsRetreated < amount) {
+            [#--
             if (bufferPosition<=0) break;
             if (tokenLocationTable[--bufferPosition] == IGNORED) {
+                assert false;
                 continue;
-            }
-            char ch = content.charAt(bufferPosition);
+            }--]
+            char ch = content.charAt(--bufferPosition);
             if (Character.isLowSurrogate(ch)) {
                 char prevChar = bufferPosition >= 0 ? content.charAt(bufferPosition) : 0;
                 if (Character.isHighSurrogate(prevChar)) {
@@ -419,9 +430,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
    * @param amount the number of code points to truncate
    */
   static final void truncateCharBuff(StringBuilder buf, int amount) {
+      assert amount <=buf.length();
     int idx = buf.length();
-    if (idx <= amount) idx = 0;
-    while (idx > 0 && amount-- > 0) {
+    //if (idx <= amount) idx = 0;
+    while (amount-- > 0) {
       char ch = buf.charAt(--idx);
       if (Character.isLowSurrogate(ch)) --idx;
     }
