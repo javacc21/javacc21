@@ -58,7 +58,6 @@ INCLUDE "JavaLexer.javacc"
 #CompilationUnit# :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
-  [SCAN TypeDeclarationLA => {}]
   ( TypeDeclaration )+!
   [<EOF>]
   {

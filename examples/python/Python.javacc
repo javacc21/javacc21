@@ -390,19 +390,32 @@ KeyWords :
    ]
 ;
 
+INJECT PARSER_CLASS : 
+{
+   // variables to keep track of where we are
+   // when parsing/scanning the Parameters production
+   private boolean seenDefault, seenSlash;
+}
+
 Parameters : 
 // Using a contextual predicate, we manage to use the same production 
 // for the parameters of a function def or a lambda. 
-// NB. This production is looser than it should be. For example,
-// a default argument can only be at the end and the slash 
-// can only appear once. FIXME.
+    {seenDefault = seenSlash = false;}#
     [
-      <NAME> [SCAN 1 \FunctionDefinition => ":" Expression] ["=" Expression]  
+      <NAME> [SCAN 1 \FunctionDefinition => ":" Expression] ["=" Expression {seenDefault = true;}#]  
       ("," =>|+1
         (
-          "/"
+          // Slash can only occur once.
+          SCAN 1 {!seenSlash}# =>
+          "/" {seenSlash = true;}#
           | 
-          <NAME> [SCAN 1 \FunctionDefinition => ":" Expression] ["=" Expression] 
+          <NAME> [SCAN 1 \FunctionDefinition => ":" Expression] 
+          [
+             // If we've already seen a param with a default value,
+             // the remaining ones also have to have a default value.
+             SCAN 0 {seenDefault || getToken(1).getType() == ASSIGN} 
+             => "=" Expression {seenDefault = true;}#
+          ] 
         )
       )* 
       [ "," ]

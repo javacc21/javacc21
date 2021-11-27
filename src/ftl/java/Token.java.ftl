@@ -40,6 +40,7 @@ import ${grammar.nodePackage}.*;
 [/#if]
 
 import java.util.Iterator;
+import java.util.List;
 
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
 import freemarker.template.*;
@@ -507,7 +508,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         throw new UnsupportedOperationException();
     }
 
-    public int indexOf(Node n) {
+    public final int indexOf(Node n) {
         return -1;
     }
 
@@ -519,15 +520,15 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         this.parent = parent;
     }
 
-    public int getChildCount() {
+    public final int getChildCount() {
         return 0;
     }
 
-    public Node getChild(int i) {
+    public final Node getChild(int i) {
         return null;
     }
 
-    public java.util.List<Node> children() {
+    public final List<Node> children() {
         return java.util.Collections.emptyList();
     }
 
