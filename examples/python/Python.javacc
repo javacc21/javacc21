@@ -276,19 +276,49 @@ Decorators : ("@" NamedExpression <NEWLINE>)+ ;
 
 Annotation : ":" Expression ;
 
-Default : "=" Expression ;
-
 InvocationArguments : "(" [Args] ")" ;
 
-Args : // This is looser than the official grammar, but okay for now...
-   Arg (SCAN 3 "," Arg)*
+Args : 
+   Arg(false, false)
+   {
+    // Variables to keep track of what we have seen,
+    // and thus, what is permissible. These are 
+    // defined locally so only apply when parsing, not
+    // scanning ahead, so the lookahead is looser
+    // than the parsing.
+      boolean seenEquals = peekNode().firstChildOfType(ASSIGN) != null;
+      boolean seenDoubleStar = peekNode().firstChildOfType(STAR_STAR) != null;
+   }
+   (
+      SCAN 3 
+      "," 
+      Arg(seenEquals, seenDoubleStar)
+      {
+         seenEquals |= peekNode().firstChildOfType(ASSIGN) != null;
+         seenDoubleStar |= peekNode().firstChildOfType(STAR_STAR) != null;
+      }
+   )*
    [","] 
 ;
 
-Arg : 
-   <NAME> (":=" | "=") =>|| Expression
+Arg(boolean seenEquals, boolean seenDoubleStar) : 
+   <NAME> 
+   ( 
+      SCAN 1 {!seenEquals} =>
+      ":=" 
+      | 
+      "=" 
+   ) 
+   =>|| 
+   Expression
    |
-   ["*" | "**"] Expression
+   [
+      SCAN 1 {!seenDoubleStar} => 
+      "*" 
+      | 
+      "**"
+   ] 
+   Expression
 ;
 
 KeyValuePair : Expression ":" Expression ;
@@ -359,7 +389,6 @@ ComparisonOperator#void :
    "is" ["not"]
 ;
 
-
 StarTarget : ["*"] PrimaryExpression ;
 
 StarTargets : StarTarget ("," =>|+1 StarTarget)* [","];
@@ -390,38 +419,33 @@ KeyWords :
    ]
 ;
 
-INJECT PARSER_CLASS : 
-{
-   // variables to keep track of where we are
-   // when parsing/scanning the Parameters production
-   private boolean seenDefault, seenSlash;
-}
-
 Parameters : 
+    {boolean seenDefault = false, seenSlash=false;}
+    [
+      <NAME> 
 // Using a contextual predicate, we manage to use the same production 
 // for the parameters of a function def or a lambda. 
-    {seenDefault = seenSlash = false;}#
-    [
-      <NAME> [SCAN 1 \FunctionDefinition => ":" Expression] ["=" Expression {seenDefault = true;}#]  
+      [SCAN 1 \FunctionDefinition => ":" Expression] 
+      ["=" Expression {seenDefault = true;}]  
       ("," =>|+1
         (
           // Slash can only occur once.
-          SCAN 1 {!seenSlash}# =>
-          "/" {seenSlash = true;}#
+          SCAN 1 {!seenSlash} =>
+          "/" {seenSlash = true;}
           | 
           <NAME> [SCAN 1 \FunctionDefinition => ":" Expression] 
           [
              // If we've already seen a param with a default value,
              // the remaining ones also have to have a default value.
              SCAN 0 {seenDefault || getToken(1).getType() == ASSIGN} 
-             => "=" Expression {seenDefault = true;}#
+             => "=" Expression {seenDefault = true;}
           ] 
         )
       )* 
       [ "," ]
     ]
     [
-        SCAN ~(")"|":") => StarEtc
+      SCAN ~(")"|":") => StarEtc
     ]
     [","]
 ;
@@ -453,9 +477,9 @@ Assignment :
 
 MatchStatement : 
    ACTIVATE_TOKENS MATCH ("match") 
-   =>|+1
    SubjectExpression 
    ":" 
+   =>||
    <NEWLINE>
    <INDENT>
    ACTIVATE_TOKENS CASE (CaseBlock)+

@@ -113,39 +113,26 @@ public class DeadCodeEliminator extends Node.Visitor {
     // is not in usedNames. The only complicated case is if the field
     // has more than one variable declaration comma-separated
     private void stripUnusedVars(FieldDeclaration fd) {
-        boolean removedSomething = false;
+        Set<Node> toBeRemoved = new HashSet<Node>();
         for (VariableDeclarator vd : fd.childrenOfType(VariableDeclarator.class)) {
             if (!usedNames.contains(vd.getName())) {
-                fd.removeChild(vd);
-                removedSomething = true;
+                toBeRemoved.add(vd);
+                int index = fd.indexOf(vd);
+                Node prev = fd.getChild(index-1);
+                Node next = fd.getChild(index+1);
+                if (prev instanceof Token && ((Token)prev).getType()==COMMA) {
+                    toBeRemoved.add(prev);
+                }
+                else if (next instanceof Token && ((Token)next).getType() == COMMA) {
+                    toBeRemoved.add(next);
+                }
             }
         }
-        if (removedSomething) {
-            if (fd.firstChildOfType(VariableDeclarator.class) != null) {
-                removeExtraCommas(fd);
-            }
-            else {
-                fd.getParent().removeChild(fd);
-            }
+        for (Node n : toBeRemoved) {
+            fd.removeChild(n);
         }
-    }
-
-    // A mop-up operation if we've eliminated some (but not all) 
-    // of the variables in a FieldDeclaration
-    static private void removeExtraCommas(FieldDeclaration fd) {
-        List<Token> toBeRemoved = new ArrayList<Token>();
-        for (int i=0; i< fd.getChildCount()-1; i++) {
-            Node current = fd.getChild(i);
-            Node next = fd.getChild(i+1);
-            if (current instanceof Token && next instanceof Token) {
-                Token curToken = (Token) current;
-                TokenType nextTokenType = ((Token) next).getType();
-                if (curToken.getType() == COMMA && (nextTokenType == COMMA || nextTokenType == SEMICOLON))
-                    toBeRemoved.add((Token) current);
-            }
-        }
-        for (Token comma : toBeRemoved) {
-            fd.removeChild(comma);
+        if (fd.firstChildOfType(VariableDeclarator.class) == null) {
+            fd.getParent().removeChild(fd);
         }
     }
 }
