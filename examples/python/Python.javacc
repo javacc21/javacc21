@@ -168,7 +168,6 @@ WithItemsInParentheses#void : "(" WithItem (SCAN 2 "," WithItem)* [","] ")" ;
 
 WithItem : Expression ["as" StarTarget] ;
 
-
 ForStatement : 
    ["async"] "for" =>|| 
    StarTargets "in" StarExpressions ":"
@@ -260,8 +259,6 @@ PrimaryExpression#void :
    )*
 ;
 
-DotName : "." <NAME> ;
-
 YieldExpression : 
     "yield" "from" =>|| Expression 
     |
@@ -276,32 +273,34 @@ Decorators : ("@" NamedExpression <NEWLINE>)+ ;
 
 Annotation : ":" Expression ;
 
-InvocationArguments : "(" [Args] ")" ;
-
-Args : 
-   Arg(false, false)
-   {
-    // Variables to keep track of what we have seen,
-    // and thus, what is permissible. These are 
-    // defined locally so only apply when parsing, not
-    // scanning ahead, so the lookahead is looser
-    // than the parsing.
-      boolean seenEquals = peekNode().firstChildOfType(ASSIGN) != null;
-      boolean seenDoubleStar = peekNode().firstChildOfType(STAR_STAR) != null;
-   }
-   (
-      SCAN 3 
-      "," 
-      Arg(seenEquals, seenDoubleStar)
+InvocationArguments : 
+   "(" 
+   [
+      Argument(false, false)
       {
-         seenEquals |= peekNode().firstChildOfType(ASSIGN) != null;
-         seenDoubleStar |= peekNode().firstChildOfType(STAR_STAR) != null;
+      // Variables to keep track of what we have seen,
+      // and thus, what is permissible. These are 
+      // defined locally so only apply when parsing, not
+      // scanning ahead, so the lookahead is looser
+      // than the parsing.
+         boolean seenEquals = peekNode().firstChildOfType(ASSIGN) != null;
+         boolean seenDoubleStar = peekNode().firstChildOfType(STAR_STAR) != null;
       }
-   )*
-   [","] 
+      (
+         SCAN 3 
+         "," 
+         Argument(seenEquals, seenDoubleStar)
+         {
+            seenEquals |= peekNode().firstChildOfType(ASSIGN) != null;
+            seenDoubleStar |= peekNode().firstChildOfType(STAR_STAR) != null;
+         }
+      )*
+      [","] 
+   ] 
+   ")" 
 ;
 
-Arg(boolean seenEquals, boolean seenDoubleStar) : 
+Argument(boolean seenEquals, boolean seenDoubleStar) : 
    <NAME> 
    ( 
       SCAN 1 {!seenEquals} =>
@@ -314,9 +313,7 @@ Arg(boolean seenEquals, boolean seenDoubleStar) :
    |
    [
       SCAN 1 {!seenDoubleStar} => 
-      "*" 
-      | 
-      "**"
+      ("*" | "**")
    ] 
    Expression
 ;

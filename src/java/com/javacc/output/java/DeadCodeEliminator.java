@@ -32,7 +32,6 @@ package com.javacc.output.java;
 import java.util.*;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
-import com.javacc.parser.JavaCCConstants.TokenType;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
 /**
