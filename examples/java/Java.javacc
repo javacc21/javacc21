@@ -413,7 +413,7 @@ ConstructorDeclaration :
   TypeIdentifier FormalParameters =>||
   [ ThrowsList ]
   "{"
-
+  [ => ExplicitConstructorInvocation ]
   ( BlockStatement )*!
   "}"
 ;
@@ -818,7 +818,7 @@ InvocationArguments :
 AllocationExpression :
   "new" PrimitiveType =>|| ArrayDimsAndInits
   |
-  "new" ObjectType [ PossiblyEmptyTypeArguments ]
+  "new" [TypeArguments] ObjectType [ PossiblyEmptyTypeArguments ]
     (
       ArrayDimsAndInits
       |
@@ -1114,8 +1114,7 @@ BreakStatement :
 YieldStatement :
    ASSERT {getToken(1).getImage().equals("yield")&&isInProduction("SwitchExpression")}#
    ACTIVATE_TOKENS YIELD ("yield") 
-   =>|| 
-   Expression ";" 
+   Expression ";" =>||
 ;
 
 ContinueStatement : "continue" [ <IDENTIFIER> ] ";" ;

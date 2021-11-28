@@ -290,8 +290,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         // The nfaLoopStart should be the same as tokenBeginOffset
         // if we are not in a MORE.
         int nfaLoopStart = this.bufferPosition;
+        boolean reachedEnd = false;
         if (inMore) {
             curChar = readChar();
+            if (curChar == -1) reachedEnd = true;
         }
         else {
             tokenBeginOffset = this.bufferPosition;
@@ -306,6 +308,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 LOGGER.info("Reached end of input");
               }
               matchedType = TokenType.EOF;
+              reachedEnd = true;
             }
             else {
               if (trace_enabled) 
@@ -319,7 +322,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       [/#if]
         ${grammar.nfaDataClassName}.NfaFunction[] nfaFunctions= ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
         // the core NFA loop
-        if (matchedType != TokenType.EOF) do {
+        if (!reachedEnd) do {
             // Holder for the new type (if any) matched on this iteration
             TokenType newType = null;
             if (codeUnitsRead > 0) {
@@ -333,7 +336,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 if (retval >=0) {
                     curChar = retval;
                 }
-                else break;
+                else {
+                    reachedEnd = true;
+                    break;
+                }
             }
             nextStates.clear();
             if (codeUnitsRead == 0) {
