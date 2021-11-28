@@ -59,8 +59,12 @@ INCLUDE "JavaLexer.javacc"
 #CompilationUnit# :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
-  ( TypeDeclaration )+!
-  [<EOF>]
+  ( TypeDeclaration )*!
+  [
+    // Why do I have to make this EOF optional?
+    // Will REVISIT later...
+    <EOF>
+  ]
   {
     return CURRENT_NODE;
   }
@@ -91,7 +95,7 @@ Modifiers#void :
    |"default" 
   )
   {
-    switch(getToken(0).getType()) {
+    if (permissibleModifiers !=null) switch(getToken(0).getType()) {
         case ABSTRACT :
         case FINAL :
            permissibleModifiers.remove(ABSTRACT);
@@ -499,7 +503,17 @@ ReturnType# : "void" | Type ;
 
 Name# : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
 
-ThrowsList : "throws" Name ( "," Name )* ;
+ThrowsList : "throws" ExceptionType ( "," ExceptionType )* ;
+
+ExceptionType : 
+    (Annotation)* 
+    (
+      Name "." =>|+1 (Annotation)+ TypeIdentifier
+      |
+      Name 
+    )
+    [TypeArguments]
+;
 
 #Expression#interface :
     AssignmentExpression
@@ -771,6 +785,7 @@ ClassLiteral : ("void" | Type) "." "class" =>|| ;
 MethodReference :
     (Type | "super")
      "::" =>||
+     [TypeArguments]
      (<IDENTIFIER>|"new")
 ;
 
@@ -939,7 +954,7 @@ VarDeclaration #void :
   ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType()==IDENTIFIER} =>||
   ACTIVATE_TOKENS VAR ("var")
   <IDENTIFIER> 
-  "=" Expression
+  ["=" Expression]
 ;
 
 LocalVariableDeclarationLA#scan :
@@ -1053,7 +1068,7 @@ DoStatement :
   "do" Statement "while" "(" Expression ")" ";"
 ;
 
-ForStatement :
+ForStatement2 :
   "for" "("
   (
       {permissibleModifiers = EnumSet.of(FINAL);}#
@@ -1064,6 +1079,23 @@ ForStatement :
   )
   ")" Statement
 ;
+
+ForStatement :
+   BasicForStatement
+   |
+   EnhancedForStatement
+   |
+   "for" FAIL
+;
+
+BasicForStatement :
+   "for" "(" [ForInit] ";" =>|| [Expression] ";" [StatementExpressionList] ")" Statement
+;
+
+EnhancedForStatement :
+   "for" "(" LocalVariableDeclaration ":" =>|| Expression ")" Statement   
+;
+
 
 ForInit :
   LocalVariableDeclaration
@@ -1114,6 +1146,9 @@ TryWithResources :
          LocalVariableDeclaration
          |
          Name
+         |
+         PrimaryExpression 
+         ASSERT {peekNode() instanceof DotName} : "Resource should be a field access here."
     )
     (
         ";"
@@ -1252,11 +1287,18 @@ SimpleLambdaLHS #void :
 LambdaParameters : "(" [ LambdaParameter ( "," LambdaParameter )* ] ")" ;
 
 LambdaParameter : 
+    {permissibleModifiers = EnumSet.of(FINAL);}#
+    Modifiers
     (
-      SCAN {getToken(1).getImage().equals("var")}
-      => ACTIVATE_TOKENS VAR ("var")
+      Type (Annotation)* "..." =>|| <IDENTIFIER>
       |
-      Type
+      (
+        SCAN {getToken(1).getImage().equals("var")}#
+        => ACTIVATE_TOKENS VAR ("var")
+        |
+        Type
+      )
+      <IDENTIFIER>((Annotation)* "[" "]")*
     )
-    VariableDeclaratorId 
 ;
+    
