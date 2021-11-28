@@ -421,7 +421,10 @@ ConstructorDeclaration :
 ExplicitConstructorInvocation :
   [TypeArguments] ("this" | "super") =>|+1 InvocationArguments ";"
   |
-  [=>Name "."] [TypeArguments] "super" =>|+1 InvocationArguments ";"
+  // Is this 100% correct? I think so, but it is not quite what the
+  // language spec says. Maybe need to revisit this.
+  (Name [=> "." "this"] | Parentheses) 
+  "." [TypeArguments] "super" =>|+1 InvocationArguments ";"
 ;
 
 Initializer# :
@@ -740,6 +743,7 @@ PrimaryExpression#void :
  (
   => "." "this" #DotThis(+1)
   |
+  SCAN "." "super" "."
   => "." "super" #DotSuper(+1)
   |
   ("." =>|+1 AllocationExpression) #DotNew(+1)
@@ -749,10 +753,6 @@ PrimaryExpression#void :
   ("." [TypeArguments] <IDENTIFIER>) #DotName(+1)
   |
   ("::" [TypeArguments] (<IDENTIFIER>|"new")) #MethodReference(+1)
-  |
-  // This really shouldn't be handled here. It's a bit kludgy
-  SCAN 1 {getToken(0).getType() == SUPER || getToken(0).getType()==THIS}# \...\ConstructorDeclaration
-  => InvocationArguments #ExplicitConstructorInvocation(+1)
   |
 // The following commented-out line is the absolutely correct condition for recent JDK's, 
 // since yield on its own cannot be a method call, though you can write this.yield(), for example.

@@ -44,7 +44,7 @@ public class JParse {
                 continue;
             }
             Files.walk(path).forEach(p->{
-                if (p.toString().endsWith(".java")&&!p.toString().endsWith("-info.java")) {
+                if (!Files.isDirectory(p) &&  p.toString().endsWith(".java")&&!p.toString().endsWith("-info.java")) {
                     paths.add(p);
                 }
             });
