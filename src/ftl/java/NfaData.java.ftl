@@ -246,13 +246,11 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
           ch == ${displayLeft}
        [#elseif left +1 == right]
           ch == ${displayLeft} || ch == ${displayRight}
-       [#elseif left > 0]
+       [#else]
           ch >= ${displayLeft} 
           [#if right < 1114111]
              && ch <= ${displayRight}
           [/#if]
-       [#else]
-           ch <= ${displayRight}
        [/#if]
     [#else]
        ([@RangesCondition moveRanges[0..1]/])||([@RangesCondition moveRanges[2..moveRanges?size-1]/])

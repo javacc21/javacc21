@@ -52,6 +52,7 @@ DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 //FAULT_TOLERANT;
 //DEBUG_FAULT_TOLERANT;
 MINIMAL_TOKEN;
+ENSURE_FINAL_EOL;
 
 INCLUDE "JavaLexer.javacc"
 
@@ -408,7 +409,7 @@ ConstructorDeclaration :
   TypeIdentifier FormalParameters =>||
   [ ThrowsList ]
   "{"
-  [ => ExplicitConstructorInvocation ]
+
   ( BlockStatement )*!
   "}"
 ;
