@@ -117,7 +117,6 @@ def main():
                 print('Processing %s -> %s' % (fn, os.path.basename(ofn)))
             try:
                 if IS_JAVA:
-                    import java.io
                     f = get_reader(p)
                     outf = get_writer(ofn)
                     if options.parser:
@@ -128,14 +127,12 @@ def main():
                         lexer = Lexer(f)
                         lexer.inputSource = p
                 else:
-                    f = open(p, encoding='utf-8')
+                    f = None
                     outf = open(ofn, 'w', encoding='utf-8')
                     if options.parser:
                         parser = Parser(p)
-                        parser.trace_enabled = True
                     else:
                         lexer = Lexer(p)
-                        # lexer.trace_enabled = True
                 if options.parser:
                     try:
                         if IS_JAVA:
@@ -152,26 +149,27 @@ def main():
                                 python_dump_node(outf, node, 0)
                     except ParseException as e:
                         logger.exception('Parse failed: %s', e)
-                        # raise
+                        if 'invalid.json' not in p:
+                            raise
                 else:
                     done = False
                     while not done:
                         if IS_JAVA:
-                            t = lexer.getNextToken()
+                            t = lexer.getNextToken(None)
                             s = '%s: %s %d %d %d %d\n' % (t.type, t.image,
                                                           t.beginLine,
                                                           t.beginColumn,
                                                           t.endLine,
                                                           t.endColumn)
                             outf.print(s)
-                            while t.next:
-                                t = t.next
-                                s = '%s: %s %d %d %d %d\n' % (t.type, t.image,
-                                                              t.beginLine,
-                                                              t.beginColumn,
-                                                              t.endLine,
-                                                              t.endColumn)
-                                outf.print(s)
+                            # while t.next:
+                                # t = t.next
+                                # s = '%s: %s %d %d %d %d\n' % (t.type, t.image,
+                                                              # t.beginLine,
+                                                              # t.beginColumn,
+                                                              # t.endLine,
+                                                              # t.endColumn)
+                                # outf.print(s)
                         else:
                             # import pdb; pdb.set_trace()
                             t = lexer.get_next_token()
@@ -181,17 +179,18 @@ def main():
                                                           t.end_line,
                                                           t.end_column)
                             outf.write(s)
-                            while t.next:
-                                t = t.next
-                                s = '%s: %s %d %d %d %d\n' % (t.type.name, t.image,
-                                                              t.begin_line,
-                                                              t.begin_column,
-                                                              t.end_line,
-                                                              t.end_column)
-                                outf.write(s)
+                            # while t.next:
+                                # t = t.next
+                                # s = '%s: %s %d %d %d %d\n' % (t.type.name, t.image,
+                                                              # t.begin_line,
+                                                              # t.begin_column,
+                                                              # t.end_line,
+                                                              # t.end_column)
+                                # outf.write(s)
                         done = t.type == TokenType.EOF
             finally:
-                f.close()
+                if f:
+                    f.close()
                 outf.close()
 
 if __name__ == '__main__':

@@ -35,6 +35,10 @@ import java.util.Set;
 
 import com.javacc.Grammar;
 import com.javacc.output.Translator;
+import com.javacc.parser.JavaCCParser;
+import com.javacc.parser.Node;
+import com.javacc.parser.ParseException;
+import com.javacc.parser.tree.Expression;
 
 public class PythonTranslator extends Translator {
     public PythonTranslator(Grammar grammar) {
@@ -131,6 +135,22 @@ public class PythonTranslator extends Translator {
         return result;
     }
 
+    private boolean shouldAddSelf(ASTPrimaryExpression expr) {
+        boolean result = true;
+        ASTHelperNode parent = expr.getParent();
+
+        if (parent != null) {
+            if (parent instanceof ASTBinaryExpression) {
+                ASTBinaryExpression be = (ASTBinaryExpression) parent;
+
+                if (be.getOp().equals(".") && (expr == be.getRhs())) {
+                    result = false;
+                }
+            }
+        }
+        return result;
+    }
+
     @Override protected void translatePrimaryExpression(ASTPrimaryExpression expr, StringBuilder result) {
         String s = expr.getLiteral();
         String n = expr.getName();
@@ -150,9 +170,16 @@ public class PythonTranslator extends Translator {
             else if (s.equals("false")) {
                 s = "False";
             }
+            else if (s.equals("this")) {
+                s = "self";
+            }
         }
-        if (isName && !isParameterName(n) && fields.containsKey(n)) {  // must be a field, then
-            result.append("self.");
+        if (isName && !isParameterName(n) && (findSymbol(n) == null) && fields.containsKey(n)) {  // must be a field, then
+            boolean addSelf = shouldAddSelf(expr);
+
+            if (addSelf) {
+                result.append("self.");
+            }
             if (properties.contains(n)) {
                 result.append('_');
             }
@@ -330,8 +357,19 @@ public class PythonTranslator extends Translator {
             result.append(" in ");
             renderReceiver(receiver, result);
         }
+        else if (methodName.equals("get") && (nargs == 1)) {
+            renderReceiver(receiver, result);
+            result.append('[');
+            internalTranslateExpression(firstArg, result);
+            result.append(']');
+        }
         else if (methodName.equals("toString") && (nargs == 0)) {
             result.append("str(");
+            renderReceiver(receiver, result);
+            result.append(')');
+        }
+        else if (methodName.equals("size") && (nargs == 0)) {
+            result.append("len(");
             renderReceiver(receiver, result);
             result.append(')');
         }
@@ -339,8 +377,8 @@ public class PythonTranslator extends Translator {
             renderReceiver(receiver, result);
             result.append(".is_tolerant");
         }
-        else if (isGetter(methodName) && (nargs == 0)) {
-            // treat as a property
+        else if (isGetter(methodName) && (nargs == 0) && !methodName.equals("getIndents")) {
+            // treat as a property. TODO special-casing of getIndents
             renderReceiver(receiver, result);
             result.append('.');
             result.append(translateGetter(methodName));
@@ -358,6 +396,7 @@ public class PythonTranslator extends Translator {
             result.append(".is_unparsed = ");
             internalTranslateExpression(firstArg, result);
         }
+/*
         else if (methodName.equals("setBeginLine") && (nargs == 1)) {
             renderReceiver(receiver, result);
             result.append(".begin_line = ");
@@ -378,6 +417,7 @@ public class PythonTranslator extends Translator {
             result.append(".end_column = ");
             internalTranslateExpression(firstArg, result);
         }
+*/
         else if (methodName.equals("of") && isEnumSet(receiver)) {
             result.append("_Set({");
             if (nargs > 0) {
@@ -400,7 +440,8 @@ public class PythonTranslator extends Translator {
         }
         else if (expr instanceof ASTAllocation) {
             if (isList(receiver)) {
-                result.append("_List()");
+                result.append("_List");
+                translateArguments(expr.getArguments(), true, result);
             }
             else {
                 internalTranslateExpression(receiver, result);
@@ -491,8 +532,12 @@ public class PythonTranslator extends Translator {
             }
         }
         else if (stmt instanceof ASTReturnStatement) {
-            result.append("return ");
-            internalTranslateExpression(((ASTReturnStatement) stmt).getValue(), result);
+            result.append("return");
+            ASTExpression value = ((ASTReturnStatement) stmt).getValue();
+            if (value != null) {
+                result.append(' ');
+                internalTranslateExpression(value, result);
+            }
             addNewline = true;
         }
         else if (stmt instanceof ASTIfStatement) {
@@ -545,17 +590,19 @@ public class PythonTranslator extends Translator {
                 internalTranslateExpression(s.getCondition(), result);
                 result.append(":\n");
                 internalTranslateStatement(s.getStatements(), indent + 4, result);
-                addIndent(indent + 4, result);
                 List<ASTExpression> iteration = s.getIteration();
-                n = iteration.size();
-                for (int i = 0; i < n; i++) {
-                    ASTExpression e = iteration.get(i);
-                    internalTranslateExpression(e, result);
-                    if (i < (n - 1)) {
-                        result.append("; ");
+                if (iteration != null) {
+                    addIndent(indent + 4, result);
+                    n = iteration.size();
+                    for (int i = 0; i < n; i++) {
+                        ASTExpression e = iteration.get(i);
+                        internalTranslateExpression(e, result);
+                        if (i < (n - 1)) {
+                            result.append("; ");
+                        }
                     }
+                    result.append('\n');
                 }
-                result.append('\n');
             }
         }
         else if (stmt instanceof ASTSwitchStatement) {
@@ -602,13 +649,27 @@ public class PythonTranslator extends Translator {
             String methodName = translateIdentifier(decl.getName());
             List<ASTFormalParameter> formals = decl.getParameters();
             SymbolTable syms = new SymbolTable();
+            boolean isStatic = false;
 
             pushSymbols(syms);
+            List<String> modifiers = decl.getModifiers();
+            if ((modifiers != null) && modifiers.contains("static")) {
+                result.append("@staticmethod\n");
+                addIndent(indent, result);
+                isStatic = true;
+            }
             result.append("def ");
             result.append(methodName);
-            result.append("(self");
+            if (isStatic) {
+                result.append('(');
+            }
+            else {
+                result.append("(self");
+                if (formals != null) {
+                    result.append(", ");
+                }
+            }
             if (formals != null) {
-                result.append(", ");
                 int n = formals.size();
                 for (int i = 0; i < n; i++) {
                     ASTFormalParameter formal = formals.get(i);
@@ -665,4 +726,28 @@ public class PythonTranslator extends Translator {
             }
         }
     }
+
+    @Override public String translateNonterminalArgs(String args) {
+        JavaCCParser parser = new JavaCCParser(String.format("(%s)", args));
+        try {
+            parser.InvocationArguments();
+            Node node = parser.rootNode();
+            StringBuilder result = new StringBuilder();
+            int n = node.getChildCount();
+            for (int i = 0; i < n; i++) {
+                Node child = node.getChild(i);
+                if (child instanceof Expression) {
+                    ASTExpression expr = (ASTExpression) transformTree(child);
+                    internalTranslateExpression(expr, result);
+                    result.append(", ");
+                }
+            }
+            result.setLength(result.length() - 2);  // lose the trailing ", "
+            return result.toString();
+        } catch (ParseException e) {
+            e.printStackTrace(); // TODO handle this better
+            return "";
+        }
+    }
+
 }

@@ -61,8 +61,6 @@
     ${production.leadingComments}
     # ${production.location}
     def parse_${production.name}(self[#if production.parameterList?has_content], ${grammar.utils.translateParameters(production.parameterList)}[/#if]):
-        if self.trace_enabled:
-            logger.info('Entering production defined on line ${production.beginLine} of ${production.inputSource?j_string}')
         # import pdb; pdb.set_trace()
         prev_production = self.currently_parsed_production
         self.currently_parsed_production = '${production.name}'
@@ -184,8 +182,6 @@ ${is}            self.close_node_scope(${nodeVarName}, ${closeCondition})
 ${is}            ${hook}(${nodeVarName})
                      [/#list]
 ${is}        else:
-${is}            if self.trace_enabled:
-${is}               logger.warning('ParseException: %s', ${parseExceptionVar})
                   [#if grammar.faultTolerant]
 ${is}            self.close_node_scope(${nodeVarName}, True)
 ${is}            ${nodeVarName}.dirty = True

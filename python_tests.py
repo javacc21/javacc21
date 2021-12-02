@@ -75,7 +75,7 @@ def copy_files(srcdir, destdir, patterns):
                 shutil.copytree(fn, dp)
             # print('%s -> %s' % (p, dp))
 
-def test_grammar(gdata):
+def test_grammar(gdata, options):
     s = 'Testing with %s grammar' % gdata.name
     line = '-' * 70
     print(line)
@@ -94,6 +94,18 @@ def test_grammar(gdata):
     dd = os.path.join(workdir, gdata.dir)
     copy_files(sd, dd, gdata.files)
     shutil.copy('ptest.py', dd)
+    # Copy bitset speed up files if available and wanted
+    if not options.no_speedup:
+        d = os.path.expanduser('~/projects/cbitset')
+        if os.path.isdir(d):
+            copied = 0
+            for spec in ('_bitset.py', '*.so'):
+                files = glob.glob(os.path.join(d, spec))
+                for f in files:
+                    shutil.copy(f, dd)
+                    copied += 1
+            if copied:
+                print('BitSet speedup files copied to working directory.')
     print('Test files copied to working directory.')
 
     # Run javacc to create the Java lexer and parser
@@ -196,6 +208,8 @@ def main():
     aa('--jython-dir', default=jd, help='Location of jython.jar')
     aa('--no-delete', default=False, action='store_true',
        help='Don\'t delete working directory')
+    aa('--no-speedup', default=False, action='store_true',
+       help='Don\'t use bitset speedup extension')
     aa('--langs', default='all', metavar='LANG1,LANG2...', help='Languages to test')
     options = ap.parse_args()
     # Check that jython is available
@@ -247,7 +261,7 @@ def main():
                 if lang == 'csharp':
                     print('Skipping csharp, because grammar is incomplete')
                     continue
-                test_grammar(gdata)
+                test_grammar(gdata, options)
                 workdirs.append(gdata.workdir)
 
     except Exception as e:

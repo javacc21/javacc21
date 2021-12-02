@@ -21,9 +21,14 @@ INJECT LEXER_CLASS :
 { 
    private Token danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
-   private List<Integer> indentationStack = new ArrayList<>();
-   {indentationStack.add(1);}
+   private List<Integer> indentationStack = initIndentationStack();
 
+   private List<Integer> initIndentationStack() {
+      List<Integer> result = new ArrayList<>();
+      result.add(1);
+      return result;
+   }
+   
    private Token TOKEN_HOOK(Token tok) {
       boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0; 
       TokenType type = tok.getType();
@@ -49,7 +54,7 @@ INJECT LEXER_CLASS :
       int indentation = indentationStack.get(indentationStack.size()-1);
       if (beginColumn > indentation) {
          indentationStack.add(beginColumn);
-         return new IndentToken(tok, indentationStack);
+         return IndentToken.makeIndentToken(tok, this, indentationStack);
       }
       if (beginColumn < indentation) {
          return handleDedent(tok, beginColumn);
@@ -69,7 +74,7 @@ INJECT LEXER_CLASS :
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           int dedentAmount = indentationStack.get(i) - indentationStack.get(i-1);
           indentationStack.remove(i);
-          Token dedent = new DedentToken(tok, indentationStack, dedentAmount);
+          Token dedent = DedentToken.makeDedentToken(tok, this, indentationStack, dedentAmount);
           if (firstDedent == null) firstDedent = dedent;
        }
        return firstDedent; 
@@ -130,12 +135,13 @@ INJECT DedentToken :
    private List<Integer> indents;
    private int dedentAmount;
 
-   public DedentToken(Token followingToken, List<Integer> indents, int dedentAmount) {
-      setType(TokenType.DEDENT);
-      this.indents = new ArrayList<Integer>(indents.size());
-      this.indents.addAll(indents);
-      this.dedentAmount = dedentAmount;
-      followingToken.preInsert(this);
+   public static Token makeDedentToken(Token followingToken, LEXER_CLASS tokenSource, List<Integer> indents, int dedentAmount) {
+      DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, 0, 0);
+      result.indents = new ArrayList<Integer>(indents.size());
+      result.indents.addAll(indents);
+      result.dedentAmount = dedentAmount;
+      followingToken.preInsert(result);
+      return result;
    }
 
    public List<Integer> getIndents() { return new ArrayList<>(indents);}
@@ -159,11 +165,12 @@ INJECT IndentToken :
 {
    private List<Integer> indents;
 
-   public IndentToken(Token followingToken, List<Integer> indents) {
-      setType(TokenType.INDENT);
-      this.indents = new ArrayList<Integer>(indents.size());
-      this.indents.addAll(indents);
-      followingToken.preInsert(this);
+   public static Token makeIndentToken(Token followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
+      IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, 0, 0);
+      result.indents = new ArrayList<Integer>(indents.size());
+      result.indents.addAll(indents);
+      followingToken.preInsert(result);
+      return result;
    }
 
    public List<Integer> getIndents() { return new ArrayList<>(indents);}

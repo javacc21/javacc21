@@ -74,6 +74,7 @@ public class PLex {
                System.out.println(s);
            }
            ++numTokens;
+/*
            Token nt = t;
            while ((nt = nt.nextCachedToken()) != null) {
                if (nt instanceof InvalidToken) {
@@ -94,6 +95,7 @@ public class PLex {
            if ((nt != null) && (nt.getType() == TokenType.EOF)) {
                break;
            }
+ */
        }
        while (t.getType() != TokenType.EOF);
        return numTokens;

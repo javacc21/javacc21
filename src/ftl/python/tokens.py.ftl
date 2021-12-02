@@ -34,19 +34,22 @@
 
 from enum import Enum, auto, unique
 
-from .utils import get_file_line_map_by_name
+from .utils import get_file_line_map_by_name, _GenWrapper, _List
+[#var injector = grammar.injector]
 
 __all__ = [
-    'BaseNode',
+    '${grammar.baseNodeClassName}',
     'TokenType',
     'Token',
 [#var tokenSubClassInfo = grammar.utils.tokenSubClassInfo()]
 [#list tokenSubClassInfo.sortedNames as name]
     '${name}',
 [/#list]
+[#if !grammar.minimalToken]
+    'new_token',
+[/#if]
     'InvalidToken',
-    'LexicalState',
-    'new_token'
+    'LexicalState'
 ]
 
 @unique
@@ -123,37 +126,66 @@ def split(tok, split_at, tt1, tt2):
 
 [/#if]
 
-class BaseNode:
+class ${grammar.baseNodeClassName}:
 
     __slots__ = (
 [#if grammar.nodeUsesParser]
         'parser',
 [/#if]
-        'input_source',
+        '_token_source',
         'parent',
         'children',
-        'begin_line',
-        'begin_column',
-        'end_line',
-        'end_column'
+        'is_unparsed',
+        'begin_offset',
+        'end_offset',
+[#if grammar.faultTolerant]
+        'dirty',
+[/#if]
     )
 
-    def __init__(self, [#if grammar.nodeUsesParser]parser_or_input_source[#else]input_source=None[/#if]):
-[#if grammar.nodeUsesParser]
-        if isinstance(parser_or_input_source, str):
-            self.parser = None
-            self.input_source = parser_or_input_source
-        else:
-            self.parser = parser_or_input_source
-            self.input_source = parser_or_input_source.input_source
-[#else]
-        self.input_source = input_source
-[/#if]
+    def __init__(self, token_source, begin_offset=0, end_offset=0):
+        self._token_source = token_source
         self.parent = None
         self.children = []
-        self.begin_line = self.begin_column = 0
-        self.end_line = self.end_column = 0
+        self.begin_offset = begin_offset
+        self.end_offset = end_offset
         # self.attributes = {}
+
+    @property
+    def begin_line(self):
+        ts = self.token_source
+        return 0 if not ts else ts.get_line_from_offset(self.begin_offset)
+
+    @property
+    def begin_column(self):
+        ts = self.token_source
+        return 0 if not ts else ts.get_codepoint_column_from_offset(self.begin_offset)
+
+    @property
+    def end_line(self):
+        ts = self.token_source
+        return 0 if not ts else ts.get_line_from_offset(self.end_offset - 1)
+
+    @property
+    def end_column(self):
+        ts = self.token_source
+        return 0 if not ts else ts.get_codepoint_column_from_offset(self.end_offset - 1)
+
+    @property
+    def token_source(self):
+        result = self._token_source
+[#if !grammar.minimalToken]        
+        if not result:
+            if self.prepended_token:
+                result = self.prepended_token.token_source
+            if not result and self.appended_token:
+                result = self.appended_token.token_source
+[/#if]
+        return result
+
+    @token_source.setter
+    def token_source(self, value):
+        self._token_source = value
 
     def add_child(self, node, index=-1):
         if index < 0:
@@ -167,6 +199,10 @@ class BaseNode:
         self.children.pop(index)
 
 [#if include_unwanted!false]
+    def set_child(self, node, index):
+        self.children[index] = node
+        node.parent = self
+
     def clear_children(self):
         self.children.clear()
 
@@ -243,6 +279,22 @@ class BaseNode:
             return last
         return last.last_token
 
+
+    def first_child_of_type(self, type):
+        for child in self.children:
+            if isinstance(child, Token) and child.type == type:
+                return child
+
+    def first_descendant_of_type(self, type):
+        for child in self.children:
+            if isinstance(child, Token):
+                if child.type == type:
+                    return child
+            else:
+                child = child.first_descendant_of_type(type)
+                if child:
+                    return child
+        
 [/#if]
 
     def __repr__(self):
@@ -252,45 +304,150 @@ class BaseNode:
                                            self.end_line,
                                            self.end_column)
 
-class Token[#if grammar.treeBuildingEnabled](BaseNode)[/#if]:
+class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]:
 
     __slots__ = (
         'type',
-        'image',
-        'input_source',
-[#if !grammar.treeBuildingEnabled]
-        'begin_line',
-        'begin_column',
-        'end_line',
-        'end_column',
+[#if !grammar.minimalToken || grammar.faultTolerant]
+        '_image',
+[/#if]
+[#if !grammar.minimalToken]
+        'prepended_token',
+        'appended_token',
+        'is_inserted',
 [/#if]
         'next',
         'previous_token',
         'next_token',
-        'is_unparsed',
-        'skipped',
+[#var injectedFields = grammar.utils.injectedTokenFieldNames(injector)]
+[#if injectedFields?size > 0]
+        # injected fields
+[#list injectedFields as fieldName]
+        '${fieldName}',
+[/#list]
+[/#if]
+[#if grammar.faultTolerant]
+        '_is_skipped',
+        '_is_virtual',
         'dirty'
+[/#if]
     )
 
-    def __init__(self, type, image, input_source):
+    def __init__(self, type, token_source, begin_offset, end_offset):
 [#if grammar.treeBuildingEnabled]
-        super().__init__(input_source)
+        super().__init__(token_source, begin_offset, end_offset)
 [#else]
-        self.begin_line = self.begin_column = 0
-        self.end_line = self.end_column = 0
+        self.begin_offset = begin_offset
+        self.end_offset = end_offset
 [/#if]
+${grammar.utils.translateTokenInjections(injector, true)}
         self.type = type
-        self.image = image
-        # A reference to the next regular (non-special) token from the input
-        # stream.  If this is the last token from the input stream, or if the
-        # token manager has not read tokens beyond this one, this field is
-        # set to None.  This is true only if this token is also a regular
-        # token.  Otherwise, see below for a description of the contents of
-        # this field.
-        self.next = None
         self.previous_token = None
         self.next_token = None
         self.is_unparsed = False
+[#if grammar.faultTolerant]
+        self.dirty = False
+        self._is_virtual = False
+        self._is_skipped = False
+[/#if]
+[#if !grammar.minimalToken || grammar.faultTolerant]
+        self._image = None
+[/#if]
+[#if !grammar.minimalToken]
+        self.prepended_token = None
+        self.appended_token = None
+        self.is_inserted = False
+
+    def pre_insert(self, prepended_token):
+        if prepended_token is self.prepended_token:
+            return
+        prepended_token.appended_token = self
+        existing_previous_token = self.previous_cached_token
+        if existing_previous_token:
+            existing_previous_token.appended_token = prepended_token
+            prepended_token.prepended_token = existing_previous_token
+        prepended_token.is_inserted = True
+        prepended_token.begin_offset = prepended_token.end_offset = self.begin_offset
+        self.prepended_token = prepended_token
+    
+    def unset_appended_token(self):
+        self.appended_token = None
+
+[/#if]
+
+    @property
+    def image(self):
+[#if grammar.minimalToken]
+        return self.source
+[#else]
+        return self._image if self._image else self.source
+[/#if]
+
+    @property
+    def source(self):
+        if self.type == TokenType.EOF:
+            return ''
+        ts = self.token_source
+        return None if not ts else ts.get_text(self.begin_offset, self.end_offset)
+
+[#if !grammar.minimalToken || grammar.faultTolerant]
+    @image.setter
+    def image(self, value):
+        self._image = value
+
+[/#if]
+
+    @property
+    def normalized_text(self):
+        if self.type == TokenType.EOF:
+            return ''
+        return self.image
+
+    __str__ = lambda self: self.normalized_text
+
+    def _preceding_tokens(self):
+        current = self
+        t = current.previous_cached_token
+        while t:
+            current = t
+            t = current.previous_cached_token
+            yield current
+
+    def preceding_tokens(self):
+        return _GenWrapper(self._preceding_tokens())
+
+    def _following_tokens(self):
+        current = self
+        t = current.next_cached_token
+        while t:
+            current = t
+            t = current.next_cached_token
+            yield current
+            
+    def following_tokens(self):
+        return _GenWrapper(self._following_tokens())
+
+    @property
+    def is_virtual(self):
+[#if grammar.faultTolerant]
+        return self._is_virtual || self.type == TokenType.EOF
+[#else]
+        return self.type == TokenType.EOF
+[/#if]
+
+[#if grammar.faultTolerant]
+    @is_virtual.setter
+    def is_virtual(self, value):
+        self._is_virtual = value
+
+[/#if]
+    @property
+    def is_skipped(self):
+[#if grammar.faultTolerant]
+        return self._is_skipped
+[#else]
+        return False
+[/#if]
 
     def get_next(self):
         return self.get_next_parsed_token()
@@ -300,36 +457,37 @@ class Token[#if grammar.treeBuildingEnabled](BaseNode)[/#if]:
 
     # return the next regular (i.e. parsed) token
     def get_next_parsed_token(self):
-        return self.next
+        result = self.next_cached_token
+        while result and result.is_unparsed:
+            result = result.next_cached_token
+        return result
 
-    def set_next_parsed_token(self, next):
-        self.next = next
-
-    set_next_token = set_next_parsed_token
-
-    def get_previous_token(self):
-        return self.previous_token
-
-    def set_previous_token(self, previous):
-        self.previous_token = previous
-
-[#if !grammar.treeBuildingEnabled]
-    def get_file_line_map(self):
-        return get_file_line_map_by_name(self.input_source)
+    @property
+    def previous_cached_token(self):
+[#if !grammar.minimalToken]        
+        if self.prepended_token:
+            return self.prepended_token
 [/#if]
+        ts = self.token_source
+        if not ts:
+            return None
+        return ts.previous_cached_token(self.begin_offset)
+
+    @property
+    def next_cached_token(self):
+[#if !grammar.minimalToken]        
+        if self.appended_token:
+            return self.appended_token
+[/#if]
+        if not self.token_source:
+            return None
+        return self.token_source.next_cached_token(self.end_offset)
 
     def get_source(self):
         if self.type == TokenType.EOF:
             return ''
         return self.get_file_line_map().get_text(self.begin_line, self.begin_column,
                                                  self.end_line, self.end_column)
-
-    def get_normalized_text(self):
-        if self.type == TokenType.EOF:
-            return 'EOF'
-        return self.image
-
-    __str__ = lambda self: self.image
 
     def __repr__(self):
         tn = self.type.name if self.type else None
@@ -341,7 +499,7 @@ class Token[#if grammar.treeBuildingEnabled](BaseNode)[/#if]:
                                                  self.end_line,
                                                  self.end_column)
 
-[#if grammar.treeBuildingEnabled]
+[#if grammar.treeBuildingEnabled && !grammar.minimalToken]
     # Copy the location info from another node or start/end nodes
     def copy_location_info(self, start, end=None):
         super().copy_location_info(start, end)
@@ -349,42 +507,55 @@ class Token[#if grammar.treeBuildingEnabled](BaseNode)[/#if]:
             self.previous_token = start.previous_token
         if end is None:
             if isinstance(start, Token):
-                self.next = start.next
-                self.next_token = start.next_token
+                self.appended_token = start.appended_token
+                self.prepended_token = start.prepended_token
         else:
+            if isinstance(start, Token):
+                self.prepended_token = start.prepended_token
             if isinstance(end, Token):
-                self.next = end.next
-                self.next_token = end.next_token
+                self.appended_token = end.appended_token
+        self.token_source = start.token_source
 [#else]
     # Copy the location info from another token or start/end tokens
     def copy_location_info(self, start, end=None):
-        if not self.input_source and start.input_source:
-            self.input_source = start.input_source
-        self.begin_line = start.begin_line
-        self.begin_column = start.begin_column
-        self.previous_token = start.previous_token
+        self.token_source = start.token_source
+        self.begin_offset = start.begin_offset
         if end is None:
-            self.end_line = start.end_line
-            self.end_column = start.end_column
-            self.next = start.next
-            self.next_token = start.next_token
-        else:
-            if not self.input_source and end.input_source:
-                self.input_source = end.input_source
-            self.end_line = end.end_line
-            self.end_column = end.end_column
-            self.next = end.next
-            self.next_token = end.next_token
-
+            self.end_offset = start.end_offset
+[#if !grammar.minimalToken]
+            self.prepended_token = start.prepended_token
+            self.appended_token = start.appended_token
 [/#if]
+        else:
+            if self.token_source is None:
+                self.token_source = end.token_source
+            self.end_offset = end.end_offset
+[#if !grammar.minimalToken]
+            self.prepended_token = start.prepended_token
+            self.appended_token = end.appended_token
+[/#if]
+[/#if]
+
+    @property
+    def input_source(self):
+        ts = self.token_source
+        return 'input' if ts is None else ts.input_source
+
     @property
     def location(self):
         return '%s:%s:%s' % (self.input_source, self.begin_line,
                              self.begin_column)
 
+${grammar.utils.translateTokenInjections(injector, false)}
+
 class InvalidToken(Token):
-    def __init__(self, image, input_source):
-        return super().__init__(TokenType.INVALID, image, input_source)
+    def __init__(self, token_source, begin_offset, end_offset):
+        super().__init__(TokenType.INVALID, token_source, begin_offset, end_offset)
+[#if grammar.faultTolerant]
+        self.is_unparsed = True
+        self.dirty = True
+[/#if]
+
 
 #
 # Token subclasses
@@ -393,15 +564,29 @@ class InvalidToken(Token):
 class ${name}(${tokenSubClassInfo.tokenClassMap[name]}): pass
 
 [/#list]
+[#if grammar.extraTokens?size > 0]
+  [#list grammar.extraTokenNames as name]
+    [#var cn = grammar.extraTokens[name]]
+class ${cn}(Token):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+${grammar.utils.translateTokenSubclassInjections(cn, injector, true)}
+${grammar.utils.translateTokenSubclassInjections(cn, injector, false)}
+  [/#list]
+[/#if]
 
-
-def new_token(type, image, input_source):
-[#list grammar.orderedNamedTokens as re]
+def new_token(type, *args):
+[#-- list grammar.orderedNamedTokens as re]
   [#if re.generatedClassName != "Token" && !re.private]
     if type == TokenType.${re.label}:
         return ${grammar.nodePrefix}${re.generatedClassName}(type, image, input_source)
   [/#if]
-[/#list]
-    if type == TokenType.INVALID:
-        return InvalidToken(image, input_source)
-    return Token(type, image, input_source)
+[/#list --]
+    if isinstance(args[0], str):  # called with an image
+        # assert isinstance(args[1], ${grammar.lexerClassName})
+        result = Token(type, args[1], 0, 0)
+        result.image = args[0]
+    else:
+        # assert isinstance(args[0], ${grammar.lexerClassName})
+        result = Token(type, args[0], args[1], args[2])
+    return result

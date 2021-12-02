@@ -59,12 +59,26 @@ public class Translator {
     }
 
     protected class ASTExpression extends ASTHelperNode {
+        public ASTExpression() {
+            this(null);
+        }
+
+        public ASTExpression(ASTHelperNode parent) {
+            this.parent = parent;
+        }
     }
 
     protected class ASTPrimaryExpression extends ASTExpression {
         protected String name;
         protected String literal;
 
+        public ASTPrimaryExpression() {
+            this(null);
+        }
+
+        public ASTPrimaryExpression(ASTHelperNode parent) {
+            this.parent = parent;
+        }
 
         public String getName() {
             return name;
@@ -370,6 +384,10 @@ public class Translator {
         protected List<ASTFormalParameter> parameters;
         protected ASTStatementList statements;
 
+        public List<String> getModifiers() {
+            return modifiers;
+        }
+
         void addModifier(String modifier) {
             if (modifiers == null) {
                 modifiers = new ArrayList<>();
@@ -575,10 +593,10 @@ public class Translator {
             // dotted name
             ASTBinaryExpression lhs = new ASTBinaryExpression();
             lhs.op = ".";
-            ASTPrimaryExpression pe = new ASTPrimaryExpression();
+            ASTPrimaryExpression pe = new ASTPrimaryExpression(lhs);
             pe.name = ((Identifier) name.getChild(0)).getImage();
             lhs.lhs = pe;
-            pe = new ASTPrimaryExpression();
+            pe = new ASTPrimaryExpression(lhs);
             pe.name = ((Identifier) name.getChild(2)).getImage();
             lhs.rhs = pe;
             result = lhs;
@@ -624,7 +642,7 @@ public class Translator {
         }
     }
 
-    ASTHelperNode transformTree(Node node, boolean forType) {
+    protected ASTHelperNode transformTree(Node node, boolean forType) {
         ASTHelperNode result = null;
 
         if (node instanceof Delimiter || node instanceof Operator) {
@@ -822,7 +840,9 @@ public class Translator {
         }
         else if (node instanceof ReturnStatement) {
             ASTReturnStatement resultNode = new ASTReturnStatement();
-            resultNode.value = (ASTExpression) transformTree(node.getChild(1));
+            if (node.getChildCount() > 2) {
+                resultNode.value = (ASTExpression) transformTree(node.getChild(1));
+            }
             return resultNode;
         }
         else if (node instanceof IfStatement) {
@@ -832,10 +852,12 @@ public class Translator {
             return resultNode;
         }
         else if (node instanceof ForStatement) {
+            throw new UnsupportedOperationException("Should be supplanted now");
+/*
             int n = node.getChildCount();
             ASTForStatement resultNode = new ASTForStatement();
             if (node.getChild(4).toString().equals(":")) {
-                // iterating for loop
+                // iterating for loop - this branch is now probably obsolete
                 ASTVariableOrFieldDeclaration decl = new ASTVariableOrFieldDeclaration();
                 decl.type = (ASTTypeExpression) transformTree(node.getChild(2), true);
                 decl.addNameAndInitializer((ASTPrimaryExpression) transformTree(node.getChild(3)), null);
@@ -853,6 +875,34 @@ public class Translator {
                     }
                 }
             }
+            resultNode.statements = (ASTStatement) transformTree(node.getLastChild());
+            return resultNode;
+*/
+        }
+        else if (node instanceof BasicForStatement) {
+            // counted for loop
+            int n = node.getChildCount();
+            ASTForStatement resultNode = new ASTForStatement();
+            resultNode.variable = (ASTVariableOrFieldDeclaration) transformTree(node.getChild(2));
+            resultNode.condition = (ASTExpression) transformTree(node.getChild(4));
+            for (int i = 5; i < (n - 1); i++) {
+                Node child = node.getChild(i);
+                if (child instanceof Expression) {
+                    resultNode.add((ASTExpression) transformTree(child));
+                }
+            }
+            resultNode.statements = (ASTStatement) transformTree(node.getLastChild());
+            return resultNode;
+        }
+        else if (node instanceof EnhancedForStatement) {
+            // iterating for loop
+            ASTForStatement resultNode = new ASTForStatement();
+            ASTVariableOrFieldDeclaration decl = new ASTVariableOrFieldDeclaration();
+            Node localVariableDecl = node.getChild(2);
+            decl.type = (ASTTypeExpression) transformTree(localVariableDecl.getFirstChild(), true);
+            decl.addNameAndInitializer((ASTPrimaryExpression) transformTree(localVariableDecl.getLastChild().getFirstChild()), null);
+            resultNode.variable = decl;
+            resultNode.iterable = (ASTExpression) transformTree(node.getChild(4));
             resultNode.statements = (ASTStatement) transformTree(node.getLastChild());
             return resultNode;
         }
@@ -956,7 +1006,7 @@ public class Translator {
         return result;
     }
 
-    ASTHelperNode transformTree(Node node) { return transformTree(node, false); }
+    protected ASTHelperNode transformTree(Node node) { return transformTree(node, false); }
 
     public void fail() throws UnsupportedOperationException {
         String message = String.format("not supported by translator for the '%s' language", grammar.getCodeLang());
@@ -1045,5 +1095,9 @@ public class Translator {
         if (!properties.isEmpty()) {
             propertyMap.put(name, new HashSet<>(properties));
         }
+    }
+
+    public String translateNonterminalArgs(String args) {
+        return args;
     }
 }

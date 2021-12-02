@@ -145,7 +145,7 @@ ${is}try:
   [#nested indent + 4 /]
 ${is}finally:
 ${is}    self.token_source.active_token_types = ${prevActives}
-${is}    if ${somethingChanged} and ${resetToken}.next:
+${is}    if ${somethingChanged}:
 ${is}        self.token_source.reset(${resetToken})
 ${is}        self._next_token_type = None
 [#else]
