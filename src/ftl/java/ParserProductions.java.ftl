@@ -609,8 +609,10 @@
           } 
           if (success&& !skippedTokens.isEmpty()) {
              InvalidNode iv = new InvalidNode();
+             iv.copyLocationInfo(skippedTokens.get(0));
              for (Token tok : skippedTokens) {
                 iv.addChild(tok);
+                iv.setEndOffset(tok.getEndOffset());
              }
              if (debugFaultTolerant) {
                 LOGGER.info("Skipping " + skippedTokens.size() + " tokens starting at: " + skippedTokens.get(0).getLocation());

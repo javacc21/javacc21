@@ -287,9 +287,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       while (matchedToken == null) {
         int curChar, codeUnitsRead=0, matchedPos=0;
         TokenType matchedType = null;
-        // The nfaLoopStart should be the same as tokenBeginOffset
-        // if we are not in a MORE.
-        int nfaLoopStart = this.bufferPosition;
         boolean reachedEnd = false;
         if (inMore) {
             curChar = readChar();
@@ -601,6 +598,7 @@ lexState the lexical state to switch to
 
     int getCodePointColumnFromOffset(int pos) {
         if (pos >= content.length()) return 1;
+        if (pos == 0) return startingColumn;
         if (Character.isLowSurrogate(content.charAt(pos))) --pos;
         int line = getLineFromOffset(pos)-startingLine;
         int lineStart = lineOffsets[line];

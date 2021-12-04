@@ -132,8 +132,6 @@ TOKEN :
   |
   < _IGNORE_CASE: "IGNORE_CASE" > #JavaCCKeyWord
   |
-//  < _NO_NFA : "NO_NFA"> #JavaCCKeyWord
-//  |
   < _PARSER_BEGIN: "PARSER_BEGIN" > #JavaCCKeyWord
   |
   < _PARSER_END: "PARSER_END" > #JavaCCKeyWord
