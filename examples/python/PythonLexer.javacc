@@ -131,7 +131,7 @@ INJECT DEDENT :
    private int dedentAmount;
 
    public DEDENT(Token followingToken, List<Integer> indents, int dedentAmount) {
-      super(TokenType.DEDENT, followingToken.getTokenSource(), followingToken.getBeginOffset(), followingToken.getBeginOffset());
+      setType(TokenType.DEDENT);
       this.indents = new ArrayList<Integer>(indents.size());
       this.indents.addAll(indents);
       this.dedentAmount = dedentAmount;
@@ -160,7 +160,7 @@ INJECT INDENT :
    private List<Integer> indents;
 
    public INDENT(Token followingToken, List<Integer> indents) {
-      super(TokenType.INDENT, followingToken.getTokenSource(), followingToken.getBeginOffset(), followingToken.getBeginOffset());
+      setType(TokenType.INDENT);
       this.indents = new ArrayList<Integer>(indents.size());
       this.indents.addAll(indents);
       followingToken.preInsert(this);

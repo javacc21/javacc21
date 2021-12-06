@@ -66,8 +66,8 @@ public interface Node extends Comparable<Node>
      * @return the input source (usually a filename) from which this Node came from
      */
     default String getInputSource() {
-        ${grammar.lexerClassName} flm = getTokenSource();
-        return flm == null ? "input" : flm.getInputSource();
+        ${grammar.lexerClassName} tokenSource = getTokenSource();
+        return tokenSource == null ? "input" : tokenSource.getInputSource();
     }
 
    /**
@@ -306,39 +306,40 @@ public interface Node extends Comparable<Node>
       * address this problem!
       */
      default String getSource() {
-        return getTokenSource().getText(getBeginOffset(), getEndOffset());
+        ${grammar.lexerClassName} tokenSource = getTokenSource();
+        return tokenSource == null ? null : tokenSource.getText(getBeginOffset(), getEndOffset());
     }
 
     /**
      * @return the (1-based) line location where this Node starts
      */      
     default int getBeginLine() {
-        ${grammar.lexerClassName} flm = getTokenSource();
-        return flm == null ? 0 : flm.getLineFromOffset(getBeginOffset());                
+        ${grammar.lexerClassName} tokenSource = getTokenSource();
+        return tokenSource == null ? 0 : tokenSource.getLineFromOffset(getBeginOffset());                
     };
 
     /**
      * @return the (1-based) line location where this Node ends
      */
     default int getEndLine() {
-        ${grammar.lexerClassName} flm = getTokenSource();
-        return flm == null ? 0 : flm.getLineFromOffset(getEndOffset()-1);
+        ${grammar.lexerClassName} tokenSource = getTokenSource();
+        return tokenSource == null ? 0 : tokenSource.getLineFromOffset(getEndOffset()-1);
     };
 
     /**
      * @return the (1-based) column where this Node starts
      */
     default int getBeginColumn() {
-        ${grammar.lexerClassName} flm = getTokenSource();
-        return flm == null ? 0 : flm.getCodePointColumnFromOffset(getBeginOffset());        
+        ${grammar.lexerClassName} tokenSource = getTokenSource();
+        return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getBeginOffset());        
     };
 
     /**
      * @return the (1-based) column offset where this Node ends
      */ 
     default int getEndColumn() {
-        ${grammar.lexerClassName} flm = getTokenSource();
-        return flm == null ? 0 : flm.getCodePointColumnFromOffset(getEndOffset()-1);
+        ${grammar.lexerClassName} tokenSource = getTokenSource();
+        return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getEndOffset()-1);
     }
     
     /**

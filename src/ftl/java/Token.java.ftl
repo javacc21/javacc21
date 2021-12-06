@@ -172,7 +172,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
         return type;
     }
 
-    void setType(TokenType type) {
+    protected void setType(TokenType type) {
         this.type=type;
     }
 
@@ -309,8 +309,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 [#if !grammar.minimalToken]        
         if (appendedToken != null) return appendedToken;
 [/#if]        
-        if (getTokenSource()==null) return null;
-        return getTokenSource().nextCachedToken(getEndOffset());
+        ${grammar.lexerClassName} tokenSource = getTokenSource();
+        return tokenSource != null ? tokenSource.nextCachedToken(getEndOffset()) : null;
     }
 
     public Token previousCachedToken() {
@@ -355,8 +355,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
 
 
-    //Should find a way to get rid of this.
-    Token() {}
+    protected Token() {}
 
     public Token(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         this.type = type;
