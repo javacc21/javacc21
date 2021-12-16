@@ -142,7 +142,7 @@ Block :
 
 ElseBlock : "else" ":" Block ;
 
-ExceptBlock : "except" [ Expression ["as" <NAME>] ] ":" Block ;
+ExceptBlock : "except" [ ["*"] Expression ["as" <NAME>] ] ":" Block ;
 
 IfStatement : 
     "if" NamedExpression ":" Block 
