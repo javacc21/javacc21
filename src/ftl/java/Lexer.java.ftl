@@ -730,7 +730,6 @@ lexState the lexical state to switch to
             }
             if (numPrecedingSlashes % 2 == 0) {
                 buf.append((char) '\\');
-                index++;
                 continue;
             }
             int numConsecutiveUs = 0;
