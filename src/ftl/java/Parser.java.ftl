@@ -48,7 +48,6 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.logging.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,7 +63,7 @@ import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*
 
 @SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
-
+[#--
     private static final java.util.logging.Logger LOGGER = Logger.getLogger(${grammar.constantsClassName}.class.getName());
     
 [#if grammar.debugParser||grammar.debugLexer||grammar.debugFaultTolerant]
@@ -77,6 +76,7 @@ public class ${grammar.parserClassName} implements ${grammar.constantsClassName}
         LOGGER.setLevel(level);
         Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
     }
+--]
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"
 Token lastConsumedToken;

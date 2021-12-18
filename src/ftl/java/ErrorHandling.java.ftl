@@ -31,29 +31,6 @@
  --]
 
  [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
- [#if grammar.debugParser]
-  private boolean trace_enabled = true;
- [#else]
-  private boolean trace_enabled = false;
- [/#if]
- 
-  public void setTracingEnabled(boolean tracingEnabled) {trace_enabled = tracingEnabled;}
-
- /**
- * @deprecated Use #setTracingEnabled
- */
-   @Deprecated
-  public void enable_tracing() {
-    setTracingEnabled(true);
-  }
-
-/**
- * @deprecated Use #setTracingEnabled
- */
-@Deprecated
- public void disable_tracing() {
-    setTracingEnabled(false);
-  }
  
 ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
 private ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
@@ -202,19 +179,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
     // Are we pending a recovery routine to
     // get back on the rails?
     private boolean pendingRecovery;
-  [#if grammar.debugFaultTolerant]
-    private boolean debugFaultTolerant = true;
-  [#else]
-    private boolean debugFaultTolerant = false;
-  [/#if]
-
-    /**
-     * Set whether to log the various actions used to keep going when 
-     * doing fault-tolerant parsing
-     */
-    public void setDebugFaultTolerant(boolean debugFaultTolerant) {
-        this.debugFaultTolerant = debugFaultTolerant;
-    }
+//    private boolean debugFaultTolerant = false;
 
     private java.util.List<ParsingProblem> parsingProblems = new java.util.ArrayList<>();
 
@@ -272,7 +237,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
   [/#list]
       }
 [/#if]
-      if (trace_enabled) LOGGER.info("Consumed token of type " + lastConsumedToken.getType() + " from " + lastConsumedToken.getLocation());
 [#if grammar.faultTolerant]
 // Check whether the very next token is in the follow set of the last consumed token
 // and if it is not, we check one token ahead to see if skipping the next token remedies
@@ -283,7 +247,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
             Token nextNext = nextToken(nextToken);
             if (followSet.contains(nextNext.getType())) {
                nextToken.setSkipped(true);
-               if (debugFaultTolerant) LOGGER.info("Skipping token " + nextToken.getType() + " at: " + nextToken.getLocation());
+//               if (debugFaultTolerant) LOGGER.info("Skipping token " + nextToken.getType() + " at: " + nextToken.getLocation());
                //lastConsumedToken.setNext(nextNext);
             }
          }
@@ -306,7 +270,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
              [#-- REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
              should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
              nextToken.setSkipped(true);
-             if (debugFaultTolerant) LOGGER.info("Skipping token of type: " + nextToken.getType() + " at: " + nextToken.getLocation());
+//             if (debugFaultTolerant) LOGGER.info("Skipping token of type: " + nextToken.getType() + " at: " + nextToken.getLocation());
 [#if grammar.treeBuildingEnabled]             
              pushNode(nextToken);
 [/#if]             
@@ -321,7 +285,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
            virtualToken.copyLocationInfo(nextToken);
            //virtualToken.setNext(nextToken);
            //lastConsumedToken.setNext(virtualToken);
-           if (debugFaultTolerant) LOGGER.info("Inserting virtual token of type: " + expectedType + " at " + virtualToken.getLocation());
+//           if (debugFaultTolerant) LOGGER.info("Inserting virtual token of type: " + expectedType + " at " + virtualToken.getLocation());
 [#if MULTIPLE_LEXICAL_STATE_HANDLING]
            if (token_source.doLexicalStateSwitch(expectedType)) {
               token_source.reset(virtualToken);

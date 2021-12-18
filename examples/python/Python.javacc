@@ -21,7 +21,7 @@ DEACTIVATE_TOKENS=MATCH,CASE;
 INCLUDE "PythonLexer.javacc" 
 
 #Module : 
-   (Statement)* 
+   (Statement)*! 
    <EOF> 
    {return CURRENT_NODE;}
 ;

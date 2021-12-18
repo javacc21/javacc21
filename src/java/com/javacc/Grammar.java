@@ -1057,23 +1057,8 @@ public class Grammar extends BaseNode {
         return b== null ? false : b;
     }
 
-    public boolean getDebugParser() {
-        Boolean b = (Boolean) settings.get("DEBUG_PARSER");
-        return b == null ? false : b;
-    }
-
-    public boolean getDebugLexer() {
-        Boolean b = (Boolean) settings.get("DEBUG_LEXER");
-        return b==null ? false : b;
-    }
-
     public boolean getEnsureFinalEOL() {
         Boolean b = (Boolean) settings.get("ENSURE_FINAL_EOL");
-        return b== null ? false : b;
-    }
-
-    public boolean getDebugFaultTolerant() {
-        Boolean b = (Boolean) settings.get("DEBUG_FAULT_TOLERANT");
         return b== null ? false : b;
     }
 
@@ -1084,7 +1069,7 @@ public class Grammar extends BaseNode {
 
     public boolean getPreserveLineEndings() {
         Boolean b = (Boolean) settings.get("PRESERVE_LINE_ENDINGS");
-        return b== null ? true : b;
+        return b== null ? false : b;
     }
 
     public boolean getJavaUnicodeEscape() {
@@ -1094,7 +1079,7 @@ public class Grammar extends BaseNode {
 
     public int getTabsToSpaces() {
         Integer i = (Integer) settings.get("TABS_TO_SPACES");
-        return i==null ? 0 : i;
+        return i==null ? 8 : i;
     }
 
     public int getJdkTarget() {
@@ -1158,7 +1143,7 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = ",FAULT_TOLERANT,DEBUG_FAULT_TOLERANT,DEBUG_LEXER,DEBUG_PARSER,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,DEBUG_TOKEN_MANAGER,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,";
+    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,";
     private String stringSettings = ",PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
     private String integerSettings = ",TABS_TO_SPACES,JDK_TARGET,";
 

@@ -64,7 +64,6 @@
     ${production.name}(${production.parameterList!}) 
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
-     if (trace_enabled) LOGGER.info("Entering production defined on line ${production.beginLine} of ${production.inputSource?j_string}");
      if (cancelled) throw new CancellationException();
      String prevProduction = currentlyParsedProduction;
      this.currentlyParsedProduction = "${production.name}";
@@ -85,7 +84,7 @@
      [@CU.HandleLexicalStateChange expansion false]
       [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
          if (pendingRecovery) {
-            if (debugFaultTolerant) LOGGER.info("Re-synching to expansion at: ${expansion.location?j_string}");
+//            if (debugFaultTolerant) LOGGER.info("Re-synching to expansion at: ${expansion.location?j_string}");
             ${expansion.recoverMethodName}();
          }
       [/#if]
@@ -181,7 +180,6 @@
                         ${hook}(${nodeVarName});
                      [/#list]
                  } else {
-                     if (trace_enabled) LOGGER.warning("ParseException: " + ${parseExceptionVar}.getMessage());
                   [#if grammar.faultTolerant]
                      closeNodeScope(${nodeVarName}, true);
                      ${nodeVarName}.setDirty(true);
@@ -416,15 +414,15 @@
           ${BuildCode(loopExpansion.nestedExpansion)}
        } catch (ParseException pe) {
           if (!isParserTolerant()) throw pe;
-          if (debugFaultTolerant) LOGGER.info("Handling exception. Last consumed token: " + lastConsumedToken.getImage() + " at: " + lastConsumedToken.getLocation());
+//          if (debugFaultTolerant) LOGGER.info("Handling exception. Last consumed token: " + lastConsumedToken.getImage() + " at: " + lastConsumedToken.getLocation());
           if (${initialTokenVarName} == lastConsumedToken) {
              lastConsumedToken = nextToken(lastConsumedToken);
              //We have to skip a token in this spot or 
              // we'll be stuck in an infinite loop!
              lastConsumedToken.setSkipped(true);
-             if (debugFaultTolerant) LOGGER.info("Skipping token " + lastConsumedToken.getImage() + " at: " + lastConsumedToken.getLocation());
+//             if (debugFaultTolerant) LOGGER.info("Skipping token " + lastConsumedToken.getImage() + " at: " + lastConsumedToken.getLocation());
           }
-          if (debugFaultTolerant) LOGGER.info("Repeat re-sync for expansion at: ${loopExpansion.location?j_string}");
+//          if (debugFaultTolerant) LOGGER.info("Repeat re-sync for expansion at: ${loopExpansion.location?j_string}");
           ${loopExpansion.recoverMethodName}();
           if (pendingRecovery) throw pe;
        }
@@ -614,9 +612,9 @@
                 iv.addChild(tok);
                 iv.setEndOffset(tok.getEndOffset());
              }
-             if (debugFaultTolerant) {
-                LOGGER.info("Skipping " + skippedTokens.size() + " tokens starting at: " + skippedTokens.get(0).getLocation());
-             }
+//             if (debugFaultTolerant) {
+//                LOGGER.info("Skipping " + skippedTokens.size() + " tokens starting at: " + skippedTokens.get(0).getLocation());
+//             }
              pushNode(iv);
           }
           pendingRecovery = !success;

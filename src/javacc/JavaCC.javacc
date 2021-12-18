@@ -49,8 +49,12 @@ PARSER_PACKAGE=com.javacc.parser;
 NODE_PACKAGE=com.javacc.parser.tree;
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../java";
-//JDK_TARGET=11;
+// The following two lines won't be necessary once we do a rebootstrap
+TABS_TO_SPACES=8;
+PRESERVE_LINE_ENDINGS=false;
 #endif 
+
+DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
 //FAULT_TOLERANT=true;
 
@@ -661,11 +665,11 @@ INJECT FieldDeclaration :
 
 INJECT PARSER_CLASS : {
 
-    private EnumSet<TokenType> javaccKeyWords = EnumSet.of(_INJECT,
-       _INCLUDE, _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
+    private EnumSet<TokenType> javaccKeyWords = EnumSet.of(
+       _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
        _PARSER_BEGIN, _PARSER_END, _TOKEN, _UNPARSED, _MORE,
        _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR, _UPTO, 
-       _LEXICAL_STATE, _EOF);
+       _LEXICAL_STATE);
 
     private Token TOKEN_HOOK(Token t) {
         if (javaccKeyWords.contains(t.getType())) {
@@ -870,9 +874,9 @@ INJECT Token :
       |
       CodeInjection
       |
-      BNFProduction
+      =>GrammarInclusion
       |
-      GrammarInclusion
+      BNFProduction
   )+!
   <EOF>
   {
@@ -921,7 +925,8 @@ GrammarInclusion throws IOException :
    List<String> locations = new ArrayList<>();
    Token includeToken;
 }
-   <_INCLUDE> {includeToken = lastConsumedToken;}
+   ACTIVATE_TOKENS _INCLUDE (<_INCLUDE>)
+   {includeToken = lastConsumedToken;}
    (
        (
            <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());}
@@ -966,7 +971,7 @@ CodeInjection :
     Annotation ann;
     ClassOrInterfaceBody coib;
 }   
-        "INJECT" ["(" {usingParentheses = true;}]
+        ACTIVATE_TOKENS _INJECT (<_INJECT>) ["(" {usingParentheses = true;}]
         [
             "class"
             |
@@ -977,6 +982,7 @@ CodeInjection :
             SCAN {usingParentheses} => ")"
         ]
         ":"
+        =>|+1
         [
           SCAN "{" ("}" | "import" | "extends" | "implements" | (Annotation)* "}") => "{"
           {foundOptionalInitialBrace=true;}
@@ -1030,7 +1036,7 @@ CodeInjection2 :
 {
         CompilationUnit jcu;
 }
-        <_INJECT>
+        ACTIVATE_TOKENS _INJECT (<_INJECT>)
         ":" =>|| "{"
         jcu=CompilationUnit
        "}"
@@ -2574,7 +2580,7 @@ RegexpExpansion #void :
   RegexpStringLiteral
   |
   SCAN ~\.\TokenProduction =>
-  (RegexpRef|EndOfFile)
+  ACTIVATE_TOKENS _EOF (RegexpRef|EndOfFile)
   |
   SCAN 3 {isInProduction("TokenProduction")} =>
   InPlaceRegexp 
@@ -2662,7 +2668,7 @@ INJECT RegexpStringLiteral :
   }
 }
 
-RegexpRef RegexpRef : 
+#RegexpRef : 
 {
    Token t;
 }

@@ -68,7 +68,6 @@
 [/#list]
 
 import java.io.*;
-import java.util.logging.Logger;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.EnumMap;
@@ -146,18 +145,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
 
-  private static final Logger LOGGER = Logger.getLogger(${grammar.constantsClassName}.class.getName());
-    [#if grammar.debugLexer]  
-  private boolean trace_enabled = true;
-    [#else]  
-  private boolean trace_enabled = false;
-    [/#if]
   private InvalidToken invalidToken;
   // The source of the raw characters that we are scanning  
-
-  private void setTracingEnabled(boolean trace_enabled) {
-     this.trace_enabled = trace_enabled;
-  }
 
   public String getInputSource() {
       return inputSource;
@@ -295,21 +284,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         else {
             tokenBeginOffset = this.bufferPosition;
             firstChar = curChar = readChar();
-            if (trace_enabled)  {
-                int tokenBeginLine = getLineFromOffset(bufferPosition);
-                int tokenBeginColumn = getCodePointColumnFromOffset(bufferPosition);
-                LOGGER.info("Starting new token on line: " + tokenBeginLine + ", column: " + tokenBeginColumn);
-            }
             if (curChar == -1) {
-              if (trace_enabled) {
-                LOGGER.info("Reached end of input");
-              }
               matchedType = TokenType.EOF;
               reachedEnd = true;
-            }
-            else {
-              if (trace_enabled) 
-                LOGGER.info("Read character " + ${grammar.constantsClassName}.displayChar(curChar));
             }
         } 
       [#if multipleLexicalStates]
@@ -329,7 +306,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 currentStates = nextStates;
                 nextStates = temp;
                 int retval = readChar();
-                if (trace_enabled) LOGGER.info("Read character " + ${grammar.constantsClassName}.displayChar(retval));
                 if (retval >=0) {
                     curChar = retval;
                 }
@@ -343,8 +319,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 TokenType returnedType = nfaFunctions[0].apply(curChar, nextStates, activeTokenTypes);
                 if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                   newType = returnedType;
-                  if (trace_enabled) 
-                    LOGGER.info("Potential match: " + newType);
                 } 
             } else {
                 int nextActive = currentStates.nextSetBit(0);
@@ -352,8 +326,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                     TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes);
                     if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                       newType = returnedType;
-                      if (trace_enabled) 
-                         LOGGER.info("Potential match: " + newType);
                     }
                     nextActive = currentStates.nextSetBit(nextActive+1);
                 } 
@@ -369,16 +341,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         if (matchedType == null) {
             bufferPosition = tokenBeginOffset+1;
             if (firstChar>0xFFFF) ++bufferPosition;
-            if (trace_enabled) {
-               LOGGER.info("Invalid input: " + ${grammar.constantsClassName}.displayChar(firstChar));
-            }
             return new InvalidToken(this, tokenBeginOffset, bufferPosition);
-        } else {
-          if (trace_enabled) {
-              String input = getText(tokenBeginOffset, tokenBeginOffset+matchedPos);
-              LOGGER.info("Matched pattern of type: " + matchedType + ": " + ${grammar.constantsClassName}.addEscapes(input));
-          }
-        }
+        } 
         bufferPosition -= (codeUnitsRead - matchedPos);
         if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             matchedToken = Token.newToken(matchedType, 
@@ -421,7 +385,6 @@ lexState the lexical state to switch to
      */
     public boolean switchTo(LexicalState lexState) {
         if (this.lexicalState != lexState) {
-           if (trace_enabled) LOGGER.info("Switching from lexical state " + this.lexicalState + " to " + lexState);
            this.lexicalState = lexState;
            return true;
         }

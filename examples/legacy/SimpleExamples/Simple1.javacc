@@ -26,25 +26,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-options {
-  LOOKAHEAD = 1;
-  CHOICE_AMBIGUITY_CHECK = 2;
-  OTHER_AMBIGUITY_CHECK = 1;
-  DEBUG_PARSER = false;
-  DEBUG_LOOKAHEAD = false;
-  DEBUG_LEXER = false;
-  ERROR_REPORTING = true;
-  JAVA_UNICODE_ESCAPE = false;
-  IGNORE_CASE = false;
-  USER_DEFINED_LEXER = false;
-  USER_CHAR_STREAM = false;
-  BUILD_PARSER = true;
-  BUILD_LEXER = true;
-  SANITY_CHECK = true;
-  FORCE_LA_CHECK = false;
-}
-
 INJECT(PARSER_CLASS) : 
 {}
 {

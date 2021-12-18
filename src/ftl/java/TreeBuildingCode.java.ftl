@@ -128,8 +128,6 @@
             ${hook}(n);
   [/#list]
         }
-        if (trace_enabled && n!=null) LOGGER.info("Opened node scope for node of type: " + n.getClass().getName());
-        if (trace_enabled) LOGGER.info("Scope nesting level is "  +  currentNodeScope.nestingLevel());
     }
 
 	/* A definite node is constructed from a specified number of
@@ -139,7 +137,6 @@
 	 */
     private void closeNodeScope(Node n, int num) {
         n.setEndOffset(lastConsumedToken.getEndOffset());
-        if (trace_enabled) LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + num + " nodes off the stack.");
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();
         for (int i=0;i<num;i++) {
@@ -167,7 +164,6 @@
     private void closeNodeScope(Node n, boolean condition) {
         if (n!= null && condition) {
             n.setEndOffset(lastConsumedToken.getEndOffset());
-            if (trace_enabled) LOGGER.finer("Closing node scope for node of type: " + n.getClass().getName() + ", popping " + nodeArity() + " nodes off the stack.");
             int a = nodeArity();
             currentNodeScope.close();
             ArrayList<Node> nodes = new ArrayList<Node>();
@@ -189,24 +185,12 @@
                 n.addChild(child);
             }
             n.close();
-            if (trace_enabled) {
-                LOGGER.info("Closing node scope for node of type: " + n.getClass().getName() + ", leaving " + nodeArity() + " nodes on the stack.");
-                LOGGER.info("Nesting level is : " + currentNodeScope.nestingLevel());
-            }
             pushNode(n);
-            if (trace_enabled) {
-                LOGGER.info("Closed node scope for node of type: " + n.getClass().getName() + ", there are now " + nodeArity() + " nodes on the stack.");
-                LOGGER.info("Nesting level is : " + currentNodeScope.nestingLevel());
-            }
 [#list grammar.closeNodeScopeHooks as hook]
            ${hook}(${nodeVarName});
 [/#list]
         } else {
             currentNodeScope.close();
-            if (trace_enabled && n!=null) {
-                LOGGER.info("Closed node scope for node of type: " + n.getClass().getName() + ", leaving " + nodeArity() + " nodes on the stack.");
-                LOGGER.info("Nesting level is : " + currentNodeScope.nestingLevel());
-            }
         }
     }
     
