@@ -682,7 +682,7 @@ lexState the lexical state to switch to
         char ch = content.charAt(index++);
         if (ch == '\n') {
             buf.append(ch);
-            ++col;
+            col=0;
         }
         else if (javaUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
             int numPrecedingSlashes = 0;
@@ -706,9 +706,9 @@ lexState the lexical state to switch to
         }
         else if (!preserveLines && ch == '\r') {
             buf.append((char)'\n');
+            col = 0;
             if (index < contentLength && content.charAt(index) == '\n') {
                 ++index;
-                col = 0;
             }
         } else if (ch == '\t' && tabsToSpaces > 0) {
             int spacesToAdd = tabsToSpaces - col % tabsToSpaces;
