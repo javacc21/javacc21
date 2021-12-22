@@ -1099,10 +1099,14 @@ Setting(Map<String,Object> settings) #Setting :
         SCAN <IDENTIFIER> "."
         =>Name {value = peekNode().toString();}
         |
-        <IDENTIFIER> {value = lastConsumedToken.getImage();} 
-           ("," {value+=",";} <IDENTIFIER> {value+=lastConsumedToken.getImage();})* 
+        <IDENTIFIER> {value = lastConsumedToken.getImage();}
+        [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.getImage();} ]
+           ("," {value+=",";}
+            <IDENTIFIER> {value+=lastConsumedToken.getImage();}
+            [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.getImage();} ]
+           )* 
      )
-  ]  
+  ]
   ";"
   {
       settings.put(key, value);

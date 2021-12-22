@@ -122,7 +122,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        [#list grammar.deactivatedTokens as token]
           activeTokenTypes.remove(${CU.TT}${token});
        [/#list]
-       [#list grammar.extraTokens as token]
+       [#list grammar.extraTokenNames as token]
           regularTokens.add(${CU.TT}${token});
        [/#list]
      }

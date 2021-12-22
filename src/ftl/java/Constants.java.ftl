@@ -17,7 +17,7 @@ import java.nio.charset.Charset;
      [#list grammar.lexerData.regularExpressions as regexp]
        ${regexp.label},
      [/#list]
-     [#list grammar.extraTokens as extraToken]
+     [#list grammar.extraTokenNames as extraToken]
        ${extraToken},
      [/#list]
      INVALID

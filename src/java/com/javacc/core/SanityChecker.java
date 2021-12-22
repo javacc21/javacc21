@@ -298,7 +298,7 @@ public class SanityChecker {
 
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
-            if (grammar.getExtraTokens().contains(label)) continue;
+            if (grammar.getExtraTokens().containsKey(label)) continue;
             RegularExpression referenced = grammar.getNamedToken(label);
             if (referenced == null) {// && !ref.getLabel().equals("EOF")) {
                 grammar.addError(ref,  "Undefined lexical token name \"" + label + "\".");
