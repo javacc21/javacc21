@@ -42,6 +42,7 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.regex.*;
 
 import com.javacc.core.Expansion;
 import com.javacc.core.LexerData;
@@ -103,7 +104,7 @@ public class Grammar extends BaseNode {
 
     private Set<String> tokensOffByDefault = new LinkedHashSet<>();
 
-    private Set<String> extraTokens = new LinkedHashSet<>();
+    private Map<String, String> extraTokens = new HashMap<>();
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
@@ -1091,13 +1092,17 @@ public class Grammar extends BaseNode {
         return tokensOffByDefault;
     }
 
-    public Set<String> getExtraTokens() {
+    public Map<String, String> getExtraTokens() {
         return extraTokens;
     }
+    public Set<String> getExtraTokenNames() { return extraTokens.keySet(); }
+    public Collection<String> getExtraTokenClassNames() { return extraTokens.values(); }
 
     private boolean ignoreCase;
     public boolean isIgnoreCase() {return ignoreCase;}
     public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
+
+    private static Pattern extraTokenPattern = Pattern.compile("^(\\w+)(#\\w+)?$");
 
     public void setSettings(Map<String, Object> settings) {
         typeCheckSettings(settings);
@@ -1122,9 +1127,21 @@ public class Grammar extends BaseNode {
             }
             else if (key.equals("EXTRA_TOKENS")) {
                 String tokens = (String) settings.get(key);
-                for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens();) {
-                    String tokenName = st.nextToken();
-                    extraTokens.add(tokenName);
+                for (StringTokenizer st = new StringTokenizer(tokens, ",\r\n"); st.hasMoreTokens();) {
+                    String tokenNameAndMaybeClass = st.nextToken();
+                    Matcher m = extraTokenPattern.matcher(tokenNameAndMaybeClass);
+                    if (m.matches()) {
+                        MatchResult mr = m.toMatchResult();
+                        String tokenName = mr.group(1);
+                        String tokenClassName = mr.group(2);
+                        if (tokenClassName == null) {
+                            tokenClassName = tokenName;
+                        }
+                        else {
+                            tokenClassName = tokenClassName.substring(1);
+                        }
+                        extraTokens.put(tokenName, tokenClassName);
+                    }
                 }
             }
             else if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {

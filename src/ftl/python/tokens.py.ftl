@@ -54,7 +54,7 @@ class TokenType(Enum):
  [#list grammar.lexerData.regularExpressions as regexp]
     ${regexp.label} = auto()
  [/#list]
- [#list grammar.extraTokens as t]
+ [#list grammar.extraTokenNames as t]
     ${t} = auto()
  [/#list]
     INVALID = auto()

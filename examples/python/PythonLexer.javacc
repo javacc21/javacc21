@@ -7,7 +7,7 @@ DEFAULT_LEXICAL_STATE = PYTHON;
 TABS_TO_SPACES=8;
 PRESERVE_LINE_ENDINGS=false;
 ENSURE_FINAL_EOL;
-EXTRA_TOKENS = INDENT, DEDENT;
+EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
 
 /*
  * The following code injection implements the various indent/dedent logic.
@@ -16,8 +16,8 @@ INJECT LEXER_CLASS :
    import java.util.List;
    import java.util.ArrayList;
    import java.util.Iterator;
-   import NODE_PACKAGE.INDENT;
-   import NODE_PACKAGE.DEDENT;
+   import NODE_PACKAGE.IndentToken;
+   import NODE_PACKAGE.DedentToken;
 { 
    private Token danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
@@ -49,7 +49,7 @@ INJECT LEXER_CLASS :
       int indentation = indentationStack.get(indentationStack.size()-1);
       if (beginColumn > indentation) {
          indentationStack.add(beginColumn);
-         return new INDENT(tok, indentationStack);
+         return new IndentToken(tok, indentationStack);
       }
       if (beginColumn < indentation) {
          return handleDedent(tok, beginColumn);
@@ -69,7 +69,7 @@ INJECT LEXER_CLASS :
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           int dedentAmount = indentationStack.get(i) - indentationStack.get(i-1);
           indentationStack.remove(i);
-          Token dedent = new DEDENT(tok, indentationStack, dedentAmount);
+          Token dedent = new DedentToken(tok, indentationStack, dedentAmount);
           if (firstDedent == null) firstDedent = dedent;
        }
        return firstDedent; 
@@ -123,14 +123,14 @@ INJECT Token : {
 
 }
 
-INJECT DEDENT : 
+INJECT DedentToken : 
    import java.util.List;
    import java.util.ArrayList;
 {
    private List<Integer> indents;
    private int dedentAmount;
 
-   public DEDENT(Token followingToken, List<Integer> indents, int dedentAmount) {
+   public DedentToken(Token followingToken, List<Integer> indents, int dedentAmount) {
       setType(TokenType.DEDENT);
       this.indents = new ArrayList<Integer>(indents.size());
       this.indents.addAll(indents);
@@ -153,13 +153,13 @@ INJECT DEDENT :
    }
 }
 
-INJECT INDENT : 
+INJECT IndentToken : 
    import java.util.List;
    import java.util.ArrayList;
 {
    private List<Integer> indents;
 
-   public INDENT(Token followingToken, List<Integer> indents) {
+   public IndentToken(Token followingToken, List<Integer> indents) {
       setType(TokenType.INDENT);
       this.indents = new ArrayList<Integer>(indents.size());
       this.indents.addAll(indents);

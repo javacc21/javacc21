@@ -474,8 +474,8 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
               case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
             [/#if]
            [/#list]
-           [#list grammar.extraTokens as tokenName]
-              case ${tokenName} : return new ${grammar.nodePrefix}${tokenName}(TokenType.${tokenName}, tokenSource, beginOffset, endOffset);
+           [#list grammar.extraTokenNames as tokenName]
+              case ${tokenName} : return new ${grammar.nodePrefix}${grammar.extraTokens[tokenName]}(TokenType.${tokenName}, tokenSource, beginOffset, endOffset);
            [/#list]
               case INVALID : return new InvalidToken(tokenSource, beginOffset, endOffset);
               default : return new Token(type, tokenSource, beginOffset, endOffset);

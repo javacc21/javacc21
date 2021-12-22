@@ -361,9 +361,10 @@ public class FilesGenerator {
                 superClassLookup.put(tokenClassName, superClassName);
             }
         }
-        for (String tokenName : grammar.getExtraTokens()) {
-            Path outputFile = getOutputFile(tokenName);
-            files.put(tokenName, outputFile);
+        for (Map.Entry<String, String> es : grammar.getExtraTokens().entrySet()) {
+            String value = es.getValue();
+            Path outputFile = getOutputFile(value);
+            files.put(value, outputFile);
             tokenSubclassFileNames.add(outputFile.getFileName().toString());
         }
         for (String nodeName : grammar.getNodeNames()) {
