@@ -87,6 +87,12 @@ public class PLex {
                    System.out.println(s);
                }
                ++numTokens;
+               if (nt.getType() == TokenType.EOF) {
+                   break;
+               }
+           }
+           if ((nt != null) && (nt.getType() == TokenType.EOF)) {
+               break;
            }
        }
        while (t.getType() != TokenType.EOF);
