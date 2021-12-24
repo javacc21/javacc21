@@ -71,6 +71,5 @@ jobs:
         python --version
         ant -version
         ant test
-        ant test-python
       env:
         PY_DEBUG: 1
