@@ -108,8 +108,6 @@
             ${hook}(self.last_consumed_token)
   [/#list]
 [/#if]
-        if self.trace_enabled:
-            logger.info('Consumed token of type %s from %s', self.last_consumed_token.type.name, self.last_consumed_token.location)
 [#if grammar.faultTolerant]
         # Check whether the very next token is in the follow set of the last consumed token
         # and if it is not, we check one token ahead to see if skipping the next token remedies
@@ -122,7 +120,7 @@
                     next_token.skipped = True
                     if self.debug_fault_tolerant:
                         logger.info('Skipping token %s at: %s', next_token.type, next_token.location)
-                    self.last_consumed_token.next = next_next
+                     # self.last_consumed_token.next = next_next
 [/#if]
         return self.last_consumed_token
 
@@ -143,7 +141,7 @@
 [#if grammar.treeBuildingEnabled]
             self.push_node(next_token)
 [/#if]
-            self.last_consumed_token.next = next_next
+            # self.last_consumed_token.next = next_next
             return next_next
 
         [#-- Since skipping the next token did not work, we will insert a virtual token --]
@@ -152,8 +150,8 @@
                                       self.last_consumed_token.input_source)
             virtual_token.virtual = True
             virtual_token.copy_location_info(next_token)
-            virtual_token.next = next_token
-            self.last_consumed_token.next = virtual_token
+            # virtual_token.next = next_token
+            # self.last_consumed_token.next = virtual_token
             if self.debug_fault_tolerant:
                 logger.info('Inserting virtual token of type: %s at: %s', expected_type, virtual_token.location)
 [#if MULTIPLE_LEXICAL_STATE_HANDLING]

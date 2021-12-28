@@ -87,18 +87,15 @@
     def open_node_scope(self, n):
         NodeScope(self)  # as a side-effect, attaches into self
         if n is not None:
-            next = self.next_token(self.last_consumed_token)
-            n.begin_line = next.begin_line
-            n.begin_column = next.begin_column
+            lct = self.last_consumed_token
+            next = self.next_token(lct)
+            n.token_source = lct.token_source
+            n.begin_offset = next.begin_offset
             n.input_source = self.input_source
             n.open()
 [#list grammar.openNodeScopeHooks as hook]
             self.${hook}(n)
 [/#list]
-        if self.trace_enabled:
-            if n is not None:
-                logger.info('Opened node scope for node of type: %s', type(n).__name__)
-            logger.info('Scope nesting level is %s', self.current_node_scope.nesting_level)
 
     #
     # A definite node is constructed from a specified number of
@@ -107,11 +104,7 @@
     # is pushed on to the stack.
     #
     def close_node_scope_numbered(self, n, num):
-        lct = self.last_consumed_token
-        n.end_line = lct.end_line
-        n.end_column = lct.end_column
-        if self.trace_enabled:
-            logger.info('Closing node scope for node of type: %s, popping %s nodes off the stack.', type(n).__name__, num)
+        n.end_offset = self.last_consumed_token.end_offset
         self.current_node_scope.close()
         nodes = self.pop_nodes(num)
         for child in reversed(nodes):
@@ -139,36 +132,23 @@
             self.close_node_scope_numbered(n, condition_or_num)
             return
         if n and condition_or_num:
-            n.end_line = self.last_consumed_token.end_line
-            n.end_column = self.last_consumed_token.end_column
-            if self.trace_enabled:
-                pass  # logger.debug('Closing node scope for node of type: %s, popping %s nodes off the stack', type(n).__name__, self.node_arity)
+            n.end_offset = self.last_consumed_token.end_offset
             a = self.node_arity
             self.current_node_scope.close()
             nodes = self.pop_nodes(a)
             for child in reversed(nodes):
                 if self.unparsed_tokens_are_nodes and isinstance(child, Token):
                     tok = child
-                    while tok.previous_token and tok.previous_token.is_unparsed:
-                        tok = tok.previous_token
+                    while tok.previous_cached_token and tok.previous_cached_token.is_unparsed:
+                        tok = tok.previous_cached_token
                     while tok.is_unparsed:
                         n.add_child(tok)
-                        tok = tok.get_next_token()
+                        tok = tok.next_cached_token
                 n.add_child(child)
             n.close()
-            if self.trace_enabled:
-                logger.info('Closing node scope for node of type: %s, leaving %s nodes on the stack.', type(n).__name__, self.node_arity)
-                logger.info('Nesting level is : %s', self.current_node_scope.nesting_level)
             self.push_node(n)
-            if self.trace_enabled:
-                logger.info('Closed node scope for node of type: %s, there are now %s nodes on the stack.', type(n).__name__, self.node_arity)
-                logger.info('Nesting level is : %s', self.current_node_scope.nesting_level)
 [#list grammar.closeNodeScopeHooks as hook]
             self.${hook}(${nodeVarName})
 [/#list]
         else:
             self.current_node_scope.close()
-            if self.trace_enabled and n is not None:
-                logger.info('Closed node scope for node of type: %s, leaving %s nodes on the stack.', type(n).__name__, self.node_arity)
-                logger.info('Nesting level is : %s', self.current_node_scope.nesting_level)
-

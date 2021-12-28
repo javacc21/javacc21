@@ -54,8 +54,8 @@ class ParseException(Exception):
         self.parser = parser
         if token is None:
             token = parser.last_consumed_token
-            if token and token.next:
-                token = token.next
+            if token and token.get_next():
+                token = token.get_next()
         self.token = token
         self.expected = expected
         if call_stack is None:
@@ -225,7 +225,6 @@ class Parser:
 [/#if]
         'parsing_stack',
         'lookahead_stack',
-        'trace_enabled',
         'build_tree',
         'tokens_are_nodes',
         'unparsed_tokens_are_nodes',
@@ -246,16 +245,18 @@ class Parser:
 [/#if]
     )
 
-    def __init__(self, input_source, stream_or_lexer=None):
+    def __init__(self, input_source_or_lexer):
 ${grammar.utils.translateParserInjections(injector, true)}
-        self.input_source = input_source
-        if not is_lexer(stream_or_lexer):
-            stream_or_lexer = Lexer(input_source, stream_or_lexer)
-        self.token_source = stream_or_lexer
+        if not is_lexer(input_source_or_lexer):
+            self.input_source = input_source_or_lexer
+            self.token_source = Lexer(input_source_or_lexer)
+        else:
+            self.token_source = input_source_or_lexer
+            self.input_source = input_source_or_lexer.input_source
 [#if grammar.lexerUsesParser]
         self.token_source.parser = self
 [/#if]
-        self.last_consumed_token = stream_or_lexer._dummy_start_token
+        self.last_consumed_token = self.token_source._dummy_start_token
         self._next_token_type = None
         self.current_lookahead_token = None
         self.remaining_lookahead = 0
@@ -268,7 +269,6 @@ ${grammar.utils.translateParserInjections(injector, true)}
         self.outer_follow_set = set()
         self.parsing_stack = []
         self.lookahead_stack = []
-        self.trace_enabled = ${CU.bool(grammar.debugParser)}
 [#if grammar.treeBuildingEnabled]
         self.build_tree = ${CU.bool(grammar.treeBuildingDefault)}
         self.tokens_are_nodes = ${CU.bool(grammar.tokensAreNodes)}
@@ -349,39 +349,19 @@ ${grammar.utils.translateParserInjections(injector, true)}
         while len(self.parsing_stack) > prev_size:
             self.pop_call_stack()
 
+    # If the next token is cached, return that
+    # Otherwise, go to the lexer
     def next_token(self, tok):
-        # If tok already has a next field set, it returns that
-        # Otherwise, it goes to the token_source, i.e. the Lexer.
-        result = None if tok is None else tok.get_next()
-        token_source = self.token_source
-        # If the cached next token is not currently active, we
-        # throw it away and go back to the XXXLexer
-        if result and result.type not in token_source.active_token_types:
-            token_source.reset(tok)
-            result = None
-        if result:
-            # The following line is a nasty kludge that will noi be
-            # necessary once token chaining is properly fixed.
-            token_source.previous_token = result
-[#list grammar.parserTokenHooks as methodName]
+        ts = self.token_source
+        result = ts.get_next_token(tok)
+        while result.is_unparsed:
+     [#list grammar.parserTokenHooks as methodName] 
             result = self.${methodName}(result)
+     [/#list]
+            result = ts.get_next_token(result)
+[#list grammar.parserTokenHooks as methodName] 
+        result = self.${methodName}(result)
 [/#list]
-        previous = None
-        while result is None:
-            self._next_token_type = None
-            next = token_source.get_next_token()
-            previous = next
-[#list grammar.parserTokenHooks as methodName]
-            next = self.${methodName}(next)
-[/#list]
-            if not next.is_unparsed:
-                result = next
-            elif isinstance(next, InvalidToken):
-[#if grammar.faultTolerant]
-                # if (debugFaultTolerant) LOGGER.info("Skipping invalid text: " + next.getImage() + " at: " + next.getLocation())
-[/#if]
-                result = next.next_token
-        if tok: tok.next = result
         self._next_token_type = None
         return result
 

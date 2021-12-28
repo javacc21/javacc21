@@ -37,6 +37,7 @@ __all__ = [
     'BitSet',
     'FileLineMap',
     'as_chr',
+    'cached_property',
     # used in tokens
     'get_file_line_map_by_name',
     # used in parser
@@ -51,10 +52,26 @@ CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
 
 EMPTY_SET = frozenset()
 
+
 def as_chr(o):
     if isinstance(o, int):
         return chr(o)
     return o
+
+
+# Copied from distlib. Could be imported from Bottle but that will pull in SSL
+# and interfere with gevent monkey-patching
+class cached_property(object):
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, obj, cls=None):
+        if obj is None:
+            return self
+        value = self.func(obj)
+        object.__setattr__(obj, self.func.__name__, value)
+        return value
+
 
 INT_BITSIZE = 64
 ALL_SET = (1 << INT_BITSIZE) - 1
@@ -123,8 +140,20 @@ class BitSet:
         self._empty = False if value else None
 [/#if]
 
-    def clear(self, pos=-1):
-        self.set(pos, value=0)
+    def clear(self, pos=-1, upto=-1):
+        if upto == -1:
+            self.set(pos, value=0)
+        else:
+            assert pos >= 0 and pos < upto
+[#if optimize_bitset]
+            idx1, bit1 = divmod(pos, INT_BITSIZE)
+            idx2, bit2 = divmod(upto - 1, INT_BITSIZE)
+[#else]
+            idx1, bit1 = self._idx_and_bit(pos)
+            idx2, bit2 = self._idx_and_bit(upto - 1)
+[/#if]
+
+
 
 [#if toggle_needed]
     def _flip_all(self):
@@ -275,6 +304,31 @@ class BitSet:
 [#else]
     next_set_bit = slow_next_set_bit
 [/#if]
+
+    def previous_set_bit(self, pos):
+        if pos < 0:
+            return -1
+        idx, bit = divmod(pos, INT_BITSIZE)
+        mask = 1 << bit
+        if self.ints[idx] & mask:
+            return pos
+
+        mask = 0 if bit == (INT_BITSIZE - 1) else ~((mask << 1) - 1)
+        while True:
+            v = self.ints[idx] & ~mask  # mask off higher bits
+            if v == 0:
+                idx -= 1
+                if idx < 0:
+                    return -1
+                mask = 0
+                continue
+            result = 0
+            v = v >> 1
+            while v:
+                result += 1
+                v = v >> 1
+            return result + INT_BITSIZE * idx
+
 
 # A mapping of filenames to line maps
 
@@ -631,6 +685,9 @@ class ListIterator:
         return result
 
 class StringBuilder:
+    """
+    Adapter class for Java StringBuilder
+    """
     __slots__ = ('buf',)
 
     def __init__(self):
@@ -643,11 +700,24 @@ class StringBuilder:
         return ''.join(self.buf)
 
 class _Set(set):
+    """
+    Adapter class for Java.util.HashSet
+    """
     def remove(self, item):
         if item in self:
             super().remove(item)
 
 class _List(list):
+    """
+    Adapter class for Java.util.List
+    """
+    def __init__(self, *args):
+        super().__init__()
+        if args:
+            arg0 = args[0]
+            if isinstance(arg0, list):
+                self.extend(arg0)
+
     def add(self, item):
         self.append(item)
 
@@ -663,6 +733,8 @@ class _List(list):
     def remove(self, idx):
         del self[idx]
 
+    def add_all(self, other):
+        self.extend(other)
 
 _FROZEN_SETS = {}
 
@@ -673,3 +745,27 @@ def make_frozenset(*types):
         result = frozenset(types)
         _FROZEN_SETS[types] = result
     return result
+
+class _GenWrapper(object):
+    """
+    Adapter class for Python generators to Java iterators
+    """
+    def __init__(self, gen):
+        self.gen = gen
+        self._step()
+
+    def _step(self):
+        try:
+            self.next_value = next(self.gen)
+            self._has_next = True
+        except StopIteration:
+            self._has_next = False
+
+    def has_next(self):
+        return self._has_next
+
+    def next(self):
+        assert self._has_next
+        rv = self.next_value
+        self._step()
+        return rv
