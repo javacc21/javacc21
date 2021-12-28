@@ -74,6 +74,7 @@ class cached_property(object):
 
 
 INT_BITSIZE = 64
+BIT_MASK = (1 << 64) - 1
 ALL_SET = (1 << INT_BITSIZE) - 1
 ALL_CLEAR = 0
 
@@ -152,8 +153,28 @@ class BitSet:
             idx1, bit1 = self._idx_and_bit(pos)
             idx2, bit2 = self._idx_and_bit(upto - 1)
 [/#if]
-
-
+            if idx1 == idx2 and bit1 == bit2:
+                # just 1 bit to do
+                mask1 = 1 << bit1
+                self.ints[idx1] &= ~mask1
+            elif idx1 == idx2:
+                # just one int to do
+                mask1 = (1 << bit1) - 1
+                mask2 = ((~((1 << bit2) - 1)) << 1) & BIT_MASK
+                self.ints[idx1] &= (mask1 | mask2)
+            else:
+                mask1 = (1 << bit1) - 1
+                mask2 = ((~((1 << bit2) - 1)) << 1) & BIT_MASK
+                self.ints[idx1] &= mask1
+                self.ints[idx2] &= mask2
+                # any in between first and last get zeroed
+                idx1 += 1
+                while idx1 < idx2:
+                    self.ints[idx1] = 0
+                    idx1 += 1
+[#if cache_empty]
+        self._empty = None
+[/#if]
 
 [#if toggle_needed]
     def _flip_all(self):
@@ -276,7 +297,7 @@ class BitSet:
         return -1
 
     def fast_next_set_bit(self, pos):
-        if pos > self.max_pos:
+        if pos < 0 or pos > self.max_pos:
             return -1
 [#if optimize_bitset]
         idx, bit = divmod(pos, INT_BITSIZE)
