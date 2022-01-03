@@ -152,7 +152,6 @@ public class FilesGenerator {
             add("InvalidToken.java");
             add("Node.java");
             add("InvalidNode.java");
-            add("FileLineMap.java");
         }
     };
 

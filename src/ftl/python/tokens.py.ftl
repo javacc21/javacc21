@@ -34,7 +34,7 @@
 
 from enum import Enum, auto, unique
 
-from .utils import get_file_line_map_by_name, _GenWrapper, _List
+from .utils import _GenWrapper, _List
 [#var injector = grammar.injector]
 
 __all__ = [
@@ -482,12 +482,6 @@ ${grammar.utils.translateTokenInjections(injector, true)}
         if not self.token_source:
             return None
         return self.token_source.next_cached_token(self.end_offset)
-
-    def get_source(self):
-        if self.type == TokenType.EOF:
-            return ''
-        return self.get_file_line_map().get_text(self.begin_line, self.begin_column,
-                                                 self.end_line, self.end_column)
 
     def __repr__(self):
         tn = self.type.name if self.type else None
