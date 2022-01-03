@@ -1,7 +1,7 @@
 [#ftl strict_vars=true]
 [#--
   Copyright (C) 2008-2020 Jonathan Revusky, revusky@javacc.com
-  Copyright (C) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk
+  Copyright (C) 2021-2022 Vinay Sajip, vinay_sajip@yahoo.co.uk
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
