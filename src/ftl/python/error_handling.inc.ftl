@@ -1,7 +1,7 @@
 [#ftl strict_vars=true]
 [#--
   Copyright (C) 2008-2020 Jonathan Revusky, revusky@javacc.com
-  Copyright (C) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk
+  Copyright (C) 2021-2022 Vinay Sajip, vinay_sajip@yahoo.co.uk
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@
 --]
 
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
-
     def stack_iterator_forward(self):
 
         class ForwardIterator:
@@ -92,7 +91,7 @@
         self.scan_to_end = ntc.scan_to_end
 
     def consume_token(self, expected_type[#if grammar.faultTolerant], tolerant, follow_set[/#if]):
-        old_token = self.last_consumed_token
+        # old_token = self.last_consumed_token
         next_token = self.next_token(self.last_consumed_token)
         if next_token.type != expected_type:
             next_token = self.handle_unexpected_token_type(expected_type, next_token[#if grammar.faultTolerant], tolerant, follow_set[/#if])

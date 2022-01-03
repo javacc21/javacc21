@@ -1,7 +1,7 @@
 [#ftl strict_vars=true]
 [#--
   Copyright (C) 2008-2020 Jonathan Revusky, revusky@javacc.com
-  Copyright (C) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk
+  Copyright (C) 2021-2022 Vinay Sajip, vinay_sajip@yahoo.co.uk
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ class TokenType(Enum):
 @unique
 class LexicalState(Enum):
   [#list grammar.lexerData.lexicalStates as lexicalState]
-     ${lexicalState.name} = auto()
+    ${lexicalState.name} = auto()
   [/#list]
 
 [#--
@@ -174,7 +174,7 @@ class ${grammar.baseNodeClassName}:
     @property
     def token_source(self):
         result = self._token_source
-[#if !grammar.minimalToken]        
+[#if !grammar.minimalToken]
         if not result:
             if self.prepended_token:
                 result = self.prepended_token.token_source
@@ -294,7 +294,7 @@ class ${grammar.baseNodeClassName}:
                 child = child.first_descendant_of_type(type)
                 if child:
                     return child
-        
+
 [/#if]
 
     def __repr__(self):
@@ -369,7 +369,7 @@ ${grammar.utils.translateTokenInjections(injector, true)}
         prepended_token.is_inserted = True
         prepended_token.begin_offset = prepended_token.end_offset = self.begin_offset
         self.prepended_token = prepended_token
-    
+
     def unset_appended_token(self):
         self.appended_token = None
 
@@ -403,7 +403,8 @@ ${grammar.utils.translateTokenInjections(injector, true)}
             return ''
         return self.image
 
-    __str__ = lambda self: self.normalized_text
+    def __str__(self):
+        return self.normalized_text
 
     def _preceding_tokens(self):
         current = self
@@ -423,7 +424,7 @@ ${grammar.utils.translateTokenInjections(injector, true)}
             current = t
             t = current.next_cached_token
             yield current
-            
+
     def following_tokens(self):
         return _GenWrapper(self._following_tokens())
 
@@ -464,7 +465,7 @@ ${grammar.utils.translateTokenInjections(injector, true)}
 
     @property
     def previous_cached_token(self):
-[#if !grammar.minimalToken]        
+[#if !grammar.minimalToken]
         if self.prepended_token:
             return self.prepended_token
 [/#if]
@@ -475,7 +476,7 @@ ${grammar.utils.translateTokenInjections(injector, true)}
 
     @property
     def next_cached_token(self):
-[#if !grammar.minimalToken]        
+[#if !grammar.minimalToken]
         if self.appended_token:
             return self.appended_token
 [/#if]

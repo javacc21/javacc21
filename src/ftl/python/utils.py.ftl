@@ -1,6 +1,6 @@
 [#ftl strict_vars=true]
 [#--
- Copyright (C) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk
+ Copyright (C) 2021-2022 Vinay Sajip, vinay_sajip@yahoo.co.uk
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,6 @@ __all__ = [
     # used in lexer
     'BitSet',
     'as_chr',
-    # used in tokens
     # used in parser
     'EMPTY_SET',
     'ListIterator',
@@ -65,8 +64,10 @@ BIT_POS = {}
 for i in range(INT_BITSIZE):
     BIT_POS[1 << i] = i
 
+
 def _ints_needed(bits):
     return int(ceil(bits / INT_BITSIZE))
+
 
 [#var optimize_bitset = true]
 [#var cache_empty = true]
@@ -334,8 +335,6 @@ class BitSet:
             return result + INT_BITSIZE * idx
 
 
-# A mapping of filenames to line maps
-
 [#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="True", JAVA_UNICODE_ESCAPE="False", ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("True", "False")]
 [#if grammar.settings.TABS_TO_SPACES??]
    [#set TABS_TO_SPACES = grammar.settings.TABS_TO_SPACES]
@@ -346,12 +345,10 @@ class BitSet:
 [#if grammar.settings.JAVA_UNICODE_ESCAPE?? && grammar.settings.JAVA_UNICODE_ESCAPE]
    [#set JAVA_UNICODE_ESCAPE = "True"]
 [/#if]
-
-
 class ListIterator:
-#
-# Emulation of the Java interface / implementation
-#
+    #
+    # Emulation of the Java interface / implementation
+    #
     __slots__ = (
         'elems',
         'num',
@@ -388,6 +385,7 @@ class ListIterator:
             self.pos -= 1
         return result
 
+
 class StringBuilder:
     """
     Adapter class for Java StringBuilder
@@ -403,6 +401,7 @@ class StringBuilder:
     def __str__(self):
         return ''.join(self.buf)
 
+
 class _Set(set):
     """
     Adapter class for Java.util.HashSet
@@ -410,6 +409,7 @@ class _Set(set):
     def remove(self, item):
         if item in self:
             super().remove(item)
+
 
 class _List(list):
     """
@@ -440,7 +440,9 @@ class _List(list):
     def add_all(self, other):
         self.extend(other)
 
+
 _FROZEN_SETS = {}
+
 
 def make_frozenset(*types):
     if types in _FROZEN_SETS:
@@ -449,6 +451,7 @@ def make_frozenset(*types):
         result = frozenset(types)
         _FROZEN_SETS[types] = result
     return result
+
 
 class _GenWrapper(object):
     """
