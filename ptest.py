@@ -3,6 +3,7 @@
 #
 # Copyright (C) 2021-2022 Vinay Sajip (vinay_sajip@yahoo.co.uk)
 #
+from __future__ import print_function    # needed forIronPython
 import argparse
 import importlib
 import logging
@@ -12,6 +13,7 @@ import sys
 DEBUGGING = 'PY_DEBUG' in os.environ
 
 IS_JAVA = sys.platform.startswith('java')
+IS_DOTNET = sys.platform == 'cli'
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +45,57 @@ if IS_JAVA:
         fos = java.io.FileOutputStream(p)
         osw = java.io.BufferedWriter(java.io.OutputStreamWriter(fos, StandardCharsets.UTF_8))
         return java.io.PrintWriter(osw, True)
+
+elif IS_DOTNET:
+    sd = [d for d in os.listdir('.') if d.startswith('cs-') and os.path.isdir(d)]
+    if not sd:
+        raise ValueError('No subdirectory starting with cs- found.')
+    sd = os.path.join(sd[0], 'bin', 'Debug', 'netstandard2.1')
+    if not os.path.isdir(sd):
+        raise ValueError('Not a directory: %s' % sd)
+    sys.path.append(os.path.abspath(sd))
+    import clr
+    dlls = [f for f in os.listdir(sd) if f.endswith('.dll')]
+    if not dlls:
+        raise ValueError('No .dll found in %s' % sd)
+    for dll in dlls:
+        # print(dll)
+        clr.AddReference(dll)
+    # print('DLLs added.')
+    from System.IO import FileStream, StreamWriter, FileMode
+
+    def clr_import_module(name):  # Because IronPython's import_module appears to be broken
+        parts = name.split('.')
+        mod = None
+        try:
+            for p in parts:
+                if mod is None:
+                    __import__(p)
+                    mod = sys.modules[p]
+                else:
+                    mod = getattr(mod, p)
+        except Exception as e:
+            msg = 'Failed to import %s at part %s' % (name, p)
+            raise ImportError(msg)
+        sys.modules[name] = mod
+        return mod
+
+    def node_repr(node):
+        if isinstance(node, Token):
+            return node.Image
+        cn = type(node).__name__
+        return '<%s (%s, %s)-(%s, %s)>' % (cn, node.BeginLine,
+                                           node.BeginColumn, node.EndLine,
+                                           node.EndColumn)
+
+    def csharp_dump_node(stream, node, level=0):
+        indstr = '  ' * level
+        s = '%s%s\n' % (indstr, node_repr(node))
+        stream.Write(s)
+        if node.Children:
+            for child in node.Children:
+                csharp_dump_node(stream, child, level + 1)
+
 else:
     def python_dump_node(stream, node, level=0):
         indstr = '  ' * level
@@ -72,6 +125,7 @@ def main():
     if not ext.startswith('.'):
         ext = '.%s' % ext
     # print('Running under %s' % sys.version.replace('\n', ' '))
+    global Token
     if IS_JAVA:
         resdir = 'java'
         pkg, cls = options.package.rsplit('.', 1)
@@ -79,11 +133,21 @@ def main():
         if options.parser:
             Parser = getattr(mod, cls)
             ParseException = getattr(mod, 'ParseException')
-            global Token
             Token = getattr(mod, 'Token')
         else:
             Lexer = getattr(mod, cls)
             TokenType = getattr(Lexer, 'TokenType')
+    elif IS_DOTNET:
+        resdir = 'csharp'
+        # import pdb; pdb.set_trace()
+        mod = clr_import_module(options.package)
+        if options.parser:
+            Parser = getattr(mod, 'Parser')
+            ParseException = getattr(mod, 'ParseException')
+        else:
+            Lexer = getattr(mod, 'Lexer')
+            TokenType = getattr(mod, 'TokenType')
+        Token = getattr(mod, 'Token')
     else:
         resdir = 'python'
         cwd = os.getcwd()
@@ -111,6 +175,7 @@ def main():
             ofn = os.path.join(od, fn.replace(ext, outext))
             if not options.quiet:
                 print('Processing %s -> %s' % (fn, os.path.basename(ofn)))
+                logger.debug('Processing %s -> %s', fn, os.path.basename(ofn))
             try:
                 if IS_JAVA:
                     f = get_reader(p)
@@ -121,6 +186,14 @@ def main():
                     else:
                         lexer = Lexer(f)
                         lexer.inputSource = p
+                elif IS_DOTNET:
+                    f = None
+                    outf = StreamWriter(FileStream(ofn, FileMode.Create))
+                    # import pdb; pdb.set_trace()
+                    if options.parser:
+                        parser = Parser(p)
+                    else:
+                        lexer = Lexer(p)
                 else:
                     f = None
                     outf = open(ofn, 'w', encoding='utf-8')
@@ -135,6 +208,10 @@ def main():
                             getattr(parser, options.parser)()
                             node = parser.rootNode()
                             java_dump_node(outf, node, 0)
+                        elif IS_DOTNET:
+                            getattr(parser, 'Parse%s' % options.parser)()
+                            node = parser.RootNode
+                            csharp_dump_node(outf, node, 0)
                         else:
                             # import pdb; pdb.set_trace()
                             getattr(parser, 'parse_%s' % options.parser)()
@@ -155,6 +232,14 @@ def main():
                                                           t.endLine,
                                                           t.endColumn)
                             outf.print(s)
+                        elif IS_DOTNET:
+                            t = lexer.GetNextToken(None)
+                            s = '%s: %s %d %d %d %d\n' % (t.Type, t.Image,
+                                                          t.BeginLine,
+                                                          t.BeginColumn,
+                                                          t.EndLine,
+                                                          t.EndColumn)
+                            outf.Write(s)
                         else:
                             # import pdb; pdb.set_trace()
                             t = lexer.get_next_token(None)
@@ -164,11 +249,19 @@ def main():
                                                           t.end_line,
                                                           t.end_column)
                             outf.write(s)
-                        done = t.type == TokenType.EOF
+                        if IS_DOTNET:
+                            # import pdb; pdb.set_trace()
+                            done = t.Type == TokenType.EOF
+                        else:
+                            done = t.type == TokenType.EOF
             finally:
                 if f:
                     f.close()
-                outf.close()
+                if outf:
+                    if IS_DOTNET:
+                        outf.Close()
+                    else:
+                        outf.close()
 
 if __name__ == '__main__':
     try:

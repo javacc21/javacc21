@@ -21,8 +21,8 @@ INJECT LEXER_CLASS :
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
 
-   private List<Integer> initIndentationStack() {
-      List<Integer> result = new ArrayList<>();
+   private static List<Integer> initIndentationStack() {
+      List<Integer> result = new ArrayList<Integer>();
       result.add(1);
       return result;
    }
@@ -37,7 +37,9 @@ INJECT LEXER_CLASS :
          case RPAREN : parenthesesNesting--; break;
          case LBRACKET : bracketNesting++; break;
          case RBRACKET : bracketNesting--; break;
-         case NEWLINE :  if (lineJoiningOn || tok.startsLine()) tok.setUnparsed(true); 
+         case NEWLINE :  if (lineJoiningOn || tok.startsLine()) {
+                             tok.setUnparsed(true);
+                         }
                          return tok;
       }
       if (danglingIndentation != null) {
@@ -80,14 +82,15 @@ INJECT LEXER_CLASS :
  
    private void RESET_TOKEN_HOOK(Token tok) {
       braceNesting = bracketNesting = parenthesesNesting = 0;
-      if (tok.getType() == INDENT || tok.getType() == DEDENT) {
+      if (tok.getType() == TokenType.INDENT || tok.getType() == TokenType.DEDENT) {
          danglingIndentation = tok;
          indentationStack = tok.getIndents();
          return;
       }
       for (Iterator<Token> toks = tok.precedingTokens(); toks.hasNext();) {
          Token previous = toks.next();
-         switch(previous.getType()) {
+         TokenType prevType = previous.getType();
+         switch (prevType) {
             case LBRACE : braceNesting++; break;
             case RBRACE : braceNesting--; break;
             case LPAREN : parenthesesNesting++; break;
@@ -95,15 +98,14 @@ INJECT LEXER_CLASS :
             case LBRACKET : bracketNesting++; break;
             case RBRACKET : bracketNesting--; break;
             case INDENT :
-            case DEDENT : indentationStack = previous.getIndents(); 
-                          return;
+            case DEDENT : indentationStack = previous.getIndents(); return;
          }
       }
    }
 }
 
 INJECT Token : {
-   protected java.util.List<Integer> getIndents() {
+   public java.util.List<Integer> getIndents() {
       return null;
    }
 
@@ -115,6 +117,15 @@ INJECT Token : {
       }
       return true;
    }
+
+   public Token getPreviousToken() {
+        return previousCachedToken();
+    }
+
+   public void setImage(String image) {
+      this.image = image;
+   }
+
 }
 
 INJECT DedentToken : 
@@ -133,15 +144,19 @@ INJECT DedentToken :
       return result;
    }
 
-   public List<Integer> getIndents() { return new ArrayList<>(indents);}
+   public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
 
    public boolean isVirtual() {
       return true;
    }
 
+/*
+ *  Commented out, as interferes with representation used in tests
+ *
    public String toString() {
        return "DEDENT";
    }
+ */
 
    public int getDedentAmount() {
       return dedentAmount;
@@ -162,18 +177,22 @@ INJECT IndentToken :
       return result;
    }
 
-   public List<Integer> getIndents() { return new ArrayList<>(indents);}
+   public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
 
    public boolean isVirtual() {
       return true;
    }
 
+/*
+ *  Commented out, as interferes with representation used in tests
+ *
    public String toString() {
        return "INDENT";
    }
+ */
 
    public int getIndentAmount() {
-      return indents.get(indents.size()-1) - indents.get(indents.size()-2);
+      return indents.get(indents.size() - 1) - indents.get(indents.size() - 2);
    }
 }
 

@@ -24,8 +24,8 @@
 </target>
 
 
-<!-- 
-     Build and test using the bootstrap jarfile, then 
+<!--
+     Build and test using the bootstrap jarfile, then
      drop in the newly built jarfile and build and test again
 -->
 <target name="full-test" depends="restore-bootstrap-jar,clean,jar,test">
@@ -68,7 +68,7 @@
 
 <target name="compile" depends="parser-gen, preprocessor-gen">
   	<mkdir dir="build"/>
-    <javac srcdir="src/java" 
+    <javac srcdir="src/java"
  	       destdir="build"
  	       deprecation="off"
  	       debug="on"
@@ -86,6 +86,11 @@
     </copy>
     <copy todir="build/templates/python">
       <fileset dir="src/ftl/python">
+         <include name="*.ftl"/>
+      </fileset>
+    </copy>
+    <copy todir="build/templates/csharp">
+      <fileset dir="src/ftl/csharp">
          <include name="*.ftl"/>
       </fileset>
     </copy>
@@ -115,13 +120,13 @@
 	  </fileset>
 	</copy>
  </target>
- 
+
 
   <target name='docs'>
     <ant antfile="build.xml" dir="src/docs" target="docs" />
   </target>
 
-	
+
   <target name="test" depends="jar">
     <echo>Testing the JSON Parser</echo>
     <ant antfile="build.xml" dir="examples/json" target="clean"/>
@@ -141,7 +146,7 @@
     <echo>Running through the crufty old legacy examples</echo>
     <ant antfile="build.xml" dir="examples/legacy" target="test" />
  </target>
-	
+
  <target name="jar" depends="compile">
     <echo>Creating basic jarfile, using this requires a freemarker.jar in the same directory</echo>
     <jar jarfile="javacc.jar" basedir="build" compress="true">
@@ -170,7 +175,7 @@
 </target>
 
   <target name="update-bootstrap">
-    <!-- 
+    <!--
       Update the bootstrap javacc.jar using the current javacc.jar built from the current
       source. To cater for template changes, the process needs to be repeated once to
       ensure that the templates are up to date, and again to ensure that any generated
@@ -191,6 +196,12 @@
   <target name="test-python" depends="jar">
     <exec executable="python3" dir="${basedir}" failonerror="true">
       <arg line="-u python_tests.py"/>
+    </exec>
+  </target>
+
+  <target name="test-csharp" depends="jar">
+    <exec executable="python3" dir="${basedir}" failonerror="true">
+      <arg line="-u csharp_tests.py"/>
     </exec>
   </target>
 </project>

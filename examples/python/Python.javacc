@@ -281,16 +281,16 @@ InvocationArguments :
       // defined locally so only apply when parsing, not
       // scanning ahead, so the lookahead is looser
       // than the parsing.
-         boolean seenEquals = peekNode().firstChildOfType(ASSIGN) != null;
-         boolean seenDoubleStar = peekNode().firstChildOfType(STAR_STAR) != null;
+         boolean seenEquals = peekNode().firstChildOfType(TokenType.ASSIGN) != null;
+         boolean seenDoubleStar = peekNode().firstChildOfType(TokenType.STAR_STAR) != null;
       }
       (
          SCAN 3 
          "," 
          Argument(seenEquals, seenDoubleStar)
          {
-            seenEquals |= peekNode().firstChildOfType(ASSIGN) != null;
-            seenDoubleStar |= peekNode().firstChildOfType(STAR_STAR) != null;
+            seenEquals |= peekNode().firstChildOfType(TokenType.ASSIGN) != null;
+            seenDoubleStar |= peekNode().firstChildOfType(TokenType.STAR_STAR) != null;
          }
       )*
       [","] 
@@ -432,7 +432,7 @@ Parameters :
           [
              // If we've already seen a param with a default value,
              // the remaining ones also have to have a default value.
-             SCAN 0 {seenDefault || getToken(1).getType() == ASSIGN} 
+             SCAN 0 {seenDefault || getToken(1).getType() == TokenType.ASSIGN}
              => "=" Expression {seenDefault = true;}
           ] 
         )
@@ -581,7 +581,7 @@ PositionalPatterns :
    (
        // If the next three tokens are a comma, identifier, and =, we need to end this
        // production and go into KeywordPatterns. This has a bit of a kludgy feel to it.
-       SCAN 0 {getToken(1).getType()==COMMA && !( getToken(2).getType()==NAME && getToken(3).getType()==ASSIGN)}#
+       SCAN 0 {getToken(1).getType() == TokenType.COMMA && !( getToken(2).getType() == TokenType.NAME && getToken(3).getType() == TokenType.ASSIGN)}#
        => "," Pattern
    )* 
 ;

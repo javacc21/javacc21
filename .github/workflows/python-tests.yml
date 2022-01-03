@@ -1,4 +1,4 @@
-name: Tests
+name: Python Generation Tests
 
 on:
   push:
@@ -70,7 +70,6 @@ jobs:
         java -jar $HOME/bin/jython.jar --version
         python --version
         ant -version
-        ant test
         ant test-python
       env:
         PY_DEBUG: 1

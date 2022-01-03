@@ -9,7 +9,7 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky nor the names of any contributors 
+ *     * Neither the name Jonathan Revusky nor the names of any contributors
  *       may be used to endorse or promote products derived from this software
  *       without specific prior written permission.
  *
@@ -49,10 +49,10 @@ import freemarker.ext.beans.BeansWrapper;
 public class FilesGenerator {
 
     private Configuration fmConfig;
-    private Grammar grammar;
-    private CodeInjector codeInjector;
-    private Set<String> tokenSubclassFileNames = new HashSet<>();
-    private HashMap<String, String> superClassLookup = new HashMap<>();
+    private final Grammar grammar;
+    private final CodeInjector codeInjector;
+    private final Set<String> tokenSubclassFileNames = new HashSet<>();
+    private final HashMap<String, String> superClassLookup = new HashMap<>();
     private final String codeLang;
 
     void initializeTemplateEngine() throws IOException {
@@ -62,9 +62,9 @@ public class FilesGenerator {
         //
         // The first two loaders are really for developers - templates
         // are looked for in the grammar's directory, and then in a
-        // templates subdirectory below that, which could, of course, be
+        // 'templates' subdirectory below that, which could, of course, be
         // a symlink to somewhere else.
-        // We check for the templates subdirectory existing, because otherwise
+        // We check for the 'templates' subdirectory existing, because otherwise
         // FreeMarker will raise an exception.
         //
         TemplateLoader templateLoader;
@@ -87,10 +87,7 @@ public class FilesGenerator {
     public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
         this.grammar = grammar;
         this.codeLang = codeLang;
-        this.codeInjector = new CodeInjector(grammar.getParserClassName(), 
-                                             grammar.getLexerClassName(),
-                                             grammar.getConstantsClassName(), 
-                                             grammar.getBaseNodeClassName(),
+        this.codeInjector = new CodeInjector(grammar,
                                              grammar.getParserPackage(), 
                                              grammar.getNodePackage(), 
                                              codeInjections);
@@ -101,42 +98,64 @@ public class FilesGenerator {
             throw new ParseException();
         }
         initializeTemplateEngine();
-        if (codeLang.equals("java")) {
-            generateToken();
-            generateLexer();
-            generateNfaData();
-            generateConstantsFile();
-            if (!grammar.getProductionTable().isEmpty()) {
-                generateParseException();
-                generateParser();
+        switch (codeLang) {
+            case "java":
+                generateToken();
+                generateLexer();
+                generateNfaData();
+                generateConstantsFile();
+                if (!grammar.getProductionTable().isEmpty()) {
+                    generateParseException();
+                    generateParser();
+                }
+                if (grammar.getFaultTolerant()) {
+                    generateInvalidNode();
+                    generateParsingProblem();
+                }
+                if (grammar.getTreeBuildingEnabled()) {
+                    generateTreeBuildingFiles();
+                }
+                break;
+            case "python": {
+                // Hardcoded for now, could make configurable later
+                String[] paths = new String[]{
+                        "__init__.py",
+                        "utils.py",
+                        "tokens.py",
+                        "lexer.py",
+                        "parser.py"
+                };
+                Path outDir = grammar.getParserOutputDirectory();
+                for (String p : paths) {
+                    Path outputFile = outDir.resolve(p);
+                    // Could check if regeneration is needed, but for now
+                    // always (re)generate
+                    generate(outputFile);
+                }
+                break;
             }
-            if (grammar.getFaultTolerant()) {
-                generateInvalidNode();
-                generateParsingProblem();
+            case "csharp": {
+                // Hardcoded for now, could make configurable later
+                String[] paths = new String[]{
+                        "Utils.cs",
+                        "Tokens.cs",
+                        "Lexer.cs",
+                        "Parser.cs",
+                        null  // filled in below
+                };
+                String csPackageName = grammar.getUtils().getPreprocessorSymbol("cs.package", grammar.getParserPackage());
+                paths[paths.length - 1] = csPackageName + ".csproj";
+                Path outDir = grammar.getParserOutputDirectory();
+                for (String p : paths) {
+                    Path outputFile = outDir.resolve(p);
+                    // Could check if regeneration is needed, but for now
+                    // always (re)generate
+                    generate(outputFile);
+                }
+                break;
             }
-            if (grammar.getTreeBuildingEnabled()) {
-                generateTreeBuildingFiles();
-            }
-        }
-        else if (codeLang.equals("python")) {
-            // Hardcoded for now, could make configurable later
-            String[] paths = new String[] {
-                "__init__.py",
-                "utils.py",
-                "tokens.py",
-                "lexer.py",
-                "parser.py"
-            };
-            Path outDir = grammar.getParserOutputDirectory();
-            for (String p : paths) {
-                Path outputFile = outDir.resolve(p);
-                // Could check if regeneration is needed, but for now
-                // always (re)generate
-                generate(outputFile);
-            }
-        }
-        else {
-            throw new UnsupportedOperationException(String.format("Code generation in '%s' is currently not supported.", codeLang));
+            default:
+                throw new UnsupportedOperationException(String.format("Code generation in '%s' is currently not supported.", codeLang));
         }
     }
 
@@ -144,7 +163,7 @@ public class FilesGenerator {
         generate(null, outputFile);
     }
 
-    private Set<String> nonNodeNames = new HashSet<String>() {
+    private final Set<String> nonNodeNames = new HashSet<String>() {
         {
             add("ParseException.java");
             add("ParsingProblem.java");
@@ -181,13 +200,18 @@ public class FilesGenerator {
                 }
             }
         }
+        else if (codeLang.equals("csharp")) {
+            if (outputFilename.endsWith(".csproj")) {
+                result = "project.csproj.ftl";
+            }
+        }
         return result;
     }
 
     public void generate(String nodeName, Path outputFile) throws IOException, ParseException, TemplateException  {
         String currentFilename = outputFile.getFileName().toString();
         String templateName = getTemplateName(currentFilename);
-        HashMap<String, Object> dataModel = new HashMap<String, Object>();
+        HashMap<String, Object> dataModel = new HashMap<>();
         dataModel.put("grammar", grammar);
         dataModel.put("filename", currentFilename);
         dataModel.put("isAbstract", grammar.nodeIsAbstract(nodeName));
@@ -200,8 +224,7 @@ public class FilesGenerator {
         if (codeInjector.getExplicitlyDeclaredPackage(classname) != null) {
             dataModel.put("explicitPackageName", codeInjector.getExplicitlyDeclaredPackage(classname));
         }
-        Writer out = null;
-        out = new StringWriter();
+        Writer out = new StringWriter();
         Template template = fmConfig.getTemplate(templateName);
         template.process(dataModel, out);
         String code = out.toString();
@@ -214,16 +237,15 @@ public class FilesGenerator {
             outfile.write(code);
         }
     }
-    
-    void outputJavaFile(String code, Path outputFile) throws IOException, ParseException, TemplateException {
+
+    void outputJavaFile(String code, Path outputFile) throws IOException {
         Path dir = outputFile.getParent();
         if (Files.exists(dir)) {
             Files.createDirectories(dir);
         }
-        CompilationUnit jcu = null;
-        Writer out = null;
+        CompilationUnit jcu;
+        Writer out = Files.newBufferedWriter(outputFile);
         try {
-            out = Files.newBufferedWriter(outputFile);
             jcu = JavaCCParser.parseJavaFile(outputFile.getFileName().toString(), code);
         } catch (Exception e) {
             out.write(code);
@@ -239,9 +261,9 @@ public class FilesGenerator {
             JavaCodeUtils.stripUnused(jcu);
             JavaFormatter2 formatter = new JavaFormatter2();
             output.write(formatter.format(jcu));
-        } 
+        }
     }
-    
+
     void generateConstantsFile() throws IOException, ParseException, TemplateException {
         String filename = grammar.getConstantsClassName() + ".java";
         Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
@@ -254,7 +276,7 @@ public class FilesGenerator {
             generate(outputFile);
         }
     }
-    
+
     void generateParsingProblem() throws IOException, ParseException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("ParsingProblem.java");
         if (regenerate(outputFile)) {
@@ -291,7 +313,7 @@ public class FilesGenerator {
         Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
-    
+
     void generateParser() throws ParseException, IOException, TemplateException {
         if (grammar.getErrorCount() !=0) {
         	throw new ParseException();
@@ -315,32 +337,29 @@ public class FilesGenerator {
         String ourName = file.getFileName().toString();
         String canonicalName = file.normalize().getFileName().toString();
        	if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
-       		String msg = "You cannot have two files that differ only in case, as in " 
+            String msg = "You cannot have two files that differ only in case, as in " 
        	                          + ourName + " and "+ canonicalName 
        	                          + "\nThis does work on a case-sensitive file system but fails on a case-insensitive one (i.e. Mac/Windows)"
        	                          + " \nYou will need to rename something in your grammar!";
-       		throw new IOException(msg);
+            throw new IOException(msg);
         }
         String filename = file.getFileName().toString();
         // Changes here to allow different rules to be used for different
         // languages. At the moment there are no non-Java code injections
-        String extn = codeLang.equals("java") ? ".java" : ".py";
-        if (filename.endsWith(extn)) {
-            String typename = filename.substring(0, filename.length()  - extn.length());
+        String extension = codeLang.equals("java") ? ".java" : codeLang.equals("python") ? ".py" : ".cs";
+        if (filename.endsWith(extension)) {
+            String typename = filename.substring(0, filename.length()  - extension.length());
             if (codeInjector.hasInjectedCode(typename)) {
                 return true;
             }
         }
         //
-        // For now regenerate() isn't called for generating Python files
-        // but I'll leave this here for now
+        // For now regenerate() isn't called for generating Python or C# files,
+        // but I'll leave this here for the moment
         //
-        if (extn.equals(".py")) {
-            return true;    // for now, always regenerate
-        }
-        return false;
+        return extension.equals(".py") || extension.equals(".cs");    // for now, always regenerate
     }
-    
+
     void generateTreeBuildingFiles() throws IOException, ParseException, TemplateException {
     	generateNodeFile();
         Map<String, Path> files = new LinkedHashMap<>();
