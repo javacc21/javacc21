@@ -396,28 +396,6 @@ public class PythonTranslator extends Translator {
             result.append(".is_unparsed = ");
             internalTranslateExpression(firstArg, result);
         }
-/*
-        else if (methodName.equals("setBeginLine") && (nargs == 1)) {
-            renderReceiver(receiver, result);
-            result.append(".begin_line = ");
-            internalTranslateExpression(firstArg, result);
-        }
-        else if (methodName.equals("setBeginColumn") && (nargs == 1)) {
-            renderReceiver(receiver, result);
-            result.append(".begin_column = ");
-            internalTranslateExpression(firstArg, result);
-        }
-        else if (methodName.equals("setEndLine") && (nargs == 1)) {
-            renderReceiver(receiver, result);
-            result.append(".end_line = ");
-            internalTranslateExpression(firstArg, result);
-        }
-        else if (methodName.equals("setEndColumn") && (nargs == 1)) {
-            renderReceiver(receiver, result);
-            result.append(".end_column = ");
-            internalTranslateExpression(firstArg, result);
-        }
-*/
         else if (methodName.equals("of") && isEnumSet(receiver)) {
             result.append("_Set({");
             if (nargs > 0) {

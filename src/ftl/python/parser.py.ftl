@@ -1,7 +1,7 @@
 [#ftl strict_vars=true]
 [#--
   Copyright (C) 2008-2020 Jonathan Revusky, revusky@javacc.com
-  Copyright (C) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk
+  Copyright (C) 2021-2022 Vinay Sajip, vinay_sajip@yahoo.co.uk
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -188,8 +188,6 @@ class ParseState:
 #
 # AST definitions
 #
-# TODO Token-related classes
-#
 # Parser nodes
 #
   [#list grammar.utils.sortedNodeClassNames as node]
@@ -199,9 +197,9 @@ class ${node}(BaseNode): pass
 ${grammar.utils.translateInjectedClass(injector, node)}
     [/#if]
 
+
   [/#list]
 [/#if]
-
 class InvalidNode(BaseNode):
     pass
 
@@ -355,11 +353,11 @@ ${grammar.utils.translateParserInjections(injector, true)}
         ts = self.token_source
         result = ts.get_next_token(tok)
         while result.is_unparsed:
-     [#list grammar.parserTokenHooks as methodName] 
+     [#list grammar.parserTokenHooks as methodName]
             result = self.${methodName}(result)
      [/#list]
             result = ts.get_next_token(result)
-[#list grammar.parserTokenHooks as methodName] 
+[#list grammar.parserTokenHooks as methodName]
         result = self.${methodName}(result)
 [/#list]
         self._next_token_type = None
@@ -413,7 +411,7 @@ ${grammar.utils.translateParserInjections(injector, true)}
         return result
 
     def uncache_tokens(self):
-       self.token_source.reset(self.get_token(0))
+        self.token_source.reset(self.get_token(0))
 
     def fail(self, message):
         if self.current_lookahead_token is None:
@@ -458,10 +456,8 @@ ${grammar.utils.translateParserInjections(injector, true)}
         return False
 
 [/#if]
-
 ${grammar.utils.translateParserInjections(injector, false)}
-
 [#list grammar.otherParserCodeDeclarations as decl]
-        # Generated from code at ${decl.location}
-        # TODO actual declaration
+    # Generated from code at ${decl.location}
+    # TODO actual declaration
 [/#list]

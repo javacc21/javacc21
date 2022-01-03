@@ -58,7 +58,9 @@
 [/#macro]
 
 [#macro ParserProduction production]
-    ${production.leadingComments}
+[#if production.leadingComments?has_content]
+    # ${production.leadingComments}
+[/#if]
     # ${production.location}
     def parse_${production.name}(self[#if production.parameterList?has_content], ${grammar.utils.translateParameters(production.parameterList)}[/#if]):
         # import pdb; pdb.set_trace()
@@ -70,6 +72,7 @@
        CURRENT_NODE.
      --]
 ${BuildCode(production.expansion, 8)}
+        self.currently_parsed_production = prev_production
     # end of parse_${production.name}${grammar.utils.clearParameters()}
 
 [/#macro]
@@ -124,7 +127,7 @@ ${BuildExpansionCode(expansion, indent)}[#t]
      [#if buildTreeNode]
      [#set nodeNumbering = nodeNumbering +1]
      [#set nodeVarName = currentProduction.name + nodeNumbering]
-     ${grammar.utils.pushNodeVariableName(nodeVarName)!}
+${grammar.utils.pushNodeVariableName(nodeVarName)!}
       [#if !treeNodeBehavior?? && !production?is_null]
          [#if grammar.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : " > "}]
@@ -188,9 +191,8 @@ ${is}            ${nodeVarName}.dirty = True
                   [#else]
 ${is}            self.clear_node_scope()
                   [/#if]
-                ${grammar.utils.popNodeVariableName()!}
+${grammar.utils.popNodeVariableName()!}
              [/#if]
-${is}    self.currently_parsed_production = prev_production
 
     [/#if]
 [#-- ${is}# DBG < TreeBuildingAndRecovery ${indent} --]

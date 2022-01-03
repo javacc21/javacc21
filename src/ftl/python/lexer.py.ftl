@@ -132,14 +132,6 @@ NFA_FUNCTIONS_${lexicalState.name}_init()
 nfa_functions = NFA_FUNCTIONS_${lexicalState.name}_init()
 [/#if]
 
-def get_function_table_map(lexical_state):
-    [#if multipleLexicalStates]
-    return function_table_map[lexical_state]
-    [#else]
-    # We only have one lexical state in this case, so we return that!
-    return nfa_functions
-    [/#if]
-
 [/#macro]
 
 [#--
@@ -282,10 +274,10 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
        [#elseif left > 0]
           ch >= ${displayLeft}[#t]
           [#if right < 1114111]
- and ch <= ${displayRight} [#rt]
+ and ch <= ${displayRight}[#rt]
           [/#if]
        [#else]
-           ch <= ${displayRight} [#t]
+           ch <= ${displayRight}[#t]
        [/#if]
     [#else]
        ([@RangesCondition moveRanges[0..1]/]) or ([@RangesCondition moveRanges[2..moveRanges?size-1]/])[#t]
@@ -328,6 +320,14 @@ ${is}}
 token_type_to_lexical_state_map = {}
 [/#if]
 [#var injector = grammar.injector]
+
+def get_function_table_map(lexical_state):
+    [#if multipleLexicalStates]
+    return function_table_map[lexical_state]
+    [#else]
+    # We only have one lexical state in this case, so we return that!
+    return nfa_functions
+    [/#if]
 
 [#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("True", "False")
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("True", "False")
@@ -521,17 +521,17 @@ ${grammar.utils.translateLexerInjections(injector, true)}
         ch = self.content[bp]
         self._buffer_position = bp + 1
         return ch
-    
+
     # The main method to invoke the NFA machinery
     def _next_token(self):
         matched_token = None
         in_more = False
         token_begin_offset = self._buffer_position
-        first_char = ''
+        # first_char = ''
         # The core tokenization loop
         read_char = self.read_char
-        get_line_from_offset = self.get_line_from_offset
-        get_codepoint_column_from_offset = self.get_codepoint_column_from_offset
+        # get_line_from_offset = self.get_line_from_offset
+        # get_codepoint_column_from_offset = self.get_codepoint_column_from_offset
         while matched_token is None:
             matched_type = None
             matched_pos = code_units_read = 0
@@ -542,7 +542,8 @@ ${grammar.utils.translateLexerInjections(injector, true)}
                     reached_end = True
             else:
                 token_begin_offset = self._buffer_position
-                first_char = cur_char = read_char()
+                # first_char = cur_char = read_char()
+                cur_char = read_char()
                 if cur_char == '':
                     matched_type = TokenType.EOF
                     reached_end = True
@@ -646,10 +647,10 @@ ${grammar.utils.translateLexerInjections(injector, true)}
         self.uncache_tokens(t)
         if lex_state:
             self.switch_to(lex_state)
-[#if multipleLexicalStates] 
+[#if multipleLexicalStates]
         else:
             self.do_lexical_state_switch(t.type)
-[/#if]        
+[/#if]
 
  [#if lexerData.hasTokenActions]
     def token_lexical_actions(self, matched_token, matched_type):
@@ -678,7 +679,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         # This is just to handle tabs to spaces. If you don't have that setting set, it
         # is really unused.
         col = 0
-        just_saw_unicode_escape = False
+        # just_saw_unicode_escape = False
         # Don't know if this is really needed for Python ...
         code_points = list(content)
         cplen = len(code_points)
@@ -689,7 +690,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                 ch = code_points[index]
                 index += 1
                 if ch != 'u':
-                    just_saw_unicode_escape = False
+                    # just_saw_unicode_escape = False
                     buf.append('\\')
                     buf.append(ch)
                     if ch == '\n':
@@ -705,16 +706,16 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                         hex_buf.append(code_points[index])
                         index += 1
                     current = int(''.join(hex_buf), 16)
-                    last = buf[-1] if len(buf) > 0 else ''
+                    # last = buf[-1] if len(buf) > 0 else ''
                     # shouldn't see surrogate pairs, normally
                     buf.append(chr(current))
-                    just_saw_unicode_escape = True
+                    # just_saw_unicode_escape = True
                     # col += 6
                     col += 1
                     # We're not going to be trying to track line/column information relative to the original content
                     # with tabs or unicode escape, so we just increment 1, not 6
             elif ch == '\r' and not preserve_lines:
-                just_saw_unicode_escape = False
+                # just_saw_unicode_escape = False
                 buf.append('\n')
                 if index < cplen:
                     ch = code_points[index]
@@ -725,13 +726,13 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                     else:
                         col = 0
             elif ch == '\t' and tabs_to_spaces > 0:
-                just_saw_unicode_escape = False
+                # just_saw_unicode_escape = False
                 spaces_to_add = tabs_to_spaces - col % tabs_to_spaces
                 for i in range(spaces_to_add):
                     buf.append(' ')
                     col += 1
             else:
-                just_saw_unicode_escape = False
+                # just_saw_unicode_escape = False
                 buf.append(ch)
                 if ch == '\n':
                     col = 0
@@ -739,7 +740,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                     col += 1
         if ensure_final_endline:
             last_char = buf[-1] if len(buf) > 0 else ''
-            if last_char != '\n' and last_char!='\r':
+            if last_char != '\n' and last_char != '\r':
                 buf.append('\n')
         return ''.join(buf)
 
@@ -785,7 +786,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         return adjustment + pos - line_start
 
     def cache_token(self, tok):
-[#if !grammar.minimalToken]     
+[#if !grammar.minimalToken]
         if tok.is_inserted:
             next = tok.next_cached_token
             if next:
