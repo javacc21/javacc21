@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 Vinay Sajip (vinay_sajip@yahoo.co.uk)
+# Copyright (C) 2021-2022 Vinay Sajip (vinay_sajip@yahoo.co.uk)
 #
 import argparse
 import importlib
@@ -12,19 +12,8 @@ import sys
 DEBUGGING = 'PY_DEBUG' in os.environ
 
 IS_JAVA = sys.platform.startswith('java')
-if IS_JAVA:
-    IS_DOTNET = False
-else:
-    IS_DOTNET = sys.implementation.name == 'ironpython'
 
 logger = logging.getLogger(__name__)
-
-def python_dump_node(stream, node, level=0):
-    indstr = '  ' * level
-    s = '%s%s\n' % (indstr, node)
-    stream.write(s)
-    for child in node.children:
-        python_dump_node(stream, child, level + 1)
 
 if IS_JAVA:
     import java.io
@@ -54,6 +43,14 @@ if IS_JAVA:
         fos = java.io.FileOutputStream(p)
         osw = java.io.BufferedWriter(java.io.OutputStreamWriter(fos, StandardCharsets.UTF_8))
         return java.io.PrintWriter(osw, True)
+else:
+    def python_dump_node(stream, node, level=0):
+        indstr = '  ' * level
+        s = '%s%s\n' % (indstr, node)
+        stream.write(s)
+        for child in node.children:
+            python_dump_node(stream, child, level + 1)
+
 
 def main():
     fn = os.path.expanduser('~/logs/ptest.log')
@@ -70,7 +67,6 @@ def main():
     aa('-q', '--quiet', default=False, action='store_true', help='Minimise output verbosity')
     aa('-m', '--match', metavar='SUBSTRING', help='Only process files which contain the specified substring')
     aa('-x', '--exclude', metavar='SUBSTRING', help='Only process files which don\'t contain the specified substring')
-    aa('--variant', default=False, action='store_true', help='Test lexer/parser variants')
     options = ap.parse_args()
     ext = options.ext
     if not ext.startswith('.'):
@@ -122,7 +118,6 @@ def main():
                     if options.parser:
                         parser = Parser(f)
                         parser.inputSource = p
-                        # parser.tracingEnabled = True
                     else:
                         lexer = Lexer(f)
                         lexer.inputSource = p
@@ -144,9 +139,7 @@ def main():
                             # import pdb; pdb.set_trace()
                             getattr(parser, 'parse_%s' % options.parser)()
                             node = parser.root_node
-                            if not options.variant:
-                                assert node, 'Root node must not be null'
-                                python_dump_node(outf, node, 0)
+                            python_dump_node(outf, node, 0)
                     except ParseException as e:
                         logger.exception('Parse failed: %s', e)
                         if 'invalid.json' not in p:
@@ -162,31 +155,15 @@ def main():
                                                           t.endLine,
                                                           t.endColumn)
                             outf.print(s)
-                            # while t.next:
-                                # t = t.next
-                                # s = '%s: %s %d %d %d %d\n' % (t.type, t.image,
-                                                              # t.beginLine,
-                                                              # t.beginColumn,
-                                                              # t.endLine,
-                                                              # t.endColumn)
-                                # outf.print(s)
                         else:
                             # import pdb; pdb.set_trace()
-                            t = lexer.get_next_token()
+                            t = lexer.get_next_token(None)
                             s = '%s: %s %d %d %d %d\n' % (t.type.name, t.image,
                                                           t.begin_line,
                                                           t.begin_column,
                                                           t.end_line,
                                                           t.end_column)
                             outf.write(s)
-                            # while t.next:
-                                # t = t.next
-                                # s = '%s: %s %d %d %d %d\n' % (t.type.name, t.image,
-                                                              # t.begin_line,
-                                                              # t.begin_column,
-                                                              # t.end_line,
-                                                              # t.end_column)
-                                # outf.write(s)
                         done = t.type == TokenType.EOF
             finally:
                 if f:
