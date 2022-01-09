@@ -1,4 +1,4 @@
-// Surpisingly, the various JDK versions I have tested have somewhat  
+// Surprisingly, the various JDK versions I have tested have somewhat  
 // different sets of characters permissible in an identifier!
 // The one exception is that there seems to be no change
 // between jdk13 and jdk14.

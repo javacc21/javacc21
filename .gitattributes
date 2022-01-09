@@ -1,4 +1,7 @@
 text eol=lf
 *.java text
+*.javacc text
+*.ftl text
+*.py text
 *.md text
 *.jar binary
