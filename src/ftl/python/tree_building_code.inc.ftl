@@ -91,7 +91,6 @@
             next = self.next_token(lct)
             n.token_source = lct.token_source
             n.begin_offset = next.begin_offset
-            n.input_source = self.input_source
             n.open()
 [#list grammar.openNodeScopeHooks as hook]
             self.${hook}(n)

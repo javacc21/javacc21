@@ -822,6 +822,22 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                 chars.append(content[offset])
         return ''.join(chars)
 
+    def get_source_line(self, lineno):
+        rln = lineno - self.starting_line
+        if rln >= len(self._line_offsets):
+            so = len(self.content)
+        else:
+            so = self._line_offsets[rln]
+        rln += 1
+        if rln >= len(self._line_offsets):
+            eo = len(self.content)
+        else:
+            eo = self._line_offsets[rln]
+        result = self.content[so:eo]
+        if result[-1] == '\n':
+            result = result[:-1]
+        return result
+
 ${grammar.utils.translateLexerInjections(injector, false)}
 
  [#if lexerData.hasLexicalStateTransitions]

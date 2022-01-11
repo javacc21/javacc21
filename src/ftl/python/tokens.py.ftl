@@ -90,42 +90,6 @@ token_strings = [
 
 --]
 
-[#if include_unwanted!false]
-# Utility method to merge two tokens into a single token of a given type.
-def merge(t1, t2, tt):
-    result = new_token(tt, t1.image + t2.image, t1.input_source)
-    result.copy_location_info(t1)
-    result.end_line = t2.end_line
-    result.end_column = t2.end_column
-    result.next = t2.next
-    result.set_next_token(t2.next_token)
-    return result
-
-# Utility method to split a token in 2. For now, it assumes that the token
-# is all on a single line. (Will maybe fix that later).
-def split(tok, split_at, tt1, tt2):
-    img1 = tok.image[:split_at]
-    img2 = tok.image[split_at:]
-    t1 = new_token(tt1, img1, tok.input_source)
-    t2 = new_token(tt2, img2, tok.input_source)
-    t1.begin_line = tok.begin_line
-    t1.begin_column = tok.begin_column
-    t1.end_line = tok.begin_line
-    t1.end_column = tok.begin_column + split_at - 1
-    t1.set_previous_token(tok.get_previous_token())
-    t2.begin_line = tok.begin_line
-    t2.begin_column = t1.end_column + 1
-    t2.end_line = tok.end_line
-    t2.end_column = tok.end_column
-    t1.next = t2
-    t1.set_next_token(t2)
-    t2.set_previous_token(t1)
-    t2.next = tok.next
-    t2.set_next_token(tok.next_token)
-    return t1
-
-[/#if]
-
 class ${grammar.baseNodeClassName}:
 
     __slots__ = (
@@ -180,12 +144,18 @@ class ${grammar.baseNodeClassName}:
                 result = self.prepended_token.token_source
             if not result and self.appended_token:
                 result = self.appended_token.token_source
+        self._token_source = result
 [/#if]
         return result
 
     @token_source.setter
     def token_source(self, value):
         self._token_source = value
+
+    @property
+    def input_source(self):
+        ts = self.token_source
+        return "input" if not ts else ts.input_source
 
     def add_child(self, node, index=-1):
         if index < 0:
@@ -230,18 +200,22 @@ class ${grammar.baseNodeClassName}:
 
     # Copy the location info from another node or start/end nodes
     def copy_location_info(self, start, end=None):
-        if start.input_source and not self.input_source:
-            self.input_source = start.input_source
-        self.begin_line = start.begin_line
-        self.begin_column = start.begin_column
+        self.token_source = start.token_source
+        self.begin_offset = start.begin_offset
         if end is None:
-            self.end_line = start.end_line
-            self.end_column = start.end_column
-        else:
-            if not self.input_source and end.input_source:
-                self.input_source = end.input_source
-            self.end_line = end.end_line
-            self.end_column = end.end_column
+            self.end_offset = start.end_offset
+[#if !grammar.minimalToken]
+        self.prepended_token = start.prepended_token
+        if end is None:
+            self.appended_token = start.appended_token
+[/#if]
+        if end is not None:
+            if self.token_source is None:
+                self.token_source = end.token_source
+            self.end_offset = end.end_offset
+[#if !grammar.minimalToken]
+            self.appended_token = end.appended_token
+[/#if]
 
     def open(self): pass
 

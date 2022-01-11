@@ -207,7 +207,6 @@ class InvalidNode(BaseNode):
 class Parser:
 
     __slots__ = (
-        'input_source',
         'token_source',
         'last_consumed_token',
         '_next_token_type',
@@ -246,11 +245,9 @@ class Parser:
     def __init__(self, input_source_or_lexer):
 ${grammar.utils.translateParserInjections(injector, true)}
         if not is_lexer(input_source_or_lexer):
-            self.input_source = input_source_or_lexer
             self.token_source = Lexer(input_source_or_lexer)
         else:
             self.token_source = input_source_or_lexer
-            self.input_source = input_source_or_lexer.input_source
 [#if grammar.lexerUsesParser]
         self.token_source.parser = self
 [/#if]
@@ -304,6 +301,9 @@ ${grammar.utils.translateParserInjections(injector, true)}
             raise NotImplementedError('This parser was not built with fault tolerance support!')
 [/#if]
 
+    @property
+    def input_source(self):
+        return self.token_source.input_source
 
     def push_last_token_back(self):
 [#if grammar.treeBuildingEnabled]
