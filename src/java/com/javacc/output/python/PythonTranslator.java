@@ -403,11 +403,6 @@ public class PythonTranslator extends Translator {
             }
             result.append("})");
         }
-//        else if (methodName.equals("setInputSource") && (nargs == 1)) {
-//            renderReceiver(receiver, result);
-//            result.append(".input_source = ");
-//            internalTranslateExpression(firstArg, result);
-//        }
         else if (isSetter(methodName) && (nargs == 1)) {
             String s = translateIdentifier(methodName);
             renderReceiver(receiver, result);
