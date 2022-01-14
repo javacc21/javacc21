@@ -4,8 +4,6 @@
 
 PARSER_PACKAGE = org.parsers.pylexer;
 DEFAULT_LEXICAL_STATE = PYTHON;
-TABS_TO_SPACES=8;
-PRESERVE_LINE_ENDINGS=false;
 ENSURE_FINAL_EOL;
 EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
 
@@ -117,15 +115,6 @@ INJECT Token : {
       }
       return true;
    }
-   
-   public Token getPreviousToken() {
-        return previousCachedToken();
-    }
-
-   public void setImage(String image) {
-      this.image = image;
-   }
-
 }
 
 INJECT DedentToken : 
@@ -188,10 +177,9 @@ INJECT IndentToken :
    }
 }
 
+SKIP : <SPACE : (" " | "\f")+>; 
 
 UNPARSED : 
-   <SPACE : (" " | "\f")+> #Whitespace
-   |
    <CONTINUE_LINE : "\\\n"> #Whitespace
    |
    <COMMENT: "#" (~["\n"])* > #Comment  

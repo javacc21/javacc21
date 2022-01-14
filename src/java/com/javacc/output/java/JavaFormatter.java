@@ -54,7 +54,6 @@ public class JavaFormatter {
     public String format(BaseNode code) {
         buf = new StringBuilder();
         List<Token> allTokens = code.getAllTokens(true);
-        checkFirstNewLine(allTokens);
         for (Token t :  allTokens) {
             if (t instanceof Whitespace) {
                 continue;
@@ -65,24 +64,6 @@ public class JavaFormatter {
             handleToken();
         }
         return buf.toString();
-    }
-
-    // Scans for the first instance of a line terminator 
-    // and sets eol accordingly
-    private void checkFirstNewLine(List<Token> tokens) {
-        for (Token t: tokens) {
-            if (t instanceof Whitespace) {
-                String img = t.getImage();
-                int idx = img.indexOf('\n');
-                if (idx == 0) break;
-                if (idx >0) {
-                    if (img.charAt(idx-1) == '\r') {
-                        eol = "\r\n";
-                    }
-                    break;
-                }
-            }
-        }
     }
 
     private void startNewLineIfNecessary() {

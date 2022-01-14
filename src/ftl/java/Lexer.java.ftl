@@ -1,5 +1,5 @@
 [#--
-/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   final Token DUMMY_START_TOKEN = new Token();
 // Just a dummy Token value that we put in the tokenLocationTable
 // to indicate that this location in the file is ignored.
-  static final private Token IGNORED = new Token();
+  static final private Token IGNORED = new Token(), SKIPPED = new Token();
 
    // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
     private CharSequence content;
@@ -138,9 +138,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // Token types that do not participate in parsing, a.k.a. "special" tokens in legacy JavaCC,
   // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
   [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames /]
-  [#-- // Tokens that are skipped, i.e. SKIP
-  N.B. This concept is being eliminated!
-  [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames / --]
+  // Tokens that are skipped, i.e. SKIP 
+  [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames /]
   // Tokens that correspond to a MORE, i.e. that are pending 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
@@ -344,7 +343,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             return new InvalidToken(this, tokenBeginOffset, bufferPosition);
         } 
         bufferPosition -= (codeUnitsRead - matchedPos);
-        if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
+        if (skippedTokens.contains(matchedType)) {
+            for (int i=tokenBeginOffset; i< bufferPosition; i++) {
+                tokenLocationTable[i] = SKIPPED;
+            }
+        }
+        else if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             matchedToken = Token.newToken(matchedType, 
                                         this, 
                                         tokenBeginOffset,
