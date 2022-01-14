@@ -79,6 +79,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 // Just a dummy Token value that we put in the tokenLocationTable
 // to indicate that this location in the file is ignored.
   static final private Token IGNORED = new Token(), SKIPPED = new Token();
+  static {
+      IGNORED.setUnparsed(true);
+      SKIPPED.setUnparsed(true);
+  }
 
    // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
     private CharSequence content;
@@ -383,8 +387,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   
     /** 
      * Switch to specified lexical state. 
-     * @param  private final Token nextToken() {
-lexState the lexical state to switch to
+     * @param lexState the lexical state to switch to
      * @return whether we switched (i.e. we weren't already in the desired lexical state)
      */
     public boolean switchTo(LexicalState lexState) {
@@ -463,7 +466,7 @@ lexState the lexical state to switch to
 
     // But there is no goto in Java!!!
     private void goTo(int offset) {
-        while (tokenLocationTable[offset] == IGNORED && offset < content.length()) {
+        while (offset<content.length() && tokenLocationTable[offset] == IGNORED) {
             ++offset;
         }
         this.bufferPosition = offset;
@@ -612,7 +615,7 @@ lexState the lexical state to switch to
     }
 
     Token nextCachedToken(int offset) {
-      int nextOffset = tokenOffsets.nextSetBit(offset);
+        int nextOffset = tokenOffsets.nextSetBit(offset);
 	    return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
     } 
 

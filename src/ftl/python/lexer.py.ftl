@@ -428,6 +428,8 @@ ${grammar.utils.translateLexerInjections(injector, true)}
         self._dummy_start_token = InvalidToken(self, 0, 0)
         self._ignored = InvalidToken(self, 0, 0)
         self._skipped = InvalidToken(self, 0, 0)
+        self._ignored.is_unparsed = True
+        self._skipped.is_unparsed = True
         # The following two BitSets are used to store the current active
         # NFA states in the core tokenization loop
         self.next_states = BitSet(MAX_STATES)
