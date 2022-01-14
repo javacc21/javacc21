@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -38,7 +38,7 @@ DEFAULT_LEXICAL_STATE=JAVA;
 JAVA_UNICODE_ESCAPE;
 TREE_BUILDING_ENABLED=false;
 
-UNPARSED : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
+SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
 
 <IN_MULTI_LINE_COMMENT>
 UNPARSED :  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA;

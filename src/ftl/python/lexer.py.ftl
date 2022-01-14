@@ -600,7 +600,8 @@ ${grammar.utils.translateLexerInjections(injector, true)}
             self._buffer_position -= code_units_read - matched_pos
             if matched_type in self.skipped_tokens:
                 for i in range(token_begin_offset, self._buffer_position):
-                    self._token_location_table[i] = self._skipped
+                    if self._token_location_table[i] != self._ignored :
+                        self._token_location_table[i] = self._skipped
             elif matched_type in self.regular_tokens or matched_type in self.unparsed_tokens:
                 # import pdb; pdb.set_trace()
                 matched_token = new_token(matched_type, self, token_begin_offset, self._buffer_position)

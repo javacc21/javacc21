@@ -247,6 +247,10 @@ INJECT BaseNode :
         boolean outputOpeningBrace = false;
         for (int i=0; i<tokens.size() -1; i++) {
             Token t = tokens.get(i);
+            Token prevToken = i == 0 ? null : tokens.get(i-1);
+            if (prevToken !=null && prevToken.getEndOffset() != t.getBeginOffset()) {
+                buf.append(" ");
+            }
             if (outputOpeningBrace) {
                 buf.append(t);
             } else if (t.getType() == TokenType.LBRACE) {
@@ -279,8 +283,13 @@ INJECT BaseNode :
 
     protected String getLiteralText() {
         StringBuilder buf = new StringBuilder();
+        Token prevToken = null;
         for (Token t : getAllTokens(true)) {
+            if (prevToken != null && prevToken.getEndOffset() != t.getBeginOffset()) {
+                buf.append(" ");
+            }
             buf.append(t);
+            prevToken = t;
         }
         return buf.toString();
     }

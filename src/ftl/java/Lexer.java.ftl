@@ -349,8 +349,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         bufferPosition -= (codeUnitsRead - matchedPos);
         if (skippedTokens.contains(matchedType)) {
             for (int i=tokenBeginOffset; i< bufferPosition; i++) {
-                tokenLocationTable[i] = SKIPPED;
+                if (tokenLocationTable[i] != IGNORED) tokenLocationTable[i] = SKIPPED;
             }
+//            goTo(bufferPosition);
         }
         else if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             matchedToken = Token.newToken(matchedType, 
