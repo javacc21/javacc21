@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -185,9 +185,7 @@ public class LexerData {
     }
     
     public TokenSet getUnparsedTokens() {
-        TokenSet unparsedTokens = getTokensOfKind("UNPARSED");
-        unparsedTokens.or(getSkippedTokens());
-        return unparsedTokens;
+        return getTokensOfKind("UNPARSED");
     }
 
     public TokenSet getRegularTokens() {

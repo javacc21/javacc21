@@ -399,6 +399,7 @@ class ${lexerClassName}:
         '_buffer_position',
         '_dummy_start_token',
         '_ignored',
+        '_skipped',
 [#var injectedFields = grammar.utils.injectedLexerFieldNames(injector)]
 [#if injectedFields?size > 0]
         # injected fields
@@ -426,6 +427,7 @@ ${grammar.utils.translateLexerInjections(injector, true)}
         self._token_offsets = BitSet(n)
         self._dummy_start_token = InvalidToken(self, 0, 0)
         self._ignored = InvalidToken(self, 0, 0)
+        self._skipped = InvalidToken(self, 0, 0)
         # The following two BitSets are used to store the current active
         # NFA states in the core tokenization loop
         self.next_states = BitSet(MAX_STATES)
@@ -453,7 +455,7 @@ ${grammar.utils.translateLexerInjections(injector, true)}
         # i.e. declared as UNPARSED (or SPECIAL_TOKEN)
         [@EnumSet "unparsed_tokens" lexerData.unparsedTokens.tokenNames 8 /]
         [#-- Tokens that are skipped, i.e. SKIP --]
-        [#-- @EnumSet "skipped_tokens" lexerData.skippedTokens.tokenNames 8 / --]
+        [@EnumSet "skipped_tokens" lexerData.skippedTokens.tokenNames 8 /]
         # Tokens that correspond to a MORE, i.e. that are pending
         # additional input
         [@EnumSet "more_tokens" lexerData.moreTokens.tokenNames 8 /]
@@ -594,7 +596,10 @@ ${grammar.utils.translateLexerInjections(injector, true)}
                 self._buffer_position = token_begin_offset + 1
                 return InvalidToken(self, token_begin_offset, self._buffer_position)
             self._buffer_position -= code_units_read - matched_pos
-            if matched_type in self.regular_tokens or matched_type in self.unparsed_tokens:
+            if matched_type in self.skipped_tokens:
+                for i in range(token_begin_offset, self._buffer_position):
+                    self.buffer[i] = _skipped
+            elif matched_type in self.regular_tokens or matched_type in self.unparsed_tokens:
                 # import pdb; pdb.set_trace()
                 matched_token = new_token(matched_type, self, token_begin_offset, self._buffer_position)
                 matched_token.is_unparsed = matched_type not in self.regular_tokens
