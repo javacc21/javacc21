@@ -195,9 +195,6 @@ class ${grammar.baseNodeClassName}:
         if self.children:
             return self.children[-1]
 
-    def chlldren_of_type(self, cls):
-        return [child for child in self.children if isinstance(child, cls)]
-
     # Copy the location info from another node or start/end nodes
     def copy_location_info(self, start, end=None):
         self.token_source = start.token_source
@@ -254,6 +251,9 @@ class ${grammar.baseNodeClassName}:
         return last.last_token
 
 
+    def children_of_type(self, cls):
+        return [child for child in self.children if isinstance(child, cls)]
+
     def first_child_of_type(self, type):
         for child in self.children:
             if isinstance(child, Token) and child.type == type:
@@ -268,6 +268,20 @@ class ${grammar.baseNodeClassName}:
                 child = child.first_descendant_of_type(type)
                 if child:
                     return child
+
+    def descendants(self, cls=None, predicate=None):
+        if cls is None:
+            cls = BaseNode
+        result = []
+        for child in self.children:
+            if isinstance(child, cls):
+                if not predicate or predicate(child):
+                    result.append(child)
+        return result
+
+    @property
+    def real_tokens(self):
+        return self.descendants(Token, lambda t: not t.is_unparsed)
 
 [/#if]
 
