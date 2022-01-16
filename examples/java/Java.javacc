@@ -885,6 +885,8 @@ INJECT WhileStatement : extends Statement
 INJECT DoStatement : extends Statement
 INJECT ExpressionStatement : extends Statement
 INJECT ForStatement : extends Statement
+INJECT BasicForStatement : extends ForStatement
+INJECT EnhancedForStatement : extends ForStatement
 INJECT BreakStatement : extends Statement
 INJECT ContinueStatement : extends Statement
 INJECT ReturnStatement : extends Statement
@@ -1062,18 +1064,6 @@ WhileStatement :
 
 DoStatement :
   "do" Statement "while" "(" Expression ")" ";"
-;
-
-ForStatement2 :
-  "for" "("
-  (
-      {permissibleModifiers = EnumSet.of(FINAL);}#
-      Modifiers 
-      ACTIVATE_TOKENS VAR (Type | "var") <IDENTIFIER> ":" =>|| Expression 
-      |
-      [ ForInit ] ";" [ Expression ] ";" [ StatementExpressionList ]
-  )
-  ")" Statement
 ;
 
 ForStatement :

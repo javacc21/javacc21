@@ -199,6 +199,22 @@ public interface Node extends Comparable<Node>
          return -1;
      }
 
+     default Node previousSibling() {
+         Node parent = getParent();
+         if (parent == null) return null;
+         int idx = parent.indexOf(this);
+         if (idx <=0) return null;
+         return parent.getChild(idx-1);
+     }
+
+     default Node nextSibling() {
+         Node parent = getParent();
+         if (parent == null) return null;
+         int idx = parent.indexOf(this);
+         if (idx >= parent.getChildCount() -1) return null;
+         return parent.getChild(idx+1);
+     }
+
      /**
       * Used to order Nodes by location.
       * @param n the Node to compare to

@@ -41,7 +41,9 @@ TREE_BUILDING_ENABLED=false;
 SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
 
 <IN_MULTI_LINE_COMMENT>
-UNPARSED :  <MULTI_LINE_COMMENT: "*/" > #Comment : JAVA;
+   UNPARSED #Comment :  
+      <MULTI_LINE_COMMENT: "*/" > #MultiLineComment : JAVA
+;
 
 
 MORE :
@@ -51,8 +53,8 @@ MORE :
 ;
 
 <IN_SINGLE_LINE_COMMENT>
-UNPARSED :
-  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #Comment : JAVA
+  UNPARSED #Comment :
+     <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #SingleLineComment : JAVA
 ;
 
 <IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE_COMMENT>
@@ -299,14 +301,14 @@ TOKEN #Delimiter :
 | < SEMICOLON: ";" > 
 | < COMMA: "," > 
 | < DOT: "." > 
-| < ASSIGN: "=" > 
 | < DOUBLE_COLON: "::" > 
 | < VAR_ARGS: "..." > 
 | < AT : "@"> 
 ;
 
 TOKEN #Operator : 
- < GT: ">" > 
+< ASSIGN: "=" > 
+| < GT: ">" > 
 | < LT: "<" > 
 | < BANG: "!" > 
 | < TILDE: "~" > 

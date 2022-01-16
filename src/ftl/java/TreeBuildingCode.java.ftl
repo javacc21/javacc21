@@ -122,7 +122,6 @@
             Token next = nextToken(lastConsumedToken);
             n.setTokenSource(lastConsumedToken.getTokenSource());
             n.setBeginOffset(next.getBeginOffset());
-//            n.setInputSource(next.getInputSource());
             n.open();
   [#list grammar.openNodeScopeHooks as hook]
             ${hook}(n);
