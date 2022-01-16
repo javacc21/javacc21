@@ -181,11 +181,9 @@ INJECT EnumDeclaration : implements TypeDeclaration;
 
 EmptyDeclaration# : ";" ;
 
-INJECT PARSER_CLASS : {private String temp;}
-
 TypeIdentifier#void :
    <IDENTIFIER> 
-   {temp = getToken(0).getImage();}#
+   {String temp = getToken(0).getImage();}#
    ASSERT {!temp.equals("record") 
            && !temp.equals("var") 
            && !temp.equals("permits")
