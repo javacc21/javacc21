@@ -199,6 +199,22 @@ public interface Node extends Comparable<Node>
          return -1;
      }
 
+     default Node previousSibling() {
+         Node parent = getParent();
+         if (parent == null) return null;
+         int idx = parent.indexOf(this);
+         if (idx <=0) return null;
+         return parent.getChild(idx-1);
+     }
+
+     default Node nextSibling() {
+         Node parent = getParent();
+         if (parent == null) return null;
+         int idx = parent.indexOf(this);
+         if (idx >= parent.getChildCount() -1) return null;
+         return parent.getChild(idx+1);
+     }
+
      /**
       * Used to order Nodes by location.
       * @param n the Node to compare to
@@ -715,32 +731,37 @@ public interface Node extends Comparable<Node>
  	static abstract public class Visitor {
 		
 		static private Method baseVisitMethod;
+        static {
+            try {
+                baseVisitMethod = Node.Visitor.class.getMethod("visit", Node.class);
+            } catch (NoSuchMethodException e) {}
+        }
 		private HashMap<Class<? extends Node>, Method> methodCache = new HashMap<>();
-		
-		static private Method getBaseVisitMethod() throws NoSuchMethodException {
-			if (baseVisitMethod == null) {
-				baseVisitMethod = Node.Visitor.class.getMethod("visit", new Class[] {Node.class});
-			} 
-			return baseVisitMethod;
-		}
 		
 		private Method getVisitMethod(Node node) {
 			Class<? extends Node> nodeClass = node.getClass();
 			if (!methodCache.containsKey(nodeClass)) {
-				try {
-					Method method = this.getClass().getMethod("visit", new Class[] {nodeClass});
-					if (method.equals(getBaseVisitMethod())) {
-						method = null; // Have to avoid infinite recursion, no?
-					}
-					methodCache.put(nodeClass, method);
-				}
-				catch (NoSuchMethodException nsme) {
-					methodCache.put(nodeClass, null);
-				}
+                methodCache.put(nodeClass, getVisitMethodImpl(nodeClass));
 			}
 	        return methodCache.get(nodeClass);
 		}
-		
+
+        // Find handler method for this node type. If there is none, 
+        // it checks for a handler for any explicitly marked interfaces
+        // If necessary, it climbs the class hierarchy to superclasses
+        private Method getVisitMethodImpl(Class<?> nodeClass) {
+            if (nodeClass == null || !Node.class.isAssignableFrom(nodeClass)) return null;
+            try {
+                return this.getClass().getMethod("visit", nodeClass);
+            } catch (NoSuchMethodException e) {}
+            for (Class<?> interf : nodeClass.getInterfaces()) {
+                if (Node.class.isAssignableFrom(interf) && !Node.class.equals(interf)) try {
+                    return this.getClass().getMethod("visit", interf);
+                } catch (NoSuchMethodException e) {}
+            }
+            return getVisitMethodImpl(nodeClass.getSuperclass());
+        }
+
 		/**
 		 * Tries to invoke (via reflection) the appropriate visit(...) method
 		 * defined in a subclass. If there is none, it just calls the fallback() routine.
@@ -751,7 +772,7 @@ public interface Node extends Comparable<Node>
 			if (visitMethod == null) {
 				fallback(node);
 			} else try {
-				visitMethod.invoke(this, new Object[] {node});
+				visitMethod.invoke(this, node);
 			} catch (InvocationTargetException ite) {
 	    		Throwable cause = ite.getCause();
 	    		if (cause instanceof RuntimeException) {
@@ -767,7 +788,6 @@ public interface Node extends Comparable<Node>
          * Just recurses over (i.e. visits) node's children
          * @param node the node we are traversing
          */
-		
 		public final void recurse(Node node) {
             for (Node child : node.children()) {
                 visit(child);
