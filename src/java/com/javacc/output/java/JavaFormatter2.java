@@ -29,6 +29,7 @@
 
 package com.javacc.output.java;
 
+import com.javacc.parser.JavaCCConstants.TokenType;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
 import com.javacc.parser.*;
@@ -64,22 +65,36 @@ public class JavaFormatter2 extends Node.Visitor {
         Token previousCachedToken = id.previousCachedToken();
         if (previousCachedToken != null) {
             if (previousCachedToken instanceof KeyWord || previousCachedToken instanceof Identifier) {
-                addSpaceIfNecessary();
+                addSpaceIfNecessary(false);
             }
         }
         buf.append(id);
     }
 
+    public void visit(KeyWord keyword) {
+        visitPrecedingTokens(keyword);
+        TokenType type = keyword.getType();
+        addSpaceIfNecessary(type == THROWS);
+        buf.append(keyword);
+        if (type == IF || type == DO || type == WHILE) {
+            buf.append(' ');
+        }
+    }
+
     public void visit(TypeDeclaration td) {
-        newLine();
+        newLine(true);
         recurse(td);
-        newLine();
+        newLine(true);
     }
 
     public void visit(Token tok) {
         visitPrecedingTokens(tok);
         if (tok.getType() == EOF) buf.append("\n");
         else {
+            int firstChar = tok.getImage().codePointAt(0);
+            if (Character.isJavaIdentifierPart(firstChar)) {
+                addSpaceIfNecessary(false);
+            }
             buf.append(tok);
         }
     }
@@ -89,7 +104,7 @@ public class JavaFormatter2 extends Node.Visitor {
         switch (op.getType()) {
             case LT:
                 if (op.getParent() instanceof RelationalExpression) {
-                    addSpaceIfNecessary();
+                    addSpaceIfNecessary(true);
                     buf.append("< ");
                 } else {
                     buf.append("<");
@@ -97,16 +112,14 @@ public class JavaFormatter2 extends Node.Visitor {
                 break;
             case GT:
                 if (op.getParent() instanceof RelationalExpression) {
-                    addSpaceIfNecessary();
+                    addSpaceIfNecessary(true);
                     buf.append("> ");
                 } else {
                     buf.append(">");
+                    if (op.nextCachedToken().getType() != GT) buf.append(' ');
                 }
                 break;
-            default : 
-                addSpaceIfNecessary();
-                buf.append(op);
-                buf.append(" ");
+            default : buf.append(op);
         }
     }
 
@@ -114,14 +127,14 @@ public class JavaFormatter2 extends Node.Visitor {
         visitPrecedingTokens(delimiter);
         switch (delimiter.getType()) {
             case COLON :
-                addSpaceIfNecessary();
+                addSpaceIfNecessary(true);
                 buf.append(": ");
                 break;
             case COMMA : 
                 buf.append(", "); 
                 break;
             case LBRACE : 
-                addSpaceIfNecessary(); 
+                addSpaceIfNecessary(true); 
                 buf.append("{");
                 if (!(delimiter.getParent() instanceof ArrayInitializer)) {
                     currentIndent += indent;
@@ -141,25 +154,22 @@ public class JavaFormatter2 extends Node.Visitor {
     }
 
     public void visit(Statement stmt) {
-        newLine();
+        if (stmt.getParent() instanceof IfStatement) {
+            addSpaceIfNecessary(true);
+        } else {
+            newLine();
+        }
         recurse(stmt);
         newLine();
     }
 
-    public void visit(KeyWord keyword) {
-        visitPrecedingTokens(keyword);
-        addSpaceIfNecessary();
-        buf.append(keyword);
-        addSpaceIfNecessary();
+    public void visit(MultiLineComment comment) {
+        startNewLineIfNecessary(); 
+        buf.append(indentText(comment.getImage()));
+        newLine();
     }
 
-    public void visit(Comment comment) {
-        if (comment.getType() == MULTI_LINE_COMMENT) {
-            buf.append(eol);
-            buf.append(indentText(comment.getImage()));
-            newLine();
-            return;
-        }
+    public void visit(SingleLineComment comment) {
         if (startsNewLine(comment)) {
             newLine();
         }
@@ -167,8 +177,15 @@ public class JavaFormatter2 extends Node.Visitor {
         buf.append(currentIndent);
     }
 
-    private void addSpaceIfNecessary() {
-        if (buf.length()>1 && !Character.isWhitespace(buf.charAt(buf.length()-1))) buf.append(' ');
+    private void addSpaceIfNecessary(boolean afterNonWhitespace) {
+        if (buf.length()==0) return;
+        int lastChar = buf.codePointBefore(buf.length());
+        if (afterNonWhitespace) {
+            if (!Character.isWhitespace(buf.charAt(buf.length()-1))) buf.append(' ');
+        } else {
+            if (Character.isJavaIdentifierPart(lastChar)) buf.append(' ');
+        }
+
     }
 
     private void dedent() {
@@ -184,22 +201,6 @@ public class JavaFormatter2 extends Node.Visitor {
         return previousCachedToken == null || previousCachedToken.getEndLine() != t.getBeginLine();
     }
 
-    private Node previousSibling(Node n) {
-        Node parent = n.getParent();
-        if (parent == null) return null;
-        int idx = parent.indexOf(n);
-        if (idx <=0) return null;
-        return parent.getChild(idx-1);
-    }
-
-    private Node nextSibling(Node n) {
-        Node parent = n.getParent();
-        if (parent == null) return null;
-        int idx = parent.indexOf(n);
-        if (idx > parent.getChildCount() -1) return null;
-        return parent.getChild(idx+1);
-    }
-
     private String indentText(String text) {
         StringBuilder buf = new StringBuilder();
         for (String line : text.split("\n")) {
@@ -209,7 +210,6 @@ public class JavaFormatter2 extends Node.Visitor {
         }
         return buf.toString();
     }
-    
 
     public void visit(PackageDeclaration pd) {
         recurse(pd);
@@ -220,27 +220,32 @@ public class JavaFormatter2 extends Node.Visitor {
     public void visit(ImportDeclaration id) {
         recurse(id);
         buf.append(eol);
-        if (!(nextSibling(id) instanceof ImportDeclaration)) {
+        if (!(id.nextSibling() instanceof ImportDeclaration)) {
             buf.append(eol);
         }
     }
 
     public void visit(MethodDeclaration md) {
-        buf.append(eol);
-        buf.append(currentIndent);
+        if (!(md.previousSibling() instanceof MethodDeclaration)) newLine(true);
         recurse(md);
+        newLine(true);
     }
 
     public void visit(FieldDeclaration fd) {
-        if (!(previousSibling(fd) instanceof FieldDeclaration)) {
+        if (!(fd.previousSibling() instanceof FieldDeclaration)) {
             newLine();
         }
         recurse(fd);
         newLine();
     }
 
+    public void visit(LocalVariableDeclaration lvd) {
+        if (!(lvd.getParent() instanceof ForStatement)) newLine();
+        recurse(lvd);
+    }
+
     public void visit(Annotation ann) {
-        if (!(previousSibling(ann) instanceof Annotation)) {
+        if (!(ann.previousSibling() instanceof Annotation)) {
             newLine();
         }
         recurse(ann);
@@ -278,9 +283,16 @@ public class JavaFormatter2 extends Node.Visitor {
             buf.append(eol);
         }
     }
-    
+
     private void newLine() {
+        newLine(false);
+    }
+    
+    private void newLine(boolean ensureBlankLine) {
         startNewLineIfNecessary();
+        if (ensureBlankLine) {
+            buf.append(eol);
+        }
         buf.append(currentIndent);
     }
 }

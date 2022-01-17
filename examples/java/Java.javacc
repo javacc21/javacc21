@@ -1064,7 +1064,7 @@ DoStatement :
   "do" Statement "while" "(" Expression ")" ";"
 ;
 
-ForStatement :
+ForStatement#abstract :
    BasicForStatement
    |
    EnhancedForStatement
