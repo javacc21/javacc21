@@ -29,16 +29,11 @@
 
 package com.javacc.output.java;
 
+import com.javacc.parser.*;
+import com.javacc.parser.tree.*;
 import com.javacc.parser.JavaCCConstants.TokenType;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
-import com.javacc.parser.*;
-import com.javacc.parser.tree.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import java.util.EnumSet;
 
 /**
@@ -48,69 +43,44 @@ import java.util.EnumSet;
  */
 public class JavaFormatter2 extends Node.Visitor {
      
-    private StringBuilder buf = new StringBuilder();
+    {this.visitUnparsedTokens = true;}
+
+    private StringBuilder buf;
     private String indent = "    ";
     private String currentIndent = "";
     private String eol = "\n";
+    private EnumSet<TokenType> alwaysPrependSpace = EnumSet.of(ASSIGN, COLON, LBRACE, HOOK, THROWS);
+    private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, COMMA, DO, FOR, IF, WHILE, THROWS, EXTENDS, HOOK);
 
-    {this.visitUnparsedTokens = true;}
-
-    private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(DO, IF, WHILE, THROWS);
-
-    private void visitPrecedingTokens(Token tok) {
-/*        
-        if (tok.isUnparsed()) return;
-        for (Token t : precedingUnparsedTokens(tok)) {
-            if (t instanceof Whitespace) continue;
-            visit((Node) t);
-        }*/
+    public String format(BaseNode code) {
+        buf = new StringBuilder();
+        visit(code);
+        return buf.toString();
     }
 
-    public void visit(Identifier id) {
-        visitPrecedingTokens(id);
-        Token previousCachedToken = id.previousCachedToken();
-        if (previousCachedToken != null) {
-            if (previousCachedToken instanceof KeyWord || previousCachedToken instanceof Identifier) {
-                addSpaceIfNecessary(false);
+    private void outputToken(Token tok) {
+        if (buf.length() >0) {
+            int prevChar = buf.codePointBefore(buf.length());
+            int nextChar = tok.getImage().codePointAt(0);
+            if ((Character.isJavaIdentifierPart(prevChar) || prevChar == ';') && Character.isJavaIdentifierPart(nextChar)) {
+                buf.append(' ');
             }
+            if (alwaysPrependSpace.contains(tok.getType())) buf.append(' ');
         }
-        buf.append(id);
-    }
-
-    public void visit(KeyWord keyword) {
-        visitPrecedingTokens(keyword);
-        TokenType type = keyword.getType();
-        addSpaceIfNecessary(type == THROWS);
-        buf.append(keyword);
-        if (alwaysAppendSpace.contains(type)) {
-            buf.append(' ');
-        }
-    }
-
-    public void visit(TypeDeclaration td) {
-        newLine(true);
-        recurse(td);
-        newLine(true);
+        buf.append(tok);
+        if (alwaysAppendSpace.contains(tok.getType())) buf.append(' ');
     }
 
     public void visit(Token tok) {
-        visitPrecedingTokens(tok);
         if (tok.getType() == EOF) buf.append("\n");
-        else {
-            int firstChar = tok.getImage().codePointAt(0);
-            if (Character.isJavaIdentifierPart(firstChar)) {
-                addSpaceIfNecessary(false);
-            }
-            buf.append(tok);
-        }
+        else outputToken(tok);
     }
 
     public void visit(Operator op) {
-        visitPrecedingTokens(op);
         switch (op.getType()) {
             case LT:
                 if (op.getParent() instanceof RelationalExpression) {
-                    addSpaceIfNecessary(true);
+                    addSpaceIfNecessary();
                     buf.append("< ");
                 } else {
                     buf.append("<");
@@ -118,30 +88,21 @@ public class JavaFormatter2 extends Node.Visitor {
                 break;
             case GT:
                 if (op.getParent() instanceof RelationalExpression) {
-                    addSpaceIfNecessary(true);
+                    addSpaceIfNecessary();
                     buf.append("> ");
                 } else {
                     buf.append(">");
                     if (op.nextCachedToken().getType() != GT) buf.append(' ');
                 }
                 break;
-            default : buf.append(op);
+            default : outputToken(op);
         }
     }
 
     public void visit(Delimiter delimiter) {
-        visitPrecedingTokens(delimiter);
         switch (delimiter.getType()) {
-            case COLON :
-                addSpaceIfNecessary(true);
-                buf.append(": ");
-                break;
-            case COMMA : 
-                buf.append(", "); 
-                break;
             case LBRACE : 
-                addSpaceIfNecessary(true); 
-                buf.append("{");
+                outputToken(delimiter);
                 if (!(delimiter.getParent() instanceof ArrayInitializer)) {
                     currentIndent += indent;
                     newLine();
@@ -155,22 +116,19 @@ public class JavaFormatter2 extends Node.Visitor {
                 buf.append("}");
                 newLine();
                 break;
-            default : buf.append(delimiter);
+            case HOOK :
+                if (!(delimiter.getParent() instanceof TernaryExpression)) {
+                    buf.append(delimiter);
+                } else {
+                    outputToken(delimiter);
+                }
+                break;
+            default : outputToken(delimiter);
         }
-    }
-
-    public void visit(Statement stmt) {
-        if (stmt.getParent() instanceof IfStatement) {
-            addSpaceIfNecessary(true);
-        } else {
-            newLine();
-        }
-        recurse(stmt);
-        newLine();
     }
 
     public void visit(MultiLineComment comment) {
-        startNewLineIfNecessary(); 
+        startNewLineIfNecessary();
         buf.append(indentText(comment.getImage()));
         newLine();
     }
@@ -183,15 +141,27 @@ public class JavaFormatter2 extends Node.Visitor {
         buf.append(currentIndent);
     }
 
-    private void addSpaceIfNecessary(boolean afterNonWhitespace) {
+    public void visit(TypeDeclaration td) {
+        newLine(true);
+        recurse(td);
+        newLine(true);
+    }
+
+    public void visit(Statement stmt) {
+        if (stmt.getParent() instanceof IfStatement) {
+            addSpaceIfNecessary();
+        } else {
+            newLine();
+        }
+        recurse(stmt);
+        newLine();
+    }
+
+    // Add a space if the last output char was not whitespace
+    private void addSpaceIfNecessary() {
         if (buf.length()==0) return;
         int lastChar = buf.codePointBefore(buf.length());
-        if (afterNonWhitespace) {
-            if (!Character.isWhitespace(buf.charAt(buf.length()-1))) buf.append(' ');
-        } else {
-            if (Character.isJavaIdentifierPart(lastChar)) buf.append(' ');
-        }
-
+        if (!Character.isWhitespace(lastChar)) buf.append(' ');
     }
 
     private void dedent() {
@@ -219,8 +189,7 @@ public class JavaFormatter2 extends Node.Visitor {
 
     public void visit(PackageDeclaration pd) {
         recurse(pd);
-        buf.append(eol);
-        buf.append(eol);
+        newLine(true);
     }
 
     public void visit(ImportDeclaration id) {
@@ -232,8 +201,14 @@ public class JavaFormatter2 extends Node.Visitor {
     }
 
     public void visit(MethodDeclaration md) {
-        if (!(md.previousSibling() instanceof MethodDeclaration)) newLine(true);
+        if (!(md.previousSibling() instanceof MethodDeclaration) && !(md.previousSibling() instanceof ConstructorDeclaration)) newLine(true);
         recurse(md);
+        newLine(true);
+    }
+
+    public void visit(ConstructorDeclaration cd) {
+        if (!(cd.previousSibling() instanceof MethodDeclaration) && !(cd.previousSibling() instanceof ConstructorDeclaration)) newLine(true);
+        recurse(cd);
         newLine(true);
     }
 
@@ -256,22 +231,6 @@ public class JavaFormatter2 extends Node.Visitor {
         }
         recurse(ann);
         newLine();
-    }
-
-    private List<Token> precedingUnparsedTokens(Token tok) {
-        ArrayList<Token> result = new ArrayList<>();
-        for (Iterator<Token> it = tok.precedingTokens(); it.hasNext();) {
-            Token next = it.next();
-            if (!next.isUnparsed()) break;
-            result.add(next);
-        }
-        Collections.reverse(result);
-        return result;
-    }
-
-    public String format(BaseNode code) {
-        visit(code);
-        return buf.toString();
     }
 
     private void startNewLineIfNecessary() {
