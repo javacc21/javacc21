@@ -851,34 +851,6 @@ public class Translator {
             resultNode.thenStmts = (ASTStatement) transformTree(node.getChild(4));
             return resultNode;
         }
-        else if (node instanceof ForStatement) {
-            throw new UnsupportedOperationException("Should be supplanted now");
-/*
-            int n = node.getChildCount();
-            ASTForStatement resultNode = new ASTForStatement();
-            if (node.getChild(4).toString().equals(":")) {
-                // iterating for loop - this branch is now probably obsolete
-                ASTVariableOrFieldDeclaration decl = new ASTVariableOrFieldDeclaration();
-                decl.type = (ASTTypeExpression) transformTree(node.getChild(2), true);
-                decl.addNameAndInitializer((ASTPrimaryExpression) transformTree(node.getChild(3)), null);
-                resultNode.variable = decl;
-                resultNode.iterable = (ASTExpression) transformTree(node.getChild(5));
-            }
-            else {
-                // counted for loop
-                resultNode.variable = (ASTVariableOrFieldDeclaration) transformTree(node.getChild(2));
-                resultNode.condition = (ASTExpression) transformTree(node.getChild(4));
-                for (int i = 5; i < (n - 1); i++) {
-                    Node child = node.getChild(i);
-                    if (child instanceof Expression) {
-                        resultNode.add((ASTExpression) transformTree(child));
-                    }
-                }
-            }
-            resultNode.statements = (ASTStatement) transformTree(node.getLastChild());
-            return resultNode;
-*/
-        }
         else if (node instanceof BasicForStatement) {
             // counted for loop
             int n = node.getChildCount();
