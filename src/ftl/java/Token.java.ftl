@@ -39,6 +39,8 @@ package ${grammar.parserPackage};
 import ${grammar.nodePackage}.*;
 [/#if]
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -400,6 +402,20 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
                 return currentPoint = previous;
             }
         };
+    }
+
+    /**
+     * @return a list of the unparsed tokens preceding this one in the order they appear in the input
+     */
+    public List<Token> precedingUnparsedTokens() {
+        List<Token> result = new ArrayList<>();
+        Token t = this.previousCachedToken();
+        while (t != null && t.isUnparsed()) {
+            result.add(t);
+            t = t.previousCachedToken();
+        }
+        Collections.reverse(result);
+        return result;
     }
 
     /**

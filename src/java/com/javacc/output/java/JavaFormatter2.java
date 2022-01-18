@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.EnumSet;
 
 /**
  * A somewhat more sophisticated class for pretty-printing java source code.
@@ -46,18 +47,23 @@ import java.util.List;
  * @author revusky
  */
 public class JavaFormatter2 extends Node.Visitor {
-    
+     
     private StringBuilder buf = new StringBuilder();
     private String indent = "    ";
     private String currentIndent = "";
     private String eol = "\n";
 
+    {this.visitUnparsedTokens = true;}
+
+    private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(DO, IF, WHILE, THROWS);
+
     private void visitPrecedingTokens(Token tok) {
+/*        
         if (tok.isUnparsed()) return;
         for (Token t : precedingUnparsedTokens(tok)) {
             if (t instanceof Whitespace) continue;
             visit((Node) t);
-        }
+        }*/
     }
 
     public void visit(Identifier id) {
@@ -76,7 +82,7 @@ public class JavaFormatter2 extends Node.Visitor {
         TokenType type = keyword.getType();
         addSpaceIfNecessary(type == THROWS);
         buf.append(keyword);
-        if (type == IF || type == DO || type == WHILE) {
+        if (alwaysAppendSpace.contains(type)) {
             buf.append(' ');
         }
     }

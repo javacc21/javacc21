@@ -249,12 +249,23 @@ public interface Node extends Comparable<Node>
       * implementations of this should similarly return a copy or
       * possibly immutable wrapper around the list.
       */
-      default List<Node> children() {
+      default List<Node> children(boolean includeUnparsedTokens) {
          List<Node> result = new ArrayList<>();
          for (int i = 0; i < getChildCount(); i++) {
-             result.add(getChild(i));
+             Node child = getChild(i);
+             if (includeUnparsedTokens && child instanceof Token) {
+                 Token tok = (Token) child;
+                 if (!tok.isUnparsed()) {
+                     result.addAll(tok.precedingUnparsedTokens());
+                 }
+             } 
+             result.add(child);
          }
          return result;
+      }
+
+      default List<Node> children() {
+          return children(false);
       }
 
     /**
@@ -737,6 +748,8 @@ public interface Node extends Comparable<Node>
             } catch (NoSuchMethodException e) {}
         }
 		private HashMap<Class<? extends Node>, Method> methodCache = new HashMap<>();
+
+        protected boolean visitUnparsedTokens;
 		
 		private Method getVisitMethod(Node node) {
 			Class<? extends Node> nodeClass = node.getClass();
@@ -789,7 +802,7 @@ public interface Node extends Comparable<Node>
          * @param node the node we are traversing
          */
 		public final void recurse(Node node) {
-            for (Node child : node.children()) {
+            for (Node child : node.children(visitUnparsedTokens)) {
                 visit(child);
             }
 		}
