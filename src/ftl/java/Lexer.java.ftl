@@ -148,7 +148,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
 
-  private InvalidToken invalidToken;
   // The source of the raw characters that we are scanning  
 
   public String getInputSource() {
@@ -219,22 +218,19 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     }
 
     private Token getNextToken() {
-      Token token = null;
-      do {
+      InvalidToken invalidToken = null;
+      Token token = nextToken();
+      while (token instanceof InvalidToken) {
+          if (invalidToken == null) {
+              invalidToken = (InvalidToken) token;
+          } else {
+              invalidToken.setEndOffset(token.getEndOffset());
+          }
           token = nextToken();
-      } while (token instanceof InvalidToken);
-      if (invalidToken != null) {
-          invalidToken.setTokenSource(this);
-          Token it = invalidToken;
-          this.invalidToken = null;
-[#if grammar.faultTolerant]
-          it.setUnparsed(true);
-[/#if]
-          cacheToken(it);
-          return it;
       }
+      if (invalidToken != null) cacheToken(invalidToken);
       cacheToken(token);
-      return token;
+      return invalidToken != null ? invalidToken : token;
     }
 
   /**
@@ -351,7 +347,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             for (int i=tokenBeginOffset; i< bufferPosition; i++) {
                 if (tokenLocationTable[i] != IGNORED) tokenLocationTable[i] = SKIPPED;
             }
-//            goTo(bufferPosition);
         }
         else if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             matchedToken = Token.newToken(matchedType, 

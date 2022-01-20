@@ -4,7 +4,8 @@ import java.util.*;
 public class ArithmeticTest {
     static public void main(String[] args) throws ParseException {
        ArithmeticParser parser = new ArithmeticParser(new InputStreamReader(System.in));
-       parser.AdditiveExpression();
+//       parser.AdditiveExpression();
+       parser.Root();
        Node root = parser.rootNode();
        System.out.println("Dumping the AST...");
        root.dump();

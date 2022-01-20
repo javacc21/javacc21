@@ -1,4 +1,4 @@
-TOKEN : {
+TOKEN : 
    <PLUS : "+">
    |
    <MINUS : "-">
@@ -12,38 +12,31 @@ TOKEN : {
    <CLOSE_PAREN : ")">
    |
    <NUMBER :  (["0"-"9"])+ ("."(["0"-"9"])+)?>
-}
+;
 
-SKIP : {
-  " " | "\t" | "\n" | "\r"
-}
+SKIP : " " | "\t" | "\n" | "\r" ;
 
-void AdditiveExpression() : 
-{}
-{
-    MultiplicativeExpression()
+AdditiveExpression : 
+    MultiplicativeExpression
     (
       (<PLUS>|<MINUS>)
-      MultiplicativeExpression()
+      MultiplicativeExpression
     )*
-}
+;
 
-void MultiplicativeExpression() :
-{}
-{
-    (<NUMBER> | ParentheticalExpression())
+MultiplicativeExpression :
+    (<NUMBER> | ParentheticalExpression)
     (
        (<TIMES>|<DIVIDE>)
-       (<NUMBER> | ParentheticalExpression())
+       (<NUMBER> | ParentheticalExpression)
     )*
-}
+;
 
-void ParentheticalExpression() :
-{}
-{
+ParentheticalExpression :
     <OPEN_PAREN>
-    AdditiveExpression()
+    AdditiveExpression
     <CLOSE_PAREN>
-}
+;
 
+Root : MultiplicativeExpression <EOF> ;
 
