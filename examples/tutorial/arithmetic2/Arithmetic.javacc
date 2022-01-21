@@ -17,9 +17,12 @@ TOKEN :
 ;
 
 INJECT PARSER_CLASS : 
+    import java.util.Scanner;
 {
     static public void main(String[] args) throws ParseException {
-       ArithmeticParser parser = new ArithmeticParser(new InputStreamReader(System.in));
+       Scanner scanner = new Scanner(System.in);
+       String input = scanner.nextLine();
+       ArithmeticParser parser = new ArithmeticParser(input);
        parser.Root();
        Node root = parser.rootNode();
        System.out.println("Dumping the AST...");
@@ -78,7 +81,7 @@ INJECT MultiplicativeExpression :
     public double evaluate() {
         double result = getChild(0).evaluate();
         for (int i=1; i< getChildCount(); i+=2) {
-            Node operator = getChild(0);
+            Node operator = getChild(1);
             double nextOperand = getChild(i+1).evaluate();
             if (operator instanceof DIVIDE) {
                 result /= nextOperand;
