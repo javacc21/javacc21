@@ -2,7 +2,7 @@ name: C# Generation Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, cs-gen ]
   pull_request:
     branches: [ master ]
 
