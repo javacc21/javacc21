@@ -472,22 +472,18 @@ ${grammar.utils.translateLexerInjections(injector, true)}
     # _next_token, which invokes the NFA machinery
     #
     def _get_next_token(self):
-        while True:
+        invalid_token = None
+        token = self._next_token()
+        while isinstance(token, InvalidToken):
+            if invalid_token is None:
+                invalid_token = token
+            else:
+                invalid_token.end_offset = token.end_offset
             token = self._next_token()
-            if not isinstance(token, InvalidToken):
-                break
-
-        if self.invalid_token:
-            self.invalid_token.token_source = self
-            it = self.invalid_token
-            self.invalid_token = None
-    [#if grammar.faultTolerant]
-            it.is_unparsed = True
-    [/#if]
-            self.cache_token(it)
-            return it
+        if invalid_token:
+            self.cache_token(invalid_token)
         self.cache_token(token)
-        return token
+        return invalid_token if invalid_token else token
 
     #
     # The public method for getting the next token.
@@ -517,7 +513,8 @@ ${grammar.utils.translateLexerInjections(injector, true)}
     def read_char(self):
         bp = self._buffer_position
         cl = self.content_len
-        while self._token_location_table[bp] == self._ignored and bp < cl:
+        tlt = self._token_location_table
+        while tlt[bp] == self._ignored and bp < cl:
             bp += 1
         if bp >= cl:
             self._buffer_position = bp
