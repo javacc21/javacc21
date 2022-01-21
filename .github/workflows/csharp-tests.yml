@@ -12,7 +12,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-latest, windows-latest]
+        # Wait to resolve macOS and Windows issues
+        # os: [ubuntu-20.04, macos-latest, windows-latest]
+        os: [ubuntu-20.04]
         java-version: ['8', '11', '16', '17']
         dotnet-version: ['5.0.x']
 

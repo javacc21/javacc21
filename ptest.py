@@ -47,10 +47,11 @@ if IS_JAVA:
         return java.io.PrintWriter(osw, True)
 
 elif IS_DOTNET:
+    NETVER = 'netstandard2.1'
     sd = [d for d in os.listdir('.') if d.startswith('cs-') and os.path.isdir(d)]
     if not sd:
         raise ValueError('No subdirectory starting with cs- found.')
-    sd = os.path.join(sd[0], 'bin', 'Debug', 'netstandard2.1')
+    sd = os.path.join(sd[0], 'bin', 'Debug', NETVER)
     if not os.path.isdir(sd):
         raise ValueError('Not a directory: %s' % sd)
     sys.path.append(os.path.abspath(sd))
