@@ -1,5 +1,5 @@
 /* Copyright (c) 2008-2022 Jonathan Revusky, revusky@javacc.com
- * Copyright (c) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk - changes for Python support.
+ * Copyright (c) 2021-2022 Vinay Sajip, vinay_sajip@yahoo.co.uk - changes for Python support.
  * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
@@ -92,28 +92,31 @@ Modifiers#void :
    |"default" 
   )
   {
-    if (permissibleModifiers !=null) switch(getToken(0).getType()) {
+    if (permissibleModifiers !=null) {
+      TokenType tt = getToken(0).getType();
+      switch(tt) {
         case ABSTRACT :
         case FINAL :
-           permissibleModifiers.remove(ABSTRACT);
-           permissibleModifiers.remove(FINAL);
+           permissibleModifiers.remove(TokenType.ABSTRACT);
+           permissibleModifiers.remove(TokenType.FINAL);
            break;
         case PRIVATE :
         case PROTECTED :
         case PUBLIC :
-           permissibleModifiers.remove(PRIVATE);
-           permissibleModifiers.remove(PROTECTED);
-           permissibleModifiers.remove(PUBLIC);
+           permissibleModifiers.remove(TokenType.PRIVATE);
+           permissibleModifiers.remove(TokenType.PROTECTED);
+           permissibleModifiers.remove(TokenType.PUBLIC);
            break;
         default : 
            permissibleModifiers.remove(lastConsumedToken.getType());
+      }
     }
   }
   |
   SCAN {
     permissibleModifiers == null 
     ||
-    permissibleModifiers.contains(SEALED)
+    permissibleModifiers.contains(TokenType.SEALED)
     &&
     (
        "sealed".equals(getToken(1).getImage())
@@ -126,8 +129,8 @@ Modifiers#void :
   ACTIVATE_TOKENS SEALED, NON_SEALED ("sealed"|"non-sealed") 
   {
     if (permissibleModifiers!=null) {
-      permissibleModifiers.remove(SEALED);
-      permissibleModifiers.remove(NON_SEALED);
+      permissibleModifiers.remove(TokenType.SEALED);
+      permissibleModifiers.remove(TokenType.NON_SEALED);
     }
   }
   |
@@ -194,7 +197,7 @@ TypeIdentifier#void :
 ;
 
 ClassDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP, SEALED, NON_SEALED);}#
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP, TokenType.SEALED, TokenType.NON_SEALED);}#
   Modifiers
   "class" =>|| 
   TypeIdentifier
@@ -206,7 +209,7 @@ ClassDeclaration :
 ;
 
 InterfaceDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP, SEALED, NON_SEALED);}#
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.STATIC, TokenType.STRICTFP, TokenType.SEALED, TokenType.NON_SEALED);}#
   Modifiers
   "interface" =>||
   TypeIdentifier
@@ -249,7 +252,7 @@ ImplementsList :
 
 
 EnumDeclaration :
-   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}#
+   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP);}#
    Modifiers
    "enum" =>|| 
    TypeIdentifier
@@ -266,9 +269,9 @@ EnumBody :
 ;
 
 RecordDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, FINAL, STATIC, STRICTFP);}
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP);}
   Modifiers
-  ASSERT {getToken(1).getImage().equals("record") && getToken(2).getType() == IDENTIFIER}#
+  ASSERT {getToken(1).getImage().equals("record") && getToken(2).getType() == TokenType.IDENTIFIER}#
   =>||
   ACTIVATE_TOKENS RECORD ("record")
   TypeIdentifier
@@ -302,7 +305,7 @@ RecordBody :
 ;
 
 CompactConstructorDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE);}#
   Modifiers
   TypeIdentifier
   "{" =>||
@@ -358,7 +361,7 @@ INJECT FieldDeclaration : implements ClassOrInterfaceBodyDeclaration
 INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
 
 FieldDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, STATIC, FINAL, TRANSIENT, VOLATILE);}#
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.STATIC, TokenType.FINAL, TokenType.TRANSIENT, TokenType.VOLATILE);}#
   Modifiers
   Type VariableDeclarator =>|+1 ( "," VariableDeclarator )* ";"
 ;
@@ -377,15 +380,15 @@ ArrayInitializer :
   (
     SCAN \.\.\InterfaceDeclaration
     =>
-    {permissibleModifiers = EnumSet.of(PUBLIC,PRIVATE,ABSTRACT,STATIC,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT);}
+    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC,TokenType.PRIVATE,TokenType.ABSTRACT,TokenType.STATIC,TokenType.SYNCHRONIZED,TokenType.NATIVE,TokenType.STRICTFP,TokenType._DEFAULT);}
     |
     SCAN ~\...\TypeDeclaration // This is a kludge to support the code injection feature in JavaCC
                                // If we're not in a TypeDeclaration (most likely because we are in a JavaCC code injection)
                                // we just accept all the possible modifiers.
     => 
-    {permissibleModifiers = EnumSet.of(PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,SYNCHRONIZED,NATIVE,STRICTFP,_DEFAULT);}
+    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC,TokenType.PROTECTED,TokenType.PRIVATE,TokenType.ABSTRACT,TokenType.STATIC,TokenType.SYNCHRONIZED,TokenType.NATIVE,TokenType.STRICTFP,TokenType._DEFAULT);}
     |
-    {permissibleModifiers = EnumSet.of(PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,FINAL,SYNCHRONIZED,NATIVE,STRICTFP);}
+    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC,TokenType.PROTECTED,TokenType.PRIVATE,TokenType.ABSTRACT,TokenType.STATIC,TokenType.FINAL,TokenType.SYNCHRONIZED,TokenType.NATIVE,TokenType.STRICTFP);}
   )
   Modifiers
   [ TypeParameters ]
@@ -399,10 +402,10 @@ ArrayInitializer :
 
 FormalParameters : "(" [ FormalParameter ( "," FormalParameter )* ] ")" ;
 
-FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);}# Modifiers Type [ (Annotation)* "..." ] VariableDeclaratorId ;
+FormalParameter : {permissibleModifiers = EnumSet.of(TokenType.FINAL);}# Modifiers Type [ (Annotation)* "..." ] VariableDeclaratorId ;
 
 ConstructorDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE);}#
   Modifiers
   [ TypeParameters ]
   TypeIdentifier FormalParameters =>||
@@ -458,6 +461,9 @@ INJECT ObjectType : implements Type
         return false;
     }
     
+/*
+ *  Commented out, as interferes with representation used in tests
+ *
     public String toString() {
         StringBuilder buf = new StringBuilder();
         for (Token t : getRealTokens()) {
@@ -465,6 +471,7 @@ INJECT ObjectType : implements Type
         }
         return buf.toString();
     }
+ */
 }
 
 DiamondOperator :  "<" ">" =>|| ;
@@ -754,11 +761,11 @@ PrimaryExpression#void :
 // still unclear to me whether this should be caught at this point or if it is better to just do
 // a post-parse tree walk that runs over the AST and checks for these things.
 //  SCAN 1 {getToken(0).getType() == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !getToken(0).getImage().equals("yield")))}#
-  SCAN 1 {getToken(0).getType() == IDENTIFIER}#
+  SCAN 1 {getToken(0).getType() == TokenType.IDENTIFIER}#
   => 
   InvocationArguments #MethodCall(+1)
  )*
- ASSERT {getToken(0).getType() != SUPER}# : "Not a valid expression here"
+ ASSERT {getToken(0).getType() != TokenType.SUPER}# : "Not a valid expression here"
 ;
 
 LiteralExpression : Literal #LiteralExpression;
@@ -939,22 +946,22 @@ LocalVariableDeclaration :
 ;   
 
 NoVarDeclaration #void : 
-   {permissibleModifiers = EnumSet.of(FINAL);}#
+   {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
    Modifiers
    Type =>|| VariableDeclarator ( "," VariableDeclarator )*    
 ;
 
 VarDeclaration #void :
-  {permissibleModifiers = EnumSet.of(FINAL);}#
+  {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
   Modifiers
-  ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType()==IDENTIFIER} =>||
+  ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType() == TokenType.IDENTIFIER} =>||
   ACTIVATE_TOKENS VAR ("var")
   <IDENTIFIER> 
   ["=" Expression]
 ;
 
 LocalVariableDeclarationLA#scan :
-   {permissibleModifiers = EnumSet.of(FINAL);}
+   {permissibleModifiers = EnumSet.of(TokenType.FINAL);}
    Modifiers
    (
      Type 
@@ -1015,7 +1022,7 @@ ClassicSwitchLabel :
 
 ClassicCaseStatement :
   ClassicSwitchLabel
-  (SCAN 1 {getToken(1).getType() != _DEFAULT} 
+  (SCAN 1 {getToken(1).getType() != TokenType._DEFAULT}
           // We need this because we'll spuriously enter the BlockStatement 
           // if the next token is "default", because "default" is in the 
           // BlockStatement first set. This is really quite tricky, but maybe not my
@@ -1220,7 +1227,7 @@ MemberValueArrayInitializer :
 
 
 AnnotationTypeDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, STRICTFP);}#
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.STATIC, TokenType.STRICTFP);}#
   Modifiers
   "@" "interface" =>|| TypeIdentifier AnnotationTypeBody
 ;
@@ -1230,7 +1237,7 @@ AnnotationTypeBody :
 ;
 
 AnnotationMethodDeclaration :
-   {permissibleModifiers = EnumSet.of(PUBLIC, ABSTRACT);}#
+   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.ABSTRACT);}#
    Modifiers
    Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
 ;
@@ -1270,7 +1277,7 @@ SimpleLambdaLHS #void :
 LambdaParameters : "(" [ LambdaParameter ( "," LambdaParameter )* ] ")" ;
 
 LambdaParameter : 
-    {permissibleModifiers = EnumSet.of(FINAL);}#
+    {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
     Modifiers
     (
       Type (Annotation)* "..." =>|| <IDENTIFIER>

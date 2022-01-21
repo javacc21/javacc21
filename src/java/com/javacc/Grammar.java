@@ -1,6 +1,6 @@
 /* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
  * Copyright (c) 2006, Sun Microsystems Inc.
- * Copyright (c) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk - changes for Python support.
+ * Copyright (c) 2021-2022 Vinay Sajip, vinay_sajip@yahoo.co.uk - changes for Python support.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -160,7 +160,7 @@ public class Grammar extends BaseNode {
     }
 
     private String separatorString() {
-        // Temporary solution. Use capital sigma for Python, for now
+        // Temporary solution. Use capital sigma for Python / others, for now
         return codeLang.equals("java") ? "$": "\u03A3";
     }
 
@@ -426,8 +426,7 @@ public class Grammar extends BaseNode {
     }
 
     public CodeInjector getInjector() {
-        return new CodeInjector(parserClassName, lexerClassName,
-                                constantsClassName, baseNodeClassName,
+        return new CodeInjector(this,
                                 parserPackage, getNodePackage(),
                                 codeInjections);
     }
@@ -948,6 +947,18 @@ public class Grammar extends BaseNode {
                     Files.createDirectories(dir);
                 }
             }
+            else if (codeLang.equals("csharp")) { // Use last part of package, append "parser", prepend "cs-"
+                int dotPosition = packageName.lastIndexOf('.');
+
+                if (dotPosition >= 0) {
+                    packageName = packageName.substring(dotPosition + 1);
+                }
+                packageName = "cs-".concat(packageName.concat("parser"));
+                dir = dir.resolve(packageName);
+                if (!Files.exists(dir)) {
+                    Files.createDirectories(dir);
+                }
+            }
             else {
                 throw new UnsupportedOperationException(String.format("Code generation in '%s' is not currently supported.", codeLang));
             }
@@ -1233,7 +1244,6 @@ public class Grammar extends BaseNode {
             nodeVariableNameStack.remove(nodeVariableNameStack.size() - 1);
         }
 
-
         private Map<String, String> id_map = new HashMap<String, String>();
         private int id = 1;
 
@@ -1247,6 +1257,18 @@ public class Grammar extends BaseNode {
 
         public String toOctalString(int i) {
             return "\\" + Integer.toOctalString(i);
+        }
+
+        public String lastPart(String source, int delimiter) {
+            int i = source.lastIndexOf(delimiter);
+            if (i < 0) {
+                return source;
+            }
+            return source.substring(i + 1);
+        }
+
+        public boolean nodeIsInterface(String nodeName) {
+            return Grammar.this.nodeIsInterface(nodeName);
         }
 
         public String addEscapes(String input) {
@@ -1364,10 +1386,9 @@ public class Grammar extends BaseNode {
             // Sort out superclasses' superclasses
             CodeInjector injector = Grammar.this.getInjector();
             String pkg = injector.getNodePackage();
-            Map<String, List<ObjectType>> extendsLists = injector.getExtendsLists();
             for (String key: superClassMap.keySet()) {
                 String qualifiedName = String.format("%s.%s", pkg, key);
-                List<ObjectType> extendsList = extendsLists.get(qualifiedName);
+                List<ObjectType> extendsList = injector.getExtendsList(qualifiedName);
 
                 if ((extendsList == null) || (extendsList.size() == 0)) {
                     superClassMap.put(key, "Token");
@@ -1393,15 +1414,31 @@ public class Grammar extends BaseNode {
             return result;
         }
 
+        // Used in templates specifically for method name translation
         public String translateIdentifier(String ident) {
-            return Grammar.this.translator.translateIdentifier(ident);
+            return Grammar.this.translator.translateIdentifier(ident, Translator.TranslationContext.METHOD);
+        }
+
+        // Used in templates for side effects, hence returning empty string
+        public String startProduction() {
+            Translator.SymbolTable symbols = new Translator.SymbolTable();
+
+            Grammar.this.translator.pushSymbols(symbols);
+            return "";
+        }
+
+        // Used in templates for side effects, hence returning empty string
+        public String endProduction() {
+            Translator t = Grammar.this.translator;
+            t.popSymbols();
+            t.clearParameterNames();
+            return "";
         }
 
         public String translateParameters(String parameterList) throws ParseException {
             StringBuilder sb = new StringBuilder();
             // First construct the parameter list with parentheses, so
             // that we can parse it and get the AST
-            Translator translator = Grammar.this.translator;
             sb.append('(');
             sb.append(parameterList);
             sb.append(')');
@@ -1411,21 +1448,9 @@ public class Grammar extends BaseNode {
             int n = parameters.size();
             // Now build the result
             sb.setLength(0);
-            for (int i = 0; i < n; i++) {
-                FormalParameter param = parameters.get(i);
-                String name = param.getName();
-                translator.addParameterName(name);
-                sb.append(translator.translateIdentifier(name));
-                if (i < (n - 1)) {
-                    sb.append(", ");
-                }
-            }
+            Translator translator = Grammar.this.translator;
+            translator.translateFormals(parameters, null, sb);
             return sb.toString();
-        }
-
-        public String clearParameters() {
-            Grammar.this.translator.clearParameterNames();
-            return "";      // so it can be easily called from a template
         }
 
         public String translateExpression(Node expr) {
@@ -1503,76 +1528,7 @@ public class Grammar extends BaseNode {
         }
 
         public String translateInjectedClass(CodeInjector injector, String name) {
-            StringBuilder result = new StringBuilder();
-            Map<String, List<ObjectType>> extendsLists = injector.getExtendsLists();
-            Map<String, List<ObjectType>> implementsLists = injector.getImplementsLists();
-            Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = injector.getBodyDeclarations();
-            String qualifiedName = String.format("%s.%s", injector.getNodePackage(), name);
-            List<ObjectType> extendsList = extendsLists.get(qualifiedName);
-            List<ObjectType> implementsList = implementsLists.get(qualifiedName);
-            List<String> nameList = new ArrayList<>();
-
-            if (extendsList.isEmpty() && implementsList.isEmpty()) {
-                 nameList.add(injector.getBaseNodeClassName());
-            }
-            else {
-                for (ObjectType ot : extendsList) {
-                    nameList.add(ot.toString());
-                }
-                for (ObjectType ot : implementsList) {
-                    nameList.add(ot.toString());
-                }
-            }
-            result.append("class ");
-            result.append(name);
-            result.append('(');
-            for (int i = 0; i < nameList.size(); i++) {
-                result.append(nameList.get(i));
-                if (i < (nameList.size() - 1)) {
-                    result.append(", ");
-                }
-            }
-            result.append("):");
-            List<ClassOrInterfaceBodyDeclaration> decls = bodyDeclarations.get(qualifiedName);
-            if (decls.size() == 0) {
-                result.append(" pass\n");
-            }
-            else {
-                int n = decls.size();
-                result.append('\n');
-                // Collect all the field declarations
-                List<FieldDeclaration> fieldDecls = new ArrayList<>();
-                for (ClassOrInterfaceBodyDeclaration decl : decls) {
-                    if (decl instanceof FieldDeclaration) {
-                        fieldDecls.add((FieldDeclaration) decl);
-                    }
-                }
-                translator.clearFields();
-                if (!fieldDecls.isEmpty()) {
-                    result.append("    def __init__(self, input_source=None):\n");
-                    result.append("        super().__init__(input_source)\n");
-                    for (FieldDeclaration fd : fieldDecls) {
-                        translator.translateStatement(fd, 8, result);
-                    }
-                    result.append('\n');
-                }
-                translator.translateProperties(name, 4, result);
-                for (ClassOrInterfaceBodyDeclaration decl : decls) {
-                    if (decl instanceof MethodDeclaration) {
-                        Grammar.this.translator.translateStatement((MethodDeclaration) decl, 4, result);
-                    }
-                    else if (decl instanceof FieldDeclaration) {
-                        continue;
-                    }
-                    else {
-                        throw new UnsupportedOperationException();
-                    }
-//                    if (idx < (n - 1)) {
-//                        result.append('\n');
-//                    }
-                }
-            }
-            return result.toString();
+            return translator.translateInjectedClass(injector, name);
         }
 
         public String translateInjections(String className, CodeInjector injector, boolean fields) {
@@ -1581,24 +1537,31 @@ public class Grammar extends BaseNode {
             if (fields) {
                 translator.clearFields();
             }
-            Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = injector.getBodyDeclarations();
-            List<ClassOrInterfaceBodyDeclaration> declsToProcess = bodyDeclarations.get(className);
-            int indent = 8;
-            if (declsToProcess != null) {
-                for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
-                    boolean process = (fields != (decl instanceof MethodDeclaration));
-                    if (process) {
-                        if (decl instanceof FieldDeclaration || decl instanceof CodeBlock || decl instanceof Initializer) {
-                            Grammar.this.translator.translateStatement(decl, indent, result);
-                        }
-                        else if (decl instanceof MethodDeclaration) {
-                            Grammar.this.translator.translateStatement((MethodDeclaration) decl, 4, result);
-                        }
-                        else {
-                            throw new UnsupportedOperationException();
+            String cn = getUtils().lastPart(className, '.');
+            t.startClass(cn);
+            try {
+                List<ClassOrInterfaceBodyDeclaration> declsToProcess = injector.getBodyDeclarations(className);
+                if (declsToProcess != null) {
+                    int fieldIndent = t.getFieldIndent();
+                    int methodIndent = t.getMethodIndent();
+                    for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
+                        boolean process = (fields != (decl instanceof MethodDeclaration));
+                        if (process) {
+                            if (decl instanceof FieldDeclaration || decl instanceof CodeBlock || decl instanceof Initializer) {
+                                Grammar.this.translator.translateStatement(decl, fieldIndent, result);
+                            }
+                            else if (decl instanceof MethodDeclaration) {
+                                Grammar.this.translator.translateStatement((MethodDeclaration) decl, methodIndent, result);
+                            }
+                            else {
+                                throw new UnsupportedOperationException();
+                            }
                         }
                     }
                 }
+            }
+            finally {
+                t.endClass(cn);
             }
             return result.toString();
         }
@@ -1630,7 +1593,7 @@ public class Grammar extends BaseNode {
                             throw new UnsupportedOperationException();
                         }
                         for (String name: names) {
-                            result.add(translator.translateIdentifier(name));
+                            result.add(translator.translateIdentifier(name, Translator.TranslationContext.VARIABLE));
                         }
                     }
                     else {
@@ -1663,18 +1626,21 @@ public class Grammar extends BaseNode {
             return translateInjections(className, injector, fields);
         }
 
+        // used in templates
         public String translateLexerInjections(CodeInjector injector, boolean fields) {
             String className = String.format("%s.%s", Grammar.this.getParserPackage(),
                     Grammar.this.getLexerClassName());
             return translateInjections(className, injector, fields);
         }
 
+        // used in templates
         public String translateParserInjections(CodeInjector injector, boolean fields) {
             String className = String.format("%s.%s", Grammar.this.getParserPackage(),
                     Grammar.this.getParserClassName());
             return translateInjections(className, injector, fields);
         }
 
+        // used in templates
         public String translateTokenSubclassInjections(String className, CodeInjector injector, boolean fields) {
             className = String.format("%s.%s", Grammar.this.getNodePackage(), className);
             return translateInjections(className, injector, fields);
@@ -1683,16 +1649,14 @@ public class Grammar extends BaseNode {
         public List<String> getSortedNodeClassNames() {
             Sequencer seq = new Sequencer();
             CodeInjector injector = getInjector();
-            Map<String, List<ObjectType>> extendsMap = injector.getExtendsLists();
-            Map<String, List<ObjectType>> implementsMap = injector.getImplementsLists();
             String pkg = injector.getNodePackage();
             String bnn = injector.getBaseNodeClassName();
 
             seq.addNode(bnn);
             for (String cn : getNodeNames()) {
                 String qn = String.format("%s.%s", pkg, cn);
-                List<ObjectType> elist = extendsMap.get(qn);
-                List<ObjectType> ilist = implementsMap.get(qn);
+                List<ObjectType> elist = injector.getExtendsList(qn);
+                List<ObjectType> ilist = injector.getImplementsList(qn);
                 List<String> preds = new ArrayList<>();
                 if (elist != null) {
                     for (ObjectType ot : elist) {

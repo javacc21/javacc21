@@ -144,9 +144,9 @@ public final class Main {
             }
     }
 
-    // Currently only Python for now, but we know other languages will be coming, so ...
     private static String [] otherSupportedLanguages = new String[] {
-        "python"
+        "python",
+        "csharp"
     };
 
     static void usage() {

@@ -31,6 +31,7 @@ package com.javacc.output.java;
 
 import java.util.*;
 
+import com.javacc.Grammar;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 
@@ -40,31 +41,30 @@ import com.javacc.parser.tree.*;
  */
 public class CodeInjector {
     
-    private String parserPackage, nodePackage, parserClassName, lexerClassName, constantsClassName, baseNodeClassName;
+    private final String parserPackage, nodePackage, parserClassName, lexerClassName, constantsClassName, baseNodeClassName;
     
-    private Map<String, TypeDeclaration> types = new HashMap<>();
-    private Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
-    private Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
-    private Map<String, List<ObjectType>> extendsLists = new HashMap<>();
-    private Map<String, List<ObjectType>> implementsLists = new HashMap<>();
-    private Map<String, TypeParameters> typeParameterLists = new HashMap<>();
-    private Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
-    private Set<String> overriddenMethods = new HashSet<>();
-    private Set<String> typeNames = new HashSet<>();
-    private Map<String, String> explicitPackages = new HashMap<>();
-    private Set<String> interfaces = new HashSet<>();
+    private final Map<String, TypeDeclaration> types = new HashMap<>();
+    private final Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
+    private final Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
+    private final Map<String, List<ObjectType>> extendsLists = new HashMap<>();
+    private final Map<String, List<ObjectType>> implementsLists = new HashMap<>();
+    private final Map<String, TypeParameters> typeParameterLists = new HashMap<>();
+    private final Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
+    private final Set<String> overriddenMethods = new HashSet<>();
+    private final Set<String> typeNames = new HashSet<>();
+    private final Map<String, String> explicitPackages = new HashMap<>();
+    private final Set<String> interfaces = new HashSet<>();
+    private final Grammar grammar;
     
-    public CodeInjector(String parserClassName,
-                        String lexerClassName,
-                        String constantsClassName,
-                        String baseNodeClassName,
-                        String parserPackage, 
+    public CodeInjector(Grammar grammar,
+                        String parserPackage,
                         String nodePackage, 
                         List<Node> codeInjections) {
-        this.parserClassName = parserClassName;
-        this.lexerClassName = lexerClassName;
-        this.constantsClassName = constantsClassName;
-        this.baseNodeClassName = baseNodeClassName;
+        this.grammar = grammar;
+        parserClassName = grammar.getParserClassName();
+        lexerClassName = grammar.getLexerClassName();
+        constantsClassName = grammar.getConstantsClassName();
+        baseNodeClassName = grammar.getBaseNodeClassName();
         if (parserPackage == null) {
             parserPackage = "";
         }
@@ -110,8 +110,7 @@ public class CodeInjector {
     
     private void add(CompilationUnit jcu) {
         String explicitPackageName = jcu.getPackageName();
-        List<ImportDeclaration> importdecls = new ArrayList<ImportDeclaration>();
-        importdecls.addAll(jcu.getImportDeclarations());
+        List<ImportDeclaration> importDecls = new ArrayList<>(jcu.getImportDeclarations());
         for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
             String name = dec.getName();
             typeNames.add(name);
@@ -128,31 +127,23 @@ public class CodeInjector {
             if (dec instanceof InterfaceDeclaration) {
                 interfaces.add(name);
             }
-            if (!importdecls.isEmpty()) {
-                Set<ImportDeclaration> injectedImports = injectedImportsMap.get(name);
-                if (injectedImports == null) {
-                    injectedImports = new HashSet<ImportDeclaration>();
-                    injectedImportsMap.put(name, injectedImports);
-                }
-                injectedImports.addAll(importdecls);
+            if (!importDecls.isEmpty()) {
+                Set<ImportDeclaration> injectedImports = injectedImportsMap.computeIfAbsent(name, k -> new HashSet<>());
+                injectedImports.addAll(importDecls);
             }
             List<ObjectType> extendsList = dec.getExtendsList() == null ? new ArrayList<>() : dec.getExtendsList().getTypes();
             List<ObjectType> existingOne = extendsLists.get(name);
             if (existingOne == null) {
                 extendsLists.put(name, extendsList);
             } else {
-                for (ObjectType type : extendsList) {
-                    existingOne.add(type);
-                }
+                existingOne.addAll(extendsList);
             }
             List<ObjectType> implementsList = dec.getImplementsList() == null ? new ArrayList<>() : dec.getImplementsList().getTypes();
             List<ObjectType> existing = implementsLists.get(name);
             if (existing == null) {
                 implementsLists.put(name, implementsList);
             } else {
-                for (ObjectType type : implementsList) {
-                    existing.add(type);
-                }
+                existing.addAll(implementsList);
             }
             TypeParameters typeParameters = dec.getTypeParameters();
             if (typeParameters != null) {
@@ -163,7 +154,7 @@ public class CodeInjector {
                     injectedList.add(typeParameters);
                 }
             }
-            List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<ClassOrInterfaceBodyDeclaration>(); 
+            List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<>();
             for (Iterator<Node> it = dec.getBody().iterator(); it.hasNext();) {
                 Node n = it.next();
                 if (n instanceof ClassOrInterfaceBodyDeclaration) {
@@ -203,33 +194,19 @@ public class CodeInjector {
             name = packageName + "." + name;
         }
         if (importDeclarations !=null && !importDeclarations.isEmpty()) {
-            Set<ImportDeclaration> existingImports = injectedImportsMap.get(name);
-            if (existingImports == null) {
-                existingImports = new HashSet<ImportDeclaration>();
-                injectedImportsMap.put(name, existingImports);
-            }
-            for (ImportDeclaration importDecl : importDeclarations) {
-                existingImports.add(importDecl);
-            }
+            Set<ImportDeclaration> existingImports = injectedImportsMap.computeIfAbsent(name, k -> new HashSet<>());
+            existingImports.addAll(importDeclarations);
         }
         if (annotations != null && !annotations.isEmpty()) {
-        	Set<Annotation> existingAnnotations = injectedAnnotationsMap.get(name);
-        	if (existingAnnotations == null) {
-        		 existingAnnotations = new HashSet<Annotation>();
-        		 injectedAnnotationsMap.put(name, existingAnnotations);
-        	}
-        	for (Annotation annotation : annotations) {
-        		existingAnnotations.add(annotation);
-        	}
+            Set<Annotation> existingAnnotations = injectedAnnotationsMap.computeIfAbsent(name, k -> new HashSet<>());
+            existingAnnotations.addAll(annotations);
         }
         if (extendsList != null) {
             List<ObjectType> existingExtendsList = extendsLists.get(name);
             if (existingExtendsList == null) {
                 extendsLists.put(name, extendsList);
             } else {
-                for (ObjectType type : extendsList) {
-                    existingExtendsList.add(type);
-                }
+                existingExtendsList.addAll(extendsList);
             }
         }
         if (implementsList != null) {
@@ -237,16 +214,10 @@ public class CodeInjector {
             if (existingImplementsList == null) {
                 implementsLists.put(name, implementsList);
             } else {
-                for (ObjectType type : implementsList) {
-                    existingImplementsList.add(type);
-                }
+                existingImplementsList.addAll(implementsList);
             }
         }
-        List<ClassOrInterfaceBodyDeclaration> existingDecls = bodyDeclarations.get(name);
-        if (existingDecls == null) {
-            existingDecls = new ArrayList<ClassOrInterfaceBodyDeclaration>();
-            bodyDeclarations.put(name, existingDecls);
-        }
+        List<ClassOrInterfaceBodyDeclaration> existingDecls = bodyDeclarations.computeIfAbsent(name, k -> new ArrayList<>());
         if (body != null) {
         	existingDecls.addAll(body.childrenOfType(ClassOrInterfaceBodyDeclaration.class));
         }
@@ -255,9 +226,9 @@ public class CodeInjector {
     
     void injectCode(CompilationUnit jcu) {
         String packageName = jcu.getPackageName();
-        Set<ImportDeclaration> allInjectedImports = new HashSet<ImportDeclaration>();
-        for (TypeDeclaration typedecl : jcu.getTypeDeclarations()) {
-            String fullName = typedecl.getName();
+        Set<ImportDeclaration> allInjectedImports = new HashSet<>();
+        for (TypeDeclaration typeDecl : jcu.getTypeDeclarations()) {
+            String fullName = typeDecl.getName();
             if (packageName !=null) {
                 fullName = packageName + "." + fullName;
             }
@@ -268,37 +239,37 @@ public class CodeInjector {
             List<ObjectType> injectedExtends = extendsLists.get(fullName);
             if (injectedExtends != null) {
                 for (ObjectType type : injectedExtends) {
-                    typedecl.addExtends(type);
+                    typeDecl.addExtends(type);
                 }
             }
             List<ObjectType> injectedImplements = implementsLists.get(fullName);
             if (injectedImplements != null) {
                 for (ObjectType type : injectedImplements) {
-                    typedecl.addImplements(type);
+                    typeDecl.addImplements(type);
                 }
             }
             TypeParameters injectedTypeParameters = typeParameterLists.get(fullName);
             if (injectedTypeParameters != null) {
-                TypeParameters typeParameters = typedecl.getTypeParameters();
+                TypeParameters typeParameters = typeDecl.getTypeParameters();
                 typeParameters.add(injectedTypeParameters);
             }
             Set<Annotation> annotations = this.injectedAnnotationsMap.get(fullName);
             if (annotations != null) {
-            	typedecl.addAnnotations(annotations);
+            	typeDecl.addAnnotations(annotations);
             }
             List<ClassOrInterfaceBodyDeclaration> injectedCode = bodyDeclarations.get(fullName);
             if (injectedCode != null) {
-                typedecl.addElements(injectedCode);
+                typeDecl.addElements(injectedCode);
             }
         }
         injectImportDeclarations(jcu, allInjectedImports);
     }
     
-    private void injectImportDeclarations(CompilationUnit jcu, Collection<ImportDeclaration> importdecls) {
+    private void injectImportDeclarations(CompilationUnit jcu, Collection<ImportDeclaration> importDecls) {
         List<ImportDeclaration> importDeclarations = jcu.getImportDeclarations();
-        for (ImportDeclaration importdecl : importdecls) {
-            if (!importDeclarations.contains(importdecl)) {
-                jcu.addImportDeclaration(importdecl);
+        for (ImportDeclaration importDecl : importDecls) {
+            if (!importDeclarations.contains(importDecl)) {
+                jcu.addImportDeclaration(importDecl);
             }
         }
     }
@@ -311,16 +282,50 @@ public class CodeInjector {
      * Helper methods
      */
 
-    public Map<String, List<ObjectType>> getExtendsLists() {
-        return extendsLists;
+    public List<ObjectType> getExtendsList(String qualifiedName) {
+        return extendsLists.get(qualifiedName);
     }
 
-    public Map<String, List<ObjectType>> getImplementsLists() {
-        return implementsLists;
+    public List<ObjectType> getImplementsList(String qualifiedName) {
+        return implementsLists.get(qualifiedName);
     }
 
     public Map<String, List<ClassOrInterfaceBodyDeclaration>> getBodyDeclarations() {
         return bodyDeclarations;
+    }
+
+    public List<ClassOrInterfaceBodyDeclaration> getBodyDeclarations(String qualifiedName) {
+        return bodyDeclarations.get(qualifiedName);
+    }
+
+    public List<String> getParentClasses(String qualifiedName) {
+        List<String> result = new ArrayList<>();
+        List<ObjectType> extendsList = getExtendsList(qualifiedName);
+        List<ObjectType> implementsList = getImplementsList(qualifiedName);
+        String name = grammar.getUtils().lastPart(qualifiedName, '.');
+        if (extendsList.isEmpty() && implementsList.isEmpty()) {
+            if (grammar.nodeIsInterface(name)) {
+                result.add("Node");
+            }
+            else {
+                result.add(baseNodeClassName);
+                result.add("Node");
+            }
+        }
+        else {
+            if (extendsList.isEmpty()) {
+                result.add(baseNodeClassName);
+            }
+            else {
+                for (ObjectType ot : extendsList) {
+                    result.add(ot.toString());
+                }
+            }
+            for (ObjectType ot : implementsList) {
+                result.add(ot.toString());
+            }
+        }
+        return result;
     }
 
     public Map<String, TypeParameters> getTypeParameterLists() {
