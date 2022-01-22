@@ -57,8 +57,16 @@ def check_jython(options):
         return 1
     return 0
 
+def get_ipy_command(params):
+    if 'GITHUB_WORKFLOW' not in os.environ or sys.platform != 'darwin':
+        result = ['ipy']
+    else:
+        result = ['mono', '/Library/Frameworks/IronPython.framework/Versions/2.7.11/bin/ipy.exe']
+    result.extend(params)
+    return result
+
 def check_ironpython(options):
-    p = subprocess.run(['ipy', '-V'], capture_output=True)
+    p = subprocess.run(get_ipy_command(['-V']), capture_output=True)
     if p.returncode:
         print('IronPython not found', file=sys.stderr)
         return 1
@@ -171,7 +179,7 @@ def test_grammar(gdata, options):
 
     # First the lexer
 
-    cmd = ['ipy', '-X:FullFrames',  '-X:Debug', 'ptest.py', '-q', gdata.cspackage, gdata.ext]
+    cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py', '-q', gdata.cspackage, gdata.ext])
     start = time.time()
     p = subprocess.run(cmd, cwd=dd)
     if p.returncode:
@@ -181,8 +189,8 @@ def test_grammar(gdata, options):
 
     # Then the parser
 
-    cmd = ['ipy', '-X:FullFrames',  '-X:Debug', 'ptest.py', '-q',
-           '--parser', gdata.production, gdata.cspackage, gdata.ext]
+    cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py', '-q',
+                           '--parser', gdata.production, gdata.cspackage, gdata.ext])
     start = time.time()
     p = subprocess.run(cmd, cwd=dd)
     if p.returncode:
