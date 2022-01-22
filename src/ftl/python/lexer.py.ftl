@@ -691,7 +691,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         while index < cplen:
             ch = code_points[index]
             index += 1
-            if ch == '\\' and csharp_unicode_escape and index < cplen and ch == 'U'
+            if ch == '\\' and csharp_unicode_escape and index < cplen and ch == 'U' :
                 hex_buf = []
                 for i in range(1, 5):
                     hex_buf.append(code_points[index+i])
