@@ -1,11 +1,20 @@
 DEFAULT_LEXICAL_STATE=CSHARP;
 CSHARP_UNICODE_ESCAPE;
 
-// The following Token productions are lifted straight from the Java grammar. Should REVISIT
 
-UNPARSED :
-  <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace
+SKIP :
+  <WHITESPACE : (<WS_CHAR>)+> #Whitespace
+  |
+  <#WS_CHAR : 
+       [
+         " ", "\t", "\n", "\r", 
+         "\u000b", "\u00a0", "\u1680",
+         "\u2000"-"\u200a",
+         "\u202f", "\u205f", "\u3000"
+       ]
+  >
 ;
+
 
 <IN_MULTI_LINE_COMMENT>
 UNPARSED :
@@ -14,8 +23,6 @@ UNPARSED :
 
 MORE : 
   "//" : IN_SINGLE_LINE_COMMENT
-  |
-  <"/**" ~["/"]> { backup(1); } : IN_FORMAL_COMMENT
   |
   "/*" : IN_MULTI_LINE_COMMENT
 ;
@@ -26,17 +33,12 @@ UNPARSED :
 ;
 
 
-<IN_FORMAL_COMMENT>
-UNPARSED :
-  <FORMAL_COMMENT: "*/" > #DocComment : CSHARP
-;
-
-INJECT DocComment : extends Comment;
-
-<IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
+<IN_SINGLE_LINE_COMMENT,IN_MULTI_LINE_COMMENT>
 MORE :
   < ~[] >
 ;
+
+// The following Token productions are mostly lifted straight from the Java grammar. Should REVISIT
 
 TOKEN #Literal :
   < LONG_LITERAL:
@@ -109,6 +111,12 @@ TOKEN #Literal :
       )*
       "\""
   >
+  |
+  < FALSE : "false" > 
+  |
+  < TRUE : "true">
+  | 
+  < NULL : "null" >
 ;
 
 TOKEN #Delimiter :
@@ -191,7 +199,6 @@ TOKEN #KeyWord :
    | < EVENT : "equals" > 
    | < EXPLICIT : "explicit" > 
    | < EXTERN : "extern" > 
-   | < FALSE : "false" > 
    | < FINALLY : "finally" > 
    | < FIXED : "fixed" > 
    | < FLOAT : "float" > 
@@ -209,7 +216,6 @@ TOKEN #KeyWord :
    | < LONG : "long" >
    | < NAMESPACE : "namespace" >
    | < NEW : "new" >
-   | < NULL : "null" >
    | < OBJECT : "object" >
    | < OPERATOR : "operator" >
    | < OUT : "out" >
@@ -232,7 +238,6 @@ TOKEN #KeyWord :
    | < SWITCH : "switch" > 
    | < THIS : "this" > 
    | < THROW : "throw" > 
-   | < TRUE : "true" >
    | < TRY : "try" >
    | < TYPEOF : "typeof" >
    | < UINT : "uint" >
