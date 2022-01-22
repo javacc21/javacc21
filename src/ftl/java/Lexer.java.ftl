@@ -48,6 +48,7 @@
 
 [#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("true", "false")
+      CSHARP_UNICODE_ESCAPE= grammar.csharpUnicodeEscape?string("true", "false")
       ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")]
 
 [#macro EnumSet varName tokenNames]
@@ -183,7 +184,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       */
      public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
         this.inputSource = inputSource;
-        this.content = mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+        this.content = mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${CSHARP_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         this.inputSource = inputSource;
         this.lineOffsets = createLineOffsetsTable(this.content);
         tokenLocationTable = new Token[content.length()+1];
@@ -656,8 +657,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 // Icky method to handle annoying stuff. Might make this public later if it is
 // needed elsewhere
   private static String mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
-        boolean javaUnicodeEscape, boolean ensureFinalEndline) {
-    if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape) {
+        boolean javaUnicodeEscape, boolean csharpUnicodeEscape, boolean ensureFinalEndline) {
+    if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape && !csharpUnicodeEscape) {
         if (ensureFinalEndline) {
             if (content.length() == 0) {
                 content = "\n";
@@ -687,7 +688,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             buf.append(ch);
             col=0;
         }
-        else if (javaUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
+        else if ((javaUnicodeEscape || csharpUnicodeEscape) && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
             int numPrecedingSlashes = 0;
             for (int i = index-1; i>=0; i--) {
                 if (content.charAt(i) == '\\') 
@@ -706,6 +707,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             String fourHexDigits = content.subSequence(index+numConsecutiveUs, index+numConsecutiveUs+4).toString();
             buf.append((char) Integer.parseInt(fourHexDigits, 16));
             index+=(numConsecutiveUs +4);
+        }
+        else if (csharpUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index) == 'U') {
+            String eightHexDigits = content.subSequence(index+1, index+9).toString();
+            buf.appendCodePoint(Integer.parseInt(eightHexDigits,16);
+            index+=9;
         }
         else if (!preserveLines && ch == '\r') {
             buf.append((char)'\n');

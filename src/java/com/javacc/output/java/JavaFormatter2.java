@@ -65,7 +65,7 @@ public class JavaFormatter2 extends Node.Visitor {
             if ((Character.isJavaIdentifierPart(prevChar) || prevChar == ';') && Character.isJavaIdentifierPart(nextChar)) {
                 buf.append(' ');
             }
-            if (alwaysPrependSpace.contains(tok.getType())) buf.append(' ');
+            else if (alwaysPrependSpace.contains(tok.getType())) buf.append(' ');
         }
         buf.append(tok);
         if (alwaysAppendSpace.contains(tok.getType())) buf.append(' ');

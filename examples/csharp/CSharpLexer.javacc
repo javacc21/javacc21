@@ -1,4 +1,5 @@
 DEFAULT_LEXICAL_STATE=CSHARP;
+CSHARP_UNICODE_ESCAPE;
 
 // The following Token productions are lifted straight from the Java grammar. Should REVISIT
 

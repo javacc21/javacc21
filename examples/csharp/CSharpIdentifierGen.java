@@ -2,13 +2,10 @@ import static java.lang.Character.*;
 import java.text.Normalizer;
 
 /**
- * This is a surprisingly complicated little utility to generate
- * all the list of character ranges for the start and continuation
- * of a Python identifier. As far as I can tell, this generates 
- * the character ranges for the identifier definition found here: 
- * https://docs.python.org/3/reference/lexical_analysis.html#identifiers
+ * A little utility to generate all the list of character ranges for the 
+ * start and continuation a C# identifier. (Except for the fact that a
+ * C# identifier optionally can start with a "@", which we deal with elsewhere.)
  */
-
 public class CSharpIdentifierGen {
 
 	static public void main(String[] args) {
