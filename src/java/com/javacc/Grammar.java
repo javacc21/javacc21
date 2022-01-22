@@ -62,7 +62,8 @@ import freemarker.template.TemplateException;
  * information regarding a JavaCC processing job.
  */
 public class Grammar extends BaseNode {
-    private String parserClassName,
+    private String baseName, 
+                   parserClassName,
                    lexerClassName,
                    parserPackage,
                    constantsClassName,
@@ -348,13 +349,23 @@ public class Grammar extends BaseNode {
             constantsClassName = (String) settings.get("CONSTANTS_CLASS");
         }
         if (constantsClassName == null) {
-            constantsClassName = getParserClassName();
-            if (constantsClassName.toLowerCase().endsWith("parser")) {
-                constantsClassName = constantsClassName.substring(0, constantsClassName.length() -6);
-            }
-            constantsClassName += "Constants";
+            constantsClassName = getBaseName() + "Constants";
         }
         return constantsClassName;
+    }
+
+    private String getBaseName() {
+        if (baseName == null) {
+            baseName = (String) settings.get("BASE_NAME");
+        }
+        if (baseName == null) {
+            baseName = filename.getFileName().toString();
+            int lastDot = baseName.lastIndexOf('.');
+            if (lastDot >0) {
+                baseName = baseName.substring(0, lastDot);
+            }
+        }
+        return baseName;
     }
 
     public String getParserClassName() {
@@ -362,18 +373,14 @@ public class Grammar extends BaseNode {
             parserClassName = (String) settings.get("PARSER_CLASS");
         }
         if (parserClassName == null) {
-            String name = filename.getFileName().toString();
-            int lastDot = name.lastIndexOf('.');
-            if (lastDot >0) {
-                name = name.substring(0, lastDot);
+            parserClassName = getBaseName();
+            if (!parserClassName.toLowerCase().endsWith("parser")) {
+                parserClassName += "Parser";
             }
-            if (!name.toLowerCase().endsWith("parser")) {
-                name += "Parser";
+            if (Character.isLowerCase(parserClassName.charAt(0))) {
+                parserClassName = parserClassName.substring(0, 1).toUpperCase() 
+                                  + parserClassName.substring(1);
             }
-            if (Character.isLowerCase(name.charAt(0))) {
-                name = name.substring(0, 1).toUpperCase() + name.substring(1);
-            }
-            parserClassName = name;
         }
         return parserClassName;
     }
@@ -397,12 +404,9 @@ public class Grammar extends BaseNode {
             lexerClassName = (String) settings.get("LEXER_CLASS");
         }
         if (lexerClassName == null) {
-            lexerClassName = getParserClassName();
-            if (lexerClassName.toLowerCase().endsWith("parser")) {
-                lexerClassName = lexerClassName.substring(0, lexerClassName.length() - 6);
-            }
+            lexerClassName = getBaseName();
             if (!lexerClassName.toLowerCase().endsWith("lexer")) {
-                lexerClassName += "Lexer";
+                lexerClassName += "Lexer"; 
             }
         }
         return lexerClassName;
@@ -1174,7 +1178,7 @@ public class Grammar extends BaseNode {
     }
     private int jdkTarget = 8;
     private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,";
-    private String stringSettings = ",PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
+    private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
     private String integerSettings = ",TABS_TO_SPACES,JDK_TARGET,";
 
     private void typeCheckSettings(Map<String, Object> settings) {
