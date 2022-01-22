@@ -1,0 +1,53 @@
+PARSER_PACKAGE=ex2;
+PARSER_CLASS=Calc;
+
+INCLUDE "Arithmetic1.javacc"
+
+INJECT NUMBER :
+{
+    public double evaluate() {
+        return Double.parseDouble(getImage());
+    }
+}
+
+INJECT AdditiveExpression :
+{
+    public double evaluate() {
+        double result = getChild(0).evaluate();
+        for (int i=1; i< getChildCount(); i+=2) {
+            boolean subtract = getChild(i) instanceof MINUS;
+            double nextOperand = getChild(i+1).evaluate();
+            if (subtract) result -= nextOperand;
+            else result += nextOperand;
+        }
+        return result;
+    }
+}
+
+INJECT MultiplicativeExpression :
+{
+    public double evaluate() {
+        double result = getChild(0).evaluate();
+        for (int i=1; i< getChildCount(); i+=2) {
+            boolean divide = getChild(i) instanceof DIVIDE;
+            double nextOperand = getChild(i+1).evaluate();
+            if (divide) result /= nextOperand;
+            else result *= nextOperand;
+        }
+        return result;
+    }
+}
+
+INJECT ParentheticalExpression : 
+{
+    public double evaluate() {
+        return getChild(1).evaluate();
+    }
+}
+
+INJECT Root :
+{
+    public double evaluate() {
+        return getChild(0).evaluate();
+    }
+}

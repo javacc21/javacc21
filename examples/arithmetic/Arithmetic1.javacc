@@ -1,0 +1,64 @@
+PARSER_PACKAGE=ex1;
+PARSER_CLASS=Calc;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : 
+   <PLUS : "+">
+   |
+   <MINUS : "-">
+   |
+   <TIMES : "*">
+   |
+   <DIVIDE : "/">
+   |
+   <OPEN_PAREN : "(">
+   |
+   <CLOSE_PAREN : ")">
+   |
+   <NUMBER :  (["0"-"9"])+ ("."(["0"-"9"])+)?>
+;
+
+AdditiveExpression : 
+    MultiplicativeExpression
+    (
+      (<PLUS>|<MINUS>)
+      MultiplicativeExpression
+    )*
+;
+
+MultiplicativeExpression :
+    (<NUMBER> | ParentheticalExpression)
+    (
+       (<TIMES>|<DIVIDE>)
+       (<NUMBER> | ParentheticalExpression)
+    )*
+;
+
+ParentheticalExpression :
+    <OPEN_PAREN>
+    AdditiveExpression
+    <CLOSE_PAREN>
+;
+
+Root : AdditiveExpression <EOF> ;
+
+INJECT PARSER_CLASS : 
+    import java.util.Scanner;
+{
+    static public void main(String[] args) throws ParseException {
+       Scanner scanner = new Scanner(System.in);
+       String input = scanner.nextLine();
+       PARSER_CLASS parser = new PARSER_CLASS(input);
+       parser.Root();
+       Node root = parser.rootNode();
+       System.out.println("Dumping the AST...");
+       root.dump();
+       System.out.println("The result is: " + root.evaluate());
+    }
+}
+
+INJECT Node : 
+{
+    default double evaluate() {throw new UnsupportedOperationException();}
+}
