@@ -688,6 +688,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             buf.append(ch);
             col=0;
         }
+        else if (csharpUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index) == 'U') {
+            String eightHexDigits = content.subSequence(index+1, index+9).toString();
+            buf.appendCodePoint(Integer.parseInt(eightHexDigits,16));
+            index+=9;
+        }
         else if ((javaUnicodeEscape || csharpUnicodeEscape) && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
             int numPrecedingSlashes = 0;
             for (int i = index-1; i>=0; i--) {
@@ -707,11 +712,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             String fourHexDigits = content.subSequence(index+numConsecutiveUs, index+numConsecutiveUs+4).toString();
             buf.append((char) Integer.parseInt(fourHexDigits, 16));
             index+=(numConsecutiveUs +4);
-        }
-        else if (csharpUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index) == 'U') {
-            String eightHexDigits = content.subSequence(index+1, index+9).toString();
-            buf.appendCodePoint(Integer.parseInt(eightHexDigits,16);
-            index+=9;
         }
         else if (!preserveLines && ch == '\r') {
             buf.append((char)'\n');
