@@ -702,7 +702,8 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                     hex_buf.append(code_points[index+i])
                 current = int(''.join(hex_buf), 16)
                 buf.append(chr(current))
-                index = index + 9
+                index += 9
+                col+=1
             elif ch == '\\' and (java_unicode_escape or csharp_unicode_escape) and index < cplen:
                 ch = code_points[index]
                 index += 1

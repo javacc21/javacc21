@@ -692,6 +692,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             String eightHexDigits = content.subSequence(index+1, index+9).toString();
             buf.appendCodePoint(Integer.parseInt(eightHexDigits,16));
             index+=9;
+            ++col;
         }
         else if ((javaUnicodeEscape || csharpUnicodeEscape) && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
             int numPrecedingSlashes = 0;
@@ -712,6 +713,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             String fourHexDigits = content.subSequence(index+numConsecutiveUs, index+numConsecutiveUs+4).toString();
             buf.append((char) Integer.parseInt(fourHexDigits, 16));
             index+=(numConsecutiveUs +4);
+            ++col;
         }
         else if (!preserveLines && ch == '\r') {
             buf.append((char)'\n');
