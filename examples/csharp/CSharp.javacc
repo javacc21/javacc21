@@ -218,9 +218,9 @@ ClassMemberDeclaration :
    ConstantDeclaration
    |
    FieldDeclaration 
-/*   | 
-   MethodDeclaration 
    | 
+   MethodDeclaration 
+/*   | 
    PropertyDeclaration 
    | 
    EventDeclaration 
@@ -256,18 +256,107 @@ FieldDeclaration :
     Declarator ("," Declarator)*
 ;
 
+PropertyDeclaration :
+   (AttributeSection)*
+   (
+      "new"|"public"|"protected"|"internal"
+      |"private"|"static"|"virtual"|"sealed"
+      |"override"|"abstract"|"extern" | "unsafe"
+   )*
+   Type
+   <IDENTIFIER>
+   PropertyBody
+;
+
+PropertyBody :
+  "{"
+   (
+      GetAccessorDeclaration [SetAccessorDeclaration]
+      |
+      SetAccessorDeclaration [GetAccessorDeclaration]
+   )
+   ["=" VariableInitializer] 
+  "}"
+  |
+  "=" VariableInitializer
+;
+
+GetAccessorDeclaration :
+   (AttributeSection)*
+   [
+      "protected" ["internal"]
+      | "internal" ["protected"]
+      | "private" 
+   ]
+   "get" =>||
+   Block ";"
+;
+
+SetAccessorDeclaration :
+   (AttributeSection)*
+   [
+      "protected" ["internal"]
+      | "internal" ["protected"]
+      | "private" 
+   ]
+   "set" =>||
+   Block
+   ";"
+;   
+
+VariableInitializer :
+   Expression
+   | 
+   ArrayInitializer
+;
+
+ArrayInitializer :
+   "{"
+      VariableInitializer [("," VariableInitializer)+ [","]]
+   "}"
+;
+
 MethodDeclaration :
    (AttributeSection)*
    ("new" | "public" | "protected" | "internal" | "private" | "static" | "virtual" | "sealed" | "override" | "abstract" | "extern" | "unsafe")*
    ["partial"]
    Name
    [TypeParameterList]
-   "("
-//    [FormalParameterList]
-   ")" 
+   FormalParameters
    (TypeParameterConstraintsClause)*
    (Type | "void")
    //MethodBody
+;
+
+FormalParameters :
+  "("
+    [
+      FixedParameter 
+      (SCAN ~("," ParameterArray) => "," FixedParameter)* 
+      ["," ParameterArray]
+      |
+      ParameterArray
+    ]
+   ")"
+;   
+
+FixedParameter :
+   (AttributeSection)*
+   ("ref"| "out" | "this")*
+   Type
+   <IDENTIFIER>
+   ["=" Expression]
+;
+
+ParameterArray : 
+   (AttributeSection)*
+   "params" =>|| 
+   ArrayType
+   <IDENTIFIER>
+;
+
+ArrayType :
+   Type "[" (",")* "]"
 ;
 
 Declarator :
@@ -321,5 +410,11 @@ Type :
       [ "[" (",")* "]" ]
       ["*"]
    )
+;
+
+Block :
+  "{"
+    // (Statement)* TODO
+  "}"
 ;
 
