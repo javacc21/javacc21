@@ -230,9 +230,9 @@ ClassMemberDeclaration :
    MethodDeclaration 
    | 
    PropertyDeclaration 
-/*   | 
-   EventDeclaration 
    | 
+   EventDeclaration 
+/*   | 
    IndexerDeclaration
    |
    OperatorDeclaration 
@@ -242,9 +242,9 @@ ClassMemberDeclaration :
    DestructorDeclaration
    |
    StaticConstructorDeclaration 
+*/
    | 
    TypeDeclaration
-*/   
 ;
 
 ConstantDeclaration :
@@ -274,6 +274,40 @@ PropertyDeclaration :
    Type
    <IDENTIFIER>
    PropertyBody
+;
+
+EventDeclaration :
+   (AttributeSection)*
+   Modifiers
+   "event"
+   =>||
+   Type
+   (
+      Declarator ("," Declarator)*
+      |
+      Name 
+      "{" 
+      (
+          AddAccessorDeclaration RemoveAccessorDeclaration
+          |
+          RemoveAccessorDeclaration AddAccessorDeclaration
+      )
+      "}"
+   )   
+;
+
+AddAccessorDeclaration :
+    (AttributeSection)*
+    "add"
+    =>||
+    Block
+;
+
+RemoveAccessorDeclaration :
+    (AttributeSection)*
+    "remove"
+    =>||
+    Block
 ;
 
 PropertyBody :
