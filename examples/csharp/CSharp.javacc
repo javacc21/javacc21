@@ -175,7 +175,7 @@ StructDeclaration :
    <IDENTIFIER>
    [":" Name ("," Name)*]
    (TypeParameterConstraintsClause)*
-   StructBody
+   "{" (ClassMemberDeclaration)* "}"
    [";"] 
 ;
 
@@ -183,16 +183,27 @@ InterfaceDeclaration :
    (AttributeSection)*
    Modifiers
    ["partial"]
-   "struct" 
    "interface"
    =>||
    <IDENTIFIER>
    [TypeParameterList]
    [Name ("," Name)*]
    (TypeParameterConstraintsClause)*
-   InterfaceBody
+   "{" 
+   (InterfaceMemberDeclaration)* 
+   "}"
    [";"]
 ;
+
+InterfaceMemberDeclaration :
+   InterfaceMethodDeclaration
+   |
+   InterfacePropertyDeclaration
+/*   |
+   InterfaceEventDeclaration
+   |
+   InterfaceIndexerDeclaration*/
+;   
 
 EnumDeclaration : 
    (AttributeSection)*
@@ -237,11 +248,24 @@ ClassMemberDeclaration :
    OperatorDeclaration 
    | 
    ConstructorDeclaration 
-   | DestructorDeclaration
+   |
+   SCAN ~\StructDeclaration
+   => DestructorDeclaration
+   |
+   SCAN \StructDeclaration 
+   => StructMemberDeclarationUnsafe
    |
    StaticConstructorDeclaration 
    | 
    TypeDeclaration
+;
+
+StructMemberDeclarationUnsafe :
+   (AttributeSection)*
+   Modifiers
+   "fixed"
+   Type
+   (<IDENTIFIER> "[" Expression "]")+
 ;
 
 ConstantDeclaration :
@@ -271,6 +295,22 @@ PropertyDeclaration :
    Type
    <IDENTIFIER>
    PropertyBody
+;
+
+InterfacePropertyDeclaration :
+   (AttributeSection)*
+   ["new"]
+   Type
+   <IDENTIFIER>
+   "{" InterfaceAccessors "}"
+;
+
+InterfaceAccessors :
+    (AttributeSection)* "get" =>|| [(AttributeSection)* "set"]
+    |
+    (AttributeSection)* "set" =>|| [(AttributeSection)* "get"]
+    | 
+    FAIL "Expecting getter or setter"
 ;
 
 EventDeclaration :
@@ -439,13 +479,27 @@ MethodDeclaration :
    (AttributeSection)*
    Modifiers
    ["partial"]
-   Name
+   ReturnType
+   [Type "."] <IDENTIFIER>
    [TypeParameterList]
    "(" [FormalParameters] ")"
    (TypeParameterConstraintsClause)*
    (Type | "void")
-   //MethodBody TODO
+   Block
 ;
+
+InterfaceMethodDeclaration :
+   (AttributeSection)*
+   ["new"]
+   ReturnType
+   <IDENTIFIER>
+   TypeParameterList
+   "(" [FormalParameters] ")"
+   (TypeParameterConstraintsClause)*
+   ";"
+;
+
+ReturnType : Type | "void" ;
 
 FormalParameters :
    ParameterArray
@@ -479,18 +533,6 @@ Declarator :
    "="
    Expression
 ;   
-
-InterfaceBody :
-   "{"
-//  (InterfaceMemberDeclaration)* //TODO
-   "}"
-;
-
-StructBody :
-   "{"
-//      (StructMemberDeclaration)* //TODO
-   "}"
-;
 
 TypeParameterList :
    "<"
