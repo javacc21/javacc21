@@ -137,19 +137,14 @@ NamespaceBody :
 
 TypeDeclaration :
    ClassDeclaration
-/*
-   (AttributeSection)*
-   Modifiers
-   ["partial"]
-   (
-     StructDeclaration
-     |
-     InterfaceDeclaration
-     |
-     EnumDeclaration
-     |
-     DelegateDeclaration
-   )*/
+   |
+   StructDeclaration
+   |
+   InterfaceDeclaration
+   |
+   EnumDeclaration
+   |
+   DelegateDeclaration
 ;
 
 Modifiers#void :
@@ -173,16 +168,25 @@ ClassDeclaration :
 ;
 
 StructDeclaration :
-    "struct" 
-    <IDENTIFIER>
-    [":" Name ("," Name)*]
-    (TypeParameterConstraintsClause)*
+   (AttributeSection)*
+   Modifiers
+   ["partial"]
+   "struct" 
+   =>||
+   <IDENTIFIER>
+   [":" Name ("," Name)*]
+   (TypeParameterConstraintsClause)*
    StructBody
    [";"] 
 ;
 
 InterfaceDeclaration :
+   (AttributeSection)*
+   Modifiers
+   ["partial"]
+   "struct" 
    "interface"
+   =>||
    <IDENTIFIER>
    [TypeParameterList]
    [Name ("," Name)*]
@@ -192,7 +196,10 @@ InterfaceDeclaration :
 ;
 
 EnumDeclaration : 
+   (AttributeSection)*
+   Modifiers
    "enum" 
+   =>||
    <IDENTIFIER>
    [":" ("sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char")]
    EnumBody
@@ -200,13 +207,14 @@ EnumDeclaration :
 ;
 
 DelegateDeclaration :
+   (AttributeSection)*
+   Modifiers
   "delegate" 
+  =>||
   Type
   <IDENTIFIER>
   [TypeParameterList]
-  "("
-//  [FormalParameterList] //TODO
-  ")"
+  FormalParameters
   (TypeParameterConstraintsClause)*
 ;
 
@@ -220,11 +228,11 @@ ClassMemberDeclaration :
    FieldDeclaration 
    | 
    MethodDeclaration 
-/*   | 
+   | 
    PropertyDeclaration 
    | 
    EventDeclaration 
-   | 
+/*   | 
    IndexerDeclaration
    |
    OperatorDeclaration 
@@ -234,9 +242,9 @@ ClassMemberDeclaration :
    DestructorDeclaration
    |
    StaticConstructorDeclaration 
+*/
    | 
    TypeDeclaration
-*/   
 ;
 
 ConstantDeclaration :
@@ -266,6 +274,40 @@ PropertyDeclaration :
    Type
    <IDENTIFIER>
    PropertyBody
+;
+
+EventDeclaration :
+   (AttributeSection)*
+   Modifiers
+   "event"
+   =>||
+   Type
+   (
+      Declarator ("," Declarator)*
+      |
+      Name 
+      "{" 
+      (
+          AddAccessorDeclaration RemoveAccessorDeclaration
+          |
+          RemoveAccessorDeclaration AddAccessorDeclaration
+      )
+      "}"
+   )   
+;
+
+AddAccessorDeclaration :
+    (AttributeSection)*
+    "add"
+    =>||
+    Block
+;
+
+RemoveAccessorDeclaration :
+    (AttributeSection)*
+    "remove"
+    =>||
+    Block
 ;
 
 PropertyBody :
@@ -373,7 +415,7 @@ InterfaceBody :
 
 StructBody :
    "{"
-//      (StructMemberDeclaration())* //TODO
+//      (StructMemberDeclaration)* //TODO
    "}"
 ;
 
