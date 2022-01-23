@@ -69,10 +69,10 @@ AttributeArguments :
     "(" 
     [
        SCAN ~(<IDENTIFIER>"=")
-       => Expression()
+       => Expression
        (
           ","
-          Expression()
+          Expression
        )*
     ]
     [
@@ -104,7 +104,7 @@ QualifiedAliasMember :
    [TypeArgumentList]
 ;
 
-TypeArgumentList() :
+TypeArgumentList :
    "<"
    [
       Type
@@ -115,8 +115,8 @@ TypeArgumentList() :
 
 Expression :  Name; // TODO!
 
-NamespaceDeclaration() :
-   "namespace"  QualifiedIdentifier NamespaceBody
+NamespaceDeclaration :
+   "namespace"  QualifiedIdentifier NamespaceBody [";"]
 ;
 
 QualifiedIdentifier :
@@ -125,22 +125,23 @@ QualifiedIdentifier :
 
 NamespaceBody :
    "{"
-       (ExternAliasDirective)* (UsingDirective)* 
+       (ExternAliasDirective)* 
+       (UsingDirective)* 
        (
-          NamespaceDeclaration
+          NamespaceDeclaration 
           |
           TypeDeclaration
-       )
+       )*
    "}"
 ;
 
 TypeDeclaration :
+   ClassDeclaration
+/*
    (AttributeSection)*
-   ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe")*
+   Modifiers
    ["partial"]
    (
-     ClassDeclaration
-     |
      StructDeclaration
      |
      InterfaceDeclaration
@@ -148,16 +149,26 @@ TypeDeclaration :
      EnumDeclaration
      |
      DelegateDeclaration
-   )
+   )*/
+;
+
+Modifiers#void :
+  ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe")*
 ;
 
 ClassDeclaration :
+  (AttributeSection)*
+  Modifiers
+  ["partial"]
   "class"
+  =>||
    <IDENTIFIER>
   [TypeParameterList]
   [":" (Name | "object" | "dynamic" | "string") ("," Name)*]
   (TypeParameterConstraintsClause)*
-  ClassBody
+  "{"
+   (ClassMemberDeclaration)*
+  "}"
   [";"]
 ;
 
@@ -203,11 +214,67 @@ TypeParameterConstraintsClause :
   "where" <IDENTIFIER> ":" (Name | "class" | "struct") ["," Name]
 ;
 
-ClassBody :
-   "{"
-//   (ClassMemberDeclaration)* //TODO      
-   "}"
+ClassMemberDeclaration :
+   ConstantDeclaration
+   |
+   FieldDeclaration 
+/*   | 
+   MethodDeclaration 
+   | 
+   PropertyDeclaration 
+   | 
+   EventDeclaration 
+   | 
+   IndexerDeclaration
+   |
+   OperatorDeclaration 
+   | 
+   ConstructorDeclaration 
+   | 
+   DestructorDeclaration
+   |
+   StaticConstructorDeclaration 
+   | 
+   TypeDeclaration
+*/   
 ;
+
+ConstantDeclaration :
+   (AttributeSection)*
+   ("new" | "public" | "protected" | "internal" | "private")*
+   "const" 
+   =>||
+   Type 
+   Declarator ("," Declarator)*
+;
+
+FieldDeclaration :
+    (AttributeSection)*
+    ("new" | "public" | "protected" | "internal" | "private" | "static" | "readonly" | "volatile" | "unsafe")*
+    Type
+    =>||
+    Declarator ("," Declarator)*
+;
+
+MethodDeclaration :
+   (AttributeSection)*
+   ("new" | "public" | "protected" | "internal" | "private" | "static" | "virtual" | "sealed" | "override" | "abstract" | "extern" | "unsafe")*
+   ["partial"]
+   Name
+   [TypeParameterList]
+   "("
+//    [FormalParameterList]
+   ")" 
+   (TypeParameterConstraintsClause)*
+   (Type | "void")
+   //MethodBody
+;
+
+Declarator :
+   <IDENTIFIER> 
+   "="
+   Expression
+;   
 
 InterfaceBody :
    "{"
