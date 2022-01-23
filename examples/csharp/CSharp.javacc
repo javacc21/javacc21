@@ -89,14 +89,13 @@ NamedArgument :
     <IDENTIFIER> "=" Expression
 ;
 
-
 /** Name of a Type or a Namespace */
 Name :
    SCAN <IDENTIFIER> "::"
    => QualifiedAliasMember()
    |
-   <IDENTIFIER>[TypeArgumentList()]
-   ("." <IDENTIFIER> [TypeArgumentList()])*
+   <IDENTIFIER>[TypeArgumentList]
+   ("." <IDENTIFIER> [TypeArgumentList])*
 ;
 
 QualifiedAliasMember :
@@ -147,7 +146,7 @@ TypeDeclaration :
    DelegateDeclaration
 ;
 
-Modifiers#void :
+Modifiers#void : //TODO
   ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe")*
 ;
 
@@ -214,7 +213,7 @@ DelegateDeclaration :
   Type
   <IDENTIFIER>
   [TypeParameterList]
-  FormalParameters
+  "(" [FormalParameters] ")"
   (TypeParameterConstraintsClause)*
 ;
 
@@ -232,17 +231,15 @@ ClassMemberDeclaration :
    PropertyDeclaration 
    | 
    EventDeclaration 
-/*   | 
-   IndexerDeclaration
+   | 
+   IndexerDeclaration 
    |
    OperatorDeclaration 
    | 
    ConstructorDeclaration 
-   | 
-   DestructorDeclaration
+   | DestructorDeclaration
    |
    StaticConstructorDeclaration 
-*/
    | 
    TypeDeclaration
 ;
@@ -296,6 +293,86 @@ EventDeclaration :
    )   
 ;
 
+IndexerDeclaration :
+    (AttributeSection)*
+    Modifiers
+    Type
+    [<IDENTIFIER> "."] 
+    "this"
+    "["
+    =>||
+     FormalParameters 
+    "]"
+    (
+       "{" AccessorDeclarations "}"
+       |
+       "=>" Expression ";"
+    )    
+;
+
+OperatorDeclaration :
+   (AttributeSection)*
+   ( "public" | "static" | "extern" | "unsafe")+
+   Type "operator" =>||
+   (
+      ("+"|"-") =>|| "(" <IDENTIFIER> ["," <IDENTIFIER>] ")"
+      |
+      ("!"|"~"|"++"|"--"|"true"|"false") =>|| "(" <IDENTIFIER> ")"
+      |
+      ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|"right_shift"|"=="|"!="|">"|"<"|">="|"<=")
+      "(" <IDENTIFIER> "," <IDENTIFIER> ")"
+   )
+;
+
+DestructorDeclaration :
+   (AttributeSection)*
+   ["extern"]
+   "~"
+   <IDENTIFIER> 
+   "(" 
+   =>||
+   ")"
+   (Block | ";")
+;
+
+ConstructorDeclaration : 
+   (AttributeSection)*
+   Modifiers
+   <IDENTIFIER>
+   "(" =>||
+   [FormalParameters]
+   ")"
+   [
+      ":"
+      ("base" | "this")
+      "(" [ArgumentList] ")"
+   ]
+   (Block | ";")
+;
+
+StaticConstructorDeclaration :
+   (AttributeSection)*
+   (
+      "extern" ["static"]
+      |
+      "static" ["extern"]
+   )
+   <IDENTIFIER>
+   "(" =>||
+   ")"
+   (Block | ";")
+;
+
+ArgumentList : Argument ("," Argument)* ;
+
+Argument :
+   [<IDENTIFIER> ":"]
+   (
+      ["ref" | "out"]
+      Expression 
+   )
+;
+
 AddAccessorDeclaration :
     (AttributeSection)*
     "add"
@@ -310,17 +387,17 @@ RemoveAccessorDeclaration :
     Block
 ;
 
+AccessorDeclarations :
+   GetAccessorDeclaration [SetAccessorDeclaration]
+   |
+   SetAccessorDeclaration [GetAccessorDeclaration]
+;   
+
 PropertyBody :
-  "{"
-   (
-      GetAccessorDeclaration [SetAccessorDeclaration]
-      |
-      SetAccessorDeclaration [GetAccessorDeclaration]
-   )
+  "{" AccessorDeclarations "}"
    ["=" VariableInitializer] 
-  "}"
   |
-  "=" VariableInitializer
+  "=>" Expression ";"
 ;
 
 GetAccessorDeclaration :
@@ -360,26 +437,22 @@ ArrayInitializer :
 
 MethodDeclaration :
    (AttributeSection)*
-   ("new" | "public" | "protected" | "internal" | "private" | "static" | "virtual" | "sealed" | "override" | "abstract" | "extern" | "unsafe")*
+   Modifiers
    ["partial"]
    Name
    [TypeParameterList]
-   FormalParameters
+   "(" [FormalParameters] ")"
    (TypeParameterConstraintsClause)*
    (Type | "void")
-   //MethodBody
+   //MethodBody TODO
 ;
 
 FormalParameters :
-  "("
-    [
-      FixedParameter 
-      (SCAN ~("," ParameterArray) => "," FixedParameter)* 
-      ["," ParameterArray]
-      |
-      ParameterArray
-    ]
-   ")"
+   ParameterArray
+   |
+   FixedParameter 
+   (SCAN ~("," ParameterArray) => "," FixedParameter)* 
+   ["," ParameterArray]
 ;   
 
 FixedParameter :
@@ -447,7 +520,7 @@ Type :
        (
         "object"|"dynamic"|"string"|"decimal"|"sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char"|"float"|"double"|"bool"
         |
-        Name() ["?"]
+        Name ["?"]
       )
       [ "[" (",")* "]" ]
       ["*"]
@@ -459,4 +532,3 @@ Block :
     // (Statement)* TODO
   "}"
 ;
-
