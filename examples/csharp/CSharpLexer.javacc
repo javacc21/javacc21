@@ -1,5 +1,6 @@
 DEFAULT_LEXICAL_STATE=CSHARP;
 CSHARP_UNICODE_ESCAPE;
+PARSER_PACKAGE=org.parsers.csharplexer;
 
 
 SKIP :
@@ -38,85 +39,44 @@ MORE :
   < ~[] >
 ;
 
-// The following Token productions are mostly lifted straight from the Java grammar. Should REVISIT
-
 TOKEN #Literal :
-  < LONG_LITERAL:
-        <DECIMAL_LITERAL> (["l","L"])
-      | <HEX_LITERAL> (["l","L"])
-      | <OCTAL_LITERAL> (["l","L"])
-      | <BINARY_LITERAL> (["l","L"])
-  >
+  < INTEGER_LITERAL: (<DECIMAL_LITERAL> | <HEX_LITERAL>) <INTEGER_TYPE_SUFFIX>> #IntegerLiteral
   |
-  < INTEGER_LITERAL:
-        <DECIMAL_LITERAL>
-      | <HEX_LITERAL>
-      | <OCTAL_LITERAL>
-      | <BINARY_LITERAL>
-  >
+  < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])?>
+  |
+  < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS>>
   | 
-  < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
-  |
-  < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS> >
-  |
-  < #OCTAL_LITERAL: "0" ["0"-"7"]((["0"-"7","_"])*["0"-"7"])? >
-  |
-  < #BINARY_LITERAL: "0" ["b","B"] ["0","1"]((["0","1","_"])*["0","1"])? >
-  |
-  < FLOATING_POINT_LITERAL:
-        <DECIMAL_FLOATING_POINT_LITERAL>
-      | <HEXADECIMAL_FLOATING_POINT_LITERAL>
-  >
-  |
-  < #DECIMAL_FLOATING_POINT_LITERAL:
-        <DECIMAL_LITERAL> "." (<DECIMAL_LITERAL>)? (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
-      | "." <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
-      | <DECIMAL_LITERAL> <DECIMAL_EXPONENT> (["f","F","d","D"])?
-      | <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? ["f","F","d","D"]
-  >
-  |
-  < #DECIMAL_EXPONENT: ["e","E"] (["+","-"])? (<DECIMAL_LITERAL>)+ >
-  |
-  < #HEXADECIMAL_FLOATING_POINT_LITERAL:
-        <HEX_LITERAL> (".")? <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
-      | "0" ["x","X"] (<HEX_DIGITS>)? "." <HEX_DIGITS> <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
-  >
-  |
-  < #HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? <DECIMAL_LITERAL> >
+  < #INTEGER_TYPE_SUFFIX : "U" | "u" | "L" | "l" | "UL" | "Ul" | "uL" | "ul"| "LU" | "Lu" | "lU" | "lu">
   |
   < #HEX_DIGITS: ["0"-"9","a"-"f","A"-"F"]((["0"-"9","a"-"f","A"-"F","_"])*["0"-"9","a"-"f","A"-"F"])? >
   |
-  < CHARACTER_LITERAL:
-      "'"
-      (   (~["'","\\","\n","\r"])
-        | ("\\"
-            ( ["n","t","b","r","f","\\","'","\""]
-            | ["0"-"7"] ( ["0"-"7"] )?
-            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
-            )
-          )
-      )
-      "'"
-  >
+  < REAL_LITERAL:
+     (<DECIMAL_LITERAL>)? "." <DECIMAL_LITERAL> (<EXPONENT_PART>)? (["f","F","d","D"])?
+  > #RealLiteral
   |
-  < STRING_LITERAL:
-      "\""
-      (   (~["\"","\\","\n","\r"])
-        | ("\\"
-            ( ["n","t","b","r","f","\\","'","\""]
-            | ["0"-"7"] ( ["0"-"7"] )?
-            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
-            )
-          )
-      )*
-      "\""
-  >
+  < #EXPONENT_PART : ["e","E"] (["+","-"])? <DECIMAL_LITERAL> >
   |
-  < FALSE : "false" > 
+  < CHARACTER_LITERAL: "'" ((~["'","\\","\n","\r"]) | <ESCAPED_CHAR>) "'"> #CharacterLiteral
   |
-  < TRUE : "true">
+  < #ESCAPED_CHAR :  "\\"
+                    (
+                      (["0","a","b","f","n", "r","t","v","\\","'","\""])
+                      |
+                      "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
+                    ) 
+  >                                                  
+  |
+  < STRING_LITERAL: <REGULAR_STRING_LITERAL>|<VERBATIM_STRING_LITERAL>> #StringLiteral
+  |
+  < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR>)*  "\"">
+  |
+  < #VERBATIM_STRING_LITERAL : "@\"" (~["\""] | "\"\"")* "\"" > 
+  |
+  < FALSE : "false" > #BooleanLiteral
+  |
+  < TRUE : "true"> #BooleanLiteral
   | 
-  < NULL : "null" >
+  < NULL : "null" > #NullLiteral
 ;
 
 TOKEN #Delimiter :

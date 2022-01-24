@@ -192,6 +192,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         this.startingLine = startingLine;
         this.startingColumn = startingColumn;
         switchTo(lexState);
+     [#if grammar.cppContinuationLines]
+        handleCPreprocessorContinuationLines();
+     [/#if]
      }
 
     /**
@@ -740,5 +743,44 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         if (lastChar != '\n' && lastChar!='\r') buf.append((char) '\n');
     }
     return buf.toString();
+  }
+
+  private void handleCPreprocessorContinuationLines() {
+      boolean inPreprocessor = false, atLineStart = true;
+      //The index of the last backslash we encountered, -1 if undefined.
+      // This is only set if we are within a preprocessor directive.
+      int lastBackslashIndex = -1;
+      int index = 0;
+      while (index < content.length()) {
+          char ch = content.charAt(index++);
+          if (ch == '#' && !inPreprocessor && atLineStart) {
+              inPreprocessor = true;
+              atLineStart = false;
+          }
+          else if (ch == '\n') {
+              if (!inPreprocessor) atLineStart = true;
+              else {
+                  if (lastBackslashIndex != -1) {
+                      // If we have the lastBackslashIndex set
+                      // we set the buffer offsets from there 
+                      // up to (and including) this newline to IGNORED
+                      for (int i=lastBackslashIndex; i< index; i++) {
+                          tokenLocationTable[i] = IGNORED;
+                      }
+                      lastBackslashIndex = -1;
+                  } else {
+                      inPreprocessor = false;
+                      atLineStart = true; 
+                  }
+              }
+          }
+          else if (ch == '\\' && inPreprocessor) {
+              lastBackslashIndex = index -1;
+          }
+          else if (!Character.isWhitespace(ch)) {
+              atLineStart = false;
+              lastBackslashIndex = -1;
+          }
+      }
   }
 }
