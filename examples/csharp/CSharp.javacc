@@ -628,8 +628,38 @@ AssignmentOperator #void :
 ;
 
 UnaryExpression :
-   PrimaryExpression //TODO
+   PrimaryExpression 
+   |
+   UnaryExpressionPlusOrMinus
+   |
+   UnaryExpressionNotPlusMinus
+   |
+   CastExpression
+   |
+   AwaitExpression
+   |
+   PreIncrementExpression
+   |
+   PreDecrementExpression
+   |
+   UnaryExpressionUnsafe
+   //TODO
+//   | null_conditional_expression 
 ;
+
+CastExpression : "(" Type ")" UnaryExpression ;
+
+AwaitExpression : "await" UnaryExpression ;
+
+UnaryExpressionUnsafe : ("*" | "&") UnaryExpression ;
+
+PreIncrementExpression : "++" UnaryExpression ;
+
+PreDecrementExpression : "--" UnaryExpression ;
+
+UnaryExpressionPlusOrMinus : ("+" | "-") UnaryExpression ;
+
+UnaryExpressionNotPlusMinus : ("~" | "~") UnaryExpression ;
 
 PrimaryExpression :
    LiteralExpression
