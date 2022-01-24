@@ -92,7 +92,7 @@ NamedArgument :
 /** Name of a Type or a Namespace */
 Name :
    SCAN <IDENTIFIER> "::"
-   => QualifiedAliasMember()
+   => QualifiedAliasMember
    |
    <IDENTIFIER>[TypeArgumentList]
    ("." <IDENTIFIER> [TypeArgumentList])*
@@ -633,29 +633,119 @@ UnaryExpression :
 
 PrimaryExpression :
    LiteralExpression
+   |
+   "this"
+   |
+   BaseAccess
+   |
+   SimpleName
+   |
+   ParenthesizedExpression
+   |
+   TypeofExpression
+   |
+   DefaultValueExpression
+   |
+   NameofExpression
+   |
+   CheckedExpression
+   |
+   UncheckedExpression
+   |
+   ObjectCreationExpression
 /*
 | interpolated_string
-| simple_name
-| parenthesized_expression
 | member_access
 | invocation_expression
 | element_access
-| this_access
-| base_access
 | post_increment_expression
 | post_decrement_expression
-| object_creation_expression
 | delegate_creation_expression
 | anonymous_object_creation_expression
-| typeof_expression
-| checked_expression
-| unchecked_expression
-| default_value_expression
-| nameof_expression
 | anonymous_method_expression
 | primary_no_array_creation_expression_unsafe
 */
 ;
+
+BaseAccess :
+   "base"
+   (
+     "." <IDENTIFIER>
+     |
+    "[" Expression ("," Expression)* "]"
+   )
+;
+
+NameofExpression : "nameof" "(" NamedEntity ")" ;
+
+NamedEntity :
+   (SimpleName | "this"| "base" | PredefinedType | QualifiedAliasMember)
+   ("." <IDENTIFIER> [TypeArgumentList])+
+;   
+
+PredefinedType#void :
+    "bool" | "byte" | "char"| "decimal" | "double" | "float" | "int" 
+    | "long" | "object" | "sbyte" | "short" | "string" | "uint" | "ulong" | "ushort"
+;
+
+DefaultValueExpression : "default" "(" Type ")" ;
+
+SimpleName : <IDENTIFIER> [TypeArgumentList] ;
+
+ParenthesizedExpression : "(" Expression ")" ;
+
+TypeofExpression :
+    "typeof" "("
+    (
+       Type
+       |
+       "void"
+       |
+       <IDENTIFIER> ["<" (",")* ">"]
+    )
+    ")"
+;
+
+ObjectCreationExpression :
+   "new" Type
+   (
+      "(" [ArgumentList] ")" [ObjectInitializer | CollectionInitializer]
+      |
+      (ObjectInitializer | CollectionInitializer)
+   )
+;
+
+ObjectInitializer :
+  "{" 
+    [
+       MemberInitializer ("," MemberInitializer)* [","]
+    ]
+  "}"
+;
+
+MemberInitializer :
+   (<IDENTIFIER> | "[" ArgumentList "]")
+   "="
+   (Expression | ObjectInitializer | CollectionInitializer)
+;
+
+CollectionInitializer : 
+   "{" 
+       [
+          ElementInitializer ("," ElementInitializer)* [","]
+       ]
+   "}"
+;
+
+ElementInitializer :
+    Expression // non-assignment, deal with later
+    |
+    "{" Expression ("," Expression)* "}"
+;
+
+CheckedExpression : "checked" "(" Expression ")" ;
+
+UncheckedExpression : "unchecked" "(" Expression ")" ;
 
 LiteralExpression :
    "true"

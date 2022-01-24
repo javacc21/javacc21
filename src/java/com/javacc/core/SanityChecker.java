@@ -68,7 +68,7 @@ public class SanityChecker {
 
         public void visit(RegexpRef ref) {
             RegularExpression referredTo = ref.getRegexp();
-            if (!alreadyVisited.contains(referredTo)) {
+            if (referredTo != null && !alreadyVisited.contains(referredTo)) {
                 if (!currentlyVisiting.contains(referredTo)) {
                     currentlyVisiting.add(referredTo);
                     visit(referredTo);
