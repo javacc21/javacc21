@@ -713,11 +713,17 @@ PrimaryNoArrayCreationExpression :
       |
       CheckedExpression
       |
+      SizeofExpression 
+      |
       UncheckedExpression
       |
       ObjectCreationExpression
       |
+      AnonymousObjectCreationExpression
+      |
       AnonymousMethodExpression
+      |
+      <INTERPOLATED_STRING_LITERAL> // TODO: deal with this better.
    )
    (
       "(" [ArgumentList] ")"
@@ -726,13 +732,13 @@ PrimaryNoArrayCreationExpression :
       |
       "." <IDENTIFIER> [TypeArgumentList]
       |
+      "->" <IDENTIFIER>
+      |
       "++"
       |
       "--"
    )*   
 /*
-| interpolated_string
-| anonymous_object_creation_expression
 | primary_no_array_creation_expression_unsafe
 */
 ;
@@ -777,13 +783,27 @@ TypeofExpression :
 ;
 
 ObjectCreationExpression :
-   "new" Type
+   "new" =>|+1 Type
    (
       "(" [ArgumentList] ")" [ObjectInitializer | CollectionInitializer]
       |
       (ObjectInitializer | CollectionInitializer)
    )
 ;
+
+AnonymousObjectCreationExpression :
+   "new" 
+   "{" =>||
+    [MemberDeclarator ("," MemberDeclarator)* [","]]
+   "}"
+;
+
+MemberDeclarator :
+    <IDENTIFIER> "=" =>|| Expression
+    |
+    PrimaryExpression // TODO ensure that it is of the right type
+;
+
 
 AnonymousMethodExpression :
    "delegate"
@@ -831,6 +851,8 @@ ElementInitializer :
 CheckedExpression : "checked" "(" Expression ")" ;
 
 UncheckedExpression : "unchecked" "(" Expression ")" ;
+
+SizeofExpression : "sizeof" "(" Type ")" ;
 
 LiteralExpression :
    "true"
