@@ -706,6 +706,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             }
             if (numPrecedingSlashes % 2 == 0) {
                 buf.append((char) '\\');
+                ++col;
                 continue;
             }
             int numConsecutiveUs = 0;
