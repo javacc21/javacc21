@@ -112,3 +112,4 @@ jobs:
         ant test-csharp
       env:
         PY_DEBUG: 1
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
