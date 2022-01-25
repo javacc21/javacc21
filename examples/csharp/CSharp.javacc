@@ -2,7 +2,7 @@ CSHARP_UNICODE_ESCAPE;
 PARSER_PACKAGE="org.parsers.csharp";
 NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
-ENSURE_FINAL_EOL=true;
+ENSURE_FINAL_EOL;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -612,7 +612,7 @@ PrimitiveType#void :
 
 Block :
   "{"
-    // (Statement)* TODO
+     (Statement)* 
   "}"
 ;
 
@@ -621,9 +621,9 @@ Expression :
    |
    LambdaExpression
    |
-   QueryExpression
-   |
    AssignmentExpression
+   |
+   QueryExpression
 ;
 
 LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
@@ -641,7 +641,7 @@ ImplicitAnonymousFunctionSignature :
    "(" [<IDENTIFIER> ("," <IDENTIFIER>)*] ")"
 ;
 
-QueryExpression : FAIL : "unimplemented" ;
+QueryExpression : "from" FAIL : "unimplemented" ;
 
 AssignmentExpression :
    UnaryExpression
@@ -999,4 +999,81 @@ LiteralExpression :
    <CHARACTER_LITERAL>
    |
    <STRING_LITERAL>
+;   
+
+Label : SCAN 2 <IDENTIFIER> ":" ;
+
+Statement :
+   (Label)*
+    (
+       SCAN "var" | Type | "const" =>
+       DeclarationStatement
+       |
+       EmbeddedStatement
+    )
+;
+
+EmptyStatement : ";" ;
+
+EmbeddedStatement :
+    Block 
+    |
+    EmptyStatement
+    |
+    WhileStatement
+    |
+    DoStatement
+    |
+    YieldStatement
+    |
+    CheckedStatement
+    |
+    UncheckedStatement
+    |
+    TryStatement
+/*
+TODO:
+   expression_statement, selection_statement, for_statement,
+   jump_statement, lock_statement, using_statement, embedded_statement_unsafe
+*/       
+;    
+
+DeclarationStatement : FAIL "unimplemented";
+
+CheckedStatement : "checked" Block ;
+
+UncheckedStatement : "unchecked" Block ;
+
+DoStatement : "do" EmbeddedStatement "while" "(" Expression ")" ";" ;
+
+WhileStatement : "while" "(" Expression ")" EmbeddedStatement ;
+
+ForEachStatement : "foreach" "(" ("var" | Type) <IDENTIFIER> "in" Expression ")" EmbeddedStatement ;
+
+TryStatement : 
+   "try" Block
+   (
+      FinallyClause
+      |
+      (CatchClause)+ [FinallyClause]
+   )
+;
+
+FinallyClause : "finally" Block ;
+
+CatchClause : 
+   "catch" 
+   [ "(" Type [<IDENTIFIER>] ")" ] 
+   [ "when" "(" Expression ")" ] 
+   Block
+;
+
+YieldStatement :
+   "yield"
+   (
+      "break"
+      |
+      "return" Expression
+   )
+   ";"
 ;   
