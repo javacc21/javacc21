@@ -64,7 +64,7 @@ def get_ipy_command(params):
             result = ['mono', '/Library/Frameworks/IronPython.framework/Versions/2.7.11/bin/ipy.exe']
         elif os.name == 'nt':
             loc = os.path.expanduser('~/bin/IronPython-2.7.11/netcoreapp3.1')
-            return ['dotnet', os.path.join(loc, 'ipy.dll')]
+            result = ['dotnet', os.path.join(loc, 'ipy.dll')]
     result.extend(params)
     return result
 
@@ -177,7 +177,7 @@ def test_grammar(gdata, options):
     # Run dotnet to build the C# code
 
     csdir = os.path.join(dd, gdata.csdir)
-    cmd = ['dotnet', 'build', '--nologo', '-v', 'q']
+    cmd = ['dotnet', 'build', '--nologo']
     p = run_command(cmd, cwd=csdir)
     if p.returncode:
         raise ValueError('Failed to build generated C# code')
