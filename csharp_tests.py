@@ -177,7 +177,7 @@ def test_grammar(gdata, options):
     # Run dotnet to build the C# code
 
     csdir = os.path.join(dd, gdata.csdir)
-    cmd = ['dotnet', '--nologo', '-v', 'q', 'build']
+    cmd = ['dotnet', 'build', '--nologo', '-v', 'q']
     p = run_command(cmd, cwd=csdir)
     if p.returncode:
         raise ValueError('Failed to build generated C# code')
