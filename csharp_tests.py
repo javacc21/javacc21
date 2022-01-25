@@ -58,10 +58,13 @@ def check_jython(options):
     return 0
 
 def get_ipy_command(params):
-    if 'GITHUB_WORKFLOW' not in os.environ or sys.platform != 'darwin':
-        result = ['ipy']
-    else:
-        result = ['mono', '/Library/Frameworks/IronPython.framework/Versions/2.7.11/bin/ipy.exe']
+    result = ['ipy']
+    if 'GITHUB_WORKFLOW' in os.environ:
+        if sys.platform == 'darwin':
+            result = ['mono', '/Library/Frameworks/IronPython.framework/Versions/2.7.11/bin/ipy.exe']
+        elif os.name == 'nt':
+            loc = os.path.expanduser('~/bin/IronPython-2.7.11/netcoreapp3.1')
+            result = ['dotnet', os.path.join(loc, 'ipy.dll')]
     result.extend(params)
     return result
 
@@ -93,6 +96,10 @@ def copy_files(srcdir, destdir, patterns):
             else:
                 shutil.copytree(fn, dp)
             # print('%s -> %s' % (p, dp))
+
+def run_command(cmd, **kwargs):
+    print(' '.join(cmd))
+    return subprocess.run(cmd, **kwargs)
 
 def test_grammar(gdata, options):
     s = 'Testing with %s grammar' % gdata.name
@@ -170,18 +177,18 @@ def test_grammar(gdata, options):
     # Run dotnet to build the C# code
 
     csdir = os.path.join(dd, gdata.csdir)
-    cmd = ['dotnet', 'build']
-    p = subprocess.run(cmd, cwd=csdir)
+    cmd = ['dotnet', 'build', '--nologo']
+    p = run_command(cmd, cwd=csdir)
     if p.returncode:
         raise ValueError('Failed to build generated C# code')
 
-    # Run Python to create the Python test result files
+    # Run IronPython to create the C# test result files
 
     # First the lexer
 
     cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py', '-q', gdata.cspackage, gdata.ext])
     start = time.time()
-    p = subprocess.run(cmd, cwd=dd)
+    p = run_command(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('C# lexer test run failed')
     elapsed = time.time() - start
@@ -192,7 +199,7 @@ def test_grammar(gdata, options):
     cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py', '-q',
                            '--parser', gdata.production, gdata.cspackage, gdata.ext])
     start = time.time()
-    p = subprocess.run(cmd, cwd=dd)
+    p = run_command(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('C# parser test run failed')
     elapsed = time.time() - start

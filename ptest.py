@@ -47,55 +47,61 @@ if IS_JAVA:
         return java.io.PrintWriter(osw, True)
 
 elif IS_DOTNET:
-    NETVER = 'netstandard2.1'
-    sd = [d for d in os.listdir('.') if d.startswith('cs-') and os.path.isdir(d)]
-    if not sd:
-        raise ValueError('No subdirectory starting with cs- found.')
-    sd = os.path.join(sd[0], 'bin', 'Debug', NETVER)
-    if not os.path.isdir(sd):
-        raise ValueError('Not a directory: %s' % sd)
-    sys.path.append(os.path.abspath(sd))
-    import clr
-    dlls = [f for f in os.listdir(sd) if f.endswith('.dll')]
-    if not dlls:
-        raise ValueError('No .dll found in %s' % sd)
-    for dll in dlls:
-        # print(dll)
-        clr.AddReference(dll)
-    # print('DLLs added.')
-    from System.IO import FileStream, StreamWriter, FileMode
+    try:
+        sd = [d for d in os.listdir('.') if d.startswith('cs-') and os.path.isdir(d)]
+        if not sd:
+            raise ValueError('No subdirectory starting with cs- found.')
+        sd = os.path.join(sd[0], 'bin', 'Debug', 'netstandard2.1')
+        if not os.path.isdir(sd):
+            raise ValueError('Not a directory: %s' % sd)
+        sd = os.path.abspath(sd)
+        print('Adding to sys.path: %s' % sd)
+        sys.path.append(sd)
+        import clr
+        dlls = [f for f in os.listdir(sd) if f.endswith('.dll')]
+        if not dlls:
+            raise ValueError('No .dll found in %s' % sd)
+        for dll in dlls:
+            fn = os.path.join(sd, dll)
+            print('Adding reference to %s (%s)' % (fn, dll))
+            clr.AddReferenceToFile(dll)
+        # print('DLLs added.')
+        from System.IO import FileStream, StreamWriter, FileMode
 
-    def clr_import_module(name):  # Because IronPython's import_module appears to be broken
-        parts = name.split('.')
-        mod = None
-        try:
-            for p in parts:
-                if mod is None:
-                    __import__(p)
-                    mod = sys.modules[p]
-                else:
-                    mod = getattr(mod, p)
-        except Exception as e:
-            msg = 'Failed to import %s at part %s' % (name, p)
-            raise ImportError(msg)
-        sys.modules[name] = mod
-        return mod
+        def clr_import_module(name):  # Because IronPython's import_module appears to be broken
+            parts = name.split('.')
+            mod = None
+            try:
+                for p in parts:
+                    if mod is None:
+                        __import__(p)
+                        mod = sys.modules[p]
+                    else:
+                        mod = getattr(mod, p)
+            except Exception as e:
+                msg = 'Failed to import %s at part %s' % (name, p)
+                raise ImportError(msg)
+            sys.modules[name] = mod
+            return mod
 
-    def node_repr(node):
-        if isinstance(node, Token):
-            return node.Image
-        cn = type(node).__name__
-        return '<%s (%s, %s)-(%s, %s)>' % (cn, node.BeginLine,
-                                           node.BeginColumn, node.EndLine,
-                                           node.EndColumn)
+        def node_repr(node):
+            if isinstance(node, Token):
+                return node.Image
+            cn = type(node).__name__
+            return '<%s (%s, %s)-(%s, %s)>' % (cn, node.BeginLine,
+                                               node.BeginColumn, node.EndLine,
+                                               node.EndColumn)
 
-    def csharp_dump_node(stream, node, level=0):
-        indstr = '  ' * level
-        s = '%s%s\n' % (indstr, node_repr(node))
-        stream.Write(s)
-        if node.Children:
-            for child in node.Children:
-                csharp_dump_node(stream, child, level + 1)
+        def csharp_dump_node(stream, node, level=0):
+            indstr = '  ' * level
+            s = '%s%s\n' % (indstr, node_repr(node))
+            stream.Write(s)
+            if node.Children:
+                for child in node.Children:
+                    csharp_dump_node(stream, child, level + 1)
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        raise
 
 else:
     def python_dump_node(stream, node, level=0):
@@ -219,6 +225,7 @@ def main():
                             node = parser.root_node
                             python_dump_node(outf, node, 0)
                     except ParseException as e:
+                        print('Parse failed: %s', e)
                         logger.exception('Parse failed: %s', e)
                         if 'invalid.json' not in p:
                             raise
