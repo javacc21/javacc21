@@ -576,7 +576,6 @@ TypeParameterList :
    ">"
 ;
 
-
 NonArrayType#void : Type ;
 
 ArrayType#void : Type ;
@@ -1020,6 +1019,8 @@ EmbeddedStatement :
     |
     EmptyStatement
     |
+    IfStatement
+    |
     WhileStatement
     |
     DoStatement
@@ -1033,8 +1034,9 @@ EmbeddedStatement :
     TryStatement
 /*
 TODO:
-   expression_statement, selection_statement, for_statement,
-   jump_statement, lock_statement, using_statement, embedded_statement_unsafe
+   expression_statement, switch_statement, for_statement, break_statement,
+   continue_statement, goto_statement, return_statement, throw_statement
+   lock_statement, using_statement, embedded_statement_unsafe
 */       
 ;    
 
@@ -1043,6 +1045,8 @@ DeclarationStatement : FAIL "unimplemented";
 CheckedStatement : "checked" Block ;
 
 UncheckedStatement : "unchecked" Block ;
+
+IfStatement : "if" "(" Expression ")" EmbeddedStatement [ "else" EmbeddedStatement] ;
 
 DoStatement : "do" EmbeddedStatement "while" "(" Expression ")" ";" ;
 
