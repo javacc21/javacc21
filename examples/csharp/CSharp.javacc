@@ -616,12 +616,19 @@ Block :
   "}"
 ;
 
-#Expression#interface :  
-   AssignmentExpression 
-   {
-      return (Expression) CURRENT_NODE;
-   }
+Expression :
+   ConditionalExpression
+   |
+   LambdaExpression
+   |
+   QueryExpression
+   |
+   AssignmentExpression
 ;
+
+LambdaExpression : FAIL : "unimplemented" ;
+
+QueryExpression : FAIL : "unimplemented" ;
 
 AssignmentExpression :
    UnaryExpression
@@ -653,7 +660,74 @@ ShiftExpression :
       ("<<" | ">>")
       AdditiveExpression
    )*
-;   
+;
+
+RelationalExpression :
+   ShiftExpression
+   (
+      ("<"|">"|"<="|">=") ShiftExpression
+      |
+      ("is"|"as") Type
+   )*
+;
+
+EqualityExpression :
+   RelationalExpression
+   (
+      ("=="|"!=") 
+      RelationalExpression
+   )*
+;
+
+AndExpression :
+   EqualityExpression
+   (
+      "&"
+      EqualityExpression
+   )*
+;
+
+ExclusiveOrExpression :
+   AndExpression
+   (
+      "^"
+      ExclusiveOrExpression
+   )*
+;
+
+InclusiveOrExpression :
+   ExclusiveOrExpression 
+   (
+      "|"
+      ExclusiveOrExpression
+   )*
+;
+
+ConditionalAndExpression :
+   InclusiveOrExpression
+   (
+      "&&"
+      InclusiveOrExpression
+   )*
+;
+
+ConditionalOrExpression :
+    ConditionalAndExpression
+    (
+       "||"
+       ConditionalAndExpression
+    )*
+;
+
+NullCoalescingExpression :
+    ConditionalOrExpression
+    (
+       "??"
+       ConditionalOrExpression
+    )*
+;
+
+ConditionalExpression : NullCoalescingExpression "?" Expression ":" Expression ;
 
 AssignmentOperator #void :
   "=" 
