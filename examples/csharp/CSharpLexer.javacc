@@ -131,7 +131,7 @@ TOKEN #Operator :
 | < XORASSIGN: "^=" > 
 | < REMASSIGN: "%=" > 
 | < LEFT_SHIFT_ASSIGN: "<<=" > 
-|  < RIGHT_SHIFT: ">>" > 
+| < RIGHT_SHIFT: ">>" > 
 | < RIGHT_SHIFT_ASSIGN: ">>=" > 
 | < LAMBDA : "=>"> 
 ;

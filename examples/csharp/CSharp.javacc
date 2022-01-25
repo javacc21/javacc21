@@ -109,7 +109,8 @@ TypeArgumentList :
       Type
       ("," Type)* 
    ]
-   ">"
+   DEACTIVATE_TOKENS RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN 
+   (">")
 ;
 
 NamespaceDeclaration :
@@ -576,6 +577,10 @@ TypeParameterList :
 ;
 
 
+NonArrayType#void : Type ;
+
+ArrayType#void : Type ;
+
 Type :
     => "void" "*"
     |
@@ -587,7 +592,14 @@ Type :
         |
         Name ["?"]
       )
-      [ "[" (",")* "]" ]
+      [ 
+         SCAN 1 ~\NonArrayType =>
+         "[" (",")* "]" 
+      ]
+      [
+         SCAN 0 \ArrayType => 
+         ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
+      ]
       ["*"]
    )
 ;
@@ -618,6 +630,30 @@ AssignmentExpression :
       Expression
    ]
 ;
+
+MultiplicativeExpression : 
+   UnaryExpression 
+   (
+      ("*" | "/" | "%") 
+      UnaryExpression
+   )*
+;
+
+AdditiveExpression :
+   MultiplicativeExpression
+   (
+      ("+" | "-")
+      MultiplicativeExpression
+   )*
+;
+
+ShiftExpression :
+   AdditiveExpression
+   (
+      ("<<" | ">>")
+      AdditiveExpression
+   )*
+;   
 
 AssignmentOperator #void :
   "=" 
@@ -684,14 +720,23 @@ NullConditionalOperations :
 NullConditionalExpression : PrimaryExpression [NullConditionalOperations] ;
 
 PrimaryExpression :
+   => ArrayCreationExpression
+   |
    PrimaryNoArrayCreationExpression
-   | 
-   ArrayCreationExpression
 ;   
 
-ArrayCreationExpression : 
-    FAIL "unimplemented"
+ArrayCreationExpression :
+    "new"
+    (
+       RankSpecifier ArrayInitializer
+       |
+       NonArrayType "[" Expression ("," Expression)* "]" (RankSpecifier)* [ArrayInitializer]
+       |
+       ArrayType ArrayInitializer
+    )
 ;
+
+RankSpecifier : "[" (",")* "]" ;
 
 PrimaryNoArrayCreationExpression :
    (
@@ -738,9 +783,6 @@ PrimaryNoArrayCreationExpression :
       |
       "--"
    )*   
-/*
-| primary_no_array_creation_expression_unsafe
-*/
 ;
 
 BaseAccess :
