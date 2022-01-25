@@ -626,7 +626,20 @@ Expression :
    AssignmentExpression
 ;
 
-LambdaExpression : FAIL : "unimplemented" ;
+LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
+
+LambdaLHS :
+  (
+   =>ImplicitAnonymousFunctionSignature
+   |
+   ExplicitAnonymousFunctionSignature
+  )
+  "=>"
+;
+
+ImplicitAnonymousFunctionSignature :
+   "(" [<IDENTIFIER> ("," <IDENTIFIER>)*] ")"
+;
 
 QueryExpression : FAIL : "unimplemented" ;
 
@@ -925,14 +938,16 @@ AnonymousMethodExpression :
    "delegate"
    [
       "("
-      [
-        ExplicitAnonymousFunctionParameter 
-        ("," ExplicitAnonymousFunctionParameter)*
-      ]
+      [ExplicitAnonymousFunctionSignature]
       ")"
    ]
    Block
 ;
+
+ExplicitAnonymousFunctionSignature : 
+   ExplicitAnonymousFunctionParameter 
+   ("," ExplicitAnonymousFunctionParameter)*
+;  
 
 ExplicitAnonymousFunctionParameter :  ["ref"|"out"] Type <IDENTIFIER> ;
 
