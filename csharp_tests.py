@@ -98,7 +98,7 @@ def copy_files(srcdir, destdir, patterns):
             # print('%s -> %s' % (p, dp))
 
 def run_command(cmd, **kwargs):
-    print(' '.join(cmd))
+    # print(' '.join(cmd))
     return subprocess.run(cmd, **kwargs)
 
 def test_grammar(gdata, options):
