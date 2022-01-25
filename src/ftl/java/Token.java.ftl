@@ -328,7 +328,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
     public Token replaceType(TokenType type) {
-        Token result = newToken(getType(), getTokenSource(), getBeginOffset(), getEndOffset());
+        Token result = newToken(type, getTokenSource(), getBeginOffset(), getEndOffset());
 [#if !grammar.minimalToken]        
         result.prependedToken = this.prependedToken;
         result.appendedToken = this.appendedToken;
