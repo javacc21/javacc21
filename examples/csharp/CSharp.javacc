@@ -583,13 +583,19 @@ Type :
     |
     (
        (
-        "object"|"dynamic"|"string"|"decimal"|"sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char"|"float"|"double"|"bool"
+        PrimitiveType 
         |
         Name ["?"]
       )
       [ "[" (",")* "]" ]
       ["*"]
    )
+;
+
+PrimitiveType#void :
+   "object"|"dynamic"|"string"|"decimal"|"sbyte"
+   |"byte"|"short"|"ushort"|"int"|"uint"|"long"
+   |"ulong"|"char"|"float"|"double"|"bool"
 ;
 
 Block :
@@ -628,7 +634,7 @@ AssignmentOperator #void :
 ;
 
 UnaryExpression :
-   PrimaryExpression 
+   NullConditionalExpression 
    |
    UnaryExpressionPlusOrMinus
    |
@@ -643,8 +649,6 @@ UnaryExpression :
    PreDecrementExpression
    |
    UnaryExpressionUnsafe
-   //TODO
-//   | null_conditional_expression 
 ;
 
 CastExpression : "(" Type ")" UnaryExpression ;
@@ -659,40 +663,76 @@ PreDecrementExpression : "--" UnaryExpression ;
 
 UnaryExpressionPlusOrMinus : ("+" | "-") UnaryExpression ;
 
-UnaryExpressionNotPlusMinus : ("~" | "~") UnaryExpression ;
+UnaryExpressionNotPlusMinus : ("!" | "~") UnaryExpression ;
+
+NullConditionalOperations : 
+   "?" =>|+1
+   (
+      "." <IDENTIFIER> [TypeArgumentList]
+      |
+      "[" ArgumentList "]"
+   )
+   (
+      "." <IDENTIFIER> [TypeArgumentList]
+      |
+      "[" ArgumentList "]"
+      |
+      "(" [ArgumentList] ")"
+   )*
+;
+
+NullConditionalExpression : PrimaryExpression [NullConditionalOperations] ;
 
 PrimaryExpression :
-   LiteralExpression
-   |
-   "this"
-   |
-   BaseAccess
-   |
-   SimpleName
-   |
-   ParenthesizedExpression
-   |
-   TypeofExpression
-   |
-   DefaultValueExpression
-   |
-   NameofExpression
-   |
-   CheckedExpression
-   |
-   UncheckedExpression
-   |
-   ObjectCreationExpression
+   PrimaryNoArrayCreationExpression
+   | 
+   ArrayCreationExpression
+;   
+
+ArrayCreationExpression : 
+    FAIL "unimplemented"
+;
+
+PrimaryNoArrayCreationExpression :
+   (
+      LiteralExpression
+      |
+      "this"
+      |
+      BaseAccess
+      |
+      SimpleName
+      |
+      ParenthesizedExpression
+      |
+      TypeofExpression
+      |
+      DefaultValueExpression
+      |
+      NameofExpression
+      |
+      CheckedExpression
+      |
+      UncheckedExpression
+      |
+      ObjectCreationExpression
+      |
+      AnonymousMethodExpression
+   )
+   (
+      "(" [ArgumentList] ")"
+      |
+      "[" Expression ("," Expression)*  "]"
+      |
+      "." <IDENTIFIER> [TypeArgumentList]
+      |
+      "++"
+      |
+      "--"
+   )*   
 /*
 | interpolated_string
-| member_access
-| invocation_expression
-| element_access
-| post_increment_expression
-| post_decrement_expression
-| delegate_creation_expression
 | anonymous_object_creation_expression
-| anonymous_method_expression
 | primary_no_array_creation_expression_unsafe
 */
 ;
@@ -744,6 +784,21 @@ ObjectCreationExpression :
       (ObjectInitializer | CollectionInitializer)
    )
 ;
+
+AnonymousMethodExpression :
+   "delegate"
+   [
+      "("
+      [
+        ExplicitAnonymousFunctionParameter 
+        ("," ExplicitAnonymousFunctionParameter)*
+      ]
+      ")"
+   ]
+   Block
+;
+
+ExplicitAnonymousFunctionParameter :  ["ref"|"out"] Type <IDENTIFIER> ;
 
 ObjectInitializer :
   "{" 
