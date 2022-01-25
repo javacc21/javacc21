@@ -12,9 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Wait to resolve Windows issues
-        # os: [ubuntu-20.04, macos-latest, windows-latest]
-        os: [ubuntu-20.04, macos-latest]
+        os: [ubuntu-20.04, macos-latest, windows-latest]
         java-version: ['8', '11', '16', '17']
         dotnet-version: ['5.0.x']
 
@@ -29,6 +27,15 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
+    # This next step is needed because we use dotnet 3.1.x to invoke IronPython
+    # (for compatibility with the DLLs we build - .NET Framework doesn't support the
+    # language features they use, so on Windows we need to invoke IronPython using
+    # "dotnet /path/to/ipy.dll")
+    - name: Setup dotnet 3.1.x (Windows)
+      if: ${{ matrix.os == 'windows-latest' }}
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x'
     - name: Create test directories (POSIX)
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
@@ -63,8 +70,10 @@ jobs:
     - name: Setup IronPython 2.7.11 (Windows)
       if: ${{ matrix.os == 'windows-latest' }}
       run: |
-        choco install --no-progress mono
-        choco install --no-progress ironpython --version=2.7.11
+        $source = 'https://github.com/IronLanguages/ironpython2/releases/download/ipy-2.7.11/IronPython.2.7.11.zip'
+        $destination = "${env:USERPROFILE}/bin/IronPython.2.7.11.zip"
+        Invoke-WebRequest -Uri $source -OutFile $destination
+        Expand-Archive -Force $destination ${env:USERPROFILE}/bin/IronPython-2.7.11
     - name: Cache Jython (POSIX)
       if: ${{ (matrix.os != 'windows-latest') }}
       id: cache-jython-posix

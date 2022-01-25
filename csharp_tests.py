@@ -58,10 +58,14 @@ def check_jython(options):
     return 0
 
 def get_ipy_command(params):
-    if 'GITHUB_WORKFLOW' not in os.environ or sys.platform != 'darwin':
+    if 'GITHUB_WORKFLOW' not in os.environ:
         result = ['ipy']
     else:
-        result = ['mono', '/Library/Frameworks/IronPython.framework/Versions/2.7.11/bin/ipy.exe']
+        if sys.platform == 'darwin'
+            result = ['mono', '/Library/Frameworks/IronPython.framework/Versions/2.7.11/bin/ipy.exe']
+        else:
+            loc = os.path.expanduser('~/bin/IronPython-2.7.11/netcoreapp3.1')
+            return ['dotnet', os.path.join(loc, 'ipy.dll')]
     result.extend(params)
     return result
 
