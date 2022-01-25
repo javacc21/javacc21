@@ -61,7 +61,7 @@ def get_ipy_command(params):
     if 'GITHUB_WORKFLOW' not in os.environ:
         result = ['ipy']
     else:
-        if sys.platform == 'darwin'
+        if sys.platform == 'darwin':
             result = ['mono', '/Library/Frameworks/IronPython.framework/Versions/2.7.11/bin/ipy.exe']
         else:
             loc = os.path.expanduser('~/bin/IronPython-2.7.11/netcoreapp3.1')
