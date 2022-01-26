@@ -213,6 +213,9 @@ TOKEN #KeyWord :
    | < VOID : "void" >
    | < VOLATILE : "volatile" > 
    | < WHILE : "while" > 
+// Now contextual Keywords
+   | < GET : "get" >
+   | < SET : "set" >
 ;
 
 INCLUDE "CSharpIdentifierDef.javacc"

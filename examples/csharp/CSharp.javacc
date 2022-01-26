@@ -309,15 +309,17 @@ ConstantDeclaration :
    "const" 
    =>||
    Type 
-   Declarator ("," Declarator)*
+   ConstantDeclarator ("," ConstantDeclarator)*
 ;
+
+ConstantDeclarator : <IDENTIFIER> "=" Expression ;
 
 FieldDeclaration :
     (AttributeSection)*
     ("new" | "public" | "protected" | "internal" | "private" | "static" | "readonly" | "volatile" | "unsafe")*
     Type
     =>|+1
-    Declarator ("," Declarator)*
+    VariableDeclarator ("," VariableDeclarator)*
    ";"
 ;
 
@@ -357,7 +359,7 @@ EventDeclaration :
    =>||
    Type
    (
-      Declarator ("," Declarator)*
+      VariableDeclarator ("," VariableDeclarator)*
       |
       Name 
       "{" 
@@ -445,7 +447,7 @@ ArgumentList : Argument ("," Argument)* ;
 Argument :
    [=> <IDENTIFIER> ":"]
    (
-      => "out" Type <IDENTIFIER> // Introduced in C# 7.0
+      => "out" Type <IDENTIFIER> // since C# 7.0
       |
       ["ref" | "out"] Expression
    )
@@ -486,7 +488,7 @@ GetAccessorDeclaration :
       | "private" 
    ]
    "get" =>||
-   Block ";"
+   (Block | ";")
 ;
 
 SetAccessorDeclaration :
@@ -497,8 +499,7 @@ SetAccessorDeclaration :
       | "private" 
    ]
    "set" =>||
-   Block
-   ";"
+   (Block | ";")
 ;   
 
 VariableInitializer :
@@ -567,11 +568,7 @@ ParameterArray :
    <IDENTIFIER>
 ;
 
-Declarator :
-   <IDENTIFIER> 
-   "="
-   Expression
-;   
+VariableDeclarator : <IDENTIFIER> ["=" Expression] ;   
 
 TypeParameterList :
    "<"
@@ -775,7 +772,7 @@ UnaryExpression :
    NullConditionalExpression 
 ;
 
-CastExpression : "(" Type ")" UnaryExpression ;
+CastExpression : "(" Type ")" =>|| UnaryExpression ;
 
 AwaitExpression : "await" UnaryExpression ;
 
@@ -913,7 +910,7 @@ TypeofExpression :
 ;
 
 ObjectCreationExpression :
-   "new" =>|+1 [Type] // The Type is optional as of C# 9
+   "new" =>|+1 [Type] // The Type is optional since C# 9
    (
       "(" [ArgumentList] ")" [ObjectInitializer | CollectionInitializer]
       |
@@ -1085,8 +1082,8 @@ LocalVariableInitializer :
 LocalConstantDeclaration :
    "const"
    Type
-   Declarator
-   ("," Declarator)*
+   ConstantDeclarator
+   ("," ConstantDeclarator)*
 ;
 
 CheckedStatement : "checked" Block ;
