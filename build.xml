@@ -41,6 +41,7 @@
  	<delete dir="build"/>
 	<delete dir="src/java/com/javacc/parser"/>
 	<delete dir="src/java/com/javacc/preprocessor"/>
+  <delete dir="examples/csharp/org"/>
   <delete dir="examples/java/org"/>
   <delete dir="examples/freemarker/fel"/>
   <delete dir="examples/freemarker/ftl"/>
@@ -134,6 +135,9 @@
     <echo>Testing the Preprocessor</echo>
     <ant antfile="build.xml" dir="examples/preprocessor" target="clean"/>
     <ant antfile="build.xml" dir="examples/preprocessor" target="test"/>
+    <echo>Testing the CSharp parser standalone</echo>
+    <ant antfile="build.xml" dir="examples/csharp" target="clean"/>
+    <ant antfile="build.xml" dir="examples/csharp" target="test"/>
     <echo>Testing the Java parser standalone</echo>
     <ant antfile="build.xml" dir="examples/java" target="clean"/>
     <ant antfile="build.xml" dir="examples/java" target="test"/>
