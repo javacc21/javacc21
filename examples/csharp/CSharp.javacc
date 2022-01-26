@@ -146,7 +146,7 @@ TypeDeclaration :
 ;
 
 Modifiers#void : //TODO
-  ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe")*
+  ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe"|"override")*
 ;
 
 ClassDeclaration :
@@ -268,9 +268,9 @@ TypeParameterConstraintsClause :
 ClassMemberDeclaration :
    ConstantDeclaration
    |
-   FieldDeclaration 
-   | 
    MethodDeclaration 
+   | 
+   FieldDeclaration 
    | 
    PropertyDeclaration 
    | 
@@ -314,8 +314,9 @@ FieldDeclaration :
     (AttributeSection)*
     ("new" | "public" | "protected" | "internal" | "private" | "static" | "readonly" | "volatile" | "unsafe")*
     Type
-    =>||
+    =>|+1
     Declarator ("," Declarator)*
+   ";"
 ;
 
 PropertyDeclaration :
@@ -327,6 +328,7 @@ PropertyDeclaration :
    )*
    Type
    <IDENTIFIER>
+   =>|+1
    PropertyBody
 ;
 
@@ -439,7 +441,7 @@ StaticConstructorDeclaration :
 ArgumentList : Argument ("," Argument)* ;
 
 Argument :
-   [<IDENTIFIER> ":"]
+   [=> <IDENTIFIER> ":"]
    (
       ["ref" | "out"]
       Expression 
@@ -513,11 +515,13 @@ MethodDeclaration :
    Modifiers
    ["partial"]
    ReturnType
-   [Type "."] <IDENTIFIER>
+   [=>Type "."] <IDENTIFIER>
    [TypeParameterList]
-   "(" [FormalParameters] ")"
+   "(" 
+   =>||
+    [FormalParameters] 
+   ")"
    (TypeParameterConstraintsClause)*
-   (Type | "void")
    Block
 ;
 
@@ -538,7 +542,10 @@ FormalParameters :
    ParameterArray
    |
    FixedParameter 
-   (SCAN ~("," ParameterArray) => "," FixedParameter)* 
+   (
+      SCAN {getToken(1).getType() == COMMA} ~("," ParameterArray)  
+      => "," FixedParameter
+   )* 
    ["," ParameterArray]
 ;   
 
@@ -555,10 +562,6 @@ ParameterArray :
    "params" =>|| 
    ArrayType
    <IDENTIFIER>
-;
-
-ArrayType :
-   Type "[" (",")* "]"
 ;
 
 Declarator :
@@ -582,8 +585,6 @@ ArrayType#void : Type ;
 
 Type :
     => "void" "*"
-    |
-    "void" // REVISIT, lone void is only valid in a return type
     |
     (
        (
@@ -616,11 +617,11 @@ Block :
 ;
 
 Expression :
+   AssignmentExpression
+   |
    ConditionalExpression
    |
    LambdaExpression
-   |
-   AssignmentExpression
    |
    QueryExpression
 ;
@@ -643,11 +644,7 @@ ImplicitAnonymousFunctionSignature :
 QueryExpression : "from" FAIL : "unimplemented" ;
 
 AssignmentExpression :
-   UnaryExpression
-   [
-      AssignmentOperator
-      Expression
-   ]
+   UnaryExpression AssignmentOperator =>|| Expression
 ;
 
 MultiplicativeExpression : 
@@ -739,7 +736,7 @@ NullCoalescingExpression :
     )*
 ;
 
-ConditionalExpression : NullCoalescingExpression "?" Expression ":" Expression ;
+ConditionalExpression : NullCoalescingExpression ["?" Expression ":" Expression] ;
 
 AssignmentOperator #void :
   "=" 
@@ -756,8 +753,6 @@ AssignmentOperator #void :
 ;
 
 UnaryExpression :
-   NullConditionalExpression 
-   |
    UnaryExpressionPlusOrMinus
    |
    UnaryExpressionNotPlusMinus
@@ -771,6 +766,8 @@ UnaryExpression :
    PreDecrementExpression
    |
    UnaryExpressionUnsafe
+   |
+   NullConditionalExpression 
 ;
 
 CastExpression : "(" Type ")" UnaryExpression ;
@@ -892,7 +889,7 @@ PredefinedType#void :
     | "long" | "object" | "sbyte" | "short" | "string" | "uint" | "ulong" | "ushort"
 ;
 
-DefaultValueExpression : "default" "(" Type ")" ;
+DefaultValueExpression : "default" "(" =>|| Type ")" ;
 
 SimpleName : <IDENTIFIER> [TypeArgumentList] ;
 
@@ -911,7 +908,7 @@ TypeofExpression :
 ;
 
 ObjectCreationExpression :
-   "new" =>|+1 Type
+   "new" =>|+1 [Type] // The Type is optional as of C# 9
    (
       "(" [ArgumentList] ")" [ObjectInitializer | CollectionInitializer]
       |
@@ -1005,7 +1002,7 @@ Label : SCAN 2 <IDENTIFIER> ":" ;
 Statement :
    (Label)*
     (
-       SCAN "var" | Type | "const" =>
+       SCAN ("const" | "var" | Type) <IDENTIFIER> =>
        DeclarationStatement
        |
        EmbeddedStatement
@@ -1063,7 +1060,7 @@ DeclarationStatement :
 ;
 
 LocalVariableDeclaration :
-   ("var" | Type)
+   ("var" | Type) =>|+1
    LocalVariableDeclarator
    ("," LocalVariableDeclarator)*
 ;
@@ -1182,9 +1179,25 @@ SwitchStatement : "switch" "(" Expression ")" SwitchBlock ;
 
 SwitchBlock : "{" (SwitchSection)* "}" ; 
 
-SwitchLabel : "case" Expression ":" ;   
+SwitchLabel : 
+   "case" Expression ":" 
+   |
+   "default" ":"
+;   
 
-SwitchSection : (SwitchLabel)+ (Statement)+ ;  
+SwitchSection : 
+   (SwitchLabel)+ 
+   (
+      SCAN 0 {
+         // A bit ugly. Really need to make semantic lookahead a bit more powerful 
+         // in terms of negative conditions! 
+                getToken(1).getType() != RBRACE
+                && getToken(1).getType() != CASE 
+                && !(getToken(1).getType() == DEFAULT && getToken(2).getType() == COLON)
+             } 
+      => Statement
+   )+ 
+;  
 
 ForStatement : 
    "for" 
@@ -1197,4 +1210,3 @@ ForStatement :
    ")"
    EmbeddedStatement
 ;
-   
