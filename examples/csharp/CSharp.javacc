@@ -49,8 +49,10 @@ GlobalAttributeSection :
 
 AttributeSection :
    "["
-   ("field"|"event"|"method"|"param"|"property"|"return"|"type")
-   ":"
+   [
+      ("field"|"event"|"method"|"param"|"property"|"return"|"type")
+      ":"
+   ]
    AttributeList
    [","]
    "]"
@@ -443,8 +445,9 @@ ArgumentList : Argument ("," Argument)* ;
 Argument :
    [=> <IDENTIFIER> ":"]
    (
-      ["ref" | "out"]
-      Expression 
+      => "out" Type <IDENTIFIER> // Introduced in C# 7.0
+      |
+      ["ref" | "out"] Expression
    )
 ;
 
@@ -536,7 +539,7 @@ InterfaceMethodDeclaration :
    ";"
 ;
 
-ReturnType : Type | "void" ;
+ReturnType : "void" | Type ;
 
 FormalParameters :
    ParameterArray
@@ -676,7 +679,9 @@ RelationalExpression :
    (
       ("<"|">"|"<="|">=") ShiftExpression
       |
-      ("is"|"as") Type
+      "is" Type [<IDENTIFIER>]
+      |
+      "as" Type
    )*
 ;
 
@@ -1050,6 +1055,8 @@ EmbeddedStatement :
     |
     ForStatement
     |
+    ForeachStatement
+    |
     ExpressionStatement
 ;    
 
@@ -1108,7 +1115,7 @@ DoStatement : "do" EmbeddedStatement "while" "(" Expression ")" ";" ;
 
 WhileStatement : "while" "(" Expression ")" EmbeddedStatement ;
 
-ForEachStatement : "foreach" "(" ("var" | Type) <IDENTIFIER> "in" Expression ")" EmbeddedStatement ;
+ForeachStatement : "foreach" "(" ("var" | Type) <IDENTIFIER> "in" Expression ")" EmbeddedStatement ;
 
 TryStatement : 
    "try" Block
