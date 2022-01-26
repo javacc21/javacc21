@@ -1,0 +1,44 @@
+<project name="CSharp Parser" default="compile">
+
+<target name="clean">
+   <delete dir="org"/>
+   <delete file="CSParse.class"/>
+</target>
+
+<target name="init">
+	<uptodate property="csparser.uptodate" srcfile="CSharp.javacc" targetfile="org/parsers/csharp/CSharpParser.java"
+/>
+</target>
+
+<target name="parser-gen" depends="init" unless="csparser.uptodate">
+  <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
+    <assertions><enable/></assertions>
+     <arg value="-q"/>
+    <arg value="${basedir}/CSharp.javacc"/>
+  </java>
+</target>
+ 
+ 
+<target name="compile" depends="init, parser-gen">
+     <javac srcdir="."  failonerror="true" source="1.8" target="1.8"
+      excludes="testfiles/**"
+      classpath="." debug="on" optimize="off" includeantruntime="no" fork="true"/>
+</target>
+
+<target name="test" depends="compile">
+     <java fork="true" failonerror="true" classname="CSParse">
+         <assertions><enable/></assertions>
+         <arg value="testfiles"/>
+     </java>
+     <echo>
+        -------------------
+        Okay, that seems okay. Now let's dump the parse tree for a single source file
+        -------------------
+     </echo>
+     <java fork="true" failonerror="true" classname="CSParse">
+	       <assertions><enable/></assertions>
+         <arg value="testfiles/CSharpAddAccessibilityModifiersDiagnosticAnalyzer.cs"/>
+     </java>
+</target>
+
+</project>
