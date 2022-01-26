@@ -1032,19 +1032,78 @@ EmbeddedStatement :
     UncheckedStatement
     |
     TryStatement
-/*
-TODO:
-   expression_statement, switch_statement, for_statement, break_statement,
-   continue_statement, goto_statement, return_statement, throw_statement
-   lock_statement, using_statement, embedded_statement_unsafe
-*/       
+    |
+    BreakStatement
+    |
+    ContinueStatement
+    |
+    GotoStatement
+    |
+    ReturnStatement
+    |
+    ThrowStatement
+    |
+    UsingStatement
+    |
+    LockStatement
+    |
+    FixedStatement
+    |
+    SwitchStatement
+    |
+    ForStatement
+    |
+    ExpressionStatement
 ;    
 
-DeclarationStatement : FAIL "unimplemented";
+DeclarationStatement : 
+   LocalVariableDeclaration ";"
+   |
+   LocalConstantDeclaration ";"
+;
+
+LocalVariableDeclaration :
+   ("var" | Type)
+   LocalVariableDeclarator
+   ("," LocalVariableDeclarator)*
+;
+
+LocalVariableDeclarator : <IDENTIFIER> ["=" LocalVariableInitializer] ;
+
+LocalVariableInitializer :  
+   Expression 
+   | 
+   ArrayInitializer 
+   | 
+   "stackalloc" Type "[" Expression "]"
+;
+
+LocalConstantDeclaration :
+   "const"
+   Type
+   Declarator
+   ("," Declarator)*
+;
 
 CheckedStatement : "checked" Block ;
 
 UncheckedStatement : "unchecked" Block ;
+
+BreakStatement : "break" ";" ;
+
+ContinueStatement : "continue" ";" ;
+
+GotoStatement : 
+   "goto"
+   (
+      <IDENTIFIER>
+      |
+      "default"
+      |
+      "case" Expression
+   )
+   ";"
+;   
 
 IfStatement : "if" "(" Expression ")" EmbeddedStatement [ "else" EmbeddedStatement] ;
 
@@ -1063,7 +1122,13 @@ TryStatement :
    )
 ;
 
+ReturnStatement : "return" [Expression] ";" ;
+
+ThrowStatement : "throw" [Expression] ";" ;
+
 FinallyClause : "finally" Block ;
+
+UnsafeStatement : "unsafe" Block ; 
 
 CatchClause : 
    "catch" 
@@ -1081,3 +1146,55 @@ YieldStatement :
    )
    ";"
 ;   
+
+UsingStatement :
+   "using"
+   "("
+   (LocalVariableDeclaration | Expression)
+   ")"
+   EmbeddedStatement
+;
+
+LockStatement : "lock" "(" Expression ")" EmbeddedStatement ;
+
+FixedStatement :
+   "fixed"
+   "("
+   FixedPointerDeclarator ("," FixedPointerDeclarator)*
+   ")"
+   EmbeddedStatement
+;    
+
+FixedPointerDeclarator : 
+   <IDENTIFIER> 
+   "=" 
+   ["&"]
+   Expression
+;
+
+StatementExpression :
+   Expression // TODO, only certain expressions can be here!
+;
+
+ExpressionStatement : StatementExpression ";" ;
+
+SwitchStatement : "switch" "(" Expression ")" SwitchBlock ; 
+
+SwitchBlock : "{" (SwitchSection)* "}" ; 
+
+SwitchLabel : "case" Expression ":" ;   
+
+SwitchSection : (SwitchLabel)+ (Statement)+ ;  
+
+ForStatement : 
+   "for" 
+   "("
+   [LocalVariableDeclaration | StatementExpression ("," StatementExpression)*]
+   ";"
+   [Expression]
+   ";"
+   (StatementExpression)*
+   ")"
+   EmbeddedStatement
+;
+   
