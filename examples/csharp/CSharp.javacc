@@ -59,7 +59,7 @@ AttributeSection :
 ;
 
 AttributeList :
-     Attribute ("," Attribute)*
+     Attribute ("," =>|+1 Attribute)*
 ;
 
 Attribute :
@@ -239,7 +239,7 @@ EnumBody#void :
    "{"
    [
       EnumMemberDeclaration
-      ("," EnumMemberDeclaration)*
+      ("," =>|+1 EnumMemberDeclaration)*
       [","]
    ]
    "}"
