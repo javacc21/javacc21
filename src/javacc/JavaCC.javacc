@@ -2040,7 +2040,10 @@ import java.util.*;
         boolean negated = false;
         for (Token t : childrenOfType(Token.class)) {
             String img = t.getImage();
-            if (img.charAt(0) == '\\' || img.charAt(0)=='/') continue;
+            if (img.charAt(0) == '\\' || img.charAt(0)=='/') {
+                negated = false;
+                continue;
+            } 
             if (img.equals("~")) {
                 negated = true;
                 continue;
