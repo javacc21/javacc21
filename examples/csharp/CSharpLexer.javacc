@@ -40,7 +40,7 @@ MORE :
 ;
 
 TOKEN #Literal :
-  < INTEGER_LITERAL: (<DECIMAL_LITERAL> | <HEX_LITERAL>) <INTEGER_TYPE_SUFFIX>> #IntegerLiteral
+  < INTEGER_LITERAL: (<DECIMAL_LITERAL> | <HEX_LITERAL>) (<INTEGER_TYPE_SUFFIX>)?> #IntegerLiteral
   |
   < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])?>
   |

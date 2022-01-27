@@ -310,6 +310,7 @@ ConstantDeclaration :
    =>||
    Type 
    ConstantDeclarator ("," ConstantDeclarator)*
+   ";"
 ;
 
 ConstantDeclarator : <IDENTIFIER> "=" Expression ;
@@ -587,21 +588,19 @@ Type :
     => "void" "*"
     |
     (
-       (
-        PrimitiveType 
-        |
-        Name ["?"]
-      )
-      [ 
-         SCAN 1 ~\NonArrayType =>
-         "[" (",")* "]" 
-      ]
-      [
-         SCAN 0 \ArrayType => 
-         ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
-      ]
-      ["*"]
+      PrimitiveType 
+      |
+      Name ["?"]
    )
+   ( 
+      SCAN 1 ~\NonArrayType =>
+      "[" (",")* "]" 
+   )*
+   [
+      SCAN 0 \ArrayType => 
+      ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
+   ]
+   ["*"]
 ;
 
 PrimitiveType#void :
@@ -950,10 +949,10 @@ ExplicitAnonymousFunctionSignature :
 ExplicitAnonymousFunctionParameter :  ["ref"|"out"] Type <IDENTIFIER> ;
 
 ObjectInitializer :
+  SCAN "{" (<IDENTIFIER> | "[" ArgumentList "]") "="
+  =>
   "{" 
-    [
-       MemberInitializer ("," MemberInitializer)* [","]
-    ]
+   MemberInitializer ("," MemberInitializer)* [","]
   "}"
 ;
 
@@ -966,15 +965,15 @@ MemberInitializer :
 CollectionInitializer : 
    "{" 
        [
-          ElementInitializer ("," ElementInitializer)* [","]
+          ElementInitializer ("," =>|+1 ElementInitializer)* [","]
        ]
    "}"
 ;
 
 ElementInitializer :
-    Expression // non-assignment, deal with later
-    |
     "{" Expression ("," Expression)* "}"
+    |
+    Expression // non-assignment, deal with later
 ;
 
 CheckedExpression : "checked" "(" Expression ")" ;
