@@ -9,8 +9,8 @@
 	<uptodate property="csparser.uptodate" srcfile="CSharp.javacc" targetfile="org/parsers/csharp/CSharpParser.java"
   />
   <uptodate property="preprocessor.uptodate"
-    targetfile="../preprocessor/PreprocessorParser.java"
-    srcfile="../preprocessor/preprocessor/Preprocessor.javacc"
+    targetfile="org/parsers/csharp/preprocessor/PreprocessorParser.java"
+    srcfile="../preprocessor/Preprocessor.javacc"
   />
 </target>
 

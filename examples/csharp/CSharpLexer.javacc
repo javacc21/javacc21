@@ -217,6 +217,7 @@ TOKEN #KeyWord :
    | < ASSEMBLY : "assembly">
    | < GET : "get" >
    | < MODULE : "module">
+   | < PARTIAL : "partial">
    | < SET : "set" >
    | < WHERE : "where" >
 ;

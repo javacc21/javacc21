@@ -4,7 +4,7 @@ NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ASSEMBLY,GET,MODULE,SET,WHERE;
+DEACTIVATE_TOKENS=ASSEMBLY,GET,MODULE,PARTIAL,SET,WHERE;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -167,6 +167,8 @@ NamespaceBody :
 ;
 
 TypeDeclaration :
+  SCAN 0 {getToken(1).getType() != RBRACE && getToken(1).getType() != EOF}# =>
+  (
    ClassDeclaration
    |
    StructDeclaration
@@ -176,6 +178,7 @@ TypeDeclaration :
    EnumDeclaration
    |
    DelegateDeclaration
+  )
 ;
 
 Modifiers#void : //TODO
@@ -185,7 +188,7 @@ Modifiers#void : //TODO
 ClassDeclaration :
   (AttributeSection)*
   Modifiers
-  ["partial"]
+  [SCAN {getToken(1).getImage().equals("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
   "class"
   =>||
    <IDENTIFIER>
@@ -201,7 +204,7 @@ ClassDeclaration :
 StructDeclaration :
    (AttributeSection)*
    Modifiers
-   ["partial"]
+  [SCAN {getToken(1).getImage().equals("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
    "struct" 
    =>||
    <IDENTIFIER>
@@ -214,7 +217,7 @@ StructDeclaration :
 InterfaceDeclaration :
    (AttributeSection)*
    Modifiers
-   ["partial"]
+   [SCAN {getToken(1).getImage().equals("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
    "interface"
    =>||
    <IDENTIFIER>
@@ -559,7 +562,7 @@ ArrayInitializer :
 MethodDeclaration :
    (AttributeSection)*
    Modifiers
-   ["partial"]
+   [SCAN {getToken(1).getImage().equals("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
    ReturnType
    MemberName
    [TypeParameterList]
