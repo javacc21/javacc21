@@ -552,7 +552,7 @@ VariableInitializer :
 
 ArrayInitializer :
    "{"
-      VariableInitializer [("," VariableInitializer)+ [","]]
+      VariableInitializer (SCAN 2 "," VariableInitializer)* [","]
    "}"
 ;
 

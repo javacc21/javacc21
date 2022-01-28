@@ -1966,15 +1966,6 @@ ScanAhead #Lookahead :
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
-/*
-[
-   <_UPTO> 
-   ExpansionChoice 
-   {
-       upToExpansion = (Expansion) peekNode();
-       CURRENT_NODE.setUpToExpansion(upToExpansion);
-   }
-]*/
 [SCAN LookBehind {lb = peekNode();}]
 [
     SCAN {!getHasExplicitNumericalLookahead} => 
