@@ -4,7 +4,7 @@ NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ASSEMBLY,GET,MODULE,PARTIAL,SET,WHERE;
+DEACTIVATE_TOKENS=ASSEMBLY,GET,MODULE,PARTIAL,SET,VAR,WHERE;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -399,7 +399,7 @@ EventDeclaration :
    =>||
    Type
    (
-      VariableDeclarator ("," VariableDeclarator)*
+      VariableDeclarator =>|+1 ("," VariableDeclarator)* ";"
       |
       Name 
       "{" 
@@ -637,6 +637,8 @@ NonArrayType#void : Type ;
 
 ArrayType#void : Type ;
 
+NonNullableType : Type;
+
 Type :
     => "void" "*"
     |
@@ -645,7 +647,10 @@ Type :
       |
       Name
    )
-   ["?"]
+   [
+      SCAN ~\NonNullableType
+      => "?"
+   ]
    ( 
       SCAN 1 ~\NonArrayType =>
       "[" (",")* "]" 
@@ -731,7 +736,7 @@ RelationalExpression :
    (
       ("<"|">"|"<="|">=") ShiftExpression
       |
-      "is" Type [<IDENTIFIER>]
+      "is" NonNullableType [<IDENTIFIER>]
       |
       "as" Type
    )*
@@ -1137,7 +1142,12 @@ DeclarationStatement :
 ;
 
 LocalVariableDeclaration :
-   ("var" | Type) =>|+1
+   (
+      ACTIVATE_TOKENS VAR ("var") 
+      | 
+      Type
+   ) 
+   =>|+1
    LocalVariableDeclarator
    ("," LocalVariableDeclarator)*
 ;

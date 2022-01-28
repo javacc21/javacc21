@@ -159,7 +159,7 @@ TOKEN #KeyWord :
    | < DOUBLE : "double" > 
    | < ELSE : "else" > 
    | < ENUM : "enum" > 
-   | < EVENT : "equals" > 
+   | < EVENT : "event" > 
    | < EXPLICIT : "explicit" > 
    | < EXTERN : "extern" > 
    | < FINALLY : "finally" > 
@@ -219,6 +219,7 @@ TOKEN #KeyWord :
    | < MODULE : "module">
    | < PARTIAL : "partial">
    | < SET : "set" >
+   | < VAR : "var" > 
    | < WHERE : "where" >
 ;
 
