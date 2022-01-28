@@ -10,10 +10,15 @@ DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
 TREE_BUILDING_ENABLED=false;
 ENSURE_FINAL_EOL;
 MINIMAL_TOKEN;
+// We shouldn't convert spaces or newlines
+// because usually we are running over input 
+// that is already converted anyway
+TABS_TO_SPACES=0;
+PRESERVE_LINE_ENDINGS=true;
 #if localtest
-PARSER_PACKAGE="org.parsers.preprocessor";
+PARSER_PACKAGE=org.parsers.preprocessor;
 #else
-PARSER_PACKAGE="com.javacc.preprocessor";
+PARSER_PACKAGE=com.javacc.preprocessor;
 #endif
 
 /*

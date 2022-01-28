@@ -262,6 +262,7 @@ public class Grammar extends BaseNode {
             put("PYTHON_IDENTIFIER_DEF", "/include/python/PythonIdentifierDef.javacc");
             put("PYTHON_LEXER", "/include/python/PythonLexer.javacc");
             put("PYTHON", "/include/python/Python.javacc");
+            put("PREPROCESSOR", "/include/preprocessor/Preprocessor.javacc");
         }
     };
 
@@ -1085,6 +1086,11 @@ public class Grammar extends BaseNode {
         return b== null ? false : b;
     }
 
+    public boolean getUsePreprocessor() {
+        Boolean b = (Boolean) settings.get("USE_PREPROCESSOR");
+        return b == null ? false : b;
+    }
+
     public boolean getPreserveLineEndings() {
         Boolean b = (Boolean) settings.get("PRESERVE_LINE_ENDINGS");
         return b== null ? false : b;
@@ -1177,7 +1183,7 @@ public class Grammar extends BaseNode {
             }
             if (!isInInclude() && key.equals("JDK_TARGET") && jdkTarget ==0){
                 int jdkTarget = (Integer) value;
-                if (jdkTarget >=8 && jdkTarget <= 17) {
+                if (jdkTarget >=8 && jdkTarget <= 18) {
                     this.jdkTarget = (Integer) value; 
                 }
                 else {
@@ -1187,7 +1193,7 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,CSHARP_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,CPP_CONTINUATION_LINES,";
+    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,CSHARP_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,CPP_CONTINUATION_LINES,USE_PREPROCESSOR,";
     private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
     private String integerSettings = ",TABS_TO_SPACES,JDK_TARGET,";
 
