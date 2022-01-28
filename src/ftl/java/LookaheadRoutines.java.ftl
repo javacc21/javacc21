@@ -245,6 +245,7 @@
 [#macro BuildLookBehindRoutine lookBehind]
     private final boolean ${lookBehind.routineName}() {
        ListIterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
+       NonTerminalCall ntc = null;
        [#list lookBehind.path as element]
           [#var elementNegated = (element[0] == "~")]
           [#if elementNegated][#set element = element?substring(1)][/#if]
@@ -265,7 +266,7 @@
                  [#var nextElementNegated = (nextElement[0]=="~")]
                  [#if nextElementNegated][#set nextElement=nextElement?substring(1)][/#if]
                  while (stackIterator.hasNext()) {
-                    NonTerminalCall ntc = stackIterator.next();
+                    ntc = stackIterator.next();
                     [#var equalityOp = nextElementNegated?string("!=", "==")]
                     if (ntc.productionName ${equalityOp} "${nextElement}") {
                        stackIterator.previous();
@@ -276,7 +277,7 @@
              [/#if]
           [#else]
              if (!stackIterator.hasNext()) return lastLookaheadSucceeded = false;
-             NonTerminalCall ntc = stackIterator.next();
+             ntc = stackIterator.next();
              [#var equalityOp = elementNegated?string("==", "!=")]
                if (ntc.productionName ${equalityOp} "${element}") return lastLookaheadSucceeded = false;
           [/#if]

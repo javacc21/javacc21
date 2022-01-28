@@ -116,7 +116,19 @@ Name :
    => QualifiedAliasMember
    |
    <IDENTIFIER>[TypeArgumentList]
-   ("." <IDENTIFIER> [TypeArgumentList])*
+   (
+     SCAN 0
+          // TODO: investigate why I can't use a negative syntactic lookahed here 
+          {getToken(1).getType() == DOT &&
+           ((!(getToken(2).getType() == IDENTIFIER && (getToken(3).getType()==LPAREN) || getToken(3).getType() == LBRACE)) 
+             || !isInProduction("MemberName"))
+          }# 
+      => "." <IDENTIFIER> [TypeArgumentList]
+   )*
+;
+
+MemberName :
+   [=>Type "."] <IDENTIFIER>
 ;
 
 QualifiedAliasMember :
@@ -207,7 +219,7 @@ InterfaceDeclaration :
    =>||
    <IDENTIFIER>
    [TypeParameterList]
-   [Name ("," Name)*]
+   [":" Name ("," Name)*]
    (TypeParameterConstraintsClause)*
    "{" 
    (InterfaceMemberDeclaration)* 
@@ -216,9 +228,9 @@ InterfaceDeclaration :
 ;
 
 InterfaceMemberDeclaration :
-   InterfaceMethodDeclaration
-   |
    InterfacePropertyDeclaration
+   |
+   InterfaceMethodDeclaration
    |
    InterfaceEventDeclaration
    |
@@ -351,7 +363,7 @@ PropertyDeclaration :
       |"override"|"abstract"|"extern" | "unsafe"
    )*
    Type
-   <IDENTIFIER>
+   MemberName
    =>|+1
    PropertyBody
 ;
@@ -361,13 +373,16 @@ InterfacePropertyDeclaration :
    ["new"]
    Type
    <IDENTIFIER>
-   "{" InterfaceAccessors "}"
+   "{" 
+   =>||
+   InterfaceAccessors 
+   "}"
 ;
 
 InterfaceAccessors :
-    (AttributeSection)* ACTIVATE_TOKENS GET ("get") =>|| [(AttributeSection)* ACTIVATE_TOKENS SET ("set")]
+    (AttributeSection)* ACTIVATE_TOKENS GET ("get" ";") =>|| [(AttributeSection)* ACTIVATE_TOKENS SET ("set" ";")]
     |
-    (AttributeSection)* ACTIVATE_TOKENS SET ("set") =>|| [(AttributeSection)* ACTIVATE_TOKENS GET ("get")]
+    (AttributeSection)* ACTIVATE_TOKENS SET ("set" ";") =>|| [(AttributeSection)* ACTIVATE_TOKENS GET ("get" ";")]
     | 
     FAIL "Expecting getter or setter"
 ;
@@ -502,7 +517,12 @@ PropertyBody :
   "{" AccessorDeclarations "}"
    ["=" VariableInitializer] 
   |
-  "=>" Expression ";"
+  "=>" 
+  (
+     ThrowStatement // This is not in the spec I was working from!
+     |
+     Expression ";"
+  )
 ;
 
 GetAccessorDeclaration :
@@ -544,7 +564,7 @@ MethodDeclaration :
    Modifiers
    ["partial"]
    ReturnType
-   [=>Type "."] <IDENTIFIER>
+   MemberName
    [TypeParameterList]
    "(" 
    =>||
@@ -559,8 +579,10 @@ InterfaceMethodDeclaration :
    ["new"]
    ReturnType
    <IDENTIFIER>
-   TypeParameterList
-   "(" [FormalParameters] ")"
+   [TypeParameterList]
+   "(" =>||
+   [FormalParameters] 
+   ")"
    (TypeParameterConstraintsClause)*
    ";"
 ;
@@ -614,8 +636,9 @@ Type :
     (
       PrimitiveType 
       |
-      Name ["?"]
+      Name
    )
+   ["?"]
    ( 
       SCAN 1 ~\NonArrayType =>
       "[" (",")* "]" 
@@ -628,9 +651,9 @@ Type :
 ;
 
 PrimitiveType#void :
-   "object"|"dynamic"|"string"|"decimal"|"sbyte"
-   |"byte"|"short"|"ushort"|"int"|"uint"|"long"
-   |"ulong"|"char"|"float"|"double"|"bool"
+   "bool" | "byte" | "char" | "decimal" | "double" | "float"
+   | "int" | "long" | "object" | "sbyte" | "short" | "string"
+   |"ushort"|"uint" |"ulong"
 ;
 
 Block :
@@ -856,6 +879,10 @@ PrimaryNoArrayCreationExpression :
       |
       BaseAccess
       |
+      PrimitiveTypeAccess
+      |
+      QualifiedAliasMemberAccess
+      |
       SimpleName
       |
       ParenthesizedExpression
@@ -894,6 +921,20 @@ PrimaryNoArrayCreationExpression :
       "--"
    )*   
 ;
+
+PrimitiveTypeAccess :
+   ("dynamic" | PrimitiveType)
+   "."
+   <IDENTIFIER>
+   [TypeArgumentList]
+;   
+
+QualifiedAliasMemberAccess :
+   <IDENTIFIER> "::" =>|| 
+   <IDENTIFIER> [TypeArgumentList]
+;
+   
+
 
 BaseAccess :
    "base"
