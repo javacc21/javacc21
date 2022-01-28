@@ -49,7 +49,7 @@ public class CSParse {
     }
       
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-       CSharpParser parser = new CSharpParser(file.toPath());
+       CSharpParser parser = new CSharpParser(file.toPath(), true);
        Node root=parser.CompilationUnit();
        if (dumpTree) {
            root.dump("");

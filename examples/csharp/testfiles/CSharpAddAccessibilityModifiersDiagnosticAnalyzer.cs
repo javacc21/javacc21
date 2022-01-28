@@ -49,7 +49,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddAccessibilityModifiers
                 ProcessMembers(context, option, typeDeclaration.Members);
             }
 
-//#if false
+#if false
             // Add this once we have the language version for C# that supports accessibility
             // modifiers on interface methods.
             if (option.Value == AccessibilityModifiersRequired.Always &&
@@ -58,7 +58,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddAccessibilityModifiers
                 // Only recurse into an interface if the user wants accessibility modifiers on 
                 ProcessTypeDeclaration(context, generator, option, typeDeclaration);
             }
-//#endif
+#endif
 
             if (!CSharpAddAccessibilityModifiers.Instance.ShouldUpdateAccessibilityModifier(CSharpAccessibilityFacts.Instance, member, option.Value, out var name))
                 return;

@@ -7,19 +7,30 @@
 
 <target name="init">
 	<uptodate property="csparser.uptodate" srcfile="CSharp.javacc" targetfile="org/parsers/csharp/CSharpParser.java"
-/>
+  />
+  <uptodate property="preprocessor.uptodate"
+    targetfile="../preprocessor/PreprocessorParser.java"
+    srcfile="../preprocessor/preprocessor/Preprocessor.javacc"
+  />
 </target>
 
-<target name="parser-gen" depends="init" unless="csparser.uptodate">
+<target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
+	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
+  <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
+     <assertions><enable/></assertions>
+ 	   <arg line="-n -d ../csharp -p csharp ../preprocessor/Preprocessor.javacc"/>
+  </java>
+</target>  
+ 
+<target name="parser-gen" depends="init,preprocessor-gen" unless="csparser.uptodate">
   <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
     <assertions><enable/></assertions>
-     <arg value="-q"/>
+     <arg value="-n"/>
     <arg value="${basedir}/CSharp.javacc"/>
   </java>
 </target>
  
- 
-<target name="compile" depends="init, parser-gen">
+<target name="compile" depends="init,parser-gen">
      <javac srcdir="."  failonerror="true" source="1.8" target="1.8"
       excludes="testfiles/**"
       classpath="." debug="on" optimize="off" includeantruntime="no" fork="true"/>

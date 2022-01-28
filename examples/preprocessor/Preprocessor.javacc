@@ -11,12 +11,14 @@ TREE_BUILDING_ENABLED=false;
 ENSURE_FINAL_EOL;
 MINIMAL_TOKEN;
 // We shouldn't convert spaces or newlines
-// because usually we are running over input 
+// because usually we are typically running over input 
 // that is already converted anyway
 TABS_TO_SPACES=0;
 PRESERVE_LINE_ENDINGS=true;
 #if localtest
 PARSER_PACKAGE=org.parsers.preprocessor;
+#elif csharp
+PARSER_PACKAGE=org.parsers.csharp.preprocessor;
 #else
 PARSER_PACKAGE=com.javacc.preprocessor;
 #endif
@@ -53,6 +55,17 @@ INJECT PARSER_CLASS :
         this.csharpMode = csharpMode;
         if (definedSymbols !=null) addSymbols(definedSymbols);
         token_source.switchTo(LexicalState.PP_SCAN_LINES);
+    }
+
+    public PARSER_CLASS(CharSequence content, Map<String, String> definedSymbols) throws IOException {
+       this(content);
+       if (definedSymbols != null) addSymbols(definedSymbols);
+       token_source.switchTo(LexicalState.PP_SCAN_LINES);
+#if csharp
+       this.csharpMode = true;
+#else        
+       this.csharpMode = false;
+#endif       
     }
 
     public BitSet getLineMarkers() {

@@ -58,14 +58,14 @@
      <assertions><enable/></assertions>
  	   <arg line="-n -q -d ../java src/javacc/JavaCC.javacc"/>
  	</java>
-  </target>
+</target>
 <target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
 	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
  	<java jar="bin/javacc.jar" fork="true" failonerror="true">
      <assertions><enable/></assertions>
  	   <arg line="-n -q -d ../../src/java examples/preprocessor/Preprocessor.javacc"/>
  	</java>
-  </target>
+</target>
 
 <target name="compile" depends="parser-gen, preprocessor-gen">
   	<mkdir dir="build"/>

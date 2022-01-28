@@ -8,6 +8,23 @@ DEACTIVATE_TOKENS=GET,SET;
 
 INCLUDE "CSharpLexer.javacc"
 
+INJECT PARSER_CLASS :
+   import PARSER_PACKAGE.preprocessor.PreprocessorParser; 
+{
+   public PARSER_CLASS(Path path, boolean usePreprocessor) throws IOException {
+      this(path);
+      if (usePreprocessor) {
+         try {
+            PreprocessorParser ppp = new PreprocessorParser(path, null, false);
+            java.util.BitSet lineMarkers = ppp.PP_Root();
+            token_source.setParsedLines(lineMarkers);
+         } catch (PARSER_PACKAGE.preprocessor.ParseException pe) {
+             throw new RuntimeException(pe);
+         }         
+      }
+   }
+}
+
 #CompilationUnit# :
    (ExternAliasDirective)*
    (UsingDirective)*
