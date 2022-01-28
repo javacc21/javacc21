@@ -4,6 +4,8 @@ NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
 ENSURE_FINAL_EOL;
 
+DEACTIVATE_TOKENS=GET,SET;
+
 INCLUDE "CSharpLexer.javacc"
 
 #CompilationUnit# :
@@ -148,7 +150,7 @@ TypeDeclaration :
 ;
 
 Modifiers#void : //TODO
-  ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe"|"override")*
+  ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern")*
 ;
 
 ClassDeclaration :
@@ -319,7 +321,7 @@ FieldDeclaration :
     (AttributeSection)*
     ("new" | "public" | "protected" | "internal" | "private" | "static" | "readonly" | "volatile" | "unsafe")*
     Type
-    =>|+1
+    =>|+2
     VariableDeclarator ("," VariableDeclarator)*
    ";"
 ;
@@ -346,9 +348,9 @@ InterfacePropertyDeclaration :
 ;
 
 InterfaceAccessors :
-    (AttributeSection)* "get" =>|| [(AttributeSection)* "set"]
+    (AttributeSection)* ACTIVATE_TOKENS GET ("get") =>|| [(AttributeSection)* ACTIVATE_TOKENS SET ("set")]
     |
-    (AttributeSection)* "set" =>|| [(AttributeSection)* "get"]
+    (AttributeSection)* ACTIVATE_TOKENS SET ("set") =>|| [(AttributeSection)* ACTIVATE_TOKENS GET ("get")]
     | 
     FAIL "Expecting getter or setter"
 ;
@@ -395,12 +397,17 @@ OperatorDeclaration :
    ( "public" | "static" | "extern" | "unsafe")+
    Type "operator" =>||
    (
-      ("+"|"-") =>|| "(" <IDENTIFIER> ["," <IDENTIFIER>] ")"
+      ("+"|"-") =>|| "(" Type <IDENTIFIER> ["," Type <IDENTIFIER>] ")"
       |
-      ("!"|"~"|"++"|"--"|"true"|"false") =>|| "(" <IDENTIFIER> ")"
+      ("!"|"~"|"++"|"--"|"true"|"false") =>|| "(" Type <IDENTIFIER> ")"
       |
       ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|"right_shift"|"=="|"!="|">"|"<"|">="|"<=")
-      "(" <IDENTIFIER> "," <IDENTIFIER> ")"
+      "(" Type <IDENTIFIER> "," Type <IDENTIFIER> ")"
+   )
+   (
+      Block 
+      |
+      ["=>" Expression] ";"
    )
 ;
 
@@ -488,7 +495,7 @@ GetAccessorDeclaration :
       | "internal" ["protected"]
       | "private" 
    ]
-   "get" =>||
+   ACTIVATE_TOKENS GET ("get") =>||
    (Block | ";")
 ;
 
@@ -499,7 +506,7 @@ SetAccessorDeclaration :
       | "internal" ["protected"]
       | "private" 
    ]
-   "set" =>||
+   ACTIVATE_TOKENS SET ("set") =>||
    (Block | ";")
 ;   
 
@@ -894,7 +901,7 @@ PredefinedType#void :
 
 DefaultValueExpression : "default" "(" =>|| Type ")" ;
 
-SimpleName : <IDENTIFIER> [TypeArgumentList] ;
+SimpleName : <IDENTIFIER> [=>TypeArgumentList] ;
 
 ParenthesizedExpression : "(" Expression ")" ;
 
