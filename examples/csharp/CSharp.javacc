@@ -618,9 +618,9 @@ Block :
 Expression :
    AssignmentExpression
    |
-   ConditionalExpression
-   |
    LambdaExpression
+   |
+   ConditionalExpression
    |
    QueryExpression
 ;
@@ -637,6 +637,8 @@ LambdaLHS :
 ;
 
 ImplicitAnonymousFunctionSignature :
+   <IDENTIFIER>
+   |
    "(" [<IDENTIFIER> ("," <IDENTIFIER>)*] ")"
 ;
 
