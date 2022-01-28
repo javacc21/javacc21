@@ -290,11 +290,12 @@ DelegateDeclaration :
    Modifiers
   "delegate" 
   =>||
-  Type
+  ReturnType
   <IDENTIFIER>
   [TypeParameterList]
   "(" [FormalParameters] ")"
   (TypeParameterConstraintsClause)*
+  ";"
 ;
 
 TypeParameterConstraintsClause :
