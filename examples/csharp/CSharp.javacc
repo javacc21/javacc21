@@ -4,7 +4,7 @@ NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=GET,SET;
+DEACTIVATE_TOKENS=ASSEMBLY,GET,MODULE,SET,WHERE;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -63,7 +63,7 @@ UsingNamespaceDirective :
 ;
 
 GlobalAttributeSection :
-   "["  ("assembly" | "module") ":" AttributeList [","] "]"
+   "["  ACTIVATE_TOKENS ASSEMBLY, MODULE ("assembly" | "module") ":" AttributeList [","] "]"
 ;
 
 AttributeSection :
@@ -295,7 +295,8 @@ DelegateDeclaration :
 ;
 
 TypeParameterConstraintsClause :
-  "where" <IDENTIFIER> ":" (Name | "class" | "struct") ["," Name]
+  SCAN {getToken(1).getImage().equals("where")} =>
+  ACTIVATE_TOKENS WHERE ("where") <IDENTIFIER> ":" (Name | "class" | "struct") ["," Name]
 ;
 
 ClassMemberDeclaration :
@@ -436,11 +437,7 @@ OperatorDeclaration :
       ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|"right_shift"|"=="|"!="|">"|"<"|">="|"<=")
       "(" Type <IDENTIFIER> "," Type <IDENTIFIER> ")"
    )
-   (
-      Block 
-      |
-      ["=>" Expression] ";"
-   )
+   MethodBody
 ;
 
 DestructorDeclaration :
@@ -571,7 +568,13 @@ MethodDeclaration :
     [FormalParameters] 
    ")"
    (TypeParameterConstraintsClause)*
-   Block
+   MethodBody
+;
+
+MethodBody :
+   Block 
+   | 
+   ["=>" Expression] ";"
 ;
 
 InterfaceMethodDeclaration :
@@ -615,7 +618,7 @@ ParameterArray :
    <IDENTIFIER>
 ;
 
-VariableDeclarator : <IDENTIFIER> ["=" Expression] ;   
+VariableDeclarator : <IDENTIFIER> ["=" (Expression|ArrayInitializer)] ;   
 
 TypeParameterList :
    "<"
@@ -820,7 +823,7 @@ UnaryExpression :
    NullConditionalExpression 
 ;
 
-CastExpression : "(" Type ")" =>|| UnaryExpression ;
+CastExpression : "(" Type ")" =>|+1 UnaryExpression ;
 
 AwaitExpression : "await" UnaryExpression ;
 
@@ -966,9 +969,9 @@ ParenthesizedExpression : "(" Expression ")" ;
 TypeofExpression :
     "typeof" "("
     (
-       Type
-       |
        "void"
+       |
+       Type
        |
        <IDENTIFIER> ["<" (",")* ">"]
     )
@@ -1070,7 +1073,7 @@ Label : SCAN 2 <IDENTIFIER> ":" ;
 Statement :
    (Label)*
     (
-       SCAN ("const" | "var" | Type) <IDENTIFIER> =>
+       SCAN ("const" | "var" | Type) (<IDENTIFIER> | PrimitiveType) =>
        DeclarationStatement
        |
        EmbeddedStatement

@@ -214,8 +214,11 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" > 
    | < WHILE : "while" > 
 // Now contextual Keywords
+   | < ASSEMBLY : "assembly">
    | < GET : "get" >
+   | < MODULE : "module">
    | < SET : "set" >
+   | < WHERE : "where" >
 ;
 
 INCLUDE "CSharpIdentifierDef.javacc"
