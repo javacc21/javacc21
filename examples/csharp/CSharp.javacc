@@ -816,7 +816,7 @@ ArrayCreationExpression :
     (
        RankSpecifier ArrayInitializer
        |
-       NonArrayType "[" Expression ("," Expression)* "]" (RankSpecifier)* [ArrayInitializer]
+       NonArrayType "[" =>|+1 Expression ("," Expression)* "]" (RankSpecifier)* [ArrayInitializer]
        |
        ArrayType ArrayInitializer
     )
@@ -861,7 +861,7 @@ PrimaryNoArrayCreationExpression :
       |
       "[" Expression ("," Expression)*  "]"
       |
-      "." <IDENTIFIER> [TypeArgumentList]
+      "." <IDENTIFIER> [=>TypeArgumentList]
       |
       "->" <IDENTIFIER>
       |
