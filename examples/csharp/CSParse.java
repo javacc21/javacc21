@@ -45,8 +45,8 @@ public class CSParse {
        }
        System.out.println("\nParsed " + successes.size() + " files successfully");
        System.out.println("Failed on " + failures.size() + " files.");
-       if (!failures.isEmpty()) System.exit(-1);
        System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
+       if (!failures.isEmpty()) System.exit(-1);
     }
       
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {

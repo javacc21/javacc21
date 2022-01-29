@@ -16,20 +16,6 @@ namespace System.Net.Http
 	public class WebAssemblyHttpHandler : HttpMessageHandler {
 		static WebAssemblyHttpHandler()
 		{
-				int ReadBuffered ()
-				{
-					int n = _bufferedBytes.Length - _position;
-					if (n > count)
-						n = count;
-					if (n <= 0)
-						return 0;
-
-					Buffer.BlockCopy (_bufferedBytes, _position, buffer, offset, n);
-					_position += n;
-
-					return n;
-				}
-			await stream.WriteAsync (data, 0, data.Length);
 			using (var streamingSupported = new Function ("return typeof Response !== 'undefined' && 'body' in Response.prototype && typeof ReadableStream === 'function'"))
 				StreamingSupported = (bool)streamingSupported.Call ();
 		}

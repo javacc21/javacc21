@@ -552,7 +552,7 @@ ConstructorDeclaration :
       ("base" | "this")
       "(" [ArgumentList] ")"
    ]
-   (Block | ";")
+   MethodBody
 ;
 
 StaticConstructorDeclaration :
@@ -565,7 +565,7 @@ StaticConstructorDeclaration :
    <IDENTIFIER>
    "(" =>||
    ")"
-   (Block | ";")
+   MethodBody
 ;
 
 ArgumentList : Argument ("," Argument)* ;
@@ -604,11 +604,8 @@ PropertyBody :
    ["=" VariableInitializer] 
   |
   "=>" 
-  (
-     ThrowStatement // This is not in the spec I was working from!
-     |
-     Expression ";"
-  )
+  Expression 
+  ";"
 ;
 
 GetAccessorDeclaration :
@@ -622,7 +619,7 @@ GetAccessorDeclaration :
    (
       Block 
       |
-      "=>" ThrowStatement 
+      "=>" Expression ";"
       | 
       ";"
    )
@@ -639,7 +636,7 @@ SetAccessorDeclaration :
    (
       Block 
       |
-      "=>" ThrowStatement 
+      "=>" Expression ";"
       |
       ";"
    )
@@ -767,12 +764,7 @@ PrimitiveType#void :
 
 Block :
   "{"
-     (
-//        SCAN \MethodBody =>
-//        MethodDeclaration
-//        |
-        Statement
-     )* 
+   ( Statement )* 
   "}"
 ;
 
@@ -929,6 +921,8 @@ UnaryExpression :
    |
    AwaitExpression
    |
+   ThrowExpression // since 7.0
+   |
    PreIncrementExpression
    |
    PreDecrementExpression
@@ -937,6 +931,8 @@ UnaryExpression :
    |
    NullConditionalExpression 
 ;
+
+ThrowExpression : "throw" Expression ;
 
 CastExpression : "(" Type ")" =>|+1 UnaryExpression ;
 
