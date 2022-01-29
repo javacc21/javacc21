@@ -2,7 +2,7 @@ CSHARP_UNICODE_ESCAPE;
 PARSER_PACKAGE="org.parsers.csharp";
 NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
-ENSURE_FINAL_EOL;
+//ENSURE_FINAL_EOL;
 
 DEACTIVATE_TOKENS=ASSEMBLY,GET,MODULE,PARTIAL,SET,VAR,WHERE;
 
@@ -63,7 +63,7 @@ UsingNamespaceDirective :
 ;
 
 GlobalAttributeSection :
-   "["  ACTIVATE_TOKENS ASSEMBLY, MODULE ("assembly" | "module") ":" AttributeList [","] "]"
+   "["  ACTIVATE_TOKENS ASSEMBLY, MODULE ("assembly" | "module") =>|| ":" AttributeList [","] "]"
 ;
 
 AttributeSection :
@@ -208,6 +208,7 @@ StructDeclaration :
    "struct" 
    =>||
    <IDENTIFIER>
+   [TypeParameterList]
    [":" Name ("," Name)*]
    (TypeParameterConstraintsClause)*
    "{" (ClassMemberDeclaration)* "}"
@@ -1031,7 +1032,7 @@ ObjectInitializer :
   SCAN "{" (<IDENTIFIER> | "[" ArgumentList "]") "="
   =>
   "{" 
-   MemberInitializer ("," MemberInitializer)* [","]
+  MemberInitializer (SCAN 2 "," MemberInitializer)* [","]
   "}"
 ;
 
@@ -1293,7 +1294,10 @@ ForStatement :
    ";"
    [Expression]
    ";"
-   (StatementExpression)*
+   [
+      StatementExpression
+      ("," StatementExpression)*
+   ]
    ")"
    EmbeddedStatement
 ;
