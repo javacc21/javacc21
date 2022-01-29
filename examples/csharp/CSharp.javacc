@@ -5,7 +5,7 @@ DEFAULT_LEXICAL_STATE=CSHARP;
 TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ASSEMBLY,ASYNC,GET,MODULE,PARTIAL,SET,VAR,WHERE;
+DEACTIVATE_TOKENS=ASSEMBLY,ASYNC,AWAIT,GET,MODULE,PARTIAL,SET,VAR,WHERE;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -682,9 +682,9 @@ Block :
 ;
 
 Expression :
-   AssignmentExpression
-   |
    LambdaExpression
+   |
+   AssignmentExpression
    |
    ConditionalExpression
    |
@@ -694,10 +694,14 @@ Expression :
 LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
 
 LambdaLHS :
+  [
+     SCAN {getToken(1).getImage().equals("async")}#
+     => ACTIVATE_TOKENS ASYNC ("async")
+  ]
   (
    =>ImplicitAnonymousFunctionSignature
    |
-   ExplicitAnonymousFunctionSignature
+   ExplicitLambdaSignature
   )
   "=>"
 ;
@@ -841,7 +845,11 @@ UnaryExpression :
 
 CastExpression : "(" Type ")" =>|+1 UnaryExpression ;
 
-AwaitExpression : "await" UnaryExpression ;
+AwaitExpression : 
+    SCAN {getToken(1).getImage().equals("await")}#
+    => 
+   ACTIVATE_TOKENS AWAIT ("await") UnaryExpression
+;
 
 UnaryExpressionUnsafe : ("*" | "&") UnaryExpression ;
 
@@ -894,6 +902,8 @@ PrimaryNoArrayCreationExpression :
    (
       LiteralExpression
       |
+      <INTERPOLATED_STRING_LITERAL> // TODO: deal with this better.
+      |
       "this"
       |
       BaseAccess
@@ -923,8 +933,6 @@ PrimaryNoArrayCreationExpression :
       AnonymousObjectCreationExpression
       |
       AnonymousMethodExpression
-      |
-      <INTERPOLATED_STRING_LITERAL> // TODO: deal with this better.
    )
    (
       "(" [ArgumentList] ")"
@@ -1030,7 +1038,13 @@ AnonymousMethodExpression :
 ExplicitAnonymousFunctionSignature : 
    ExplicitAnonymousFunctionParameter 
    ("," ExplicitAnonymousFunctionParameter)*
-;  
+; 
+
+ExplicitLambdaSignature :
+   "(" 
+       ExplicitAnonymousFunctionSignature
+   ")"
+;
 
 ExplicitAnonymousFunctionParameter :  ["ref"|"out"] Type <IDENTIFIER> ;
 

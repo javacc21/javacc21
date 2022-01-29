@@ -2,7 +2,6 @@ DEFAULT_LEXICAL_STATE=CSHARP;
 CSHARP_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.csharplexer;
 
-
 SKIP :
   <WHITESPACE : (<WS_CHAR>)+> #Whitespace
   |
@@ -216,6 +215,7 @@ TOKEN #KeyWord :
 // Now contextual Keywords
    | < ASSEMBLY : "assembly">
    | < ASYNC : "async" >
+   | < AWAIT : "await" >
    | < GET : "get" >
    | < MODULE : "module">
    | < PARTIAL : "partial">
