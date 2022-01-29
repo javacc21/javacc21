@@ -294,6 +294,18 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     }
 
     /**
+     * @return the previous regular (i.e. parsed) token
+     * or null
+     */
+    public final Token getPrevious() {
+        Token result = previousCachedToken();
+        while (result != null && result.isUnparsed()) {
+            result = result.previousCachedToken();
+        }
+        return result;
+    }
+
+    /**
      * @return the next regular (i.e. parsed) token
      */
     private Token getNextParsedToken() {

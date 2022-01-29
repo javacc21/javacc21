@@ -2,9 +2,10 @@ CSHARP_UNICODE_ESCAPE;
 PARSER_PACKAGE="org.parsers.csharp";
 NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
-//ENSURE_FINAL_EOL;
+TABS_TO_SPACES=4;
+ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ASSEMBLY,GET,MODULE,PARTIAL,SET,VAR,WHERE;
+DEACTIVATE_TOKENS=ASSEMBLY,ASYNC,GET,MODULE,PARTIAL,SET,VAR,WHERE;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -184,6 +185,11 @@ TypeDeclaration :
 Modifiers#void : //TODO
   ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern")*
 ;
+
+INJECT PARSER_CLASS :
+{
+   EnumSet<TokenType> permissibleModifiers;
+}
 
 ClassDeclaration :
   (AttributeSection)*

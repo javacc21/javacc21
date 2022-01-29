@@ -451,6 +451,12 @@ ${grammar.utils.translateTokenInjections(injector, true)}
             result = result.next_cached_token
         return result
 
+    def get_previous(self):
+        result = self.previous_cached_token
+        while result and result.is_unparsed:
+            result = result.previous_cached_token
+        return result
+
     @property
     def previous_cached_token(self):
 [#if !grammar.minimalToken]

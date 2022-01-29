@@ -60,6 +60,7 @@ public class JParse {
         }
         System.out.println("\nParsed " + successes.size() + " files successfully");
         System.out.println("Failed on " + failures.size() + " files.");
+        if (!failures.isEmpty()) System.exit(-1);
         System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
     }
 

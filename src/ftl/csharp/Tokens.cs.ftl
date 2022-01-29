@@ -704,6 +704,16 @@ namespace ${csPackage} {
             }
         }
 
+        internal Token Previous {
+            get {
+                var result = PreviousCachedToken;
+                while ((result != null) && result.IsUnparsed) {
+                    result = result.PreviousCachedToken;
+                }
+                return result;
+            }
+        }
+
         internal Token NextParsedToken {
             get {
                 var result = NextCachedToken;

@@ -385,13 +385,17 @@ ${grammar.utils.translateInjectedClass(injector, node)}
         }
 
         /**
-        * If we are in a lookahead, it looks ahead from the currentLookaheadToken
+        * If we are in a lookahead, it looks ahead/behind from the currentLookaheadToken
         * Otherwise, it is the lastConsumedToken
         */
         public Token GetToken(int index) {
             var t = (currentLookaheadToken == null) ? LastConsumedToken : currentLookaheadToken;
             for (var i = 0; i < index; i++) {
                 t = NextToken(t);
+            }
+            for (var i = 0; i > index; i--) {
+                t = t.PreviousToken;
+                if (t == null) break;
             }
             return t;
         }

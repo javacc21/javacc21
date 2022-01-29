@@ -197,14 +197,19 @@ public boolean isCancelled() {return cancelled;}
 
 /**
  * @param index how many tokens to look ahead
- * @return the specific Token index ahead in the stream. 
+ * @return the specific regular (i.e. parsed) Token index ahead/behind in the stream. 
  * If we are in a lookahead, it looks ahead from the currentLookaheadToken
- * Otherwise, it is the lastConsumedToken
+ * Otherwise, it is the lastConsumedToken. If you pass in a negative
+ * number it goes backward.
  */
-  final public Token getToken(int index) {
+  final public Token getToken(final int index) {
     Token t = currentLookaheadToken == null ? lastConsumedToken : currentLookaheadToken;
     for (int i = 0; i < index; i++) {
       t = nextToken(t);
+    }
+    for (int i = 0; i > index; i--) {
+      t = t.getPrevious();
+      if (t == null) break;
     }
     return t;
   }

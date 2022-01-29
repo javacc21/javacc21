@@ -366,14 +366,22 @@ ${grammar.utils.translateParserInjections(injector, true)}
     def get_next_token(self):
         return self.get_token(1)
 
-    # If we are in a lookahead, it looks ahead from the current lookahead token
+    # If we are in a lookahead, it looks ahead/behind from the current lookahead token
     # Otherwise, it is the last consumed token
     def get_token(self, index):
         t = self.current_lookahead_token
         if t is None:
             t = self.last_consumed_token
-        for i in range(index):
-            t = self.next_token(t)
+        if index == 0 :
+            return t
+        if index > 0 : 
+            for i in range(index):
+                t = self.next_token(t)
+        else :
+            for i in range(-index) :
+                t = t.previous_token()
+                if t is None :
+                   break
         return t
 
     @property

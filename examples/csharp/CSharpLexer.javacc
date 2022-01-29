@@ -215,6 +215,7 @@ TOKEN #KeyWord :
    | < WHILE : "while" > 
 // Now contextual Keywords
    | < ASSEMBLY : "assembly">
+   | < ASYNC : "async" >
    | < GET : "get" >
    | < MODULE : "module">
    | < PARTIAL : "partial">
