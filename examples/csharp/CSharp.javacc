@@ -181,15 +181,93 @@ TypeDeclaration :
    DelegateDeclaration
   )
 ;
-
-Modifiers#void : //TODO
-  ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern")*
-;
-
 INJECT PARSER_CLASS :
 {
    EnumSet<TokenType> permissibleModifiers;
 }
+
+Modifiers#void : //TODO
+//  ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern")*
+  (
+    SCAN { permissibleModifiers == null 
+         || 
+         permissibleModifiers.contains(getToken(1).getType()) }#
+      =>
+      ("new"|"public"|"protected"|"internal"|"private"|"abstract"
+      |"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern")
+      {
+         if (permissibleModifiers != null) {
+            permissibleModifiers.remove(getToken(0).getType());
+         }
+      }
+     |
+     SCAN { ((permissibleModifiers == null || permissibleModifiers.contains(ASYNC))
+            && getToken(1).getImage().equals("async"))
+          }#
+      => ACTIVATE_TOKENS ASYNC ("async")
+      { if (permissibleModifiers!=null) permissibleModifiers.remove(ASYNC);}
+  )*
+;
+
+#if false
+Modifiers#void : 
+ (
+  SCAN {isParserTolerant() || permissibleModifiers == null  
+       || permissibleModifiers.contains(getToken(1).getType())}#
+  =>
+  (
+   "public"|"static"|"protected"|"private"|"final"|"abstract" 
+   |"synchronized"|"native"|"transient"|"volatile"|"strictfp" 
+   |"default" 
+  )
+  {
+    if (permissibleModifiers !=null) {
+      TokenType tt = getToken(0).getType();
+      switch(tt) {
+        case ABSTRACT :
+        case FINAL :
+           permissibleModifiers.remove(TokenType.ABSTRACT);
+           permissibleModifiers.remove(TokenType.FINAL);
+           break;
+        case PRIVATE :
+        case PROTECTED :
+        case PUBLIC :
+           permissibleModifiers.remove(TokenType.PRIVATE);
+           permissibleModifiers.remove(TokenType.PROTECTED);
+           permissibleModifiers.remove(TokenType.PUBLIC);
+           break;
+        default : 
+           permissibleModifiers.remove(lastConsumedToken.getType());
+      }
+    }
+  }
+  |
+  SCAN {
+    permissibleModifiers == null 
+    ||
+    permissibleModifiers.contains(TokenType.SEALED)
+    &&
+    (
+       "sealed".equals(getToken(1).getImage())
+       ||
+       "non".equals(getToken(1).getImage())
+         && "-".equals(getToken(2).getImage())
+         && "sealed".equals(getToken(3).getImage())  
+    )
+  }# =>
+  ACTIVATE_TOKENS SEALED, NON_SEALED ("sealed"|"non-sealed") 
+  {
+    if (permissibleModifiers!=null) {
+      permissibleModifiers.remove(TokenType.SEALED);
+      permissibleModifiers.remove(TokenType.NON_SEALED);
+    }
+  }
+  |
+  Annotation
+ )*
+ {permissibleModifiers = null;}#
+;
+#endif
 
 ClassDeclaration :
   (AttributeSection)*
@@ -541,7 +619,13 @@ GetAccessorDeclaration :
       | "private" 
    ]
    ACTIVATE_TOKENS GET ("get") =>||
-   (Block | ";")
+   (
+      Block 
+      |
+      "=>" ThrowStatement 
+      | 
+      ";"
+   )
 ;
 
 SetAccessorDeclaration :
@@ -552,7 +636,13 @@ SetAccessorDeclaration :
       | "private" 
    ]
    ACTIVATE_TOKENS SET ("set") =>||
-   (Block | ";")
+   (
+      Block 
+      |
+      "=>" ThrowStatement 
+      |
+      ";"
+   )
 ;   
 
 VariableInitializer :
@@ -677,7 +767,12 @@ PrimitiveType#void :
 
 Block :
   "{"
-     (Statement)* 
+     (
+//        SCAN \MethodBody =>
+//        MethodDeclaration
+//        |
+        Statement
+     )* 
   "}"
 ;
 
@@ -846,7 +941,7 @@ UnaryExpression :
 CastExpression : "(" Type ")" =>|+1 UnaryExpression ;
 
 AwaitExpression : 
-    SCAN {getToken(1).getImage().equals("await")}#
+   SCAN {getToken(1).getImage().equals("await")}#
     => 
    ACTIVATE_TOKENS AWAIT ("await") UnaryExpression
 ;
@@ -984,7 +1079,9 @@ PredefinedType#void :
     | "long" | "object" | "sbyte" | "short" | "string" | "uint" | "ulong" | "ushort"
 ;
 
-DefaultValueExpression : "default" "(" =>|| Type ")" ;
+// The "(Type)" part is optional (since C# 7.1)
+// if it can be inferred by the compiler.
+DefaultValueExpression : "default" [ "(" Type ")" ] ;
 
 SimpleName : <IDENTIFIER> [=>TypeArgumentList] ;
 
@@ -1103,8 +1200,14 @@ Label : SCAN 2 <IDENTIFIER> ":" ;
 Statement :
    (Label)*
     (
-       SCAN ("const" | "var" | Type) (<IDENTIFIER> | PrimitiveType) =>
-       DeclarationStatement
+       // REVISIT this
+       SCAN {!getToken(1).getImage().equals("await")}#
+       =>
+       MethodDeclaration
+       |
+       LocalConstantDeclaration ";" 
+       |
+       LocalVariableDeclaration ";"
        |
        EmbeddedStatement
     )
@@ -1166,8 +1269,10 @@ LocalVariableDeclaration :
    (
       ACTIVATE_TOKENS VAR ("var") 
       | 
-      Type
-   ) 
+      Type 
+      ASSERT {getToken(-1).getType() == DOT || !getToken(0).toString().equals("await")}#
+   )
+   ASSERT {getToken(2).getType() != LPAREN}#
    =>|+1
    LocalVariableDeclarator
    ("," LocalVariableDeclarator)*
