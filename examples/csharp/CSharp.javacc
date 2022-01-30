@@ -1,4 +1,3 @@
-CSHARP_UNICODE_ESCAPE;
 PARSER_PACKAGE="org.parsers.csharp";
 NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
@@ -6,7 +5,7 @@ TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
 
 DEACTIVATE_TOKENS=ASSEMBLY,ASYNC,AWAIT,GET,MODULE,PARTIAL,SET,VAR,
-                  WHEN,WHERE;
+                  WHEN,WHERE,YIELD;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -1294,7 +1293,8 @@ CatchClause :
 ;
 
 YieldStatement :
-   "yield"
+   SCAN {getToken(1).getImage().equals("yield")}#
+   => ACTIVATE_TOKENS YIELD ("yield")
    (
       "break"
       |

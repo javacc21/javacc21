@@ -14,7 +14,7 @@ MINIMAL_TOKEN;
 // because usually we are typically running over input 
 // that is already converted anyway
 TABS_TO_SPACES=0;
-PRESERVE_LINE_ENDINGS=true;
+//PRESERVE_LINE_ENDINGS=true;
 #if localtest
 PARSER_PACKAGE=org.parsers.preprocessor;
 #elif csharp
