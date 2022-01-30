@@ -1126,9 +1126,9 @@ TypeofExpression :
     (
        "void"
        |
-       Type
+       => <IDENTIFIER> "<" (",")* ">"
        |
-       <IDENTIFIER> ["<" (",")* ">"]
+       Type
     )
     ")"
 ;
