@@ -319,7 +319,12 @@ DelegateDeclaration :
 
 TypeParameterConstraintsClause :
   SCAN {getToken(1).getImage().equals("where")} =>
-  ACTIVATE_TOKENS WHERE ("where") <IDENTIFIER> ":" (Name | "class" | "struct") ["," Name]
+  ACTIVATE_TOKENS WHERE ("where") 
+  <IDENTIFIER> 
+  ":" 
+  (Name | "class" | "struct") 
+  ("," =>|+1 Name)* 
+  ["," "new" =>|| "(" ")"]
 ;
 
 ClassMemberDeclaration :
