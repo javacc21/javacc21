@@ -4,8 +4,8 @@ DEFAULT_LEXICAL_STATE=CSHARP;
 TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ASSEMBLY,ASYNC,AWAIT,GET,MODULE,PARTIAL,SET,VAR,
-                  WHEN,WHERE,YIELD;
+DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,MODULE,PARTIAL,
+                  REMOVE,SET,VAR, WHEN,WHERE,YIELD;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -527,14 +527,14 @@ Argument :
 
 AddAccessorDeclaration :
     (AttributeSection)*
-    "add"
+    ACTIVATE_TOKENS ADD ("add")
     =>||
     Block
 ;
 
 RemoveAccessorDeclaration :
     (AttributeSection)*
-    "remove"
+    ACTIVATE_TOKENS REMOVE ("remove")
     =>||
     Block
 ;

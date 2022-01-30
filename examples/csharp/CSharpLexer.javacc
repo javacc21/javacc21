@@ -219,12 +219,14 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" > 
    | < WHILE : "while" > 
 // Now contextual Keywords
+   | < ADD : "add">
    | < ASSEMBLY : "assembly">
    | < ASYNC : "async" >
    | < AWAIT : "await" >
    | < GET : "get" >
    | < MODULE : "module">
    | < PARTIAL : "partial">
+   | < REMOVE : "remove">
    | < SET : "set" >
    | < VAR : "var" > 
    | < WHEN : "when">
