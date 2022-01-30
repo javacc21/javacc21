@@ -486,7 +486,7 @@ DestructorDeclaration :
    "(" 
    =>||
    ")"
-   (Block | ";")
+   MethodBody
 ;
 
 ConstructorDeclaration : 
@@ -1282,6 +1282,8 @@ EmbeddedStatement :
     ReturnStatement
     |
     ThrowStatement
+    |
+    UnsafeStatement
     |
     UsingStatement
     |
