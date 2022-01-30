@@ -122,18 +122,8 @@ Name :
    |
    <IDENTIFIER>[TypeArgumentList]
    (
-     SCAN 0
-          // TODO: investigate why I can't use a negative syntactic lookahed here 
-          {getToken(1).getType() == DOT &&
-           ((!(getToken(2).getType() == IDENTIFIER && (getToken(3).getType()==LPAREN) || getToken(3).getType() == LBRACE)) 
-             || !isInProduction("MemberName"))
-          }# 
-      => "." <IDENTIFIER> [TypeArgumentList]
+      "." <IDENTIFIER> [TypeArgumentList]
    )*
-;
-
-MemberName :
-   [=>Type "."] <IDENTIFIER>
 ;
 
 QualifiedAliasMember :
@@ -396,7 +386,8 @@ PropertyDeclaration :
       |"override"|"abstract"|"extern" | "unsafe"
    )*
    Type
-   MemberName
+   //MemberName
+   Name
    =>|+1
    PropertyBody
 ;
@@ -461,9 +452,6 @@ OperatorDeclaration :
    (AttributeSection)*
    ( "public" | "static" | "extern" | "unsafe")+
    (Type | "implicit" | "explicit")
-//   {
-//      boolean plicit = lastConsumedToken.getType() == IMPLICIT || lastConsumedToken.getType() == EXPLICIT;
-//   }
    "operator" =>||
    (
       ("+"|"-") =>|| "(" Type <IDENTIFIER> ["," Type <IDENTIFIER>] ")"
@@ -473,7 +461,7 @@ OperatorDeclaration :
       ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|"right_shift"|"=="|"!="|">"|"<"|">="|"<=")
       "(" Type <IDENTIFIER> "," Type <IDENTIFIER> ")"
       |
-      Type "(" Type <IDENTIFIER> ")" // ASSERT {plicit}
+      Type "(" Type <IDENTIFIER> ")" 
    )
    MethodBody
 ;
@@ -608,7 +596,8 @@ MethodDeclaration :
    Modifiers
    [SCAN {getToken(1).getImage().equals("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
    ReturnType
-   MemberName
+   //MemberName
+   Name
    [TypeParameterList]
    "(" 
    =>||
