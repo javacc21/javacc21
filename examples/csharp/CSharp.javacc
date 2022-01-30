@@ -117,17 +117,18 @@ NamedArgument :
 
 /** Name of a Type or a Namespace */
 Name :
-   SCAN <IDENTIFIER> "::"
-   => QualifiedAliasMember
-   |
-   <IDENTIFIER>[TypeArgumentList]
+   (
+     QualifiedAliasMember
+     |
+     <IDENTIFIER>[TypeArgumentList]
+   )
    (
       "." <IDENTIFIER> [TypeArgumentList]
    )*
 ;
 
 QualifiedAliasMember :
-   <IDENTIFIER> "::" <IDENTIFIER>
+   <IDENTIFIER> "::" =>|| <IDENTIFIER>
    [TypeArgumentList]
 ;
 
@@ -1074,7 +1075,7 @@ PrimaryNoArrayCreationExpression :
 
 PrimitiveTypeAccess :
    ("dynamic" | PrimitiveType)
-   "."
+   "." =>||
    <IDENTIFIER>
    [TypeArgumentList]
 ;   
