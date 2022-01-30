@@ -5,7 +5,8 @@ DEFAULT_LEXICAL_STATE=CSHARP;
 TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ASSEMBLY,ASYNC,AWAIT,GET,MODULE,PARTIAL,SET,VAR,WHERE;
+DEACTIVATE_TOKENS=ASSEMBLY,ASYNC,AWAIT,GET,MODULE,PARTIAL,SET,VAR,
+                  WHEN,WHERE;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -91,14 +92,15 @@ AttributeArguments :
     "(" 
     [
        SCAN ~(<IDENTIFIER>"=")
-       => Expression
+       => [=>Type ":" ] Expression
        (
           ","
+          [=>Type ":"] // since when?
           Expression
        )*
     ]
     [
-       SCAN <IDENTIFIER>"="
+       SCAN <IDENTIFIER> "="
        => NamedArgument
        (
           "," NamedArgument
@@ -187,7 +189,6 @@ INJECT PARSER_CLASS :
 }
 
 Modifiers#void : //TODO
-//  ("new"|"public"|"protected"|"internal"|"private"|"abstract"|"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern")*
   (
     SCAN { permissibleModifiers == null 
          || 
@@ -208,66 +209,6 @@ Modifiers#void : //TODO
       { if (permissibleModifiers!=null) permissibleModifiers.remove(ASYNC);}
   )*
 ;
-
-#if false
-Modifiers#void : 
- (
-  SCAN {isParserTolerant() || permissibleModifiers == null  
-       || permissibleModifiers.contains(getToken(1).getType())}#
-  =>
-  (
-   "public"|"static"|"protected"|"private"|"final"|"abstract" 
-   |"synchronized"|"native"|"transient"|"volatile"|"strictfp" 
-   |"default" 
-  )
-  {
-    if (permissibleModifiers !=null) {
-      TokenType tt = getToken(0).getType();
-      switch(tt) {
-        case ABSTRACT :
-        case FINAL :
-           permissibleModifiers.remove(TokenType.ABSTRACT);
-           permissibleModifiers.remove(TokenType.FINAL);
-           break;
-        case PRIVATE :
-        case PROTECTED :
-        case PUBLIC :
-           permissibleModifiers.remove(TokenType.PRIVATE);
-           permissibleModifiers.remove(TokenType.PROTECTED);
-           permissibleModifiers.remove(TokenType.PUBLIC);
-           break;
-        default : 
-           permissibleModifiers.remove(lastConsumedToken.getType());
-      }
-    }
-  }
-  |
-  SCAN {
-    permissibleModifiers == null 
-    ||
-    permissibleModifiers.contains(TokenType.SEALED)
-    &&
-    (
-       "sealed".equals(getToken(1).getImage())
-       ||
-       "non".equals(getToken(1).getImage())
-         && "-".equals(getToken(2).getImage())
-         && "sealed".equals(getToken(3).getImage())  
-    )
-  }# =>
-  ACTIVATE_TOKENS SEALED, NON_SEALED ("sealed"|"non-sealed") 
-  {
-    if (permissibleModifiers!=null) {
-      permissibleModifiers.remove(TokenType.SEALED);
-      permissibleModifiers.remove(TokenType.NON_SEALED);
-    }
-  }
-  |
-  Annotation
- )*
- {permissibleModifiers = null;}#
-;
-#endif
 
 ClassDeclaration :
   (AttributeSection)*
@@ -517,7 +458,11 @@ IndexerDeclaration :
 OperatorDeclaration :
    (AttributeSection)*
    ( "public" | "static" | "extern" | "unsafe")+
-   Type "operator" =>||
+   (Type | "implicit" | "explicit")
+//   {
+//      boolean plicit = lastConsumedToken.getType() == IMPLICIT || lastConsumedToken.getType() == EXPLICIT;
+//   }
+   "operator" =>||
    (
       ("+"|"-") =>|| "(" Type <IDENTIFIER> ["," Type <IDENTIFIER>] ")"
       |
@@ -525,6 +470,8 @@ OperatorDeclaration :
       |
       ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|"right_shift"|"=="|"!="|">"|"<"|">="|"<=")
       "(" Type <IDENTIFIER> "," Type <IDENTIFIER> ")"
+      |
+      Type "(" Type <IDENTIFIER> ")" // ASSERT {plicit}
    )
    MethodBody
 ;
@@ -910,6 +857,7 @@ AssignmentOperator #void :
   | "^="
   | "<<="
   | ">>="
+  | "??=" // since 8.0
 ;
 
 UnaryExpression :
@@ -960,9 +908,9 @@ NullConditionalOperations :
       "[" ArgumentList "]"
    )
    (
-      "." <IDENTIFIER> [TypeArgumentList]
+      ["?"] "." =>|| <IDENTIFIER> [TypeArgumentList]
       |
-      "[" ArgumentList "]"
+      ["?"] "[" =>|| ArgumentList "]"
       |
       "(" [ArgumentList] ")"
    )*
@@ -971,9 +919,24 @@ NullConditionalOperations :
 NullConditionalExpression : PrimaryExpression [NullConditionalOperations] ;
 
 PrimaryExpression :
+   (
    => ArrayCreationExpression
    |
    PrimaryNoArrayCreationExpression
+   )
+   (
+    "(" [ArgumentList] ")"
+    |
+    "[" Expression ("," Expression)*  "]"
+    |
+    "." <IDENTIFIER> [=>TypeArgumentList]
+    |
+    "->" <IDENTIFIER>
+    |
+    "++"
+    |
+    "--"
+   )*   
 ;   
 
 ArrayCreationExpression :
@@ -1025,19 +988,6 @@ PrimaryNoArrayCreationExpression :
       |
       AnonymousMethodExpression
    )
-   (
-      "(" [ArgumentList] ")"
-      |
-      "[" Expression ("," Expression)*  "]"
-      |
-      "." <IDENTIFIER> [=>TypeArgumentList]
-      |
-      "->" <IDENTIFIER>
-      |
-      "++"
-      |
-      "--"
-   )*   
 ;
 
 PrimitiveTypeAccess :
@@ -1369,9 +1319,18 @@ FixedStatement :
    FixedPointerDeclarator ("," FixedPointerDeclarator)*
    ")"
    EmbeddedStatement
-;    
+; 
+
+PointerType : 
+   ("void" | Type) 
+   [
+     SCAN 0 {getToken(0).getType() != STAR}#
+     => "*" 
+   ]
+;
 
 FixedPointerDeclarator : 
+   PointerType
    <IDENTIFIER> 
    "=" 
    ["&"]
@@ -1389,16 +1348,25 @@ SwitchStatement : "switch" "(" Expression ")" SwitchBlock ;
 SwitchBlock : "{" (SwitchSection)* "}" ; 
 
 SwitchLabel : 
-   "case" Expression ":" 
+   "case" Type <IDENTIFIER> =>|| [WhenClause] ":"
+   |
+   "case" Expression [WhenClause] ":" 
    |
    "default" ":"
 ;   
+
+WhenClause :
+   SCAN 0 {getToken(1).getImage().equals("when")}#
+   => 
+   ACTIVATE_TOKENS WHEN ("when")
+   Expression
+;
 
 SwitchSection : 
    (SwitchLabel)+ 
    (
       SCAN 0 {
-         // A bit ugly. Really need to make semantic lookahead a bit more powerful 
+         // A bit ugly. Really need to make syntactic lookahead a bit more powerful 
          // in terms of negative conditions! 
                 getToken(1).getType() != RBRACE
                 && getToken(1).getType() != CASE 
