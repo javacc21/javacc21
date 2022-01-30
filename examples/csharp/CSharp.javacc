@@ -4,8 +4,11 @@ DEFAULT_LEXICAL_STATE=CSHARP;
 TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,MODULE,PARTIAL,
-                  REMOVE,SET,VAR, WHEN,WHERE,YIELD;
+DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,INTO,MODULE,PARTIAL,
+                  REMOVE,SET,VAR,WHEN,YIELD,
+                  // The following are all used in queries                  
+                  ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
+                  INTO, ORDERBY,SELECT,WHERE;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -715,13 +718,14 @@ Block :
 ;
 
 Expression :
+   SCAN QueryExpressionLA
+   =>QueryExpression
+   |
    LambdaExpression
    |
    AssignmentExpression
    |
    ConditionalExpression
-   |
-   QueryExpression
 ;
 
 LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
@@ -745,7 +749,97 @@ ImplicitAnonymousFunctionSignature :
    "(" [<IDENTIFIER> ("," <IDENTIFIER>)*] ")"
 ;
 
-QueryExpression : "from" FAIL : "unimplemented" ;
+QueryExpressionLA#scan :
+   <IDENTIFIER> ASSERT {getToken(0).getImage().equals("from")}
+   (
+      <IDENTIFIER> "in" 
+      |
+      Type <IDENTIFIER> "in" 
+   )
+;
+
+QueryExpression :
+   ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
+                   INTO, ORDERBY,SELECT,WHERE
+   (
+     FromClause 
+     QueryBody
+   ) 
+;
+
+InQueryExpression#void :
+   DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
+                   GROUP,JOIN,LET,INTO,
+                   ORDERBY,SELECT,WHERE
+   (Expression)
+;
+
+FromClause :
+   "from"
+   (
+      <IDENTIFIER> "in" =>|| InQueryExpression
+      |
+      Type <IDENTIFIER> "in" InQueryExpression 
+   )
+;
+
+QueryBody :
+   (QueryBodyClause)*
+   (
+      SelectClause
+      |
+      GroupClause
+   )
+   [
+      "into" 
+      <IDENTIFIER>
+      QueryBody
+   ]
+;
+
+QueryBodyClause :
+   FromClause
+   |
+   LetClause
+   |
+   WhereClause
+   |
+   JoinClause
+   |
+   OrderbyClause
+;
+
+LetClause : "let" <IDENTIFIER> "=" InQueryExpression ;
+
+WhereClause : "where" InQueryExpression ;
+
+JoinClause : 
+   "join" 
+   (
+      <IDENTIFIER> "in" 
+      |
+      Type <IDENTIFIER> "in"
+   )
+   InQueryExpression
+   "on"
+   InQueryExpression
+   "equals"
+   InQueryExpression
+   ["into" <IDENTIFIER>]
+;   
+
+SelectClause : "select" InQueryExpression ;
+
+GroupClause : "group" InQueryExpression "by" InQueryExpression;
+
+OrderbyClause : 
+    "orderby" 
+    InQueryExpression 
+    ["ascending"|"descending"] 
+    (
+       "," InQueryExpression ["ascending"|"descending"]
+    )*
+;    
 
 AssignmentExpression :
    UnaryExpression AssignmentOperator =>|| Expression

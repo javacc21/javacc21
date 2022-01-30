@@ -230,8 +230,21 @@ TOKEN #KeyWord :
    | < SET : "set" >
    | < VAR : "var" > 
    | < WHEN : "when">
-   | < WHERE : "where" >
    | < YIELD : "yield" >
+// Here are the soft keywords used in queries 
+   | <ASCENDING : "ascending">
+   | <BY : "by">
+   | <DESCENDING : "descending">
+   | <EQUALS : "equals">
+   | <FROM : "from">
+   | <GROUP : "group">
+   | <INTO : "into">
+   | <JOIN : "join">
+   | <LET : "let">
+   | <ON : "on">
+   | <ORDERBY : "orderby" >
+   | <SELECT : "select">
+   | <WHERE : "where">  
 ;
 
 INCLUDE "CSharpIdentifierDef.javacc"
