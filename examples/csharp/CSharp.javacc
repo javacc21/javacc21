@@ -73,8 +73,20 @@ GlobalAttributeSection :
 AttributeSection :
    "["
    [
-      ("field"|"event"|"method"|"param"|"property"|"return"|"type")
-      ":"
+      (<EVENT> |<RETURN> |<IDENTIFIER> )
+      ":" =>||
+      {String idImage = getToken(-1).getImage();}
+      ASSERT {
+         this.isParserTolerant()
+         || idImage == null
+         || idImage.equals("event")
+         || idImage.equals("field")
+         || idImage.equals("method")
+         || idImage.equals("param")
+         || idImage.equals("property")
+         || idImage.equals("return")
+         || idImage.equals("type")
+      }
    ]
    AttributeList
    [","]
