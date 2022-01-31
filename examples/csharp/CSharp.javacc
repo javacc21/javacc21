@@ -1126,11 +1126,31 @@ TypeofExpression :
     (
        "void"
        |
-       => <IDENTIFIER> "<" (",")* ">"
+   // The following expansion is a little bit tricky.
+   // If our initial scanahead doesn't find any
+   // any empty type args, like <,,,> sort of things,
+   // then the assertion at the end fails, and this means
+   // that we go to the next choice, which is
+   // a regular Type production (with no funky <,,> thingies
+       =>UnboundTypeName ASSERT {sawEmptyTypeArgs}#
        |
        Type
     )
     ")"
+;
+
+INJECT PARSER_CLASS : {boolean sawEmptyTypeArgs = false;}
+
+UnboundTypeName :
+   {sawEmptyTypeArgs = false;}#
+   [=> <IDENTIFIER> "::"]
+   <IDENTIFIER>
+   ["<" (",")* ">" {sawEmptyTypeArgs = true;}#]
+   (
+      "."
+      <IDENTIFIER>
+      ["<" (",")* ">" {sawEmptyTypeArgs = true;}#]
+   )*
 ;
 
 ObjectCreationExpression :
