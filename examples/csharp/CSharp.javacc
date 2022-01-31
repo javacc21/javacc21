@@ -542,7 +542,8 @@ Argument :
    (
       => "out" Type <IDENTIFIER> // since C# 7.0
       |
-      ["ref" | "out"] Expression
+      // Not sure since when "in" is allowed here
+      ["ref" | "out" | "in"] Expression
    )
 ;
 
@@ -679,7 +680,9 @@ FormalParameters :
 
 FixedParameter :
    (AttributeSection)*
-   ("ref"| "out" | "this")*
+   ("ref"| "out" | "this"
+    | "in" // since 7.2
+   )*
    Type
    <IDENTIFIER>
    ["=" Expression]
@@ -869,7 +872,9 @@ OrderbyClause :
 ;    
 
 AssignmentExpression :
-   UnaryExpression AssignmentOperator =>|| Expression
+   UnaryExpression AssignmentOperator =>|| 
+   ["ref"] // since 7.0 ?
+   Expression
 ;
 
 MultiplicativeExpression : 
@@ -963,7 +968,12 @@ NullCoalescingExpression :
     )*
 ;
 
-ConditionalExpression : NullCoalescingExpression ["?" Expression ":" Expression] ;
+ConditionalExpression : 
+   NullCoalescingExpression 
+   [
+      "?" ["ref"] Expression ":" ["ref"] Expression
+   ] 
+;
 
 AssignmentOperator #void :
   "=" 
