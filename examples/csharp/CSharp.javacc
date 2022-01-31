@@ -669,21 +669,33 @@ ReturnType :
 ;
 
 FormalParameters :
+   SCAN {checkNextTokenImage("__arglist")}
+   =>ArgListParameter
+   |
    ParameterArray
    |
-   FixedParameter 
-   (
-      SCAN {checkNextTokenType(COMMA)} ~("," ParameterArray)  
-      => "," FixedParameter
-   )* 
-   ["," ParameterArray]
+   FixedParameter (=> "," FixedParameter)* ["," VarArgsParameter]
+;
+
+VarArgsParameter#void :
+   ArgListParameter
+   |
+   ParameterArray
 ;   
+
+
+ArgListParameter# :
+    <IDENTIFIER>
+    ASSERT {getToken(0).getImage().equals("__arglist")}
+    =>||
+;
 
 FixedParameter :
    (AttributeSection)*
    ("ref"| "out" | "this"
     | "in" // since 7.2
    )*
+   =>|+1
    Type
    <IDENTIFIER>
    ["=" Expression]
