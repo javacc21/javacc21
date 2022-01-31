@@ -202,6 +202,9 @@ Modifiers#void : //TODO
       =>
       ("new"|"public"|"protected"|"internal"|"private"|"abstract"
       |"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern"
+      // This is allowed on methods in some cases,
+      // but not sure where exactly or when this was added
+      | "readonly"
       // Note that "ref" is only a permissible keyword for struct
       // since 7.3
       | "ref"
@@ -654,7 +657,14 @@ InterfaceMethodDeclaration :
    ";"
 ;
 
-ReturnType : "void" | Type ;
+ReturnType : 
+   SCAN {getToken(2).getType() != STAR}# =>
+   // If we have void*, we prefer to parse it as Type
+   // for tree-building purposes.
+   "void" ["*"] 
+   | 
+   Type 
+;
 
 FormalParameters :
    ParameterArray
