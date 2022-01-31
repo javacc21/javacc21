@@ -690,7 +690,7 @@ Type :
       => "?"
    ]
    ( 
-      SCAN 1 ~\NonArrayType =>
+      SCAN ~\NonArrayType =>
       "[" (",")* "]" 
    )*
    [
