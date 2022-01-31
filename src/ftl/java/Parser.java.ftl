@@ -214,6 +214,18 @@ public boolean isCancelled() {return cancelled;}
     return t;
   }
 
+  private String tokenImage(int n) {
+     return getToken(n).getImage();
+  }
+
+  private boolean checkNextTokenImage(String img) {
+    return getToken(1).getImage().equals(img);
+  }
+
+  private boolean checkNextTokenType(TokenType type) {
+    return getToken(1).getType() == type;
+  }
+
   private final TokenType nextTokenType() {
     if (nextTokenType == null) {
        nextTokenType = nextToken(lastConsumedToken).getType();

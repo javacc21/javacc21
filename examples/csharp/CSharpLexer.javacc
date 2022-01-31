@@ -38,6 +38,10 @@ MORE :
 ;
 
 TOKEN #Literal :
+  < REAL_LITERAL:
+     ((<DECIMAL_LITERAL>)? ".")? <DECIMAL_LITERAL> (<EXPONENT_PART>)? (["f","F","d","D"])?
+  > #RealLiteral
+  |
   < INTEGER_LITERAL: (<DECIMAL_LITERAL> | <HEX_LITERAL>) (<INTEGER_TYPE_SUFFIX>)?> #IntegerLiteral
   |
   < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])?>
@@ -47,10 +51,6 @@ TOKEN #Literal :
   < #INTEGER_TYPE_SUFFIX : "U" | "u" | "L" | "l" | "UL" | "Ul" | "uL" | "ul"| "LU" | "Lu" | "lU" | "lu">
   |
   < #HEX_DIGITS: ["0"-"9","a"-"f","A"-"F"]((["0"-"9","a"-"f","A"-"F","_"])*["0"-"9","a"-"f","A"-"F"])? >
-  |
-  < REAL_LITERAL:
-     (<DECIMAL_LITERAL>)? "." <DECIMAL_LITERAL> (<EXPONENT_PART>)? (["f","F","d","D"])?
-  > #RealLiteral
   |
   < #EXPONENT_PART : ["e","E"] (["+","-"])? <DECIMAL_LITERAL> >
   |

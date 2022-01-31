@@ -93,7 +93,7 @@ Attribute :
 AttributeArguments :
     "(" 
     [
-       SCAN ~(<IDENTIFIER>"=")
+       SCAN ~(")" | <IDENTIFIER>"=")
        => [=>Type ":" ] Expression
        (
           ","
@@ -163,7 +163,7 @@ NamespaceBody :
 ;
 
 TypeDeclaration :
-  SCAN 0 {getToken(1).getType() != RBRACE && getToken(1).getType() != EOF}# =>
+  SCAN 0 {!checkNextTokenType(RBRACE) && !checkNextTokenType(EOF)}# =>
   (
    ClassDeclaration
    |
@@ -196,7 +196,7 @@ Modifiers#void : //TODO
       }
      |
      SCAN { ((permissibleModifiers == null || permissibleModifiers.contains(ASYNC))
-            && getToken(1).getImage().equals("async"))
+            && checkNextTokenImage("async"))
           }#
       => ACTIVATE_TOKENS ASYNC ("async")
       { if (permissibleModifiers!=null) permissibleModifiers.remove(ASYNC);}
@@ -206,7 +206,7 @@ Modifiers#void : //TODO
 ClassDeclaration :
   (AttributeSection)*
   Modifiers
-  [SCAN {getToken(1).getImage().equals("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
   "class"
   =>||
    <IDENTIFIER>
@@ -222,7 +222,7 @@ ClassDeclaration :
 StructDeclaration :
    (AttributeSection)*
    Modifiers
-  [SCAN {getToken(1).getImage().equals("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
    "struct" 
    =>||
    <IDENTIFIER>
@@ -236,7 +236,7 @@ StructDeclaration :
 InterfaceDeclaration :
    (AttributeSection)*
    Modifiers
-   [SCAN {getToken(1).getImage().equals("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
    "interface"
    =>||
    <IDENTIFIER>
@@ -318,7 +318,7 @@ DelegateDeclaration :
 ;
 
 TypeParameterConstraintsClause :
-  SCAN {getToken(1).getImage().equals("where")} =>
+  SCAN {checkNextTokenImage("where")} =>
   ACTIVATE_TOKENS WHERE ("where") 
   <IDENTIFIER> 
   ":" 
@@ -600,7 +600,7 @@ ArrayInitializer :
 MethodDeclaration :
    (AttributeSection)*
    Modifiers
-   [SCAN {getToken(1).getImage().equals("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
    ReturnType
    //MemberName
    Name
@@ -639,7 +639,7 @@ FormalParameters :
    |
    FixedParameter 
    (
-      SCAN {getToken(1).getType() == COMMA} ~("," ParameterArray)  
+      SCAN {checkNextTokenType(COMMA)} ~("," ParameterArray)  
       => "," FixedParameter
    )* 
    ["," ParameterArray]
@@ -697,7 +697,7 @@ Type :
       SCAN 0 \ArrayType => 
       ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
    ]
-   ["*"]
+   ("*")*
 ;
 
 PrimitiveType#void :
@@ -727,7 +727,7 @@ LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
 
 LambdaLHS :
   [
-     SCAN {getToken(1).getImage().equals("async")}#
+     SCAN {checkNextTokenImage("async")}#
      => ACTIVATE_TOKENS ASYNC ("async")
   ]
   (
@@ -973,7 +973,7 @@ ThrowExpression : "throw" Expression ;
 CastExpression : "(" Type ")" =>|+1 UnaryExpression ;
 
 AwaitExpression : 
-   SCAN {getToken(1).getImage().equals("await")}#
+   SCAN {checkNextTokenImage("await")}#
     => 
    ACTIVATE_TOKENS AWAIT ("await") UnaryExpression
 ;
@@ -1255,7 +1255,7 @@ Statement :
    (Label)*
     (
        // REVISIT this
-       SCAN {!getToken(1).getImage().equals("await")}#
+       SCAN {!checkNextTokenImage("await")}#
        =>
        MethodDeclaration
        |
@@ -1404,7 +1404,7 @@ CatchClause :
 ;
 
 YieldStatement :
-   SCAN {getToken(1).getImage().equals("yield")}#
+   SCAN {checkNextTokenImage("yield")}#
    => ACTIVATE_TOKENS YIELD ("yield")
    (
       "break"
