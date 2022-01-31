@@ -474,7 +474,7 @@ IndexerDeclaration :
     (
        "{" AccessorDeclarations "}"
        |
-       "=>" Expression ";"
+       "=>" ["ref"] Expression ";"
     )    
 ;
 
@@ -572,6 +572,7 @@ PropertyBody :
    ["=" VariableInitializer] 
   |
   "=>" 
+  ["ref"] // since 7.3, I think...
   Expression 
   ";"
 ;
@@ -588,7 +589,7 @@ GetAccessorDeclaration :
    (
       Block 
       |
-      "=>" Expression ";"
+      "=>" ["ref"] Expression ";"
       | 
       ";"
    )
@@ -605,7 +606,7 @@ SetAccessorDeclaration :
    (
       Block 
       |
-      "=>" Expression ";"
+      "=>" ["ref"] Expression ";"
       |
       ";"
    )
@@ -642,7 +643,7 @@ MethodDeclaration :
 MethodBody :
    Block 
    | 
-   ["=>" Expression] ";"
+   ["=>" ["ref"] Expression] ";"
 ;
 
 InterfaceMethodDeclaration :
@@ -1479,6 +1480,7 @@ LockStatement : "lock" "(" Expression ")" EmbeddedStatement ;
 FixedStatement :
    "fixed"
    "(" =>||
+   PointerType
    FixedPointerDeclarator ("," FixedPointerDeclarator)*
    ")"
    EmbeddedStatement
@@ -1493,7 +1495,6 @@ PointerType :
 ;
 
 FixedPointerDeclarator : 
-   PointerType
    <IDENTIFIER> 
    "=" 
    ["&"]
