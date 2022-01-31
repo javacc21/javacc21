@@ -40,6 +40,7 @@ public class CSParse {
           System.out.println(file.getName()  + " parsed successfully.");
           successes.add(file);
        }
+       System.out.println();
        for (File file : failures) {
            System.out.println("Parse failed on: " + file);
        }

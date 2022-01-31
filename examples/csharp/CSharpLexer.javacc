@@ -233,6 +233,7 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" > 
    | < WHILE : "while" > 
 // Now contextual Keywords
+   | < __ARGLIST : "arglist">
    | < ADD : "add">
    | < ASSEMBLY : "assembly">
    | < ASYNC : "async" >

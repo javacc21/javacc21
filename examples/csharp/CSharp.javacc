@@ -5,7 +5,7 @@ TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,INTO,MODULE,PARTIAL,
-                  REMOVE,SET,VAR,WHEN,YIELD,
+                  REMOVE,SET,VAR,WHEN,YIELD, __ARGLIST,
                   // The following are all used in queries                  
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
                   INTO, ORDERBY,SELECT,WHERE;
@@ -378,8 +378,10 @@ StructMemberDeclarationUnsafe :
    (AttributeSection)*
    Modifiers
    "fixed"
+   =>||
    Type
    (<IDENTIFIER> "[" Expression "]")+
+   ";"
 ;
 
 ConstantDeclaration :
@@ -1446,7 +1448,7 @@ LockStatement : "lock" "(" Expression ")" EmbeddedStatement ;
 
 FixedStatement :
    "fixed"
-   "("
+   "(" =>||
    FixedPointerDeclarator ("," FixedPointerDeclarator)*
    ")"
    EmbeddedStatement
