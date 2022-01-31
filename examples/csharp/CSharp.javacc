@@ -189,7 +189,13 @@ Modifiers#void : //TODO
          permissibleModifiers.contains(getToken(1).getType()) }#
       =>
       ("new"|"public"|"protected"|"internal"|"private"|"abstract"
-      |"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern")
+      |"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern"
+      // Note that "ref" is only a permissible keyword for struct
+      // since 7.3
+      | "ref"
+      // 
+      | "readonly" // Have to check where this is possible and since when      
+      )
       {
          if (permissibleModifiers != null) {
             permissibleModifiers.remove(getToken(0).getType());
@@ -391,9 +397,9 @@ PropertyDeclaration :
       "new"|"public"|"protected"|"internal"
       |"private"|"static"|"virtual"|"sealed"
       |"override"|"abstract"|"extern" | "unsafe"
+      | "readonly" // REVISIT. When is this permissible?
    )*
    Type
-   //MemberName
    Name
    =>|+1
    PropertyBody
@@ -558,6 +564,7 @@ GetAccessorDeclaration :
       "protected" ["internal"]
       | "internal" ["protected"]
       | "private" 
+      | "readonly" // Only in a struct, I think. And since which version?
    ]
    ACTIVATE_TOKENS GET ("get") =>||
    (
