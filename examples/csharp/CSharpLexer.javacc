@@ -83,11 +83,11 @@ TOKEN #Literal :
   // TODO. This is not really correct.
   < INTERPOLATED_STRING_LITERAL : <REGULAR_INTERPOLATED_STRING_LITERAL> | ("$" <VERBATIM_STRING_LITERAL>) >
   |
-  < #REGULAR_INTERPOLATED_STRING_LITERAL : "$\"" ((~["\"","\\","'", "\n","\r"]) | <ESCAPED_CHAR>|<SINGLE_QUOTE_STRING>)* "\"">
+  < #REGULAR_INTERPOLATED_STRING_LITERAL : "$\"" ((~["\"","\\", "\n","\r"]) | <ESCAPED_CHAR>|<SINGLE_QUOTE_STRING>)* "\"">
   |
   < #SINGLE_QUOTE_STRING : ["'","`"] ((~["'", "\\", "\n", "\r"])|<ESCAPED_CHAR>)* "'" >
   |
-  < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR>)*  "\"">
+  < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)*  "\"">
   |
   < #VERBATIM_STRING_LITERAL : "@\"" (~["\""] | "\"\"")* "\"" > 
   |
