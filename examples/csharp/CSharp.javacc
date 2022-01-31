@@ -569,7 +569,7 @@ AccessorDeclarations :
 
 PropertyBody :
   "{" AccessorDeclarations "}"
-   ["=" VariableInitializer] 
+   ["=" VariableInitializer ";"]
   |
   "=>" 
   ["ref"] // since 7.3, I think...
