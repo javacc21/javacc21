@@ -123,6 +123,7 @@ Name :
      <IDENTIFIER>[TypeArgumentList]
    )
    (
+      SCAN 2
       "." <IDENTIFIER> [TypeArgumentList]
    )*
 ;
@@ -441,7 +442,7 @@ IndexerDeclaration :
     (AttributeSection)*
     Modifiers
     Type
-    [<IDENTIFIER> "."] 
+    [Name "."] 
     "this"
     "["
     =>||
