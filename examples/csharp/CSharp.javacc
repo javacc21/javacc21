@@ -1337,13 +1337,10 @@ EmbeddedStatement :
     ExpressionStatement
 ;    
 
-DeclarationStatement : 
-   LocalVariableDeclaration ";"
-   |
-   LocalConstantDeclaration ";"
-;
-
 LocalVariableDeclaration :
+   [
+      "ref" // since C# 7.0
+   ]
    (
       ACTIVATE_TOKENS VAR ("var") 
       | 
@@ -1410,7 +1407,20 @@ TryStatement :
    )
 ;
 
-ReturnStatement : "return" [Expression] ";" ;
+ReturnStatement : 
+   "return" 
+   [
+      [
+         // since 7.0. Note that this can only happen in a return statement
+         // in a method that was itself declared using ref
+         // However, I don't think this is our problem. At least for now.
+         // We leave it to the compiler!
+         "ref"
+      ] 
+      Expression 
+   ] 
+   ";" 
+;
 
 ThrowStatement : "throw" [Expression] ";" ;
 
