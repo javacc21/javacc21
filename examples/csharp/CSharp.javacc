@@ -43,7 +43,11 @@ INJECT PARSER_CLASS :
 ;
 
 ExternAliasDirective :
-   "extern" "alias" <IDENTIFIER> ";"
+   "extern" 
+   <IDENTIFIER>
+   ASSERT {getToken(0).getImage().equals("alias")}#
+   =>||
+   <IDENTIFIER> ";"
 ;
 
 UsingDirective :
@@ -726,12 +730,15 @@ ArrayType#void : Type ;
 NonNullableType : Type;
 
 Type :
+    SCAN ~\TupleType
     => "void" "*"
     |
     (
       PrimitiveType 
       |
       Name
+      |
+      TupleType
    )
    [
       SCAN ~\NonNullableType
@@ -745,7 +752,16 @@ Type :
       SCAN 0 \ArrayType => 
       ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
    ]
-   ("*")*
+   (SCAN ~\TupleType => "*")*
+;
+
+TupleType :
+   "("
+   Type [<IDENTIFIER>] 
+   ASSERT (",")
+   =>||
+   ("," Type [<IDENTIFIER>])*
+   ")"
 ;
 
 PrimitiveType#void :
@@ -1111,6 +1127,8 @@ PrimaryNoArrayCreationExpression :
       |
       SimpleName
       |
+      Tuple
+      |
       ParenthesizedExpression
       |
       TypeofExpression
@@ -1132,6 +1150,22 @@ PrimaryNoArrayCreationExpression :
       AnonymousMethodExpression
    )
 ;
+
+Tuple :
+   "("
+    [=> <IDENTIFIER> ":"] 
+    Expression
+    ASSERT {getToken(1).getType()==COMMA}#
+    =>|+1
+    (
+       ","
+       [=> <IDENTIFIER> ":"]
+       Expression
+    )*
+   ")"
+;
+
+
 
 PrimitiveTypeAccess :
    ("dynamic" | PrimitiveType)
@@ -1524,12 +1558,19 @@ SwitchStatement : "switch" "(" Expression ")" SwitchBlock ;
 SwitchBlock : "{" (SwitchSection)* "}" ; 
 
 SwitchLabel : 
-   "case" Type <IDENTIFIER> =>|| [WhenClause] ":"
-   |
-   "case" Expression [WhenClause] ":" 
+   CaseLabel
    |
    "default" ":"
-;   
+; 
+
+CaseLabel :
+   "case"
+   (
+      Type <IDENTIFIER> =>|| [WhenClause] ":"
+      |
+      Expression [WhenClause] ":"
+   )
+;
 
 WhenClause :
    SCAN 0 {getToken(1).getImage().equals("when")}#

@@ -99,7 +99,7 @@ TOKEN :
  <#PP_WS : [" ", "\t", "\f",
          "\u000b", "\u00a0", "\u1680",
          "\u2000"-"\u200a",
-         "\u202f", "\u205f", "\u3000"]>
+         "\u202f", "\u205f", "\u3000","\uC2A0"]>
  |
  <#PP_EOL : "\n" | "\r" | "\r\n" >
  |
@@ -169,7 +169,7 @@ INCLUDE NON_EXISTENT ! JAVA_IDENTIFIER_DEF
     <PP_EOL_COMMENT : ("//" (~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES
 ;
 
-<PP_DIRECTIVE> SKIP : " " | "\t" | "\f" ;
+<PP_DIRECTIVE> SKIP : <(<PP_WS>)+> ;
 
 BitSet PP_Root#void : PP_Block <EOF> {return lineMarkers;};
 
