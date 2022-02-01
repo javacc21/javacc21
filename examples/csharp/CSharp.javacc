@@ -239,7 +239,7 @@ ClassDeclaration :
    <IDENTIFIER>
   [TypeParameterList]
   [":" (Name | "object" | "dynamic" | "string") ("," Name)*]
-  (TypeParameterConstraintsClause)*
+  TypeParameterConstraints
   "{"
    (ClassMemberDeclaration)*
   "}"
@@ -255,7 +255,7 @@ StructDeclaration :
    <IDENTIFIER>
    [TypeParameterList]
    [":" Name ("," Name)*]
-   (TypeParameterConstraintsClause)*
+   TypeParameterConstraints
    "{" (ClassMemberDeclaration)* "}"
    [";"] 
 ;
@@ -269,7 +269,7 @@ InterfaceDeclaration :
    <IDENTIFIER>
    [TypeParameterList]
    [":" Name ("," Name)*]
-   (TypeParameterConstraintsClause)*
+   TypeParameterConstraints
    "{" 
    (InterfaceMemberDeclaration)* 
    "}"
@@ -340,18 +340,27 @@ DelegateDeclaration :
   <IDENTIFIER>
   [TypeParameterList]
   "(" [FormalParameters] ")"
-  (TypeParameterConstraintsClause)*
+  TypeParameterConstraints
   ";"
 ;
 
-TypeParameterConstraintsClause :
-  SCAN {checkNextTokenImage("where")} =>
-  ACTIVATE_TOKENS WHERE ("where") 
-  <IDENTIFIER> 
-  ":" 
-  (Name | "class" | "struct") 
-  ("," =>|+1 Name)* 
-  ["," "new" =>|| "(" ")"]
+TypeParameterConstraints :
+  ACTIVATE_TOKENS WHERE
+  (TypeParameterConstraint)*
+;
+
+TypeParameterConstraint :
+   <WHERE>
+   DEACTIVATE_TOKENS WHERE
+   ( 
+      <IDENTIFIER> 
+      ":"
+      (
+         "new" "(" ")"
+         |
+         ("class"|"struct"|Name) (SCAN 2 "," Name)* ["," "new" "(" ")"]
+      )
+   )
 ;
 
 ClassMemberDeclaration :
@@ -556,14 +565,14 @@ AddAccessorDeclaration :
     (AttributeSection)*
     ACTIVATE_TOKENS ADD ("add")
     =>||
-    Block
+    AccessorBody
 ;
 
 RemoveAccessorDeclaration :
     (AttributeSection)*
     ACTIVATE_TOKENS REMOVE ("remove")
     =>||
-    Block
+    AccessorBody
 ;
 
 AccessorDeclarations :
@@ -591,13 +600,7 @@ GetAccessorDeclaration :
       | "readonly" // Only in a struct, I think. And since which version?
    ]
    ACTIVATE_TOKENS GET ("get") =>||
-   (
-      Block 
-      |
-      "=>" ["ref"] Expression ";"
-      | 
-      ";"
-   )
+   AccessorBody
 ;
 
 SetAccessorDeclaration :
@@ -608,14 +611,16 @@ SetAccessorDeclaration :
       | "private" 
    ]
    ACTIVATE_TOKENS SET ("set") =>||
-   (
-      Block 
-      |
-      "=>" ["ref"] Expression ";"
-      |
-      ";"
-   )
+   AccessorBody
 ;   
+
+AccessorBody :
+   Block 
+   |
+   "=>" ["ref"] Expression ";"
+   |
+   ";"
+;
 
 VariableInitializer :
    Expression
@@ -641,7 +646,7 @@ MethodDeclaration :
    =>||
     [FormalParameters] 
    ")"
-   (TypeParameterConstraintsClause)*
+   TypeParameterConstraints
    MethodBody
 ;
 
@@ -661,7 +666,7 @@ InterfaceMethodDeclaration :
    "(" =>||
    [FormalParameters] 
    ")"
-   (TypeParameterConstraintsClause)*
+   TypeParameterConstraints
    ";"
 ;
 

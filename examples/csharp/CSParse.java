@@ -40,7 +40,9 @@ public class CSParse {
               continue;
           }
           parseTime = System.nanoTime() - parseStart;
-          System.out.println("Parsed " + file + " in " + parseTime/1000000.0 + " milliseconds.");
+          String parseTimeString = "" + parseTime/1000000.0;
+          parseTimeString = parseTimeString.substring(0, parseTimeString.indexOf('.')+2);
+          System.out.println("Parsed " + file + " in " + parseTimeString + " milliseconds.");
           successes.add(file);
        }
        System.out.println();
@@ -51,7 +53,9 @@ public class CSParse {
            System.out.println("\nParsed " + successes.size() + " files successfully");
            System.out.println("Failed on " + failures.size() + " files.");
        }
-       System.out.println("\nDuration: " + (System.nanoTime() - startTime)/1000000000.0 + " seconds");
+       String duration = "" + (System.nanoTime()-startTime)/1E9;
+       duration = duration.substring(0, duration.indexOf('.') + 2);
+       System.out.println("\nDuration: " + duration + " seconds");
        if (!failures.isEmpty()) System.exit(-1);
     }
       
