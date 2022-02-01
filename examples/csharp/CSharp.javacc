@@ -512,7 +512,7 @@ OperatorDeclaration :
 
 DestructorDeclaration :
    (AttributeSection)*
-   ["extern"]
+   ["extern" | "unsafe"]
    "~"
    <IDENTIFIER> 
    "(" 
@@ -942,6 +942,26 @@ RelationalExpression :
    (
       ("<"|">"|"<="|">=") ShiftExpression
       |
+      "is" Type
+      ASSERT 
+      {
+         getToken(0).getType() != HOOK 
+      // This is now really grotesque! 
+      // If the Type we matched ends in a ?
+      // then the following token must be
+      // one of the following half dozen types
+      // Otherwise we effectively backtrack
+      // and match the Type as a NonNullableType,
+      // i.e. we parse it without the trailing "?"
+         || getToken(1).getType() == HOOK 
+         || getToken(1).getType()== RPAREN 
+         || getToken(1).getType() == SEMICOLON
+         || getToken(1).getType() == EQ
+         || getToken(1).getType() == SC_OR
+         || getToken(1).getType() == SC_AND
+      }# =>|| 
+      [<IDENTIFIER>]
+      |
       "is" NonNullableType [<IDENTIFIER>]
       |
       "as" Type
@@ -1178,7 +1198,7 @@ PrimitiveTypeAccess :
    ("dynamic" | PrimitiveType)
    "." =>||
    <IDENTIFIER>
-   [TypeArgumentList]
+   [ => TypeArgumentList ]
 ;   
 
 QualifiedAliasMemberAccess :
@@ -1528,7 +1548,12 @@ YieldStatement :
 UsingStatement :
    "using"
    "("
-   (LocalVariableDeclaration | Expression)
+   (
+      SCAN LocalVariableDeclaration ")"
+      => LocalVariableDeclaration 
+      | 
+      Expression
+   )
    ")"
    EmbeddedStatement
 ;
