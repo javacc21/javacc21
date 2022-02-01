@@ -152,8 +152,9 @@ QualifiedAliasMember :
 TypeArgumentList :
    "<"
    [
+      (AttributeSection)*
       Type
-      ("," Type)* 
+      ("," (AttributeSection)* Type)* 
    ]
    DEACTIVATE_TOKENS RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN 
    (">")
@@ -719,7 +720,7 @@ TypeParameterList :
    (AttributeSection)*
    ["in"|"out"] // Only with interfaces 
    Name
-   ("," (AttributeSection)* Name)*    
+   ("," (AttributeSection)* ["in"|"out"] Name)*    
    ">"
 ;
 
@@ -731,7 +732,7 @@ NonNullableType : Type;
 
 Type :
     SCAN ~\TupleType
-    => "void" "*"
+    => "void" ("*")+
     |
     (
       PrimitiveType 
@@ -1123,6 +1124,8 @@ PrimaryNoArrayCreationExpression :
       |
       PrimitiveTypeAccess
       |
+      AnonymousMethodExpression
+      |
       QualifiedAliasMemberAccess
       |
       SimpleName
@@ -1146,8 +1149,6 @@ PrimaryNoArrayCreationExpression :
       ObjectCreationExpression
       |
       AnonymousObjectCreationExpression
-      |
-      AnonymousMethodExpression
    )
 ;
 
@@ -1266,7 +1267,12 @@ MemberDeclarator :
 
 
 AnonymousMethodExpression :
+   [
+      SCAN {checkNextTokenImage("async")}
+      => ACTIVATE_TOKENS ASYNC ("async")
+   ]
    "delegate"
+   =>||
    [
       "("
       [ExplicitAnonymousFunctionSignature]
