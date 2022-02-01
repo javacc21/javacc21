@@ -1386,7 +1386,7 @@ LocalVariableDeclaration :
    ("," LocalVariableDeclarator)*
 ;
 
-LocalVariableDeclarator : <IDENTIFIER> ["=" LocalVariableInitializer] ;
+LocalVariableDeclarator : <IDENTIFIER> ["=" ["ref"] LocalVariableInitializer] ;
 
 LocalVariableInitializer :  
    Expression 
