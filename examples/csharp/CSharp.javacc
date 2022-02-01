@@ -948,7 +948,7 @@ RelationalExpression :
          getToken(0).getType() != HOOK 
       // This is now really grotesque! 
       // If the Type we matched ends in a ?
-      // then the following token must be
+      // then the token after that must be
       // one of the following half dozen types
       // Otherwise we effectively backtrack
       // and match the Type as a NonNullableType,
@@ -1330,8 +1330,12 @@ ObjectInitializer :
 
 MemberInitializer :
    (<IDENTIFIER> | "[" ArgumentList "]")
-   "="
-   (Expression | ObjectInitializer | CollectionInitializer)
+   [
+      // If this is really optional, it is a mistake in the spec. 
+      // At least the C# 6.0 spec
+     "="
+     (Expression | ObjectInitializer | CollectionInitializer)
+   ]
 ;
 
 CollectionInitializer : 
