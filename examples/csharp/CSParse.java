@@ -25,28 +25,33 @@ public class CSParse {
           }
 	   addFilesRecursively(files, file);
       }
-      long startTime = System.currentTimeMillis();
+      long startTime = System.nanoTime();
+      long parseStart, parseTime;
       for (File file : files) {
           try {
              // A bit screwball, we'll dump the tree if there is only one arg. :-)
+              parseStart = System.nanoTime();
               parseFile(file, files.size() == 1);
           } 
           catch (Exception e) {
               System.err.println("Error processing file: " + file);
               e.printStackTrace();
-	      failures.add(file);
+	          failures.add(file);
               continue;
           }
-          System.out.println(file.getName()  + " parsed successfully.");
+          parseTime = System.nanoTime() - parseStart;
+          System.out.println("Parsed " + file + " in " + parseTime/1000000.0 + " milliseconds.");
           successes.add(file);
        }
        System.out.println();
        for (File file : failures) {
            System.out.println("Parse failed on: " + file);
        }
-       System.out.println("\nParsed " + successes.size() + " files successfully");
-       System.out.println("Failed on " + failures.size() + " files.");
-       System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
+       if (files.size() > 1) {
+           System.out.println("\nParsed " + successes.size() + " files successfully");
+           System.out.println("Failed on " + failures.size() + " files.");
+       }
+       System.out.println("\nDuration: " + (System.nanoTime() - startTime)/1000000000.0 + " seconds");
        if (!failures.isEmpty()) System.exit(-1);
     }
       

@@ -493,7 +493,7 @@ OperatorDeclaration :
       |
       ("!"|"~"|"++"|"--"|"true"|"false") =>|| "(" Type <IDENTIFIER> ")"
       |
-      ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|"right_shift"|"=="|"!="|">"|"<"|">="|"<=")
+      ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|">>"|"=="|"!="|">"|"<"|">="|"<=")
       "(" Type <IDENTIFIER> "," Type <IDENTIFIER> ")"
       |
       Type "(" Type <IDENTIFIER> ")" 
@@ -653,6 +653,7 @@ MethodBody :
 
 InterfaceMethodDeclaration :
    (AttributeSection)*
+   ["unsafe"] // REVISIT. 
    ["new"]
    ReturnType
    <IDENTIFIER>

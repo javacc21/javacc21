@@ -41,15 +41,17 @@
          <assertions><enable/></assertions>
          <arg value="testfiles"/>
      </java>
+    <!--
      <echo>
-        -------------------
+       
         Okay, that seems okay. Now let's dump the parse tree for a single source file
-        -------------------
+        
      </echo>
      <java fork="true" failonerror="true" classname="CSParse">
 	       <assertions><enable/></assertions>
          <arg value="testfiles/CSharpAddAccessibilityModifiersDiagnosticAnalyzer.cs"/>
-     </java>
+     </java> 
+  -->
 </target>
 
 </project>
