@@ -8,7 +8,7 @@ DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,INTO,MODULE,PARTIAL,
                   REMOVE,SET,VAR,WHEN,YIELD, __ARGLIST,
                   // The following are all used in queries                  
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
-                  INTO, ORDERBY,SELECT,WHERE;
+                  INTO, ON, ORDERBY,SELECT,WHERE;
 
 INCLUDE "CSharpLexer.javacc"
 
@@ -826,7 +826,7 @@ QueryExpressionLA#scan :
 
 QueryExpression :
    ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
-                   INTO, ORDERBY,SELECT,WHERE
+                   INTO, ON, ORDERBY,SELECT,WHERE
    (
      FromClause 
      QueryBody
@@ -836,7 +836,7 @@ QueryExpression :
 InQueryExpression#void :
    DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
                    GROUP,JOIN,LET,INTO,
-                   ORDERBY,SELECT,WHERE
+                   ON, ORDERBY,SELECT,WHERE
    (Expression)
 ;
 
@@ -1534,7 +1534,7 @@ UnsafeStatement : "unsafe" Block ;
 CatchClause : 
    "catch" 
    [ "(" Type [<IDENTIFIER>] ")" ] 
-   [ "when" "(" Expression ")" ] 
+   [ ACTIVATE_TOKENS WHEN ("when") =>|| "(" Expression ")" ] 
    Block
 ;
 
