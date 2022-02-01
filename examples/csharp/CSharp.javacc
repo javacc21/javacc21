@@ -719,7 +719,7 @@ TypeParameterList :
    (AttributeSection)*
    ["in"|"out"] // Only with interfaces 
    Name
-   ("," (AttributeSection)* Name)*    
+   ("," (AttributeSection)* ["in"|"out"] Name)*    
    ">"
 ;
 
@@ -731,7 +731,7 @@ NonNullableType : Type;
 
 Type :
     SCAN ~\TupleType
-    => "void" "*"
+    => "void" ("*")+
     |
     (
       PrimitiveType 
