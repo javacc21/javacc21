@@ -331,7 +331,6 @@ def get_function_table_map(lexical_state):
 
 [#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("True", "False")
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("True", "False")
-      CSHARP_UNICODE_ESCAPE = grammar.csharpUnicodeEscape?string("True", "False")
       ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("True", "False")]
 
 CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
@@ -416,7 +415,7 @@ ${grammar.utils.translateLexerInjections(injector, true)}
             raise ValueError('input filename not specified')
         self.input_source = input_source
         text = _input_text(input_source)
-        self.content = self.munge_content(text, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${CSHARP_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL})
+        self.content = self.munge_content(text, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL})
         self.content_len = n = len(self.content)
         n += 1
 [#if grammar.lexerUsesParser]
@@ -672,7 +671,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
  [/#if]
 
     def munge_content(self, content, tabs_to_spaces, preserve_lines,
-                      java_unicode_escape, csharp_unicode_escape, ensure_final_endline):
+                      java_unicode_escape, ensure_final_endline):
         if tabs_to_spaces <= 0 and preserve_lines and not java_unicode_escape:
             if ensure_final_endline:
                 last_char = content[-1]
@@ -691,20 +690,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         while index < cplen:
             ch = code_points[index]
             index += 1
-            if ch == '\\' and csharp_unicode_escape and index < cplen and ch == 'U' :
-                hex_buf = []
-                for i in range(1, 5):
-                    hex_buf.append(code_points[index+i])
-                current = int(''.join(hex_buf), 16)
-                buf.append(chr(current))
-                hex_buf = []                    
-                for i in range(5,9):
-                    hex_buf.append(code_points[index+i])
-                current = int(''.join(hex_buf), 16)
-                buf.append(chr(current))
-                index += 9
-                col+=1
-            elif ch == '\\' and (java_unicode_escape or csharp_unicode_escape) and index < cplen:
+            if ch == '\\' and java_unicode_escape and index < cplen:
                 ch = code_points[index]
                 index += 1
                 if ch != 'u':
