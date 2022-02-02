@@ -6,6 +6,8 @@ package ${grammar.parserPackage};
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.ByteBuffer;
+import static java.nio.charset.StandardCharsets.*;
 
 /**
  * Token literal values and constants.
@@ -152,7 +154,14 @@ import java.nio.charset.Charset;
     if (firstByte == 0xFF && secondByte == 0xFE) {
         return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16LE"));
     }
-    return new String(bytes, Charset.forName("UTF-8"));
+    Charset defaultCS = Charset.defaultCharset();
+    if (!defaultCS.equals(UTF_8)) try {
+       return UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString();
+    } catch (IOException ioe) {
+       // Just ignore it, I guess.
+       // Will revisit this later.
+    }
+    return new String(bytes, defaultCS);
   }
 }
 
