@@ -48,7 +48,6 @@
 
 [#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("true", "false")
-      CSHARP_UNICODE_ESCAPE= grammar.csharpUnicodeEscape?string("true", "false")
       ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")]
 
 [#macro EnumSet varName tokenNames]
@@ -184,7 +183,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       */
      public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
         this.inputSource = inputSource;
-        this.content = mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${CSHARP_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+        this.content = mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         this.inputSource = inputSource;
         this.lineOffsets = createLineOffsetsTable(this.content);
         tokenLocationTable = new Token[content.length()+1];
@@ -192,8 +191,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         this.startingLine = startingLine;
         this.startingColumn = startingColumn;
         switchTo(lexState);
-     [#if grammar.cppContinuationLines]
-        handleCPreprocessorContinuationLines();
+     [#if grammar.cppContinuationLine]
+        handleCContinuationLines();
      [/#if]
      }
 
@@ -660,7 +659,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 // Icky method to handle annoying stuff. Might make this public later if it is
 // needed elsewhere
   private static String mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
-        boolean javaUnicodeEscape, boolean csharpUnicodeEscape, boolean ensureFinalEndline) {
+        boolean javaUnicodeEscape, boolean ensureFinalEndline) {
+            boolean csharpUnicodeEscape = false;
     if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape && !csharpUnicodeEscape) {
         if (ensureFinalEndline) {
             if (content.length() == 0) {
@@ -746,42 +746,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     return buf.toString();
   }
 
-  private void handleCPreprocessorContinuationLines() {
-      boolean inPreprocessor = false, atLineStart = true;
-      //The index of the last backslash we encountered, -1 if undefined.
-      // This is only set if we are within a preprocessor directive.
-      int lastBackslashIndex = -1;
-      int index = 0;
-      while (index < content.length()) {
-          char ch = content.charAt(index++);
-          if (ch == '#' && !inPreprocessor && atLineStart) {
-              inPreprocessor = true;
-              atLineStart = false;
-          }
-          else if (ch == '\n') {
-              if (!inPreprocessor) atLineStart = true;
-              else {
-                  if (lastBackslashIndex != -1) {
-                      // If we have the lastBackslashIndex set
-                      // we set the buffer offsets from there 
-                      // up to (and including) this newline to IGNORED
-                      for (int i=lastBackslashIndex; i< index; i++) {
-                          tokenLocationTable[i] = IGNORED;
-                      }
-                      lastBackslashIndex = -1;
-                  } else {
-                      inPreprocessor = false;
-                      atLineStart = true; 
-                  }
-              }
-          }
-          else if (ch == '\\' && inPreprocessor) {
-              lastBackslashIndex = index -1;
-          }
-          else if (!Character.isWhitespace(ch)) {
-              atLineStart = false;
-              lastBackslashIndex = -1;
-          }
+  private void handleCContinuationLines() {
+      String input = content.toString();
+      for (int offset = input.indexOf('\\'); offset >=0; offset = input.indexOf('\\', offset+1)) {
+          int nlIndex = input.indexOf('\n', offset);
+          if (nlIndex < 0) break;
+          if (input.substring(offset, nlIndex).trim().isEmpty()) {
+              for (int i=offset; i<=nlIndex; i++) tokenLocationTable[i] = IGNORED;
+          } 
       }
-  }
+  }  
 }
