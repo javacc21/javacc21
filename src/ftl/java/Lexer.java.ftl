@@ -751,7 +751,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       for (int offset = input.indexOf('\\'); offset >=0; offset = input.indexOf('\\', offset+1)) {
           int nlIndex = input.indexOf('\n', offset);
           if (nlIndex < 0) break;
-          if (input.substring(offset, nlIndex).trim().isEmpty()) {
+          if (input.substring(offset+1, nlIndex).trim().isEmpty()) {
               for (int i=offset; i<=nlIndex; i++) tokenLocationTable[i] = IGNORED;
           } 
       }
