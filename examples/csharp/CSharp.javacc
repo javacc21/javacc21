@@ -790,8 +790,8 @@ Expression :
    LambdaExpression
    |
    AssignmentExpression
-   |
-   ConditionalExpression
+//   |
+//   ConditionalExpression
 ;
 
 LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
@@ -908,9 +908,12 @@ OrderbyClause :
 ;    
 
 AssignmentExpression :
-   UnaryExpression AssignmentOperator =>|| 
-   ["ref"] // since 7.0 ?
-   Expression
+   ConditionalExpression 
+   [
+      AssignmentOperator
+      ["ref"] // since 7.0 ?
+      Expression
+   ]
 ;
 
 MultiplicativeExpression : 
@@ -942,13 +945,15 @@ RelationalExpression :
    (
       ("<"|">"|"<="|">=") ShiftExpression
       |
+      => "is" "null" // Not sure this is supposed to work, but...
+      |
       "is" Type
       ASSERT 
       {
          getToken(0).getType() != HOOK 
       // This is now really grotesque! 
-      // If the Type we matched ends in a ?
-      // then the token after that must be
+      // If the Type we matched is "nullable", i.e. 
+      // ends in a ?  // then the token after that must be
       // one of the following half dozen types
       // Otherwise we effectively backtrack
       // and match the Type as a NonNullableType,
@@ -1106,9 +1111,43 @@ NullConditionalExpression : PrimaryExpression [NullConditionalOperations] ;
 
 PrimaryExpression :
    (
-   => ArrayCreationExpression
-   |
-   PrimaryNoArrayCreationExpression
+      => ArrayCreationExpression
+      |
+      LiteralExpression
+      |
+      <INTERPOLATED_STRING_LITERAL> // TODO: deal with this better.
+      |
+      "this"
+      |
+      BaseAccess
+      |
+      PrimitiveTypeAccess
+      |
+      AnonymousMethodExpression
+      |
+      QualifiedAliasMemberAccess
+      |
+      SimpleName
+      |
+      Tuple
+      |
+      ParenthesizedExpression
+      |
+      TypeofExpression
+      |
+      DefaultValueExpression
+      |
+      NameofExpression
+      |
+      CheckedExpression
+      |
+      SizeofExpression 
+      |
+      UncheckedExpression
+      |
+      ObjectCreationExpression
+      |
+      AnonymousObjectCreationExpression
    )
    (
     "(" [ArgumentList] ")"
@@ -1567,19 +1606,11 @@ LockStatement : "lock" "(" Expression ")" EmbeddedStatement ;
 FixedStatement :
    "fixed"
    "(" =>||
-   PointerType
+   Type ASSERT {getToken(0).getType() == STAR}
    FixedPointerDeclarator ("," FixedPointerDeclarator)*
    ")"
    EmbeddedStatement
 ; 
-
-PointerType : 
-   ("void" | Type) 
-   [
-     SCAN 0 {getToken(0).getType() != STAR}#
-     => "*" 
-   ]
-;
 
 FixedPointerDeclarator : 
    <IDENTIFIER> 

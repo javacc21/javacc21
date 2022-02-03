@@ -1,6 +1,4 @@
 TOKEN :
-//  <IDENTIFIER : ("@")? <CSHARP_IDENTIFIER_START> (<CSHARP_IDENTIFIER_PART>)*>
-//  |
   <#CSHARP_IDENTIFIER_START :
     [
         "\u0041"-"\u005a",

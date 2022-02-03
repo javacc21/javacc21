@@ -264,5 +264,12 @@ TOKEN #KeyWord :
 INCLUDE "CSharpIdentifierDef.javacc"
 
 TOKEN :
-  <IDENTIFIER : ("@")? <CSHARP_IDENTIFIER_START> (<CSHARP_IDENTIFIER_PART>)*>
+  <IDENTIFIER : ("@")? (<CSHARP_IDENTIFIER_START>|<UNICODE_ESCAPE>) (<CSHARP_IDENTIFIER_PART>|<UNICODE_ESCAPE>)*>
+  |   
+  <#UNICODE_ESCAPE : "\\" 
+                    (
+                      "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
+                      |
+                      "U" (["0"-"9", "a"-"f", "A"-"F"]){8}
+                    ) >
 ;
