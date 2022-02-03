@@ -51,6 +51,8 @@ import java.util.concurrent.CancellationException;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.Charset;
+
 [#if grammar.nodePackage?has_content && grammar.parserPackage! != grammar.nodePackage]
 [#list grammar.nodeNames as node]
 import ${grammar.nodePackage}.${node};
@@ -63,20 +65,6 @@ import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*
 
 @SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
-[#--
-    private static final java.util.logging.Logger LOGGER = Logger.getLogger(${grammar.constantsClassName}.class.getName());
-    
-[#if grammar.debugParser||grammar.debugLexer||grammar.debugFaultTolerant]
-     static {
-         LOGGER.setLevel(Level.FINEST);
-     }
-[/#if]    
-
-    public static void setLogLevel(Level level) {
-        LOGGER.setLevel(level);
-        Logger.getGlobal().getParent().getHandlers()[0].setLevel(level);
-    }
---]
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"
 Token lastConsumedToken;
@@ -132,6 +120,10 @@ public boolean isCancelled() {return cancelled;}
    */
   public ${grammar.parserClassName}(String inputSource, Path path) throws IOException {
     this(inputSource, ${grammar.constantsClassName}.stringFromBytes(Files.readAllBytes(path)));
+  }
+
+  public ${grammar.parserClassName}(String inputSource, Path path, Charset charset) throws IOException {
+    this(inputSource, ${grammar.constantsClassName}.stringFromBytes(Files.readAllBytes(path), charset));
   }
 
   /**

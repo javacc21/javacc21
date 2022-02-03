@@ -1,7 +1,7 @@
 PARSER_PACKAGE="org.parsers.csharp";
 NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
-TABS_TO_SPACES=0;
+TABS_TO_SPACES=4;
 PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
 
@@ -1200,46 +1200,6 @@ ArrayCreationExpression :
 
 RankSpecifier : "[" (",")* "]" ;
 
-PrimaryNoArrayCreationExpression :
-   (
-      LiteralExpression
-      |
-      <INTERPOLATED_STRING_LITERAL> // TODO: deal with this better.
-      |
-      "this"
-      |
-      BaseAccess
-      |
-      PrimitiveTypeAccess
-      |
-      AnonymousMethodExpression
-      |
-      QualifiedAliasMemberAccess
-      |
-      SimpleName
-      |
-      Tuple
-      |
-      ParenthesizedExpression
-      |
-      TypeofExpression
-      |
-      DefaultValueExpression
-      |
-      NameofExpression
-      |
-      CheckedExpression
-      |
-      SizeofExpression 
-      |
-      UncheckedExpression
-      |
-      ObjectCreationExpression
-      |
-      AnonymousObjectCreationExpression
-   )
-;
-
 Tuple :
    "("
    TupleElement =>|+1
@@ -1335,7 +1295,7 @@ UnboundTypeName :
 ;
 
 ObjectCreationExpression :
-   "new" =>|+1 [Type] // The Type is optional since C# 9
+   "new" =>|+1 [NonArrayType] // This seems possible since C# 9
    (
       "(" [ArgumentList] ")" [ObjectInitializer | CollectionInitializer]
       |

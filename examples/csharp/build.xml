@@ -8,13 +8,13 @@
 <target name="init">
 	<uptodate property="csparser.uptodate" srcfile="CSharp.javacc" targetfile="org/parsers/csharp/CSharpParser.java"
   />
-  <uptodate property="preprocessor.uptodate"
+  <uptodate property="cspreprocessor.uptodate"
     targetfile="org/parsers/csharp/preprocessor/PreprocessorParser.java"
     srcfile="../preprocessor/Preprocessor.javacc"
   />
 </target>
 
-<target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
+<target name="preprocessor-gen" depends="init" unless="cspreprocessor.uptodate">
 	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
   <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
      <assertions><enable/></assertions>
