@@ -491,6 +491,25 @@ IndexerDeclaration :
        "=>" ["ref"] Expression ";"
     )    
 ;
+#if false
+OperatorDeclaration :
+   (AttributeSection)*
+   ( "public" | "static" | "extern" | "unsafe")+
+   (Type | "implicit" | "explicit")
+   "operator" =>||
+   (
+      ("+"|"-") =>|| "(" ["in"] Type <IDENTIFIER> ["," Type <IDENTIFIER>] ")"
+      |
+      ("!"|"~"|"++"|"--"|"true"|"false") =>|| "(" ["in"] Type <IDENTIFIER> ")"
+      |
+      ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|">>"|"=="|"!="|">"|"<"|">="|"<=")
+      "(" Type ["in"] <IDENTIFIER> "," Type ["in"" <IDENTIFIER> ")"
+      |
+      Type "(" Type ["in"] <IDENTIFIER> ["=" Expression] ")" 
+   )
+   MethodBody
+;
+#endif
 
 OperatorDeclaration :
    (AttributeSection)*
@@ -498,14 +517,14 @@ OperatorDeclaration :
    (Type | "implicit" | "explicit")
    "operator" =>||
    (
-      ("+"|"-") =>|| "(" Type <IDENTIFIER> ["," Type <IDENTIFIER>] ")"
+      ("+"|"-") "(" ["in"] Type <IDENTIFIER> ["," ["in"] Type <IDENTIFIER>] ")"
       |
-      ("!"|"~"|"++"|"--"|"true"|"false") =>|| "(" Type <IDENTIFIER> ")"
+      ("!"|"~"|"++"|"--"|"true"|"false") "(" ["in"] Type <IDENTIFIER> ")"
       |
       ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|">>"|"=="|"!="|">"|"<"|">="|"<=")
-      "(" Type <IDENTIFIER> "," Type <IDENTIFIER> ")"
+      "(" ["in"] Type <IDENTIFIER> "," ["in"] Type <IDENTIFIER> ")"
       |
-      Type "(" Type <IDENTIFIER> ")" 
+      Type "(" ["in"] Type <IDENTIFIER> ["=" Expression] ")" 
    )
    MethodBody
 ;
@@ -1219,19 +1238,22 @@ PrimaryNoArrayCreationExpression :
 
 Tuple :
    "("
-    [=> <IDENTIFIER> ":"] 
-    Expression
-    ASSERT {getToken(1).getType()==COMMA}#
-    =>|+1
-    (
-       ","
-       [=> <IDENTIFIER> ":"]
-       Expression
-    )*
+   TupleElement =>|+1
+   (
+      "," TupleElement
+   )+
    ")"
 ;
 
-
+TupleElement :
+   [=> <IDENTIFIER> ":"]
+   (
+       =>Expression ASSERT ("," | ")")
+       |
+       =>Type Expression ASSERT ("," | ")")
+   ) 
+   =>||
+;
 
 PrimitiveTypeAccess :
    ("dynamic" | PrimitiveType)
@@ -1357,7 +1379,7 @@ ExplicitLambdaSignature :
    ")"
 ;
 
-ExplicitAnonymousFunctionParameter :  ["ref"|"out"] Type <IDENTIFIER> ;
+ExplicitAnonymousFunctionParameter :  ["ref"|"out"|"in"] Type <IDENTIFIER> ;
 
 ObjectInitializer :
   SCAN "{" (<IDENTIFIER> | "[" ArgumentList "]") "="
@@ -1483,6 +1505,9 @@ LocalVariableDeclaration :
    [
       "ref" // since C# 7.0
    ]
+   [
+      "readonly" //REVISIT
+   ]
    (
       ACTIVATE_TOKENS VAR ("var") 
       | 
@@ -1502,7 +1527,25 @@ LocalVariableInitializer :
    | 
    ArrayInitializer 
    | 
-   "stackalloc" Type "[" Expression "]"
+   StackAllocInitializer
+;
+
+StackAllocInitializer :
+   "stackalloc" 
+   (
+      "[" "]" ArrayInitializer
+      |
+      Type
+      (
+         SCAN 0 {getToken(0).getType() != RBRACKET}#
+         => "[" Expression "]" 
+         |
+         "[" Expression "]"
+         |
+         {}
+      )
+      [ArrayInitializer]
+   )
 ;
 
 LocalConstantDeclaration :
@@ -1512,9 +1555,9 @@ LocalConstantDeclaration :
    ("," ConstantDeclarator)*
 ;
 
-CheckedStatement : "checked" Block ;
+CheckedStatement : "checked" =>|+1 Block ;
 
-UncheckedStatement : "unchecked" Block ;
+UncheckedStatement : "unchecked" =>|+1 Block ;
 
 BreakStatement : "break" ";" ;
 
@@ -1615,8 +1658,11 @@ FixedStatement :
 FixedPointerDeclarator : 
    <IDENTIFIER> 
    "=" 
-   ["&"]
-   Expression
+   (
+      ["&"] Expression
+      |
+      StackAllocInitializer
+   )
 ;
 
 StatementExpression :
