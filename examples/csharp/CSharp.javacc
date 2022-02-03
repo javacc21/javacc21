@@ -1,7 +1,8 @@
 PARSER_PACKAGE="org.parsers.csharp";
 NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
-TABS_TO_SPACES=4;
+TABS_TO_SPACES=0;
+PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,INTO,MODULE,PARTIAL,
@@ -573,6 +574,9 @@ ArgumentList : Argument ("," Argument)* ;
 Argument :
    [=> <IDENTIFIER> ":"]
    (
+       // Where is this specified?
+      PrimitiveType ASSERT(","|")") =>||
+      |
       => "out" Type <IDENTIFIER> // since C# 7.0
       |
       // Not sure since when "in" is allowed here
@@ -1171,7 +1175,7 @@ PrimaryExpression :
    (
     "(" [ArgumentList] ")"
     |
-    "[" Expression ("," Expression)*  "]"
+    "[" [=><IDENTIFIER> ":"] Expression ("," [=><IDENTIFIER>":"] Expression)*  "]"
     |
     "." <IDENTIFIER> [=>TypeArgumentList]
     |
