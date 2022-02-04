@@ -20,21 +20,33 @@ UNPARSED :
 ;
 
 MORE : 
-  "//" : IN_SINGLE_LINE_COMMENT
-  |
   "/*" : IN_MULTI_LINE_COMMENT
 ;
 
-<IN_SINGLE_LINE_COMMENT>
-UNPARSED :
-  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #Comment : CSHARP
-;
-
-
-<IN_SINGLE_LINE_COMMENT,IN_MULTI_LINE_COMMENT>
+<IN_MULTI_LINE_COMMENT>
 MORE :
   < ~[] >
 ;
+
+UNPARSED :
+  < SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > 
+;
+
+TOKEN : //Not yet used.
+{
+  <PP_IF : "#if" >
+  |
+  <PP_ELIF : "#elif">
+  |
+  <PP_DEFINE : "#define">
+  |
+  <PP_UNDEF : "#undefine">
+  |
+  <PP_ELSE : "#else">
+  |
+  <PP_IGNORED_DIRECTIVE : "#pragma" | "#line" | "#warning" | "#error" | "#region" | "#endregion" | "#nullable" > 
+  //Anything else that starts with a '#' will just be an InvalidToken
+}
 
 TOKEN #Literal :
   < INTEGER_LITERAL: (<DECIMAL_LITERAL> | <HEX_LITERAL> | <BINARY_LITERAL>) (<INTEGER_TYPE_SUFFIX>)?> #IntegerLiteral
