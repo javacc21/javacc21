@@ -806,16 +806,65 @@ Block :
   "}"
 ;
 
-Expression :
+Expression#interface :
    SCAN QueryExpressionLA
    =>QueryExpression
    |
    LambdaExpression
    |
    AssignmentExpression
-//   |
-//   ConditionalExpression
 ;
+
+INJECT LiteralExpression : implements Expression
+INJECT LambdaExpression : implements Expression
+INJECT AdditiveExpression : implements Expression
+INJECT MultiplicativeExpression : implements Expression
+INJECT EqualityExpression : implements Expression
+INJECT NullCoalescingExpression : implements Expression
+INJECT NullConditionalExpression : implements Expression
+INJECT AssignmentExpression : implements Expression
+INJECT ConditionalAndExpression : implements Expression
+INJECT ConditionalOrExpression : implements Expression
+INJECT ConditionalExpression : implements Expression
+INJECT ArrayCreationExpression : implements Expression
+INJECT ObjectCreationExpression : implements Expression
+INJECT AnonymousObjectCreationExpression : implements Expression
+INJECT ParenthesizedExpression : implements Expression
+INJECT InvocationExpression : implements Expression
+INJECT PostDecrementExpression : implements Expression
+INJECT PostIncrementExpression : implements Expression
+INJECT PreDecrementExpression : implements Expression
+INJECT PreIncrementExpression : implements Expression
+INJECT QualifiedAliasMember : implements Expression
+INJECT UnaryExpression : implements Expression
+INJECT UnaryExpressionNotPlusMinus : extends UnaryExpression
+INJECT UnaryExpressionPlusOrMinus : extends UnaryExpression
+INJECT UnaryExpressionUnsafe : extends UnaryExpression
+
+INJECT Tuple : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT SimpleName : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT MemberAccess : implements Expression 
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT PointerMemberAccess : implements Expression 
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT ElementAccess : implements Expression 
+{
+   public boolean isAssignableTo() {return true;}
+}
 
 LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
 
@@ -1173,18 +1222,18 @@ PrimaryExpression :
       AnonymousObjectCreationExpression
    )
    (
-    "(" [ArgumentList] ")"
+    ("(" [ArgumentList] ")") #InvocationExpression(+1)
     |
-    "[" [=><IDENTIFIER> ":"] Expression ("," [=><IDENTIFIER>":"] Expression)*  "]"
+    ("[" [=><IDENTIFIER> ":"] Expression ("," [=><IDENTIFIER>":"] Expression)*  "]") #ElementAccess(+1)
     |
-    "." <IDENTIFIER> [=>TypeArgumentList]
+    ("." <IDENTIFIER> [=>TypeArgumentList]) #MemberAccess(+1)
     |
-    "->" <IDENTIFIER>
+    "->" <IDENTIFIER> #PointerMemberAccess(3)
     |
-    "++"
+    "++" #PostIncrementExpression(2)
     |
-    "--"
-   )*   
+    "--" #PostDecrementExpression(2)
+   )*      
 ;   
 
 ArrayCreationExpression :
@@ -1258,7 +1307,7 @@ PredefinedType#void :
 // if it can be inferred by the compiler.
 DefaultValueExpression : "default" [ "(" Type ")" ] ;
 
-SimpleName : <IDENTIFIER> [=>TypeArgumentList] ;
+SimpleName# : <IDENTIFIER> [=>TypeArgumentList] ;
 
 ParenthesizedExpression : "(" Expression ")" ;
 
@@ -1463,28 +1512,61 @@ EmbeddedStatement :
     ForeachStatement
     |
     ExpressionStatement
-;    
+;
 
-LocalVariableDeclaration :
+LocalVariableDeclarationLA#scan :
+   ASSERT {!checkNextTokenImage("await")} // Is there any possibility that a local type is named "await"?
+   ["ref"] ["readonly"]
+   (
+      (
+         <IDENTIFIER> ASSERT {getToken(0).getImage().equals("var")}
+         (<IDENTIFIER>|Tuple) "="
+      )
+      |
+      (
+         Type <IDENTIFIER> ("="|";"|",")
+      )
+   )
+;
+
+LocalVariableDeclaration : 
+  SCAN LocalVariableDeclarationLA =>
+  (
+     VarDeclaration
+     |
+     NoVarDeclaration
+  )
+;   
+
+NoVarDeclaration :
    [
       "ref" // since C# 7.0
    ]
    [
       "readonly" //REVISIT
    ]
-   (
-      ACTIVATE_TOKENS VAR ("var") 
-      | 
-      Type 
-      ASSERT {getToken(-1).getType() == DOT || !getToken(0).toString().equals("await")}#
-   )
-   ASSERT {getToken(2).getType() != LPAREN}#
+   Type 
+   ASSERT {getToken(-1).getType() == DOT || !getToken(0).toString().equals("await")}#
    =>|+1
    LocalVariableDeclarator
    ("," LocalVariableDeclarator)*
 ;
 
-LocalVariableDeclarator : <IDENTIFIER> ["=" ["ref"] LocalVariableInitializer] ;
+VarDeclaration :
+   [
+      "ref" // since C# 7.0
+   ]
+   [
+      "readonly" //REVISIT
+   ]
+   ACTIVATE_TOKENS VAR ("var") 
+   =>||
+   (<IDENTIFIER>|Tuple) "=" LocalVariableInitializer
+;
+
+LocalVariableDeclarator : 
+   <IDENTIFIER> ["=" ["ref"] LocalVariableInitializer] 
+;
 
 LocalVariableInitializer :  
    Expression 
