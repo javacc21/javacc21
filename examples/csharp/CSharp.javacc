@@ -14,18 +14,33 @@ DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,INTO,MODULE,PARTIAL,
 INCLUDE "CSharpLexer.javacc"
 
 INJECT PARSER_CLASS :
-   import PARSER_PACKAGE.preprocessor.PreprocessorParser; 
+   import PARSER_PACKAGE.cspreprocessor.Preprocessor; 
 {
    public PARSER_CLASS(Path path, boolean usePreprocessor) throws IOException {
       this(path);
       if (usePreprocessor) {
          try {
-            PreprocessorParser ppp = new PreprocessorParser(path, null, false);
+            Preprocessor ppp = new Preprocessor(path, null);
             java.util.BitSet lineMarkers = ppp.PP_Root();
-            token_source.setParsedLines(lineMarkers);
-         } catch (PARSER_PACKAGE.preprocessor.ParseException pe) {
+            token_source.setUnparsedLines(lineMarkers);
+         } catch (PARSER_PACKAGE.cspreprocessor.ParseException pe) {
              throw new RuntimeException(pe);
          }         
+      }
+   }
+}
+
+INJECT LEXER_CLASS : 
+{
+   public void setUnparsedLines(BitSet parsedLines) {
+      for (int i=0; i < lineOffsets.length; i++) {
+         if (parsedLines.get(i+1)) {
+               int lineOffset = lineOffsets[i];
+               int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i+1] : content.length();
+               for (int offset = lineOffset; offset < nextLineOffset; offset++) {
+                  tokenLocationTable[offset] = IGNORED;
+               }
+         }
       }
    }
 }

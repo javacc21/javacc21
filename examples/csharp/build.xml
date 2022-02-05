@@ -9,8 +9,8 @@
 	<uptodate property="csparser.uptodate" srcfile="CSharp.javacc" targetfile="org/parsers/csharp/CSharpParser.java"
   />
   <uptodate property="cspreprocessor.uptodate"
-    targetfile="org/parsers/csharp/preprocessor/PreprocessorParser.java"
-    srcfile="../preprocessor/Preprocessor.javacc"
+    targetfile="org/parsers/csharp/cspreprocessor/Preprocessor.java"
+    srcfile="CSPreprocessor.javacc"
   />
 </target>
 
@@ -18,7 +18,7 @@
 	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
   <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
      <assertions><enable/></assertions>
- 	   <arg line="-n -d ../csharp -p csharp ../preprocessor/Preprocessor.javacc"/>
+ 	   <arg line="-n CSPreprocessor.javacc"/>
   </java>
 </target>  
  
