@@ -822,7 +822,6 @@ INJECT ArrayCreationExpression : implements Expression
 INJECT AnonymousMethodExpression : implements Expression
 INJECT AnonymousObjectCreationExpression : implements Expression
 INJECT AssignmentExpression : implements Expression
-INJECT BaseAccess : implements Expression
 INJECT CheckedExpression : implements Expression
 INJECT ConditionalExpression : implements Expression
 INJECT ConditionalExpression : implements Expression
@@ -840,7 +839,6 @@ INJECT NullCoalescingExpression : implements Expression
 INJECT NullConditionalExpression : extends UnaryExpression
 INJECT ObjectCreationExpression : implements Expression
 INJECT OrExpression : implements Expression
-INJECT ParenthesizedExpression : implements Expression
 INJECT PrimitiveTypeAccess : implements Expression
 INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
@@ -865,12 +863,22 @@ INJECT UnaryExpressionUnsafe : extends UnaryExpression
    public boolean isAssignableTo() {return true;}
 }
 
+INJECT BaseAccess : implements Expression 
+{
+   public boolean isAssignableTo() {return true;}
+}
+
 INJECT Tuple : implements Expression
 {
    public boolean isAssignableTo() {return true;}
 }
 
 INJECT SimpleName : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT This : implements Expression 
 {
    public boolean isAssignableTo() {return true;}
 }
@@ -1004,12 +1012,10 @@ OrderbyClause :
 ;    
 
 AssignmentExpression :
-   ConditionalExpression 
+   ConditionalExpression {Expression lhs = (Expression) peekNode();}
    [
-//      SCAN 1 {(peekNode() instanceof Expression) 
-//              &&((Expression) peekNode()).isAssignableTo()} =>
-//      {if (!(peekNode() instanceof Expression())) new Exception().printStackTrace();}
       AssignmentOperator
+      ASSERT {lhs.isAssignableTo()} : "Left-hand side is not assignable." :
       ["ref"] // since 7.0 ?
       Expression
    ]
@@ -1210,13 +1216,13 @@ NullConditionalExpression : PrimaryExpression [NullConditionalOperations] ;
 
 PrimaryExpression#void :
    (
-      => ArrayCreationExpression
+      ArrayCreationExpression
       |
       LiteralExpression
       |
       <INTERPOLATED_STRING_LITERAL> // TODO: deal with this better.
       |
-      "this" #LiteralExpression
+      "this" #This
       |
       BaseAccess
       |
@@ -1267,8 +1273,8 @@ ParenthesizedOrTuple#void :
     Tuple
 ;
 
-
 ArrayCreationExpression :
+    SCAN "new" [NonArrayType] "[" =>
     "new"
     (
        RankSpecifier ArrayInitializer
@@ -1278,6 +1284,23 @@ ArrayCreationExpression :
        ArrayType ArrayInitializer
     )
 ;
+
+ObjectCreationExpression :
+   "new" =>|+1 [NonArrayType] // This seems possible since C# 9
+   (
+      "(" [ArgumentList] ")" [ObjectInitializer | CollectionInitializer]
+      |
+      (ObjectInitializer | CollectionInitializer)
+   )
+;
+
+AnonymousObjectCreationExpression :
+   "new" 
+   "{" =>||
+    [MemberDeclarator ("," MemberDeclarator)* [","]]
+   "}"
+;
+
 
 RankSpecifier : "[" (",")* "]" ;
 
@@ -1337,11 +1360,18 @@ PredefinedType#void :
 
 // The "(Type)" part is optional (since C# 7.1)
 // if it can be inferred by the compiler.
-DefaultValueExpression : "default" [ "(" Type ")" ] ;
+DefaultValueExpression# : "default" [ "(" Type ")" ] ;
 
 SimpleName# : <IDENTIFIER> [=>TypeArgumentList] ;
 
 ParenthesizedExpression : "(" Expression ")" ;
+
+INJECT ParenthesizedExpression : implements Expression 
+{
+   public boolean isAssignableTo() {
+      return ((Expression) getChild(1)).isAssignableTo();
+   }
+}
 
 TypeofExpression :
     "typeof" "("
@@ -1373,22 +1403,6 @@ UnboundTypeName :
       <IDENTIFIER>
       ["<" (",")* ">" {sawEmptyTypeArgs = true;}#]
    )*
-;
-
-ObjectCreationExpression :
-   "new" =>|+1 [NonArrayType] // This seems possible since C# 9
-   (
-      "(" [ArgumentList] ")" [ObjectInitializer | CollectionInitializer]
-      |
-      (ObjectInitializer | CollectionInitializer)
-   )
-;
-
-AnonymousObjectCreationExpression :
-   "new" 
-   "{" =>||
-    [MemberDeclarator ("," MemberDeclarator)* [","]]
-   "}"
 ;
 
 MemberDeclarator :
@@ -1646,7 +1660,7 @@ GotoStatement :
    (
       <IDENTIFIER>
       |
-      "default"
+      "default" #DefaultValueExpression
       |
       "case" Expression
    )
