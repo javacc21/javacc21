@@ -15,7 +15,7 @@ SKIP :
 ;
 
 UNPARSED #Comment :
-  < MULTI_LINE_COMMENT : "/**/" | ("/*" (~["*"] | ("*" ~["/"]))* "*/")> 
+  < MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
   |
   < SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > 
 ;
