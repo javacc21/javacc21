@@ -831,6 +831,7 @@ INJECT DefaultValueExpression : implements Expression
 INJECT EqualityExpression : implements Expression
 INJECT ExclusiveOrExpression : implements Expression
 INJECT InclusiveOrExpression : implements Expression
+INJECT InvocationExpression : implements Expression
 INJECT LambdaExpression : implements Expression
 INJECT Literal : implements Expression
 INJECT LiteralExpression : implements Expression
@@ -843,7 +844,6 @@ INJECT PrimitiveTypeAccess : implements Expression
 INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
 INJECT TypeofExpression : implements Expression
-INJECT InvocationExpression : implements Expression
 INJECT QualifiedAliasMember : implements Expression
 INJECT SizeofExpression : implements Expression
 INJECT UncheckedExpression : implements Expression
@@ -851,7 +851,7 @@ INJECT UnaryExpression : implements Expression
 INJECT PostDecrementExpression : extends UnaryExpression
 INJECT PostIncrementExpression : extends UnaryExpression
 INJECT PreDecrementExpression : extends UnaryExpression
-INJECT PreIncrementExpression : extends UnaryExpression
+INJECT PreIncrementExpression : extends UnaryExpression 
 INJECT AwaitExpression : extends UnaryExpression
 INJECT CastExpression : extends UnaryExpression
 INJECT ThrowExpression : extends UnaryExpression
@@ -1176,7 +1176,7 @@ UnaryExpression#abstract :
    NullConditionalExpression 
 ;
 
-ThrowExpression : "throw" Expression ;
+ThrowExpression# : "throw" [Expression] ;
 
 CastExpression : "(" Type ")" =>|+1 UnaryExpression ;
 
@@ -1699,7 +1699,7 @@ ReturnStatement :
    ";" 
 ;
 
-ThrowStatement : "throw" [Expression] ";" ;
+ThrowStatement : ThrowExpression ";" ;
 
 FinallyClause : "finally" Block ;
 
@@ -1757,8 +1757,36 @@ FixedPointerDeclarator :
    )
 ;
 
-StatementExpression :
-   Expression // TODO, only certain expressions can be here!
+StatementExpression#void :
+   PreIncrementExpression
+   |
+   PreDecrementExpression
+   |
+   AwaitExpression
+   |
+   PrimaryExpression
+   {Expression lhs = (Expression) peekNode();} 
+   (
+      NullConditionalOperations #NullConditionalExpression(2)
+      |
+      SCAN 1 {lhs.isAssignableTo()}
+      => AssignmentOperator Expression #AssignmentExpression(3)
+      |
+      ASSERT 
+      {
+         lhs instanceof InvocationExpression
+         |
+         lhs instanceof ObjectCreationExpression
+         |
+         lhs instanceof PostDecrementExpression
+         |
+         lhs instanceof PostIncrementExpression
+      }
+      : "Not a statement"
+   )
+   |
+   AssignmentExpression 
+   ASSERT {peekNode() instanceof AssignmentExpression} : "Not a statement"
 ;
 
 ExpressionStatement : StatementExpression ";" ;
