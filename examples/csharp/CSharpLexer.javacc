@@ -92,11 +92,6 @@ TOKEN #Delimiter :
 | < RBRACKET: "]" > 
 | < SEMICOLON: ";" > 
 | < COMMA: "," > 
-| < DOT: "." > 
-| < ASSIGN: "=" > 
-| < DOUBLE_COLON: "::" > 
-| < VAR_ARGS: "..." > 
-| < AT : "@"> 
 ;
 
 TOKEN #Operator : 
@@ -123,7 +118,7 @@ TOKEN #Operator :
 | < SLASH: "/" > 
 | < BIT_AND: "&" > 
 | < BIT_OR: "|" > 
-| < XOR: "^" > 
+| < HAT: "^" > 
 | < REM: "%" > 
 | < LSHIFT: "<<" > 
 | < PLUSASSIGN: "+=" > 
@@ -138,6 +133,12 @@ TOKEN #Operator :
 | < RIGHT_SHIFT: ">>" > 
 | < RIGHT_SHIFT_ASSIGN: ">>=" > 
 | < LAMBDA : "=>"> 
+| < ASSIGN: "=" > 
+| < DOUBLE_COLON: "::" > 
+| < DOT: "." > 
+| < RANGE : ".." > 
+| < VAR_ARGS: "..." > 
+| < AT : "@"> 
 ;
 
 // C# Keywords
@@ -225,6 +226,7 @@ TOKEN #KeyWord :
    | < AWAIT : "await" >
    | < GET : "get" >
    | < MODULE : "module">
+   | < NOT : "not">
    | < PARTIAL : "partial">
    | < REMOVE : "remove">
    | < SET : "set" >
