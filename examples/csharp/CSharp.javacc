@@ -1237,12 +1237,12 @@ UnaryExpressionNotPlusMinus : ("!" | "~") UnaryExpression ;
 NullConditionalOperations : 
    "?" =>|+1
    (
-      "." <IDENTIFIER> [TypeArgumentList]
+      "." <IDENTIFIER> [=>TypeArgumentList]
       |
       "[" ArgumentList "]"
    )
    (
-      ["?"] "." =>|| <IDENTIFIER> [TypeArgumentList]
+      ["?"] "." =>|| <IDENTIFIER> [=>TypeArgumentList]
       |
       ["?"] "[" =>|| ArgumentList "]"
       |
@@ -1732,7 +1732,20 @@ DoStatement : "do" EmbeddedStatement "while" "(" Expression ")" ";" ;
 
 WhileStatement : "while" "(" Expression ")" EmbeddedStatement ;
 
-ForeachStatement : "foreach" "(" ("var" | Type) <IDENTIFIER> "in" Expression ")" EmbeddedStatement ;
+ForeachStatement : 
+    "foreach" 
+    "(" 
+    ("var" | Type) 
+    (
+       <IDENTIFIER> 
+       | 
+       Tuple // since ???
+    )
+    "in" 
+    Expression 
+    ")" 
+    EmbeddedStatement 
+;
 
 TryStatement : 
    "try" Block
