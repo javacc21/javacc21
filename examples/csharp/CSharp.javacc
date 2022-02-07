@@ -1902,17 +1902,39 @@ ForStatement :
 
 // C# 8 Pattern syntax follows.
 
-Pattern : ACTIVATE_TOKENS AND, OR, NOT (OrPattern) ;
+Pattern : ACTIVATE_TOKENS AND, OR, NOT, VAR (OrPattern) ;
 
 OrPattern : NotPattern ("or" NotPattern)* ;
 
-NotPattern : ("not")* PrimaryPatttern ;
+NotPattern : ("not")* PrimaryPattern ;
 
-PrimaryPatttern :
+PrimaryPattern :
+   RelationalPattern
+   |
+   ParenthesizedPattern
+   |
+   DeclarationPattern
+   |
+   PropertyPattern
+   |
+   VarPattern
+   | 
    TypePattern
-;    
+   |
+   ShiftExpression // Need to check that this is a constant in principle
+;
 
-TypePattern() :
+ParenthesizedPattern : "(" Pattern ")" ;
+
+DeclarationPattern : NonNullableType <IDENTIFIER> =>|| ;
+
+VarPattern : 
+    SCAN 0 {checkNextTokenImage("var")} => 
+    ACTIVATE_TOKENS VAR ("var")
+    <IDENTIFIER>
+;
+
+TypePattern :
    (
       "null"
       |
@@ -1938,8 +1960,38 @@ TypePattern() :
          || checkNextTokenImage("and")
          || checkNextTokenImage("or")
       }# =>|| 
-      [<IDENTIFIER>]
       |
-      NonNullableType [<IDENTIFIER>]
+      NonNullableType
    )
+;
+
+RelationalPattern : (">"|">="|"<="|"<") RelationalExpression ;
+
+PositionalPattern :
+    [Type] 
+    "(" =>||
+    [SubPatterns]
+    ")"
+    [PropertySubPattern]
+    [<IDENTIFIER>]
+;
+
+SubPatterns :
+   [=> <IDENTIFIER> ":"]
+   Pattern
+   (
+      ","
+      [=> <IDENTIFIER> ":"] 
+      Pattern
+   )*
+;
+
+PropertyPattern : 
+   [Type] =>|+1 PropertySubPattern [<IDENTIFIER>]
+;
+
+PropertySubPattern :
+   "{"
+    [SubPatterns [","]]
+   "}"
 ;
