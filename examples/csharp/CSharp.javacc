@@ -1068,7 +1068,8 @@ SwitchExpression :
       "switch"
       "{"
          SwitchExpressionCase
-         ("," SwitchExpressionCase)*
+         (SCAN 2 "," SwitchExpressionCase)*
+         [","]
       "}"
    ]
 ;
