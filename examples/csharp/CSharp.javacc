@@ -769,6 +769,7 @@ Type :
       => TupleType
    )
    [
+      // This is weird. Must REVISIT this.
       SCAN ~\NonNullableType
       => "?"
    ]
@@ -781,6 +782,10 @@ Type :
       ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
    ]
    (SCAN ~\TupleType => "*")*
+   [
+      SCAN ~\NonNullableType
+      => "?"
+   ]
 ;
 
 TupleType :
