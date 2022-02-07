@@ -6,7 +6,7 @@ PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,INTO,MODULE,
-                  PARTIAL, REMOVE,SET,VAR,WHEN,YIELD, __ARGLIST,
+                  PARTIAL, RECORD, REMOVE,SET,VAR,WHEN,YIELD, __ARGLIST,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries                  
@@ -240,10 +240,11 @@ Modifiers#void : //TODO
          }
       }
      |
-     SCAN { ((permissibleModifiers == null || permissibleModifiers.contains(ASYNC))
-            && checkNextTokenImage("async"))
+     SCAN { permissibleModifiers == null 
+            || permissibleModifiers.contains(ASYNC) && checkNextTokenImage("async") 
+            || permissibleModifiers.contains(RECORD) && checkNextTokenImage("record")
           }#
-      => ACTIVATE_TOKENS ASYNC ("async")
+      => ACTIVATE_TOKENS ASYNC, RECORD ("async" | "record")
       { if (permissibleModifiers!=null) permissibleModifiers.remove(ASYNC);}
   )*
 ;
@@ -458,7 +459,7 @@ PropertyDeclaration :
 
 InterfacePropertyDeclaration :
    (AttributeSection)*
-   ["new"]
+   ("new" | "public")* // FIXME!
    Type
    <IDENTIFIER>
    "{" 
@@ -1949,7 +1950,7 @@ PrimaryPattern :
    |
    VarPattern
    | 
-   TypePattern
+   =>TypePattern
    |
    ShiftExpression // Need to check that this is a constant in principle
 ;

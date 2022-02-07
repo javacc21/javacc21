@@ -227,6 +227,7 @@ TOKEN #KeyWord :
    | < GET : "get" >
    | < MODULE : "module">
    | < PARTIAL : "partial">
+   | < RECORD : "record" >
    | < REMOVE : "remove">
    | < SET : "set" >
    | < VAR : "var" > 
