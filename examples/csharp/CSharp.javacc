@@ -1869,9 +1869,11 @@ SwitchStatement : "switch" "(" Expression ("," Expression)* ")" SwitchBlock ;
 SwitchBlock : "{" (SwitchSection)* "}" ; 
 
 SwitchLabel : 
-   "case" Pattern [WhenClause] ":"
-   |
    "default" ":"
+   |
+   => "case" Expression [WhenClause] ":"
+   |
+   "case" Pattern [WhenClause] ":"
 ; 
 
 CaseLabel :
@@ -1891,7 +1893,7 @@ WhenClause :
    SCAN 0 {getToken(1).getImage().equals("when")}#
    => 
    ACTIVATE_TOKENS WHEN ("when")
-   Expression
+   NullCoalescingExpression 
 ;
 
 SwitchSection : 
@@ -1934,9 +1936,10 @@ NotPattern : ("not")* PrimaryPattern ;
 PrimaryPattern :
    RelationalPattern
    |
-   Tuple // Is this quite right? REVISIT maybe.
+   // These next two options are a bit ugly.
+   => CastExpression // Maybe there is a better way but I don't see it.
    |
-   ParenthesizedPattern
+   =>ParenthesizedPattern
    |
    DeclarationPattern
    |
@@ -1955,8 +1958,7 @@ DeclarationPattern : NonNullableType ACTIVATE_TOKENS WHEN (<IDENTIFIER>) =>|| ;
 
 VarPattern : 
     SCAN 0 {checkNextTokenImage("var")} => 
-    ACTIVATE_TOKENS VAR ("var")
-    <IDENTIFIER>
+    ACTIVATE_TOKENS VAR, WHEN ("var" <IDENTIFIER>)
 ;
 
 TypePattern :
@@ -2012,7 +2014,7 @@ SubPatterns :
 ;
 
 PropertyPattern : 
-   [Type] =>|+1 PropertySubPattern [<IDENTIFIER>]
+   [Type] =>|+1 PropertySubPattern ACTIVATE_TOKENS WHEN ([<IDENTIFIER>])
 ;
 
 PropertySubPattern :
