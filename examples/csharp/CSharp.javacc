@@ -1851,7 +1851,7 @@ StatementExpression#void :
 
 ExpressionStatement : StatementExpression ";" ;
 
-SwitchStatement : "switch" "(" Expression ")" SwitchBlock ; 
+SwitchStatement : "switch" "(" Expression ("," Expression)* ")" SwitchBlock ; 
 
 SwitchBlock : "{" (SwitchSection)* "}" ; 
 
