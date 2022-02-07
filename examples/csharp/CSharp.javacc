@@ -1271,6 +1271,7 @@ NullConditionalOperations :
       |
       "(" [ArgumentList] ")"
    )*
+   ["!"] // since 8.0
 ;
 
 NullConditionalExpression : PrimaryExpression [NullConditionalOperations] ;

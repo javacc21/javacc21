@@ -4,12 +4,12 @@
  * generic preprocessor and use it for both internal development 
  * and for C# itself but that turned out not to bethe case. For one thing,
  * it appears that internal JavaCC development will require some extra 
- * features not in C#. But also, teh  way the preprocessing works in C#
+ * features not in C#. But also, the  way the preprocessing works in C#
  * is extremely bizarre and screwy, almost certainly because they wrote
  * a spec based on the initial implementation, rather than the other way round!
  * For one thing, a totally correct C# preprocessor has to be "aware" of 
  * strings and multiline comments in the source. The current implementation
- * is about 99.97% correct. There are a couple of corner cases I almost
+ * is about 99.97% correct. There are a couple of corner cases I 
  * am aware of, but will get to them later.
  */
 
@@ -181,14 +181,15 @@ PP_IfBlock#void :
         if (result) alreadyHandled = true;
         setCurrentlyOn(result && previouslyOn);
     }
-    PP_Block {if (alreadyHandled) setCurrentlyOn(false);} 
+    PP_Block 
     (
         <PP_ELIF> result=PP_Expression <PP_EOL>
         {
-            if (!alreadyHandled) {
+            if (alreadyHandled) setCurrentlyOn(false);
+            else {
                 alreadyHandled = result;
                 setCurrentlyOn(previouslyOn && result);
-            }
+            } 
         }
         PP_Block
     )* 
