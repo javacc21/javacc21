@@ -132,7 +132,7 @@ TOKEN #Operator :
 | < LEFT_SHIFT_ASSIGN: "<<=" > 
 | < RIGHT_SHIFT: ">>" > 
 | < RIGHT_SHIFT_ASSIGN: ">>=" > 
-| < LAMBDA : "=>"> 
+| < ARROW : "=>"> 
 | < ASSIGN: "=" > 
 | < DOUBLE_COLON: "::" > 
 | < DOT: "." > 

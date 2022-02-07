@@ -371,12 +371,14 @@ TypeParameterConstraint :
    <WHERE>
    DEACTIVATE_TOKENS WHERE
    ( 
-      <IDENTIFIER> 
+      <IDENTIFIER>  
       ":"
       (
          "new" "(" ")"
          |
          ("class"|"struct"|Name) (SCAN 2 "," Name)* ["," "new" "(" ")"]
+         |
+         "default" // Since C# 9.0 apparently
       )
    )
 ;
@@ -688,7 +690,7 @@ InterfaceMethodDeclaration :
    [FormalParameters] 
    ")"
    TypeParameterConstraints
-   ";"
+   MethodBody // since 8.0. NB. The method body can be a lone semicolon.
 ;
 
 ReturnType : 
