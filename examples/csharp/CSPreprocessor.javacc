@@ -2,7 +2,7 @@
  * This is a a second pass at an implementation of the preprocessor 
  * for C#. I had originally thought that I could just create a 
  * generic preprocessor and use it for both internal development 
- * and for C# itself but that turned out not to bethe case. For one thing,
+ * and for C# itself but that turned out not to be the case. For one thing,
  * it appears that internal JavaCC development will require some extra 
  * features not in C#. But also, the  way the preprocessing works in C#
  * is extremely bizarre and screwy, almost certainly because they wrote

@@ -5,8 +5,10 @@ TABS_TO_SPACES=4;
 PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,INTO,MODULE,NOT,
+DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,INTO,MODULE,
                   PARTIAL, REMOVE,SET,VAR,WHEN,YIELD, __ARGLIST,
+                  // The following are used in patterns:
+                  AND, OR, NOT,
                   // The following are all used in queries                  
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
                   INTO, ON, ORDERBY,SELECT,WHERE;
@@ -1100,37 +1102,6 @@ RelationalExpression :
       |
       "is" Pattern
    )*
-;   
-
-Pattern :
-    {boolean negated = false;}
-    [SCAN 0 {checkNextTokenImage("not")} => ACTIVATE_TOKENS NOT ("not") {negated = true;}]
-    (
-      "null"
-      |
-      SCAN {!negated} =>
-      Type
-      ASSERT 
-      {
-         getToken(0).getType() != HOOK 
-      // This is now really grotesque! 
-      // If the Type we matched is "nullable", i.e. 
-      // ends in a ?  // then the token after that must be
-      // one of the following half dozen types
-      // Otherwise we effectively backtrack
-      // and match the Type as a NonNullableType,
-      // i.e. we parse it without the trailing "?"
-         || getToken(1).getType() == HOOK 
-         || getToken(1).getType()== RPAREN 
-         || getToken(1).getType() == SEMICOLON
-         || getToken(1).getType() == EQ
-         || getToken(1).getType() == SC_OR
-         || getToken(1).getType() == SC_AND
-      }# =>|| 
-      [<IDENTIFIER>]
-      |
-      NonNullableType [<IDENTIFIER>]
-   )
 ;
 
 EqualityExpression :
@@ -1927,4 +1898,48 @@ ForStatement :
    ]
    ")"
    EmbeddedStatement
+;
+
+// C# 8 Pattern syntax follows.
+
+Pattern : ACTIVATE_TOKENS AND, OR, NOT (OrPattern) ;
+
+OrPattern : NotPattern ("or" NotPattern)* ;
+
+NotPattern : ("not")* PrimaryPatttern ;
+
+PrimaryPatttern :
+   TypePattern
+;    
+
+TypePattern() :
+   (
+      "null"
+      |
+      =>
+      Type
+      {TokenType nextTokType = getToken(1).getType();}#
+      ASSERT 
+      {
+         getToken(0).getType() != HOOK 
+      // This is now really grotesque! 
+      // If the Type we matched is "nullable", i.e. 
+      // ends in a ?  // then the token after that must be
+      // one of the following half dozen types
+      // Otherwise we effectively backtrack
+      // and match the Type as a NonNullableType,
+      // i.e. we parse it without the trailing "?"
+         || nextTokType == HOOK 
+         || nextTokType == RPAREN 
+         || nextTokType == SEMICOLON
+         || nextTokType == EQ
+         || nextTokType == SC_OR
+         || nextTokType == SC_AND
+         || checkNextTokenImage("and")
+         || checkNextTokenImage("or")
+      }# =>|| 
+      [<IDENTIFIER>]
+      |
+      NonNullableType [<IDENTIFIER>]
+   )
 ;

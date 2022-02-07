@@ -226,13 +226,15 @@ TOKEN #KeyWord :
    | < AWAIT : "await" >
    | < GET : "get" >
    | < MODULE : "module">
-   | < NOT : "not">
    | < PARTIAL : "partial">
    | < REMOVE : "remove">
    | < SET : "set" >
    | < VAR : "var" > 
    | < WHEN : "when">
    | < YIELD : "yield" >
+   | < AND : "and">
+   | < OR  : "or" >
+   | < NOT : "not">
 // Here are the soft keywords used in queries 
    | <ASCENDING : "ascending">
    | <BY : "by">
