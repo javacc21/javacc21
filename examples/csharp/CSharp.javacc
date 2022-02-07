@@ -858,6 +858,7 @@ INJECT ShiftExpression : implements Expression
 INJECT TypeofExpression : implements Expression
 INJECT QualifiedAliasMember : implements Expression
 INJECT SizeofExpression : implements Expression
+INJECT SwitchExpression : implements Expression
 INJECT UncheckedExpression : implements Expression
 INJECT UnaryExpression : implements Expression
 INJECT PostDecrementExpression : extends UnaryExpression
@@ -921,9 +922,14 @@ INJECT ElementAccess : implements Expression
 LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
 
 LambdaLHS :
+  {boolean seenStatic = false;}
+  ["static" {seenStatic = true;}] // since 9.0
   [
      SCAN {checkNextTokenImage("async")}#
      => ACTIVATE_TOKENS ASYNC ("async")
+     [
+        SCAN {!seenStatic} => "static"
+     ]
   ]
   (
    =>ImplicitAnonymousFunctionSignature
@@ -1042,12 +1048,26 @@ AssignmentExpression :
 ;
 
 MultiplicativeExpression : 
-   RangeExpression 
+   SwitchExpression
    (
       ("*" | "/" | "%") 
-      RangeExpression
+      SwitchExpression
    )*
 ;
+
+SwitchExpression :
+   RangeExpression 
+   [
+      "switch"
+      "{"
+         SwitchExpressionCase
+         ("," SwitchExpressionCase)*
+      "}"
+   ]
+;
+
+SwitchExpressionCase : Pattern [WhenClause] "=>" Expression ;
+
 
 RangeExpression :
    ".." [UnaryExpression]
@@ -1078,12 +1098,17 @@ RelationalExpression :
       |
       "as" Type
       |
-      => "is" 
-      [SCAN 0 {checkNextTokenImage("not")} => ACTIVATE_TOKENS NOT ("not")]
-      "null" 
+      "is" Pattern
+   )*
+;   
+
+Pattern :
+    {boolean negated = false;}
+    [SCAN 0 {checkNextTokenImage("not")} => ACTIVATE_TOKENS NOT ("not") {negated = true;}]
+    (
+      "null"
       |
-      "is" 
-      ASSERT {!checkNextTokenImage("not")}# 
+      SCAN {!negated} =>
       Type
       ASSERT 
       {
@@ -1104,12 +1129,8 @@ RelationalExpression :
       }# =>|| 
       [<IDENTIFIER>]
       |
-      "is" 
-      ASSERT {!checkNextTokenImage("not")}# 
-      NonNullableType =>|| [<IDENTIFIER>]
-      |
-      "is" ACTIVATE_TOKENS NOT ("not") NonNullableType [<IDENTIFIER>]
-   )*
+      NonNullableType [<IDENTIFIER>]
+   )
 ;
 
 EqualityExpression :
@@ -1464,10 +1485,15 @@ MemberDeclarator :
 
 
 AnonymousMethodExpression :
-   [
-      SCAN {checkNextTokenImage("async")}
-      => ACTIVATE_TOKENS ASYNC ("async")
-   ]
+  {boolean seenStatic = false;}
+  ["static" {seenStatic = true;}] // since 9.0
+  [
+     SCAN {checkNextTokenImage("async")}#
+     => ACTIVATE_TOKENS ASYNC ("async")
+     [
+        SCAN {!seenStatic} => "static"
+     ]
+  ]
    "delegate"
    =>||
    [
@@ -1901,4 +1927,3 @@ ForStatement :
    ")"
    EmbeddedStatement
 ;
-
