@@ -1869,7 +1869,7 @@ SwitchStatement : "switch" "(" Expression ("," Expression)* ")" SwitchBlock ;
 SwitchBlock : "{" (SwitchSection)* "}" ; 
 
 SwitchLabel : 
-   CaseLabel
+   "case" Pattern [WhenClause] ":"
    |
    "default" ":"
 ; 
@@ -1934,6 +1934,8 @@ NotPattern : ("not")* PrimaryPattern ;
 PrimaryPattern :
    RelationalPattern
    |
+   Tuple // Is this quite right? REVISIT maybe.
+   |
    ParenthesizedPattern
    |
    DeclarationPattern
@@ -1949,7 +1951,7 @@ PrimaryPattern :
 
 ParenthesizedPattern : "(" Pattern ")" ;
 
-DeclarationPattern : NonNullableType <IDENTIFIER> =>|| ;
+DeclarationPattern : NonNullableType ACTIVATE_TOKENS WHEN (<IDENTIFIER>) =>|| ;
 
 VarPattern : 
     SCAN 0 {checkNextTokenImage("var")} => 
