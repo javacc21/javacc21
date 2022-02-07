@@ -1864,7 +1864,11 @@ SwitchLabel :
 CaseLabel :
    "case"
    (
-      Type <IDENTIFIER> =>|| [WhenClause] ":"
+      Type <IDENTIFIER> 
+      ASSERT {checkNextTokenImage("when") || getToken(1).getType() == COLON}#
+      =>|| 
+      [WhenClause] 
+      ":"
       |
       Expression [WhenClause] ":"
    )
