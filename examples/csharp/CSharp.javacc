@@ -1690,7 +1690,7 @@ VarDeclaration :
    ]
    ACTIVATE_TOKENS VAR ("var") 
    =>||
-   (<IDENTIFIER>|Tuple) "=" LocalVariableInitializer
+   (<IDENTIFIER>|Tuple) "=" ["ref"] LocalVariableInitializer
 ;
 
 LocalVariableDeclarator : 
@@ -1867,7 +1867,7 @@ StatementExpression#void :
       NullConditionalOperations #NullConditionalExpression(2)
       |
       SCAN 1 {lhs.isAssignableTo()}
-      => AssignmentOperator Expression #AssignmentExpression(3)
+      => (AssignmentOperator ["ref"] Expression) #AssignmentExpression(+1)
       |
       ASSERT 
       {
@@ -1942,7 +1942,9 @@ ForStatement :
 
 Pattern : ACTIVATE_TOKENS AND, OR, NOT, VAR (OrPattern) ;
 
-OrPattern : NotPattern ("or" NotPattern)* ;
+OrPattern : AndPattern ("or" AndPattern)* ;
+
+AndPattern : NotPattern ("and" NotPattern)* ;
 
 NotPattern : ("not")* PrimaryPattern ;
 
