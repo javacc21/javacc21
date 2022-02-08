@@ -205,6 +205,8 @@ TypeDeclaration :
    |
    StructDeclaration
    |
+   RecordDeclaration
+   |
    InterfaceDeclaration
    |
    EnumDeclaration
@@ -212,6 +214,7 @@ TypeDeclaration :
    DelegateDeclaration
   )
 ;
+
 INJECT PARSER_CLASS :
 {
    EnumSet<TokenType> permissibleModifiers;
@@ -244,7 +247,8 @@ Modifiers#void : //TODO
             || permissibleModifiers.contains(ASYNC) && checkNextTokenImage("async") 
             || permissibleModifiers.contains(RECORD) && checkNextTokenImage("record")
           }#
-      => ACTIVATE_TOKENS ASYNC, RECORD ("async" | "record")
+//      => ACTIVATE_TOKENS ASYNC, RECORD ("async" | SCAN ~\RecordDeclaration => "record")
+      => ACTIVATE_TOKENS ASYNC, RECORD ("async")
       { if (permissibleModifiers!=null) permissibleModifiers.remove(ASYNC);}
   )*
 ;
@@ -277,6 +281,23 @@ StructDeclaration :
    TypeParameterConstraints
    "{" (ClassMemberDeclaration)* "}"
    [";"] 
+;
+
+RecordDeclaration :
+   (AttributeSection)*
+   Modifiers
+   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+   ACTIVATE_TOKENS RECORD ("record")
+   =>||
+   <IDENTIFIER>
+   [TypeParameterList]
+   ["(" FormalParameters ")"]
+   TypeParameterConstraints
+   (
+     "{" (ClassMemberDeclaration)* "}" [";"]
+     |
+     ";"
+   )
 ;
 
 InterfaceDeclaration :

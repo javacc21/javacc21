@@ -63,10 +63,10 @@ TOKEN #Literal :
                     ) 
   >                                                  
   |
-  < STRING_LITERAL: <REGULAR_STRING_LITERAL>|<VERBATIM_STRING_LITERAL>> #StringLiteral
+  < STRING_LITERAL: <REGULAR_STRING_LITERAL>| "@" <VERBATIM_STRING_LITERAL>> #StringLiteral
   |
   // TODO. The VERBATIM_STRING_LITERAL part is still not quite correct.
-  < INTERPOLATED_STRING_LITERAL : <REGULAR_INTERPOLATED_STRING_LITERAL> | ("$" <VERBATIM_STRING_LITERAL>) >
+  < INTERPOLATED_STRING_LITERAL : <REGULAR_INTERPOLATED_STRING_LITERAL> | (("$@"|"@$") <VERBATIM_STRING_LITERAL>) >
   |
   < #REGULAR_INTERPOLATED_STRING_LITERAL : "$\"" ((~["\"","\\", "\n","\r"]) | <ESCAPED_CHAR>|<SINGLE_QUOTE_STRING>)* "\"">
   |
@@ -74,7 +74,7 @@ TOKEN #Literal :
   |
   < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)*  "\"">
   |
-  < #VERBATIM_STRING_LITERAL : "@\"" (~["\""] | "\"\"")* "\"" > 
+  < #VERBATIM_STRING_LITERAL : "\"" (~["\""] | "\"\"")* "\"" > 
   |
   < FALSE : "false" > #BooleanLiteral
   |
