@@ -5,8 +5,9 @@ TABS_TO_SPACES=4;
 PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,GET,INTO,MODULE,
-                  PARTIAL, RECORD, REMOVE,SET,VAR,WHEN,YIELD, __ARGLIST,
+DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE,
+                  PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, __ARGLIST,
+                  GET,SET,INIT,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries                  
@@ -179,7 +180,12 @@ TypeArgumentList :
 ;
 
 NamespaceDeclaration :
-   "namespace"  QualifiedIdentifier NamespaceBody [";"]
+   "namespace"  QualifiedIdentifier 
+   (
+      ";"
+      |
+      NamespaceBody [";"]
+   )
 ;
 
 QualifiedIdentifier :
@@ -341,7 +347,7 @@ InterfaceIndexerDeclaration :
    Type
    "this"
    "[" FormalParameters "]"
-   "{" InterfaceAccessors "}"
+   "{" (InterfaceAccessor)+ "}"
 ;
 
 EnumDeclaration : 
@@ -485,17 +491,19 @@ InterfacePropertyDeclaration :
    <IDENTIFIER>
    "{" 
    =>||
-   InterfaceAccessors 
+   (InterfaceAccessor)+
    "}"
 ;
 
-InterfaceAccessors :
-    (AttributeSection)* ACTIVATE_TOKENS GET ("get" ";") =>|| [(AttributeSection)* ACTIVATE_TOKENS SET ("set" ";")]
-    |
-    (AttributeSection)* ACTIVATE_TOKENS SET ("set" ";") =>|| [(AttributeSection)* ACTIVATE_TOKENS GET ("get" ";")]
-    | 
-    FAIL "Expecting getter or setter"
-;
+InterfaceAccessor : // TODO, check that there is only one of each
+    (AttributeSection)* 
+    ASSERT {checkNextTokenImage("get")||checkNextTokenImage("set")||checkNextTokenImage("init")}#
+    : "Expecting get, set, or init here"
+    ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init" ) 
+    =>|| 
+    ";"
+;    
+
 
 EventDeclaration :
    (AttributeSection)*
@@ -528,7 +536,7 @@ IndexerDeclaration :
      FormalParameters 
     "]"
     (
-       "{" AccessorDeclarations "}"
+       "{" (AccessorDeclaration)+ "}"
        |
        "=>" ["ref"] Expression ";"
     )    
@@ -620,14 +628,8 @@ RemoveAccessorDeclaration :
     AccessorBody
 ;
 
-AccessorDeclarations :
-   GetAccessorDeclaration [SetAccessorDeclaration]
-   |
-   SetAccessorDeclaration [GetAccessorDeclaration]
-;   
-
 PropertyBody :
-  "{" AccessorDeclarations "}"
+  "{" (AccessorDeclaration)+ "}"
    ["=" VariableInitializer ";"]
   |
   "=>" 
@@ -636,15 +638,15 @@ PropertyBody :
   ";"
 ;
 
-GetAccessorDeclaration :
+AccessorDeclaration :
    (AttributeSection)*
    [
       "protected" ["internal"]
       | "internal" ["protected"]
       | "private" 
-      | "readonly" // Only in a struct, I think. And since which version?
+      | "readonly" // Only in a struct, and only for a getter I think. And since which version?
    ]
-   ACTIVATE_TOKENS GET ("get") =>||
+   ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init") =>||
    AccessorBody
 ;
 
