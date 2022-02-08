@@ -39,43 +39,6 @@ TOKEN #Literal :
   |
   < #EXPONENT_PART : ["e","E"] (["+","-"])? <DECIMAL_LITERAL> >
   |
-  < CHARACTER_LITERAL: "'" ((~["'","\\","\n","\r"]) | <ESCAPED_CHAR>) "'"> #CharacterLiteral
-  |
-  < #ESCAPED_CHAR :  "\\"
-                    (
-                      (["0","a","b","f","n", "r","t","v","\\","'","\""])
-                      |
-                      "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
-                      |
-                      "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
-                    ) 
-  >
-  |                                                  
-  < #ESCAPED_CHAR2 :  "\\"
-                    (
-                      (["0","a","b","f","n", "r","t","v","\\","'","\""])
-                      |
-                      "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
-                      |
-                      "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
-                      |
-                      "U" (["0"-"9", "a"-"f", "A"-"F"]){8}
-                    ) 
-  >                                                  
-  |
-  < STRING_LITERAL: <REGULAR_STRING_LITERAL>| "@" <VERBATIM_STRING_LITERAL>> #StringLiteral
-  |
-  // TODO. The VERBATIM_STRING_LITERAL part is still not quite correct.
-  < INTERPOLATED_STRING_LITERAL : <REGULAR_INTERPOLATED_STRING_LITERAL> | (("$@"|"@$") <VERBATIM_STRING_LITERAL>) >
-  |
-  < #REGULAR_INTERPOLATED_STRING_LITERAL : "$\"" ((~["\"","\\", "\n","\r"]) | <ESCAPED_CHAR>|<SINGLE_QUOTE_STRING>)* "\"">
-  |
-  < #SINGLE_QUOTE_STRING : ["'","`"] ((~["'", "\\", "\n", "\r"])|<ESCAPED_CHAR>)* "'" >
-  |
-  < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)*  "\"">
-  |
-  < #VERBATIM_STRING_LITERAL : "\"" (~["\""] | "\"\"")* "\"" > 
-  |
   < FALSE : "false" > #BooleanLiteral
   |
   < TRUE : "true"> #BooleanLiteral
@@ -264,3 +227,59 @@ TOKEN :
                       "U" (["0"-"9", "a"-"f", "A"-"F"]){8}
                     ) >
 ;
+
+TOKEN #Literal :
+  < CHARACTER_LITERAL: "'" ((~["'","\\","\n","\r"]) | <ESCAPED_CHAR>) "'"> #CharacterLiteral
+  |
+  < #ESCAPED_CHAR :  "\\"
+                    (
+                      (["0","a","b","f","n", "r","t","v","\\","'","\""])
+                      |
+                      "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
+                      |
+                      "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
+                    ) 
+  >
+  |                                                  
+  < #ESCAPED_CHAR2 :  "\\"
+                    (
+                      (["0","a","b","f","n", "r","t","v","\\","'","\""])
+                      |
+                      "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
+                      |
+                      "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
+                      |
+                      "U" (["0"-"9", "a"-"f", "A"-"F"]){8}
+                    ) 
+  >                                                  
+  |
+  < STRING_LITERAL: <REGULAR_STRING_LITERAL>| <NOT_REALLY_INTERPOLATED> | "@"<RAW_STRING_>> #StringLiteral
+  |
+  // TODO. The final part quite correct.
+  < INTERPOLATED_STRING_LITERAL : <REGULAR_INTERPOLATED_STRING_LITERAL> | (("$@"|"@$") <RAW_STRING_>) >
+  |
+  < #REGULAR_INTERPOLATED_STRING_LITERAL : "$\"" ((~["\"","\\", "\n","\r"]) | <ESCAPED_CHAR>|<SINGLE_QUOTE_STRING>)* "\"">
+  |
+  < #SINGLE_QUOTE_STRING : ["'","`"] ((~["'", "\\", "\n", "\r"])|<ESCAPED_CHAR>)* "'" >
+  |
+  < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)*  "\"">
+  |
+  < #RAW_STRING_ : "\"" (~["\""] | "\"\"")* "\"" > 
+  |
+  // Starts with '$"' but does not contain any placeholder
+  < #NOT_REALLY_INTERPOLATED : "$\"" (<CHAR_IN_INTERPOLATION>)* "\"">
+  |
+  // Just any non-interpolated character in an interpolated string.
+  < #CHAR_IN_INTERPOLATION : (~["\"","\\","\n","\r","{","}"]) | "{{" | "}}" | <ESCAPED_CHAR2>>
+;   
+
+
+#if false
+MORE :
+  < REGULAR_INTERPOLATION_START : "$\" ((~["\"","\\","\n","\r","{"]) | "{{" | <ESCAPED_CHAR2>)*> : IN_INTERPOLATION 
+;
+
+TOKEN <IN_INTERPOLATION,CSHARP>
+  < LBRACE : "{"> #Delimiter : CSHARP
+;
+#endif
