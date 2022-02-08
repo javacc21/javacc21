@@ -377,7 +377,7 @@ TypeParameterConstraint :
       (
          "new" "(" ")"
          |
-         ("class"|"struct"|Name) (SCAN 2 "," Name)* ["," "new" "(" ")"]
+         ("struct" | "class" ["?"] | Name ["?"]) (SCAN 2 "," Name["?"])* ["," "new" "(" ")"]
          |
          "default" // Since C# 9.0 apparently
       )
@@ -1874,23 +1874,12 @@ SwitchBlock : "{" (SwitchSection)* "}" ;
 SwitchLabel : 
    "default" ":"
    |
+   // REVISIT: Why do I need this line?
    => "case" Expression [WhenClause] ":"
    |
    "case" Pattern [WhenClause] ":"
 ; 
 
-CaseLabel :
-   "case"
-   (
-      Type <IDENTIFIER> 
-      ASSERT {checkNextTokenImage("when") || getToken(1).getType() == COLON}#
-      =>|| 
-      [WhenClause] 
-      ":"
-      |
-      Expression [WhenClause] ":"
-   )
-;
 
 WhenClause :
    SCAN 0 {getToken(1).getImage().equals("when")}#
@@ -1949,6 +1938,8 @@ PrimaryPattern :
    PropertyPattern
    |
    VarPattern
+   |
+   TuplePattern
    | 
    =>TypePattern
    |
@@ -1956,6 +1947,8 @@ PrimaryPattern :
 ;
 
 ParenthesizedPattern : "(" Pattern ")" ;
+
+TuplePattern : "(" Pattern =>|+1 ("," Pattern)+ ")" ;
 
 DeclarationPattern : NonNullableType ACTIVATE_TOKENS WHEN (<IDENTIFIER>) =>|| ;
 
