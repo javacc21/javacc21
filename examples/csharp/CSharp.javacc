@@ -1261,12 +1261,12 @@ UnaryExpressionNotPlusMinus : ("!" | "~") UnaryExpression ;
 NullConditionalOperations : 
    "?" =>|+1
    (
-      "." <IDENTIFIER> [=>TypeArgumentList]
+      "." <IDENTIFIER> ["!"][=>TypeArgumentList]
       |
       "[" ArgumentList "]"
    )
    (
-      ["?"] "." =>|| <IDENTIFIER> [=>TypeArgumentList]
+      ["?"] "." =>|| <IDENTIFIER> ["!"] [=>TypeArgumentList]
       |
       ["?"] "[" =>|| ArgumentList "]"
       |
