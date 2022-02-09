@@ -188,6 +188,7 @@ TOKEN #KeyWord :
    | < ASYNC : "async" >
    | < AWAIT : "await" >
    | < GET : "get" >
+   | < INIT : "init" >
    | < MODULE : "module">
    | < PARTIAL : "partial">
    | < RECORD : "record" >

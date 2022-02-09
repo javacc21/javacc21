@@ -137,10 +137,9 @@ AttributeArguments :
        )*
     ]
     [
-       SCAN <IDENTIFIER> "="
-       => NamedArgument
+       <IDENTIFIER> "=" =>|| Expression #NamedArgument(3)
        (
-          "," NamedArgument
+          "," <IDENTIFIER> "=" Expression #NamedArgument(3)
        )*
     ]
     ")"  
@@ -641,25 +640,16 @@ PropertyBody :
 AccessorDeclaration :
    (AttributeSection)*
    [
-      "protected" ["internal"]
-      | "internal" ["protected"]
+      "public" 
+      | "protected" ["internal"]
+      | "internal" ["protected"|"public"]
       | "private" 
       | "readonly" // Only in a struct, and only for a getter I think. And since which version?
    ]
-   ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init") =>||
+   ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init") 
+   =>||
    AccessorBody
 ;
-
-SetAccessorDeclaration :
-   (AttributeSection)*
-   [
-      "protected" ["internal"]
-      | "internal" ["protected"]
-      | "private" 
-   ]
-   ACTIVATE_TOKENS SET ("set") =>||
-   AccessorBody
-;   
 
 AccessorBody :
    Block 
@@ -865,7 +855,7 @@ INJECT AndExpression : implements Expression
 INJECT ArrayCreationExpression : implements Expression
 INJECT AnonymousMethodExpression : implements Expression
 INJECT AnonymousObjectCreationExpression : implements Expression
-INJECT AssignmentExpression : implements Expression
+INJECT AssignmentExpression : implements StatementExpression
 INJECT CheckedExpression : implements Expression
 INJECT ConditionalExpression : implements Expression
 INJECT ConditionalExpression : implements Expression
@@ -1665,6 +1655,7 @@ LocalVariableDeclarationLA#scan :
 
 LocalVariableDeclaration : 
   SCAN LocalVariableDeclarationLA =>
+  ["ref"]
   ["using"] // since 8.0
   (
      VarDeclaration
@@ -1765,6 +1756,7 @@ WhileStatement : "while" "(" Expression ")" EmbeddedStatement ;
 ForeachStatement : 
     "foreach" 
     "(" 
+    ["ref"]
     ("var" | Type) 
     (
        <IDENTIFIER> 
