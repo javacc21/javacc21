@@ -253,33 +253,26 @@ TOKEN #Literal :
                     ) 
   >                                                  
   |
-  < STRING_LITERAL: <REGULAR_STRING_LITERAL>| <NOT_REALLY_INTERPOLATED> | "@"<RAW_STRING_>> #StringLiteral
+  < STRING_LITERAL: <REGULAR_STRING_LITERAL>| "@"<RAW_STRING_>> #StringLiteral
   |
   // TODO. The final part quite correct.
-  < INTERPOLATED_STRING_LITERAL : <REGULAR_INTERPOLATED_STRING_LITERAL> | (("$@"|"@$") <RAW_STRING_>) >
-  |
-  < #REGULAR_INTERPOLATED_STRING_LITERAL : "$\"" ((~["\"","\\", "\n","\r"]) | <ESCAPED_CHAR>|<SINGLE_QUOTE_STRING>)* "\"">
-  |
-  < #SINGLE_QUOTE_STRING : ["'","`"] ((~["'", "\\", "\n", "\r"])|<ESCAPED_CHAR>)* "'" >
+  < INTERPOLATED_STRING_LITERAL : ("$@"|"@$") <RAW_STRING_> >
   |
   < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)*  "\"">
   |
   < #RAW_STRING_ : "\"" (~["\""] | "\"\"")* "\"" > 
   |
-  // Starts with '$"' but does not contain any placeholder
-  < #NOT_REALLY_INTERPOLATED : "$\"" (<CHAR_IN_INTERPOLATION>)* "\"">
-  |
+  < REGULAR_INTERPOLATION_START : "$\"" > : IN_INTERPOLATION
+; 
+
+<IN_INTERPOLATION>
+TOKEN :
   // Just any non-interpolated character in an interpolated string.
-  < #CHAR_IN_INTERPOLATION : (~["\"","\\","\n","\r","{","}"]) | "{{" | "}}" | <ESCAPED_CHAR2>>
-;   
-
-
-#if false
-MORE :
-  < REGULAR_INTERPOLATION_START : "$\" ((~["\"","\\","\n","\r","{"]) | "{{" | <ESCAPED_CHAR2>)*> : IN_INTERPOLATION 
+  < NON_INTERPOLATED_TEXT : ((~["\"","\\","\n","\r","{","}"]) | "{{" | "}}" | <ESCAPED_CHAR2>)+ >
+  |
+  < ENDING_QUOTE : "\"" > : CSHARP
+  |
+  <PLACEHOLDER_START : "{" > : CSHARP
 ;
 
-TOKEN <IN_INTERPOLATION,CSHARP>
-  < LBRACE : "{"> #Delimiter : CSHARP
-;
-#endif
+
