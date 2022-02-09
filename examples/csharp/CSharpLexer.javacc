@@ -273,6 +273,8 @@ TOKEN :
   < ENDING_QUOTE : "\"" > : CSHARP
   |
   <PLACEHOLDER_START : "{" > : CSHARP
+//  |
+//  <PLACEHOLDER_END : "}" > : IN_INTERPOLATION
 ;
 
 
