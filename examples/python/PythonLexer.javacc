@@ -6,6 +6,7 @@ PARSER_PACKAGE = org.parsers.pylexer;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
+TABS_TO_SPACES=4;
 
 /*
  * The following code injection implements the various indent/dedent logic.

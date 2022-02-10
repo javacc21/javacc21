@@ -1096,6 +1096,14 @@ public class Grammar extends BaseNode {
         return b== null ? false : b;
     }
 
+    public boolean getPreserveTabs() {
+        Boolean b = (Boolean) settings.get("PRESERVE_TABS");
+        if (b!=null) return b;
+        if (settings.get("TAB_SIZE")==null && settings.get("TABS_TO_SPACES")==null)
+            return true;
+        return getTabSize() ==0;
+    }
+
     public boolean getJavaUnicodeEscape() {
         Boolean b = (Boolean) settings.get("JAVA_UNICODE_ESCAPE");
         return b== null ? false : b;
@@ -1106,9 +1114,12 @@ public class Grammar extends BaseNode {
         return b== null ? false : b;
     }
 
-    public int getTabsToSpaces() {
-        Integer i = (Integer) settings.get("TABS_TO_SPACES");
-        return i==null ? 8 : i;
+    public int getTabSize() {
+        Integer i = (Integer) settings.get("TAB_SIZE");
+        if (i==null) {
+            i = (Integer) settings.get("TABS_TO_SPACES");
+        }
+        return i==null ? 1 : i;
     }
 
     public int getJdkTarget() {
@@ -1188,9 +1199,9 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,USE_PREPROCESSOR,";
+    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,USE_PREPROCESSOR,";
     private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
-    private String integerSettings = ",TABS_TO_SPACES,JDK_TARGET,";
+    private String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
     private void typeCheckSettings(Map<String, Object> settings) {
         for (String key : settings.keySet()) {

@@ -48,7 +48,10 @@
 
 [#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("true", "false")
-      ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")]
+      ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")
+      PRESERVE_TABS = grammar.preserveTabs?string("true", "false")
+      TABS_TO_SPACES = grammar.tabSize
+]      
 
 [#macro EnumSet varName tokenNames]
    [#if tokenNames?size=0]
@@ -75,6 +78,12 @@ import java.util.EnumSet;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
+    static final int DEFAULT_TAB_WIDTH = ${grammar.tabSize};
+    private int tabWidth = DEFAULT_TAB_WIDTH;
+
+    public void setTabWidth(int tabWidth) {this.tabWidth = tabWidth;}
+
+
   final Token DUMMY_START_TOKEN = new Token();
 // Just a dummy Token value that we put in the tokenLocationTable
 // to indicate that this location in the file is ignored.
@@ -91,6 +100,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     // A list of offsets of the beginning of lines
     private int[] lineOffsets;
 
+
     // The starting line and column, usually 1,1
     // that is used to report a file position 
     // in 1-based line/column terms
@@ -103,7 +113,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
 // A BitSet that stores where the tokens are located.
 // This is not strictly necessary, I suppose...
-    private BitSet tokenOffsets;
+   private BitSet tokenOffsets;
+
+//  A Bitset that stores the line numbers that
+// contain either hard tabs or extended (beyond 0xFFFF) unicode
+// characters.
+   private BitSet needToCalculateColumns=new BitSet();
 
 // Just a very simple, bloody minded approach, just store the
 // Token objects in a table where the offsets are the code unit 
@@ -183,9 +198,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       */
      public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
         this.inputSource = inputSource;
-        this.content = mungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+        this.content = mungeContent(input, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         this.inputSource = inputSource;
-        this.lineOffsets = createLineOffsetsTable(this.content);
+        createLineOffsetsTable();
         tokenLocationTable = new Token[content.length()+1];
         tokenOffsets = new BitSet(content.length() +1);
         this.startingLine = startingLine;
@@ -481,23 +496,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     }
 
     /**
-     * The number of supplementary unicode characters in the specified 
-     * offset range. The range is expressed in code units
-     */
-    private int numSupplementaryCharactersInRange(int start, int end) {
-        int result =0;
-        while (start < end-1) {
-            if (Character.isHighSurrogate(content.charAt(start++))) {
-                if (Character.isLowSurrogate(content.charAt(start))) {
-                    start++;
-                    result++;
-                }
-            }
-        }
-        return result;
-    }
-
-    /**
      * The offset of the start of the given line. This is in code units
      */
     private int getLineStartOffset(int lineNumber) {
@@ -536,9 +534,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      * @param parsedLines a #java.util.BitSet that holds which lines
      * are parsed (i.e. not ignored)
      */
-    public void setParsedLines(BitSet parsedLines) {
+    private void setParsedLines(BitSet parsedLines, boolean reversed) {
         for (int i=0; i < lineOffsets.length; i++) {
-            if (!parsedLines.get(i+1)) {
+            boolean turnOffLine = !parsedLines.get(i+1);
+            if (reversed) turnOffLine = !turnOffLine;
+            if (turnOffLine) {
                 int lineOffset = lineOffsets[i];
                 int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i+1] : content.length();
                 for (int offset = lineOffset; offset < nextLineOffset; offset++) {
@@ -547,6 +547,17 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             }
         }
     }
+
+    /**
+     * This is used in conjunction with having a preprocessor.
+     * We set which lines are actually parsed lines and the 
+     * unset ones are ignored. 
+     * @param parsedLines a #java.util.BitSet that holds which lines
+     * are parsed (i.e. not ignored)
+     */
+    public void setParsedLines(BitSet parsedLines) {setParsedLines(parsedLines,false);}
+
+    public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines,true);}
 
     /**
      * @return the line number from the absolute offset passed in as a parameter
@@ -568,12 +579,27 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     int getCodePointColumnFromOffset(int pos) {
         if (pos >= content.length()) return 1;
         if (pos == 0) return startingColumn;
+        final int line = getLineFromOffset(pos)-startingLine;
+        final int lineStart = lineOffsets[line];
+        int startColumnAdjustment = line>0 ? 1 : startingColumn;
+        int unadjustedColumn = pos - lineStart + startColumnAdjustment;
+        if (!needToCalculateColumns.get(line)) {
+            return unadjustedColumn;
+        }
         if (Character.isLowSurrogate(content.charAt(pos))) --pos;
-        int line = getLineFromOffset(pos)-startingLine;
-        int lineStart = lineOffsets[line];
-        int numSupps = numSupplementaryCharactersInRange(lineStart, pos);
-        int startColumnAdjustment = line > 0 ? 1 : startingColumn;
-        return startColumnAdjustment+pos-lineOffsets[line]-numSupps;
+        int result = unadjustedColumn;
+        for (int i=lineStart; i< pos; i++) {
+            char ch = content.charAt(i);
+            if (ch == '\t') {
+                result += tabWidth;
+                result -= (startColumnAdjustment + i - lineStart)%tabWidth;
+            }
+            else if (Character.isHighSurrogate(ch)) {
+                ++i;
+                --result;
+            }
+        }
+        return result;
     }
     
     /**
@@ -623,18 +649,17 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
     }
 
-    /**
-     * Given the line number and the column in code points,
-     * returns the column in code units.
-     */
-    private static int[] createLineOffsetsTable(CharSequence content) {
+    private void createLineOffsetsTable() {
         if (content.length() == 0) {
-            return new int[0];
+            this.lineOffsets = new int[0];
         }
         int lineCount = 0;
         int length = content.length();
         for (int i = 0; i < length; i++) {
             char ch = content.charAt(i);
+            if (ch == '\t' || Character.isHighSurrogate(ch)) {
+                needToCalculateColumns.set(i);
+            }
             if (ch == '\n') {
                 lineCount++;
             }
@@ -653,15 +678,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 lineOffsets[index++] = i + 1;
             }
         }
-        return lineOffsets;
+        this.lineOffsets = lineOffsets;
     }
  
 // Icky method to handle annoying stuff. Might make this public later if it is
 // needed elsewhere
-  private static String mungeContent(CharSequence content, int tabsToSpaces, boolean preserveLines,
+  private static String mungeContent(CharSequence content, boolean preserveTabs, boolean preserveLines,
         boolean javaUnicodeEscape, boolean ensureFinalEndline) {
-            boolean csharpUnicodeEscape = false;
-    if (tabsToSpaces <= 0 && preserveLines && !javaUnicodeEscape && !csharpUnicodeEscape) {
+    if (preserveTabs && preserveLines && !javaUnicodeEscape) {
         if (ensureFinalEndline) {
             if (content.length() == 0) {
                 content = "\n";
@@ -691,13 +715,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             buf.append(ch);
             col=0;
         }
-        else if (csharpUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index) == 'U') {
-            String eightHexDigits = content.subSequence(index+1, index+9).toString();
-            buf.appendCodePoint(Integer.parseInt(eightHexDigits,16));
-            index+=9;
-            ++col;
-        }
-        else if ((javaUnicodeEscape || csharpUnicodeEscape) && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
+        else if (javaUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
             int numPrecedingSlashes = 0;
             for (int i = index-1; i>=0; i--) {
                 if (content.charAt(i) == '\\') 
@@ -725,8 +743,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             if (index < contentLength && content.charAt(index) == '\n') {
                 ++index;
             }
-        } else if (ch == '\t' && tabsToSpaces > 0) {
-            int spacesToAdd = tabsToSpaces - col % tabsToSpaces;
+        } else if (ch == '\t' && !preserveTabs) {
+            int spacesToAdd = DEFAULT_TAB_WIDTH - col % DEFAULT_TAB_WIDTH;
             for (int i = 0; i < spacesToAdd; i++) {
                 buf.append((char) ' ');
                 col++;

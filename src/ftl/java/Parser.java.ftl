@@ -235,9 +235,18 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
+
   private void uncacheTokens() {
       token_source.reset(getToken(0));
   }
+
+  private void resetTo(LexicalState state) {
+    token_source.reset(getToken(0), state);
+  }
+
+  private void resetTo(Token tok, LexicalState state) {
+    token_source.reset(tok, state);
+  } 
 
   boolean deactivateTokenTypes(TokenType... types) {
     boolean result = false;

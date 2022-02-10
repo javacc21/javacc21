@@ -171,6 +171,8 @@ TOKEN :
   <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
   |
   <_LEXICAL_STATE : "LEXICAL_STATE"> #JavaCCKeyWord
+//  |
+//  < SINGLE_QUOTE_STRING : "'" (~["'", "\\", "\n", "\r"])* "'" >
 }
 
 INJECT BaseNode :

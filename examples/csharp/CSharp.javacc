@@ -33,21 +33,6 @@ INJECT PARSER_CLASS :
    }
 }
 
-INJECT LEXER_CLASS : 
-{
-   public void setUnparsedLines(BitSet parsedLines) {
-      for (int i=0; i < lineOffsets.length; i++) {
-         if (parsedLines.get(i+1)) {
-               int lineOffset = lineOffsets[i];
-               int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i+1] : content.length();
-               for (int offset = lineOffset; offset < nextLineOffset; offset++) {
-                  tokenLocationTable[offset] = IGNORED;
-               }
-         }
-      }
-   }
-}
-
 #CompilationUnit# :
    (ExternAliasDirective)*
    (UsingDirective)*
@@ -252,7 +237,6 @@ Modifiers#void : //TODO
             || permissibleModifiers.contains(ASYNC) && checkNextTokenImage("async") 
             || permissibleModifiers.contains(RECORD) && checkNextTokenImage("record")
           }#
-//      => ACTIVATE_TOKENS ASYNC, RECORD ("async" | SCAN ~\RecordDeclaration => "record")
       => ACTIVATE_TOKENS ASYNC, RECORD ("async")
       { if (permissibleModifiers!=null) permissibleModifiers.remove(ASYNC);}
   )*
@@ -1879,17 +1863,7 @@ StatementExpression#interface :
       SCAN 1 {lhs.isAssignableTo()}
       => (AssignmentOperator ["ref"] Expression) #AssignmentExpression(+1)
       |
-      ASSERT {lhs instanceof StatementExpression} : "Not a statement " + lhs.getClass() :
-/*      
-      {
-         lhs instanceof InvocationExpression
-         |
-         lhs instanceof ObjectCreationExpression
-         |
-         lhs instanceof PostDecrementExpression
-         |
-         lhs instanceof PostIncrementExpression
-      }*/
+      ASSERT {lhs instanceof StatementExpression} : "Not a statement."
    )
    |
    AssignmentExpression 
@@ -2061,7 +2035,6 @@ RegularStringInterpolation :
    )*
    UNCACHE_TOKENS   
    {token_source.switchTo(LexicalState.IN_INTERPOLATION);}#
-//   LEXICAL_STATE IN_INTERPOLATION
    <ENDING_QUOTE>
    {token_source.switchTo(LexicalState.CSHARP);}#
 ;
