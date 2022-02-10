@@ -1,6 +1,7 @@
 PARSER_PACKAGE="org.parsers.csharp";
 NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
+PRESERVE_TABS;
 TABS_TO_SPACES=4;
 PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
@@ -37,13 +38,44 @@ INJECT PARSER_CLASS :
    (ExternAliasDirective)*
    (UsingDirective)*
    (GlobalAttributeSection)*
-   (
-      NamespaceDeclaration
-      |
-      TypeDeclaration
-    )* 
+   CompilationUnitBody
    <EOF>
    {return CURRENT_NODE;}
+;
+
+CompilationUnitBody#void :
+    FileScopedNamespaceDeclaration // Since 10.0
+    |
+    //(Statement)* 
+    (NamespaceDeclaration | TypeDeclaration)*
+;
+
+FileScopedNamespaceDeclaration :
+   "namespace" QualifiedIdentifier ";" =>||
+   (ExternAliasDirective)*
+   (UsingDirective)*
+   (TypeDeclaration)*
+;
+
+NamespaceDeclaration :
+   "namespace"  QualifiedIdentifier  =>|+1
+   NamespaceBody [";"]
+;
+
+QualifiedIdentifier :
+    <IDENTIFIER> ("." <IDENTIFIER>)*
+;
+
+NamespaceBody :
+   "{"
+       (ExternAliasDirective)* 
+       (UsingDirective)* 
+       (
+          NamespaceDeclaration 
+          |
+          TypeDeclaration
+       )*
+   "}"
 ;
 
 ExternAliasDirective :
@@ -163,30 +195,6 @@ TypeArgumentList :
    (">")
 ;
 
-NamespaceDeclaration :
-   "namespace"  QualifiedIdentifier 
-   (
-      ";"
-      |
-      NamespaceBody [";"]
-   )
-;
-
-QualifiedIdentifier :
-    <IDENTIFIER> ("." <IDENTIFIER>)*
-;
-
-NamespaceBody :
-   "{"
-       (ExternAliasDirective)* 
-       (UsingDirective)* 
-       (
-          NamespaceDeclaration 
-          |
-          TypeDeclaration
-       )*
-   "}"
-;
 
 TypeDeclaration :
   SCAN 0 {!checkNextTokenType(RBRACE) && !checkNextTokenType(EOF)}# =>
