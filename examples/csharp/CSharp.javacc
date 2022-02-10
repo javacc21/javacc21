@@ -46,9 +46,20 @@ INJECT PARSER_CLASS :
 CompilationUnitBody#void :
     FileScopedNamespaceDeclaration // Since 10.0
     |
-    //(Statement)* 
+    (
+      SCAN ~(<EOF>|"namespace"|TypeDeclarationLA)
+      =>
+      Statement
+    )*
     (NamespaceDeclaration | TypeDeclaration)*
 ;
+
+TypeDeclarationLA#scan :
+   (AttributeSection)*
+   Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+   ("struct"|"class"|"interface"|"record")
+;   
 
 FileScopedNamespaceDeclaration :
    "namespace" QualifiedIdentifier ";" =>||
