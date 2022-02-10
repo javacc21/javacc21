@@ -879,6 +879,7 @@ INJECT RangeExpression : implements Expression
 INJECT RegularStringInterpolation : implements Expression
 INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
+INJECT StackAllocInitializer : implements Expression
 INJECT StatementExpression : extends Expression
 INJECT TypeofExpression : implements Expression
 INJECT QualifiedAliasMember : implements Expression
@@ -1187,7 +1188,12 @@ NullCoalescingExpression :
 ConditionalExpression : 
    NullCoalescingExpression 
    [
-      "?" ["ref"] Expression ":" ["ref"] Expression
+      "?" 
+      (
+       ["ref"] Expression
+       ":" 
+       ["ref"] Expression
+      )
    ]
 ;
 
@@ -1293,6 +1299,8 @@ PrimaryExpression#void :
       QualifiedAliasMemberAccess
       |
       SimpleName
+      |
+      StackAllocInitializer // since 8.0
       |
       ParenthesizedOrTuple
       |
@@ -1698,8 +1706,8 @@ LocalVariableInitializer :
    Expression 
    | 
    ArrayInitializer 
-   | 
-   StackAllocInitializer
+//   | 
+//   StackAllocInitializer
 ;
 
 StackAllocInitializer :
@@ -1849,11 +1857,11 @@ FixedStatement :
 FixedPointerDeclarator : 
    <IDENTIFIER> 
    "=" 
-   (
+//   (
       ["&"] Expression
-      |
-      StackAllocInitializer
-   )
+//      |
+//      StackAllocInitializer
+//   )
 ;
 
 StatementExpression#interface :
