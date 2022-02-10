@@ -1754,7 +1754,12 @@ DoStatement : "do" EmbeddedStatement "while" "(" Expression ")" ";" ;
 WhileStatement : "while" "(" Expression ")" EmbeddedStatement ;
 
 ForeachStatement : 
-    "foreach" 
+    [
+       //Since 8.0 (I think...)
+       SCAN {checkNextTokenImage("await")}# 
+       => ACTIVATE_TOKENS AWAIT ("await")
+    ]
+    "foreach" =>||
     "(" 
     ["ref"]
     ("var" | Type) 
@@ -1848,12 +1853,7 @@ FixedStatement :
 
 FixedPointerDeclarator : 
    <IDENTIFIER> 
-   "=" 
-//   (
-      ["&"] Expression
-//      |
-//      StackAllocInitializer
-//   )
+   "=" ["&"] Expression
 ;
 
 StatementExpression#interface :
