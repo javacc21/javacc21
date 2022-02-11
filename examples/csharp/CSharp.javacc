@@ -514,19 +514,28 @@ InterfacePropertyDeclaration :
    (AttributeSection)*
    ("new" | "public")* // FIXME!
    Type
-   <IDENTIFIER>
-   "{" 
-   =>||
-   (InterfaceAccessor)+
-   "}"
+   <IDENTIFIER> =>|+1
+   (
+      "{" (InterfaceAccessor)+ "}"
+      |
+      // This seems to be another of these
+      // new features not hardly documented
+      // anywhere. For read-only 'get' properties,
+      // apparently, you can dispense with the 
+      // "{ get }" but I'm not sure if this is only
+      // in interfaces.
+      "=>" Expression ";"
+   )
 ;
 
 InterfaceAccessor : // TODO, check that there is only one of each
     (AttributeSection)* 
     ASSERT {checkNextTokenImage("get")||checkNextTokenImage("set")||checkNextTokenImage("init")}#
     : "Expecting get, set, or init here"
-    ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init" ) 
+    ACTIVATE_TOKENS GET,SET,INIT 
+    ( "get" | "set" | "init" )
     =>|| 
+    ["=>" Expression ] 
     ";"
 ;    
 
