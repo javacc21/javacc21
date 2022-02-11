@@ -314,6 +314,11 @@ RecordDeclaration :
    <IDENTIFIER>
    [TypeParameterList]
    ["(" [FormalParameters] ")"]
+   [
+      // Call of base constructor
+      // Where is this documented?
+      ":" Name "(" [ArgumentList] ")"
+   ]
    TypeParameterConstraints
    (
      "{" (ClassMemberDeclaration)* "}" [";"]
