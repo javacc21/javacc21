@@ -734,8 +734,7 @@ MethodBody :
 
 InterfaceMethodDeclaration :
    (AttributeSection)*
-   ["unsafe"] // REVISIT. 
-   ["new"]
+   Modifiers // REVISIT later.
    ReturnType
    <IDENTIFIER>
    [TypeParameterList]
