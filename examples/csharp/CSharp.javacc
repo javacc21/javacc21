@@ -58,7 +58,7 @@ TypeDeclarationLA#scan :
    (AttributeSection)*
    Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
-   ("struct"|"class"|"interface"|"enum"
+   ("struct"|"class"|"interface"|"enum"|"delegate"
      |SCAN {checkNextTokenImage("record")}=>{})
 ;   
 
@@ -308,6 +308,7 @@ RecordDeclaration :
    (AttributeSection)*
    Modifiers
    [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+   ASSERT {checkNextTokenImage("record")}#
    ACTIVATE_TOKENS RECORD ("record")
    =>||
    <IDENTIFIER>
@@ -429,6 +430,9 @@ TypeParameterConstraint :
 ClassMemberDeclaration :
    ConstantDeclaration
    |
+   SCAN TypeDeclarationLA =>
+   TypeDeclaration
+   |
    MethodDeclaration 
    | 
    FieldDeclaration 
@@ -450,8 +454,6 @@ ClassMemberDeclaration :
    => StructMemberDeclarationUnsafe
    |
    StaticConstructorDeclaration 
-   | 
-   TypeDeclaration
 ;
 
 StructMemberDeclarationUnsafe :
@@ -656,13 +658,15 @@ PropertyBody :
 
 AccessorDeclaration :
    (AttributeSection)*
+   Modifiers
+/*   
    [
       "public" 
       | "protected" ["internal"]
       | "internal" ["protected"|"public"]
       | "private" 
       | "readonly" // Only in a struct, and only for a getter I think. And since which version?
-   ]
+   ]*/
    ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init") 
    =>||
    AccessorBody
