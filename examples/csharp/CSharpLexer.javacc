@@ -49,7 +49,7 @@ TOKEN #Literal :
 TOKEN #Delimiter :
   < LPAREN: "(" > 
 | < RPAREN: ")" >
-| < LBRACE: "{" > 
+//| < LBRACE: "{" > 
 | < RBRACE: "}" > 
 | < LBRACKET: "[" > 
 | < RBRACKET: "]" > 
@@ -256,24 +256,35 @@ TOKEN #Literal :
   |
   < STRING_LITERAL: <REGULAR_STRING_LITERAL>| "@"<RAW_STRING_>> #StringLiteral
   |
-  // TODO. The final part quite correct.
-  < INTERPOLATED_STRING_LITERAL : ("$@"|"@$") <RAW_STRING_> >
-  |
+//  < INTERPOLATED_STRING_LITERAL : ("$@"|"@$") <RAW_STRING_> >
+//  |
   < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)*  "\"">
   |
   < #RAW_STRING_ : "\"" (~["\""] | "\"\"")* "\"" > 
+  | 
+  < REGULAR_INTERPOLATION_START : "$\"" > : IN_REGULAR_INTERPOLATION
   |
-  < REGULAR_INTERPOLATION_START : "$\"" > : IN_INTERPOLATION
+  < MULTI_INTERPOLATION_START : "$@\"" | "@$\"" > : IN_MULTI_INTERPOLATION
 ; 
 
-<IN_INTERPOLATION>
+<IN_REGULAR_INTERPOLATION>
 TOKEN :
   // Just any non-interpolated character in an interpolated string.
   < NON_INTERPOLATED_TEXT : ((~["\"","\\","\n","\r","{","}"]) | "{{" | "}}" | <ESCAPED_CHAR2>)+ >
-  |
-  < ENDING_QUOTE : "\"" > : CSHARP
-  |
-  <PLACEHOLDER_START : "{" > : CSHARP
 ;
 
+<IN_MULTI_INTERPOLATION>
+TOKEN :
+  // Just any non-interpolated character in an interpolated string.
+  < NON_INTERPOLATED_TEXT2 : ((~["\"","{","}"] | "\"\"") | "{{" | "}}")+ >
+;
 
+<CSHARP, IN_REGULAR_INTERPOLATION, IN_MULTI_INTERPOLATION > 
+TOKEN #Delimiter :
+   <LBRACE : "{" > : CSHARP
+;
+
+<IN_REGULAR_INTERPOLATION,IN_MULTI_INTERPOLATION >
+TOKEN :
+  < ENDING_QUOTE : "\"" > : CSHARP
+;  

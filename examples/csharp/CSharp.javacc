@@ -1,7 +1,7 @@
 PARSER_PACKAGE="org.parsers.csharp";
 NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
-PRESERVE_TABS;
+//PRESERVE_TABS;
 TABS_TO_SPACES=4;
 PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
@@ -58,7 +58,8 @@ TypeDeclarationLA#scan :
    (AttributeSection)*
    Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
-   ("struct"|"class"|"interface"|"record")
+   ("struct"|"class"|"interface"|"enum"
+     |SCAN {checkNextTokenImage("record")}=>{})
 ;   
 
 FileScopedNamespaceDeclaration :
@@ -879,7 +880,9 @@ INJECT ObjectCreationExpression : implements StatementExpression
 INJECT OrExpression : implements Expression
 INJECT PrimitiveTypeAccess : implements Expression
 INJECT RangeExpression : implements Expression
-INJECT RegularStringInterpolation : implements Expression
+INJECT InterpolatedString : implements Expression
+INJECT RegularStringInterpolation : extends InterpolatedString
+INJECT MultiStringInterpolation : extends InterpolatedString
 INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
 INJECT StackAllocInitializer : implements Expression
@@ -1287,9 +1290,9 @@ PrimaryExpression#void :
       |
       LiteralExpression
       |
-      RegularStringInterpolation
-      |
-      <INTERPOLATED_STRING_LITERAL> // TODO: deal with this better.
+      InterpolatedString
+//      |
+//      <INTERPOLATED_STRING_LITERAL> 
       |
       "this" #This
       |
@@ -1779,7 +1782,8 @@ ForeachStatement :
        | 
        Tuple // since ???
     )
-    "in" 
+    UNCACHE_TOKENS
+    ACTIVATE_TOKENS IN ("in") 
     Expression 
     ")" 
     EmbeddedStatement 
@@ -2046,31 +2050,47 @@ PropertySubPattern :
    "}"
 ;
 
+InterpolatedString#abstract : RegularStringInterpolation | MultiStringInterpolation ;
+
 RegularStringInterpolation :
    <REGULAR_INTERPOLATION_START>
    (
       <NON_INTERPOLATED_TEXT>
       |
       PlaceHolder
+      {resetTo(LexicalState.IN_REGULAR_INTERPOLATION);}#
    )*
    UNCACHE_TOKENS   
-   {token_source.switchTo(LexicalState.IN_INTERPOLATION);}#
+   {token_source.switchTo(LexicalState.IN_REGULAR_INTERPOLATION);}#
+   <ENDING_QUOTE>
+   {token_source.switchTo(LexicalState.CSHARP);}#
+;
+
+MultiStringInterpolation :
+   <MULTI_INTERPOLATION_START>
+   (
+      <NON_INTERPOLATED_TEXT2>
+      |
+      PlaceHolder
+      {resetTo(LexicalState.IN_MULTI_INTERPOLATION);}
+   )*
+   UNCACHE_TOKENS   
+   {token_source.switchTo(LexicalState.IN_MULTI_INTERPOLATION);}#
    <ENDING_QUOTE>
    {token_source.switchTo(LexicalState.CSHARP);}#
 ;
 
 PlaceHolder :
-   <PLACEHOLDER_START>
+   "{"
    Expression
    ["," Expression]
    [
       ":" 
-      UNCACHE_TOKENS   
-      {token_source.switchTo(LexicalState.IN_INTERPOLATION);}#
+      {
+         resetTo(LexicalState.IN_REGULAR_INTERPOLATION);
+      }#
       <NON_INTERPOLATED_TEXT>
-      {token_source.switchTo(LexicalState.CSHARP);}#
+      {resetTo(LexicalState.CSHARP);}#
    ]
    "}"
-   UNCACHE_TOKENS   
-   {token_source.switchTo(LexicalState.IN_INTERPOLATION);}#
 ;
