@@ -300,7 +300,11 @@ StructDeclaration :
    ]
    [":" Name ("," Name)*]
    TypeParameterConstraints
-   "{" (ClassMemberDeclaration)* "}"
+   (
+      "{" (ClassMemberDeclaration)* "}"
+      |
+      SCAN {isaRecordStruct} => ";"
+   )
    [";"] 
 ;
 
@@ -317,7 +321,7 @@ RecordDeclaration :
    [
       // Call of base constructor
       // Where is this documented?
-      ":" Name "(" [ArgumentList] ")"
+      ":" Name ["(" [ArgumentList] ")"]
    ]
    TypeParameterConstraints
    (
