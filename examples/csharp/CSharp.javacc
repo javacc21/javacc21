@@ -279,13 +279,25 @@ ClassDeclaration :
 ;
 
 StructDeclaration :
+   {boolean isaRecordStruct=false;}
    (AttributeSection)*
    Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  [ 
+     // Record structs are since 10.0
+     SCAN {checkNextTokenImage("record")}
+     => ACTIVATE_TOKENS RECORD ("record")
+     {isaRecordStruct=true;}
+  ]
    "struct" 
    =>||
    <IDENTIFIER>
    [TypeParameterList]
+   [
+      SCAN 1 {isaRecordStruct}
+      => 
+      "(" FormalParameters ")"
+   ]
    [":" Name ("," Name)*]
    TypeParameterConstraints
    "{" (ClassMemberDeclaration)* "}"
@@ -300,7 +312,7 @@ RecordDeclaration :
    =>||
    <IDENTIFIER>
    [TypeParameterList]
-   ["(" FormalParameters ")"]
+   ["(" [FormalParameters] ")"]
    TypeParameterConstraints
    (
      "{" (ClassMemberDeclaration)* "}" [";"]
