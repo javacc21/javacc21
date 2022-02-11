@@ -8,7 +8,7 @@ ENSURE_FINAL_EOL;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE,
                   PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, __ARGLIST,
-                  GET,SET,INIT,
+                  GET,SET,INIT,WITH,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries                  
@@ -789,7 +789,7 @@ Type :
       |
       => TupleType
    )
-   [
+      [
       // This is weird. Must REVISIT this.
       SCAN ~\NonNullableType
       => "?"
@@ -895,6 +895,7 @@ INJECT SizeofExpression : implements Expression
 INJECT SwitchExpression : implements Expression
 INJECT UncheckedExpression : implements Expression
 INJECT UnaryExpression : implements Expression
+INJECT WithExpression : implements Expression
 INJECT PostDecrementExpression : extends UnaryExpression implements StatementExpression
 INJECT PostIncrementExpression : extends UnaryExpression implements StatementExpression
 INJECT PreDecrementExpression : extends UnaryExpression implements StatementExpression
@@ -1082,11 +1083,26 @@ AssignmentExpression :
 ;
 
 MultiplicativeExpression : 
-   SwitchExpression
+   WithExpression
    (
       ("*" | "/" | "%") 
-      SwitchExpression
+      WithExpression
    )*
+;
+
+WithExpression :
+   SwitchExpression
+   [
+      SCAN 0 {checkNextTokenImage("with")}#
+      => ACTIVATE_TOKENS WITH ("with")
+      "{"
+      [
+         MemberInitializer
+         (SCAN 2 "," MemberInitializer)*
+         [","]
+      ]
+      "}"
+   ]
 ;
 
 SwitchExpression :
@@ -1617,7 +1633,8 @@ EmbeddedStatement :
     |
     DoStatement
     |
-    YieldStatement
+    SCAN 2 {checkNextTokenImage("yield")}#
+    => YieldStatement
     |
     CheckedStatement
     |
@@ -1830,8 +1847,9 @@ CatchClause :
 ;
 
 YieldStatement :
-   SCAN {checkNextTokenImage("yield")}#
-   => ACTIVATE_TOKENS YIELD ("yield")
+   //SCAN 2 {checkNextTokenImage("yield")}#
+   //=> 
+   ACTIVATE_TOKENS YIELD ("yield")
    (
       "break"
       |

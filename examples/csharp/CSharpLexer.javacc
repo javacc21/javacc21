@@ -200,6 +200,7 @@ TOKEN #KeyWord :
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">
+   | < WITH : "with" >
 // Here are the soft keywords used in queries 
    | <ASCENDING : "ascending">
    | <BY : "by">
