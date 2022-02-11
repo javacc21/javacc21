@@ -50,7 +50,6 @@
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("true", "false")
       ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")
       PRESERVE_TABS = grammar.preserveTabs?string("true", "false")
-      TABS_TO_SPACES = grammar.tabSize
 ]      
 
 [#macro EnumSet varName tokenNames]
@@ -78,10 +77,12 @@ import java.util.EnumSet;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
-    static final int DEFAULT_TAB_WIDTH = ${grammar.tabSize};
-    private int tabWidth = DEFAULT_TAB_WIDTH;
+    static final int DEFAULT_TAB_SIZE = ${grammar.tabSize};
+    private int tabSize = DEFAULT_TAB_SIZE;
 
-    public void setTabWidth(int tabWidth) {this.tabWidth = tabWidth;}
+[#if grammar.preserveTabs]
+    public void setTabSize(int tabSize) {this.tabSize = tabSize;}
+[/#if]    
 
 
   final Token DUMMY_START_TOKEN = new Token();
@@ -587,16 +588,18 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             return unadjustedColumn;
         }
         if (Character.isLowSurrogate(content.charAt(pos))) --pos;
-        int result = unadjustedColumn;
+        int result = startColumnAdjustment;
         for (int i=lineStart; i< pos; i++) {
             char ch = content.charAt(i);
             if (ch == '\t') {
-                result += tabWidth;
-                result -= (startColumnAdjustment + i - lineStart)%tabWidth;
-            }
+                result += tabSize - (result-1)%tabSize;
+            } 
             else if (Character.isHighSurrogate(ch)) {
+                ++result;
                 ++i;
-                --result;
+            } 
+            else {
+                ++result;
             }
         }
         return result;
@@ -658,7 +661,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         for (int i = 0; i < length; i++) {
             char ch = content.charAt(i);
             if (ch == '\t' || Character.isHighSurrogate(ch)) {
-                needToCalculateColumns.set(i);
+                needToCalculateColumns.set(lineCount);
             }
             if (ch == '\n') {
                 lineCount++;
@@ -744,7 +747,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 ++index;
             }
         } else if (ch == '\t' && !preserveTabs) {
-            int spacesToAdd = DEFAULT_TAB_WIDTH - col % DEFAULT_TAB_WIDTH;
+            int spacesToAdd = DEFAULT_TAB_SIZE - col % DEFAULT_TAB_SIZE;
             for (int i = 0; i < spacesToAdd; i++) {
                 buf.append((char) ' ');
                 col++;

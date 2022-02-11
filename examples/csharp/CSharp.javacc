@@ -1,7 +1,7 @@
 PARSER_PACKAGE="org.parsers.csharp";
 NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
-//PRESERVE_TABS;
+PRESERVE_TABS;
 TABS_TO_SPACES=4;
 PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
@@ -605,6 +605,7 @@ StaticConstructorDeclaration :
 ArgumentList : Argument ("," Argument)* ;
 
 Argument :
+   (AttributeSection)*
    [=> <IDENTIFIER> ":"]
    (
        // Where is this specified?
@@ -793,8 +794,9 @@ Type :
       SCAN ~\NonNullableType
       => "?"
    ]
-   ( 
-      SCAN ~\NonArrayType =>
+   (
+      SCAN 2 ~\NonArrayType =>
+      ["?"]
       "[" (",")* "]" 
    )*
    [
@@ -1516,18 +1518,19 @@ AnonymousMethodExpression :
    Block
 ;
 
-ExplicitAnonymousFunctionSignature : 
-   ExplicitAnonymousFunctionParameter 
-   ("," ExplicitAnonymousFunctionParameter)*
-; 
-
 ExplicitLambdaSignature :
    "(" 
        ExplicitAnonymousFunctionSignature
    ")"
 ;
 
-ExplicitAnonymousFunctionParameter :  ["ref"|"out"|"in"] Type <IDENTIFIER> ;
+ExplicitAnonymousFunctionSignature : 
+   ExplicitAnonymousFunctionParameter 
+   ("," ExplicitAnonymousFunctionParameter)*
+; 
+
+
+ExplicitAnonymousFunctionParameter :  (AttributeSection)* ["ref"|"out"|"in"] Type <IDENTIFIER> ;
 
 ObjectInitializer :
   SCAN "{" (<IDENTIFIER> | "[" ArgumentList "]") "="
