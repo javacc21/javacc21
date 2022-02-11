@@ -811,6 +811,8 @@ ArrayType#void : Type ;
 
 NonNullableType : Type;
 
+NonTupleType : Type;
+
 Type :
     SCAN ~\TupleType
     => "void" ("*")+
@@ -820,6 +822,7 @@ Type :
       |
       Name
       |
+      SCAN ~\NonTupleType
       => TupleType
    )
       [
@@ -1821,6 +1824,7 @@ DoStatement : "do" EmbeddedStatement "while" "(" Expression ")" ";" ;
 WhileStatement : "while" "(" Expression ")" EmbeddedStatement ;
 
 ForeachStatement : 
+   {boolean iteratingOverTupleType=false;}
     [
        //Since 8.0 (I think...)
        SCAN {checkNextTokenImage("await")}# 
@@ -1829,14 +1833,22 @@ ForeachStatement :
     "foreach" =>||
     "(" 
     ["ref"]
-    ("var" | Type) 
+    (
+       "var" 
+       | 
+       Tuple {iteratingOverTupleType = true;}
+       | 
+       NonTupleType 
+    ) 
     (
        <IDENTIFIER> 
        | 
-       Tuple // since ???
+       SCAN {!iteratingOverTupleType} => Tuple // since ???
+       //Tuple
+       |
+       SCAN {iteratingOverTupleType} =>{}
     )
-    UNCACHE_TOKENS
-    ACTIVATE_TOKENS IN ("in") 
+    "in"
     Expression 
     ")" 
     EmbeddedStatement 
