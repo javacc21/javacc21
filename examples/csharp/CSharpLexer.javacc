@@ -257,15 +257,13 @@ TOKEN #Literal :
   |
   < STRING_LITERAL: <REGULAR_STRING_LITERAL>| "@"<RAW_STRING_>> #StringLiteral
   |
-//  < INTERPOLATED_STRING_LITERAL : ("$@"|"@$") <RAW_STRING_> >
-//  |
   < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)*  "\"">
   |
   < #RAW_STRING_ : "\"" (~["\""] | "\"\"")* "\"" > 
   | 
-  < REGULAR_INTERPOLATION_START : "$\"" > : IN_REGULAR_INTERPOLATION
+  < REGULAR_INTERPOLATION_START : "$\"" >  
   |
-  < MULTI_INTERPOLATION_START : "$@\"" | "@$\"" > : IN_MULTI_INTERPOLATION
+  < MULTI_INTERPOLATION_START : "$@\"" | "@$\"" > 
 ; 
 
 <IN_REGULAR_INTERPOLATION>
@@ -282,10 +280,10 @@ TOKEN :
 
 <CSHARP, IN_REGULAR_INTERPOLATION, IN_MULTI_INTERPOLATION > 
 TOKEN #Delimiter :
-   <LBRACE : "{" > : CSHARP
+   <LBRACE : "{" >  
 ;
 
 <IN_REGULAR_INTERPOLATION,IN_MULTI_INTERPOLATION >
 TOKEN :
-  < ENDING_QUOTE : "\"" > : CSHARP
+  < ENDING_QUOTE : "\"" >  
 ;  

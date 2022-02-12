@@ -118,7 +118,7 @@ ${prefix}${newID()}[#rt]
 [#if expansion.specifiedLexicalState??]
   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
 ${is}${prevLexicalStateVar} = self.token_source.lexical_state
-${is}self.token_source.reset(${resetToken}, ${prevLexicalStateVar})
+${is}self.token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState})
 ${is}try:
   [#nested indent /]
 ${is}finally:

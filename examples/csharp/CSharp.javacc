@@ -2120,43 +2120,52 @@ InterpolatedString#abstract : RegularStringInterpolation | MultiStringInterpolat
 
 RegularStringInterpolation :
    <REGULAR_INTERPOLATION_START>
+   LEXICAL_STATE IN_REGULAR_INTERPOLATION
    (
-      <NON_INTERPOLATED_TEXT>
-      |
-      PlaceHolder
-      {resetTo(LexicalState.IN_REGULAR_INTERPOLATION);}#
-   )*
-   UNCACHE_TOKENS   
-   {token_source.switchTo(LexicalState.IN_REGULAR_INTERPOLATION);}#
-   <ENDING_QUOTE>
-   {token_source.switchTo(LexicalState.CSHARP);}#
+      (
+         RegularNonInterpolatedText
+         |
+         PlaceHolder
+      )*
+      <ENDING_QUOTE>
+   )
 ;
 
 MultiStringInterpolation :
    <MULTI_INTERPOLATION_START>
+   LEXICAL_STATE IN_MULTI_INTERPOLATION
    (
-      <NON_INTERPOLATED_TEXT2>
-      |
-      PlaceHolder
-      {resetTo(LexicalState.IN_MULTI_INTERPOLATION);}
-   )*
-   UNCACHE_TOKENS   
-   {token_source.switchTo(LexicalState.IN_MULTI_INTERPOLATION);}#
-   <ENDING_QUOTE>
-   {token_source.switchTo(LexicalState.CSHARP);}#
+      (
+         MultiNonInterpolatedText
+         |
+         PlaceHolder
+      )*
+      <ENDING_QUOTE>
+   )
 ;
 
 PlaceHolder :
    "{"
-   Expression
-   ["," Expression]
-   [
-      ":" 
-      {
-         resetTo(LexicalState.IN_REGULAR_INTERPOLATION);
-      }#
-      <NON_INTERPOLATED_TEXT>
-      {resetTo(LexicalState.CSHARP);}#
-   ]
-   "}"
+   LEXICAL_STATE CSHARP
+   (
+      Expression
+      ["," Expression]
+      [
+         ":" 
+         RegularNonInterpolatedText
+      ]
+      "}"
+   )
+;
+
+RegularNonInterpolatedText :
+   LEXICAL_STATE IN_REGULAR_INTERPOLATION
+   (<NON_INTERPOLATED_TEXT>)
+   =>||
+;
+
+MultiNonInterpolatedText :
+   LEXICAL_STATE IN_MULTI_INTERPOLATION
+   (<NON_INTERPOLATED_TEXT2>)
+   =>||
 ;

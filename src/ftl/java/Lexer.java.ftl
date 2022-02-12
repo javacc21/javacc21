@@ -148,10 +148,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      }
   [/#if]
 
-[#if lexerData.hasLexicalStateTransitions]
   // A lookup for lexical state transitions triggered by a certain token type
   private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
-[/#if]
   // Token types that are "regular" tokens that participate in parsing,
   // i.e. declared as TOKEN
   [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames /]
