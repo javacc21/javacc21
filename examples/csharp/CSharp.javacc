@@ -355,6 +355,8 @@ InterfaceMemberDeclaration :
    InterfaceEventDeclaration
    |
    InterfaceIndexerDeclaration
+   |
+   TypeDeclaration
 ; 
 
 InterfaceEventDeclaration :
@@ -1015,7 +1017,6 @@ ImplicitAnonymousFunctionSignature :
    |
    "(" [<IDENTIFIER> ("," <IDENTIFIER>)*] ")"
 ;
-
 QueryExpressionLA#scan :
    <IDENTIFIER> ASSERT {getToken(0).getImage().equals("from")}
    (
@@ -1037,7 +1038,7 @@ QueryExpression :
 InQueryExpression#void :
    DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
                    GROUP,JOIN,LET,INTO,
-                   ON, ORDERBY,SELECT,WHERE
+                   ON, ORDERBY,WHERE
    (Expression)
 ;
 
