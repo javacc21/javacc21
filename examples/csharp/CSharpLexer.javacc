@@ -190,6 +190,7 @@ TOKEN #KeyWord :
    | < GET : "get" >
    | < INIT : "init" >
    | < MODULE : "module">
+   | < NAMEOF : "nameof">
    | < PARTIAL : "partial">
    | < RECORD : "record" >
    | < REMOVE : "remove">

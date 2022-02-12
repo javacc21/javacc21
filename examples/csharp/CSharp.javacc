@@ -6,7 +6,7 @@ TABS_TO_SPACES=4;
 PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
 
-DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE,
+DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, __ARGLIST,
                   GET,SET,INIT,WITH,
                   // The following are used in patterns:
@@ -263,18 +263,34 @@ Modifiers#void : //TODO
 ;
 
 ClassDeclaration :
+  {boolean isaRecordClass =false;}
   (AttributeSection)*
   Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  [ 
+     // Record classes are since 10.0
+     // and barely mentioned anywhere
+     SCAN {checkNextTokenImage("record")}
+     => ACTIVATE_TOKENS RECORD ("record")
+     {isaRecordClass =true;}
+  ]
   "class"
   =>||
    <IDENTIFIER>
+   [
+      SCAN 1 {isaRecordClass}
+      => 
+      "(" FormalParameters ")"
+   ]
   [TypeParameterList]
-  [":" (Name | "object" | "dynamic" | "string") ("," Name)*]
+  [SCAN 1 {isaRecordClass} => "(" [FormalParameters] ")"]
+  [":" (Name[ SCAN 1 {isaRecordClass} => "(" ArgumentList ")"] | "object" | "dynamic" | "string") ("," Name[SCAN 1 {isaRecordClass} => "(" ArgumentList ")"] )*]
   TypeParameterConstraints
-  "{"
-   (ClassMemberDeclaration)*
-  "}"
+   (
+      "{" (ClassMemberDeclaration)* "}"
+      |
+      SCAN {isaRecordClass} => ";"
+   )
   [";"]
 ;
 
@@ -909,6 +925,7 @@ INJECT InvocationExpression : implements StatementExpression
 INJECT LambdaExpression : implements Expression
 INJECT Literal : implements Expression
 INJECT MultiplicativeExpression : implements Expression
+INJECT NameofExpression : implements Expression
 INJECT NullCoalescingExpression : implements Expression
 INJECT NullForgivingExpression : implements Expression
 INJECT NullConditionalExpression : extends UnaryExpression
@@ -1156,7 +1173,6 @@ SwitchExpression :
 
 SwitchExpressionCase : Pattern [WhenClause] "=>" Expression ;
 
-
 RangeExpression :
    ".." [UnaryExpression]
    |
@@ -1357,6 +1373,8 @@ PrimaryExpression#void :
       |
       QualifiedAliasMemberAccess
       |
+      NameofExpression
+      |
       SimpleName
       |
       StackAllocInitializer // since 8.0
@@ -1366,8 +1384,6 @@ PrimaryExpression#void :
       TypeofExpression
       |
       DefaultValueExpression
-      |
-      NameofExpression
       |
       CheckedExpression
       |
@@ -1472,8 +1488,6 @@ QualifiedAliasMemberAccess :
    <IDENTIFIER> [TypeArgumentList]
 ;
    
-
-
 BaseAccess :
    "base"
    (
@@ -1483,11 +1497,17 @@ BaseAccess :
    )
 ;
 
-NameofExpression : "nameof" "(" NamedEntity ")" ;
+NameofExpression : 
+   ASSERT {checkNextTokenImage("nameof")}#
+   ACTIVATE_TOKENS NAMEOF ("nameof") 
+   "(" =>|| 
+   NamedEntity 
+   ")" 
+;
 
 NamedEntity :
-   (SimpleName | "this"| "base" | PredefinedType | QualifiedAliasMember)
-   ("." <IDENTIFIER> [TypeArgumentList])+
+   (SimpleName | "this" | "base" | PredefinedType | QualifiedAliasMember)
+   ("." <IDENTIFIER> [TypeArgumentList])*
 ;   
 
 PredefinedType#void :
@@ -2031,6 +2051,8 @@ PrimaryPattern :
    |
    =>ParenthesizedPattern
    |
+   NameofExpression
+   |
    DeclarationPattern
    |
    PropertyPattern
@@ -2042,6 +2064,8 @@ PrimaryPattern :
    =>TypePattern
    |
    ShiftExpression // Need to check that this is a constant in principle
+   |
+   PositionalPattern
 ;
 
 ParenthesizedPattern : "(" Pattern ")" ;
