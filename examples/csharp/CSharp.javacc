@@ -498,12 +498,7 @@ FieldDeclaration :
 
 PropertyDeclaration :
    (AttributeSection)*
-   (
-      "new"|"public"|"protected"|"internal"
-      |"private"|"static"|"virtual"|"sealed"
-      |"override"|"abstract"|"extern" | "unsafe"
-      | "readonly" // REVISIT. When is this permissible?
-   )*
+   Modifiers
    Type
    Name
    =>|+1
@@ -1003,6 +998,10 @@ LambdaLHS :
         SCAN {!seenStatic} => "static"
      ]
   ]
+  [
+     SCAN ("void" | NonNullableType) "(" 
+     => ReturnType
+  ]
   (
    =>ImplicitAnonymousFunctionSignature
    |
@@ -1346,8 +1345,6 @@ PrimaryExpression#void :
       LiteralExpression
       |
       InterpolatedString
-//      |
-//      <INTERPOLATED_STRING_LITERAL> 
       |
       "this" #This
       |
@@ -1636,7 +1633,9 @@ LiteralExpression# :
    |
    <CHARACTER_LITERAL>
    |
-   <STRING_LITERAL>
+   <REGULAR_STRING_LITERAL>
+   |
+   <VERBATIM_STRING_LITERAL>
 ;   
 
 Label : SCAN 2 <IDENTIFIER> ":" ;

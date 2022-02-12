@@ -255,11 +255,9 @@ TOKEN #Literal :
                     ) 
   >                                                  
   |
-  < STRING_LITERAL: <REGULAR_STRING_LITERAL>| "@"<RAW_STRING_>> #StringLiteral
+  < REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)* "\""> #StringLiteral
   |
-  < #REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)*  "\"">
-  |
-  < #RAW_STRING_ : "\"" (~["\""] | "\"\"")* "\"" > 
+  < VERBATIM_STRING_LITERAL : "@\"" (~["\""] | "\"\"")* "\"" > #StringLiteral
   | 
   < REGULAR_INTERPOLATION_START : "$\"" >  
   |
