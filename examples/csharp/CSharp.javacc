@@ -200,8 +200,8 @@ TypeArgumentList :
    "<"
    [
       (AttributeSection)*
-      Type
-      ("," (AttributeSection)* Type)* 
+      ("void" | Type)
+      ("," (AttributeSection)* ("void" | Type))* 
    ]
    DEACTIVATE_TOKENS RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN 
    (">")
@@ -781,6 +781,7 @@ FixedParameter :
    ("ref"| "out" | "this"
     | "in" // since 7.2
    )*
+   ["delegate" "*"]
    =>|+1
    Type
    <IDENTIFIER>
