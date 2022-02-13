@@ -125,20 +125,7 @@ GlobalAttributeSection :
 AttributeSection :
    "["
    [
-      (<EVENT> |<RETURN> |<IDENTIFIER> )
-      ":" =>||
-      {String idImage = getToken(-1).getImage();}
-      ASSERT {
-         this.isParserTolerant()
-         || idImage == null
-         || idImage.equals("event")
-         || idImage.equals("field")
-         || idImage.equals("method")
-         || idImage.equals("param")
-         || idImage.equals("property")
-         || idImage.equals("return")
-         || idImage.equals("type")
-      }
+      => (<EVENT> |<RETURN> |<IDENTIFIER> ) ":"
    ]
    AttributeList
    [","]
@@ -1064,7 +1051,7 @@ FromClause :
 ;
 
 QueryBody :
-   (QueryBodyClause)*
+   ACTIVATE_TOKENS SELECT, GROUP (QueryBodyClause)*
    (
       SelectClause
       |
@@ -1784,8 +1771,6 @@ LocalVariableInitializer :
    Expression 
    | 
    ArrayInitializer 
-//   | 
-//   StackAllocInitializer
 ;
 
 StackAllocInitializer :
@@ -1984,6 +1969,7 @@ SwitchLabel :
    "default" ":"
    |
    // REVISIT: Why do I need this line?
+   // The third choice should be enough, it seems...
    => "case" Expression [WhenClause] ":"
    |
    "case" Pattern [WhenClause] ":"
@@ -1991,7 +1977,7 @@ SwitchLabel :
 
 
 WhenClause :
-   SCAN 0 {getToken(1).getImage().equals("when")}#
+   SCAN 0 {checkNextTokenImage("when")}#
    => 
    ACTIVATE_TOKENS WHEN ("when")
    NullCoalescingExpression 
@@ -2029,7 +2015,8 @@ ForStatement :
 // C# 8 Pattern syntax follows.
 
 Pattern : 
-   ACTIVATE_TOKENS AND, OR, NOT, VAR, WHEN (OrPattern) 
+   //ACTIVATE_TOKENS AND, OR, NOT, VAR, WHEN (OrPattern) 
+   ACTIVATE_TOKENS AND, OR, NOT, VAR (OrPattern) 
 ;
 
 OrPattern : AndPattern ("or" AndPattern)* ;
@@ -2060,7 +2047,9 @@ PrimaryPattern :
    |
    =>PositionalPattern
    | 
+   //Which should it be here?
    ShiftExpression 
+   //ExclusiveOrExpression
 ;
 
 ParenthesizedPattern : "(" Pattern ")" ;
@@ -2069,7 +2058,7 @@ DeclarationPattern : NonNullableType ACTIVATE_TOKENS WHEN (<IDENTIFIER>) =>|| ;
 
 VarPattern : 
     SCAN 0 {checkNextTokenImage("var")} => 
-    ACTIVATE_TOKENS VAR, WHEN ("var" (<IDENTIFIER> | Tuple))
+    ACTIVATE_TOKENS VAR ("var" (<IDENTIFIER> | Tuple))
 ;
 
 TypePattern :
@@ -2120,11 +2109,11 @@ PositionalPattern :
     "(" 
     [SubPatterns]
     ")"
-    DEACTIVATE_TOKENS WHEN 
-    (
+//    DEACTIVATE_TOKENS WHEN 
+//    (
         [PropertySubPattern]
-        [SCAN {!checkNextTokenImage("when")}# => <IDENTIFIER>]
-    )
+        [SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}# => <IDENTIFIER>]
+//    )
 ;
 
 SubPatterns :
@@ -2139,7 +2128,11 @@ SubPatterns :
 ;
 
 PropertyPattern : 
-   [Type] =>|+1 PropertySubPattern ACTIVATE_TOKENS WHEN ([<IDENTIFIER>])
+   [Type] =>|+1 PropertySubPattern 
+   [
+      SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}#
+      =><IDENTIFIER>
+   ]
 ;
 
 PropertySubPattern :
