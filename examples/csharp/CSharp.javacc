@@ -1055,7 +1055,7 @@ QueryExpression :
 InQueryExpression#void :
    DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
                    GROUP,JOIN,LET,INTO,
-                   ON, ORDERBY,WHERE
+                   ON, ORDERBY//,WHERE
    (Expression)
 ;
 
@@ -2125,10 +2125,12 @@ SubPatterns :
    [=> <IDENTIFIER> ":"]
    Pattern
    (
+      SCAN 2
       ","
       [=> <IDENTIFIER> ":"] 
       Pattern
    )*
+   [","]
 ;
 
 PropertyPattern : 
