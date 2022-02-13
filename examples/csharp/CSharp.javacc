@@ -2120,12 +2120,12 @@ PositionalPattern :
 ;
 
 SubPatterns :
-   [=> <IDENTIFIER> ":"]
+   [=> QualifiedIdentifier ":"]
    Pattern
    (
       SCAN 2
       ","
-      [=> <IDENTIFIER> ":"] 
+      [=> QualifiedIdentifier ":"] 
       Pattern
    )*
 ;
