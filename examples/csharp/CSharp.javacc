@@ -364,6 +364,9 @@ InterfaceDeclaration :
 ;
 
 InterfaceMemberDeclaration :
+   SCAN TypeDeclarationLA =>
+   TypeDeclaration
+   |
    InterfacePropertyDeclaration
    |
    InterfaceMethodDeclaration
@@ -371,8 +374,6 @@ InterfaceMemberDeclaration :
    InterfaceEventDeclaration
    |
    InterfaceIndexerDeclaration
-   |
-   TypeDeclaration
 ; 
 
 InterfaceEventDeclaration :
@@ -2034,7 +2035,9 @@ ForStatement :
 
 // C# 8 Pattern syntax follows.
 
-Pattern : ACTIVATE_TOKENS AND, OR, NOT, VAR (OrPattern) ;
+Pattern : 
+   ACTIVATE_TOKENS AND, OR, NOT, VAR (OrPattern) 
+;
 
 OrPattern : AndPattern ("or" AndPattern)* ;
 
