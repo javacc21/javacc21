@@ -833,14 +833,15 @@ Type :
     => "void" ("*")+
     |
     (
-      PrimitiveType 
+      PrimitiveType
       |
-      Name
+      Name 
       |
       SCAN ~\NonTupleType
       => TupleType
    )
-      [
+   ("*")*
+   [
       // This is weird. Must REVISIT this.
       SCAN ~\NonNullableType
       => "?"
@@ -2036,7 +2037,7 @@ ForStatement :
 // C# 8 Pattern syntax follows.
 
 Pattern : 
-   ACTIVATE_TOKENS AND, OR, NOT, VAR (OrPattern) 
+   ACTIVATE_TOKENS AND, OR, NOT, VAR, WHEN (OrPattern) 
 ;
 
 OrPattern : AndPattern ("or" AndPattern)* ;
@@ -2050,10 +2051,10 @@ PrimaryPattern :
    |
    RelationalPattern
    |
-   // These next two options are a bit ugly.
+   // These next three options are a bit ugly.
    => CastExpression // Maybe there is a better way but I don't see it.
    |
-   =>ParenthesizedPattern
+   => ParenthesizedPattern
    |
    NameofExpression
    |
@@ -2063,13 +2064,12 @@ PrimaryPattern :
    |
    VarPattern
    |
-   TuplePattern
-   | 
    =>TypePattern
    |
-   ShiftExpression // Need to check that this is a constant in principle
-   |
-   PositionalPattern
+   //TuplePattern
+   =>PositionalPattern
+   | 
+   ShiftExpression 
 ;
 
 ParenthesizedPattern : "(" Pattern ")" ;
@@ -2086,6 +2086,10 @@ VarPattern :
 TypePattern :
    (
       => Type
+      [
+         SCAN {getToken(0) instanceof NODE_PACKAGE.PrimitiveType}#
+         => "." <IDENTIFIER>
+      ]
       {TokenType nextTokType = getToken(1).getType();}#
       ASSERT 
       {
@@ -2114,12 +2118,15 @@ TypePattern :
 RelationalPattern : (">"|">="|"<="|"<") RelationalExpression ;
 
 PositionalPattern :
-    [Type] 
-    "(" =>||
+    [=>NonTupleType] 
+    "(" 
     [SubPatterns]
     ")"
-    [PropertySubPattern]
-    [<IDENTIFIER>]
+    DEACTIVATE_TOKENS WHEN 
+    (
+        [PropertySubPattern]
+        [<IDENTIFIER>]
+    )
 ;
 
 SubPatterns :

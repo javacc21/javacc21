@@ -110,21 +110,21 @@ TOKEN #KeyWord :
    <ABSTRACT : "abstract" > 
    | < AS : "as" > 
    | < BASE : "base" > 
-   | < BOOL : "bool" > 
+   | < BOOL : "bool" > #PrimitiveType
    | < BREAK : "break" >
-   | < BYTE : "byte" > 
+   | < BYTE : "byte" > #PrimitiveType
    |  <CASE : "case" > 
    | < CATCH : "catch" > 
-   | < CHAR : "char" > 
+   | < CHAR : "char" > #PrimitiveType
    | < CHECKED : "checked" > 
    | < CLASS : "class" > 
    | < CONST : "const" > 
    | < CONTINUE : "continue" > 
-   | < DECIMAL : "decimal" > 
+   | < DECIMAL : "decimal" > #PrimitiveType
    | < DEFAULT : "default" > 
    | < DELEGATE : "delegate" > 
    | < DO : "do" > 
-   | < DOUBLE : "double" > 
+   | < DOUBLE : "double" > #PrimitiveType
    | < ELSE : "else" > 
    | < ENUM : "enum" > 
    | < EVENT : "event" > 
@@ -132,19 +132,19 @@ TOKEN #KeyWord :
    | < EXTERN : "extern" > 
    | < FINALLY : "finally" > 
    | < FIXED : "fixed" > 
-   | < FLOAT : "float" > 
+   | < FLOAT : "float" > #PrimitiveType
    | < FOR : "for" > 
    | < FOREACH : "foreach" > 
    | < GOTO : "goto" > 
    | < IF : "if" > 
    | < IMPLICIT : "implicit" > 
    | < IN : "in" > 
-   | < INT : "int" > 
+   | < INT : "int" > #PrimitiveType
    | < INTERFACE : "interface" > 
    | < INTERNAL : "internal" > 
    | < IS : "is">
    | < LOCK : "lock" >
-   | < LONG : "long" >
+   | < LONG : "long" > #PrimitiveType
    | < NAMESPACE : "namespace" >
    | < NEW : "new" >
    | < OBJECT : "object" >
@@ -158,24 +158,24 @@ TOKEN #KeyWord :
    | < READONLY : "readonly" > 
    | < REF : "ref" > 
    | < RETURN : "return" > 
-   | < SBYTE : "sbyte" > 
+   | < SBYTE : "sbyte" > #PrimitiveType
    | < SEALED : "sealed" > 
-   | < SHORT : "short" > 
+   | < SHORT : "short" > #PrimitiveType
    | < SIZEOF : "sizeof" > 
    | < STACKALLOC : "stackalloc" > 
    | < STATIC : "static" > 
-   | < STRING : "string" > 
+   | < STRING : "string" > #PrimitiveType
    | < STRUCT : "struct" > 
    | < SWITCH : "switch" > 
    | < THIS : "this" > 
    | < THROW : "throw" > 
    | < TRY : "try" >
    | < TYPEOF : "typeof" >
-   | < UINT : "uint" >
-   | < ULONG : "ulong" >
+   | < UINT : "uint" > #PrimitiveType
+   | < ULONG : "ulong" > #PrimitiveType
    | < UNCHECKED : "unchecked" >
    | < UNSAFE : "unsafe" >
-   | < USHORT : "ushort" > 
+   | < USHORT : "ushort" > #PrimitiveType
    | < USING : "using" > 
    | < VIRTUAL : "virtual" > 
    | < VOID : "void" >
