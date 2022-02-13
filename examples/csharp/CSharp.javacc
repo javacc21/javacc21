@@ -691,14 +691,6 @@ PropertyBody :
 AccessorDeclaration :
    (AttributeSection)*
    Modifiers
-/*   
-   [
-      "public" 
-      | "protected" ["internal"]
-      | "internal" ["protected"|"public"]
-      | "private" 
-      | "readonly" // Only in a struct, and only for a getter I think. And since which version?
-   ]*/
    ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init") 
    =>||
    AccessorBody
@@ -2131,7 +2123,7 @@ PositionalPattern :
     DEACTIVATE_TOKENS WHEN 
     (
         [PropertySubPattern]
-        [<IDENTIFIER>]
+        [SCAN {!checkNextTokenImage("when")}# => <IDENTIFIER>]
     )
 ;
 
