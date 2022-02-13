@@ -1034,6 +1034,7 @@ ImplicitAnonymousFunctionSignature :
    |
    "(" [<IDENTIFIER> ("," <IDENTIFIER>)*] ")"
 ;
+
 QueryExpressionLA#scan :
    <IDENTIFIER> ASSERT {getToken(0).getImage().equals("from")}
    (
@@ -1055,7 +1056,7 @@ QueryExpression :
 InQueryExpression#void :
    DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
                    GROUP,JOIN,LET,INTO,
-                   ON, ORDERBY//,WHERE
+                   ON, ORDERBY
    (Expression)
 ;
 
@@ -1913,8 +1914,6 @@ CatchClause :
 ;
 
 YieldStatement :
-   //SCAN 2 {checkNextTokenImage("yield")}#
-   //=> 
    ACTIVATE_TOKENS YIELD ("yield")
    (
       "break"
@@ -2044,6 +2043,8 @@ AndPattern : NotPattern ("and" NotPattern)* ;
 NotPattern : ("not")* PrimaryPattern ;
 
 PrimaryPattern :
+   "null" | "true" | "false"
+   |
    RelationalPattern
    |
    // These next two options are a bit ugly.
@@ -2076,15 +2077,12 @@ DeclarationPattern : NonNullableType ACTIVATE_TOKENS WHEN (<IDENTIFIER>) =>|| ;
 
 VarPattern : 
     SCAN 0 {checkNextTokenImage("var")} => 
-    ACTIVATE_TOKENS VAR, WHEN ("var" <IDENTIFIER>)
+    ACTIVATE_TOKENS VAR, WHEN ("var" (<IDENTIFIER> | Tuple))
 ;
 
 TypePattern :
    (
-      "null"
-      |
-      =>
-      Type
+      => Type
       {TokenType nextTokType = getToken(1).getType();}#
       ASSERT 
       {
@@ -2130,7 +2128,6 @@ SubPatterns :
       [=> <IDENTIFIER> ":"] 
       Pattern
    )*
-   [","]
 ;
 
 PropertyPattern : 
