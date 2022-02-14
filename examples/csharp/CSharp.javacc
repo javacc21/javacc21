@@ -1586,7 +1586,7 @@ ExplicitAnonymousFunctionSignature :
 ExplicitAnonymousFunctionParameter :  (AttributeSection)* ["ref"|"out"|"in"] Type <IDENTIFIER> ;
 
 ObjectInitializer :
-  SCAN "{" (<IDENTIFIER> | "[" ArgumentList "]") "="
+  SCAN "{" (QualifiedIdentifier | "[" ArgumentList "]") "="
   =>
   "{" 
   MemberInitializer (SCAN 2 "," MemberInitializer)* [","]
@@ -1594,7 +1594,7 @@ ObjectInitializer :
 ;
 
 MemberInitializer :
-   (<IDENTIFIER> | "[" ArgumentList "]")
+   (QualifiedIdentifier | "[" ArgumentList "]")
    [
       // If this is really optional, it is a mistake in the spec. 
       // At least the C# 6.0 spec
@@ -2016,7 +2016,7 @@ ForStatement :
 
 Pattern : 
    //ACTIVATE_TOKENS AND, OR, NOT, VAR, WHEN (OrPattern) 
-   ACTIVATE_TOKENS AND, OR, NOT, VAR (OrPattern) 
+   ACTIVATE_TOKENS AND, OR, NOT (OrPattern) 
 ;
 
 OrPattern : AndPattern ("or" AndPattern)* ;
@@ -2054,11 +2054,22 @@ PrimaryPattern :
 
 ParenthesizedPattern : "(" Pattern ")" ;
 
-DeclarationPattern : NonNullableType ACTIVATE_TOKENS WHEN (<IDENTIFIER>) =>|| ;
+DeclarationPattern : 
+    NonNullableType 
+    ASSERT {checkNextTokenType(IDENTIFIER)}#
+    ACTIVATE_TOKENS FROM, WHERE
+    (
+       ASSERT ~(FromClause)
+       ASSERT ~(WhenClause)
+    )
+    <IDENTIFIER>
+    =>|| 
+;
 
 VarPattern : 
     SCAN 0 {checkNextTokenImage("var")} => 
-    ACTIVATE_TOKENS VAR ("var" (<IDENTIFIER> | Tuple))
+    ACTIVATE_TOKENS VAR ("var")
+    (<IDENTIFIER> | Tuple)
 ;
 
 TypePattern :
@@ -2109,11 +2120,8 @@ PositionalPattern :
     "(" 
     [SubPatterns]
     ")"
-//    DEACTIVATE_TOKENS WHEN 
-//    (
-        [PropertySubPattern]
-        [SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}# => <IDENTIFIER>]
-//    )
+    [PropertySubPattern]
+    [SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}# => <IDENTIFIER>]
 ;
 
 SubPatterns :

@@ -96,6 +96,7 @@ TOKEN #Operator :
 | < RIGHT_SHIFT: ">>" > 
 | < RIGHT_SHIFT_ASSIGN: ">>=" > 
 | < ARROW : "=>"> 
+| < POINTER_ACCESS : "->"> 
 | < ASSIGN: "=" > 
 | < DOUBLE_COLON: "::" > 
 | < DOT: "." > 
