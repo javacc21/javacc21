@@ -152,8 +152,6 @@ UNPARSED :
     |
     <PP_RPAREN : ")">
     |
-    <PP_ASSIGN : "=">
-    |
     <PP_EQUALS : "==">
     |
     <PP_NOT_EQUALS : "!=">

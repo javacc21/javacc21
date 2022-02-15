@@ -1,0 +1,193 @@
+TREE_BUILDING_ENABLED = false;
+PARSER_PACKAGE=org.parsers.csharp.pphelper;
+
+INCLUDE "CSharpIdentifierDef.javacc"
+
+INJECT PARSER_CLASS : 
+   import java.util.HashSet;
+   import java.util.Set;
+{
+    private Set<String> symbols = new HashSet<>();
+
+    static public Info evaluate(String input, Set<String> symbols) throws ParseException {
+        PARSER_CLASS parser = new PARSER_CLASS(input);
+        parser.symbols = symbols;
+        return parser.DirectiveLine();
+    }
+
+    public enum DirectiveType {
+        IF, ELIF, ELSE, ENDIF,
+        DEFINE, UNDEF, IGNORED, UNKNOWN;
+    }
+
+    static public class Info {
+        public final DirectiveType directiveType;
+        public final boolean evaluationResult;
+
+        Info(DirectiveType directiveType, boolean evaluationResult) {
+            this.directiveType = directiveType;
+            this.evaluationResult = evaluationResult;
+        }
+    }
+}
+
+SKIP :
+  <#WS : [" ", "\t", "\f",
+         "\u000b", "\u00a0", "\u1680",
+         "\u2000"-"\u200a",
+         "\u202f", "\u205f", "\u3000","\uC2A0"]>
+;
+
+TOKEN :
+  <EOL : ("//" (~["\n"]))? "\n" >
+  |
+  <IDENTIFIER : <CSHARP_IDENTIFIER_START> (<CSHARP_IDENTIFIER_PART>)*>
+  |
+  <TRUE : "true">
+  |
+  <FALSE : "false">
+  |
+  <OR : "||">
+  |
+  <AND : "&&">
+  |
+  <LPAREN : "(">
+  |
+  <RPAREN : ")">
+  |
+  <NOT : "!">
+  |
+  <EQUALS : "==">
+  |
+  <NOT_EQUALS : "!=">
+  |
+  <IF : (<WS>)* "#" (<WS>)* "if" <WS>>
+  |
+  <ELIF : (<WS>)* "#" (<WS>)* "elif" <WS>>
+  |
+  <DEFINE : (<WS>)* "#" (<WS>)* "define" <WS>>
+  |
+  <UNDEF : (<WS>)* "#" (<WS>)* "undef" <WS>> 
+  |
+  <ELSE : (<WS>)* "#" (<WS>)* "else" <EOL>>
+  |
+  <ENDIF : (<WS>)* "#" (<WS>)* "endif" <EOL>>
+  |
+  <IGNORED_DIRECTIVE  : (<WS>)* "#" (<WS>)* 
+     ("pragma" | "line" | "warning" | "error" | "region" | "endregion" | "nullable")
+     (~["\n"])* "\n" 
+   > 
+  |
+  <UNKNOWN_DIRECTIVE : (<WS>)* "#" (<WS>)* <IDENTIFIER>>
+;
+
+Info DirectiveLine :
+   {
+       boolean result = false;
+       DirectiveType directiveType = null;
+   } 
+   (
+       result = IfDirective {directiveType = DirectiveType.IF;}
+       |
+       result = ElifDirective {directiveType = DirectiveType.ELIF;}
+       |
+       <ELSE> {directiveType = DirectiveType.ELSE;}
+       |
+       <ENDIF> {directiveType = DirectiveType.ENDIF;}
+       |
+       DefineDirective {directiveType = DirectiveType.DEFINE;}
+       |
+       UndefDirective {directiveType = DirectiveType.UNDEF;}
+       |
+       <IGNORED_DIRECTIVE> {directiveType = DirectiveType.IGNORED;}
+       |
+       <UNKNOWN_DIRECTIVE> {directiveType = DirectiveType.UNKNOWN;}
+   )
+   {
+       return new Info(directiveType, result);
+   }
+;
+
+boolean IfDirective :
+    {boolean result;}
+    <IF> 
+    result = Expression
+    <EOL>
+    {
+        return result;
+    }
+;
+
+DefineDirective : 
+    <DEFINE> 
+    <IDENTIFIER> 
+    {symbols.add(lastConsumedToken.getImage());}
+;
+
+UndefDirective : 
+    <DEFINE>
+    <IDENTIFIER> 
+    {symbols.remove(lastConsumedToken.getImage());}
+;
+
+boolean ElifDirective :
+    {boolean result;}
+    <ELIF> 
+    result = Expression
+    <EOL>
+    {
+        return result;
+    }
+;    
+
+
+boolean Expression :
+    {boolean inequality = false, result, result2;}
+    result=OrExpression
+    [
+        ("==" | "!=" {inequality = true;})
+        result2=OrExpression
+        {result = inequality ? result != result2 : result == result2;}
+    ]
+    { return result;}
+;
+
+boolean OrExpression :
+    {boolean result, result2;}
+    result=AndExpression 
+    [
+        "||"
+        result2=AndExpression
+        {result = result && result2;}
+    ]
+    {return result;}
+;
+
+boolean AndExpression :
+    {boolean result, result2;}
+    result=NotExpression
+    [
+        "&&"
+        result2 = NotExpression
+        {result = result && result2;}
+    ]
+    {return result;}
+;
+
+boolean NotExpression :
+    {boolean not = false, result;}
+    ["!" {not = true;}]
+    result=PrimaryExpression
+    {return not ? !result : result;}
+;
+
+boolean PrimaryExpression :
+    {boolean result = false;}
+    (
+      <IDENTIFIER> {result = symbols.contains(lastConsumedToken.getImage());}
+      |
+      "(" result=Expression ")"
+    )
+    {return result;}
+;
+

@@ -3,7 +3,6 @@ NODE_PACKAGE="org.parsers.csharp.tree";
 DEFAULT_LEXICAL_STATE=CSHARP;
 PRESERVE_TABS;
 TABS_TO_SPACES=4;
-PRESERVE_LINE_ENDINGS;
 ENSURE_FINAL_EOL;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
@@ -2104,6 +2103,7 @@ TypePattern :
             || nextTokType == EQ
             || nextTokType == SC_OR
             || nextTokType == SC_AND
+            || nextTokType == COMMA
             || checkNextTokenImage("and")
             || checkNextTokenImage("or")
          )
@@ -2121,7 +2121,7 @@ PositionalPattern :
     [SubPatterns]
     ")"
     [PropertySubPattern]
-    [SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}# => <IDENTIFIER>]
+    [SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpressionCase", "SwitchLabel")}# => <IDENTIFIER>]
 ;
 
 SubPatterns :
