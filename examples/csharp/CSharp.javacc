@@ -256,7 +256,7 @@ ClassDeclaration :
   [ 
      // Record classes are since 10.0
      // and barely mentioned anywhere
-     SCAN {checkNextTokenImage("record")}
+     SCAN {checkNextTokenImage("record")}#
      => ACTIVATE_TOKENS RECORD ("record")
      {isaRecordClass =true;}
   ]
@@ -287,7 +287,7 @@ StructDeclaration :
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
   [ 
      // Record structs are since 10.0
-     SCAN {checkNextTokenImage("record")}
+     SCAN {checkNextTokenImage("record")}#
      => ACTIVATE_TOKENS RECORD ("record")
      {isaRecordStruct=true;}
   ]
@@ -747,7 +747,7 @@ ReturnType :
 ;
 
 FormalParameters :
-   SCAN {checkNextTokenImage("__arglist")}
+   SCAN {checkNextTokenImage("__arglist")}#
    =>ArgListParameter
    |
    ParameterArray
@@ -1844,7 +1844,6 @@ ForeachStatement :
        <IDENTIFIER> 
        | 
        SCAN {!iteratingOverTupleType} => Tuple // since ???
-       //Tuple
        |
        SCAN {iteratingOverTupleType} =>{}
     )
@@ -2066,7 +2065,7 @@ DeclarationPattern :
 ;
 
 VarPattern : 
-    SCAN 0 {checkNextTokenImage("var")} => 
+    SCAN 0 {checkNextTokenImage("var")}# => 
     ACTIVATE_TOKENS VAR ("var")
     (<IDENTIFIER> | Tuple)
 ;
