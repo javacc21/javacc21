@@ -826,7 +826,7 @@ public class Grammar extends BaseNode {
     // A bit kludgy
     // Also, this code doesn't really belong in this class, I don't think.
     private void checkForHooks(Node node, String className) {
-        if (node == null || null instanceof Token) {
+        if (node == null || node instanceof Token || node instanceof EmptyDeclaration) {
             return;
         }
         else if (node instanceof TokenManagerDecls) {
