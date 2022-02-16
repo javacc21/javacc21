@@ -17,10 +17,11 @@ DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
 INCLUDE "CSharpLexer.javacc"
 
 INJECT PARSER_CLASS :
-   import PARSER_PACKAGE.cspreprocessor.Preprocessor; 
+//   import PARSER_PACKAGE.cspreprocessor.Preprocessor; 
 {
    public PARSER_CLASS(Path path, boolean usePreprocessor) throws IOException {
       this(path);
+/*
       if (usePreprocessor) {
          try {
             Preprocessor ppp = new Preprocessor(path, null);
@@ -30,6 +31,7 @@ INJECT PARSER_CLASS :
              throw new RuntimeException(pe);
          }         
       }
+*/      
    }
 }
 
@@ -1972,7 +1974,6 @@ SwitchLabel :
    |
    "case" Pattern [WhenClause] ":"
 ; 
-
 
 WhenClause :
    SCAN 0 {checkNextTokenImage("when")}#

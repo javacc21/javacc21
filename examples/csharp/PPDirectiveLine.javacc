@@ -1,3 +1,6 @@
+// This grammar just defines a little parser that can be passed a line
+// with a C# pre-processor directive and gives back a result
+
 TREE_BUILDING_ENABLED = false;
 PARSER_PACKAGE=org.parsers.csharp.ppline;
 
@@ -35,20 +38,20 @@ INJECT PARSER_CLASS :
 }
 
 SKIP :
-  <#WS : [" ", "\t", "\f",
+  <WS : [" ", "\t", "\f",
          "\u000b", "\u00a0", "\u1680",
          "\u2000"-"\u200a",
          "\u202f", "\u205f", "\u3000","\uC2A0"]>
 ;
 
 TOKEN :
-  <EOL : ("//" (~["\n"]))? "\n" >
-  |
-  <IDENTIFIER : <CSHARP_IDENTIFIER_START> (<CSHARP_IDENTIFIER_PART>)*>
+  <EOL : (<WS>)* ("//" (~["\n"])*)? "\n" >
   |
   <TRUE : "true">
   |
   <FALSE : "false">
+  |
+  <IDENTIFIER : <CSHARP_IDENTIFIER_START> (<CSHARP_IDENTIFIER_PART>)*>
   |
   <OR : "||">
   |
@@ -158,28 +161,28 @@ boolean Expression :
 boolean OrExpression :
     {boolean result, result2;}
     result=AndExpression 
-    [
+    (
         "||"
         result2=AndExpression
         {result = result && result2;}
-    ]
+    )*
     {return result;}
 ;
 
 boolean AndExpression :
     {boolean result, result2;}
     result=NotExpression
-    [
+    (
         "&&"
         result2 = NotExpression
         {result = result && result2;}
-    ]
+    )*
     {return result;}
 ;
 
 boolean NotExpression :
     {boolean not = false, result;}
-    ["!" {not = true;}]
+    ("!" {not = !not;})*
     result=PrimaryExpression
     {return not ? !result : result;}
 ;
@@ -188,6 +191,10 @@ boolean PrimaryExpression :
     {boolean result = false;}
     (
       <IDENTIFIER> {result = symbols.contains(lastConsumedToken.getImage());}
+      |
+      <TRUE> {result = true;}
+      |
+      <FALSE> {result = false;}
       |
       "(" result=Expression ")"
     )

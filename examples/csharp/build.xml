@@ -34,7 +34,8 @@
   </java>
 </target>  
  
-<target name="parser-gen" depends="init,line-directive-parser-gen,preprocessor-gen" unless="csparser.uptodate">
+<!-- target name="parser-gen" depends="init,line-directive-parser-gen,preprocessor-gen" unless="csparser.uptodate" -->
+<target name="parser-gen" depends="init,line-directive-parser-gen" unless="csparser.uptodate">
   <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
     <assertions><enable/></assertions>
      <arg value="-n"/>

@@ -319,14 +319,14 @@ INJECT CSharpLexer :
     import org.parsers.csharp.ppline.PPDirectiveLineParser;
     import org.parsers.csharp.ppline.PPDirectiveLineParser.DirectiveType;
 {
-   boolean parsingOn=true, alreadyHandled = false;
-   int ifNesting;
-   BitSet parsingOnStack = new BitSet();
-   Set<String> ppSymbols = new HashSet<>();
-   private boolean ignoring;
-
+   private boolean parsingOn, alreadyHandled, seenElse;
+   private int ifNesting, lastEnabledOffset=1;
+   private BitSet parsingOnStack = new BitSet(), seenElseStack = new BitSet(), alreadyHandledStack = new BitSet();
+   private Set<String> ppSymbols = new HashSet<>();
+   
    {
      // We start with parsing on, of course
+     parsingOn = true;
      parsingOnStack.set(0);
    }
 
@@ -334,57 +334,107 @@ INJECT CSharpLexer :
       ppSymbols.addAll(symbols);
    }
 
+//   BitSet beenThere = new BitSet();
+// Token hook to handle preprocessor directives.
+
    private Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
-      if (type == EOF || 
-         content.charAt(tok.getBeginOffset()) != '#') return tok;
-      if (!atLineStart(tok)) {
-        tok.setType(TokenType.INVALID);
-        tok.setUnparsed(false);
+      if (type == EOF) return tok;
+      int lineNum = tok.getBeginLine();
+      String image = tok.getImage();
+      if (image.isEmpty() || image.charAt(0) != '#') 
+      {
+         return tok;
+      }
+      if (tokenLocationTable[tok.getBeginOffset()] == IGNORED) {
+        System.out.println("KILROY 2!!!");
         return tok;
       }
+      if (!atLineStart(tok)) {
+        if (parsingOn) {
+            tok.setType(TokenType.INVALID);
+        }
+        return tok;
+      }
+      Token prevToken = tok.previousCachedToken();
+      // We let this little helper parser defined in PPDirectiveLine.javacc
+      // parse the line. So we just pass it the line where the token occurs
+      // and get back an info object that tells us what we need to know.
       String line = getLine(tok);
       PPDirectiveLineParser.Info info = PPDirectiveLineParser.evaluate(line, ppSymbols);
-      if (type == HASH_IF) {
-        parsingOnStack.set(ifNesting++, parsingOn);
-        alreadyHandled = false;
+      DirectiveType directiveType = info.directiveType;
+      
+      setLineSkipped(tok);
+
+      if (directiveType == DirectiveType.UNKNOWN) {
+         tok.setType(INVALID);
+         return tok;
       }
-      if (ifNesting ==0) {
-        if (type == HASH_ELIF || type == HASH_ELSE || type == HASH_ENDIF) {
-          throw new RuntimeException("Found " + tok.getImage() + " without cooresponding #if");
-        }
-        if (type == HASH_ENDIF) {
-          --ifNesting;
-          parsingOn = parsingOnStack.get(ifNesting);
-        }
+      if (ifNesting == 0 
+           && (directiveType == DirectiveType.ELIF 
+               || directiveType == DirectiveType.ELSE 
+               || directiveType == DirectiveType.ENDIF)) {
+          tok.setType(INVALID);
+          return tok;
       }
-      if (type == HASH_ELSE) {
-        setIgnore(alreadyHandled);
+      if (seenElse && (directiveType == DirectiveType.ELIF || directiveType == DirectiveType.ELSE)) {
+        tok.setType(INVALID);
+        return tok;
       }
-/* Deal with later      
-      if (type == HASH_IF || type == HASH_ELIF) {
-        boolean result = false;
-        try {
-          result = PP_Expression();
-        } catch (ParseException pe) {
-          throw new RuntimeException(pe);
-        }
-        if (!alreadyHandled && result) {
-          setIgnore(false);
-          alreadyHandled = true;
-        }
-        alreadyHandled = alreadyHandled || result;
+      if (directiveType == DirectiveType.ENDIF) {
+        seenElse = seenElseStack.get(ifNesting);
+        alreadyHandled = alreadyHandledStack.get(ifNesting);
+        setParsingEnabled(parsingOnStack.get(ifNesting), tok);
+        --ifNesting;
       }
-*/      
+      else if (directiveType == DirectiveType.ELSE) {
+        seenElse = true;
+        setParsingEnabled(parsingOnStack.get(ifNesting) && !alreadyHandled, tok);
+      }
+      else if (directiveType == DirectiveType.ELIF) {
+        setParsingEnabled(parsingOnStack.get(ifNesting) && !alreadyHandled && info.evaluationResult, tok);
+        alreadyHandled |= info.evaluationResult;
+      }
+      else if (directiveType == DirectiveType.IF) {
+        ++ifNesting;
+        alreadyHandledStack.set(ifNesting, alreadyHandled);
+        seenElseStack.set(ifNesting, seenElse);
+        parsingOnStack.set(ifNesting, parsingOn);
+        seenElse = false;
+        alreadyHandled = info.evaluationResult;
+        setParsingEnabled(parsingOn && info.evaluationResult, tok);
+      }
+//      setLineSkipped(tok);
+//      reset(prevToken);
+//      reset(tok.previousCachedToken());
+//      uncacheTokens(tok);
+//      goTo(tok.getEndOffset());
       return tok;
    }
 
-   void setParsingEnabled(boolean b) {
-       parsingOnStack.set(ifNesting, b);
-       setIgnore(!b);
+   void setRegionIgnore(int start, int end) {
+     for (int i = start; i< end; i++) {
+       tokenLocationTable[i] = IGNORED;
+     }
+     tokenOffsets.clear(start, end);
    }
 
+   private int turnedOffPoint;
 
+   void setParsingEnabled(boolean parsingOn, Token tok) {
+       boolean turnedOn = !this.parsingOn && parsingOn;
+       boolean turnedOff = this.parsingOn && !parsingOn;
+       if (turnedOn) {
+         switchTo(LexicalState.CSHARP);
+         int endRegion = getLineEndOffset(tok.getEndLine()) +1 ;
+         setRegionIgnore(turnedOffPoint, endRegion);
+       }
+       if (turnedOff) {
+         turnedOffPoint = getLineStartOffset(tok.getBeginLine());
+         switchTo(LexicalState.IN_IGNORED_SECTION);
+       }
+       this.parsingOn = parsingOn;
+   }
 
    private boolean atLineStart(Token tok) {
       int offset = tok.getBeginOffset();
@@ -401,8 +451,15 @@ INJECT CSharpLexer :
        return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum)+1);
    }
 
-   void setIgnore(boolean ignoring) {
-     this.ignoring = ignoring;
+   private void setLineSkipped(Token tok) {
+       int lineNum = tok.getBeginLine();
+       int start = getLineStartOffset(lineNum);
+       int end = getLineStartOffset(lineNum+1);
+       setRegionIgnore(start, end);
+       tok.setBeginOffset(start);
+       tok.setEndOffset(end);
+//       tokenOffsets.clear(end, tokenOffsets.length());
+//       goTo(end);
    }
 }
 

@@ -626,8 +626,10 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         }
 [/#if]        
 	    int offset = tok.getBeginOffset();
-	    tokenOffsets.set(offset);
-	    tokenLocationTable[offset] = tok;
+        if (tokenLocationTable[offset] != IGNORED) {
+	        tokenOffsets.set(offset);
+	        tokenLocationTable[offset] = tok;
+        }
     }
 
     void uncacheTokens(Token lastToken) {
