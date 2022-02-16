@@ -12,6 +12,10 @@
     targetfile="org/parsers/csharp/cspreprocessor/Preprocessor.java"
     srcfile="CSPreprocessor.javacc"
   />
+  <uptodate property="pplineparser.uptodate"
+    targetfile="org/parsers/csharp/ppline/PPDirectiveLineParser.java"
+    srcfile="PPDirectiveLine.javacc"
+  />
 </target>
 
 <target name="preprocessor-gen" depends="init" unless="cspreprocessor.uptodate">
@@ -21,8 +25,16 @@
  	   <arg line="-n CSPreprocessor.javacc"/>
   </java>
 </target>  
+
+<target name="line-directive-parser-gen" depends="init" unless="pplineparser.uptodate">
+	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
+  <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
+     <assertions><enable/></assertions>
+ 	   <arg line="-n PPDirectiveLine.javacc"/>
+  </java>
+</target>  
  
-<target name="parser-gen" depends="init,preprocessor-gen" unless="csparser.uptodate">
+<target name="parser-gen" depends="init,line-directive-parser-gen,preprocessor-gen" unless="csparser.uptodate">
   <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
     <assertions><enable/></assertions>
      <arg value="-n"/>

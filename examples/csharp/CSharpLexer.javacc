@@ -309,22 +309,44 @@ TOKEN :
 
 <IN_IGNORED_SECTION> SKIP : <  ~[] > ;
 
+UNPARSED :
+    <HASH : "#">
+;
+
 INJECT CSharpLexer :
     import java.util.HashSet;
     import java.util.Set;
+    import org.parsers.csharp.ppline.PPDirectiveLineParser;
+    import org.parsers.csharp.ppline.PPDirectiveLineParser.DirectiveType;
 {
    boolean parsingOn=true, alreadyHandled = false;
    int ifNesting;
-   BitSet parsingOnStack = new BitSet(), alreadyHandledStack = new BitSet();
+   BitSet parsingOnStack = new BitSet();
    Set<String> ppSymbols = new HashSet<>();
    private boolean ignoring;
 
+   {
+     // We start with parsing on, of course
+     parsingOnStack.set(0);
+   }
+
+   void addSymbols(Set<String> symbols) {
+      ppSymbols.addAll(symbols);
+   }
+
    private Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
+      if (type == EOF || 
+         content.charAt(tok.getBeginOffset()) != '#') return tok;
+      if (!atLineStart(tok)) {
+        tok.setType(TokenType.INVALID);
+        tok.setUnparsed(false);
+        return tok;
+      }
+      String line = getLine(tok);
+      PPDirectiveLineParser.Info info = PPDirectiveLineParser.evaluate(line, ppSymbols);
       if (type == HASH_IF) {
-        alreadyHandledStack.set(ifNesting, alreadyHandled);
-        parsingOnStack.set(ifNesting, parsingOn);
-        ifNesting++;
+        parsingOnStack.set(ifNesting++, parsingOn);
         alreadyHandled = false;
       }
       if (ifNesting ==0) {
@@ -374,7 +396,13 @@ INJECT CSharpLexer :
       return true;
    }
 
+   private String getLine(Token tok) {
+       int lineNum = tok.getBeginLine();
+       return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum)+1);
+   }
+
    void setIgnore(boolean ignoring) {
      this.ignoring = ignoring;
    }
 }
+
