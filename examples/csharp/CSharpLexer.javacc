@@ -346,14 +346,7 @@ INJECT CSharpLexer :
       {
          return tok;
       }
-      if (tokenLocationTable[tok.getBeginOffset()] == IGNORED) {
-        System.out.println("KILROY 2!!!");
-        return tok;
-      }
       if (!atLineStart(tok)) {
-        if (parsingOn) {
-            tok.setType(TokenType.INVALID);
-        }
         return tok;
       }
       Token prevToken = tok.previousCachedToken();
