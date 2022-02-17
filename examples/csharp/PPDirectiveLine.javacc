@@ -67,9 +67,9 @@ TOKEN :
   |
   <NOT_EQUALS : "!=">
   |
-  <IF : (<WS>)* "#" (<WS>)* "if" <WS>>
+  <IF : (<WS>)* "#" (<WS>)* "if">
   |
-  <ELIF : (<WS>)* "#" (<WS>)* "elif" <WS>>
+  <ELIF : (<WS>)* "#" (<WS>)* "elif">
   |
   <DEFINE : (<WS>)* "#" (<WS>)* "define" <WS>>
   |
