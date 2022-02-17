@@ -48,6 +48,7 @@ TypeDeclarationLA#scan :
    (AttributeSection)*
    Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ASSERT ~("delegate" "*")
    ("struct"|"class"|"interface"|"enum"|"delegate"
      |SCAN {checkNextTokenImage("record")}=>{})
 ;   
@@ -402,6 +403,7 @@ DelegateDeclaration :
    (AttributeSection)*
    Modifiers
   "delegate" 
+  ASSERT ~("*") 
   =>||
   ReturnType
   <IDENTIFIER>
@@ -764,7 +766,6 @@ FixedParameter :
    ("ref"| "out" | "this"
     | "in" // since 7.2
    )*
-   ["delegate" "*"]
    =>|+1
    Type
    <IDENTIFIER>
@@ -798,6 +799,8 @@ NonNullableType : Type;
 NonTupleType : Type;
 
 Type :
+  [=> "delegate" "*"]
+  (
     SCAN ~\TupleType
     => "void" ("*")+
     |
@@ -829,6 +832,7 @@ Type :
       SCAN ~\NonNullableType
       => "?"
    ]
+  )
 ;
 
 TupleType :
@@ -1143,7 +1147,11 @@ SwitchExpression :
    ]
 ;
 
-SwitchExpressionCase : Pattern [WhenClause] "=>" Expression ;
+SwitchExpressionCase : 
+   Expression [WhenClause] "=>" =>|| Expression
+   |
+   Pattern [WhenClause] "=>" Expression 
+;   
 
 RangeExpression :
    ".." [UnaryExpression]
@@ -1379,7 +1387,7 @@ PrimaryExpression#void :
       |
       ("." <IDENTIFIER> [=>TypeArgumentList]) #MemberAccess(+1)
       |
-      "->" <IDENTIFIER> #PointerMemberAccess(3)
+      ("->" <IDENTIFIER> [=>TypeArgumentList]) #PointerMemberAccess(+1)
       |
       "++" #PostIncrementExpression(2)
       |
@@ -2037,7 +2045,7 @@ PrimaryPattern :
    | 
    //Which should it be here?
    ShiftExpression 
-   //ExclusiveOrExpression
+   //InclusiveOrExpression
 ;
 
 ParenthesizedPattern : "(" Pattern ")" ;
