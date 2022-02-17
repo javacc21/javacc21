@@ -17,21 +17,10 @@ DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
 INCLUDE "CSharpLexer.javacc"
 
 INJECT PARSER_CLASS :
-//   import PARSER_PACKAGE.cspreprocessor.Preprocessor; 
 {
-   public PARSER_CLASS(Path path, boolean usePreprocessor) throws IOException {
+   public PARSER_CLASS(Path path, java.util.Set<String> ppSymbols) throws IOException {
       this(path);
-/*
-      if (usePreprocessor) {
-         try {
-            Preprocessor ppp = new Preprocessor(path, null);
-            java.util.BitSet lineMarkers = ppp.PP_Root();
-            token_source.setUnparsedLines(lineMarkers);
-         } catch (PARSER_PACKAGE.cspreprocessor.ParseException pe) {
-             throw new RuntimeException(pe);
-         }         
-      }
-*/      
+      if (ppSymbols != null) token_source.addSymbols(ppSymbols);
    }
 }
 

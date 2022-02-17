@@ -320,7 +320,7 @@ INJECT CSharpLexer :
     import org.parsers.csharp.ppline.PPDirectiveLineParser.DirectiveType;
 {
    private boolean parsingOn, alreadyHandled, seenElse;
-   private int ifNesting, lastEnabledOffset=1;
+   private int ifNesting, lastEnabledOffset;
    private BitSet parsingOnStack = new BitSet(), seenElseStack = new BitSet(), alreadyHandledStack = new BitSet();
    private Set<String> ppSymbols = new HashSet<>();
    
@@ -334,13 +334,11 @@ INJECT CSharpLexer :
       ppSymbols.addAll(symbols);
    }
 
-//   BitSet beenThere = new BitSet();
 // Token hook to handle preprocessor directives.
 
    private Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
       if (type == EOF) return tok;
-      int lineNum = tok.getBeginLine();
       String image = tok.getImage();
       if (image.isEmpty() || image.charAt(0) != '#') 
       {
@@ -397,11 +395,6 @@ INJECT CSharpLexer :
         alreadyHandled = info.evaluationResult;
         setParsingEnabled(parsingOn && info.evaluationResult, tok);
       }
-//      setLineSkipped(tok);
-//      reset(prevToken);
-//      reset(tok.previousCachedToken());
-//      uncacheTokens(tok);
-//      goTo(tok.getEndOffset());
       return tok;
    }
 
@@ -451,8 +444,6 @@ INJECT CSharpLexer :
        setRegionIgnore(start, end);
        tok.setBeginOffset(start);
        tok.setEndOffset(end);
-//       tokenOffsets.clear(end, tokenOffsets.length());
-//       goTo(end);
    }
 }
 
