@@ -371,13 +371,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                                         tokenBeginOffset,
                                         bufferPosition);
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
- [#list grammar.lexerTokenHooks as tokenHookMethodName]
-    [#if tokenHookMethodName = "CommonTokenAction"]
-           ${tokenHookMethodName}(matchedToken);
-    [#else]
-            matchedToken = ${tokenHookMethodName}(matchedToken);
-    [/#if]
- [/#list]
         }
      [#if lexerData.hasTokenActions]
         matchedToken = tokenLexicalActions(matchedToken, matchedType);
@@ -386,6 +379,13 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         doLexicalStateSwitch(matchedType);
      [/#if]
       }
+ [#list grammar.lexerTokenHooks as tokenHookMethodName]
+    [#if tokenHookMethodName = "CommonTokenAction"]
+           ${tokenHookMethodName}(matchedToken);
+    [#else]
+            matchedToken = ${tokenHookMethodName}(matchedToken);
+    [/#if]
+ [/#list]
       return matchedToken;
    }
 

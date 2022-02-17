@@ -603,19 +603,19 @@ ${grammar.utils.translateLexerInjections(injector, true)}
                 # import pdb; pdb.set_trace()
                 matched_token = new_token(matched_type, self, token_begin_offset, self._buffer_position)
                 matched_token.is_unparsed = matched_type not in self.regular_tokens
-[#list grammar.lexerTokenHooks as tokenHookMethodName]
-  [#if tokenHookMethodName = "CommonTokenAction"]
-                self.${tokenHookMethodName}(matched_token)
-  [#else]
-                matched_token = self.${tokenHookMethodName}(matched_token)
-  [/#if]
-[/#list]
 [#if lexerData.hasTokenActions]
             matched_token = self.token_lexical_actions(matched_token, matched_type)
 [/#if]
 [#if multipleLexicalStates]
             self.do_lexical_state_switch(matched_type)
 [/#if]
+[#list grammar.lexerTokenHooks as tokenHookMethodName]
+  [#if tokenHookMethodName = "CommonTokenAction"]
+            self.${tokenHookMethodName}(matched_token)
+  [#else]
+            matched_token = self.${tokenHookMethodName}(matched_token)
+  [/#if]
+[/#list]
         return matched_token
 
 [#if multipleLexicalStates]
@@ -793,8 +793,9 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
             return
 [/#if]
         offset = tok.begin_offset
-        self._token_offsets.set(offset)
-        self._token_location_table[offset] = tok
+        if _token_location_table[offset] != self._ignored :
+            self._token_offsets.set(offset)
+            self._token_location_table[offset] = tok
 
     def uncache_tokens(self, last_token):
         end_offset = last_token.end_offset

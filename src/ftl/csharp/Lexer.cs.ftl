@@ -668,13 +668,6 @@ namespace ${csPackage} {
                                                   tokenBeginOffset,
                                                   _bufferPosition);
                     matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
- [#list grammar.lexerTokenHooks as tokenHookMethodName]
-    [#if tokenHookMethodName = "CommonTokenAction"]
-                    ${tokenHookMethodName}(matchedToken);
-    [#else]
-                    matchedToken = ${tokenHookMethodName}(matchedToken);
-    [/#if]
- [/#list]
                 }
      [#if lexerData.hasTokenActions]
                 matchedToken = TokenLexicalActions(matchedToken, matchedType);
@@ -683,6 +676,13 @@ namespace ${csPackage} {
                 DoLexicalStateSwitch(matchedType.Value);
      [/#if]
             }
+ [#list grammar.lexerTokenHooks as tokenHookMethodName]
+    [#if tokenHookMethodName = "CommonTokenAction"]
+                ${tokenHookMethodName}(matchedToken);
+    [#else]
+                matchedToken = ${tokenHookMethodName}(matchedToken);
+    [/#if]
+ [/#list]
             return matchedToken;
         }
 
@@ -993,8 +993,10 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             }
 [/#if]
             int offset = tok.BeginOffset;
-            _tokenOffsets.Set(offset);
-            _tokenLocationTable[offset] = tok;
+            if (_tokenLocationTable[offset] != Ignored) {
+                _tokenOffsets.Set(offset);
+                _tokenLocationTable[offset] = tok;
+            }
         }
 
         void UncacheTokens(Token lastToken) {
