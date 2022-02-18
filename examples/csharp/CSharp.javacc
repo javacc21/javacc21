@@ -804,38 +804,35 @@ NonTupleType : Type;
 Type :
   [=> "delegate" "*"]
   (
-    SCAN ~\TupleType
-    => "void" ("*")+
+    => "void" "*"
     |
-    (
-      PrimitiveType
-      |
-      Name 
-      |
-      SCAN ~\NonTupleType
-      => TupleType
-   )
-   ("*")*
-   [
-      // This is weird. Must REVISIT this.
-      SCAN ~\NonNullableType
-      => "?"
-   ]
-   (
-      SCAN 2 ~\NonArrayType =>
-      ["?"]
-      "[" (",")* "]" 
-   )*
-   [
-      SCAN 0 \ArrayType => 
-      ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
-   ]
-   (SCAN ~\TupleType => "*")*
-   [
-      SCAN ~\NonNullableType
-      => "?"
-   ]
+    PrimitiveType
+    |
+    Name 
+    |
+    SCAN ~\NonTupleType
+    => TupleType
   )
+  ("*")*
+  [
+     // This is weird. Must REVISIT this.
+     SCAN ~\NonNullableType
+     => "?"
+  ]
+  (
+     SCAN 2 ~\NonArrayType =>
+     ["?"]
+     "[" (",")* "]" 
+  )*
+  [
+     SCAN 0 \ArrayType => 
+     ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
+  ]
+  (SCAN ~\TupleType => "*")*
+  [
+     SCAN ~\NonNullableType
+     => "?"
+  ]
 ;
 
 TupleType :
@@ -899,7 +896,6 @@ INJECT DefaultValueExpression : implements Expression
 INJECT EqualityExpression : implements Expression
 INJECT ExclusiveOrExpression : implements Expression
 INJECT InclusiveOrExpression : implements Expression
-INJECT InvocationExpression : implements StatementExpression
 INJECT LambdaExpression : implements Expression
 INJECT Literal : implements Expression
 INJECT MultiplicativeExpression : implements Expression
@@ -935,6 +931,11 @@ INJECT ThrowExpression : extends UnaryExpression
 INJECT UnaryExpressionNotPlusMinus : extends UnaryExpression
 INJECT UnaryExpressionPlusOrMinus : extends UnaryExpression
 INJECT FromEndIndex : extends UnaryExpression
+
+INJECT InvocationExpression : implements StatementExpression 
+{
+   public boolean isAssignableTo() {return true;}
+}
 
 INJECT LiteralExpression : implements Expression 
 {
@@ -1840,7 +1841,7 @@ ForeachStatement :
        | 
        Tuple {iteratingOverTupleType = true;}
        | 
-       NonTupleType 
+       Type 
     ) 
     (
        <IDENTIFIER> 

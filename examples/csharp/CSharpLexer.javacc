@@ -320,7 +320,8 @@ INJECT CSharpLexer :
     import org.parsers.csharp.ppline.PPDirectiveLineParser.DirectiveType;
 {
    private boolean parsingOn, alreadyHandled, seenElse;
-   private int ifNesting, lastEnabledOffset;
+   private int ifNesting, lastEnabledOffset, turnedOffPoint;
+
    private BitSet parsingOnStack = new BitSet(), seenElseStack = new BitSet(), alreadyHandledStack = new BitSet();
    private Set<String> ppSymbols = new HashSet<>();
    
@@ -338,7 +339,10 @@ INJECT CSharpLexer :
 
    private Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
-      if (type == EOF) return tok;
+      if (type == EOF) {
+        assert ifNesting == 0 : "unclosed #if";
+        return tok;
+      }
       String image = tok.getImage();
       if (image.isEmpty() || image.charAt(0) != '#') 
       {
@@ -405,7 +409,6 @@ INJECT CSharpLexer :
      tokenOffsets.clear(start, end);
    }
 
-   private int turnedOffPoint;
 
    void setParsingEnabled(boolean parsingOn, Token tok) {
        boolean turnedOn = !this.parsingOn && parsingOn;
