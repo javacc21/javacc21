@@ -887,7 +887,7 @@ INJECT ArrayCreationExpression : implements Expression
 INJECT AnonymousMethodExpression : implements Expression
 INJECT AnonymousObjectCreationExpression : implements Expression
 INJECT AssignmentExpression : implements StatementExpression
-INJECT CheckedExpression : implements Expression
+INJECT CheckedExpression : implements StatementExpression
 INJECT ConditionalExpression : implements Expression
 INJECT ConditionalExpression : implements Expression
 INJECT ConditionalAndExpression : implements Expression
@@ -918,7 +918,7 @@ INJECT TypeofExpression : implements Expression
 INJECT QualifiedAliasMember : implements Expression
 INJECT SizeofExpression : implements Expression
 INJECT SwitchExpression : implements Expression
-INJECT UncheckedExpression : implements Expression
+INJECT UncheckedExpression : implements StatementExpression
 INJECT UnaryExpression : implements Expression
 INJECT WithExpression : implements Expression
 INJECT PostDecrementExpression : extends UnaryExpression implements StatementExpression

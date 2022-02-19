@@ -6,8 +6,11 @@
 </target>
 
 <target name="init">
-	<uptodate property="csparser.uptodate" srcfile="CSharp.javacc" targetfile="org/parsers/csharp/CSharpParser.java"
-  />
+  <uptodate property="csparser.uptodate"
+            targetfile="org/parsers/csharp/CSharpParser.java">
+      <srcfiles dir="." includes="*.javacc"/>
+  </uptodate>
+
   <uptodate property="pplineparser.uptodate"
     targetfile="org/parsers/csharp/ppline/PPDirectiveLineParser.java"
     srcfile="PPDirectiveLine.javacc"
