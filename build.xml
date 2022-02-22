@@ -4,7 +4,7 @@
     </tstamp>
 
   <target name="init">
-    <echo>Join the JavaCC 21 Discussion forum at: https://parsers.org/</echo>
+    <echo>Join the Discussion forum at: https://discuss.congocc.org/</echo>
 	  <echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
 	  <echo>JDK Version: ${java.version} on ${os.name}</echo>
 	  <uptodate property="parser.uptodate"

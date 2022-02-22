@@ -21,6 +21,8 @@ A longstanding limitation of JavaCC has been that syntactic lookahead does not n
 
 This is now fixed in JavaCC 21 and you can read about it [here](https://javacc.com/2020/07/15/nested-syntactic-lookahead-works/).
 
+Another longstanding pain point for developers was this "Code too Large" problem. In particular, if you wrote a very large, complex lexical specification, one would easily run into this. This has now been completely vanquished and you can see [here](https://javacc.com/2021/03/30/code-too-large-problem-fixed/) if you want more of the gory details. But the bottom line is that the whole issue has been completely addressed in JavaCC 21.
+
 ## Streamlined Syntax
 
 Though the *legacy* syntax is still supported (and will be for the indefinite future), JavaCC 21 offers a [streamlined syntax](https://doku.javacc.com/doku.php?id=new_syntax_summary) that should be easier to read and write. Sometimes the improvement in readability is dramatic.
@@ -85,7 +87,7 @@ Since the Java grammar stands alone, it can be used freely in separate projects 
 
 ## Preprocessor
 
-JavaCC 21 now has a preprocessor that is basically identical to the preprocessor in Microsoft's C# programming language. It only implements the `#define/#undef` and `#if/#elif/#else/#endif` constructs that are used to conditionally turn on and off ranges of lines in the input file. See [here](https://javacc.com/2021/02/01/javacc-21-has-a-preprocessor/) for more information.
+JavaCC 21 now has a preprocessor that is quite similar to the preprocessor in Microsoft's C# programming language. It only implements the `#define/#undef` and `#if/#elif/#else/#endif` constructs that are used to conditionally turn on and off ranges of lines in the input file. See [here](https://javacc.com/2021/02/01/javacc-21-has-a-preprocessor/) for more information.
 
 ## Tree Building
 
@@ -115,9 +117,10 @@ The current JavaCC 21 codebase itself is the result of a massive refactoring/cle
 
 In general, JavaCC 21 has more sensible default settings and is [much more usable out-of-the-box](https://doku.javacc.com/doku.php?id=convention_over_configuration).
 
-## Robust Up-to-date Python Grammar/Parser
+## Robust Up-to-date Grammars/Parsers for Python and C#
 
-JavaCC 21 includes a robust, [up-to-date grammar](https://github.com/javacc21/javacc21/blob/master/examples/python/Python.javacc) for the latest stable version of the Python language (3.10) and, like the aforementioned Java grammar, it can be used and adapted in your own projects without any restriction.
+JavaCC 21 includes robust, up-to-date grammars for the latest stable versions of [Python](https://github.com/javacc21/javacc21/blob/master/examples/python/Python.javacc) and [C Sharp](https://github.com/javacc21/javacc21/blob/master/examples/csharp/CSharp.javacc). Both of these grammars can be used and adapted in your own projects without any restriction. 
+
 
 ## JavaCC 21 is actively developed!
 
@@ -137,4 +140,4 @@ The latest source code can be checked out from Github via:
 
 And then you can do a build by invoking ant from the top-level directory. You should also be able to run the test suite by running "ant test".
 
-If you are interested in this project, either as a user or as a developer, feel free to join us on our [Gitter chat channel](https://gitter.im/javacc21/javacc21). You can also sign up on our [Discourse forum](https://discuss.parsers.org/) and post any questions or suggestions there.
+If you are interested in this project, either as a user or as a developer, feel free to join us on our [Gitter chat channel](https://gitter.im/javacc21/javacc21). You can also sign up on our [Flarum forum](https://discuss.congocc.org/) and post any questions or suggestions there.
