@@ -49,7 +49,7 @@ DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 
 //FAULT_TOLERANT;
 MINIMAL_TOKEN;
-TABS_TO_SPACES=4;
+ENSURE_FINAL_EOL;
 
 INCLUDE "JavaLexer.javacc"
 
@@ -81,7 +81,7 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
-Modifiers#void : 
+Modifiers#(false) : 
  (
   SCAN {isParserTolerant() || permissibleModifiers == null  
        || permissibleModifiers.contains(getToken(1).getType())}#
@@ -143,7 +143,7 @@ INJECT PARSER_CLASS : {
   private EnumSet<TokenType> permissibleModifiers;
 }
 
-TypeDeclaration#interface :
+TypeDeclaration #interface :
   SCAN TypeDeclarationLA =>
   (
     EmptyDeclaration 
@@ -355,7 +355,7 @@ ClassOrInterfaceBodyDeclaration#interface :
 ;
 
 INJECT TypeDeclaration : extends ClassOrInterfaceBodyDeclaration
-INJECT Initializer : implements ClassOrInterfaceBodyDeclaration
+INJECT Initializer : extends CodeBlock implements ClassOrInterfaceBodyDeclaration
 INJECT ConstructorDeclaration : implements ClassOrInterfaceBodyDeclaration
 INJECT FieldDeclaration : implements ClassOrInterfaceBodyDeclaration
 INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
@@ -532,6 +532,7 @@ INJECT Expression :
 }
 
 INJECT AdditiveExpression : implements Expression
+INJECT ArrayInitializer : implements Expression
 INJECT AndExpression : implements Expression 
 INJECT AssignmentExpression : implements Expression
 INJECT ConditionalAndExpression : implements Expression 
@@ -539,11 +540,9 @@ INJECT ConditionalOrExpression : implements Expression
 INJECT EqualityExpression : implements Expression 
 INJECT ExclusiveOrExpression : implements Expression 
 INJECT ExplicitConstructorInvocation : implements Expression 
-INJECT InclusiveAndExpression : implements Expression 
 INJECT InclusiveOrExpression : implements Expression 
 INJECT InstanceOfExpression : implements Expression 
 INJECT ClassLiteral : implements Expression
-INJECT CodeBlock : implements Expression
 INJECT DotThis : implements Expression
 INJECT LambdaExpression : implements Expression 
 INJECT MethodCall : implements Expression 
@@ -556,6 +555,7 @@ INJECT PreIncrementExpression : implements Expression
 INJECT PrimitiveCastExpression : implements Expression
 INJECT RelationalExpression : implements Expression 
 INJECT ShiftExpression : implements Expression
+INJECT StatementExpression : extends Statement implements Expression
 INJECT SwitchExpression : implements Expression
 INJECT TernaryExpression : implements Expression 
 INJECT UnaryExpression : implements Expression
@@ -882,24 +882,28 @@ Statement  :
 ;
 
 INJECT AssertStatement : extends Statement;
-INJECT YieldStatement : extends Statement;
-INJECT EmptyStatement : extends Statement;
-INJECT SwitchStatement : extends Statement
-INJECT IfStatement : extends Statement
-INJECT WhileStatement : extends Statement
+INJECT BasicForStatement : extends ForStatement
+INJECT BreakStatement : extends Statement
+INJECT CodeBlock : extends Statement
+INJECT ContinueStatement : extends Statement
 INJECT DoStatement : extends Statement
+INJECT EmptyStatement : extends Statement;
+INJECT EnhancedForStatement : extends ForStatement
 INJECT ExpressionStatement : extends Statement
 INJECT ForStatement : extends Statement
-INJECT BasicForStatement : extends ForStatement
-INJECT EnhancedForStatement : extends ForStatement
-INJECT BreakStatement : extends Statement
-INJECT ContinueStatement : extends Statement
+INJECT IfStatement : extends Statement
+INJECT LocalVariableDeclaration : extends Statement
+INJECT VarDeclaration : extends LocalVariableDeclaration
+INJECT NoVarDeclaration : extends LocalVariableDeclaration
 INJECT ReturnStatement : extends Statement
-INJECT ThrowStatement : extends Statement
+INJECT SwitchStatement : extends Statement
 INJECT SynchronizedStatement : extends Statement
+INJECT ThrowStatement : extends Statement
 INJECT TryStatement : extends Statement
-INJECT TryWithResources : extends TryStatement
 INJECT ClassicTryStatement : extends TryStatement
+INJECT TryWithResources : extends TryStatement
+INJECT WhileStatement : extends Statement
+INJECT YieldStatement : extends Statement;
 
 TryStatement #(false) :
    TryWithResources
@@ -935,7 +939,7 @@ BlockStatement :
  )
 ;
 
-LocalVariableDeclaration :
+LocalVariableDeclaration#abstract :
    SCAN LocalVariableDeclarationLA
    =>
    (
@@ -972,9 +976,9 @@ LocalVariableDeclarationLA#scan :
    <IDENTIFIER>
 ;
 
-EmptyStatement : ";" ;
+EmptyStatement# : ";" ;
 
-StatementExpression :
+StatementExpression# :
   PreIncrementExpression
   |
   PreDecrementExpression
@@ -1088,13 +1092,13 @@ EnhancedForStatement :
 ;
 
 
-ForInit :
+ForInit#void :
   LocalVariableDeclaration
   |
   StatementExpressionList
 ;
 
-StatementExpressionList :
+StatementExpressionList#void :
   StatementExpression ( "," StatementExpression )*
 ;
 
