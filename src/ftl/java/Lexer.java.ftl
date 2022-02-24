@@ -372,11 +372,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                                         bufferPosition);
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
-     [#if lexerData.hasTokenActions]
-        matchedToken = tokenLexicalActions(matchedToken, matchedType);
-     [/#if]
      [#if multipleLexicalStates]
         doLexicalStateSwitch(matchedType);
+     [/#if]
+     [#if lexerData.hasTokenActions]
+        matchedToken = tokenLexicalActions(matchedToken, matchedType);
      [/#if]
       }
  [#list grammar.lexerTokenHooks as tokenHookMethodName]

@@ -71,12 +71,12 @@ PackageDeclaration :
     (Annotation)* 
     "package" 
     =>|| 
-    Name {CURRENT_NODE.setPackageName(peekNode().toString());} ";" 
+    Name {CURRENT_NODE.setPackageName((Name) peekNode());} ";" 
 ;
 
 INJECT PackageDeclaration :
 {
-  @Property String packageName;
+  @Property Name packageName;
 }
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
@@ -496,7 +496,7 @@ TypeArgument :
 
 WildcardBounds : ("extends" | "super") ReferenceType ;
 
-PrimitiveType :
+PrimitiveType# :
   (Annotation)*
   "boolean" | "char" | "byte" | "short" | "int" | "long" | "float" | "double"
   =>||

@@ -302,7 +302,7 @@ INJECT CompilationUnit :
 {
     public String getPackageName() {
         PackageDeclaration jpd = getPackageDeclaration();
-        return jpd == null ?  null : jpd.getPackageName();
+        return jpd == null ?  null : jpd.getPackageName().toString();
     }
     
     
