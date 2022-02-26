@@ -3,11 +3,12 @@
    package ${grammar.parserPackage};
 [/#if]
 
-   import java.util.*;
+[#var BASE_EXCEPTION_TYPE = grammar.useCheckedException?string("Exception", "RuntimeException")]
 
+import java.util.*;
 
 @SuppressWarnings("serial")
-public class ParseException extends Exception implements ${grammar.constantsClassName} {
+public class ParseException extends ${BASE_EXCEPTION_TYPE} implements ${grammar.constantsClassName} {
 
   // The token we tripped up on.
   private Token token;

@@ -62,8 +62,20 @@
     final ${production.accessModifier}
     ${production.returnType}
     ${production.name}(${production.parameterList!}) 
+   [#if grammar.useCheckedException]    
     throws ParseException
-    [#list (production.throwsList.types)! as throw], ${throw}[/#list] {
+    [#list (production.throwsList.types)! as throw], ${throw}[/#list] 
+   [#elseif (production.throwsList.types)?has_content] 
+     [#list production.throwsList.types as throw]
+        [#if throw_index == 0]
+           throws ${throw}
+        [#else]
+           , ${throw}
+        [/#if]
+     [/#list] 
+   [/#if]
+    
+    {
      if (cancelled) throw new CancellationException();
      String prevProduction = currentlyParsedProduction;
      this.currentlyParsedProduction = "${production.name}";
