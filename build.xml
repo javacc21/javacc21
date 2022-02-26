@@ -105,6 +105,16 @@
         <include name="*.javacc"/>
       </fileset>
     </copy>
+    <copy todir="build/include/csharp">
+      <fileset dir="examples/csharp">
+        <include name="*.javacc"/>
+      </fileset>
+    </copy>
+    <copy todir="build/include/json">
+      <fileset dir="examples/json">
+        <include name="*.javacc"/>
+      </fileset>
+    </copy>
     <copy todir="build/include/preprocessor">
       <fileset dir="examples/preprocessor">
           <include name="*.javacc"/>

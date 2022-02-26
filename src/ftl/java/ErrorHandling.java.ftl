@@ -216,7 +216,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
 
       private Token consumeToken(TokenType expectedType 
         [#if grammar.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet [/#if]
-      ) throws ParseException {
+      ) 
+      [#if grammar.useCheckedException] throws ParseException [/#if]
+      {
         Token oldToken = lastConsumedToken;
         Token nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
@@ -258,7 +260,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
  
   private Token handleUnexpectedTokenType(TokenType expectedType, Token nextToken
       [#if grammar.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet[/#if]
-      ) throws ParseException {
+      ) 
+      [#if grammar.useCheckedException] throws ParseException [/#if]
+      {
       [#if !grammar.faultTolerant]
        throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
       [#else]

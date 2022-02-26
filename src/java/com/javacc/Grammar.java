@@ -262,7 +262,12 @@ public class Grammar extends BaseNode {
             put("PYTHON_IDENTIFIER_DEF", "/include/python/PythonIdentifierDef.javacc");
             put("PYTHON_LEXER", "/include/python/PythonLexer.javacc");
             put("PYTHON", "/include/python/Python.javacc");
+            put("CSHARP", "/include/csharp/CSharp.javacc");
+            put("CSHARP_LEXER", "/include/csharp/CSharpLexer.javacc");
+            put("CSHARP_IDENTIFIER_DEF", "/include/csharp/CSharpIdentifierDef.javacc");
             put("PREPROCESSOR", "/include/preprocessor/Preprocessor.javacc");
+            put("JSON", "/include/json/JSON.javacc");
+            put("JSONC", "/include/json/JSONC.javacc");
         }
     };
 
