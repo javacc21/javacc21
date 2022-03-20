@@ -795,7 +795,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
             return
 [/#if]
         offset = tok.begin_offset
-        if _token_location_table[offset] != self._ignored :
+        if self._token_location_table[offset] != self._ignored :
             self._token_offsets.set(offset)
             self._token_location_table[offset] = tok
 
