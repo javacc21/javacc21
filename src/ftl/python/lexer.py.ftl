@@ -61,8 +61,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-TAB_SIZE = grammar.tabSize
-
 #
 # Hack to allow token types to be referenced in snippets without
 # qualifying
