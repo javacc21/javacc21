@@ -61,6 +61,8 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+TAB_SIZE = grammar.tabSize
+
 #
 # Hack to allow token types to be referenced in snippets without
 # qualifying
@@ -331,7 +333,9 @@ def get_function_table_map(lexical_state):
 
 [#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("True", "False")
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("True", "False")
-      ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("True", "False")]
+      ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("True", "False")
+      PRESERVE_TABS = grammar.preserveTabs?string("True", "False")
+]
 
 CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
 
@@ -415,7 +419,7 @@ ${grammar.utils.translateLexerInjections(injector, true)}
             raise ValueError('input filename not specified')
         self.input_source = input_source
         text = _input_text(input_source)
-        self.content = self.munge_content(text, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL})
+        self.content = self.munge_content(text, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL})
         self.content_len = n = len(self.content)
         n += 1
 [#if grammar.lexerUsesParser]
@@ -670,9 +674,9 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         return matched_token
  [/#if]
 
-    def munge_content(self, content, tabs_to_spaces, preserve_lines,
+    def munge_content(self, content, preserve_tabs, preserve_lines,
                       java_unicode_escape, ensure_final_endline):
-        if tabs_to_spaces <= 0 and preserve_lines and not java_unicode_escape:
+        if preserve_tabs and preserve_lines and not java_unicode_escape:
             if ensure_final_endline:
                 last_char = content[-1]
                 if last_char != '\n' and last_char != '\r':
@@ -726,8 +730,8 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                         col += 1
                     else:
                         col = 0
-            elif ch == '\t' and tabs_to_spaces > 0:
-                spaces_to_add = tabs_to_spaces - col % tabs_to_spaces
+            elif ch == '\t' and not preserve_tabs :
+                spaces_to_add = ${grammar.tabSize} - col % ${grammar.tabSize}
                 for i in range(spaces_to_add):
                     buf.append(' ')
                     col += 1

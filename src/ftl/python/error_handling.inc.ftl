@@ -83,7 +83,8 @@
         return BackwardIterator(self.parsing_stack, self.lookahead_stack)
 
     def push_onto_lookahead_stack(self, method_name, filename, line, column):
-        self.lookahead_stack.append(NonTerminalCall(self, filename, method_name, line, column))
+#        self.lookahead_stack.append(NonTerminalCall(self, filename, method_name, line, column))
+        self.lookahead_stack.append(NonTerminalCall(self, filename, method_name, offset))
 
     def pop_lookahead_stack(self):
         ntc = self.lookahead_stack.pop()

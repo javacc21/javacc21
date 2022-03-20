@@ -33,8 +33,8 @@
 
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
 
-        private void PushOntoLookaheadStack(string methodName, string fileName, uint line, uint column) {
-            _lookaheadStack.Add(new NonTerminalCall(this, fileName, methodName, line, column));
+        private void PushOntoLookaheadStack(string methodName, string fileName, uint offset) {
+            _lookaheadStack.Add(new NonTerminalCall(this, fileName, methodName, offset));
         }
 
         private void PopLookaheadStack() {

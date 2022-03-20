@@ -41,7 +41,9 @@
 [#var injector = grammar.injector]
 [#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("true", "false")
-      ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")]
+      ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")
+      PRESERVE_TABS = grammar.preserveTabs?string("true", "false")
+ ]
 
 [#macro EnumSet varName tokenNames indent=0]
 [#var is = ""?right_pad(indent)]
@@ -361,7 +363,7 @@ namespace ${csPackage} {
         public Lexer(string inputSource, LexicalState lexState = LexicalState.${lexerData.lexicalStates[0].name}, int line = 1, int column = 1) {
             InputSource = inputSource;
             var input = InputText(inputSource);
-            _content = MungeContent(input, ${grammar.tabsToSpaces}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+            _content = MungeContent(input, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
             _contentLength = _content.Length;
             _lineOffsets = CreateLineOffsetsTable(_content);
             _tokenLocationTable = new Token[_contentLength + 1];
@@ -720,7 +722,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         }
 [/#if]
 
-        private string MungeContent(string content, int tabsToSpaces, bool preserveLines,
+        private string MungeContent(string content, boolean preserveTabs, bool preserveLines,
                       bool unicodeEscape, bool ensureFinalEol)
         {
             StringBuilder buf;
@@ -807,10 +809,10 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                         }
                         break;
                     }
-                    case '\t' when tabsToSpaces > 0:
+                    case '\t' when not preserveTabs:
                     {
                         justSawUnicodeEscape = false;
-                        int spacesToAdd = tabsToSpaces - col % tabsToSpaces;
+                        int spacesToAdd = ${grammar.tabSize} - col % ${grammar.tabSize};
                         for (int i = 0; i < spacesToAdd; i++) {
                             buf.Append(' ');
                             col++;

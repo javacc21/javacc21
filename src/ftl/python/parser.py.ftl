@@ -145,24 +145,35 @@ class NonTerminalCall:
         'source_file',
         'parser',
         'production_name',
-        'line', 'column',
+#        'line', 'column',
+        'offset',
         'scan_to_end',
 [#if grammar.faultTolerant]
         'follow_set',
 [/#if]
     )
 
-    def __init__(self, parser, filename, prodname, line, column):
+#    def __init__(self, parser, filename, prodname, line, column):
+    def __init__(self, parser, filename, prodname, offset):
         self.parser = parser
         self.source_file = filename
         self.production_name = prodname
-        self.line = line
-        self.column = column
+#        self.line = line
+#        self.column = column
+        self. offset = offset
         # We actually only use this when we're working with the LookaheadStack
         self.scan_to_end = parser.scan_to_end
 [#if grammar.faultTolerant]
         self.follow_set = parser.outer_follow_set
 [/#if]
+
+    @property
+    def line(self) :
+        return self.parser.token_source.get_line_from_offset(self, offset)
+    
+    @property
+    def column(self) :
+        return self.parser.token_source.get_codepoint_column_from_offset(self, offset)
 
     def create_stack_trace_element(self):
         return (type(self.parser).__name__,  self.production_name, self.source_file, self.line)
@@ -333,8 +344,9 @@ ${grammar.utils.translateParserInjections(injector, true)}
         self.token_source.reset(self.last_consumed_token)
 [/#if]
 
-    def push_onto_call_stack(self, method_name, filename, line, column):
-        self.parsing_stack.append(NonTerminalCall(self, filename, method_name, line, column))
+    def push_onto_call_stack(self, method_name, filename, offset):
+#        self.parsing_stack.append(NonTerminalCall(self, filename, method_name, line, column))
+        self.parsing_stack.append(NonTerminalCall(self, filename, offset))
 
     def pop_call_stack(self):
         ntc = self.parsing_stack.pop()
