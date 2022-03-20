@@ -346,7 +346,7 @@ ${grammar.utils.translateParserInjections(injector, true)}
 
     def push_onto_call_stack(self, method_name, filename, offset):
 #        self.parsing_stack.append(NonTerminalCall(self, filename, method_name, line, column))
-        self.parsing_stack.append(NonTerminalCall(self, filename, offset))
+        self.parsing_stack.append(NonTerminalCall(self, filename, method_name, offset))
 
     def pop_call_stack(self):
         ntc = self.parsing_stack.pop()
