@@ -722,12 +722,12 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         }
 [/#if]
 
-        private string MungeContent(string content, boolean preserveTabs, bool preserveLines,
+        private string MungeContent(string content, bool preserveTabs, bool preserveLines,
                       bool unicodeEscape, bool ensureFinalEol)
         {
             StringBuilder buf;
 
-            if (tabsToSpaces <= 0 && preserveLines && !unicodeEscape) {
+            if (preserveTabs && preserveLines && !unicodeEscape) {
                 if (!ensureFinalEol) return _content;
                 if (content.Length == 0) {
                     content = "\n";
@@ -809,7 +809,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                         }
                         break;
                     }
-                    case '\t' when not preserveTabs:
+                    case '\t' when !preserveTabs:
                     {
                         justSawUnicodeEscape = false;
                         int spacesToAdd = ${grammar.tabSize} - col % ${grammar.tabSize};
