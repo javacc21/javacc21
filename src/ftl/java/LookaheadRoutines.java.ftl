@@ -382,7 +382,7 @@
   checking the production's nested expansion 
 --]
 [#macro ScanCodeNonTerminal nt]
-      pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
+      pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginOffset});
       [#var prevProductionVarName = "prevProduction" + CU.newID()]
       String ${prevProductionVarName} = currentLookaheadProduction;
       currentLookaheadProduction = "${nt.production.name}";
