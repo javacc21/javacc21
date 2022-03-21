@@ -129,7 +129,7 @@ abstract public class NonTerminal extends Expansion {
          return getNestedExpansion().getSpecifiesLexicalStateSwitch();
      }
 
-     protected boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
+     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
          if (productionName.equals(getName())) return true;
          if (alreadyVisited.contains(getName())) return false;
          alreadyVisited.add(getName());

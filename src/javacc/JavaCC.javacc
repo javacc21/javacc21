@@ -1475,6 +1475,10 @@ INJECT ExpansionWithParentheses :
         LexicalStateSwitch lss = firstChildOfType(LexicalStateSwitch.class);
         return lss == null ? super.getSpecifiedLexicalState() : lss.getLexicalStateName();
     }
+
+    public boolean potentiallyStartsWith(String productionName, java.util.Set<String> alreadyVisited) {
+        return getNestedExpansion().potentiallyStartsWith(productionName, alreadyVisited);
+    }
 }
 
 ExpansionSequence# :

@@ -595,7 +595,7 @@ abstract public class Expansion extends BaseNode {
      * Whether this expansion can start with a given production
      * This is the default implementation that always returns false.
      */
-    protected boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
+    public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         return false;
     }
 

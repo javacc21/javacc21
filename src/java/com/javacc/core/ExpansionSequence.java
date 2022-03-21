@@ -228,11 +228,12 @@ abstract public class ExpansionSequence extends Expansion {
         return childrenOfType(Expansion.class);
     }
 
-    protected boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
+    public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
+        boolean result = false;
         for (Expansion unit : getUnits()) {
-            if (unit.potentiallyStartsWith(productionName, alreadyVisited)) return true;
+            if (unit.potentiallyStartsWith(productionName, alreadyVisited)) result = true;
             if (!unit.isPossiblyEmpty()) break;
         }
-        return false;
+        return result;
     }
 }

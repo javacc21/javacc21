@@ -124,7 +124,7 @@ public class SanityChecker {
             }
 
             if (prod.isLeftRecursive()) {
-                grammar.addError(prod, "Production " + prod.getName() + " is potentially left recursive.");
+                grammar.addWarning(prod, "Production " + prod.getName() + " is potentially left recursive.");
             }
         }
 

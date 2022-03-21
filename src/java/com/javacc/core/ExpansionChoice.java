@@ -98,7 +98,7 @@ abstract public class ExpansionChoice extends Expansion {
         return false;
     }
 
-    protected boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
+    public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         for (Expansion choice : getChoices()) {
             if (choice.potentiallyStartsWith(productionName, alreadyVisited)) return true;
         }
