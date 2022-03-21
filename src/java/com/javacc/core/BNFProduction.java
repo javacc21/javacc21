@@ -212,4 +212,11 @@ abstract public class BNFProduction extends BaseNode {
           }
           return finalSet;
     }
+
+    /**
+     * Does this production potentially have left recursion?
+     */
+    public boolean isLeftRecursive() {
+        return getExpansion().potentiallyStartsWith(getName(), new HashSet<>());
+    }
 }

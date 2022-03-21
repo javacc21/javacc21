@@ -740,15 +740,7 @@ public interface Node extends Comparable<Node>
     }
 
  	static abstract public class Visitor {
-		
-		static private Method baseVisitMethod;
-        static {
-            try {
-                baseVisitMethod = Node.Visitor.class.getMethod("visit", Node.class);
-            } catch (NoSuchMethodException e) {}
-        }
 		private HashMap<Class<? extends Node>, Method> methodCache = new HashMap<>();
-
         protected boolean visitUnparsedTokens;
 		
 		private Method getVisitMethod(Node node) {

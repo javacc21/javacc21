@@ -30,7 +30,9 @@
 
 package com.javacc.core;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.javacc.Grammar;
 import com.javacc.parser.BaseNode;
@@ -587,5 +589,17 @@ abstract public class Expansion extends BaseNode {
         }
         Expansion preceding = getPreceding();
         return preceding != null && preceding.isTolerantParsing() && !(preceding instanceof RegularExpression);
+    }
+
+    /**
+     * Whether this expansion can start with a given production
+     * This is the default implementation that always returns false.
+     */
+    protected boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
+        return false;
+    }
+
+    final public boolean potentiallyStartsWith(String productionName) {
+        return potentiallyStartsWith(productionName, new HashSet<>());
     }
 }

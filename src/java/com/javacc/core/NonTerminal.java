@@ -28,6 +28,9 @@
 
 package com.javacc.core;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.javacc.parser.tree.*;
 
 abstract public class NonTerminal extends Expansion {
@@ -124,5 +127,12 @@ abstract public class NonTerminal extends Expansion {
 
      public boolean getSpecifiesLexicalStateSwitch() {
          return getNestedExpansion().getSpecifiesLexicalStateSwitch();
+     }
+
+     protected boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
+         if (productionName.equals(getName())) return true;
+         if (alreadyVisited.contains(getName())) return false;
+         alreadyVisited.add(getName());
+         return getNestedExpansion().potentiallyStartsWith(productionName, alreadyVisited);
      }
 }

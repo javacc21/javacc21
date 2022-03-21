@@ -29,6 +29,7 @@
 package com.javacc.core;
 
 import java.util.List;
+import java.util.Set;
 
 abstract public class ExpansionChoice extends Expansion {
     public List<Expansion> getChoices() {
@@ -93,6 +94,13 @@ abstract public class ExpansionChoice extends Expansion {
     public boolean getSpecifiesLexicalStateSwitch() {
         for (Expansion choice : getChoices()) {
             if (choice.getSpecifiesLexicalStateSwitch()) return true;
+        }
+        return false;
+    }
+
+    protected boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
+        for (Expansion choice : getChoices()) {
+            if (choice.potentiallyStartsWith(productionName, alreadyVisited)) return true;
         }
         return false;
     }

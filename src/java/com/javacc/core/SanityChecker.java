@@ -122,6 +122,10 @@ public class SanityChecker {
                 grammar.addError(prod, "Lexical state \""
                 + lexicalStateName + "\" has not been defined.");
             }
+
+            if (prod.isLeftRecursive()) {
+                grammar.addError(prod, "Production " + prod.getName() + " is potentially left recursive.");
+            }
         }
 
         for (Expansion exp : grammar.descendants(Expansion.class)) {
