@@ -42,7 +42,6 @@ import com.javacc.parser.tree.*;
  * productions. This is the base class of a bunch of other more specific
  * classes.
  */
-
 abstract public class Expansion extends BaseNode {
 
     private TreeBuildingAnnotation treeNodeBehavior;
