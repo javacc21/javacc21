@@ -202,10 +202,11 @@ public final class Main {
             checkForNewer();
             System.exit(1);
         }
+/*        
         if (args[0].equalsIgnoreCase("convert")) {
             com.javacc.output.lint.SyntaxConverter.main(args);
             System.exit(0);
-        }
+        }*/
         Path grammarFile = null, outputDirectory = null;
         String codeLang = "java";
         int jdkTarget = 0;

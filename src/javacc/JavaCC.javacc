@@ -1778,7 +1778,7 @@ Expansion ExpansionUnit :
  }
 ;
 
-#NonTerminal# :
+#NonTerminal #com.javacc.core.NonTerminal :
   [
     => Name {CURRENT_NODE.setLHS((Name)peekNode());} "="
   ]
@@ -1811,7 +1811,7 @@ UpToHere(Expansion exp) #void :
    }
 ;
 
-INJECT NonTerminal : extends com.javacc.core.NonTerminal 
+//INJECT NonTerminal : extends com.javacc.core.NonTerminal 
 
 //The following two productions are not actually used. These constructs are now 
 // handled by ExpansionWithParentheses so the following two productions

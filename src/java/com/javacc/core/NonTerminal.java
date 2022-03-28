@@ -32,7 +32,7 @@ import java.util.Set;
 
 import com.javacc.parser.tree.*;
 
-abstract public class NonTerminal extends Expansion {
+public class NonTerminal extends Expansion {
     
     private Name LHS;
     public Name getLHS() {return LHS;}
