@@ -34,7 +34,8 @@ import com.javacc.parser.Token;
 import com.javacc.parser.tree.*;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
-abstract public class BNFProduction extends BaseNode {
+//abstract 
+public class BNFProduction extends BaseNode {
     private Expansion expansion, recoveryExpansion;
     private String lexicalState, name, leadingComments = "";
     private boolean implicitReturnType;

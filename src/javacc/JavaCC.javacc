@@ -1124,7 +1124,8 @@ Setting(Map<String,Object> settings) #Setting :
   }
 ;
 
-BNFProduction :
+BNFProduction #com.javacc.core.BNFProduction :
+//BNFProduction #BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
     Token firstToken=getToken(1), id;
@@ -1179,15 +1180,15 @@ BNFProduction :
      }
 ;
 
-INJECT BNFProduction : extends com.javacc.core.BNFProduction;
+//INJECT BNFProduction : extends com.javacc.core.BNFProduction;
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" 
   (
       SCAN \BNFProduction => 
-      (<IDENTIFIER>|"abstract"|"interface"|"void"|{})
+      (Name|"abstract"|"interface"|"void"|{})
       |
-      <IDENTIFIER>
+      Name
   )
   [
        "("
@@ -1210,10 +1211,13 @@ INJECT TreeBuildingAnnotation :
     public String getNodeName() {
         Token hash = firstChildOfType(TokenType.HASH);
         if (hash == null) return null;
+        Node nextNode = hash.nextSibling();
+        if (nextNode instanceof Name) {
+            return nextNode.toString();
+        }
         Token nextToken = hash.getNext();
         TokenType nextType = nextToken.getType();
-        if (nextType != IDENTIFIER 
-            && nextType != ABSTRACT 
+        if (nextType != ABSTRACT 
             && nextType != INTERFACE 
             && nextType != VOID) return null;
         return nextToken.getImage();
@@ -1237,6 +1241,11 @@ INJECT TreeBuildingAnnotation :
     
     public boolean isVoid() {
         return "void".equals(getNodeName());
+    }
+
+    public boolean isFullyQualified() {
+        String nodeName = getNodeName();
+        return nodeName != null && nodeName.indexOf('.') >0;
     }
 }
 

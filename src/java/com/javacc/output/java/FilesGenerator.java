@@ -387,6 +387,7 @@ public class FilesGenerator {
             tokenSubclassFileNames.add(outputFile.getFileName().toString());
         }
         for (String nodeName : grammar.getNodeNames()) {
+            if (nodeName.indexOf('.')>0) continue;
             Path outputFile = getOutputFile(nodeName);
             if (tokenSubclassFileNames.contains(outputFile.getFileName().toString())) {
                 String name = outputFile.getFileName().toString();

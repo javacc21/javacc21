@@ -55,7 +55,11 @@ import java.nio.charset.Charset;
 
 [#if grammar.nodePackage?has_content && grammar.parserPackage! != grammar.nodePackage]
 [#list grammar.nodeNames as node]
-import ${grammar.nodePackage}.${node};
+[#if node?index_of('.')>0]
+   import ${node};
+[#else]
+   import ${grammar.nodePackage}.${node};
+[/#if]
 [/#list]
 
 [/#if]

@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.*;
 
+import com.javacc.core.BNFProduction;
 import com.javacc.core.Expansion;
 import com.javacc.core.LexerData;
 import com.javacc.core.RegularExpression;
