@@ -31,7 +31,7 @@ package com.javacc.core;
 import java.util.List;
 import java.util.Set;
 
-abstract public class ExpansionChoice extends Expansion {
+public class ExpansionChoice extends Expansion {
     public List<Expansion> getChoices() {
         return childrenOfType(Expansion.class);
     }

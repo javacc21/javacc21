@@ -1422,11 +1422,9 @@ INJECT RegexpSpec :
     }
 }
 
-ExpansionChoice : 
+ExpansionChoice #com.javacc.core.ExpansionChoice(>1) : 
   ExpansionSequence ( "|" ExpansionSequence)*
 ;
-
-INJECT ExpansionChoice : extends com.javacc.core.ExpansionChoice 
 
 ExpansionWithParentheses :
 {
