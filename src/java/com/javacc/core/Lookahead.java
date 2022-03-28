@@ -31,7 +31,7 @@ package com.javacc.core;
 import com.javacc.parser.BaseNode;
 import com.javacc.parser.tree.*;
 
-abstract public class Lookahead extends BaseNode {
+public class Lookahead extends BaseNode {
     private Name LHS;
     private Expansion expansion, nestedExpansion, upToExpansion;
     private boolean negated, semanticLookaheadNested;

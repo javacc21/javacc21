@@ -47,6 +47,7 @@ import java.util.regex.*;
 import com.javacc.core.BNFProduction;
 import com.javacc.core.Expansion;
 import com.javacc.core.LexerData;
+import com.javacc.core.Lookahead;
 import com.javacc.core.RegularExpression;
 import com.javacc.core.SanityChecker;
 import com.javacc.output.Sequencer;

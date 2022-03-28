@@ -1490,7 +1490,7 @@ INJECT ExpansionWithParentheses :
     }
 }
 
-ExpansionSequence# :
+ExpansionSequence #com.javacc.core.ExpansionSequence :
 {
    Expansion sub;
    Lookahead la = null;
@@ -1512,10 +1512,8 @@ ExpansionSequence# :
   )+!
 ;
 
-INJECT ExpansionSequence : extends com.javacc.core.ExpansionSequence
-
-Lookahead Lookahead #void :
-(<RIGHT_ARROW>#Lookahead | ScanAhead | LegacyLookahead) 
+com.javacc.core.Lookahead Lookahead #void :
+(<RIGHT_ARROW>#com.javacc.core.Lookahead | ScanAhead | LegacyLookahead) 
 {
     return (Lookahead) peekNode();
 };
@@ -1551,7 +1549,7 @@ Assertion :
    [UpToHere(CURRENT_NODE)]
 ;
 
-ScanAhead #Lookahead : 
+ScanAhead #com.javacc.core.Lookahead : 
 {
    Token amountToken=null;
    boolean hasSemanticLookahead = false, getHasExplicitNumericalLookahead=false;
@@ -1674,7 +1672,7 @@ import java.util.*;
     }
 }
 
-INJECT LegacyLookahead : extends Lookahead;
+INJECT LegacyLookahead : extends com.javacc.core.Lookahead;
 
 LegacyLookahead# :
 {
@@ -1714,8 +1712,6 @@ LegacyLookahead# :
      ")"
   ]
 }
-
-INJECT Lookahead : extends com.javacc.core.Lookahead
 
 Expansion ExpansionUnit :
 {
@@ -1810,8 +1806,6 @@ UpToHere(Expansion exp) #void :
        }
    }
 ;
-
-//INJECT NonTerminal : extends com.javacc.core.NonTerminal 
 
 //The following two productions are not actually used. These constructs are now 
 // handled by ExpansionWithParentheses so the following two productions

@@ -31,7 +31,7 @@ package com.javacc.core;
 import java.util.*;
 import com.javacc.parser.tree.*;
 
-abstract public class ExpansionSequence extends Expansion {
+public class ExpansionSequence extends Expansion {
 
     /**
      * @return a List that includes child expansions that are
