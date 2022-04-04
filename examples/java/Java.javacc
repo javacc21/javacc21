@@ -949,13 +949,13 @@ LocalVariableDeclaration#abstract :
    )
 ;   
 
-NoVarDeclaration #void : 
+NoVarDeclaration : 
    {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
    Modifiers
    Type =>|| VariableDeclarator ( "," VariableDeclarator )*    
 ;
 
-VarDeclaration #void :
+VarDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
   Modifiers
   ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType() == TokenType.IDENTIFIER} =>||
