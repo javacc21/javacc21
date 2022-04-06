@@ -291,13 +291,13 @@ Expression PP_AndExpression#void :
 
 Expression PP_NotExpression#void :
   {
-    boolean not = false;
+    boolean notFlag = false;
     Expression result;
   }
-   (<PP_NOT> {not = !not;})* 
+   (<PP_NOT> {notFlag = !notFlag;})*
    result=PP_PrimaryExpression 
   {
-     if (not) {
+     if (notFlag) {
        result.booleanValue = !result.booleanValue;
      }
      return result;

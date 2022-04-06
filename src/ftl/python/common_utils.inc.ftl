@@ -120,7 +120,7 @@ ${prefix}${newID()}[#rt]
 ${is}${prevLexicalStateVar} = self.token_source.lexical_state
 ${is}self.token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState})
 ${is}try:
-  [#nested indent /]
+  [#nested indent + 4 /]
 ${is}finally:
 ${is}    if ${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}:
 ${is}        if ${resetToken}.next:

@@ -19,6 +19,9 @@ INCLUDE "CSharpLexer.javacc"
 // Just an experiment to see if this makes any difference!
 INJECT ParseException : extends RuntimeException
 
+/*
+ * This is not used
+
 INJECT PARSER_CLASS :
 {
    public PARSER_CLASS(Path path, java.util.Set<String> ppSymbols) throws IOException {
@@ -26,6 +29,7 @@ INJECT PARSER_CLASS :
       if (ppSymbols != null) token_source.addSymbols(ppSymbols);
    }
 }
+ */
 
 #CompilationUnit# :
    (ExternAliasDirective)*
@@ -878,7 +882,16 @@ INJECT Expression :
     * Can this expression be evaluated at compile-time?
     */
    default boolean isConstant() {
-      return childrenOfType(Expression.class).stream().allMatch(Expression::isConstant);
+      for (Node child : children()) {
+        if (!(child instanceof Expression)) {
+          continue;
+        }
+        if (!((Expression) child).isConstant()) {
+          return false;
+        }
+      }
+      return true;
+      // return childrenOfType(Expression.class).stream().allMatch(Expression::isConstant);
    }  
 }
 

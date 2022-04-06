@@ -323,7 +323,6 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
         'appended_token',
         'is_inserted',
 [/#if]
-        'next',
         'previous_token',
         'next_token',
 [#var injectedFields = grammar.utils.injectedTokenFieldNames(injector)]
@@ -336,7 +335,13 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
 [#if grammar.faultTolerant]
         '_is_skipped',
         '_is_virtual',
-        'dirty'
+        'dirty',
+[/#if]
+[#if !grammar.treeBuildingEnabled]
+        'begin_offset',
+        'end_offset',
+        'is_unparsed',
+        'token_source',
 [/#if]
     )
 
@@ -346,6 +351,7 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
 [#else]
         self.begin_offset = begin_offset
         self.end_offset = end_offset
+        self.token_source = token_source
 [/#if]
 ${grammar.utils.translateTokenInjections(injector, true)}
         self.type = type
@@ -457,11 +463,13 @@ ${grammar.utils.translateTokenInjections(injector, true)}
         return False
 [/#if]
 
-    def get_next(self):
+    def _get_next(self):
         return self.get_next_parsed_token()
 
-    def set_next(self, next):  # This is typically only used internally
+    def _set_next(self, next):  # This is typically only used internally
         self.set_next_parsed_token(next)
+
+    next = property(_get_next, _set_next)
 
     # return the next regular (i.e. parsed) token
     def get_next_parsed_token(self):
@@ -470,7 +478,8 @@ ${grammar.utils.translateTokenInjections(injector, true)}
             result = result.next_cached_token
         return result
 
-    def get_previous(self):
+    @property
+    def previous(self):
         result = self.previous_cached_token
         while result and result.is_unparsed:
             result = result.previous_cached_token
@@ -493,9 +502,10 @@ ${grammar.utils.translateTokenInjections(injector, true)}
         if self.appended_token:
             return self.appended_token
 [/#if]
-        if not self.token_source:
+        ts = self.token_source
+        if not ts:
             return None
-        return self.token_source.next_cached_token(self.end_offset)
+        return ts.next_cached_token(self.end_offset)
 
     def __repr__(self):
         tn = self.type.name if self.type else None
@@ -564,6 +574,8 @@ class InvalidToken(Token):
         self.dirty = True
 [/#if]
 
+class IgnoredToken(InvalidToken): pass
+class SkippedToken(InvalidToken): pass
 
 #
 # Token subclasses

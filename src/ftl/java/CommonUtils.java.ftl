@@ -12,8 +12,8 @@
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
  *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
+ *       nor the names of any contributors may be used to endorse
+ *       or promote products derived from this software without specific prior written
  *       permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -30,7 +30,7 @@
  */
  --]
 
-[#-- A place to put some utility routines used in various templates. Currently doesn't 
+[#-- A place to put some utility routines used in various templates. Currently doesn't
      really have much! --]
 
 [#var TT = "TokenType."]
@@ -40,13 +40,13 @@
    [#set TT=""]
  [/#if]
 
-[#-- 
+[#--
   Rewritten version of this macro to try to get around the Code too large problem.
 --]
 [#macro enumSet varName tokenNames]
    [#if tokenNames?size = 0]
      static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
-   [#elseif tokenNames?size <8]
+   [#elseif tokenNames?size < 8000]
     static private final EnumSet<TokenType> ${varName} = tokenTypeSet(
        [#list tokenNames as type]
          [#if type_index > 0],[/#if]
@@ -59,7 +59,7 @@
        return tokenTypeSet(
          [#list tokenNames as type]
           [#if type_index > 0],[/#if]
-           ${TT}${type} 
+           ${TT}${type}
          [/#list]
        );
     }
@@ -72,7 +72,7 @@
 
 [#macro finalSetVar expansion]
     [@enumSet expansion.finalSetVarName expansion.finalSet.tokenNames /]
-[/#macro]            
+[/#macro]
 
 [#macro followSetVar expansion]
     [@enumSet expansion.followSetVarName expansion.followSet.tokenNames/]
@@ -90,7 +90,7 @@
       = ${init}
    [/#if]
    ;
-[/#macro] 
+[/#macro]
 
 [#macro newVarName prefix]
    ${prefix}${newID()}

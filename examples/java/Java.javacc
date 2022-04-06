@@ -200,9 +200,9 @@ ClassDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP, TokenType.SEALED, TokenType.NON_SEALED);}#
   Modifiers
   "class" =>||
-  TypeIdentifier
+  TypeIdentifier /name/
   [ TypeParameters ]
-  [ ExtendsList]
+  [ ExtendsList ]
   [ ImplementsList ]
   [ PermitsList ]
   ClassOrInterfaceBody
@@ -255,14 +255,14 @@ EnumDeclaration :
    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP);}#
    Modifiers
    "enum" =>||
-   TypeIdentifier
+   TypeIdentifier /name/
    [ImplementsList]
    EnumBody
 ;
 
 EnumBody :
    "{"
-   [ EnumConstant ( SCAN 2 "," EnumConstant )* ]
+   [ EnumConstant /[values]/ ( SCAN 2 "," EnumConstant /[values]/ )* ]
    [ "," ]
    [ ";" ( ClassOrInterfaceBodyDeclaration )*! ]
    "}"
@@ -310,7 +310,7 @@ CompactConstructorDeclaration :
   TypeIdentifier
   "{" =>||
   [ => ExplicitConstructorInvocation ]
-  ( BlockStatement )*!
+  ( BlockStatement /[statements]/ )*!
   "}"
 ;
 
@@ -340,7 +340,7 @@ TypeBound :
    "extends" ObjectType ( "&" ObjectType )*
 ;
 
-ClassOrInterfaceBody : "{" (SCAN ~("}") => ClassOrInterfaceBodyDeclaration)*! "}" ;
+ClassOrInterfaceBody : "{" (SCAN ~("}") => ClassOrInterfaceBodyDeclaration /[decls]/ )*! "}" ;
 
 ClassOrInterfaceBodyDeclaration#interface :
   Initializer
@@ -368,7 +368,7 @@ FieldDeclaration :
 
 VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
-VariableDeclaratorId : <IDENTIFIER> ( (Annotation)* "[" "]" )* ;
+VariableDeclaratorId : <IDENTIFIER> /varName/ ( (Annotation)* "[" "]" )* ;
 
 VariableInitializer : ArrayInitializer | Expression ;
 
@@ -1162,7 +1162,7 @@ CatchBlock :
     "catch"
     "("
     ["final"]
-    ObjectType /[exceptionTypes]/ ("|" ObjectType /[exceptionTypes]/ )* VariableDeclaratorId
+    ObjectType /[exceptionTypes]/ ("|" ObjectType /[exceptionTypes]/ )* VariableDeclaratorId /varDecl/
     ")"
     Block
 ;

@@ -315,7 +315,7 @@
        [/#if]
        ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
    [/#if]
-   [#if !regexp.childName?is_null]
+   [#if !regexp.childName?is_null && !grammar.currentNodeVariableName?is_null]
     if (buildTree) {
         Node child = peekNode();
         String name = "${regexp.childName}";

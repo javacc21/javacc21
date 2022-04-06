@@ -1218,17 +1218,17 @@ public class Grammar extends BaseNode {
     private void typeCheckSettings(Map<String, Object> settings) {
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
-            if (booleanSettings.indexOf(","+key+",")>=0) {
+            if (booleanSettings.contains("," + key + ",")) {
                 if (!(value instanceof Boolean)) {
                     errorMessages.add("The option " + key + " is supposed to be a boolean (true/false) type");
                 }
             }
-            else if (stringSettings.indexOf(","+key+",")>=0) {
+            else if (stringSettings.contains("," + key + ",")) {
                 if (!(value instanceof String)) {
                     errorMessages.add("The option " + key + " is supposed to be a string");
                 }
             }
-            else if (integerSettings.indexOf(","+key+",")>=0) {
+            else if (integerSettings.contains("," + key + ",")) {
                 if (!(value instanceof Integer)) {
                     errorMessages.add("The option " + key + " is supposed to be an integer");
                 }
@@ -1571,25 +1571,27 @@ public class Grammar extends BaseNode {
 
         public String translateInjections(String className, CodeInjector injector, boolean fields) {
             StringBuilder result = new StringBuilder();
-            Translator t = Grammar.this.translator;
             if (fields) {
                 translator.clearFields();
             }
             String cn = getUtils().lastPart(className, '.');
-            t.startClass(cn);
+            translator.startClass(cn, fields, result);
             try {
                 List<ClassOrInterfaceBodyDeclaration> declsToProcess = injector.getBodyDeclarations(className);
                 if (declsToProcess != null) {
-                    int fieldIndent = t.getFieldIndent();
-                    int methodIndent = t.getMethodIndent();
+                    int fieldIndent = translator.getFieldIndent();
+                    int methodIndent = translator.getMethodIndent();
                     for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
-                        boolean process = (fields != (decl instanceof MethodDeclaration));
+                        // If processing fields, we want to process FieldDeclarations or Initializers.
+                        // Otherwise, we want to process TypeDeclarations, MethodDeclarations and ConstructorDeclarations
+                        boolean process = (fields == (decl instanceof FieldDeclaration || decl instanceof Initializer));
                         if (process) {
                             if (decl instanceof FieldDeclaration || decl instanceof CodeBlock || decl instanceof Initializer) {
-                                Grammar.this.translator.translateStatement(decl, fieldIndent, result);
+                                translator.translateStatement(decl, fieldIndent, result);
                             }
-                            else if (decl instanceof MethodDeclaration) {
-                                Grammar.this.translator.translateStatement((MethodDeclaration) decl, methodIndent, result);
+                            else if (decl instanceof MethodDeclaration || decl instanceof ConstructorDeclaration ||
+                                     decl instanceof EnumDeclaration || decl instanceof ClassDeclaration) {
+                                translator.translateStatement(decl, methodIndent, result);
                             }
                             else {
                                 throw new UnsupportedOperationException();
@@ -1599,7 +1601,7 @@ public class Grammar extends BaseNode {
                 }
             }
             finally {
-                t.endClass(cn);
+                translator.endClass(cn, fields, result);
             }
             return result.toString();
         }
@@ -1610,7 +1612,11 @@ public class Grammar extends BaseNode {
             List<ClassOrInterfaceBodyDeclaration> declsToProcess = bodyDeclarations.get(className);
             if (declsToProcess != null) {
                 for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
-                    if ((decl instanceof MethodDeclaration) || (decl instanceof Initializer)) {
+                    if ((decl instanceof MethodDeclaration) ||
+                            (decl instanceof ConstructorDeclaration) ||
+                            (decl instanceof Initializer) ||
+                            (decl instanceof EnumDeclaration) ||
+                            (decl instanceof ClassDeclaration)) {
                         continue;
                     }
                     if (decl instanceof FieldDeclaration) {
@@ -1659,6 +1665,13 @@ public class Grammar extends BaseNode {
             return injectedFieldNames(className, injector);
         }
 
+        // used in templates
+        public String translateNestedTypes(String className, CodeInjector injector, boolean fields) {
+            className = String.format("%s.%s", Grammar.this.getNodePackage(), className);
+            return translateInjections(className, injector, fields);
+        }
+
+        // used in templates
         public String translateTokenInjections(CodeInjector injector, boolean fields) {
             String className = String.format("%s.Token", Grammar.this.getParserPackage());
             return translateInjections(className, injector, fields);
@@ -1682,6 +1695,42 @@ public class Grammar extends BaseNode {
         public String translateTokenSubclassInjections(String className, CodeInjector injector, boolean fields) {
             className = String.format("%s.%s", Grammar.this.getNodePackage(), className);
             return translateInjections(className, injector, fields);
+        }
+
+        protected void processImports(Set<ImportDeclaration> imports, StringBuilder result) {
+            for (ImportDeclaration decl: imports) {
+                String name = decl.getChild(1).toString();
+                if (name.startsWith("java.")) {
+                    continue;
+                }
+                translator.translateImport(name, result);
+            }
+        }
+
+        // used in templates
+        public String translateLexerImports() {
+            StringBuilder result = new StringBuilder();
+            CodeInjector injector = getInjector();
+            String cn = String.format("%s.%s", getParserPackage(), getLexerClassName());
+            Set<ImportDeclaration> imports = injector.getImportDeclarations(cn);
+
+            if (imports != null) {
+                processImports(imports, result);
+            }
+            return result.toString();
+        }
+
+        // used in templates
+        public String translateParserImports() {
+            StringBuilder result = new StringBuilder();
+            CodeInjector injector = getInjector();
+            String cn = String.format("%s.%s", getParserPackage(), getParserClassName());
+            Set<ImportDeclaration> imports = injector.getImportDeclarations(cn);
+
+            if (imports != null) {
+                processImports(imports, result);
+            }
+            return result.toString();
         }
 
         public List<String> getSortedNodeClassNames() {

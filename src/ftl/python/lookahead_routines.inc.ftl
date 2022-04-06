@@ -153,23 +153,21 @@ ${BuildProductionLookaheadMethod(production, indent)}
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
   [#var prevNonTerminalNestingVarName = "non_terminal_nesting" + CU.newID(),
-      prevCurrentLookaheadTokenVarName = "current_lookahead_token"+ CU.newID(),
-      prevLookaheadRoutineNestingVarName = "lookahead_routine_nesting" + CU.newID()
-   ]
-    # predicate routine for expansion at:
-    # ${expansion.location}
-    # BuildPredicateRoutine macro
+        prevCurrentLookaheadTokenVarName = "current_lookahead_token"+ CU.newID(),
+        prevLookaheadRoutineNestingVarName = "lookahead_routine_nesting" + CU.newID()
+  ]
+    # BuildPredicateRoutine: expansion at ${expansion.location}
     def ${expansion.predicateMethodName}(self):
         ${prevNonTerminalNestingVarName} = self.non_terminal_nesting
-        ${prevCurrentLookaheadTokenVarName} = self.current_lookahead_token
         ${prevLookaheadRoutineNestingVarName} = self.lookahead_routine_nesting
+        ${prevCurrentLookaheadTokenVarName} = self.current_lookahead_token
         try:
             self.lookahead_routine_nesting += 1
-            if self.current_lookahead_token == None :
-                self.current_lookahead_token = self.last_consumed_token
             self.remaining_lookahead = ${lookaheadAmount}
+            if self.current_lookahead_token is None:
+                self.current_lookahead_token = self.last_consumed_token
             self.hit_failure = False
-            self.scan_to_end = ${CU.bool(expansion.hasExplicitNumericalLookahead || expansion.hasSeparateSyntacticLookahead)}
+            self.scan_to_end = False
 ${BuildPredicateCode(expansion, 12)}
       [#if !expansion.hasSeparateSyntacticLookahead]
 ${BuildScanCode(expansion, 12)}
@@ -243,11 +241,7 @@ ${is}if self.remaining_lookahead <= 0:
 ${is}    return True
 [#if expansion.hasSeparateSyntacticLookahead]
 ${is}if [#if !expansion.lookahead.negated]not [/#if]self.${expansion.lookaheadExpansion.scanRoutineName}():
-  [#if expansion.lookahead.negated]
 ${is}    return False
-  [#else]
-${is}    return False
-  [/#if]
 [/#if]
 [#-- ${is}# DBG < BuildPredicateCode ${indent} --]
 [/#macro]
@@ -391,7 +385,7 @@ ${ScanCodeOneOrMore(expansion, indent)}
    [#elseif classname = "ExpansionChoice"]
 ${ScanCodeChoice(expansion, indent)}
    [#elseif classname = "CodeBlock"]
-      [#if expansion.appliesInLookahead || expansion.containingProduction.onlyForLookahead || expansion.insideLookahead]
+      [#if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead]
 ${grammar.utils.translateCodeBlock(expansion, indent)}
       [/#if]
    [/#if]
@@ -415,7 +409,7 @@ ${grammar.utils.translateCodeBlock(expansion, indent)}
    [#list sequence.units as sub]
        [@BuildScanCode sub indent /]
        [#if sub.scanLimit]
-${is}if not self.scan_to_end and self.non_terminal_nesting <=1 and self.lookahead_routine_nesting <= 1:
+${is}if not self.scan_to_end and self.lookahead_routine_nesting <= 1 and self.non_terminal_nesting <= 1:
 ${is}    self.remaining_lookahead = ${sub.scanLimitPlus}
        [/#if]
    [/#list]
@@ -429,19 +423,20 @@ ${is}    self.remaining_lookahead = ${sub.scanLimitPlus}
 --]
 [#macro ScanCodeNonTerminal nt indent]
 [#var is=""?right_pad(indent)]
+${is}# NonTerminal ${nt.name} at ${nt.location}
 ${is}self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginLine}, ${nt.beginColumn})
-      [#var prevScanToEndVarName = "scan_to_end" + CU.newID()]
+      [#var prevScanToEndVarName = "prev_scan_to_end" + CU.newID()]
 ${is}${prevScanToEndVarName} = self.scan_to_end
 ${is}self.current_lookahead_production = '${nt.production.name}'
 ${is}self.scan_to_end = ${CU.bool(nt.scanToEnd)}
-${is}self.lookahead_routine_nesting+=1
+${is}self.non_terminal_nesting += 1
 ${is}try:
 ${is}    if not self.${nt.production.lookaheadMethodName}():
 ${is}        return False
 ${is}finally:
 ${is}    self.pop_lookahead_stack()
-${is}    self.lookahead_routine_nesting -=1
 ${is}    self.scan_to_end = ${prevScanToEndVarName}
+${is}    self.non_terminal_nesting -= 1
 [/#macro]
 
 [#macro ScanSingleToken expansion indent]

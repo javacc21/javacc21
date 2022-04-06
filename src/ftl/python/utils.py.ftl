@@ -41,7 +41,8 @@ __all__ = [
     'ListIterator',
     'StringBuilder',
     '_Set',
-    '_List'
+    '_List',
+    'HashSet'
 ]
 
 CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
@@ -410,6 +411,7 @@ class _Set(set):
         if item in self:
             super().remove(item)
 
+HashSet = _Set
 
 class _List(list):
     """

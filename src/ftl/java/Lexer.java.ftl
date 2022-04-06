@@ -78,9 +78,10 @@ import java.util.EnumSet;
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
     static final int DEFAULT_TAB_SIZE = ${grammar.tabSize};
-    private int tabSize = DEFAULT_TAB_SIZE;
 
 [#if grammar.preserveTabs]
+    private int tabSize = DEFAULT_TAB_SIZE;
+
     public void setTabSize(int tabSize) {this.tabSize = tabSize;}
 [/#if]    
 
@@ -589,7 +590,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         for (int i=lineStart; i< pos; i++) {
             char ch = content.charAt(i);
             if (ch == '\t') {
-                result += tabSize - (result-1)%tabSize;
+                result += DEFAULT_TAB_SIZE - (result-1) % DEFAULT_TAB_SIZE;
             } 
             else if (Character.isHighSurrogate(ch)) {
                 ++result;
@@ -775,5 +776,40 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
               for (int i=offset; i<=nlIndex; i++) tokenLocationTable[i] = IGNORED;
           } 
       }
-  }  
+  }
+
+  // Utility methods. Having them here makes it easier to handle things
+  // more uniformly in other generation languages.
+
+   protected void setRegionIgnore(int start, int end) {
+     for (int i = start; i< end; i++) {
+       tokenLocationTable[i] = IGNORED;
+     }
+     tokenOffsets.clear(start, end);
+   }
+
+   protected boolean atLineStart(Token tok) {
+      int offset = tok.getBeginOffset();
+      while (offset > 0) {
+        --offset;
+        char c = this.content.charAt(offset);
+        if (!Character.isWhitespace(c)) return false;
+        if (c=='\n') break;
+      }
+      return true;
+   }
+
+   protected String getLine(Token tok) {
+       int lineNum = tok.getBeginLine();
+       return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum)+1);
+   }
+
+   protected void setLineSkipped(Token tok) {
+       int lineNum = tok.getBeginLine();
+       int start = getLineStartOffset(lineNum);
+       int end = getLineStartOffset(lineNum+1);
+       setRegionIgnore(start, end);
+       tok.setBeginOffset(start);
+       tok.setEndOffset(end);
+   }
 }

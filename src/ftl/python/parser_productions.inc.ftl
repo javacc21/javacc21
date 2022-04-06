@@ -374,10 +374,7 @@ ${is}    self.outer_follow_set = new_follow_set
   [/#if]
 [/#if]
 ${is}try:
-   [#if !nonterminal.LHS?is_null && production.returnType != "void"]
-${is}    ${nonterminal.LHS} =
-   [/#if]
-${is}    self.parse_${nonterminal.name}(${grammar.utils.translateNonterminalArgs(nonterminal.args)})
+${is}    [#if !nonterminal.LHS?is_null && production.returnType != "void"]${nonterminal.LHS} = [/#if]self.parse_${nonterminal.name}(${grammar.utils.translateNonterminalArgs(nonterminal.args)})
    [#if !nonterminal.LHS?is_null && production.returnType = "void"]
 ${is}    try:
 ${is}        ${nonterminal.LHS} = self.peek_node()

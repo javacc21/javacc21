@@ -107,7 +107,6 @@ public class CodeInjector {
         return explicitPackages.get(className);
     }
 
-    
     private void add(CompilationUnit jcu) {
         String explicitPackageName = jcu.getPackageName();
         List<ImportDeclaration> importDecls = new ArrayList<>(jcu.getImportDeclarations());
@@ -288,6 +287,10 @@ public class CodeInjector {
 
     public List<ObjectType> getImplementsList(String qualifiedName) {
         return implementsLists.get(qualifiedName);
+    }
+
+    public Set<ImportDeclaration> getImportDeclarations(String qualifiedName) {
+        return injectedImportsMap.get(qualifiedName);
     }
 
     public Map<String, List<ClassOrInterfaceBodyDeclaration>> getBodyDeclarations() {
