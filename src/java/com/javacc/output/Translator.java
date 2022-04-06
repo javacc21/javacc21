@@ -942,7 +942,7 @@ public class Translator {
                 ASTPrimaryExpression name;
                 ASTExpression initializer;
 
-                if (child instanceof Primitive || child instanceof ObjectType) {
+                if (child instanceof Primitive || child instanceof PrimitiveType || child instanceof ObjectType) {
                     resultNode.type = (ASTTypeExpression) transformTree(child, true);
                 }
                 else if (child instanceof Identifier) {
