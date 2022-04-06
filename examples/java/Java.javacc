@@ -565,7 +565,7 @@ INJECT LiteralExpression : implements Expression
 INJECT DotNew : extends AllocationExpression
 
 INJECT Name : implements Expression {
-    public boolean isAssignableTo() {return true;}
+  public boolean isAssignableTo() {return true;}
 }
 
 INJECT DotName : implements Expression {

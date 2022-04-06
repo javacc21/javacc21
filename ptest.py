@@ -225,7 +225,7 @@ def main():
                             node = parser.root_node
                             python_dump_node(outf, node, 0)
                     except ParseException as e:
-                        print('Parse failed: %s', e)
+                        print('Parse failed: %s' % e)
                         logger.exception('Parse failed: %s', e)
                         if 'invalid.json' not in p:
                             raise

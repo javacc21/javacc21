@@ -613,9 +613,9 @@ ${grammar.utils.translateLexerInjections(injector, true)}
 [/#if]
 [#list grammar.lexerTokenHooks as tokenHookMethodName]
   [#if tokenHookMethodName = "CommonTokenAction"]
-            self.${tokenHookMethodName}(matched_token)
+        self.${tokenHookMethodName}(matched_token)
   [#else]
-            matched_token = self.${tokenHookMethodName}(matched_token)
+        matched_token = self.${tokenHookMethodName}(matched_token)
   [/#if]
 [/#list]
         return matched_token

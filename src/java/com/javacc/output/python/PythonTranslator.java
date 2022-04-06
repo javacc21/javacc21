@@ -406,8 +406,10 @@ public class PythonTranslator extends Translator {
             boolean isProperty = vd.hasAnnotation("Property");
             boolean isField = vd.isField();
 
-            if (type.isNumeric()) {
-                defaultInitializer = "0";
+            if (isProperty || isField) {
+                if (type.isNumeric()) {
+                    defaultInitializer = "0";
+                }
             }
             for (int i = 0; i < n; i++) {
                 ASTPrimaryExpression name = names.get(i);
