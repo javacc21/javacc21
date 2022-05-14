@@ -91,7 +91,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   // Initialize the various NFA method tables
   static {
     [#list grammar.lexerData.lexicalStates as lexicalState]
-      NFA_FUNCTIONS_${lexicalState.name}_init();
+      ${lexicalState.name}.NFA_FUNCTIONS_init();
     [/#list]
   }
 
@@ -103,7 +103,12 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   }
 
  [#list grammar.lexerData.lexicalStates as lexicalState]
+ /**
+  * Holder class for NFA code related to ${lexicalState.name} lexical state
+  */
+  private static class ${lexicalState.name} {
    [@GenerateStateCode lexicalState/]
+  }
  [/#list]  
 }
 
@@ -123,10 +128,10 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
     [/#if]
   [/#list]
 
-  static private void NFA_FUNCTIONS_${lexicalState.name}_init() {
+  static private void NFA_FUNCTIONS_init() {
     NfaFunction[] functions = new NfaFunction[${lexicalState.allNfaStates.size()}];
     [#list lexicalState.allNfaStates as state]
-      functions[${state.index}] = ${grammar.nfaDataClassName}::${state.methodName};
+      functions[${state.index}] = ${lexicalState.name}::${state.methodName};
     [/#list]
     [#if multipleLexicalStates]
       functionTableMap.put(LexicalState.${lexicalState.name}, functions);
