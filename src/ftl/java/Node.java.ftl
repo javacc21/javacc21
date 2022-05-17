@@ -33,12 +33,8 @@
 [#if grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
 [/#if]
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.lang.reflect.*;
 import java.util.function.Predicate;
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
@@ -740,22 +736,39 @@ public interface Node extends Comparable<Node>
     }
 
  	static abstract public class Visitor {
-		private HashMap<Class<? extends Node>, Method> methodCache = new HashMap<>();
+        static private Map<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>> mapLookup;
+        static private final Method DUMMY_METHOD;
+        static {
+            try {
+                // Use this just to represent no method found, since ConcurrentHashMap cannot contains nulls
+                DUMMY_METHOD = Object.class.getMethod("toString");
+            } catch (Exception e) {throw new RuntimeException(e);} // Never happens anyway.
+            mapLookup = Collections.synchronizedMap(new HashMap<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>>());
+        }
+        private Map<Class<? extends Node>, Method> methodCache;
+        {
+            this.methodCache = mapLookup.get(this.getClass());
+            if (methodCache == null) {
+                methodCache = new ConcurrentHashMap<Class<? extends Node>, Method>();
+                mapLookup.put(this.getClass(), methodCache);
+            }
+        }
         protected boolean visitUnparsedTokens;
 		
 		private Method getVisitMethod(Node node) {
 			Class<? extends Node> nodeClass = node.getClass();
-			if (!methodCache.containsKey(nodeClass)) {
+            Method method = methodCache.get(nodeClass);
+            if (method == null) {
                 methodCache.put(nodeClass, getVisitMethodImpl(nodeClass));
-			}
-	        return methodCache.get(nodeClass);
+            }
+            return methodCache.get(nodeClass);
 		}
 
         // Find handler method for this node type. If there is none, 
         // it checks for a handler for any explicitly marked interfaces
         // If necessary, it climbs the class hierarchy to superclasses
         private Method getVisitMethodImpl(Class<?> nodeClass) {
-            if (nodeClass == null || !Node.class.isAssignableFrom(nodeClass)) return null;
+            if (nodeClass == null || !Node.class.isAssignableFrom(nodeClass)) return DUMMY_METHOD;
             try {
                 return this.getClass().getMethod("visit", nodeClass);
             } catch (NoSuchMethodException e) {}
@@ -769,13 +782,13 @@ public interface Node extends Comparable<Node>
 
 		/**
 		 * Tries to invoke (via reflection) the appropriate visit(...) method
-		 * defined in a subclass. If there is none, it just calls the fallback() routine.
+		 * defined in a subclass. If there is none, it just calls the recurse() routine.
          * @param node the Node to "visit" 
 		 */
 		public final void visit(Node node) {
 			Method visitMethod = getVisitMethod(node);
-			if (visitMethod == null) {
-				fallback(node);
+			if (visitMethod == DUMMY_METHOD) {
+				recurse(node);
 			} else try {
 				visitMethod.invoke(this, node);
 			} catch (InvocationTargetException ite) {
@@ -797,16 +810,6 @@ public interface Node extends Comparable<Node>
             for (Node child : node.children(visitUnparsedTokens)) {
                 visit(child);
             }
-		}
-		
-		/**
-		 * If there is no specific method to visit this node type,
-		 * it just uses this method. The default base implementation
-		 * is just to recurse over the nodes.
-         * @param node The node we are currently traversing
-		 */
-		public void fallback(Node node) {
-		    recurse(node);
 		}
     }
 }
