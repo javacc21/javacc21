@@ -889,7 +889,6 @@ INJECT AnonymousObjectCreationExpression : implements Expression
 INJECT AssignmentExpression : implements StatementExpression
 INJECT CheckedExpression : implements StatementExpression
 INJECT ConditionalExpression : implements Expression
-INJECT ConditionalExpression : implements Expression
 INJECT ConditionalAndExpression : implements Expression
 INJECT ConditionalOrExpression : implements Expression
 INJECT DefaultValueExpression : implements Expression

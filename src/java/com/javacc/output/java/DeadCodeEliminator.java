@@ -45,7 +45,7 @@ import static com.javacc.parser.JavaCCConstants.TokenType.*;
  * Also variable names can be in a sense overloaded by being defined
  * in inner classes, but we don't bother about that either.
  */
-public class DeadCodeEliminator extends Node.Visitor {
+class DeadCodeEliminator extends Node.Visitor {
     private Set<String> usedNames = new HashSet<String>();
     private Set<Node> alreadyVisited = new HashSet<Node>();
     private CompilationUnit jcu;
@@ -73,7 +73,7 @@ public class DeadCodeEliminator extends Node.Visitor {
         }
     }
 
-    public void visit(MethodDeclaration md) {
+    void visit(MethodDeclaration md) {
         if (alreadyVisited.contains(md)) return;
         if (md.firstChildOfType(PRIVATE) == null || usedNames.contains(md.getName())) {
             md.descendants(Identifier.class).stream().forEach(id->usedNames.add(id.getImage()));
@@ -81,7 +81,7 @@ public class DeadCodeEliminator extends Node.Visitor {
         }
     }
 
-    public void visit(VariableDeclarator vd) {
+    void visit(VariableDeclarator vd) {
         if (alreadyVisited.contains(vd)) return;
         boolean isPrivate = vd.getParent().firstChildOfType(PRIVATE) != null;
         if (!isPrivate || usedNames.contains(vd.getName())) {
@@ -92,7 +92,7 @@ public class DeadCodeEliminator extends Node.Visitor {
         }
     }
 
-    public void visit(Initializer init) {
+    void visit(Initializer init) {
         if (alreadyVisited.contains(init)) return;
         for (Identifier id : init.descendants(Identifier.class)) {
             usedNames.add(id.getImage());
@@ -100,7 +100,7 @@ public class DeadCodeEliminator extends Node.Visitor {
         alreadyVisited.add(init);
     }
 
-    public void visit(ConstructorDeclaration cd) {
+    void visit(ConstructorDeclaration cd) {
         if (alreadyVisited.contains(cd)) return;
         for (Identifier id : cd.descendants(Identifier.class)) {
             usedNames.add(id.getImage());

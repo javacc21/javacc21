@@ -46,7 +46,7 @@ import com.javacc.parser.tree.*;
  * 
  * @author revusky
  */
-public class NfaBuilder extends Node.Visitor {
+class NfaBuilder extends Node.Visitor {
 
     private NfaState start, end;
     private boolean ignoreCase;
@@ -65,7 +65,7 @@ public class NfaBuilder extends Node.Visitor {
         lexicalState.getInitialState().addEpsilonMove(start);
     }
 
-    public void visit(CharacterList charList) {
+    void visit(CharacterList charList) {
         List<CharacterRange> ranges = orderedRanges(charList, ignoreCase);
         start = new NfaState(lexicalState);
         end = new NfaState(lexicalState);
@@ -75,7 +75,7 @@ public class NfaBuilder extends Node.Visitor {
         start.setNextState(end);
     }
 
-    public void visit(OneOrMoreRegexp oom) {
+    void visit(OneOrMoreRegexp oom) {
         NfaState startState = new NfaState(lexicalState);
         NfaState finalState = new NfaState(lexicalState);
         visit(oom.getRegexp());
@@ -86,7 +86,7 @@ public class NfaBuilder extends Node.Visitor {
         this.end = finalState;
     }
 
-    public void visit(RegexpChoice choice) {
+    void visit(RegexpChoice choice) {
         List<RegularExpression> choices = choice.getChoices();
         if (choices.size() == 1) {
             visit(choices.get(0));
@@ -103,7 +103,7 @@ public class NfaBuilder extends Node.Visitor {
         this.end = finalState;
     }
 
-    public void visit(RegexpStringLiteral stringLiteral) {
+    void visit(RegexpStringLiteral stringLiteral) {
         NfaState state = end = start = new NfaState(lexicalState);
         for (int ch : stringLiteral.getImage().codePoints().toArray()) {
             state.setCharMove(ch, grammar.isIgnoreCase() || ignoreCase);
@@ -113,7 +113,7 @@ public class NfaBuilder extends Node.Visitor {
         }
     }
 
-    public void visit(ZeroOrMoreRegexp zom) {
+    void visit(ZeroOrMoreRegexp zom) {
         NfaState startState = new NfaState(lexicalState);
         NfaState finalState = new NfaState(lexicalState);
         visit(zom.getRegexp());
@@ -125,7 +125,7 @@ public class NfaBuilder extends Node.Visitor {
         this.end = finalState;
     }
 
-    public void visit(ZeroOrOneRegexp zoo) {
+    void visit(ZeroOrOneRegexp zoo) {
         NfaState startState = new NfaState(lexicalState);
         NfaState finalState = new NfaState(lexicalState);
         visit(zoo.getRegexp());
@@ -136,13 +136,13 @@ public class NfaBuilder extends Node.Visitor {
         this.end = finalState;
     }
 
-    public void visit(RegexpRef ref) {
+    void visit(RegexpRef ref) {
         // REVISIT. Can the states generated
         // here be reused?
         visit(ref.getRegexp());
     }
 
-    public void visit(RegexpSequence sequence) {
+    void visit(RegexpSequence sequence) {
         if (sequence.getUnits().size() == 1) {
             visit(sequence.getUnits().get(0));
         }
@@ -165,7 +165,7 @@ public class NfaBuilder extends Node.Visitor {
         this.end = finalState;
     }
 
-    public void visit(RepetitionRange repRange) {
+    void visit(RepetitionRange repRange) {
         List<RegularExpression> units = new ArrayList<RegularExpression>();
         RegexpSequence seq;
         int i;

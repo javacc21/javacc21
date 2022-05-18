@@ -770,11 +770,19 @@ public interface Node extends Comparable<Node>
         private Method getVisitMethodImpl(Class<?> nodeClass) {
             if (nodeClass == null || !Node.class.isAssignableFrom(nodeClass)) return DUMMY_METHOD;
             try {
-                return this.getClass().getMethod("visit", nodeClass);
+                Method m = this.getClass().getDeclaredMethod("visit", nodeClass);
+                if (!Modifier.isPublic(nodeClass.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
+                    m.setAccessible(true);
+                }
+                return m;
             } catch (NoSuchMethodException e) {}
             for (Class<?> interf : nodeClass.getInterfaces()) {
                 if (Node.class.isAssignableFrom(interf) && !Node.class.equals(interf)) try {
-                    return this.getClass().getMethod("visit", interf);
+                    Method m = this.getClass().getDeclaredMethod("visit", interf);
+                    if (!Modifier.isPublic(interf.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
+                        m.setAccessible(true);
+                    }
+                    return m;
                 } catch (NoSuchMethodException e) {}
             }
             return getVisitMethodImpl(nodeClass.getSuperclass());

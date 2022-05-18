@@ -62,11 +62,11 @@ public class SanityChecker {
      * for some ugly legacy code.
      * @author revusky
      */
-    public class RegexpVisitor extends Node.Visitor {
+    class RegexpVisitor extends Node.Visitor {
 
         private HashSet<RegularExpression> alreadyVisited = new HashSet<>(), currentlyVisiting = new HashSet<>();
 
-        public void visit(RegexpRef ref) {
+        void visit(RegexpRef ref) {
             RegularExpression referredTo = ref.getRegexp();
             if (referredTo != null && !alreadyVisited.contains(referredTo)) {
                 if (!currentlyVisiting.contains(referredTo)) {
