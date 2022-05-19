@@ -132,6 +132,7 @@
                 else {
                     token_source.switchTo(${prevLexicalStateVar});
                 }
+                nextTokenType = null;
             }
          }
    [#elseif expansion.tokenActivation??]
