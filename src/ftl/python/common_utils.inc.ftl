@@ -127,6 +127,7 @@ ${is}        if ${resetToken}.next:
 ${is}            self.token_source.reset(${resetToken}, ${prevLexicalStateVar})
 ${is}        else:
 ${is}            self.token_source.switch_to(${prevLexicalStateVar})
+${is}        self._next_token_type = None
 [#elseif expansion.tokenActivation??]
   [#var tokenActivation = expansion.tokenActivation]
   [#var methodName = "activate_token_types"]
