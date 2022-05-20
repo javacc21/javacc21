@@ -2194,11 +2194,8 @@ PlaceHolder :
 RegularNonInterpolatedText :
    LEXICAL_STATE IN_REGULAR_INTERPOLATION
    (<NON_INTERPOLATED_TEXT>)
-   =>||
 ;
 
-MultiNonInterpolatedText :
-   LEXICAL_STATE IN_MULTI_INTERPOLATION
-   (<NON_INTERPOLATED_TEXT2>)
-   =>||
+MultiNonInterpolatedText : IN_MULTI_INTERPOLATION :
+   <NON_INTERPOLATED_TEXT2>
 ;
