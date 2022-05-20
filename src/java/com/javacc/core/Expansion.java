@@ -290,6 +290,9 @@ abstract public class Expansion extends BaseNode {
         if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
             return true;
         }
+        if (getSpecifiedLexicalState() != null) {
+            return true;
+        }
         return getHasGlobalSemanticActions();
     }
 
