@@ -113,11 +113,8 @@ ${is}    try:
   [#nested indent + 4 /]
 ${is}    finally:
 ${is}        if ${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}:
-      [#if !grammar.hugeFileSupport && !grammar.userDefinedLexer]
 ${is}            tokenSource.Reset(${resetToken}, ${prevLexicalStateVar})
-      [#else]
-${is}            tokenSource.SwitchTo(${prevLexicalStateVar})
-      [/#if]
+${is}            _nextTokenType = null;
 [#elseif expansion.tokenActivation??]
   [#var tokenActivation = expansion.tokenActivation]
   [#var methodName = "ActivateTokenTypes"]
