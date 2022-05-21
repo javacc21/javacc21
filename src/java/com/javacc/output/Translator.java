@@ -954,6 +954,12 @@ public class Translator {
                     initializer = (child.getChildCount() == 1) ? null : (ASTExpression) transformTree(child.getLastChild());
                     resultNode.addNameAndInitializer(name, initializer);
                 }
+                else if (child instanceof LocalVariableDeclaration) {
+                    return transformTree(child, forType);
+                }
+                else {
+                    throw new UnsupportedOperationException();
+                }
             }
             return resultNode;
         }
@@ -1021,16 +1027,23 @@ public class Translator {
             // counted for loop
             int n = node.getChildCount();
             ASTForStatement resultNode = new ASTForStatement();
-            ASTVariableOrFieldDeclaration vd = new ASTVariableOrFieldDeclaration();
-            vd.type = (ASTTypeExpression) transformTree(node.getChild(2), true);
-            VariableDeclarator d = (VariableDeclarator) node.getChild(3);
-            ASTPrimaryExpression name = (ASTPrimaryExpression) transformTree(d.getFirstChild());
-            ASTExpression initializer = (d.getChildCount() == 1) ? null : (ASTExpression) transformTree(d.getLastChild());
-            vd.addNameAndInitializer(name, initializer);
-            resultNode.variable = vd;
-            resultNode.condition = (ASTExpression) transformTree(node.getChild(5));
+            Node child = node.getChild(2);
+            if (child instanceof LocalVariableDeclaration) {
+                resultNode.variable = (ASTVariableOrFieldDeclaration) transformTree(child, forType);
+                resultNode.condition = (ASTExpression) transformTree(node.getChild(4));
+            }
+            else {
+                ASTVariableOrFieldDeclaration vd = new ASTVariableOrFieldDeclaration();
+                vd.type = (ASTTypeExpression) transformTree(child, true);
+                VariableDeclarator d = (VariableDeclarator) node.getChild(3);
+                ASTPrimaryExpression name = (ASTPrimaryExpression) transformTree(d.getFirstChild());
+                ASTExpression initializer = (d.getChildCount() == 1) ? null : (ASTExpression) transformTree(d.getLastChild());
+                vd.addNameAndInitializer(name, initializer);
+                resultNode.variable = vd;
+                resultNode.condition = (ASTExpression) transformTree(node.getChild(5));
+            }
             for (int i = 6; i < (n - 1); i++) {
-                Node child = node.getChild(i);
+                child = node.getChild(i);
                 if (child instanceof Expression) {
                     resultNode.add((ASTExpression) transformTree(child));
                 }
