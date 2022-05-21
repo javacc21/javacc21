@@ -223,6 +223,11 @@ public class LexerData {
         for (RegexpChoice choice : choices) {
             checkUnmatchability(choice);
         }
+        for (LexicalStateData lsd : getLexicalStates()) {
+            if (lsd.isEmpty()) {
+                grammar.addError("Error: Lexical State " + lsd.getName() + " does not contain any token types!");
+            }
+        }
     }
 
     //What about the case of a regexp existing in multiple lexical states? REVISIT (JR)

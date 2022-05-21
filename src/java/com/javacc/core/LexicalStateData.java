@@ -67,6 +67,10 @@ public class LexicalStateData {
     Grammar getGrammar() {
         return grammar;
     }
+
+    boolean isEmpty() {
+        return regularExpressions.isEmpty();
+    }
    
     public NfaState getInitialState() {return initialState;}
 

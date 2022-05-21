@@ -343,11 +343,11 @@ public final class Main {
         grammar.parse(grammarFile, true);
         grammar.createOutputDir();
         grammar.doSanityChecks();
+        grammar.generateLexer();
         if (grammar.getErrorCount() > 0) {
             outputErrors(grammar);
             return 1;
         }
-        grammar.generateLexer();
         grammar.generateFiles();
         if (grammar.getWarningCount() == 0 && !quiet) {
             System.out.println("Parser generated successfully.");
