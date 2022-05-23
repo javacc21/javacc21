@@ -343,6 +343,10 @@ public final class Main {
         grammar.parse(grammarFile, true);
         grammar.createOutputDir();
         grammar.doSanityChecks();
+        if (grammar.getErrorCount() > 0) {
+            outputErrors(grammar);
+            return 1;
+        }
         grammar.generateLexer();
         if (grammar.getErrorCount() > 0) {
             outputErrors(grammar);
