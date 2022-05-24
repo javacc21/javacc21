@@ -372,7 +372,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                                         bufferPosition);
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
-     [#if multipleLexicalStates]
+     [#if lexerData.hasLexicalStateTransitions]
         doLexicalStateSwitch(matchedType);
      [/#if]
      [#if lexerData.hasTokenActions]
@@ -390,7 +390,17 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
    }
 
    LexicalState lexicalState = LexicalState.values()[0];
-[#if multipleLexicalStates]
+
+[#if lexerData.hasLexicalStateTransitions]
+  // Generate the map for lexical state transitions from the various token types
+  static {
+    [#list grammar.lexerData.regularExpressions as regexp]
+      [#if !regexp.newLexicalState?is_null]
+          tokenTypeToLexicalStateMap.put(TokenType.${regexp.label},LexicalState.${regexp.newLexicalState.name});
+      [/#if]
+    [/#list]
+  }
+
   boolean doLexicalStateSwitch(TokenType tokenType) {
        LexicalState newState = tokenTypeToLexicalStateMap.get(tokenType);
        if (newState == null) return false;
@@ -422,7 +432,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       if (state != null) {
           switchTo(state);
       }
-[#if multipleLexicalStates] 
+[#if lexerData.hasLexicalStateTransitions] 
         else {
           doLexicalStateSwitch(t.getType());
         }
@@ -446,17 +456,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       default : break;
     }
     return matchedToken;
-  }
- [/#if]
-
- [#if lexerData.hasLexicalStateTransitions]
-  // Generate the map for lexical state transitions from the various token types
-  static {
-    [#list grammar.lexerData.regularExpressions as regexp]
-      [#if !regexp.newLexicalState?is_null]
-          tokenTypeToLexicalStateMap.put(TokenType.${regexp.label},LexicalState.${regexp.newLexicalState.name});
-      [/#if]
-    [/#list]
   }
  [/#if]
 
