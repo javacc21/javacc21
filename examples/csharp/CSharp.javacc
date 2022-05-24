@@ -6,7 +6,7 @@ TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
-                  PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, __ARGLIST,
+                  PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
                   GET,SET,INIT,WITH,
                   // The following are used in patterns:
                   AND, OR, NOT,
@@ -744,7 +744,7 @@ ReturnType :
 
 FormalParameters :
 //   SCAN 0 {checkNextTokenImage("__arglist")}#
-//   => ACTIVATE_TOKENS __ARGLIST (<__ARGLIST>)
+//   => ACTIVATE_TOKENS ARGLIST (<ARGLIST>)
    ArgListParameter
    |
    ParameterArray
