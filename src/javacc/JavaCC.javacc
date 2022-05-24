@@ -2146,11 +2146,22 @@ INJECT RegexpRef :
     @Property RegularExpression regexp;
 
     public boolean isPrivate() {
-        return regexp!= null && regexp.isPrivate(); //REVISIT, why do we need a null check?
+        return regexp!= null && regexp.isPrivate(); 
     }
 
     public boolean matchesEmptyString() {
         return regexp != null && regexp.matchesEmptyString();
+    }
+
+    public int getOrdinal() {
+        if (regexp == null) {
+            // This is the case if this RegexpRef refers to a token type
+            // specified in the EXTRA_TOKENS
+            int extraTokensIndex = getGrammar().getExtraTokenNames().indexOf(getLabel());
+            assert extraTokensIndex >=0;
+            return extraTokensIndex + getGrammar().getLexerData().getRegularExpressions().size();
+        }
+        return regexp.getOrdinal();
     }
 }
 

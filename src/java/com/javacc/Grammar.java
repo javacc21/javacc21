@@ -107,7 +107,7 @@ public class Grammar extends BaseNode {
 
     private Set<String> tokensOffByDefault = new LinkedHashSet<>();
 
-    private Map<String, String> extraTokens = new HashMap<>();
+    private Map<String, String> extraTokens = new LinkedHashMap<>();
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
@@ -1146,7 +1146,7 @@ public class Grammar extends BaseNode {
     public Map<String, String> getExtraTokens() {
         return extraTokens;
     }
-    public Set<String> getExtraTokenNames() { return extraTokens.keySet(); }
+    public List<String> getExtraTokenNames() { return new ArrayList<>(extraTokens.keySet()); }
     public Collection<String> getExtraTokenClassNames() { return extraTokens.values(); }
 
     private boolean ignoreCase;

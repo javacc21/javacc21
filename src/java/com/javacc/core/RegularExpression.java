@@ -104,7 +104,7 @@ public abstract class RegularExpression extends Expansion {
   	    return String.valueOf(id);
     }
 
-    public final int getOrdinal() {
+    public int getOrdinal() {
         return id;
     }
 

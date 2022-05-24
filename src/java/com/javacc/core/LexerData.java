@@ -59,7 +59,10 @@ public class LexerData {
     }
     
     public String getTokenName(int ordinal) {
-        return regularExpressions.get(ordinal).getLabel();
+        if (ordinal < regularExpressions.size()) {
+            return regularExpressions.get(ordinal).getLabel();
+        }
+        return grammar.getExtraTokenNames().get(ordinal-regularExpressions.size());
     }
 
     public String getLexicalStateName(int index) {
@@ -173,7 +176,7 @@ public class LexerData {
     }
 
     public int getTokenCount() {
-        return regularExpressions.size();
+        return regularExpressions.size() + grammar.getExtraTokenNames().size();
     }
     
     public TokenSet getMoreTokens() {
