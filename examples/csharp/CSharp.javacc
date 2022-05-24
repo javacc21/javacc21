@@ -743,8 +743,7 @@ ReturnType :
 ;
 
 FormalParameters :
-   SCAN {checkNextTokenImage("__arglist")}#
-   =>ArgListParameter
+   ArgListParameter
    |
    ParameterArray
    |
@@ -760,7 +759,7 @@ VarArgsParameter#void :
 
 ArgListParameter# :
     <IDENTIFIER>
-    ASSERT {getToken(0).getImage().equals("__arglist")}
+    ASSERT {getToken(0).getImage().equals("__arglist")}#
     =>||
 ;
 
