@@ -183,7 +183,7 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" > 
    | < WHILE : "while" > 
 // Now contextual Keywords
-   | < __ARGLIST : "arglist">
+   | < __ARGLIST : "__arglist">
    | < ADD : "add">
    | < ASSEMBLY : "assembly">
    | < ASYNC : "async" >

@@ -743,6 +743,8 @@ ReturnType :
 ;
 
 FormalParameters :
+//   SCAN 0 {checkNextTokenImage("__arglist")}#
+//   => ACTIVATE_TOKENS __ARGLIST (<__ARGLIST>)
    ArgListParameter
    |
    ParameterArray
