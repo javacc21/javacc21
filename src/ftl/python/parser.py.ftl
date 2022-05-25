@@ -145,22 +145,19 @@ class NonTerminalCall:
         'source_file',
         'parser',
         'production_name',
-#        'line', 'column',
-        'offset',
+        'line', 'column',
         'scan_to_end',
 [#if grammar.faultTolerant]
         'follow_set',
 [/#if]
     )
 
-#    def __init__(self, parser, filename, prodname, line, column):
-    def __init__(self, parser, filename, prodname, offset):
+    def __init__(self, parser, filename, prodname, line, column):
         self.parser = parser
         self.source_file = filename
         self.production_name = prodname
-#        self.line = line
-#        self.column = column
-        self. offset = offset
+        self.line = line
+        self.column = column
         # We actually only use this when we're working with the LookaheadStack
         self.scan_to_end = parser.scan_to_end
 [#if grammar.faultTolerant]
@@ -344,9 +341,8 @@ ${grammar.utils.translateParserInjections(injector, true)}
         self.token_source.reset(self.last_consumed_token)
 [/#if]
 
-    def push_onto_call_stack(self, method_name, filename, offset):
-#        self.parsing_stack.append(NonTerminalCall(self, filename, method_name, line, column))
-        self.parsing_stack.append(NonTerminalCall(self, filename, method_name, offset))
+    def push_onto_call_stack(self, method_name, filename, line, column):
+        self.parsing_stack.append(NonTerminalCall(self, filename, method_name, line, column))
 
     def pop_call_stack(self):
         ntc = self.parsing_stack.pop()

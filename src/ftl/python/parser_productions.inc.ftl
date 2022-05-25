@@ -349,7 +349,7 @@ ${is}# DBG < BuildCodeAttemptBlock ${indent}
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
    [#var production = nonterminal.production]
-${is}self.push_onto_call_stack('${nonterminal.containingProduction.name}', '${nonterminal.inputSource?j_string}', ${nonterminal.beginOffset})
+${is}self.push_onto_call_stack('${nonterminal.containingProduction.name}', '${nonterminal.inputSource?j_string}', ${nonterminal.beginLine}, ${nonterminal.beginColumn})
 [#if grammar.faultTolerant]
   [#var followSet = nonterminal.followSet]
   [#if !followSet.incomplete]
@@ -473,13 +473,13 @@ ${is}else:
 ${is}    break
    [#elseif choice.parent.simpleName = "OneOrMore"]
 ${is}elif (${inFirstVarName}):
-${is}    self.push_onto_call_stack('${currentProduction.name}', '${choice.inputSource?j_string}', ${choice.beginOffset})
+${is}    self.push_onto_call_stack('${currentProduction.name}', '${choice.inputSource?j_string}', ${choice.beginLine}, ${choice.beginColumn})
 ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
 ${is}else:
 ${is}    break
    [#elseif choice.parent.simpleName != "ZeroOrOne"]
 ${is}else:
-${is}    self.push_onto_call_stack('${currentProduction.name}', '${choice.inputSource?j_string}', ${choice.beginOffset})
+${is}    self.push_onto_call_stack('${currentProduction.name}', '${choice.inputSource?j_string}', ${choice.beginLine}, ${choice.beginColumn})
 ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
    [/#if]
 [#-- ${is}# DBG < BuildCodeChoice ${indent} --]

@@ -443,7 +443,7 @@ ${is}    self.remaining_lookahead = ${sub.scanLimitPlus}
 --]
 [#macro ScanCodeNonTerminal nt indent]
 [#var is=""?right_pad(indent)]
-${is}self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginOffset})
+${is}self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginLine}, ${nt.beginColumn})
       [#var prevProductionVarName = "prevProduction" + CU.newID()]
 ${is}${prevProductionVarName} = self.current_lookahead_production
 ${is}self.current_lookahead_production = '${nt.production.name}'

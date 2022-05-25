@@ -45,7 +45,6 @@ private ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 class NonTerminalCall {
     final String sourceFile;
     final String productionName;
-    //final int offset;
     final int line, column;
 
     // We actually only use this when we're working with the LookaheadStack
@@ -55,11 +54,9 @@ class NonTerminalCall {
    [/#if]
 
 
-//    NonTerminalCall(String sourceFile, String productionName, int offset) {
     NonTerminalCall(String sourceFile, String productionName, int line, int column) {
         this.sourceFile = sourceFile;
         this.productionName = productionName;
-//        this.offset = offset;
         this.line = line;
         this.column = column;
         this.scanToEnd = ${grammar.parserClassName}.this.scanToEnd;
@@ -71,29 +68,17 @@ class NonTerminalCall {
     final ${grammar.lexerClassName} getTokenSource() {
         return ${grammar.parserClassName}.this.token_source;
     }
-/*
-    final int getLine() {
-        return getTokenSource().getLineFromOffset(offset);
-    }
 
-    final int getColumn() {
-        return getTokenSource().getCodePointColumnFromOffset(offset);
-    }
-*/
     StackTraceElement createStackTraceElement() {
-//        return new StackTraceElement("${grammar.parserClassName}", productionName, sourceFile, getLine());
         return new StackTraceElement("${grammar.parserClassName}", productionName, sourceFile, line);
     }
 
     void dump(PrintStream ps) {
-//        ps.println(productionName + ":" + getLine() + ":" + getColumn());
          ps.println(productionName + ":" + line + ":" + column);
     }
 }
 
-//private final void pushOntoCallStack(String methodName, String fileName, int offset) {
 private final void pushOntoCallStack(String methodName, String fileName, int line, int column) {
-//   parsingStack.add(new NonTerminalCall(fileName, methodName, offset));
    parsingStack.add(new NonTerminalCall(fileName, methodName, line, column));
 }
 
@@ -160,9 +145,7 @@ private ListIterator<NonTerminalCall> stackIteratorBackward() {
 }
 
 
-//private final void pushOntoLookaheadStack(String methodName, String fileName, int offset) {
 private final void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
-//    lookaheadStack.add(new NonTerminalCall(fileName, methodName, offset));
     lookaheadStack.add(new NonTerminalCall(fileName, methodName, line, column));
 }
 

@@ -347,7 +347,7 @@ ${is}// DBG < BuildCodeAttemptBlock ${indent}
 [#var is = ""?right_pad(indent)]
 [#-- ${is}// DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
    [#var production = nonterminal.production]
-${is}PushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginOffset});
+${is}PushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nt.beginColumn});
    [#var followSet = nonterminal.followSet]
    [#if !followSet.incomplete]
       [#if !nonterminal.beforeLexicalStateSwitch]
@@ -487,7 +487,7 @@ ${is}    break;
 ${is}}
    [#elseif choice.parent.simpleName = "OneOrMore"]
 ${is}else if (${inFirstVarName}) {
-${is}    PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginOffset});
+${is}    PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
 ${is}    throw new ParseException(this, ${choice.firstSetVarName});
 ${is}}
 ${is}else {
@@ -495,7 +495,7 @@ ${is}    break;
 ${is}}
    [#elseif choice.parent.simpleName != "ZeroOrOne"]
 ${is}else {
-${is}    PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginOffset});
+${is}    PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
 ${is}    throw new ParseException(this, ${choice.firstSetVarName});
 ${is}}
    [/#if]

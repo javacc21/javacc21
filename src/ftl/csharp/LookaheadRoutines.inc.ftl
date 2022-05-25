@@ -423,7 +423,7 @@ ${is}}
 --]
 [#macro ScanCodeNonTerminal nt indent]
 [#var is=""?right_pad(indent)]
-${is}PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginOffset});
+${is}PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
       [#var prevProductionVarName = "prevProduction" + CU.newID()]
 ${is}var ${prevProductionVarName} = _currentLookaheadProduction;
 ${is}_currentLookaheadProduction = "${nt.production.name}";

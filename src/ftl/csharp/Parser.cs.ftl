@@ -154,19 +154,17 @@ namespace ${csPackage} {
         public Parser Parser { get; private set; }
         public string SourceFile { get; private set; }
         public string ProductionName { get; private set; }
-//        public uint Line { get; private set; }
-//        public uint Column { get; private set; }
-        public uint Offset {get; private set; }
+        public uint Line { get; private set; }
+        public uint Column { get; private set; }
         public bool ScanToEnd { get; private set; }
         public ISet<TokenType> FollowSet { get; private set; }
 
-        internal NonTerminalCall(Parser parser, string fileName, string productionName, uint offset) {
+        internal NonTerminalCall(Parser parser, string fileName, string productionName, uint line, uint column) {
             Parser = parser;
             SourceFile = fileName;
             ProductionName = productionName;
-//            Line = line;
-//            Column = column;
-            Offset = offset;
+            Line = line;
+            Column = column;
             // We actually only use this when we're working with the LookaheadStack
             ScanToEnd = parser.ScanToEnd;
             FollowSet = parser.OuterFollowSet;
@@ -349,8 +347,8 @@ ${grammar.utils.translateInjectedClass(injector, node)}
         public bool IsTreeBuildingEnabled { get { return false; }
 
 [/#if]
-        internal void PushOntoCallStack(string methodName, string fileName, uint offset) {
-            ParsingStack.Add(new NonTerminalCall(this, fileName, methodName, offset));
+        internal void PushOntoCallStack(string methodName, string fileName, uint line, uint column) {
+            ParsingStack.Add(new NonTerminalCall(this, fileName, methodName, line, column));
         }
 
         internal void PopCallStack() {
