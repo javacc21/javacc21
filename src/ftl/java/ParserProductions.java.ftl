@@ -326,7 +326,6 @@
      ${tryblock.finallyBlock!}
 [/#macro]
 
-
 [#macro BuildCodeAttemptBlock attemptBlock]
    try {
       stashParseState();
@@ -341,7 +340,8 @@
 
 [#macro BuildCodeNonTerminal nonterminal]
    [#var production = nonterminal.production]
-   pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginOffset});
+//   pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginOffset});
+   pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn});
    [#if grammar.faultTolerant]
       [#var followSet = nonterminal.followSet]
       [#if !followSet.incomplete]
@@ -460,14 +460,16 @@
       }
    [#elseif choice.parent.simpleName = "OneOrMore"]
        else if (${inFirstVarName}) {
-           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginOffset});
+           //pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginOffset});
+           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
            throw new ParseException(this, ${choice.firstSetVarName}, parsingStack);
        } else {
            break;
        }
    [#elseif choice.parent.simpleName != "ZeroOrOne"]
        else {
-           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginOffset});
+//           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginOffset});
+           pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
            throw new ParseException(this, ${choice.firstSetVarName}, parsingStack);
         }
    [/#if]
