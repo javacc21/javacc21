@@ -281,7 +281,7 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
-        if (getHasTokenActivation() || getHasSeparateSyntacticLookahead() || getHasLookBehind() || getSpecifiedLexicalState() != null) {
+        if (getHasSeparateSyntacticLookahead() || getHasLookBehind() || getSpecifiesLexicalStateSwitch()) {
             return true;
         }
         if (getHasSemanticLookahead() && getLookahead().isSemanticLookaheadNested()) {
@@ -441,12 +441,15 @@ abstract public class Expansion extends BaseNode {
         return !getFollowSet().isIncomplete();
     }
 
-    public boolean getSpecifiesLexicalStateSwitch() {
+    public boolean getSpecifiesLexicalStateSwitch() {return false;}
+/*
+    public abstract boolean getSpecifiesLexicalStateSwitch();
+    
         if (getHasTokenActivation()) {
             return true;
         }
         return getSpecifiedLexicalState() != null;
-    };
+    };*/
 
     public boolean getHasTokenActivation() {
         return firstChildOfType(TokenActivation.class) != null;
@@ -471,11 +474,7 @@ abstract public class Expansion extends BaseNode {
             return false; // Maybe a bit kludgy. REVISIT.
         if (getHasScanLimit())
             return false;
-        if (!descendants(TokenActivation.class).isEmpty())
-            return false;
         if (getSpecifiesLexicalStateSwitch()) 
-            return false;
-        if (!descendants(Expansion.class, exp->exp.getSpecifiesLexicalStateSwitch()).isEmpty())
             return false;
         return true;
     }

@@ -125,7 +125,7 @@ public class NonTerminal extends Expansion {
      }
 
      public boolean getSpecifiesLexicalStateSwitch() {
-         return getNestedExpansion().getSpecifiesLexicalStateSwitch();
+         return getProduction().getLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
      }
 
      private boolean needsLeftRecursionCheck;
