@@ -93,7 +93,7 @@ public class ExpansionChoice extends Expansion {
     
     public boolean getSpecifiesLexicalStateSwitch() {
         for (Expansion choice : getChoices()) {
-            if (choice.getSpecifiesLexicalStateSwitch()) return true;
+            if (!choice.getHasExplicitLookahead() && !choice.isPossiblyEmpty() && choice.getSpecifiesLexicalStateSwitch()) return true;
         }
         return false;
     }

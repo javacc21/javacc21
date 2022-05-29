@@ -63,7 +63,7 @@ public class ExpansionSequence extends Expansion {
 
     public boolean getSpecifiesLexicalStateSwitch() {
         for (Expansion unit : getUnits()) {
-            if (unit.getSpecifiesLexicalStateSwitch())
+            if (!unit.getHasExplicitLookahead() && !unit.isPossiblyEmpty() && unit.getSpecifiesLexicalStateSwitch())
                 return true;
             if (!unit.isPossiblyEmpty())
                 break;

@@ -281,16 +281,24 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
-        if (getHasSeparateSyntacticLookahead() || getHasLookBehind() || getSpecifiesLexicalStateSwitch()) {
+        if (getHasSeparateSyntacticLookahead() || getHasLookBehind()) {
             return true;
         }
         if (getHasSemanticLookahead() && getLookahead().isSemanticLookaheadNested()) {
             return true;
         }
+        if (isPossiblyEmpty()) {
+            return false;
+        }
         if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
             return true;
         }
-        if (getSpecifiedLexicalState() != null) {
+        if (getHasTokenActivation() || getSpecifiedLexicalState() != null) {
+            return true;
+        }
+        if (getSpecifiesLexicalStateSwitch()) {
+            //System.err.println("KILROY " + this.getClass().getName());
+            //System.err.println("KILROY " + this.getLocation());
             return true;
         }
         return getHasGlobalSemanticActions();
@@ -441,15 +449,9 @@ abstract public class Expansion extends BaseNode {
         return !getFollowSet().isIncomplete();
     }
 
-    public boolean getSpecifiesLexicalStateSwitch() {return false;}
-/*
-    public abstract boolean getSpecifiesLexicalStateSwitch();
-    
-        if (getHasTokenActivation()) {
-            return true;
-        }
-        return getSpecifiedLexicalState() != null;
-    };*/
+    public boolean getSpecifiesLexicalStateSwitch() {
+        return false;
+    };
 
     public boolean getHasTokenActivation() {
         return firstChildOfType(TokenActivation.class) != null;
@@ -474,7 +476,11 @@ abstract public class Expansion extends BaseNode {
             return false; // Maybe a bit kludgy. REVISIT.
         if (getHasScanLimit())
             return false;
+        if (!descendants(TokenActivation.class).isEmpty())
+            return false;
         if (getSpecifiesLexicalStateSwitch()) 
+            return false;
+        if (!descendants(Expansion.class, exp->exp.getSpecifiesLexicalStateSwitch()).isEmpty())
             return false;
         return true;
     }
