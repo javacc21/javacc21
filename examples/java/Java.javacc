@@ -310,7 +310,7 @@ CompactConstructorDeclaration :
   TypeIdentifier
   "{" =>||
   [ => ExplicitConstructorInvocation ]
-  ( BlockStatement )*!
+  ( SCAN ~("}") => BlockStatement )*!
   "}" 
 ;
 
@@ -412,7 +412,7 @@ ConstructorDeclaration :
   [ ThrowsList ]
   "{"
   [ => ExplicitConstructorInvocation ]
-  ( BlockStatement )*!
+  ( SCAN ~("}") => BlockStatement )*!
   "}"
 ;
 
@@ -915,7 +915,7 @@ TryStatement #(false) :
 
 AssertStatement : "assert" Expression [ ":" Expression ] ";" ;
 
-Block #CodeBlock : "{" (BlockStatement)*! "}" ;
+Block #CodeBlock : "{" ( SCAN ~("}") => BlockStatement)*! "}" ;
 
 BlockStatement :
  ASSERT ~(("final"|Annotation)* ("public"|"private"|"protected"|"static")) : "Cannot declare anything to be public, private, protected, or static  in a local context"
@@ -935,7 +935,7 @@ BlockStatement :
   |
   EnumDeclaration
   |
-  Statement
+  SCAN 0 Statement
  )
 ;
 
@@ -1026,7 +1026,7 @@ ClassicSwitchLabel :
 
 ClassicCaseStatement :
   ClassicSwitchLabel
-  (SCAN 1 {getToken(1).getType() != TokenType._DEFAULT}
+  (SCAN 0 {!checkNextTokenType(TokenType._DEFAULT) && !checkNextTokenType(TokenType.CASE) && !checkNextTokenType(TokenType.RBRACE)}
           // We need this because we'll spuriously enter the BlockStatement 
           // if the next token is "default", because "default" is in the 
           // BlockStatement first set. This is really quite tricky, but maybe not my
@@ -1059,7 +1059,7 @@ NewCaseStatement :
      SCAN 0 \.\.\SwitchExpression
      => Expression ";"
      |
-     BlockStatement
+     SCAN 0 BlockStatement
    )
 ;
 
