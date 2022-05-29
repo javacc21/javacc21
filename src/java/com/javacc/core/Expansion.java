@@ -297,8 +297,6 @@ abstract public class Expansion extends BaseNode {
             return true;
         }
         if (getSpecifiesLexicalStateSwitch()) {
-            //System.err.println("KILROY " + this.getClass().getName());
-            //System.err.println("KILROY " + this.getLocation());
             return true;
         }
         return getHasGlobalSemanticActions();

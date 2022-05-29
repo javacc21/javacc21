@@ -1471,7 +1471,7 @@ INJECT ExpansionWithParentheses :
     public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
     public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
     public boolean getSpecifiesLexicalStateSwitch() {
-        return getSpecifiedLexicalState() != null || getHasTokenActivation() || getNestedExpansion().getSpecifiesLexicalStateSwitch();
+        return getSpecifiedLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
     }
 
     public Expansion getNestedExpansion() {
