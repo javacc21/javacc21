@@ -151,6 +151,12 @@ public class ExpansionSequence extends Expansion {
                 NonTerminal nt = (NonTerminal) unit;
                 return nt.getNestedExpansion().getLookahead();
             }
+            if (unit.superfluousParentheses()) {
+                ExpansionSequence seq = unit.firstChildOfType(ExpansionSequence.class);
+                if (seq != null) {
+                    return seq.getLookahead();
+                }
+            }
             if (unit.getMaximumSize() > 0)
                 break;
         }

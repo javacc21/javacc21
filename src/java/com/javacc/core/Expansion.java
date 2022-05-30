@@ -131,11 +131,30 @@ abstract public class Expansion extends BaseNode {
         }
     }
 
+    /**
+     * This method is a bit hairy because of the need to deal with 
+     * superfluous parentheses.
+     * @return Is this expansion at a choice point?
+     */
+
     public boolean isAtChoicePoint() {
-        Node parent = getNonSuperfluousParent();
-        // Node parent = getParent();
-        return parent instanceof ExpansionChoice || parent instanceof OneOrMore || parent instanceof ZeroOrMore
-                || parent instanceof ZeroOrOne || parent instanceof BNFProduction;
+        Node parent = getParent();
+        if (parent instanceof ExpansionChoice || parent instanceof OneOrMore || parent instanceof ZeroOrMore
+            || parent instanceof ZeroOrOne || parent instanceof BNFProduction) {
+                return true;
+            }
+        if (!(parent instanceof ExpansionWithParentheses)) {
+            return false;
+        }
+        ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
+        if (!grandparent.isAtChoicePoint()) {
+            return false;
+        }
+        for (Expansion exp : grandparent.getUnits()) {
+            if (exp == parent) return true;
+            if (exp.getMaximumSize()>0) break;
+        }
+        return false;
     }
 
     /**
@@ -338,10 +357,6 @@ abstract public class Expansion extends BaseNode {
 
     public boolean getHasScanLimit() {
         return false; // Only an ExpansionSequence can have a scan limit.
-    }
-
-    public boolean getHasInnerScanLimit() {
-        return false;
     }
 
     public Expansion getUpToExpansion() {
