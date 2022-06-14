@@ -310,6 +310,11 @@ INJECT BaseNode :
         if (namedChildMap == null) {
             namedChildMap = new HashMap<>();
         }
+        if (namedChildMap.containsKey(name)) {
+            // Can't have duplicates
+            String msg = String.format("Duplicate named child not allowed: {0}", name);
+            throw new RuntimeException(msg);
+        }
         namedChildMap.put(name, node);
     }
 
@@ -1427,16 +1432,6 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
      }
   ]
   [
-      // These delimiters are provisional
-      "#{#"
-      (
-        <IDENTIFIER>
-        |
-        ( "[" <IDENTIFIER> "]" )
-      )
-      "#}#"
-  ]
-  [
       SCAN {!regexp.isPrivate()} \...\TokenProduction =>
       Block
   ]
@@ -1808,6 +1803,32 @@ Expansion ExpansionUnit :
   |
   FAIL
  )
+ [
+    {
+        String key;
+        boolean multiple = false;
+    }
+    // These delimiters are provisional
+    "#{#"
+    (
+      <IDENTIFIER> { key = ((Token) peekNode()).getImage(); }
+      |
+      ( "["
+        <IDENTIFIER> { key = ((Token) peekNode()).getImage(); multiple = true; }
+      "]" )
+    )
+    "#}#"
+    {
+        System.out.println(key);
+        System.out.println(multiple);
+        if (multiple) {
+
+        }
+        else {
+
+        }
+    }
+ ]
  [
      SCAN 1 ~\...\Lookahead => 
     tba=TreeNodeDescriptor
