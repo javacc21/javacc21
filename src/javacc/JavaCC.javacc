@@ -295,6 +295,42 @@ INJECT BaseNode :
         }
         return buf.toString();
     }
+
+    protected Map<String, Node> namedChildMap;
+    protected Map<String, List<Node>> namedChildListMap;
+
+    protected Node getNamedChild(String name) {
+        if (namedChildMap == null) {
+            return null;
+        }
+        return namedChildMap.get(name);
+    }
+
+    protected void setNamedChild(String name, Node node) {
+        if (namedChildMap == null) {
+            namedChildMap = new HashMap<>();
+        }
+        namedChildMap.put(name, node);
+    }
+
+    protected List<Node> getNamedChildList(String name) {
+        if (namedChildListMap == null) {
+            return null;
+        }
+        return namedChildListMap.get(name);
+    }
+
+    protected void addToNamedChildList(String name, Node node) {
+        if (namedChildListMap == null) {
+            namedChildListMap = new HashMap<>();
+        }
+        List<Node> nodeList = namedChildListMap.get(name);
+        if (nodeList == null) {
+            nodeList = new ArrayList<>();
+            namedChildListMap.put(name, nodeList);
+        }
+        nodeList.add(node);
+    }
 }
 
 INJECT CompilationUnit : 
@@ -1389,6 +1425,16 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
         regexp.setGeneratedSuperClassName(tokenClassName);
         regexp.setGeneratedClassName(lastConsumedToken.getImage());
      }
+  ]
+  [
+      // These delimiters are provisional
+      "#{#"
+      (
+        <IDENTIFIER>
+        |
+        ( "[" <IDENTIFIER> "]" )
+      )
+      "#}#"
   ]
   [
       SCAN {!regexp.isPrivate()} \...\TokenProduction =>
