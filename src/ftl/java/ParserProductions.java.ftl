@@ -90,8 +90,7 @@
 
 [#macro BuildCode expansion]
    [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
-  // Code for ${expansion.simpleName} specified at:
-  // ${expansion.location}
+  // Code for ${expansion.simpleName} specified at ${expansion.location}
   [/#if]
      [@CU.HandleLexicalStateChange expansion false]
       [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
@@ -263,6 +262,8 @@
         [@BuildCodeChoice expansion/]
     [#elseif classname = "Assertion"]
         [@BuildAssertionCode expansion/]
+    [#elseif classname = "ChildNameInfo"]
+        [@BuildChildNameInfo expansion/]
     [/#if]
 [/#macro]
 
@@ -276,6 +277,10 @@
     [#else]
        ${fail.code}
     [/#if]
+[/#macro]
+
+[#macro BuildChildNameInfo info]
+    System.out.println(info);
 [/#macro]
 
 [#macro BuildCodeTokenTypeActivation activation]

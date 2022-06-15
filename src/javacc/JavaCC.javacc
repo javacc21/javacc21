@@ -299,14 +299,14 @@ INJECT BaseNode :
     protected Map<String, Node> namedChildMap;
     protected Map<String, List<Node>> namedChildListMap;
 
-    protected Node getNamedChild(String name) {
+    public Node getNamedChild(String name) {
         if (namedChildMap == null) {
             return null;
         }
         return namedChildMap.get(name);
     }
 
-    protected void setNamedChild(String name, Node node) {
+    public void setNamedChild(String name, Node node) {
         if (namedChildMap == null) {
             namedChildMap = new HashMap<>();
         }
@@ -318,14 +318,14 @@ INJECT BaseNode :
         namedChildMap.put(name, node);
     }
 
-    protected List<Node> getNamedChildList(String name) {
+    public List<Node> getNamedChildList(String name) {
         if (namedChildListMap == null) {
             return null;
         }
         return namedChildListMap.get(name);
     }
 
-    protected void addToNamedChildList(String name, Node node) {
+    public void addToNamedChildList(String name, Node node) {
         if (namedChildListMap == null) {
             namedChildListMap = new HashMap<>();
         }
@@ -859,8 +859,12 @@ INJECT Identifier :
 INJECT interface Node :
    import com.javacc.Grammar;
 {
-   Grammar getGrammar();
-   void setGrammar(Grammar grammar);
+    Grammar getGrammar();
+    void setGrammar(Grammar grammar);
+    default Node getNamedChild(String name) { return null; }
+    default void setNamedChild(String name, Node node) {}
+    default  List<Node> getNamedChildList(String name) { return null; }
+    default void addToNamedChildList(String name, Node node) {}
 }
 
 
@@ -1221,7 +1225,12 @@ BNFProduction #com.javacc.core.BNFProduction :
      }
 ;
 
-//INJECT BNFProduction : extends com.javacc.core.BNFProduction;
+INJECT BNFProduction :
+{
+    public void close() {
+        List<ChildNameInfo> nodes = descendantsOfType(ChildNameInfo.class);
+    }
+}
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" 
@@ -1752,6 +1761,34 @@ LegacyLookahead# :
   ]
 }
 
+ChildNameInfo :
+{
+    String name;
+    boolean multiple = false;
+}
+  // TODO these delimiters are provisional - agreement needed on final form
+  "#{#"
+  (
+    <IDENTIFIER> { name = ((Token) peekNode()).getImage(); }
+    |
+    ( "["
+      <IDENTIFIER> { name = ((Token) peekNode()).getImage(); multiple = true; }
+    "]" )
+  )
+  "#}#"
+  {
+    CURRENT_NODE.setName(name);
+    CURRENT_NODE.setMultiple(multiple);
+  }
+;
+
+INJECT ChildNameInfo :
+    extends com.javacc.core.EmptyExpansion
+{
+    @Property String name;
+    @Property boolean multiple;
+}
+
 Expansion ExpansionUnit :
 {
     Name lhs=null;
@@ -1803,32 +1840,7 @@ Expansion ExpansionUnit :
   |
   FAIL
  )
- [
-    {
-        String key;
-        boolean multiple = false;
-    }
-    // These delimiters are provisional
-    "#{#"
-    (
-      <IDENTIFIER> { key = ((Token) peekNode()).getImage(); }
-      |
-      ( "["
-        <IDENTIFIER> { key = ((Token) peekNode()).getImage(); multiple = true; }
-      "]" )
-    )
-    "#}#"
-    {
-        System.out.println(key);
-        System.out.println(multiple);
-        if (multiple) {
-
-        }
-        else {
-
-        }
-    }
- ]
+ [ChildNameInfo]
  [
      SCAN 1 ~\...\Lookahead => 
     tba=TreeNodeDescriptor
