@@ -262,8 +262,6 @@
         [@BuildCodeChoice expansion/]
     [#elseif classname = "Assertion"]
         [@BuildAssertionCode expansion/]
-    [#elseif classname = "ChildNameInfo"]
-        [@BuildChildNameInfo expansion/]
     [/#if]
 [/#macro]
 
@@ -277,10 +275,6 @@
     [#else]
        ${fail.code}
     [/#if]
-[/#macro]
-
-[#macro BuildChildNameInfo info]
-    System.out.println(info);
 [/#macro]
 
 [#macro BuildCodeTokenTypeActivation activation]
@@ -318,6 +312,18 @@
          }
        [/#if]
        ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
+   [/#if]
+   [#if !regexp.childName?is_null]
+    // child name: ${regexp.childName}
+    if (buildTree) {
+        Node child = peekNode();
+        // Need access to the "nodeVarName" here ...
+    [#if regexp.multipleChildren]
+        // multiple
+    [#else]
+        // single
+    [/#if]
+    }
    [/#if]
 [/#macro]
 
@@ -373,6 +379,18 @@
       } catch (ClassCastException cce) {
          ${nonterminal.LHS} = null;
       }
+   [/#if]
+   [#if !nonterminal.childName?is_null]
+      // child name: ${nonterminal.childName}
+        if (buildTree) {
+            Node child = peekNode();
+            // Need access to the "nodeVarName" here ...
+        [#if nonterminal.multipleChildren]
+            // multiple
+        [#else]
+            // single
+        [/#if]
+        }
    [/#if]
    } 
    finally {

@@ -1225,13 +1225,6 @@ BNFProduction #com.javacc.core.BNFProduction :
      }
 ;
 
-INJECT BNFProduction :
-{
-    public void close() {
-        List<ChildNameInfo> nodes = descendantsOfType(ChildNameInfo.class);
-    }
-}
-
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" 
   (
@@ -1761,7 +1754,7 @@ LegacyLookahead# :
   ]
 }
 
-ChildNameInfo :
+ChildNameInfo(Expansion expansion) #void :
 {
     String name;
     boolean multiple = false;
@@ -1777,17 +1770,10 @@ ChildNameInfo :
   )
   "#}#"
   {
-    CURRENT_NODE.setName(name);
-    CURRENT_NODE.setMultiple(multiple);
+    expansion.setChildName(name);
+    expansion.setMultipleChildren(multiple);
   }
 ;
-
-INJECT ChildNameInfo :
-    extends com.javacc.core.EmptyExpansion
-{
-    @Property String name;
-    @Property boolean multiple;
-}
 
 Expansion ExpansionUnit :
 {
@@ -1833,14 +1819,13 @@ Expansion ExpansionUnit :
             grammar.addInplaceRegexp(re);
       }
   }
-  [UpToHere(result)]
+  [ChildNameInfo(result)] [UpToHere(result)]
   |
   SCAN [Name "="]<IDENTIFIER>
-  => result=NonTerminal [UpToHere(result)]
+  => result=NonTerminal [ChildNameInfo(result)] [UpToHere(result)]
   |
   FAIL
  )
- [ChildNameInfo]
  [
      SCAN 1 ~\...\Lookahead => 
     tba=TreeNodeDescriptor

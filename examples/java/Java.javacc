@@ -393,8 +393,8 @@ ArrayInitializer :
   Modifiers
   [ TypeParameters ]
   ReturnType
-  <IDENTIFIER>
-  =>|+1 #{# methodName #}# FormalParameters #{# formals #}# ( (Annotation)* "[" "]" )*
+  <IDENTIFIER> #{# methodName #}#
+  =>|+1 FormalParameters #{# formals #}# ( (Annotation)* "[" "]" )*
   [ ThrowsList ]
   ( Block #{# statements #}# | ";" )
   {return CURRENT_NODE;}
@@ -408,7 +408,7 @@ ConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE);}#
   Modifiers
   [ TypeParameters ]
-  TypeIdentifier FormalParameters =>|| #{# formals #}#
+  TypeIdentifier FormalParameters #{# formals #}# =>||
   [ ThrowsList ]
   "{"
   [ => ExplicitConstructorInvocation ]
