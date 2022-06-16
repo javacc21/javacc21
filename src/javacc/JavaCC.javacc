@@ -818,8 +818,12 @@ INJECT Identifier :
 INJECT interface Node :
    import com.javacc.Grammar;
 {
-   Grammar getGrammar();
-   void setGrammar(Grammar grammar);
+    Grammar getGrammar();
+    void setGrammar(Grammar grammar);
+    default Node getNamedChild(String name) { return null; }
+    default void setNamedChild(String name, Node node) {}
+    default  List<Node> getNamedChildList(String name) { return null; }
+    default void addToNamedChildList(String name, Node node) {}
 }
 
 
@@ -1179,8 +1183,6 @@ BNFProduction #com.javacc.core.BNFProduction :
         }
      }
 ;
-
-//INJECT BNFProduction : extends com.javacc.core.BNFProduction;
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" 
@@ -1711,6 +1713,27 @@ LegacyLookahead# :
   ]
 }
 
+ChildNameInfo(Expansion expansion) #void :
+{
+    String name;
+    boolean multiple = false;
+}
+  // TODO these delimiters are provisional - agreement needed on final form
+  "#{#"
+  (
+    <IDENTIFIER> { name = ((Token) peekNode()).getImage(); }
+    |
+    ( "["
+      <IDENTIFIER> { name = ((Token) peekNode()).getImage(); multiple = true; }
+    "]" )
+  )
+  "#}#"
+  {
+    expansion.setChildName(name);
+    expansion.setMultipleChildren(multiple);
+  }
+;
+
 Expansion ExpansionUnit :
 {
     Name lhs=null;
@@ -1755,10 +1778,10 @@ Expansion ExpansionUnit :
             grammar.addInplaceRegexp(re);
       }
   }
-  [UpToHere(result)]
+  [ChildNameInfo(result)] [UpToHere(result)]
   |
   SCAN [Name "="]<IDENTIFIER>
-  => result=NonTerminal [UpToHere(result)]
+  => result=NonTerminal [ChildNameInfo(result)] [UpToHere(result)]
   |
   FAIL
  )

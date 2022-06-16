@@ -487,6 +487,57 @@ namespace ${csPackage} {
         public int ChildCount {
             get => children.Count;
         }
+
+        protected IDictionary<string, Node> NamedChildMap;
+        protected IDictionary<string, IList<Node>> NamedChildListMap;
+
+        public Node GetNamedChild(string name) {
+            if (NamedChildMap == null) {
+                return null;
+            }
+            if (!NamedChildMap.ContainsKey(name)) {
+                return null;
+            }
+            return NamedChildMap[name];
+        }
+
+        public void SetNamedChild(String name, Node node) {
+            if (NamedChildMap == null) {
+                NamedChildMap = new Dictionary<string, Node>();
+            }
+            if (NamedChildMap.ContainsKey(name)) {
+                string msg = @"Duplicate named child not allowed: {name}";
+                throw new ApplicationException(msg);
+            }
+            NamedChildMap[name] = node;
+        }
+
+        public IList<Node> GetNamedChildList(string name) {
+            if (NamedChildListMap == null) {
+                return null;
+            }
+            if (!NamedChildListMap.ContainsKey(name)) {
+                return null;
+            }
+            return NamedChildListMap[name];
+        }
+
+        public void AddToNamedChildList(string name, Node node) {
+            if (NamedChildListMap == null) {
+                NamedChildListMap = new Dictionary<string, IList<Node>>();
+            }
+
+            IList<Node> nodeList;
+
+            if (NamedChildListMap.ContainsKey(name)) {
+                nodeList = NamedChildListMap[name];
+            }
+            else {
+                nodeList = new List<Node>();
+                NamedChildListMap[name] = nodeList;
+            }
+            nodeList.Add(node);
+        }
     }
 
     public class Token[#if grammar.treeBuildingEnabled] : Node[/#if] {

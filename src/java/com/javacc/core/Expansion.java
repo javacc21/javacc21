@@ -623,4 +623,16 @@ abstract public class Expansion extends BaseNode {
     final public boolean potentiallyStartsWith(String productionName) {
         return potentiallyStartsWith(productionName, new HashSet<>());
     }
+
+    /*
+     * This section indicates whether this expansion has a child name associated with it,
+     * and whether that relates to a single value or a list of values.
+     */
+    private String childName;
+    private boolean multipleChildren;
+
+    public String getChildName() { return childName; }
+    public void setChildName(String name) { childName = name; }
+    public boolean isMultipleChildren() { return multipleChildren; }
+    public void setMultipleChildren(boolean multiple) { multipleChildren = multiple; }
 }

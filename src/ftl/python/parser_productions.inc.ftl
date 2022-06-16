@@ -81,8 +81,7 @@ ${BuildCode(production.expansion, 8)}
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > BuildCode ${indent} ${expansion.simpleName} --]
    [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
-${is}# Code for ${expansion.simpleName} specified at:
-${is}# ${expansion.location}
+${is}# Code for ${expansion.simpleName} specified at ${expansion.location}
   [/#if]
      [@CU.HandleLexicalStateChange expansion false indent; indent]
       [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
@@ -299,21 +298,31 @@ ${BuildCode(subexp, indent)}
 [#macro BuildCodeRegexp regexp indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildCodeRegexp ${indent} --]
-   [#var LHS = ""]
-   [#if regexp.LHS??][#set LHS = regexp.LHS + "="][/#if]
-   [#if !grammar.faultTolerant]
+  [#var LHS = ""]
+  [#if regexp.LHS??][#set LHS = regexp.LHS + "="][/#if]
+  [#if !grammar.faultTolerant]
 ${is}${LHS}self.consume_token(${regexp.label})
-   [#else]
-       [#var tolerant = regexp.tolerantParsing?string("True", "False")]
-       [#var followSetVarName = "self." + regexp.followSetVarName]
-       [#if regexp.followSet.incomplete]
-         [#set followSetVarName = "follow_set" + CU.newID()]
+  [#else]
+    [#var tolerant = regexp.tolerantParsing?string("True", "False")]
+    [#var followSetVarName = "self." + regexp.followSetVarName]
+    [#if regexp.followSet.incomplete]
+      [#set followSetVarName = "follow_set" + CU.newID()]
 ${is}${followSetVarName} = None
 ${is}if self.outer_follow_set is not None:
 ${is}    ${followSetVarName} = set(self.${regexp.followSetVarName}) | self.outer_follow_set
-       [/#if]
+    [/#if]
 ${is}${LHS}self.consume_token(${regexp.label}, ${tolerant}, ${followSetVarName})
-   [/#if]
+  [/#if]
+  [#if !regexp.childName?is_null]
+${is}if self.build_tree:
+${is}    child = self.peek_node()
+${is}    name = '${regexp.childName}'
+    [#if regexp.multipleChildren]
+${is}    ${grammar.currentNodeVariableName}.add_to_named_child_list(name, child)
+    [#else]
+${is}    ${grammar.currentNodeVariableName}.set_named_child(name, child)
+    [/#if]
+  [/#if]
 [#-- ${is}# DBG < BuildCodeRegexp ${indent} --]
 [/#macro]
 
@@ -374,6 +383,16 @@ ${is}    try:
 ${is}        ${nonterminal.LHS} = self.peek_node()
 ${is}    catch Exception:
 ${is}        ${nonterminal.LHS} = None
+   [/#if]
+   [#if !nonterminal.childName?is_null]
+${is}    if self.build_tree:
+${is}        child = self.peek_node()
+${is}        name = '${nonterminal.childName}'
+     [#if nonterminal.multipleChildren]
+${is}        ${grammar.currentNodeVariableName}.add_to_named_child_list(name, child)
+     [#else]
+${is}        ${grammar.currentNodeVariableName}.set_named_child(name, child)
+     [/#if]
    [/#if]
 ${is}finally:
 ${is}    self.pop_call_stack()

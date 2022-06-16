@@ -105,6 +105,8 @@ class ${grammar.baseNodeClassName}:
 [#if grammar.faultTolerant]
         'dirty',
 [/#if]
+        'named_child_map',
+        'named_child_list_map',
     )
 
     def __init__(self, token_source, begin_offset=0, end_offset=0):
@@ -113,6 +115,8 @@ class ${grammar.baseNodeClassName}:
         self.children = []
         self.begin_offset = begin_offset
         self.end_offset = end_offset
+        self.named_child_map = {}
+        self.named_child_list_map = {}
         # self.attributes = {}
 
     @property
@@ -284,6 +288,21 @@ class ${grammar.baseNodeClassName}:
         return self.descendants(Token, lambda t: not t.is_unparsed)
 
 [/#if]
+
+    def get_named_child(self, name):
+        return self.named_child_map.get(name)
+
+    def set_named_child(self, name, child):
+        if name in self.named_child_map:
+            raise ValueError('Duplicate named child not allowed: %s' % name)
+        self.named_child_map[name] = child
+
+    def get_named_child_list(self, name):
+        return self.named_child_list_map.get(name)
+
+    def add_to_named_child_list(self, name, child):
+        existing = self.named_child_list_map.setdefault(name, [])
+        existing.append(child)
 
     def __repr__(self):
         return '<%s (%d, %d)-(%d, %d)>' % (type(self).__name__,

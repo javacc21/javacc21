@@ -90,8 +90,7 @@
 
 [#macro BuildCode expansion]
    [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
-  // Code for ${expansion.simpleName} specified at:
-  // ${expansion.location}
+  // Code for ${expansion.simpleName} specified at ${expansion.location}
   [/#if]
      [@CU.HandleLexicalStateChange expansion false]
       [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
@@ -314,6 +313,17 @@
        [/#if]
        ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
    [/#if]
+   [#if !regexp.childName?is_null]
+    if (buildTree) {
+        Node child = peekNode();
+        String name = "${regexp.childName}";
+    [#if regexp.multipleChildren]
+        ${grammar.currentNodeVariableName}.addToNamedChildList(name, child);
+    [#else]
+        ${grammar.currentNodeVariableName}.setNamedChild(name, child);
+    [/#if]
+    }
+   [/#if]
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock]
@@ -368,6 +378,17 @@
       } catch (ClassCastException cce) {
          ${nonterminal.LHS} = null;
       }
+   [/#if]
+   [#if !nonterminal.childName?is_null]
+        if (buildTree) {
+            Node child = peekNode();
+            String name = "${nonterminal.childName}";
+    [#if nonterminal.multipleChildren]
+            ${grammar.currentNodeVariableName}.addToNamedChildList(name, child);
+    [#else]
+            ${grammar.currentNodeVariableName}.setNamedChild(name, child);
+    [/#if]
+        }
    [/#if]
    } 
    finally {
