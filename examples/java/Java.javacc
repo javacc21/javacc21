@@ -394,7 +394,7 @@ ArrayInitializer :
   [ TypeParameters ]
   ReturnType
   <IDENTIFIER> 
-  =>|+1 FormalParameters /formals/ ( (Annotation)* "[" "]" )*
+  =>|+1 FormalParameters ( (Annotation)* "[" "]" )*
   [ ThrowsList ]
   ( Block | ";" )
   {return CURRENT_NODE;}

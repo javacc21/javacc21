@@ -47,17 +47,6 @@ import java.util.*;
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
     private ${grammar.lexerClassName} tokenSource;
-
-    private String lookupName;
-
-    public String getLookupName() {
-        return lookupName;
-    }
-
-    public void setLookupName(String lookupName) {
-        this.lookupName = lookupName;
-    }
-
     
     public ${grammar.lexerClassName} getTokenSource() {
         if (tokenSource==null) {
