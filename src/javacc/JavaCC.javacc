@@ -176,8 +176,6 @@ TOKEN :
 }
 
 INJECT BaseNode :
-    import java.util.*;
-    import freemarker.template.*;
     import java.lang.reflect.*;
     import com.javacc.Grammar;
     import NODE_PACKAGE.KeyWord;
@@ -1125,7 +1123,6 @@ Setting(Map<String,Object> settings) #Setting :
 ;
 
 BNFProduction #com.javacc.core.BNFProduction :
-//BNFProduction #BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
     Token firstToken=getToken(1), id;
@@ -1179,8 +1176,6 @@ BNFProduction #com.javacc.core.BNFProduction :
         }
      }
 ;
-
-//INJECT BNFProduction : extends com.javacc.core.BNFProduction;
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" 
@@ -1762,6 +1757,16 @@ Expansion ExpansionUnit :
   |
   FAIL
  )
+ [
+  // The delimiter is provisional
+  "/"
+  (
+    <IDENTIFIER> {result.setLookupName(lastConsumedToken.getImage());}
+    |
+    "[" <IDENTIFIER> {result.setLookupName(lastConsumedToken.getImage());} "]" 
+  )
+  "/"
+ ]
  [
      SCAN 1 ~\...\Lookahead => 
     tba=TreeNodeDescriptor

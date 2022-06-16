@@ -64,6 +64,16 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
     
     private boolean unparsed;
 
+    private String lookupName;
+
+    public String getLookupName() {
+        return lookupName;
+    }
+
+    public void setLookupName(String lookupName) {
+        this.lookupName = lookupName;
+    }
+
 [#if grammar.treeBuildingEnabled]
     private Node parent;
 [/#if]
