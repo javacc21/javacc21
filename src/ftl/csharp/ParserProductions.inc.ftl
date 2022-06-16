@@ -347,7 +347,7 @@ ${is}// DBG < BuildCodeAttemptBlock ${indent}
 [#var is = ""?right_pad(indent)]
 [#-- ${is}// DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
    [#var production = nonterminal.production]
-${is}PushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nt.beginColumn});
+${is}PushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn});
    [#var followSet = nonterminal.followSet]
    [#if !followSet.incomplete]
       [#if !nonterminal.beforeLexicalStateSwitch]
