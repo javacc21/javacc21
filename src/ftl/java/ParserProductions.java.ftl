@@ -314,15 +314,12 @@
        ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
    [/#if]
    [#if !regexp.childName?is_null]
-    // child name: ${regexp.childName}
     if (buildTree) {
         Node child = peekNode();
         String name = "${regexp.childName}";
     [#if regexp.multipleChildren]
-        // multiple
         ${grammar.currentNodeVariableName}.addToNamedChildList(name, child);
     [#else]
-        // single
         ${grammar.currentNodeVariableName}.setNamedChild(name, child);
     [/#if]
     }
@@ -383,15 +380,12 @@
       }
    [/#if]
    [#if !nonterminal.childName?is_null]
-      // child name: ${nonterminal.childName}
         if (buildTree) {
             Node child = peekNode();
             String name = "${nonterminal.childName}";
     [#if nonterminal.multipleChildren]
-            // multiple
             ${grammar.currentNodeVariableName}.addToNamedChildList(name, child);
     [#else]
-            // single
             ${grammar.currentNodeVariableName}.setNamedChild(name, child);
     [/#if]
         }
