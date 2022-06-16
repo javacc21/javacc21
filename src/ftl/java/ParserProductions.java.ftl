@@ -206,8 +206,11 @@
     [/#if]
 [/#macro]
 
+[#var currentNodeVarName]
+
 [#--  Boilerplate code to create the node variable --]
 [#macro createNode treeNodeBehavior nodeVarName isAbstractType]
+   [#set currentNodeVarName = nodeVarName]
    [#var nodeName = nodeClassName(treeNodeBehavior)]
    ${nodeName} ${nodeVarName} = null;
    [#if !isAbstractType]
@@ -317,11 +320,13 @@
     // child name: ${regexp.childName}
     if (buildTree) {
         Node child = peekNode();
-        // Need access to the "nodeVarName" here ...
+        String name = "${regexp.childName}";
     [#if regexp.multipleChildren]
         // multiple
+        ${currentNodeVarName}.addToNamedChildList(name, child);
     [#else]
         // single
+        ${currentNodeVarName}.setNamedChild(name, child);
     [/#if]
     }
    [/#if]
@@ -384,12 +389,14 @@
       // child name: ${nonterminal.childName}
         if (buildTree) {
             Node child = peekNode();
-            // Need access to the "nodeVarName" here ...
-        [#if nonterminal.multipleChildren]
+            String name = "${nonterminal.childName}";
+    [#if nonterminal.multipleChildren]
             // multiple
-        [#else]
+            ${currentNodeVarName}.addToNamedChildList(name, child);
+    [#else]
             // single
-        [/#if]
+            ${currentNodeVarName}.setNamedChild(name, child);
+    [/#if]
         }
    [/#if]
    } 
