@@ -164,6 +164,14 @@ class NonTerminalCall:
         self.follow_set = parser.outer_follow_set
 [/#if]
 
+    @property
+    def line(self) :
+        return self.parser.token_source.get_line_from_offset(self, offset)
+    
+    @property
+    def column(self) :
+        return self.parser.token_source.get_codepoint_column_from_offset(self, offset)
+
     def create_stack_trace_element(self):
         return (type(self.parser).__name__,  self.production_name, self.source_file, self.line)
 
