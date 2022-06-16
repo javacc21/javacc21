@@ -1719,7 +1719,7 @@ ChildNameInfo(Expansion expansion) #void :
     boolean multiple = false;
 }
   // TODO these delimiters are provisional - agreement needed on final form
-  "#{#"
+  "/"
   (
     <IDENTIFIER> { name = ((Token) peekNode()).getImage(); }
     |
@@ -1727,7 +1727,7 @@ ChildNameInfo(Expansion expansion) #void :
       <IDENTIFIER> { name = ((Token) peekNode()).getImage(); multiple = true; }
     "]" )
   )
-  "#}#"
+  "/"
   {
     expansion.setChildName(name);
     expansion.setMultipleChildren(multiple);
