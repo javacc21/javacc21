@@ -495,6 +495,9 @@ namespace ${csPackage} {
             if (NamedChildMap == null) {
                 return null;
             }
+            if (!NamedChildMap.ContainsKey(name)) {
+                return null;
+            }
             return NamedChildMap[name];
         }
 
@@ -513,6 +516,9 @@ namespace ${csPackage} {
             if (NamedChildListMap == null) {
                 return null;
             }
+            if (!NamedChildListMap.ContainsKey(name)) {
+                return null;
+            }
             return NamedChildListMap[name];
         }
 
@@ -520,8 +526,13 @@ namespace ${csPackage} {
             if (NamedChildListMap == null) {
                 NamedChildListMap = new Dictionary<string, IList<Node>>();
             }
-            IList<Node> nodeList = NamedChildListMap[name];
-            if (nodeList == null) {
+
+            IList<Node> nodeList;
+
+            if (NamedChildListMap.ContainsKey(name)) {
+                nodeList = NamedChildListMap[name];
+            }
+            else {
                 nodeList = new List<Node>();
                 NamedChildListMap[name] = nodeList;
             }
