@@ -206,11 +206,8 @@
     [/#if]
 [/#macro]
 
-[#var currentNodeVarName]
-
 [#--  Boilerplate code to create the node variable --]
 [#macro createNode treeNodeBehavior nodeVarName isAbstractType]
-   [#set currentNodeVarName = nodeVarName]
    [#var nodeName = nodeClassName(treeNodeBehavior)]
    ${nodeName} ${nodeVarName} = null;
    [#if !isAbstractType]
@@ -323,10 +320,10 @@
         String name = "${regexp.childName}";
     [#if regexp.multipleChildren]
         // multiple
-        ${currentNodeVarName}.addToNamedChildList(name, child);
+        ${grammar.currentNodeVariableName}.addToNamedChildList(name, child);
     [#else]
         // single
-        ${currentNodeVarName}.setNamedChild(name, child);
+        ${grammar.currentNodeVariableName}.setNamedChild(name, child);
     [/#if]
     }
    [/#if]
@@ -392,10 +389,10 @@
             String name = "${nonterminal.childName}";
     [#if nonterminal.multipleChildren]
             // multiple
-            ${currentNodeVarName}.addToNamedChildList(name, child);
+            ${grammar.currentNodeVariableName}.addToNamedChildList(name, child);
     [#else]
             // single
-            ${currentNodeVarName}.setNamedChild(name, child);
+            ${grammar.currentNodeVariableName}.setNamedChild(name, child);
     [/#if]
         }
    [/#if]
