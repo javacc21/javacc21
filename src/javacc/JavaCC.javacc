@@ -176,6 +176,8 @@ TOKEN :
 }
 
 INJECT BaseNode :
+    import java.util.*;
+    import freemarker.template.*;
     import java.lang.reflect.*;
     import com.javacc.Grammar;
     import NODE_PACKAGE.KeyWord;
@@ -816,8 +818,12 @@ INJECT Identifier :
 INJECT interface Node :
    import com.javacc.Grammar;
 {
-   Grammar getGrammar();
-   void setGrammar(Grammar grammar);
+    Grammar getGrammar();
+    void setGrammar(Grammar grammar);
+    default Node getNamedChild(String name) { return null; }
+    default void setNamedChild(String name, Node node) {}
+    default  List<Node> getNamedChildList(String name) { return null; }
+    default void addToNamedChildList(String name, Node node) {}
 }
 
 
@@ -1123,6 +1129,7 @@ Setting(Map<String,Object> settings) #Setting :
 ;
 
 BNFProduction #com.javacc.core.BNFProduction :
+//BNFProduction #BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
     Token firstToken=getToken(1), id;
@@ -1706,6 +1713,27 @@ LegacyLookahead# :
   ]
 }
 
+ChildNameInfo(Expansion expansion) #void :
+{
+    String name;
+    boolean multiple = false;
+}
+  // TODO these delimiters are provisional - agreement needed on final form
+  "/"
+  (
+    <IDENTIFIER> { name = ((Token) peekNode()).getImage(); }
+    |
+    ( "["
+      <IDENTIFIER> { name = ((Token) peekNode()).getImage(); multiple = true; }
+    "]" )
+  )
+  "/"
+  {
+    expansion.setChildName(name);
+    expansion.setMultipleChildren(multiple);
+  }
+;
+
 Expansion ExpansionUnit :
 {
     Name lhs=null;
@@ -1750,23 +1778,13 @@ Expansion ExpansionUnit :
             grammar.addInplaceRegexp(re);
       }
   }
-  [UpToHere(result)]
+  [ChildNameInfo(result)] [UpToHere(result)]
   |
   SCAN [Name "="]<IDENTIFIER>
-  => result=NonTerminal [UpToHere(result)]
+  => result=NonTerminal [ChildNameInfo(result)] [UpToHere(result)]
   |
   FAIL
  )
- [
-  // The delimiter is provisional
-  "/"
-  (
-    <IDENTIFIER> {result.setLookupName(lastConsumedToken.getImage());}
-    |
-    "[" <IDENTIFIER> {result.setLookupName(lastConsumedToken.getImage());} "]" 
-  )
-  "/"
- ]
  [
      SCAN 1 ~\...\Lookahead => 
     tba=TreeNodeDescriptor

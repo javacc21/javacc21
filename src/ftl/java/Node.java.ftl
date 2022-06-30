@@ -406,22 +406,6 @@ public interface Node extends Comparable<Node>
         return false;
      }
 
-
-     String getLookupName();
-
-     void setLookupName(String lookupName);
-
-     default Node getNodeByLookupName(String lookupName) {
-        for (int i = 0; i<getChildCount(); i++) {
-            Node child = getChild(i);
-            if (lookupName.equals(child.getLookupName())) return child;
-            child = child.getNodeByLookupName(lookupName);
-            if (child != null) return child;
-        }
-        return null;
-     }
-
-
      /**
       * Mark whether this Node is unparsed, i.e. <i>not</i> the result of 
       * normal parsing

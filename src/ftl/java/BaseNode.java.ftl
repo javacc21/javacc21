@@ -47,17 +47,6 @@ import java.util.*;
  @SuppressWarnings("rawtypes")  
 public class ${grammar.baseNodeClassName} implements Node {
     private ${grammar.lexerClassName} tokenSource;
-
-    private String lookupName;
-
-    public String getLookupName() {
-        return lookupName;
-    }
-
-    public void setLookupName(String lookupName) {
-        this.lookupName = lookupName;
-    }
-
     
     public ${grammar.lexerClassName} getTokenSource() {
         if (tokenSource==null) {
@@ -240,5 +229,46 @@ public class ${grammar.baseNodeClassName} implements Node {
             buf.append(t);
         }
         return buf.toString();
+    }
+
+    protected Map<String, Node> namedChildMap;
+    protected Map<String, List<Node>> namedChildListMap;
+
+    public Node getNamedChild(String name) {
+        if (namedChildMap == null) {
+            return null;
+        }
+        return namedChildMap.get(name);
+    }
+
+    public void setNamedChild(String name, Node node) {
+        if (namedChildMap == null) {
+            namedChildMap = new HashMap<>();
+        }
+        if (namedChildMap.containsKey(name)) {
+            // Can't have duplicates
+            String msg = String.format("Duplicate named child not allowed: {0}", name);
+            throw new RuntimeException(msg);
+        }
+        namedChildMap.put(name, node);
+    }
+
+    public List<Node> getNamedChildList(String name) {
+        if (namedChildListMap == null) {
+            return null;
+        }
+        return namedChildListMap.get(name);
+    }
+
+    public void addToNamedChildList(String name, Node node) {
+        if (namedChildListMap == null) {
+            namedChildListMap = new HashMap<>();
+        }
+        List<Node> nodeList = namedChildListMap.get(name);
+        if (nodeList == null) {
+            nodeList = new ArrayList<>();
+            namedChildListMap.put(name, nodeList);
+        }
+        nodeList.add(node);
     }
 }
