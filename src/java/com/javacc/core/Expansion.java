@@ -296,20 +296,27 @@ abstract public class Expansion extends BaseNode {
         return getHasGlobalSemanticActions();
     }
 
+    public final boolean hasNestedSemanticLookahead() {
+        for (Expansion expansion : descendants(Expansion.class)) {
+            if (expansion.getHasSemanticLookahead() && expansion.getLookahead().isSemanticLookaheadNested()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public final boolean getRequiresPredicateMethod() {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
-        if (getHasSeparateSyntacticLookahead() || getHasLookBehind()) {
-            return true;
-        }
-        if (getHasSemanticLookahead() && getLookahead().isSemanticLookaheadNested()) {
+        if (getLookahead() != null) {
             return true;
         }
         if (isPossiblyEmpty()) {
             return false;
         }
-        if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
+        //if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
+        if (getHasImplicitSyntacticLookahead()) {
             return true;
         }
         if (getHasTokenActivation() || getSpecifiedLexicalState() != null) {
@@ -480,20 +487,20 @@ abstract public class Expansion extends BaseNode {
      * AND there is no funny business like lexical state switches a FAIL
      * or an up-to-here marker
      */
-    public final boolean isSingleToken() {
-        if (isPossiblyEmpty())
+    public boolean isSingleToken() {
+        if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getSpecifiesLexicalStateSwitch())
             return false;
-        if (getMaximumSize() > 1)
+        if (getLookahead() != null)
             return false;
-        if (firstChildOfType(Failure.class) != null)
-            return false; // Maybe a bit kludgy. REVISIT.
-        if (getHasScanLimit())
-            return false;
-        if (!descendants(TokenActivation.class).isEmpty())
-            return false;
-        if (getSpecifiesLexicalStateSwitch()) 
+        if (firstDescendantOfType(Failure.class) != null || firstDescendantOfType(TokenActivation.class) != null)
             return false;
         if (!descendants(Expansion.class, exp->exp.getSpecifiesLexicalStateSwitch()).isEmpty())
+            return false;
+        if (!descendants(Expansion.class, exp->exp.getHasLookBehind()).isEmpty())
+            return false;
+        if (hasNestedSemanticLookahead()) 
+            return false;
+        if (getHasGlobalSemanticActions())
             return false;
         return true;
     }

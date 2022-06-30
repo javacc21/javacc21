@@ -141,4 +141,8 @@ public class NonTerminal extends Expansion {
          alreadyVisited.add(getName());
          return getNestedExpansion().potentiallyStartsWith(productionName, alreadyVisited);
      }
+
+     public boolean isSingleToken() {
+         return super.isSingleToken() && getProduction().getExpansion().isSingleToken();
+     }
 }
