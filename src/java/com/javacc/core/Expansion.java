@@ -312,9 +312,10 @@ abstract public class Expansion extends BaseNode {
         if (getLookahead() != null) {
             return true;
         }
-        if (isPossiblyEmpty()) {
-            return false;
-        }
+// This seems like a problem. REVISIT.        
+//        if (isPossiblyEmpty()) {
+//            return false;
+//        }
         //if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
         if (getHasImplicitSyntacticLookahead()) {
             return true;
