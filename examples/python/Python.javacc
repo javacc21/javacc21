@@ -310,8 +310,9 @@ Argument(boolean seenEquals, boolean seenDoubleStar) :
    Expression
    |
    [
-      SCAN 1 {!seenDoubleStar} => 
-      ("*" | "**")
+      SCAN 1 {!seenDoubleStar} => "*"
+      |
+      "**"
    ] 
    Expression
 ;
