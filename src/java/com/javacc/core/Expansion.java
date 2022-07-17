@@ -287,15 +287,6 @@ abstract public class Expansion extends BaseNode {
 
     }
 
-    public boolean getRequiresScanAhead() {
-        Lookahead la = getLookahead();
-        if (la != null && la.getRequiresScanAhead())
-            return true;
-        // if (this.getParent() instanceof com.javacc.parser.tree.Assertion) return
-        // true;
-        return getHasGlobalSemanticActions();
-    }
-
     public final boolean hasNestedSemanticLookahead() {
         for (Expansion expansion : descendants(Expansion.class)) {
             if (expansion.getHasSemanticLookahead() && expansion.getLookahead().isSemanticLookaheadNested()) {
@@ -312,11 +303,6 @@ abstract public class Expansion extends BaseNode {
         if (getLookahead() != null) {
             return true;
         }
-// This seems like a problem. REVISIT.        
-//        if (isPossiblyEmpty()) {
-//            return false;
-//        }
-        //if (getHasImplicitSyntacticLookahead() && !isSingleToken()) {
         if (getHasImplicitSyntacticLookahead()) {
             return true;
         }
@@ -352,13 +338,10 @@ abstract public class Expansion extends BaseNode {
     }
 
     public int getLookaheadAmount() {
-        Lookahead la = getLookahead();
-        if (la != null)
-            return la.getAmount();
-        return getRequiresScanAhead() ? Integer.MAX_VALUE : 1; // A bit kludgy, REVISIT
+         return 1;
     }
 
-    public boolean getHasSemanticLookahead() {
+    public final boolean getHasSemanticLookahead() {
         Lookahead la = getLookahead();
         return la != null && la.hasSemanticLookahead();
     }
@@ -372,16 +355,18 @@ abstract public class Expansion extends BaseNode {
         return la == null ? null : la.getUpToExpansion();
     }
 
-    public Expression getSemanticLookahead() {
-        return getHasSemanticLookahead() ? getLookahead().getSemanticLookahead() : null;
+    public final Expression getSemanticLookahead() {
+        Lookahead la = getLookahead();
+        return la == null ? null : la.getSemanticLookahead();
     }
 
     public boolean getHasLookBehind() {
-        return getLookahead() != null && getLookahead().getLookBehind() != null;
+        return getLookBehind() != null;
     }
 
     public LookBehind getLookBehind() {
-        return getLookahead() != null ? getLookahead().getLookBehind() : null;
+        Lookahead la = getLookahead();
+        return la == null ? null : la.getLookBehind();
     }
 
     public boolean isNegated() {

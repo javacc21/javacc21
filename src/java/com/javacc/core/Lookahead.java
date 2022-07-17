@@ -70,10 +70,8 @@ public class Lookahead extends BaseNode {
         return !hasSemanticLookahead() && (getAmount() == 0 || getLookaheadExpansion().isPossiblyEmpty()); 
     }
 
-    public boolean getRequiresScanAhead() {
+    boolean getRequiresScanAhead() {
         return !getLookaheadExpansion().isPossiblyEmpty() || isSemanticLookaheadNested();
-//        return !getLookaheadExpansion().isPossiblyEmpty() && getAmount() > 1;
-//          return !isAlwaysSuccessful() && getAmount() >1;
     }
 
     public boolean hasSemanticLookahead() {

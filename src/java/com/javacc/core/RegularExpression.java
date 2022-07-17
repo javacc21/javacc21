@@ -191,10 +191,6 @@ public abstract class RegularExpression extends Expansion {
     	return false;
     }
     
-    final public boolean getRequiresScanAhead() {
-    	return false;
-    }
-    
     final public int getMinimumSize() {
         return 1;
     }

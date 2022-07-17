@@ -108,7 +108,7 @@ public class ExpansionSequence extends Expansion {
         return finalSet;
     }
 
-    public boolean getRequiresScanAhead() {
+    boolean getRequiresScanAhead() {
         boolean foundNonEmpty = false;
         for (Expansion unit : getUnits()) {
             if (unit.isScanLimit())
@@ -242,5 +242,12 @@ public class ExpansionSequence extends Expansion {
             if (!unit.isPossiblyEmpty()) break;
         }
         return result;
+    }
+
+    public int getLookaheadAmount() {
+        Lookahead la = getLookahead();
+        if (la != null)
+            return la.getAmount();
+        return getRequiresScanAhead() ? Integer.MAX_VALUE : 1; // A bit kludgy, REVISIT 
     }
 }

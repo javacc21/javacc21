@@ -34,9 +34,6 @@ package com.javacc.core;
  */
 
 abstract public class EmptyExpansion extends Expansion {
-    public boolean getRequiresScanAhead() {
-        return false;
-    }
     
     public boolean isPossiblyEmpty() {
         return true;
@@ -51,5 +48,4 @@ abstract public class EmptyExpansion extends Expansion {
     public int getMaximumSize() {return 0;}
 
     public boolean getSpecifiesLexicalStateSwitch() {return false;}
-
 }
