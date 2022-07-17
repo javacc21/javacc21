@@ -103,11 +103,12 @@ public class BNFProduction extends BaseNode {
     }
 
     public boolean getHasExplicitLookahead() {
-        return expansion.getHasExplicitLookahead();
+        return expansion instanceof ExpansionSequence && ((ExpansionSequence) expansion).getLookahead() != null;
     }
 
     public Lookahead getLookahead() {
-        return expansion.getLookahead();
+        return expansion instanceof ExpansionSequence ? ((ExpansionSequence) expansion).getLookahead() : null;
+//        return expansion.getLookahead();
     }
 
     public CodeBlock getJavaCode() {

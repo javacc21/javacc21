@@ -222,26 +222,15 @@ abstract public class Expansion extends BaseNode {
         return firstAncestorOfType(Lookahead.class) != null;
     }
 
-    public Lookahead getLookahead() {
-        return null;
-    }
-
-    public boolean getHasExplicitLookahead() {
-        return getLookahead() != null;
-    }
-
     public boolean getHasExplicitNumericalLookahead() {
-        Lookahead la = getLookahead();
-        return la != null && la.getHasExplicitNumericalAmount();
+        return false;
     }
 
     /**
      * Does this expansion have a separate lookahead expansion?
      */
-
     public boolean getHasSeparateSyntacticLookahead() {
-        Lookahead la = getLookahead();
-        return la != null && la.getNestedExpansion() != null;
+        return false; // can only be true for an ExpansionSequence
     }
 
     /**
@@ -263,32 +252,32 @@ abstract public class Expansion extends BaseNode {
         if (getMaximumSize() <= 1) {
             return false;
         }
-        Lookahead la = getLookahead();
+        Lookahead la = (this instanceof ExpansionSequence) ? ((ExpansionSequence) this).getLookahead() : null;
         return la != null && la.getAmount() > 1;
     }
 
     private boolean scanLimit;
     private int scanLimitPlus;
 
-    public boolean isScanLimit() {
+    public final boolean isScanLimit() {
         return scanLimit;
     }
 
-    public void setScanLimit(boolean scanLimit) {
+    public final void setScanLimit(boolean scanLimit) {
         this.scanLimit = scanLimit;
     }
 
-    public int getScanLimitPlus() {
+    public final int getScanLimitPlus() {
         return scanLimitPlus;
     }
 
-    public void setScanLimitPlus(int scanLimitPlus) {
+    public final void setScanLimitPlus(int scanLimitPlus) {
         this.scanLimitPlus = scanLimitPlus;
 
     }
 
     public final boolean hasNestedSemanticLookahead() {
-        for (Expansion expansion : descendants(Expansion.class)) {
+        for (ExpansionSequence expansion : descendants(ExpansionSequence.class)) {
             if (expansion.getHasSemanticLookahead() && expansion.getLookahead().isSemanticLookaheadNested()) {
                 return true;
             }
@@ -300,7 +289,7 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
-        if (getLookahead() != null) {
+        if (this instanceof ExpansionSequence && ((ExpansionSequence) this).getLookahead() != null) {
             return true;
         }
         if (getHasImplicitSyntacticLookahead()) {
@@ -316,9 +305,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public Expansion getLookaheadExpansion() {
-        Lookahead la = getLookahead();
-        Expansion exp = la == null ? null : la.getNestedExpansion();
-        return exp != null ? exp : this;
+        return this;
     }
 
     public boolean isAlwaysSuccessful() {
@@ -328,7 +315,7 @@ abstract public class Expansion extends BaseNode {
         if (firstChildOfType(Failure.class) != null) {
             return false;
         }
-        Lookahead la = getLookahead();
+        Lookahead la = (this instanceof ExpansionSequence) ? ((ExpansionSequence) this).getLookahead() : null;
         return la == null || la.getNestedExpansion() == null || la.getNestedExpansion().isPossiblyEmpty();
     }
 
@@ -341,23 +328,23 @@ abstract public class Expansion extends BaseNode {
          return 1;
     }
 
-    public final boolean getHasSemanticLookahead() {
-        Lookahead la = getLookahead();
-        return la != null && la.hasSemanticLookahead();
+    public boolean getHasSemanticLookahead() {
+        return false;
+//        Lookahead la = getLookahead();
+//        return la != null && la.hasSemanticLookahead();
     }
 
     public boolean getHasScanLimit() {
         return false; // Only an ExpansionSequence can have a scan limit.
     }
-
+/*
     public Expansion getUpToExpansion() {
         Lookahead la = getLookahead();
         return la == null ? null : la.getUpToExpansion();
     }
-
-    public final Expression getSemanticLookahead() {
-        Lookahead la = getLookahead();
-        return la == null ? null : la.getSemanticLookahead();
+*/
+    public Expression getSemanticLookahead() {
+        return null;
     }
 
     public boolean getHasLookBehind() {
@@ -365,12 +352,11 @@ abstract public class Expansion extends BaseNode {
     }
 
     public LookBehind getLookBehind() {
-        Lookahead la = getLookahead();
-        return la == null ? null : la.getLookBehind();
+        return null;
     }
 
     public boolean isNegated() {
-        return getLookahead() != null && getLookahead().isNegated();
+        return false;
     }
 
     public String getFirstSetVarName() {
@@ -476,7 +462,7 @@ abstract public class Expansion extends BaseNode {
     public boolean isSingleToken() {
         if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getSpecifiesLexicalStateSwitch())
             return false;
-        if (getLookahead() != null)
+        if (this instanceof ExpansionSequence && ((ExpansionSequence) this).getLookahead() != null)
             return false;
         if (firstDescendantOfType(Failure.class) != null || firstDescendantOfType(TokenActivation.class) != null)
             return false;

@@ -149,7 +149,7 @@ public class ExpansionSequence extends Expansion {
         for (Expansion unit : allUnits()) {
             if (unit instanceof NonTerminal) {
                 NonTerminal nt = (NonTerminal) unit;
-                return nt.getNestedExpansion().getLookahead();
+                return nt.getLookahead();
             }
             if (unit.superfluousParentheses()) {
                 ExpansionSequence seq = unit.firstChildOfType(ExpansionSequence.class);
@@ -249,5 +249,43 @@ public class ExpansionSequence extends Expansion {
         if (la != null)
             return la.getAmount();
         return getRequiresScanAhead() ? Integer.MAX_VALUE : 1; // A bit kludgy, REVISIT 
+    }
+
+    /**
+     * Does this expansion have a separate lookahead expansion?
+     */
+    public boolean getHasSeparateSyntacticLookahead() {
+        Lookahead la = getLookahead();
+        return la != null && la.getNestedExpansion() != null;
+    }
+
+    public Expansion getLookaheadExpansion() {
+        Lookahead la = getLookahead();
+        Expansion exp = la == null ? null : la.getNestedExpansion();
+        return exp != null ? exp : this;
+    }
+
+    public boolean isNegated() {
+        return getLookahead() != null && getLookahead().isNegated();
+    }
+
+    public LookBehind getLookBehind() {
+        Lookahead la = getLookahead();
+        return la == null ? null : la.getLookBehind();
+    }
+
+    public final Expression getSemanticLookahead() {
+        Lookahead la = getLookahead();
+        return la == null ? null : la.getSemanticLookahead();
+    }
+
+    public boolean getHasExplicitNumericalLookahead() {
+        Lookahead la = getLookahead();
+        return la != null && la.getHasExplicitNumericalAmount();
+    }
+
+    public boolean getHasSemanticLookahead() {
+        Lookahead la = getLookahead();
+        return la != null && la.hasSemanticLookahead();
     }
 }

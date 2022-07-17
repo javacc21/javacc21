@@ -54,7 +54,9 @@ public class NonTerminal extends Expansion {
     }
 
     public Lookahead getLookahead() {
-        return getNestedExpansion().getLookahead();
+        Expansion nestedExpansion = getNestedExpansion();
+        return nestedExpansion instanceof ExpansionSequence ? ((ExpansionSequence)nestedExpansion).getLookahead() : null;
+//        return getNestedExpansion().getLookahead();
     }
 
     public InvocationArguments getArgs() {
