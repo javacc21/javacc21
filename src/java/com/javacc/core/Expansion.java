@@ -233,29 +233,6 @@ abstract public class Expansion extends BaseNode {
         return false; // can only be true for an ExpansionSequence
     }
 
-    /**
-     * Do we do a syntactic lookahead using this expansion itself as the lookahead
-     * expansion?
-     */
-    public boolean getHasImplicitSyntacticLookahead() {
-        if (!this.isAtChoicePoint())
-            return false;
-        if (getHasSeparateSyntacticLookahead())
-            return false;
-        if (this.isAlwaysSuccessful())
-            return false;
-        if (getHasScanLimit()) {
-            return true;
-        }
-        if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <= 1)
-            return false;
-        if (getMaximumSize() <= 1) {
-            return false;
-        }
-        Lookahead la = (this instanceof ExpansionSequence) ? ((ExpansionSequence) this).getLookahead() : null;
-        return la != null && la.getAmount() > 1;
-    }
-
     private boolean scanLimit;
     private int scanLimitPlus;
 
@@ -285,23 +262,23 @@ abstract public class Expansion extends BaseNode {
         return false;
     }
 
-    public final boolean getRequiresPredicateMethod() {
+    public boolean getRequiresPredicateMethod() {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
-        if (this instanceof ExpansionSequence && ((ExpansionSequence) this).getLookahead() != null) {
-            return true;
-        }
-        if (getHasImplicitSyntacticLookahead()) {
-            return true;
-        }
         if (getHasTokenActivation() || getSpecifiedLexicalState() != null) {
+//            System.out.println("KILROY 2");
             return true;
         }
         if (getSpecifiesLexicalStateSwitch()) {
+//            System.out.println("KILROY 3");
             return true;
         }
-        return getHasGlobalSemanticActions();
+        if (getHasGlobalSemanticActions()) {
+//            System.out.println("KILROY 4");
+            return true;
+        }
+        return false;
     }
 
     public Expansion getLookaheadExpansion() {
