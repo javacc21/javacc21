@@ -435,7 +435,7 @@ abstract public class Expansion extends BaseNode {
      * @return whether this Expansion is always matched by exactly one token
      * AND there is no funny business like lexical state switches a FAIL
      * or an up-to-here marker
-     */
+     *//*
     public boolean isSingleToken() {
         if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getSpecifiesLexicalStateSwitch())
             return false;
@@ -452,7 +452,9 @@ abstract public class Expansion extends BaseNode {
         if (getHasGlobalSemanticActions())
             return false;
         return true;
-    }
+    }*/
+
+    public boolean isSingleToken() {return false;}
 
     /**
      * @return the minimum number of tokens that this expansion consumes.

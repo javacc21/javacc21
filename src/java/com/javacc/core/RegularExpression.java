@@ -198,6 +198,8 @@ public abstract class RegularExpression extends Expansion {
     final public int getMaximumSize() {
         return 1;
     }
+
+    public boolean isSingleToken() {return true;}
     
     abstract public boolean matchesEmptyString();
 }
