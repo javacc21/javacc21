@@ -288,31 +288,12 @@ public class ExpansionSequence extends Expansion {
         Lookahead la = getLookahead();
         return la != null && la.hasSemanticLookahead();
     }
-
-    public boolean getRequiresPredicateMethod() {
-        if (isInsideLookahead() || !isAtChoicePoint()) {
-            return false;
-        }
-        if (getLookahead() != null) {
-            return true;
-        }
-        if (getHasImplicitSyntacticLookahead()) {
-            return true;
-        }
-        if (getHasTokenActivation() || getSpecifiedLexicalState() != null) {
-            return true;
-        }
-        if (getSpecifiesLexicalStateSwitch()) {
-            return true;
-        }
-        return getHasGlobalSemanticActions();
-    }
     
    /**
      * Do we do a syntactic lookahead using this expansion itself as the lookahead
      * expansion?
      */
-    private boolean getHasImplicitSyntacticLookahead() {
+    boolean getHasImplicitSyntacticLookahead() {
         if (!this.isAtChoicePoint())
             return false;
         if (getHasSeparateSyntacticLookahead())

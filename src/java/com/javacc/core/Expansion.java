@@ -257,21 +257,26 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
+        if (getLookahead() != null) {
+            return true;
+        }
+        if (getHasImplicitSyntacticLookahead()) {
+            return true;
+        }
         if (getHasTokenActivation() || getSpecifiedLexicalState() != null) {
             return true;
         }
         if (getSpecifiesLexicalStateSwitch()) {
             return true;
         }
-        if (getHasGlobalSemanticActions()) {
-            return true;
-        }
-        return false;
+        return getHasGlobalSemanticActions();
     }
 
     public Lookahead getLookahead() {return null;}
 
     public Expansion getLookaheadExpansion() { return this; }
+
+    boolean getHasImplicitSyntacticLookahead() {return false;}
 
     public boolean isAlwaysSuccessful() {
         if (getHasSemanticLookahead() || getHasLookBehind() || !isPossiblyEmpty()) {

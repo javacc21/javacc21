@@ -96,10 +96,9 @@ public class NonTerminal extends Expansion {
      }
 
      public boolean isAlwaysSuccessful() {
-         return getProduction().isAlwaysSuccessful();
+         return getProduction().getExpansion().isAlwaysSuccessful();
      }
      
-     // REVISIT. Is this disposition really correct?
      private boolean inMinimumSize, inMaximumSize;
      
      public int getMinimumSize() {
@@ -126,9 +125,5 @@ public class NonTerminal extends Expansion {
 
      public boolean getSpecifiesLexicalStateSwitch() {
          return getProduction().getLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
-     }
-
-     public boolean isSingleToken() {
-         return super.isSingleToken() && getProduction().getExpansion().isSingleToken();
      }
 }

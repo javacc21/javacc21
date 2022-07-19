@@ -34,15 +34,10 @@ import com.javacc.parser.Token;
 import com.javacc.parser.tree.*;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
-//abstract 
 public class BNFProduction extends BaseNode {
     private Expansion expansion, recoveryExpansion;
     private String lexicalState, name, leadingComments = "";
     private boolean implicitReturnType;
-    /**
-     * The NonTerminal nodes which refer to this production.
-     */
-    private List<NonTerminal> referringNonTerminals;
     
     public Expansion getExpansion() {
         return expansion;
@@ -82,14 +77,6 @@ public class BNFProduction extends BaseNode {
         this.implicitReturnType = implicitReturnType;
     }
 
-    public List<NonTerminal> getReferringNonTerminals() {
-        if (referringNonTerminals == null) {
-           referringNonTerminals = getGrammar().descendants(NonTerminal.class, nt->nt.getName().equals(name));
-        }
-        return referringNonTerminals;
-    }
-
-
     public TreeBuildingAnnotation getTreeNodeBehavior() {
         return firstChildOfType(TreeBuildingAnnotation.class);
     }
@@ -119,10 +106,6 @@ public class BNFProduction extends BaseNode {
      */
     public boolean isPossiblyEmpty() {
         return getExpansion().isPossiblyEmpty();
-    }
-
-    public boolean isAlwaysSuccessful() {
-        return getExpansion().isAlwaysSuccessful();
     }
 
     public boolean isOnlyForLookahead() {
@@ -218,6 +201,6 @@ public class BNFProduction extends BaseNode {
      * Does this production potentially have left recursion?
      */
     public boolean isLeftRecursive() {
-        return getExpansion().potentiallyStartsWith(getName(), new HashSet<>());
+        return getExpansion().potentiallyStartsWith(getName());
     }
 }
