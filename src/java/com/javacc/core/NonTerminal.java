@@ -54,9 +54,7 @@ public class NonTerminal extends Expansion {
     }
 
     public Lookahead getLookahead() {
-        Expansion nestedExpansion = getNestedExpansion();
-        return nestedExpansion instanceof ExpansionSequence ? ((ExpansionSequence)nestedExpansion).getLookahead() : null;
-//        return getNestedExpansion().getLookahead();
+        return getNestedExpansion().getLookahead();
     }
 
     public InvocationArguments getArgs() {
@@ -122,26 +120,12 @@ public class NonTerminal extends Expansion {
          return result;
      }
      
-     public boolean getHasScanLimit() {
+     boolean getHasScanLimit() {
          return getProduction().getHasScanLimit();
      }
 
      public boolean getSpecifiesLexicalStateSwitch() {
          return getProduction().getLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
-     }
-
-     private boolean needsLeftRecursionCheck;
-
-     public boolean getNeedsLeftRecursionCheck() {return needsLeftRecursionCheck;}
-
-     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
-         if (productionName.equals(getName())) {
-             needsLeftRecursionCheck = true;
-             return true;
-         }
-         if (alreadyVisited.contains(getName())) return false;
-         alreadyVisited.add(getName());
-         return getNestedExpansion().potentiallyStartsWith(productionName, alreadyVisited);
      }
 
      public boolean isSingleToken() {

@@ -99,16 +99,15 @@ public class BNFProduction extends BaseNode {
     }
 
     public boolean getHasScanLimit() {
-        return expansion instanceof ExpansionSequence && ((ExpansionSequence) expansion).getHasScanLimit();
+        return expansion.getHasScanLimit();
     }
 
     public boolean getHasExplicitLookahead() {
-        return expansion instanceof ExpansionSequence && ((ExpansionSequence) expansion).getLookahead() != null;
+        return expansion.getLookahead() != null;
     }
 
     public Lookahead getLookahead() {
-        return expansion instanceof ExpansionSequence ? ((ExpansionSequence) expansion).getLookahead() : null;
-//        return expansion.getLookahead();
+        return expansion.getLookahead();
     }
 
     public CodeBlock getJavaCode() {

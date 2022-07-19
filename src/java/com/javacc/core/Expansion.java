@@ -253,50 +253,38 @@ abstract public class Expansion extends BaseNode {
 
     }
 
-    public final boolean hasNestedSemanticLookahead() {
-        for (ExpansionSequence expansion : descendants(ExpansionSequence.class)) {
-            if (expansion.getHasSemanticLookahead() && expansion.getLookahead().isSemanticLookaheadNested()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public boolean getRequiresPredicateMethod() {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
         if (getHasTokenActivation() || getSpecifiedLexicalState() != null) {
-//            System.out.println("KILROY 2");
             return true;
         }
         if (getSpecifiesLexicalStateSwitch()) {
-//            System.out.println("KILROY 3");
             return true;
         }
         if (getHasGlobalSemanticActions()) {
-//            System.out.println("KILROY 4");
             return true;
         }
         return false;
     }
 
-    public Expansion getLookaheadExpansion() {
-        return this;
-    }
+    public Lookahead getLookahead() {return null;}
+
+    public Expansion getLookaheadExpansion() { return this; }
 
     public boolean isAlwaysSuccessful() {
         if (getHasSemanticLookahead() || getHasLookBehind() || !isPossiblyEmpty()) {
             return false;
         }
-        if (firstChildOfType(Failure.class) != null) {
+        if (firstChildOfType(Failure.class) != null || firstChildOfType(Assertion.class) != null) {
             return false;
         }
-        Lookahead la = (this instanceof ExpansionSequence) ? ((ExpansionSequence) this).getLookahead() : null;
+        Lookahead la = getLookahead();
         return la == null || la.getNestedExpansion() == null || la.getNestedExpansion().isPossiblyEmpty();
     }
 
-    public boolean getHasGlobalSemanticActions() {
+    final boolean getHasGlobalSemanticActions() {
         List<CodeBlock> blocks = descendants(CodeBlock.class, cb -> cb.isAppliesInLookahead());
         return !blocks.isEmpty();
     }
@@ -307,19 +295,12 @@ abstract public class Expansion extends BaseNode {
 
     public boolean getHasSemanticLookahead() {
         return false;
-//        Lookahead la = getLookahead();
-//        return la != null && la.hasSemanticLookahead();
     }
 
-    public boolean getHasScanLimit() {
-        return false; // Only an ExpansionSequence can have a scan limit.
+    boolean getHasScanLimit() {
+        return false; // Only an ExpansionSequence or a NonTerminal can have a scan limit.
     }
-/*
-    public Expansion getUpToExpansion() {
-        Lookahead la = getLookahead();
-        return la == null ? null : la.getUpToExpansion();
-    }
-*/
+
     public Expression getSemanticLookahead() {
         return null;
     }
@@ -430,29 +411,6 @@ abstract public class Expansion extends BaseNode {
      * @return Can this expansion be matched by the empty string.
      */
     abstract public boolean isPossiblyEmpty();
-
-    /**
-     * @return whether this Expansion is always matched by exactly one token
-     * AND there is no funny business like lexical state switches a FAIL
-     * or an up-to-here marker
-     *//*
-    public boolean isSingleToken() {
-        if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getSpecifiesLexicalStateSwitch())
-            return false;
-        if (this instanceof ExpansionSequence && ((ExpansionSequence) this).getLookahead() != null)
-            return false;
-        if (firstDescendantOfType(Failure.class) != null || firstDescendantOfType(TokenActivation.class) != null)
-            return false;
-        if (!descendants(Expansion.class, exp->exp.getSpecifiesLexicalStateSwitch()).isEmpty())
-            return false;
-        if (!descendants(Expansion.class, exp->exp.getHasLookBehind()).isEmpty())
-            return false;
-        if (hasNestedSemanticLookahead()) 
-            return false;
-        if (getHasGlobalSemanticActions())
-            return false;
-        return true;
-    }*/
 
     public boolean isSingleToken() {return false;}
 

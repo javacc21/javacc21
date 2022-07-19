@@ -202,7 +202,7 @@ public class ExpansionSequence extends Expansion {
      * @return whether we have a scan limit, including an implicit one inside a
      *         nested NonTerminal
      */
-    public boolean getHasScanLimit() {
+    boolean getHasScanLimit() {
         boolean atStart = true;
         for (Expansion unit : allUnits()) {
             if (unit.isScanLimit())
