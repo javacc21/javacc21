@@ -253,7 +253,7 @@ abstract public class Expansion extends BaseNode {
 
     }
 
-    public boolean getRequiresPredicateMethod() {
+    public final boolean getRequiresPredicateMethod() {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
@@ -417,7 +417,34 @@ abstract public class Expansion extends BaseNode {
      */
     abstract public boolean isPossiblyEmpty();
 
-    public boolean isSingleToken() {return false;}
+    public boolean isSingleToken() {
+        // Uncomment the following line to turn off this optimization.
+        // if (true) return false;
+        if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getSpecifiesLexicalStateSwitch())
+            return false;
+        if (getLookahead() != null) 
+            return false;
+        if (firstDescendantOfType(Failure.class) != null || firstDescendantOfType(Assertion.class) != null || firstDescendantOfType(TokenActivation.class) != null)
+            return false;
+        if (!descendants(Expansion.class, exp->exp.getSpecifiesLexicalStateSwitch()).isEmpty())
+            return false;
+        if (!descendants(Expansion.class, exp->exp.getHasLookBehind()).isEmpty())
+            return false;
+        if (hasNestedSemanticLookahead()) 
+            return false;
+        if (getHasGlobalSemanticActions())
+            return false;
+        return true;
+    }
+
+    public final boolean hasNestedSemanticLookahead() {
+        for (ExpansionSequence expansion : descendants(ExpansionSequence.class)) {
+            if (expansion.getHasSemanticLookahead() && expansion.getLookahead().isSemanticLookaheadNested()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * @return the minimum number of tokens that this expansion consumes.

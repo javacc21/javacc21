@@ -310,4 +310,15 @@ public class ExpansionSequence extends Expansion {
         }
         return getLookahead() != null;
     }
+
+    public boolean isSingleToken() {
+        if (!super.isSingleToken()) return false;
+        for (Expansion exp : getUnits()) {
+            // This is mostly in order to recurse into any NonTerminals 
+            // in the expansion sequence.
+            if (exp.getMaximumSize() == 1 && !exp.isSingleToken()) return false;
+        }
+        return true;
+    }
+
 }

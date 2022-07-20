@@ -104,4 +104,12 @@ public class ExpansionChoice extends Expansion {
         }
         return false;
     }
+
+    public boolean isSingleToken() {
+        if (!super.isSingleToken()) return false;
+        for (Expansion exp : getChoices()) {
+            if (!exp.isSingleToken()) return false;
+        }
+        return true;
+    }
 }

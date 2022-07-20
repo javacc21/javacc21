@@ -126,4 +126,8 @@ public class NonTerminal extends Expansion {
      public boolean getSpecifiesLexicalStateSwitch() {
          return getProduction().getLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
      }
+
+     public boolean isSingleToken() {
+        return getNestedExpansion().isSingleToken();
+     }
 }
