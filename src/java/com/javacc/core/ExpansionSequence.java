@@ -321,11 +321,12 @@ public class ExpansionSequence extends Expansion {
         if (getHasScanLimit()) {
             return true;
         }
-        if (getHasExplicitNumericalLookahead() && getLookaheadAmount() <= 1)
+        if (getHasExplicitNumericalLookahead() && getLookaheadAmount() ==0)
             return false;
-        if (getMaximumSize() <= 1) {
-            return false;
-        }
+// REVISIT.            
+//        if (getMaximumSize() <= 1) {
+//            return false;
+//        }
         return getLookahead() != null;
     }
 
@@ -338,5 +339,4 @@ public class ExpansionSequence extends Expansion {
         }
         return true;
     }
-
 }

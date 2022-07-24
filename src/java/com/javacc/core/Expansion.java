@@ -30,9 +30,7 @@
 
 package com.javacc.core;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.javacc.Grammar;
 import com.javacc.parser.BaseNode;
@@ -245,12 +243,18 @@ abstract public class Expansion extends BaseNode {
             return true;
         }
         if (getHasTokenActivation() || getSpecifiedLexicalState() != null) {
+            // Not quite correct. We only care about token activation if 
+            // we haven't yet consumed any input. Otherwise, it doesn't matter.
             return true;
         }
         if (getSpecifiesLexicalStateSwitch()) {
             return true;
         }
-        return getHasGlobalSemanticActions();
+        if (descendants(CodeBlock.class).stream().anyMatch(cb->cb.isAppliesInLookahead())) {
+            // This is not quite correct. REVISIT.
+            return true;
+        }
+        return false;
     }
 
     public Lookahead getLookahead() {return null;}
@@ -259,9 +263,15 @@ abstract public class Expansion extends BaseNode {
 
     boolean getHasImplicitSyntacticLookahead() {return false;}
 
-    final boolean getHasGlobalSemanticActions() {
-        List<CodeBlock> blocks = descendants(CodeBlock.class, cb -> cb.isAppliesInLookahead());
-        return !blocks.isEmpty();
+
+    // This should only be used if we already know the expansion consumes at most a single
+    // token. Otherwise, we're bound to get into infinite loops nesting into the nonterminals.
+    // But with a maximum size of 1, given that we don't support left recursion, we should
+    // be okay.
+    private boolean hasGlobalSemanticActions() {
+        assert this.getMaximumSize() <= 1;
+        return descendants(CodeBlock.class).stream().anyMatch(cb->cb.isAppliesInLookahead())
+            || descendants(NonTerminal.class).stream().anyMatch(nt->nt.getNestedExpansion().hasGlobalSemanticActions());
     }
 
     public int getLookaheadAmount() {
@@ -382,33 +392,28 @@ abstract public class Expansion extends BaseNode {
         return firstChildOfType(TokenActivation.class) != null;
     }
 
+
+    /**
+     * @return Can we do a short-cut and scan this expansion as a single token (using the scanToken method)
+     */
     public boolean isSingleToken() {
         // Uncomment the following line to turn off this optimization.
         // if (true) return false;
-        if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getSpecifiesLexicalStateSwitch())
+        if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getSpecifiesLexicalStateSwitch() || getLookahead() != null)
             return false;
-        if (getLookahead() != null) 
+        if (descendants(Expansion.class).stream().anyMatch(exp->exp.getLookahead() != null)) {
             return false;
-        if (firstDescendantOfType(Failure.class) != null || firstDescendantOfType(Assertion.class) != null || firstDescendantOfType(TokenActivation.class) != null)
+        }
+        if (firstDescendantOfType(Failure.class) != null || firstDescendantOfType(Assertion.class) != null || firstDescendantOfType(TokenActivation.class) != null) {
+            // REVISIT. This does not take into account any failures or assertions inside a NonTerminal.
             return false;
-        if (!descendants(Expansion.class, exp->exp.getSpecifiesLexicalStateSwitch()).isEmpty())
+        }
+        if (descendants(Expansion.class).stream().anyMatch(exp->exp.getSpecifiesLexicalStateSwitch())) {
             return false;
-        if (!descendants(Expansion.class, exp->exp.getHasLookBehind()).isEmpty())
-            return false;
-        if (hasNestedSemanticLookahead()) 
-            return false;
-        if (getHasGlobalSemanticActions())
+        }
+        if (hasGlobalSemanticActions())
             return false;
         return true;
-    }
-
-    public final boolean hasNestedSemanticLookahead() {
-        for (ExpansionSequence expansion : descendants(ExpansionSequence.class)) {
-            if (expansion.getHasSemanticLookahead() && expansion.getLookahead().isSemanticLookaheadNested()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
