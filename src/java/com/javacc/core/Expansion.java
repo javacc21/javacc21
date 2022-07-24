@@ -41,7 +41,7 @@ import com.javacc.parser.tree.*;
 
 /**
  * Describes expansions - entities that may occur on the right hand sides of
- * productions. This is the base class of a bunch of other more specific
+ * productions. This is the abstract base class of a bunch of other more specific
  * classes.
  */
 abstract public class Expansion extends BaseNode {
@@ -136,25 +136,19 @@ abstract public class Expansion extends BaseNode {
      * superfluous parentheses.
      * @return Is this expansion at a choice point?
      */
-
-    public boolean isAtChoicePoint() {
+    public final boolean isAtChoicePoint() {
+        if (!(this instanceof ExpansionChoice || this instanceof ExpansionSequence)) return false;
         Node parent = getParent();
-        if (parent instanceof ExpansionChoice || parent instanceof OneOrMore || parent instanceof ZeroOrMore
-            || parent instanceof ZeroOrOne || parent instanceof BNFProduction) {
-                return true;
-            }
+        if (parent instanceof ExpansionChoice 
+            || parent instanceof OneOrMore 
+            || parent instanceof ZeroOrMore
+            || parent instanceof ZeroOrOne 
+            || parent instanceof BNFProduction) return true;
         if (!(parent instanceof ExpansionWithParentheses)) {
             return false;
         }
         ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
-        if (!grandparent.isAtChoicePoint()) {
-            return false;
-        }
-        for (Expansion exp : grandparent.getUnits()) {
-            if (exp == parent) return true;
-            if (exp.getMaximumSize()>0) break;
-        }
-        return false;
+        return grandparent.getUnits().get(0) == parent && grandparent.isAtChoicePoint();
     }
 
     /**

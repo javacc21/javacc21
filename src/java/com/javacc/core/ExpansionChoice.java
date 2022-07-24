@@ -28,18 +28,19 @@
 
 package com.javacc.core;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public class ExpansionChoice extends Expansion {
-    public List<Expansion> getChoices() {
-        return childrenOfType(Expansion.class);
+    public List<ExpansionSequence> getChoices() {
+        return childrenOfType(ExpansionSequence.class);
     }
     
     public TokenSet getFirstSet() {
          if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
-            for (Expansion choice : getChoices()) {
+            for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
                 firstSet.or(choice.getLookaheadExpansion().getFirstSet());
             }
          }
@@ -48,7 +49,7 @@ public class ExpansionChoice extends Expansion {
     
     public TokenSet getFinalSet() {
         TokenSet finalSet = new TokenSet(getGrammar());
-        for (Expansion choice : getChoices()) {
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
             finalSet.or(choice.getFinalSet());
         }
         return finalSet;
@@ -56,16 +57,16 @@ public class ExpansionChoice extends Expansion {
     
     
     public boolean isPossiblyEmpty() {
-        return getChoices().stream().anyMatch(choice->choice.isPossiblyEmpty());
+        return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isPossiblyEmpty());
     }
  
     public boolean isAlwaysSuccessful() {
-        return getChoices().stream().anyMatch(choice->choice.isAlwaysSuccessful());
+        return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isAlwaysSuccessful());
     }
     
     public int getMinimumSize() {
         int result = Integer.MAX_VALUE;
-        for (Expansion choice : getChoices()) {
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
            int choiceMin = choice.getMinimumSize();
            if (choiceMin ==0) return 0;
            result = Math.min(result, choiceMin);
@@ -75,7 +76,7 @@ public class ExpansionChoice extends Expansion {
  
     public int getMaximumSize() {
         int result = 0;
-        for (Expansion exp : getChoices()) {
+        for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {
             result = Math.max(result, exp.getMaximumSize());
             if (result == Integer.MAX_VALUE) break;
         }
@@ -83,14 +84,14 @@ public class ExpansionChoice extends Expansion {
     }
     
     public boolean getSpecifiesLexicalStateSwitch() {
-        for (Expansion choice : getChoices()) {
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
             if (choice.getSpecifiesLexicalStateSwitch()) return true;
         }
         return false;
     }
 
     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
-        for (Expansion choice : getChoices()) {
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
             if (choice.potentiallyStartsWith(productionName, alreadyVisited)) return true;
         }
         return false;
@@ -98,9 +99,17 @@ public class ExpansionChoice extends Expansion {
 
     public boolean isSingleToken() {
         if (!super.isSingleToken()) return false;
-        for (Expansion exp : getChoices()) {
+        for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {
             if (!exp.isSingleToken()) return false;
         }
         return true;
+    }
+
+    List<Expansion> getSubExpansionsUpToOneToken() {
+        List<Expansion> result = new ArrayList<>();
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+            result.addAll(choice.getSubExpansionsUpToOneToken());
+        }
+        return result;
     }
 }

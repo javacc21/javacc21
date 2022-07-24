@@ -39,17 +39,17 @@ public class ExpansionSequence extends Expansion {
      */
     private List<Expansion> allUnits() {
         List<Expansion> result = new ArrayList<>();
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             result.add(unit);
             if (unit.superfluousParentheses()) {
                 result.addAll(unit.firstChildOfType(ExpansionSequence.class).allUnits());
-            }
+            } 
         }
         return result;
     }
 
     Expansion firstNonEmpty() {
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             if (unit instanceof ExpansionWithParentheses
                     && ((ExpansionWithParentheses) unit).superfluousParentheses()) {
                 unit = unit.firstChildOfType(ExpansionSequence.class).firstNonEmpty();
@@ -62,7 +62,7 @@ public class ExpansionSequence extends Expansion {
     }
 
     public boolean getSpecifiesLexicalStateSwitch() {
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             if (unit.getSpecifiesLexicalStateSwitch()) {
                 return true;
             }
@@ -77,7 +77,7 @@ public class ExpansionSequence extends Expansion {
         if (getHasSemanticLookahead() || getHasLookBehind()) {
             return false;
         }
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             if (!unit.isAlwaysSuccessful())
                 return false;
         }
@@ -88,7 +88,7 @@ public class ExpansionSequence extends Expansion {
     public TokenSet getFirstSet() {
         if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
-            for (Expansion child : getUnits()) {
+            for (Expansion child : childrenOfType(Expansion.class)) {
                 firstSet.or(child.getFirstSet());
                 if (!child.isPossiblyEmpty()) {
                     break;
@@ -100,7 +100,7 @@ public class ExpansionSequence extends Expansion {
 
     public TokenSet getFinalSet() {
         TokenSet finalSet = new TokenSet(getGrammar());
-        List<Expansion> children = getUnits();
+        List<Expansion> children = childrenOfType(Expansion.class);
         Collections.reverse(children);
         for (Expansion child : children) {
             finalSet.or(child.getFinalSet());
@@ -113,7 +113,7 @@ public class ExpansionSequence extends Expansion {
 
     private boolean getRequiresScanAhead() {
         boolean foundNonEmpty = false;
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             if (unit.isScanLimit())
                 return true;
             if (!foundNonEmpty && (unit instanceof NonTerminal)) {
@@ -131,7 +131,7 @@ public class ExpansionSequence extends Expansion {
     }
 
     public boolean getHasTokenActivation() {
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             if (unit.getHasTokenActivation())
                 return true;
             if (!unit.isPossiblyEmpty())
@@ -149,7 +149,7 @@ public class ExpansionSequence extends Expansion {
     public Lookahead getLookahead() {
         if (lookahead != null)
             return lookahead;
-        for (Expansion unit : allUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             if (unit instanceof NonTerminal) {
                 NonTerminal nt = (NonTerminal) unit;
                 return nt.getLookahead();
@@ -171,7 +171,7 @@ public class ExpansionSequence extends Expansion {
     }
 
     public boolean isPossiblyEmpty() {
-        for (Expansion e : getUnits()) {
+        for (Expansion e : childrenOfType(Expansion.class)) {
             if (!e.isPossiblyEmpty()) {
                 return false;
             }
@@ -181,7 +181,7 @@ public class ExpansionSequence extends Expansion {
 
     public int getMinimumSize() {
         int result = 0;
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             int minUnit = unit.getMinimumSize();
             if (minUnit == Integer.MAX_VALUE)
                 return Integer.MAX_VALUE;
@@ -192,7 +192,7 @@ public class ExpansionSequence extends Expansion {
 
     public int getMaximumSize() {
         int result = 0;
-        for (Expansion exp : getUnits()) {
+        for (Expansion exp : childrenOfType(Expansion.class)) {
             int max = exp.getMaximumSize();
             if (max == Integer.MAX_VALUE)
                 return Integer.MAX_VALUE;
@@ -226,7 +226,7 @@ public class ExpansionSequence extends Expansion {
      *         expansion.
      */
     public boolean getHasExplicitScanLimit() {
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             if (unit.isScanLimit()) {
                 return true;
             }
@@ -238,9 +238,22 @@ public class ExpansionSequence extends Expansion {
         return childrenOfType(Expansion.class);
     }
 
+    List<Expansion> getSubExpansionsUpToOneToken() {
+        int consumed = 0;
+        List<Expansion> result = new ArrayList<>();
+        for (Expansion exp : allUnits()) {
+            result.add(exp);
+            int min = exp.getMinimumSize();
+            if (min == Integer.MAX_VALUE) consumed = Integer.MAX_VALUE;
+            else consumed += min;
+            if (min >= 1) break;
+        }
+        return result;
+    }
+
     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         boolean result = false;
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : childrenOfType(Expansion.class)) {
             if (unit.potentiallyStartsWith(productionName, alreadyVisited)) result = true;
             if (!unit.isPossiblyEmpty()) break;
         }
@@ -316,7 +329,7 @@ public class ExpansionSequence extends Expansion {
 
     public boolean isSingleToken() {
         if (!super.isSingleToken()) return false;
-        for (Expansion exp : getUnits()) {
+        for (Expansion exp : childrenOfType(Expansion.class)) {
             // This is mostly in order to recurse into any NonTerminals 
             // in the expansion sequence.
             if (exp.getMaximumSize() == 1 && !exp.isSingleToken()) return false;
