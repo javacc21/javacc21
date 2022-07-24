@@ -56,20 +56,11 @@ public class ExpansionChoice extends Expansion {
     
     
     public boolean isPossiblyEmpty() {
-         for (Expansion e : getChoices()) {
-             if (e.isPossiblyEmpty()) {
-                 return true;
-             }
-         }
-         return false;
+        return getChoices().stream().anyMatch(choice->choice.isPossiblyEmpty());
     }
  
     public boolean isAlwaysSuccessful() {
-        if (!super.isAlwaysSuccessful()) return false;
-        for (Expansion choice : getChoices()) {
-            if (choice.isAlwaysSuccessful()) return true;
-        }
-        return false;
+        return getChoices().stream().anyMatch(choice->choice.isAlwaysSuccessful());
     }
     
     public int getMinimumSize() {

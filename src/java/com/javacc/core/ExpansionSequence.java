@@ -37,7 +37,7 @@ public class ExpansionSequence extends Expansion {
      * @return a List that includes child expansions that are
      *         inside of superfluous parentheses.
      */
-    public List<Expansion> allUnits() {
+    private List<Expansion> allUnits() {
         List<Expansion> result = new ArrayList<>();
         for (Expansion unit : getUnits()) {
             result.add(unit);
@@ -48,7 +48,7 @@ public class ExpansionSequence extends Expansion {
         return result;
     }
 
-    public Expansion firstNonEmpty() {
+    Expansion firstNonEmpty() {
         for (Expansion unit : getUnits()) {
             if (unit instanceof ExpansionWithParentheses
                     && ((ExpansionWithParentheses) unit).superfluousParentheses()) {
@@ -73,13 +73,16 @@ public class ExpansionSequence extends Expansion {
     }
 
     public boolean isAlwaysSuccessful() {
-        if (!super.isAlwaysSuccessful())
+        if (!isPossiblyEmpty()) return false;
+        if (getHasSemanticLookahead() || getHasLookBehind()) {
             return false;
+        }
         for (Expansion unit : getUnits()) {
             if (!unit.isAlwaysSuccessful())
                 return false;
         }
-        return true;
+        Lookahead la = getLookahead();
+        return la == null || la.getNestedExpansion() == null || la.getNestedExpansion().isPossiblyEmpty();        
     }
 
     public TokenSet getFirstSet() {
@@ -108,7 +111,7 @@ public class ExpansionSequence extends Expansion {
         return finalSet;
     }
 
-    boolean getRequiresScanAhead() {
+    private boolean getRequiresScanAhead() {
         boolean foundNonEmpty = false;
         for (Expansion unit : getUnits()) {
             if (unit.isScanLimit())

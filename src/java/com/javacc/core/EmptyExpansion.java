@@ -35,9 +35,9 @@ package com.javacc.core;
 
 abstract public class EmptyExpansion extends Expansion {
     
-    public boolean isPossiblyEmpty() {
-        return true;
-    }
+    public boolean isPossiblyEmpty() {return true;}
+
+    public boolean isAlwaysSuccessful() {return true;}
     
     public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
     

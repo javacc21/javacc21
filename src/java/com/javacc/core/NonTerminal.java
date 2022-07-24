@@ -28,8 +28,6 @@
 
 package com.javacc.core;
 
-import java.util.Set;
-
 import com.javacc.parser.tree.*;
 
 public class NonTerminal extends Expansion {

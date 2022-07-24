@@ -202,6 +202,8 @@ public abstract class RegularExpression extends Expansion {
     public boolean isSingleToken() {return true;}
     
     abstract public boolean matchesEmptyString();
+
+    public boolean isAlwaysSuccessful() {return matchesEmptyString();}
 }
 
 

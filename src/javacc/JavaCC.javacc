@@ -1525,6 +1525,8 @@ INJECT Assertion :
     @Property Expression assertionExpression, messageExpression;
     @Property Expansion expansion;
     @Property boolean expansionNegated, semanticLookaheadNested;
+
+    public boolean isAlwaysSuccessful() {return false;}
 }
 
 
@@ -1900,6 +1902,10 @@ INJECT AttemptBlock :
         return getNestedExpansion().isPossiblyEmpty();
     }
     
+    public boolean isAlwaysSuccessful() {
+        return getNestedExpansion().isAlwaysSuccessful();
+    }
+    
     //REVISIT: Should this take RECOVER into account? I don't think so,
     // but I still have to think about it a bit more.
     public TokenSet getFirstSet() {
@@ -2018,6 +2024,10 @@ INJECT TryBlock  :
     
     public boolean isPossiblyEmpty() {
         return getNestedExpansion().isPossiblyEmpty();
+    }
+    
+    public boolean isAlwaysSuccessful() {
+        return getNestedExpansion().isAlwaysSuccessful();
     }
     
     public TokenSet getFirstSet() {

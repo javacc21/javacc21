@@ -63,7 +63,7 @@ abstract public class Expansion extends BaseNode {
     public Expansion() {
     }
 
-    public BNFProduction getContainingProduction() {
+    public final BNFProduction getContainingProduction() {
         return firstAncestorOfType(BNFProduction.class);
     }
 
@@ -204,20 +204,7 @@ abstract public class Expansion extends BaseNode {
     public final boolean superfluousParentheses() {
         return this.getClass() == ExpansionWithParentheses.class && firstChildOfType(ExpansionSequence.class) != null;
     }
-
-    public boolean beginsSequence() {
-        if (getParent() instanceof ExpansionSequence) {
-            ExpansionSequence seq = (ExpansionSequence) getParent();
-            for (Expansion child : seq.childrenOfType(Expansion.class)) {
-                if (child == this)
-                    return true;
-                if (!child.isPossiblyEmpty())
-                    return false;
-            }
-        }
-        return false;
-    }
-
+ 
     public boolean isInsideLookahead() {
         return firstAncestorOfType(Lookahead.class) != null;
     }
@@ -277,17 +264,6 @@ abstract public class Expansion extends BaseNode {
     public Expansion getLookaheadExpansion() { return this; }
 
     boolean getHasImplicitSyntacticLookahead() {return false;}
-
-    public boolean isAlwaysSuccessful() {
-        if (getHasSemanticLookahead() || getHasLookBehind() || !isPossiblyEmpty()) {
-            return false;
-        }
-        if (firstChildOfType(Failure.class) != null || firstChildOfType(Assertion.class) != null) {
-            return false;
-        }
-        Lookahead la = getLookahead();
-        return la == null || la.getNestedExpansion() == null || la.getNestedExpansion().isPossiblyEmpty();
-    }
 
     final boolean getHasGlobalSemanticActions() {
         List<CodeBlock> blocks = descendants(CodeBlock.class, cb -> cb.isAppliesInLookahead());
@@ -412,11 +388,6 @@ abstract public class Expansion extends BaseNode {
         return firstChildOfType(TokenActivation.class) != null;
     }
 
-    /**
-     * @return Can this expansion be matched by the empty string.
-     */
-    abstract public boolean isPossiblyEmpty();
-
     public boolean isSingleToken() {
         // Uncomment the following line to turn off this optimization.
         // if (true) return false;
@@ -445,6 +416,13 @@ abstract public class Expansion extends BaseNode {
         }
         return false;
     }
+
+    /**
+     * @return Can this expansion be matched by the empty string.
+     */
+    abstract public boolean isPossiblyEmpty();
+
+    abstract public boolean isAlwaysSuccessful();
 
     /**
      * @return the minimum number of tokens that this expansion consumes.
