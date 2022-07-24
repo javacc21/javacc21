@@ -116,9 +116,17 @@ public class NonTerminal extends Expansion {
          inMaximumSize = false;
          return result;
      }
+    
      
+     // We don't nest into NonTerminals
      boolean getHasScanLimit() {
-         return getProduction().getHasScanLimit();
+        Expansion exp = getNestedExpansion();
+        if (exp instanceof ExpansionSequence) {
+            for (Expansion sub : ((ExpansionSequence) exp).allUnits()) {
+                if (sub.isScanLimit()) return true;
+            }
+        }
+        return false;
      }
 
      public boolean getSpecifiesLexicalStateSwitch() {

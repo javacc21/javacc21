@@ -85,10 +85,6 @@ public class BNFProduction extends BaseNode {
         return firstChildOfType(TreeBuildingAnnotation.class);
     }
 
-    public boolean getHasScanLimit() {
-        return expansion.getHasScanLimit();
-    }
-
     public boolean getHasExplicitLookahead() {
         return expansion.getLookahead() != null;
     }

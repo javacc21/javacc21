@@ -37,7 +37,7 @@ public class ExpansionSequence extends Expansion {
      * @return a List that includes child expansions that are
      *         inside of superfluous parentheses.
      */
-    private List<Expansion> allUnits() {
+    List<Expansion> allUnits() {
         List<Expansion> result = new ArrayList<>();
         for (Expansion unit : childrenOfType(Expansion.class)) {
             result.add(unit);
@@ -203,7 +203,9 @@ public class ExpansionSequence extends Expansion {
 
     /**
      * @return whether we have a scan limit, including an implicit one inside a
-     *         nested NonTerminal
+     *         nested NonTerminal. However, the NonTerminal has to 
+     *         start the sequence and we don't nest within the NonTerminal. I think
+     *         that gets too confusing.
      */
     boolean getHasScanLimit() {
         boolean atStart = true;
