@@ -241,19 +241,6 @@ public class ExpansionSequence extends Expansion {
         return childrenOfType(Expansion.class);
     }
 
-    List<Expansion> getSubExpansionsUpToOneToken() {
-        int consumed = 0;
-        List<Expansion> result = new ArrayList<>();
-        for (Expansion exp : allUnits()) {
-            result.add(exp);
-            int min = exp.getMinimumSize();
-            if (min == Integer.MAX_VALUE) consumed = Integer.MAX_VALUE;
-            else consumed += min;
-            if (min >= 1) break;
-        }
-        return result;
-    }
-
     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         boolean result = false;
         for (Expansion unit : childrenOfType(Expansion.class)) {

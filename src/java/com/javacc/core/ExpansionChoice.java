@@ -105,14 +105,11 @@ public class ExpansionChoice extends Expansion {
         return true;
     }
 
-    List<Expansion> getSubExpansionsUpToOneToken() {
-        List<Expansion> result = new ArrayList<>();
-        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
-            result.addAll(choice.getSubExpansionsUpToOneToken());
-        }
-        return result;
-    }
-    
+
+//For now we don't recurse into the various choice sub-expansions.
+// If the following code is uncommented, we end up with a huge slow-down
+// on the Java grammar, for example.
+/*
     public boolean startsWithLexicalChange() {
         for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
             if (choice.startsWithLexicalChange()) return true;
@@ -126,4 +123,5 @@ public class ExpansionChoice extends Expansion {
         }
         return false;
     }
+*/    
 }

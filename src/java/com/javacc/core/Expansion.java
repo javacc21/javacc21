@@ -242,6 +242,7 @@ abstract public class Expansion extends BaseNode {
         if (getHasImplicitSyntacticLookahead()) {
             return true;
         }
+/*
         if (getHasTokenActivation() || getSpecifiedLexicalState() != null) {
             // Not quite correct. We only care about token activation if 
             // we haven't yet consumed any input. Otherwise, it doesn't matter.
@@ -249,9 +250,8 @@ abstract public class Expansion extends BaseNode {
         }
         if (getSpecifiesLexicalStateSwitch()) {
             return true;
-        }
-        if (descendants(CodeBlock.class).stream().anyMatch(cb->cb.isAppliesInLookahead())) {
-            // This is not quite correct. REVISIT.
+        }*/
+        if (startsWithGlobalCodeAction() || startsWithLexicalChange()) {
             return true;
         }
         return false;
