@@ -29,6 +29,7 @@
 package com.javacc.core;
 
 import java.util.*;
+import com.javacc.parser.Node;
 import com.javacc.parser.tree.*;
 
 public class ExpansionSequence extends Expansion {
@@ -338,5 +339,27 @@ public class ExpansionSequence extends Expansion {
             if (exp.getMaximumSize() == 1 && !exp.isSingleToken()) return false;
         }
         return true;
+    }
+
+    public boolean startsWithLexicalChange() {
+        Node parent = getParent();
+        if (parent instanceof BNFProduction) {
+            if (((BNFProduction) parent).getLexicalState() != null) {
+                return true;
+            }
+        }
+        for (Expansion exp : childrenOfType(Expansion.class)) {
+            if (exp.startsWithLexicalChange()) return true;
+            if (!exp.isPossiblyEmpty()) break;
+        }
+        return false;
+    }
+
+    public boolean startsWithGlobalCodeAction() {
+        for (Expansion exp : childrenOfType(Expansion.class)) {
+            if (exp.startsWithGlobalCodeAction()) return true;
+            if (!exp.isPossiblyEmpty()) break;
+        }
+        return false;
     }
 }

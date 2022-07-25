@@ -136,4 +136,14 @@ public class NonTerminal extends Expansion {
      public boolean isSingleToken() {
         return getNestedExpansion().isSingleToken();
      }
+
+     public boolean startsWithLexicalChange() {
+        return getProduction().getLexicalState() != null || getNestedExpansion().startsWithLexicalChange();
+     }
+
+     public boolean startsWithGlobalCodeAction() {
+        CodeBlock javaCode = getProduction().getJavaCode();
+        if (javaCode != null && javaCode.isAppliesInLookahead()) return true;
+        return getNestedExpansion().startsWithGlobalCodeAction();
+     }
 }

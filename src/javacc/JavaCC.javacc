@@ -1488,6 +1488,15 @@ INJECT ExpansionWithParentheses :
     public boolean potentiallyStartsWith(String productionName, java.util.Set<String> alreadyVisited) {
         return getNestedExpansion().potentiallyStartsWith(productionName, alreadyVisited);
     }
+
+    public boolean startsWithLexicalChange() {
+        return firstChildOfType(LexicalStateSwitch.class) != null || firstChildOfType(TokenActivation.class) != null
+              || getNestedExpansion().startsWithLexicalChange();
+    }
+
+    public boolean startsWithGlobalCodeAction() {
+        return getNestedExpansion().startsWithGlobalCodeAction();
+    }
 }
 
 ExpansionSequence #com.javacc.core.ExpansionSequence :
@@ -1932,6 +1941,14 @@ INJECT AttemptBlock :
      public boolean getSpecifiesLexicalStateSwitch() {
          return getNestedExpansion().getSpecifiesLexicalStateSwitch();
      }
+
+     public boolean startsWithLexicalChange() {
+        return getNestedExpansion().startsWithLexicalChange();
+     }
+
+     public boolean startsWithGlobalCodeAction() {
+        return getNestedExpansion().startsWithGlobalCodeAction();
+     }
 }
 
 UncacheTokens# : "UNCACHE_TOKENS" ;   
@@ -1963,6 +1980,8 @@ INJECT Failure :
     }
 
     public boolean isAlwaysSuccessful() {return false;}
+
+    public boolean startsWithGlobalCodeAction() {return true;}    
 }
 
 LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER> ;
@@ -2049,6 +2068,14 @@ INJECT TryBlock  :
     public boolean getSpecifiesLexicalStateSwitch() {
         return getNestedExpansion().getSpecifiesLexicalStateSwitch();
     }
+
+    public boolean startsWithLexicalChange() {
+        return getNestedExpansion().startsWithLexicalChange();
+    }
+
+    public boolean startsWithGlobalCodeAction() {
+        return getNestedExpansion().startsWithGlobalCodeAction();
+    }
 }
 
 
@@ -2063,6 +2090,10 @@ INJECT CodeBlock :
     
     public boolean isPossiblyEmpty() {
        return true;
+    }
+
+    public boolean startsWithGlobalCodeAction() {
+        return isAppliesInLookahead();
     }
 }
 

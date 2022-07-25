@@ -263,6 +263,9 @@ abstract public class Expansion extends BaseNode {
 
     boolean getHasImplicitSyntacticLookahead() {return false;}
 
+    public boolean startsWithGlobalCodeAction() {return false;}
+    public boolean startsWithLexicalChange() {return false;}
+
 
     // This should only be used if we already know the expansion consumes at most a single
     // token. Otherwise, we're bound to get into infinite loops nesting into the nonterminals.

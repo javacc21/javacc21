@@ -112,4 +112,18 @@ public class ExpansionChoice extends Expansion {
         }
         return result;
     }
+    
+    public boolean startsWithLexicalChange() {
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+            if (choice.startsWithLexicalChange()) return true;
+        }
+        return false;
+    }    
+
+    public boolean startsWithGlobalCodeAction() {
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+            if (choice.startsWithGlobalCodeAction()) return true;
+        }
+        return false;
+    }
 }
