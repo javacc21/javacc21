@@ -62,17 +62,6 @@ public class ExpansionSequence extends Expansion {
         return null;
     }
 
-    public boolean getSpecifiesLexicalStateSwitch() {
-        for (Expansion unit : childrenOfType(Expansion.class)) {
-            if (unit.getSpecifiesLexicalStateSwitch()) {
-                return true;
-            }
-            if (!unit.isPossiblyEmpty())
-                break;
-        }
-        return false;
-    }
-
     public boolean isAlwaysSuccessful() {
         if (!isPossiblyEmpty()) return false;
         if (getHasSemanticLookahead() || getHasLookBehind()) {
@@ -129,16 +118,6 @@ public class ExpansionSequence extends Expansion {
         }
         Lookahead la = getLookahead();
         return la != null && la.getRequiresScanAhead();
-    }
-
-    public boolean getHasTokenActivation() {
-        for (Expansion unit : childrenOfType(Expansion.class)) {
-            if (unit.getHasTokenActivation())
-                return true;
-            if (!unit.isPossiblyEmpty())
-                break;
-        }
-        return false;
     }
 
     private Lookahead lookahead;

@@ -1472,9 +1472,6 @@ INJECT ExpansionWithParentheses :
     public boolean isAlwaysSuccessful() {return getNestedExpansion().isAlwaysSuccessful();}
     public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
     public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
-    public boolean getSpecifiesLexicalStateSwitch() {
-        return getSpecifiedLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
-    }
 
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
@@ -1941,10 +1938,6 @@ INJECT AttemptBlock :
      public int getMaximumSize() {
          return getNestedExpansion().getMaximumSize();
      }
-     
-     public boolean getSpecifiesLexicalStateSwitch() {
-         return getNestedExpansion().getSpecifiesLexicalStateSwitch();
-     }
 
      public boolean startsWithLexicalChange() {
         return getNestedExpansion().startsWithLexicalChange();
@@ -2068,11 +2061,7 @@ INJECT TryBlock  :
     public int getMaximumSize() {
         return getNestedExpansion().getMaximumSize();
     }
-
-    public boolean getSpecifiesLexicalStateSwitch() {
-        return getNestedExpansion().getSpecifiesLexicalStateSwitch();
-    }
-
+    
     public boolean startsWithLexicalChange() {
         return getNestedExpansion().startsWithLexicalChange();
     }

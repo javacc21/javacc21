@@ -47,10 +47,6 @@ public class NonTerminal extends Expansion {
         return getProduction().getExpansion();
     }
 
-    public boolean getHasTokenActivation() {
-        return getNestedExpansion().getHasTokenActivation();
-    }
-
     public Lookahead getLookahead() {
         return getNestedExpansion().getLookahead();
     }
@@ -127,10 +123,6 @@ public class NonTerminal extends Expansion {
             }
         }
         return false;
-     }
-
-     public boolean getSpecifiesLexicalStateSwitch() {
-         return getProduction().getLexicalState() != null || getNestedExpansion().getSpecifiesLexicalStateSwitch();
      }
 
      public boolean isSingleToken() {

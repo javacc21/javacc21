@@ -28,7 +28,6 @@
 
 package com.javacc.core;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -83,13 +82,6 @@ public class ExpansionChoice extends Expansion {
         return result;
     }
     
-    public boolean getSpecifiesLexicalStateSwitch() {
-        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
-            if (choice.getSpecifiesLexicalStateSwitch()) return true;
-        }
-        return false;
-    }
-
     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
             if (choice.potentiallyStartsWith(productionName, alreadyVisited)) return true;

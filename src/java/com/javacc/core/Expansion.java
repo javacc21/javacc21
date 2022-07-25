@@ -242,15 +242,6 @@ abstract public class Expansion extends BaseNode {
         if (getHasImplicitSyntacticLookahead()) {
             return true;
         }
-/*
-        if (getHasTokenActivation() || getSpecifiedLexicalState() != null) {
-            // Not quite correct. We only care about token activation if 
-            // we haven't yet consumed any input. Otherwise, it doesn't matter.
-            return true;
-        }
-        if (getSpecifiesLexicalStateSwitch()) {
-            return true;
-        }*/
         if (startsWithGlobalCodeAction() || startsWithLexicalChange()) {
             return true;
         }
@@ -387,27 +378,12 @@ abstract public class Expansion extends BaseNode {
         return !getFollowSet().isIncomplete();
     }
 
-    public boolean getSpecifiesLexicalStateSwitch() {
-        return false;
-    };
-
-    public boolean getHasTokenActivation() {
-        return firstChildOfType(TokenActivation.class) != null;
-    }
-
-
     /**
      * @return Can we do a short-cut and scan this expansion as a single token (using the scanToken method)
      */
     public boolean isSingleToken() {
         // Uncomment the following line to turn off this optimization.
         // if (true) return false;
-    //    if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getLookahead() != null)
-//            return false;
-//        if (startsWithGlobalCodeAction() || startsWithLexicalChange()) {
-//            return false;
-//        }
-
         return !isPossiblyEmpty() && getMaximumSize() == 1 && !getHasScanLimit() && getLookahead() == null 
                && !startsWithGlobalCodeAction() && !startsWithLexicalChange();
     }
@@ -513,7 +489,8 @@ abstract public class Expansion extends BaseNode {
             following = following.getFollowingExpansion();
             if (following == null)
                 return null;
-            if (following.getSpecifiesLexicalStateSwitch())
+//            if (following.getSpecifiesLexicalStateSwitch())
+            if (following.startsWithLexicalChange())
                 return true;
         } while (following.isPossiblyEmpty());
         return false;
