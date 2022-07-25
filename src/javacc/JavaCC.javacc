@@ -1536,6 +1536,10 @@ INJECT Assertion :
     @Property boolean expansionNegated, semanticLookaheadNested;
 
     public boolean isAlwaysSuccessful() {return false;}
+
+    public boolean startsWithGlobalCodeAction() {
+        return expansion != null || semanticLookaheadNested;
+    }
 }
 
 

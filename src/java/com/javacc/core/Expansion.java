@@ -402,21 +402,14 @@ abstract public class Expansion extends BaseNode {
     public boolean isSingleToken() {
         // Uncomment the following line to turn off this optimization.
         // if (true) return false;
-        if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getSpecifiesLexicalStateSwitch() || getLookahead() != null)
-            return false;
-        if (descendants(Expansion.class).stream().anyMatch(exp->exp.getLookahead() != null)) {
-            return false;
-        }
-        if (firstDescendantOfType(Failure.class) != null || firstDescendantOfType(Assertion.class) != null || firstDescendantOfType(TokenActivation.class) != null) {
-            // REVISIT. This does not take into account any failures or assertions inside a NonTerminal.
-            return false;
-        }
-        if (descendants(Expansion.class).stream().anyMatch(exp->exp.getSpecifiesLexicalStateSwitch())) {
-            return false;
-        }
-        if (hasGlobalSemanticActions())
-            return false;
-        return true;
+    //    if (isPossiblyEmpty() || getMaximumSize() > 1 || getHasScanLimit() || getLookahead() != null)
+//            return false;
+//        if (startsWithGlobalCodeAction() || startsWithLexicalChange()) {
+//            return false;
+//        }
+
+        return !isPossiblyEmpty() && getMaximumSize() == 1 && !getHasScanLimit() && getLookahead() == null 
+               && !startsWithGlobalCodeAction() && !startsWithLexicalChange();
     }
 
     /**
