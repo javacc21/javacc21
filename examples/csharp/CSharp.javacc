@@ -2074,7 +2074,7 @@ VarPattern :
 
 TypePattern :
    (
-      => Type
+      Type
       [
          SCAN {getToken(0) instanceof NODE_PACKAGE.PrimitiveType}#
          => "." <IDENTIFIER>

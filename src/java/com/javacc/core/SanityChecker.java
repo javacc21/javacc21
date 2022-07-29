@@ -108,6 +108,18 @@ public class SanityChecker {
             {
                 grammar.addError(sequence, "Encountered scanahead at a non-choice location." );
             }
+
+            if (sequence.getHasExplicitScanLimit() && !sequence.isAtChoicePoint()) {
+                grammar.addError(sequence, "Encountered an up-to-here marker at a non-choice location.")
+            }
+
+            if (sequence.getHasSeparateSyntacticLookahead() && sequence.getHasExplicitScanLimit()) {
+                grammar.addError(sequence, "An expansion cannot have both syntactic lookahead and a scan limit.");
+            }
+
+            if (sequence.getHasExplicitNumericalLookahead() && sequence.getHasExplicitScanLimit()) {
+                grammar.addError(sequence, "An expansion cannot have both numerical lookahead and a scan limit.");
+            }
         }
 /* REVISIT this later.*/
         for (Expansion exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {

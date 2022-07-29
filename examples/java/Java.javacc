@@ -340,7 +340,7 @@ TypeBound :
    "extends" ObjectType ( "&" ObjectType )*
 ;
 
-ClassOrInterfaceBody : "{" (ClassOrInterfaceBodyDeclaration)*! "}" ;
+ClassOrInterfaceBody : "{" (SCAN ~("}") => ClassOrInterfaceBodyDeclaration)*! "}" ;
 
 ClassOrInterfaceBodyDeclaration#interface :
   Initializer
