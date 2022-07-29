@@ -110,7 +110,7 @@ public class SanityChecker {
             }
 
             if (sequence.getHasExplicitScanLimit() && !sequence.isAtChoicePoint()) {
-                grammar.addError(sequence, "Encountered an up-to-here marker at a non-choice location.")
+                grammar.addError(sequence, "Encountered an up-to-here marker at a non-choice location.");
             }
 
             if (sequence.getHasSeparateSyntacticLookahead() && sequence.getHasExplicitScanLimit()) {
