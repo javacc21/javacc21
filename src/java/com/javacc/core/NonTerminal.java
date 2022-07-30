@@ -60,15 +60,20 @@ public class NonTerminal extends Expansion {
     }
     
     /**
-     * The basic logic of when we scan to the end of 
-     * a NonTerminal, ignoring any nested lookahead or scan limits.
+     * The basic logic of when we actually stop at a scan limit 
+     * encountered inside a NonTerminalscan to the end of 
      */
-    public boolean getScanToEnd() {
-        if (isInsideLookahead()) return true;
+
+    public boolean getStopAtScanLimit() {
+        if (isInsideLookahead()) return false;
         ExpansionSequence parent = (ExpansionSequence) getNonSuperfluousParent();
-        if (!parent.isAtChoicePoint()) return true;
-        if (parent.getHasExplicitNumericalLookahead() || parent.getHasExplicitScanLimit()) return true;
-        return parent.firstNonEmpty() != this;
+        if (!parent.isAtChoicePoint()) return false;
+        if (parent.getHasExplicitNumericalLookahead() || parent.getHasExplicitScanLimit()) return false;
+        return parent.firstNonEmpty() == this;
+    }
+
+    public final boolean getScanToEnd() {
+        return !getStopAtScanLimit();
     }
 
     public TokenSet getFirstSet() {
@@ -115,7 +120,8 @@ public class NonTerminal extends Expansion {
     
      
      // We don't nest into NonTerminals
-     boolean getHasScanLimit() {
+     @Override
+     public boolean getHasScanLimit() {
         Expansion exp = getNestedExpansion();
         if (exp instanceof ExpansionSequence) {
             for (Expansion sub : ((ExpansionSequence) exp).allUnits()) {

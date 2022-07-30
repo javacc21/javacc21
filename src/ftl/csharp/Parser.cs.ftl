@@ -156,7 +156,6 @@ namespace ${csPackage} {
         public string ProductionName { get; private set; }
         public uint Line { get; private set; }
         public uint Column { get; private set; }
-        public bool ScanToEnd { get; private set; }
         public ISet<TokenType> FollowSet { get; private set; }
 
         internal NonTerminalCall(Parser parser, string fileName, string productionName, uint line, uint column) {
@@ -165,8 +164,6 @@ namespace ${csPackage} {
             ProductionName = productionName;
             Line = line;
             Column = column;
-            // We actually only use this when we're working with the LookaheadStack
-            ScanToEnd = parser.ScanToEnd;
             FollowSet = parser.OuterFollowSet;
         }
 /*
@@ -245,7 +242,6 @@ ${grammar.utils.translateInjectedClass(injector, node)}
         private TokenType? _nextTokenType;
         private uint _remainingLookahead;
         private bool _hitFailure;
-        private bool _lastLookaheadSucceeded;
         private string _currentlyParsedProduction;
         private string _currentLookaheadProduction;
         private uint _lookaheadRoutineNesting;

@@ -103,6 +103,7 @@ public class ExpansionSequence extends Expansion {
 
     private boolean getRequiresScanAhead() {
         boolean foundNonEmpty = false;
+        if (getHasExplicitScanLimit()) return true;
         for (Expansion unit : childrenOfType(Expansion.class)) {
             if (unit.isScanLimit())
                 return true;
@@ -187,16 +188,18 @@ public class ExpansionSequence extends Expansion {
      *         start the sequence and we don't nest within the NonTerminal. I think
      *         that gets too confusing.
      */
-    boolean getHasScanLimit() {
+    @Override
+    public boolean getHasScanLimit() {
         boolean atStart = true;
         for (Expansion unit : allUnits()) {
             if (unit.isScanLimit())
                 return true;
             if (atStart && unit instanceof NonTerminal) {
+                atStart = false;
                 if (unit.getHasScanLimit())
                     return true;
             }
-            if (!unit.isPossiblyEmpty())
+            if (unit.getMaximumSize() > 0)
                 atStart = false;
         }
         return false;
@@ -207,8 +210,9 @@ public class ExpansionSequence extends Expansion {
      *         i.e. <em>not including</em> one that is inside a NonTerminal
      *         expansion.
      */
+    @Override
     public boolean getHasExplicitScanLimit() {
-        for (Expansion unit : childrenOfType(Expansion.class)) {
+        for (Expansion unit: allUnits()) {
             if (unit.isScanLimit()) {
                 return true;
             }
@@ -220,6 +224,7 @@ public class ExpansionSequence extends Expansion {
         return childrenOfType(Expansion.class);
     }
 
+    @Override
     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         boolean result = false;
         for (Expansion unit : childrenOfType(Expansion.class)) {
@@ -229,6 +234,7 @@ public class ExpansionSequence extends Expansion {
         return result;
     }
 
+    @Override
     public int getLookaheadAmount() {
         Lookahead la = getLookahead();
         if (la != null)

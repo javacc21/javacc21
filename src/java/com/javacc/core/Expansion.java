@@ -146,7 +146,7 @@ abstract public class Expansion extends BaseNode {
             return false;
         }
         ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
-        return grandparent.getUnits().get(0) == parent && grandparent.isAtChoicePoint();
+        return grandparent.childrenOfType(Expansion.class).get(0) == parent && grandparent.isAtChoicePoint();
     }
 
     /**
@@ -156,7 +156,7 @@ abstract public class Expansion extends BaseNode {
      *         expansions inside parentheses.
      */
 
-    public Node getNonSuperfluousParent() {
+    final Node getNonSuperfluousParent() {
         Node parent = getParent();
         if (!(parent instanceof Expansion) || !((Expansion) parent).superfluousParentheses()) {
             return parent;
@@ -201,7 +201,15 @@ abstract public class Expansion extends BaseNode {
         return firstAncestorOfType(Lookahead.class) != null;
     }
 
+    public boolean isInsideAssertion() {
+        return firstAncestorOfType(Assertion.class) != null;
+    }
+
     public boolean getHasExplicitNumericalLookahead() {
+        return false;
+    }
+
+    public boolean getHasExplicitScanLimit() {
         return false;
     }
 
@@ -236,16 +244,10 @@ abstract public class Expansion extends BaseNode {
         if (isInsideLookahead() || !isAtChoicePoint()) {
             return false;
         }
-        if (getLookahead() != null) {
-            return true;
-        }
-        if (getHasImplicitSyntacticLookahead()) {
-            return true;
-        }
-        if (startsWithGlobalCodeAction() || startsWithLexicalChange()) {
-            return true;
-        }
-        return false;
+        return getLookahead() != null 
+            || getHasImplicitSyntacticLookahead() 
+            || startsWithGlobalCodeAction() 
+            || startsWithLexicalChange();
     }
 
     public Lookahead getLookahead() {return null;}
@@ -276,7 +278,7 @@ abstract public class Expansion extends BaseNode {
         return false;
     }
 
-    boolean getHasScanLimit() {
+    public boolean getHasScanLimit() {
         return false; // Only an ExpansionSequence or a NonTerminal can have a scan limit.
     }
 

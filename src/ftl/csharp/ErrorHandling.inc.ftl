@@ -40,7 +40,6 @@
         private void PopLookaheadStack() {
             var ntc = _lookaheadStack.Pop();
             _currentLookaheadProduction = ntc.ProductionName;
-            ScanToEnd = ntc.ScanToEnd;
         }
 
         private Token ConsumeToken(TokenType expectedType[#if grammar.faultTolerant], bool tolerant, HashSet<TokenType> followSet[/#if]) {

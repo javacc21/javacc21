@@ -115,5 +115,5 @@ public class ExpansionChoice extends Expansion {
         }
         return false;
     }
-*/    
+*/
 }

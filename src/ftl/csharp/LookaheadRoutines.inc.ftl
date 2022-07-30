@@ -82,26 +82,26 @@
             Token peekedToken = NextToken(currentLookaheadToken);
             TokenType tt = peekedToken.Type;
             if (System.Array.FindIndex<TokenType>(types, t => t == tt) < 0) {
-                return _lastLookaheadSucceeded = false;
+                return false;
             }
             if (_remainingLookahead != UNLIMITED) {
                 _remainingLookahead--;
             }
             currentLookaheadToken = peekedToken;
-            return _lastLookaheadSucceeded = true;
+            return true;
         }
 
         internal bool ScanToken(HashSet<TokenType> types) {
             Token peekedToken = NextToken(currentLookaheadToken);
             TokenType tt = peekedToken.Type;
             if (!types.Contains(tt)) {
-                return _lastLookaheadSucceeded = false;
+                return false;
             }
             if (_remainingLookahead != UNLIMITED) {
                 _remainingLookahead--;
             }
             currentLookaheadToken = peekedToken;
-            return _lastLookaheadSucceeded = true;
+            return true;
         }
 
 // ====================================
@@ -148,7 +148,7 @@ ${BuildPredicateCode(expansion, 12)}
       [#if !expansion.hasSeparateSyntacticLookahead]
 ${BuildScanCode(expansion, 12)}
       [/#if]
-            return _lastLookaheadSucceeded = true;
+            return true;
         }
         finally {
             _lookaheadRoutineNesting--;
@@ -172,7 +172,7 @@ ${is}        _lookaheadRoutineNesting++;
 ${BuildPredicateCode(expansion, indent + 8)}
    [/#if]
 ${BuildScanCode(expansion, indent + 8)}
-${is}        return _lastLookaheadSucceeded = true;
+${is}        return true;
 ${is}    }
 ${is}    finally {
 ${is}        _lookaheadRoutineNesting--;
@@ -198,7 +198,7 @@ ${is}    }
 ${is}    try {
 ${is}        _lookaheadRoutineNesting++;
 ${BuildScanCode(expansion, indent + 4)}
-${is}        return _lastLookaheadSucceeded = true;
+${is}        return true;
 ${is}    }
 ${is}    finally {
 ${is}        _lookaheadRoutineNesting--;
@@ -213,24 +213,22 @@ ${is}}
 [#-- ${is}# DBG > BuildPredicateCode ${indent} --]
 [#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
 ${is}if (!(${grammar.utils.translateExpression(expansion.semanticLookahead)})) {
-${is}    return _lastLookaheadSucceeded = false;
+${is}    return false;
 ${is}}
 [/#if]
 [#if expansion.hasLookBehind]
 ${is}if ([#if !expansion.lookBehind.negated]![/#if]${expansion.lookBehind.routineName}()) {
-${is}    return _lastLookaheadSucceeded = false;
+${is}    return false;
 ${is}}
 [/#if]
 ${is}if (_remainingLookahead <= 0) {
-${is}    return _lastLookaheadSucceeded = true;
+${is}    return true;
 ${is}}
 [#if expansion.hasSeparateSyntacticLookahead]
 ${is}if ([#if !expansion.lookahead.negated]![/#if]${expansion.lookaheadExpansion.scanRoutineName}()) {
   [#if expansion.lookahead.negated]
-${is}    _lastLookaheadSucceeded = true;
 ${is}    return false;
   [#else]
-${is}    _lastLookaheadSucceeded = false;
 ${is}    return false;
   [/#if]
 ${is}}
@@ -255,7 +253,7 @@ ${is}    var prevScanaheadToken = currentLookaheadToken;
 ${is}    try {
 ${is}        _lookaheadRoutineNesting++;
 ${BuildScanCode(lookahead.nestedExpansion, indent + 8)}
-${is}        return _lastLookaheadSucceeded = !_hitFailure;
+${is}        return !_hitFailure;
 ${is}    }
 ${is}    finally {
 ${is}        _lookaheadRoutineNesting--;
@@ -280,15 +278,15 @@ ${is}    NonTerminalCall ntc;
   [#if elementNegated][#set element = element?substring(1)][/#if]
   [#if element = "."]
 ${is}    if (!stackIterator.HasNext()) {
-${is}        return _lastLookaheadSucceeded = false;
+${is}        return false;
 ${is}    }
 ${is}    stackIterator.Next();
   [#elseif element = "..."]
     [#if element_index = lookBehind.path?size-1]
       [#if lookBehind.hasEndingSlash]
-${is}    return _lastLookaheadSucceeded = !stackIterator.HasNext();
+${is}    return !stackIterator.HasNext();
       [#else]
-${is}    return _lastLookaheadSucceeded = true;
+${is}    return true;
       [/#if]
     [#else]
       [#var nextElement = lookBehind.path[element_index+1]]
@@ -302,27 +300,26 @@ ${is}            stackIterator.Previous();
 ${is}            break;
 ${is}        }
 ${is}        if (!stackIterator.HasNext()) {
-${is}            return _lastLookaheadSucceeded = false;
+${is}            return false;
 ${is}        }
 ${is}    }
     [/#if]
   [#else]
 ${is}    if (!stackIterator.HasNext()) {
-${is}        return _lastLookaheadSucceeded = false;
+${is}        return false;
 ${is}    }
 ${is}    ntc = stackIterator.Next();
      [#var equalityOp = elementNegated?string("==", "!=")]
 ${is}    if (ntc.ProductionName ${equalityOp} "${element}") {
-${is}        return _lastLookaheadSucceeded = false;
+${is}        return false;
 ${is}    }
   [/#if]
 [/#list]
 [#if lookBehind.hasEndingSlash]
-${is}    _lastLookaheadSucceeded = !stackIterator.HasNext();
+${is}    return !stackIterator.HasNext();
 [#else]
-${is}    _lastLookaheadSucceeded = true;
+${is}    return true;
 [/#if]
-${is}    return _lastLookaheadSucceeded;
 ${is}}
 [#-- ${is}# DBG < BuildLookBehindRoutine ${indent} --]
 [/#macro]
@@ -335,7 +332,7 @@ ${is}}
 ${grammar.utils.translateCodeBlock(production.javaCode, 12)}
 [/#if]
 ${BuildScanCode(production.expansion, 12)}
-            return _lastLookaheadSucceeded = true;
+            return true;
         }
 
 [#--     # DBG < BuildProductionLookaheadMethod ${indent} --]
@@ -352,7 +349,7 @@ ${BuildScanCode(production.expansion, 12)}
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
 ${is}if (_hitFailure || _remainingLookahead <= 0) {
-${is}    return _lastLookaheadSucceeded = !_hitFailure;
+${is}    return !_hitFailure;
 ${is}}
 ${is}// Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
@@ -424,18 +421,18 @@ ${is}}
 [#macro ScanCodeNonTerminal nt indent]
 [#var is=""?right_pad(indent)]
 ${is}PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
-      [#var prevProductionVarName = "prevProduction" + CU.newID()]
+      [#var prevScanToEndVarName = "ScanToEnd" + CU.newID()]
 ${is}var ${prevProductionVarName} = _currentLookaheadProduction;
 ${is}_currentLookaheadProduction = "${nt.production.name}";
 ${is}ScanToEnd = ${CU.bool(nt.ScanToEnd)};
 ${is}try {
 ${is}    if (!${nt.production.lookaheadMethodName}()) {
-${is}        return _lastLookaheadSucceeded = false;
+${is}        return false;
 ${is}    }
 ${is}}
 ${is}finally {
 ${is}    PopLookaheadStack();
-${is}    _currentLookaheadProduction = ${prevProductionVarName};
+${is}    ScanToEnd = ${prevScanToEndVarName};
 ${is}}
 [/#macro]
 
@@ -445,11 +442,11 @@ ${is}}
 [#-- ${is}# DBG > ScanSingleToken ${indent} --]
 [#if firstSet?size = 1]
 ${is}if (!ScanToken(${CU.TT}${firstSet[0]})) {
-${is}    return _lastLookaheadSucceeded = false;
+${is}    return false;
 ${is}}
 [#else]
 ${is}if (!ScanToken(${expansion.firstSetVarName})) {
-${is}    return _lastLookaheadSucceeded = false;
+${is}    return false;
 ${is}}
 [/#if]
 [#-- ${is}# DBG < ScanSingleToken ${indent} --]
@@ -461,13 +458,13 @@ ${is}}
 [#if assertion.assertionExpression?? && (assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
 ${is}if (!(${grammar.utils.translateExpression(assertion.assertionExpression)})) {
 ${is}    _hitFailure = true;
-${is}    return _lastLookaheadSucceeded = false;
+${is}    return false;
 ${is}}
 [/#if]
 [#if assertion.expansion??]
 ${is}if ([#if !assertion.expansionNegated]![/#if]${assertion.expansion.scanRoutineName}()) {
 ${is}    _hitFailure = true;
-${is}    return _lastLookaheadSucceeded = false;
+${is}    return false;
 ${is}}
 [/#if]
 [#-- ${is}# DBG < ScanCodeAssertion ${indent} --]
@@ -477,7 +474,7 @@ ${is}}
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeError ${indent} --]
 ${is}_hitFailure = true;
-${is}return _lastLookaheadSucceeded = false;
+${is}return false;
 [#-- ${is}# DBG < ScanCodeError ${indent} --]
 [/#macro]
 
@@ -504,7 +501,7 @@ ${is}    currentLookaheadToken = token${CU.newVarIndex};
 ${is}    _remainingLookahead = remainingLookahead${CU.newVarIndex};
 ${is}    _hitFailure = hitFailure${CU.newVarIndex};
      [#if !subseq_has_next]
-${is}    return _lastLookaheadSucceeded = false;
+${is}    return false;
      [/#if]
 [#-- bump up the indentation, as the items in the list are recursive
      levels
@@ -553,7 +550,7 @@ ${is}}
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
 ${is}if (!(${CheckExpansion(oom.nestedExpansion)})) {
-${is}    return _lastLookaheadSucceeded = false;
+${is}    return false;
 ${is}}
 [@ScanCodeZeroOrMore oom indent /]
 [#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]

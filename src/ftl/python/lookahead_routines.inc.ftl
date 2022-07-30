@@ -95,12 +95,10 @@
         else:
             no_match = tt not in expected_type_or_types
         if no_match:
-            self.last_lookahead_succeeded = False
             return False
         if self.remaining_lookahead != UNLIMITED:
             self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
-        self.last_lookahead_succeeded = True
         return True
 
 [#else]
@@ -108,24 +106,20 @@
         peeked_token = self.next_token(self.current_lookahead_token)
         tt = peeked_token.type
         if tt != expected_type:
-            self.last_lookahead_succeeded = False
             return False
         if self.remaining_lookahead != UNLIMITED:
             self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
-        self.last_lookahead_succeeded = True
         return True
 
     def scan_token_many(self, expected_types):
         peeked_token = self.next_token(self.current_lookahead_token)
         tt = peeked_token.type
         if tt not in expected_types:
-            self.last_lookahead_succeeded = False
             return False
         if self.remaining_lookahead != UNLIMITED:
             self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
-        self.last_lookahead_succeeded = True
         return True
 
 [/#if]
@@ -172,7 +166,6 @@ ${BuildPredicateCode(expansion, 12)}
       [#if !expansion.hasSeparateSyntacticLookahead]
 ${BuildScanCode(expansion, 12)}
       [/#if]
-            self.last_lookahead_succeeded = True
             return True
         finally:
             self.lookahead_routine_nesting -= 1
@@ -194,7 +187,6 @@ ${is}        self.lookahead_routine_nesting += 1
 ${BuildPredicateCode(expansion, indent + 8)}
    [/#if]
 ${BuildScanCode(expansion, indent + 8)}
-${is}        self.last_lookahead_succeeded = True
 ${is}        return True
 ${is}    finally:
 ${is}        self.lookahead_routine_nesting -= 1
@@ -219,7 +211,6 @@ ${is}        self.current_lookahead_token = self.last_consumed_token
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
 ${BuildScanCode(expansion, indent + 8)}
-${is}        self.last_lookahead_succeeded = True
 ${is}        return True
 ${is}    finally:
 ${is}        self.lookahead_routine_nesting -= 1
@@ -233,25 +224,20 @@ ${is}        self.current_lookahead_token = ${storeCurrentLookaheadVar}
 [#-- ${is}# DBG > BuildPredicateCode ${indent} --]
 [#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
 ${is}if not (${grammar.utils.translateExpression(expansion.semanticLookahead)}):
-${is}    self.last_lookahead_succeeded = False
 ${is}    return False
 [/#if]
 [#if expansion.hasLookBehind]
 ${is}if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
-${is}    self.last_lookahead_succeeded = False
 ${is}    return False
 [/#if]
 ${is}if self.remaining_lookahead <= 0:
-${is}    self.last_lookahead_succeeded = True
 ${is}    return True
 [#if expansion.hasSeparateSyntacticLookahead]
 ${is}if [#if !expansion.lookahead.negated]not [/#if]self.${expansion.lookaheadExpansion.scanRoutineName}():
   [#if expansion.lookahead.negated]
-${is}    self.last_lookahead_succeeded = True
-${is}    return not self.last_lookahead_succeeded
+${is}    return False
   [#else]
-${is}    self.last_lookahead_succeeded = False
-${is}    return self.last_lookahead_succeeded
+${is}    return False
   [/#if]
 [/#if]
 [#-- ${is}# DBG < BuildPredicateCode ${indent} --]
@@ -275,8 +261,7 @@ ${is}    prev_scanahead_token = self.current_lookahead_token
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
 ${BuildScanCode(lookahead.nestedExpansion, indent + 8)}
-${is}        self.last_lookahead_succeeded = not self.hit_failure
-${is}        return self.last_lookahead_succeeded
+${is}        return not self.hit_failure
 ${is}    finally:
 ${is}        self.lookahead_routine_nesting -= 1
 ${is}        self.current_lookahead_token = prev_scanahead_token
@@ -297,17 +282,15 @@ ${is}    stack_iterator = self.${lookBehind.backward?string("stack_iterator_back
   [#if elementNegated][#set element = element?substring(1)][/#if]
   [#if element = "."]
 ${is}    if not stack_iterator.has_next:
-${is}        self.last_lookahead_succeeded = False
 ${is}        return False
 ${is}    stack_iterator.next
   [#elseif element = "..."]
     [#if element_index = lookBehind.path?size-1]
       [#if lookBehind.hasEndingSlash]
-${is}    self.last_lookahead_succeeded = not stack_iterator.has_next
+${is}    return not stack_iterator.has_next
       [#else]
-${is}    self.last_lookahead_succeeded = True
+${is}    return True
       [/#if]
-${is}    return self.last_lookahead_succeeded
     [#else]
       [#var nextElement = lookBehind.path[element_index+1]]
       [#var nextElementNegated = (nextElement[0]=="~")]
@@ -319,26 +302,22 @@ ${is}        if ntc.production_name ${equalityOp} "${nextElement}":
 ${is}            stack_iterator.previous
 ${is}            break
 ${is}        if not stack_iterator.has_next:
-${is}            self.last_lookahead_succeeded = False
 ${is}            return False
     [/#if]
   [#else]
 ${is}    if not stack_iterator.has_next:
-${is}        self.last_lookahead_succeeded = False
 ${is}        return False
 ${is}    ntc = stack_iterator.next
      [#var equalityOp = elementNegated?string("==", "!=")]
 ${is}    if ntc.production_name ${equalityOp} "${element}":
-${is}        self.last_lookahead_succeeded = False
 ${is}        return False
   [/#if]
 [/#list]
 [#if lookBehind.hasEndingSlash]
-${is}    self.last_lookahead_succeeded = not stack_iterator.has_next
+${is}    return not stack_iterator.has_next
 [#else]
-${is}    self.last_lookahead_succeeded = True
+${is}    return True
 [/#if]
-${is}    return self.last_lookahead_succeeded
 [#-- ${is}# DBG < BuildLookBehindRoutine ${indent} --]
 [/#macro]
 
@@ -352,7 +331,6 @@ ${is}    return self.last_lookahead_succeeded
 ${grammar.utils.translateCodeBlock(production.javaCode, 8)}
 [/#if]
 ${BuildScanCode(production.expansion, 8)}
-        self.last_lookahead_succeeded = True
         return True
 
 [#--     # DBG < BuildProductionLookaheadMethod ${indent} --]
@@ -369,8 +347,7 @@ ${BuildScanCode(production.expansion, 8)}
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
 ${is}if self.hit_failure or self.remaining_lookahead <= 0:
-${is}    self.last_lookahead_succeeded = not self.hit_failure
-${is}    return self.last_lookahead_succeeded
+${is}    return not self.hit_failure
 ${is}# Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
   [@CU.HandleLexicalStateChange expansion true indent; indent]
@@ -444,17 +421,16 @@ ${is}    self.remaining_lookahead = ${sub.scanLimitPlus}
 [#macro ScanCodeNonTerminal nt indent]
 [#var is=""?right_pad(indent)]
 ${is}self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginLine}, ${nt.beginColumn})
-      [#var prevProductionVarName = "prevProduction" + CU.newID()]
-${is}${prevProductionVarName} = self.current_lookahead_production
+      [#var prevScanToEndVarName = "scan_to_end" + CU.newID()]
+${is}${prevScanToEndVarName} = self.scan_to_end
 ${is}self.current_lookahead_production = '${nt.production.name}'
 ${is}self.scan_to_end = ${CU.bool(nt.scanToEnd)}
 ${is}try:
 ${is}    if not self.${nt.production.lookaheadMethodName}():
-${is}        self.last_lookahead_succeeded = False
 ${is}        return False
 ${is}finally:
 ${is}    self.pop_lookahead_stack()
-${is}    self.current_lookahead_production = ${prevProductionVarName}
+${is}    self.scanToEnd = ${prevScanToEndVarName}
 [/#macro]
 
 [#macro ScanSingleToken expansion indent]
@@ -467,7 +443,6 @@ ${is}if not self.scan_token_one(${firstSet[0]}):
 [#else]
 ${is}if not self.scan_token(${firstSet[0]}):
 [/#if]
-${is}    self.last_lookahead_succeeded = False
 ${is}    return False
 [#else]
 [#if optimize_scan_token]
@@ -475,7 +450,6 @@ ${is}if not self.scan_token_many(self.${expansion.firstSetVarName}):
 [#else]
 ${is}if not self.scan_token(self.${expansion.firstSetVarName}):
 [/#if]
-${is}    self.last_lookahead_succeeded = False
 ${is}    return False
 [/#if]
 [#-- ${is}# DBG < ScanSingleToken ${indent} --]
@@ -487,13 +461,11 @@ ${is}    return False
 [#if assertion.assertionExpression?? && (assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
 ${is}if not (${grammar.utils.translateExpression(assertion.assertionExpression)}):
 ${is}    self.hit_failure = True
-${is}    self.last_lookahead_succeeded = False
 ${is}    return False
 [/#if]
 [#if assertion.expansion??]
 ${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():
 ${is}    self.hit_failure = True
-${is}    self.last_lookahead_succeeded = False
 ${is}    return False
 [/#if]
 [#-- ${is}# DBG < ScanCodeAssertion ${indent} --]
@@ -503,7 +475,6 @@ ${is}    return False
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeError ${indent} --]
 ${is}self.hit_failure = True
-${is}self.last_lookahead_succeeded = False
 ${is}return False
 [#-- ${is}# DBG < ScanCodeError ${indent} --]
 [/#macro]
@@ -520,7 +491,6 @@ ${is}    self.current_lookahead_token = token${CU.newVarIndex}
 ${is}    self.remaining_lookahead = remaining_lookahead${CU.newVarIndex}
 ${is}    self.hit_failure = hit_failure${CU.newVarIndex}
      [#if !subseq_has_next]
-${is}    self.last_lookahead_succeeded = False
 ${is}    return False
      [/#if]
 [#-- bump up the indentation, as the items in the list are recursive
@@ -563,7 +533,6 @@ ${is}        break
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
 ${is}if not (${CheckExpansion(oom.nestedExpansion)}):
-${is}    self.last_lookahead_succeeded = False
 ${is}    return False
 [@ScanCodeZeroOrMore oom indent /]
 [#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]

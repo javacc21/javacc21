@@ -214,7 +214,6 @@ class Parser:
         'remaining_lookahead',
         'scan_to_end',
         'hit_failure',
-        'last_lookahead_succeeded',
         'lookahead_routine_nesting',
         'outer_follow_set',
 [#if grammar.faultTolerant]
@@ -257,7 +256,6 @@ ${grammar.utils.translateParserInjections(injector, true)}
         self.remaining_lookahead = 0
         self.scan_to_end = False
         self.hit_failure = False
-        self.last_lookahead_succeeded = False
         self.currently_parsed_production = ''
         self.current_lookahead_production = ''
         self.lookahead_routine_nesting = 0

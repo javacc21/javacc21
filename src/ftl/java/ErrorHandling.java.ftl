@@ -47,8 +47,6 @@ class NonTerminalCall {
     final String productionName;
     final int line, column;
 
-    // We actually only use this when we're working with the LookaheadStack
-    final boolean scanToEnd;
    [#if grammar.faultTolerant]
     final EnumSet<TokenType> followSet;
    [/#if]
@@ -59,7 +57,6 @@ class NonTerminalCall {
         this.productionName = productionName;
         this.line = line;
         this.column = column;
-        this.scanToEnd = ${grammar.parserClassName}.this.scanToEnd;
       [#if grammar.faultTolerant]
         this.followSet = ${grammar.parserClassName}.this.outerFollowSet;
       [/#if]
@@ -152,7 +149,6 @@ private final void pushOntoLookaheadStack(String methodName, String fileName, in
 private final void popLookaheadStack() {
     NonTerminalCall ntc = lookaheadStack.remove(lookaheadStack.size() -1);
     this.currentLookaheadProduction = ntc.productionName;
-    this.scanToEnd = ntc.scanToEnd;
 }
 
 void dumpLookaheadStack(PrintStream ps) {
