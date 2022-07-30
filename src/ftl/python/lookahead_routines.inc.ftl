@@ -160,9 +160,9 @@ ${BuildProductionLookaheadMethod(production, indent)}
     # ${expansion.location}
     # BuildPredicateRoutine macro
     def ${expansion.predicateMethodName}(self):
-        ${prevNonTerminalNestingVarName} = non_terminal_nesting
-        ${prevCurrentLookaheadTokenVarName} = current_lookahead_token
-        ${prevLookaheadRoutineNestingVarName} = lookahead_routine_nesting
+        ${prevNonTerminalNestingVarName} = self.non_terminal_nesting
+        ${prevCurrentLookaheadTokenVarName} = self.current_lookahead_token
+        ${prevLookaheadRoutineNestingVarName} = self.lookahead_routine_nesting
         try:
             self.lookahead_routine_nesting += 1
             if self.current_lookahead_token == None :
