@@ -77,7 +77,7 @@ private Token currentLookaheadToken;
 private int remainingLookahead;
 private boolean scanToEnd, hitFailure, lastLookaheadSucceeded;
 private String currentlyParsedProduction, currentLookaheadProduction;
-private int lookaheadRoutineNesting;
+private int lookaheadRoutineNesting, nonTerminalNesting;
 private EnumSet<TokenType> outerFollowSet;
 
 [#--

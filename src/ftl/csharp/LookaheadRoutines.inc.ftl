@@ -134,13 +134,23 @@ ${BuildProductionLookaheadMethod(production, indent)}
 [#macro BuildPredicateRoutine expansion indent]
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
+  [#var prevNonTerminalNestingVarName = "nonTerminalNesting" + CU.newID(),
+       prevCurrentLookaheadTokenVarName = "currentLookaheadToken"+ CU.newID(),
+       prevLookaheadRoutineNestingVarName = "lookaheadRoutineNesting" + CU.newID()
+  ]
+
+
+
     // predicate routine for expansion at:
     // ${expansion.location}
     // BuildPredicateRoutine macro
     private bool ${expansion.predicateMethodName}() {
+        uint ${prevNonTerminalNestingVarName} = _nonTerminalNesting;
+        uint ${prevLookaheadRoutineNestingVarName} = _lookaheadRoutineNesting;
+        Token ${prevCurrentLookaheadTokenVarName} = currentLookaheadToken;
         try {
             _lookaheadRoutineNesting++;
-            currentLookaheadToken = LastConsumedToken;
+            if (currentLookaheadToken == null) currentLookaheadToken = LastConsumedToken;
             _remainingLookahead = ${lookaheadAmount};
             _hitFailure = false;
             ScanToEnd = ${CU.bool(expansion.hasExplicitNumericalLookahead || expansion.hasSeparateSyntacticLookahead)};
@@ -151,8 +161,9 @@ ${BuildScanCode(expansion, 12)}
             return true;
         }
         finally {
-            _lookaheadRoutineNesting--;
-            currentLookaheadToken = null;
+            _lookaheadRoutineNesting = ${prevLookaheadRoutineNestingVarName};
+            _nonTerminalNesting = ${prevNonTerminalNestingVarName};
+            currentLookaheadToken = ${prevCurrentLookaheadTokenVarName};
         }
     }
 
@@ -405,7 +416,7 @@ ${grammar.utils.translateCodeBlock(expansion, indent)}
    [#list sequence.units as sub]
        [@BuildScanCode sub indent /]
        [#if sub.scanLimit]
-${is}if (!ScanToEnd && _lookaheadRoutineNesting <= 1) {
+${is}if (!ScanToEnd && _nonTerminalNesting <=1 _lookaheadRoutineNesting <= 1) {
 ${is}    _remainingLookahead = ${sub.scanLimitPlus};
 ${is}}
        [/#if]
@@ -422,8 +433,8 @@ ${is}}
 [#var is=""?right_pad(indent)]
 ${is}PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
       [#var prevScanToEndVarName = "ScanToEnd" + CU.newID()]
-${is}var ${prevProductionVarName} = _currentLookaheadProduction;
 ${is}_currentLookaheadProduction = "${nt.production.name}";
+${is}${prevScanToEndVarName} = ScanToEnd;
 ${is}ScanToEnd = ${CU.bool(nt.ScanToEnd)};
 ${is}try {
 ${is}    if (!${nt.production.lookaheadMethodName}()) {
@@ -433,6 +444,7 @@ ${is}}
 ${is}finally {
 ${is}    PopLookaheadStack();
 ${is}    ScanToEnd = ${prevScanToEndVarName};
+${is}    _nonTerminalNesting--;
 ${is}}
 [/#macro]
 

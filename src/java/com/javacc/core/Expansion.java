@@ -241,7 +241,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public final boolean getRequiresPredicateMethod() {
-        if (isInsideLookahead() || !isAtChoicePoint()) {
+        if (!isAtChoicePoint()) {
             return false;
         }
         return getLookahead() != null 
