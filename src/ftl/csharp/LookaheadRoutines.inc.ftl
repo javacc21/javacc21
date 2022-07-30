@@ -434,7 +434,7 @@ ${is}}
 ${is}PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
       [#var prevScanToEndVarName = "ScanToEnd" + CU.newID()]
 ${is}_currentLookaheadProduction = "${nt.production.name}";
-${is}${prevScanToEndVarName} = ScanToEnd;
+${is}bool ${prevScanToEndVarName} = ScanToEnd;
 ${is}ScanToEnd = ${CU.bool(nt.ScanToEnd)};
 ${is}try {
 ${is}    if (!${nt.production.lookaheadMethodName}()) {
