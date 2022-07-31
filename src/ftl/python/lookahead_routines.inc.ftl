@@ -391,7 +391,7 @@ ${ScanCodeOneOrMore(expansion, indent)}
    [#elseif classname = "ExpansionChoice"]
 ${ScanCodeChoice(expansion, indent)}
    [#elseif classname = "CodeBlock"]
-      [#if expansion.appliesInLookahead || expansion.containingProduction.onlyForLookahead]
+      [#if expansion.appliesInLookahead || expansion.containingProduction.onlyForLookahead || expansion.insideLookahead]
 ${grammar.utils.translateCodeBlock(expansion, indent)}
       [/#if]
    [/#if]
@@ -469,7 +469,7 @@ ${is}    return False
 [#macro ScanCodeAssertion assertion indent]
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
-[#if assertion.assertionExpression?? && (assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
+[#if assertion.assertionExpression?? && (assertion.insideLookahead || assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
 ${is}if not (${grammar.utils.translateExpression(assertion.assertionExpression)}):
 ${is}    self.hit_failure = True
 ${is}    return False
