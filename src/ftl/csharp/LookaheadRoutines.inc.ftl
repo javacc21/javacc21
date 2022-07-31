@@ -416,7 +416,7 @@ ${grammar.utils.translateCodeBlock(expansion, indent)}
    [#list sequence.units as sub]
        [@BuildScanCode sub indent /]
        [#if sub.scanLimit]
-${is}if (!ScanToEnd && _nonTerminalNesting <=1 _lookaheadRoutineNesting <= 1) {
+${is}if (!ScanToEnd && _nonTerminalNesting <=1 && _lookaheadRoutineNesting <= 1) {
 ${is}    _remainingLookahead = ${sub.scanLimitPlus};
 ${is}}
        [/#if]
