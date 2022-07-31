@@ -352,7 +352,7 @@
    [#elseif classname = "ExpansionChoice"]
       [@ScanCodeChoice expansion /]
    [#elseif classname = "CodeBlock"]
-      [#if expansion.appliesInLookahead || expansion.containingProduction.onlyForLookahead]
+      [#if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead]
          ${expansion}
       [/#if]
    [/#if]
@@ -413,7 +413,8 @@
 [/#macro]    
 
 [#macro ScanCodeAssertion assertion]
-   [#if assertion.assertionExpression?? && (assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
+   [#if assertion.assertionExpression?? && 
+        (assertion.insideLookahead || assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
       if (!(${assertion.assertionExpression})) {
          hitFailure = true;
          return false;

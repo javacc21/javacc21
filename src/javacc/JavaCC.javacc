@@ -160,8 +160,6 @@ TOKEN :
   |
   < _ON_ERROR : "ON_ERROR"> #JavaCCKeyWord
   |
-  < _UPTO : "UPTO"> #JavaCCKeyWord
-  |
   <HASH : "#">
   |
   <BACKSLASH : "\\"> #Backslash
@@ -679,7 +677,7 @@ INJECT PARSER_CLASS : {
     private EnumSet<TokenType> javaccKeyWords = EnumSet.of(
        _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
        _PARSER_BEGIN, _PARSER_END, _TOKEN, _UNPARSED, _SKIP, _MORE,
-       _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR, _UPTO, 
+       _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR,  
        _LEXICAL_STATE);
 
     private Token TOKEN_HOOK(Token t) {
@@ -1565,7 +1563,7 @@ ScanAhead #com.javacc.core.Lookahead :
 {
    Token amountToken=null;
    boolean hasSemanticLookahead = false, getHasExplicitNumericalLookahead=false;
-   Expansion expansion = null, upToExpansion = null;
+   Expansion expansion = null;
    Expression exp=null;
    Name name = null;
    Node lb = null;
@@ -1594,7 +1592,7 @@ ScanAhead #com.javacc.core.Lookahead :
 (
     SCAN {expansion == null} => <RIGHT_ARROW>
     |
-    SCAN {expansion != null || (exp ==null && lb == null && upToExpansion == null)} => {}
+    SCAN {expansion != null || (exp ==null && lb == null)} => {}
 )
 ;
 
@@ -1755,10 +1753,10 @@ Expansion ExpansionUnit :
  (
   result=UncacheTokens
   |
-  SCAN 1 ~\...\Lookahead => 
+ // SCAN 1 ~\...\Lookahead => 
   result = Failure
   |
-  SCAN 1 ~\...\Lookahead =>
+//  SCAN 1 ~\...\Lookahead =>
   result=Block ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
   SCAN 1 ~\...\Lookahead =>
@@ -1767,7 +1765,7 @@ Expansion ExpansionUnit :
   SCAN 1 ~\...\Lookahead =>
   result=TryBlock
   |
-  SCAN 1 ~\...\Lookahead =>
+//  SCAN 1 ~\...\Lookahead =>
   result = Assertion
   |
   result = ExpansionWithParentheses 

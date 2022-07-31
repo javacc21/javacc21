@@ -395,6 +395,11 @@ abstract public class Expansion extends BaseNode {
      */
     abstract public boolean isPossiblyEmpty();
 
+
+    /**
+     * This is really a misnomer. It should really be alwaysEnter
+     * or something like that.
+     */
     abstract public boolean isAlwaysSuccessful();
 
     /**

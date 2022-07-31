@@ -33,7 +33,7 @@ import com.javacc.parser.tree.*;
 
 public class Lookahead extends BaseNode {
     private Name LHS;
-    private Expansion expansion, nestedExpansion, upToExpansion;
+    private Expansion expansion, nestedExpansion;
     private boolean negated, semanticLookaheadNested;
     private Expression semanticLookahead;
 
@@ -60,11 +60,6 @@ public class Lookahead extends BaseNode {
     public boolean isNegated() {return negated;}
 
     public void setNegated(boolean negated) {this.negated = negated;}
-
-    public Expansion getUpToExpansion() { return upToExpansion;}
-
-    public void setUpToExpansion(Expansion upToExpansion) {this.upToExpansion = upToExpansion;}
-
 
     public boolean isAlwaysSuccessful() {
         return !hasSemanticLookahead() && (getAmount() == 0 || getLookaheadExpansion().isPossiblyEmpty()); 

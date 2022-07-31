@@ -193,13 +193,6 @@ public class SanityChecker {
             }
         }
 
-        for (Lookahead la : grammar.getAllLookaheads()) {
-            Expansion exp = la.getUpToExpansion();
-            if (exp != null && !exp.isSingleToken()) {
-                grammar.addError(exp, "The expansion after UPTO here must be matched by exactly one token.");
-            }
-         }
-
         // Check that any lexical state referred to actually exists
         for (RegexpSpec res : grammar.descendants(RegexpSpec.class)) {
             String nextLexicalState = res.getNextState();

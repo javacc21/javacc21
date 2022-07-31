@@ -64,15 +64,15 @@ public class ExpansionSequence extends Expansion {
 
     public boolean isAlwaysSuccessful() {
         if (!isPossiblyEmpty()) return false;
-        if (getHasSemanticLookahead() || getHasLookBehind()) {
+        Lookahead la = getLookahead();
+        if (la == null) return true;
+        if (la.getSemanticLookahead() != null || la.getLookBehind() != null || la.getNestedExpansion() != null) {
             return false;
         }
-        for (Expansion unit : childrenOfType(Expansion.class)) {
-            if (!unit.isAlwaysSuccessful())
-                return false;
+        for (Expansion exp : childrenOfType(Expansion.class)) {
+            if (!exp.isAlwaysSuccessful()) return false;
         }
-        Lookahead la = getLookahead();
-        return la == null || la.getNestedExpansion() == null || la.getNestedExpansion().isPossiblyEmpty();        
+        return la.getAmount() == 0;
     }
 
     public TokenSet getFirstSet() {
