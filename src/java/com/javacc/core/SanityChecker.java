@@ -113,7 +113,7 @@ public class SanityChecker {
                 grammar.addError(sequence, "Encountered an up-to-here marker at a non-choice location.");
             }
 
-            if (sequence.getHasSeparateSyntacticLookahead() && sequence.getHasExplicitScanLimit()) {
+            if (sequence.getHasExplicitLookahead() && sequence.getHasSeparateSyntacticLookahead() && sequence.getHasExplicitScanLimit()) {
                 grammar.addError(sequence, "An expansion cannot have both syntactic lookahead and a scan limit.");
             }
 

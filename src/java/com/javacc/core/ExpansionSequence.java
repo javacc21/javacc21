@@ -271,8 +271,7 @@ public class ExpansionSequence extends Expansion {
     }
 
     public boolean getHasExplicitNumericalLookahead() {
-        Lookahead la = getLookahead();
-        return la != null && la.getHasExplicitNumericalAmount();
+        return lookahead != null && lookahead.getHasExplicitNumericalAmount();
     }
 
     public boolean getHasSemanticLookahead() {
