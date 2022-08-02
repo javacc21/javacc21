@@ -64,6 +64,7 @@ public class ExpansionSequence extends Expansion {
 
     public boolean isAlwaysSuccessful() {
         if (!isPossiblyEmpty()) return false;
+        if (firstChildOfType(Failure.class)!=null || firstChildOfType(Assertion.class) !=null) return false;
         Lookahead la = getLookahead();
         if (la == null) return true;
         if (la.getSemanticLookahead() != null || la.getLookBehind() != null || la.getNestedExpansion() != null) {
