@@ -3,6 +3,7 @@
 <target name="clean">
    <delete dir="org"/>
    <delete file="CSParse.class"/>
+   <delete file="CSLex.class"/>
 </target>
 
 <target name="init">
@@ -23,8 +24,8 @@
      <assertions><enable/></assertions>
  	   <arg line="-n PPDirectiveLine.javacc"/>
   </java>
-</target>  
- 
+</target>
+
 <target name="parser-gen" depends="init,line-directive-parser-gen" unless="csparser.uptodate">
   <java classpath="../../build:../../javacc.jar:../../bin/javacc.jar:../../bin/freemarker.jar" classname="com.javacc.Main" failonerror="true" fork="true">
     <assertions><enable/></assertions>
@@ -32,7 +33,7 @@
     <arg value="${basedir}/CSharp.javacc"/>
   </java>
 </target>
- 
+
 <target name="compile" depends="init,parser-gen">
      <javac srcdir="."  failonerror="true" source="1.8" target="1.8"
       excludes="testfiles/**"
@@ -46,14 +47,14 @@
      </java>
     <!--
      <echo>
-       
+
         Okay, that seems okay. Now let's dump the parse tree for a single source file
-        
+
      </echo>
      <java fork="true" failonerror="true" classname="CSParse">
 	       <assertions><enable/></assertions>
          <arg value="testfiles/CSharpAddAccessibilityModifiersDiagnosticAnalyzer.cs"/>
-     </java> 
+     </java>
   -->
 </target>
 
