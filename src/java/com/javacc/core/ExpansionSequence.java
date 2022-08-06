@@ -62,18 +62,22 @@ public class ExpansionSequence extends Expansion {
         return null;
     }
 
+
+    @Override
     public boolean isAlwaysSuccessful() {
         if (!isPossiblyEmpty()) return false;
-        if (firstChildOfType(Failure.class)!=null || firstChildOfType(Assertion.class) !=null) return false;
+        if (allUnits().stream().anyMatch(unit->unit instanceof Assertion || unit instanceof Failure)) return false;
         Lookahead la = getLookahead();
-        if (la == null) return true;
-        if (la.getSemanticLookahead() != null || la.getLookBehind() != null || la.getNestedExpansion() != null) {
-            return false;
+        if (la != null) {
+            if (la.getSemanticLookahead() != null || la.getLookBehind() != null || la.getNestedExpansion() != null) {
+                return false;
+            }
+            return la.getAmount() == 0;
         }
         for (Expansion exp : childrenOfType(Expansion.class)) {
             if (!exp.isAlwaysSuccessful()) return false;
         }
-        return la.getAmount() == 0;
+        return true;
     }
 
     public TokenSet getFirstSet() {
@@ -128,6 +132,7 @@ public class ExpansionSequence extends Expansion {
         this.lookahead = lookahead;
     }
 
+    @Override
     public Lookahead getLookahead() {
         if (lookahead != null)
             return lookahead;

@@ -155,7 +155,7 @@ public class SanityChecker {
                 if (unit.isAlwaysSuccessful()) {
                     int numFollowing = choices.size() - i -1;
                     String msg = (numFollowing ==1) ? " The expansion that follows " : "The following " + numFollowing + " expansions ";
-                    grammar.addError(unit, "This expansion can match the empty string." + msg + "can never be matched.");
+                    grammar.addError(unit, "This expansion can match empty input." + msg + "can never be matched.");
                 }
             }
         }
@@ -168,17 +168,13 @@ public class SanityChecker {
                 if (failure != null) {
                     grammar.addError(exp, "Expansion inside " + starOrPlus + " always fails! This cannot be right!");
                 } else {
-                  grammar.addError(exp, "Expansion inside " + starOrPlus + " can be matched by the empty string, so it would produce an infinite loop!");
+                    grammar.addError(exp, "Expansion inside " + starOrPlus + " can be matched by empty input, so it would produce an infinite loop!");
                 }
             }
         }
 
         for (ZeroOrOne zoo : grammar.descendants(ZeroOrOne.class, zoo->zoo.getNestedExpansion().isAlwaysSuccessful())) {
-            if (zoo.getNestedExpansion().firstChildOfType(Failure.class) != null) {
-                grammar.addWarning(zoo, "The FAIL inside this construct is always triggered. This may not be your intention.");
-            } else {
-                grammar.addWarning(zoo, "The expansion inside this (...)? construct can be matched by the empty string so it is always matched. This may not be your intention.");
-            }
+            grammar.addWarning(zoo, "The expansion inside this (...)? construct can be matched by empty input so it is always matched. This may not be your intention.");
         }
    
 
