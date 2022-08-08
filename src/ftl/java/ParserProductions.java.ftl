@@ -156,7 +156,9 @@
          ParseException ${parseExceptionVar} = null;
          int ${callStackSizeVar} = parsingStack.size();
          try {
+[#if grammar.useCheckedException]
             if (false) throw new ParseException("Never happens!");
+[/#if]
             [#nested]
          }
          catch (ParseException e) { 
