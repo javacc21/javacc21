@@ -114,7 +114,12 @@ def test_grammar(gdata, options):
     print('Test files copied to working directory.')
 
     # Run javacc to create the Java lexer and parser
-
+    if lang == 'csharp':
+        pf = os.path.join(dd, 'PPDirectiveLine.javacc')
+        cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', pf]
+        p = run_command(cmd)
+        if p.returncode:
+            raise ValueError('Preprocessor generation in Java failed')
     gf = os.path.join(dd, gdata.grammar)
     cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', gf]
     p = run_command(cmd)
@@ -162,6 +167,11 @@ def test_grammar(gdata, options):
 
     # Run javacc to create the Python lexer and parser
 
+    if lang == 'csharp':
+        cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', '-lang', 'python', pf]
+        p = run_command(cmd)
+        if p.returncode:
+            raise ValueError('Preprocessor generation in Python failed')
     cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', '-lang', 'python', gf]
     p = run_command(cmd)
     if p.returncode:
@@ -268,9 +278,6 @@ def main():
         langs = options.langs.split(',')
         for lang, gdata in languages.items():
             if options.langs == 'all' or lang in langs:
-                if lang == 'csharp':
-                    print('Skipping csharp, because grammar is incomplete')
-                    continue
                 test_grammar(gdata, options)
                 workdirs.append(gdata.workdir)
 

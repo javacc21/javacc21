@@ -402,14 +402,6 @@ INJECT CSharpLexer :
       return tok;
    }
 
-   void setRegionIgnore(int start, int end) {
-     for (int i = start; i< end; i++) {
-       tokenLocationTable[i] = IGNORED;
-     }
-     tokenOffsets.clear(start, end);
-   }
-
-
    void setParsingEnabled(boolean parsingOn, Token tok) {
        boolean turnedOn = !this.parsingOn && parsingOn;
        boolean turnedOff = this.parsingOn && !parsingOn;
@@ -424,12 +416,21 @@ INJECT CSharpLexer :
        }
        this.parsingOn = parsingOn;
    }
+/*
+ * Moved to Lexer class to make it easier to handle in Python/C#
+
+   private void setRegionIgnore(int start, int end) {
+     for (int i = start; i< end; i++) {
+       tokenLocationTable[i] = IGNORED;
+     }
+     tokenOffsets.clear(start, end);
+   }
 
    private boolean atLineStart(Token tok) {
       int offset = tok.getBeginOffset();
       while (offset > 0) {
         --offset;
-        char c = content.charAt(offset);
+        char c = this.content.charAt(offset);
         if (!Character.isWhitespace(c)) return false;
         if (c=='\n') break;
       }
@@ -449,5 +450,6 @@ INJECT CSharpLexer :
        tok.setBeginOffset(start);
        tok.setEndOffset(end);
    }
+ */
 }
 
