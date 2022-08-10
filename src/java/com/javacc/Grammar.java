@@ -580,7 +580,7 @@ public class Grammar extends BaseNode {
      * Add a new lexical state
      */
     public void addLexicalState(String name) {
-        if (!lexicalStates.contains(name)) lexicalStates.add(name);
+        lexicalStates.add(name);
     }
 
     public List<Expansion> getExpansionsForFirstSet() {
@@ -630,10 +630,10 @@ public class Grammar extends BaseNode {
                     continue;
                 }
             }
-            String varName = null;
-            if (type==0) {
+            String varName;
+            if (type == 0) {
                 varName = expansion.getFirstSetVarName();
-            } else if (type ==1) {
+            } else if (type == 1) {
                 varName = expansion.getFinalSetVarName();
             } else {
                 varName = expansion.getFollowSetVarName();
@@ -836,7 +836,7 @@ public class Grammar extends BaseNode {
         if (node == null || node instanceof Token || node instanceof EmptyDeclaration) {
             return;
         }
-        else if (node instanceof TokenManagerDecls) {
+        if (node instanceof TokenManagerDecls) {
             ClassOrInterfaceBody body = node.childrenOfType(ClassOrInterfaceBody.class).get(0);
             checkForHooks(body, getLexerClassName());
         }
@@ -900,7 +900,8 @@ public class Grammar extends BaseNode {
                     getCloseNodeScopeHooks(className).add(methodName);
                 }
             }
-        } else {
+        }
+        else {
             for (Iterator<Node> it= node.iterator();  it.hasNext();) {
                 checkForHooks(it.next(), className);
             }
@@ -959,16 +960,20 @@ public class Grammar extends BaseNode {
                     Files.createDirectories(dir);
                 }
             }
-            else if (codeLang.equals("csharp")) { // Use last part of package, append "parser", prepend "cs-"
-                int dotPosition = packageName.lastIndexOf('.');
+            else if (codeLang.equals("csharp")) {
+                // Use last part of package, append "parser", prepend "cs-"
+                // only if outDir isn't specified
+                if (outputDir == null) {
+                    int dotPosition = packageName.lastIndexOf('.');
 
-                if (dotPosition >= 0) {
-                    packageName = packageName.substring(dotPosition + 1);
-                }
-                packageName = "cs-".concat(packageName.concat("parser"));
-                dir = dir.resolve(packageName);
-                if (!Files.exists(dir)) {
-                    Files.createDirectories(dir);
+                    if (dotPosition >= 0) {
+                        packageName = packageName.substring(dotPosition + 1);
+                    }
+                    packageName = "cs-".concat(packageName.concat("parser"));
+                    dir = dir.resolve(packageName);
+                    if (!Files.exists(dir)) {
+                        Files.createDirectories(dir);
+                    }
                 }
             }
             else {
@@ -1005,7 +1010,7 @@ public class Grammar extends BaseNode {
         if (!Files.exists(result)) {
             Files.createDirectories(result);
         } else if (!Files.isDirectory(result)) {
-            throw new IOException(result.toString() + " is not a directory.");
+            throw new IOException(result + " is not a directory.");
         }
         return result;
     }
@@ -1039,68 +1044,68 @@ public class Grammar extends BaseNode {
 
     public boolean getTreeBuildingEnabled() {
         Boolean b = (Boolean) settings.get("TREE_BUILDING_ENABLED");
-        return b == null ? true : b;
+        return b == null || b;
     }
 
     public boolean getTreeBuildingDefault() {
         Boolean b = (Boolean) settings.get("TREE_BUILDING_DEFAULT");
-        return b == null ? true : b;
+        return b == null || b;
     }
 
     public boolean getNodeDefaultVoid() {
         Boolean b = (Boolean) settings.get("NODE_DEFAULT_VOID");
-        return b == null ? false : b;
+        return b != null && b;
     }
 
     public boolean getSmartNodeCreation() {
         Boolean b = (Boolean) settings.get("SMART_NODE_CREATION");
-        return b == null ? true : b;
+        return b == null || b;
     }
 
     public boolean getTokensAreNodes() {
         Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
-        return b == null ? true : b;
+        return b == null || b;
     }
 
     public boolean getUnparsedTokensAreNodes() {
         Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
         if (b == null) b = (Boolean) settings.get("SPECIAL_TOKENS_ARE_NODES");
-        return b== null ? false : true;
+        return b != null;
     }
 
     public boolean getNodeUsesParser() {
         Boolean b = (Boolean) settings.get("NODE_USES_PARSER");
-        return b == null ? false : b;
+        return b != null && b;
     }
 
     public boolean getLexerUsesParser() {
         Boolean b = (Boolean) settings.get("LEXER_USES_PARSER");
-        return b == null ? false : b;
+        return b != null && b;
     }
 
     public boolean getFaultTolerant() {
         Boolean b = (Boolean) settings.get("FAULT_TOLERANT");
-        return b== null ? false : b;
+        return b != null && b;
     }
 
     public boolean getEnsureFinalEOL() {
         Boolean b = (Boolean) settings.get("ENSURE_FINAL_EOL");
-        return b== null ? false : b;
+        return b != null && b;
     }
 
     public boolean getMinimalToken() {
         Boolean b = (Boolean) settings.get("MINIMAL_TOKEN");
-        return b== null ? false : b;
+        return b != null && b;
     }
 
     public boolean getUsePreprocessor() {
         Boolean b = (Boolean) settings.get("USE_PREPROCESSOR");
-        return b == null ? false : b;
+        return b != null && b;
     }
 
     public boolean getPreserveLineEndings() {
         Boolean b = (Boolean) settings.get("PRESERVE_LINE_ENDINGS");
-        return b== null ? false : b;
+        return b != null && b;
     }
 
     public boolean getPreserveTabs() {
@@ -1113,17 +1118,17 @@ public class Grammar extends BaseNode {
 
     public boolean getJavaUnicodeEscape() {
         Boolean b = (Boolean) settings.get("JAVA_UNICODE_ESCAPE");
-        return b== null ? false : b;
+        return b != null && b;
     }
 
     public boolean getCppContinuationLine() {
         Boolean b = (Boolean) settings.get("C_CONTINUATION_LINE");
-        return b== null ? false : b;
+        return b != null && b;
     }
 
     public boolean getUseCheckedException() {
         Boolean b = (Boolean) settings.get("USE_CHECKED_EXCEPTION");
-        return b == null ? false : b;
+        return b != null && b;
     }
 
     public int getTabSize() {
@@ -1365,7 +1370,7 @@ public class Grammar extends BaseNode {
             if (ch == '\n') return "\'\\n\'";
             if (ch == '\f') return "\'\\f\'";
             if (ch == ' ') return "\' \'";
-            if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch)) return "\'" + (char) ch + "\'";
+            if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch)) return "'" + (char) ch + "'";
             s = "0x" + Integer.toHexString(ch);
             if (Grammar.this.codeLang.equals("python")) {
                 s = String.format("as_chr(%s)", s);
@@ -1483,7 +1488,6 @@ public class Grammar extends BaseNode {
             JavaCCParser parser = new JavaCCParser(sb.toString());
             parser.FormalParameters();
             List<FormalParameter> parameters = ((FormalParameters) parser.rootNode()).getParams();
-            int n = parameters.size();
             // Now build the result
             sb.setLength(0);
             Translator translator = Grammar.this.translator;
@@ -1540,9 +1544,8 @@ public class Grammar extends BaseNode {
             StringBuilder result = new StringBuilder();
             if (cb != null) {
                 cb = cb.trim();
-                if (cb.length() == 0) { // must add a "pass"
-                    addIndent(indent, result);
-                    result.append("pass  # empty code block\n");
+                if (cb.length() == 0) {
+                    translator.translateEmptyBlock(indent, result);
                 }
                 else {
                     String block = "{" + cb + "}";
@@ -1558,6 +1561,7 @@ public class Grammar extends BaseNode {
             return result.toString();
         }
 
+        // used in templates
         public String translateNonterminalArgs(String args) {
             // The args are passed through as a string, but need to be translated according to the language
             // being generated. For the Java template, they don't come through this method - they are passed
@@ -1565,11 +1569,17 @@ public class Grammar extends BaseNode {
             return (args == null) ? "" : Grammar.this.translator.translateNonterminalArgs(args);
         }
 
+        // used in templates
         public String translateInjectedClass(CodeInjector injector, String name) {
-            return translator.translateInjectedClass(injector, name);
+            String result;
+
+            translator.startClass(name, false, null);
+            result = translator.translateInjectedClass(injector, name);
+            translator.endClass(name, false, null);
+            return result;
         }
 
-        public String translateInjections(String className, CodeInjector injector, boolean fields) {
+        public String translateInjections(String className, CodeInjector injector, boolean fields, boolean initializers) {
             StringBuilder result = new StringBuilder();
             if (fields) {
                 translator.clearFields();
@@ -1587,6 +1597,9 @@ public class Grammar extends BaseNode {
                         boolean process = (fields == (decl instanceof FieldDeclaration || decl instanceof Initializer));
                         if (process) {
                             if (decl instanceof FieldDeclaration || decl instanceof CodeBlock || decl instanceof Initializer) {
+                                if ((decl instanceof Initializer) && !initializers) {
+                                    continue;
+                                }
                                 translator.translateStatement(decl, fieldIndent, result);
                             }
                             else if (decl instanceof MethodDeclaration || decl instanceof ConstructorDeclaration ||
@@ -1602,6 +1615,20 @@ public class Grammar extends BaseNode {
             }
             finally {
                 translator.endClass(cn, fields, result);
+            }
+            return result.toString();
+        }
+
+        protected String translateInitializers(String className, CodeInjector injector) {
+            StringBuilder result = new StringBuilder();
+            List<ClassOrInterfaceBodyDeclaration> declsToProcess = injector.getBodyDeclarations(className);
+            if (declsToProcess != null) {
+                int fieldIndent = translator.getFieldIndent();
+                for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
+                    if (decl instanceof Initializer) {
+                        translator.translateStatement(decl, fieldIndent, result);
+                    }
+                }
             }
             return result.toString();
         }
@@ -1659,6 +1686,7 @@ public class Grammar extends BaseNode {
             return injectedFieldNames(className, injector);
         }
 
+        // used in templates
         public List<String> injectedParserFieldNames(CodeInjector injector) {
             String className = String.format("%s.%s", Grammar.this.getParserPackage(),
                     Grammar.this.getParserClassName());
@@ -1668,39 +1696,64 @@ public class Grammar extends BaseNode {
         // used in templates
         public String translateNestedTypes(String className, CodeInjector injector, boolean fields) {
             className = String.format("%s.%s", Grammar.this.getNodePackage(), className);
-            return translateInjections(className, injector, fields);
+            return translateInjections(className, injector, fields, false);
         }
 
         // used in templates
         public String translateTokenInjections(CodeInjector injector, boolean fields) {
             String className = String.format("%s.Token", Grammar.this.getParserPackage());
-            return translateInjections(className, injector, fields);
+            return translateInjections(className, injector, fields, fields && translator.isIncludeInitializers());
         }
 
         // used in templates
         public String translateLexerInjections(CodeInjector injector, boolean fields) {
             String className = String.format("%s.%s", Grammar.this.getParserPackage(),
                     Grammar.this.getLexerClassName());
-            return translateInjections(className, injector, fields);
+            return translateInjections(className, injector, fields, fields && translator.isIncludeInitializers());
         }
 
         // used in templates
         public String translateParserInjections(CodeInjector injector, boolean fields) {
             String className = String.format("%s.%s", Grammar.this.getParserPackage(),
                     Grammar.this.getParserClassName());
-            return translateInjections(className, injector, fields);
+            return translateInjections(className, injector, fields, fields && translator.isIncludeInitializers());
+        }
+
+        // used in templates
+        public String translateLexerInitializers(CodeInjector injector) {
+            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
+                    Grammar.this.getLexerClassName());
+            return translateInitializers(className, injector);
+        }
+
+        // used in templates
+        public String translateParserInitializers(CodeInjector injector) {
+            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
+                    Grammar.this.getParserClassName());
+            return translateInitializers(className, injector);
         }
 
         // used in templates
         public String translateTokenSubclassInjections(String className, CodeInjector injector, boolean fields) {
             className = String.format("%s.%s", Grammar.this.getNodePackage(), className);
-            return translateInjections(className, injector, fields);
+            return translateInjections(className, injector, fields, fields && translator.isIncludeInitializers());
+        }
+
+        // used in templates
+        public String translateType(String type) {
+            return translator.translateTypeName(type);
+        }
+
+        // used in templates
+        public String translateModifiers(String modifiers) {
+            return modifiers;
         }
 
         protected void processImports(Set<ImportDeclaration> imports, StringBuilder result) {
+            String prefix = String.format("%s.", getNodePackage());
             for (ImportDeclaration decl: imports) {
                 String name = decl.getChild(1).toString();
-                if (name.startsWith("java.")) {
+                if (name.startsWith("java.") || name.startsWith(prefix)) {
                     continue;
                 }
                 translator.translateImport(name, result);

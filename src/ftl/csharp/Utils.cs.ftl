@@ -102,12 +102,17 @@ namespace ${csPackage} {
             }
         }
 
-        public void Set(int pos) {
+        public void Set(int pos, bool value = true) {
             Debug.Assert(pos >= 0 && pos < _nbits);
             var idx = pos / BitsInWord;
             var bit = pos % BitsInWord;
             var mask = 1UL << (int) bit;
-            _words[idx] |= mask;
+            if (value) {
+                _words[idx] |= mask;
+            }
+            else {
+                _words[idx] &= ~mask;
+            }
         }
 
         public int NextSetBit(int pos) {
@@ -611,8 +616,8 @@ namespace ${csPackage} {
             }
         }
 
-        public static SetAdapter<T> EnumSet<T>(params T[] values) where T : struct, Enum {
-            var result = new SetAdapter<T>();
+        public static HashSet<T> EnumSet<T>(params T[] values) where T : struct, Enum {
+            var result = new HashSet<T>();
 
             foreach(T v in values) {
                 result.Add(v);
@@ -707,6 +712,12 @@ namespace ${csPackage} {
                 SetCache[types] = result;
             }
             return result;
+        }
+
+        public static void AddRange<T>(this HashSet<T> set, IEnumerable<T> source) {
+            foreach(T item in source) {
+                set.Add(item);
+            }
         }
     }
 
@@ -861,11 +872,17 @@ namespace ${csPackage} {
         }
     }
 
+/*
     public class SetAdapter<T> : HashSet<T> {
         public SetAdapter() : base() {}
         public SetAdapter(IEnumerable<T> source) : base(source) {}
+        public void AddRange(IEnumerable<T> source) {
+            foreach(T item in source) {
+                Add(item);
+            }
+        }
     }
-
+ */
 /*
 
 # Any stuff below is for debugging only ... to be deleted later

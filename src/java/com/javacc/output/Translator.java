@@ -46,6 +46,7 @@ public class Translator {
     protected int fieldIndent;
     protected int methodIndent;
     protected boolean isTyped;
+    protected boolean includeInitializers;
     protected boolean inInterface;
     protected String currentClass;
 
@@ -54,6 +55,8 @@ public class Translator {
         Collections.addAll(set, objs);
         return set;
     }
+
+    public boolean isIncludeInitializers() { return includeInitializers; }
 
     protected class ASTHelperNode {
         ASTHelperNode parent;
@@ -309,10 +312,15 @@ public class Translator {
     protected class ASTContinueStatement extends ASTStatement {}
 
     protected class ASTStatementList extends ASTStatement {
+        boolean initializer;
         private  List<ASTStatement> statements;
 
         public List<ASTStatement> getStatements() {
             return statements;
+        }
+
+        public boolean isInitializer() {
+            return initializer;
         }
 
         void add(ASTStatement stmt) {
@@ -902,7 +910,9 @@ public class Translator {
             return resultNode;
         }
         else if (node instanceof Initializer) {
-            return transformTree(node.getFirstChild());
+            ASTStatementList resultNode = (ASTStatementList) transformTree(node.getFirstChild());
+            resultNode.initializer = true;
+            return resultNode;
         }
         else if (node instanceof MethodCall) {
             ASTInvocation resultNode = new ASTInvocation();
@@ -1567,7 +1577,7 @@ public class Translator {
     protected void internalTranslateStatement(ASTStatement stmt, int indent, StringBuilder result) {
         fail();
     }
-
+    public void translateEmptyBlock(int indent, StringBuilder result) { fail(); }
     public void translateStatement(Node stmt, int indent, StringBuilder result) {
         ASTStatement node = (ASTStatement) transformTree(stmt);
         internalTranslateStatement(node, indent, result);
@@ -1582,6 +1592,8 @@ public class Translator {
     public String translateNonterminalArgs(String args) {
         return args;
     }
+
+    public String translateTypeName(String name) { fail(); return null; }
 
     protected void translateType(ASTTypeExpression expr, StringBuilder result) {
         fail();
@@ -1663,6 +1675,18 @@ public class Translator {
             return false;
         }
         return name.equals("ArrayList");
+    }
+
+    protected boolean isSet(ASTExpression node) {
+        if (!(node instanceof ASTPrimaryExpression)) {
+            return false;
+        }
+        ASTPrimaryExpression pe = (ASTPrimaryExpression) node;
+        String name = pe.getName();
+        if (name == null) {
+            return false;
+        }
+        return name.equals("HashSet");
     }
 
     protected void processForIteration(List<ASTExpression> iteration, int indent, StringBuilder result) {

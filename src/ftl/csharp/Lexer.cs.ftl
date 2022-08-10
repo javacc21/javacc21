@@ -119,7 +119,7 @@ ${is});
           [#-- In this case we need a new if or possibly else if --]
          [#if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
-                 handled since the last lone if, we start a new if-else 
+                 handled since the last lone if, we start a new if-else
                  If not, we continue in the same if-else block as before. --]
            [#set lastBlockStartIndex = state_index]
            [#set useIf = true]
@@ -242,12 +242,16 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 namespace ${csPackage} {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
+${grammar.utils.translateLexerImports()}
 
     public class Lexer[#if useLogging!false] : IObservable<LogInfo>[/#if] {
         // Lexer fields and properties (non-NFA-related)
+
+        const int DEFAULT_TAB_SIZE = ${grammar.tabSize};
 
         internal static readonly Token DummyStartToken, Ignored, Skipped;
 
@@ -260,7 +264,7 @@ namespace ${csPackage} {
 [/#if]
 
         // The starting line and column, usually 1,1
-        // that is used to report a file position 
+        // that is used to report a file position
         // in 1-based line/column terms
         private int startingLine, startingColumn;
 
@@ -333,6 +337,11 @@ namespace ${csPackage} {
         private int _bufferPosition;
         private readonly BitSet _tokenOffsets;
 
+        //  A Bitset that stores the line numbers that
+        // contain either hard tabs or extended (beyond 0xFFFF) unicode
+        // characters.
+        private readonly BitSet _needToCalculateColumns;
+
         public LexicalState LexicalState => _lexicalState;
 
         // constructors
@@ -365,6 +374,7 @@ namespace ${csPackage} {
             var input = InputText(inputSource);
             _content = MungeContent(input, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
             _contentLength = _content.Length;
+            _needToCalculateColumns = new BitSet(_contentLength + 1);
             _lineOffsets = CreateLineOffsetsTable(_content);
             _tokenLocationTable = new Token[_contentLength + 1];
             _tokenOffsets = new BitSet(_contentLength + 1);
@@ -378,6 +388,7 @@ namespace ${csPackage} {
             regularTokens.Add(${CU.TT}${token});
   [/#list]
 [/#if]
+${grammar.utils.translateLexerInitializers(injector)}
             SwitchTo(lexState);
         }
 
@@ -388,8 +399,52 @@ namespace ${csPackage} {
         private static readonly UTF32Encoding Utf32Le = new UTF32Encoding(false, true, true);
         private static readonly UTF32Encoding Utf32Be = new UTF32Encoding(true, true, true);
 
+        private bool PreamblesEqual(Span<byte> data, byte[] preamble) {
+            for (int i = preamble.Length - 1; i >= 0; i--) {
+                if (data[i] != preamble[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+/*
+        private static string TryDecode(Encoding encoding, byte[] bytes)
+        {
+            var byteIndex = 0;
+            var byteCount = bytes.Length;
+            var chars = new char[byteCount];
+            var charIndex = 0;
+            var charCount = byteCount;
+            int bytesUsed, charsUsed;
+            bool completed;
+
+            var decoder = encoding.GetDecoder();
+            while (true)
+            {
+                decoder.Convert(bytes, byteIndex, byteCount,
+                        chars, charIndex, charCount,
+                        false, out bytesUsed, out charsUsed, out completed);
+                if (completed)
+                {
+                    break;
+                }
+
+                throw new ArgumentException();
+            }
+            return new string(chars, 0, charsUsed);
+        }
+ */
         private String InputText(string path) {
-            var fs = new FileStream(path, FileMode.Open);
+            FileStream fs;
+
+            try {
+                fs = new FileStream(path, FileMode.Open);
+            }
+            catch (Exception ex) when (ex is FileNotFoundException || ex is DirectoryNotFoundException) {
+                // assume we were passed source code.
+                return path;
+            }
             var fileLen = (int) fs.Length;
             var bytes = new byte[fileLen];
             var bomLen = 3;
@@ -403,23 +458,23 @@ namespace ${csPackage} {
             if (fileLen <= bomLen) {
                 encoding = Utf8;
             }
-            else if ((bomBytes = allBytes[..bomLen]) == Utf8.GetPreamble()) {
+            else if (PreamblesEqual(bomBytes = allBytes[..bomLen], Utf8.GetPreamble())) {
                 encoding = Utf8;
                 foundBom = bomBytes;
             }
-            else if ((bomBytes = allBytes[..(bomLen = 2)]) == Utf16Le.GetPreamble()) {
+            else if (PreamblesEqual(bomBytes = allBytes[..(bomLen = 2)], Utf16Le.GetPreamble())) {
                 encoding = Utf16Le;
                 foundBom = bomBytes;
             }
-            else if (bomBytes == Utf16Be.GetPreamble()) {
+            else if (PreamblesEqual(bomBytes, Utf16Be.GetPreamble())) {
                 encoding = Utf16Be;
                 foundBom = bomBytes;
             }
-            else if ((bomBytes = allBytes[(bomLen = 4)..]) == Utf32Le.GetPreamble()) {
+            else if (PreamblesEqual(bomBytes = allBytes[(bomLen = 4)..], Utf32Le.GetPreamble())) {
                 encoding = Utf32Le;
                 foundBom = bomBytes;
             }
-            else if (bomBytes == Utf32Be.GetPreamble()) {
+            else if (PreamblesEqual(bomBytes, Utf32Be.GetPreamble())) {
                 encoding = Utf32Be;
                 foundBom = bomBytes;
             }
@@ -451,6 +506,7 @@ namespace ${csPackage} {
                 }
             }
             var rest = (foundBom == null) ? allBytes : allBytes[bomLen..];
+            //return TryDecode(encoding, rest.ToArray());
             return encoding.GetString(rest);
         }
 
@@ -464,6 +520,9 @@ namespace ${csPackage} {
             var length = content.Length;
             for (var i = 0; i < length; i++) {
                 var ch = content[i];
+                if (ch == '\t' || char.IsHighSurrogate(ch)) {
+                    _needToCalculateColumns.Set(lineCount);
+                }
                 if (ch == '\n') {
                     lineCount++;
                 }
@@ -476,10 +535,11 @@ namespace ${csPackage} {
             var index = 1;
             for (var i = 0; i < length; i++) {
                 var ch = content[i];
-                if (ch != '\n') continue;
-                if (i + 1 == length)
-                    break;
-                lineOffsets[index++] = i + 1;
+                if (ch == '\n') {
+                    if (i + 1 == length)
+                        break;
+                    lineOffsets[index++] = i + 1;
+                }
             }
             return lineOffsets;
         }
@@ -503,7 +563,7 @@ namespace ${csPackage} {
         //
         // Switch to specified lexical state.
         //
-        private bool SwitchTo(LexicalState lexState) {
+        public bool SwitchTo(LexicalState lexState) {
             if (_lexicalState != lexState) {
                 _lexicalState = lexState;
                 return true;
@@ -511,7 +571,7 @@ namespace ${csPackage} {
             return false;
         }
 
-[#if multipleLexicalStates]
+[#if lexerData.hasLexicalStateTransitions]
         bool DoLexicalStateSwitch(TokenType tokenType) {
             if (!tokenTypeToLexicalStateMap.ContainsKey(tokenType)) {
                 return false;
@@ -543,12 +603,12 @@ namespace ${csPackage} {
 
         /**
         * The public method for getting the next token.
-        * If the tok parameter is null, it just tokenizes 
+        * If the tok parameter is null, it just tokenizes
         * starting at the internal _bufferPosition
         * Otherwise, it checks whether we have already cached
-        * the token after this one. If not, it finally goes 
+        * the token after this one. If not, it finally goes
         * to the NFA machinery
-        */ 
+        */
         public Token GetNextToken(Token tok) {
             if(tok == null) {
                 return GetNextToken();
@@ -567,7 +627,7 @@ namespace ${csPackage} {
         * A lower level method to tokenize, that takes the absolute
         * offset into the _content buffer as a parameter
         * @param offset where to start
-        * @return the token that results from scanning from the given starting point 
+        * @return the token that results from scanning from the given starting point
         */
         public Token GetNextToken(int offset) {
             GoTo(offset);
@@ -665,8 +725,8 @@ namespace ${csPackage} {
                     }
                 }
                 if (regularTokens.Contains((TokenType) matchedType) || unparsedTokens.Contains((TokenType) matchedType)) {
-                    matchedToken = Token.NewToken((TokenType) matchedType, 
-                                                  this, 
+                    matchedToken = Token.NewToken((TokenType) matchedType,
+                                                  this,
                                                   tokenBeginOffset,
                                                   _bufferPosition);
                     matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
@@ -674,7 +734,7 @@ namespace ${csPackage} {
      [#if lexerData.hasTokenActions]
                 matchedToken = TokenLexicalActions(matchedToken, matchedType);
      [/#if]
-     [#if multipleLexicalStates]
+     [#if lexerData.hasLexicalStateTransitions]
                 DoLexicalStateSwitch(matchedType.Value);
      [/#if]
             }
@@ -699,7 +759,7 @@ namespace ${csPackage} {
             if (state != null) {
                 SwitchTo(state.Value);
             }
-[#if multipleLexicalStates] 
+[#if lexerData.hasLexicalStateTransitions]
             else {
                 DoLexicalStateSwitch(t.Type);
             }
@@ -843,8 +903,39 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             return buf.ToString();
         }
 
+        private void GoTo(int offset) {
+            while (_tokenLocationTable[offset] == Ignored && offset < _contentLength) {
+                ++offset;
+            }
+            _bufferPosition = offset;
+        }
+
+        /**
+        * return the line length in code _units_
+        */
+        private int GetLineLength(int lineNumber) {
+            int startOffset = GetLineStartOffset(lineNumber);
+            int endOffset = GetLineEndOffset(lineNumber);
+            return 1 + endOffset - startOffset;
+        }
+
+        /*
+         * The offset of the start of the given line. This is in code units
+         */
+        private int GetLineStartOffset(int lineNumber) {
+            int realLineNumber = lineNumber - startingLine;
+            if (realLineNumber <= 0) {
+                return 0;
+            }
+            if (realLineNumber >= _lineOffsets.Length) {
+                return _contentLength;
+            }
+            return _lineOffsets[realLineNumber];
+        }
+
         /*
          * The offset of the end of the given line. This is in code units.
+         */
         private int GetLineEndOffset(int lineNumber) {
             int realLineNumber = lineNumber - startingLine;
             if (realLineNumber < 0) {
@@ -858,26 +949,9 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             }
             return _lineOffsets[realLineNumber + 1] - 1;
         }
-        */
-
-        private void GoTo(int offset) {
-            while (_tokenLocationTable[offset] == Ignored && offset < _contentLength) {
-                ++offset;
-            }
-            _bufferPosition = offset;
-        }
 
         /**
-        * return the line length in code _units_
-        private int GetLineLength(int lineNumber) {
-            int startOffset = GetLineStartOffset(lineNumber);
-            int endOffset = GetLineEndOffset(lineNumber);
-            return 1 + endOffset - startOffset;
-        }
-        */ 
-
-        /**
-        * The number of supplementary unicode characters in the specified 
+        * The number of supplementary unicode characters in the specified
         * offset range. The range is expressed in code units
         */
         private int NumSupplementaryCharactersInRange(int start, int end) {
@@ -892,20 +966,6 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             }
             return result;
         }
-
-        /*
-         * The offset of the start of the given line. This is in code units
-        private int GetLineStartOffset(int lineNumber) {
-            int realLineNumber = lineNumber - startingLine;
-            if (realLineNumber <= 0) {
-                return 0;
-            }
-            if (realLineNumber >= _lineOffsets.Length) {
-                return _contentLength;
-            }
-            return _lineOffsets[realLineNumber];
-        }
-        */
 
         private int ReadChar() {
             while (_tokenLocationTable[_bufferPosition] == Ignored && _bufferPosition < _contentLength) {
@@ -927,8 +987,8 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
 
         /**
         * This is used in conjunction with having a preprocessor.
-        * We set which lines are actually parsed lines and the 
-        * unset ones are ignored. 
+        * We set which lines are actually parsed lines and the
+        * unset ones are ignored.
         * @param parsedLines a #java.util.BitSet that holds which lines
         * are parsed (i.e. not ignored)
         */
@@ -964,14 +1024,31 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         internal int GetCodePointColumnFromOffset(int pos) {
             if (pos >= _contentLength) return 1;
             if (pos == 0) return startingColumn;
+            var line = GetLineFromOffset(pos) - startingLine;
+            var lineStart = _lineOffsets[line];
+            var startColumnAdjustment = line > 0 ? 1 : startingColumn;
+            var unadjustedColumn = pos - lineStart + startColumnAdjustment;
+            if (!_needToCalculateColumns[line]) {
+                return unadjustedColumn;
+            }
             if (char.IsLowSurrogate(_content[pos])) --pos;
-            int line = GetLineFromOffset(pos) - startingLine;
-            int lineStart = _lineOffsets[line];
-            int numSupps = NumSupplementaryCharactersInRange(lineStart, pos);
-            int startColumnAdjustment = line > 0 ? 1 : startingColumn;
-            return startColumnAdjustment + pos - _lineOffsets[line] - numSupps;
+            var result = startColumnAdjustment;
+            for (int i = lineStart; i < pos; i++) {
+                var ch = _content[i];
+                if (ch == '\t') {
+                    result += DEFAULT_TAB_SIZE - (result - 1) % DEFAULT_TAB_SIZE;
+                }
+                else if (char.IsHighSurrogate(ch)) {
+                    ++result;
+                    ++i;
+                }
+                else {
+                    ++result;
+                }
+            }
+            return result;
         }
-        
+
         /**
         * @return the text between startOffset (inclusive)
         * and endOffset(exclusive)
@@ -987,7 +1064,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         }
 
         internal void CacheToken(Token tok) {
-[#if !grammar.minimalToken]        
+[#if !grammar.minimalToken]
             if (tok.isInserted) {
                 Token next = tok.NextCachedToken;
                 if (next != null) CacheToken(next);
@@ -1014,7 +1091,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         internal Token NextCachedToken(int offset) {
             int nextOffset = _tokenOffsets.NextSetBit(offset);
             return nextOffset == -1 ? null : _tokenLocationTable[nextOffset];
-        } 
+        }
 
         internal Token PreviousCachedToken(int offset) {
             int prevOffset = _tokenOffsets.PreviousSetBit(offset - 1);
@@ -1029,7 +1106,39 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             return nfaFunctions;
 [/#if]
         }
-        
+
+        protected void SetRegionIgnore(int start, int end) {
+            for (int i = start; i< end; i++) {
+                _tokenLocationTable[i] = Ignored;
+            }
+            _tokenOffsets.Clear(start, end);
+        }
+
+        protected bool AtLineStart(Token tok) {
+            int offset = tok.BeginOffset;
+            while (offset > 0) {
+                --offset;
+                char c = _content[offset];
+                if (!Char.IsWhiteSpace(c)) return false;
+                if (c == '\n') break;
+            }
+            return true;
+        }
+
+        protected string GetLine(Token tok) {
+            int lineNum = tok.BeginLine;
+            return GetText(GetLineStartOffset(lineNum), GetLineEndOffset(lineNum) + 1);
+        }
+
+        protected void SetLineSkipped(Token tok) {
+            int lineNum = tok.BeginLine;
+            int start = GetLineStartOffset(lineNum);
+            int end = GetLineStartOffset(lineNum+1);
+            SetRegionIgnore(start, end);
+            tok.BeginOffset = start;
+            tok.EndOffset = end;
+        }
+
 ${grammar.utils.translateLexerInjections(injector, true)}
 
 ${grammar.utils.translateLexerInjections(injector, false)}

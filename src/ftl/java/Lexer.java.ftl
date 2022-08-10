@@ -434,9 +434,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
           switchTo(state);
       }
 [#if lexerData.hasLexicalStateTransitions] 
-        else {
+      else {
           doLexicalStateSwitch(t.getType());
-        }
+      }
 [/#if]        
     }
 
@@ -459,23 +459,6 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     return matchedToken;
   }
  [/#if]
-
-    /**
-     * The offset of the end of the given line. This is in code units.
-     */
-    private int getLineEndOffset(int lineNumber) {
-        int realLineNumber = lineNumber - startingLine;
-        if (realLineNumber <0) {
-            return 0;
-        }
-        if (realLineNumber >= lineOffsets.length) {
-            return content.length();
-        }
-        if (realLineNumber == lineOffsets.length -1) {
-            return content.length() -1;
-        }
-        return lineOffsets[realLineNumber+1] -1;
-    }
 
     // But there is no goto in Java!!!
     private void goTo(int offset) {
@@ -506,6 +489,23 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             return content.length();
         }
         return lineOffsets[realLineNumber];
+    }
+
+    /**
+     * The offset of the end of the given line. This is in code units.
+     */
+    private int getLineEndOffset(int lineNumber) {
+        int realLineNumber = lineNumber - startingLine;
+        if (realLineNumber <0) {
+            return 0;
+        }
+        if (realLineNumber >= lineOffsets.length) {
+            return content.length();
+        }
+        if (realLineNumber == lineOffsets.length -1) {
+            return content.length() -1;
+        }
+        return lineOffsets[realLineNumber+1] -1;
     }
 
     private int readChar() {
@@ -580,17 +580,17 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         if (pos == 0) return startingColumn;
         final int line = getLineFromOffset(pos)-startingLine;
         final int lineStart = lineOffsets[line];
-        int startColumnAdjustment = line>0 ? 1 : startingColumn;
+        int startColumnAdjustment = line > 0 ? 1 : startingColumn;
         int unadjustedColumn = pos - lineStart + startColumnAdjustment;
         if (!needToCalculateColumns.get(line)) {
             return unadjustedColumn;
         }
         if (Character.isLowSurrogate(content.charAt(pos))) --pos;
         int result = startColumnAdjustment;
-        for (int i=lineStart; i< pos; i++) {
+        for (int i = lineStart; i < pos; i++) {
             char ch = content.charAt(i);
             if (ch == '\t') {
-                result += DEFAULT_TAB_SIZE - (result-1) % DEFAULT_TAB_SIZE;
+                result += DEFAULT_TAB_SIZE - (result - 1) % DEFAULT_TAB_SIZE;
             } 
             else if (Character.isHighSurrogate(ch)) {
                 ++result;
@@ -716,9 +716,9 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         char ch = content.charAt(index++);
         if (ch == '\n') {
             buf.append(ch);
-            col=0;
+            col = 0;
         }
-        else if (javaUnicodeEscape && ch == '\\' && index<contentLength && content.charAt(index)=='u') {
+        else if (javaUnicodeEscape && ch == '\\' && index < contentLength && content.charAt(index)=='u') {
             int numPrecedingSlashes = 0;
             for (int i = index-1; i>=0; i--) {
                 if (content.charAt(i) == '\\') 
@@ -731,7 +731,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 continue;
             }
             int numConsecutiveUs = 0;
-            for (int i = index; i<contentLength; i++) {
+            for (int i = index; i < contentLength; i++) {
                 if (content.charAt(i) == 'u') numConsecutiveUs++;
                 else break;
             }
@@ -762,7 +762,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             return "\n";
         }
         char lastChar = buf.charAt(buf.length()-1);
-        if (lastChar != '\n' && lastChar!='\r') buf.append((char) '\n');
+        if (lastChar != '\n' && lastChar != '\r') buf.append((char) '\n');
     }
     return buf.toString();
   }

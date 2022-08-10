@@ -44,6 +44,7 @@ public class PythonTranslator extends Translator {
         super(grammar);
         methodIndent = 4;
         fieldIndent = 8;
+        includeInitializers = true;
     }
 
     @Override public String translateOperator(String operator) {
@@ -923,5 +924,10 @@ public class PythonTranslator extends Translator {
             }
         }
         super.endClass(name, fields, result);
+    }
+
+    @Override public void translateEmptyBlock(int indent, StringBuilder result) {
+        addIndent(indent, result);
+        result.append("pass  # empty code block\n");
     }
 }

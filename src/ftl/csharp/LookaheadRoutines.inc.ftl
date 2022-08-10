@@ -43,8 +43,8 @@
 [#macro Generate]
     [@firstSetVars /]
     [@followSetVars /]
-    [#if grammar.choicePointExpansions?size !=0]
-       [@BuildLookaheads 4 /]
+    [#if grammar.choicePointExpansions?size != 0]
+       [@BuildLookaheads 8 /]
      [/#if]
 [/#macro]
 
@@ -141,19 +141,17 @@ ${BuildProductionLookaheadMethod(production, indent)}
 
 
 
-    // predicate routine for expansion at:
-    // ${expansion.location}
-    // BuildPredicateRoutine macro
+    // BuildPredicateRoutine: expansion at ${expansion.location}
     private bool ${expansion.predicateMethodName}() {
         uint ${prevNonTerminalNestingVarName} = _nonTerminalNesting;
         uint ${prevLookaheadRoutineNestingVarName} = _lookaheadRoutineNesting;
         Token ${prevCurrentLookaheadTokenVarName} = currentLookaheadToken;
         try {
             _lookaheadRoutineNesting++;
-            if (currentLookaheadToken == null) currentLookaheadToken = LastConsumedToken;
             _remainingLookahead = ${lookaheadAmount};
+            if (currentLookaheadToken == null) currentLookaheadToken = LastConsumedToken;
             _hitFailure = false;
-            ScanToEnd = ${CU.bool(expansion.hasExplicitNumericalLookahead || expansion.hasSeparateSyntacticLookahead)};
+            ScanToEnd = false;
 ${BuildPredicateCode(expansion, 12)}
       [#if !expansion.hasSeparateSyntacticLookahead]
 ${BuildScanCode(expansion, 12)}
@@ -162,8 +160,8 @@ ${BuildScanCode(expansion, 12)}
         }
         finally {
             _lookaheadRoutineNesting = ${prevLookaheadRoutineNestingVarName};
-            _nonTerminalNesting = ${prevNonTerminalNestingVarName};
             currentLookaheadToken = ${prevCurrentLookaheadTokenVarName};
+            _nonTerminalNesting = ${prevNonTerminalNestingVarName};
         }
     }
 
@@ -222,7 +220,7 @@ ${is}}
 [#macro BuildPredicateCode expansion indent]
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > BuildPredicateCode ${indent} --]
-[#if expansion.hasSemanticLookahead && expansion.lookahead.semanticLookaheadNested]
+[#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
 ${is}if (!(${grammar.utils.translateExpression(expansion.semanticLookahead)})) {
 ${is}    return false;
 ${is}}
@@ -338,6 +336,7 @@ ${is}}
 [#macro BuildProductionLookaheadMethod production indent]
 [#var is=""?right_pad(indent)]
 [#--     # DBG > BuildProductionLookaheadMethod ${indent} --]
+        // BuildProductionLookaheadMethod macro
         private bool ${production.lookaheadMethodName}() {
 [#if production.javaCode?? && production.javaCode.appliesInLookahead]
 ${grammar.utils.translateCodeBlock(production.javaCode, 12)}
@@ -431,11 +430,13 @@ ${is}}
 --]
 [#macro ScanCodeNonTerminal nt indent]
 [#var is=""?right_pad(indent)]
+${is}// NonTerminal ${nt.name} at ${nt.location}
 ${is}PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
-      [#var prevScanToEndVarName = "ScanToEnd" + CU.newID()]
-${is}_currentLookaheadProduction = "${nt.production.name}";
+[#var prevScanToEndVarName = "prevScanToEnd" + CU.newID()]
 ${is}bool ${prevScanToEndVarName} = ScanToEnd;
+${is}_currentLookaheadProduction = "${nt.production.name}";
 ${is}ScanToEnd = ${CU.bool(nt.ScanToEnd)};
+${is}++_nonTerminalNesting;
 ${is}try {
 ${is}    if (!${nt.production.lookaheadMethodName}()) {
 ${is}        return false;

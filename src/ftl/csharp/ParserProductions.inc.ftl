@@ -58,7 +58,7 @@
     [@CU.firstSetVar production.expansion/]
         ${production.leadingComments}
         // ${production.location}
-        ${grammar.utils.startProduction()}${production.accessModifier} ${production.returnType} Parse${production.name}([#if production.parameterList?has_content]${grammar.utils.translateParameters(production.parameterList)}[/#if]) {
+        ${grammar.utils.startProduction()}${grammar.utils.translateModifiers(production.accessModifier)} ${grammar.utils.translateType(production.returnType)} Parse${production.name}([#if production.parameterList?has_content]${grammar.utils.translateParameters(production.parameterList)}[/#if]) {
             var prevProduction = _currentlyParsedProduction;
             _currentlyParsedProduction = "${production.name}";
 ${BuildCode(production.expansion, 12)}
@@ -369,7 +369,7 @@ ${is}OuterFollowSet = null;
    [#else]
      [#if !followSet.isEmpty()]
 ${is}if (OuterFollowSet != null) {
-${is}    var newFollowSet = new SetAdapter<TokenType>(${nonterminal.followSetVarName});
+${is}    var newFollowSet = new HashSet<TokenType>(${nonterminal.followSetVarName});
 ${is}    newFollowSet.UnionWith(OuterFollowSet);
 ${is}    OuterFollowSet = newFollowSet;
 ${is}}
@@ -462,7 +462,7 @@ ${is}}
 ${BuildCode(loopExpansion.nestedExpansion, indent)}
 [#else]
 [#var initialTokenVarName = "initialToken" + CU.newID()]
-${is}${initialTokenVarName} = lastConsumedToken;
+${is}${initialTokenVarName} = LastConsumedToken;
 ${is}try {
 ${BuildCode(loopExpansion.nestedExpansion, indent + 4)}
 ${is}}
@@ -471,11 +471,11 @@ ${is}    if (!IsTolerant) throw;
 ${is}    if (debugFaultTolerant) {
 ${is}        // logger.info('Handling exception. Last consumed token: %s at: %s', lastConsumedToken.image, lastConsumedToken.location)
 ${is}    }
-${is}    if (${initialTokenVarName} == lastConsumedToken) {
-${is}        lastConsumedToken = NextToken(lastConsumedToken);
+${is}    if (${initialTokenVarName} == LastConsumedToken) {
+${is}        LastConsumedToken = NextToken(LastConsumedToken);
 ${is}        // We have to skip a token in this spot or
 ${is}        // we'll be stuck in an infinite loop!
-${is}        lastConsumedToken.skipped = true;
+${is}        LastConsumedToken.skipped = true;
 ${is}        if (debugFaultTolerant) {
 ${is}            // logger.info('Skipping token %s at: %s', lastConsumedToken.image, lastConsumedToken.location)
 ${is}        }
@@ -577,14 +577,14 @@ ${is}}
 [/#if]
    [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "]
    [#if assertion.assertionExpression??]
-      if (!(${grammar.utils.translateExpression(assertion.assertionExpression)})) {
-         Fail("${assertionMessage}"${optionalPart});
-      }
+${is}if (!(${grammar.utils.translateExpression(assertion.assertionExpression)})) {
+${is}    Fail("${assertionMessage}"${optionalPart});
+${is}}
    [/#if]
    [#if assertion.expansion??]
-      if ([#if !assertion.expansionNegated]![/#if]${assertion.expansion.scanRoutineName}()) {
-         Fail("${assertionMessage}"${optionalPart});
-      }
+${is}if ([#if !assertion.expansionNegated]![/#if]${assertion.expansion.scanRoutineName}()) {
+${is}    Fail("${assertionMessage}"${optionalPart});
+${is}}
    [/#if]
 [/#macro]
 
@@ -596,11 +596,11 @@ ${is}}
 [#macro BuildRecoverRoutines]
    [#list grammar.expansionsNeedingRecoverMethod as expansion]
     def ${expansion.recoverMethodName}(self):
-        Token initialToken = lastConsumedToken;
+        Token initialToken = LastConsumedToken;
         IList<Token> skippedTokens = new List<Token>();
         bool success = false;
 
-        while (lastConsumedToken.Type != TokenType.EOF) {
+        while (LastConsumedToken.Type != TokenType.EOF) {
 [#if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"]
             if (${ExpansionCondition(expansion.nestedExpansion)}) {
 [#else]
@@ -636,10 +636,10 @@ ${is}}
                 [#set followingExpansion = followingExpansion.followingExpansion]
                [/#list]
              [/#if]
-            lastConsumedToken = NextToken(lastConsumedToken);
-            skippedTokens.Add(lastConsumedToken);
+            LastConsumedToken = NextToken(LastConsumedToken);
+            skippedTokens.AddLastConsumedToken);
         if (!success && skippedTokens.Count > 0) {
-             lastConsumedToken = initialToken;
+             LastConsumedToken = initialToken;
         }
         if (success && skippedTokens.Count > 0) {
             iv = InvalidNode(self);

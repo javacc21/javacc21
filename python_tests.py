@@ -80,7 +80,7 @@ def run_command(cmd, **kwargs):
     return subprocess.run(cmd, **kwargs)
 
 def test_grammar(gdata, options):
-    lang = gdata.dir  # Perhas not intuitive, hence this comment
+    lang = gdata.dir  # Perhaps not intuitive, hence this comment
     s = 'Testing with %s grammar' % gdata.name
     line = '-' * 70
     print(line)

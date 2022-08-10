@@ -103,18 +103,25 @@ ${prefix}${newID()}[#rt]
 [#macro HandleLexicalStateChange expansion inLookahead indent]
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
+[#var resetToken = inLookahead?string("currentLookaheadToken", "LastConsumedToken")]
 [#if expansion.specifiedLexicalState??]
-  [#var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")]
   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
-${is}${prevLexicalStateVar} = tokenSource.LexicalState;
-${is}if (tokenSource.LexicalState != LexicalState.${expansion.specifiedLexicalState}:
-${is}    tokenSource.Reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState})
-${is}    try:
-  [#nested indent + 4 /]
-${is}    finally:
-${is}        if ${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}:
-${is}            tokenSource.Reset(${resetToken}, ${prevLexicalStateVar})
-${is}            _nextTokenType = null;
+${is}LexicalState ${prevLexicalStateVar} = tokenSource.LexicalState;
+${is}tokenSource.Reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
+${is}try {
+[#nested indent + 8 /]
+${is}}
+${is}finally {
+${is}    if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+${is}        if (${resetToken}.Next != null) {
+${is}            tokenSource.Reset(${resetToken}, ${prevLexicalStateVar});
+${is}        }
+${is}        else {
+${is}            tokenSource.SwitchTo(${prevLexicalStateVar});
+${is}        }
+${is}        _nextTokenType = null;
+${is}    }
+${is}}
 [#elseif expansion.tokenActivation??]
   [#var tokenActivation = expansion.tokenActivation]
   [#var methodName = "ActivateTokenTypes"]
@@ -123,7 +130,7 @@ ${is}            _nextTokenType = null;
   [/#if]
   [#var prevActives = newVarName("previousActives")]
   [#var somethingChanged = newVarName("somethingChanged")]
-${is}var ${prevActives} = new SetAdapter<TokenType>(tokenSource.ActiveTokenTypes);
+${is}var ${prevActives} = new HashSet<TokenType>(tokenSource.ActiveTokenTypes);
 ${is}var ${somethingChanged} = ${methodName}(
   [#list tokenActivation.tokenNames as tokenName]
 ${is}    ${TT}${tokenName}[#if tokenName_has_next],[/#if]

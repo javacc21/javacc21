@@ -32,13 +32,16 @@ class App {
 	while (i0++ < i2) {
 		generate();
 		dump();
-	}        
+	}
+
 	end = DateTime.Now;
 	n2 = (end-start).TotalMilliseconds;
 	Console.WriteLine("{0} generations in {1} milliseconds, {2} gen/sec.",
 	i2, (int)n2, (int)(i2/(n2/1000)));
 	return 0;
-}    
+}
+
+
 static void generate() {
 	int i0, i1, i2, i3;
 	i0 = s15.Length;
@@ -50,7 +53,8 @@ static void generate() {
 			i3 = (offset + i0 + i1) % i0;
 			if (s15.Substring(i3, 1) == "*")
 				i2++;
-		}            
+		}
+
 		if (s15.Substring(i1, 1) == "*") {
 			if (i2 < 2 || i2 > 3) {
 				s1 += " ";
@@ -70,5 +74,7 @@ static void generate() {
 static void dump() {
 	;
 }
-}
+}
+
+
 

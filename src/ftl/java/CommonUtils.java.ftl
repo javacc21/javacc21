@@ -120,13 +120,13 @@
    [#if expansion.specifiedLexicalState??]
       [#var prevLexicalStateVar = newVarName("previousLexicalState")]
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
-           token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
+         token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
          try {
            [#nested/]
          }
          finally {
             if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
-                if (${resetToken}.getNext()!=null) {
+                if (${resetToken}.getNext() != null) {
                     token_source.reset(${resetToken}, ${prevLexicalStateVar});
                 }
                 else {
