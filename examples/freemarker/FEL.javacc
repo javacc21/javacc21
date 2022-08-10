@@ -360,7 +360,7 @@ Parenthesis :
 
 ArgsList #void :
     (
-        LOOKAHEAD(<IDENTIFIER><EQUALS>)
+        SCAN <IDENTIFIER><EQUALS> =>
         NamedArgsList
         |
         PositionalArgsList
