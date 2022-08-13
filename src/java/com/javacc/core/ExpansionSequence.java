@@ -107,20 +107,16 @@ public class ExpansionSequence extends Expansion {
     }
 
     private boolean getRequiresScanAhead() {
-        boolean foundNonEmpty = false;
-        if (getHasExplicitScanLimit()) return true;
-        for (Expansion unit : childrenOfType(Expansion.class)) {
-            if (unit.isScanLimit())
-                return true;
-            if (!foundNonEmpty && (unit instanceof NonTerminal)) {
+        if (this.getHasExplicitScanLimit()) return true;
+        for (Expansion unit : allUnits()) {
+            if (unit instanceof NonTerminal) {
                 NonTerminal nt = (NonTerminal) unit;
                 if (nt.getHasScanLimit())
                     return true;
                 if (nt.getProduction().getHasExplicitLookahead())
                     return true;
             }
-            if (!unit.isPossiblyEmpty())
-                foundNonEmpty = true;
+            if (unit.getMaximumSize()>0) break;
         }
         Lookahead la = getLookahead();
         return la != null && la.getRequiresScanAhead();
@@ -218,12 +214,7 @@ public class ExpansionSequence extends Expansion {
      */
     @Override
     public boolean getHasExplicitScanLimit() {
-        for (Expansion unit: allUnits()) {
-            if (unit.isScanLimit()) {
-                return true;
-            }
-        }
-        return false;
+        return allUnits().stream().anyMatch(Expansion::isScanLimit);
     }
 
     public List<Expansion> getUnits() {
@@ -242,6 +233,7 @@ public class ExpansionSequence extends Expansion {
 
     @Override
     public int getLookaheadAmount() {
+        if (getHasExplicitScanLimit()) return Integer.MAX_VALUE;
         Lookahead la = getLookahead();
         if (la != null)
             return la.getAmount();
