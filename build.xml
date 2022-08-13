@@ -161,6 +161,12 @@
     <ant antfile="build.xml" dir="examples/legacy" target="test" />
  </target>
 
+  <target name="test-java" depends="jar">
+    <echo>Testing the Java parser standalone</echo>
+    <ant antfile="build.xml" dir="examples/java" target="clean"/>
+    <ant antfile="build.xml" dir="examples/java" target="test"/>
+ </target>
+
  <target name="jar" depends="compile">
     <echo>Creating basic jarfile, using this requires a freemarker.jar in the same directory</echo>
     <jar jarfile="javacc.jar" basedir="build" compress="true">

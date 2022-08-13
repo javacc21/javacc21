@@ -105,11 +105,27 @@ public class PythonTranslator extends Translator {
         else if (Character.isLowerCase(ident.charAt(0)) && !isSpecialPrefix(ident)) {
             result = camelToSnake(result);
         }
+        else if (ident.equals("LEXER_CLASS")) {
+            result = "Lexer";
+        }
+        else if (ident.equals("PARSER_CLASS")) {
+            result = "Parser";
+        }
+        else if (ident.startsWith("NODE_PACKAGE.")) {
+            result = ident.substring(13);
+        }
+        else if (ident.equals("DirectiveLine")) {
+            // TODO fix this special-casing for the current C# grammar
+            result = "parse_DirectiveLine";
+        }
         return result;
     }
 
     @Override public String translateGetter(String getterName) {
         if (getterName.startsWith("is")) {
+            return translateIdentifier(getterName, TranslationContext.METHOD);
+        }
+        else if (!getterName.startsWith("get")) {
             return translateIdentifier(getterName, TranslationContext.METHOD);
         }
         String result = Character.toLowerCase(getterName.charAt(3)) +
@@ -242,6 +258,13 @@ public class PythonTranslator extends Translator {
         result.append(')');
     }
 
+    @Override protected void translateArrayAccess(ASTArrayAccess expr, StringBuilder result) {
+        internalTranslateExpression(expr.getArray(), TranslationContext.UNKNOWN, result);
+        result.append('[');
+        internalTranslateExpression(expr.getIndex(), TranslationContext.UNKNOWN, result);
+        result.append(']');
+    }
+
     @SuppressWarnings("DuplicatedCode")
     @Override protected void translateTernaryExpression(ASTTernaryExpression expr, StringBuilder result) {
         boolean parens = needsParentheses(expr);
@@ -274,6 +297,12 @@ public class PythonTranslator extends Translator {
         }
     }
 
+    protected static Set<String> leaveAsMethods = new HashSet<>(Arrays.asList("getIndents", "isConstant"));
+
+    protected boolean treatAsProperty(String methodName) {
+        return isGetter(methodName) || methodName.equals("previousCachedToken");
+    }
+
     @Override protected void translateInvocation(ASTInvocation expr, StringBuilder result) {
         String methodName = expr.getMethodName();
         int nargs = expr.getArgCount();
@@ -301,17 +330,23 @@ public class PythonTranslator extends Translator {
             renderReceiver(receiver, result);
             result.append(')');
         }
-        else if (methodName.equals("size") && (nargs == 0)) {
+        else if ((methodName.equals("size") || methodName.equals("length")) && (nargs == 0)) {
             result.append("len(");
             renderReceiver(receiver, result);
             result.append(')');
+        }
+        else if (methodName.equals("charAt") && (nargs == 1)) {
+            renderReceiver(receiver, result);
+            result.append('[');
+            internalTranslateExpression(firstArg, TranslationContext.PARAMETER, result);
+            result.append(']');
         }
         else if (methodName.equals("isParserTolerant") && (nargs == 0)) {
             renderReceiver(receiver, result);
             result.append(".is_tolerant");
         }
-        else if (isGetter(methodName) && (nargs == 0) && !methodName.equals("getIndents")) {
-            // treat as a property. TODO special-casing of getIndents
+        else if ((nargs == 0) && treatAsProperty(methodName) && !leaveAsMethods.contains(methodName)) {
+            // treat as a property.
             renderReceiver(receiver, result);
             result.append('.');
             result.append(translateGetter(methodName));
@@ -369,13 +404,37 @@ public class PythonTranslator extends Translator {
         boolean result = true;
 
         if (stmt instanceof ASTStatementList) {
-            result = false;
+            result = ((ASTStatementList) stmt).getStatements() == null;
         }
         else if (stmt instanceof ASTVariableOrFieldDeclaration) {
             ASTVariableOrFieldDeclaration d = (ASTVariableOrFieldDeclaration) stmt;
             result = d.isField() || d.hasInitializer();
         }
         return result;
+    }
+
+    protected void translateIf(ASTIfStatement stmt, int indent, boolean first, StringBuilder result) {
+        if (first) {
+            result.append("if ");
+        }
+        else {
+            addIndent(indent, result);
+            result.append("elif ");
+        }
+        internalTranslateExpression(stmt.getCondition(), TranslationContext.UNKNOWN, result);
+        result.append(":\n");
+        internalTranslateStatement(stmt.getThenStmts(), indent + 4, result);
+        ASTStatement estmt = stmt.getElseStmts();
+        if (estmt != null) {
+            if (!(estmt instanceof ASTIfStatement)) {
+                addIndent(indent, result);
+                result.append("else:\n");
+                internalTranslateStatement(estmt, indent + 4, result);
+            }
+            else {
+                translateIf((ASTIfStatement) estmt, indent, false, result);
+            }
+        }
     }
 
     @Override protected void internalTranslateStatement(ASTStatement stmt, int indent, StringBuilder result) {
@@ -392,8 +451,13 @@ public class PythonTranslator extends Translator {
         else if (stmt instanceof ASTStatementList) {
             List<ASTStatement> statements = ((ASTStatementList) stmt).getStatements();
 
-            for (ASTStatement s : statements) {
-                internalTranslateStatement(s, indent, result);
+            if (statements == null) {   // empty block
+                result.append("pass\n");
+            }
+            else {
+                for (ASTStatement s : statements) {
+                    internalTranslateStatement(s, indent, result);
+                }
             }
         }
         else if (stmt instanceof ASTVariableOrFieldDeclaration) {
@@ -442,16 +506,39 @@ public class PythonTranslator extends Translator {
             }
             addNewline = true;
         }
+        else if (stmt instanceof ASTBreakStatement) {
+            result.append("break");
+            addNewline = true;
+        }
+        else if (stmt instanceof ASTContinueStatement) {
+            result.append("continue");
+            addNewline = true;
+        }
         else if (stmt instanceof ASTIfStatement) {
-            ASTIfStatement s = (ASTIfStatement) stmt;
+            translateIf((ASTIfStatement) stmt, indent, true, result);
+        }
+        else if (stmt instanceof ASTWhileStatement) {
+            ASTWhileStatement s = (ASTWhileStatement) stmt;
 
-            result.append("if ");
+            result.append("while ");
             internalTranslateExpression(s.getCondition(), TranslationContext.UNKNOWN, result);
             result.append(":\n");
-            internalTranslateStatement(s.getThenStmts(), indent + 4, result);
-            if (s.getElseStmts() != null) {
-                addIndent(indent, result);
-                internalTranslateStatement(s.getElseStmts(), indent + 4, result);
+            internalTranslateStatement(s.getStatements(), indent + 4, result);
+        }
+        else if (stmt instanceof ASTAssertStatement) {
+            ASTAssertStatement s = (ASTAssertStatement) stmt;
+            result.append("if not (");
+            internalTranslateExpression(s.getCondition(), TranslationContext.UNKNOWN, result);
+            result.append("):\n");
+            addIndent(indent + 4, result);
+            ASTExpression m = s.getMessage();
+            if (m == null) {
+                result.append("raise AssertionError()\n");
+            }
+            else {
+                result.append("raise AssertionError(str(");
+                internalTranslateExpression(m, TranslationContext.UNKNOWN, result);
+                result.append("))\n");
             }
         }
         else if (stmt instanceof ASTForStatement) {
@@ -539,7 +626,7 @@ public class PythonTranslator extends Translator {
         }
         else if (stmt instanceof ASTMethodDeclaration) {
             ASTMethodDeclaration decl = (ASTMethodDeclaration) stmt;
-            String methodName = translateIdentifier(decl.getName(), TranslationContext.METHOD);
+            String methodName = decl.isConstructor() ? "__init__" : translateIdentifier(decl.getName(), TranslationContext.METHOD);
             List<ASTFormalParameter> formals = decl.getParameters();
             SymbolTable symbols = new SymbolTable();
             boolean isStatic = false;
@@ -569,6 +656,85 @@ public class PythonTranslator extends Translator {
             internalTranslateStatement(decl.getStatements(), indent + 4, result);
             result.append('\n');
             popSymbols();
+        }
+        else if (stmt instanceof ASTTryStatement) {
+            ASTTryStatement tryStmt = (ASTTryStatement) stmt;
+            result.append("try:\n");
+            internalTranslateStatement(tryStmt.getBlock(), indent + 4, result);
+            List<ASTExceptionInfo> catchBlocks = tryStmt.getCatchBlocks();
+            if (catchBlocks != null) {
+                for (ASTExceptionInfo cb: catchBlocks) {
+                    addIndent(indent, result);
+                    result.append("except ");
+                    List<ASTTypeExpression> infos = cb.getExceptionTypes();
+                    int n = infos.size();
+                    boolean multiple = n > 1;
+                    if (multiple) {
+                        result.append('(');
+                    }
+                    for (int i = 0; i < n; i++) {
+                        ASTTypeExpression te = infos.get(i);
+                        internalTranslateExpression(te, TranslationContext.TYPE, result);
+                        if (i < (n - 1)) {
+                            result.append(", ");
+                        }
+                    }
+                    if (multiple) {
+                        result.append(')');
+                    }
+                    result.append(" as ");
+                    result.append(cb.getVariable());
+                    result.append(":\n");
+                    internalTranslateStatement(cb.getBlock(), indent + 4, result);
+                }
+            }
+            ASTStatement fb = tryStmt.getFinallyBlock();
+            if (fb != null) {
+                addIndent(indent, result);
+                result.append("finally:\n");
+                internalTranslateStatement(fb, indent + 4, result);
+            }
+        }
+        else if (stmt instanceof ASTEnumDeclaration) {
+            ASTEnumDeclaration enumDecl = (ASTEnumDeclaration) stmt;
+
+            result.append("@unique\n");
+            addIndent(indent, result);
+            result.append("class ");
+            result.append(enumDecl.getName());
+            result.append("(Enum):\n");
+            List<String> values = enumDecl.getValues();
+            if (values == null) {
+                addIndent(indent + 4, result);
+                result.append("pass\n\n");
+            }
+            else {
+                for (String s: values) {
+                    addIndent(indent + 4, result);
+                    result.append(s);
+                    result.append(" = auto()\n");
+                }
+                result.append('\n');
+            }
+        }
+        else if (stmt instanceof ASTClassDeclaration) {
+            ASTClassDeclaration classDecl = (ASTClassDeclaration) stmt;
+            List<ASTStatement> decls = classDecl.getDeclarations();
+            result.append("class ");
+            result.append(classDecl.getName());
+            result.append(":\n");
+            if (decls == null) {
+                addIndent(indent + 4, result);
+                result.append("pass\n");
+            }
+            else {
+                for (ASTStatement decl: decls) {
+                    if (decl instanceof ASTVariableOrFieldDeclaration) {
+                        continue;
+                    }
+                    internalTranslateStatement(decl, indent + 4, result);
+                }
+            }
         }
         else {
             throw new UnsupportedOperationException();
@@ -638,7 +804,7 @@ public class PythonTranslator extends Translator {
         String qualifiedName = String.format("%s.%s", injector.getNodePackage(), name);
         List<String> nameList = injector.getParentClasses(qualifiedName);
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
-        boolean isInterface = grammar.nodeIsInterface(name);
+        // boolean isInterface = grammar.nodeIsInterface(name);
         int n = decls.size();
 
         nameList.remove("Node");    // don't have the Node interface in Python
@@ -698,5 +864,64 @@ public class PythonTranslator extends Translator {
 
     @Override  public void translateFormals(List<FormalParameter> formals, SymbolTable symbols, StringBuilder result) {
         translateFormals(transformFormals(formals), symbols, false, false, result);
+    }
+
+    @Override public void translateImport(String javaName, StringBuilder result) {
+        String prefix = String.format("%s.", grammar.getParserPackage());
+        if (!javaName.startsWith(prefix)) {
+            throw new UnsupportedOperationException();
+        }
+        javaName = javaName.substring(prefix.length());
+        List<String> parts = new ArrayList<>(Arrays.asList(javaName.split("\\.")));
+        String from = null;
+        String s = parts.get(0);
+        if (Character.isLowerCase(s.charAt(0))) {
+            from = String.format("%sparser", s);
+            parts.remove(0);
+        }
+        int n = parts.size();
+        if ((n == 0) || (n > 2)) {
+            throw new UnsupportedOperationException();
+        }
+        s = parts.get(0);
+        String suffix = null;
+
+        if (s.endsWith("Parser")) {
+            suffix = "Parser";
+        }
+        else if (s.endsWith("Lexer")) {
+            suffix = "Lexer";
+        }
+        if (n == 1) {
+            if (suffix != null) {
+                result.append("from ").append(from).append(" import ").append(suffix).append(" as ").append(s).append('\n');
+            }
+        }
+        else {
+            result.append("from ").append(from);
+            if (suffix != null) {
+                result.append('.').append(suffix.toLowerCase());
+            }
+            result.append(" import ").append(parts.get(1)).append('\n');
+        }
+    }
+
+    @Override public void endClass(String name, boolean fields, StringBuilder result) {
+        if (!fields && nestedDeclarations != null) {
+            result.append('\n');
+            for (Map.Entry<String, Set<String>> kv: nestedDeclarations.entrySet()) {
+                String cn = kv.getKey();
+                if (cn.endsWith("Lexer")) {
+                    cn = "Lexer";
+                }
+                else if (cn.endsWith("Parser")) {
+                    cn = "Parser";
+                }
+                for (String s: kv.getValue()) {
+                    result.append(s).append(" = ").append(cn).append('.').append(s).append('\n');
+                }
+            }
+        }
+        super.endClass(name, fields, result);
     }
 }

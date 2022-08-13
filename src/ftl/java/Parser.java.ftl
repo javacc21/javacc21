@@ -215,7 +215,7 @@ public boolean isCancelled() {return cancelled;}
   }
 
   private boolean checkNextTokenImage(String img) {
-    return getToken(1).getImage().equals(img);
+    return tokenImage(1).equals(img);
   }
 
   private boolean checkNextTokenType(TokenType type) {

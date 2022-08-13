@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 if IS_JAVA:
     import java.io
     from java.nio.charset import StandardCharsets
+    from java.nio.file import Paths
 
     def node_repr(node):
         if isinstance(node, Token):
@@ -36,15 +37,42 @@ if IS_JAVA:
         for child in node.children():
             java_dump_node(stream, child, level + 1)
 
-    def get_reader(p):
-        fis = java.io.FileInputStream(p)
-        isr = java.io.InputStreamReader(fis, StandardCharsets.UTF_8)
-        return java.io.BufferedReader(isr)
+    def get_path(p):
+        return Paths.get(p)
 
     def get_writer(p):
         fos = java.io.FileOutputStream(p)
         osw = java.io.BufferedWriter(java.io.OutputStreamWriter(fos, StandardCharsets.UTF_8))
         return java.io.PrintWriter(osw, True)
+
+    def input_text(input_source):
+        with open(input_source, 'rb') as f:
+            text = f.read()
+        if len(text) <= 3:
+            encoding = 'utf-8'
+        elif text[:3] == b'\xEF\xBB\xBF':
+            text = text[3:]
+            encoding = 'utf-8'
+        elif text[:2] == b'\xFF\xFE':
+            text = text[2:]
+            encoding = 'utf-16le'
+        elif text[:2] == b'\xFE\xFF':
+            text = text[2:]
+            encoding = 'utf-16be'
+        elif text[:4] == b'\xFF\xFE\x00\x00':
+            text = text[4:]
+            encoding = 'utf-32le'
+        elif text[:4] == b'\x00\x00\xFE\xFF':
+            text = text[4:]
+            encoding = 'utf-32be'
+        else:
+            # No encoding from BOM.
+            encoding = 'utf-8'
+        try:
+            return text.decode(encoding)
+        except UnicodeDecodeError:
+            return text.decode('latin-1')  # Some C# test files contain binary!
+
 
 elif IS_DOTNET:
     try:
@@ -185,14 +213,15 @@ def main():
                 logger.debug('Processing %s -> %s', fn, os.path.basename(ofn))
             try:
                 if IS_JAVA:
-                    f = get_reader(p)
+                    f = get_path(p)
                     outf = get_writer(ofn)
                     if options.parser:
                         parser = Parser(f)
                         parser.inputSource = p
                     else:
-                        lexer = Lexer(f)
+                        lexer = Lexer(input_text(p))
                         lexer.inputSource = p
+                    f = None  # no need to close
                 elif IS_DOTNET:
                     f = None
                     outf = StreamWriter(FileStream(ofn, FileMode.Create))
@@ -231,9 +260,10 @@ def main():
                             raise
                 else:
                     done = False
+                    t = None
                     while not done:
                         if IS_JAVA:
-                            t = lexer.getNextToken(None)
+                            t = lexer.getNextToken(t)
                             s = '%s: %s %d %d %d %d\n' % (t.type, t.image,
                                                           t.beginLine,
                                                           t.beginColumn,
@@ -241,7 +271,7 @@ def main():
                                                           t.endColumn)
                             outf.print(s)
                         elif IS_DOTNET:
-                            t = lexer.GetNextToken(None)
+                            t = lexer.GetNextToken(t)
                             s = '%s: %s %d %d %d %d\n' % (t.Type, t.Image,
                                                           t.BeginLine,
                                                           t.BeginColumn,
@@ -250,7 +280,7 @@ def main():
                             outf.Write(s)
                         else:
                             # import pdb; pdb.set_trace()
-                            t = lexer.get_next_token(None)
+                            t = lexer.get_next_token(t)
                             s = '%s: %s %d %d %d %d\n' % (t.type.name, t.image,
                                                           t.begin_line,
                                                           t.begin_column,
@@ -262,14 +292,20 @@ def main():
                             done = t.Type == TokenType.EOF
                         else:
                             done = t.type == TokenType.EOF
+            except Exception as e:
+                import traceback
+                traceback.print_exc(e)
             finally:
-                if f:
-                    f.close()
-                if outf:
-                    if IS_DOTNET:
-                        outf.Close()
-                    else:
-                        outf.close()
+                try:
+                    if f:
+                        f.close()
+                    if outf:
+                        if IS_DOTNET:
+                            outf.Close()
+                        else:
+                            outf.close()
+                except Exception:
+                    logger.warning('Failed to close %s', f)
 
 if __name__ == '__main__':
     try:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 Vinay Sajip (vinay_sajip@yahoo.co.uk)
+# Copyright (C) 2021-2022 Vinay Sajip (vinay_sajip@yahoo.co.uk)
 #
 import argparse
 import glob
@@ -75,7 +75,12 @@ def copy_files(srcdir, destdir, patterns):
                 shutil.copytree(fn, dp)
             # print('%s -> %s' % (p, dp))
 
+def run_command(cmd, **kwargs):
+    # print(' '.join(cmd))
+    return subprocess.run(cmd, **kwargs)
+
 def test_grammar(gdata, options):
+    lang = gdata.dir  # Perhas not intuitive, hence this comment
     s = 'Testing with %s grammar' % gdata.name
     line = '-' * 70
     print(line)
@@ -109,10 +114,15 @@ def test_grammar(gdata, options):
     print('Test files copied to working directory.')
 
     # Run javacc to create the Java lexer and parser
-
+    if lang == 'csharp':
+        pf = os.path.join(dd, 'PPDirectiveLine.javacc')
+        cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', pf]
+        p = run_command(cmd)
+        if p.returncode:
+            raise ValueError('Preprocessor generation in Java failed')
     gf = os.path.join(dd, gdata.grammar)
     cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', gf]
-    p = subprocess.run(cmd)
+    p = run_command(cmd)
     if p.returncode:
         raise ValueError('Parser generation in Java failed')
     print('Java version of lexer and parser created.')
@@ -124,29 +134,32 @@ def test_grammar(gdata, options):
     pkg, cls = jparser.rsplit('.', 1)
     fn = os.path.join(pkg.replace('.', os.sep), '%s.java' % cls)
     cmd = ['javac', fn]
-    p = subprocess.run(cmd, cwd=dd)
+    p = run_command(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('Java compilation failed')
     print('Java lexer and parser compiled.')
 
     # Run Jython to create the Java test result files
+    # For C#, you can't run the lexer standalone, because the parser switches lexical
+    # states during e.g. string parsing
 
-    # First the lexer
-    cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py', '-q',
-           gdata.jlexer, gdata.ext]
-    start = time.time()
-    p = subprocess.run(cmd, cwd=dd)
-    if p.returncode:
-        raise ValueError('Java lexer test run failed')
-    elapsed = time.time() - start
-    print('Java lexer run completed (%.2f secs).' % elapsed)
+    if lang != 'csharp':
+        # First the lexer
+        cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py', '-q',
+               gdata.jlexer, gdata.ext]
+        start = time.time()
+        p = run_command(cmd, cwd=dd)
+        if p.returncode:
+            raise ValueError('Java lexer test run failed')
+        elapsed = time.time() - start
+        print('Java lexer run completed (%.2f secs).' % elapsed)
 
     # Then the parser
 
     cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py', '-q',
            '--parser', gdata.production, gdata.jparser, gdata.ext]
     start = time.time()
-    p = subprocess.run(cmd, cwd=dd)
+    p = run_command(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('Java parser test run failed')
     elapsed = time.time() - start
@@ -154,30 +167,37 @@ def test_grammar(gdata, options):
 
     # Run javacc to create the Python lexer and parser
 
+    if lang == 'csharp':
+        cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', '-lang', 'python', pf]
+        p = run_command(cmd)
+        if p.returncode:
+            raise ValueError('Preprocessor generation in Python failed')
     cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', '-lang', 'python', gf]
-    p = subprocess.run(cmd)
+    p = run_command(cmd)
     if p.returncode:
         raise ValueError('Parser generation in Python failed')
     print('Python version of lexer and parser created.')
 
     # Run Python to create the Python test result files
+    # For C#, you can't run the lexer standalone, because the parser switches lexical
+    # states during e.g. string parsing
 
-    # First the lexer
-
-    cmd = [sys.executable, 'ptest.py', '-q', gdata.ppackage, gdata.ext]
-    start = time.time()
-    p = subprocess.run(cmd, cwd=dd)
-    if p.returncode:
-        raise ValueError('Python lexer test run failed')
-    elapsed = time.time() - start
-    print('Python lexer run completed (%.2f secs).' % elapsed)
+    if lang != 'csharp':
+        # First the lexer
+        cmd = [sys.executable, 'ptest.py', '-q', gdata.ppackage, gdata.ext]
+        start = time.time()
+        p = run_command(cmd, cwd=dd)
+        if p.returncode:
+            raise ValueError('Python lexer test run failed')
+        elapsed = time.time() - start
+        print('Python lexer run completed (%.2f secs).' % elapsed)
 
     # Then the parser
 
     cmd = [sys.executable, 'ptest.py', '-q',
            '--parser', gdata.production, gdata.ppackage, gdata.ext]
     start = time.time()
-    p = subprocess.run(cmd, cwd=dd)
+    p = run_command(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('Python parser test run failed')
     elapsed = time.time() - start
@@ -189,7 +209,7 @@ def test_grammar(gdata, options):
            os.path.join('testfiles', 'results', 'python')]
     if os.name == 'nt':
         cmd.insert(1, '-b')
-    p = subprocess.run(cmd, cwd=dd)
+    p = run_command(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('Test results differ - '
                          'should be identical')
@@ -258,9 +278,6 @@ def main():
         langs = options.langs.split(',')
         for lang, gdata in languages.items():
             if options.langs == 'all' or lang in langs:
-                if lang == 'csharp':
-                    print('Skipping csharp, because grammar is incomplete')
-                    continue
                 test_grammar(gdata, options)
                 workdirs.append(gdata.workdir)
 

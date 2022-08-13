@@ -102,6 +102,7 @@ def run_command(cmd, **kwargs):
     return subprocess.run(cmd, **kwargs)
 
 def test_grammar(gdata, options):
+    lang = gdata.dir  # Perhas not intuitive, hence this comment
     s = 'Testing with %s grammar' % gdata.name
     line = '-' * 70
     print(line)
@@ -126,7 +127,7 @@ def test_grammar(gdata, options):
 
     gf = os.path.join(dd, gdata.grammar)
     cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', gf]
-    p = subprocess.run(cmd)
+    p = run_command(cmd)
     if p.returncode:
         raise ValueError('Parser generation in Java failed')
     print('Java version of lexer and parser created.')
@@ -138,29 +139,32 @@ def test_grammar(gdata, options):
     pkg, cls = jparser.rsplit('.', 1)
     fn = os.path.join(pkg.replace('.', os.sep), '%s.java' % cls)
     cmd = ['javac', fn]
-    p = subprocess.run(cmd, cwd=dd)
+    p = run_command(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('Java compilation failed')
     print('Java lexer and parser compiled.')
 
     # Run Jython to create the Java test result files
+    # For C#, you can't run the lexer standalone, because the parser switches lexical
+    # states during e.g. string parsing
 
-    # First the lexer
-    cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py', '-q',
-           gdata.jlexer, gdata.ext]
-    start = time.time()
-    p = subprocess.run(cmd, cwd=dd)
-    if p.returncode:
-        raise ValueError('Java lexer test run failed')
-    elapsed = time.time() - start
-    print('Java lexer run completed (%.2f secs).' % elapsed)
+    if lang != 'csharp':
+        # First the lexer
+        cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py', '-q',
+               gdata.jlexer, gdata.ext]
+        start = time.time()
+        p = run_command(cmd, cwd=dd)
+        if p.returncode:
+            raise ValueError('Java lexer test run failed')
+        elapsed = time.time() - start
+        print('Java lexer run completed (%.2f secs).' % elapsed)
 
     # Then the parser
 
     cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py', '-q',
            '--parser', gdata.production, gdata.jparser, gdata.ext]
     start = time.time()
-    p = subprocess.run(cmd, cwd=dd)
+    p = run_command(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('Java parser test run failed')
     elapsed = time.time() - start
@@ -169,7 +173,7 @@ def test_grammar(gdata, options):
     # Run javacc to create the C# lexer and parser
 
     cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', '-lang', 'csharp', gf]
-    p = subprocess.run(cmd)
+    p = run_command(cmd)
     if p.returncode:
         raise ValueError('Parser generation in C# failed')
     print('C# version of lexer and parser created.')
@@ -183,16 +187,18 @@ def test_grammar(gdata, options):
         raise ValueError('Failed to build generated C# code')
 
     # Run IronPython to create the C# test result files
+    # For C#, you can't run the lexer standalone, because the parser switches lexical
+    # states during e.g. string parsing
 
-    # First the lexer
-
-    cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py', '-q', gdata.cspackage, gdata.ext])
-    start = time.time()
-    p = run_command(cmd, cwd=dd)
-    if p.returncode:
-        raise ValueError('C# lexer test run failed')
-    elapsed = time.time() - start
-    print('C# lexer run completed (%.2f secs).' % elapsed)
+    if lang != 'csharp':
+        # First the lexer
+        cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py', '-q', gdata.cspackage, gdata.ext])
+        start = time.time()
+        p = run_command(cmd, cwd=dd)
+        if p.returncode:
+            raise ValueError('C# lexer test run failed')
+        elapsed = time.time() - start
+        print('C# lexer run completed (%.2f secs).' % elapsed)
 
     # Then the parser
 
@@ -211,7 +217,7 @@ def test_grammar(gdata, options):
            os.path.join('testfiles', 'results', 'csharp')]
     if os.name == 'nt':
         cmd.insert(1, '-b')
-    p = subprocess.run(cmd, cwd=dd)
+    p = run_command(cmd, cwd=dd)
     if p.returncode:
         raise ValueError('Test results differ - '
                          'should be identical')

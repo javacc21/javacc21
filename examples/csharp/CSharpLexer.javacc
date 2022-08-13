@@ -322,7 +322,7 @@ INJECT CSharpLexer :
    private boolean parsingOn, alreadyHandled, seenElse;
    private int ifNesting, lastEnabledOffset, turnedOffPoint;
 
-   private BitSet parsingOnStack = new BitSet(), seenElseStack = new BitSet(), alreadyHandledStack = new BitSet();
+   private BitSet parsingOnStack = new BitSet(1000), seenElseStack = new BitSet(1000), alreadyHandledStack = new BitSet(1000);
    private Set<String> ppSymbols = new HashSet<>();
    
    {
@@ -344,11 +344,11 @@ INJECT CSharpLexer :
         return tok;
       }
       String image = tok.getImage();
-      if (image.isEmpty() || image.charAt(0) != '#') 
+      if (image.length() == 0 || image.charAt(0) != '#')
       {
          return tok;
       }
-      if (!atLineStart(tok)) {
+      if (!this.atLineStart(tok)) {
         return tok;
       }
       Token prevToken = tok.previousCachedToken();
@@ -402,14 +402,6 @@ INJECT CSharpLexer :
       return tok;
    }
 
-   void setRegionIgnore(int start, int end) {
-     for (int i = start; i< end; i++) {
-       tokenLocationTable[i] = IGNORED;
-     }
-     tokenOffsets.clear(start, end);
-   }
-
-
    void setParsingEnabled(boolean parsingOn, Token tok) {
        boolean turnedOn = !this.parsingOn && parsingOn;
        boolean turnedOff = this.parsingOn && !parsingOn;
@@ -424,11 +416,21 @@ INJECT CSharpLexer :
        }
        this.parsingOn = parsingOn;
    }
+/*
+ * Moved to Lexer class to make it easier to handle in Python/C#
+
+   private void setRegionIgnore(int start, int end) {
+     for (int i = start; i< end; i++) {
+       tokenLocationTable[i] = IGNORED;
+     }
+     tokenOffsets.clear(start, end);
+   }
 
    private boolean atLineStart(Token tok) {
       int offset = tok.getBeginOffset();
-      while (offset >0) {
-        char c = content.charAt(--offset);
+      while (offset > 0) {
+        --offset;
+        char c = this.content.charAt(offset);
         if (!Character.isWhitespace(c)) return false;
         if (c=='\n') break;
       }
@@ -448,5 +450,6 @@ INJECT CSharpLexer :
        tok.setBeginOffset(start);
        tok.setEndOffset(end);
    }
+ */
 }
 

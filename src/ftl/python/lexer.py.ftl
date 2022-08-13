@@ -34,16 +34,19 @@
 [#import "common_utils.inc.ftl" as CU]
 
 import bisect
+from enum import Enum, auto, unique
 import logging
 import re
 
-from .tokens import TokenType, LexicalState, InvalidToken, new_token
+from .tokens import (TokenType, LexicalState, InvalidToken, IgnoredToken,
+                     SkippedToken, new_token)
+
 [#if grammar.extraTokens?size > 0]
   [#list grammar.extraTokenNames as tokenName]
 from .tokens import ${grammar.extraTokens[tokenName]}
   [/#list]
 [/#if]
-from .utils import as_chr, _List, EMPTY_SET
+from .utils import as_chr, _List, EMPTY_SET, HashSet
 
 # See if an accelerated BitSet is available.
 try:
@@ -53,6 +56,8 @@ except ImportError:
     from .utils import BitSet
     _fast_bitset = False
 
+${grammar.utils.translateLexerImports()}
+
 [#var NFA_RANGE_THRESHOLD = 16]
 [#var MAX_INT=2147483647]
 [#var lexerData=grammar.lexerData]
@@ -60,6 +65,8 @@ except ImportError:
 [#var TT = "TokenType."]
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_TAB_SIZE = ${grammar.tabSize}
 
 #
 # Hack to allow token types to be referenced in snippets without
@@ -315,7 +322,7 @@ ${is}}
    ${import}
 [/#list]
 
-[#if lexerData.hasLexicalStateTransitions]
+[#if multipleLexicalStates]
 # A mapping for lexical state transitions triggered by a certain token type (token type -> lexical state)
 token_type_to_lexical_state_map = {}
 [/#if]
@@ -338,10 +345,16 @@ def get_function_table_map(lexical_state):
 CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
 
 def _input_text(input_source):
-    with open(input_source, 'rb') as f:
-        text = f.read()
+    # Check if it's an existing filename
+    try:
+        with open(input_source, 'rb') as f:
+            text = f.read()
+    except OSError:
+        return input_source  # assume it's source rather than a path to source
+    implicit = False
     if len(text) <= 3:
         encoding = 'utf-8'
+        implicit = True
     elif text[:3] == b'\xEF\xBB\xBF':
         text = text[3:]
         encoding = 'utf-8'
@@ -360,6 +373,7 @@ def _input_text(input_source):
     else:
         # No encoding from BOM.
         encoding = 'utf-8'
+        implicit = True
         if input_source.endswith(('.py', '.pyw')):
             # Look for coding in first two lines
             parts = text.split(b'\n', 2)
@@ -368,7 +382,12 @@ def _input_text(input_source):
                 m = CODING_PATTERN.match(parts[1])
             if m:
                 encoding = m.groups()[0].decode('ascii')
-    return text.decode(encoding)
+    try:
+        return text.decode(encoding, errors='replace')
+    except UnicodeDecodeError:
+        if not implicit:
+            raise
+        return text.decode('latin-1')
 
 [#-- #var lexerClassName = grammar.lexerClassName --]
 [#var lexerClassName = "Lexer"]
@@ -376,6 +395,7 @@ class ${lexerClassName}:
 
     __slots__ = (
         'input_source',
+        'tab_size',
 [#if grammar.lexerUsesParser]
         'parser',
 [/#if]
@@ -394,6 +414,7 @@ class ${lexerClassName}:
         'more_tokens',
         'lexical_state',
         '_line_offsets',
+        '_need_to_calculate_columns',
         '_token_offsets',
         '_token_location_table',
         'content',
@@ -420,16 +441,18 @@ ${grammar.utils.translateLexerInjections(injector, true)}
         self.content = self.munge_content(text, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL})
         self.content_len = n = len(self.content)
         n += 1
+        self.tab_size = DEFAULT_TAB_SIZE
 [#if grammar.lexerUsesParser]
         self.parser = None
 [/#if]
         self._buffer_position = 0
+        self._need_to_calculate_columns = BitSet(n)
         self._line_offsets = self.create_line_offsets_table(self.content)
         self._token_location_table = [None] * n
         self._token_offsets = BitSet(n)
         self._dummy_start_token = InvalidToken(self, 0, 0)
-        self._ignored = InvalidToken(self, 0, 0)
-        self._skipped = InvalidToken(self, 0, 0)
+        self._ignored = IgnoredToken(self, 0, 0)
+        self._skipped = SkippedToken(self, 0, 0)
         self._ignored.is_unparsed = True
         self._skipped.is_unparsed = True
         # The following two BitSets are used to store the current active
@@ -598,18 +621,19 @@ ${grammar.utils.translateLexerInjections(injector, true)}
                 return InvalidToken(self, token_begin_offset, self._buffer_position)
             self._buffer_position -= code_units_read - matched_pos
             if matched_type in self.skipped_tokens:
+                tlt = self._token_location_table
                 for i in range(token_begin_offset, self._buffer_position):
-                    if self._token_location_table[i] != self._ignored :
-                        self._token_location_table[i] = self._skipped
+                    if tlt[i] is not self._ignored:
+                        tlt[i] = self._skipped
             elif matched_type in self.regular_tokens or matched_type in self.unparsed_tokens:
                 # import pdb; pdb.set_trace()
                 matched_token = new_token(matched_type, self, token_begin_offset, self._buffer_position)
                 matched_token.is_unparsed = matched_type not in self.regular_tokens
+[#if lexerData.hasLexicalStateTransitions]
+            self.do_lexical_state_switch(matched_type)
+[/#if]
 [#if lexerData.hasTokenActions]
             matched_token = self.token_lexical_actions(matched_token, matched_type)
-[/#if]
-[#if multipleLexicalStates]
-            self.do_lexical_state_switch(matched_type)
 [/#if]
 [#list grammar.lexerTokenHooks as tokenHookMethodName]
   [#if tokenHookMethodName = "CommonTokenAction"]
@@ -692,53 +716,47 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         while index < cplen:
             ch = code_points[index]
             index += 1
-            if ch == '\\' and java_unicode_escape and index < cplen:
-                ch = code_points[index]
-                index += 1
-                if ch != 'u':
+            if ch == '\n':
+                buf.append(ch)
+                col = 0
+            elif java_unicode_escape and ch == '\\' and index < cplen and code_points[index] == 'u':
+                num_preceding_slashes = 0
+                i = index - 1
+                while i >= 0:
+                    if code_points[i] == '\\':
+                        num_preceding_slashes += 1
+                    else:
+                        break
+                    i -= 1
+                if num_preceding_slashes % 2 == 0:
                     buf.append('\\')
-                    buf.append(ch)
-                    if ch == '\n':
-                        col = 0
-                    else:
-                        col += 2
-                else:
-                    while code_points[index] == 'u':
-                        index += 1
-                        # col += 1
-                    hex_buf = []
-                    for i in range(4):
-                        hex_buf.append(code_points[index])
-                        index += 1
-                    current = int(''.join(hex_buf), 16)
-                    # last = buf[-1] if len(buf) > 0 else ''
-                    # shouldn't see surrogate pairs, normally
-                    buf.append(chr(current))
-                    # col += 6
                     col += 1
-                    # We're not going to be trying to track line/column information relative to the original content
-                    # with tabs or unicode escape, so we just increment 1, not 6
-            elif ch == '\r' and not preserve_lines:
-                buf.append('\n')
-                if index < cplen:
-                    ch = code_points[index]
-                    index += 1
-                    if ch != '\n':
-                        buf.append(ch)
-                        col += 1
+                    continue
+                num_consecutive_us = 0
+                i  = index
+                while i < cplen:
+                    if code_points[i] == 'u':
+                        num_consecutive_us += 1
                     else:
-                        col = 0
-            elif ch == '\t' and not preserve_tabs :
-                spaces_to_add = ${grammar.tabSize} - col % ${grammar.tabSize}
+                        break
+                    i += 1
+                four_hex_digits = ''.join(code_points[index + num_consecutive_us:index + num_consecutive_us + 4])
+                buf.append(chr(int(four_hex_digits, 16)))
+                index += num_consecutive_us + 4
+                col += 1
+            elif not preserve_lines and ch == '\r':
+                buf.append('\n')
+                col = 0
+                if index < cplen and code_points[index] == '\n':
+                    index += 1
+            elif ch == '\t' and not preserve_tabs:
+                spaces_to_add = self.tab_size - col % self.tab_size
                 for i in range(spaces_to_add):
                     buf.append(' ')
                     col += 1
             else:
                 buf.append(ch)
-                if ch == '\n':
-                    col = 0
-                else:
-                    col += 1
+                col += 1
         if ensure_final_endline:
             last_char = buf[-1] if len(buf) > 0 else ''
             if last_char != '\n' and last_char != '\r':
@@ -749,7 +767,14 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         if not content:
             return [0]
         length = len(content)
-        line_count = content.count('\n')
+        line_count = 0
+        length = len(content)
+        for i in range(length):
+            ch = content[i]
+            if ch == '\t':
+                self._need_to_calculate_columns.set(line_count)
+            if ch == '\n':
+                line_count += 1
         if content[-1] != '\n':
             line_count += 1
         result = [0]
@@ -783,8 +808,20 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         # import pdb; pdb.set_trace()
         line = self.get_line_from_offset(pos) - self.starting_line
         line_start = self._line_offsets[line]
-        adjustment = 1 if line > 0 else self.starting_column
-        return adjustment + pos - line_start
+        start_col_adjustment = 1 if line > 0 else self.starting_column
+        unadjusted_col = pos - line_start + start_col_adjustment
+        if not self._need_to_calculate_columns[line]:
+            return unadjusted_col
+        result = start_col_adjustment
+        i = line_start
+        while i < pos:
+            ch = self.content[i]
+            if ch == '\t':
+                result += self.tab_size - (result - 1) % self.tab_size
+            else:
+                result += 1
+            i += 1
+        return result
 
     def cache_token(self, tok):
 [#if !grammar.minimalToken]
@@ -795,9 +832,10 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
             return
 [/#if]
         offset = tok.begin_offset
-        if self._token_location_table[offset] != self._ignored :
+        tlt = self._token_location_table
+        if tlt[offset] is not self._ignored:
             self._token_offsets.set(offset)
-            self._token_location_table[offset] = tok
+            tlt[offset] = tok
 
     def uncache_tokens(self, last_token):
         end_offset = last_token.end_offset
@@ -839,6 +877,56 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         if result[-1] == '\n':
             result = result[:-1]
         return result
+
+    def set_region_ignore(self, start, end):
+        tlt = self._token_location_table
+        for offset in range(start, end):
+            tlt[offset] = self._ignored
+        self._token_offsets.clear(start, end)
+
+    def at_line_start(self, tok):
+        offset = tok.begin_offset
+        while offset > 0:
+            offset -= 1
+            c = self.content[offset]
+            if not c.isspace():
+                return False
+            if c == '\n':
+                break
+        return True
+
+    def get_line_start_offset(self, lineno):
+        rln = lineno - self.starting_line
+        if rln <= 0:
+            return 0
+        if rln >= len(self._line_offsets):
+            return self.content_len
+        return self._line_offsets[rln]
+
+    def get_line_end_offset(self, lineno):
+        rln = lineno - self.starting_line
+        if rln < 0:
+            return 0
+        if rln >= len(self._line_offsets):
+            return self.content_len
+        if rln == len(self._line_offsets) - 1:
+            return self.content_len - 1
+        return self._line_offsets[rln + 1] - 1
+
+    def get_line(self, tok):
+        lineno = tok.begin_line
+        soff = self.get_line_start_offset(lineno)
+        eoff = self.get_line_end_offset(lineno)
+        return self.get_text(soff, eoff + 1)
+
+    def set_line_skipped(self, tok):
+        lineno = tok.begin_line
+        soff = self.get_line_start_offset(lineno)
+        eoff = self.get_line_start_offset(lineno + 1)
+        self.set_region_ignore(soff, eoff)
+        tok.begin_offset = soff
+        tok.end_offset = eoff
+
 
 ${grammar.utils.translateLexerInjections(injector, false)}
 

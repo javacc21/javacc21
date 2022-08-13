@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk
+/* Copyright (C) 2021-2022 Vinay Sajip, vinay_sajip@yahoo.co.uk
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -202,8 +202,8 @@ public class Translator {
     }
 
     protected class ASTInvocation extends ASTExpression {
-        private ASTExpression receiver;
-        private List<ASTExpression> arguments;
+        protected ASTExpression receiver;
+        protected List<ASTExpression> arguments;
 
         void add(ASTExpression arg) {
             if (arguments == null) {
@@ -228,6 +228,9 @@ public class Translator {
             while (result == null) {
                 if (node instanceof ASTPrimaryExpression) {
                     result = ((ASTPrimaryExpression) node).name;
+                    if (result == null) {
+                        result = ((ASTPrimaryExpression) node).literal;
+                    }
                 }
                 else if (node instanceof ASTBinaryExpression) {
                     node = ((ASTBinaryExpression) node).rhs;
@@ -261,7 +264,46 @@ public class Translator {
             return postfix;
         }
     }
-    
+
+    protected class ASTArrayAccess extends ASTExpression {
+        protected ASTExpression array;
+        protected ASTExpression index;
+
+        public ASTExpression getArray() {
+            return array;
+        }
+
+        public ASTExpression getIndex() {
+            return index;
+        }
+    }
+
+    protected class ASTMethodReference extends ASTExpression {
+        protected ASTTypeExpression type;
+        protected List<ASTTypeExpression> typeArguments;
+        protected ASTExpression identifier;
+
+        public ASTTypeExpression getType() {
+            return type;
+        }
+
+        public List<ASTTypeExpression> getTypeArguments() {
+            return typeArguments;
+        }
+
+        public ASTExpression getIdentifier() {
+            return identifier;
+        }
+    }
+
+    protected class ASTExplicitConstructorInvocation extends ASTInvocation {
+        protected List<ASTTypeExpression> typeArguments;
+
+        public List<ASTTypeExpression> getTypeArguments() {
+            return typeArguments;
+        }
+    }
+
     protected class ASTStatement extends ASTHelperNode {}
     protected class ASTBreakStatement extends ASTStatement {}
     protected class ASTContinueStatement extends ASTStatement {}
@@ -415,6 +457,70 @@ public class Translator {
         }
     }
 
+    protected class ASTAssertStatement extends ASTStatement {
+        protected ASTExpression condition;
+        protected ASTExpression message;
+
+        public ASTExpression getCondition() {
+            return condition;
+        }
+
+        public ASTExpression getMessage() {
+            return message;
+        }
+    }
+
+    protected class ASTExceptionInfo {
+        protected List<ASTTypeExpression> exceptionTypes;
+        protected String variable;
+        protected ASTStatement block;
+
+        protected void addExceptionType(ASTTypeExpression te) {
+            if (exceptionTypes == null) {
+                exceptionTypes = new ArrayList<>();
+            }
+            exceptionTypes.add(te);
+        }
+
+        public String getVariable() {
+            return variable;
+        }
+
+        public ASTStatement getBlock() {
+            return block;
+        }
+
+        public List<ASTTypeExpression> getExceptionTypes() {
+            return exceptionTypes;
+        }
+    }
+
+    protected class ASTTryStatement extends ASTStatement {
+        protected List<ASTHelperNode> resources;
+        protected ASTStatement block;
+        protected List<ASTExceptionInfo> catchBlocks;
+        protected ASTStatement finallyBlock;
+
+        protected void addCatchBlock(ASTExceptionInfo info) {
+            if (catchBlocks == null) {
+                catchBlocks = new ArrayList<ASTExceptionInfo>();
+            }
+            catchBlocks.add(info);
+        }
+
+        public ASTStatement getBlock() {
+            return block;
+        }
+
+        public List<ASTExceptionInfo> getCatchBlocks() {
+            return catchBlocks;
+        }
+
+        public ASTStatement getFinallyBlock() {
+            return finallyBlock;
+        }
+    }
+
     protected class ASTFormalParameter extends ASTHelperNode {
         protected boolean isFinal;
         protected ASTTypeExpression type;
@@ -429,13 +535,21 @@ public class Translator {
         }
     }
 
-    protected class ASTMethodDeclaration extends ASTStatement {
+    abstract class ASTStatementWithName extends ASTStatement {
+        protected String name;
+
+        public String getName() {
+            return name;
+        }
+    }
+
+    protected class ASTMethodDeclaration extends ASTStatementWithName {
         protected List<String> modifiers;
 
         protected ASTTypeExpression returnType;
-        protected String name;
         protected List<ASTFormalParameter> parameters;
         protected ASTStatementList statements;
+        protected boolean constructor;
 
         public List<String> getModifiers() {
             return modifiers;
@@ -448,15 +562,15 @@ public class Translator {
             modifiers.add(modifier);
         }
 
+        public boolean isConstructor() {
+            return constructor;
+        }
+
         void addParameter(ASTFormalParameter parameter) {
             if (parameters == null) {
                 parameters = new ArrayList<>();
             }
             parameters.add(parameter);
-        }
-
-        public String getName() {
-            return name;
         }
 
         public List<ASTFormalParameter> getParameters() {
@@ -527,6 +641,32 @@ public class Translator {
                 }
             }
             return false;
+        }
+    }
+
+    protected class ASTEnumDeclaration extends ASTStatementWithName {
+        protected List<String> values;
+
+        public List<String> getValues() { return values; }
+
+        protected void addValue(String v) {
+            if (values == null) {
+                values = new ArrayList<>();
+            }
+            values.add(v);
+        }
+    }
+
+    protected class ASTClassDeclaration extends ASTStatementWithName {
+        protected List<ASTStatement> declarations;
+
+        public List<ASTStatement> getDeclarations() { return declarations; }
+
+        protected void addDeclaration(ASTStatement decl) {
+            if (declarations == null) {
+                declarations = new ArrayList<>();
+            }
+            declarations.add(decl);
         }
     }
 
@@ -654,8 +794,10 @@ public class Translator {
         return (idx < n) && Character.isUpperCase(name.charAt(idx));
     }
 
+    protected Set<String> notSetters = new HashSet<>(Arrays.asList("setLineSkipped"));
+
     public boolean isSetter(String name) {
-        if ((name.length() <= 3) || !name.startsWith("set")) {
+        if ((name.length() <= 3) || !name.startsWith("set") || notSetters.contains(name)) {
             return false;
         }
         return Character.isUpperCase(name.charAt(3));
@@ -695,6 +837,18 @@ public class Translator {
         return result;
     }
 
+    protected void processArguments(ASTInvocation invocation, Node args) {
+        int m = args.getChildCount();
+        for (int j = 1; j < (m - 1); j++) {
+            Node child = args.getChild(j);
+            if (child instanceof Delimiter) {
+                continue;
+            }
+            ASTExpression arg = (ASTExpression) transformTree(child);
+            invocation.add(arg);
+        }
+    }
+
     // Called when a node's last child is a MethodCall instance.
     ASTInvocation transformMethodCall(Node node) {
         if (node.getChildCount() != 2) {
@@ -703,11 +857,7 @@ public class Translator {
         ASTInvocation result = new ASTInvocation();
         result.receiver = (ASTExpression) transformTree(node.getFirstChild());
         Node args = node.getLastChild();
-        int m = args.getChildCount();
-        for (int j = 1; j < (m - 1); j++) {
-            ASTExpression arg = (ASTExpression) transformTree(args.getChild(j));
-            result.add(arg);
-        }
+        processArguments(result, args);
         return result;
     }
 
@@ -842,7 +992,7 @@ public class Translator {
         else if (node instanceof ReturnType) {
             return transformTree(node.getFirstChild(), true);
         }
-        else if (node instanceof UnaryExpressionNotPlusMinus) {
+        else if (node instanceof UnaryExpressionNotPlusMinus || node instanceof UnaryExpression) {
             ASTUnaryExpression resultNode = new ASTUnaryExpression();
             result = resultNode;
             resultNode.op = ((Operator) node.getChild(0)).getImage();
@@ -860,6 +1010,28 @@ public class Translator {
                 resultNode.postfix = true;
                 return resultNode;
             }
+        }
+        else if (node instanceof PreDecrementExpression || node instanceof PreIncrementExpression) {
+            ASTPreOrPostfixExpression resultNode = new ASTPreOrPostfixExpression();
+
+            resultNode.op = node.getFirstChild().toString();
+            resultNode.setOperand((ASTExpression) transformTree(node.getLastChild()));
+            return resultNode;
+        }
+        else if (node instanceof ArrayAccess) {
+            ASTArrayAccess resultNode = new ASTArrayAccess();
+
+            resultNode.array = (ASTExpression) transformTree(node.getFirstChild());
+            resultNode.index = (ASTExpression) transformTree(node.getChild(2));
+            return resultNode;
+        }
+        else if (node instanceof MethodReference) {
+            ASTMethodReference resultNode = new ASTMethodReference();
+            int n = node.getChildCount();
+
+            resultNode.type = (ASTTypeExpression) transformTree(node.getFirstChild(), true);
+            resultNode.identifier = (ASTExpression) transformTree(node.getLastChild());
+            return resultNode;
         }
         else if (node instanceof TernaryExpression) {
             ASTTernaryExpression resultNode = new ASTTernaryExpression();
@@ -1019,8 +1191,21 @@ public class Translator {
         }
         else if (node instanceof IfStatement) {
             ASTIfStatement resultNode = new ASTIfStatement();
+            Node child = node.getNamedChild("condition");
+            resultNode.condition = (ASTExpression) transformTree(child);
+            child = node.getNamedChild("thenBlock");
+            resultNode.thenStmts = (ASTStatement) transformTree(child);
+            child = node.getNamedChild("elseBlock");
+            if (child != null) {
+                resultNode.elseStmts = (ASTStatement) transformTree(child);
+            }
+            return resultNode;
+        }
+        else if (node instanceof WhileStatement) {
+            ASTWhileStatement resultNode = new ASTWhileStatement();
+
             resultNode.condition = (ASTExpression) transformTree(node.getChild(2));
-            resultNode.thenStmts = (ASTStatement) transformTree(node.getChild(4));
+            resultNode.statements = (ASTStatement) transformTree(node.getLastChild());
             return resultNode;
         }
         else if (node instanceof BasicForStatement) {
@@ -1055,15 +1240,22 @@ public class Translator {
             // iterating for loop
             ASTForStatement resultNode = new ASTForStatement();
             ASTVariableOrFieldDeclaration decl = new ASTVariableOrFieldDeclaration();
-            decl.type = (ASTTypeExpression) transformTree(node.getChild(2), true);
-            Node vd = node.getChild(3);
-            ASTPrimaryExpression name;
-            ASTExpression initializer;
-            name = (ASTPrimaryExpression) transformTree(vd.getFirstChild());
-            initializer = vd.getChildCount() == 1 ? null : (ASTExpression) transformTree(vd.getLastChild());
-            decl.addNameAndInitializer(name, initializer);
-            resultNode.variable = decl;
-            resultNode.iterable = (ASTExpression) transformTree(node.getChild(5));
+            Node child = node.getChild(2);
+            if (child instanceof LocalVariableDeclaration) {
+                resultNode.variable = (ASTVariableOrFieldDeclaration) transformTree(child, forType);
+                resultNode.iterable = (ASTExpression) transformTree(node.getChild(4));
+            }
+            else {
+                decl.type = (ASTTypeExpression) transformTree(node.getChild(2), true);
+                Node vd = node.getChild(3);
+                ASTPrimaryExpression name;
+                ASTExpression initializer;
+                name = (ASTPrimaryExpression) transformTree(vd.getFirstChild());
+                initializer = vd.getChildCount() == 1 ? null : (ASTExpression) transformTree(vd.getLastChild());
+                decl.addNameAndInitializer(name, initializer);
+                resultNode.variable = decl;
+                resultNode.iterable = (ASTExpression) transformTree(node.getChild(5));
+            }
             resultNode.statements = (ASTStatement) transformTree(node.getLastChild());
             return resultNode;
         }
@@ -1119,8 +1311,9 @@ public class Translator {
             }
             return resultNode;
         }
-        else if (node instanceof MethodDeclaration) {
+        else if (node instanceof MethodDeclaration || node instanceof ConstructorDeclaration) {
             ASTMethodDeclaration resultNode = new ASTMethodDeclaration();
+            resultNode.constructor = node instanceof ConstructorDeclaration;
             int n = node.getChildCount();
             for (int i = 0; i < (n - 1); i++) {
                 Node child = node.getChild(i);
@@ -1147,7 +1340,40 @@ public class Translator {
                     }
                 }
             }
-            resultNode.statements = (ASTStatementList) transformTree(node.getLastChild());
+            if (node instanceof MethodDeclaration) {
+                resultNode.statements = (ASTStatementList) transformTree(node.getLastChild());
+            }
+            else {
+                List<Node> stmts = node.getNamedChildList("statements");
+                if (stmts != null) {
+                    resultNode.statements = new ASTStatementList();
+                    for (Node child : stmts) {
+                        ASTStatement stmt = (ASTStatement) transformTree(child);
+                        resultNode.statements.add(stmt);
+                    }
+                }
+/*
+                for (int i = 0; i < (n - 1); i++) {
+                    Node child = node.getChild(i);
+                    ASTStatement stmt = null;
+
+                    if (child instanceof ExplicitConstructorInvocation) {
+                        ASTExpressionStatement es = new ASTExpressionStatement();
+                        es.value = (ASTExpression) transformTree(child);
+                        stmt = es;
+                    }
+                    else if (child instanceof BlockStatement) {
+                        stmt = (ASTStatement) transformTree(child);
+                    }
+                    else {
+                        throw new UnsupportedOperationException();
+                    }
+                    if (stmt != null) {
+                        resultNode.statements.add(stmt);
+                    }
+                }
+*/
+            }
             return resultNode;
         }
         else if (node instanceof StatementExpression) {
@@ -1162,12 +1388,70 @@ public class Translator {
                 resultNode.setLhs((ASTExpression) transformTree(child.getFirstChild()));
                 resultNode.setRhs((ASTExpression) transformTree(child.getLastChild()));
             }
-            else if (child instanceof PostfixExpression) {
+            else if (child instanceof PostfixExpression || child instanceof PreDecrementExpression || child instanceof PreIncrementExpression) {
                 return transformTree(child);
             }
             else {
                 throw new UnsupportedOperationException();
             }
+        }
+        else if (node instanceof AssertStatement) {
+            ASTAssertStatement resultNode = new ASTAssertStatement();
+            resultNode.condition = (ASTExpression) transformTree(node.getChild(1));
+            if (node.getChildCount() >= 4) {
+                resultNode.message = (ASTExpression) transformTree(node.getChild(3));
+            }
+            return resultNode;
+        }
+        else if (node instanceof ExplicitConstructorInvocation) {
+            ASTExplicitConstructorInvocation resultNode = new ASTExplicitConstructorInvocation();
+
+            resultNode.receiver = (ASTExpression) transformTree(node.getFirstChild());
+            processArguments(resultNode, node.firstChildOfType(InvocationArguments.class));
+            return resultNode;
+        }
+        else if (node instanceof ClassicTryStatement) {
+            ASTTryStatement resultNode = new ASTTryStatement();
+            resultNode.block = (ASTStatement) transformTree(node.getNamedChild("block"));
+            List<Node> catchBlocks = node.getNamedChildList("catchBlocks");
+            for (Node cb: catchBlocks) {
+                ASTExceptionInfo info = new ASTExceptionInfo();
+                List<Node> excTypes = cb.getNamedChildList("exceptionTypes");
+
+                for (Node et: excTypes) {
+                    info.addExceptionType((ASTTypeExpression) transformTree(et, true));
+                }
+                info.variable = ((Token) cb.getNamedChild("varDecl")).getImage();
+                info.block = (ASTStatement) transformTree(cb.getLastChild());
+                resultNode.addCatchBlock(info);
+            }
+            Node fb = node.getNamedChild("finallyBlock");
+            if (fb != null) {
+                resultNode.finallyBlock = (ASTStatement) transformTree(fb);
+            }
+            return resultNode;
+        }
+        else if (node instanceof EnumDeclaration) {
+            ASTEnumDeclaration resultNode = new ASTEnumDeclaration();
+
+            resultNode.name = ((Token) node.getNamedChild("name")).getImage();
+            addNestedDeclaration(resultNode.name);
+            List<Node> values = node.getLastChild().getNamedChildList("values");
+            for (Node child: values) {
+                resultNode.addValue(((Token) child).getImage());
+            }
+            return resultNode;
+        }
+        else if (node instanceof ClassDeclaration) {
+            ASTClassDeclaration resultNode = new ASTClassDeclaration();
+
+            resultNode.name = ((Token) node.getNamedChild("name")).getImage();
+            addNestedDeclaration(resultNode.name);
+            List<Node> decls = node.getLastChild().getNamedChildList("decls");
+            for (Node decl: decls) {
+                resultNode.addDeclaration((ASTStatement) transformTree(decl));
+            }
+            return resultNode;
         }
         if (result == null) {
             throw new UnsupportedOperationException();
@@ -1200,6 +1484,10 @@ public class Translator {
         fail();
     }
 
+    public void translateImport(String javaName, StringBuilder result) {
+        fail();
+    }
+
     protected void translateBinaryExpression(ASTBinaryExpression expr, StringBuilder result) {
         fail();
     }
@@ -1209,6 +1497,10 @@ public class Translator {
     }
 
     protected void translateInstanceofExpression(ASTInstanceofExpression expr, StringBuilder result) {
+        fail();
+    }
+
+    protected void translateArrayAccess(ASTArrayAccess expr, StringBuilder result) {
         fail();
     }
 
@@ -1240,6 +1532,14 @@ public class Translator {
         }
         else if (expr instanceof ASTInstanceofExpression) {
             translateInstanceofExpression((ASTInstanceofExpression) expr, result);
+        }
+        else if (expr instanceof ASTArrayAccess) {
+            translateArrayAccess((ASTArrayAccess) expr, result);
+        }
+        else if (expr instanceof ASTMethodReference) {
+            internalTranslateExpression(((ASTMethodReference) expr).getType(), TranslationContext.UNKNOWN, result);
+            result.append('.');
+            internalTranslateExpression(((ASTMethodReference) expr).getIdentifier(), TranslationContext.UNKNOWN, result);
         }
         else {
             throw new UnsupportedOperationException();
@@ -1517,15 +1817,29 @@ public class Translator {
         return result;
     }
 
-//    public String getCurrentClass() {
-//        return currentClass;
-//    }
+    protected HashMap<String, Set<String>> nestedDeclarations;
 
-    public void startClass(String name) {
+    public HashMap<String, Set<String>> getNestedDeclarations() {
+        return nestedDeclarations;
+    }
+
+    protected void addNestedDeclaration(String name) {
+        if (nestedDeclarations == null) {
+            nestedDeclarations = new HashMap<>();
+        }
+        Set<String> existing = nestedDeclarations.get(currentClass);
+        if (existing == null) {
+            existing = new HashSet<>();
+            nestedDeclarations.put(currentClass, existing);
+        }
+        existing.add(name);
+    }
+
+    public void startClass(String name, boolean fields, StringBuilder result) {
         currentClass = name;
     }
 
-    public void endClass(String name) {
+    public void endClass(String name, boolean fields, StringBuilder result) {
         if (!currentClass.equals(name)) {
             throw new IllegalStateException("Unexpected end of class");
         }

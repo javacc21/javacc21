@@ -181,10 +181,10 @@ boolean AndExpression :
 ;
 
 boolean NotExpression :
-    {boolean not = false, result;}
-    ("!" {not = !not;})*
+    {boolean notFlag = false, result;}
+    ("!" {notFlag = !notFlag;})*
     result=PrimaryExpression
-    {return not ? !result : result;}
+    {return notFlag ? !result : result;}
 ;
 
 boolean PrimaryExpression :

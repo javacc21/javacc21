@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CharacterCodingException;
 import static java.nio.charset.StandardCharsets.*;
 
 /**
@@ -134,7 +138,7 @@ import static java.nio.charset.StandardCharsets.*;
     * And if no encoding was passed in and no byte-order mark was present, we assume the raw input
     * is in UTF-8.
     */
-  static public String stringFromBytes(byte[] bytes, Charset charset) {
+  static public String stringFromBytes(byte[] bytes, Charset charset) throws CharacterCodingException {
     int arrayLength = bytes.length;
     if (charset == null) {
       int firstByte = arrayLength>0 ? Byte.toUnsignedInt(bytes[0]) : 1;
@@ -158,19 +162,30 @@ import static java.nio.charset.StandardCharsets.*;
       }
       charset = UTF_8;
     }
-[#--  
-   Not sure about this, will have to revisit it.  
-    Charset defaultCS = Charset.defaultCharset();
-    if (!defaultCS.equals(UTF_8)) try {
-       return defaultCS.newDecoder().decode(ByteBuffer.wrap(bytes)).toString();
-    } catch (IOException ioe) {
-       // Just ignore it, I guess.
+    CharsetDecoder decoder = charset.newDecoder();
+    ByteBuffer b = ByteBuffer.wrap(bytes);
+    CharBuffer c = CharBuffer.allocate(bytes.length);
+    while (true) {
+        CoderResult r = decoder.decode(b, c, false);
+        if (!r.isError()) {
+            break;
+        }
+        if (!r.isMalformed()) {
+            r.throwException();
+        }
+        int n = r.length();
+        b.position(b.position() + n);
+        for (int i = 0; i < n; i++) {
+            c.put((char) 0xFFFD);
+        }
     }
---]    
-    return new String(bytes, charset);
+    c.limit(c.position());
+    c.rewind();
+    return c.toString();
+    // return new String(bytes, charset);
   }
 
-  static public String stringFromBytes(byte[] bytes) {
+  static public String stringFromBytes(byte[] bytes) throws CharacterCodingException {
      return stringFromBytes(bytes, null);
   }
 }

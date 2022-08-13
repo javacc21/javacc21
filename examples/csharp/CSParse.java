@@ -7,12 +7,12 @@ import org.parsers.csharp.*;
  * A test harness for parsing C# source code
   */
 public class CSParse {
-    
+
     static public ArrayList<Node> roots= new ArrayList<>();
 
    static public void main(String args[]) {
       List<File> failures = new ArrayList<File>();
-      List<File> successes = new ArrayList<File>();    
+      List<File> successes = new ArrayList<File>();
       if (args.length == 0) {
         usage();
       }
@@ -32,7 +32,7 @@ public class CSParse {
              // A bit screwball, we'll dump the tree if there is only one arg. :-)
               parseStart = System.nanoTime();
               parseFile(file, files.size() == 1);
-          } 
+          }
           catch (Exception e) {
               System.err.println("Error processing file: " + file);
               e.printStackTrace();
@@ -58,9 +58,9 @@ public class CSParse {
        System.out.println("\nDuration: " + duration + " seconds");
        if (!failures.isEmpty()) System.exit(-1);
     }
-      
+
    static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-       CSharpParser parser = new CSharpParser(file.toPath(), null);
+       CSharpParser parser = new CSharpParser(file.toPath());
        Node root=parser.CompilationUnit();
        if (dumpTree) {
            root.dump("");
@@ -77,7 +77,7 @@ public class CSParse {
            files.add(file);
        }
    }
-   
+
    static public void usage() {
        System.out.println("Usage: java CSParse <sourcefiles or directories>");
        System.out.println("If you just pass it one C# source file, it dumps the AST");

@@ -122,9 +122,7 @@
 [#macro BuildPredicateRoutine expansion] 
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
-  // predicate routine for expansion at: 
-  // ${expansion.location}
-  // BuildPredicateRoutine macro
+  // BuildPredicateRoutine: expansion at ${expansion.location}
    private final boolean ${expansion.predicateMethodName}() {
      [#var prevNonTerminalNestingVarName = "nonTerminalNesting" + CU.newID(),
            prevCurrentLookaheadTokenVarName = "currentLookaheadToken"+ CU.newID(),
