@@ -296,7 +296,7 @@ namespace ${csPackage} {
             return result;
         }
 
-        ListAdapter<T> Descendants<T>(System.Type t, Predicate<T> predicate) where T : Node {
+        ListAdapter<T> Descendants<T>(System.Type t, Predicate<T> predicate) where T : Token {
             var result = new ListAdapter<T>();
 
             for (int i = 0; i < ChildCount; i++) {
@@ -546,7 +546,6 @@ namespace ${csPackage} {
         public int BeginOffset { get; set; }
         public int EndOffset { get; set; }
         public Node Parent { get; set; }
-        public bool IsUnparsed { get; internal set; }
         public int ChildCount => 0;
         public Node GetChild(int i) => null;
         public ListAdapter<Node> Children => new ListAdapter<Node>();
@@ -581,10 +580,12 @@ namespace ${csPackage} {
             }
         }
         
-        public TokenType Type { get; private set; }
+        public TokenType Type { get; internal set; }
 
 [#if !grammar.treeBuildingEnabled]
         internal bool IsUnparsed;
+[#else]
+        public bool IsUnparsed { get; internal set; }
 [/#if]
 
 [#if !grammar.minimalToken || grammar.faultTolerant]
@@ -736,7 +737,9 @@ namespace ${csPackage} {
         }
 [#else]
         internal void CopyLocationInfo(Token start, Token end = null) {
-            ((Node) this).CopyLocationInfo(start, end);
+            TokenSource = start.TokenSource;
+            BeginOffset = start.BeginOffset;
+            EndOffset = start.EndOffset;
 [#if !grammar.minimalToken]
             appendedToken = start.appendedToken;
             prependedToken = start.prependedToken;

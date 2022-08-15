@@ -148,6 +148,7 @@ public class BNFProduction extends BaseNode {
         return rt == null ? "void" : rt.getAsString();
     }
 
+    // used in templates
     public String getAccessModifier() {
         for (Token t : childrenOfType(Token.class)) {
            TokenType type = t.getType();

@@ -10,7 +10,7 @@ INJECT PARSER_CLASS :
    import java.util.HashSet;
    import java.util.Set;
 {
-    private Set<String> symbols = new HashSet<>();
+    private Set<String> symbols = new HashSet<String>();
 
     static public Info evaluate(String input, Set<String> symbols) {
         PARSER_CLASS parser = new PARSER_CLASS(input);
@@ -90,7 +90,7 @@ TOKEN :
 Info DirectiveLine :
    {
        boolean result = false;
-       DirectiveType directiveType = null;
+       DirectiveType directiveType = DirectiveType.UNKNOWN;
    } 
    (
        result = IfDirective {directiveType = DirectiveType.IF;}

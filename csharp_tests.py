@@ -102,7 +102,7 @@ def run_command(cmd, **kwargs):
     return subprocess.run(cmd, **kwargs)
 
 def test_grammar(gdata, options):
-    lang = gdata.dir  # Perhas not intuitive, hence this comment
+    lang = gdata.dir  # Perhaps not intuitive, hence this comment
     s = 'Testing with %s grammar' % gdata.name
     line = '-' * 70
     print(line)
@@ -122,9 +122,13 @@ def test_grammar(gdata, options):
     copy_files(sd, dd, gdata.files)
     shutil.copy('ptest.py', dd)
     print('Test files copied to working directory.')
-
     # Run javacc to create the Java lexer and parser
-
+    if lang == 'csharp':
+        pf = os.path.join(dd, 'PPDirectiveLine.javacc')
+        cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', pf]
+        p = run_command(cmd)
+        if p.returncode:
+            raise ValueError('Preprocessor generation in Java failed')
     gf = os.path.join(dd, gdata.grammar)
     cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', gf]
     p = run_command(cmd)
@@ -172,6 +176,11 @@ def test_grammar(gdata, options):
 
     # Run javacc to create the C# lexer and parser
 
+    if lang == 'csharp':
+        cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', '-lang', 'csharp', '-d', 'cs-csharpparser/ppline', pf]
+        p = run_command(cmd)
+        if p.returncode:
+            raise ValueError('Preprocessor generation in Python failed')
     cmd = ['java', '-jar', 'javacc.jar', '-n', '-q', '-lang', 'csharp', gf]
     p = run_command(cmd)
     if p.returncode:
@@ -291,9 +300,9 @@ def main():
         langs = options.langs.split(',')
         for lang, gdata in languages.items():
             if options.langs == 'all' or lang in langs:
-                if lang == 'csharp':
-                    print('Skipping csharp, because grammar is incomplete')
-                    continue
+                # if lang == 'csharp':
+                    # print('Skipping csharp, because grammar is incomplete')
+                    # continue
                 test_grammar(gdata, options)
                 workdirs.append(gdata.workdir)
 

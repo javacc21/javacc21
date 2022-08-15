@@ -293,7 +293,6 @@
 
 [#macro BuildProductionLookaheadMethod production]
    // BuildProductionLookaheadMethod macro
-
    private final boolean ${production.lookaheadMethodName}() {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}
@@ -384,7 +383,7 @@
   checking the production's nested expansion 
 --]
 [#macro ScanCodeNonTerminal nt]
-     // NonTerminal ${nt.name} at ${nt.location}
+      // NonTerminal ${nt.name} at ${nt.location}
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
       [#var prevScanToEndVarName = "prevScanToEnd" + CU.newID()]
       boolean ${prevScanToEndVarName} = scanToEnd;

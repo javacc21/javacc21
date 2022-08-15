@@ -653,18 +653,29 @@ public interface Node extends Comparable<Node>
     }
 
     default void dump(String prefix) {
-        String output = (this instanceof Token) ? toString().trim() : getClass().getSimpleName();
+        String output;
+
+        if (this instanceof Token) {
+            output = toString().trim();
+        }
+        else {
+            output = String.format("<%s (%d, %d)-(%d-%d)>",
+                                   getClass().getSimpleName(),
+                                   getBeginLine(), getBeginColumn(),
+                                   getEndLine(), getEndColumn());
+        }
+        // String output = (this instanceof Token) ? toString().trim() : getClass().getSimpleName();
 [#if grammar.faultTolerant]
         if (this.isDirty()) {
             output += " (incomplete)";
         }
 [/#if]
-        if (output.length() >0) {
+        if (output.length() > 0) {
             System.out.println(prefix + output);
         }
         for (Iterator<Node> it = iterator(); it.hasNext();) {
             Node child = it.next();
-            child.dump(prefix+"  ");
+            child.dump(prefix + "  ");
         }
     }
 

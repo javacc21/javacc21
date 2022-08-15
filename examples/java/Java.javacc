@@ -135,7 +135,7 @@ Modifiers#(false) :
   }
   |
   Annotation
- )*
+ /[modifiers]/ )*
  {permissibleModifiers = null;}#
 ;
 
@@ -164,7 +164,7 @@ TypeDeclaration #interface :
 TypeDeclarationLA#scan :
    ";"
    |
-   Modifiers
+   Modifiers /modifiers/
    (
      "class"
      | "interface"
@@ -198,7 +198,7 @@ TypeIdentifier#void :
 
 ClassDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP, TokenType.SEALED, TokenType.NON_SEALED);}#
-  Modifiers
+  Modifiers /modifiers/
   "class" =>||
   TypeIdentifier /name/
   [ TypeParameters ]
@@ -210,7 +210,7 @@ ClassDeclaration :
 
 InterfaceDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.STATIC, TokenType.STRICTFP, TokenType.SEALED, TokenType.NON_SEALED);}#
-  Modifiers
+  Modifiers /modifiers/
   "interface" =>||
   TypeIdentifier
   [ TypeParameters ]
@@ -253,7 +253,7 @@ ImplementsList :
 
 EnumDeclaration :
    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP);}#
-   Modifiers
+   Modifiers /modifiers/
    "enum" =>||
    TypeIdentifier /name/
    [ImplementsList]
@@ -270,7 +270,7 @@ EnumBody :
 
 RecordDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP);}
-  Modifiers
+  Modifiers /modifiers/
   ASSERT {getToken(1).getImage().equals("record") && getToken(2).getType() == TokenType.IDENTIFIER}#
   =>||
   ACTIVATE_TOKENS RECORD ("record")
@@ -306,7 +306,7 @@ RecordBody :
 
 CompactConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE);}#
-  Modifiers
+  Modifiers /modifiers/
   TypeIdentifier
   "{" =>||
   [ => ExplicitConstructorInvocation ]
@@ -362,7 +362,7 @@ INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
 
 FieldDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.STATIC, TokenType.FINAL, TokenType.TRANSIENT, TokenType.VOLATILE);}#
-  Modifiers
+  Modifiers /modifiers/
   Type VariableDeclarator =>|+1 ( "," VariableDeclarator )* ";"
 ;
 
@@ -390,7 +390,7 @@ ArrayInitializer :
     |
     {permissibleModifiers = EnumSet.of(TokenType.PUBLIC,TokenType.PROTECTED,TokenType.PRIVATE,TokenType.ABSTRACT,TokenType.STATIC,TokenType.FINAL,TokenType.SYNCHRONIZED,TokenType.NATIVE,TokenType.STRICTFP);}
   )
-  Modifiers
+  Modifiers /modifiers/
   [ TypeParameters ]
   ReturnType
   <IDENTIFIER> /methodName/
@@ -402,11 +402,11 @@ ArrayInitializer :
 
 FormalParameters : "(" [ FormalParameter ( "," FormalParameter )* ] ")" ;
 
-FormalParameter : {permissibleModifiers = EnumSet.of(TokenType.FINAL);}# Modifiers Type [ (Annotation)* "..." ] VariableDeclaratorId ;
+FormalParameter : {permissibleModifiers = EnumSet.of(TokenType.FINAL);}# Modifiers /modifiers/ Type [ (Annotation)* "..." ] VariableDeclaratorId ;
 
 ConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE);}#
-  Modifiers
+  Modifiers /modifiers/
   [ TypeParameters ]
   TypeIdentifier FormalParameters /formals/ =>||
   [ ThrowsList ]
@@ -951,13 +951,13 @@ LocalVariableDeclaration#abstract :
 
 NoVarDeclaration :
    {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
-   Modifiers
+   Modifiers /modifiers/
    Type =>|| VariableDeclarator ( "," VariableDeclarator )*
 ;
 
 VarDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
-  Modifiers
+  Modifiers /modifiers/
   ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType() == TokenType.IDENTIFIER} =>||
   ACTIVATE_TOKENS VAR ("var")
   <IDENTIFIER>
@@ -966,7 +966,7 @@ VarDeclaration :
 
 LocalVariableDeclarationLA#scan :
    {permissibleModifiers = EnumSet.of(TokenType.FINAL);}
-   Modifiers
+   Modifiers /modifiers/
    (
      Type
      |
@@ -1232,7 +1232,7 @@ MemberValueArrayInitializer :
 
 AnnotationTypeDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.STATIC, TokenType.STRICTFP);}#
-  Modifiers
+  Modifiers /modifiers/
   "@" "interface" =>|| TypeIdentifier AnnotationTypeBody
 ;
 
@@ -1242,7 +1242,7 @@ AnnotationTypeBody :
 
 AnnotationMethodDeclaration :
    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.ABSTRACT);}#
-   Modifiers
+   Modifiers /modifiers/
    Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
 ;
 
@@ -1282,7 +1282,7 @@ LambdaParameters : "(" [ LambdaParameter ( "," LambdaParameter )* ] ")" ;
 
 LambdaParameter :
     {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
-    Modifiers
+    Modifiers /modifiers/
     (
       Type (Annotation)* "..." =>|| <IDENTIFIER>
       |

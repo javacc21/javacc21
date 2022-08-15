@@ -41,6 +41,7 @@ namespace ${csPackage} {
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Text;
+${grammar.utils.translateParserImports()}
 
     public class ParseException : Exception {
         public Parser Parser { get; private set; }
@@ -283,6 +284,7 @@ ${grammar.utils.translateInjectedClass(injector, node)}
 [#if grammar.treeBuildingEnabled]
             new NodeScope(this); // attaches NodeScope instance to Parser instance
 [/#if]
+${grammar.utils.translateParserInitializers(injector)}
         }
 
 [#if grammar.faultTolerant]
@@ -340,7 +342,7 @@ ${grammar.utils.translateInjectedClass(injector, node)}
 
    [#embed "TreeBuildingCode.inc.ftl"]
 [#else]
-        public bool IsTreeBuildingEnabled { get { return false; }
+        public bool IsTreeBuildingEnabled { get { return false; } }
 
 [/#if]
         internal void PushOntoCallStack(string methodName, string fileName, uint line, uint column) {
@@ -396,6 +398,18 @@ ${grammar.utils.translateInjectedClass(injector, node)}
             return t;
         }
 
+        internal string TokenImage(int n) {
+            return GetToken(n).Image;
+        }
+
+        internal bool CheckNextTokenImage(string img) {
+            return TokenImage(1).Equals(img);
+        }
+
+        internal bool CheckNextTokenType(TokenType tt) {
+            return GetToken(1).Type == tt;
+        }
+
         internal TokenType NextTokenType {
             get {
                 if (_nextTokenType == null) {
@@ -418,10 +432,8 @@ ${grammar.utils.translateInjectedClass(injector, node)}
                     att.Add(tt);
                 }
             }
-            if (result) {
-                tokenSource.Reset(GetToken(0));
-                _nextTokenType = null;
-            }
+            tokenSource.Reset(GetToken(0));
+            _nextTokenType = null;
             return result;
         }
 
@@ -439,10 +451,8 @@ ${grammar.utils.translateInjectedClass(injector, node)}
                     att.Remove(tt);
                 }
             }
-            if (result) {
-                tokenSource.Reset(GetToken(0));
-                _nextTokenType = null;
-            }
+            tokenSource.Reset(GetToken(0));
+            _nextTokenType = null;
             return result;
         }
 

@@ -320,10 +320,10 @@ INJECT CSharpLexer :
     import org.parsers.csharp.ppline.PPDirectiveLineParser.DirectiveType;
 {
    private boolean parsingOn, alreadyHandled, seenElse;
-   private int ifNesting, lastEnabledOffset, turnedOffPoint;
+   private int ifNesting, turnedOffPoint;
 
    private BitSet parsingOnStack = new BitSet(1000), seenElseStack = new BitSet(1000), alreadyHandledStack = new BitSet(1000);
-   private Set<String> ppSymbols = new HashSet<>();
+   private Set<String> ppSymbols = new HashSet<String>();
    
    {
      // We start with parsing on, of course
@@ -339,7 +339,7 @@ INJECT CSharpLexer :
 
    private Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
-      if (type == EOF) {
+      if (type == TokenType.EOF) {
         assert ifNesting == 0 : "unclosed #if";
         return tok;
       }
@@ -362,18 +362,18 @@ INJECT CSharpLexer :
       setLineSkipped(tok);
 
       if (directiveType == DirectiveType.UNKNOWN) {
-         tok.setType(INVALID);
+         tok.setType(TokenType.INVALID);
          return tok;
       }
       if (ifNesting == 0 
            && (directiveType == DirectiveType.ELIF 
                || directiveType == DirectiveType.ELSE 
                || directiveType == DirectiveType.ENDIF)) {
-          tok.setType(INVALID);
+          tok.setType(TokenType.INVALID);
           return tok;
       }
       if (seenElse && (directiveType == DirectiveType.ELIF || directiveType == DirectiveType.ELSE)) {
-        tok.setType(INVALID);
+        tok.setType(TokenType.INVALID);
         return tok;
       }
       if (directiveType == DirectiveType.ENDIF) {

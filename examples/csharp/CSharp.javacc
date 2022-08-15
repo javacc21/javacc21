@@ -194,7 +194,7 @@ TypeArgumentList :
 
 
 TypeDeclaration :
-  SCAN 0 {!checkNextTokenType(RBRACE) && !checkNextTokenType(EOF)}# =>
+  SCAN 0 {!checkNextTokenType(TokenType.RBRACE) && !checkNextTokenType(TokenType.EOF)}# =>
   (
    ClassDeclaration
    |
@@ -239,11 +239,11 @@ Modifiers#void : //TODO
       }
      |
      SCAN { permissibleModifiers == null 
-            || permissibleModifiers.contains(ASYNC) && checkNextTokenImage("async") 
-            || permissibleModifiers.contains(RECORD) && checkNextTokenImage("record")
+            || permissibleModifiers.contains(TokenType.ASYNC) && checkNextTokenImage("async")
+            || permissibleModifiers.contains(TokenType.RECORD) && checkNextTokenImage("record")
           }#
       => ACTIVATE_TOKENS ASYNC, RECORD ("async")
-      { if (permissibleModifiers!=null) permissibleModifiers.remove(ASYNC);}
+      { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
   )*
 ;
 
@@ -738,7 +738,7 @@ InterfaceMethodDeclaration :
 ;
 
 ReturnType : 
-   SCAN {getToken(2).getType() != STAR}# =>
+   SCAN {getToken(2).getType() != TokenType.STAR}# =>
    // If we have void*, we prefer to parse it as Type
    // for tree-building purposes.
    "void" ["*"] 
@@ -932,7 +932,9 @@ INJECT QualifiedAliasMember : implements Expression
 INJECT SizeofExpression : implements Expression
 INJECT SwitchExpression : implements Expression
 INJECT UncheckedExpression : implements StatementExpression
-INJECT UnaryExpression : implements Expression
+INJECT UnaryExpression : implements Expression {
+   public boolean isAssignableTo() {return true;}
+}
 INJECT WithExpression : implements Expression
 INJECT PostDecrementExpression : extends UnaryExpression implements StatementExpression
 INJECT PostIncrementExpression : extends UnaryExpression implements StatementExpression
@@ -1352,7 +1354,6 @@ NullConditionalOperations :
 NullConditionalExpression : PrimaryExpression [NullConditionalOperations] ;
 
 PrimaryExpression#void :
-   {Node node;}
    (
       ArrayCreationExpression
       |
@@ -1436,7 +1437,7 @@ ArrayCreationExpression :
 ;
 
 ObjectCreationExpression :
-   "new" =>|+1 [SCAN 1 {getToken(1).getType()!=LPAREN} => NonArrayType] // This seems possible since C# 9
+   "new" =>|+1 [SCAN 1 {getToken(1).getType() != TokenType.LPAREN} => NonArrayType] // This seems possible since C# 9
    (
       "(" [ArgumentList] ")" [ObjectInitializer | CollectionInitializer]
       |
@@ -1760,7 +1761,7 @@ NoVarDeclaration :
       "readonly" //REVISIT
    ]
    Type 
-   ASSERT {getToken(-1).getType() == DOT || !getToken(0).toString().equals("await")}#
+   ASSERT {getToken(-1).getType() == TokenType.DOT || !getToken(0).toString().equals("await")}#
    =>|+1
    LocalVariableDeclarator
    ("," LocalVariableDeclarator)*
@@ -1795,7 +1796,7 @@ StackAllocInitializer :
       |
       Type
       (
-         SCAN 0 {getToken(0).getType() != RBRACKET}#
+         SCAN 0 {getToken(0).getType() != TokenType.RBRACKET}#
          => "[" Expression "]" 
          |
          "[" Expression "]"
@@ -1940,7 +1941,7 @@ LockStatement : "lock" "(" Expression ")" EmbeddedStatement ;
 FixedStatement :
    "fixed"
    "(" =>||
-   Type ASSERT {getToken(0).getType() == STAR}
+   Type ASSERT {getToken(0).getType() == TokenType.STAR}
    FixedPointerDeclarator ("," FixedPointerDeclarator)*
    ")"
    EmbeddedStatement
@@ -2002,9 +2003,9 @@ SwitchSection :
       SCAN 0 {
          // A bit ugly. Really need to make syntactic lookahead a bit more powerful 
          // in terms of negative conditions! 
-                getToken(1).getType() != RBRACE
-                && getToken(1).getType() != CASE 
-                && !(getToken(1).getType() == DEFAULT && getToken(2).getType() == COLON)
+                getToken(1).getType() != TokenType.RBRACE
+                && getToken(1).getType() != TokenType.CASE
+                && !(getToken(1).getType() == TokenType.DEFAULT && getToken(2).getType() == TokenType.COLON)
              } 
       => Statement
    )+ 
@@ -2069,7 +2070,7 @@ ParenthesizedPattern : "(" Pattern ")" ;
 
 DeclarationPattern : 
     NonNullableType 
-    ASSERT {checkNextTokenType(IDENTIFIER)}#
+    ASSERT {checkNextTokenType(TokenType.IDENTIFIER)}#
     ACTIVATE_TOKENS FROM, WHERE
     (
        ASSERT ~(FromClause)
@@ -2100,10 +2101,10 @@ TypePattern :
       {
          // If we have a left parentheis, this choice fails 
          // and we go to PositionalPattern
-         nextTokType != LPAREN 
+         nextTokType != TokenType.LPAREN
          &&
          (
-            lastTokType != HOOK 
+            lastTokType != TokenType.HOOK
          // This is now really grotesque! 
          // If the Type we matched is "nullable", i.e. 
          // ends in a ?  // then the token after that must be
@@ -2111,19 +2112,19 @@ TypePattern :
          // Otherwise we effectively backtrack
          // and match the Type as a NonNullableType,
          // i.e. we parse it without the trailing "?"
-            || nextTokType == HOOK 
-            || nextTokType == RPAREN 
-            || nextTokType == SEMICOLON
-            || nextTokType == EQ
-            || nextTokType == SC_OR
-            || nextTokType == SC_AND
-            || nextTokType == COMMA
+            || nextTokType == TokenType.HOOK
+            || nextTokType == TokenType.RPAREN
+            || nextTokType == TokenType.SEMICOLON
+            || nextTokType == TokenType.EQ
+            || nextTokType == TokenType.SC_OR
+            || nextTokType == TokenType.SC_AND
+            || nextTokType == TokenType.COMMA
             || checkNextTokenImage("and")
             || checkNextTokenImage("or")
          )
       }# =>|| 
       |
-      NonNullableType ASSERT {getToken(1).getType()!=LPAREN}#
+      NonNullableType ASSERT {getToken(1).getType() != TokenType.LPAREN}#
    )
 ;
 
