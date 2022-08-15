@@ -10,7 +10,7 @@ DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   GET,SET,INIT,WITH,
                   // The following are used in patterns:
                   AND, OR, NOT,
-                  // The following are all used in queries                  
+                  // The following are all used in queries
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
                   INTO, ON, ORDERBY,SELECT,WHERE;
 
@@ -52,13 +52,13 @@ CompilationUnitBody#void :
 ;
 
 TypeDeclarationLA#scan :
-   (AttributeSection)*
-   Modifiers
+  (AttributeSection)*
+  Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
   ASSERT ~("delegate" "*")
-   ("struct"|"class"|"interface"|"enum"|"delegate"
-     |SCAN {checkNextTokenImage("record")}=>{})
-;   
+  ("struct"|"class"|"interface"|"enum"|"delegate"
+    |SCAN {checkNextTokenImage("record")}=>{})
+;
 
 FileScopedNamespaceDeclaration :
    "namespace" QualifiedIdentifier ";" =>||
@@ -78,10 +78,10 @@ QualifiedIdentifier :
 
 NamespaceBody :
    "{"
-       (ExternAliasDirective)* 
-       (UsingDirective)* 
+       (ExternAliasDirective)*
+       (UsingDirective)*
        (
-          NamespaceDeclaration 
+          NamespaceDeclaration
           |
           TypeDeclaration
        )*
@@ -89,7 +89,7 @@ NamespaceBody :
 ;
 
 ExternAliasDirective :
-   "extern" 
+   "extern"
    <IDENTIFIER>
    ASSERT {getToken(0).getImage().equals("alias")}#
    =>||
@@ -102,11 +102,11 @@ UsingDirective :
     UsingAliasDirective
     |
     UsingNamespaceDirective
-;    
+;
 
-UsingStaticDirective : 
+UsingStaticDirective :
     "using" "static" =>|| Name ";"
-; 
+;
 
 UsingAliasDirective :
    "using" <IDENTIFIER> "=" =>|| Name ";"
@@ -140,7 +140,7 @@ Attribute :
 ;
 
 AttributeArguments :
-    "(" 
+    "("
     [
        SCAN ~(")" | <IDENTIFIER>"=")
        => [=>Type ":" ] Expression
@@ -156,7 +156,7 @@ AttributeArguments :
           "," <IDENTIFIER> "=" Expression #NamedArgument(3)
        )*
     ]
-    ")"  
+    ")"
 ;
 
 NamedArgument :
@@ -186,9 +186,9 @@ TypeArgumentList :
    [
       (AttributeSection)*
       ("void" | Type)
-      ("," (AttributeSection)* ("void" | Type))* 
+      ("," (AttributeSection)* ("void" | Type))*
    ]
-   DEACTIVATE_TOKENS RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN 
+   DEACTIVATE_TOKENS RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN
    (">")
 ;
 
@@ -217,20 +217,20 @@ INJECT PARSER_CLASS :
 
 Modifiers#void : //TODO
   (
-    SCAN { permissibleModifiers == null 
-         || 
+    SCAN { permissibleModifiers == null
+         ||
          permissibleModifiers.contains(getToken(1).getType()) }#
       =>
       ("new"|"public"|"protected"|"internal"|"private"|"abstract"
       |"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern"
       // This is allowed on methods in some cases,
       // but not sure where exactly or when this was added
+      // Have to check where this is possible and since when
       | "readonly"
       // Note that "ref" is only a permissible keyword for struct
       // since 7.3
       | "ref"
-      // 
-      | "readonly" // Have to check where this is possible and since when      
+      | "volatile"
       )
       {
          if (permissibleModifiers != null) {
@@ -238,21 +238,27 @@ Modifiers#void : //TODO
          }
       }
      |
-     SCAN { permissibleModifiers == null 
+     SCAN { permissibleModifiers == null
             || permissibleModifiers.contains(TokenType.ASYNC) && checkNextTokenImage("async")
             || permissibleModifiers.contains(TokenType.RECORD) && checkNextTokenImage("record")
           }#
       => ACTIVATE_TOKENS ASYNC, RECORD ("async")
       { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
   )*
+  {permissibleModifiers = null;}#
 ;
 
 ClassDeclaration :
-  {boolean isaRecordClass =false;}
+  {
+    boolean isaRecordClass = false;
+    permissibleModifiers = EnumSet.of(TokenType.NEW,  TokenType.PUBLIC, TokenType.PROTECTED,
+                                      TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
+                                      TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE);
+  }#
   (AttributeSection)*
   Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
-  [ 
+  [
      // Record classes are since 10.0
      // and barely mentioned anywhere
      SCAN {checkNextTokenImage("record")}#
@@ -264,7 +270,7 @@ ClassDeclaration :
    <IDENTIFIER>
    [
       SCAN 1 {isaRecordClass}
-      => 
+      =>
       "(" FormalParameters ")"
    ]
   [TypeParameterList]
@@ -280,23 +286,28 @@ ClassDeclaration :
 ;
 
 StructDeclaration :
-   {boolean isaRecordStruct=false;}
-   (AttributeSection)*
-   Modifiers
+  {
+    boolean isaRecordStruct = false;
+    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
+                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.REF,
+                                      TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW);
+  }#
+  (AttributeSection)*
+  Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
-  [ 
+  [
      // Record structs are since 10.0
      SCAN {checkNextTokenImage("record")}#
      => ACTIVATE_TOKENS RECORD ("record")
      {isaRecordStruct=true;}
   ]
-   "struct" 
+   "struct"
    =>||
    <IDENTIFIER>
    [TypeParameterList]
    [
       SCAN 1 {isaRecordStruct}
-      => 
+      =>
       "(" FormalParameters ")"
    ]
    [":" Name ("," Name)*]
@@ -306,46 +317,55 @@ StructDeclaration :
       |
       SCAN {isaRecordStruct} => ";"
    )
-   [";"] 
+   [";"]
 ;
 
 RecordDeclaration :
-   (AttributeSection)*
-   Modifiers
-   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
-   ASSERT {checkNextTokenImage("record")}#
-   ACTIVATE_TOKENS RECORD ("record")
-   =>||
-   <IDENTIFIER>
-   [TypeParameterList]
-   ["(" [FormalParameters] ")"]
-   [
-      // Call of base constructor
-      // Where is this documented?
-      ":" Name ["(" [ArgumentList] ")"]
-   ]
-   TypeParameterConstraints
-   (
-     "{" (ClassMemberDeclaration)* "}" [";"]
-     |
-     ";"
-   )
+  {
+    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
+                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
+                                      TokenType.ABSTRACT);
+  }#
+  (AttributeSection)*
+  Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ASSERT {checkNextTokenImage("record")}#
+  ACTIVATE_TOKENS RECORD ("record")
+  =>||
+  <IDENTIFIER>
+  [TypeParameterList]
+  ["(" [FormalParameters] ")"]
+  [
+    // Call of base constructor
+    // Where is this documented?
+    ":" Name ["(" [ArgumentList] ")"]
+  ]
+  TypeParameterConstraints
+  (
+    "{" (ClassMemberDeclaration)* "}" [";"]
+    |
+    ";"
+  )
 ;
 
 InterfaceDeclaration :
-   (AttributeSection)*
-   Modifiers
-   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
-   "interface"
-   =>||
-   <IDENTIFIER>
-   [TypeParameterList]
-   [":" Name ("," Name)*]
-   TypeParameterConstraints
-   "{" 
-   (InterfaceMemberDeclaration)* 
-   "}"
-   [";"]
+  {
+    permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.PUBLIC, TokenType.PARTIAL,
+                                      TokenType.PRIVATE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  "interface"
+  =>||
+  <IDENTIFIER>
+  [TypeParameterList]
+  [":" Name ("," Name)*]
+  TypeParameterConstraints
+  "{"
+  (InterfaceMemberDeclaration)*
+  "}"
+  [";"]
 ;
 
 InterfaceMemberDeclaration :
@@ -359,7 +379,7 @@ InterfaceMemberDeclaration :
    InterfaceEventDeclaration
    |
    InterfaceIndexerDeclaration
-; 
+;
 
 InterfaceEventDeclaration :
    (AttributeSection)*
@@ -379,15 +399,20 @@ InterfaceIndexerDeclaration :
    "{" (InterfaceAccessor)+ "}"
 ;
 
-EnumDeclaration : 
-   (AttributeSection)*
-   Modifiers
-   "enum" 
-   =>||
-   <IDENTIFIER>
-   [":" ("sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char")]
-   EnumBody
-   [";"]
+EnumDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
+                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
+                                      TokenType.ABSTRACT, TokenType.PARTIAL, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  "enum"
+  =>||
+  <IDENTIFIER>
+  [":" ("sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char")]
+  EnumBody
+  [";"]
 ;
 
 EnumBody#void :
@@ -407,10 +432,15 @@ EnumMemberDeclaration :
 ;
 
 DelegateDeclaration :
-   (AttributeSection)*
-   Modifiers
-  "delegate" 
-  ASSERT ~("*") 
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.INTERNAL, TokenType.UNSAFE, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT);
+  }#
+  (AttributeSection)*
+  Modifiers
+  "delegate"
+  ASSERT ~("*")
   =>||
   ReturnType
   <IDENTIFIER>
@@ -428,8 +458,8 @@ TypeParameterConstraints :
 TypeParameterConstraint :
    <WHERE>
    DEACTIVATE_TOKENS WHERE
-   ( 
-      <IDENTIFIER>  
+   (
+      <IDENTIFIER>
       ":"
       (
          "new" "(" ")"
@@ -442,72 +472,96 @@ TypeParameterConstraint :
 ;
 
 ClassMemberDeclaration :
-   ConstantDeclaration
-   |
-   SCAN TypeDeclarationLA =>
-   TypeDeclaration
-   |
-   MethodDeclaration 
-   | 
-   FieldDeclaration 
-   | 
-   PropertyDeclaration 
-   | 
-   EventDeclaration 
-   | 
-   IndexerDeclaration 
-   |
-   OperatorDeclaration 
-   | 
-   ConstructorDeclaration 
-   |
-   SCAN ~\StructDeclaration
-   => DestructorDeclaration
-   |
-   SCAN \StructDeclaration 
-   => StructMemberDeclarationUnsafe
-   |
-   StaticConstructorDeclaration 
+  ConstantDeclaration
+  |
+  SCAN TypeDeclarationLA =>
+  TypeDeclaration
+  |
+  MethodDeclaration
+  |
+  FieldDeclaration
+  |
+  PropertyDeclaration
+  |
+  EventDeclaration
+  |
+  IndexerDeclaration
+  |
+  OperatorDeclaration
+  |
+  ConstructorDeclaration
+  |
+  SCAN ~\StructDeclaration
+  => DestructorDeclaration
+  |
+  SCAN \StructDeclaration
+  => StructMemberDeclarationUnsafe
+  |
+  StaticConstructorDeclaration
 ;
 
 StructMemberDeclarationUnsafe :
-   (AttributeSection)*
-   Modifiers
-   "fixed"
-   =>||
-   Type
-   (<IDENTIFIER> "[" Expression "]")+
-   ";"
+  {
+    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
+                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  "fixed"
+  =>||
+  Type
+  (<IDENTIFIER> "[" Expression "]")+
+  ";"
 ;
 
 ConstantDeclaration :
-   (AttributeSection)*
-   ("new" | "public" | "protected" | "internal" | "private")*
-   "const" 
-   =>||
-   Type 
-   ConstantDeclarator ("," ConstantDeclarator)*
-   ";"
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.INTERNAL);
+  }#
+  (AttributeSection)*
+  Modifiers
+  "const"
+  =>||
+  Type
+  ConstantDeclarator ("," ConstantDeclarator)*
+  ";"
 ;
 
 ConstantDeclarator : <IDENTIFIER> "=" Expression ;
 
 FieldDeclaration :
-    (AttributeSection)*
-    ("new" | "public" | "protected" | "internal" | "private" | "static" | "readonly" | "volatile" | "unsafe")*
-    Type
-    =>|+2
-    VariableDeclarator ("," VariableDeclarator)*
-   ";"
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC,TokenType.UNSAFE, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
+                                      TokenType.REF, TokenType.READONLY, TokenType.SEALED,
+                                      TokenType.VOLATILE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  Type
+  =>|+2
+  VariableDeclarator ("," VariableDeclarator)*
+ ";"
 ;
 
 PropertyDeclaration :
-   (AttributeSection)*
-   Modifiers
-   Type
-   Name
-   =>|+1
-   PropertyBody
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC, TokenType.UNSAFE, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
+                                      TokenType.REF, TokenType.READONLY, TokenType.SEALED,
+                                      TokenType.VOLATILE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  Type
+  Name
+  =>|+1
+  PropertyBody
 ;
 
 InterfacePropertyDeclaration :
@@ -521,7 +575,7 @@ InterfacePropertyDeclaration :
       // This seems to be another of these
       // new features not hardly documented
       // anywhere. For read-only 'get' properties,
-      // apparently, you can dispense with the 
+      // apparently, you can dispense with the
       // "{ get }" but I'm not sure if this is only
       // in interfaces.
       "=>" Expression ";"
@@ -529,18 +583,24 @@ InterfacePropertyDeclaration :
 ;
 
 InterfaceAccessor : // TODO, check that there is only one of each
-    (AttributeSection)* 
+    (AttributeSection)*
     ASSERT {checkNextTokenImage("get")||checkNextTokenImage("set")||checkNextTokenImage("init")}#
     : "Expecting get, set, or init here"
-    ACTIVATE_TOKENS GET,SET,INIT 
+    ACTIVATE_TOKENS GET,SET,INIT
     ( "get" | "set" | "init" )
-    =>|| 
-    ["=>" Expression ] 
+    =>||
+    ["=>" Expression ]
     ";"
-;    
+;
 
 
 EventDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.INTERNAL, TokenType.SEALED);
+  }#
    (AttributeSection)*
    Modifiers
    "event"
@@ -549,32 +609,38 @@ EventDeclaration :
    (
       VariableDeclarator =>|+1 ("," VariableDeclarator)* ";"
       |
-      Name 
-      "{" 
+      Name
+      "{"
       (
           AddAccessorDeclaration RemoveAccessorDeclaration
           |
           RemoveAccessorDeclaration AddAccessorDeclaration
       )
       "}"
-   )   
+   )
 ;
 
 IndexerDeclaration :
-    (AttributeSection)*
-    Modifiers
-    Type
-    [Name "."] 
-    "this"
-    "["
-    =>||
-     FormalParameters 
-    "]"
-    (
-       "{" (AccessorDeclaration)+ "}"
-       |
-       "=>" ["ref"] Expression ";"
-    )    
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.INTERNAL, TokenType.SEALED);
+  }#
+  (AttributeSection)*
+  Modifiers
+  Type
+  [Name "."]
+  "this"
+  "["
+  =>||
+   FormalParameters
+  "]"
+  (
+     "{" (AccessorDeclaration)+ "}"
+     |
+     "=>" ["ref"] Expression ";"
+  )
 ;
 
 OperatorDeclaration :
@@ -590,7 +656,7 @@ OperatorDeclaration :
       ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|">>"|"=="|"!="|">"|"<"|">="|"<=")
       "(" ["in"] Type <IDENTIFIER> "," ["in"] Type <IDENTIFIER> ")"
       |
-      Type "(" ["in"] Type <IDENTIFIER> ["=" Expression] ")" 
+      Type "(" ["in"] Type <IDENTIFIER> ["=" Expression] ")"
    )
    MethodBody
 ;
@@ -599,26 +665,30 @@ DestructorDeclaration :
    (AttributeSection)*
    ["extern" | "unsafe"]
    "~"
-   <IDENTIFIER> 
-   "(" 
+   <IDENTIFIER>
+   "("
    =>||
    ")"
    MethodBody
 ;
 
-ConstructorDeclaration : 
-   (AttributeSection)*
-   Modifiers
-   <IDENTIFIER>
-   "(" =>||
-   [FormalParameters]
-   ")"
-   [
-      ":"
-      ("base" | "this")
-      "(" [ArgumentList] ")"
-   ]
-   MethodBody
+ConstructorDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC, TokenType.INTERNAL, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  <IDENTIFIER>
+  "(" =>||
+  [FormalParameters]
+  ")"
+  [
+     ":"
+     ("base" | "this")
+     "(" [ArgumentList] ")"
+  ]
+  MethodBody
 ;
 
 StaticConstructorDeclaration :
@@ -668,22 +738,27 @@ PropertyBody :
   "{" (AccessorDeclaration)+ "}"
    ["=" VariableInitializer ";"]
   |
-  "=>" 
+  "=>"
   ["ref"] // since 7.3, I think...
-  Expression 
+  Expression
   ";"
 ;
 
 AccessorDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.VIRTUAL, TokenType.OVERRIDE, TokenType.NEW,
+                                      TokenType.ABSTRACT, TokenType.INTERNAL, TokenType.READONLY);
+  }#
    (AttributeSection)*
    Modifiers
-   ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init") 
+   ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init")
    =>||
    AccessorBody
 ;
 
 AccessorBody :
-   Block 
+   Block
    |
    "=>" ["ref"] Expression ";"
    |
@@ -692,7 +767,7 @@ AccessorBody :
 
 VariableInitializer :
    Expression
-   | 
+   |
    ArrayInitializer
 ;
 
@@ -703,47 +778,58 @@ ArrayInitializer :
 ;
 
 MethodDeclaration :
-   (AttributeSection)*
-   Modifiers
-   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
-   ReturnType
-   //MemberName
-   Name
-   [TypeParameterList]
-   "(" 
-   =>||
-    [FormalParameters] 
-   ")"
-   TypeParameterConstraints
-   MethodBody
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC,TokenType.UNSAFE, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
+                                      TokenType.REF, TokenType.READONLY, TokenType.SEALED);
+  }#
+  (AttributeSection)*
+  Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ReturnType
+  //MemberName
+  Name
+  [TypeParameterList]
+  "("
+  =>||
+   [FormalParameters]
+  ")"
+  TypeParameterConstraints
+  MethodBody
 ;
 
 MethodBody :
-   Block 
-   | 
+   Block
+   |
    ["=>" ["ref"] Expression] ";"
 ;
 
 InterfaceMethodDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.INTERNAL, TokenType.UNSAFE);
+  }#
    (AttributeSection)*
    Modifiers // REVISIT later.
    ReturnType
    <IDENTIFIER>
    [TypeParameterList]
    "(" =>||
-   [FormalParameters] 
+   [FormalParameters]
    ")"
    TypeParameterConstraints
    MethodBody // since 8.0. NB. The method body can be a lone semicolon.
 ;
 
-ReturnType : 
+ReturnType :
    SCAN {getToken(2).getType() != TokenType.STAR}# =>
    // If we have void*, we prefer to parse it as Type
    // for tree-building purposes.
-   "void" ["*"] 
-   | 
-   Type 
+   "void" ["*"]
+   |
+   Type
 ;
 
 FormalParameters :
@@ -760,7 +846,7 @@ VarArgsParameter#void :
    ArgListParameter
    |
    ParameterArray
-;   
+;
 
 
 ArgListParameter# :
@@ -780,21 +866,21 @@ FixedParameter :
    ["=" Expression]
 ;
 
-ParameterArray : 
+ParameterArray :
    (AttributeSection)*
-   "params" =>|| 
+   "params" =>||
    ArrayType
    <IDENTIFIER>
 ;
 
-VariableDeclarator : <IDENTIFIER> ["=" (Expression|ArrayInitializer)] ;   
+VariableDeclarator : <IDENTIFIER> ["=" (Expression|ArrayInitializer)] ;
 
 TypeParameterList :
    "<"
    (AttributeSection)*
-   ["in"|"out"] // Only with interfaces 
+   ["in"|"out"] // Only with interfaces
    Name
-   ("," (AttributeSection)* ["in"|"out"] Name)*    
+   ("," (AttributeSection)* ["in"|"out"] Name)*
    ">"
 ;
 
@@ -813,7 +899,7 @@ Type :
     |
     PrimitiveType
     |
-    Name 
+    Name
     |
     SCAN ~\NonTupleType
     => TupleType
@@ -827,10 +913,10 @@ Type :
   (
      SCAN 2 ~\NonArrayType =>
      ["?"]
-     "[" (",")* "]" 
+     "[" (",")* "]"
   )*
   [
-     SCAN 0 \ArrayType => 
+     SCAN 0 \ArrayType =>
      ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
   ]
   (SCAN ~\TupleType => "*")*
@@ -842,7 +928,7 @@ Type :
 
 TupleType :
    "("
-   Type [<IDENTIFIER>] 
+   Type [<IDENTIFIER>]
    ASSERT (",")
    =>||
    ("," Type [<IDENTIFIER>])*
@@ -857,7 +943,7 @@ PrimitiveType#void :
 
 Block :
   "{"
-   ( Statement )* 
+   ( Statement )*
   "}"
 ;
 
@@ -892,10 +978,10 @@ INJECT Expression :
       }
       return true;
       // return childrenOfType(Expression.class).stream().allMatch(Expression::isConstant);
-   }  
+   }
 }
 
-INJECT AdditiveExpression : implements Expression 
+INJECT AdditiveExpression : implements Expression
 INJECT AndExpression : implements Expression
 INJECT ArrayCreationExpression : implements Expression
 INJECT AnonymousMethodExpression : implements Expression
@@ -947,12 +1033,12 @@ INJECT UnaryExpressionNotPlusMinus : extends UnaryExpression
 INJECT UnaryExpressionPlusOrMinus : extends UnaryExpression
 INJECT FromEndIndex : extends UnaryExpression
 
-INJECT InvocationExpression : implements StatementExpression 
+INJECT InvocationExpression : implements StatementExpression
 {
    public boolean isAssignableTo() {return true;}
 }
 
-INJECT LiteralExpression : implements Expression 
+INJECT LiteralExpression : implements Expression
 {
     public boolean isConstant() {return true;}
 }
@@ -962,7 +1048,7 @@ INJECT UnaryExpressionUnsafe : extends UnaryExpression
    public boolean isAssignableTo() {return true;}
 }
 
-INJECT BaseAccess : implements Expression 
+INJECT BaseAccess : implements Expression
 {
    public boolean isAssignableTo() {return true;}
 }
@@ -979,22 +1065,22 @@ INJECT SimpleName : implements Expression
    public boolean isConstant() {return false;}
 }
 
-INJECT This : implements Expression 
+INJECT This : implements Expression
 {
    public boolean isAssignableTo() {return true;}
 }
 
-INJECT MemberAccess : implements Expression 
+INJECT MemberAccess : implements Expression
 {
    public boolean isAssignableTo() {return true;}
 }
 
-INJECT PointerMemberAccess : implements Expression 
+INJECT PointerMemberAccess : implements Expression
 {
    public boolean isAssignableTo() {return true;}
 }
 
-INJECT ElementAccess : implements Expression 
+INJECT ElementAccess : implements Expression
 {
    public boolean isAssignableTo() {return true;}
 }
@@ -1012,7 +1098,7 @@ LambdaLHS :
      ]
   ]
   [
-     SCAN ("void" | NonNullableType) "(" 
+     SCAN ("void" | NonNullableType) "("
      => ReturnType
   ]
   (
@@ -1032,9 +1118,9 @@ ImplicitAnonymousFunctionSignature :
 QueryExpressionLA#scan :
    <IDENTIFIER> ASSERT {getToken(0).getImage().equals("from")}
    (
-      <IDENTIFIER> "in" 
+      <IDENTIFIER> "in"
       |
-      Type <IDENTIFIER> "in" 
+      Type <IDENTIFIER> "in"
    )
 ;
 
@@ -1042,9 +1128,9 @@ QueryExpression :
    ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
                    INTO, ON, ORDERBY,SELECT,WHERE
    (
-     FromClause 
+     FromClause
      QueryBody
-   ) 
+   )
 ;
 
 InQueryExpression#void :
@@ -1059,7 +1145,7 @@ FromClause :
    (
       <IDENTIFIER> "in" =>|| InQueryExpression
       |
-      Type <IDENTIFIER> "in" InQueryExpression 
+      Type <IDENTIFIER> "in" InQueryExpression
    )
 ;
 
@@ -1071,7 +1157,7 @@ QueryBody :
       GroupClause
    )
    [
-      "into" 
+      "into"
       <IDENTIFIER>
       QueryBody
    ]
@@ -1093,10 +1179,10 @@ LetClause : "let" <IDENTIFIER> "=" InQueryExpression ;
 
 WhereClause : "where" InQueryExpression ;
 
-JoinClause : 
-   "join" 
+JoinClause :
+   "join"
    (
-      <IDENTIFIER> "in" 
+      <IDENTIFIER> "in"
       |
       Type <IDENTIFIER> "in"
    )
@@ -1106,20 +1192,20 @@ JoinClause :
    "equals"
    InQueryExpression
    ["into" <IDENTIFIER>]
-;   
+;
 
 SelectClause : "select" InQueryExpression ;
 
 GroupClause : "group" InQueryExpression "by" InQueryExpression;
 
-OrderbyClause : 
-    "orderby" 
-    InQueryExpression 
-    ["ascending"|"descending"] 
+OrderbyClause :
+    "orderby"
+    InQueryExpression
+    ["ascending"|"descending"]
     (
        "," InQueryExpression ["ascending"|"descending"]
     )*
-;    
+;
 
 AssignmentExpression :
    ConditionalExpression {Expression lhs = (Expression) peekNode();}
@@ -1131,10 +1217,10 @@ AssignmentExpression :
    ]
 ;
 
-MultiplicativeExpression : 
+MultiplicativeExpression :
    WithExpression
    (
-      ("*" | "/" | "%") 
+      ("*" | "/" | "%")
       WithExpression
    )*
 ;
@@ -1155,7 +1241,7 @@ WithExpression :
 ;
 
 SwitchExpression :
-   RangeExpression 
+   RangeExpression
    [
       "switch"
       "{"
@@ -1166,11 +1252,11 @@ SwitchExpression :
    ]
 ;
 
-SwitchExpressionCase : 
+SwitchExpressionCase :
    Expression [WhenClause] "=>" =>|| Expression
    |
-   Pattern [WhenClause] "=>" Expression 
-;   
+   Pattern [WhenClause] "=>" Expression
+;
 
 RangeExpression :
    ".." [UnaryExpression]
@@ -1208,7 +1294,7 @@ RelationalExpression :
 EqualityExpression :
    RelationalExpression
    (
-      ("=="|"!=") 
+      ("=="|"!=")
       RelationalExpression
    )*
 ;
@@ -1230,7 +1316,7 @@ ExclusiveOrExpression :
 ;
 
 InclusiveOrExpression :
-   ExclusiveOrExpression 
+   ExclusiveOrExpression
    (
       "|"
       ExclusiveOrExpression
@@ -1261,25 +1347,25 @@ NullCoalescingExpression :
     )*
 ;
 
-ConditionalExpression : 
-   NullCoalescingExpression 
+ConditionalExpression :
+   NullCoalescingExpression
    [
-      "?" 
+      "?"
       (
        ["ref"] Expression
-       ":" 
+       ":"
        ["ref"] Expression
       )
    ]
 ;
 
 AssignmentOperator #void :
-  "=" 
-  | "+=" 
-  | "-=" 
-  | "*=" 
-  | "/=" 
-  | "%=" 
+  "="
+  | "+="
+  | "-="
+  | "*="
+  | "/="
+  | "%="
   | "&="
   | "|="
   | "^="
@@ -1307,20 +1393,20 @@ UnaryExpression#abstract :
    |
    FromEndIndex
    |
-   NullConditionalExpression 
+   NullConditionalExpression
 ;
 
 FromEndIndex :  // since 8.0
-    "^" UnaryExpression 
+    "^" UnaryExpression
 ;
 
 ThrowExpression# : "throw" [Expression] ;
 
 CastExpression : "(" Type ")" =>|+1 UnaryExpression ;
 
-AwaitExpression : 
+AwaitExpression :
    SCAN 2 {checkNextTokenImage("await")}#
-    => 
+    =>
    ACTIVATE_TOKENS AWAIT ("await") UnaryExpression
 ;
 
@@ -1334,7 +1420,7 @@ UnaryExpressionPlusOrMinus : ("+" | "-") UnaryExpression ;
 
 UnaryExpressionNotPlusMinus : ("!" | "~") UnaryExpression ;
 
-NullConditionalOperations : 
+NullConditionalOperations :
    "?" =>|+1
    (
       "." <IDENTIFIER> ["!"][=>TypeArgumentList]
@@ -1385,7 +1471,7 @@ PrimaryExpression#void :
       |
       CheckedExpression
       |
-      SizeofExpression 
+      SizeofExpression
       |
       UncheckedExpression
       |
@@ -1415,8 +1501,8 @@ PrimaryExpression#void :
          // since 8.0
         "!" #NullForgivingExpression(2)
       ]
-   )*      
-;   
+   )*
+;
 
 ParenthesizedOrTuple#void :
     => ParenthesizedExpression
@@ -1446,7 +1532,7 @@ ObjectCreationExpression :
 ;
 
 AnonymousObjectCreationExpression :
-   "new" 
+   "new"
    "{" =>||
     [MemberDeclarator ("," MemberDeclarator)* [","]]
    "}"
@@ -1470,7 +1556,7 @@ TupleElement :
        =>Expression ASSERT ("," | ")")
        |
        =>Type Expression ASSERT ("," | ")")
-   ) 
+   )
    =>||
 ;
 
@@ -1479,13 +1565,13 @@ PrimitiveTypeAccess :
    "." =>||
    <IDENTIFIER>
    [ => TypeArgumentList ]
-;   
+;
 
 QualifiedAliasMemberAccess :
-   <IDENTIFIER> "::" =>|| 
+   <IDENTIFIER> "::" =>||
    <IDENTIFIER> [TypeArgumentList]
 ;
-   
+
 BaseAccess :
    "base"
    (
@@ -1495,21 +1581,21 @@ BaseAccess :
    )
 ;
 
-NameofExpression : 
+NameofExpression :
    ASSERT {checkNextTokenImage("nameof")}#
-   ACTIVATE_TOKENS NAMEOF ("nameof") 
-   "(" =>|| 
-   NamedEntity 
-   ")" 
+   ACTIVATE_TOKENS NAMEOF ("nameof")
+   "(" =>||
+   NamedEntity
+   ")"
 ;
 
 NamedEntity :
    (SimpleName | "this" | "base" | PredefinedType | QualifiedAliasMember)
    ("." <IDENTIFIER> [TypeArgumentList])*
-;   
+;
 
 PredefinedType#void :
-    "bool" | "byte" | "char"| "decimal" | "double" | "float" | "int" 
+    "bool" | "byte" | "char"| "decimal" | "double" | "float" | "int"
     | "long" | "object" | "sbyte" | "short" | "string" | "uint" | "ulong" | "ushort"
 ;
 
@@ -1521,7 +1607,7 @@ SimpleName# : <IDENTIFIER> [=>TypeArgumentList] ;
 
 ParenthesizedExpression : "(" Expression ")" ;
 
-INJECT ParenthesizedExpression : implements Expression 
+INJECT ParenthesizedExpression : implements Expression
 {
    public boolean isAssignableTo() {
       return ((Expression) getChild(1)).isAssignableTo();
@@ -1588,15 +1674,15 @@ AnonymousMethodExpression :
 ;
 
 ExplicitLambdaSignature :
-   "(" 
+   "("
        ExplicitAnonymousFunctionSignature
    ")"
 ;
 
-ExplicitAnonymousFunctionSignature : 
-   ExplicitAnonymousFunctionParameter 
+ExplicitAnonymousFunctionSignature :
+   ExplicitAnonymousFunctionParameter
    ("," ExplicitAnonymousFunctionParameter)*
-; 
+;
 
 
 ExplicitAnonymousFunctionParameter :  (AttributeSection)* ["ref"|"out"|"in"] Type <IDENTIFIER> ;
@@ -1604,7 +1690,7 @@ ExplicitAnonymousFunctionParameter :  (AttributeSection)* ["ref"|"out"|"in"] Typ
 ObjectInitializer :
   SCAN "{" (QualifiedIdentifier | "[" ArgumentList "]") "="
   =>
-  "{" 
+  "{"
   MemberInitializer (SCAN 2 "," MemberInitializer)* [","]
   "}"
 ;
@@ -1612,15 +1698,15 @@ ObjectInitializer :
 MemberInitializer :
    (QualifiedIdentifier | "[" ArgumentList "]")
    [
-      // If this is really optional, it is a mistake in the spec. 
+      // If this is really optional, it is a mistake in the spec.
       // At least the C# 6.0 spec
      "="
      (Expression | ObjectInitializer | CollectionInitializer)
    ]
 ;
 
-CollectionInitializer : 
-   "{" 
+CollectionInitializer :
+   "{"
        [
           ElementInitializer ("," =>|+1 ElementInitializer)* [","]
        ]
@@ -1655,7 +1741,7 @@ LiteralExpression# :
    <REGULAR_STRING_LITERAL>
    |
    <VERBATIM_STRING_LITERAL>
-;   
+;
 
 Label : SCAN 2 <IDENTIFIER> ":" ;
 
@@ -1667,7 +1753,7 @@ Statement :
        =>
        MethodDeclaration
        |
-       LocalConstantDeclaration ";" 
+       LocalConstantDeclaration ";"
        |
        LocalVariableDeclaration ";"
        |
@@ -1678,7 +1764,7 @@ Statement :
 EmptyStatement : ";" ;
 
 EmbeddedStatement :
-    Block 
+    Block
     |
     EmptyStatement
     |
@@ -1742,7 +1828,7 @@ LocalVariableDeclarationLA#scan :
    )
 ;
 
-LocalVariableDeclaration : 
+LocalVariableDeclaration :
   SCAN LocalVariableDeclarationLA =>
   ["ref"]
   ["using"] // since 8.0
@@ -1751,7 +1837,7 @@ LocalVariableDeclaration :
      |
      NoVarDeclaration
   )
-;   
+;
 
 NoVarDeclaration :
    [
@@ -1760,7 +1846,7 @@ NoVarDeclaration :
    [
       "readonly" //REVISIT
    ]
-   Type 
+   Type
    ASSERT {getToken(-1).getType() == TokenType.DOT || !getToken(0).toString().equals("await")}#
    =>|+1
    LocalVariableDeclarator
@@ -1774,30 +1860,30 @@ VarDeclaration :
    [
       "readonly" //REVISIT
    ]
-   ACTIVATE_TOKENS VAR ("var") 
+   ACTIVATE_TOKENS VAR ("var")
    =>||
    (<IDENTIFIER>|Tuple) "=" ["ref"] LocalVariableInitializer
 ;
 
-LocalVariableDeclarator : 
-   <IDENTIFIER> ["=" ["ref"] LocalVariableInitializer] 
+LocalVariableDeclarator :
+   <IDENTIFIER> ["=" ["ref"] LocalVariableInitializer]
 ;
 
-LocalVariableInitializer :  
-   Expression 
-   | 
-   ArrayInitializer 
+LocalVariableInitializer :
+   Expression
+   |
+   ArrayInitializer
 ;
 
 StackAllocInitializer :
-   "stackalloc" 
+   "stackalloc"
    (
       "[" "]" ArrayInitializer
       |
       Type
       (
          SCAN 0 {getToken(0).getType() != TokenType.RBRACKET}#
-         => "[" Expression "]" 
+         => "[" Expression "]"
          |
          "[" Expression "]"
          |
@@ -1822,7 +1908,7 @@ BreakStatement : "break" ";" ;
 
 ContinueStatement : "continue" ";" ;
 
-GotoStatement : 
+GotoStatement :
    "goto"
    (
       <IDENTIFIER>
@@ -1832,7 +1918,7 @@ GotoStatement :
       "case" Expression
    )
    ";"
-;   
+;
 
 IfStatement : "if" "(" Expression ")" EmbeddedStatement [ "else" EmbeddedStatement] ;
 
@@ -1840,37 +1926,37 @@ DoStatement : "do" EmbeddedStatement "while" "(" Expression ")" ";" ;
 
 WhileStatement : "while" "(" Expression ")" EmbeddedStatement ;
 
-ForeachStatement : 
+ForeachStatement :
    {boolean iteratingOverTupleType=false;}
     [
        //Since 8.0 (I think...)
-       SCAN {checkNextTokenImage("await")}# 
+       SCAN {checkNextTokenImage("await")}#
        => ACTIVATE_TOKENS AWAIT ("await")
     ]
     "foreach" =>||
-    "(" 
+    "("
     ["ref"]
     (
-       "var" 
-       | 
+       "var"
+       |
        Tuple {iteratingOverTupleType = true;}
-       | 
-       Type 
-    ) 
+       |
+       Type
+    )
     (
-       <IDENTIFIER> 
-       | 
+       <IDENTIFIER>
+       |
        SCAN {!iteratingOverTupleType} => Tuple // since ???
        |
        SCAN {iteratingOverTupleType} =>{}
     )
     "in"
-    Expression 
-    ")" 
-    EmbeddedStatement 
+    Expression
+    ")"
+    EmbeddedStatement
 ;
 
-TryStatement : 
+TryStatement :
    "try" Block
    (
       FinallyClause
@@ -1879,8 +1965,8 @@ TryStatement :
    )
 ;
 
-ReturnStatement : 
-   "return" 
+ReturnStatement :
+   "return"
    [
       [
          // since 7.0. Note that this can only happen in a return statement
@@ -1888,22 +1974,22 @@ ReturnStatement :
          // However, I don't think this is our problem. At least for now.
          // We leave it to the compiler!
          "ref"
-      ] 
-      Expression 
-   ] 
-   ";" 
+      ]
+      Expression
+   ]
+   ";"
 ;
 
 ThrowStatement : ThrowExpression ";" ;
 
 FinallyClause : "finally" Block ;
 
-UnsafeStatement : "unsafe" Block ; 
+UnsafeStatement : "unsafe" Block ;
 
-CatchClause : 
-   "catch" 
-   [ "(" Type [<IDENTIFIER>] ")" ] 
-   [ ACTIVATE_TOKENS WHEN ("when") =>|| "(" Expression ")" ] 
+CatchClause :
+   "catch"
+   [ "(" Type [<IDENTIFIER>] ")" ]
+   [ ACTIVATE_TOKENS WHEN ("when") =>|| "(" Expression ")" ]
    Block
 ;
 
@@ -1915,7 +2001,7 @@ YieldStatement :
       "return" Expression
    )
    ";"
-;   
+;
 
 UsingStatement :
    [
@@ -1928,8 +2014,8 @@ UsingStatement :
    =>||
    (
       SCAN LocalVariableDeclaration ")"
-      => LocalVariableDeclaration 
-      | 
+      => LocalVariableDeclaration
+      |
       Expression
    )
    [SCAN 0 {hasParenthesis} => ")"]
@@ -1945,10 +2031,10 @@ FixedStatement :
    FixedPointerDeclarator ("," FixedPointerDeclarator)*
    ")"
    EmbeddedStatement
-; 
+;
 
-FixedPointerDeclarator : 
-   <IDENTIFIER> 
+FixedPointerDeclarator :
+   <IDENTIFIER>
    "=" ["&"] Expression
 ;
 
@@ -1960,7 +2046,7 @@ StatementExpression#interface :
    AwaitExpression
    |
    PrimaryExpression
-   {Expression lhs = (Expression) peekNode();} 
+   {Expression lhs = (Expression) peekNode();}
    (
       NullConditionalOperations #NullConditionalExpression(2)
       |
@@ -1970,17 +2056,17 @@ StatementExpression#interface :
       ASSERT {lhs instanceof StatementExpression} : "Not a statement."
    )
    |
-   AssignmentExpression 
+   AssignmentExpression
    ASSERT {peekNode() instanceof AssignmentExpression} : "Not a statement."
 ;
 
 ExpressionStatement : StatementExpression ";" ;
 
-SwitchStatement : "switch" "(" Expression ("," Expression)* ")" SwitchBlock ; 
+SwitchStatement : "switch" "(" Expression ("," Expression)* ")" SwitchBlock ;
 
-SwitchBlock : "{" (SwitchSection)* "}" ; 
+SwitchBlock : "{" (SwitchSection)* "}" ;
 
-SwitchLabel : 
+SwitchLabel :
    "default" ":"
    |
    // REVISIT: Why do I need this line?
@@ -1988,31 +2074,31 @@ SwitchLabel :
    => "case" Expression [WhenClause] ":"
    |
    "case" Pattern [WhenClause] ":"
-; 
+;
 
 WhenClause :
    SCAN 0 {checkNextTokenImage("when")}#
-   => 
+   =>
    ACTIVATE_TOKENS WHEN ("when")
-   NullCoalescingExpression 
+   NullCoalescingExpression
 ;
 
-SwitchSection : 
-   (SwitchLabel)+ 
+SwitchSection :
+   (SwitchLabel)+
    (
       SCAN 0 {
-         // A bit ugly. Really need to make syntactic lookahead a bit more powerful 
-         // in terms of negative conditions! 
+         // A bit ugly. Really need to make syntactic lookahead a bit more powerful
+         // in terms of negative conditions!
                 getToken(1).getType() != TokenType.RBRACE
                 && getToken(1).getType() != TokenType.CASE
                 && !(getToken(1).getType() == TokenType.DEFAULT && getToken(2).getType() == TokenType.COLON)
-             } 
+             }
       => Statement
-   )+ 
-;  
+   )+
+;
 
-ForStatement : 
-   "for" 
+ForStatement :
+   "for"
    "("
    [LocalVariableDeclaration | StatementExpression ("," StatementExpression)*]
    ";"
@@ -2028,9 +2114,9 @@ ForStatement :
 
 // C# 8 Pattern syntax follows.
 
-Pattern : 
-   //ACTIVATE_TOKENS AND, OR, NOT, VAR, WHEN (OrPattern) 
-   ACTIVATE_TOKENS AND, OR, NOT (OrPattern) 
+Pattern :
+   //ACTIVATE_TOKENS AND, OR, NOT, VAR, WHEN (OrPattern)
+   ACTIVATE_TOKENS AND, OR, NOT (OrPattern)
 ;
 
 OrPattern : AndPattern ("or" AndPattern)* ;
@@ -2060,16 +2146,16 @@ PrimaryPattern :
    =>TypePattern
    |
    =>PositionalPattern
-   | 
+   |
    //Which should it be here?
-   ShiftExpression 
+   ShiftExpression
    //InclusiveOrExpression
 ;
 
 ParenthesizedPattern : "(" Pattern ")" ;
 
-DeclarationPattern : 
-    NonNullableType 
+DeclarationPattern :
+    NonNullableType
     ASSERT {checkNextTokenType(TokenType.IDENTIFIER)}#
     ACTIVATE_TOKENS FROM, WHERE
     (
@@ -2077,11 +2163,11 @@ DeclarationPattern :
        ASSERT ~(WhenClause)
     )
     <IDENTIFIER>
-    =>|| 
+    =>||
 ;
 
-VarPattern : 
-    SCAN 0 {checkNextTokenImage("var")}# => 
+VarPattern :
+    SCAN 0 {checkNextTokenImage("var")}# =>
     ACTIVATE_TOKENS VAR ("var")
     (<IDENTIFIER> | Tuple)
 ;
@@ -2097,16 +2183,16 @@ TypePattern :
          TokenType lastTokType = getToken(0).getType();
          TokenType nextTokType = getToken(1).getType();
       }#
-      ASSERT 
+      ASSERT
       {
-         // If we have a left parentheis, this choice fails 
+         // If we have a left parentheis, this choice fails
          // and we go to PositionalPattern
          nextTokType != TokenType.LPAREN
          &&
          (
             lastTokType != TokenType.HOOK
-         // This is now really grotesque! 
-         // If the Type we matched is "nullable", i.e. 
+         // This is now really grotesque!
+         // If the Type we matched is "nullable", i.e.
          // ends in a ?  // then the token after that must be
          // one of the following half dozen types
          // Otherwise we effectively backtrack
@@ -2122,7 +2208,7 @@ TypePattern :
             || checkNextTokenImage("and")
             || checkNextTokenImage("or")
          )
-      }# =>|| 
+      }# =>||
       |
       NonNullableType ASSERT {getToken(1).getType() != TokenType.LPAREN}#
    )
@@ -2131,8 +2217,8 @@ TypePattern :
 RelationalPattern : (">"|">="|"<="|"<") RelationalExpression ;
 
 PositionalPattern :
-    [=>NonTupleType] 
-    "(" 
+    [=>NonTupleType]
+    "("
     [SubPatterns]
     ")"
     [PropertySubPattern]
@@ -2145,13 +2231,13 @@ SubPatterns :
    (
       SCAN 2
       ","
-      [=> QualifiedIdentifier ":"] 
+      [=> QualifiedIdentifier ":"]
       Pattern
    )*
 ;
 
-PropertyPattern : 
-   [Type] =>|+1 PropertySubPattern 
+PropertyPattern :
+   [Type] =>|+1 PropertySubPattern
    [
       SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}#
       =><IDENTIFIER>
@@ -2199,7 +2285,7 @@ PlaceHolder :
       Expression
       ["," Expression]
       [
-         ":" 
+         ":"
          RegularNonInterpolatedText
       ]
       "}"
