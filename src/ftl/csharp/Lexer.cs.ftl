@@ -38,7 +38,6 @@
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size() > 1]
 [#var TT = "TokenType."]
-[#var injector = grammar.injector]
 [#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("true", "false")
       ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")
@@ -388,7 +387,7 @@ ${grammar.utils.translateLexerImports()}
             regularTokens.Add(${CU.TT}${token});
   [/#list]
 [/#if]
-${grammar.utils.translateLexerInitializers(injector)}
+${grammar.utils.translateLexerInitializers()}
             SwitchTo(lexState);
         }
 
@@ -1139,8 +1138,8 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             tok.EndOffset = end;
         }
 
-${grammar.utils.translateLexerInjections(injector, true)}
+${grammar.utils.translateLexerInjections(true)}
 
-${grammar.utils.translateLexerInjections(injector, false)}
+${grammar.utils.translateLexerInjections(false)}
     }
 }

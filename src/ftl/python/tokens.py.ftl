@@ -35,7 +35,6 @@
 from enum import Enum, auto, unique
 
 from .utils import _GenWrapper, _List
-[#var injector = grammar.injector]
 
 __all__ = [
     '${grammar.baseNodeClassName}',
@@ -325,7 +324,7 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
 [/#if]
         'previous_token',
         'next_token',
-[#var injectedFields = grammar.utils.injectedTokenFieldNames(injector)]
+[#var injectedFields = grammar.utils.injectedTokenFieldNames()]
 [#if injectedFields?size > 0]
         # injected fields
 [#list injectedFields as fieldName]
@@ -353,7 +352,7 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
         self.end_offset = end_offset
         self.token_source = token_source
 [/#if]
-${grammar.utils.translateTokenInjections(injector, true)}
+${grammar.utils.translateTokenInjections(true)}
         self.type = type
         self.previous_token = None
         self.next_token = None
@@ -564,7 +563,7 @@ ${grammar.utils.translateTokenInjections(injector, true)}
         return '%s:%s:%s' % (self.input_source, self.begin_line,
                              self.begin_column)
 
-${grammar.utils.translateTokenInjections(injector, false)}
+${grammar.utils.translateTokenInjections(false)}
 
 class InvalidToken(Token):
     def __init__(self, token_source, begin_offset, end_offset):
@@ -590,8 +589,8 @@ class ${name}(${tokenSubClassInfo.tokenClassMap[name]}): pass
 class ${cn}(Token):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-${grammar.utils.translateTokenSubclassInjections(cn, injector, true)}
-${grammar.utils.translateTokenSubclassInjections(cn, injector, false)}
+${grammar.utils.translateTokenSubclassInjections(cn, true)}
+${grammar.utils.translateTokenSubclassInjections(cn, false)}
   [/#list]
 [/#if]
 

@@ -437,10 +437,13 @@ public class Grammar extends BaseNode {
         addLexicalState(defaultLexicalState);
     }
 
+    private CodeInjector injector;
+
     public CodeInjector getInjector() {
-        return new CodeInjector(this,
-                                parserPackage, getNodePackage(),
-                                codeInjections);
+        if (injector == null) {
+            injector = new CodeInjector(this, parserPackage, getNodePackage(), codeInjections);
+        }
+        return injector;
     }
 
     public List<Node> getOtherParserCodeDeclarations() {
@@ -1372,7 +1375,7 @@ public class Grammar extends BaseNode {
             if (ch == ' ') return "\' \'";
             if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch)) return "'" + (char) ch + "'";
             s = "0x" + Integer.toHexString(ch);
-            if (Grammar.this.codeLang.equals("python")) {
+            if (codeLang.equals("python")) {
                 s = String.format("as_chr(%s)", s);
             }
             return s;
@@ -1407,7 +1410,7 @@ public class Grammar extends BaseNode {
             Map<String, String> superClassMap = new HashMap<>();
             //List<String> classes = new ArrayList<>();
 
-            for (RegularExpression re : Grammar.this.getOrderedNamedTokens()) {
+            for (RegularExpression re : getOrderedNamedTokens()) {
                 if (re.isPrivate()) continue;
                 String tokenClassName = re.getGeneratedClassName();
                 String superClassName = re.getGeneratedSuperClassName();
@@ -1427,7 +1430,6 @@ public class Grammar extends BaseNode {
                 }
             }
             // Sort out superclasses' superclasses
-            CodeInjector injector = Grammar.this.getInjector();
             String pkg = injector.getNodePackage();
             for (String key: superClassMap.keySet()) {
                 String qualifiedName = String.format("%s.%s", pkg, key);
@@ -1459,22 +1461,21 @@ public class Grammar extends BaseNode {
 
         // Used in templates specifically for method name translation
         public String translateIdentifier(String ident) {
-            return Grammar.this.translator.translateIdentifier(ident, Translator.TranslationContext.METHOD);
+            return translator.translateIdentifier(ident, Translator.TranslationContext.METHOD);
         }
 
         // Used in templates for side effects, hence returning empty string
         public String startProduction() {
             Translator.SymbolTable symbols = new Translator.SymbolTable();
 
-            Grammar.this.translator.pushSymbols(symbols);
+            translator.pushSymbols(symbols);
             return "";
         }
 
         // Used in templates for side effects, hence returning empty string
         public String endProduction() {
-            Translator t = Grammar.this.translator;
-            t.popSymbols();
-            t.clearParameterNames();
+            translator.popSymbols();
+            translator.clearParameterNames();
             return "";
         }
 
@@ -1490,14 +1491,13 @@ public class Grammar extends BaseNode {
             List<FormalParameter> parameters = ((FormalParameters) parser.rootNode()).getParams();
             // Now build the result
             sb.setLength(0);
-            Translator translator = Grammar.this.translator;
             translator.translateFormals(parameters, null, sb);
             return sb.toString();
         }
 
         public String translateExpression(Node expr) {
             StringBuilder result = new StringBuilder();
-            Grammar.this.translator.translateExpression(expr, result);
+            translator.translateExpression(expr, result);
             return result.toString();
         }
 
@@ -1507,13 +1507,13 @@ public class Grammar extends BaseNode {
             JavaCCParser parser = new JavaCCParser(expr);
             parser.Expression();
             StringBuilder result = new StringBuilder();
-            Grammar.this.translator.translateExpression(parser.rootNode(), result);
+            translator.translateExpression(parser.rootNode(), result);
             return result.toString();
         }
 
         private void translateStatements(Node node, int indent, StringBuilder result) {
             if (node instanceof Statement) {
-                Grammar.this.translator.translateStatement(node, indent, result);
+                translator.translateStatement(node, indent, result);
             }
             else {
                 for (int i = 0; i < node.getChildCount(); i++) {
@@ -1521,7 +1521,7 @@ public class Grammar extends BaseNode {
                     if (child instanceof Delimiter) {
                         continue;   // could put in more checks here
                     }
-                    Grammar.this.translator.translateStatement(child, indent, result);
+                    translator.translateStatement(child, indent, result);
                 }
             }
         }
@@ -1566,11 +1566,11 @@ public class Grammar extends BaseNode {
             // The args are passed through as a string, but need to be translated according to the language
             // being generated. For the Java template, they don't come through this method - they are passed
             // straight through as a string by the Java template.
-            return (args == null) ? "" : Grammar.this.translator.translateNonterminalArgs(args);
+            return (args == null) ? "" : translator.translateNonterminalArgs(args);
         }
 
         // used in templates
-        public String translateInjectedClass(CodeInjector injector, String name) {
+        public String translateInjectedClass(String name) {
             String result;
 
             translator.startClass(name, false, null);
@@ -1579,7 +1579,7 @@ public class Grammar extends BaseNode {
             return result;
         }
 
-        public String translateInjections(String className, CodeInjector injector, boolean fields, boolean initializers) {
+        public String translateInjections(String className, boolean fields, boolean initializers) {
             StringBuilder result = new StringBuilder();
             if (fields) {
                 translator.clearFields();
@@ -1619,7 +1619,7 @@ public class Grammar extends BaseNode {
             return result.toString();
         }
 
-        protected String translateInitializers(String className, CodeInjector injector) {
+        protected String translateInitializers(String className) {
             StringBuilder result = new StringBuilder();
             List<ClassOrInterfaceBodyDeclaration> declsToProcess = injector.getBodyDeclarations(className);
             if (declsToProcess != null) {
@@ -1633,7 +1633,7 @@ public class Grammar extends BaseNode {
             return result.toString();
         }
 
-        public List<String> injectedFieldNames(String className, CodeInjector injector) {
+        public List<String> injectedFieldNames(String className) {
             ArrayList<String> result = new ArrayList<>();
             Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = injector.getBodyDeclarations();
             List<ClassOrInterfaceBodyDeclaration> declsToProcess = bodyDeclarations.get(className);
@@ -1675,68 +1675,62 @@ public class Grammar extends BaseNode {
             return result;
         }
 
-        public List<String> injectedTokenFieldNames(CodeInjector injector) {
-            String className = String.format("%s.Token", Grammar.this.getParserPackage());
-            return injectedFieldNames(className, injector);
+        public List<String> injectedTokenFieldNames() {
+            String className = String.format("%s.Token", getParserPackage());
+            return injectedFieldNames(className);
         }
 
-        public List<String> injectedLexerFieldNames(CodeInjector injector) {
-            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
-                    Grammar.this.getLexerClassName());
-            return injectedFieldNames(className, injector);
-        }
-
-        // used in templates
-        public List<String> injectedParserFieldNames(CodeInjector injector) {
-            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
-                    Grammar.this.getParserClassName());
-            return injectedFieldNames(className, injector);
+        public List<String> injectedLexerFieldNames() {
+            String className = String.format("%s.%s", getParserPackage(), getLexerClassName());
+            return injectedFieldNames(className);
         }
 
         // used in templates
-        public String translateNestedTypes(String className, CodeInjector injector, boolean fields) {
-            className = String.format("%s.%s", Grammar.this.getNodePackage(), className);
-            return translateInjections(className, injector, fields, false);
+        public List<String> injectedParserFieldNames() {
+            String className = String.format("%s.%s", getParserPackage(), getParserClassName());
+            return injectedFieldNames(className);
         }
 
         // used in templates
-        public String translateTokenInjections(CodeInjector injector, boolean fields) {
-            String className = String.format("%s.Token", Grammar.this.getParserPackage());
-            return translateInjections(className, injector, fields, fields && translator.isIncludeInitializers());
+        public String translateNestedTypes(String className, boolean fields) {
+            className = String.format("%s.%s", getNodePackage(), className);
+            return translateInjections(className, fields, false);
         }
 
         // used in templates
-        public String translateLexerInjections(CodeInjector injector, boolean fields) {
-            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
-                    Grammar.this.getLexerClassName());
-            return translateInjections(className, injector, fields, fields && translator.isIncludeInitializers());
+        public String translateTokenInjections(boolean fields) {
+            String className = String.format("%s.Token", getParserPackage());
+            return translateInjections(className, fields, fields && translator.isIncludeInitializers());
         }
 
         // used in templates
-        public String translateParserInjections(CodeInjector injector, boolean fields) {
-            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
-                    Grammar.this.getParserClassName());
-            return translateInjections(className, injector, fields, fields && translator.isIncludeInitializers());
+        public String translateLexerInjections(boolean fields) {
+            String className = String.format("%s.%s", getParserPackage(), getLexerClassName());
+            return translateInjections(className, fields, fields && translator.isIncludeInitializers());
         }
 
         // used in templates
-        public String translateLexerInitializers(CodeInjector injector) {
-            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
-                    Grammar.this.getLexerClassName());
-            return translateInitializers(className, injector);
+        public String translateParserInjections(boolean fields) {
+            String className = String.format("%s.%s", getParserPackage(), getParserClassName());
+            return translateInjections(className, fields, fields && translator.isIncludeInitializers());
         }
 
         // used in templates
-        public String translateParserInitializers(CodeInjector injector) {
-            String className = String.format("%s.%s", Grammar.this.getParserPackage(),
-                    Grammar.this.getParserClassName());
-            return translateInitializers(className, injector);
+        public String translateLexerInitializers() {
+            String className = String.format("%s.%s", getParserPackage(), getLexerClassName());
+            return translateInitializers(className);
         }
 
         // used in templates
-        public String translateTokenSubclassInjections(String className, CodeInjector injector, boolean fields) {
-            className = String.format("%s.%s", Grammar.this.getNodePackage(), className);
-            return translateInjections(className, injector, fields, fields && translator.isIncludeInitializers());
+        public String translateParserInitializers() {
+            String className = String.format("%s.%s", getParserPackage(), getParserClassName());
+            return translateInitializers(className);
+        }
+
+        // used in templates
+        public String translateTokenSubclassInjections(String className, boolean fields) {
+            className = String.format("%s.%s", getNodePackage(), className);
+            return translateInjections(className, fields, fields && translator.isIncludeInitializers());
         }
 
         // used in templates
@@ -1763,7 +1757,6 @@ public class Grammar extends BaseNode {
         // used in templates
         public String translateLexerImports() {
             StringBuilder result = new StringBuilder();
-            CodeInjector injector = getInjector();
             String cn = String.format("%s.%s", getParserPackage(), getLexerClassName());
             Set<ImportDeclaration> imports = injector.getImportDeclarations(cn);
 
@@ -1776,7 +1769,6 @@ public class Grammar extends BaseNode {
         // used in templates
         public String translateParserImports() {
             StringBuilder result = new StringBuilder();
-            CodeInjector injector = getInjector();
             String cn = String.format("%s.%s", getParserPackage(), getParserClassName());
             Set<ImportDeclaration> imports = injector.getImportDeclarations(cn);
 
@@ -1788,7 +1780,6 @@ public class Grammar extends BaseNode {
 
         public List<String> getSortedNodeClassNames() {
             Sequencer seq = new Sequencer();
-            CodeInjector injector = getInjector();
             String pkg = injector.getNodePackage();
             String bnn = injector.getBaseNodeClassName();
 
