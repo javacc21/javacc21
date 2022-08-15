@@ -57,7 +57,7 @@ public class CSLex {
     }
 
     static public int tokenizeFile(File file, boolean quiet) throws IOException, ParseException {
-        String content = CSharpConstants.stringFromBytes(Files.readAllBytes(file.toPath()), null);
+        String content = CSharpLexer.stringFromBytes(Files.readAllBytes(file.toPath()), null);
         CSharpLexer lexer = new CSharpLexer(file.toString(), content);
         Token t = null;
         int numTokens = 0;
