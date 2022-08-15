@@ -34,7 +34,7 @@ FAULT_TOLERANT=true;
 
 INJECT FELParser : {
    static public void main(String[] args) throws ParseException, IOException {
-       String input = CONSTANTS_CLASS.readFully(new java.io.InputStreamReader(System.in));
+       String input = LEXER_CLASS.readFully(new java.io.InputStreamReader(System.in));
        FELParser parser = new FELParser(input);
        Node n = parser.Input();
        n.dump("  ");
@@ -173,7 +173,7 @@ Node Input #void :
    }
 ;
 
-Expression : 
+Expression :
     OrExpression
 ;
 
@@ -242,7 +242,7 @@ UnaryExpression #void :
     DefaultToExpression
 ;
 
-UnaryPlusMinusExpression : 
+UnaryPlusMinusExpression :
     (<PLUS>|<MINUS>) DefaultToExpression
 ;
 
@@ -308,7 +308,7 @@ DotKey #void :
     (<IDENTIFIER>|<TIMES>)
 ;
 
-DynamicKey #void : 
+DynamicKey #void :
     <OPEN_BRACKET>Expression<CLOSE_BRACKET>
 ;
 
@@ -348,7 +348,7 @@ NumberLiteral :
     <INTEGER>|<DECIMAL>
 ;
 
-BooleanLiteral : 
+BooleanLiteral :
     <TRUE>|<FALSE>
 ;
 
