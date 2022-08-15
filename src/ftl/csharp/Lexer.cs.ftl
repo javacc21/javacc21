@@ -441,7 +441,7 @@ ${grammar.utils.translateLexerInitializers(injector)}
             try {
                 fs = new FileStream(path, FileMode.Open);
             }
-            catch (Exception ex) when (ex is FileNotFoundException || ex is DirectoryNotFoundException) {
+            catch (IOException) {
                 // assume we were passed source code.
                 return path;
             }
