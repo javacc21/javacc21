@@ -34,7 +34,6 @@
 // ReSharper disable InconsistentNaming
 [#import "CommonUtils.inc.ftl" as CU]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
-[#var injector = grammar.injector]
 [#var csPackage = grammar.utils.getPreprocessorSymbol('cs.package', grammar.parserPackage) ]
 namespace ${csPackage} {
     using System;
@@ -213,7 +212,7 @@ ${grammar.utils.translateParserImports()}
     [/#if]
 
   [#else]
-${grammar.utils.translateInjectedClass(injector, node)}
+${grammar.utils.translateInjectedClass(node)}
 
   [/#if]
 [/#list]
@@ -284,7 +283,7 @@ ${grammar.utils.translateInjectedClass(injector, node)}
 [#if grammar.treeBuildingEnabled]
             new NodeScope(this); // attaches NodeScope instance to Parser instance
 [/#if]
-${grammar.utils.translateParserInitializers(injector)}
+${grammar.utils.translateParserInitializers()}
         }
 
 [#if grammar.faultTolerant]
@@ -496,8 +495,8 @@ ${grammar.utils.translateParserInitializers(injector)}
 [#embed "ErrorHandling.inc.ftl"]
 
 
-${grammar.utils.translateParserInjections(injector, true)}
-${grammar.utils.translateParserInjections(injector, false)}
+${grammar.utils.translateParserInjections(true)}
+${grammar.utils.translateParserInjections(false)}
 
     }
 

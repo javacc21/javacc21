@@ -185,7 +185,6 @@ class ParseState:
         self.node_scope = parser.current_node_scope.clone()
 [/#if]
 
-[#var injector = grammar.injector]
 [#if grammar.treeBuildingEnabled]
 #
 # AST definitions
@@ -196,7 +195,7 @@ class ParseState:
     [#if !injector.hasInjectedCode(node)]
 class ${node}(BaseNode): pass
     [#else]
-${grammar.utils.translateInjectedClass(injector, node)}
+${grammar.utils.translateInjectedClass(node)}
     [/#if]
 
 
@@ -235,7 +234,7 @@ class Parser:
         'parsing_problems',
         'currently_parsed_production',
         'current_lookahead_production',
-[#var injectedFields = grammar.utils.injectedParserFieldNames(injector)]
+[#var injectedFields = grammar.utils.injectedParserFieldNames()]
 [#if injectedFields?size > 0]
         # injected fields
 [#list injectedFields as fieldName]
@@ -245,7 +244,7 @@ class Parser:
     )
 
     def __init__(self, input_source_or_lexer):
-${grammar.utils.translateParserInjections(injector, true)}
+${grammar.utils.translateParserInjections(true)}
         if not is_lexer(input_source_or_lexer):
             self.token_source = Lexer(input_source_or_lexer)
         else:
@@ -480,7 +479,7 @@ ${grammar.utils.translateParserInjections(injector, true)}
         return False
 
 [/#if]
-${grammar.utils.translateParserInjections(injector, false)}
+${grammar.utils.translateParserInjections(false)}
 [#list grammar.otherParserCodeDeclarations as decl]
     # Generated from code at ${decl.location}
     # TODO actual declaration

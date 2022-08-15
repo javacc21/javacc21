@@ -326,7 +326,6 @@ ${is}}
 # A mapping for lexical state transitions triggered by a certain token type (token type -> lexical state)
 token_type_to_lexical_state_map = {}
 [/#if]
-[#var injector = grammar.injector]
 
 def get_function_table_map(lexical_state):
     [#if multipleLexicalStates]
@@ -423,7 +422,7 @@ class ${lexerClassName}:
         '_dummy_start_token',
         '_ignored',
         '_skipped',
-[#var injectedFields = grammar.utils.injectedLexerFieldNames(injector)]
+[#var injectedFields = grammar.utils.injectedLexerFieldNames()]
 [#if injectedFields?size > 0]
         # injected fields
 [#list injectedFields as fieldName]
@@ -433,7 +432,7 @@ class ${lexerClassName}:
     )
 
     def __init__(self, input_source, lex_state=LexicalState.${lexerData.lexicalStates[0].name}, line=1, column=1):
-${grammar.utils.translateLexerInjections(injector, true)}
+${grammar.utils.translateLexerInjections(true)}
         if not input_source:
             raise ValueError('input filename not specified')
         self.input_source = input_source
@@ -928,7 +927,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         tok.end_offset = eoff
 
 
-${grammar.utils.translateLexerInjections(injector, false)}
+${grammar.utils.translateLexerInjections(false)}
 
  [#if lexerData.hasLexicalStateTransitions]
 # Generate the map for lexical state transitions from the various token types (if necessary)

@@ -226,6 +226,8 @@ public class FilesGenerator {
         }
         Writer out = new StringWriter();
         Template template = fmConfig.getTemplate(templateName);
+        // Sometimes needed in templates for e.g. injector.hasInjectedCode(node)
+        dataModel.put("injector", grammar.getInjector());
         template.process(dataModel, out);
         String code = out.toString();
         if (!grammar.isQuiet()) {
