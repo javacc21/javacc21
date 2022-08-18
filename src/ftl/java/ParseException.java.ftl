@@ -19,40 +19,43 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} implements ${grammar.
   
   private boolean alreadyAdjusted;
 
-  public ParseException() {
-    super();
+  private ${grammar.parserClassName} parser;
+
+  private void setInfo(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
+    this.parser = parser;
+    if (token != null && token.getNext() != null) {
+        token = token.getNext();
+    }
+    this.token = token;
+    this.expectedTypes = expectedTypes;
+    this.callStack = new ArrayList<>(callStack);
   }
-  
-  public ParseException(Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
-      this.token = token.getNext() != null ? token.getNext() : token;
-      this.expectedTypes = expectedTypes;
-      this.callStack = new ArrayList<>(callStack);
+
+  public ParseException(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
+      setInfo(parser, token, expectedTypes, callStack);
   }
 
   public ParseException(${grammar.parserClassName} parser, String message) {
      super(message);
-     this.token = parser.lastConsumedToken;
-     if (token != null && token.getNext() != null) {
-        token = token.getNext();
-     }
-     this.callStack = new ArrayList<>(parser.parsingStack);
+     setInfo(parser, parser.lastConsumedToken, null, parser.parsingStack);
   }
 
   public ParseException(${grammar.parserClassName} parser, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
-     this.token = parser.lastConsumedToken;
-     if (token != null && token.getNext() != null) {
-        token = token.getNext();
-     }
-     this.expectedTypes = expectedTypes;
-     this.callStack = new ArrayList<>(callStack);
+    this(parser, parser.lastConsumedToken, expectedTypes, callStack);
   }
-  
-  public ParseException(String message) {
-    super(message);
-  }
-  
+
   public ParseException(Token token) {
      this.token = token;
+  }
+
+  // Needed because of inheritance
+  public ParseException() {
+    super();
+  }
+  
+  // Needed because of inheritance
+  public ParseException(String message) {
+    super(message);
   }
   
   @Override 
@@ -105,7 +108,8 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} implements ${grammar.
       return token;
    }
   
-  
+   public ${grammar.parserClassName} getParser() { return parser; }
+
    private void adjustStackTrace() {
       if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;
       List<StackTraceElement> fullTrace = new LinkedList<>();
