@@ -42,18 +42,18 @@ import com.javacc.parser.tree.*;
 public class CodeInjector {
     
     private final String parserPackage, nodePackage, parserClassName, lexerClassName, constantsClassName, baseNodeClassName;
-    
-    private final Map<String, TypeDeclaration> types = new HashMap<>();
+
+    private final Map<String, TypeDeclaration> types = new HashMap<>();  // Not presently queried ...
     private final Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
     private final Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
     private final Map<String, List<ObjectType>> extendsLists = new HashMap<>();
     private final Map<String, List<ObjectType>> implementsLists = new HashMap<>();
     private final Map<String, TypeParameters> typeParameterLists = new HashMap<>();
     private final Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
-    private final Set<String> overriddenMethods = new HashSet<>();
+    private final Set<String> overriddenMethods = new HashSet<>();  // Not presently queried ...
     private final Set<String> typeNames = new HashSet<>();
     private final Map<String, String> explicitPackages = new HashMap<>();
-    private final Set<String> interfaces = new HashSet<>();
+    private final Set<String> interfaces = new HashSet<>();  // Not presently queried ...
     private final Grammar grammar;
     
     public CodeInjector(Grammar grammar,
@@ -180,8 +180,23 @@ public class CodeInjector {
             }
         }
     }
-    
-    private void add(String name, List<ImportDeclaration> importDeclarations, List<Annotation> annotations, List<ObjectType> extendsList, 
+
+    private void addToDependencies(String name, List<ObjectType> listToAdd, Map<String, List<ObjectType>> mapOfExistingLists) {
+        List<ObjectType> existingList = mapOfExistingLists.get(name);
+        if (existingList == null) {
+            mapOfExistingLists.put(name, listToAdd);
+        } else {
+            for (ObjectType ot : listToAdd) {
+                // Don't add duplicates. Maybe it should be a set rather than a list,
+                // but order sensitivity might apply
+                if (!existingList.contains(ot)) {
+                    existingList.add(ot);
+                }
+            }
+        }
+    }
+
+    private void add(String name, List<ImportDeclaration> importDeclarations, List<Annotation> annotations, List<ObjectType> extendsList,
             List<ObjectType> implementsList, ClassOrInterfaceBody body, boolean isInterface) 
     {
         typeNames.add(name);
@@ -201,28 +216,17 @@ public class CodeInjector {
             existingAnnotations.addAll(annotations);
         }
         if (extendsList != null) {
-            List<ObjectType> existingExtendsList = extendsLists.get(name);
-            if (existingExtendsList == null) {
-                extendsLists.put(name, extendsList);
-            } else {
-                existingExtendsList.addAll(extendsList);
-            }
+            addToDependencies(name, extendsList, extendsLists);
         }
         if (implementsList != null) {
-            List<ObjectType> existingImplementsList = implementsLists.get(name);
-            if (existingImplementsList == null) {
-                implementsLists.put(name, implementsList);
-            } else {
-                existingImplementsList.addAll(implementsList);
-            }
+            addToDependencies(name, implementsList, implementsLists);
         }
         List<ClassOrInterfaceBodyDeclaration> existingDecls = bodyDeclarations.computeIfAbsent(name, k -> new ArrayList<>());
         if (body != null) {
         	existingDecls.addAll(body.childrenOfType(ClassOrInterfaceBodyDeclaration.class));
         }
-        
     }
-    
+
     void injectCode(CompilationUnit jcu) {
         String packageName = jcu.getPackageName();
         Set<ImportDeclaration> allInjectedImports = new HashSet<>();

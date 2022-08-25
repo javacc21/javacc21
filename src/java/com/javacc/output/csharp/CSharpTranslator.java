@@ -34,9 +34,6 @@ import java.util.*;
 import com.javacc.Grammar;
 import com.javacc.output.Translator;
 import com.javacc.output.java.CodeInjector;
-import com.javacc.parser.JavaCCParser;
-import com.javacc.parser.Node;
-import com.javacc.parser.ParseException;
 import com.javacc.parser.tree.*;
 
 public class CSharpTranslator extends Translator {
@@ -499,23 +496,20 @@ public class CSharpTranslator extends Translator {
             addNewline = true;
         }
         else if (stmt instanceof ASTStatementList) {
-            boolean isinitializer = ((ASTStatementList) stmt).isInitializer();
+            boolean isInitializer = ((ASTStatementList) stmt).isInitializer();
             List<ASTStatement> statements = ((ASTStatementList) stmt).getStatements();
 
-            if (isinitializer) {
+            if (isInitializer) {
                 addIndent(indent, result);
                 result.append("{\n");
                 indent += 4;
             }
-            if (statements == null) {
-
-            }
-            else {
+            if (statements != null) {
                 for (ASTStatement s : statements) {
                     internalTranslateStatement(s, indent, result);
                 }
             }
-            if (isinitializer) {
+            if (isInitializer) {
                 indent -= 4;
                 addIndent(indent, result);
                 result.append("}\n");
@@ -936,7 +930,7 @@ public class CSharpTranslator extends Translator {
 
     @Override protected void translateCast(ASTTypeExpression cast, StringBuilder result) {
         result.append('(');
-        translateType(cast, result);;
+        translateType(cast, result);
         result.append(") ");
     }
 
