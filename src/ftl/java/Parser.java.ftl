@@ -75,10 +75,12 @@ Token lastConsumedToken;
 private TokenType nextTokenType;
 private Token currentLookaheadToken;
 private int remainingLookahead;
-private boolean scanToEnd, hitFailure, lastLookaheadSucceeded;
+private boolean scanToEnd, hitFailure;
 private String currentlyParsedProduction, currentLookaheadProduction;
 private int lookaheadRoutineNesting, nonTerminalNesting;
+[#if grammar.faultTolerant]
 private EnumSet<TokenType> outerFollowSet;
+[/#if]
 
 [#--
  REVISIT these.
@@ -239,11 +241,12 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
-
+  // TODO only generate if needed?
   private void uncacheTokens() {
       token_source.reset(getToken(0));
   }
 
+/*
   private void resetTo(LexicalState state) {
     token_source.reset(getToken(0), state);
   }
@@ -251,6 +254,7 @@ public boolean isCancelled() {return cancelled;}
   private void resetTo(Token tok, LexicalState state) {
     token_source.reset(tok, state);
   } 
+ */
 
   boolean deactivateTokenTypes(TokenType... types) {
     boolean result = false;

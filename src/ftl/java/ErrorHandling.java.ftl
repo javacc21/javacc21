@@ -93,6 +93,7 @@ private final void restoreCallStack(int prevSize) {
     }
 }
 
+// TODO only generate if needed?
 private ListIterator<NonTerminalCall> stackIteratorForward() {
     final ListIterator<NonTerminalCall> parseStackIterator = parsingStack.listIterator();
     final ListIterator<NonTerminalCall> lookaheadStackIterator = lookaheadStack.listIterator();
@@ -301,9 +302,8 @@ void dumpLookaheadCallStack(PrintStream ps) {
       [/#if]
   }
   
-  /**
+  /*
    * pushes the last token back.
-   */
   private void pushLastTokenBack() {
      [#if grammar.treeBuildingEnabled]
         if (peekNode() == lastConsumedToken) {
@@ -312,6 +312,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
      [/#if]
      lastConsumedToken = lastConsumedToken.previousCachedToken();
   }
+   */
  
   private class ParseState {
        Token lastConsumed;
@@ -336,16 +337,20 @@ void dumpLookaheadCallStack(PrintStream ps) {
        } 
   }
 
+ // TODO only generate if required?
  private ArrayList<ParseState> parseStateStack = new ArrayList<>();
  
+  // TODO only generate if required?
   private void stashParseState() {
       parseStateStack.add(new ParseState());
   }
   
+  // TODO only generate if required?
   private ParseState popParseState() {
       return parseStateStack.remove(parseStateStack.size() -1);
   }
   
+  // TODO only generate if required?
   private void restoreStashedParseState() {
      ParseState state = popParseState();
 [#if grammar.treeBuildingEnabled]

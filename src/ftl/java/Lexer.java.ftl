@@ -475,14 +475,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         this.bufferPosition = offset;
     }
 
-    /**
+    /*
      * @return the line length in code _units_
-     */ 
     private int getLineLength(int lineNumber) {
         int startOffset = getLineStartOffset(lineNumber);
         int endOffset = getLineEndOffset(lineNumber);
         return 1+endOffset - startOffset;
     }
+     */
 
     /**
      * The offset of the start of the given line. This is in code units
@@ -774,6 +774,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     return buf.toString();
   }
 
+[#if grammar.cppContinuationLine]
   private void handleCContinuationLines() {
       String input = content.toString();
       for (int offset = input.indexOf('\\'); offset >=0; offset = input.indexOf('\\', offset+1)) {
@@ -785,6 +786,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       }
   }
 
+[/#if]
   // Utility methods. Having them here makes it easier to handle things
   // more uniformly in other generation languages.
 
