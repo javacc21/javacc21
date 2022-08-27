@@ -68,14 +68,20 @@ class DeadCodeEliminator extends Node.Visitor {
         }
         // We go through all the private FieldDeclarations and get rid of any variables that 
         // are not in usedNames
-        for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, fd->fd.firstChildOfType(PRIVATE)!=null)) {
+        for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, fd->isPrivate(fd))) {
             stripUnusedVars(fd);
         }
     }
 
+    private boolean isPrivate(Node node) {
+        if (node.firstChildOfType(PRIVATE) != null) return true;
+        Modifiers mods = node.firstChildOfType(Modifiers.class);
+        return mods == null ? false : mods.firstChildOfType(PRIVATE) != null;
+    }
+
     void visit(MethodDeclaration md) {
         if (alreadyVisited.contains(md)) return;
-        if (md.firstChildOfType(PRIVATE) == null || usedNames.contains(md.getName())) {
+        if (!isPrivate(md) || usedNames.contains(md.getName())) {
             md.descendants(Identifier.class).stream().forEach(id->usedNames.add(id.getImage()));
             alreadyVisited.add(md);
         }
@@ -83,8 +89,8 @@ class DeadCodeEliminator extends Node.Visitor {
 
     void visit(VariableDeclarator vd) {
         if (alreadyVisited.contains(vd)) return;
-        boolean isPrivate = vd.getParent().firstChildOfType(PRIVATE) != null;
-        if (!isPrivate || usedNames.contains(vd.getName())) {
+//        boolean isPrivate = isPrivate(vd.getParent());
+        if (!isPrivate(vd.getParent()) || usedNames.contains(vd.getName())) {
             for (Identifier id : vd.descendants(Identifier.class)) {
                 usedNames.add(id.getImage());
             }
