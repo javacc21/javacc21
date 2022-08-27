@@ -89,7 +89,6 @@ class DeadCodeEliminator extends Node.Visitor {
 
     void visit(VariableDeclarator vd) {
         if (alreadyVisited.contains(vd)) return;
-//        boolean isPrivate = isPrivate(vd.getParent());
         if (!isPrivate(vd.getParent()) || usedNames.contains(vd.getName())) {
             for (Identifier id : vd.descendants(Identifier.class)) {
                 usedNames.add(id.getImage());
