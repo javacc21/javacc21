@@ -1186,6 +1186,11 @@ public class Translator {
                 else if (child instanceof MarkerAnnotation) {
                     resultNode.addAnnotation(child.getLastChild().toString());
                 }
+                else if (child instanceof Modifiers) {
+                    for (Node gc: child.children()) {
+                        resultNode.addModifier(gc.toString());
+                    }
+                }
                 else {
                     throw new UnsupportedOperationException();
                 }
@@ -1349,6 +1354,20 @@ public class Translator {
                         }
                     }
                 }
+                else if (child instanceof Modifiers) {
+                    for (Node gc : child.children()) {
+                        resultNode.addModifier(gc.toString());
+                    }
+                }
+                else if (child instanceof Delimiter) {
+                    continue;
+                }
+/*
+                ConstructorDeclararions can contain other stuff
+                else {
+                    throw new UnsupportedOperationException();
+                }
+*/
             }
             if (node instanceof MethodDeclaration) {
                 resultNode.statements = (ASTStatementList) transformTree(node.getLastChild());
