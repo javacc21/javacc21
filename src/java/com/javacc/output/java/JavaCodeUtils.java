@@ -47,14 +47,24 @@ public class JavaCodeUtils {
     static public void addGetterSetters(Node root) {
         List<FieldDeclaration> fds = root.descendants(FieldDeclaration.class);
         for (FieldDeclaration fd : fds) {
-            List<Annotation> annotations  = fd.childrenOfType(Annotation.class);
-            for (Annotation annotation : annotations) {
+            //List<Annotation> annotations  = fd.childrenOfType(Annotation.class);
+            for (Annotation annotation : getAnnotations(fd)) {
                 if (annotation.getName().equals("Property")) {
                     addGetterSetter(fd);
-                    fd.removeChild(annotation);
+                    annotation.getParent().removeChild(annotation);
                 }
             }
         }
+    }
+
+    static private List<Annotation> getAnnotations(Node node) {
+        List<Annotation> result = new ArrayList<>();
+        result.addAll(node.childrenOfType(Annotation.class));
+        Modifiers mods = node.firstChildOfType(Modifiers.class);
+        if (mods != null) {
+            result.addAll(mods.childrenOfType(Annotation.class));
+        }
+        return result;
     }
 
     static private void addGetterSetter(FieldDeclaration fd) {
@@ -68,19 +78,25 @@ public class JavaCodeUtils {
     }
 
     static private void ensurePrivate(FieldDeclaration fd) {
-        for (Token tok : fd.childrenOfType(Token.class)) {
+        List<Token> tokens = fd.childrenOfType(Token.class);
+        Modifiers mods = fd.firstChildOfType(Modifiers.class);
+        if (mods != null) {
+            tokens.addAll(mods.childrenOfType(Token.class));
+        }
+        for (Token tok : tokens) {
             TokenType type = tok.getType();
             if (type == PRIVATE) {
                 return; // Nothing to do!
             }
             else if (type == PROTECTED || type == PUBLIC) {
-                fd.removeChild(tok);
+                tok.getParent().removeChild(tok);
                 break;
             }
         }
         Type type = fd.firstChildOfType(Type.class);
         Token privateToken = Token.newToken(PRIVATE, "private", fd.getTokenSource());
-        fd.addChild(fd.indexOf(type), privateToken);
+        if (mods !=null) mods.addChild(privateToken);
+        else fd.addChild(fd.indexOf(type), privateToken);
     }
 
     static private void insertGetterSetter(Node context, String fieldType, String fieldName, int index) {
@@ -124,8 +140,11 @@ public class JavaCodeUtils {
             }
             boolean removeElement = specifiesMax ? target > specifiedVersion : target < specifiedVersion;
             Node parent = annotation.getParent();
-            Node grandparent = parent.getParent();
             parent.removeChild(annotation);
+            if (parent instanceof Modifiers) {
+                parent = parent.getParent();
+            }
+            Node grandparent = parent.getParent();
             if (removeElement) {
                 grandparent.removeChild(parent);
             } 
