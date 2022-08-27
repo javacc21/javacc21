@@ -81,8 +81,7 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
 
-Modifiers#(false) :
-//Modifiers : 
+Modifiers :
  (
   SCAN {isParserTolerant() || permissibleModifiers == null
        || permissibleModifiers.contains(getToken(1).getType())}#
@@ -136,7 +135,7 @@ Modifiers#(false) :
   }
   |
   Annotation
- /[modifiers]/ )*
+ )*
  {permissibleModifiers = null;}#
 ;
 
