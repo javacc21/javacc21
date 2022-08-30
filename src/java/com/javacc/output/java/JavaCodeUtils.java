@@ -112,13 +112,8 @@ public class JavaCodeUtils {
                         + "\npublic void " + setterMethodName 
                         + "(" + fieldType + " " +  fieldName + ") {this." + fieldName + " = " + fieldName + ";}";
         MethodDeclaration getterMethod = null, setterMethod=null;
-        try {
-           getterMethod = new JavaCCParser(getter).MethodDeclaration();
-           setterMethod = new JavaCCParser(setter).MethodDeclaration();
-        } catch (ParseException pe) {
-            // We can't really get here unless something is horribly broken!
-            throw new InternalError(pe);
-        }
+        getterMethod = new JavaCCParser(getter).MethodDeclaration();
+        setterMethod = new JavaCCParser(setter).MethodDeclaration();
         context.addChild(index +1, setterMethod);
         context.addChild(index +1, getterMethod);
     }

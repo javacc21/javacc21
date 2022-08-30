@@ -387,7 +387,7 @@ abstract public class Expansion extends BaseNode {
         // Uncomment the following line to turn off this optimization.
         // if (true) return false;
         return !isPossiblyEmpty() && getMaximumSize() == 1 && !getHasScanLimit() && getLookahead() == null 
-               && !startsWithGlobalCodeAction() && !startsWithLexicalChange();
+               && !hasGlobalSemanticActions() && !startsWithLexicalChange();
     }
 
     /**
