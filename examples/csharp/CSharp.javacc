@@ -53,8 +53,7 @@ CompilationUnitBody#void :
 
 TypeDeclarationLA#scan :
   (AttributeSection)*
-  Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  Modifiers(true)
   ASSERT ~("delegate" "*")
   ("struct"|"class"|"interface"|"enum"|"delegate"
     |SCAN {checkNextTokenImage("record")}=>{})
@@ -215,7 +214,7 @@ INJECT PARSER_CLASS :
    EnumSet<TokenType> permissibleModifiers;
 }
 
-Modifiers#void : //TODO
+Modifiers(boolean partial)#void : //TODO
   (
     SCAN { permissibleModifiers == null
          ||
@@ -245,6 +244,7 @@ Modifiers#void : //TODO
       => ACTIVATE_TOKENS ASYNC, RECORD ("async")
       { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
   )*
+  [SCAN {partial && checkNextTokenImage("partial")} => ACTIVATE_TOKENS PARTIAL ("partial")]
   {permissibleModifiers = null;}#
 ;
 
@@ -256,8 +256,7 @@ ClassDeclaration :
                                       TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE);
   }#
   (AttributeSection)*
-  Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  Modifiers(true)
   [
      // Record classes are since 10.0
      // and barely mentioned anywhere
@@ -293,8 +292,7 @@ StructDeclaration :
                                       TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW);
   }#
   (AttributeSection)*
-  Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  Modifiers(true)
   [
      // Record structs are since 10.0
      SCAN {checkNextTokenImage("record")}#
@@ -327,8 +325,7 @@ RecordDeclaration :
                                       TokenType.ABSTRACT);
   }#
   (AttributeSection)*
-  Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  Modifiers(true)
   ASSERT {checkNextTokenImage("record")}#
   ACTIVATE_TOKENS RECORD ("record")
   =>||
@@ -354,8 +351,7 @@ InterfaceDeclaration :
                                       TokenType.PRIVATE);
   }#
   (AttributeSection)*
-  Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  Modifiers(true)
   "interface"
   =>||
   <IDENTIFIER>
@@ -406,7 +402,7 @@ EnumDeclaration :
                                       TokenType.ABSTRACT, TokenType.PARTIAL, TokenType.UNSAFE);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   "enum"
   =>||
   <IDENTIFIER>
@@ -438,7 +434,7 @@ DelegateDeclaration :
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   "delegate"
   ASSERT ~("*")
   =>||
@@ -506,7 +502,7 @@ StructMemberDeclarationUnsafe :
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.UNSAFE);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   "fixed"
   =>||
   Type
@@ -520,7 +516,7 @@ ConstantDeclaration :
                                       TokenType.INTERNAL);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   "const"
   =>||
   Type
@@ -540,7 +536,7 @@ FieldDeclaration :
                                       TokenType.VOLATILE);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   Type
   =>|+2
   VariableDeclarator ("," VariableDeclarator)*
@@ -557,7 +553,7 @@ PropertyDeclaration :
                                       TokenType.VOLATILE);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   Type
   Name
   =>|+1
@@ -569,7 +565,7 @@ InterfacePropertyDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   Type
   <IDENTIFIER> =>|+1
   (
@@ -605,7 +601,7 @@ EventDeclaration :
                                       TokenType.INTERNAL, TokenType.SEALED);
   }#
    (AttributeSection)*
-   Modifiers
+   Modifiers(false)
    "event"
    =>||
    Type
@@ -631,7 +627,7 @@ IndexerDeclaration :
                                       TokenType.INTERNAL, TokenType.SEALED);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   Type
   [Name "."]
   "this"
@@ -652,7 +648,7 @@ OperatorDeclaration :
                                       TokenType.EXTERN, TokenType.UNSAFE);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   (Type | "implicit" | "explicit")
   "operator" =>||
   (
@@ -673,7 +669,7 @@ DestructorDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.UNSAFE);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   "~"
   <IDENTIFIER>
   "("
@@ -688,7 +684,7 @@ ConstructorDeclaration :
                                       TokenType.STATIC, TokenType.INTERNAL, TokenType.UNSAFE);
   }#
   (AttributeSection)*
-  Modifiers
+  Modifiers(false)
   <IDENTIFIER>
   "(" =>||
   [FormalParameters]
@@ -706,7 +702,7 @@ StaticConstructorDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.STATIC);
   }#
    (AttributeSection)*
-   Modifiers
+   Modifiers(false)
    <IDENTIFIER>
    "(" =>||
    ")"
@@ -760,7 +756,7 @@ AccessorDeclaration :
                                       TokenType.ABSTRACT, TokenType.INTERNAL, TokenType.READONLY);
   }#
    (AttributeSection)*
-   Modifiers
+   Modifiers(false)
    ACTIVATE_TOKENS GET,SET,INIT ("get" | "set" | "init")
    =>||
    AccessorBody
@@ -795,8 +791,7 @@ MethodDeclaration :
                                       TokenType.REF, TokenType.READONLY, TokenType.SEALED);
   }#
   (AttributeSection)*
-  Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  Modifiers(true)
   ReturnType
   //MemberName
   Name
@@ -821,7 +816,7 @@ InterfaceMethodDeclaration :
                                       TokenType.INTERNAL, TokenType.UNSAFE);
   }#
    (AttributeSection)*
-   Modifiers // REVISIT later.
+   Modifiers(false) // REVISIT later.
    ReturnType
    <IDENTIFIER>
    [TypeParameterList]
