@@ -1492,6 +1492,10 @@ INJECT ExpansionWithParentheses :
     public boolean startsWithGlobalCodeAction() {
         return getNestedExpansion().startsWithGlobalCodeAction();
     }
+
+    public boolean isSingleToken() {
+         return super.isSingleToken() && getNestedExpansion().isSingleToken();
+    }
 }
 
 ExpansionSequence #com.javacc.core.ExpansionSequence :
