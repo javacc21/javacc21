@@ -565,21 +565,24 @@ PropertyDeclaration :
 ;
 
 InterfacePropertyDeclaration :
-   (AttributeSection)*
-   ("new" | "public")* // FIXME!
-   Type
-   <IDENTIFIER> =>|+1
-   (
-      "{" (InterfaceAccessor)+ "}"
-      |
-      // This seems to be another of these
-      // new features not hardly documented
-      // anywhere. For read-only 'get' properties,
-      // apparently, you can dispense with the
-      // "{ get }" but I'm not sure if this is only
-      // in interfaces.
-      "=>" Expression ";"
-   )
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW);
+  }#
+  (AttributeSection)*
+  Modifiers
+  Type
+  <IDENTIFIER> =>|+1
+  (
+     "{" (InterfaceAccessor)+ "}"
+     |
+     // This seems to be another of these
+     // new features not hardly documented
+     // anywhere. For read-only 'get' properties,
+     // apparently, you can dispense with the
+     // "{ get }" but I'm not sure if this is only
+     // in interfaces.
+     "=>" Expression ";"
+  )
 ;
 
 InterfaceAccessor : // TODO, check that there is only one of each
@@ -644,32 +647,39 @@ IndexerDeclaration :
 ;
 
 OperatorDeclaration :
-   (AttributeSection)*
-   ( "public" | "static" | "extern" | "unsafe")+
-   (Type | "implicit" | "explicit")
-   "operator" =>||
-   (
-      ("+"|"-") "(" ["in"] Type <IDENTIFIER> ["," ["in"] Type <IDENTIFIER>] ")"
-      |
-      ("!"|"~"|"++"|"--"|"true"|"false") "(" ["in"] Type <IDENTIFIER> ")"
-      |
-      ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|">>"|"=="|"!="|">"|"<"|">="|"<=")
-      "(" ["in"] Type <IDENTIFIER> "," ["in"] Type <IDENTIFIER> ")"
-      |
-      Type "(" ["in"] Type <IDENTIFIER> ["=" Expression] ")"
-   )
-   MethodBody
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.STATIC,
+                                      TokenType.EXTERN, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  (Type | "implicit" | "explicit")
+  "operator" =>||
+  (
+     ("+"|"-") "(" ["in"] Type <IDENTIFIER> ["," ["in"] Type <IDENTIFIER>] ")"
+     |
+     ("!"|"~"|"++"|"--"|"true"|"false") "(" ["in"] Type <IDENTIFIER> ")"
+     |
+     ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|">>"|"=="|"!="|">"|"<"|">="|"<=")
+     "(" ["in"] Type <IDENTIFIER> "," ["in"] Type <IDENTIFIER> ")"
+     |
+     Type "(" ["in"] Type <IDENTIFIER> ["=" Expression] ")"
+  )
+  MethodBody
 ;
 
 DestructorDeclaration :
-   (AttributeSection)*
-   ["extern" | "unsafe"]
-   "~"
-   <IDENTIFIER>
-   "("
-   =>||
-   ")"
-   MethodBody
+  {
+    permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  "~"
+  <IDENTIFIER>
+  "("
+  =>||
+  ")"
+  MethodBody
 ;
 
 ConstructorDeclaration :
@@ -692,12 +702,11 @@ ConstructorDeclaration :
 ;
 
 StaticConstructorDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.STATIC);
+  }#
    (AttributeSection)*
-   (
-      "extern" ["static"]
-      |
-      "static" ["extern"]
-   )
+   Modifiers
    <IDENTIFIER>
    "(" =>||
    ")"
