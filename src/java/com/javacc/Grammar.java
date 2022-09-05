@@ -235,6 +235,12 @@ public class Grammar extends BaseNode {
         }
         if (LexerData.isJavaIdentifier(location)) {
             location = resolveAlias(location);
+            /*
+             * Look to see if a file with the same name exists in the directory of the current filename, If it does,
+             * use it
+             */
+            path = filename.toAbsolutePath().getParent().resolve(Paths.get(location).getFileName());
+            if (Files.exists(path)) return path;
         }
         URI uri = null;
         try {
