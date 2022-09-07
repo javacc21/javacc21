@@ -513,6 +513,7 @@ ${is}    return False
 ${is}${CU.newVarName("token")} = self.current_lookahead_token
 ${is}if not (${CheckExpansion(zoo.nestedExpansion)}):
 ${is}    self.current_lookahead_token = token${CU.newVarIndex}
+${is}    self.hit_failure = False
 [#-- ${is}# DBG < ScanCodeZeroOrOne ${indent} --]
 [/#macro]
 
@@ -527,6 +528,7 @@ ${is}    ${CU.newVarName("token")} = self.current_lookahead_token
 ${is}    if not (${CheckExpansion(zom.nestedExpansion)}):
 ${is}        self.current_lookahead_token = token${CU.newVarIndex}
 ${is}        break
+${is}    self.hit_failure = False
 [#-- ${is}# DBG < ScanCodeZeroOrMore ${indent} --]
 [/#macro]
 

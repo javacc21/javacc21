@@ -534,6 +534,7 @@ ${is}}
 ${is}var ${CU.newVarName("token")} = currentLookaheadToken;
 ${is}if (!(${CheckExpansion(zoo.nestedExpansion)})) {
 ${is}    currentLookaheadToken = token${CU.newVarIndex};
+${is}    _hitFailure = false;
 ${is}}
 [#-- ${is}# DBG < ScanCodeZeroOrOne ${indent} --]
 [/#macro]
@@ -550,6 +551,7 @@ ${is}    if (!(${CheckExpansion(zom.nestedExpansion)})) {
 ${is}        currentLookaheadToken = token${CU.newVarIndex};
 ${is}        break;
 ${is}    }
+${is}    _hitFailure = false;
 ${is}}
 [#-- ${is}# DBG < ScanCodeZeroOrMore ${indent} --]
 [/#macro]

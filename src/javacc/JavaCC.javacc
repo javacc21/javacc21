@@ -1070,10 +1070,7 @@ Options #Options :
 OptionsBlock #Options :
     {Map<String, Object> settings = new HashMap<>();} 
     <IDENTIFIER> 
-    [
-        SCAN {!getToken(0).getImage().equalsIgnoreCase("options")}#
-        => FAIL "Expecting \"options\" here"
-    ]
+    ASSERT {getToken(0).getImage().equalsIgnoreCase("options")}#
     =>||
     [":"]
     "{" 

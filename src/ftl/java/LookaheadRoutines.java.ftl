@@ -452,8 +452,10 @@
 
 [#macro ScanCodeZeroOrOne zoo]
    [@CU.newVar type="Token" init="currentLookaheadToken"/]
-   if (!${CheckExpansion(zoo.nestedExpansion)}) 
+   if (!${CheckExpansion(zoo.nestedExpansion)}) {
       currentLookaheadToken = token${CU.newVarIndex};
+      hitFailure = false;
+   }
 [/#macro]
 
 [#-- 
@@ -467,6 +469,7 @@
              break;
          }
       }
+      hitFailure = false;
 [/#macro]
 
 [#--
