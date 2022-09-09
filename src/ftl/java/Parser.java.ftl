@@ -54,15 +54,15 @@ import java.nio.file.Path;
 import java.nio.charset.Charset;
 
 [#if grammar.nodePackage?has_content && grammar.parserPackage! != grammar.nodePackage]
-[#list grammar.nodeNames as node]
-[#if node?index_of('.')>0]
-   import ${node};
-[#else]
-   import ${grammar.nodePackage}.${node};
+  [#list grammar.nodeNames as node]
+    [#if node?index_of('.')>0]
+      import ${node};
+    [#else]
+      import ${grammar.nodePackage}.${grammar.nodePrefix}${node};
+    [/#if]
+  [/#list]
 [/#if]
-[/#list]
 
-[/#if]
 [#if grammar.parserPackage?has_content]
 import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
 [/#if]
