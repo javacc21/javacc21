@@ -659,7 +659,7 @@ public interface Node extends Comparable<Node>
             output = toString().trim();
         }
         else {
-            output = String.format("<%s (%d, %d)-(%d-%d)>",
+            output = String.format("<%s (%d, %d)-(%d, %d)>",
                                    getClass().getSimpleName(),
                                    getBeginLine(), getBeginColumn(),
                                    getEndLine(), getEndColumn());

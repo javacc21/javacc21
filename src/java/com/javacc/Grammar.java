@@ -803,7 +803,7 @@ public class Grammar extends BaseNode {
     }
 
     public void addNodeType(String productionName, String nodeName) {
-        if (nodeName.equals("void")) {
+        if (nodeName.equals("void") || nodeName.equals("scan")) {
             return;
         }
         if (nodeName.equals("abstract")) {
