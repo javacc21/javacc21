@@ -122,16 +122,16 @@ private ListIterator<NonTerminalCall> stackIteratorBackward() {
     final ListIterator<NonTerminalCall> lookaheadStackIterator = lookaheadStack.listIterator(lookaheadStack.size());
     return new ListIterator<NonTerminalCall>() {
         public boolean hasNext() {
-            return parseStackIterator.hasPrevious() || lookaheadStackIterator.hasPrevious();
+            return lookaheadStackIterator.hasPrevious() || parseStackIterator.hasPrevious();
         }
         public NonTerminalCall next() {
             return lookaheadStackIterator.hasPrevious() ? lookaheadStackIterator.previous() : parseStackIterator.previous();
         }
         public NonTerminalCall previous() {
-           return lookaheadStackIterator.hasNext() ? lookaheadStackIterator.next() : parseStackIterator.next();
+           return parseStackIterator.hasNext() ? parseStackIterator.next() : lookaheadStackIterator.next();
         }
         public boolean hasPrevious() {
-            return lookaheadStackIterator.hasNext() || parseStackIterator.hasNext();
+            return parseStackIterator.hasNext() || lookaheadStackIterator.hasNext();
         }
         public void add(NonTerminalCall ntc) {throw new UnsupportedOperationException();}
         public void set(NonTerminalCall ntc) {throw new UnsupportedOperationException();}

@@ -825,13 +825,13 @@ namespace ${csPackage} {
             _iter2 = new ListIterator<T>(list2, list2.Count);
         }
 
-        public bool HasNext()  => _iter1.HasPrevious() || _iter2.HasPrevious();
+        public bool HasNext()  => _iter2.HasPrevious() || _iter1.HasPrevious();
 
         public T Next() => _iter2.HasPrevious() ? _iter2.Previous() : _iter1.Previous();
 
-        public bool HasPrevious() => _iter2.HasNext() || _iter1.HasNext();
+        public bool HasPrevious() => _iter1.HasNext() || _iter2.HasNext();
 
-        public T Previous() => _iter2.HasNext()  ? _iter2.Next() : _iter1.Next();
+        public T Previous() => _iter1.HasNext()  ? _iter1.Next() : _iter2.Next();
     }
 
     public class GenWrapper<T> : Iterator<T> {
