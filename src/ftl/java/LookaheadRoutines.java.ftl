@@ -73,10 +73,19 @@
 
 
 [#macro BuildLookaheads]
-  private final boolean scanToken(TokenType expectedType) {
+  private final boolean scanToken(TokenType expectedType, TokenType... additionalTypes) {
      Token peekedToken = nextToken(currentLookaheadToken);
      TokenType type = peekedToken.getType();
-     if (type != expectedType) return false;
+     if (type != expectedType) {
+       boolean matched = false;
+       for (TokenType tt : additionalTypes) {
+         if (type == tt) {
+            matched = true;
+            break;
+         }
+       }
+       if (!matched) return false;
+     }
      if (remainingLookahead != UNLIMITED) remainingLookahead--;
      currentLookaheadToken = peekedToken;
      return true;
@@ -159,9 +168,7 @@
   private final boolean ${expansion.scanRoutineName}() {
     try {
        lookaheadRoutineNesting++;
-   [#if !expansion.insideLookahead]
      ${BuildPredicateCode(expansion)}
-   [/#if]
      ${BuildScanCode(expansion)}
       return true;
     }
@@ -207,12 +214,13 @@
        if ([#if !expansion.lookBehind.negated]![/#if]
        ${expansion.lookBehind.routineName}()) return false;
      [/#if]
-     if (remainingLookahead <=0) return true;
      [#if expansion.hasSeparateSyntacticLookahead]
+      if (remainingLookahead <=0) return !hitFailure;
       if (
       [#if !expansion.lookahead.negated]![/#if]
         ${expansion.lookaheadExpansion.scanRoutineName}()) return false;
      [/#if]
+     // End BuildPredicateCode macro
 [/#macro]
 
 
@@ -487,8 +495,13 @@
 
 [#macro CheckExpansion expansion]
    [#if expansion.singleToken]
-     [#if expansion.firstSet.tokenNames?size = 1]
-      scanToken(${CU.TT}${expansion.firstSet.tokenNames[0]})
+     [#if expansion.firstSet.tokenNames?size < 5]
+      scanToken(
+        [#list expansion.firstSet.tokenNames as name]
+          ${CU.TT}${name}
+          [#if name_has_next],[/#if]
+        [/#list]
+      ) 
      [#else]
       scanToken(${expansion.firstSetVarName})
      [/#if]

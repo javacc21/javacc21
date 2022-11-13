@@ -177,9 +177,7 @@ ${is}// BuildScanRoutine macro
 ${is}private bool ${expansion.scanRoutineName}() {
 ${is}    try {
 ${is}        _lookaheadRoutineNesting++;
-   [#if !expansion.insideLookahead]
 ${BuildPredicateCode(expansion, indent + 8)}
-   [/#if]
 ${BuildScanCode(expansion, indent + 8)}
 ${is}        return true;
 ${is}    }
@@ -230,10 +228,10 @@ ${is}if ([#if !expansion.lookBehind.negated]![/#if]${expansion.lookBehind.routin
 ${is}    return false;
 ${is}}
 [/#if]
-${is}if (_remainingLookahead <= 0) {
-${is}    return true;
-${is}}
 [#if expansion.hasSeparateSyntacticLookahead]
+${is}if (_remainingLookahead <= 0) {
+${is}    return !_hitFailure;
+${is}}
 ${is}if ([#if !expansion.lookahead.negated]![/#if]${expansion.lookaheadExpansion.scanRoutineName}()) {
   [#if expansion.lookahead.negated]
 ${is}    return false;

@@ -190,9 +190,7 @@ ${is}def ${expansion.scanRoutineName}(self):
 ${is}    # import pdb; pdb.set_trace()
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
-   [#if !expansion.insideLookahead]
 ${BuildPredicateCode(expansion, indent + 8)}
-   [/#if]
 ${BuildScanCode(expansion, indent + 8)}
 ${is}        return True
 ${is}    finally:
@@ -237,9 +235,9 @@ ${is}    return False
 ${is}if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
 ${is}    return False
 [/#if]
+[#if expansion.hasSeparateSyntacticLookahead]
 ${is}if self.remaining_lookahead <= 0:
 ${is}    return True
-[#if expansion.hasSeparateSyntacticLookahead]
 ${is}if [#if !expansion.lookahead.negated]not [/#if]self.${expansion.lookaheadExpansion.scanRoutineName}():
 ${is}    return False
 [/#if]

@@ -10,11 +10,6 @@ DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
 TREE_BUILDING_ENABLED=false;
 ENSURE_FINAL_EOL;
 MINIMAL_TOKEN;
-// We shouldn't convert spaces or newlines
-// because usually we are typically running over input 
-// that is already converted anyway
-TABS_TO_SPACES=0;
-//PRESERVE_LINE_ENDINGS=true;
 #if localtest
 PARSER_PACKAGE=org.parsers.preprocessor;
 #elif csharp
@@ -24,14 +19,12 @@ PARSER_PACKAGE=com.javacc.preprocessor;
 #endif
 
 /*
- * This is an implementation of the standard C# preprocessor.
- * Well, it is incomplete at the moment, because it just ignores
- * everything except #define/#undef and #if/#elif/#else. 
- * The other C# pre-processing directives, #pragma, #region/#endregion, 
- * #warning/#error and #line are just treated as lines to ignore.
- * So the only thing currently supported is turning on or off 
- * parts of the source file.
- * This is very bare-bones and bloody-minded. It does not build a
+ * This is the preprocessor used internally in JavaCC 21. It began with the intent
+ * of being an implementation of the standard C# preprocessor. However, I (JR) had to
+ * re-implement the C# preprocessor for the C# grammar because I had misread the spec
+ * somewhat. Oh well. It is the same basic approach. Really the only thing that is supported
+ * is turning on/off parts of the source file. 
+ * This implementation is very bare-bones and bloody-minded. It does not build a
  * tree or any of that. It just uses code actions to create a BitSet
  * that holds whether a line is "turned on" or not. The line offsets
  * are 1-based.

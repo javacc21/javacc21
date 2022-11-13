@@ -28,7 +28,6 @@
 
 package com.javacc.core;
 
-import java.util.*;
 import com.javacc.parser.BaseNode;
 import com.javacc.parser.Token;
 import com.javacc.parser.tree.*;
