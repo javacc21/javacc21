@@ -34,6 +34,7 @@
      really have much! --]
 
 [#var TT = "TokenType."]
+[#var USE_FIRST_SET_THRESHOLD = 5]
 
  [#if grammar.parserPackage?has_content]
    [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]

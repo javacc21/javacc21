@@ -265,7 +265,7 @@
         public NodeScope clone() {
             NodeScope clone = (NodeScope) super.clone();
             if (parentScope != null) {
-                clone.parentScope = (NodeScope) parentScope.clone();
+                clone.parentScope = parentScope.clone();
             }
             return clone;
         } 

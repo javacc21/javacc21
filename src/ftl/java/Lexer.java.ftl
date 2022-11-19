@@ -706,7 +706,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                         ((StringBuilder) content).append((char) '\n');
                     } else {
                         StringBuilder buf = new StringBuilder(content);
-                        buf.append((char) '\n');
+                        buf.append('\n');
                         content = buf.toString();
                     }
                 }
@@ -733,7 +733,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 else break;
             }
             if (numPrecedingSlashes % 2 == 0) {
-                buf.append((char) '\\');
+                buf.append('\\');
                 ++col;
                 continue;
             }
@@ -748,7 +748,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             ++col;
         }
         else if (!preserveLines && ch == '\r') {
-            buf.append((char)'\n');
+            buf.append('\n');
             col = 0;
             if (index < contentLength && content.charAt(index) == '\n') {
                 ++index;
@@ -756,7 +756,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         } else if (ch == '\t' && !preserveTabs) {
             int spacesToAdd = DEFAULT_TAB_SIZE - col % DEFAULT_TAB_SIZE;
             for (int i = 0; i < spacesToAdd; i++) {
-                buf.append((char) ' ');
+                buf.append(' ');
                 col++;
             }
         } else {
@@ -769,7 +769,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             return "\n";
         }
         char lastChar = buf.charAt(buf.length()-1);
-        if (lastChar != '\n' && lastChar != '\r') buf.append((char) '\n');
+        if (lastChar != '\n' && lastChar != '\r') buf.append('\n');
     }
     return buf.toString();
   }

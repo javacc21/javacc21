@@ -86,7 +86,7 @@
        }
        if (!matched) return false;
      }
-     if (remainingLookahead != UNLIMITED) remainingLookahead--;
+     --remainingLookahead;
      currentLookaheadToken = peekedToken;
      return true;
   }
@@ -95,8 +95,7 @@
      Token peekedToken = nextToken(currentLookaheadToken);
      TokenType type = peekedToken.getType();
      if (!types.contains(type)) return false;
-     if (remainingLookahead != UNLIMITED) remainingLookahead--;
-//     if (type == upToTokenType) remainingLookahead = 0;
+     --remainingLookahead;
      currentLookaheadToken = peekedToken;
      return true;
   }
@@ -229,7 +228,6 @@
    that is used in a nested lookahead.
  --]
 [#macro BuildLookaheadRoutine lookahead]
-  [#if lookahead.nestedExpansion??]
      // lookahead routine for lookahead at: 
      // ${lookahead.location}
      private final boolean ${lookahead.nestedExpansion.scanRoutineName}() {
@@ -248,7 +246,6 @@
            hitFailure = prevHitFailure;
         }
      }
-   [/#if]
 [/#macro]
 
 [#macro BuildLookBehindRoutine lookBehind]
@@ -410,8 +407,13 @@
 
 [#macro ScanSingleToken expansion]
     [#var firstSet = expansion.firstSet.tokenNames]
-    [#if firstSet?size = 1]
-      if (!scanToken(${CU.TT}${firstSet[0]})) return false;
+    [#if firstSet?size < CU.USE_FIRST_SET_THRESHOLD]
+      if (!scanToken(
+        [#list expansion.firstSet.tokenNames as name]
+          ${CU.TT}${name}
+          [#if name_has_next],[/#if]
+        [/#list]
+      )) return false; 
     [#else]
       if (!scanToken(${expansion.firstSetVarName})) return false;
     [/#if]
@@ -495,7 +497,7 @@
 
 [#macro CheckExpansion expansion]
    [#if expansion.singleToken]
-     [#if expansion.firstSet.tokenNames?size < 5]
+     [#if expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD]
       scanToken(
         [#list expansion.firstSet.tokenNames as name]
           ${CU.TT}${name}

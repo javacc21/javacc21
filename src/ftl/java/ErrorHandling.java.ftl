@@ -331,7 +331,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
            this.lexicalState = token_source.lexicalState;
 [/#if]
 [#if grammar.treeBuildingEnabled]            
-           this.nodeScope = (NodeScope) currentNodeScope.clone();
+           this.nodeScope = currentNodeScope.clone();
 [/#if]           
        } 
   }
