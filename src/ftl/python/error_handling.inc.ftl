@@ -66,7 +66,7 @@
 
             @property
             def has_next(self):
-                return self.iter1.has_previous or self.iter2.has_previous
+                return self.iter2.has_previous or self.iter1.has_previous
 
             @property
             def next(self):
@@ -74,11 +74,11 @@
 
             @property
             def has_previous(self):
-                return self.iter2.has_next or self.iter1.has_next
+                return self.iter1.has_next or self.iter2.has_next
 
             @property
             def previous(self):
-                return self.iter2.next if self.iter2.has_next else self.iter1.next
+                return self.iter1.next if self.iter1.has_next else self.iter2.next
 
         return BackwardIterator(self.parsing_stack, self.lookahead_stack)
 
