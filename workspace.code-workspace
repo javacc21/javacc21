@@ -16,6 +16,7 @@
 	"settings": {
 		"java.project.sourcePaths": [
 			"src/java",
+			"examples/csharp",
 			"examples/java",
 			"examples/json",
 			"examples/freemarker"

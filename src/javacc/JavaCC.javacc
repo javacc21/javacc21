@@ -49,9 +49,6 @@ PARSER_PACKAGE=com.javacc.parser;
 NODE_PACKAGE=com.javacc.parser.tree;
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../java";
-// The following two lines won't be necessary once we do a rebootstrap
-TABS_TO_SPACES=8;
-PRESERVE_LINE_ENDINGS=false;
 #endif 
 
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
@@ -174,8 +171,6 @@ TOKEN :
 }
 
 INJECT BaseNode :
-    import java.util.*;
-    import freemarker.template.*;
     import java.lang.reflect.*;
     import com.javacc.Grammar;
     import NODE_PACKAGE.KeyWord;
