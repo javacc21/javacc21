@@ -232,7 +232,11 @@
         }
 
         Node peek() {
-            return isEmpty() ? parentScope.peek() : get(size()-1);
+            if (isEmpty()) {
+                return parentScope == null ? null : parentScope.peek();
+
+            }
+            return get(size()-1);
         }
 
         Node pop() {
