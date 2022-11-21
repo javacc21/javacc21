@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.com/javacc21/javacc21.png)](https://travis-ci.com/github/javacc21/javacc21)
+![Core (Java) Status](https://img.shields.io/github/workflow/status/javacc21/javacc21/Core%20Tests?label=core%20%28Java%29)
+![Python Build Status](https://img.shields.io/github/workflow/status/javacc21/javacc21/Python%20Generation%20Tests?label=Python)
+![C# Build Status](https://img.shields.io/github/workflow/status/javacc21/javacc21/CSharp%20Generation%20Tests?label=C%23)
 [![Gitter chat for JavaCC 21](https://badges.gitter.im/javacc21/javacc21.svg)](https://gitter.im/javacc21/javacc21)
 
 # JavaCC 21
@@ -35,7 +37,7 @@ For example, where you would previously have written:
          Foo() Bar()
      }
 
-with the streamlined syntax, you can now write: 
+with the streamlined syntax, you can now write:
 
      FooBar : Foo Bar;
 
@@ -48,7 +50,7 @@ in JavaCC 21, you can write:
      => Foo Bar Baz
 
 The [new up-to-here marker](https://javacc.com/2020/07/31/new-feature-for-scan-up-to-here/) also offers great gains in readability and maintainability. For example, you can now write:
-    
+
     Foo Bar =>|| Baz
 
 This means that you scan ahead up to the `=>||` or in other words, you check for `Foo Bar` and if that is successful, you parse the full expansion `Foo Bar Baz`. Using the legacy syntax, this would be written as:
@@ -83,7 +85,7 @@ JavaCC 21 provides a much needed [INCLUDE instruction](https://doku.javacc.com/d
 
 The INCLUDE feature is used to very good effect in the internal code of JavaCC 21 itself. The [embedded Java grammar](https://github.com/JavaCC21/JavaCC21/blob/master/src/main/grammars/Java.javacc) is simply [INCLUDEd in the JavaCC grammar](https://github.com/JavaCC21/JavaCC21/blob/master/src/main/grammars/JavaCC.javacc#413)
 
-Since the Java grammar stands alone, it can be used freely in separate projects that require a Java grammar. 
+Since the Java grammar stands alone, it can be used freely in separate projects that require a Java grammar.
 
 ## Preprocessor
 
@@ -91,13 +93,13 @@ JavaCC 21 now has a preprocessor that is quite similar to the preprocessor in Mi
 
 ## Tree Building
 
-JavaCC 21 is based on the view that building an AST (*Abstract Syntax Tree*) is the *normal* usage of this sort of tool. While the legacy JavaCC package does contain automatic tree-building functionality, i.e. the JJTree preprocessor, JJTree has some (very) longstanding usability issues that JavaCC 21 addresses. 
+JavaCC 21 is based on the view that building an AST (*Abstract Syntax Tree*) is the *normal* usage of this sort of tool. While the legacy JavaCC package does contain automatic tree-building functionality, i.e. the JJTree preprocessor, JJTree has some (very) longstanding usability issues that JavaCC 21 addresses.
 
 For one thing, a lot of what makes JJTree quite cumbersome to use is precisely that it is a preprocessor! In JavaCC 21, all of the JJTree functionality is simply in the core tool and the generated parser builds an AST by default. (Tree building can be turned off however.)
 
 (*NB. JavaCC 21 uses the same syntax for tree-building annotations as JJTree.*)
 
-One of the most annoying aspects of JJTree was that it had no disposition for *injecting* code into a generated Node subclass. This is actually rather odd, because the core JavaCC tool does allow you to inject code into the generated parser or lexer class (via <code>PARSER_BEGIN...PARSER_END</code> and <code>TOKEN_MGR_DECLS</code> respectively) but whoever implemented JJTree somehow did not understand the need for this. Presumably, you are supposed to generate your <code>ASTXXX.java</code> files and then, if you want to put any functionality into them, to post-edit them. (*Except... then... how do you do a clean rebuild of your project?*) 
+One of the most annoying aspects of JJTree was that it had no disposition for *injecting* code into a generated Node subclass. This is actually rather odd, because the core JavaCC tool does allow you to inject code into the generated parser or lexer class (via <code>PARSER_BEGIN...PARSER_END</code> and <code>TOKEN_MGR_DECLS</code> respectively) but whoever implemented JJTree somehow did not understand the need for this. Presumably, you are supposed to generate your <code>ASTXXX.java</code> files and then, if you want to put any functionality into them, to post-edit them. (*Except... then... how do you do a clean rebuild of your project?*)
 
 Thus, JavaCC 21 has an [INJECT statement](https://doku.javacc.com/doku.php?id=include) that allows you to *inject* Java code into any generated file (including <code>Token.java</code> or <code>ParseException.java</code>) thus doing away with the unwieldy *antipattern* of post-editing generated files.
 
@@ -105,7 +107,7 @@ Aside from the lack of any ability to inject code into generated ASTXXX classes,
 
 ## Better Generated Code
 
-JavaCC 21 generates more readable code generally. Certain things have been modernized significantly. Consider the <code>Token.kind</code> field in the <code>Token.java</code> generated by the legacy tool. That field is an integer and is also (contrary to well known best practices) publicly accessible. In the <code>Token.java</code> file that JavaCC 21 generates, the <code>Token.getType()</code> returns a [type-safe Enum](https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html) and all of the code in the generated parser that previously used integers to represent the type of Token, now uses type-safe Enums. 
+JavaCC 21 generates more readable code generally. Certain things have been modernized significantly. Consider the <code>Token.kind</code> field in the <code>Token.java</code> generated by the legacy tool. That field is an integer and is also (contrary to well known best practices) publicly accessible. In the <code>Token.java</code> file that JavaCC 21 generates, the <code>Token.getType()</code> returns a [type-safe Enum](https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html) and all of the code in the generated parser that previously used integers to represent the type of Token, now uses type-safe Enums.
 
 Code generated by legacy JavaCC gave just about zero information about where the generated code originated. Parsers generated by JavaCC 21 have line/column information (*relative to the real source file, the grammar file*) and they also inject information into the stack trace generated by ParseException that contain line/column information relative to the grammar file.
 
@@ -119,16 +121,16 @@ In general, JavaCC 21 has more sensible default settings and is [much more usabl
 
 ## Robust Up-to-date Grammars/Parsers for Python and C#
 
-JavaCC 21 includes robust, up-to-date grammars for the latest stable versions of [Python](https://github.com/javacc21/javacc21/blob/master/examples/python/Python.javacc) and [C Sharp](https://github.com/javacc21/javacc21/blob/master/examples/csharp/CSharp.javacc). Both of these grammars can be used and adapted in your own projects without any restriction. 
+JavaCC 21 includes robust, up-to-date grammars for the latest stable versions of [Python](https://github.com/javacc21/javacc21/blob/master/examples/python/Python.javacc) and [C Sharp](https://github.com/javacc21/javacc21/blob/master/examples/csharp/CSharp.javacc). Both of these grammars can be used and adapted in your own projects without any restriction.
 
 
 ## JavaCC 21 is actively developed!
 
-Perhaps most importantly, the project is again under active development.  
+Perhaps most importantly, the project is again under active development.
 
 Now that the project is active again, users can expect significant new features fairly soon. Given that code generation has been externalized to template files, the ability to generate parsers in other languages is probably not very far off. Another near-term major goal is to provide support for *fault-tolerant* parsing, where a parser incorporates heuristics for building an AST even when the input is invalid (unbalanced delimiters, missing semicolon and such).
 
-One way to stay up to date with the JavaCC 21 project is to subscribe to [our blog newsfeed](https://javacc.com/feed) in any newsreader. 
+One way to stay up to date with the JavaCC 21 project is to subscribe to [our blog newsfeed](https://javacc.com/feed) in any newsreader.
 
 Usage is really quite simple. As described [here](https://javacc.com/home/) JavaCC 21 is invoked on the command line via:
 

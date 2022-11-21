@@ -1,10 +1,19 @@
-name: C# Generation Tests
+name: CSharp Generation Tests
 
 on:
   push:
-    branches: [ master, ci-changes ]
+    branches: [ master ]
+    paths:
+        - '!**/*.md'
+        - '!.github/workflows/*.yml'
+        - '.github/workflows/csharp-tests.yml'
+
   pull_request:
     branches: [ master ]
+    paths:
+        - '!**/*.md'
+        - '!.github/workflows/*.yml'
+        - '.github/workflows/csharp-tests.yml'
 
 jobs:
   build:
