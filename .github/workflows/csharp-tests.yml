@@ -1,4 +1,4 @@
-name: C# Generation Tests
+name: CSharp Generation Tests
 
 on:
   push:
