@@ -5,11 +5,15 @@ on:
     branches: [ master ]
     paths:
         - '!**/*.md'
+        - '!.github/workflows/*.yml'
+        - '.github/workflows/python-tests.yml'
 
   pull_request:
     branches: [ master ]
     paths:
         - '!**/*.md'
+        - '!.github/workflows/*.yml'
+        - '.github/workflows/python-tests.yml'
 
 jobs:
   build:
