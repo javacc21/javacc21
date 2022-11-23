@@ -108,7 +108,10 @@ class NodeScope(list):
         return ns[0] if len(ns) else None
 
     def peek(self):
-        return self.parent_scope.peek() if not len(self) else self[-1]
+        if len(self):
+            return self[-1]
+        ps = self.parent_scope
+        return None if not ps else ps.peek()
 
     def pop(self):
         return self.parent_scope.pop() if not len(self) else super().pop()
