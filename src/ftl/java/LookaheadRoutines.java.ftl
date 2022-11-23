@@ -135,9 +135,11 @@
      [#var prevNonTerminalNestingVarName = "nonTerminalNesting" + CU.newID(),
            prevCurrentLookaheadTokenVarName = "currentLookaheadToken"+ CU.newID(),
            prevLookaheadRoutineNestingVarName = "lookaheadRoutineNesting" + CU.newID()
+           prevLookaheadRemainingVarName = "lookaheadRemaining" + CU.newID()
      ]
      int ${prevNonTerminalNestingVarName} = nonTerminalNesting;
      int ${prevLookaheadRoutineNestingVarName} = lookaheadRoutineNesting;
+     int ${prevLookaheadRemainingVarName} = remainingLookahead;
      Token ${prevCurrentLookaheadTokenVarName} = currentLookaheadToken;
      try {
          lookaheadRoutineNesting++;
@@ -146,10 +148,10 @@
          hitFailure = false;
          scanToEnd = false;
       ${BuildPredicateCode(expansion)}
-      [#if !expansion.hasSeparateSyntacticLookahead]
-         ${BuildScanCode(expansion)}
+      [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount >0]
+        ${BuildScanCode(expansion)}
       [/#if]
-      return true;
+         return true;
       }
       finally {
         lookaheadRoutineNesting = ${prevLookaheadRoutineNestingVarName};
@@ -165,10 +167,17 @@
   // ${expansion.location}
   // BuildScanRoutine macro
   private final boolean ${expansion.scanRoutineName}() {
+    [#var prevRemainingLookaheadVarName = "remainingLookahead" + CU.newID()]
+    int ${prevRemainingLookaheadVarName} = remainingLookahead;
     try {
        lookaheadRoutineNesting++;
      ${BuildPredicateCode(expansion)}
-     ${BuildScanCode(expansion)}
+  [#--if expansion.atChoicePoint && expansion.lookaheadAmount != 2147483647 && expansion.lookaheadAmount != 0--]
+      try {
+       ${BuildScanCode(expansion)}
+      } finally {
+        if (remainingLookahead <=0) passedPredicate = true;
+      }
       return true;
     }
     finally {
@@ -214,11 +223,17 @@
        ${expansion.lookBehind.routineName}()) return false;
      [/#if]
      [#if expansion.hasSeparateSyntacticLookahead]
-      if (remainingLookahead <=0) return !hitFailure;
+      if (remainingLookahead <=0) {
+         passedPredicate = true;
+         return !hitFailure;
+      }
       if (
       [#if !expansion.lookahead.negated]![/#if]
         ${expansion.lookaheadExpansion.scanRoutineName}()) return false;
-     [/#if]
+      [/#if]
+      [#if expansion.lookaheadAmount == 0]
+         passedPredicate = true;
+      [/#if]
      // End BuildPredicateCode macro
 [/#macro]
 
@@ -315,7 +330,10 @@
 [#macro BuildScanCode expansion]
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
-      if (hitFailure || remainingLookahead<=0) return !hitFailure;
+      if (hitFailure) return false;
+      if (remainingLookahead<=0) {
+         return true;
+      }
   // Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
   [@CU.HandleLexicalStateChange expansion true]
@@ -375,8 +393,8 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
-          if (!scanToEnd && lookaheadRoutineNesting <= 1 && nonTerminalNesting <=1) {
-             remainingLookahead = ${sub.scanLimitPlus};
+          if (!scanToEnd && lookaheadRoutineNesting <=1 && nonTerminalNesting <=1) {
+            remainingLookahead = ${sub.scanLimitPlus};
           }
        [/#if]
    [/#list]
@@ -447,8 +465,11 @@
 [#macro ScanCodeChoice choice]
    [@CU.newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${CU.newVarIndex} = remainingLookahead;
-   boolean hitFailure${CU.newVarIndex} = hitFailure;
+   boolean hitFailure${CU.newVarIndex} = hitFailure, passedPredicate${CU.newVarIndex} = passedPredicate;
+   passedPredicate = false;
+   try {
   [#list choice.choices as subseq]
+     if (passedPredicate) return false;
      if (!${CheckExpansion(subseq)}) {
      currentLookaheadToken = token${CU.newVarIndex};
      remainingLookahead=remainingLookahead${CU.newVarIndex};
@@ -458,28 +479,40 @@
      [/#if]
   [/#list]
   [#list 1..choice.choices?size as unused] } [/#list]
+   } finally {passedPredicate = passedPredicate${CU.newVarIndex};}
 [/#macro]
 
 [#macro ScanCodeZeroOrOne zoo]
    [@CU.newVar type="Token" init="currentLookaheadToken"/]
-   if (!${CheckExpansion(zoo.nestedExpansion)}) {
-      currentLookaheadToken = token${CU.newVarIndex};
-      hitFailure = false;
-   }
+   boolean passedPredicate${CU.newVarIndex} = passedPredicate;
+   passedPredicate = false;
+   try {
+      if (!${CheckExpansion(zoo.nestedExpansion)}) {
+         if (passedPredicate) return false;
+         currentLookaheadToken = token${CU.newVarIndex};
+         hitFailure = false;
+      }
+   } finally {passedPredicate = passedPredicate${CU.newVarIndex};}
 [/#macro]
 
 [#-- 
   Generates lookahead code for a ZeroOrMore construct]
 --]
 [#macro ScanCodeZeroOrMore zom]
+   [#var prevPassPredicateVarName = "passedPredicate" + CU.newID()]
+    boolean ${prevPassPredicateVarName} = passedPredicate;
+    try {
       while (remainingLookahead > 0 && !hitFailure) {
       [@CU.newVar type="Token" init="currentLookaheadToken"/]
-         if (!${CheckExpansion(zom.nestedExpansion)}) {
-             currentLookaheadToken = token${CU.newVarIndex};
-             break;
-         }
+        passedPredicate = false;
+        if (!${CheckExpansion(zom.nestedExpansion)}) {
+            if (passedPredicate) return false;
+            currentLookaheadToken = token${CU.newVarIndex};
+            break;
+        }
       }
-      hitFailure = false;
+    } finally {passedPredicate = ${prevPassPredicateVarName};}
+    hitFailure = false;
 [/#macro]
 
 [#--
