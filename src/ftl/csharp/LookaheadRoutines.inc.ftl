@@ -134,34 +134,23 @@ ${BuildProductionLookaheadMethod(production, indent)}
 [#macro BuildPredicateRoutine expansion indent]
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
-  [#var prevNonTerminalNestingVarName = "nonTerminalNesting" + CU.newID(),
-       prevCurrentLookaheadTokenVarName = "currentLookaheadToken"+ CU.newID(),
-       prevLookaheadRoutineNestingVarName = "lookaheadRoutineNesting" + CU.newID()
-  ]
-
-
-
     // BuildPredicateRoutine: expansion at ${expansion.location}
     private bool ${expansion.predicateMethodName}() {
-        uint ${prevNonTerminalNestingVarName} = _nonTerminalNesting;
-        uint ${prevLookaheadRoutineNestingVarName} = _lookaheadRoutineNesting;
-        Token ${prevCurrentLookaheadTokenVarName} = currentLookaheadToken;
+        _remainingLookahead = ${lookaheadAmount};
+        currentLookaheadToken = LastConsumedToken;
         try {
-            _lookaheadRoutineNesting++;
-            _remainingLookahead = ${lookaheadAmount};
-            if (currentLookaheadToken == null) currentLookaheadToken = LastConsumedToken;
-            _hitFailure = false;
-            ScanToEnd = false;
 ${BuildPredicateCode(expansion, 12)}
-      [#if !expansion.hasSeparateSyntacticLookahead]
+      [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0]
 ${BuildScanCode(expansion, 12)}
       [/#if]
             return true;
         }
         finally {
-            _lookaheadRoutineNesting = ${prevLookaheadRoutineNestingVarName};
-            currentLookaheadToken = ${prevCurrentLookaheadTokenVarName};
-            _nonTerminalNesting = ${prevNonTerminalNestingVarName};
+            _lookaheadRoutineNesting = 0;
+            currentLookaheadToken = null;
+            _nonTerminalNesting = 0;
+            _hitFailure = false;
+            ScanToEnd = false;
         }
     }
 
@@ -413,7 +402,7 @@ ${grammar.utils.translateCodeBlock(expansion, indent)}
    [#list sequence.units as sub]
        [@BuildScanCode sub indent /]
        [#if sub.scanLimit]
-${is}if (!ScanToEnd && _nonTerminalNesting <=1 && _lookaheadRoutineNesting <= 1) {
+${is}if (!ScanToEnd && _nonTerminalNesting <=1 && _lookaheadRoutineNesting == 0) {
 ${is}    _remainingLookahead = ${sub.scanLimitPlus};
 ${is}}
        [/#if]

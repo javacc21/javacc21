@@ -340,7 +340,9 @@ abstract public class Expansion extends BaseNode {
             } else {
                 Grammar g = getGrammar();
                 String prefix = g.generateIdentifierPrefix("check");
-
+                if (this.getParent() instanceof Assertion) {
+                    prefix = prefix.replace("check", "assert");
+                }
                 scanRoutineName = g.generateUniqueIdentifier(prefix, this);
             }
         }
@@ -385,7 +387,7 @@ abstract public class Expansion extends BaseNode {
      */
     public boolean isSingleToken() {
         // Uncomment the following line to turn off this optimization.
-        // if (true) return false;
+         //if (true) return false;
         return !isPossiblyEmpty() && getMaximumSize() == 1 && !getHasScanLimit() && getLookahead() == null 
                && !hasGlobalSemanticActions() && !startsWithLexicalChange();
     }

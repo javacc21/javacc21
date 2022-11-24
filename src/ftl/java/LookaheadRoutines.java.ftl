@@ -11,10 +11,9 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse 
- *       or promote products derived from this software without specific prior written 
- *       permission.
+ *     * Neither the name Jonathan Revusky nor the names of any contributors 
+ *       may be used to endorse or promote products derived from this software 
+ * .     without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -132,21 +131,9 @@
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
   // BuildPredicateRoutine: expansion at ${expansion.location}
    private final boolean ${expansion.predicateMethodName}() {
-     [#var prevNonTerminalNestingVarName = "nonTerminalNesting" + CU.newID(),
-           prevCurrentLookaheadTokenVarName = "currentLookaheadToken"+ CU.newID(),
-           prevLookaheadRoutineNestingVarName = "lookaheadRoutineNesting" + CU.newID()
-           prevLookaheadRemainingVarName = "lookaheadRemaining" + CU.newID()
-     ]
-     int ${prevNonTerminalNestingVarName} = nonTerminalNesting;
-     int ${prevLookaheadRoutineNestingVarName} = lookaheadRoutineNesting;
-     int ${prevLookaheadRemainingVarName} = remainingLookahead;
-     Token ${prevCurrentLookaheadTokenVarName} = currentLookaheadToken;
+     remainingLookahead= ${lookaheadAmount};
+     currentLookaheadToken = lastConsumedToken;
      try {
-         lookaheadRoutineNesting++;
-         remainingLookahead= ${lookaheadAmount};
-         if (currentLookaheadToken == null) currentLookaheadToken= lastConsumedToken;
-         hitFailure = false;
-         scanToEnd = false;
       ${BuildPredicateCode(expansion)}
       [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount >0]
         ${BuildScanCode(expansion)}
@@ -154,9 +141,11 @@
          return true;
       }
       finally {
-        lookaheadRoutineNesting = ${prevLookaheadRoutineNestingVarName};
-        currentLookaheadToken = ${prevCurrentLookaheadTokenVarName};
-        nonTerminalNesting = ${prevNonTerminalNestingVarName};
+         lookaheadRoutineNesting = 0;
+         nonTerminalNesting = 0;
+         currentLookaheadToken = null;
+         hitFailure = false;
+         scanToEnd = false;
      }
    }
 [/#macro]
@@ -168,11 +157,10 @@
   // BuildScanRoutine macro
   private final boolean ${expansion.scanRoutineName}() {
     [#var prevRemainingLookaheadVarName = "remainingLookahead" + CU.newID()]
-    int ${prevRemainingLookaheadVarName} = remainingLookahead;
+    [#-- int ${prevRemainingLookaheadVarName} = remainingLookahead;--]
     try {
        lookaheadRoutineNesting++;
      ${BuildPredicateCode(expansion)}
-  [#--if expansion.atChoicePoint && expansion.lookaheadAmount != 2147483647 && expansion.lookaheadAmount != 0--]
       try {
        ${BuildScanCode(expansion)}
       } finally {
@@ -192,7 +180,9 @@
   // ${expansion.parent.location}
   // BuildAssertionRoutine macro
     private final boolean ${expansion.scanRoutineName}() {
-     [#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")]
+     [#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")
+            storeRemainingLookahead = CU.newVarName("remainingLookahead")]
+       int ${storeRemainingLookahead} = remainingLookahead;
        remainingLookahead = UNLIMITED;
        scanToEnd=true;
        Token ${storeCurrentLookaheadVar} = currentLookaheadToken;
@@ -207,6 +197,7 @@
     finally {
        lookaheadRoutineNesting--;
        currentLookaheadToken = ${storeCurrentLookaheadVar};
+       remainingLookahead = ${storeRemainingLookahead};
     }
   }
 [/#macro]
@@ -393,7 +384,7 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
-          if (!scanToEnd && lookaheadRoutineNesting <=1 && nonTerminalNesting <=1) {
+          if (!scanToEnd && lookaheadRoutineNesting == 0 && nonTerminalNesting <=1) {
             remainingLookahead = ${sub.scanLimitPlus};
           }
        [/#if]

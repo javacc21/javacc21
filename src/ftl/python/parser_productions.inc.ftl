@@ -522,30 +522,6 @@ ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
    [#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0]True[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#t][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if][#t]
 [/#macro]
 
-
-
-[#macro BuildAssertionRoutine assertion]
-    [#var methodName = assertion.predicateMethodName?replace("scan$", "assert$")]
-    [#var empty = true]
-    def ${methodName}(self):
-       if not (
-       [#if !assertion.semanticLookahead?is_null]
-          (${assertion.semanticLookahead})
-          [#set empty = false /]
-       [/#if]
-       [#if !assertion.lookBehind?is_null]
-          [#if !empty] && [/#if]
-          !${assertion.lookBehind.routineName}()
-       [/#if]
-       [#if !assertion.expansion?is_null]
-           [#if !empty] && [/#if]
-           [#if assertion.expansion.negated] ! [/#if]
-           self.${assertion.expansion.scanRoutineName}()
-       [/#if]
-       ):
-          raise ParseException(self, message='${assertion.message?j_string}');
-[/#macro]
-
 [#macro BuildAssertionCode assertion indent]
 [#var is = ""?right_pad(indent)]
 [#var optionalPart = ""]
@@ -562,7 +538,6 @@ ${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.sc
 ${is}    self.fail("${assertionMessage}"${optionalPart})
 [/#if]
 [/#macro]
-
 
 [#--
    Macro to build routines that scan up to the start of an expansion

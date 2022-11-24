@@ -547,30 +547,6 @@ ${is}}
    [#if expansion.firstSet.tokenNames?size = 0 || expansion.lookaheadAmount ==0]true[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#t][#else](${expansion.firstSetVarName}.Contains(NextTokenType))[/#if][#t]
 [/#macro]
 
-
-
-[#macro BuildAssertionRoutine assertion indent]
-    [#var methodName = assertion.predicateMethodName?replace("scan$", "assert$")]
-    [#var empty = true]
-    def ${methodName}(self):
-       if not (
-       [#if !assertion.semanticLookahead?is_null]
-          (${assertion.semanticLookahead})
-          [#set empty = false /]
-       [/#if]
-       [#if !assertion.lookBehind?is_null]
-          [#if !empty] && [/#if]
-          !${assertion.lookBehind.routineName}()
-       [/#if]
-       [#if !assertion.expansion?is_null]
-           [#if !empty] && [/#if]
-           [#if assertion.expansion.negated] ! [/#if]
-           self.${assertion.expansion.scanRoutineName}()
-       [/#if]
-       ):
-          raise ParseException(self, message='${assertion.message?j_string}');
-[/#macro]
-
 [#macro BuildAssertionCode assertion indent]
 [#var is = ""?right_pad(indent)]
 [#var optionalPart = ""]

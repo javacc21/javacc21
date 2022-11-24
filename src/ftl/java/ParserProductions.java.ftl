@@ -542,31 +542,6 @@
 [/#macro]
 
 
-
-[#macro BuildAssertionRoutine assertion]
-    [#var methodName = assertion.predicateMethodName?replace("scan$", "assert$")]
-    [#var empty = true]
-    private final void ${methodName}() throws ParseException {
-       if (!(
-       [#if !assertion.semanticLookahead?is_null]
-          (${assertion.semanticLookahead})
-          [#set empty = false /]
-       [/#if]
-       [#if !assertion.lookBehind?is_null]
-          [#if !empty] && [/#if]
-          !${assertion.lookBehind.routineName}()
-       [/#if]
-       [#if !assertion.expansion?is_null]
-           [#if !empty] && [/#if]
-           [#if assertion.expansion.negated] ! [/#if]
-           ${assertion.expansion.scanRoutineName}()
-       [/#if]
-       )) {
-          throw new ParseException(this, "${assertion.message?j_string}");
-        }
-    }
-[/#macro]
-
 [#macro BuildAssertionCode assertion]
    [#var optionalPart = ""]
    [#if assertion.messageExpression??]
