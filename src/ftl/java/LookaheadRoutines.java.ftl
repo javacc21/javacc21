@@ -133,6 +133,7 @@
    private final boolean ${expansion.predicateMethodName}() {
      remainingLookahead= ${lookaheadAmount};
      currentLookaheadToken = lastConsumedToken;
+     final boolean scanToEnd = false;
      try {
       ${BuildPredicateCode(expansion)}
       [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount >0]
@@ -145,7 +146,6 @@
          nonTerminalNesting = 0;
          currentLookaheadToken = null;
          hitFailure = false;
-         scanToEnd = false;
      }
    }
 [/#macro]
@@ -155,7 +155,7 @@
   // scanahead routine for expansion at: 
   // ${expansion.location}
   // BuildScanRoutine macro
-  private final boolean ${expansion.scanRoutineName}() {
+  private final boolean ${expansion.scanRoutineName}(boolean scanToEnd) {
     [#if expansion.hasExplicitNumericalLookahead]
        int $remainingLookahead$ = remainingLookahead;
        boolean $hitScanCode$ = false;
@@ -184,12 +184,12 @@
   // scanahead routine for assertion at: 
   // ${expansion.parent.location}
   // BuildAssertionRoutine macro
+  [#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")
+        storeRemainingLookahead = CU.newVarName("remainingLookahead")]
     private final boolean ${expansion.scanRoutineName}() {
-     [#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")
-            storeRemainingLookahead = CU.newVarName("remainingLookahead")]
+       final boolean scanToEnd = true;
        int ${storeRemainingLookahead} = remainingLookahead;
        remainingLookahead = UNLIMITED;
-       scanToEnd=true;
        Token ${storeCurrentLookaheadVar} = currentLookaheadToken;
        if (currentLookaheadToken == null) {
           currentLookaheadToken = lastConsumedToken;
@@ -225,7 +225,7 @@
       }
       if (
       [#if !expansion.lookahead.negated]![/#if]
-        ${expansion.lookaheadExpansion.scanRoutineName}()) return false;
+        ${expansion.lookaheadExpansion.scanRoutineName}(true)) return false;
       [/#if]
       [#if expansion.lookaheadAmount == 0]
          passedPredicate = true;
@@ -241,7 +241,7 @@
 [#macro BuildLookaheadRoutine lookahead]
      // lookahead routine for lookahead at: 
      // ${lookahead.location}
-     private final boolean ${lookahead.nestedExpansion.scanRoutineName}() {
+     private final boolean ${lookahead.nestedExpansion.scanRoutineName}(boolean scanToEnd) {
         int prevRemainingLookahead = remainingLookahead;
         boolean prevHitFailure = hitFailure;
         Token prevScanAheadToken = currentLookaheadToken;
@@ -309,7 +309,7 @@
 
 [#macro BuildProductionLookaheadMethod production]
    // BuildProductionLookaheadMethod macro
-   private final boolean ${production.lookaheadMethodName}() {
+   private final boolean ${production.lookaheadMethodName}(boolean scanToEnd) {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}
        [/#if]
@@ -389,8 +389,10 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
-          if (!scanToEnd && lookaheadRoutineNesting == 0 && nonTerminalNesting <=1) {
-            remainingLookahead = ${sub.scanLimitPlus};
+          if (lookaheadRoutineNesting == 0 && nonTerminalNesting <=1) {
+            if (!scanToEnd) {
+                remainingLookahead = ${sub.scanLimitPlus};
+            }
           }
        [/#if]
    [/#list]
@@ -404,17 +406,13 @@
 [#macro ScanCodeNonTerminal nt]
       // NonTerminal ${nt.name} at ${nt.location}
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
-      [#var prevScanToEndVarName = "prevScanToEnd" + CU.newID()]
-      boolean ${prevScanToEndVarName} = scanToEnd;
       currentLookaheadProduction = "${nt.production.name}";
-      scanToEnd = ${CU.bool(nt.scanToEnd)};
       ++nonTerminalNesting;
       try {
-          if (!${nt.production.lookaheadMethodName}()) return false;
+          if (!${nt.production.lookaheadMethodName}(${CU.bool(nt.scanToEnd)})) return false;
       }
       finally {
           popLookaheadStack();
-          scanToEnd = ${prevScanToEndVarName};
           --nonTerminalNesting;
       }
 [/#macro]
@@ -537,6 +535,6 @@
       scanToken(${expansion.firstSetVarName})
      [/#if]
    [#else]
-      ${expansion.scanRoutineName}()
+      ${expansion.scanRoutineName}(false)
    [/#if]
 [/#macro]
