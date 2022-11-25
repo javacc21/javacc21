@@ -156,20 +156,25 @@
   // ${expansion.location}
   // BuildScanRoutine macro
   private final boolean ${expansion.scanRoutineName}() {
-    [#var prevRemainingLookaheadVarName = "remainingLookahead" + CU.newID()]
-    [#-- int ${prevRemainingLookaheadVarName} = remainingLookahead;--]
+    [#if expansion.hasExplicitNumericalLookahead]
+       int $remainingLookahead$ = remainingLookahead;
+       boolean $hitScanCode$ = false;
+    [/#if]
     try {
        lookaheadRoutineNesting++;
-     ${BuildPredicateCode(expansion)}
-      try {
+       ${BuildPredicateCode(expansion)}
+       [#if expansion.hasExplicitNumericalLookahead]
+       $hitScanCode$ = true;
+       [/#if]
        ${BuildScanCode(expansion)}
-      } finally {
-        if (remainingLookahead <=0) passedPredicate = true;
-      }
-      return true;
+       return true;
     }
     finally {
        lookaheadRoutineNesting--;
+   [#if expansion.hasExplicitNumericalLookahead]
+       int tokensScanned = $remainingLookahead$ - remainingLookahead;
+       if ($hitScanCode$ && tokensScanned >= ${expansion.lookaheadAmount}) passedPredicate = true;
+   [/#if]
     }
   }
  [/#if]
@@ -335,10 +340,10 @@
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion /]
    [#elseif expansion.singleToken]
-      [#if !expansion.isRegexp]
+      [#--if !expansion.isRegexp]
    // Applying single-token optimization for expansion of type ${classname}
    // ${expansion.location}
-      [/#if]
+      [/#if--]
       ${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion"]
       ${ScanCodeAssertion(expansion)} 
