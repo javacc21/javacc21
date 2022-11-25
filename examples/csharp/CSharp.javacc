@@ -16,9 +16,6 @@ DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
 
 INCLUDE "CSharpLexer.javacc"
 
-// Just an experiment to see if this makes any difference!
-INJECT ParseException : extends RuntimeException
-
 /*
  * This is not used
 

@@ -3,9 +3,6 @@
 package ${grammar.parserPackage};
 [/#if]
 
-import java.io.IOException;
-import java.io.Reader;
-
 /**
  * Token literal values and constants.
  */
