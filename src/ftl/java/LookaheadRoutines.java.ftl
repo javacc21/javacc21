@@ -389,11 +389,16 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
-          if (lookaheadRoutineNesting == 0 && nonTerminalNesting <=1) {
-            if (!scanToEnd) {
-                remainingLookahead = ${sub.scanLimitPlus};
+         if (!scanToEnd && nonTerminalNesting <=1) {
+            if (lookaheadRoutineNesting == 0) {
+              remainingLookahead = ${sub.scanLimitPlus};
             }
-          }
+           [#if sub.scanLimitPlus == 0]
+            else if (nonTerminalNesting == 1) {
+                  passedPredicate = true;
+            }
+           [/#if]
+         }
        [/#if]
    [/#list]
 [/#macro]
@@ -408,8 +413,13 @@
       pushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
       currentLookaheadProduction = "${nt.production.name}";
       ++nonTerminalNesting;
+    [#var scanToEndParam = "false"]
+    [#if nt.scanToEnd]
+       [#set scanToEndParam = "nonTerminalNesting==1"] 
+    [/#if]
       try {
           if (!${nt.production.lookaheadMethodName}(${CU.bool(nt.scanToEnd)})) return false;
+[#--          if (!${nt.production.lookaheadMethodName}(${scanToEndParam)})) return false;--]
       }
       finally {
           popLookaheadStack();

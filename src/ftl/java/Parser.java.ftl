@@ -67,7 +67,6 @@ import java.nio.charset.Charset;
 import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
 [/#if]
 
-@SuppressWarnings("unused")
 public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"
@@ -79,14 +78,6 @@ private boolean hitFailure, passedPredicate;
 private String currentlyParsedProduction, currentLookaheadProduction;
 private int lookaheadRoutineNesting, nonTerminalNesting;
 private EnumSet<TokenType> outerFollowSet;
-
-[#--
- REVISIT these.
-//private Token nextToken; 
-//private EnumSet<Token> currentFollowSet;
-// private TokenType upToTokenType;
-// private EnumSet<TokenType> upToFirstSet;
---]
 
 private boolean cancelled;
 public void cancel() {cancelled = true;}
