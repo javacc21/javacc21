@@ -163,9 +163,11 @@
     try {
        lookaheadRoutineNesting++;
        ${BuildPredicateCode(expansion)}
-       [#if expansion.hasExplicitNumericalLookahead]
+      [#if expansion.hasExplicitNumericalLookahead]
        $hitScanCode$ = true;
-       [/#if]
+      [#elseif expansion.hasScanLimit]
+        passedPredicateThreshold = -1;
+      [/#if]
        ${BuildScanCode(expansion)}
        return true;
     }
@@ -174,6 +176,8 @@
    [#if expansion.hasExplicitNumericalLookahead]
        int tokensScanned = $remainingLookahead$ - remainingLookahead;
        if ($hitScanCode$ && tokensScanned >= ${expansion.lookaheadAmount}) passedPredicate = true;
+   [#elseif expansion.hasScanLimit]
+       if (remainingLookahead <= passedPredicateThreshold) passedPredicate = true;
    [/#if]
     }
   }
@@ -393,11 +397,10 @@
             if (lookaheadRoutineNesting == 0) {
               remainingLookahead = ${sub.scanLimitPlus};
             }
-           [#if sub.scanLimitPlus == 0]
             else if (nonTerminalNesting == 1) {
-                  passedPredicate = true;
+               passedPredicateThreshold = remainingLookahead
+             [#if sub.scanLimitPlus > 0]-${sub.scanLimitPlus}[/#if];
             }
-           [/#if]
          }
        [/#if]
    [/#list]
@@ -419,7 +422,6 @@
     [/#if]
       try {
           if (!${nt.production.lookaheadMethodName}(${CU.bool(nt.scanToEnd)})) return false;
-[#--          if (!${nt.production.lookaheadMethodName}(${scanToEndParam)})) return false;--]
       }
       finally {
           popLookaheadStack();
