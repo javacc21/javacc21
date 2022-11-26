@@ -79,6 +79,12 @@ private String currentlyParsedProduction, currentLookaheadProduction;
 private int lookaheadRoutineNesting, passedPredicateThreshold = -1;
 private EnumSet<TokenType> outerFollowSet;
 
+[#if grammar.legacyGlitchyLookahead]
+   private boolean legacyGlitchyLookahead = true;
+[#else]
+   private boolean legacyGlitchyLookahead = false;
+[/#if]
+
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}

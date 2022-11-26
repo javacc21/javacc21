@@ -61,7 +61,7 @@ public class NonTerminal extends Expansion {
     
     /**
      * The basic logic of when we actually stop at a scan limit 
-     * encountered inside a NonTerminalscan to the end of 
+     * encountered inside a NonTerminal
      */
 
     public boolean getStopAtScanLimit() {

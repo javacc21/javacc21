@@ -155,30 +155,37 @@
   // ${expansion.location}
   // BuildScanRoutine macro
   private final boolean ${expansion.scanRoutineName}(boolean scanToEnd) {
-    [#if expansion.hasExplicitNumericalLookahead]
-       int $remainingLookahead$ = remainingLookahead;
-       boolean $hitScanCode$ = false;
+    [#if expansion.hasNumericalLookahead || expansion.lookaheadAmount =1]
+       boolean $reachedScanCode$ = false;
+       int passedPredicateThreshold = remainingLookahead - ${expansion.lookaheadAmount};
+    [/#if]
+    [#if expansion.hasScanLimit]
+       int prevPassedPredicateThreshold = this.passedPredicateThreshold;
+       this.passedPredicateThreshold = -1;
     [/#if]
     try {
        lookaheadRoutineNesting++;
        ${BuildPredicateCode(expansion)}
-      [#if expansion.hasExplicitNumericalLookahead]
-       $hitScanCode$ = true;
-      [#elseif expansion.hasScanLimit]
-        passedPredicateThreshold = -1;
+      [#if expansion.hasNumericalLookahead || expansion.lookaheadAmount == 1]
+       $reachedScanCode$ = true;
       [/#if]
        ${BuildScanCode(expansion)}
-       return true;
     }
     finally {
        lookaheadRoutineNesting--;
-   [#if expansion.hasExplicitNumericalLookahead]
-       int tokensScanned = $remainingLookahead$ - remainingLookahead;
-       if ($hitScanCode$ && tokensScanned >= ${expansion.lookaheadAmount}) passedPredicate = true;
-   [#elseif expansion.hasScanLimit]
-       if (remainingLookahead <= passedPredicateThreshold) passedPredicate = true;
+   [#if expansion.hasScanLimit]
+       if (remainingLookahead <= this.passedPredicateThreshold) {
+         passedPredicate = true;
+         this.passedPredicateThreshold = prevPassedPredicateThreshold;
+       }
+   [#elseif expansion.hasNumericalLookahead || expansion.lookaheadAmount =1]
+       if ($reachedScanCode$ && remainingLookahead <= passedPredicateThreshold) {
+         passedPredicate = true;
+       }
    [/#if]
     }
+    passedPredicate = false;
+    return true;
   }
  [/#if]
 [/#macro]
@@ -229,7 +236,7 @@
       if (
       [#if !expansion.lookahead.negated]![/#if]
         ${expansion.lookaheadExpansion.scanRoutineName}(true)) return false;
-      [/#if]
+    [/#if]
       [#if expansion.lookaheadAmount == 0]
          passedPredicate = true;
       [/#if]
@@ -465,16 +472,17 @@
    [@CU.newVar "Token", "currentLookaheadToken"/]
    int remainingLookahead${CU.newVarIndex} = remainingLookahead;
    boolean hitFailure${CU.newVarIndex} = hitFailure, passedPredicate${CU.newVarIndex} = passedPredicate;
-   passedPredicate = false;
    try {
   [#list choice.choices as subseq]
-     if (passedPredicate) return false;
+     passedPredicate = false;
      if (!${CheckExpansion(subseq)}) {
      currentLookaheadToken = token${CU.newVarIndex};
      remainingLookahead=remainingLookahead${CU.newVarIndex};
      hitFailure = hitFailure${CU.newVarIndex};
      [#if !subseq_has_next]
         return false;
+     [#else]
+        if (passedPredicate && !legacyGlitchyLookahead) return false;
      [/#if]
   [/#list]
   [#list 1..choice.choices?size as unused] } [/#list]
@@ -487,7 +495,7 @@
    passedPredicate = false;
    try {
       if (!${CheckExpansion(zoo.nestedExpansion)}) {
-         if (passedPredicate) return false;
+         if (passedPredicate && !legacyGlitchyLookahead) return false;
          currentLookaheadToken = token${CU.newVarIndex};
          hitFailure = false;
       }
@@ -505,7 +513,7 @@
       [@CU.newVar type="Token" init="currentLookaheadToken"/]
         passedPredicate = false;
         if (!${CheckExpansion(zom.nestedExpansion)}) {
-            if (passedPredicate) return false;
+            if (passedPredicate && !legacyGlitchyLookahead) return false;
             currentLookaheadToken = token${CU.newVarIndex};
             break;
         }

@@ -54,6 +54,7 @@ BASE_SRC_DIR="../java";
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
 //FAULT_TOLERANT=true;
+LEGACY_GLITCHY_LOOKAHEAD;
 
 INJECT PARSER_CLASS :
     import java.util.*;
@@ -1498,7 +1499,7 @@ ExpansionSequence #com.javacc.core.ExpansionSequence :
   [ 
     SCAN ~\...\Lookahead 
     =>
-    la=Lookahead
+    la=Lookahead 
     {
        la.setExpansion(CURRENT_NODE);
        CURRENT_NODE.setLookahead(la);

@@ -205,7 +205,7 @@ abstract public class Expansion extends BaseNode {
         return firstAncestorOfType(Assertion.class) != null;
     }
 
-    public boolean getHasExplicitNumericalLookahead() {
+    public boolean getHasNumericalLookahead() {
         return false;
     }
 
