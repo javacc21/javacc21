@@ -148,7 +148,6 @@ ${BuildScanCode(expansion, 12)}
         finally {
             _lookaheadRoutineNesting = 0;
             currentLookaheadToken = null;
-            _nonTerminalNesting = 0;
             _hitFailure = false;
             ScanToEnd = false;
         }
@@ -402,7 +401,7 @@ ${grammar.utils.translateCodeBlock(expansion, indent)}
    [#list sequence.units as sub]
        [@BuildScanCode sub indent /]
        [#if sub.scanLimit]
-${is}if (!ScanToEnd && _nonTerminalNesting <=1 && _lookaheadRoutineNesting == 0) {
+${is}if (!ScanToEnd && _lookaheadStack.Count <=1 && _lookaheadRoutineNesting == 0) {
 ${is}    _remainingLookahead = ${sub.scanLimitPlus};
 ${is}}
        [/#if]
@@ -423,7 +422,6 @@ ${is}PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource
 ${is}bool ${prevScanToEndVarName} = ScanToEnd;
 ${is}_currentLookaheadProduction = "${nt.production.name}";
 ${is}ScanToEnd = ${CU.bool(nt.ScanToEnd)};
-${is}++_nonTerminalNesting;
 ${is}try {
 ${is}    if (!${nt.production.lookaheadMethodName}()) {
 ${is}        return false;
@@ -432,7 +430,6 @@ ${is}}
 ${is}finally {
 ${is}    PopLookaheadStack();
 ${is}    ScanToEnd = ${prevScanToEndVarName};
-${is}    _nonTerminalNesting--;
 ${is}}
 [/#macro]
 

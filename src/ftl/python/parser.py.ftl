@@ -219,7 +219,6 @@ class Parser:
         'scan_to_end',
         'hit_failure',
         'lookahead_routine_nesting',
-        'non_terminal_nesting',
         'outer_follow_set',
 [#if grammar.faultTolerant]
         'current_follow_set',
@@ -264,7 +263,6 @@ ${grammar.utils.translateParserInjections(true)}
         self.currently_parsed_production = ''
         self.current_lookahead_production = ''
         self.lookahead_routine_nesting = 0
-        self.non_terminal_nesting = 0
         self.outer_follow_set = set()
         self.parsing_stack = []
         self.lookahead_stack = []

@@ -244,7 +244,7 @@ ${grammar.utils.translateInjectedClass(node)}
         private bool _hitFailure;
         private string _currentlyParsedProduction;
         private string _currentLookaheadProduction;
-        private uint _lookaheadRoutineNesting, _nonTerminalNesting;
+        private uint _lookaheadRoutineNesting;
         //private ISet<TokenType> _currentFollowSet;
         private readonly IList<NonTerminalCall> _lookaheadStack = new List<NonTerminalCall>();
         private readonly IList<ParseState> _parseStateStack = new List<ParseState>();
