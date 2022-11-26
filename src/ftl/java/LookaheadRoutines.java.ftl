@@ -155,18 +155,17 @@
   // ${expansion.location}
   // BuildScanRoutine macro
   private final boolean ${expansion.scanRoutineName}(boolean scanToEnd) {
-    [#if expansion.hasNumericalLookahead || expansion.lookaheadAmount =1]
-       boolean $reachedScanCode$ = false;
-       int passedPredicateThreshold = remainingLookahead - ${expansion.lookaheadAmount};
-    [/#if]
     [#if expansion.hasScanLimit]
        int prevPassedPredicateThreshold = this.passedPredicateThreshold;
        this.passedPredicateThreshold = -1;
+    [#else]
+       boolean $reachedScanCode$ = false;
+       int passedPredicateThreshold = remainingLookahead - ${expansion.lookaheadAmount};
     [/#if]
     try {
        lookaheadRoutineNesting++;
        ${BuildPredicateCode(expansion)}
-      [#if expansion.hasNumericalLookahead || expansion.lookaheadAmount == 1]
+      [#if !expansion.hasScanLimit]
        $reachedScanCode$ = true;
       [/#if]
        ${BuildScanCode(expansion)}
@@ -178,7 +177,7 @@
          passedPredicate = true;
          this.passedPredicateThreshold = prevPassedPredicateThreshold;
        }
-   [#elseif expansion.hasNumericalLookahead || expansion.lookaheadAmount =1]
+   [#else]
        if ($reachedScanCode$ && remainingLookahead <= passedPredicateThreshold) {
          passedPredicate = true;
        }
