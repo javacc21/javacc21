@@ -145,7 +145,6 @@
       [#var prevActives = newVarName("previousActives")]
       [#var somethingChanged = newVarName("somethingChanged")]
       EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(token_source.activeTokenTypes);
-      LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
       boolean ${somethingChanged} = ${methodName}(
       [#list tokenActivation.tokenNames as tokenName]
          ${tokenName}[#if tokenName_has_next],[/#if]
@@ -156,8 +155,8 @@
       }
       finally {
          token_source.activeTokenTypes = ${prevActives};
-         if (${somethingChanged} || ${prevLexicalStateVar} != token_source.lexicalState) {
-             token_source.reset(${resetToken}, ${prevLexicalStateVar});
+         if (${somethingChanged}) {
+             token_source.reset(${resetToken});
              nextTokenType= null;
          }
       }
