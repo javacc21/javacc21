@@ -15,7 +15,7 @@ NODE_PACKAGE = org.parsers.python.ast;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 DEACTIVATE_TOKENS=MATCH,CASE;
-LEGACY_GLITCHY_LOOKAHEAD;
+LEGACY_GLITCHY_LOOKAHEAD=false;
 
 INCLUDE "PythonLexer.javacc" 
 
@@ -458,25 +458,41 @@ SimpleAssignTarget :
    "(" SimpleAssignTarget ")"
 ;
 
+AssignmentLA#scan : 
+   SimpleAssignTarget (":" | AugAssign) =>|| 
+   |
+   StarTargets "=" 
+;   
+
 Assignment :
- SCAN (SimpleAssignTarget (":" | AugAssign)) | (StarTargets "=") =>
+ //SCAN SimpleAssignTarget (":" | AugAssign) | (StarTargets "=") =>
+ SCAN AssignmentLA =>
  (
   SimpleAssignTarget ":" =>|| Expression ["=" AnnotatedRhs]
   |
   SimpleAssignTarget AugAssign =>|| (YieldExpression | StarExpressions)
   |
-  (=>StarTargets "=")+ =>|| (YieldExpression | StarExpressions)
+  (StarTargets "=" =>||)+ (YieldExpression | StarExpressions)
  )
 ;
 
 // Below this point is the new pattern matching stuff
 // introduced in Python 3.10
 
+MatchStatementLA#scan :
+   <MATCH>
+   |
+   <NAME> 
+   ASSERT {getToken(0).getImage().equals("match")}
+   SubjectExpression
+   ":"
+;   
+
 MatchStatement : 
+  SCAN MatchStatementLA =>
    ACTIVATE_TOKENS MATCH ("match") 
    SubjectExpression 
    ":" 
-   =>||
    <NEWLINE>
    <INDENT>
    ACTIVATE_TOKENS CASE (CaseBlock)+

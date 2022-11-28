@@ -118,8 +118,8 @@
 
 [#macro HandleLexicalStateChange expansion inLookahead]
    [#var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")]
+   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
    [#if expansion.specifiedLexicalState??]
-      [#var prevLexicalStateVar = newVarName("previousLexicalState")]
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
          token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
          try {
@@ -145,6 +145,7 @@
       [#var prevActives = newVarName("previousActives")]
       [#var somethingChanged = newVarName("somethingChanged")]
       EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(token_source.activeTokenTypes);
+      LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
       boolean ${somethingChanged} = ${methodName}(
       [#list tokenActivation.tokenNames as tokenName]
          ${tokenName}[#if tokenName_has_next],[/#if]
@@ -155,8 +156,8 @@
       }
       finally {
          token_source.activeTokenTypes = ${prevActives};
-         if (${somethingChanged}) {
-             token_source.reset(${resetToken});
+         if (${somethingChanged} || ${prevLexicalStateVar} != token_source.lexicalState) {
+             token_source.reset(${resetToken}, ${prevLexicalStateVar});
              nextTokenType= null;
          }
       }
