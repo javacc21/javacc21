@@ -4,6 +4,7 @@ on:
   push:
     branches: [ master ]
     paths:
+        - '**'
         - '!**/*.md'
         - '!.github/workflows/*.yml'
         - '.github/workflows/csharp-tests.yml'
@@ -11,6 +12,7 @@ on:
   pull_request:
     branches: [ master ]
     paths:
+        - '**'
         - '!**/*.md'
         - '!.github/workflows/*.yml'
         - '.github/workflows/csharp-tests.yml'
