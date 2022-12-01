@@ -465,18 +465,27 @@ Assignment :
   |
   SimpleAssignTarget AugAssign =>|| (YieldExpression | StarExpressions)
   |
-  (=>StarTargets "=")+ =>|| (YieldExpression | StarExpressions)
+  (StarTargets "=" =>||)+ (YieldExpression | StarExpressions)
  )
 ;
 
 // Below this point is the new pattern matching stuff
 // introduced in Python 3.10
 
+MatchStatementLA#scan :
+   <MATCH>
+   |
+   <NAME> 
+   ASSERT {getToken(0).getImage().equals("match")}
+   SubjectExpression
+   ":"
+;   
+
 MatchStatement : 
+  SCAN MatchStatementLA =>
    ACTIVATE_TOKENS MATCH ("match") 
    SubjectExpression 
    ":" 
-   =>||
    <NEWLINE>
    <INDENT>
    ACTIVATE_TOKENS CASE (CaseBlock)+

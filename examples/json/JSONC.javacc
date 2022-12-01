@@ -5,6 +5,7 @@ PARSER_PACKAGE=org.parsers.jsonc;
 PARSER_CLASS=JSONCParser;
 DEFAULT_LEXICAL_STATE=JSON;
 MINIMAL_TOKEN;
+LEGACY_GLITCHY_LOOKAHEAD=false;
 
 UNPARSED #Comment :
     <SINGLE_LINE_COMMENT : "//" (~["\n","\r"])*  ("\n"|"\r"|"\r\n") >
