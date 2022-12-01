@@ -54,7 +54,7 @@ BASE_SRC_DIR="../java";
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
 //FAULT_TOLERANT=true;
-LEGACY_GLITCHY_LOOKAHEAD;
+LEGACY_GLITCHY_LOOKAHEAD=false;
 
 INJECT PARSER_CLASS :
     import java.util.*;
@@ -1787,7 +1787,7 @@ Expansion ExpansionUnit :
   }
   [ChildNameInfo(result)] [UpToHere(result)]
   |
-  SCAN [Name "="]<IDENTIFIER>
+  SCAN [Name "=" =>||]<IDENTIFIER>
   => result=NonTerminal [ChildNameInfo(result)] [UpToHere(result)]
   |
   FAIL
