@@ -44,9 +44,9 @@
     import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
     [#set TT=""]
 [/#if]
-import java.util.Arrays;
-import java.util.BitSet;
 import java.util.EnumSet;
+import java.util.BitSet;
+import java.util.Arrays;
 [#if multipleLexicalStates]
   import java.util.EnumMap;
 [/#if]

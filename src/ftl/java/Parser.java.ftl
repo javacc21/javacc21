@@ -38,6 +38,10 @@
 package ${grammar.parserPackage};
 [/#if]
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -48,10 +52,6 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.charset.Charset;
 
 [#if grammar.nodePackage?has_content && grammar.parserPackage! != grammar.nodePackage]
   [#list grammar.nodeNames as node]

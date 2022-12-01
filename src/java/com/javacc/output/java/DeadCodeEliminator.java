@@ -71,6 +71,30 @@ class DeadCodeEliminator extends Node.Visitor {
         for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, fd->isPrivate(fd))) {
             stripUnusedVars(fd);
         }
+
+        // With the remaining field declarations, we add any type names to usedNames
+        // so that we don't remove imports that refer to them. 
+        for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class)) {
+            for (Identifier id : fd.descendantsOfType(Identifier.class)) {
+        // In Foo.Bar.Baz it is only the Foo
+        // that needs to be added to usedNames, for example.
+                if (id.getPrevious().getType() != DOT) {
+                   usedNames.add(id.getImage());
+                }
+            }
+        }
+
+        // Now get rid of unused imports.
+        for (ImportDeclaration imp : jcu.childrenOfType(ImportDeclaration.class)) {
+            if (imp.firstChildOfType(STAR) == null) {
+                List<Identifier> names = imp.descendantsOfType(Identifier.class);
+                Identifier name = names.get(names.size()-1);
+                if (!usedNames.contains(name.getImage())) {
+                    jcu.removeChild(imp);
+                    //System.out.println("Removing: " + imp.getAsString());
+                }
+            }
+        }
     }
 
     private boolean isPrivate(Node node) {
