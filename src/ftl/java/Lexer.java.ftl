@@ -71,6 +71,7 @@
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
@@ -958,8 +959,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
             c.put((char) 0xFFFD);
         }
     }
-    c.limit(c.position());
-    c.rewind();
+    ((Buffer) c).limit(c.position());
+    ((Buffer) c).rewind();
     return c.toString();
     // return new String(bytes, charset);
   }
