@@ -4,7 +4,7 @@ DEFAULT_LEXICAL_STATE=CSHARP;
 PRESERVE_TABS;
 TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
-LEGACY_GLITCHY_LOOKAHEAD;
+LEGACY_GLITCHY_LOOKAHEAD=false;
 
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
@@ -1826,7 +1826,7 @@ LocalVariableDeclarationLA#scan :
    ["ref"] ["readonly"]
    (
       (
-         <IDENTIFIER> ASSERT {getToken(0).getImage().equals("var")}
+         <IDENTIFIER> ASSERT {getToken(0).getImage().equals("var")} =>||
          (<IDENTIFIER>|Tuple) "="
       )
       |
@@ -2058,8 +2058,8 @@ StatementExpression#interface :
    (
       NullConditionalOperations #NullConditionalExpression(2)
       |
-      SCAN 1 {lhs.isAssignableTo()}
-      => (AssignmentOperator ["ref"] Expression) #AssignmentExpression(+1)
+      SCAN 1 {lhs.isAssignableTo()} =>
+      (AssignmentOperator ["ref"] Expression) #AssignmentExpression(+1)
       |
       ASSERT {lhs instanceof StatementExpression} : "Not a statement."
    )

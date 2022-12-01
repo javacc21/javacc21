@@ -1054,6 +1054,7 @@ public class Grammar extends BaseNode {
     public boolean getLegacyGlitchyLookahead() {
         Boolean b = (Boolean) settings.get("LEGACY_GLITCHY_LOOKAHEAD");
         return b == null || b;
+//        return b!=null && b;
     }
 
     public boolean getTreeBuildingEnabled() {
