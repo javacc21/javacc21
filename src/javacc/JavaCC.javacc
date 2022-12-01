@@ -1823,7 +1823,6 @@ Expansion ExpansionUnit :
 ;
 
 UpToHere(Expansion exp) #void :
-   SCAN ~\...\Lookahead =>
    <UP_TO_HERE>
    {
        String img = lastConsumedToken.getImage();

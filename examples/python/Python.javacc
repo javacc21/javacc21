@@ -15,7 +15,7 @@ NODE_PACKAGE = org.parsers.python.ast;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 DEACTIVATE_TOKENS=MATCH,CASE;
-LEGACY_GLITCHY_LOOKAHEAD;
+LEGACY_GLITCHY_LOOKAHEAD=false;
 
 INCLUDE "PythonLexer.javacc" 
 
@@ -459,7 +459,7 @@ SimpleAssignTarget :
 ;
 
 Assignment :
- SCAN (SimpleAssignTarget (":" | AugAssign)) | (StarTargets "=") =>
+ SCAN SimpleAssignTarget (":" | AugAssign) =>|| | StarTargets "=" =>
  (
   SimpleAssignTarget ":" =>|| Expression ["=" AnnotatedRhs]
   |
