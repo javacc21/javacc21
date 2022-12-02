@@ -169,7 +169,7 @@ public class LexicalStateData {
             }
         }
         for (NfaState state : statesInComposite) {
-            state.index = idx++;
+            if (state.index !=0) state.index = idx++;
         }
         allStates.removeIf(state->state.index<0);
     }
