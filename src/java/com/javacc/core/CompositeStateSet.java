@@ -31,7 +31,6 @@ package com.javacc.core;
 import java.util.*;
 
 public class CompositeStateSet {
-
     Set<NfaState> states = new HashSet<>();
     final LexicalStateData lexicalState;
     int index=-1; 
@@ -66,4 +65,17 @@ public class CompositeStateSet {
         return result;    
     }
 
+    // Recursive method to figure out which composite state sets are actually used.
+    // invoke this on a lexical state's initial state. 
+    void findWhatIsUsed(Set<CompositeStateSet> alreadyVisited, Set<CompositeStateSet> usedStates) {
+        if (alreadyVisited.contains(this)) return;
+        alreadyVisited.add(this);
+        if (states.isEmpty()) return;
+        usedStates.add(this);
+        for (NfaState state : states) {
+            NfaState nextState = state.getNextState();
+            if (nextState == null) continue;
+            nextState.getCanonicalState().findWhatIsUsed(alreadyVisited, usedStates);
+        }
+    }
 }

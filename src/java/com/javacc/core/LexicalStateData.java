@@ -142,7 +142,10 @@ public class LexicalStateData {
                 canonicalSetLookup.put(state.getEpsilonMoves(), canonicalSet);
             }
         }
-        canonicalSets = new ArrayList<>(canonicalSetLookup.values());
+        Set<CompositeStateSet> usedStateSets = findUsedStateSets();
+        Set<CompositeStateSet> allStateSets = new HashSet<>(canonicalSetLookup.values());
+        allStateSets.removeIf(set->!usedStateSets.contains(set));
+        canonicalSets = new ArrayList<>(allStateSets);
         CompositeStateSet initialComposite = initialState.getCanonicalState();
         int indexInList = canonicalSets.indexOf(initialComposite);
         Collections.swap(canonicalSets, indexInList, 0);
@@ -154,6 +157,12 @@ public class LexicalStateData {
         for (int i = 0; i<simpleStates.size();i++) {
             simpleStates.get(i).index = i;
         }
+    }
+
+    Set<CompositeStateSet> findUsedStateSets() {
+        Set<CompositeStateSet> result = new HashSet<>();
+        initialState.getCanonicalState().findWhatIsUsed(new HashSet<>(), result);
+        return result;
     }
 
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {
