@@ -113,13 +113,18 @@ public class NfaState {
 
     public RegularExpression getNextStateType() {return nextState.getType();}
 
-    public int getNextStateIndex() {return nextState.getCanonicalState().index;}
+    public int getNextStateIndex() {
+        //int idx = nextState.getCanonicalState().index;
+        //assert idx >=0;
+        //return idx;
+        return nextState.getCanonicalState().index;
+    }
 
     void setNextState(NfaState nextState) {this.nextState = nextState;}
 
     public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
 
-    CompositeStateSet getCanonicalState() {
+    public CompositeStateSet getCanonicalState() {
         return lexicalState.getCanonicalComposite(epsilonMoves);
     }
 

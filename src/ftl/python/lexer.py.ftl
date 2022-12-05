@@ -107,7 +107,10 @@ def check_intervals(ranges, ch):
 [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
 [@GenerateMoveArray nfaState/]
 [/#if]
-[@GenerateNfaStateMethod nfaState/]
+[/#list]
+
+[#list lexicalState.canonicalSets as state]
+[@GenerateNfaStateMethod state/]
 [/#list]
 
 def NFA_FUNCTIONS_${lexicalState.name}_init():
@@ -123,7 +126,7 @@ def NFA_FUNCTIONS_${lexicalState.name}_init():
     [/#list]
 --]
     functions = [
-[#list lexicalState.allNfaStates as state]
+[#list lexicalState.canonicalSets as state]
         ${state.methodName}[#if state_has_next],[/#if]
 [/#list]
     ]
@@ -169,14 +172,10 @@ ${arrayName} = [
 [/#macro]
 
 [#--
-   Generate the method that represents the transition
-   (or transitions if this is a CompositeStateSet)
-   that correspond to an instanceof com.javacc.core.NfaState
+   Generate the method that represents the transitions
+   that correspond to an instanceof com.javacc.core.CompositeStateSet
 --]
 [#macro GenerateNfaStateMethod nfaState]
-  [#if !nfaState.composite]
-     [@GenerateSimpleNfaMethod nfaState/]
-  [#else]
 def ${nfaState.methodName}(ch, next_states, valid_types):
     [#var states = nfaState.orderedStates]
     [#-- sometimes set in the code below --]
@@ -198,18 +197,13 @@ def ${nfaState.methodName}(ch, next_states, valid_types):
       [/#if]
     [/#list]
     return type
-
-  [/#if]
 [/#macro]
 
 [#--
   Generates the code for an NFA state transition
   within a composite state. This code is a bit tricky
   because it consolidates more than one condition in
-  a single conditional block. The jumpOut parameter says
-  whether we can just jump out of the method.
-  (This is based on whether any of the moveRanges
-  for later states overlap. If not, we can jump out.)
+  a single conditional block.
 --]
 [#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup useElif=false]
   [#var nextState = nfaState.nextState.canonicalState]

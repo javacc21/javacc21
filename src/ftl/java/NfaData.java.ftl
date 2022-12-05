@@ -162,7 +162,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 
 [#--
    Generate the method that represents the transitions
-   that correspond to an instanceof com.javacc.core.CompositeNfaState
+   that correspond to an instanceof com.javacc.core.CompositeStateSet
 --]
 [#macro GenerateNfaMethod nfaState]  
     static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
@@ -197,25 +197,6 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
     [/#list]
       return type;
     }
-[/#macro]
-
-[#-- 
-  Generate the code for a simple (non-composite) NFA state
---]
-[#macro GenerateSimpleNfaMethod nfaState]
-  static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
-    [#var type = nfaState.nextStateType]
-      if ([@NfaStateCondition nfaState /]) {
-        [#if nfaState.nextStateIndex >= 0]
-          nextStates.set(${nfaState.nextStateIndex});
-        [/#if]
-      [#if type??]
-        if (validTypes.contains(${TT}${type.label}))
-           return ${TT}${type.label};
-      [/#if]
-    }
-    return null;
-  }
 [/#macro]
 
 [#--
