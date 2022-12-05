@@ -62,20 +62,21 @@ ${is});
   for the given lexical state
 --]
 [#macro GenerateStateCode lexicalState]
+  [#list lexicalState.canonicalSets as state]
+    [@GenerateNfaMethod state /]
+  [/#list]
+
   [#list lexicalState.allNfaStates as nfaState]
     [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
       [@GenerateMoveArray nfaState /]
     [/#if]
-    [#if nfaState.composite]
-       [@GenerateCompositeNfaMethod nfaState /]
-    [#else]
-       [@GenerateSimpleNfaMethod nfaState /]
-    [/#if]
-[/#list]
+  [/#list]
+
+
 
         private static void NFA_FUNCTIONS_${lexicalState.name}Init() {
             var f = new NfaFunction[] {
-[#list lexicalState.allNfaStates as state]
+[#list lexicalState.canonicalSets as state]
                 ${state.methodName}[#if state_has_next],[/#if]
 [/#list]
             };
@@ -109,7 +110,7 @@ ${is});
    Generate the method that represents the transitions
    that correspond to an instanceof com.javacc.core.CompositeNfaState
 --]
-[#macro GenerateCompositeNfaMethod nfaState]
+[#macro GenerateNfaMethod nfaState]
         static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes) {
             TokenType? type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0, useIf=false]
@@ -170,27 +171,6 @@ ${is});
     [/#if]
             }
   [/#if]
-[/#macro]
-
-[#--
-  Generate the code for a simple (non-composite) NFA state
---]
-[#macro GenerateSimpleNfaMethod nfaState]
-        private static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes) {
-[#var type = nfaState.nextStateType]
-            if ([@NfaStateCondition nfaState /]) {
-  [#if nfaState.nextStateIndex >= 0]
-                nextStates.Set(${nfaState.nextStateIndex});
-  [/#if]
-[#if type??]
-                if (validTypes.Contains(${TT}${type.label})) {
-                    return ${TT}${type.label};
-                }
-[/#if]
-            }
-            return null;
-        }
-
 [/#macro]
 
 [#--

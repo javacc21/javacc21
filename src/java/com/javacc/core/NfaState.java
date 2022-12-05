@@ -61,10 +61,6 @@ public class NfaState {
         return index;
     }
 
-    public boolean isComposite() {
-        return false;
-    }
-
     public String getMovesArrayName() {
         String lexicalStateName = lexicalState.getName();
         if (lexicalStateName.equals("DEFAULT")) 
@@ -100,11 +96,6 @@ public class NfaState {
 
     }
 
-    public int getOrdinal() {
-        assert !isComposite();
-        return type == null ? Integer.MAX_VALUE : type.getOrdinal();
-    }
-
     public RegularExpression getType() {return type;}
 
     public LexicalStateData getLexicalState() {return lexicalState;}
@@ -114,9 +105,6 @@ public class NfaState {
     public RegularExpression getNextStateType() {return nextState.getType();}
 
     public int getNextStateIndex() {
-        //int idx = nextState.getCanonicalState().index;
-        //assert idx >=0;
-        //return idx;
         return nextState.getCanonicalState().index;
     }
 
@@ -210,6 +198,10 @@ public class NfaState {
         BitSet bs1 = moveRangesToBS(moves1);
         BitSet bs2 = moveRangesToBS(moves2);
         return bs1.intersects(bs2);
+    }
+
+    private int getOrdinal() {
+        return type == null ? Integer.MAX_VALUE : type.getOrdinal();
     }
 
     static int comparator(NfaState state1, NfaState state2) {
