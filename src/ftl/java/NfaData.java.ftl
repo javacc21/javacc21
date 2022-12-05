@@ -118,7 +118,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
 --]
 [#macro GenerateStateCode lexicalState]
   [#list lexicalState.canonicalSets as state]
-     [@GenerateCompositeNfaMethod state/]
+     [@GenerateNfaMethod state/]
   [/#list]
 
   [#list lexicalState.allNfaStates as state]
@@ -164,7 +164,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
    Generate the method that represents the transitions
    that correspond to an instanceof com.javacc.core.CompositeNfaState
 --]
-[#macro GenerateCompositeNfaMethod nfaState]  
+[#macro GenerateNfaMethod nfaState]  
     static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]

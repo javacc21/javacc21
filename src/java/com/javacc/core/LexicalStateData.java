@@ -46,7 +46,9 @@ public class LexicalStateData {
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
 
-    private Map<Set<NfaState>, CompositeStateSet> canonicalSets = new HashMap<>();
+    private Map<Set<NfaState>, CompositeStateSet> canonicalSetLookup = new HashMap<>();
+    private List<CompositeStateSet> canonicalSets;
+    private List<NfaState> simpleStates;
 
     private Map<String, RegularExpression> caseSensitiveTokenTable = new HashMap<>();
     private Map<String, RegularExpression> caseInsensitiveTokenTable = new HashMap<>();
@@ -69,14 +71,7 @@ public class LexicalStateData {
     }
 
     public List<CompositeStateSet> getCanonicalSets() {
-        List<CompositeStateSet> result = new ArrayList<>(canonicalSets.values());
-        CompositeStateSet initialComposite = initialState.getCanonicalState();
-        int indexInList = result.indexOf(initialComposite);
-        Collections.swap(result, indexInList, 0);
-        for (int i =0; i< result.size();i++) {
-            result.get(i).index = i;
-        }
-        return result;
+        return canonicalSets;
     }
 
     boolean isEmpty() {
@@ -88,11 +83,7 @@ public class LexicalStateData {
     public String getName() {return name;}
 
     public Collection<NfaState> getAllNfaStates() {
-        List<NfaState> result = new ArrayList<>(allStates);
-        for (int i = 0; i<result.size();i++) {
-            result.get(i).index = i;
-        }
-        return result;
+        return simpleStates;
     }
 
     void addTokenProduction(TokenProduction tokenProduction) {
@@ -121,10 +112,10 @@ public class LexicalStateData {
 
     CompositeStateSet getCanonicalComposite(Set<NfaState> stateSet) {
         //assert !stateSet.isEmpty();
-        CompositeStateSet result = canonicalSets.get(stateSet);
+        CompositeStateSet result = canonicalSetLookup.get(stateSet);
         if (result == null) {
             result = new CompositeStateSet(stateSet, this);
-            canonicalSets.put(stateSet, result);
+            canonicalSetLookup.put(stateSet, result);
         }
         return result;
     }
@@ -140,27 +131,29 @@ public class LexicalStateData {
         return choices;
     }
 
-    void generateData() {
+    private void generateData() {
         for (NfaState state : allStates) {
             state.doEpsilonClosure();
         }
         for (NfaState state : allStates) {
-            CompositeStateSet canonicalSet = canonicalSets.get(state.getEpsilonMoves());
+            CompositeStateSet canonicalSet = canonicalSetLookup.get(state.getEpsilonMoves());
             if (canonicalSet == null) {
                 canonicalSet = new CompositeStateSet(state.getEpsilonMoves(), this);
-                canonicalSets.put(state.getEpsilonMoves(), canonicalSet);
+                canonicalSetLookup.put(state.getEpsilonMoves(), canonicalSet);
             }
         }
-        indexStates();
-    }
-
-    void indexStates() {
-        // Make sure that the index of the starting state is zero.
-        int idx = 1;
-        for (NfaState state : allStates) {
-            state.index = idx++;
+        canonicalSets = new ArrayList<>(canonicalSetLookup.values());
+        CompositeStateSet initialComposite = initialState.getCanonicalState();
+        int indexInList = canonicalSets.indexOf(initialComposite);
+        Collections.swap(canonicalSets, indexInList, 0);
+        for (int i =0; i< canonicalSets.size();i++) {
+            canonicalSets.get(i).index = i;
         }
         allStates.removeIf(state->!state.isMoveCodeNeeded());
+        simpleStates = new ArrayList<>(allStates);
+        for (int i = 0; i<simpleStates.size();i++) {
+            simpleStates.get(i).index = i;
+        }
     }
 
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {

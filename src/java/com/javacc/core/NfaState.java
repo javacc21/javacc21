@@ -119,7 +119,7 @@ public class NfaState {
 
     public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
 
-    public CompositeStateSet getCanonicalState() {
+    CompositeStateSet getCanonicalState() {
         return lexicalState.getCanonicalComposite(epsilonMoves);
     }
 
