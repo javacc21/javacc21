@@ -117,20 +117,19 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   for the given lexical state
 --]
 [#macro GenerateStateCode lexicalState]
-  [#list lexicalState.allNfaStates as nfaState]
-    [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
-      [@GenerateMoveArray nfaState/]
-    [/#if]
-    [#if nfaState.composite]
-       [@GenerateCompositeNfaMethod nfaState/]
-    [#else]
-       [@GenerateSimpleNfaMethod nfaState /]
+  [#list lexicalState.canonicalSets as state]
+     [@GenerateCompositeNfaMethod state/]
+  [/#list]
+
+  [#list lexicalState.allNfaStates as state]
+    [#if state.moveRanges.size() >= NFA_RANGE_THRESHOLD]
+      [@GenerateMoveArray state/]
     [/#if]
   [/#list]
 
   static private void NFA_FUNCTIONS_init() {
-    NfaFunction[] functions = new NfaFunction[${lexicalState.allNfaStates.size()}];
-    [#list lexicalState.allNfaStates as state]
+    NfaFunction[] functions = new NfaFunction[${lexicalState.canonicalSets.size()}];
+    [#list lexicalState.canonicalSets as state]
       functions[${state.index}] = ${lexicalState.name}::${state.methodName};
     [/#list]
     [#if multipleLexicalStates]

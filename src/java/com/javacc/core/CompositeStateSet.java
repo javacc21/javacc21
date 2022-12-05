@@ -30,26 +30,24 @@ package com.javacc.core;
 
 import java.util.*;
 
-public class CompositeStateSet extends NfaState {
+public class CompositeStateSet {
 
-    Set<NfaState> states = new HashSet<>(); 
+    Set<NfaState> states = new HashSet<>();
+    final LexicalStateData lexicalState;
+    int index=-1; 
 
     CompositeStateSet(Set<NfaState> states, LexicalStateData lsd) {
-        super(lsd);
         this.states = new HashSet<>(states);
+        this.lexicalState = lsd;
     }
 
-    public boolean isComposite() {
-        return true;
-    }
-
-    public boolean isMoveCodeNeeded() {
-        return true;
-    }
-
+    public int getIndex() {return index;}
 
     public String getMethodName() {
-        return super.getMethodName().replace("NFA_", "NFA_COMPOSITE_");
+        String lexicalStateName = lexicalState.getName();
+        if (lexicalStateName.equals("DEFAULT")) 
+            return "NFA_" + index;
+        return "NFA_" + lexicalStateName + "_" + index; 
     }
 
     public boolean equals(Object other) {

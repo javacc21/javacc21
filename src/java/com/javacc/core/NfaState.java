@@ -66,14 +66,10 @@ public class NfaState {
     }
 
     public String getMovesArrayName() {
-        return getMethodName().replace("NFA_", "NFA_MOVES_");
-    }
-
-    public String getMethodName() {
         String lexicalStateName = lexicalState.getName();
         if (lexicalStateName.equals("DEFAULT")) 
-            return "NFA_" + index;
-        return "NFA_" + lexicalStateName + "_" + index; 
+            return "NFA_MOVES_" + index;
+        return "NFA_MOVES_" + lexicalStateName + "_" + index; 
     }
 
     public List<Integer> getMoveRanges() { return moveRanges; }
@@ -117,22 +113,17 @@ public class NfaState {
 
     public RegularExpression getNextStateType() {return nextState.getType();}
 
-    public int getNextStateIndex() {return nextState.getCanonicalState().getIndex();}
+    public int getNextStateIndex() {return nextState.getCanonicalState().index;}
 
     void setNextState(NfaState nextState) {this.nextState = nextState;}
 
     public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
 
-    public NfaState getCanonicalState() {
-        if (this.isComposite() || epsilonMoves.isEmpty()) return this;
-        if (epsilonMoves.size() == 1) {
-            return epsilonMoves.iterator().next();
-        }
+    public CompositeStateSet getCanonicalState() {
         return lexicalState.getCanonicalComposite(epsilonMoves);
     }
 
     boolean isMoveCodeNeeded() {
-        if (getCanonicalState().isComposite()) return false;
         if (nextState == null) return false;
         return nextState.type != null || !nextState.epsilonMoves.isEmpty();
     }

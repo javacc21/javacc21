@@ -68,6 +68,17 @@ public class LexicalStateData {
         return grammar;
     }
 
+    public List<CompositeStateSet> getCanonicalSets() {
+        List<CompositeStateSet> result = new ArrayList<>(canonicalSets.values());
+        CompositeStateSet initialComposite = initialState.getCanonicalState();
+        int indexInList = result.indexOf(initialComposite);
+        Collections.swap(result, indexInList, 0);
+        for (int i =0; i< result.size();i++) {
+            result.get(i).index = i;
+        }
+        return result;
+    }
+
     boolean isEmpty() {
         return regularExpressions.isEmpty();
     }
@@ -78,7 +89,9 @@ public class LexicalStateData {
 
     public Collection<NfaState> getAllNfaStates() {
         List<NfaState> result = new ArrayList<>(allStates);
-        Collections.sort(result, (first,second)->first.index-second.index);
+        for (int i = 0; i<result.size();i++) {
+            result.get(i).index = i;
+        }
         return result;
     }
 
@@ -106,11 +119,8 @@ public class LexicalStateData {
         return result;
     }
 
-    NfaState getCanonicalComposite(Set<NfaState> stateSet) {
-        assert stateSet.size() >1;
-        if (stateSet.size() == 1) {
-            return stateSet.iterator().next();
-        }
+    CompositeStateSet getCanonicalComposite(Set<NfaState> stateSet) {
+        //assert !stateSet.isEmpty();
         CompositeStateSet result = canonicalSets.get(stateSet);
         if (result == null) {
             result = new CompositeStateSet(stateSet, this);
@@ -134,44 +144,23 @@ public class LexicalStateData {
         for (NfaState state : allStates) {
             state.doEpsilonClosure();
         }
-        addCompositeStates();
-        indexStates();
-    }
-
-    void addCompositeStates() {
-        for (NfaState state : new ArrayList<>(allStates))  {
-            NfaState canonicalState = state.getCanonicalState();
-            if (state != canonicalState) {
-                allStates.add(state.getCanonicalState());
-                allStates.remove(state);
+        for (NfaState state : allStates) {
+            CompositeStateSet canonicalSet = canonicalSets.get(state.getEpsilonMoves());
+            if (canonicalSet == null) {
+                canonicalSet = new CompositeStateSet(state.getEpsilonMoves(), this);
+                canonicalSets.put(state.getEpsilonMoves(), canonicalSet);
             }
         }
+        indexStates();
     }
 
     void indexStates() {
         // Make sure that the index of the starting state is zero.
-        initialState = initialState.getCanonicalState();
-        initialState.index = 0;
         int idx = 1;
-        Set<NfaState> statesInComposite = new HashSet<>();
         for (NfaState state : allStates) {
-            if (state.index!=0 && state.isComposite()) {
-                state.index = idx++;
-                statesInComposite.addAll(((CompositeStateSet) state).states);
-            }
+            state.index = idx++;
         }
-        for (NfaState state : allStates) {
-            if (state.index!=0 
-                && !state.isComposite()
-                &&state.isMoveCodeNeeded() 
-                && !statesInComposite.contains(state)) {
-                   state.index = idx++;
-            }
-        }
-        for (NfaState state : statesInComposite) {
-            if (state.index !=0) state.index = idx++;
-        }
-        allStates.removeIf(state->state.index<0);
+        allStates.removeIf(state->!state.isMoveCodeNeeded());
     }
 
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {
