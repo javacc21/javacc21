@@ -320,6 +320,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
      * @return the next token of any sort (parsed or unparsed or invalid)
      */
     public Token nextCachedToken() {
+        if (getType() == TokenType.EOF) return null;
 [#if !grammar.minimalToken]        
         if (appendedToken != null) return appendedToken;
 [/#if]        
@@ -440,7 +441,7 @@ public class Token implements ${grammar.constantsClassName} ${extendsNode} {
                 return currentPoint.nextCachedToken() != null;
             }
             public Token next() {
-                Token next = currentPoint.nextCachedToken();
+                Token next= currentPoint.nextCachedToken();                
                 if (next == null) throw new java.util.NoSuchElementException("No next token!");
                 return currentPoint = next;
             }
