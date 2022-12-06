@@ -46,9 +46,9 @@ public class LexicalStateData {
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
 
-    private Map<Set<NfaState>, CompositeStateSet> canonicalSetLookup = new HashMap<>();
     private List<CompositeStateSet> canonicalSets;
     private List<NfaState> simpleStates;
+    private Map<Set<NfaState>, CompositeStateSet> canonicalSetLookup = new HashMap<>();
 
     private Map<String, RegularExpression> caseSensitiveTokenTable = new HashMap<>();
     private Map<String, RegularExpression> caseInsensitiveTokenTable = new HashMap<>();
@@ -57,7 +57,7 @@ public class LexicalStateData {
 
     private NfaState initialState;
 
-    Set<NfaState> allStates = new HashSet<>();
+    private Set<NfaState> allStates = new HashSet<>();
     
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -72,6 +72,10 @@ public class LexicalStateData {
 
     public List<CompositeStateSet> getCanonicalSets() {
         return canonicalSets;
+    }
+
+    void addState(NfaState state) {
+        allStates.add(state);
     }
 
     boolean isEmpty() {
@@ -111,7 +115,6 @@ public class LexicalStateData {
     }
 
     CompositeStateSet getCanonicalComposite(Set<NfaState> stateSet) {
-        //assert !stateSet.isEmpty();
         CompositeStateSet result = canonicalSetLookup.get(stateSet);
         if (result == null) {
             result = new CompositeStateSet(stateSet, this);
@@ -132,23 +135,20 @@ public class LexicalStateData {
     }
 
     private void generateData() {
-        for (NfaState state : allStates) {
+        for (NfaState state: allStates) {
             state.doEpsilonClosure();
         }
-        for (NfaState state : allStates) {
-            CompositeStateSet canonicalSet = canonicalSetLookup.get(state.getEpsilonMoves());
-            if (canonicalSet == null) {
-                canonicalSet = new CompositeStateSet(state.getEpsilonMoves(), this);
-                canonicalSetLookup.put(state.getEpsilonMoves(), canonicalSet);
-            }
-        }
-        Set<CompositeStateSet> usedStateSets = findUsedStateSets();
-        Set<CompositeStateSet> allStateSets = new HashSet<>(canonicalSetLookup.values());
-        allStateSets.removeIf(set->!usedStateSets.contains(set));
-        canonicalSets = new ArrayList<>(allStateSets);
+        Set<CompositeStateSet> allStateSets = new HashSet<>();
         CompositeStateSet initialComposite = initialState.getCanonicalState();
+        initialComposite.findWhatIsUsed(new HashSet<>(), allStateSets);
+        canonicalSets = new ArrayList<>(allStateSets);        
+        // Make sure the initial state is the first in the list.
         int indexInList = canonicalSets.indexOf(initialComposite);
         Collections.swap(canonicalSets, indexInList, 0);
+        setIndexes();
+    }
+
+    private void setIndexes() {
         for (int i =0; i< canonicalSets.size();i++) {
             canonicalSets.get(i).index = i;
         }
@@ -159,17 +159,11 @@ public class LexicalStateData {
         }
     }
 
-    Set<CompositeStateSet> findUsedStateSets() {
-        Set<CompositeStateSet> result = new HashSet<>();
-        initialState.getCanonicalState().findWhatIsUsed(new HashSet<>(), result);
-        return result;
-    }
-
     List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {
         boolean ignore = tp.isIgnoreCase() || grammar.isIgnoreCase();//REVISIT
         List<RegexpChoice> choices = new ArrayList<>();
-        for (RegexpSpec respec : tp.getRegexpSpecs()) {
-            RegularExpression currentRegexp = respec.getRegexp();
+        for (RegexpSpec regexpSpec : tp.getRegexpSpecs()) {
+            RegularExpression currentRegexp = regexpSpec.getRegexp();
             if (currentRegexp.isPrivate()) {
                 continue;
             }
@@ -178,11 +172,11 @@ public class LexicalStateData {
                 choices.add((RegexpChoice) currentRegexp);
             }
             new NfaBuilder(this, ignore).buildStates(currentRegexp);
-            if (respec.getNextState() != null && !respec.getNextState().equals(this.name))
-                currentRegexp.setNewLexicalState(lexerData.getLexicalState(respec.getNextState()));
+            if (regexpSpec.getNextState() != null && !regexpSpec.getNextState().equals(this.name))
+                currentRegexp.setNewLexicalState(lexerData.getLexicalState(regexpSpec.getNextState()));
 
-            if (respec.getCodeSnippet() != null && !respec.getCodeSnippet().isEmpty()) {
-                currentRegexp.setCodeSnippet(respec.getCodeSnippet());
+            if (regexpSpec.getCodeSnippet() != null && !regexpSpec.getCodeSnippet().isEmpty()) {
+                currentRegexp.setCodeSnippet(regexpSpec.getCodeSnippet());
             }
         }
         return choices;

@@ -85,7 +85,7 @@ public class LexerData {
     public int getMaxNfaStates() {
         int result = 0;
         for (LexicalStateData lsd : lexicalStates) {
-            result = Math.max(result, lsd.allStates.size());
+            result = Math.max(result, lsd.getAllNfaStates().size());
         }
         return result;
     }

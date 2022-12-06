@@ -54,7 +54,7 @@ public class NfaState {
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
-        lexicalState.allStates.add(this);
+        lexicalState.addState(this);
     }
 
     public int getIndex() {
