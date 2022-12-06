@@ -336,7 +336,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
        } 
   }
 
- private ArrayList<ParseState> parseStateStack = new ArrayList<>();
+  private ArrayList<ParseState> parseStateStack = new ArrayList<>();
  
   private void stashParseState() {
       parseStateStack.add(new ParseState());
@@ -350,8 +350,8 @@ void dumpLookaheadCallStack(PrintStream ps) {
      ParseState state = popParseState();
 [#if grammar.treeBuildingEnabled]
      currentNodeScope = state.nodeScope;
-     ${grammar.parserClassName}.this.parsingStack = state.parsingStack;
 [/#if]
+     ${grammar.parserClassName}.this.parsingStack = state.parsingStack;
     if (state.lastConsumed != null) {
         //REVISIT
          lastConsumedToken = state.lastConsumed;

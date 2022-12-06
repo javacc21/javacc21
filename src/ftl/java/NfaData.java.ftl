@@ -47,9 +47,7 @@
 import java.util.EnumSet;
 import java.util.BitSet;
 import java.util.Arrays;
-[#if multipleLexicalStates]
-  import java.util.EnumMap;
-[/#if]
+import java.util.EnumMap;
 
 /**
  * Holder class for the data used by ${grammar.lexerClassName}

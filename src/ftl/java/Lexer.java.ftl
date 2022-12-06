@@ -87,11 +87,16 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
     static final int DEFAULT_TAB_SIZE = ${grammar.tabSize};
 
+[#if !multipleLexicalStates]
+    static final private ${grammar.nfaDataClassName}.NfaFunction[] nfaFunctions= ${grammar.nfaDataClassName}.getFunctionTableMap(null);
+[/#if]
+
 [#if grammar.preserveTabs]
     private int tabSize = DEFAULT_TAB_SIZE;
 
     public void setTabSize(int tabSize) {this.tabSize = tabSize;}
 [/#if]    
+
 
 
   final Token DUMMY_START_TOKEN = new Token();
@@ -256,7 +261,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       }
       if (invalidToken != null) cacheToken(invalidToken);
       cacheToken(token);
-      return invalidToken != null ? invalidToken : token;
+      if (invalidToken != null) {
+        goTo(invalidToken.getEndOffset());
+        return invalidToken;
+      }
+      return token;
     }
 
   /**
@@ -318,8 +327,8 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        // Get the NFA function table current lexical state
        // There is some possibility that there was a lexical state change
        // since the last iteration of this loop!
-      [/#if]
         ${grammar.nfaDataClassName}.NfaFunction[] nfaFunctions= ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
+      [/#if]
         // the core NFA loop
         if (!reachedEnd) do {
             // Holder for the new type (if any) matched on this iteration
@@ -340,21 +349,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
                 }
             }
             nextStates.clear();
-            if (codeUnitsRead == 0) {
-                TokenType returnedType = nfaFunctions[0].apply(curChar, nextStates, activeTokenTypes);
+            int nextActive = codeUnitsRead == 0 ? 0 : currentStates.nextSetBit(0);
+            do {
+                TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes);
                 if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
-                  newType = returnedType;
-                } 
-            } else {
-                int nextActive = currentStates.nextSetBit(0);
-                while (nextActive != -1) {
-                    TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes);
-                    if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
-                      newType = returnedType;
-                    }
-                    nextActive = currentStates.nextSetBit(nextActive+1);
-                } 
-            }
+                    newType = returnedType;
+                }
+                nextActive = codeUnitsRead == 0 ? -1 : currentStates.nextSetBit(nextActive+1);
+            } while (nextActive != -1);
             ++codeUnitsRead;
             if (curChar>0xFFFF) ++codeUnitsRead;
             if (newType != null) {
@@ -663,6 +665,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     private void createLineOffsetsTable() {
         if (content.length() == 0) {
             this.lineOffsets = new int[0];
+            return;
         }
         int lineCount = 0;
         int length = content.length();

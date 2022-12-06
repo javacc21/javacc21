@@ -46,7 +46,6 @@ DEFAULT_LEXICAL_STATE=JAVA;
 // The following tokens are only activated at key points whether
 // they are needed.
 DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
-LEGACY_GLITCHY_LOOKAHEAD=false;
 
 //FAULT_TOLERANT;
 MINIMAL_TOKEN;
