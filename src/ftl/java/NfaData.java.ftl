@@ -126,14 +126,19 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   [/#list]
 
   static private void NFA_FUNCTIONS_init() {
-    NfaFunction[] functions = new NfaFunction[${lexicalState.canonicalSets.size()}];
+    [#if multipleLexicalStates]
+      NfaFunction[] functions = new NfaFunction[]
+    [#else]
+      nfaFunctions = new NfaFunction[]
+    [/#if] 
+    {
     [#list lexicalState.canonicalSets as state]
-      functions[${state.index}] = ${lexicalState.name}::${state.methodName};
+      ${lexicalState.name}::${state.methodName}
+      [#if state_has_next],[/#if]
     [/#list]
+    };
     [#if multipleLexicalStates]
       functionTableMap.put(LexicalState.${lexicalState.name}, functions);
-    [#else]
-      nfaFunctions = functions;
     [/#if]
   }
 [/#macro]
@@ -150,11 +155,13 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
     static private int[] ${arrayName} = ${arrayName}_init();
 
     static private int[] ${arrayName}_init() {
-        int[] result = new int[${nfaState.moveRanges.size()}];
+        return new int[]
+        {
         [#list nfaState.moveRanges as char]
-          result[${char_index}] = ${grammar.utils.displayChar(char)};
+          ${grammar.utils.displayChar(char)}
+          [#if char_has_next],[/#if]
         [/#list]
-        return result;
+        };
     }
 [/#macro] 
 

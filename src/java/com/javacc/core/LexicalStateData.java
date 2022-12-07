@@ -1,5 +1,4 @@
-/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
- * Copyright (c) 2006, Sun Microsystems Inc.
+/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@congocc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +39,7 @@ import com.javacc.parser.tree.TokenProduction;
 
 public class LexicalStateData {
 
-    private Grammar grammar;
-    private LexerData lexerData;
+    final Grammar grammar;
     private String name;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
@@ -61,17 +59,18 @@ public class LexicalStateData {
     
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
-        this.lexerData = grammar.getLexerData();
         this.name = name;
         initialState = new NfaState(this);
     }
 
-    Grammar getGrammar() {
-        return grammar;
-    }
-
     public List<CompositeStateSet> getCanonicalSets() {
         return canonicalSets;
+    }
+
+    public String getName() {return name;}
+
+    public List<NfaState> getAllNfaStates() {
+        return simpleStates;
     }
 
     void addState(NfaState state) {
@@ -81,14 +80,8 @@ public class LexicalStateData {
     boolean isEmpty() {
         return regularExpressions.isEmpty();
     }
-   
-    public NfaState getInitialState() {return initialState;}
 
-    public String getName() {return name;}
-
-    public Collection<NfaState> getAllNfaStates() {
-        return simpleStates;
-    }
+    NfaState getInitialState() {return initialState;}
 
     void addTokenProduction(TokenProduction tokenProduction) {
         tokenProductions.add(tokenProduction);
@@ -173,7 +166,7 @@ public class LexicalStateData {
             }
             new NfaBuilder(this, ignore).buildStates(currentRegexp);
             if (regexpSpec.getNextState() != null && !regexpSpec.getNextState().equals(this.name))
-                currentRegexp.setNewLexicalState(lexerData.getLexicalState(regexpSpec.getNextState()));
+                currentRegexp.setNewLexicalState(grammar.getLexerData().getLexicalState(regexpSpec.getNextState()));
 
             if (regexpSpec.getCodeSnippet() != null && !regexpSpec.getCodeSnippet().isEmpty()) {
                 currentRegexp.setCodeSnippet(regexpSpec.getCodeSnippet());

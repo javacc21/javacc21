@@ -57,10 +57,6 @@ public class NfaState {
         lexicalState.addState(this);
     }
 
-    public int getIndex() {
-        return index;
-    }
-
     public String getMovesArrayName() {
         String lexicalStateName = lexicalState.getName();
         if (lexicalStateName.equals("DEFAULT")) 
