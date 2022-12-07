@@ -571,7 +571,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
     /**
      * @return the line number from the absolute offset passed in as a parameter
      */
-    int getLineFromOffset(int pos) {
+    public int getLineFromOffset(int pos) {
         if (pos >= content.length()) {
             if (content.charAt(content.length()-1) == '\n') {
                 return startingLine + lineOffsets.length;
@@ -585,7 +585,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         return startingLine-(bsearchResult+2);
     }
 
-    int getCodePointColumnFromOffset(int pos) {
+    /**
+     * @return the column (1-based and in code points)
+     * from the absolute offset passed in as a parameter
+     */
+
+    public int getCodePointColumnFromOffset(int pos) {
         if (pos >= content.length()) return 1;
         if (pos == 0) return startingColumn;
         final int line = getLineFromOffset(pos)-startingLine;
@@ -617,7 +622,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
      * @return the text between startOffset (inclusive)
      * and endOffset(exclusive)
      */
-    String getText(int startOffset, int endOffset) {
+    public String getText(int startOffset, int endOffset) {
         StringBuilder buf = new StringBuilder();
         for (int offset = startOffset; offset < endOffset; offset++) {
             if (tokenLocationTable[offset] != IGNORED) {
@@ -792,14 +797,14 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // Utility methods. Having them here makes it easier to handle things
   // more uniformly in other generation languages.
 
-   protected void setRegionIgnore(int start, int end) {
+   private void setRegionIgnore(int start, int end) {
      for (int i = start; i< end; i++) {
        tokenLocationTable[i] = IGNORED;
      }
      tokenOffsets.clear(start, end);
    }
 
-   protected boolean atLineStart(Token tok) {
+   private boolean atLineStart(Token tok) {
       int offset = tok.getBeginOffset();
       while (offset > 0) {
         --offset;
@@ -810,12 +815,12 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
       return true;
    }
 
-   protected String getLine(Token tok) {
+   private String getLine(Token tok) {
        int lineNum = tok.getBeginLine();
        return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum)+1);
    }
 
-   protected void setLineSkipped(Token tok) {
+   private void setLineSkipped(Token tok) {
        int lineNum = tok.getBeginLine();
        int start = getLineStartOffset(lineNum);
        int end = getLineStartOffset(lineNum+1);
@@ -879,7 +884,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   }
 
   // Annoying kludge really...
-  static public String readToEnd(Reader reader) {
+  static String readToEnd(Reader reader) {
     try {
         return readFully(reader);
     } catch (IOException ioe) {
@@ -889,7 +894,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
 
   static final int BUF_SIZE = 0x10000;
 
-  static public String readFully(Reader reader) throws IOException {
+  static String readFully(Reader reader) throws IOException {
     char[] block = new char[BUF_SIZE];
     int charsRead = reader.read(block);
     if (charsRead < 0) {
