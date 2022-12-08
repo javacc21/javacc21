@@ -85,15 +85,19 @@ import java.util.EnumSet;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
-    static final int DEFAULT_TAB_SIZE = ${grammar.tabSize};
 
 [#if !multipleLexicalStates]
     static final private ${grammar.nfaDataClassName}.NfaFunction[] nfaFunctions= ${grammar.nfaDataClassName}.getFunctionTableMap(null);
 [/#if]
 
+    static final int DEFAULT_TAB_SIZE = ${grammar.tabSize};
+
 [#if grammar.preserveTabs]
     private int tabSize = DEFAULT_TAB_SIZE;
 
+    /**
+     * set the tab size used for location reporting
+     */
     public void setTabSize(int tabSize) {this.tabSize = tabSize;}
 [/#if]    
 
@@ -605,7 +609,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         for (int i = lineStart; i < pos; i++) {
             char ch = content.charAt(i);
             if (ch == '\t') {
+             [#if grammar.preserveTabs]
+                result += tabSize - (result - 1) % tabSize;
+             [#else]
                 result += DEFAULT_TAB_SIZE - (result - 1) % DEFAULT_TAB_SIZE;
+             [/#if]
             } 
             else if (Character.isHighSurrogate(ch)) {
                 ++result;
