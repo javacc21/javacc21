@@ -44,7 +44,7 @@ public class LexicalStateData {
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
 
-    private List<CompositeStateSet> canonicalSets;
+    private List<CompositeStateSet> compositeSets;
     private List<NfaState> simpleStates;
     private Map<Set<NfaState>, CompositeStateSet> canonicalSetLookup = new HashMap<>();
 
@@ -64,7 +64,7 @@ public class LexicalStateData {
     }
 
     public List<CompositeStateSet> getCanonicalSets() {
-        return canonicalSets;
+        return compositeSets;
     }
 
     public String getName() {return name;}
@@ -131,24 +131,22 @@ public class LexicalStateData {
         for (NfaState state: allStates) {
             state.doEpsilonClosure();
         }
-        Set<CompositeStateSet> allStateSets = new HashSet<>();
-        CompositeStateSet initialComposite = initialState.getCanonicalState();
-        initialComposite.findWhatIsUsed(new HashSet<>(), allStateSets);
-        canonicalSets = new ArrayList<>(allStateSets);        
-        // Make sure the initial state is the first in the list.
-        int indexInList = canonicalSets.indexOf(initialComposite);
-        Collections.swap(canonicalSets, indexInList, 0);
-        setIndexes();
-    }
-
-    private void setIndexes() {
-        for (int i =0; i< canonicalSets.size();i++) {
-            canonicalSets.get(i).index = i;
-        }
+        // Get rid of dummy states.
         allStates.removeIf(state->!state.isMoveCodeNeeded());
         simpleStates = new ArrayList<>(allStates);
         for (int i = 0; i<simpleStates.size();i++) {
-            simpleStates.get(i).index = i;
+            simpleStates.get(i).setMovesArrayName(i);
+        }
+        Set<CompositeStateSet> allComposites = new HashSet<>();
+        CompositeStateSet initialComposite = initialState.getComposite();
+        initialComposite.findWhatIsUsed(new HashSet<>(), allComposites);
+        this.compositeSets = new ArrayList<>(allComposites);
+        // Make sure the initial state is the first in the list.
+        int indexInList = compositeSets.indexOf(initialComposite);
+        Collections.swap(compositeSets, indexInList, 0);
+        // Set the index on the various composites
+        for (int i =0; i< compositeSets.size();i++) {
+            compositeSets.get(i).setIndex(i);
         }
     }
 

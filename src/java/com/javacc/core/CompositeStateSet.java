@@ -31,7 +31,7 @@ package com.javacc.core;
 import java.util.*;
 
 public class CompositeStateSet {
-    Set<NfaState> states = new HashSet<>();
+    private Set<NfaState> states = new HashSet<>();
     final LexicalStateData lexicalState;
     int index=-1; 
 
@@ -41,6 +41,8 @@ public class CompositeStateSet {
     }
 
     public int getIndex() {return index;}
+
+    void setIndex(int index) {this.index = index;}
 
     public String getMethodName() {
         String lexicalStateName = lexicalState.getName();
@@ -75,7 +77,7 @@ public class CompositeStateSet {
         for (NfaState state : states) {
             NfaState nextState = state.getNextState();
             if (nextState == null) continue;
-            nextState.getCanonicalState().findWhatIsUsed(alreadyVisited, usedStates);
+            nextState.getComposite().findWhatIsUsed(alreadyVisited, usedStates);
         }
     }
 }

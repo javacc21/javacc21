@@ -43,7 +43,7 @@ public class NfaState {
     private RegularExpression type;
     private NfaState nextState;
     private Set<NfaState> epsilonMoves = new HashSet<>();
-    int index = -1;
+    private String movesArrayName;
 
     // An ordered list of the ranges of characters that this 
     // NfaState "accepts". A single character is stored as a 
@@ -57,11 +57,16 @@ public class NfaState {
         lexicalState.addState(this);
     }
 
-    public String getMovesArrayName() {
+    void setMovesArrayName(int index) {
         String lexicalStateName = lexicalState.getName();
         if (lexicalStateName.equals("DEFAULT")) 
-            return "NFA_MOVES_" + index;
-        return "NFA_MOVES_" + lexicalStateName + "_" + index; 
+            movesArrayName = "NFA_MOVES_" + index;
+        else 
+            movesArrayName = "NFA_MOVES_" + lexicalStateName + "_" + index; 
+    }
+
+    public String getMovesArrayName() {
+        return movesArrayName;
     }
 
     public List<Integer> getMoveRanges() { return moveRanges; }
@@ -101,14 +106,14 @@ public class NfaState {
     public RegularExpression getNextStateType() {return nextState.getType();}
 
     public int getNextStateIndex() {
-        return nextState.getCanonicalState().index;
+        return nextState.getComposite().getIndex();
     }
 
     void setNextState(NfaState nextState) {this.nextState = nextState;}
 
     public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
 
-    public CompositeStateSet getCanonicalState() {
+    public CompositeStateSet getComposite() {
         return lexicalState.getCanonicalComposite(epsilonMoves);
     }
 

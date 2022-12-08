@@ -114,17 +114,6 @@ def check_intervals(ranges, ch):
 [/#list]
 
 def NFA_FUNCTIONS_${lexicalState.name}_init():
-[#--
-    In theory this could be initialized as a normal list, but it's
-    not clear if state.index is always the same as state_index
-
-    Update: it is, see https://github.com/javacc21/javacc21/issues/72
-
-    functions = [None] * ${lexicalState.allNfaStates.size()}
-    [#list lexicalState.allNfaStates as state]
-    functions[${state.index}] = ${state.methodName}
-    [/#list]
---]
     functions = [
 [#list lexicalState.canonicalSets as state]
         ${state.methodName}[#if state_has_next],[/#if]
@@ -153,17 +142,6 @@ nfa_functions = NFA_FUNCTIONS_${lexicalState.name}_init()
 [#macro GenerateMoveArray nfaState]
 [#var moveRanges = nfaState.moveRanges]
 [#var arrayName = nfaState.movesArrayName]
-[#-- No need to create an array and populate one by one - just
-     initialize normally
-
-def ${arrayName}_init():
-     it!
-    result = [0] * ${nfaState.moveRanges.size()}
-[#list nfaState.moveRanges as char]
-    result[${char_index}] = ${grammar.utils.displayChar(char)}
-    return result
-${arrayName} = ${arrayName}_init()
-[/#list--]
 ${arrayName} = [
 [#list nfaState.moveRanges as char]
     ${grammar.utils.displayChar(char)}[#if char_has_next],[/#if]
@@ -206,7 +184,7 @@ def ${nfaState.methodName}(ch, next_states, valid_types):
   a single conditional block.
 --]
 [#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup useElif=false]
-  [#var nextState = nfaState.nextState.canonicalState]
+  [#var nextState = nfaState.nextState.composite]
   [#var type = nfaState.nextState.type]
     [#if isFirstOfGroup]
     [#if useElif]elif[#else]if[/#if] [@NfaStateCondition nfaState /]:
@@ -220,25 +198,6 @@ def ${nfaState.methodName}(ch, next_states, valid_types):
             type = ${TT}${type.label}
      [/#if]
    [/#if]
-[/#macro]
-
-[#--
-  Generate the code for a simple (non-composite) NFA state
---]
-[#macro GenerateSimpleNfaMethod nfaState]
-def ${nfaState.methodName}(ch, next_states, valid_types):
-[#var nextState = nfaState.nextState.canonicalState]
-[#var type = nfaState.nextState.type]
-    if [@NfaStateCondition nfaState /]:
-        [#if nextState.index >= 0]
-        next_states.set(${nextState.index})
-        [/#if]
-      [#if type??]
-        if ${TT}${type.label} in valid_types:
-            return ${TT}${type.label}
-      [/#if]
-    [#--return None--]
-
 [/#macro]
 
 [#--

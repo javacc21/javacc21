@@ -40,9 +40,7 @@ import com.javacc.parser.tree.*;
 
 /**
  * A Visitor object that builds an Nfa start and end state from a Regular expression. This is a
- * result of refactoring some legacy code that used all static methods. NB. This
- * class and the visit methods must be public because of the use of reflection.
- * Ideally, it would all be private and package-private.
+ * result of refactoring some legacy code that used all static methods. 
  * 
  * @author revusky
  */
@@ -107,9 +105,9 @@ class NfaBuilder extends Node.Visitor {
         NfaState state = end = start = new NfaState(lexicalState);
         for (int ch : stringLiteral.getImage().codePoints().toArray()) {
             state.setCharMove(ch, grammar.isIgnoreCase() || ignoreCase);
-            end = new NfaState(lexicalState);
-            state.setNextState(end);
-            state = end;
+            this.end = new NfaState(lexicalState);
+            state.setNextState(this.end);
+            state = this.end;
         }
     }
 

@@ -155,7 +155,7 @@ ${is});
   for later states overlap. If not, we can jump out.)
 --]
 [#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup useElif=false]
-  [#var nextState = nfaState.nextState.canonicalState]
+  [#var nextState = nfaState.nextState.composite]
   [#var type = nfaState.nextState.type]
   [#if isFirstOfGroup]
             [#if useElif]else if[#else]if[/#if] ([@NfaStateCondition nfaState /]) {
