@@ -96,8 +96,7 @@
             no_match = tt not in expected_type_or_types
         if no_match:
             return False
-        if self.remaining_lookahead != UNLIMITED:
-            self.remaining_lookahead -= 1
+        self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
         return True
 
@@ -107,8 +106,7 @@
         tt = peeked_token.type
         if tt != expected_type:
             return False
-        if self.remaining_lookahead != UNLIMITED:
-            self.remaining_lookahead -= 1
+        self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
         return True
 
@@ -117,8 +115,7 @@
         tt = peeked_token.type
         if tt not in expected_types:
             return False
-        if self.remaining_lookahead != UNLIMITED:
-            self.remaining_lookahead -= 1
+        self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
         return True
 

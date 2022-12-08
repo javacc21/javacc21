@@ -84,9 +84,7 @@
             if (System.Array.FindIndex<TokenType>(types, t => t == tt) < 0) {
                 return false;
             }
-            if (_remainingLookahead != UNLIMITED) {
-                _remainingLookahead--;
-            }
+            _remainingLookahead--;
             currentLookaheadToken = peekedToken;
             return true;
         }
@@ -97,9 +95,7 @@
             if (!types.Contains(tt)) {
                 return false;
             }
-            if (_remainingLookahead != UNLIMITED) {
-                _remainingLookahead--;
-            }
+            _remainingLookahead--;
             currentLookaheadToken = peekedToken;
             return true;
         }
