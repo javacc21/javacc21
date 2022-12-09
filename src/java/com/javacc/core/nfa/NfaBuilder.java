@@ -134,14 +134,13 @@ class NfaBuilder extends Node.Visitor {
     }
 
     void visit(RegexpRef ref) {
-        // REVISIT. Can the states generated
-        // here be reused?
         visit(ref.getRegexp());
     }
 
     void visit(RegexpSequence sequence) {
         if (sequence.getUnits().size() == 1) {
             visit(sequence.getUnits().get(0));
+            return;
         }
         NfaState startState = new NfaState(lexicalState);
         NfaState finalState = new NfaState(lexicalState);

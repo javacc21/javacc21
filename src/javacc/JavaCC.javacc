@@ -2229,7 +2229,7 @@ RegexpChoice :
 ;
 
 RegexpChoiceInParen #RegexpChoice : 
-   "(" RegexpSequence() ("|" RegexpSequence())* ")"
+   "(" RegexpSequence ("|" RegexpSequence)* ")"
 ;
 
 INJECT RegexpChoice : 
@@ -2290,9 +2290,11 @@ RepeatedRegexp #void :
   (  "+" #OneOrMoreRegexp(2) 
    | "*" #ZeroOrMoreRegexp(2)
    | "?" #ZeroOrOneRegexp(2) 
-   | "{" t  = <INTEGER_LITERAL> {r1 = ((IntegerLiteral)t).getValue();}
-         [ "," { hasMax = true; } [ t = <INTEGER_LITERAL> {r2=((IntegerLiteral)t).getValue();} ] ]
-     "}" #RepetitionRange(4 + (hasMax ? 1 : 0) + (r2!=-1 ? 1 : 0))
+   | (
+      "{" t  = <INTEGER_LITERAL> {r1 = ((IntegerLiteral)t).getValue();}
+           [ "," { hasMax = true; } [ t = <INTEGER_LITERAL> {r2=((IntegerLiteral)t).getValue();} ] ]
+       "}"
+     ) #RepetitionRange(+1) //(4 + (hasMax ? 1 : 0) + (r2!=-1 ? 1 : 0))
      {
          RepetitionRange range = (RepetitionRange) peekNode();
          range.setMin(r1);
