@@ -31,6 +31,7 @@ package com.javacc.core;
 import java.util.*;
 
 import com.javacc.Grammar;
+import com.javacc.core.nfa.LexicalStateData;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
 

@@ -26,12 +26,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.core;
+package com.javacc.core.nfa;
 
 import java.util.*;
 
 import com.javacc.Grammar;
-import com.javacc.parser.tree.RegexpChoice;
+import com.javacc.core.RegularExpression;
 import com.javacc.parser.tree.RegexpSpec;
 import com.javacc.parser.tree.RegexpStringLiteral;
 import com.javacc.parser.tree.TokenProduction;
@@ -56,7 +56,7 @@ public class LexicalStateData {
 
     private Set<NfaState> allStates = new HashSet<>();
     
-    LexicalStateData(Grammar grammar, String name) {
+    public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
         this.name = name;
         initialState = new NfaState(this);
@@ -76,21 +76,17 @@ public class LexicalStateData {
         allStates.add(state);
     }
 
-    boolean isEmpty() {
-        return regularExpressions.isEmpty();
-    }
-
     NfaState getInitialState() {return initialState;}
 
-    void addTokenProduction(TokenProduction tokenProduction) {
+    public void addTokenProduction(TokenProduction tokenProduction) {
         tokenProductions.add(tokenProduction);
     }
 
-    boolean containsRegularExpression(RegularExpression re) {
+    public boolean containsRegularExpression(RegularExpression re) {
         return regularExpressions.contains(re);
     }
 
-    void addStringLiteral(RegexpStringLiteral re) {
+    public void addStringLiteral(RegexpStringLiteral re) {
         if (re.getIgnoreCase()) {
             caseInsensitiveTokenTable.put(re.getImage().toUpperCase(), re);
         } else {
@@ -98,7 +94,7 @@ public class LexicalStateData {
         }
     }
 
-    RegularExpression getStringLiteral(String image) {
+    public RegularExpression getStringLiteral(String image) {
         RegularExpression result = caseSensitiveTokenTable.get(image);
         if (result == null) {
             result = caseInsensitiveTokenTable.get(image.toUpperCase());
@@ -115,15 +111,14 @@ public class LexicalStateData {
         return result;
     }
 
-    List<RegexpChoice> process() {
-    	List<RegexpChoice> choices = new ArrayList<>();
-        boolean isFirst = true;
+    public void process() {
         for (TokenProduction tp : tokenProductions) {
-            choices.addAll(processTokenProduction(tp, isFirst));
-            isFirst = false;
+            processTokenProduction(tp);
         }
         generateData();
-        return choices;
+        if (regularExpressions.isEmpty()) {
+            grammar.addError("Error: Lexical State " + getName() + " does not contain any token types!");
+        }
     }
 
     private void generateData() {
@@ -150,18 +145,14 @@ public class LexicalStateData {
         }
     }
 
-    List<RegexpChoice> processTokenProduction(TokenProduction tp, boolean isFirst) {
+    private void processTokenProduction(TokenProduction tp) {
         boolean ignore = tp.isIgnoreCase() || grammar.isIgnoreCase();//REVISIT
-        List<RegexpChoice> choices = new ArrayList<>();
         for (RegexpSpec regexpSpec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = regexpSpec.getRegexp();
             if (currentRegexp.isPrivate()) {
                 continue;
             }
             regularExpressions.add(currentRegexp);
-            if (currentRegexp instanceof RegexpChoice) {
-                choices.add((RegexpChoice) currentRegexp);
-            }
             new NfaBuilder(this, ignore).buildStates(currentRegexp);
             if (regexpSpec.getNextState() != null && !regexpSpec.getNextState().equals(this.name))
                 currentRegexp.setNewLexicalState(grammar.getLexerData().getLexicalState(regexpSpec.getNextState()));
@@ -170,6 +161,5 @@ public class LexicalStateData {
                 currentRegexp.setCodeSnippet(regexpSpec.getCodeSnippet());
             }
         }
-        return choices;
     }
 }

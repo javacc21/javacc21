@@ -26,9 +26,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.core;
+package com.javacc.core.nfa;
 
 import java.util.*;
+import com.javacc.core.RegularExpression;
 
 /**
  * Class representing a single state of a Non-deterministic Finite Automaton (NFA)

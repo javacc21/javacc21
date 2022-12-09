@@ -31,8 +31,8 @@ package com.javacc.core;
 import java.util.*;
 
 import com.javacc.Grammar;
+import com.javacc.core.nfa.LexicalStateData;
 import com.javacc.parser.tree.EndOfFile;
-import com.javacc.parser.tree.RegexpChoice;
 import com.javacc.parser.tree.RegexpStringLiteral;
 import com.javacc.parser.tree.TokenProduction;
 
@@ -217,28 +217,8 @@ public class LexerData {
                 lexState.addTokenProduction(tokenProduction);
             }
         }
-        List<RegexpChoice> choices = new ArrayList<RegexpChoice>();
         for (LexicalStateData lexState : lexicalStates) {
-            choices.addAll(lexState.process());
-        }
-        for (RegexpChoice choice : choices) {
-            checkUnmatchability(choice);
-        }
-        for (LexicalStateData lsd : getLexicalStates()) {
-            if (lsd.isEmpty()) {
-                grammar.addError("Error: Lexical State " + lsd.getName() + " does not contain any token types!");
-            }
-        }
-    }
-
-    //What about the case of a regexp existing in multiple lexical states? REVISIT (JR)
-    static private void checkUnmatchability(RegexpChoice choice) {
-        for (RegularExpression curRE : choice.getChoices()) {
-            if (!(curRE).isPrivate() && curRE.getOrdinal() > 0 && curRE.getOrdinal() < choice.getOrdinal()
-                    && curRE.getLexicalState() == choice.getLexicalState()) {
-                choice.getGrammar().addWarning(choice, "Regular Expression choice : " + curRE.getLabel()
-                        + " can never be matched as : " + choice.getLabel());
-            }
+            lexState.process();
         }
     }
 }

@@ -31,6 +31,7 @@ package com.javacc.core;
 import java.util.*;
 
 import com.javacc.Grammar;
+import com.javacc.core.nfa.LexicalStateData;
 import com.javacc.parser.tree.CodeBlock;
 import com.javacc.parser.tree.Name;
 import com.javacc.parser.tree.TokenProduction;
@@ -64,11 +65,11 @@ public abstract class RegularExpression extends Expansion {
         return codeSnippet;
     }
 
-    void setCodeSnippet(CodeBlock codeSnippet) {
+    public void setCodeSnippet(CodeBlock codeSnippet) {
         this.codeSnippet = codeSnippet;
     }
 
-    protected boolean getIgnoreCase() {
+    public boolean getIgnoreCase() {
         TokenProduction tp = firstAncestorOfType(TokenProduction.class);
         if (tp !=null) return tp.isIgnoreCase();
         return getGrammar().isIgnoreCase();//REVISIT
@@ -106,7 +107,7 @@ public abstract class RegularExpression extends Expansion {
         return id;
     }
 
-    protected final void setOrdinal(int id) {
+    public final void setOrdinal(int id) {
         this.id =  id;
     }
 

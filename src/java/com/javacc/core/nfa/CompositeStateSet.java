@@ -26,7 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.core;
+package com.javacc.core.nfa;
 
 import java.util.*;
 

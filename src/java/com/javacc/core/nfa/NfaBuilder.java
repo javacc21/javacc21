@@ -26,13 +26,14 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.javacc.core;
+package com.javacc.core.nfa;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
 import com.javacc.Grammar;
+import com.javacc.core.RegularExpression;
 import com.javacc.parser.Node;
 import com.javacc.parser.tree.*;
 
