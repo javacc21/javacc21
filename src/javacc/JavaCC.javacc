@@ -1,5 +1,4 @@
 /* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
- * Copyright (c) 2006, Sun Microsystems Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,10 +9,9 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse or promote
- *       products derived from this software without specific prior written
- *       permission.
+ *     * Neither the name Jonathan Revusky, nor the names of any contributors 
+ *       may be used to endorse or promote products derived from this software 
+ *       without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -2265,9 +2263,18 @@ RegexpSequence :
 
 INJECT RegexpSequence : 
    import java.util.*;
+   import com.javacc.Grammar;
    import com.javacc.core.RegularExpression;
    extends RegularExpression;
 {
+
+   public RegexpSequence(Grammar grammar, List<RegularExpression> units) {
+       super(grammar);
+       for (RegularExpression re : units) addChild(re);
+   }
+
+   public RegexpSequence() {}
+
    public List<RegularExpression> getUnits() {
        return childrenOfType(RegularExpression.class);
    }
@@ -2283,18 +2290,16 @@ INJECT RegexpSequence :
 RepeatedRegexp #void : 
 {
      int r1 = 0, r2 = -1;
-     Token t;
-     boolean hasMax = false;
 }
   RegexpChoiceInParen
   (  "+" #OneOrMoreRegexp(2) 
    | "*" #ZeroOrMoreRegexp(2)
    | "?" #ZeroOrOneRegexp(2) 
    | (
-      "{" t  = <INTEGER_LITERAL> {r1 = ((IntegerLiteral)t).getValue();}
-           [ "," { hasMax = true; } [ t = <INTEGER_LITERAL> {r2=((IntegerLiteral)t).getValue();} ] ]
+      "{" <INTEGER_LITERAL> {r1 = ((IntegerLiteral)lastConsumedToken).getValue();}
+           [ "," [ <INTEGER_LITERAL> {r2=((IntegerLiteral)lastConsumedToken).getValue();} ] ]
        "}"
-     ) #RepetitionRange(+1) //(4 + (hasMax ? 1 : 0) + (r2!=-1 ? 1 : 0))
+     ) #RepetitionRange(+1) 
      {
          RepetitionRange range = (RepetitionRange) peekNode();
          range.setMin(r1);
@@ -2308,7 +2313,6 @@ INJECT RepetitionRange :
    extends RegularExpression;
 {
     @Property int min = 0, max = -1;
-
 
     public boolean hasMax() {
         return firstChildOfType(COMMA) != null;
