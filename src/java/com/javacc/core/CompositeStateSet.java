@@ -1,4 +1,4 @@
-/* Copyright (c) 2021 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2021-2022 Jonathan Revusky, revusky@congocc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,13 @@ package com.javacc.core;
 
 import java.util.*;
 
+/**
+ * A class representing a composite state set, i.e. 
+ * a set of one or more NfaState objects.
+ * Each instance of this class ends up being implemented 
+ * in the generated code as an instance of the 
+ * XXXNfaData::NfaFunction functional interface. 
+ */
 public class CompositeStateSet {
     private Set<NfaState> states = new HashSet<>();
     final LexicalStateData lexicalState;
@@ -58,7 +65,9 @@ public class CompositeStateSet {
 
     /**
      * We return the NFA states in this composite 
-     * in order (decreasing) of the ordinal of the nextState
+     * in order (decreasing) of the ordinal of the nextState's 
+     * ordinal, i.e. in increasing order of its priority in
+     * terms of pattern matching.
      * @return sorted list of states
      */
     public List<NfaState> getOrderedStates() {
@@ -68,7 +77,7 @@ public class CompositeStateSet {
     }
 
     // Recursive method to figure out which composite state sets are actually used.
-    // invoke this on a lexical state's initial state. 
+    // We invoke this on a lexical state's initial state. 
     void findWhatIsUsed(Set<CompositeStateSet> alreadyVisited, Set<CompositeStateSet> usedStates) {
         if (alreadyVisited.contains(this)) return;
         alreadyVisited.add(this);

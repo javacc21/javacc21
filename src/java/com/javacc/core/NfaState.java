@@ -1,5 +1,4 @@
-/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
- * Copyright (c) 2006, Sun Microsystems Inc.
+/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,10 +9,9 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse or promote
- *       products derived from this software without specific prior written
- *       permission.
+ *     * Neither the name Jonathan Revusky  nor the names of any contributors 
+ *       may be used to endorse or promote products derived from this software 
+ *       without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -50,7 +48,7 @@ public class NfaState {
     // range in which the left side is the same as the right side.
     // Thus, for example, the (ASCII) characters that can start an identifier would be:
     // '$','$','A','Z','_','_',a','z'
-    List<Integer> moveRanges = new ArrayList<>();
+    private List<Integer> moveRanges = new ArrayList<>();
 
     NfaState(LexicalStateData lexicalState) {
         this.lexicalState = lexicalState;
@@ -113,6 +111,10 @@ public class NfaState {
 
     public Set<NfaState> getEpsilonMoves() {return epsilonMoves;}
 
+    /**
+     * @return the CompositeStateSet object that this NfaState is
+     * part of.
+     */
     public CompositeStateSet getComposite() {
         return lexicalState.getCanonicalComposite(epsilonMoves);
     }
@@ -152,25 +154,17 @@ public class NfaState {
         }
     }
 
-    private boolean closureDone;
-
-    /**
-     * This method computes the closure and also updates the type so that any
-     * time there is a move to this state, it can go on epsilon to a new state
-     * in the epsilon moves that might have a lower kind of token number for the
-     * same length.
-     */
-    void doEpsilonClosure() {
-        if (closureDone) return;
-        closureDone = true;
+    void doEpsilonClosure(Set<NfaState> alreadyVisited) {
+        if (alreadyVisited.contains(this)) return;
+        alreadyVisited.add(this);
         // Recursively do closure
         for (NfaState state : new ArrayList<>(epsilonMoves)) {
-            state.doEpsilonClosure();
+            state.doEpsilonClosure(alreadyVisited);
             assert type == null || state.type == null || type == state.type;
             if (type == null) type = state.type;
             for (NfaState otherState : state.epsilonMoves) {
                 addEpsilonMove(otherState);
-                otherState.doEpsilonClosure();
+                otherState.doEpsilonClosure(alreadyVisited);
             }
         }
         addEpsilonMove(this);

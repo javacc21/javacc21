@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@congocc.com
+/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@congocc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,10 +9,9 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
- *       nor the names of any contributors may be used to endorse or promote
- *       products derived from this software without specific prior written
- *       permission.
+ *     * Neither the name Jonathan Revusky nor the names of any contributors 
+ *       may be used to endorse or promote products derived from this software 
+ *       without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -45,7 +44,7 @@ public class LexicalStateData {
     private List<TokenProduction> tokenProductions = new ArrayList<>();
 
     private List<CompositeStateSet> compositeSets;
-    private List<NfaState> simpleStates;
+    private List<NfaState> simpleStates = new ArrayList<>();
     private Map<Set<NfaState>, CompositeStateSet> canonicalSetLookup = new HashMap<>();
 
     private Map<String, RegularExpression> caseSensitiveTokenTable = new HashMap<>();
@@ -57,7 +56,7 @@ public class LexicalStateData {
 
     private Set<NfaState> allStates = new HashSet<>();
     
-    public LexicalStateData(Grammar grammar, String name) {
+    LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
         this.name = name;
         initialState = new NfaState(this);
@@ -128,14 +127,15 @@ public class LexicalStateData {
     }
 
     private void generateData() {
+        Set<NfaState> alreadyVisited = new HashSet<>();
         for (NfaState state: allStates) {
-            state.doEpsilonClosure();
+            state.doEpsilonClosure(alreadyVisited);
         }
         // Get rid of dummy states.
         allStates.removeIf(state->!state.isMoveCodeNeeded());
-        simpleStates = new ArrayList<>(allStates);
-        for (int i = 0; i<simpleStates.size();i++) {
-            simpleStates.get(i).setMovesArrayName(i);
+        for (NfaState state : allStates) {
+            state.setMovesArrayName(simpleStates.size());
+            simpleStates.add(state);
         }
         Set<CompositeStateSet> allComposites = new HashSet<>();
         CompositeStateSet initialComposite = initialState.getComposite();
