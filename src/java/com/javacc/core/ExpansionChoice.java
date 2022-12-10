@@ -96,24 +96,4 @@ public class ExpansionChoice extends Expansion {
         }
         return true;
     }
-
-
-//For now we don't recurse into the various choice sub-expansions.
-// If the following code is uncommented, we end up with a huge slow-down
-// on the Java grammar, for example.
-/*
-    public boolean startsWithLexicalChange() {
-        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
-            if (choice.startsWithLexicalChange()) return true;
-        }
-        return false;
-    }    
-
-    public boolean startsWithGlobalCodeAction() {
-        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
-            if (choice.startsWithGlobalCodeAction()) return true;
-        }
-        return false;
-    }
-*/
 }
