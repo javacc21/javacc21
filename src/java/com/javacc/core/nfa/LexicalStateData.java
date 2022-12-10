@@ -115,10 +115,10 @@ public class LexicalStateData {
         for (TokenProduction tp : tokenProductions) {
             processTokenProduction(tp);
         }
-        generateData();
         if (regularExpressions.isEmpty()) {
             grammar.addError("Error: Lexical State " + getName() + " does not contain any token types!");
         }
+        generateData();
     }
 
     private void generateData() {

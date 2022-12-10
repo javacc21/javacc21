@@ -81,9 +81,11 @@ public class CompositeStateSet {
     void findWhatIsUsed(Set<CompositeStateSet> alreadyVisited, Set<CompositeStateSet> usedStates) {
         if (alreadyVisited.contains(this)) return;
         alreadyVisited.add(this);
+        if (states.isEmpty()) return;
         usedStates.add(this);
         for (NfaState state : states) {
             state.getNextState().getComposite().findWhatIsUsed(alreadyVisited, usedStates);
         }
     }
+
 }
