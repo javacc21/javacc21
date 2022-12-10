@@ -96,8 +96,8 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
   // Just use the canned binary search to check whether the char
   // is in one of the intervals
   private static final boolean checkIntervals(int[] ranges, int ch) {
-    int temp;
-    return (temp = Arrays.binarySearch(ranges, ch)) >=0 || temp%2 == 0;
+    int result = Arrays.binarySearch(ranges, ch);
+    return result >=0 || result%2 == 0;
   }
 
  [#list grammar.lexerData.lexicalStates as lexicalState]
@@ -170,7 +170,7 @@ class ${grammar.nfaDataClassName} implements ${grammar.constantsClassName} {
    that correspond to an instanceof com.javacc.core.CompositeStateSet
 --]
 [#macro GenerateNfaMethod nfaState]  
-    static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
+    static private TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
     [#list states as state]

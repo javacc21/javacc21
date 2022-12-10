@@ -161,7 +161,9 @@ TOKEN #Literal :
   |
   < TEXT_BLOCK_LITERAL:
      "\"\"\"" (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
-        ( ~["\"", "\\"] | "\"" ~["\""] | "\"\"" ~["\""] | <STRING_ESCAPE> | "\\" <LINE_TERMINATOR> )*
+     // This was slightly broken until recently (2022-12-10) 
+     // I think it's okay now. (JR)
+        (("\""){0,2} ((~["\"", "\\"]) | <STRING_ESCAPE> | ("\\" <LINE_TERMINATOR>)))*
      "\"\"\""
   > #StringLiteral
 ;
