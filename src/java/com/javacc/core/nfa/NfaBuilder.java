@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@congocc.org
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,13 +38,20 @@ import com.javacc.parser.Node;
 import com.javacc.parser.tree.*;
 
 /**
- * A Visitor object that builds an Nfa start and end state from a Regular expression. This is a
- * result of refactoring some legacy code that used all static methods. 
+ * A Visitor object that builds an NFA from a Regular expression. 
+ * This visitor object builds a lot of dummy NFA states that are 
+ * effectively a kind of scaffolding that are removed in a separate stage, 
+ * after doing the so-called "epsilon closure". At that point, the various
+ * remaining NfaState objects (the ones that are actually used) are 
+ * consolidated into CompositeStateSet objects that get expressed as
+ * NFA_XXX methods in the generated code.
  * 
  * @author revusky
  */
 class NfaBuilder extends Node.Visitor {
 
+    // the starting and ending NfaState objects
+    // of the last regexp that we "visited"
     private NfaState start, end;
     private boolean ignoreCase;
     private LexicalStateData lexicalState;
@@ -56,6 +63,12 @@ class NfaBuilder extends Node.Visitor {
         this.ignoreCase = ignoreCase;
     }
 
+    /**
+     * This method sets the start and end states
+     * of the regexp passed in. The start state is
+     * then added as an "epsilon move" to the lexical state's
+     * initial state.
+     */
     void buildStates(RegularExpression regularExpression) {
         visit(regularExpression);
         end.setType(regularExpression);

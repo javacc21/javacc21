@@ -195,19 +195,4 @@ public class NfaState {
         BitSet bs2 = moveRangesToBS(moves2);
         return bs1.intersects(bs2);
     }
-
-    private int getOrdinal() {
-        return type == null ? Integer.MAX_VALUE : type.getOrdinal();
-    }
-
-    static int comparator(NfaState state1, NfaState state2) {
-        int result = state2.nextState.getOrdinal() - state1.nextState.getOrdinal();
-        if (result == 0)
-           result = (state1.moveRanges.get(0) - state2.moveRanges.get(0));
-        if (result == 0)
-           result = (state1.moveRanges.get(1) - state2.moveRanges.get(1));
-        if (result ==0)
-           result = state2.moveRanges.size() - state1.moveRanges.size();
-        return result;
-    }
 }

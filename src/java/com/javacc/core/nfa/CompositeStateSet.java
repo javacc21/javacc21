@@ -72,8 +72,23 @@ public class CompositeStateSet {
      */
     public List<NfaState> getOrderedStates() {
         ArrayList<NfaState> result = new ArrayList<>(states);
-        Collections.sort(result, NfaState::comparator);
+        Collections.sort(result, CompositeStateSet::nfaComparator);
         return result;    
+    }
+
+    static private int nfaComparator(NfaState state1, NfaState state2) {
+        int result = getOrdinal(state2.getNextState()) - getOrdinal(state1.getNextState());
+        if (result == 0)
+           result = (state1.getMoveRanges().get(0) - state2.getMoveRanges().get(0));
+        if (result == 0)
+           result = (state1.getMoveRanges().get(1) - state2.getMoveRanges().get(1));
+        if (result ==0)
+           result = state2.getMoveRanges().size() - state2.getMoveRanges().size();
+        return result;
+    }    
+    
+    static private int getOrdinal(NfaState state) {
+        return state.getType() == null ? Integer.MAX_VALUE : state.getType().getOrdinal();
     }
 
     // Recursive method to figure out which composite state sets are actually used.
@@ -87,5 +102,4 @@ public class CompositeStateSet {
             state.getNextState().getComposite().findWhatIsUsed(alreadyVisited, usedStates);
         }
     }
-
 }
