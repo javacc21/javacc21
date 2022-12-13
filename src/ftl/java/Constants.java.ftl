@@ -3,12 +3,16 @@
 package ${grammar.parserPackage};
 [/#if]
 
-/**
- * Token literal values and constants.
- */
+
 
   public interface ${grammar.constantsClassName} {
 
+  /**
+   * The various token types. The first type EOF
+   * and the last type INVALID are auto-generated.
+   * They represent the end of input and invalid input
+   * respectively.
+   */
   public enum TokenType {
      [#list grammar.lexerData.regularExpressions as regexp]
        ${regexp.label},
@@ -25,7 +29,8 @@ package ${grammar.parserPackage};
 
   public enum LexicalState {
   [#list grammar.lexerData.lexicalStates as lexicalState]
-     ${lexicalState.name},
+     ${lexicalState.name}
+     [#if lexicalState_has_next],[/#if]
   [/#list]
    }
 }
