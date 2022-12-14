@@ -185,16 +185,13 @@ INJECT StringLiteral :
   }
 
   @MaxJDK14
-  static public String removeEscapesAndQuotes(String input) {
-      String content = input.substring(1, input.length() - 1);
-      if (content.indexOf('\\') < 0)
-          return content;
+  static public String removeEscapesAndQuotes(String content) {
       StringBuilder buf = new StringBuilder();
-      for (int i = 0; i < content.length(); i++) {
+      for (int i = 1; i < content.length()-1; i++) {
           char ch = content.charAt(i);
           if (ch != '\\') {
               buf.append(ch);
-          } else if (i < content.length() -1) {
+          } else if (i < content.length() -2) {
               char nextChar = content.charAt(++i);
               if (nextChar < '0' || nextChar > '7') {
                   switch (nextChar) {
@@ -211,12 +208,12 @@ INJECT StringLiteral :
                 // Deal with this legacy C handling of octals
                   int octal = nextChar - '0';
                   boolean possibly3digits = octal <=3;
-                  if (i < content.length() - 1) {
+                  if (i < content.length() - 2) {
                       nextChar = content.charAt(i + 1);
                       if (nextChar >= '0' && nextChar <= '7') {
                           octal = octal * 8 + nextChar - '0';
                           i++;
-                          if (possibly3digits && i < content.length() - 1) {
+                          if (possibly3digits && i < content.length() - 2) {
                               nextChar = content.charAt(i + 1);
                               if (nextChar >= '0' && nextChar <= '7') {
                                   octal = octal * 8 + nextChar - '0';

@@ -122,6 +122,8 @@ TOKEN :
   |
   < _UNCACHE_TOKENS : "UNCACHE_TOKENS"> #JavaCCKeyWord
   |
+  < _ACTIVE_TOKENS : "ACTIVE_TOKENS"> #JavaCCKeyWord
+  |
   < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #JavaCCKeyWord
   |
   < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #JavaCCKeyWord
@@ -165,8 +167,10 @@ TOKEN :
   <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
   |
   <_LEXICAL_STATE : "LEXICAL_STATE"> #JavaCCKeyWord
-//  |
-//  < SINGLE_QUOTE_STRING : "'" (~["'", "\\", "\n", "\r"])* "'" >
+  |
+  <SINGLE_QUOTE_STRING:
+      "'" ((~["'", "\\", "\n"])| "\\" ~[]){2,} "'"
+  > #StringLiteral
 }
 
 INJECT BaseNode :
@@ -1982,9 +1986,9 @@ INJECT LexicalStateSwitch : {
 }
 
 TokenActivation : 
-   ("ACTIVATE_TOKENS" | "DEACTIVATE_TOKENS" {CURRENT_NODE.setDeactivate(true);})
-   <IDENTIFIER>
-   ([","] <IDENTIFIER>)*
+   ("ACTIVE_TOKENS" | "ACTIVATE_TOKENS" | "DEACTIVATE_TOKENS" {CURRENT_NODE.setDeactivate(true);})
+   ["+"|"-"] <IDENTIFIER>
+   ([","] ["+"|"-"] <IDENTIFIER>)*
 ;
 
 INJECT TokenActivation : 
@@ -1996,6 +2000,32 @@ INJECT TokenActivation :
         List<String> result = new ArrayList<>();
         for (Identifier id : childrenOfType(Identifier.class)) {
             result.add(id.getImage());
+        }
+        return result;
+    }
+
+    public List<String> getDeactivatedTokens() {
+        List<String> result = new ArrayList<>();
+        for (Identifier id : childrenOfType(Identifier.class)) {
+            if (id.getPrevious().getType() == TokenType.MINUS) {
+                result.add(id.getImage());
+            }
+            else if (isDeactivate() && id.getPrevious().getType() != TokenType.PLUS) {
+                result.add(id.getImage());
+            }
+        }
+        return result;
+    }
+
+    public List<String> getActivatedTokens() {
+        List<String> result = new ArrayList<>();
+        for (Identifier id : childrenOfType(Identifier.class)) {
+            if (id.getPrevious().getType() == TokenType.PLUS) {
+                result.add(id.getImage());
+            }
+            if (!isDeactivate() && id.getPrevious().getType() != TokenType.MINUS) {
+                result.add(id.getImage());
+            }
         }
         return result;
     }

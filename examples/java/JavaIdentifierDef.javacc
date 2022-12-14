@@ -5,11 +5,6 @@
 // The currently chosen approach is to default to the definition
 // in JDK 16, which is, after all, the most recent version.
 //
-// Note that JavaCC21 (like legacy JavaCC) has no awareness of characters
-// that cannot be represented internally in 2 bytes (i.e. the basic multilingual plane)
-// Some extended characters are permissible in Java identifiers, it seems,
-// but all of that is something to be dealt with later, when JavaCC21
-// finally supports the full, current Unicode standard.
 
 #if jdk13 || jdk14
 // JDK13 and JDK14 have identical

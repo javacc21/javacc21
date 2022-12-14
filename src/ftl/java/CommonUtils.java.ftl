@@ -137,18 +137,24 @@
          }
    [#elseif expansion.tokenActivation??]
       [#var tokenActivation = expansion.tokenActivation]
-      [#var methodName = "activateTokenTypes"]
-      [#if tokenActivation.deactivate]
-          [#set methodName = "deactivateTokenTypes"]
-      [/#if]
       [#var prevActives = newVarName("previousActives")]
       [#var somethingChanged = newVarName("somethingChanged")]
       EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(token_source.activeTokenTypes);
-      boolean ${somethingChanged} = ${methodName}(
-      [#list tokenActivation.tokenNames as tokenName]
-         ${tokenName}[#if tokenName_has_next],[/#if]
-      [/#list]
-      );
+      boolean ${somethingChanged} = false;
+      [#if tokenActivation.activatedTokens?size>0]
+         ${somethingChanged} = activateTokenTypes(
+         [#list tokenActivation.activatedTokens as tokenName]
+             ${tokenName}[#if tokenName_has_next],[/#if]
+         [/#list]
+         );
+      [/#if]
+      [#if tokenActivation.deactivatedTokens?size>0]
+         ${somethingChanged} = ${somethingChanged} |= deactivateTokenTypes(
+         [#list tokenActivation.deactivatedTokens as tokenName]
+             ${tokenName}[#if tokenName_has_next],[/#if]
+         [/#list]
+         );
+      [/#if]
       try {
          [#nested/]
       }

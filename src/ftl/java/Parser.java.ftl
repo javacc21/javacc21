@@ -230,8 +230,10 @@ public boolean isCancelled() {return cancelled;}
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.add(tt);
     }
-    token_source.reset(getToken(0));
-    nextTokenType = null;
+    if (result) {
+      token_source.reset(getToken(0));
+      nextTokenType = null;
+    }
     return result;
   }
 
@@ -253,8 +255,10 @@ public boolean isCancelled() {return cancelled;}
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.remove(tt);
     }
-    token_source.reset(getToken(0));
-    nextTokenType = null;
+    if (result) {
+        token_source.reset(getToken(0));
+        nextTokenType = null;
+    }
     return result;
   }
 
