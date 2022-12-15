@@ -130,18 +130,23 @@ ${is}            self.token_source.switch_to(${prevLexicalStateVar})
 ${is}        self._next_token_type = None
 [#elseif expansion.tokenActivation??]
   [#var tokenActivation = expansion.tokenActivation]
-  [#var methodName = "activate_token_types"]
-  [#if tokenActivation.deactivate]
-    [#set methodName = "deactivate_token_types"]
-  [/#if]
   [#var prevActives = newVarName("previousActives")]
   [#var somethingChanged = newVarName("somethingChanged")]
 ${is}${prevActives} = _Set(self.token_source.active_token_types)
-${is}${somethingChanged} = self.${methodName}(
-  [#list tokenActivation.tokenNames as tokenName]
+${somethingChanged} = False
+[#if tokenActivation.deactivatedTokens?size>0]
+${is}${somethingChanged} = ${somethingChanged} or self.deactivate_token_types(
+  [#list tokenActivation.deactivatedTokens as tokenName]
 ${is}    ${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
 ${is})
+[#if tokenActivation.activatedTokens?size>0]
+${is}${somethingChanged} = ${somethingChanged} or self.activate_token_types(
+  [#list tokenActivation.activatedTokens as tokenName]
+${is}    ${tokenName}[#if tokenName_has_next],[/#if]
+  [/#list]
+${is})
+[/#if]
 ${is}try:
   [#nested indent + 4 /]
 ${is}finally:
@@ -155,11 +160,3 @@ ${is}        self._next_token_type = None
 [#-- ${is}# DBG < HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [/#macro]
 
-[#-- macro BitSetFromLongArray bitSet]
-      BitSet.valueOf(new long[] {
-          [#list bitSet.toLongArray() as long]
-             ${grammar.utils.toHexStringL(long)}
-             [#if long_has_next],[/#if]
-          [/#list]
-      })
-[/#macro --]

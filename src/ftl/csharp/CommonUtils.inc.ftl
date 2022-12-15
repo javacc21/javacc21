@@ -1,4 +1,5 @@
 [#ftl strict_vars=true]
+
 [#--
   Copyright (C) 2008-2020 Jonathan Revusky, revusky@javacc.com
   Copyright (C) 2021 Vinay Sajip, vinay_sajip@yahoo.co.uk
@@ -124,18 +125,24 @@ ${is}    }
 ${is}}
 [#elseif expansion.tokenActivation??]
   [#var tokenActivation = expansion.tokenActivation]
-  [#var methodName = "ActivateTokenTypes"]
-  [#if tokenActivation.deactivate]
-    [#set methodName = "DeactivateTokenTypes"]
-  [/#if]
   [#var prevActives = newVarName("previousActives")]
   [#var somethingChanged = newVarName("somethingChanged")]
 ${is}var ${prevActives} = new HashSet<TokenType>(tokenSource.ActiveTokenTypes);
-${is}var ${somethingChanged} = ${methodName}(
-  [#list tokenActivation.tokenNames as tokenName]
+${is}var ${somethingChanged} = false;
+[#if tokenActivation.activatedTokens?size > 0]
+${is}${somethingChanged} = ActivateTokenTypes(
+  [#list tokenActivation.activatedTokens as tokenName]
 ${is}    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
 ${is});
+[/#if]
+[#if tokenActivation.deactivatedTokens?size > 0]
+${is}${somethingChanged} = ${somethingChanged} || DeactivateTokenTypes(
+  [#list tokenActivation.deactivatedTokens as tokenName]
+${is}    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
+  [/#list]
+${is});
+[/#if]
 ${is}try {
   [#nested indent + 4 /]
 ${is}}
@@ -152,11 +159,3 @@ ${is}}
 [#-- ${is}# DBG < HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [/#macro]
 
-[#-- macro BitSetFromLongArray bitSet]
-      BitSet.valueOf(new long[] {
-          [#list bitSet.toLongArray() as long]
-             ${grammar.utils.toHexStringL(long)}
-             [#if long_has_next],[/#if]
-          [/#list]
-      })
-[/#macro --]

@@ -2023,7 +2023,7 @@ INJECT TokenActivation :
             if (id.getPrevious().getType() == TokenType.PLUS) {
                 result.add(id.getImage());
             }
-            if (!isDeactivate() && id.getPrevious().getType() != TokenType.MINUS) {
+            else if (!isDeactivate() && id.getPrevious().getType() != TokenType.MINUS) {
                 result.add(id.getImage());
             }
         }

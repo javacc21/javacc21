@@ -170,11 +170,3 @@
    [/#if]
 [/#macro]
 
-[#macro BitSetFromLongArray bitSet]
-      BitSet.valueOf(new long[] {
-          [#list bitSet.toLongArray() as long]
-             ${grammar.utils.toHexStringL(long)}
-             [#if long_has_next],[/#if]
-          [/#list]
-      })
-[/#macro]
