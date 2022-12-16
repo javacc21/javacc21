@@ -1,25 +1,27 @@
 // Surprisingly, the various JDK versions I have tested have somewhat  
 // different sets of characters permissible in an identifier!
-// The one exception is that there seems to be no change
-// between jdk13 and jdk14.
+// There is no change between jdk13 and jdk 14. 
+// Also no change between JDK15, JDK16, JDK17, and JDK18.
+// Somehow the JDK version of what an identifier is changed somewhat.
+// It seems that somewhat more extended unicode characters are included.
 // The currently chosen approach is to default to the definition
-// in JDK 16, which is, after all, the most recent version.
+// in JDK 19, which is, after all, the most recent version.
+// This is unlikely to affect hardly anybody admittedly
 //
-
-#if jdk13 || jdk14
-// JDK13 and JDK14 have identical
-// definitions of a Java identifier
-INCLUDE "Java13IdentifierDef.javacc"
+#if jdk8 || jdk9 || jdk10
+INCLUDE "Java8IdentifierDef.javacc"
 #elif jdk11 || jdk12 
 // Truth is that I didn't have a JDK12 around to test.
 // I don't know if it differs in this respect from JDK11.
 INCLUDE "Java11IdentifierDef.javacc"
-#elif jdk8 || jdk9 || jdk10 
-// Also didn't have a jdk9 or jdk10 to test
-INCLUDE "Java8IdentifierDef.javacc"
-#else
-// JDK17 is unchanged.
-INCLUDE "Java16IdentifierDef.javacc"
+#elif jdk13 || jdk14
+// JDK13 and JDK14 have identical
+// definitions of a Java identifier
+INCLUDE "Java14IdentifierDef.javacc"
+#elif jdk15 || jdk16 || jdk17 || jdk18
+INCLUDE "Java17IdentifierDef.javacc"
+#else 
+   INCLUDE "JAVA19IdentifierDef.javacc"
 #endif
 
 #if false

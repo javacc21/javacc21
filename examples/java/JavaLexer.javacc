@@ -166,6 +166,9 @@ TOKEN #Literal :
   > #StringLiteral
 ;
 
+INJECT CharacterLiteral :
+extends Literal;
+
 INJECT StringLiteral : 
   extends Literal 
 {
