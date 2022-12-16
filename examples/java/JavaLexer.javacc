@@ -123,8 +123,8 @@ TOKEN #KeyWord :
 
 TOKEN #Literal :
   < #STRING_ESCAPE:
-      "\\"
-      ( ["n","t","b","r","f", "s", "\\","'","\""]
+      '\\'
+      ( ["n","t","b","r","f", "s", "\\","'",'"']
       // octal escapes
       | ["0"-"7"] ( ["0"-"7"] )?
       | ["0"-"3"] ["0"-"7"] ["0"-"7"]
@@ -136,33 +136,30 @@ TOKEN #Literal :
   < #LINE_TERMINATOR: "\n" | "\r" | "\r\n" >
   |
   < CHARACTER_LITERAL:
-      "'"
-      (   (~["'","\\","\n","\r"])
-        | ("\\"
-            ( ["n","t","b","r","f","\\","'","\""]
-            | ["0"-"7"] ( ["0"-"7"] )?
-            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
-            )
-          )
+      "'" 
+      (   
+          ~["'","\\","\n","\r"]
+          |
+          <STRING_ESCAPE>
       )
       "'"
   > #CharacterLiteral 
   |
   < STRING_LITERAL:
-      "\""
+      '"'
       (   (~["\"","\\","\n","\r"])
           |
           <STRING_ESCAPE>
       )*
-      "\""
+      '"'
   > #StringLiteral
   |
   < TEXT_BLOCK_LITERAL:
-     "\"\"\"" (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
+     '"""' (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
      // This was slightly broken until recently (2022-12-10) 
      // I think it's okay now. (JR)
-        (("\""){0,2} ((~["\"", "\\"]) | <STRING_ESCAPE> | ("\\" <LINE_TERMINATOR>)))*
-     "\"\"\""
+        (('"'){0,2} ((~['"', '\\']) | <STRING_ESCAPE> | ("\\" <LINE_TERMINATOR>)))*
+     '"""'
   > #StringLiteral
 ;
 

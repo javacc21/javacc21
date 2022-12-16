@@ -80,7 +80,7 @@ class NfaBuilder extends Node.Visitor {
         start = new NfaState(lexicalState);
         end = new NfaState(lexicalState);
         for (CharacterRange cr : ranges) {
-            start.addRange(cr.left, cr.right);
+            start.addRange(cr.getLeft(), cr.getRight());
         }
         start.setNextState(end);
     }
@@ -230,7 +230,7 @@ class NfaBuilder extends Node.Visitor {
     static private BitSet rangeListToBS(List<CharacterRange> ranges) {
         BitSet result = new BitSet();
         for (CharacterRange range : ranges) {
-            result.set(range.left, range.right+1);
+            result.set(range.getLeft(), range.getRight()+1);
         }
         return result;
     }

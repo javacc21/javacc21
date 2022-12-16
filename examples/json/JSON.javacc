@@ -23,13 +23,13 @@ SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r")+>;
 
 // Delimiters
 TOKEN #Delimiter :
-    <COLON : ":">
+    <COLON : ':'>
     |
-    <COMMA : ",">
+    <COMMA : ','>
     |
-    <OPEN_BRACKET : "[">
+    <OPEN_BRACKET : '['>
     |
-    <CLOSE_BRACKET : "]">
+    <CLOSE_BRACKET : ']'>
     |
     <OPEN_BRACE : "{" >
     |
@@ -38,17 +38,17 @@ TOKEN #Delimiter :
 
 // Literals
 TOKEN #Literal :
-    <TRUE: "true"> #BooleanLiteral
+    <TRUE: 'true'> #BooleanLiteral
     |
     <FALSE: "false"> #BooleanLiteral
     |
     <NULL: "null"> #NullLiteral
     |
-    <#ESCAPE1 : "\\" (["\\", "\"", "/","b","f","n","r","t"])>
+    <#ESCAPE1 : '\\' (['\\', '"', '/',"b","f","n","r","t"])>
     |
     <#ESCAPE2 : "\\u" (["0"-"9", "a"-"f", "A"-"F"]) {4}>
     |
-    <#REGULAR_CHAR : ~["\u0000"-"\u001F","\"","\\"]>
+    <#REGULAR_CHAR : ~["\u0000"-"\u001F",'"',"\\"]>
     |
     <STRING_LITERAL : "\"" (<REGULAR_CHAR>|<ESCAPE2>|<ESCAPE1>)* "\""> #StringLiteral
     |

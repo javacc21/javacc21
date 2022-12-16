@@ -169,7 +169,13 @@ TOKEN :
   <_LEXICAL_STATE : "LEXICAL_STATE"> #JavaCCKeyWord
   |
   <SINGLE_QUOTE_STRING:
-      "'" ((~["'", "\\", "\n"])| "\\" ~[]){2,} "'"
+      "'"
+      (
+          ~["'","\\","\n","\r"]
+          |
+          <STRING_ESCAPE>
+      ){2,}
+       "'"
   > #StringLiteral
 }
 
@@ -2174,9 +2180,10 @@ InPlaceRegexp #void :
 ;
 
 RegexpStringLiteral# :
-   <STRING_LITERAL>
+   (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>)
    {
-      String image = ((StringLiteral)lastConsumedToken).getString();
+//      String image = ((StringLiteral)lastConsumedToken).getString();
+      String image = StringLiteral.removeEscapesAndQuotes(lastConsumedToken.getImage());
       CURRENT_NODE.setImage(image);
    }
 ;
@@ -2445,16 +2452,17 @@ INJECT CharacterList :
     }
 
 CharacterRange# :
-    <STRING_LITERAL>
+    (<STRING_LITERAL>|<CHARACTER_LITERAL>)
     [ 
     "-"
-    <STRING_LITERAL>
+    (<STRING_LITERAL>|<CHARACTER_LITERAL>)
    ]
 ;
 
 INJECT CharacterRange :
+  import java.util.ArrayList;
 {
-    public int left, right;
+    @Property int left, right;
     
     public CharacterRange() {} 
     
@@ -2483,15 +2491,31 @@ INJECT CharacterRange :
     }
 
     public void close() {
-        java.util.List<StringLiteral> bounds = childrenOfType(StringLiteral.class);
-        String left = bounds.get(0).getString();
-        if (!isSingleChar(left)) {
+       // java.util.List<StringLiteral> bounds = childrenOfType(StringLiteral.class);
+        java.util.List<Token> bounds = new ArrayList<>();
+        for (Node n : children()) {
+            if (n instanceof StringLiteral) bounds.add((Token) n);
+            if (n instanceof CharacterLiteral) bounds.add((Token) n);
+            if (bounds.size() >1) break;
+        }
+        String leftBound = StringLiteral.removeEscapesAndQuotes(bounds.get(0).getImage());
+        String rightBound = leftBound;
+        if (bounds.size() >1) {
+            rightBound = StringLiteral.removeEscapesAndQuotes(bounds.get(1).getImage());
+        }
+        if (!isSingleChar(leftBound)) {
             getGrammar().addError(bounds.get(0),
                     "String in character list may contain only one character.");
         }
-        this.left = this.right = left.codePointAt(0);
+        this.left = this.right = leftBound.codePointAt(0);
+        if (!leftBound.equals(rightBound)) {
+            if (!isSingleChar(rightBound)) {
+                getGrammar().addError(bounds.get(1),
+                        "String in character list may contain only one character.");
+            }
+        }
         if (bounds.size()>1) {
-            String right = bounds.get(1).getString();
+            String right = StringLiteral.removeEscapesAndQuotes(bounds.get(1).getImage());
             if (!isSingleChar(right)) {
                 getGrammar().addError(bounds.get(1),
                         "String in character list may contain only one character.");
