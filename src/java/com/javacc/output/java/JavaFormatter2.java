@@ -71,12 +71,12 @@ public class JavaFormatter2 extends Node.Visitor {
         if (alwaysAppendSpace.contains(tok.getType())) buf.append(' ');
     }
 
-    public void visit(Token tok) {
+    void visit(Token tok) {
         if (tok.getType() == EOF) buf.append("\n");
         else outputToken(tok);
     }
 
-    public void visit(Operator op) {
+    void visit(Operator op) {
         switch (op.getType()) {
             case LT:
                 if (op.getParent() instanceof RelationalExpression) {
@@ -99,7 +99,7 @@ public class JavaFormatter2 extends Node.Visitor {
         }
     }
 
-    public void visit(Delimiter delimiter) {
+    void visit(Delimiter delimiter) {
         switch (delimiter.getType()) {
             case LBRACE : 
                 outputToken(delimiter);
@@ -109,12 +109,13 @@ public class JavaFormatter2 extends Node.Visitor {
                 }
                 break;
             case RBRACE :
-                if (!(delimiter.getParent() instanceof ArrayInitializer)) {
+                boolean endOfArrayInitializer = delimiter.getParent() instanceof ArrayInitializer;
+                if (!endOfArrayInitializer) {
                     newLine();
                     dedent();
                 } 
                 buf.append("}");
-                newLine();
+                if (!endOfArrayInitializer) newLine();
                 break;
             case HOOK :
                 if (!(delimiter.getParent() instanceof TernaryExpression)) {
@@ -127,13 +128,13 @@ public class JavaFormatter2 extends Node.Visitor {
         }
     }
 
-    public void visit(MultiLineComment comment) {
+    void visit(MultiLineComment comment) {
         startNewLineIfNecessary();
         buf.append(indentText(comment.getImage()));
         newLine();
     }
 
-    public void visit(SingleLineComment comment) {
+    void visit(SingleLineComment comment) {
         if (startsNewLine(comment)) {
             newLine();
         }
@@ -141,20 +142,19 @@ public class JavaFormatter2 extends Node.Visitor {
         buf.append(currentIndent);
     }
 
-    public void visit(TypeDeclaration td) {
+    void visit(TypeDeclaration td) {
         newLine(true);
         recurse(td);
         newLine(true);
     }
 
-    public void visit(Statement stmt) {
+    void visit(Statement stmt) {
         if (stmt.getParent() instanceof IfStatement) {
             addSpaceIfNecessary();
-        } else {
+        } else if (!(stmt.getParent() instanceof ForStatement)) {
             newLine();
         }
         recurse(stmt);
-        newLine();
     }
 
     // Add a space if the last output char was not whitespace
@@ -187,12 +187,12 @@ public class JavaFormatter2 extends Node.Visitor {
         return buf.toString();
     }
 
-    public void visit(PackageDeclaration pd) {
+    void visit(PackageDeclaration pd) {
         recurse(pd);
         newLine(true);
     }
 
-    public void visit(ImportDeclaration id) {
+    void visit(ImportDeclaration id) {
         recurse(id);
         buf.append(eol);
         if (!(id.nextSibling() instanceof ImportDeclaration)) {
@@ -200,19 +200,19 @@ public class JavaFormatter2 extends Node.Visitor {
         }
     }
 
-    public void visit(MethodDeclaration md) {
+    void visit(MethodDeclaration md) {
         if (!(md.previousSibling() instanceof MethodDeclaration) && !(md.previousSibling() instanceof ConstructorDeclaration)) newLine(true);
         recurse(md);
         newLine(true);
     }
 
-    public void visit(ConstructorDeclaration cd) {
+    void visit(ConstructorDeclaration cd) {
         if (!(cd.previousSibling() instanceof MethodDeclaration) && !(cd.previousSibling() instanceof ConstructorDeclaration)) newLine(true);
         recurse(cd);
         newLine(true);
     }
 
-    public void visit(FieldDeclaration fd) {
+    void visit(FieldDeclaration fd) {
         if (!(fd.previousSibling() instanceof FieldDeclaration)) {
             newLine();
         }
@@ -220,12 +220,12 @@ public class JavaFormatter2 extends Node.Visitor {
         newLine();
     }
 
-    public void visit(LocalVariableDeclaration lvd) {
+    void visit(LocalVariableDeclaration lvd) {
         if (!(lvd.getParent() instanceof ForStatement)) newLine();
         recurse(lvd);
     }
 
-    public void visit(Annotation ann) {
+    void visit(Annotation ann) {
         if (!(ann.previousSibling() instanceof Annotation)) {
             newLine();
         }

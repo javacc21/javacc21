@@ -197,7 +197,7 @@ INJECT IndentToken :
    }
 }
 
-SKIP : <SPACE : (" " | "\f")+>; 
+SKIP : <SPACE : (' ' | "\f")+>; 
 
 UNPARSED : 
    <CONTINUE_LINE : "\\\n"> #Whitespace
@@ -210,9 +210,9 @@ TOKEN :
 ;
 
 TOKEN #Delimiter :
-   <ASSIGN : "=">
+   <ASSIGN : '='>
    |
-   <AT : "@">
+   <AT : '@'>
    |
    <COLON : ":" >
    |

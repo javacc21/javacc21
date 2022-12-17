@@ -218,7 +218,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
       ) 
       [#if grammar.useCheckedException] throws ParseException [/#if]
       {
-        Token oldToken = lastConsumedToken;
         Token nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
             nextToken = handleUnexpectedTokenType(expectedType, nextToken

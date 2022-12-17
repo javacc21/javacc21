@@ -38,8 +38,8 @@ import com.javacc.parser.Node;
 import com.javacc.parser.tree.*;
 
 /**
- * A Visitor object that builds an NFA from a Regular expression. 
- * This visitor object builds a lot of dummy NFA states that are 
+ * A Visitor object that builds a "finite automaton" from a Regular expression. 
+ * This visitor object builds a lot of dummy states that are 
  * effectively a kind of scaffolding that are removed in a separate stage, 
  * after doing the so-called "epsilon closure". At that point, the various
  * remaining NfaState objects (the ones that are actually used) are 
