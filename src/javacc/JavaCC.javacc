@@ -54,6 +54,20 @@ DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 //FAULT_TOLERANT=true;
 LEGACY_GLITCHY_LOOKAHEAD=false;
 
+INJECT LEXER_CLASS : 
+{
+  // Set whether to generate unparsed tokens for WHITESPACE
+  static public void keepWhitespace(boolean b) {
+    if (b) {
+        skippedTokens.remove(TokenType.WHITESPACE);
+        unparsedTokens.add(TokenType.WHITESPACE);
+    } else {
+        skippedTokens.add(TokenType.WHITESPACE);
+        unparsedTokens.remove(TokenType.WHITESPACE);
+    }
+  }
+}
+
 INJECT PARSER_CLASS :
     import java.util.*;
     import java.nio.file.Path;
@@ -1128,7 +1142,6 @@ Setting(Map<String,Object> settings) #Setting :
 ;
 
 BNFProduction #com.javacc.core.BNFProduction :
-//BNFProduction #BNFProduction :
 {
     TreeBuildingAnnotation tba = null;
     Token firstToken=getToken(1), id;
@@ -1260,10 +1273,10 @@ TokenProduction #TokenProduction :
     boolean ignoreCase = false;
 }
   [
-    => "<" "*" ">"  {multipleStatesSpecified = true;} 
+    "<" "*" ">" =>||  {multipleStatesSpecified = true;} 
     |
-    "<"
-      <IDENTIFIER>{
+    "<" <IDENTIFIER>
+      {
           firstSpecifiedLexicalState = lastConsumedToken.getImage();
           grammar.addLexicalState(firstSpecifiedLexicalState);
       }
@@ -1379,7 +1392,7 @@ RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
   RegexpExpansion
   {
       regexp = (RegularExpression) peekNode();
-      CURRENT_NODE.addChild(popNode());
+//      CURRENT_NODE.addChild(popNode());
       if (tokenClassName != null) {
           regexp.setGeneratedClassName(tokenClassName);
       }
@@ -2157,7 +2170,7 @@ InPlaceRegexp #void :
    )
    ":"
   ]
-  {clearNodeScope();}
+  {clearNodeScope();} // <=== REVISIT
   RegexpChoice {choice = (RegularExpression) peekNode();} 
   <GT>
   {
@@ -2182,7 +2195,6 @@ InPlaceRegexp #void :
 RegexpStringLiteral# :
    (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>)
    {
-//      String image = ((StringLiteral)lastConsumedToken).getString();
       String image = StringLiteral.removeEscapesAndQuotes(lastConsumedToken.getImage());
       CURRENT_NODE.setImage(image);
    }

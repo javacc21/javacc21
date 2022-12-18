@@ -29,10 +29,17 @@
 package com.javacc.output.congo;
 
 import com.javacc.Grammar;
+import com.javacc.core.BNFProduction;
 import com.javacc.parser.*;
-import com.javacc.parser.JavaCCConstants.TokenType.*;
+import static com.javacc.parser.JavaCCConstants.TokenType.*;
 import com.javacc.parser.tree.*;
 import com.javacc.output.java.JavaFormatter;
+import java.io.IOException;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 
 /**
  * A class to format/lint/cleanup a JavaCC grammar
@@ -40,8 +47,84 @@ import com.javacc.output.java.JavaFormatter;
  * TODO
  */
 
-public class GrammarFormatter extends JavaFormatter {
-    protected void visit(Grammar grammar) {}
+public class GrammarFormatter extends Node.Visitor {
 
-    protected void visit(Token tok) {}
+    static {
+        JavaCCLexer.keepWhitespace(true);
+    }
+
+    {this.visitUnparsedTokens = true;}
+
+    private StringBuilder buffer = new StringBuilder();
+
+    protected void visit(Options options) {
+        Token firstToken = options.firstDescendantOfType(Token.class);
+        boolean legacyOptionBlock = firstToken.getImage().equalsIgnoreCase("options");
+        if (legacyOptionBlock) {
+            for (Token t : firstToken.precedingUnparsedTokens()) {
+                buffer.append(t);
+            }
+        }
+        for (Setting setting : options.childrenOfType(Setting.class)) {
+            visit(setting);
+        }
+        if (legacyOptionBlock) {
+            Token lastToken = (Token) options.getChild(options.getChildCount() -1);
+            for (Token t : lastToken.precedingUnparsedTokens()) {
+                buffer.append(t);
+            }
+        }
+    }
+
+/*    protected void visit(TokenProduction tp) {
+        for (Node child : tp.children()) {
+            buffer.append("KILROY: " + child.getClass().getSimpleName()+"\n");
+        }
+        recurse(tp);
+    }
+
+    protected void visit(RegexpSpec respec) {
+        buffer.append("\nKILROY1\n");
+        for (Node child : respec.children()) {
+            buffer.append(child.getClass().getSimpleName());
+        }
+        buffer.append("\nKILROY2\n");
+        recurse(respec);
+    }*/
+
+    protected void visit(BNFProduction prod) {
+    }
+
+    protected void visit(Token tok) {
+        if (tok.getParent() instanceof TokenProduction) {
+            if (tok.getType() == LBRACE) return;
+            if (tok.getType() == RBRACE) {
+                buffer.append(";");
+                return;
+            }
+        }
+        buffer.append(tok.getImage());
+    }
+
+    static public void main(String[] args) throws IOException {
+        //if (args.length == 0) usage();
+        String filename = "/Users/revusky/projects/javacc/examples/json/JSON.javacc";
+        if (args.length > 0) filename = args[0];
+        Path path = new File(filename).toPath();
+        if (!Files.exists(path)) {
+            System.err.println("File " + path + " does not exist!");
+            System.exit(-1);
+        }
+        Grammar grammar = new Grammar(path.getParent(), "java", 8, false, new HashMap<>());
+        Node root = grammar.parse(path, false);
+        GrammarFormatter formatter = new GrammarFormatter();
+        formatter.visit((BaseNode) root);
+        System.out.println("===========");
+        System.out.println(formatter.buffer);
+    }
+
+    static void usage() {
+        System.out.println("Usage: java com.javacc.output.congo.GrammarFormatter <filename>");
+        System.exit(0);
+    }
 }
