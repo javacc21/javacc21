@@ -29,41 +29,208 @@
 
 package com.javacc.output.java;
 
-import static com.javacc.parser.JavaCCConstants.TokenType;
-import static com.javacc.parser.JavaCCConstants.TokenType.*;
-
 import com.javacc.parser.*;
 import com.javacc.parser.tree.*;
+import com.javacc.parser.JavaCCConstants.TokenType;
+import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
-import java.util.List;
+import java.util.EnumSet;
 
 /**
- * A rather rough-and-ready class for pretty-printing java source code.
+ * A Node.Visitor subclass for pretty-printing java source code.
+ * Doubtless it has some rough edges, but is good enough for our purposes.
  * @author revusky
  */
+public class JavaFormatter extends Node.Visitor {
+     
+    {this.visitUnparsedTokens = true;}
 
-public class JavaFormatter {
-    
-    private Token currentToken, lastToken;
-    private BaseNode parent;
-    private StringBuilder buf = new StringBuilder();
+    protected StringBuilder buf;
     private String indent = "    ";
     private String currentIndent = "";
     private String eol = "\n";
-    
+    private EnumSet<TokenType> alwaysPrependSpace = EnumSet.of(ASSIGN, COLON, LBRACE, HOOK, THROWS);
+    private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, COMMA, DO, FOR, IF, WHILE, THROWS, EXTENDS, HOOK);
+
     public String format(BaseNode code) {
         buf = new StringBuilder();
-        List<Token> allTokens = code.getAllTokens(true);
-        for (Token t :  allTokens) {
-            if (t instanceof Whitespace) {
-                continue;
+        visit(code);
+        return buf.toString();
+    }
+
+    private void outputToken(Token tok) {
+        if (buf.length() >0) {
+            int prevChar = buf.codePointBefore(buf.length());
+            int nextChar = tok.getImage().codePointAt(0);
+            if ((Character.isJavaIdentifierPart(prevChar) || prevChar == ';') && Character.isJavaIdentifierPart(nextChar)) {
+                buf.append(' ');
             }
-            lastToken = currentToken;
-            currentToken = t;
-            parent = (BaseNode) t.getParent();
-            handleToken();
+            else if (alwaysPrependSpace.contains(tok.getType())) buf.append(' ');
+        }
+        buf.append(tok);
+        if (alwaysAppendSpace.contains(tok.getType())) buf.append(' ');
+    }
+
+    protected void visit(Token tok) {
+        if (tok.getType() == EOF) buf.append("\n");
+        else outputToken(tok);
+    }
+
+    protected void visit(Operator op) {
+        switch (op.getType()) {
+            case LT:
+                if (op.getParent() instanceof RelationalExpression) {
+                    addSpaceIfNecessary();
+                    buf.append("< ");
+                } else {
+                    buf.append("<");
+                }
+                break;
+            case GT:
+                if (op.getParent() instanceof RelationalExpression) {
+                    addSpaceIfNecessary();
+                    buf.append("> ");
+                } else {
+                    buf.append(">");
+                    if (op.nextCachedToken().getType() != GT) buf.append(' ');
+                }
+                break;
+            default : outputToken(op);
+        }
+    }
+
+    protected void visit(Delimiter delimiter) {
+        switch (delimiter.getType()) {
+            case LBRACE : 
+                outputToken(delimiter);
+                if (!(delimiter.getParent() instanceof ArrayInitializer)) {
+                    currentIndent += indent;
+                    newLine();
+                }
+                break;
+            case RBRACE :
+                boolean endOfArrayInitializer = delimiter.getParent() instanceof ArrayInitializer;
+                if (!endOfArrayInitializer) {
+                    newLine();
+                    dedent();
+                } 
+                buf.append("}");
+                if (!endOfArrayInitializer) newLine();
+                break;
+            case HOOK :
+                if (!(delimiter.getParent() instanceof TernaryExpression)) {
+                    buf.append(delimiter);
+                } else {
+                    outputToken(delimiter);
+                }
+                break;
+            default : outputToken(delimiter);
+        }
+    }
+
+    protected void visit(MultiLineComment comment) {
+        startNewLineIfNecessary();
+        buf.append(indentText(comment.getImage()));
+        newLine();
+    }
+
+    protected void visit(SingleLineComment comment) {
+        if (startsNewLine(comment)) {
+            newLine();
+        }
+        buf.append(comment.getImage());
+        buf.append(currentIndent);
+    }
+
+    protected void visit(TypeDeclaration td) {
+        newLine(true);
+        recurse(td);
+        newLine(true);
+    }
+
+    protected void visit(Statement stmt) {
+        if (stmt.getParent() instanceof IfStatement) {
+            addSpaceIfNecessary();
+        } else if (!(stmt.getParent() instanceof ForStatement)) {
+            newLine();
+        }
+        recurse(stmt);
+    }
+
+    // Add a space if the last output char was not whitespace
+    private void addSpaceIfNecessary() {
+        if (buf.length()==0) return;
+        int lastChar = buf.codePointBefore(buf.length());
+        if (!Character.isWhitespace(lastChar)) buf.append(' ');
+    }
+
+    private void dedent() {
+        String finalPart = buf.substring(buf.length() - indent.length(), buf.length());
+        if (finalPart.equals(indent)) {
+            buf.setLength(buf.length()-4);
+        }
+        currentIndent = currentIndent.substring(0, currentIndent.length() - indent.length());
+    }
+
+    private boolean startsNewLine(Token t) {
+        Token previousCachedToken = t.previousCachedToken();
+        return previousCachedToken == null || previousCachedToken.getEndLine() != t.getBeginLine();
+    }
+
+    private String indentText(String text) {
+        StringBuilder buf = new StringBuilder();
+        for (String line : text.split("\n")) {
+            buf.append(currentIndent);
+            buf.append(line.trim());
+            buf.append("\n");
         }
         return buf.toString();
+    }
+
+    protected void visit(PackageDeclaration pd) {
+        recurse(pd);
+        newLine(true);
+    }
+
+    protected void visit(ImportDeclaration id) {
+        recurse(id);
+        buf.append(eol);
+        if (!(id.nextSibling() instanceof ImportDeclaration)) {
+            buf.append(eol);
+        }
+    }
+
+    protected void visit(MethodDeclaration md) {
+        if (!(md.previousSibling() instanceof MethodDeclaration) && !(md.previousSibling() instanceof ConstructorDeclaration)) newLine(true);
+        recurse(md);
+        newLine(true);
+    }
+
+    protected void visit(ConstructorDeclaration cd) {
+        if (!(cd.previousSibling() instanceof MethodDeclaration) && !(cd.previousSibling() instanceof ConstructorDeclaration)) newLine(true);
+        recurse(cd);
+        newLine(true);
+    }
+
+    protected void visit(FieldDeclaration fd) {
+        if (!(fd.previousSibling() instanceof FieldDeclaration)) {
+            newLine();
+        }
+        recurse(fd);
+        newLine();
+    }
+
+    protected void visit(LocalVariableDeclaration lvd) {
+        if (!(lvd.getParent() instanceof ForStatement)) newLine();
+        recurse(lvd);
+    }
+
+    protected void visit(Annotation ann) {
+        if (!(ann.previousSibling() instanceof Annotation)) {
+            newLine();
+        }
+        recurse(ann);
+        newLine();
     }
 
     private void startNewLineIfNecessary() {
@@ -81,135 +248,16 @@ public class JavaFormatter {
             buf.append(eol);
         }
     }
-    
+
     private void newLine() {
+        newLine(false);
+    }
+    
+    private void newLine(boolean ensureBlankLine) {
         startNewLineIfNecessary();
+        if (ensureBlankLine) {
+            buf.append(eol);
+        }
         buf.append(currentIndent);
-    }
-    
-    private void handleToken() {
-        switch (currentToken.getType()) {
-            case LBRACE :
-                handleOpenBrace();
-                break;
-            case RBRACE :
-                handleCloseBrace();
-                break;
-            case COLON :
-                if ((parent instanceof ConditionalOrExpression) || (parent instanceof ForStatement)) {
-                    buf.append(" : ");
-                } else {
-                    buf.append(':');
-                    newLine();
-                }
-                break;
-            case SEMICOLON :
-                buf.append(';');
-                if (parent instanceof PackageDeclaration) {
-                    buf.append(eol);
-                    buf.append(eol);
-                }
-                else if (parent instanceof ForStatement) {
-                	if (parent.getChild(parent.getChildCount()-1) != currentToken) {
-                		buf.append(" ");
-                	} else {
-                		newLine();
-                	}
-                }
-                else {
-                    newLine();
-                }
-                break;
-            case RPAREN :
-                buf.append(')');
-                if (parent instanceof Annotation) {
-                    newLine();
-                }
-                break;
-            case MULTI_LINE_COMMENT :
-                newLine();
-                buf.append(currentToken);
-                newLine();
-                break;
-            case SINGLE_LINE_COMMENT : 
-                handleSingleLineComment();
-                break;
-            case ELSE :
-                buf.append("else ");
-                break;
-            case FOR : 
-            	buf.append("for ");
-            	break;
-            case AT :
-            	newLine();
-            	buf.append("@");
-            	break;
-            case COMMA :
-                buf.append(", ");
-                break;
-            default:
-                if (buf.length() > 0 && currentToken.getType() != EOF) {
-                    int lastChar = buf.codePointBefore(buf.length());
-                    int thisChar = currentToken.toString().codePointAt(0);
-                    if ((Character.isJavaIdentifierPart(lastChar) || lastChar == ')' || lastChar == ']') 
-                            && Character.isJavaIdentifierPart(thisChar)) {
-                        buf.append(' ');
-                    }
-                }
-                buf.append(currentToken);
-                TokenType type = currentToken.getType();
-                if (type == IF || type == WHILE || type == GT || type == EQ || type == ASSIGN) {
-                    buf.append(' ');
-                }
-                if (type == IDENTIFIER && parent instanceof Annotation && parent.indexOf(currentToken) == parent.getChildCount()-1) {
-                    newLine();
-                }
-        }
-    }
-    
-    private void handleSingleLineComment() {
-        if (lastToken !=null && lastToken.getEndLine() == currentToken.getBeginLine()) {
-            int lastNL = buf.indexOf(eol);
-            if (lastNL >=0 && buf.substring(lastNL).trim().length() == 0) {
-                buf.setLength(lastNL);
-            }
-        }
-        buf.append(currentToken);
-        newLine();
-    }
-    
-    
-    private void handleOpenBrace() {
-        if (parent instanceof ArrayInitializer) {
-            buf.append('{');
-            return;
-        }
-        buf.append(' ');
-        buf.append('{');
-        currentIndent += indent;
-        newLine();
-    }
-    
-    private void handleCloseBrace() {
-        if (parent == null) {
-            return; //REVISIT
-        }
-        if (parent instanceof ArrayInitializer) {
-            buf.append('}');
-            return;
-        }
-        if (currentIndent.length() >= indent.length()) {
-            currentIndent = currentIndent.substring(0, currentIndent.length() -indent.length());
-        }
-        newLine();
-        buf.append('}');
-        if (parent instanceof TypeDeclaration 
-            || parent instanceof ConstructorDeclaration
-            || parent.getParent() instanceof MethodDeclaration)
-        {
-            buf.append(eol);
-            buf.append(eol);
-        }
-        newLine();
     }
 }
