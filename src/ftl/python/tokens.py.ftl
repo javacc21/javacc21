@@ -67,28 +67,6 @@ class LexicalState(Enum):
     ${lexicalState.name} = auto()
   [/#list]
 
-[#--
-token_strings = [
-    '<EOF>',
-[#list grammar.allTokenProductions as tokenProduction]
-  [#list tokenProduction.regexpSpecs as regexpSpec]
-  [@output_regexp regexpSpec.regexp, tokenProduction_has_next || regexpSpec_has_next /]
-  [/#list]
-[/#list]
-]
-
-[#macro output_regexp regexp, comma]
-  [#if regexp.class.name?ends_with("StringLiteral")]
-    '"${grammar.utils.addEscapes(regexp.image)}"'[#if comma],[/#if]
-  [#elseif regexp.label != ""]
-    '<${regexp.label}>'[#if comma],[/#if]
-  [#else]
-    '<token of kind ${regexp.ordinal}>'[#if comma],[/#if]
-  [/#if]
-[/#macro]
-
---]
-
 class ${grammar.baseNodeClassName}:
 
     __slots__ = (

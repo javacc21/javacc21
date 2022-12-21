@@ -52,10 +52,17 @@ public class JavaFormatter extends Node.Visitor {
     private EnumSet<TokenType> alwaysPrependSpace = EnumSet.of(ASSIGN, COLON, LBRACE, HOOK, THROWS);
     private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, COMMA, DO, FOR, IF, WHILE, THROWS, EXTENDS, HOOK);
 
-    public String format(BaseNode code) {
+    public String format(BaseNode code, int indentLevel) {
         buf = new StringBuilder();
+        for (int i = 0; i < indentLevel; i++) {
+            currentIndent += indent;
+        }
         visit(code);
         return buf.toString();
+    }
+
+    public String format(BaseNode code) {
+        return format(code, 0);
     }
 
     private void outputToken(Token tok) {

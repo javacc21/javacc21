@@ -1264,7 +1264,7 @@ INJECT TreeBuildingAnnotation :
 }
 
 
-TokenProduction #TokenProduction :
+TokenProduction :
 {
     Token t = null;
     String tokenClassName = null;
@@ -1273,7 +1273,7 @@ TokenProduction #TokenProduction :
     boolean ignoreCase = false;
 }
   [
-    "<" "*" ">" =>||  {multipleStatesSpecified = true;} 
+    "<" "*" =>|| ">" {multipleStatesSpecified = true;} 
     |
     "<" <IDENTIFIER>
       {
@@ -1290,8 +1290,8 @@ TokenProduction #TokenProduction :
   ["#" t = <IDENTIFIER> {tokenClassName=t.getImage();}] 
   ":"
   ["{" {useBraces = true;}]
-   RegexpSpec(CURRENT_NODE, tokenClassName)
-   ( "|" RegexpSpec(CURRENT_NODE, tokenClassName) )*
+   RegexpSpec(tokenClassName)
+   ( "|" RegexpSpec(tokenClassName) )*
    (
       SCAN {useBraces} => "}" 
       | 
@@ -1385,19 +1385,23 @@ TokenManagerDecls :
     ClassOrInterfaceBody
 ;
 
-RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
+RegexpSpec(String tokenClassName) #RegexpSpec :
 {
     RegularExpression regexp;
 }
-  RegexpExpansion
-  {
+(
+  RegexpStringLiteral
+  |
+  InPlaceRegexp 
+ )
+ {
       regexp = (RegularExpression) peekNode();
 //      CURRENT_NODE.addChild(popNode());
       if (tokenClassName != null) {
           regexp.setGeneratedClassName(tokenClassName);
       }
-  }
-  [
+ }
+ [
      "#"<IDENTIFIER>
      {
         regexp.setGeneratedSuperClassName(tokenClassName);
@@ -1797,7 +1801,7 @@ Expansion ExpansionUnit :
     lhs = Name
     "="
   ]
-  RegexpExpansion
+  ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile ) 
   {
       RegularExpression re = (RegularExpression) peekNode();
       result = re;
@@ -1806,6 +1810,15 @@ Expansion ExpansionUnit :
             grammar.addInplaceRegexp(re);
       }
   }
+  [
+      SCAN {isInProduction("BNFProduction") && !isInProduction("Lookahead")}
+      =>
+      {
+          RegularExpression regexp = (RegularExpression) peekNode();
+          regexp.setTolerantParsing(true);
+      }
+      "!" {regexp.addChild(popNode());}
+  ]
   [ChildNameInfo(result)] [UpToHere(result)]
   |
   SCAN [Name "=" =>||]<IDENTIFIER>
@@ -2130,28 +2143,6 @@ INJECT CodeBlock :
         return isAppliesInLookahead();
     }
 }
-
-RegexpExpansion #void :
- (
-  RegexpStringLiteral
-  |
-  SCAN ~\.\TokenProduction =>
-  ACTIVATE_TOKENS _EOF (RegexpRef|EndOfFile)
-  |
-  SCAN 3 {isInProduction("TokenProduction")} =>
-  InPlaceRegexp 
- )
- [
-      SCAN {isInProduction("BNFProduction") && !isInProduction("Lookahead")}
-      =>
-      {
-          RegularExpression regexp = (RegularExpression) peekNode();
-          regexp.setTolerantParsing(true);
-      }
-      "!" {regexp.addChild(popNode());}
- ]
-;
-
 
 InPlaceRegexp #void :
 {

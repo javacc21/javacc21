@@ -237,7 +237,7 @@ TOKEN #Literal :
   |
   < #ESCAPED_CHAR :  "\\"
                     (
-                      (["0","a","b","f","n", "r","t","v","\\","'","\""])
+                      (["0","a","b","f","n", "r","t","v","\\","'",'"'])
                       |
                       "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
                       |
@@ -247,7 +247,7 @@ TOKEN #Literal :
   |                                                  
   < #ESCAPED_CHAR2 :  "\\"
                     (
-                      (["0","a","b","f","n", "r","t","v","\\","'","\""])
+                      (["0","a","b","f","n", "r","t","v","\\","'",'"'])
                       |
                       "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
                       |
@@ -257,25 +257,25 @@ TOKEN #Literal :
                     ) 
   >                                                  
   |
-  < REGULAR_STRING_LITERAL : "\"" ((~["\"","\\","\n","\r"]) | <ESCAPED_CHAR2>)* "\""> #StringLiteral
+  < REGULAR_STRING_LITERAL : '"' ((~['"',"\\","\n","\r"]) | <ESCAPED_CHAR2>)* '"'> #StringLiteral
   |
-  < VERBATIM_STRING_LITERAL : "@\"" (~["\""] | "\"\"")* "\"" > #StringLiteral
+  < VERBATIM_STRING_LITERAL : '@"' (~['"'] | '""')* '"' > #StringLiteral
   | 
-  < REGULAR_INTERPOLATION_START : "$\"" >  
+  < REGULAR_INTERPOLATION_START : '$"' >  
   |
-  < MULTI_INTERPOLATION_START : "$@\"" | "@$\"" > 
+  < MULTI_INTERPOLATION_START : '$@"' | '@$"' > 
 ; 
 
 <IN_REGULAR_INTERPOLATION>
 TOKEN :
   // Just any non-interpolated character in an interpolated string.
-  < NON_INTERPOLATED_TEXT : ((~["\"","\\","\n","\r","{","}"]) | "{{" | "}}" | <ESCAPED_CHAR2>)+ >
+  < NON_INTERPOLATED_TEXT : ((~['"',"\\","\n","\r","{","}"]) | "{{" | "}}" | <ESCAPED_CHAR2>)+ >
 ;
 
 <IN_MULTI_INTERPOLATION>
 TOKEN :
   // Just any non-interpolated character in an interpolated string.
-  < NON_INTERPOLATED_TEXT2 : ((~["\"","{","}"] | "\"\"") | "{{" | "}}")+ >
+  < NON_INTERPOLATED_TEXT2 : ((~['"',"{","}"] | '""') | "{{" | "}}")+ >
 ;
 
 <CSHARP, IN_REGULAR_INTERPOLATION, IN_MULTI_INTERPOLATION > 
@@ -285,7 +285,7 @@ TOKEN #Delimiter :
 
 <IN_REGULAR_INTERPOLATION,IN_MULTI_INTERPOLATION >
 TOKEN :
-  < ENDING_QUOTE : "\"" >  
+  < ENDING_QUOTE : '"' >  
 ;  
 
 <IN_IGNORED_SECTION> UNPARSED :
@@ -416,40 +416,5 @@ INJECT CSharpLexer :
        }
        this.parsingOn = parsingOn;
    }
-/*
- * Moved to Lexer class to make it easier to handle in Python/C#
-
-   private void setRegionIgnore(int start, int end) {
-     for (int i = start; i< end; i++) {
-       tokenLocationTable[i] = IGNORED;
-     }
-     tokenOffsets.clear(start, end);
-   }
-
-   private boolean atLineStart(Token tok) {
-      int offset = tok.getBeginOffset();
-      while (offset > 0) {
-        --offset;
-        char c = this.content.charAt(offset);
-        if (!Character.isWhitespace(c)) return false;
-        if (c=='\n') break;
-      }
-      return true;
-   }
-
-   private String getLine(Token tok) {
-       int lineNum = tok.getBeginLine();
-       return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum)+1);
-   }
-
-   private void setLineSkipped(Token tok) {
-       int lineNum = tok.getBeginLine();
-       int start = getLineStartOffset(lineNum);
-       int end = getLineStartOffset(lineNum+1);
-       setRegionIgnore(start, end);
-       tok.setBeginOffset(start);
-       tok.setEndOffset(end);
-   }
- */
 }
 
