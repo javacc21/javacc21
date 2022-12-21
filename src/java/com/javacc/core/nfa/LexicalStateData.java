@@ -154,8 +154,8 @@ public class LexicalStateData {
             }
             regularExpressions.add(currentRegexp);
             new NfaBuilder(this, ignore).buildStates(currentRegexp);
-            if (regexpSpec.getNextState() != null && !regexpSpec.getNextState().equals(this.name)) {
-                currentRegexp.setNewLexicalState(grammar.getLexerData().getLexicalState(regexpSpec.getNextState()));
+            if (regexpSpec.getNextLexicalState() != null && !regexpSpec.getNextLexicalState().equals(this.name)) {
+                currentRegexp.setNewLexicalState(grammar.getLexerData().getLexicalState(regexpSpec.getNextLexicalState()));
             }
             if (regexpSpec.getCodeSnippet() != null && !regexpSpec.getCodeSnippet().isEmpty()) {
                 currentRegexp.setCodeSnippet(regexpSpec.getCodeSnippet());

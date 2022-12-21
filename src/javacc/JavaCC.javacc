@@ -1287,7 +1287,11 @@ TokenProduction :
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
   ]
-  ["#" t = <IDENTIFIER> {tokenClassName=t.getImage();}] 
+  ["#" <IDENTIFIER> {
+    tokenClassName=lastConsumedToken.getImage();
+    CURRENT_NODE.setTokenClassName(tokenClassName);
+    }
+  ] 
   ":"
   ["{" {useBraces = true;}]
    RegexpSpec(tokenClassName)
@@ -1314,6 +1318,7 @@ INJECT TokenProduction :
     import com.javacc.core.LexicalStateData;
 {
     @Property private boolean explicit=true, ignoreCase;
+    @Property String tokenClassName;
 
     private String implicitLexicalState;
     
@@ -1388,15 +1393,33 @@ TokenManagerDecls :
 RegexpSpec(String tokenClassName) #RegexpSpec :
 {
     RegularExpression regexp;
+    boolean isPrivate = false;
+    String image = "";
 }
 (
-  RegexpStringLiteral
+  RegexpStringLiteral {regexp = (RegularExpression) peekNode();}
   |
-  InPlaceRegexp 
+  <LT>
+  [
+    ["#" {isPrivate = true;}]
+    <IDENTIFIER> {image = lastConsumedToken.getImage();}
+    ":"
+  ]
+  RegexpChoice {regexp = (RegularExpression) peekNode();} 
+  <GT>
+  {
+      if (regexp instanceof RegexpRef) {
+        RegexpSequence seq = new RegexpSequence();
+        seq.addChild(regexp);
+        pokeNode(seq);
+        regexp = seq;
+      } 
+      regexp.setLabel(image);
+      regexp.setGeneratedClassName(image);
+      regexp.setPrivate(isPrivate); 
+  }
  )
  {
-      regexp = (RegularExpression) peekNode();
-//      CURRENT_NODE.addChild(popNode());
       if (tokenClassName != null) {
           regexp.setGeneratedClassName(tokenClassName);
       }
@@ -1409,27 +1432,20 @@ RegexpSpec(String tokenClassName) #RegexpSpec :
      }
   ]
   [
-      SCAN {!regexp.isPrivate()} \...\TokenProduction =>
+      SCAN 1 {!regexp.isPrivate()} =>
       Block
   ]
   [ 
-      SCAN {!regexp.isPrivate()} \...\TokenProduction =>
-      ":" <IDENTIFIER>
+      SCAN 1 {!regexp.isPrivate()} =>
+      ":" <IDENTIFIER> {CURRENT_NODE.setNextLexicalState(lastConsumedToken.getImage());}
   ]
 ;
 
 INJECT RegexpSpec : 
    import com.javacc.core.RegularExpression;
 {
-    public String getNextState() {
-        Token nsTok = getNsTok();
-        return nsTok == null ? null : nsTok.toString();
-    }
 
-    public Token getNsTok() {
-        Token colon = firstChildOfType(COLON);
-        return colon == null ? null : colon.getNext();
-    }
+    @Property String nextLexicalState;
 
     public RegularExpression getRegexp() {
          return firstChildOfType(RegularExpression.class);
@@ -1775,10 +1791,8 @@ Expansion ExpansionUnit :
  (
   result=UncacheTokens
   |
- // SCAN 1 ~\...\Lookahead => 
   result = Failure
   |
-//  SCAN 1 ~\...\Lookahead =>
   result=Block ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
   |
   SCAN 1 ~\...\Lookahead =>
@@ -1787,7 +1801,6 @@ Expansion ExpansionUnit :
   SCAN 1 ~\...\Lookahead =>
   result=TryBlock
   |
-//  SCAN 1 ~\...\Lookahead =>
   result = Assertion
   |
   result = ExpansionWithParentheses 
@@ -2144,45 +2157,6 @@ INJECT CodeBlock :
     }
 }
 
-InPlaceRegexp #void :
-{
-    RegularExpression re, choice;
-    String image = "";
-    Token t;
-    boolean isPrivate= false;
-}
-  t=<LT>
-  [
-   (
-     t=<IDENTIFIER> {image = t.getImage();}
-     |
-     SCAN ~\...\BNFProduction 
-     => "#"t=<IDENTIFIER> {image = t.getImage(); isPrivate= true;}
-   )
-   ":"
-  ]
-  {clearNodeScope();} // <=== REVISIT
-  RegexpChoice {choice = (RegularExpression) peekNode();} 
-  <GT>
-  {
-      if (choice instanceof RegexpRef) {
-        RegexpSequence seq = new RegexpSequence();
-        seq.addChild(choice);
-        re = seq;
-      } else {
-        re = choice;
-      }
-      if (image.length() ==0 && isInProduction("BNFProduction")) {
-         grammar.addError(t, "It is mandatory to label an inline regexp in a grammar production.");
-      }
-      re.setLabel(image);
-      re.setGeneratedClassName(image);
-      re.setPrivate(isPrivate); 
-      re.setBeginOffset(t.getBeginOffset());
-      pokeNode(re);
-  }
-;
-
 RegexpStringLiteral# :
    (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>)
    {
@@ -2494,7 +2468,6 @@ INJECT CharacterRange :
     }
 
     public void close() {
-       // java.util.List<StringLiteral> bounds = childrenOfType(StringLiteral.class);
         java.util.List<Token> bounds = new ArrayList<>();
         for (Node n : children()) {
             if (n instanceof StringLiteral) bounds.add((Token) n);

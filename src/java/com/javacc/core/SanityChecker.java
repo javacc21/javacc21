@@ -190,9 +190,10 @@ public class SanityChecker {
 
         // Check that any lexical state referred to actually exists
         for (RegexpSpec res : grammar.descendants(RegexpSpec.class)) {
-            String nextLexicalState = res.getNextState();
+            String nextLexicalState = res.getNextLexicalState();
             if (nextLexicalState != null && lexerData.getLexicalState(nextLexicalState) == null) {
-                grammar.addError(res.getNsTok(), "Lexical state \""
+                Node lastChild = res.getChild(res.getChildCount()-1);
+                grammar.addError(lastChild, "Lexical state \""
                 + nextLexicalState + "\" has not been defined.");
             }
         }
