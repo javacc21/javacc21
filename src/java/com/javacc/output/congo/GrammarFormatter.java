@@ -30,6 +30,7 @@ package com.javacc.output.congo;
 
 import com.javacc.Grammar;
 import com.javacc.core.BNFProduction;
+import com.javacc.core.NonTerminal;
 import com.javacc.parser.*;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 import com.javacc.parser.tree.*;
@@ -53,12 +54,19 @@ public class GrammarFormatter extends Node.Visitor {
 
     {this.visitUnparsedTokens = true;}
 
+    private Grammar grammar;
     private StringBuilder buffer = new StringBuilder();
-    private boolean passWhitespaceThrough=true, inOptions, inBNFProduction;
+    private boolean passWhitespaceThrough=true;
+
+    private Map<String, JavacodeProduction> javacodeProductions = new HashMap<>();
+    private String packageFromDecl, parserClassFromDecl;
+
+    public GrammarFormatter(Grammar grammar) {
+        this.grammar = grammar;
+    }
 
 
     void visit(Options options) {
-        inOptions = true;
         Token firstToken = options.firstDescendantOfType(Token.class);
         boolean legacyOptionBlock = firstToken.getImage().equalsIgnoreCase("options");
         if (legacyOptionBlock) {
@@ -73,7 +81,16 @@ public class GrammarFormatter extends Node.Visitor {
             String key = setting.firstChildOfType(Token.class).getImage();
             if (!setting.getGrammar().isASetting(key)) continue;
             visit(setting);
-            buffer.append("\n");
+            if (parserClassFromDecl != null) {
+                buffer.append("\nPARSER_CLASS=");
+                buffer.append(parserClassFromDecl);
+                buffer.append(";");
+            }
+            if (packageFromDecl != null) {
+                buffer.append("\nPARSER_PACKAGE=");
+                buffer.append(packageFromDecl);
+                buffer.append(";");
+            }
         }
         if (legacyOptionBlock) {
             Token lastToken = (Token) options.getChild(options.getChildCount() -1);
@@ -82,7 +99,6 @@ public class GrammarFormatter extends Node.Visitor {
             }
         }
         buffer.append("\n");
-        inOptions = false;
     }
 
     void visit(CodeBlock block) {
@@ -90,21 +106,26 @@ public class GrammarFormatter extends Node.Visitor {
             return;
         }
         buffer.append("\n");
-        buffer.append(new JavaFormatter().format(block));
+        buffer.append(new JavaFormatter().format(block,1));
     }
 
-    void visit(TokenProduction tp) {
-        buffer.append("\nTOKEN PRODUCTION: " + tp.getLocation() +"\n");
+    void visit(NonTerminal nt) {
+        String name = nt.getName();
+        boolean isJavacodeProduction = javacodeProductions.containsKey(name);
+        if (isJavacodeProduction) buffer.append("{");
+        recurse(nt);
+        if (isJavacodeProduction) buffer.append(";}");
     }
 
     void visit(BNFProduction prod) {
-        inBNFProduction = true;
         recurse(prod);
-        inBNFProduction = false;
     }
 
     void visit(FormalParameters params) {
-        if (params.getChildCount() == 2) return;
+        if (params.getChildCount() == 2) {
+            buffer.append(" ");
+            return;
+        }
         recurse(params);
     }
 
@@ -117,8 +138,46 @@ public class GrammarFormatter extends Node.Visitor {
         buffer.append(token.getImage());
     }
 
+    void visit(StringLiteral sl) {
+        buffer.append(escapeNonAscii(sl.getImage()));
+    }
+
+    void visit(CharacterLiteral cl) {
+        buffer.append(escapeNonAscii(cl.getImage()));
+    }
+
     void visit(KeyWord kw) {
-        if (inBNFProduction && kw.getType()==VOID && kw.getPrevious().getType() != HASH) {
+        if (kw.getParent() instanceof BNFProduction && kw.getType()==VOID && kw.getPrevious().getType() != HASH) {
+            return;
+        }
+        buffer.append(kw.getImage());
+    }
+
+    void visit(LegacyLookahead la) {
+        Token firstToken = la.firstChildOfType(_LOOKAHEAD);
+        for (Token t : firstToken.precedingUnparsedTokens()) visit(t);
+        buffer.append("SCAN ");
+        if (la.getHasExplicitNumericalAmount()) {
+            buffer.append("" + la.getAmount());
+        }
+        if (la.hasSemanticLookahead()) {
+            buffer.append("{");
+            buffer.append(la.getSemanticLookahead());
+            buffer.append("}");
+            if (la.isSemanticLookaheadNested()) {
+                buffer.append("#");
+            }
+            buffer.append(" ");
+        }
+        if (la.getNestedExpansion() != null) {
+            recurse(la.getNestedExpansion());
+        }
+        buffer.append(" =>");
+    }
+
+    void visit(JavaCCKeyWord kw) {
+        if (kw.getImage().equals("SPECIAL_TOKEN")) {
+            buffer.append("UNPARSED");
             return;
         }
         buffer.append(kw.getImage());
@@ -138,7 +197,6 @@ public class GrammarFormatter extends Node.Visitor {
     }
 
     void visit(Whitespace ws) {
-        if (inOptions) return;
         if (passWhitespaceThrough) buffer.append(ws.getImage());
     }
 
@@ -180,14 +238,62 @@ public class GrammarFormatter extends Node.Visitor {
         }
         Grammar grammar = new Grammar(path.getParent(), "java", 8, false, new HashMap<>());
         Node root = grammar.parse(path, false);
-        GrammarFormatter formatter = new GrammarFormatter();
+        GrammarFormatter formatter = new GrammarFormatter(grammar);
+        formatter.buildData();
         formatter.visit((BaseNode) root);
-        System.out.println("===========");
         System.out.println(formatter.buffer);
     }
 
     static void usage() {
         System.out.println("Usage: java com.javacc.output.congo.GrammarFormatter <filename>");
         System.exit(0);
+    }
+
+    private void buildData() {
+        for (JavacodeProduction jp : grammar.descendantsOfType(JavacodeProduction.class)) {
+            MethodDeclaration md = jp.firstChildOfType(MethodDeclaration.class);
+            String name = md.getName();
+            javacodeProductions.put(name, jp);
+        }
+        ParserCodeDecls pdecls = grammar.firstDescendantOfType(ParserCodeDecls.class);
+        TokenManagerDecls tdecls = grammar.firstDescendantOfType(TokenManagerDecls.class);
+        if (pdecls != null) {
+            PackageDeclaration packageDeclaration = pdecls.firstDescendantOfType(PackageDeclaration.class);
+            packageFromDecl = packageDeclaration.getPackageName().toString();
+            parserClassFromDecl = pdecls.firstChildOfType(Identifier.class).toString();
+        }
+        if (tdecls != null) {
+
+        }
+    }
+
+    static String escapeNonAscii(String s) {
+        int[] codePoints = s.codePoints().toArray();
+        StringBuilder buf = new StringBuilder();
+        for (int ch : codePoints) {
+            if (ch < 128 && !Character.isISOControl(ch)) {
+                buf.append((char) ch);
+            }
+            else if (ch <=0xFFFF) {
+                buf.append(toEscapedUnicode(ch));
+            }
+            else {
+                int high = Character.highSurrogate(ch);
+                int low = Character.lowSurrogate(ch);
+                buf.append(toEscapedUnicode(high));
+                buf.append(toEscapedUnicode(low));
+            }
+        }
+        return buf.toString();
+    }
+
+    static String toEscapedUnicode(int ch) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("\\u");
+        if (ch <= 0XF) buf.append("000");
+        else if (ch <= 0xFF) buf.append("00");
+        else if (ch <= 0xFFF) buf.append("0");
+        buf.append(Integer.toString(ch, 16));
+        return buf.toString();
     }
 }
