@@ -56,8 +56,10 @@ public class GrammarFormatter extends Node.Visitor {
     {this.visitUnparsedTokens = true;}
 
     private StringBuilder buffer = new StringBuilder();
+    private boolean passWhitespaceThrough=true, inOptions, inBNFProduction;
 
-    protected void visit(Options options) {
+    void visit(Options options) {
+        inOptions = true;
         Token firstToken = options.firstDescendantOfType(Token.class);
         boolean legacyOptionBlock = firstToken.getImage().equalsIgnoreCase("options");
         if (legacyOptionBlock) {
@@ -66,7 +68,8 @@ public class GrammarFormatter extends Node.Visitor {
             }
         }
         for (Setting setting : options.childrenOfType(Setting.class)) {
-            visit(setting);
+           visit(setting);
+           buffer.append("\n");
         }
         if (legacyOptionBlock) {
             Token lastToken = (Token) options.getChild(options.getChildCount() -1);
@@ -74,42 +77,76 @@ public class GrammarFormatter extends Node.Visitor {
                 buffer.append(t);
             }
         }
+        buffer.append("\n");
+        inOptions = false;
     }
 
-/*    protected void visit(TokenProduction tp) {
-        for (Node child : tp.children()) {
-            buffer.append("KILROY: " + child.getClass().getSimpleName()+"\n");
-        }
-        recurse(tp);
+    void visit(CodeBlock block) {
+        buffer.append(new JavaFormatter().format(block));
     }
 
-    protected void visit(RegexpSpec respec) {
-        buffer.append("\nKILROY1\n");
-        for (Node child : respec.children()) {
-            buffer.append(child.getClass().getSimpleName());
+    void visit(TokenProduction tp) {
+        buffer.append("\nTOKEN PRODUCTION: " + tp.getLocation() +"\n");
+    }
+
+    void visit(BNFProduction prod) {
+        inBNFProduction = true;
+        recurse(prod);
+        inBNFProduction = false;
+    }
+
+    void visit(Token token) {
+        buffer.append(token.getImage());
+    }
+
+    void visit(Whitespace ws) {
+        if (inOptions) return;
+        if (passWhitespaceThrough) buffer.append(ws.getImage());
+    }
+
+    void visit(SingleLineComment slc) {
+        if (slc.getPrevious().getType() == SEMICOLON && buffer.charAt(buffer.length()-1) == '\n') {
+            buffer.setLength(buffer.length()-1);
+            buffer.append(" ");
         }
-        buffer.append("\nKILROY2\n");
-        recurse(respec);
+        buffer.append(slc.getImage());
+    }
+
+
+/*
+    protected void visit(KeyWord kw) {
+        if (kw.getType() == VOID) {
+            if (!(kw.getParent() instanceof BNFProduction)) {
+                buffer.append("void");
+            } else buffer.append("KILROY");
+        }
+        else {
+            buffer.append(kw.getImage());
+        }
+    }
+/* 
+    protected void visit(Delimiter delim) {
+        if (delim.getType() == LBRACE) {
+
+        }
     }*/
 
-    protected void visit(BNFProduction prod) {
+    protected void visit(ParserCodeDecls decls) {
+        buffer.append("INJECT :\n{\n");
+        CompilationUnit jcu = decls.firstChildOfType(CompilationUnit.class);
+        buffer.append(new JavaFormatter().format(jcu,1));
+        buffer.append("\n}\n\n");
     }
 
-    protected void visit(Token tok) {
-        if (tok.getParent() instanceof TokenProduction) {
-            if (tok.getType() == LBRACE) return;
-            if (tok.getType() == RBRACE) {
-                buffer.append(";");
-                return;
-            }
-        }
-        buffer.append(tok.getImage());
+    protected void visit(TokenManagerDecls decls) {
+        buffer.append("INJECT LEXER_CLASS :\n");
+        ClassOrInterfaceBody coib = decls.firstChildOfType(ClassOrInterfaceBody.class);
+        buffer.append(new JavaFormatter().format(coib));
     }
 
     static public void main(String[] args) throws IOException {
-        //if (args.length == 0) usage();
-        String filename = "/Users/revusky/projects/javacc/examples/json/JSON.javacc";
-        if (args.length > 0) filename = args[0];
+        if (args.length == 0) usage();
+        String filename = args[0];
         Path path = new File(filename).toPath();
         if (!Files.exists(path)) {
             System.err.println("File " + path + " does not exist!");

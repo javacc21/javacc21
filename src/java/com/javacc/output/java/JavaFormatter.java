@@ -144,10 +144,17 @@ public class JavaFormatter extends Node.Visitor {
     protected void visit(SingleLineComment comment) {
         if (startsNewLine(comment)) {
             newLine();
+        } else if (comment.getPrevious().getType() == SEMICOLON) {
+            if (buf.charAt(buf.length()-1) == '\n') {
+                buf.setLength(buf.length()-1);
+                buf.append(" ");
+            }
         }
         buf.append(comment.getImage());
         buf.append(currentIndent);
     }
+
+    protected void visit(Whitespace ws) {}
 
     protected void visit(TypeDeclaration td) {
         newLine(true);
