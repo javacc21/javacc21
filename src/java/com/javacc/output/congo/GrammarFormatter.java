@@ -36,10 +36,8 @@ import com.javacc.parser.tree.*;
 import com.javacc.output.java.JavaFormatter;
 import java.io.IOException;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
+import java.nio.file.*;
+import java.util.*;
 
 /**
  * A class to format/lint/cleanup a JavaCC grammar
@@ -58,6 +56,7 @@ public class GrammarFormatter extends Node.Visitor {
     private StringBuilder buffer = new StringBuilder();
     private boolean passWhitespaceThrough=true, inOptions, inBNFProduction;
 
+
     void visit(Options options) {
         inOptions = true;
         Token firstToken = options.firstDescendantOfType(Token.class);
@@ -66,10 +65,15 @@ public class GrammarFormatter extends Node.Visitor {
             for (Token t : firstToken.precedingUnparsedTokens()) {
                 buffer.append(t);
             }
+        } 
+        else if (firstToken.previousCachedToken().getType() == MULTI_LINE_COMMENT) {
+            buffer.append("\n");
         }
         for (Setting setting : options.childrenOfType(Setting.class)) {
-           visit(setting);
-           buffer.append("\n");
+            String key = setting.firstChildOfType(Token.class).getImage();
+            if (!setting.getGrammar().isASetting(key)) continue;
+            visit(setting);
+            buffer.append("\n");
         }
         if (legacyOptionBlock) {
             Token lastToken = (Token) options.getChild(options.getChildCount() -1);
@@ -82,6 +86,10 @@ public class GrammarFormatter extends Node.Visitor {
     }
 
     void visit(CodeBlock block) {
+        if (block.getChildCount() == 2 && block.getParent() instanceof BNFProduction) {
+            return;
+        }
+        buffer.append("\n");
         buffer.append(new JavaFormatter().format(block));
     }
 
@@ -95,8 +103,38 @@ public class GrammarFormatter extends Node.Visitor {
         inBNFProduction = false;
     }
 
+    void visit(FormalParameters params) {
+        if (params.getChildCount() == 2) return;
+        recurse(params);
+    }
+
+    void visit(InvocationArguments args) {
+        if (args.getChildCount() == 2) return;
+        recurse(args);
+    }
+
     void visit(Token token) {
         buffer.append(token.getImage());
+    }
+
+    void visit(KeyWord kw) {
+        if (inBNFProduction && kw.getType()==VOID && kw.getPrevious().getType() != HASH) {
+            return;
+        }
+        buffer.append(kw.getImage());
+    }
+
+    void visit(Delimiter delim) {
+        Node parent = delim.getParent();
+        if (delim.getType() == LBRACE && (parent instanceof BNFProduction || parent instanceof TokenProduction)) {
+            return;
+        }
+        else if (delim.getType() == RBRACE && (parent instanceof BNFProduction || parent instanceof TokenProduction)) {
+            if (delim == parent.getChild(parent.getChildCount()-1)) {
+                buffer.append(";\n");
+            }
+        }
+        else buffer.append(delim.getImage());
     }
 
     void visit(Whitespace ws) {
@@ -112,24 +150,12 @@ public class GrammarFormatter extends Node.Visitor {
         buffer.append(slc.getImage());
     }
 
-
-/*
-    protected void visit(KeyWord kw) {
-        if (kw.getType() == VOID) {
-            if (!(kw.getParent() instanceof BNFProduction)) {
-                buffer.append("void");
-            } else buffer.append("KILROY");
-        }
-        else {
-            buffer.append(kw.getImage());
-        }
+    void visit(JavacodeProduction jcp) {
+        MethodDeclaration md = jcp.firstChildOfType(MethodDeclaration.class);
+        buffer.append("\nINJECT PARSER_CLASS :\n{\n");
+        buffer.append(new JavaFormatter().format(md,1));
+        buffer.append("\n}");
     }
-/* 
-    protected void visit(Delimiter delim) {
-        if (delim.getType() == LBRACE) {
-
-        }
-    }*/
 
     protected void visit(ParserCodeDecls decls) {
         buffer.append("INJECT :\n{\n");

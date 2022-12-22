@@ -897,6 +897,8 @@ INJECT Token :
    ]!
    [ParserCodeDecls]
    (
+      JavacodeProduction
+      |
       tp=TokenProduction  {grammar.addTokenProduction(tp);}
       |
       decls=TokenManagerDecls {grammar.addCodeInjection(decls);}
@@ -1194,6 +1196,13 @@ BNFProduction #com.javacc.core.BNFProduction :
            grammar.addNodeType(CURRENT_NODE.getName(),CURRENT_NODE.getName());
         }
      }
+;
+
+JavacodeProduction :
+  <IDENTIFIER>
+  ASSERT {getToken(0).getImage().equals("JAVACODE")}#
+  =>||
+  MethodDeclaration
 ;
 
 TreeNodeDescriptor #TreeBuildingAnnotation :

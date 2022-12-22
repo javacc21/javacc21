@@ -1233,6 +1233,12 @@ public class Grammar extends BaseNode {
     private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
     private String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
+    public boolean isASetting(String key) {
+        return booleanSettings.contains("," + key + ",")
+              || stringSettings.contains("," + key + ",")
+              || integerSettings.contains("," + key + ",");
+    }
+    
     private void typeCheckSettings(Map<String, Object> settings) {
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
