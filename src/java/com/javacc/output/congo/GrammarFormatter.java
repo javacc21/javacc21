@@ -56,7 +56,7 @@ public class GrammarFormatter extends Node.Visitor {
 
     private Grammar grammar;
     private StringBuilder buffer = new StringBuilder();
-    private boolean passWhitespaceThrough=true;
+    private boolean passWhitespaceThrough=true, inJavaCodeNT;
 
     private Map<String, JavacodeProduction> javacodeProductions = new HashMap<>();
     private String packageFromDecl, parserClassFromDecl;
@@ -81,16 +81,16 @@ public class GrammarFormatter extends Node.Visitor {
             String key = setting.firstChildOfType(Token.class).getImage();
             if (!setting.getGrammar().isASetting(key)) continue;
             visit(setting);
-            if (parserClassFromDecl != null) {
-                buffer.append("\nPARSER_CLASS=");
-                buffer.append(parserClassFromDecl);
-                buffer.append(";");
-            }
-            if (packageFromDecl != null) {
-                buffer.append("\nPARSER_PACKAGE=");
-                buffer.append(packageFromDecl);
-                buffer.append(";");
-            }
+        }
+        if (parserClassFromDecl != null) {
+            buffer.append("\nPARSER_CLASS=");
+            buffer.append(parserClassFromDecl);
+            buffer.append(";");
+        }
+        if (packageFromDecl != null) {
+            buffer.append("\nPARSER_PACKAGE=");
+            buffer.append(packageFromDecl);
+            buffer.append(";");
         }
         if (legacyOptionBlock) {
             Token lastToken = (Token) options.getChild(options.getChildCount() -1);
@@ -105,20 +105,16 @@ public class GrammarFormatter extends Node.Visitor {
         if (block.getChildCount() == 2 && block.getParent() instanceof BNFProduction) {
             return;
         }
-        buffer.append("\n");
-        buffer.append(new JavaFormatter().format(block,1));
+        recurse(block);
     }
 
     void visit(NonTerminal nt) {
         String name = nt.getName();
-        boolean isJavacodeProduction = javacodeProductions.containsKey(name);
-        if (isJavacodeProduction) buffer.append("{");
+        inJavaCodeNT = javacodeProductions.containsKey(name);
+        if (inJavaCodeNT) buffer.append("{");
         recurse(nt);
-        if (isJavacodeProduction) buffer.append(";}");
-    }
-
-    void visit(BNFProduction prod) {
-        recurse(prod);
+        if (inJavaCodeNT) buffer.append(";\n}");
+        inJavaCodeNT = false;
     }
 
     void visit(FormalParameters params) {
@@ -130,7 +126,7 @@ public class GrammarFormatter extends Node.Visitor {
     }
 
     void visit(InvocationArguments args) {
-        if (args.getChildCount() == 2) return;
+        if (args.getChildCount() == 2 && !inJavaCodeNT) return;
         recurse(args);
     }
 
@@ -147,7 +143,10 @@ public class GrammarFormatter extends Node.Visitor {
     }
 
     void visit(KeyWord kw) {
-        if (kw.getParent() instanceof BNFProduction && kw.getType()==VOID && kw.getPrevious().getType() != HASH) {
+        if (kw.getType()==VOID 
+            && kw.getParent().getParent() instanceof BNFProduction 
+            && kw.getPrevious().getType() != HASH) 
+        {
             return;
         }
         buffer.append(kw.getImage());
@@ -225,12 +224,20 @@ public class GrammarFormatter extends Node.Visitor {
     protected void visit(TokenManagerDecls decls) {
         buffer.append("INJECT LEXER_CLASS :\n");
         ClassOrInterfaceBody coib = decls.firstChildOfType(ClassOrInterfaceBody.class);
+        visit(coib);
+    }
+
+    void visit(ClassOrInterfaceBody coib) {
         buffer.append(new JavaFormatter().format(coib));
     }
 
     static public void main(String[] args) throws IOException {
         if (args.length == 0) usage();
         String filename = args[0];
+        if (args[0].equals("convert")) {
+            if (args.length == 1) usage();
+            filename = args[1];
+        }
         Path path = new File(filename).toPath();
         if (!Files.exists(path)) {
             System.err.println("File " + path + " does not exist!");
@@ -259,7 +266,9 @@ public class GrammarFormatter extends Node.Visitor {
         TokenManagerDecls tdecls = grammar.firstDescendantOfType(TokenManagerDecls.class);
         if (pdecls != null) {
             PackageDeclaration packageDeclaration = pdecls.firstDescendantOfType(PackageDeclaration.class);
-            packageFromDecl = packageDeclaration.getPackageName().toString();
+            if (packageDeclaration != null) {
+                packageFromDecl = packageDeclaration.getPackageName().toString();
+            }
             parserClassFromDecl = pdecls.firstChildOfType(Identifier.class).toString();
         }
         if (tdecls != null) {
