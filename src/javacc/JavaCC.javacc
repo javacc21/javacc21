@@ -1850,7 +1850,7 @@ Expansion ExpansionUnit :
     |
     SCAN "(" ExpansionChoice ")" ("*"|"+"|"?") => {}
     |
-    InvocationArguments
+    InvocationArguments =>||
   ]
   [
      SCAN ~\...\Lookahead =>
