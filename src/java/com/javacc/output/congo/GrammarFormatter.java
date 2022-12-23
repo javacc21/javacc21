@@ -133,17 +133,16 @@ public class GrammarFormatter extends Node.Visitor {
     }
 
     void visit(FormalParameters params) {
-        if (!inJavaCode && params.getChildCount() == 2 && (
-            params.getParent() instanceof MethodDeclaration 
-            || params.getParent() instanceof ConstructorDeclaration)) {
-            buffer.append(" ");
-            return;
+        if (params.getChildCount() > 2 
+            || params.getParent() instanceof MethodDeclaration 
+            || params.getParent() instanceof ConstructorDeclaration)
+        {
+               recurse(params);
         }
-        recurse(params);
     }
 
     void visit(InvocationArguments args) {
-        if (args.getChildCount() > 2 || args.firstAncestorOfType(MethodCall.class) != null) {
+        if (args.getChildCount() > 2 || !(args.getParent() instanceof NonTerminal)) {
             recurse(args);
         }
     }
