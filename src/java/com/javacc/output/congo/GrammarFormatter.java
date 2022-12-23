@@ -29,10 +29,7 @@
 package com.javacc.output.congo;
 
 import com.javacc.Grammar;
-import com.javacc.core.BNFProduction;
-import com.javacc.core.ExpansionSequence;
-import com.javacc.core.Lookahead;
-import com.javacc.core.NonTerminal;
+import com.javacc.core.*;
 import com.javacc.parser.*;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 import com.javacc.parser.tree.*;
@@ -178,10 +175,24 @@ public class GrammarFormatter extends Node.Visitor {
     }
 
     void visit(ExpansionSequence seq) {
-        recurse(seq);
-        if (seq.getHasExplicitLookahead()) {
-            if (seq.getLookahead().getChildCount() == 1 && !seq.getHasScanLimit()) {
-                buffer.append(" =>|| ");
+        List<Expansion> expansions = seq.getUnits();
+        Expansion lastExpansion = expansions.get(expansions.size()-1);
+        for (Node child : seq.children()) {
+            visit(child);
+            if (child instanceof Expansion) {
+                // It has to be written in this annoying way because of the 
+                // the tree that the JavaCCParser builds. REVISIT
+                if (child == lastExpansion) {
+                    if (seq.getHasExplicitLookahead()) {
+                        if (seq.getLookahead().getChildCount() == 1 && !seq.getHasScanLimit()) {
+                            buffer.append(" =>|| ");
+                        }
+                    }
+                }
+                TreeBuildingAnnotation tba = ((Expansion) child).getTreeNodeBehavior();
+                if (tba != null) {
+                    visit(tba);
+                }
             }
         }
     }
@@ -240,6 +251,7 @@ public class GrammarFormatter extends Node.Visitor {
     void visit(SingleLineComment slc) {
         if (slc.getPrevious() != null 
             && slc.getPrevious().getType() == SEMICOLON 
+            && slc.getPrevious().getBeginLine() == slc.getBeginLine()
             && buffer.charAt(buffer.length()-1) == '\n') 
         {
             buffer.setLength(buffer.length()-1);

@@ -1824,34 +1824,6 @@ Expansion ExpansionUnit :
   result = ZeroOrOne 
   |
   result=Terminal
-#if false  
-  SCAN [Name "="] (<STRING_LITERAL>|"<")
-  =>
-  [
-    SCAN ~\...\Lookahead Name "=" =>
-    lhs = Name
-    "="
-  ]
-  ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile ) 
-  {
-      RegularExpression re = (RegularExpression) peekNode();
-      result = re;
-      re.setLHS(lhs);
-      if (!(re instanceof EndOfFile)) {
-            grammar.addInplaceRegexp(re);
-      }
-  }
-  [
-      SCAN {isInProduction("BNFProduction") && !isInProduction("Lookahead")}
-      =>
-      {
-          RegularExpression regexp = (RegularExpression) peekNode();
-          regexp.setTolerantParsing(true);
-      }
-      "!" {regexp.addChild(popNode());}
-  ]
-  [ChildNameInfo(result)] [UpToHere(result)]
-#endif  
   |
   result=NonTerminal 
   |
