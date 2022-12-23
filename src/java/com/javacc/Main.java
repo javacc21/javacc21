@@ -187,7 +187,7 @@ public final class Main {
      * The main program.
      */
     public static void main(String[] args) throws Exception {
-        if (args[0].equalsIgnoreCase("convert")) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("convert")) {
             com.javacc.output.congo.GrammarFormatter.main(args);
             System.exit(0);
         }

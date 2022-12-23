@@ -263,16 +263,12 @@ public class GrammarFormatter extends Node.Visitor {
             javacodeProductions.put(name, jp);
         }
         ParserCodeDecls pdecls = grammar.firstDescendantOfType(ParserCodeDecls.class);
-        TokenManagerDecls tdecls = grammar.firstDescendantOfType(TokenManagerDecls.class);
         if (pdecls != null) {
             PackageDeclaration packageDeclaration = pdecls.firstDescendantOfType(PackageDeclaration.class);
             if (packageDeclaration != null) {
                 packageFromDecl = packageDeclaration.getPackageName().toString();
             }
             parserClassFromDecl = pdecls.firstChildOfType(Identifier.class).toString();
-        }
-        if (tdecls != null) {
-
         }
     }
 
