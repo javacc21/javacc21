@@ -78,12 +78,12 @@ public class JavaFormatter extends Node.Visitor {
         if (alwaysAppendSpace.contains(tok.getType())) buf.append(' ');
     }
 
-    protected void visit(Token tok) {
+    void visit(Token tok) {
         if (tok.getType() == EOF) buf.append("\n");
         else outputToken(tok);
     }
 
-    protected void visit(Operator op) {
+    void visit(Operator op) {
         switch (op.getType()) {
             case LT:
                 if (op.getParent() instanceof RelationalExpression) {
@@ -106,7 +106,7 @@ public class JavaFormatter extends Node.Visitor {
         }
     }
 
-    protected void visit(Delimiter delimiter) {
+    void visit(Delimiter delimiter) {
         switch (delimiter.getType()) {
             case LBRACE : 
                 outputToken(delimiter);
@@ -135,13 +135,13 @@ public class JavaFormatter extends Node.Visitor {
         }
     }
 
-    protected void visit(MultiLineComment comment) {
+    void visit(MultiLineComment comment) {
         startNewLineIfNecessary();
         buf.append(indentText(comment.getImage()));
         newLine();
     }
 
-    protected void visit(SingleLineComment comment) {
+    void visit(SingleLineComment comment) {
         if (startsNewLine(comment)) {
             newLine();
         } else if (comment.getPrevious().getType() == SEMICOLON) {
@@ -154,15 +154,15 @@ public class JavaFormatter extends Node.Visitor {
         buf.append(currentIndent);
     }
 
-    protected void visit(Whitespace ws) {}
+    void visit(Whitespace ws) {}
 
-    protected void visit(TypeDeclaration td) {
+    void visit(TypeDeclaration td) {
         newLine(true);
         recurse(td);
         newLine(true);
     }
 
-    protected void visit(Statement stmt) {
+    void visit(Statement stmt) {
         if (stmt.getParent() instanceof IfStatement) {
             addSpaceIfNecessary();
         } else if (!(stmt.getParent() instanceof ForStatement)) {

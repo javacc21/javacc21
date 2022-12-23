@@ -30,6 +30,8 @@ package com.javacc.output.congo;
 
 import com.javacc.Grammar;
 import com.javacc.core.BNFProduction;
+import com.javacc.core.ExpansionSequence;
+import com.javacc.core.Lookahead;
 import com.javacc.core.NonTerminal;
 import com.javacc.parser.*;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
@@ -41,9 +43,22 @@ import java.nio.file.*;
 import java.util.*;
 
 /**
- * A class to format/lint/cleanup a JavaCC grammar
- * Basically, convert it to the conventions for CongoCC
- * TODO
+ * A class to convert a legacy JavaCC or JavaCC21 grammar
+ * to the conventions for Congo.
+ * Currently, it converts the legacy
+ * PARSER_CODE_DECLS and TOKEN_MGR_DECLS to a JavaCC21/Congo 
+ * INJECT. It converts the old JAVACODE thing to an INJECT as well.
+ * It converts the older LOOKAHEAD construct to SCAN.
+ * It gets rid of those superfluous {} that infest legacy JavaCC
+ * grammars and are now unnecessary. It gets rid of superfluous
+ * void return types that needed to be tacked on in legacy JavaCC grammars.
+ * It converts Foo() to just Foo. It converts
+ * => Expansion to Expansion =>||
+ * Currently (it's a TODO) it does not convert
+ * SCAN Foo Bar => Foo Bar Baz
+ * to Foo Bar =>|| Baz
+ * nor does it (also a TODO) replace things like:
+ * Foo Foo #Foo with simply #Foo#.
  */
 
 public class GrammarFormatter extends Node.Visitor {
@@ -56,7 +71,7 @@ public class GrammarFormatter extends Node.Visitor {
 
     private Grammar grammar;
     private StringBuilder buffer = new StringBuilder();
-    private boolean passWhitespaceThrough=true, inJavaCodeNT;
+    private boolean passWhitespaceThrough=true, inJavaCode;
 
     private Map<String, JavacodeProduction> javacodeProductions = new HashMap<>();
     private String packageFromDecl, parserClassFromDecl;
@@ -105,20 +120,25 @@ public class GrammarFormatter extends Node.Visitor {
         if (block.getChildCount() == 2 && block.getParent() instanceof BNFProduction) {
             return;
         }
+        inJavaCode = true;
         recurse(block);
+        inJavaCode = false;
+        if (block.isAppliesInLookahead()) buffer.append("#");
     }
 
     void visit(NonTerminal nt) {
         String name = nt.getName();
-        inJavaCodeNT = javacodeProductions.containsKey(name);
-        if (inJavaCodeNT) buffer.append("{");
+        inJavaCode = javacodeProductions.containsKey(name);
+        if (inJavaCode) buffer.append("{");
         recurse(nt);
-        if (inJavaCodeNT) buffer.append(";\n}");
-        inJavaCodeNT = false;
+        if (inJavaCode) buffer.append(";\n}");
+        inJavaCode = false;
     }
 
     void visit(FormalParameters params) {
-        if (params.getChildCount() == 2) {
+        if (!inJavaCode && params.getChildCount() == 2 && (
+            params.getParent() instanceof MethodDeclaration 
+            || params.getParent() instanceof ConstructorDeclaration)) {
             buffer.append(" ");
             return;
         }
@@ -126,11 +146,16 @@ public class GrammarFormatter extends Node.Visitor {
     }
 
     void visit(InvocationArguments args) {
-        if (args.getChildCount() == 2 && !inJavaCodeNT) return;
-        recurse(args);
+        if (args.getChildCount() > 2 || args.firstAncestorOfType(MethodCall.class) != null) {
+            recurse(args);
+        }
     }
 
     void visit(Token token) {
+        if (token.getImage().equals("#") && buffer.charAt(buffer.length()-1) =='#') {
+            // This is a kludge really.
+            return;
+        }
         buffer.append(token.getImage());
     }
 
@@ -150,6 +175,19 @@ public class GrammarFormatter extends Node.Visitor {
             return;
         }
         buffer.append(kw.getImage());
+    }
+
+    void visit(ExpansionSequence seq) {
+        recurse(seq);
+        if (seq.getHasExplicitLookahead()) {
+            if (seq.getLookahead().getChildCount() == 1 && !seq.getHasScanLimit()) {
+                buffer.append(" =>|| ");
+            }
+        }
+    }
+
+    void visit(Lookahead la) {
+        if (la.getChildCount() > 1) recurse(la);
     }
 
     void visit(LegacyLookahead la) {
@@ -200,7 +238,10 @@ public class GrammarFormatter extends Node.Visitor {
     }
 
     void visit(SingleLineComment slc) {
-        if (slc.getPrevious().getType() == SEMICOLON && buffer.charAt(buffer.length()-1) == '\n') {
+        if (slc.getPrevious() != null 
+            && slc.getPrevious().getType() == SEMICOLON 
+            && buffer.charAt(buffer.length()-1) == '\n') 
+        {
             buffer.setLength(buffer.length()-1);
             buffer.append(" ");
         }

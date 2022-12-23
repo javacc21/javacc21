@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2021 Jonathan Revusky, revusky@javacc.com
+/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@javacc.com
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1770,7 +1770,7 @@ LegacyLookahead# :
   ]
 }
 
-ChildNameInfo(Expansion expansion) #void :
+ChildNameInfo(Expansion expansion) : //#void :
 {
     String name;
     boolean multiple = false;
@@ -1793,7 +1793,7 @@ ChildNameInfo(Expansion expansion) #void :
 
 Expansion ExpansionUnit :
 {
-    Name lhs=null;
+    //Name lhs=null;
     Expansion result=null;
     TreeBuildingAnnotation tba = null;
 }
@@ -1802,7 +1802,14 @@ Expansion ExpansionUnit :
   |
   result = Failure
   |
-  result=Block ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
+  result=Block 
+  [
+    "#" 
+    {
+        ((CodeBlock)result).setAppliesInLookahead(true);
+         //result.addChild(lastConsumedToken);
+    }
+  ]
   |
   SCAN 1 ~\...\Lookahead =>
   result=AttemptBlock
@@ -1816,6 +1823,8 @@ Expansion ExpansionUnit :
   |
   result = ZeroOrOne 
   |
+  result=Terminal
+#if false  
   SCAN [Name "="] (<STRING_LITERAL>|"<")
   =>
   [
@@ -1842,9 +1851,9 @@ Expansion ExpansionUnit :
       "!" {regexp.addChild(popNode());}
   ]
   [ChildNameInfo(result)] [UpToHere(result)]
+#endif  
   |
-  SCAN [Name "=" =>||]<IDENTIFIER>
-  => result=NonTerminal [ChildNameInfo(result)] [UpToHere(result)]
+  result=NonTerminal 
   |
   FAIL
  )
@@ -1863,6 +1872,7 @@ Expansion ExpansionUnit :
     => Name {CURRENT_NODE.setLHS((Name)peekNode());} "="
   ]
   <IDENTIFIER>
+  =>||
   [
     SCAN "(" ExpansionSequence "|" => {}
     |
@@ -1875,8 +1885,52 @@ Expansion ExpansionUnit :
      "!"
      {CURRENT_NODE.setTolerantParsing(true);}
   ]
+  [ChildNameInfo(CURRENT_NODE)] 
+  [UpToHere(CURRENT_NODE)]
   {return CURRENT_NODE;}
 ;
+
+RegularExpression Terminal #void :
+{
+    Name lhs=null;
+    RegularExpression result=null;
+}
+  SCAN [Name "="] (<STRING_LITERAL>|"<")
+  =>
+  [
+    SCAN ~\...\Lookahead Name "=" =>
+    lhs = Name
+    "="
+  ]
+  ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile ) 
+  {
+      result = (RegularExpression) peekNode();
+      result.setLHS(lhs);
+      if (!(result instanceof EndOfFile)) {
+            grammar.addInplaceRegexp(result);
+      }
+  }
+  [
+      SCAN {isInProduction("BNFProduction") && !isInProduction("Lookahead")}
+      =>
+      {
+          RegularExpression regexp = (RegularExpression) peekNode();
+          regexp.setTolerantParsing(true);
+      }
+      "!" {regexp.addChild(popNode());}
+  ]
+  [
+    ChildNameInfo(result)
+    {result.addChild(popNode());}
+  ] 
+  [
+    UpToHere(result)
+    {result.addChild(popNode());}
+  ]
+  {
+    return result;
+  }
+;  
 
 UpToHere(Expansion exp) #void :
    <UP_TO_HERE>
