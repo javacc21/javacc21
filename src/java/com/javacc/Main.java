@@ -179,7 +179,8 @@ public final class Main {
         System.out.println("   For example:   -p debug,strict");
         System.out.println(" -q                Quieter output");
         System.out.println();
-        System.out.println("As of 2021, all other options can only be set at the top of your grammar file.");
+        System.out.println("There is now a syntax converter available that can be run with:");
+        System.out.println("     java -jar " + jarFileName + " convert grammarfile");
         System.out.println();
     }
 
