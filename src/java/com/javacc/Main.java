@@ -90,8 +90,9 @@ public final class Main {
     }
 
     static void checkForNewer() {
-        if (jarPath != null && Files.exists(jarPath))
-            try {
+        if (jarPath != null && Files.exists(jarPath) 
+             && (jarPath.endsWith("javacc.jar") || jarPath.endsWith("javacc-full.jar")))
+           try {
                 long jarLastModified = Files.getLastModifiedTime(jarPath).toMillis();
                 if (System.currentTimeMillis() - jarLastModified < 3600000L) {
                     // If the current jarfile is less than an hour old, let's not bother.

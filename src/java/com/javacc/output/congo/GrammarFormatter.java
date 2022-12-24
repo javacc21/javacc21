@@ -123,6 +123,16 @@ public class GrammarFormatter extends Node.Visitor {
         if (block.isAppliesInLookahead()) buffer.append("#");
     }
 
+    
+    void visit(RegularExpression regexp) {
+        // A bit kludgy. REVISIT.
+        if (regexp.getLHS() != null) {
+            recurse(regexp.getLHS());
+            buffer.append("=");
+        }
+        recurse(regexp);
+    }
+
     void visit(NonTerminal nt) {
         String name = nt.getName();
         inJavaCode = javacodeProductions.containsKey(name);
@@ -181,16 +191,19 @@ public class GrammarFormatter extends Node.Visitor {
     void visit(Name name) {
         if (name.getParent() instanceof TreeBuildingAnnotation) {
             if (name.firstChildOfType(Identifier.class).getPrevious().getType() == HASH) {
-                BNFProduction bnf = (BNFProduction) name.getParent().getParent();
-                if (bnf.getName().equals(name.toString())) return;
+                BNFProduction bnf = name.firstAncestorOfType(BNFProduction.class);
+                if (bnf != null && bnf.getName().equals(name.toString())) return;
             }
         }
         recurse(name);
     }
 
     void visit(ExpansionSequence seq) {
-        List<Expansion> expansions = seq.getUnits();
-        Expansion lastExpansion = expansions.get(expansions.size()-1);
+        Expansion lastExpansion = null;
+        for (Expansion exp : seq.getUnits()) {
+            // REVISIT
+            if (!(exp instanceof CodeBlock)) lastExpansion = exp;
+        }
         for (Node child : seq.children()) {
             visit(child);
             if (child instanceof Expansion) {
@@ -198,7 +211,7 @@ public class GrammarFormatter extends Node.Visitor {
                 // the tree that the JavaCCParser builds. REVISIT
                 if (child == lastExpansion) {
                     if (seq.getHasExplicitLookahead()) {
-                        if (seq.getLookahead().getChildCount() == 1 && !seq.getHasScanLimit()) {
+                        if (seq.getLookahead().getChildCount() == 1 && !seq.getHasExplicitScanLimit()) {
                             buffer.append(" =>|| ");
                         }
                     }
