@@ -163,14 +163,29 @@ public class GrammarFormatter extends Node.Visitor {
         buffer.append(escapeNonAscii(cl.getImage()));
     }
 
-    void visit(KeyWord kw) {
-        if (kw.getType()==VOID 
-            && kw.getParent().getParent() instanceof BNFProduction 
-            && kw.getPrevious().getType() != HASH) 
-        {
-            return;
+    void visit(ReturnType rt) {
+        if (!(rt.getParent() instanceof BNFProduction)) {
+           recurse(rt);
+           return;
         }
-        buffer.append(kw.getImage());
+        String rtString = rt.toString();
+        String productionName = ((BNFProduction) rt.getParent()).getName();
+        if (productionName.equals(rtString)) {
+            buffer.append("#");
+        }
+        else if (!rtString.equals("void")) {
+           recurse(rt);
+        }
+    }
+
+    void visit(Name name) {
+        if (name.getParent() instanceof TreeBuildingAnnotation) {
+            if (name.firstChildOfType(Identifier.class).getPrevious().getType() == HASH) {
+                BNFProduction bnf = (BNFProduction) name.getParent().getParent();
+                if (bnf.getName().equals(name.toString())) return;
+            }
+        }
+        recurse(name);
     }
 
     void visit(ExpansionSequence seq) {
