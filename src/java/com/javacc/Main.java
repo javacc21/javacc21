@@ -190,7 +190,7 @@ public final class Main {
      */
     public static void main(String[] args) throws Exception {
         if (args.length > 0 && args[0].equalsIgnoreCase("convert")) {
-            com.javacc.output.congo.GrammarFormatter.main(args);
+            com.javacc.output.congo.SyntaxConverter.main(args);
             System.exit(0);
         }
         try {

@@ -58,7 +58,7 @@ import java.util.*;
  * Foo Foo #Foo with simply #Foo#.
  */
 
-public class GrammarFormatter extends Node.Visitor {
+public class SyntaxConverter extends Node.Visitor {
 
     static {
         JavaCCLexer.keepWhitespace(true);
@@ -73,7 +73,7 @@ public class GrammarFormatter extends Node.Visitor {
     private Map<String, JavacodeProduction> javacodeProductions = new HashMap<>();
     private String packageFromDecl, parserClassFromDecl;
 
-    public GrammarFormatter(Grammar grammar) {
+    public SyntaxConverter(Grammar grammar) {
         this.grammar = grammar;
     }
 
@@ -325,14 +325,14 @@ public class GrammarFormatter extends Node.Visitor {
         }
         Grammar grammar = new Grammar(path.getParent(), "java", 8, false, new HashMap<>());
         Node root = grammar.parse(path, false);
-        GrammarFormatter formatter = new GrammarFormatter(grammar);
-        formatter.buildData();
-        formatter.visit((BaseNode) root);
-        System.out.println(formatter.buffer);
+        SyntaxConverter converter = new SyntaxConverter(grammar);
+        converter.buildData();
+        converter.visit((BaseNode) root);
+        System.out.println(converter.buffer);
     }
 
     static void usage() {
-        System.out.println("Usage: java com.javacc.output.congo.GrammarFormatter <filename>");
+        System.out.println("Usage: java -jar javacc.com convert <filename>");
         System.exit(0);
     }
 
