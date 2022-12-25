@@ -68,7 +68,7 @@ public class SyntaxConverter extends Node.Visitor {
 
     private Grammar grammar;
     private StringBuilder buffer = new StringBuilder();
-    private boolean passWhitespaceThrough=true, inJavaCode;
+    private boolean passWhitespaceThrough=true;
 
     private Map<String, JavacodeProduction> javacodeProductions = new HashMap<>();
     private String packageFromDecl, parserClassFromDecl;
@@ -76,7 +76,6 @@ public class SyntaxConverter extends Node.Visitor {
     public SyntaxConverter(Grammar grammar) {
         this.grammar = grammar;
     }
-
 
     void visit(Options options) {
         Token firstToken = options.firstDescendantOfType(Token.class);
@@ -117,9 +116,7 @@ public class SyntaxConverter extends Node.Visitor {
         if (block.getChildCount() == 2 && block.getParent() instanceof BNFProduction) {
             return;
         }
-        inJavaCode = true;
         recurse(block);
-        inJavaCode = false;
         if (block.isAppliesInLookahead()) buffer.append("#");
     }
 
@@ -135,11 +132,10 @@ public class SyntaxConverter extends Node.Visitor {
 
     void visit(NonTerminal nt) {
         String name = nt.getName();
-        inJavaCode = javacodeProductions.containsKey(name);
+        boolean inJavaCode = javacodeProductions.containsKey(name);
         if (inJavaCode) buffer.append("{");
         recurse(nt);
-        if (inJavaCode) buffer.append(";\n}");
-        inJavaCode = false;
+        if (inJavaCode) buffer.append(";}");
     }
 
     void visit(FormalParameters params) {
@@ -181,7 +177,7 @@ public class SyntaxConverter extends Node.Visitor {
         String rtString = rt.toString();
         String productionName = ((BNFProduction) rt.getParent()).getName();
         if (productionName.equals(rtString)) {
-            buffer.append("#");
+            buffer.append("\n#");
         }
         else if (!rtString.equals("void")) {
            recurse(rt);
@@ -192,7 +188,13 @@ public class SyntaxConverter extends Node.Visitor {
         if (name.getParent() instanceof TreeBuildingAnnotation) {
             if (name.firstChildOfType(Identifier.class).getPrevious().getType() == HASH) {
                 BNFProduction bnf = name.firstAncestorOfType(BNFProduction.class);
-                if (bnf != null && bnf.getName().equals(name.toString())) return;
+                if (bnf != null && bnf.getName().equals(name.toString())) {
+                    if (buffer.substring(buffer.length()-2).equals(" #")) {
+                        buffer.setLength(buffer.length()-1);
+                        buffer.setCharAt(buffer.length()-1, '#');
+                    }
+                    return;
+                }
             }
         }
         recurse(name);
@@ -261,6 +263,7 @@ public class SyntaxConverter extends Node.Visitor {
     void visit(Delimiter delim) {
         Node parent = delim.getParent();
         if (delim.getType() == LBRACE && (parent instanceof BNFProduction || parent instanceof TokenProduction)) {
+            if (Character.isWhitespace(buffer.charAt(buffer.length()-1))) buffer.setLength(buffer.length()-1);
             return;
         }
         else if (delim.getType() == RBRACE && (parent instanceof BNFProduction || parent instanceof TokenProduction)) {
@@ -269,6 +272,17 @@ public class SyntaxConverter extends Node.Visitor {
             }
         }
         else buffer.append(delim.getImage());
+    }
+
+    void visit(Identifier id) {
+        if (id.getParent() instanceof BNFProduction && buffer.length() > 2) {
+            char lastChar = buffer.charAt(buffer.length() -1);
+            char secondLast = buffer.charAt(buffer.length() -2);
+            if (lastChar == ' ' && (secondLast == '#' || secondLast == '\n')) {
+                buffer.setLength(buffer.length()-1);
+            }
+        }
+        buffer.append(id.getImage());
     }
 
     void visit(Whitespace ws) {
