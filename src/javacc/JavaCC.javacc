@@ -265,8 +265,7 @@ INJECT BaseNode :
         boolean outputOpeningBrace = false;
         for (int i=0; i<tokens.size() -1; i++) {
             Token t = tokens.get(i);
-            Token prevToken = i == 0 ? null : tokens.get(i-1);
-            if (prevToken !=null && prevToken.getEndOffset() != t.getBeginOffset()) {
+            if (i>0 && tokens.get(i-1).getEndOffset() != t.getBeginOffset()) {
                 buf.append(" ");
             }
             if (outputOpeningBrace) {
@@ -278,25 +277,12 @@ INJECT BaseNode :
         return buf.toString();
     }
 
-    // REVISIT. Need to fix the token chaining    
-    public void prepend(Node n) {
-        ListIterator<Node> iterator = iterator();
-        iterator.add(n);
-    }
-    
     public String getAsString() {
         return getLiteralText();
     }
     
     public boolean isEmpty() {
         return getRealTokens().isEmpty();
-    }
-
-    public boolean hasKeyWord(String keyWord) {
-        for (KeyWord kw: childrenOfType(KeyWord.class)) {
-           if (kw.getImage().equals(keyWord)) return true;
-        }
-        return false;
     }
 
     protected String getLiteralText() {
@@ -523,15 +509,7 @@ INJECT TypeDeclaration :
    
     
     default boolean isClass() {
-        for (Node n : children()) {
-        if (n instanceof Token) {
-           Token t = (Token) n;
-               if (t.getType() == TokenType.CLASS) {
-                  return true;
-               }
-        }
-        }
-        return false;
+        return firstChildOfType(TokenType.CLASS) != null;
     }
     
     default void addImplements(ObjectType type) {
@@ -562,8 +540,6 @@ INJECT TypeDeclaration :
                 }
             }
             iterator.previous();
-            iterator.add(Token.newToken(TokenType.WHITESPACE, " ", this.getTokenSource()));
-            iterator.next();
             iterator.add(extendsList);
         }
         extendsList.addType(type, this instanceof InterfaceDeclaration);
@@ -1841,7 +1817,8 @@ Expansion ExpansionUnit :
 
 #NonTerminal #com.javacc.core.NonTerminal :
   [
-    => Name {CURRENT_NODE.setLHS((Name)peekNode());} "="
+    Name {CURRENT_NODE.setLHS((Name)peekNode());} "=" 
+    =>||
   ]
   <IDENTIFIER>
   =>||

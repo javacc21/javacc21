@@ -268,7 +268,7 @@ public interface Node extends Comparable<Node>
      * @param includeCommentTokens Whether to include comment tokens
      */
      default List<Token> getAllTokens(boolean includeCommentTokens) {
-		List<Token> result = new ArrayList<Token>();
+		List<Token> result = new ArrayList<>();
         for (Iterator<Node> it = iterator(); it.hasNext();) {
             Node child = it.next();
             if (child instanceof Token) {
@@ -277,17 +277,7 @@ public interface Node extends Comparable<Node>
                     continue;
                 }
                 if (includeCommentTokens) {
-                    ArrayList<Token> comments = null;
-                    Token prev = token.previousCachedToken();
-                    while (prev != null && prev.isUnparsed()) {
-                        if (comments == null) comments = new ArrayList<>();
-                        comments.add(prev);
-                        prev = prev.previousCachedToken();
-                    }
-                    if (comments !=null) {
-                        Collections.reverse(comments);
-                        result.addAll(comments);
-                    }
+                    result.addAll(token.precedingUnparsedTokens());
                 }
                 result.add(token);
             } 
