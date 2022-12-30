@@ -185,7 +185,7 @@
             n.close();
             pushNode(n);
 [#list grammar.closeNodeScopeHooks as hook]
-           ${hook}(${nodeVarName});
+           ${hook}(n);
 [/#list]
         } else {
             currentNodeScope.close();

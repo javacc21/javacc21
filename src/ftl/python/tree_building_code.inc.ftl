@@ -146,7 +146,7 @@
             n.close()
             self.push_node(n)
 [#list grammar.closeNodeScopeHooks as hook]
-            self.${hook}(${nodeVarName})
+            self.${hook}(n)
 [/#list]
         else:
             self.current_node_scope.close()

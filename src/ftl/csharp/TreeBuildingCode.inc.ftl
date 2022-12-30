@@ -158,7 +158,7 @@
                 n.Close();
                 PushNode(n);
     [#list grammar.closeNodeScopeHooks as hook]
-                ${hook}(${nodeVarName});
+                ${hook}(n);
     [/#list]
             }
             else {

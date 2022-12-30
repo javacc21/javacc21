@@ -84,6 +84,13 @@ import java.util.EnumSet;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
+    // For some backward compatibility with very old stuff
+    private ${grammar.lexerClassName} input_stream = this;
+    private void backup(int amount) {
+        if (amount > bufferPosition) throw new ArrayIndexOutOfBoundsException();
+        this.bufferPosition -= amount;
+    }
+
 
 [#if !multipleLexicalStates]
     static final private ${grammar.nfaDataClassName}.NfaFunction[] nfaFunctions= ${grammar.nfaDataClassName}.getFunctionTableMap(null);
