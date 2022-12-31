@@ -116,7 +116,7 @@ public class LexicalStateData {
             processTokenProduction(tp);
         }
         if (regularExpressions.isEmpty()) {
-            grammar.addError("Error: Lexical State " + getName() + " does not contain any token types!");
+            grammar.addWarning("Warning: Lexical State " + getName() + " does not contain any token types!");
         }
         generateData();
     }
@@ -138,7 +138,11 @@ public class LexicalStateData {
         this.compositeSets = new ArrayList<>(allComposites);
         // Make sure the initial state is the first in the list.
         int indexInList = compositeSets.indexOf(initialComposite);
-        Collections.swap(compositeSets, indexInList, 0);
+        if (indexInList == -1) {
+            compositeSets.clear();
+            compositeSets.add(initialComposite);
+        }
+        else Collections.swap(compositeSets, indexInList, 0);
         // Set the index on the various composites
         for (int i =0; i< compositeSets.size();i++) {
             compositeSets.get(i).setIndex(i);

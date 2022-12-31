@@ -144,14 +144,14 @@
       [#if tokenActivation.activatedTokens?size>0]
          ${somethingChanged} = activateTokenTypes(
          [#list tokenActivation.activatedTokens as tokenName]
-             ${tokenName}[#if tokenName_has_next],[/#if]
+             ${TT}${tokenName}[#if tokenName_has_next],[/#if]
          [/#list]
          );
       [/#if]
       [#if tokenActivation.deactivatedTokens?size>0]
          ${somethingChanged} = ${somethingChanged} |= deactivateTokenTypes(
          [#list tokenActivation.deactivatedTokens as tokenName]
-             ${tokenName}[#if tokenName_has_next],[/#if]
+             ${TT}${tokenName}[#if tokenName_has_next],[/#if]
          [/#list]
          );
       [/#if]
