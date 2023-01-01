@@ -3,6 +3,7 @@
 /build/*
 /classes/*
 /target/*
+/report/*
 /.settings/*
 __pycache__/*
 /*.jar
@@ -45,6 +46,12 @@ __pycache__/*
 *.zip
 *.tar.gz
 *.rar
+
+# eclipse
+.project
+
+# jacoco
+jacoco*
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*

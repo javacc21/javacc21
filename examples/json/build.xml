@@ -1,4 +1,8 @@
-<project name="JSONParser" default="compile" basedir=".">
+<project name="JSONParser" default="compile" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
+
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="../../jacoco-0.8.7/lib/jacocoant.jar"/>
+    </taskdef>
    <uptodate property="parser1.uptodate"
             srcfile="JSON.javacc"
             targetfile="${basedir}/org/parsers/json/JSONParser.java"/> 
@@ -37,20 +41,24 @@
             Now test a few files I grabbed with various non-European characters
             This might not display correctly on the terminal you are using!
       </echo>
-      <java classname="JSONTest" classpath="."  failonerror="true" fork="true">
-          <assertions><enable/></assertions>
-          <arg value="${basedir}/testfiles/Mono.WebAssembly.Build.targets.buildschema.json"/>
-          <arg value="${basedir}/testfiles/package.nls.ko.json"/>
-          <arg value="${basedir}/testfiles/package.nls.ru.json"/>
-          <arg value="${basedir}/testfiles/package.nls.zh-cn.json"/>
-      </java>
+      <jacoco:coverage>
+          <java classname="JSONTest" classpath="."  failonerror="true" fork="true">
+              <assertions><enable/></assertions>
+              <arg value="${basedir}/testfiles/Mono.WebAssembly.Build.targets.buildschema.json"/>
+              <arg value="${basedir}/testfiles/package.nls.ko.json"/>
+              <arg value="${basedir}/testfiles/package.nls.ru.json"/>
+              <arg value="${basedir}/testfiles/package.nls.zh-cn.json"/>
+          </java>
+      </jacoco:coverage>
       <echo>
          Now test the JSONC parser on a file with errors
       </echo>
-      <java classname="JSONCTest" classpath="." failonerror="true" fork="true">
-            <assertions><enable/></assertions>
-          <arg value="${basedir}/testfiles/invalid.json"/>
-      </java>
+      <jacoco:coverage>
+          <java classname="JSONCTest" classpath="." failonerror="true" fork="true">
+                <assertions><enable/></assertions>
+              <arg value="${basedir}/testfiles/invalid.json"/>
+          </java>
+      </jacoco:coverage>
    </target>
 
       

@@ -1,5 +1,8 @@
-<project name="Java Parser" default="compile">
+<project name="Java Parser" default="compile" xmlns:jacoco="antlib:org.jacoco.ant">
 
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="../../jacoco-0.8.7/lib/jacocoant.jar"/>
+    </taskdef>
 <target name="clean">
    <delete dir="org"/>
    <delete file="JParse.class"/>
@@ -7,8 +10,7 @@
 </target>
 
 <target name="init">
-	<uptodate property="javaparser.uptodate" srcfile="Java.javacc" targetfile="org/parsers/java/JavaParser.java"
-/>
+	<uptodate property="javaparser.uptodate" srcfile="Java.javacc" targetfile="org/parsers/java/JavaParser.java"/>
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
@@ -27,19 +29,23 @@
 </target>
 
 <target name="test" depends="compile">
-     <java fork="true" failonerror="true" classname="JParse">
-         <assertions><enable/></assertions>
-         <arg value="org/parsers/java"/>
-     </java>
+	 <jacoco:coverage>
+         <java fork="true" failonerror="true" classname="JParse" classpath=".">
+             <assertions><enable/></assertions>
+             <arg value="org/parsers/java"/>
+         </java>
+     </jacoco:coverage>
      <echo>
         -------------------
         Okay, that seems okay. Now let's dump the parse tree for a single source file
         -------------------
      </echo>
-     <java fork="true" failonerror="true" classname="JParse">
-	       <assertions><enable/></assertions>
-         <arg value="org/parsers/java/ast/CompilationUnit.java"/>
-     </java>
+	 <jacoco:coverage>
+         <java fork="true" failonerror="true" classname="JParse" classpath=".">
+	         <assertions><enable/></assertions>
+             <arg value="org/parsers/java/ast/CompilationUnit.java"/>
+         </java>
+	 </jacoco:coverage>
 </target>
 
 </project>
