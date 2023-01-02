@@ -1708,7 +1708,11 @@ import java.util.*;
     }
 }
 
-INJECT LegacyLookahead : extends com.javacc.core.Lookahead;
+INJECT LegacyLookahead : 
+extends com.javacc.core.Lookahead
+{
+    public boolean isSemanticLookaheadNested() {return true;}
+}
 
 LegacyLookahead# :
 {
@@ -1743,7 +1747,7 @@ LegacyLookahead# :
       ]
       [
         "{"  exp=Expression  "}" {CURRENT_NODE.setSemanticLookahead(exp);}
-        ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+        ["#"]
       ]
      ")"
   ]

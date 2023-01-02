@@ -241,9 +241,7 @@ public class SyntaxConverter extends Node.Visitor {
             buffer.append("{");
             buffer.append(la.getSemanticLookahead());
             buffer.append("}");
-            if (la.isSemanticLookaheadNested()) {
-                buffer.append("#");
-            }
+            buffer.append("#");
             buffer.append(" ");
         }
         if (la.getNestedExpansion() != null) {
