@@ -412,7 +412,7 @@ INJECT ImplementsList :
     public List<ObjectType> getTypes() {
         return childrenOfType(ObjectType.class);
     }
-    //REVISIT. fix token chaining    
+    //REVISIT. fix token chaining?    
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
@@ -575,8 +575,7 @@ INJECT ExtendsList :
 INJECT TypeParameters : 
     import java.util.*;
 {
-    // REVISIT. fix token chaining
-    
+    // REVISIT. fix token chaining?
     public void add(TypeParameter param) {
         if (!getParameters().contains(param)) {
             ListIterator<Node> iterator = iterator();
@@ -1158,13 +1157,17 @@ BNFProduction #com.javacc.core.BNFProduction :
     ]
     (
         // Older syntax
-        => [=>Block] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
+        [=>Block] "{" ExpansionChoice 
+        {CURRENT_NODE.setExpansion((Expansion) peekNode());}
+        "}" =>|| 
         |
         [Block {CodeBlock block = (CodeBlock) peekNode();}
           ["#" {block.setAppliesInLookahead(true);}]
+          ASSERT ~(";") =>||
         ]
         ExpansionChoice 
-        {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
+        {CURRENT_NODE.setExpansion((Expansion) peekNode());} 
+        ";"
     )
     {
         CURRENT_NODE.adjustFirstToken(firstToken);
