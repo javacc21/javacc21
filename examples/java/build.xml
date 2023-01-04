@@ -27,7 +27,7 @@
 </target>
 
 <target name="test" depends="compile">
-     <java fork="true" failonerror="true" classname="JParse">
+     <java fork="true" classpath="." failonerror="true" classname="JParse">
          <assertions><enable/></assertions>
          <arg value="org/parsers/java"/>
      </java>
@@ -36,7 +36,7 @@
         Okay, that seems okay. Now let's dump the parse tree for a single source file
         -------------------
      </echo>
-     <java fork="true" failonerror="true" classname="JParse">
+     <java fork="true" classpath="." failonerror="true" classname="JParse">
 	       <assertions><enable/></assertions>
          <arg value="org/parsers/java/ast/CompilationUnit.java"/>
      </java>
