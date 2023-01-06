@@ -812,6 +812,10 @@ public class Grammar extends BaseNode {
             interfaceNodeNames.add(productionName);
             nodeName = productionName;
         }
+        else {
+            abstractNodeNames.remove(nodeName);
+            interfaceNodeNames.remove(nodeName);
+        }
         nodeNames.add(nodeName);
         nodeClassNames.put(nodeName, getNodePrefix() + nodeName);
         nodePackageNames.put(nodeName, getNodePackage());
