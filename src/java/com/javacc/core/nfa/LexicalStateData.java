@@ -153,7 +153,7 @@ public class LexicalStateData {
         boolean ignore = tp.isIgnoreCase() || grammar.isIgnoreCase();//REVISIT
         for (RegexpSpec regexpSpec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = regexpSpec.getRegexp();
-            if (currentRegexp.isPrivate()) {
+            if (currentRegexp.isPrivate() || grammar.isOverridden(currentRegexp)) {
                 continue;
             }
             regularExpressions.add(currentRegexp);

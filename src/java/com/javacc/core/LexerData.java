@@ -202,6 +202,7 @@ public class LexerData {
     private TokenSet getTokensOfKind(String kind) {
         TokenSet result = new TokenSet(grammar);
         for (RegularExpression re : regularExpressions) {
+            if (grammar.isOverridden(re)) continue;
             TokenProduction tp = re.getTokenProduction();
             if (tp != null && tp.getKind().equals(kind)) {
                 result.set(re.getOrdinal());

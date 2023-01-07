@@ -210,7 +210,7 @@ public class SanityChecker {
 
         /*
          * The following loop inserts all names of regular expressions into
-         * "named_tokens_table" and "ordered_named_tokens". Duplications are
+         * "namedTokensTable" and "ordered_named_tokens". Duplications are
          * flagged as errors.
          */
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) { 
@@ -218,12 +218,13 @@ public class SanityChecker {
                 RegularExpression re = res.getRegexp();
                 if (!(re instanceof RegexpRef) && re.hasLabel()) {
                     String label = re.getLabel();
-                    RegularExpression regexp = grammar.addNamedToken(label, re);
+                    RegularExpression regexp = grammar.getNamedToken(label);
                     if (regexp != null) {
-                        grammar.addError(res.getRegexp(),
+                        grammar.addWarning(res.getRegexp(),
                                 "Multiply defined lexical token name \"" + label
                                 + "\".");
                     } 
+                    grammar.addNamedToken(label, re);
                 }
             }
         }

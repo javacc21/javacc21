@@ -79,6 +79,7 @@ public class Grammar extends BaseNode {
 
     private Map<String, BNFProduction> productionTable;
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
+    private Set<RegularExpression> overriddenTokens = new HashSet<>();
     private Map<String, String> tokenNamesToConstName = new HashMap<>();
     private Set<String> lexicalStates = new LinkedHashSet<>();
     private Map<String, String> preprocessorSymbols = new HashMap<>();
@@ -683,13 +684,12 @@ public class Grammar extends BaseNode {
         return namedTokensTable.get(name);
     }
 
-    public RegularExpression addNamedToken(String name, RegularExpression regexp) {
-        RegularExpression alreadyThere = namedTokensTable.get(name);
-        if (alreadyThere != null) {
-            return alreadyThere;
-        }
-        namedTokensTable.put(name, regexp);
-        return null;
+    public void addNamedToken(String name, RegularExpression regexp) {
+        overriddenTokens.add(namedTokensTable.put(name, regexp));
+    }
+
+    public boolean isOverridden(RegularExpression regexp) {
+        return overriddenTokens.contains(regexp);
     }
 
     public boolean hasTokenOfName(String name) {
@@ -697,7 +697,7 @@ public class Grammar extends BaseNode {
     }
 
     /**
-     * Contains the same entries as "named_tokens_table", but this is an ordered
+     * Contains the same entries as "namedTokensTable", but this is an ordered
      * list which is ordered by the order of appearance in the input file.
      * (Actually, the only place where this is used is in generating the
      * XXXConstants.java file)
