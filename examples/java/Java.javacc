@@ -68,9 +68,10 @@ INCLUDE "JavaLexer.javacc"
 
 PackageDeclaration :
     (Annotation)*
-    "package"
+    <PACKAGE>
     =>||
-    Name {CURRENT_NODE.setPackageName((Name) peekNode());} ";"
+    Name {CURRENT_NODE.setPackageName((Name) peekNode());} 
+    <SEMICOLON>
 ;
 
 INJECT PackageDeclaration :
@@ -78,7 +79,7 @@ INJECT PackageDeclaration :
   @Property Name packageName;
 }
 
-ImportDeclaration : "import" [ "static" ] Name [ "." "*" ] ";" ;
+ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 
 Modifiers :
  (
@@ -86,10 +87,9 @@ Modifiers :
        || permissibleModifiers.contains(getToken(1).getType())}#
   =>
   (
-   "public"|"static"|"protected"|"private"|"final"|"abstract"
-   |"synchronized"|"native"|"transient"|"volatile"|"strictfp"
-   |"default"
-  )
+   <PUBLIC>|<STATIC>|<PROTECTED>|<PRIVATE> |<FINAL>|<ABSTRACT>
+   |<SYNCHRONIZED>|<NATIVE>|<TRANSIENT>|<VOLATILE>|<STRICTFP>
+   |<_DEFAULT>)
   {
     if (permissibleModifiers !=null) {
       TokenType tt = getToken(0).getType();
@@ -125,7 +125,7 @@ Modifiers :
          && "sealed".equals(getToken(3).getImage())
     )
   }# =>
-  ACTIVATE_TOKENS SEALED, NON_SEALED ("sealed"|"non-sealed")
+  ACTIVATE_TOKENS SEALED, NON_SEALED (<SEALED>|<NON_SEALED>)
   {
     if (permissibleModifiers!=null) {
       permissibleModifiers.remove(TokenType.SEALED);
@@ -161,14 +161,14 @@ TypeDeclaration #interface :
 
 
 TypeDeclarationLA#scan :
-   ";"
+   <SEMICOLON>
    |
    Modifiers /modifiers/
    (
-     "class"
-     | "interface"
-     | "enum"
-     | "@" "interface"
+     <CLASS>
+     | <INTERFACE>
+     | <ENUM>
+     | <AT> <INTERFACE>
      | <IDENTIFIER>
        ASSERT {currentLookaheadToken.getImage().equals("record")}
        <IDENTIFIER>
@@ -181,7 +181,7 @@ INJECT ClassDeclaration : implements TypeDeclaration;
 INJECT InterfaceDeclaration : implements TypeDeclaration;
 INJECT EnumDeclaration : implements TypeDeclaration;
 
-EmptyDeclaration# : ";" ;
+EmptyDeclaration# : <SEMICOLON> ;
 
 TypeIdentifier#void :
    <IDENTIFIER>
@@ -198,7 +198,7 @@ TypeIdentifier#void :
 ClassDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP, TokenType.SEALED, TokenType.NON_SEALED);}#
   Modifiers /modifiers/
-  "class" =>||
+  <CLASS> =>||
   TypeIdentifier /name/
   [ TypeParameters ]
   [ ExtendsList ]
@@ -210,7 +210,7 @@ ClassDeclaration :
 InterfaceDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.STATIC, TokenType.STRICTFP, TokenType.SEALED, TokenType.NON_SEALED);}#
   Modifiers /modifiers/
-  "interface" =>||
+  <INTERFACE> =>||
   TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList ]
@@ -220,17 +220,17 @@ InterfaceDeclaration :
 
 PermitsList :
    SCAN 0 {getToken(1).getImage().equals("permits")}# =>
-   ACTIVATE_TOKENS PERMITS ("permits")
+   ACTIVATE_TOKENS PERMITS (<PERMITS>)
    ObjectType
-   ("," ObjectType)*
+   (<COMMA> ObjectType)*
 ;
 
 ExtendsList :
-   "extends"
+   <EXTENDS>
    ObjectType
    (
      SCAN 1 \InterfaceDeclaration =>
-     "," ObjectType
+     <COMMA> ObjectType
    )*
 ;
 
@@ -243,9 +243,9 @@ import java.util.List;
 }
 
 ImplementsList :
-   "implements" ObjectType
+   <IMPLEMENTS> ObjectType
    (
-     "," ObjectType
+     <COMMA> ObjectType
    )*
 ;
 
@@ -253,18 +253,18 @@ ImplementsList :
 EnumDeclaration :
    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP);}#
    Modifiers /modifiers/
-   "enum" =>||
+   <ENUM> =>||
    TypeIdentifier /name/
    [ImplementsList]
    EnumBody
 ;
 
 EnumBody :
-   "{"
-   [ EnumConstant /[values]/ ( SCAN 2 "," EnumConstant /[values]/ )* ]
-   [ "," ]
-   [ ";" ( ClassOrInterfaceBodyDeclaration )*! ]
-   "}"
+   <LBRACE>
+   [ EnumConstant /[values]/ ( SCAN 2 <COMMA> EnumConstant /[values]/ )* ]
+   [ <COMMA> ]
+   [ <SEMICOLON> ( ClassOrInterfaceBodyDeclaration )*! ]
+   <RBRACE>
 ;
 
 RecordDeclaration :
@@ -272,7 +272,7 @@ RecordDeclaration :
   Modifiers /modifiers/
   ASSERT {getToken(1).getImage().equals("record") && getToken(2).getType() == TokenType.IDENTIFIER}#
   =>||
-  ACTIVATE_TOKENS RECORD ("record")
+  ACTIVATE_TOKENS RECORD (<RECORD>)
   TypeIdentifier
   [TypeParameters]
   RecordHeader
@@ -281,36 +281,36 @@ RecordDeclaration :
 ;
 
 RecordHeader :
-   "("
+   <LPAREN>
    [
      RecordComponent
-     ("," RecordComponent)*
+     (<COMMA> RecordComponent)*
    ]
-   ")"
+   <RPAREN>
 ;
 
 RecordComponent :
-   (Annotation)* Type [(Annotation)* "..."] <IDENTIFIER>
+   (Annotation)* Type [(Annotation)* <VAR_ARGS>] <IDENTIFIER>
 ;
 
 RecordBody :
-  "{"
+  <LBRACE> 
   (
    CompactConstructorDeclaration
    |
    ClassOrInterfaceBodyDeclaration
   )*
-  "}"
+  <RBRACE>
 ;
 
 CompactConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE);}#
   Modifiers /modifiers/
   TypeIdentifier
-  "{" =>||
-  [ => ExplicitConstructorInvocation ]
+  <LBRACE> =>||
+  [ ExplicitConstructorInvocation =>|| ]
   ( BlockStatement /[statements]/ )*!
-  "}"
+  <RBRACE>
 ;
 
 INJECT CompactConstructorDeclaration : extends ConstructorDeclaration
@@ -320,9 +320,9 @@ EnumConstant :
 ;
 
 TypeParameters :
-   "<"
-   TypeParameter ( "," TypeParameter )*
-   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">")
+   <LT>
+   TypeParameter ( <COMMA> TypeParameter )*
+   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
 ;
 
 INJECT TypeParameters :
@@ -336,10 +336,10 @@ INJECT TypeParameters :
 TypeParameter: (Annotation)* TypeIdentifier =>|| [TypeBound];
 
 TypeBound :
-   "extends" ObjectType ( "&" ObjectType )*
+   <EXTENDS> ObjectType ( <BIT_AND> ObjectType )*
 ;
 
-ClassOrInterfaceBody : "{" (SCAN ~("}") => ClassOrInterfaceBodyDeclaration /[decls]/ )*! "}" ;
+ClassOrInterfaceBody : <LBRACE> (SCAN ~(<RBRACE>) => ClassOrInterfaceBodyDeclaration /[decls]/ )*! <RBRACE> ;
 
 ClassOrInterfaceBodyDeclaration#interface :
   Initializer
@@ -362,17 +362,17 @@ INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
 FieldDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.STATIC, TokenType.FINAL, TokenType.TRANSIENT, TokenType.VOLATILE);}#
   Modifiers /modifiers/
-  Type VariableDeclarator =>|+1 ( "," VariableDeclarator )* ";"
+  Type VariableDeclarator =>|+1 ( <COMMA> VariableDeclarator )* <SEMICOLON>
 ;
 
-VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
+VariableDeclarator# : VariableDeclaratorId [ <ASSIGN> VariableInitializer ] ;
 
-VariableDeclaratorId : <IDENTIFIER> /varName/ ( (Annotation)* "[" "]" )* ;
+VariableDeclaratorId : <IDENTIFIER> /varName/ ( (Annotation)* <LBRACKET> <RBRACKET> )* ;
 
 VariableInitializer : ArrayInitializer | Expression ;
 
 ArrayInitializer :
-  "{" [ VariableInitializer ( SCAN 2 "," VariableInitializer )* ] [ "," ] "}"
+   <LBRACE> [ VariableInitializer ( SCAN 2 <COMMA> VariableInitializer )* ] [ <COMMA> ] <RBRACE>
 ;
 
 #MethodDeclaration :
@@ -393,15 +393,15 @@ ArrayInitializer :
   [ TypeParameters ]
   ReturnType
   <IDENTIFIER> /methodName/
-  =>|+1 FormalParameters /formals/ ( (Annotation)* "[" "]" )*
+  =>|+1 FormalParameters /formals/ ( (Annotation)* <LBRACKET><RBRACKET> )*
   [ ThrowsList ]
-  ( Block /statements/ | ";" )
+  ( Block /statements/ | <SEMICOLON> )
   {return CURRENT_NODE;}
 ;
 
-FormalParameters : "(" [ FormalParameter ( "," FormalParameter )* ] ")" ;
+FormalParameters : <LPAREN> [ FormalParameter ( <COMMA> FormalParameter )* ] <RPAREN> ;
 
-FormalParameter : {permissibleModifiers = EnumSet.of(TokenType.FINAL);}# Modifiers /modifiers/ Type [ (Annotation)* "..." ] VariableDeclaratorId ;
+FormalParameter : {permissibleModifiers = EnumSet.of(TokenType.FINAL);}# Modifiers /modifiers/ Type [ (Annotation)* <VAR_ARGS> ] VariableDeclaratorId ;
 
 ConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE);}#
@@ -409,27 +409,27 @@ ConstructorDeclaration :
   [ TypeParameters ]
   TypeIdentifier FormalParameters /formals/ =>||
   [ ThrowsList ]
-  "{"
-  [ => ExplicitConstructorInvocation ]
+  <LBRACE>
+  [ ExplicitConstructorInvocation =>||]
   ( BlockStatement /[statements]/ )*!
-  "}"
+  <RBRACE>
 ;
 
 ExplicitConstructorInvocation :
-  [TypeArguments] ("this" | "super") =>|+1 InvocationArguments ";"
+  [TypeArguments] (<THIS> | <SUPER>) =>|+1 InvocationArguments <SEMICOLON>
   |
   // Is this 100% correct? I think so, but it is not quite what the
   // language spec says. Maybe need to revisit this.
-  (Name [=> "." "this"] | Parentheses)
-  "." [TypeArguments] "super" =>|+1 InvocationArguments ";"
+  (Name [<DOT><THIS> =>||] | Parentheses)
+  <DOT> [TypeArguments] <SUPER> =>|+1 InvocationArguments <SEMICOLON>
 ;
 
 Initializer# :
-  [ "static" ] =>|+1 Block
+  [ <STATIC> ] =>|+1 Block
 ;
 
 Type#interface :
-   => ReferenceType
+   ReferenceType =>||
    |
    PrimitiveType
 ;
@@ -440,15 +440,15 @@ INJECT PrimitiveType : implements Type
 INJECT Primitive : implements Type
 
 ReferenceType :
-   => PrimitiveArrayType
+   PrimitiveArrayType =>||
    |
-   ObjectType (=> (Annotation)* "[" "]" )*
+   ObjectType ((Annotation)* <LBRACKET><RBRACKET> =>||)*
 ;
 
 ObjectType# :
     (Annotation)*
     TypeIdentifier [ TypeArguments ]
-    ( "." (Annotation)* <IDENTIFIER> =>|| [ TypeArguments ] )*
+    ( <DOT> (Annotation)* <IDENTIFIER> =>|| [ TypeArguments ] )*
 ;
 
 INJECT ObjectType : implements Type
@@ -473,7 +473,7 @@ INJECT ObjectType : implements Type
  */
 }
 
-DiamondOperator :  "<" ">" =>|| ;
+DiamondOperator :  <LT><GT> =>|| ;
 
 PossiblyEmptyTypeArguments #void :
    DiamondOperator
@@ -483,36 +483,36 @@ PossiblyEmptyTypeArguments #void :
 
 TypeArguments :
   SCAN 2
-  "<" TypeArgument ( "," TypeArgument )*
-   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">")
+  <LT> TypeArgument ( <COMMA> TypeArgument )*
+   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
 ;
 
 TypeArgument :
-  (Annotation)* "?" =>|| [ WildcardBounds ]
+  (Annotation)* <HOOK> =>|| [ WildcardBounds ]
   |
   ReferenceType
 ;
 
-WildcardBounds : ("extends" | "super") ReferenceType ;
+WildcardBounds : (<EXTENDS> | <SUPER>) ReferenceType ;
 
 PrimitiveType# :
   (Annotation)*
-  "boolean" | "char" | "byte" | "short" | "int" | "long" | "float" | "double"
+  <BOOLEAN> | <CHAR> | <BYTE> | <SHORT> | <INT> | <LONG> | <FLOAT> | <DOUBLE>
   =>||
 ;
 
-PrimitiveArrayType : PrimitiveType (=> (Annotation)* "[" "]")+ ;
+PrimitiveArrayType : PrimitiveType ((Annotation)* <LBRACKET><RBRACKET> =>||)+ ;
 
-ReturnType# : "void" | Type ;
+ReturnType# : <VOID> | Type ;
 
-Name# : <IDENTIFIER> ( => "." <IDENTIFIER>)* ;
+Name# : <IDENTIFIER> (<DOT> <IDENTIFIER> =>||)* ;
 
-ThrowsList : "throws" ExceptionType ( "," ExceptionType )* ;
+ThrowsList : <THROWS> ExceptionType ( <COMMA> ExceptionType )* ;
 
 ExceptionType :
     (Annotation)*
     (
-      Name "." =>|+1 (Annotation)+ TypeIdentifier
+      Name <DOT> =>|+1 (Annotation)+ TypeIdentifier
       |
       Name
     )
@@ -587,41 +587,41 @@ AssignmentExpression :
 ;
 
 AssignmentOperator #void :
-  "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | ">>>=" | "&=" | "^=" | "|="
+  <ASSIGN> | <STARASSIGN> | <SLASHASSIGN> | <REMASSIGN> | <PLUSASSIGN> | <MINUSASSIGN> | <LSHIFTASSIGN> | <RSIGNEDSHIFTASSIGN> | <RUNSIGNEDSHIFTASSIGN> | <ANDASSIGN> | <XORASSIGN> | <ORASSIGN>
 ;
 
 TernaryExpression :
-  ConditionalOrExpression [  "?" Expression ":" Expression ]
+  ConditionalOrExpression [  <HOOK> Expression <COLON> Expression ]
 ;
 
 ConditionalOrExpression :
-  ConditionalAndExpression ( "||" ConditionalAndExpression )*
+  ConditionalAndExpression ( <SC_OR> ConditionalAndExpression )*
 ;
 
 ConditionalAndExpression :
-  InclusiveOrExpression ( "&&" InclusiveOrExpression )*
+  InclusiveOrExpression ( <SC_AND> InclusiveOrExpression )*
 ;
 
 InclusiveOrExpression :
-  ExclusiveOrExpression ( "|" ExclusiveOrExpression )*
+  ExclusiveOrExpression ( <BIT_OR> ExclusiveOrExpression )*
 ;
 
 ExclusiveOrExpression :
-  AndExpression ( "^" AndExpression )*
+  AndExpression ( <XOR> AndExpression )*
 ;
 
 AndExpression :
-  EqualityExpression ( "&" EqualityExpression )*
+  EqualityExpression ( <BIT_AND> EqualityExpression )*
 ;
 
 EqualityExpression :
-  InstanceOfExpression ( ( "==" | "!=" ) InstanceOfExpression )*
+  InstanceOfExpression ( ( <EQ> | <NE> ) InstanceOfExpression )*
 ;
 
 InstanceOfExpression :
   RelationalExpression
   [
-    "instanceof"
+    <INSTANCEOF>
     (
       LocalVariableDeclaration // This is a stable feature in JDK 16.
       |
@@ -634,10 +634,10 @@ RelationalExpression :
   ShiftExpression
   (
     (
-     "<"
-     | ">"
-     | "<="
-     | ">="
+     <LT>
+     | <GT>
+     | <LE>
+     | <GE>
     )
     ShiftExpression
   )*
@@ -650,24 +650,24 @@ ShiftExpression :
      // Under certain conditions we scanned forward
      // and (incorrectly) scanned a >>, so we uncache
      // the tokens and end up rescanning!
-     SCAN ">" (">"|">>") => UNCACHE_TOKENS
+     SCAN <GT> (<GT>|<RSIGNEDSHIFT>) => UNCACHE_TOKENS
    ]
    (
-      ("<<" | ">>" | ">>>")
+      (<LSHIFT> | <RSIGNEDSHIFT> | <RUNSIGNEDSHIFT>)
       AdditiveExpression
    )*
 ;
 
 AdditiveExpression :
-  MultiplicativeExpression (  ( "+" | "-" ) MultiplicativeExpression )*
+  MultiplicativeExpression (  ( <PLUS> | <MINUS> ) MultiplicativeExpression )*
 ;
 
 MultiplicativeExpression :
-  UnaryExpression (  ( "*" | "/" | "%" ) UnaryExpression )*
+  UnaryExpression (  ( <STAR> | <SLASH>| <REM> ) UnaryExpression )*
 ;
 
 UnaryExpression :
-  ( "+" | "-" ) UnaryExpression
+  ( <PLUS> | <MINUS> ) UnaryExpression
   |
   PreIncrementExpression
   |
@@ -677,19 +677,19 @@ UnaryExpression :
 ;
 
 PreIncrementExpression :
-  "++" UnaryExpression
+  <INCR> UnaryExpression
   ASSERT {((Expression)peekNode()).isAssignableTo()}
   : "Expression after ++ is not an assignable variable."
 ;
 
 PreDecrementExpression :
-  "--" UnaryExpression
+  <DECR> UnaryExpression
   ASSERT {((Expression)peekNode()).isAssignableTo()}
   : "expression after -- is not an assignable variable"
 ;
 
 UnaryExpressionNotPlusMinus :
-  ( "~" | "!" ) UnaryExpression
+  ( <TILDE> | <BANG> ) UnaryExpression
   |
   LambdaExpression
   |
@@ -707,7 +707,7 @@ PostfixExpression :
   [
     SCAN {((Expression)peekNode()).isAssignableTo()}
     =>
-    "++" | "--"
+    <INCR> | <DECR>
   ]
 ;
 
@@ -716,20 +716,20 @@ SwitchExpression# :
 ;
 
 PrimitiveCastExpression :
-    "(" PrimitiveType ")" =>|| UnaryExpression
+   <LPAREN> PrimitiveType <RPAREN> =>|| UnaryExpression
 ;
 
 ObjectCastExpression :
-   "(" ReferenceType ("&" ObjectType)* ")" =>|+1 UnaryExpressionNotPlusMinus
+   <LPAREN> ReferenceType (<BIT_AND> ObjectType)* <RPAREN> =>|+1 UnaryExpressionNotPlusMinus
 ;
 
 PrimaryExpression#void :
  (
   LiteralExpression
   |
-  "this" #LiteralExpression
+  <THIS> #LiteralExpression
   |
-  "super" #LiteralExpression
+  <SUPER> #LiteralExpression
   |
   Parentheses
   |
@@ -742,17 +742,17 @@ PrimaryExpression#void :
   Name
  )
  (
-  => ("." "this") #DotThis(+1)
+  (<DOT> <THIS> =>||) #DotThis(+1)
   |
-  => ("." "super") #DotSuper(+1)
+  (<DOT> <SUPER> =>||) #DotSuper(+1)
   |
-  ("." =>|+1 AllocationExpression) #DotNew(+1)
+  (<DOT> =>|+1 AllocationExpression) #DotNew(+1)
   |
-  ("[" Expression "]") #ArrayAccess(+1)
+  (<LBRACKET> Expression <RBRACKET>) #ArrayAccess(+1)
   |
-  ("." [TypeArguments] <IDENTIFIER>) #DotName(+1)
+  (<DOT> [TypeArguments] <IDENTIFIER>) #DotName(+1)
   |
-  ("::" [TypeArguments] (<IDENTIFIER>|"new")) #MethodReference(+1)
+  (<DOUBLE_COLON> [TypeArguments] (<IDENTIFIER>|<NEW>)) #MethodReference(+1)
   |
 // The following commented-out line is the absolutely correct condition for recent JDK's,
 // since yield on its own cannot be a method call, though you can write this.yield(), for example.
@@ -770,9 +770,9 @@ PrimaryExpression#void :
 LiteralExpression : Literal #LiteralExpression;
 
 Parentheses :
-    "("
+    <LPAREN>
     Expression {CURRENT_NODE.setNestedExpression((Expression) peekNode());}
-    ")"
+    <RPAREN>
 ;
 
 INJECT Parentheses : implements Expression {
@@ -780,13 +780,13 @@ INJECT Parentheses : implements Expression {
   public boolean isAssignableTo() {return nestedExpression.isAssignableTo();}
 }
 
-ClassLiteral : ("void" | Type) "." "class" =>|| ;
+ClassLiteral : (<VOID> | Type) <DOT> <CLASS> =>|| ;
 
 MethodReference :
-    (Type | "super")
-     "::" =>||
+    (Type | <SUPER>)
+     <DOUBLE_COLON> =>||
      [TypeArguments]
-     (<IDENTIFIER>|"new")
+     (<IDENTIFIER>|<NEW>)
 ;
 
 Literal #void :
@@ -802,23 +802,23 @@ Literal #void :
   |
   <TEXT_BLOCK_LITERAL>
   |
-  "true"
+  <TRUE>
   |
-  "false"
+  <FALSE>
   |
-  "null"
+  <NULL>
 ;
 
 InvocationArguments :
-    "("
-    [ Expression ("," Expression)* ]
-    ")"
+    <LPAREN>
+    [ Expression (<COMMA> Expression)* ]
+    <RPAREN>
 ;
 
 AllocationExpression :
-  "new" PrimitiveType =>|| ArrayDimsAndInits
+  <NEW> PrimitiveType =>|| ArrayDimsAndInits
   |
-  "new" [TypeArguments] ObjectType [ PossiblyEmptyTypeArguments ]
+  <NEW> [TypeArguments] ObjectType [ PossiblyEmptyTypeArguments ]
     (
       ArrayDimsAndInits
       |
@@ -829,14 +829,14 @@ AllocationExpression :
 ArrayDimsAndInits :
   SCAN 2
   (
-    "[" =>|+1 Expression "]"
+    <LBRACKET> =>|+1 Expression <RBRACKET>
   )+
   (
-    => (Annotation)* "[" "]"
+    (Annotation)* <LBRACKET><RBRACKET> =>||
   )*
   |
   (
-    (Annotation)* "[" "]"
+    (Annotation)* <LBRACKET><RBRACKET>
   )+
   ArrayInitializer
 ;
@@ -909,15 +909,15 @@ TryStatement #(false) :
    |
    ClassicTryStatement
    |
-   "try" FAIL "Expecting '{' or '(' after 'try'"
+   <TRY> FAIL "Expecting '{' or '(' after 'try'"
 ;
 
-AssertStatement : "assert" Expression [ ":" Expression ] ";" ;
+AssertStatement : <_ASSERT> Expression [ <COLON> Expression ] <SEMICOLON> ;
 
-Block #CodeBlock : "{" (BlockStatement)*! "}" ;
+Block #CodeBlock : <LBRACE> (BlockStatement)*! <RBRACE> ;
 
 BlockStatement :
- ASSERT ~(("final"|Annotation)* ("public"|"private"|"protected"|"static")) : "Cannot declare anything to be public, private, protected, or static  in a local context"
+ ASSERT ~((<FINAL>|Annotation)* (<PUBLIC>|<PRIVATE>|<PROTECTED>|<STATIC>)) : "Cannot declare anything to be public, private, protected, or static  in a local context"
  (
 // The YieldStatement option in the Statement production will thus never
 // be matched but this doesn't seem to be a problem really.
@@ -926,7 +926,7 @@ BlockStatement :
   |
   RecordDeclaration
   |
-  LocalVariableDeclaration ";"
+  LocalVariableDeclaration <SEMICOLON>
   |
   ClassDeclaration
   |
@@ -951,16 +951,16 @@ LocalVariableDeclaration#abstract :
 NoVarDeclaration :
    {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
    Modifiers /modifiers/
-   Type =>|| VariableDeclarator ( "," VariableDeclarator )*
+   Type =>|| VariableDeclarator ( <COMMA> VariableDeclarator )*
 ;
 
 VarDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
   Modifiers /modifiers/
   ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType() == TokenType.IDENTIFIER} =>||
-  ACTIVATE_TOKENS VAR ("var")
+  ACTIVATE_TOKENS VAR (<VAR>)
   <IDENTIFIER>
-  ["=" Expression]
+  [<ASSIGN> Expression]
 ;
 
 LocalVariableDeclarationLA#scan :
@@ -975,7 +975,7 @@ LocalVariableDeclarationLA#scan :
    <IDENTIFIER>
 ;
 
-EmptyStatement# : ";" ;
+EmptyStatement# : <SEMICOLON> ;
 
 StatementExpression# :
   PreIncrementExpression
@@ -987,7 +987,7 @@ StatementExpression# :
   (
       SCAN 1 {lhs.isAssignableTo()}=>
       (
-          ("++" | "--") #PostfixExpression(2)
+          (<INCR> | <DECR>) #PostfixExpression(2)
           |
           AssignmentOperator Expression #AssignmentExpression(3)
       )
@@ -999,28 +999,28 @@ StatementExpression# :
   )
 ;
 
-ExpressionStatement : StatementExpression ";" ;
+ExpressionStatement : StatementExpression <SEMICOLON> ;
 
 SwitchStatement :
-  SCAN "switch" "(" Expression ")" "{" NewSwitchLabel
+  SCAN <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE> NewSwitchLabel
   => NewSwitchStatement
   |
   ClassicSwitchStatement
 ;
 
 ClassicSwitchStatement :
-  "switch" "(" Expression ")" "{"
+  <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE>
   (ClassicCaseStatement)*
-  "}"
+  <RBRACE>
 ;
 
 ClassicSwitchLabel :
   (
-   "case" Expression ("," Expression)*
+   <CASE> Expression (<COMMA> Expression)*
    |
-   "default"
+   <_DEFAULT>
   )
-  ":"
+  <COLON>
 ;
 
 ClassicCaseStatement :
@@ -1034,18 +1034,18 @@ ClassicCaseStatement :
 ;
 
 NewSwitchStatement :
-  "switch" "(" Expression ")" "{"
+  <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE>
   (NewCaseStatement)*
-  "}"
+  <RBRACE>
 ;
 
 NewSwitchLabel :
   (
-   "case" Expression ("," Expression)*
+   <CASE> Expression (<COMMA> Expression)*
    |
-   "default"
+   <_DEFAULT>
   )
-  "->"
+  <LAMBDA>
 ;
 
 NewCaseStatement :
@@ -1056,22 +1056,22 @@ NewCaseStatement :
      ThrowStatement
      |
      SCAN 0 \.\.\SwitchExpression
-     => Expression ";"
+     => Expression <SEMICOLON> 
      |
      BlockStatement
    )
 ;
 
 IfStatement :
-  "if" "(" Expression /condition/ ")" Statement /thenBlock/ [ "else" Statement /elseBlock/ ]
+  <IF> <LPAREN> Expression /condition/ <RPAREN> Statement /thenBlock/ [ <ELSE> Statement /elseBlock/ ]
 ;
 
 WhileStatement :
-  "while" "(" Expression ")" Statement
+  <WHILE> <LPAREN> Expression <RPAREN> Statement
 ;
 
 DoStatement :
-  "do" Statement "while" "(" Expression ")" ";"
+  <DO> Statement <WHILE> <LPAREN> Expression <RPAREN> <SEMICOLON>
 ;
 
 ForStatement#abstract :
@@ -1079,15 +1079,15 @@ ForStatement#abstract :
    |
    EnhancedForStatement
    |
-   "for" FAIL
+   <FOR> FAIL
 ;
 
 BasicForStatement :
-   "for" "(" [ForInit] ";" =>|| [Expression] ";" [StatementExpressionList] ")" Statement
+   <FOR> <LPAREN> [ForInit] <SEMICOLON> =>|| [Expression] <SEMICOLON> [StatementExpressionList] <RPAREN> Statement
 ;
 
 EnhancedForStatement :
-   "for" "(" LocalVariableDeclaration ":" =>|| Expression ")" Statement
+   <FOR> <LPAREN> LocalVariableDeclaration <COLON> =>|| Expression <RPAREN> Statement
 ;
 
 
@@ -1098,29 +1098,29 @@ ForInit#void :
 ;
 
 StatementExpressionList#void :
-  StatementExpression ( "," StatementExpression )*
+  StatementExpression ( <COMMA> StatementExpression )*
 ;
 
 BreakStatement :
-  "break" [ <IDENTIFIER> ] ";"
+  <BREAK> [ <IDENTIFIER> ] <SEMICOLON>
 ;
 
 YieldStatement :
    ASSERT {getToken(1).getImage().equals("yield")&&isInProduction("SwitchExpression")}#
-   ACTIVATE_TOKENS YIELD ("yield")
-   Expression ";" =>||
+   ACTIVATE_TOKENS YIELD (<YIELD>)
+   Expression <SEMICOLON> =>||
 ;
 
-ContinueStatement : "continue" [ <IDENTIFIER> ] ";" ;
+ContinueStatement : <CONTINUE> [ <IDENTIFIER> ] <SEMICOLON> ;
 
-ReturnStatement : "return" (Expression)? ";" ;
+ReturnStatement : <RETURN> (Expression)? <SEMICOLON> ;
 
-ThrowStatement : "throw" Expression ";" ;
+ThrowStatement : <THROW> Expression <SEMICOLON> ;
 
-SynchronizedStatement : "synchronized" "(" Expression ")" Block ;
+SynchronizedStatement : <SYNCHRONIZED> <LPAREN> Expression <RPAREN> Block ;
 
 ClassicTryStatement :
-  "try"
+  <TRY>
   =>|+1
   Block /block/
   (
@@ -1134,7 +1134,7 @@ ClassicTryStatement :
 ;
 
 TryWithResources :
-   "try" "(" =>||
+   <TRY> <LPAREN> =>||
     (
          LocalVariableDeclaration
          |
@@ -1144,25 +1144,25 @@ TryWithResources :
          ASSERT {peekNode() instanceof DotName} : "Resource should be a field access here."
     )
     (
-        ";"
+       <SEMICOLON> 
        [
           LocalVariableDeclaration
           |
           Name
        ]
     )*
-    ")"
+    <RPAREN>
     Block /block/
     ( CatchBlock /[catchBlocks]/ )*
     [ FinallyBlock /finallyBlock/ ]
 ;
 
 CatchBlock :
-    "catch"
-    "("
-    ["final"]
-    ObjectType /[exceptionTypes]/ ("|" ObjectType /[exceptionTypes]/ )* VariableDeclaratorId /varDecl/
-    ")"
+    <CATCH>
+    <LPAREN>
+    [<FINAL>]
+    ObjectType /[exceptionTypes]/ (<BIT_OR> ObjectType /[exceptionTypes]/ )* VariableDeclaratorId /varDecl/
+    <RPAREN>
     Block
 ;
 
@@ -1173,7 +1173,7 @@ INJECT CatchBlock : extends Statement
     }
 }
 
-FinallyBlock : "finally" Block;
+FinallyBlock : <FINALLY> Block;
 
 INJECT FinallyBlock :
 {
@@ -1193,11 +1193,11 @@ Annotation #interface :
  )
 ;
 
-NormalAnnotation : "@" Name "(" =>|+2 [ MemberValuePairs ] ")" ;
+NormalAnnotation : <AT> Name <LPAREN> =>|+2 [ MemberValuePairs ] <RPAREN> ;
 
-MarkerAnnotation : "@" Name ;
+MarkerAnnotation : <AT> Name ;
 
-SingleMemberAnnotation : "@" Name "(" =>|| MemberValue ")" ;
+SingleMemberAnnotation : <AT> Name <LPAREN> =>|| MemberValue <RPAREN> ;
 
 INJECT Annotation :
 {
@@ -1209,10 +1209,10 @@ INJECT MarkerAnnotation : implements Annotation
 INJECT SingleMemberAnnotation : implements Annotation
 
 MemberValuePairs :
-   MemberValuePair ( "," MemberValuePair )*
+   MemberValuePair ( <COMMA> MemberValuePair )*
 ;
 
-MemberValuePair :  <IDENTIFIER> "=" MemberValue;
+MemberValuePair :  <IDENTIFIER> <ASSIGN> MemberValue;
 
 MemberValue :
    Annotation
@@ -1223,26 +1223,26 @@ MemberValue :
 ;
 
 MemberValueArrayInitializer :
-  => "{" "}"
+  <LBRACE> <RBRACE> =>||
   |
-  "{" MemberValue ( "," =>|+1 MemberValue )* [ "," ] "}"
+  <LBRACE> MemberValue ( <COMMA> =>|+1 MemberValue )* [ <COMMA> ] <RBRACE>
 ;
 
 
 AnnotationTypeDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.STATIC, TokenType.STRICTFP);}#
   Modifiers /modifiers/
-  "@" "interface" =>|| TypeIdentifier AnnotationTypeBody
+  <AT> <INTERFACE> =>|| TypeIdentifier AnnotationTypeBody
 ;
 
 AnnotationTypeBody :
-  "{" ( AnnotationTypeMemberDeclaration )* "}"
+  <LBRACE> ( AnnotationTypeMemberDeclaration )* <RBRACE>
 ;
 
 AnnotationMethodDeclaration :
    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.ABSTRACT);}#
    Modifiers /modifiers/
-   Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
+   Type <IDENTIFIER> <LPAREN> =>|| <RPAREN> [ DefaultValue ] <SEMICOLON> 
 ;
 
 AnnotationTypeMemberDeclaration :
@@ -1261,37 +1261,37 @@ AnnotationTypeMemberDeclaration :
   FieldDeclaration
 ;
 
-DefaultValue : "default" MemberValue ;
+DefaultValue : <_DEFAULT> MemberValue ;
 
 LambdaExpression :
   SCAN ~\...\NewSwitchLabel =>
   LambdaLHS =>|| (Expression | Block)
 ;
 
-LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | LambdaParameters) "->" =>|| ;
+LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | LambdaParameters) <LAMBDA> =>|| ;
 
 SimpleLambdaLHS #void :
    SCAN 3
-   "(" <IDENTIFIER>
-   (","<IDENTIFIER>)*
-   ")"
+   <LPAREN> <IDENTIFIER>
+   (<COMMA> <IDENTIFIER>)*
+   <RPAREN>
 ;
 
-LambdaParameters : "(" [ LambdaParameter ( "," LambdaParameter )* ] ")" ;
+LambdaParameters : <LPAREN> [ LambdaParameter ( <COMMA> LambdaParameter )* ] <RPAREN> ;
 
 LambdaParameter :
     {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
     Modifiers /modifiers/
     (
-      Type (Annotation)* "..." =>|| <IDENTIFIER>
+      Type (Annotation)* <VAR_ARGS> =>|| <IDENTIFIER>
       |
       (
         SCAN {getToken(1).getImage().equals("var")}#
-        => ACTIVATE_TOKENS VAR ("var")
+        => ACTIVATE_TOKENS VAR (<VAR>)
         |
         Type
       )
-      <IDENTIFIER>((Annotation)* "[" "]")*
+      <IDENTIFIER>((Annotation)* <LBRACKET><RBRACKET>)*
     )
 ;
 
