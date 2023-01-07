@@ -94,7 +94,9 @@ public class LexerData {
     }
 
     public List<RegularExpression> getRegularExpressions() {
-        return regularExpressions;
+        List<RegularExpression> result = new ArrayList<>(regularExpressions);
+        result.removeIf(re->grammar.isOverridden(re));
+        return result;
     }
 
     public boolean getHasLexicalStateTransitions() {
