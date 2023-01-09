@@ -343,12 +343,12 @@ public final class Main {
         grammar.createOutputDir();
         grammar.doSanityChecks();
         if (grammar.getErrorCount() > 0) {
-            outputErrors(grammar);
+            outputErrors(grammar, quiet);
             return 1;
         }
         grammar.generateLexer();
         if (grammar.getErrorCount() > 0) {
-            outputErrors(grammar);
+            outputErrors(grammar, quiet);
             return 1;
         }
         grammar.generateFiles();
@@ -358,16 +358,19 @@ public final class Main {
             System.out.println("Parser generated with 0 errors and "
                                 + grammar.getWarningCount() + " warnings.");
         }
-        outputErrors(grammar);
+        outputErrors(grammar, quiet);
         return (grammar.getErrorCount() == 0) ? 0 : 1;
     }
 
-    static void outputErrors(Grammar grammar) {
+    static void outputErrors(Grammar grammar, boolean quiet) {
         for (String error : grammar.errorMessages) {
             System.err.println(error);
         }
         for (String warning : grammar.warningMessages) {
             System.err.println(warning);
+        }
+        if (!quiet && !grammar.errorMessages.isEmpty()) for (String info: grammar.infoMessages) {
+            System.err.println(info);
         }
     }
 

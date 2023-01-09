@@ -110,7 +110,7 @@ public class Grammar extends BaseNode {
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
-    List<String> errorMessages = new ArrayList<>(), warningMessages = new ArrayList<>();
+    List<String> errorMessages = new ArrayList<>(), warningMessages = new ArrayList<>(), infoMessages = new ArrayList<>();
 
 	private int parseErrorCount;
 	private int semanticErrorCount;
@@ -781,6 +781,15 @@ public class Grammar extends BaseNode {
     public void addWarning(Node location, String warningMessage) {
         String locationString = location == null ? "" : location.getLocation();
         warningMessages.add("Warning: " + locationString + ":" + warningMessage);
+    }
+
+    public void addInfo(String infoMessage) {
+        infoMessages.add(infoMessage);
+    }
+
+    public void addInfo(Node location, String infoMessage) {
+        String locationString = location == null ? "" : location.getLocation();
+        infoMessages.add("Info: " + locationString + ":" + infoMessage);
     }
 
 	/**

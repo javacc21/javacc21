@@ -220,9 +220,8 @@ public class SanityChecker {
                     String label = re.getLabel();
                     RegularExpression regexp = grammar.getNamedToken(label);
                     if (regexp != null) {
-                        grammar.addWarning(res.getRegexp(),
-                                "Multiply defined lexical token name \"" + label
-                                + "\".");
+                        grammar.addInfo(res.getRegexp(),
+                                "Token name \"" + label + " is redefined.");
                     } 
                     grammar.addNamedToken(label, re);
                 }
