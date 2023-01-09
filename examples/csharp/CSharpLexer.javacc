@@ -83,7 +83,7 @@ TOKEN #Operator :
 | < BIT_OR: "|" > 
 | < HAT: "^" > 
 | < REM: "%" > 
-| < LSHIFT: "<<" > 
+| < LEFT_SHIFT: "<<" > 
 | < PLUSASSIGN: "+=" > 
 | < MINUSASSIGN: "-=" > 
 | < STARASSIGN: "*=" > 
@@ -126,6 +126,7 @@ TOKEN #KeyWord :
    | < DELEGATE : "delegate" > 
    | < DO : "do" > 
    | < DOUBLE : "double" > #PrimitiveType
+   | < DYNAMIC : "dynamic">
    | < ELSE : "else" > 
    | < ENUM : "enum" > 
    | < EVENT : "event" > 

@@ -296,6 +296,8 @@ TOKEN #Operator :
    |
    <SLASH : "/">
    |
+   <SLASHSLASH : "//">
+   |
    <PERCENT : "%">
    |
    <LSHIFT : "<<">
