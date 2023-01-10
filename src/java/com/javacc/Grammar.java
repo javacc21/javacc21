@@ -189,7 +189,7 @@ public class Grammar extends BaseNode {
         return id;
     }
 
-    public Node parse(Path file, boolean enterIncludes) throws IOException, ParseException {
+    public Node parse(Path file, boolean enterIncludes) throws IOException {
         Path canonicalPath = file.normalize();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
@@ -282,7 +282,7 @@ public class Grammar extends BaseNode {
         return locationAliases.getOrDefault(location, location);
     }
 
-    public Node include(List<String> locations, Node includeLocation) throws IOException, ParseException {
+    public Node include(List<String> locations, Node includeLocation) throws IOException {
         Path path = resolveLocation(locations);
         if (path == null) {
             addError(includeLocation, "Could not resolve location of include file");
@@ -348,7 +348,7 @@ public class Grammar extends BaseNode {
         resolveStringLiterals();
     }
 
-    public void generateFiles() throws ParseException, IOException, TemplateException {
+    public void generateFiles() throws IOException, TemplateException {
         translator = Translator.getTranslatorFor(this);
         new FilesGenerator(this, codeLang, codeInjections).generateAll();
     }
@@ -685,7 +685,12 @@ public class Grammar extends BaseNode {
     }
 
     public void addNamedToken(String name, RegularExpression regexp) {
-        overriddenTokens.add(namedTokensTable.put(name, regexp));
+        if (namedTokensTable.containsKey(name)) {
+            RegularExpression oldValue = namedTokensTable.get(name);
+            namedTokensTable.replace(name, oldValue, regexp);
+            overriddenTokens.add(oldValue);
+        }
+        else namedTokensTable.put(name, regexp);
     }
 
     public boolean isOverridden(RegularExpression regexp) {
@@ -1546,7 +1551,7 @@ public class Grammar extends BaseNode {
             return "";
         }
 
-        public String translateParameters(String parameterList) throws ParseException {
+        public String translateParameters(String parameterList) {
             StringBuilder sb = new StringBuilder();
             // First construct the parameter list with parentheses, so
             // that we can parse it and get the AST
@@ -1568,7 +1573,7 @@ public class Grammar extends BaseNode {
             return result.toString();
         }
 
-        public String translateString(String expr) throws ParseException {
+        public String translateString(String expr) {
             // For debugging. Just parse the passed string as an expression
             // and output the translation.
             JavaCCParser parser = new JavaCCParser(expr);
@@ -1607,7 +1612,7 @@ public class Grammar extends BaseNode {
             }
         }
 
-        public String translateCodeBlock(String cb, int indent) throws ParseException {
+        public String translateCodeBlock(String cb, int indent) {
             StringBuilder result = new StringBuilder();
             if (cb != null) {
                 cb = cb.trim();
