@@ -527,9 +527,7 @@
    and then the same code as a ZeroOrMore
 --]
 [#macro ScanCodeOneOrMore oom]
-   if (!${CheckExpansion(oom.nestedExpansion)}) {
-      return false;
-   }
+   [@BuildScanCode oom.nestedExpansion /]
    [@ScanCodeZeroOrMore oom /]
 [/#macro]
 

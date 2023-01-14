@@ -523,8 +523,9 @@ ${is}    self.hit_failure = False
 [#macro ScanCodeOneOrMore oom indent]
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
-${is}if not (${CheckExpansion(oom.nestedExpansion)}):
-${is}    return False
+[#--${is}if not (${CheckExpansion(oom.nestedExpansion)}):
+${is}    return False--]
+[@BuildScanCode oom.nestedExpansion indent /]
 [@ScanCodeZeroOrMore oom indent /]
 [#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]
 [/#macro]

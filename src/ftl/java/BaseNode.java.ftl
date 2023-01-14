@@ -60,7 +60,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         this.tokenSource = tokenSource;
     }
     
-    static private Class listClass = ArrayList.class;
+    static private Class<? extends List> listClass = ArrayList.class;
 
     /**
      * Sets the List class that is used to store child nodes. By default,

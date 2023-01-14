@@ -544,9 +544,11 @@ ${is}}
 [#macro ScanCodeOneOrMore oom indent]
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
+[#--
 ${is}if (!(${CheckExpansion(oom.nestedExpansion)})) {
-${is}    return false;
+${is}    return false;--]
 ${is}}
+[@BuildScanCode oom.nestedExpansion /]
 [@ScanCodeZeroOrMore oom indent /]
 [#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]
 [/#macro]

@@ -348,9 +348,9 @@ ClassOrInterfaceBodyDeclaration#interface :
   |
   ConstructorDeclaration
   |
-  FieldDeclaration
-  |
   MethodDeclaration
+  |
+  FieldDeclaration
 ;
 
 INJECT TypeDeclaration : extends ClassOrInterfaceBodyDeclaration
@@ -362,7 +362,7 @@ INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
 FieldDeclaration :
   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.STATIC, TokenType.FINAL, TokenType.TRANSIENT, TokenType.VOLATILE);}#
   Modifiers /modifiers/
-  Type VariableDeclarator =>|+1 ( <COMMA> VariableDeclarator )* <SEMICOLON>
+  Type VariableDeclarator ( <COMMA> VariableDeclarator )* <SEMICOLON>
 ;
 
 VariableDeclarator# : VariableDeclaratorId [ <ASSIGN> VariableInitializer ] ;
@@ -1136,21 +1136,18 @@ ClassicTryStatement :
 TryWithResources :
    <TRY> <LPAREN> =>||
     (
+      SCAN 0 {getToken(0).getType() == TokenType.SEMICOLON && getToken(1).getType() != TokenType.RPAREN}#
+      =>
+       (
          LocalVariableDeclaration
          |
          Name
          |
          PrimaryExpression
          ASSERT {peekNode() instanceof DotName} : "Resource should be a field access here."
-    )
-    (
-       <SEMICOLON> 
-       [
-          LocalVariableDeclaration
-          |
-          Name
-       ]
-    )*
+       )
+       [<SEMICOLON>]
+    )+
     <RPAREN>
     Block /block/
     ( CatchBlock /[catchBlocks]/ )*
@@ -1223,9 +1220,11 @@ MemberValue :
 ;
 
 MemberValueArrayInitializer :
-  <LBRACE> <RBRACE> =>||
-  |
-  <LBRACE> MemberValue ( <COMMA> =>|+1 MemberValue )* [ <COMMA> ] <RBRACE>
+  <LBRACE>
+  [
+     MemberValue ( <COMMA> =>|+1 MemberValue )* [<COMMA>] 
+  ]
+  <RBRACE>
 ;
 
 
