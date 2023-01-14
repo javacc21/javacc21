@@ -904,6 +904,9 @@ INJECT TryWithResources : extends TryStatement
 INJECT WhileStatement : extends Statement
 INJECT YieldStatement : extends Statement;
 
+INJECT ClassicSwitchStatement : extends SwitchStatement;
+INJECT NewSwitchStatement : extends SwitchStatement;
+
 TryStatement #(false) :
    TryWithResources
    |
@@ -1001,7 +1004,7 @@ StatementExpression# :
 
 ExpressionStatement : StatementExpression <SEMICOLON> ;
 
-SwitchStatement :
+SwitchStatement#abstract :
   SCAN <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE> NewSwitchLabel
   => NewSwitchStatement
   |
