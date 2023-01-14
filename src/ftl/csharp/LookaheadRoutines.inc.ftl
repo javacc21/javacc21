@@ -548,7 +548,7 @@ ${is}}
 ${is}if (!(${CheckExpansion(oom.nestedExpansion)})) {
 ${is}    return false;--]
 ${is}}
-[@BuildScanCode oom.nestedExpansion /]
+[@BuildScanCode oom.nestedExpansion indent /]
 [@ScanCodeZeroOrMore oom indent /]
 [#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]
 [/#macro]
