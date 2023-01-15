@@ -143,6 +143,7 @@ abstract public class Expansion extends BaseNode {
         if (!(parent instanceof ExpansionWithParentheses)) {
             return false;
         }
+        if (parent.getParent() instanceof AttemptBlock) return false;
         ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
         return grandparent.childrenOfType(Expansion.class).get(0) == parent && grandparent.isAtChoicePoint();
     }

@@ -899,15 +899,15 @@ INJECT SwitchStatement : extends Statement
 INJECT SynchronizedStatement : extends Statement
 INJECT ThrowStatement : extends Statement
 INJECT TryStatement : extends Statement
-INJECT ClassicTryStatement : extends TryStatement
-INJECT TryWithResources : extends TryStatement
 INJECT WhileStatement : extends Statement
 INJECT YieldStatement : extends Statement;
 
 INJECT ClassicSwitchStatement : extends SwitchStatement;
 INJECT NewSwitchStatement : extends SwitchStatement;
+INJECT ClassicTryStatement : extends TryStatement
+INJECT TryWithResources : extends TryStatement
 
-TryStatement #(false) :
+TryStatement #abstract :
    TryWithResources
    |
    ClassicTryStatement
@@ -1139,7 +1139,7 @@ ClassicTryStatement :
 TryWithResources :
    <TRY> <LPAREN> =>||
     (
-      SCAN 0 {getToken(0).getType() == TokenType.SEMICOLON && getToken(1).getType() != TokenType.RPAREN}#
+      SCAN {getToken(0).getType() == TokenType.SEMICOLON}# ~(<RPAREN>) 
       =>
        (
          LocalVariableDeclaration
