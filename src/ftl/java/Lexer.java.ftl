@@ -590,9 +590,11 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
         }
         int bsearchResult = Arrays.binarySearch(lineOffsets, pos);
         if (bsearchResult>=0) {
-            return startingLine + bsearchResult;
+        [#-- REVISIT --]
+            return Math.max(1,startingLine + bsearchResult);
         }
-        return startingLine-(bsearchResult+2);
+        [#-- REVISIT --]
+        return Math.max(1,startingLine-(bsearchResult+2));
     }
 
     /**
