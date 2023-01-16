@@ -1106,7 +1106,7 @@ public class Translator {
             resultNode.setValue((ASTExpression) transformTree(node.getChild(0)));
             return resultNode;
         }
-        else if (node instanceof BlockStatement) {
+        else if (node instanceof LocalVariableDeclaration) {
             int n = node.getChildCount();
             if (n == 1) {
                 return transformTree(node.getChild(0));

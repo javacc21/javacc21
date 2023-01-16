@@ -844,41 +844,42 @@ ArrayDimsAndInits :
 
 Label : <IDENTIFIER><COLON> =>|| ;
 
-Statement  :
-  (Label)*
-  (
-    AssertStatement
-    |
-    Block
-    |
-    YieldStatement
-    |
-    EmptyStatement
-    |
-    ExpressionStatement
-    |
-    SwitchStatement
-    |
-    IfStatement
-    |
-    WhileStatement
-    |
-    DoStatement
-    |
-    ForStatement
-    |
-    BreakStatement
-    |
-    ContinueStatement
-    |
-    ReturnStatement
-    |
-    ThrowStatement
-    |
-    SynchronizedStatement
-    |
-    TryStatement
-  )
+LabeledStatement : Label =>|| Statement ;
+
+Statement#abstract  :
+  LabeledStatement
+  |
+  AssertStatement
+  |
+  Block
+  |
+  YieldStatement
+  |
+  EmptyStatement
+  |
+  ExpressionStatement
+  |
+  SwitchStatement
+  |
+  IfStatement
+  |
+  WhileStatement
+  |
+  DoStatement
+  |
+  ForStatement
+  |
+  BreakStatement
+  |
+  ContinueStatement
+  |
+  ReturnStatement
+  |
+  ThrowStatement
+  |
+  SynchronizedStatement
+  |
+  TryStatement
 ;
 
 INJECT AssertStatement : extends Statement;
@@ -892,6 +893,7 @@ INJECT EnhancedForStatement : extends ForStatement
 INJECT ExpressionStatement : extends Statement
 INJECT ForStatement : extends Statement
 INJECT IfStatement : extends Statement
+INJECT LabeledStatement : extends Statement
 INJECT LocalVariableDeclaration : extends Statement
 INJECT VarDeclaration : extends LocalVariableDeclaration
 INJECT NoVarDeclaration : extends LocalVariableDeclaration
@@ -920,7 +922,7 @@ AssertStatement : <_ASSERT> Expression [ <COLON> Expression ] <SEMICOLON> ;
 
 Block #CodeBlock : <LBRACE> (BlockStatement)*! <RBRACE> ;
 
-BlockStatement :
+BlockStatement#void :
  ASSERT ~((<FINAL>|Annotation)* (<PUBLIC>|<PRIVATE>|<PROTECTED>|<STATIC>)) : "Cannot declare anything to be public, private, protected, or static  in a local context"
  (
 // The YieldStatement option in the Statement production will thus never
@@ -930,7 +932,8 @@ BlockStatement :
   |
   RecordDeclaration
   |
-  LocalVariableDeclaration <SEMICOLON>
+  LocalVariableDeclaration { Node varDecl = peekNode(); }
+  <SEMICOLON> {varDecl.addChild(popNode());}
   |
   ClassDeclaration
   |
