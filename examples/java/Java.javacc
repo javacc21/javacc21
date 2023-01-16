@@ -530,10 +530,13 @@ INJECT Expression :
   default String getAsString() {return toString();}
 }
 
+INJECT PrimaryExpression : extends Expression
 INJECT AdditiveExpression : implements Expression
 INJECT ArrayInitializer : implements Expression
 INJECT AndExpression : implements Expression
 INJECT AssignmentExpression : implements Expression
+INJECT CastExpression : implements Expression
+INJECT ObjectCastExpression : extends CastExpression
 INJECT ConditionalAndExpression : implements Expression
 INJECT ConditionalOrExpression : implements Expression
 INJECT EqualityExpression : implements Expression
@@ -541,17 +544,15 @@ INJECT ExclusiveOrExpression : implements Expression
 INJECT ExplicitConstructorInvocation : implements Expression
 INJECT InclusiveOrExpression : implements Expression
 INJECT InstanceOfExpression : implements Expression
-INJECT ClassLiteral : implements Expression
-INJECT DotThis : implements Expression
+INJECT ClassLiteral : implements PrimaryExpression
+INJECT DotThis : implements PrimaryExpression
 INJECT LambdaExpression : implements Expression
-INJECT MethodCall : implements Expression
-INJECT MethodReference : implements Expression
+INJECT MethodCall : implements PrimaryExpression
+INJECT MethodReference : implements PrimaryExpression
 INJECT MultiplicativeExpression : implements Expression
-INJECT ObjectCastExpression : implements Expression
 INJECT PostfixExpression : implements Expression
 INJECT PreDecrementExpression : implements Expression
 INJECT PreIncrementExpression : implements Expression
-INJECT PrimitiveCastExpression : implements Expression
 INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
 INJECT StatementExpression : extends Statement implements Expression
@@ -559,19 +560,19 @@ INJECT SwitchExpression : implements Expression
 INJECT TernaryExpression : implements Expression
 INJECT UnaryExpression : implements Expression
 INJECT UnaryExpressionNotPlusMinus : implements Expression
-INJECT AllocationExpression : implements Expression
-INJECT LiteralExpression : implements Expression
+INJECT AllocationExpression : implements PrimaryExpression
+INJECT LiteralExpression : implements PrimaryExpression
 INJECT DotNew : extends AllocationExpression
 
-INJECT Name : implements Expression {
+INJECT Name : implements PrimaryExpression {
   public boolean isAssignableTo() {return true;}
 }
 
-INJECT DotName : implements Expression {
+INJECT DotName : implements PrimaryExpression {
   public boolean isAssignableTo() {return true;}
 }
 
-INJECT ArrayAccess : implements Expression {
+INJECT ArrayAccess : implements PrimaryExpression {
   public boolean isAssignableTo() {return true;}
 }
 
@@ -715,15 +716,15 @@ SwitchExpression# :
    SwitchStatement
 ;
 
-PrimitiveCastExpression :
+PrimitiveCastExpression#CastExpression :
    <LPAREN> PrimitiveType <RPAREN> =>|| UnaryExpression
 ;
 
-ObjectCastExpression :
+ObjectCastExpression#ObjectCastExpression :
    <LPAREN> ReferenceType (<BIT_AND> ObjectType)* <RPAREN> =>|+1 UnaryExpressionNotPlusMinus
 ;
 
-PrimaryExpression#void :
+PrimaryExpression#interface :
  (
   LiteralExpression
   |
@@ -767,7 +768,7 @@ PrimaryExpression#void :
  ASSERT {getToken(0).getType() != TokenType.SUPER}# : "Not a valid expression here"
 ;
 
-LiteralExpression : Literal #LiteralExpression;
+LiteralExpression# : Literal ;
 
 Parentheses :
     <LPAREN>
@@ -775,7 +776,7 @@ Parentheses :
     <RPAREN>
 ;
 
-INJECT Parentheses : implements Expression {
+INJECT Parentheses : implements PrimaryExpression {
   @Property Expression nestedExpression;
   public boolean isAssignableTo() {return nestedExpression.isAssignableTo();}
 }
