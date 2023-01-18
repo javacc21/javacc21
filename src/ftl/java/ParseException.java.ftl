@@ -23,12 +23,16 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} implements ${grammar.
 
   private void setInfo(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
     this.parser = parser;
-    if (token != null && token.getNext() != null) {
+    if (token != null && token.getType() != TokenType.EOF && token.getNext() != null) {
         token = token.getNext();
     }
     this.token = token;
     this.expectedTypes = expectedTypes;
     this.callStack = new ArrayList<>(callStack);
+  }
+
+  public boolean hitEOF() {
+    return token != null && token.getType() == TokenType.EOF;
   }
 
   public ParseException(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
