@@ -814,7 +814,7 @@ public interface Node extends Comparable<Node>
          * Just recurses over (i.e. visits) node's children
          * @param node the node we are traversing
          */
-		public final void recurse(Node node) {
+		public void recurse(Node node) {
             for (Node child : node.children(visitUnparsedTokens)) {
                 visit(child);
             }
