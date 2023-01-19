@@ -60,7 +60,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         this.tokenSource = tokenSource;
     }
     
-    static private Class<? extends List> listClass = ArrayList.class;
+    static private Class<? extends List> listClass;
 
     /**
      * Sets the List class that is used to store child nodes. By default,
@@ -75,6 +75,9 @@ public class ${grammar.baseNodeClassName} implements Node {
     }
 
     private List<Node> newList() {
+        if (listClass == null) {
+            listClass = ArrayList.class;
+        }
         try {
            return (List<Node>) listClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
