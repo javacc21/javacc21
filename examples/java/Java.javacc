@@ -616,7 +616,7 @@ AndExpression :
 ;
 
 EqualityExpression :
-  InstanceOfExpression ( ( <EQ> | <NE> ) InstanceOfExpression )*
+  InstanceOfExpression ( ( <EQ> | <NE> ) InstanceOfExpression #EqualityExpression(3) )*
 ;
 
 InstanceOfExpression :
@@ -633,15 +633,10 @@ InstanceOfExpression :
 
 RelationalExpression :
   ShiftExpression
-  (
-    (
-     <LT>
-     | <GT>
-     | <LE>
-     | <GE>
-    )
+  [
+    ( <LT> | <GT> | <LE> | <GE>)
     ShiftExpression
-  )*
+  ]
 ;
 
 
@@ -655,7 +650,7 @@ ShiftExpression :
    ]
    (
       (<LSHIFT> | <RSIGNEDSHIFT> | <RUNSIGNEDSHIFT>)
-      AdditiveExpression
+      AdditiveExpression #ShiftExpression(3)
    )*
 ;
 
