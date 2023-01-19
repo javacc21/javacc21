@@ -84,12 +84,12 @@ public class ${grammar.baseNodeClassName} implements Node {
     /**
      * the parent node
      */    
-    protected Node parent;
+    private Node parent;
 
     /**
      * the child nodes
      */
-    protected List<Node> children = newList();
+    private List<Node> children = newList();
     
     private int beginOffset, endOffset;
     private boolean unparsed;
@@ -228,8 +228,8 @@ public class ${grammar.baseNodeClassName} implements Node {
         return buf.toString();
     }
 
-    protected Map<String, Node> namedChildMap;
-    protected Map<String, List<Node>> namedChildListMap;
+    private Map<String, Node> namedChildMap;
+    private Map<String, List<Node>> namedChildListMap;
 
     public Node getNamedChild(String name) {
         if (namedChildMap == null) {

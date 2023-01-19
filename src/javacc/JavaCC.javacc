@@ -553,7 +553,7 @@ INJECT ExtendsList :
     
       public void addType(ObjectType type, boolean isInterface) {
         if (!isInterface) {
-            children = new java.util.ArrayList<Node>();
+            clearChildren();
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
@@ -738,7 +738,7 @@ INJECT ThrowsList :
 {
     public List<Node> getTypes() {
         List<Node> result = new ArrayList<>();
-        for (Node n : children) {
+        for (Node n : children()) {
            if ((n instanceof Name) || (n instanceof Identifier)) {
               result.add(n);
            }
@@ -1348,7 +1348,7 @@ INJECT TokenProduction :
     }
     
     private boolean isInAllLexStates() {
-       for (Node n : children) {
+       for (Node n : children()) {
           if (n instanceof Token) {
           Token t = (Token) n;
               if (t.getType() == STAR) {

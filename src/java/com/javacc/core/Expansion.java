@@ -49,7 +49,7 @@ abstract public class Expansion extends BaseNode {
     protected TokenSet firstSet;
 
     public int getIndex() {
-        return parent.indexOf(this);
+        return getParent().indexOf(this);
     }
 
     public Expansion(Grammar grammar) {
