@@ -77,7 +77,7 @@ public class ${grammar.baseNodeClassName} implements Node {
     @SuppressWarnings("unchecked")
     private List<Node> newList() {
         if (listClass == null) {
-            listClass = ArrayList.class;
+            return new ArrayList<>();
         }
         try {
            return (List<Node>) listClass.getDeclaredConstructor().newInstance();
