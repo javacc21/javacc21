@@ -106,6 +106,13 @@ public class JavaFormatter extends Node.Visitor {
         }
     }
 
+    void visit(KeyWord kw) {
+        outputToken(kw);        
+        if (kw.getType() == RETURN) {
+            if (kw.getNext().getType() != SEMICOLON) buf.append(' ');
+        }
+    }
+
     void visit(Delimiter delimiter) {
         switch (delimiter.getType()) {
             case LBRACE : 

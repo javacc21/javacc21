@@ -555,7 +555,7 @@ INJECT PreDecrementExpression : implements Expression
 INJECT PreIncrementExpression : implements Expression
 INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
-INJECT StatementExpression : extends Statement implements Expression
+INJECT StatementExpression : implements Statement, Expression
 INJECT SwitchExpression : implements Expression
 INJECT TernaryExpression : implements Expression
 INJECT UnaryExpression : implements Expression
@@ -841,7 +841,7 @@ Label : <IDENTIFIER><COLON> =>|| ;
 
 LabeledStatement : Label =>|| Statement ;
 
-Statement#abstract  :
+Statement#interface  :
   LabeledStatement
   |
   AssertStatement
@@ -877,28 +877,28 @@ Statement#abstract  :
   TryStatement
 ;
 
-INJECT AssertStatement : extends Statement;
+INJECT AssertStatement : implements Statement;
 INJECT BasicForStatement : extends ForStatement
-INJECT BreakStatement : extends Statement
-INJECT CodeBlock : extends Statement
-INJECT ContinueStatement : extends Statement
-INJECT DoStatement : extends Statement
-INJECT EmptyStatement : extends Statement;
+INJECT BreakStatement : implements Statement
+INJECT CodeBlock : implements Statement
+INJECT ContinueStatement : implements Statement
+INJECT DoStatement : implements Statement
+INJECT EmptyStatement : implements Statement;
 INJECT EnhancedForStatement : extends ForStatement
-INJECT ExpressionStatement : extends Statement
-INJECT ForStatement : extends Statement
-INJECT IfStatement : extends Statement
-INJECT LabeledStatement : extends Statement
-INJECT LocalVariableDeclaration : extends Statement
+INJECT ExpressionStatement : implements Statement
+INJECT ForStatement : implements Statement
+INJECT IfStatement : implements Statement
+INJECT LabeledStatement : implements Statement
+INJECT LocalVariableDeclaration : implements Statement
 INJECT VarDeclaration : extends LocalVariableDeclaration
 INJECT NoVarDeclaration : extends LocalVariableDeclaration
-INJECT ReturnStatement : extends Statement
-INJECT SwitchStatement : extends Statement
-INJECT SynchronizedStatement : extends Statement
-INJECT ThrowStatement : extends Statement
-INJECT TryStatement : extends Statement
-INJECT WhileStatement : extends Statement
-INJECT YieldStatement : extends Statement;
+INJECT ReturnStatement : implements Statement
+INJECT SwitchStatement : implements Statement
+INJECT SynchronizedStatement : implements Statement
+INJECT ThrowStatement : implements Statement
+INJECT TryStatement : implements Statement
+INJECT WhileStatement : implements Statement
+INJECT YieldStatement : implements Statement;
 
 INJECT ClassicSwitchStatement : extends SwitchStatement;
 INJECT NewSwitchStatement : extends SwitchStatement;
@@ -1165,7 +1165,7 @@ CatchBlock :
     Block
 ;
 
-INJECT CatchBlock : extends Statement
+INJECT CatchBlock : implements Statement
 {
     public CodeBlock getBlock() {
         return firstChildOfType(CodeBlock.class);

@@ -322,6 +322,10 @@ public interface Node extends Comparable<Node>
         return tokenSource == null ? null : tokenSource.getText(getBeginOffset(), getEndOffset());
     }
 
+    default int getLength() {
+        return 1 + getEndOffset() - getBeginOffset();
+    }
+
     /**
      * @return the (1-based) line location where this Node starts
      */      
