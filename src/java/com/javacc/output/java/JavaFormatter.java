@@ -70,12 +70,12 @@ public class JavaFormatter extends Node.Visitor {
             int prevChar = buf.codePointBefore(buf.length());
             int nextChar = tok.getImage().codePointAt(0);
             if ((Character.isJavaIdentifierPart(prevChar) || prevChar == ';') && Character.isJavaIdentifierPart(nextChar)) {
-                buf.append(' ');
+                addSpaceIfNecessary();
             }
-            else if (alwaysPrependSpace.contains(tok.getType())) buf.append(' ');
+            else if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
         }
         buf.append(tok);
-        if (alwaysAppendSpace.contains(tok.getType())) buf.append(' ');
+        if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
     }
 
     void visit(Token tok) {
@@ -109,12 +109,17 @@ public class JavaFormatter extends Node.Visitor {
     void visit(KeyWord kw) {
         outputToken(kw);        
         if (kw.getType() == RETURN) {
-            if (kw.getNext().getType() != SEMICOLON) buf.append(' ');
+            if (kw.getNext().getType() != SEMICOLON) addSpaceIfNecessary();
         }
     }
 
     void visit(Delimiter delimiter) {
         switch (delimiter.getType()) {
+            case RBRACKET :
+                outputToken(delimiter);
+                TokenType nextType = delimiter.getNext().getType();
+                if (nextType != LBRACKET && nextType != SEMICOLON) addSpaceIfNecessary();
+                break;
             case LBRACE : 
                 outputToken(delimiter);
                 if (!(delimiter.getParent() instanceof ArrayInitializer)) {
@@ -172,11 +177,20 @@ public class JavaFormatter extends Node.Visitor {
     void visit(Statement stmt) {
         if (stmt.getParent() instanceof IfStatement) {
             addSpaceIfNecessary();
-        } else if (!(stmt.getParent() instanceof ForStatement)) {
-            newLine();
-        }
+        } 
         recurse(stmt);
+        newLine();
     }
+
+//    void visit(StatementExpression exp) {
+//        recurse(exp);
+//    }
+
+//    void visit(ExpressionStatement stmt) {
+//        recurse(stmt);
+//        newLine();
+//    }
+
 
     // Add a space if the last output char was not whitespace
     private void addSpaceIfNecessary() {
@@ -242,8 +256,10 @@ public class JavaFormatter extends Node.Visitor {
     }
 
     protected void visit(LocalVariableDeclaration lvd) {
-        if (!(lvd.getParent() instanceof ForStatement)) newLine();
+        boolean inForStatement = (lvd.getParent() instanceof ForStatement);
+        if (!inForStatement) newLine();
         recurse(lvd);
+        if (!inForStatement) newLine();
     }
 
     protected void visit(Annotation ann) {

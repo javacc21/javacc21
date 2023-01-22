@@ -437,7 +437,6 @@ Type#interface :
 INJECT ReferenceType : implements Type
 INJECT PrimitiveArrayType : implements Type
 INJECT PrimitiveType : implements Type
-INJECT Primitive : implements Type
 
 ReferenceType :
    PrimitiveArrayType =>||
@@ -555,7 +554,7 @@ INJECT PreDecrementExpression : implements Expression
 INJECT PreIncrementExpression : implements Expression
 INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
-INJECT StatementExpression : implements Statement, Expression
+INJECT StatementExpression : implements Expression
 INJECT SwitchExpression : implements Expression
 INJECT TernaryExpression : implements Expression
 INJECT UnaryExpression : implements Expression
@@ -1165,7 +1164,7 @@ CatchBlock :
     Block
 ;
 
-INJECT CatchBlock : implements Statement
+INJECT CatchBlock : 
 {
     public CodeBlock getBlock() {
         return firstChildOfType(CodeBlock.class);
