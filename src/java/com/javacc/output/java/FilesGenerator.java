@@ -209,6 +209,7 @@ public class FilesGenerator {
     }
 
     public void generate(String nodeName, Path outputFile) throws IOException, TemplateException  {
+        if (outputFile.toFile().exists()) return; // skip generate if file exists
         String currentFilename = outputFile.getFileName().toString();
         String templateName = getTemplateName(currentFilename);
         HashMap<String, Object> dataModel = new HashMap<>();
