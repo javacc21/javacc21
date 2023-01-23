@@ -341,6 +341,11 @@ public final class Main {
         Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
         grammar.parse(grammarFile, true);
         grammar.createOutputDir();
+        // do not generate unless output directory is empty
+        if (Files.list(grammar.getParserOutputDirectory()).anyMatch(p->true)) {
+            System.out.println("Parser already generated.");
+            return 0;
+        }
         grammar.doSanityChecks();
         if (grammar.getErrorCount() > 0) {
             outputErrors(grammar, quiet);
