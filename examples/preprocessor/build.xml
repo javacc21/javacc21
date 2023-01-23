@@ -1,4 +1,9 @@
-<project name="Preprocessor" default="compile" basedir=".">
+<project name="Preprocessor" default="compile" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
+
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="../../jacoco-0.8.7/lib/jacocoant.jar"/>
+    </taskdef>
+
     <uptodate property="ppparser.uptodate"
       srcfile="Preprocessor.javacc"
 	    targetfile="org/parsers/preprocessor/PreprocessorParser.java"/> 
@@ -25,9 +30,11 @@
       <echo>
             Now test on a file...
       </echo>
-      <java classname="PPTest" classpath="." failonerror="true" fork="true">
+    <jacoco:coverage>
+     <java classname="PPTest" classpath="." failonerror="true" fork="true">
           <assertions><enable/></assertions>
 	      <arg value="${basedir}/testfile" />
       </java>
+    </jacoco:coverage>
    </target>
 </project>

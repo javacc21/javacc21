@@ -1,25 +1,29 @@
-<project name="javacc21" default="compile" basedir=".">
+<project name="javacc21" default="compile" basedir="."  xmlns:jacoco="antlib:org.jacoco.ant">
+
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="lib/jacocoant.jar"/>
+    </taskdef>
     <tstamp>
         <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
     </tstamp>
 
   <target name="init">
     <echo>Join the Discussion forum at: https://discuss.congocc.org/</echo>
-	  <echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
-	  <echo>JDK Version: ${java.version} on ${os.name}</echo>
-	  <uptodate property="parser.uptodate"
-		targetfile="src/java/com/javacc/parser/JavaCCParser.java">
+      <echo>Send any bug report to bugs@javacc.com and include the following information.</echo>
+      <echo>JDK Version: ${java.version} on ${os.name}</echo>
+      <uptodate property="parser.uptodate"
+        targetfile="src/java/com/javacc/parser/JavaCCParser.java">
         <srcfiles dir="src/javacc" includes="*.javacc"/>
-	  </uptodate>
+      </uptodate>
     <uptodate property="preprocessor.uptodate"
-    		targetfile="src/java/com/javacc/preprocessor/PreprocessorParser.java"
+            targetfile="src/java/com/javacc/preprocessor/PreprocessorParser.java"
         srcfile="examples/preprocessor/Preprocessor.javacc"
     />
 </target>
 
 <target name="restore-bootstrap-jar">
-	<exec executable="git" dir="${basedir}">
-		<arg line="checkout bin/javacc.jar"/>
+    <exec executable="git" dir="${basedir}">
+        <arg line="checkout bin/javacc.jar"/>
     </exec>
 </target>
 
@@ -29,56 +33,57 @@
      drop in the newly built jarfile and build and test again
 -->
 <target name="full-test" depends="restore-bootstrap-jar,clean,jar,test">
-	<echo>Now we copy the new javacc.jar to bin to rebootstrap</echo>
-	<copy file="javacc.jar" todir="bin"/>
-	<antcall target="clean"/>
-	<antcall target="test"/>
+    <echo>Now we copy the new javacc.jar to bin to rebootstrap</echo>
+    <copy file="javacc.jar" todir="bin"/>
+    <antcall target="clean"/>
+    <antcall target="test"/>
 </target>
 
 <target name="clean">
- 	<delete file="javacc.jar"/>
- 	<delete file="javacc-full.jar"/>
- 	<delete dir="build"/>
-	<delete dir="src/java/com/javacc/parser"/>
-	<delete dir="src/java/com/javacc/preprocessor"/>
-  <delete dir="examples/csharp/org"/>
-  <delete dir="examples/java/org"/>
-  <delete dir="examples/freemarker/fel"/>
-  <delete dir="examples/freemarker/ftl"/>
-  <delete dir="examples/json/org"/>
-  <delete dir="examples/preprocessor/org/"/>
-  <delete dir="examples/python/org/"/>
-  <delete dir="examples/legacy/test.tmp"/>
+    <delete file="javacc.jar"/>
+    <delete file="javacc-full.jar"/>
+    <delete dir="build"/>
+    <delete dir="src/java/com/javacc/parser"/>
+    <delete dir="src/java/com/javacc/preprocessor"/>
+    <delete dir="examples/csharp/org"/>
+    <delete dir="examples/java/org"/>
+    <delete dir="examples/freemarker/fel"/>
+    <delete dir="examples/freemarker/ftl"/>
+    <delete dir="examples/json/org"/>
+    <delete dir="examples/preprocessor/org/"/>
+    <delete dir="examples/python/org/"/>
+    <delete dir="examples/legacy/test.tmp"/>
+    <delete dir="report"/>
 </target>
 
 
 <target name="parser-gen" depends="init" unless="parser.uptodate">
-	<echo>Using Bootstrap JavaCC to regenerate JavaCC parser</echo>
- 	<java jar="bin/javacc.jar" fork="true" failonerror="true">
+    <echo>Using Bootstrap JavaCC to regenerate JavaCC parser</echo>
+    <java jar="bin/javacc.jar" fork="true" failonerror="true">
      <assertions><enable/></assertions>
- 	   <arg line="-n -q -d ../java src/javacc/JavaCC.javacc"/>
- 	</java>
+       <arg line="-n -q -d ../java src/javacc/JavaCC.javacc"/>
+    </java>
 </target>
 <target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
-	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
- 	<java jar="bin/javacc.jar" fork="true" failonerror="true">
+    <echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
+    <java jar="bin/javacc.jar" fork="true" failonerror="true">
      <assertions><enable/></assertions>
- 	   <arg line="-n -q -d ../../src/java examples/preprocessor/Preprocessor.javacc"/>
- 	</java>
+       <arg line="-n -q -d ../../src/java examples/preprocessor/Preprocessor.javacc"/>
+    </java>
 </target>
 
 <target name="compile" depends="parser-gen, preprocessor-gen">
-  	<mkdir dir="build"/>
+    <mkdir dir="build"/>
     <javac srcdir="src/java"
- 	       destdir="build"
- 	       deprecation="off"
- 	       debug="on"
- 	       optimize="off"
-    	   classpath="bin/freemarker.jar"
+           destdir="build"
+           deprecation="off"
+           debug="on"
+           optimize="off"
+           classpath="bin/freemarker.jar"
            includeantruntime="no"
-	    failonerror="true"
-	    fork="true"
-	    target="1.8" source="1.8"
+        failonerror="true"
+        fork="true"
+        target="1.8" source="1.8"
     />
      <copy todir="build/templates/java">
       <fileset dir="src/ftl/java">
@@ -125,11 +130,11 @@
           <include name="*.javacc"/>
       </fileset>
     </copy>
-	<copy todir="build">
-	  <fileset dir="src/ftl">
-	    <include name="*.properties"/>
-	  </fileset>
-	</copy>
+    <copy todir="build">
+      <fileset dir="src/ftl">
+        <include name="*.properties"/>
+      </fileset>
+    </copy>
  </target>
 
 
@@ -160,7 +165,197 @@
     <echo>Running through the crufty old legacy examples</echo>
     <ant antfile="build.xml" dir="examples/legacy" target="test" />
  </target>
-
+ <target name="report" depends="test">
+    <jacoco:report>
+        <executiondata>
+            <file file="jacoco.exec"/>
+        </executiondata>
+            <structure name="Project: javaCC 21">
+                <group name="Core">
+                    <classfiles>
+                        <fileset dir="build"/>
+                    </classfiles>
+                    <sourcefiles encoding="UTF-8">
+                        <fileset dir="src/java"/>
+                        <fileset dir="src/javacc"/>
+                    </sourcefiles>
+                </group>
+                <group name="Examples">
+                    <group name="Java">
+                        <classfiles>
+                            <fileset dir="examples/java"/>
+                        </classfiles>
+                        <sourcefiles encoding="UTF-8">
+                            <fileset dir="examples/java"/>
+                        </sourcefiles>
+                    </group>
+                    <group name="Json">
+                        <classfiles>
+                            <fileset dir="examples/json"/>
+                        </classfiles>
+                        <sourcefiles encoding="UTF-8">
+                            <fileset dir="examples/json"/>
+                        </sourcefiles>
+                    </group>
+                    <group name="Csharp">
+                        <classfiles>
+                            <fileset dir="examples/csharp"/>
+                        </classfiles>
+                        <sourcefiles encoding="UTF-8">
+                            <fileset dir="examples/csharp"/>
+                        </sourcefiles>
+                    </group>
+                    <group name="Python">
+                        <classfiles>
+                            <fileset dir="examples/python"/>
+                        </classfiles>
+                        <sourcefiles encoding="UTF-8">
+                            <fileset dir="examples/python"/>
+                        </sourcefiles>
+                    </group>
+                    <group name="Freemarker">
+                        <classfiles>
+                            <fileset dir="examples/freemarker"/>
+                        </classfiles>
+                        <sourcefiles encoding="UTF-8">
+                            <fileset dir="examples/freemarker"/>
+                        </sourcefiles>
+                    </group>
+                    <group name="Preprocessor">
+                        <classfiles>
+                            <fileset dir="examples/preprocessor"/>
+                        </classfiles>
+                        <sourcefiles encoding="UTF-8">
+                            <fileset dir="examples/preprocessor"/>
+                        </sourcefiles>
+                    </group>
+                    <group name="Legacy">
+                        <group name="MailProcessing">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/MailProcessing"/>
+                             </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/MailProcessing"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="CORBA-IDL">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/CORBA-IDL"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/CORBA-IDL"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Interpreter">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Interpreter"/>
+                             </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Interpreter"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Lookahead.eg1">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg1"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg1"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Lookahead.eg2">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg2"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg2"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Lookahead.eg4">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg4"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg4"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Lookahead.eg5">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg5"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg5"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Lookahead.eg6">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg6"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg6"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Lookahead.eg7">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg7"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg7"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Lookahead.eg8">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg8"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg8"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Lookahead.eg9">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg9"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg9"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="Lookahead.eg10">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg10"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/Lookahead.eg10"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="TreeBuildingExamples.eg1">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/TreeBuildingExamples.eg1"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/TreeBuildingExamples.eg1"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="TreeBuildingExamples.eg2">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/TreeBuildingExamples.eg2"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/TreeBuildingExamples.eg2"/>
+                            </sourcefiles>
+                        </group>
+                        <group name="TreeBuildingExamples.eg3">
+                            <classfiles>
+                                <fileset dir="examples/legacy/test.tmp/TreeBuildingExamples.eg3"/>
+                            </classfiles>
+                            <sourcefiles encoding="UTF-8">
+                                <fileset dir="examples/legacy/test.tmp/TreeBuildingExamples.eg3"/>
+                            </sourcefiles>
+                        </group>
+                    </group>
+                </group>
+            </structure>
+        <html destdir="report"/>
+    </jacoco:report>
+  </target>
   <target name="test-java" depends="jar">
     <echo>Testing the Java parser standalone</echo>
     <ant antfile="build.xml" dir="examples/java" target="clean"/>
@@ -181,7 +376,7 @@
  </target>
 
  <target name="full-jar" depends="compile">
-	 <echo>Creating the "uber-jar" with all dependencies, i.e. the FreeMarker classes</echo>
+     <echo>Creating the "uber-jar" with all dependencies, i.e. the FreeMarker classes</echo>
     <jar jarfile="javacc-full.jar" compress="true">
         <fileset dir="build"/>
         <zipfileset includes="**/*.class" src="bin/freemarker.jar"/>

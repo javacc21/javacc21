@@ -1,4 +1,8 @@
-<project name="CSharp Parser" default="compile">
+<project name="CSharp Parser" default="compile" xmlns:jacoco="antlib:org.jacoco.ant">
+
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="../../jacoco-0.8.7/lib/jacocoant.jar"/>
+    </taskdef>
 
 <target name="clean">
    <delete dir="org"/>
@@ -41,17 +45,19 @@
 </target>
 
 <target name="test" depends="compile">
-     <java fork="true" failonerror="true" classname="CSParse">
+    <jacoco:coverage>
+     <java fork="true" failonerror="true" classname="CSParse" classpath=".">
          <assertions><enable/></assertions>
          <arg value="testfiles"/>
      </java>
+    </jacoco:coverage>
     <!--
      <echo>
 
         Okay, that seems okay. Now let's dump the parse tree for a single source file
 
      </echo>
-     <java fork="true" failonerror="true" classname="CSParse">
+     <java fork="true" failonerror="true" classname="CSParse" classpath=".">
 	       <assertions><enable/></assertions>
          <arg value="testfiles/CSharpAddAccessibilityModifiersDiagnosticAnalyzer.cs"/>
      </java>

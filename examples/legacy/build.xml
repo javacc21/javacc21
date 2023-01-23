@@ -1,4 +1,8 @@
-<project name="Legacy Tests" default="test">
+<project name="Legacy Tests" default="test" xmlns:jacoco="antlib:org.jacoco.ant">
+
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="../../jacoco-0.8.7/lib/jacocoant.jar"/>
+    </taskdef>
 
     <property name="classpath" value="../../build:./../../bin/freemarker.jar"/>
 	<property name="outputdir" value="${basedir}/test.tmp"/>
@@ -6,10 +10,12 @@
  <target name="test" description="run functional test cases">
 	    <delete dir="test.tmp" />
 	    <mkdir dir="test.tmp" />
+    <jacoco:coverage>
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 			<assertions><enable/></assertions>
 	    	<arg line="-q -d ${outputdir}/CORBA-IDL ${basedir}/CORBA-IDL/IDL.javacc"/>
 		</java>
+    </jacoco:coverage>
 	    <javac srcdir="${outputdir}/CORBA-IDL"
 				classpath="${outputdir}/CORBA-IDL"
 		       includeantruntime="no" 
@@ -22,10 +28,12 @@
 	      </fileset>
 	    </copy>
 
+    <jacoco:coverage>
 	    <java failonerror="true" fork="true" classname="IDLParser" classpath="test.tmp/CORBA-IDL:${FREEMARKER_JAR}" outputproperty="test.corba.out">
 	      <arg line="${outputdir}/CORBA-IDL/Hello.idl" />
 	                <assertions><enable/></assertions>
 	    </java>
+    </jacoco:coverage>
 	    <echo>${test.corba.out}</echo>
 
 	    <fail message="CORBA failed">
@@ -44,6 +52,7 @@
 	      </fileset>
 	    </copy>
 
+    <jacoco:coverage>
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 			<assertions><enable/></assertions>
 	    	<arg value="-q"/>
@@ -51,6 +60,7 @@
 			<arg value="${outputdir}/GUIParsing/ParserVersion"/>
 			<arg value="${basedir}/GUIParsing/ParserVersion/CalcInput.javacc"/>
 		</java>
+    </jacoco:coverage>
 	    <javac srcdir="${outputdir}/GUIParsing/ParserVersion" 
 		       classpath="${outputdir}/GUIParsing/ParserVersion" 
 		       includeantruntime="no" 
@@ -65,6 +75,7 @@
 	      </fileset>
 	    </copy>
 
+    <jacoco:coverage>
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 			<assertions><enable/></assertions>
 	    	<arg value="-q"/>
@@ -72,6 +83,7 @@
 			<arg value="${outputdir}/Interpreter"/>
 			<arg value="${basedir}/Interpreter/SPL.javacc"/>
 		</java>
+    </jacoco:coverage>
 
 
 	 <copy todir="${outputdir}/Interpreter/">
@@ -87,6 +99,7 @@
 			   failonerror="true"
 		       fork="true"/>
 
+    <jacoco:coverage>
 	    <java failonerror="true" 
 		      fork="true" 
 	          classname="SPLParser" 
@@ -97,6 +110,7 @@
 		  <assertions><enable/></assertions>
 	      <arg line="test.tmp/Interpreter/fact.spl" />
 	    </java>
+    </jacoco:coverage>
 	    <echo>${spl.out1}</echo>
 	    <fail message="SPLParser fact parse failed">
 	     <condition>
@@ -106,6 +120,7 @@
 	     </condition>
 	    </fail>
 		<echo>Interpreter test succeeded.</echo>
+    <jacoco:coverage>
 	    <java failonerror="true" 
 		      fork="true" 
 	          classname="SPLParser" 
@@ -116,6 +131,7 @@
 	      <arg line="test.tmp/Interpreter/odd.spl" />
 	      	                <assertions><enable/></assertions>
 	    </java>
+    </jacoco:coverage>
 	    <echo>${spl.out2}</echo>
 	    <fail message="SPLParser odd parse failed">
 	     <condition>
@@ -124,6 +140,7 @@
 	      </not>
 	     </condition>
 	    </fail>
+    <jacoco:coverage>
 	    <java failonerror="true" 
 		      fork="true" 
 	          classname="SPLParser" 
@@ -134,6 +151,7 @@
 		  <assertions><enable/></assertions>
 	      <arg line="test.tmp/Interpreter/sqrt.spl" />
 	    </java>
+    </jacoco:coverage>
 	    <echo>${spl.out3}</echo>
 	    <fail message="SPLParser sqrt parse failed">
 	     <condition>
@@ -146,6 +164,7 @@
 		<echo>Interpreter test succeeded.</echo>
 	    <echo />
 	    
+    <jacoco:coverage>
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 		    <assertions><enable/></assertions>
 	    	<arg value="-q"/>
@@ -153,6 +172,7 @@
 			<arg value="${outputdir}/TreeBuildingExamples.eg1"/>
 			<arg value="${basedir}/TreeBuildingExamples/eg1.javacc"/>
 		</java>
+    </jacoco:coverage>
 	    <javac debug="on" 
 		       srcdir="${outputdir}/TreeBuildingExamples.eg1" 
 			   classpath="${outputdir}/TreeBuildingExamples.eg1" 
@@ -160,6 +180,7 @@
 			   failonerror="true"
 			   fork="true" />
 	    
+    <jacoco:coverage>
 	    <java failonerror="true" fork="true" 
 	          classname="Eg1" 
 	          classpath="${outputdir}/TreeBuildingExamples.eg1/"
@@ -168,6 +189,7 @@
 	    >
 	    	<assertions><enable/></assertions>
 	    </java>
+    </jacoco:coverage>
 	    <echo>${jjtree.eg1.out}</echo>
 	    <fail message="JJTree eg1 parse failed">
 	     <condition>
@@ -186,6 +208,7 @@
 	      </fileset>
 	    </copy>
 
+    <jacoco:coverage>
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 		    <assertions><enable/></assertions>
 	    	<arg value="-q"/>
@@ -193,6 +216,7 @@
 			<arg value="${outputdir}/TreeBuildingExamples.eg2"/>
 			<arg value="${basedir}/TreeBuildingExamples/eg2.javacc"/>
 		</java>
+    </jacoco:coverage>
 	    <javac srcdir="${outputdir}/TreeBuildingExamples.eg2" 
 	           classpath="${outputdir}/TreeBuildingExamples.eg2" 
 		       includes="Eg2.java" 
@@ -200,6 +224,7 @@
 			   fork="true"
 		       failonerror="true"/>
 	    
+    <jacoco:coverage>
 	    <java failonerror="true" fork="true" 
 	          classname="Eg2" 
 	          classpath="test.tmp/TreeBuildingExamples.eg2/"
@@ -208,6 +233,7 @@
 	    >
 	    	  <assertions><enable/></assertions>
 	    </java>
+    </jacoco:coverage>
 	    <echo>${jjtree.eg2.out}</echo>
 	    <fail message="JJTree eg2 parse failed">
 	     <condition>
@@ -226,6 +252,7 @@
 	      </fileset>
 	    </copy>
 
+    <jacoco:coverage>
 	    <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 		    <assertions><enable/></assertions>
 	    	<arg value="-q"/>
@@ -233,11 +260,13 @@
 			<arg value="${outputdir}/TreeBuildingExamples.eg3"/>
 			<arg value="${basedir}/TreeBuildingExamples/eg3.javacc"/>
 		</java>
+    </jacoco:coverage>
 	    <javac srcdir="${outputdir}/TreeBuildingExamples.eg3"
 	           classpath="${outputdir}/TreeBuildingExamples.eg3"
 		       fork="true" 
 		       includeantruntime="no" failonerror="true"/>
 
+    <jacoco:coverage>
 	    <java failonerror="true" fork="true" 
 	          classname="Eg3" 
 	          classpath="${outputdir}/TreeBuildingExamples.eg3/"
@@ -246,6 +275,7 @@
 	    >
 	    	<assertions><enable/></assertions>
 	    </java>
+    </jacoco:coverage>
 	    <echo>${jjtree.eg3.out}</echo>
 	    <fail message="JJTree eg3 parse failed">
 	     <condition>
@@ -258,6 +288,7 @@
 	    
 	    <echo>TreeBuildingExamples succeeded</echo>
 
+    <jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -265,7 +296,9 @@
 		 <arg value="${outputdir}/Lookahead.eg1"/>
 		 <arg value="${basedir}/Lookahead/Example1.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
+    <jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -273,7 +306,9 @@
 		 <arg value="${outputdir}/Lookahead.eg2"/>
 		 <arg value="${basedir}/Lookahead/Example2.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
+	<jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -281,8 +316,9 @@
 		 <arg value="${outputdir}/Lookahead.eg4"/>
 		 <arg value="${basedir}/Lookahead/Example4.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
-
+	<jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -290,7 +326,9 @@
 		 <arg value="${outputdir}/Lookahead.eg5"/>
 		 <arg value="${basedir}/Lookahead/Example5.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
+	<jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -298,7 +336,9 @@
 		 <arg value="${outputdir}/Lookahead.eg6"/>
 		 <arg value="${basedir}/Lookahead/Example6.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
+	<jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -306,7 +346,9 @@
 		 <arg value="${outputdir}/Lookahead.eg7"/>
 		 <arg value="${basedir}/Lookahead/Example7.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
+	<jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -314,7 +356,9 @@
 		 <arg value="${outputdir}/Lookahead.eg8"/>
 		 <arg value="${basedir}/Lookahead/Example8.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
+	<jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -322,7 +366,9 @@
 		 <arg value="${outputdir}/Lookahead.eg9"/>
 		 <arg value="${basedir}/Lookahead/Example9.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
+	<jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -330,9 +376,11 @@
 		 <arg value="${outputdir}/Lookahead.eg10"/>
 		 <arg value="${basedir}/Lookahead/Example10.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
 	 <echo>Lookahead examples succeeded</echo>
 
+	<jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -340,7 +388,9 @@
 		 <arg value="${outputdir}/MailProcessing"/>
 		 <arg value="${basedir}/MailProcessing/Digest.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
+ 	<jacoco:coverage>
 	 <java classpath="${classpath}" classname="com.javacc.Main" failonerror="true" fork="true">
 	    <assertions><enable/></assertions>
     	<arg value="-q"/>
@@ -348,6 +398,7 @@
 		 <arg value="${outputdir}/MailProcessing"/>
 		 <arg value="${basedir}/MailProcessing/Faq.javacc"/>
 	 </java>
+    </jacoco:coverage>
 
 	 <javac srcdir="${outputdir}/MailProcessing" 
 	        classpath ="${outputdir}/MailProcessing" 

@@ -1,6 +1,10 @@
 <?xml version='1.0' encoding='ISO-8859-1' ?>
 
-<project name="FreeMarker Parser" default="build" basedir=".">
+<project name="FreeMarker Parser" default="build" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
+
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="../../jacoco-0.8.7/lib/jacocoant.jar"/>
+    </taskdef>
 
 <target name="clean">
     <delete dir="fel"/>
@@ -28,18 +32,24 @@
 
 <target name="test" depends="build">
      <echo>Here is a really simple FEL example: 2+2</echo>
-     <java fork="true" failonerror="true" classname="fel.FELParser" inputstring="2+2">
+    <jacoco:coverage>
+     <java fork="true" failonerror="true" classname="fel.FELParser" classpath="." inputstring="2+2">
         <assertions><enable/></assertions>
      </java>
+    </jacoco:coverage>
      <echo>Okay, a bit more complex example now: x.y.z(foo, &quot;bar&quot;)?upper_case</echo>
-     <java fork="true" failonerror="true" classname="fel.FELParser" inputstring='x.y.z(foo, "bar")?upper_case'>
+    <jacoco:coverage>
+     <java fork="true" failonerror="true" classname="fel.FELParser" classpath="." inputstring='x.y.z(foo, "bar")?upper_case'>
         <assertions><enable/></assertions>
      </java>
+    </jacoco:coverage>
 	 <echo>Now let's try out the full FTL parser on the templates used in JavaCC</echo>
-     <java fork="true" failonerror="true" classname="ftl.FTLParser">
+    <jacoco:coverage>
+     <java fork="true" failonerror="true" classpath="." classname="ftl.FTLParser">
        <assertions><enable/></assertions>
      	 <arg value = "../../src/ftl/java"/>
 	 </java>
+    </jacoco:coverage>
 </target>
 
 </project>

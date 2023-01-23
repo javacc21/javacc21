@@ -1,4 +1,8 @@
-<project name="Python" default="compile" basedir=".">
+<project name="Python" default="compile" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
+
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath path="../../jacoco-0.8.7/lib/jacocoant.jar"/>
+    </taskdef>
     <target name="parser-check">
         <uptodate property="pyparser.uptodate" targetfile="org/parsers/python/PythonParser.java"> 
             <srcfiles dir="." includes="*.javacc"/>
@@ -27,9 +31,11 @@
       <echo>
             Now test on a few files..
       </echo>
-      <java classname="PyTest" classpath="." failonerror="true" fork="true">
-          <assertions><enable/></assertions>
-	      <arg value="${basedir}/testfiles" />
-      </java>
+      <jacoco:coverage>
+          <java classname="PyTest" classpath="." failonerror="true" fork="true">
+              <assertions><enable/></assertions>
+              <arg value="${basedir}/testfiles" />
+          </java>
+      </jacoco:coverage>
    </target>
 </project>
