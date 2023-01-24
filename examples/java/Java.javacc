@@ -1024,7 +1024,7 @@ ClassicSwitchLabel :
   <COLON>
 ;
 
-ClassicCaseStatement# :
+ClassicCaseStatement :
   ClassicSwitchLabel
   (SCAN 1 {getToken(1).getType() != TokenType._DEFAULT}
           // We need this because we'll spuriously enter the BlockStatement
