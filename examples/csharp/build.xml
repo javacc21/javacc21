@@ -41,7 +41,7 @@
 </target>
 
 <target name="test" depends="compile">
-     <java fork="true" failonerror="true" classname="CSParse">
+     <java fork="true" classpath="." failonerror="true" classname="CSParse">
          <assertions><enable/></assertions>
          <arg value="testfiles"/>
      </java>
