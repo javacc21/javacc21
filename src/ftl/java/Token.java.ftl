@@ -55,10 +55,10 @@ import freemarker.template.*;
 
 public class Token implements ${grammar.constantsClassName} ${extendsNode} {
 
+    transient private ${grammar.lexerClassName} tokenSource;
+    
     private TokenType type;
-
-    private ${grammar.lexerClassName} tokenSource;
-
+    
     private int beginOffset, endOffset;
     
     private boolean unparsed;

@@ -179,18 +179,7 @@ public class JavaFormatter extends Node.Visitor {
             addSpaceIfNecessary();
         } 
         recurse(stmt);
-        newLine();
     }
-
-//    void visit(StatementExpression exp) {
-//        recurse(exp);
-//    }
-
-//    void visit(ExpressionStatement stmt) {
-//        recurse(stmt);
-//        newLine();
-//    }
-
 
     // Add a space if the last output char was not whitespace
     private void addSpaceIfNecessary() {
