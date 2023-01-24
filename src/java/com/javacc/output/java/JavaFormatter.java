@@ -314,6 +314,17 @@ public class JavaFormatter extends Node.Visitor {
         newLine();
     }
 
+    void visit(ClassicCaseStatement ccs)  {
+        visit(ccs.firstChildOfType(ClassicSwitchLabel.class));
+        currentIndent += indent;
+        newLine();
+        for (Statement stmt : ccs.childrenOfType(Statement.class)) {
+            visit(stmt);
+        }
+        dedent();
+        newLine();
+    }
+
     private void startNewLineIfNecessary() {
         if (buf.length() == 0) {
             return;
