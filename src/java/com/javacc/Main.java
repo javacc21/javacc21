@@ -9,8 +9,8 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky nor the names of any contributors 
- *       may be used to endorse or promote products derived from this software 
+ *     * Neither the name Jonathan Revusky nor the names of any contributors
+ *       may be used to endorse or promote products derived from this software
  *       without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -57,6 +57,7 @@ public final class Main {
     private static Path jarPath;
     private static FileSystem fileSystem = FileSystems.getDefault();
     private static final Pattern symbolPattern = Pattern.compile("^(\\w+(\\.\\w+)*)(=(\\w+(\\.\\w+)*))?$");
+    private static boolean noGenerateNonEmpty = false;
 
     static {
         try {
@@ -90,7 +91,7 @@ public final class Main {
     }
 
     static void checkForNewer() {
-        if (jarPath != null && Files.exists(jarPath) 
+        if (jarPath != null && Files.exists(jarPath)
              && (jarPath.endsWith("javacc.jar") || jarPath.endsWith("javacc-full.jar")))
            try {
                 long jarLastModified = Files.getLastModifiedTime(jarPath).toMillis();
@@ -176,6 +177,7 @@ public final class Main {
         System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 18. (Default is 8)");
         System.out.println("                     (this is only useful when the code generation is in Java)");
         System.out.println(" -n                Suppress the check for a newer version");
+        System.out.println(" -g                Do not generate unless output directory is empty");
         System.out.println(" -p                Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.");
         System.out.println("   For example:   -p debug,strict");
         System.out.println(" -q                Quieter output");
@@ -247,6 +249,9 @@ public final class Main {
                 }
                 else if (arg.equalsIgnoreCase("-n")) {
                     noNewerCheck = true;
+                }
+                else if (arg.equalsIgnoreCase("-g")) {
+                    noGenerateNonEmpty = true;
                 }
                 else if (arg.equalsIgnoreCase("-q") || arg.equalsIgnoreCase("-quiet")) {
                     quiet = true;
@@ -334,7 +339,6 @@ public final class Main {
      * @return error code
      * @throws Exception
      */
-
     public static int mainProgram(Path grammarFile, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
       throws IOException, ParseException, TemplateException {
         if (!quiet) bannerLine();
@@ -342,7 +346,7 @@ public final class Main {
         grammar.parse(grammarFile, true);
         grammar.createOutputDir();
         // do not generate unless output directory is empty
-        if (Files.list(grammar.getParserOutputDirectory()).anyMatch(p->true)) {
+        if (isNoGenerateNonEmpty() && Files.list(grammar.getParserOutputDirectory()).anyMatch(p->true)) {
             System.out.println("Parser already generated.");
             return 0;
         }
@@ -409,5 +413,13 @@ public final class Main {
     		}
     	}
     	return " (" + jarFileName + " built by " + builtBy + " on " + buildDate + ")";
+    }
+
+    /**
+     * Getter to access no generate non empty configuration property.
+     * @return whether to generate non empty
+     */
+    public static boolean isNoGenerateNonEmpty() {
+        return noGenerateNonEmpty;
     }
 }

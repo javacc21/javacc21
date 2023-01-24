@@ -38,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import com.javacc.Grammar;
+import com.javacc.Main;
 import com.javacc.core.RegularExpression;
 import com.javacc.parser.*;
 import com.javacc.parser.tree.CompilationUnit;
@@ -88,12 +89,12 @@ public class FilesGenerator {
         this.grammar = grammar;
         this.codeLang = codeLang;
         this.codeInjector = new CodeInjector(grammar,
-                                             grammar.getParserPackage(), 
-                                             grammar.getNodePackage(), 
+                                             grammar.getParserPackage(),
+                                             grammar.getNodePackage(),
                                              codeInjections);
     }
 
-    public void generateAll() throws IOException, TemplateException { 
+    public void generateAll() throws IOException, TemplateException {
         if (grammar.getErrorCount() != 0) {
             throw new ParseException();
         }
@@ -209,7 +210,8 @@ public class FilesGenerator {
     }
 
     public void generate(String nodeName, Path outputFile) throws IOException, TemplateException  {
-        if (outputFile.toFile().exists()) return; // skip generate if file exists
+        if (Main.isNoGenerateNonEmpty() && outputFile.toFile().exists())
+            return; // skip generate if file exists
         String currentFilename = outputFile.getFileName().toString();
         String templateName = getTemplateName(currentFilename);
         HashMap<String, Object> dataModel = new HashMap<>();
@@ -305,7 +307,7 @@ public class FilesGenerator {
             generate(outputFile);
         }
     }
-    
+
     void generateLexer() throws IOException, TemplateException {
         String filename = grammar.getLexerClassName() + ".java";
         Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
@@ -326,7 +328,7 @@ public class FilesGenerator {
         Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
-    
+
     void generateNodeFile() throws IOException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("Node.java");
         if (regenerate(outputFile)) {
@@ -337,12 +339,12 @@ public class FilesGenerator {
     private boolean regenerate(Path file) throws IOException {
         if (!Files.exists(file)) {
         	return true;
-        } 
+        }
         String ourName = file.getFileName().toString();
         String canonicalName = file.normalize().getFileName().toString();
        	if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
-            String msg = "You cannot have two files that differ only in case, as in " 
-       	                          + ourName + " and "+ canonicalName 
+            String msg = "You cannot have two files that differ only in case, as in "
+                                  + ourName + " and "+ canonicalName
        	                          + "\nThis does work on a case-sensitive file system but fails on a case-insensitive one (i.e. Mac/Windows)"
        	                          + " \nYou will need to rename something in your grammar!";
             throw new IOException(msg);
