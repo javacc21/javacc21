@@ -110,7 +110,7 @@ public class JavaFormatter extends Node.Visitor {
                 } else {
                     buf.append(op);
                     TokenType tokenType = op.nextCachedToken().getType();
-                    if (tokenType != GT && tokenType != COMMA && tokenType != LPAREN && tokenType != RPAREN)
+                    if (tokenType != GT && tokenType != COMMA && tokenType != LPAREN && tokenType != RPAREN && tokenType != LBRACE)
                         addSpaceIfNecessary();
                 }
                 break;
