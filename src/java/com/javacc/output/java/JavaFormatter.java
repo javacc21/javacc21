@@ -9,7 +9,7 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky nor the names of any contributors 
+ *     * Neither the name Jonathan Revusky nor the names of any contributors
  *       may be used to endorse or promote products derived from this software
  *       without specific prior written permission.
  *
@@ -35,6 +35,7 @@ import com.javacc.parser.JavaCCConstants.TokenType;
 import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
 import java.util.EnumSet;
+import java.util.regex.Pattern;
 
 /**
  * A Node.Visitor subclass for pretty-printing java source code.
@@ -42,15 +43,16 @@ import java.util.EnumSet;
  * @author revusky
  */
 public class JavaFormatter extends Node.Visitor {
-     
+
     {this.visitUnparsedTokens = true;}
 
     protected StringBuilder buf;
     private String indent = "    ";
     private String currentIndent = "";
     private String eol = "\n";
-    private EnumSet<TokenType> alwaysPrependSpace = EnumSet.of(ASSIGN, COLON, LBRACE, HOOK, THROWS);
-    private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, COMMA, DO, FOR, IF, WHILE, THROWS, EXTENDS, HOOK);
+    private EnumSet<TokenType> alwaysPrependSpace = EnumSet.of(ASSIGN, COLON, LBRACE, THROWS, EQ, NE, LE, GE, PLUS, MINUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR, XOR, REM, LSHIFT, PLUSASSIGN, MINUSASSIGN, STARASSIGN, SLASHASSIGN, ANDASSIGN, ORASSIGN, XORASSIGN, REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT, RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA);
+    private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, COMMA, DO, CATCH, FOR, IF, WHILE, THROWS, EXTENDS, EQ, NE, LE, GE, PLUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR, XOR, REM, LSHIFT, PLUSASSIGN, MINUSASSIGN, STARASSIGN, SLASHASSIGN, ANDASSIGN, ORASSIGN, XORASSIGN, REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT, RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA);
+    private static final Pattern multiBlock = Pattern.compile("else|catch|finally");
 
     public String format(BaseNode code, int indentLevel) {
         buf = new StringBuilder();
@@ -66,10 +68,11 @@ public class JavaFormatter extends Node.Visitor {
     }
 
     private void outputToken(Token tok) {
-        if (buf.length() >0) {
-            int prevChar = buf.codePointBefore(buf.length());
+        if (buf.length() > 0) {
             int nextChar = tok.getImage().codePointAt(0);
-            if ((Character.isJavaIdentifierPart(prevChar) || prevChar == ';') && Character.isJavaIdentifierPart(nextChar)) {
+            int prevChar = buf.codePointBefore(buf.length());
+            if ((Character.isJavaIdentifierPart(prevChar) || prevChar == ';')
+                    && Character.isJavaIdentifierPart(nextChar)) {
                 addSpaceIfNecessary();
             }
             else if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
@@ -83,31 +86,69 @@ public class JavaFormatter extends Node.Visitor {
         else outputToken(tok);
     }
 
+    void visit(TypeParameters tps) {
+        addSpaceIfNecessary(); // spaced from method modifiers
+        recurse(tps);
+    }
+
     void visit(Operator op) {
         switch (op.getType()) {
             case LT:
                 if (op.getParent() instanceof RelationalExpression) {
                     addSpaceIfNecessary();
-                    buf.append("< ");
+                    buf.append(op);
+                    buf.append(' ');
                 } else {
-                    buf.append("<");
+                    buf.append(op);
                 }
                 break;
             case GT:
                 if (op.getParent() instanceof RelationalExpression) {
                     addSpaceIfNecessary();
-                    buf.append("> ");
+                    buf.append(op);
+                    buf.append(' ');
                 } else {
-                    buf.append(">");
+                    buf.append(op);
+                    TokenType tokenType = op.nextCachedToken().getType();
+                    if (tokenType != GT && tokenType != COMMA && tokenType != LPAREN && tokenType != RPAREN)
+                        addSpaceIfNecessary();
+                }
+                break;
+            case HOOK:
+                if (op.getParent() instanceof TernaryExpression) {
+                    addSpaceIfNecessary();
+                    buf.append(op);
+                    buf.append(' ');
+                } else {
+                    buf.append(op);
                     if (op.nextCachedToken().getType() != GT) buf.append(' ');
                 }
+                break;
+            case STAR:
+                if (op.getParent() instanceof ImportDeclaration)
+                    buf.append(op); // no spaces for import statements
+                else {
+                    addSpaceIfNecessary();
+                    buf.append(op);
+                    buf.append(' ');
+                }
+                break;
+            case MINUS:
+                if (op.getPrevious().getType() == RPAREN || op.getPrevious() instanceof Identifier)
+                    addSpaceIfNecessary();
+                buf.append(op);
+                int nextChar = op.getNext().getImage().codePointAt(0);
+                if (op.getPrevious() instanceof Identifier // for -1 or 2 - 1
+                        || op.getPrevious() instanceof Delimiter
+                        || !Character.isDigit(nextChar))
+                    addSpaceIfNecessary();
                 break;
             default : outputToken(op);
         }
     }
 
     void visit(KeyWord kw) {
-        outputToken(kw);        
+        outputToken(kw);
         if (kw.getType() == RETURN) {
             if (kw.getNext().getType() != SEMICOLON) addSpaceIfNecessary();
         }
@@ -118,9 +159,11 @@ public class JavaFormatter extends Node.Visitor {
             case RBRACKET :
                 outputToken(delimiter);
                 TokenType nextType = delimiter.getNext().getType();
-                if (nextType != LBRACKET && nextType != SEMICOLON) addSpaceIfNecessary();
+                if (nextType != LBRACKET && nextType != SEMICOLON && nextType != GT
+                        && nextType != RPAREN && nextType != COMMA)
+                    addSpaceIfNecessary();
                 break;
-            case LBRACE : 
+            case LBRACE :
                 outputToken(delimiter);
                 if (!(delimiter.getParent() instanceof ArrayInitializer)) {
                     currentIndent += indent;
@@ -132,16 +175,29 @@ public class JavaFormatter extends Node.Visitor {
                 if (!endOfArrayInitializer) {
                     newLine();
                     dedent();
-                } 
-                buf.append("}");
-                if (!endOfArrayInitializer) newLine();
-                break;
-            case HOOK :
-                if (!(delimiter.getParent() instanceof TernaryExpression)) {
-                    buf.append(delimiter);
-                } else {
-                    outputToken(delimiter);
                 }
+                buf.append(delimiter);
+                Token token = delimiter.getNext();
+                if (!endOfArrayInitializer && null != token && token.getType() != SEMICOLON) {
+                    if (token instanceof KeyWord && multiBlock.matcher(token.getImage()).matches())
+                        addSpaceIfNecessary(); // space for multi block statements
+                    else newLine();
+                }
+                break;
+            case RPAREN:
+                buf.append(delimiter);
+                if (delimiter.getParent() instanceof CastExpression)
+                    addSpaceIfNecessary();
+                break;
+            case SEMICOLON:
+                if (buf.charAt(buf.length() - 1) != ' ') { // detect rogue semicolons
+                    buf.append(delimiter);
+                    if (!ForStatement.class.isInstance(delimiter.getParent())
+                            && !ImportDeclaration.class.isInstance(delimiter.getParent()))
+                        newLine();
+                } else for (int i = 1; i <= 6; i++) // remove rogue semicolons
+                    if (buf.charAt(buf.length() - 1) == ' ' || buf.charAt(buf.length() - 1) == '\n')
+                        buf.setLength(buf.length() - 1);
                 break;
             default : outputToken(delimiter);
         }
@@ -159,11 +215,11 @@ public class JavaFormatter extends Node.Visitor {
         } else if (comment.getPrevious().getType() == SEMICOLON) {
             if (buf.charAt(buf.length()-1) == '\n') {
                 buf.setLength(buf.length()-1);
-                buf.append(" ");
+                buf.append(' ');
             }
         }
-        buf.append(comment.getImage());
-        buf.append(currentIndent);
+        buf.append(comment.getImage().trim());
+        newLine(); // comments may have trailing whitespace
     }
 
     void visit(Whitespace ws) {}
@@ -175,9 +231,8 @@ public class JavaFormatter extends Node.Visitor {
     }
 
     void visit(Statement stmt) {
-        if (stmt.getParent() instanceof IfStatement) {
+        if (stmt.getParent() instanceof IfStatement)
             addSpaceIfNecessary();
-        } 
         recurse(stmt);
     }
 
@@ -191,7 +246,7 @@ public class JavaFormatter extends Node.Visitor {
     private void dedent() {
         String finalPart = buf.substring(buf.length() - indent.length(), buf.length());
         if (finalPart.equals(indent)) {
-            buf.setLength(buf.length()-4);
+            buf.setLength(buf.length() - indent.length());
         }
         currentIndent = currentIndent.substring(0, currentIndent.length() - indent.length());
     }
@@ -278,7 +333,7 @@ public class JavaFormatter extends Node.Visitor {
     private void newLine() {
         newLine(false);
     }
-    
+
     private void newLine(boolean ensureBlankLine) {
         startNewLineIfNecessary();
         if (ensureBlankLine) {
