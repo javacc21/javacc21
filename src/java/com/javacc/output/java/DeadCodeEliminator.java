@@ -9,7 +9,7 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name Jonathan Revusky nor the names of any contributors 
+ *     * Neither the name Jonathan Revusky nor the names of any contributors
  *       may be used to endorse or promote products derived from this software
  *       without specific prior written permission.
  *
@@ -36,7 +36,7 @@ import static com.javacc.parser.JavaCCConstants.TokenType.*;
 
 /**
  * A visitor that eliminates unused code.
- * It is not absolutely correct, in the sense of catching all 
+ * It is not absolutely correct, in the sense of catching all
  * unused methods or fields, but works for our purposes.
  * For example, it does not take account overloaded methods, so
  * if the method name is referenced somewhere, it is assumed to be used.
@@ -66,14 +66,21 @@ class DeadCodeEliminator extends Node.Visitor {
         for (MethodDeclaration md : jcu.descendants(MethodDeclaration.class, md->!usedNames.contains(md.getName()))) {
             md.getParent().removeChild(md);
         }
-        // We go through all the private FieldDeclarations and get rid of any variables that 
+        // We go through all the private FieldDeclarations and get rid of any variables that
         // are not in usedNames
         for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, fd->isPrivate(fd))) {
             stripUnusedVars(fd);
         }
 
+        // Add interface extends list to used names
+        for (InterfaceDeclaration iface : jcu.descendants(InterfaceDeclaration.class)) {
+            ExtendsList el = iface.firstDescendantOfType(ExtendsList.class);
+            if (null != el) for (Identifier id : el.descendantsOfType(Identifier.class))
+                usedNames.add(id.getImage());
+        }
+
         // With the remaining field declarations, we add any type names to usedNames
-        // so that we don't remove imports that refer to them. 
+        // so that we don't remove imports that refer to them.
         for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class)) {
             for (Identifier id : fd.descendantsOfType(Identifier.class)) {
         // In Foo.Bar.Baz it is only the Foo
@@ -137,7 +144,7 @@ class DeadCodeEliminator extends Node.Visitor {
         alreadyVisited.add(cd);
     }
 
-    // Get rid of any variable declarations where the variable name 
+    // Get rid of any variable declarations where the variable name
     // is not in usedNames. The only complicated case is if the field
     // has more than one variable declaration comma-separated
     private void stripUnusedVars(FieldDeclaration fd) {
