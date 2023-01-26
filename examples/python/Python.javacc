@@ -17,7 +17,7 @@ ENSURE_FINAL_EOL;
 DEACTIVATE_TOKENS=MATCH,CASE;
 LEGACY_GLITCHY_LOOKAHEAD=false;
 
-INCLUDE "PythonLexer.ccc" 
+INCLUDE "PythonLexer.javacc" 
 
 #Module : 
    (Statement)*! 

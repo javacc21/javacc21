@@ -125,7 +125,6 @@ INJECT PARSER_CLASS :
 /* JAVACC RESERVED WORDS: These are the only tokens in JavaCC but not in Java */
 
 TOKEN :
-{
   < _INJECT: "INJECT" > #JavaCCKeyWord
   |
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
@@ -191,7 +190,7 @@ TOKEN :
       ){2,}
        "'"
   > #StringLiteral
-}
+;
 
 INJECT BaseNode :
     import java.lang.reflect.*;
@@ -866,7 +865,6 @@ INJECT Token :
     TokenManagerDecls decls;
     TokenProduction tp;
 }
-{
    [
       OptionsBlock | Options
    ]!
@@ -882,7 +880,7 @@ INJECT Token :
       |
       CodeInjection
       |
-      =>GrammarInclusion
+      GrammarInclusion =>||
       |
       BNFProduction
   )+!
@@ -890,14 +888,13 @@ INJECT Token :
   {
         return CURRENT_NODE;
   }
-}
+;
 
 ParserCodeDecls : 
 {
     Token id;
     CompilationUnit parserCode;
 }
-{
    "PARSER_BEGIN"
    "("
    id=<IDENTIFIER>
@@ -912,7 +909,7 @@ ParserCodeDecls :
            grammar.setParserCode(parserCode);
    }
    "PARSER_END" ["(" <IDENTIFIER> ")"]
-}
+;
 
 INJECT ReturnType :
     import java.util.List;
@@ -1004,7 +1001,7 @@ CodeInjection :
         [
              "extends" 
              ot=ObjectType {CURRENT_NODE.addExtendsType(ot);}
-             (SCAN {isInterface} => "," ot=ObjectType {CURRENT_NODE.addExtendsType(ot);})*
+             (SCAN 1 {isInterface} => "," ot=ObjectType {CURRENT_NODE.addExtendsType(ot);})*
              [";"]
         ]
         [
@@ -1720,7 +1717,6 @@ LegacyLookahead# :
     Expression exp = null;
     boolean empty = true, commaAtEnd = false;
 }
-{
   <_LOOKAHEAD>
   [
    "(" 
@@ -1751,7 +1747,7 @@ LegacyLookahead# :
       ]
      ")"
   ]
-}
+;
 
 ChildNameInfo(Expansion expansion) : //#void :
 {
