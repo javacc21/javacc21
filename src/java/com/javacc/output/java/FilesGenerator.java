@@ -100,6 +100,7 @@ public class FilesGenerator {
         initializeTemplateEngine();
         switch (codeLang) {
             case "java":
+//                long start = System.nanoTime();
                 generateToken();
                 generateLexer();
                 generateNfaData();
@@ -108,12 +109,15 @@ public class FilesGenerator {
                     generateParseException();
                     generateParser();
                 }
+//                System.out.println("Spent " + (System.nanoTime() -start)/10000000 + " milliseconds generating Parser/lexer.");
                 if (grammar.getFaultTolerant()) {
                     generateInvalidNode();
                     generateParsingProblem();
                 }
                 if (grammar.getTreeBuildingEnabled()) {
+//                    start = System.nanoTime();
                     generateTreeBuildingFiles();
+//                    System.out.println("Spent " + (System.nanoTime() -start)/10000000 + " milliseconds generating AST nodes.");
                 }
                 break;
             case "python": {

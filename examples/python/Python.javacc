@@ -17,7 +17,7 @@ ENSURE_FINAL_EOL;
 DEACTIVATE_TOKENS=MATCH,CASE;
 LEGACY_GLITCHY_LOOKAHEAD=false;
 
-INCLUDE "PythonLexer.javacc" 
+INCLUDE "PythonLexer.ccc" 
 
 #Module : 
    (Statement)*! 
@@ -524,7 +524,7 @@ ClosedPattern :
    |
    NameOrAttribute
    |
-   =>GroupPattern
+   GroupPattern =>||
    |
    SequencePattern
    |

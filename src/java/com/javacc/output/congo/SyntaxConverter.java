@@ -211,11 +211,15 @@ public class SyntaxConverter extends Node.Visitor {
             if (child instanceof Expansion) {
                 // It has to be written in this annoying way because of the 
                 // the tree that the JavaCCParser builds. REVISIT
-                if (child == lastExpansion) {
-                    if (seq.getHasExplicitLookahead()) {
-                        if (seq.getLookahead().getChildCount() == 1 && !seq.getHasExplicitScanLimit()) {
-                            buffer.append(" =>|| ");
-                        }
+                if (child == lastExpansion && seq.getHasExplicitLookahead()) {
+                    if (seq.getLookahead().getChildCount() == 2) {
+                        buffer.append(" =>|| ");
+                    }
+                    else if (!seq.getHasExplicitNumericalLookahead() 
+                            && !seq.getHasSeparateSyntacticLookahead()
+                            && !seq.getHasScanLimit()
+                            && seq.getMaximumSize() > 1) {
+                                buffer.append(" =>|| ");
                     }
                 }
                 TreeBuildingAnnotation tba = ((Expansion) child).getTreeNodeBehavior();

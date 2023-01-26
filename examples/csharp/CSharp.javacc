@@ -16,7 +16,7 @@ DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
                   INTO, ON, ORDERBY,SELECT,WHERE;
 
-INCLUDE "CSharpLexer.javacc"
+INCLUDE "CSharpLexer.ccc"
 
 /*
  * This is not used
@@ -716,12 +716,12 @@ ArgumentList : Argument (<COMMA> Argument)* ;
 
 Argument :
    (AttributeSection)*
-   [=> <IDENTIFIER> <COLON>]
+   [<IDENTIFIER> <COLON> =>||]
    (
        // Where is this specified?
       PrimitiveType ASSERT(<COMMA>|<RPAREN>) =>||
       |
-      => <OUT> Type <IDENTIFIER> // since C# 7.0
+      <OUT> Type <IDENTIFIER> =>|| // since C# 7.0
       |
       // Not sure since when "in" is allowed here
       [<REF> | <OUT> | <IN>] Expression
@@ -830,12 +830,19 @@ InterfaceMethodDeclaration :
    TypeParameterConstraints
    MethodBody // since 8.0. NB. The method body can be a lone semicolon.
 ;
-
+#if false
 ReturnType :
-   SCAN {getToken(2).getType() != TokenType.STAR}# =>
+   SCAN 1 {getToken(2).getType() != TokenType.STAR}# =>
    // If we have void*, we prefer to parse it as Type
    // for tree-building purposes.
    <VOID> [<STAR>]
+   |
+   Type
+;
+#endif
+
+ReturnType :
+   <VOID> ASSERT~(<STAR>) =>||
    |
    Type
 ;
@@ -847,7 +854,7 @@ FormalParameters :
    |
    ParameterArray
    |
-   FixedParameter (=> <COMMA> FixedParameter)* [<COMMA> VarArgsParameter]
+   FixedParameter (<COMMA> FixedParameter =>||)* [<COMMA> VarArgsParameter]
 ;
 
 VarArgsParameter#void :
@@ -903,7 +910,7 @@ NonTupleType : Type;
 Type :
   [<DELEGATE> <STAR> =>||]
   (
-    => <VOID> <STAR>
+    <VOID> <STAR> =>||
     |
     PrimitiveType
     |
@@ -1099,8 +1106,9 @@ LambdaLHS :
   {boolean seenStatic = false;}
   [<STATIC> {seenStatic = true;}] // since 9.0
   [
-     SCAN {checkNextTokenImage("async")}#
-     => ACTIVATE_TOKENS ASYNC (<ASYNC>)
+     ASSERT {checkNextTokenImage("async")}#
+     =>||
+     ACTIVATE_TOKENS ASYNC (<ASYNC>)
      [
         SCAN {!seenStatic} => <STATIC>
      ]
@@ -1110,7 +1118,7 @@ LambdaLHS :
      => ReturnType
   ]
   (
-   =>ImplicitAnonymousFunctionSignature
+   ImplicitAnonymousFunctionSignature =>||
    |
    ExplicitLambdaSignature
   )
@@ -1431,12 +1439,12 @@ UnaryExpressionNotPlusMinus : (<BANG> | <TILDE>) UnaryExpression ;
 NullConditionalOperations :
    <HOOK> =>|+1
    (
-      <DOT> <IDENTIFIER> [<BANG>][=>TypeArgumentList]
+      <DOT> <IDENTIFIER> [<BANG>][TypeArgumentList =>||]
       |
       <LBRACKET> ArgumentList <RBRACKET>
    )
    (
-      [<HOOK>] <DOT> =>|| <IDENTIFIER> [<BANG>] [=>TypeArgumentList]
+      [<HOOK>] <DOT> =>|| <IDENTIFIER> [<BANG>] [TypeArgumentList =>||]
       |
       [<HOOK>] <LBRACKET> =>|| ArgumentList <RBRACKET>
       |
@@ -1495,9 +1503,9 @@ PrimaryExpression#void :
     (
       (<LPAREN> [ArgumentList] <RPAREN>) #InvocationExpression(+1)
       |
-      (<LBRACKET> [=><IDENTIFIER> <COLON>] Expression (<COMMA> [=><IDENTIFIER><COLON>] Expression)*  <RBRACKET>) #ElementAccess(+1)
+      (<LBRACKET> [<IDENTIFIER><COLON> =>||] Expression (<COMMA> [<IDENTIFIER><COLON> =>||] Expression)*  <RBRACKET>) #ElementAccess(+1)
       |
-      (<DOT> <IDENTIFIER> [=>TypeArgumentList]) #MemberAccess(+1)
+      (<DOT> <IDENTIFIER> [TypeArgumentList =>||]) #MemberAccess(+1)
       |
       (<POINTER_ACCESS> <IDENTIFIER> [TypeArgumentList=>||]) #PointerMemberAccess(+1)
       |
@@ -1513,7 +1521,7 @@ PrimaryExpression#void :
 ;
 
 ParenthesizedOrTuple#void :
-    => ParenthesizedExpression
+    ParenthesizedExpression =>||
     |
     Tuple
 ;
@@ -1559,11 +1567,11 @@ Tuple :
 ;
 
 TupleElement :
-   [=> <IDENTIFIER> <COLON>]
+   [<IDENTIFIER> <COLON> =>||]
    (
-       =>Expression ASSERT (<COMMA> | <RPAREN>)
+       Expression ASSERT(<COMMA> | <RPAREN>) =>||
        |
-       =>Type Expression ASSERT (<COMMA> | <RPAREN>)
+       Type Expression ASSERT(<COMMA> | <RPAREN>) =>||
    )
    =>||
 ;
@@ -1572,7 +1580,7 @@ PrimitiveTypeAccess :
    (<DYNAMIC> | PrimitiveType)
    <DOT> =>||
    <IDENTIFIER>
-   [ => TypeArgumentList ]
+   [TypeArgumentList =>||]
 ;
 
 QualifiedAliasMemberAccess :
@@ -1611,7 +1619,7 @@ PredefinedType#void :
 // if it can be inferred by the compiler.
 DefaultValueExpression# : <DEFAULT> [ <LPAREN> Type <RPAREN> ] ;
 
-SimpleName# : <IDENTIFIER> [=>TypeArgumentList] ;
+SimpleName# : <IDENTIFIER> [TypeArgumentList =>||] ;
 
 ParenthesizedExpression : <LPAREN> Expression <RPAREN> ;
 
@@ -1633,7 +1641,7 @@ TypeofExpression :
    // then the assertion at the end fails, and this means
    // that we go to the next choice, which is
    // a regular Type production (with no funky <,,> thingies
-       =>UnboundTypeName ASSERT {sawEmptyTypeArgs}#
+       UnboundTypeName ASSERT {sawEmptyTypeArgs}# =>||
        |
        Type
     )
@@ -1665,8 +1673,9 @@ AnonymousMethodExpression :
   {boolean seenStatic = false;}
   [<STATIC> {seenStatic = true;}] // since 9.0
   [
-     SCAN {checkNextTokenImage("async")}#
-     => ACTIVATE_TOKENS ASYNC (<ASYNC>)
+     ASSERT {checkNextTokenImage("async")}#
+     =>||
+     ACTIVATE_TOKENS ASYNC (<ASYNC>)
      [
         SCAN {!seenStatic} => <STATIC>
      ]
@@ -2079,7 +2088,7 @@ SwitchLabel :
    |
    // REVISIT: Why do I need this line?
    // The third choice should be enough, it seems...
-   => <CASE> Expression [WhenClause] <COLON>
+   <CASE> Expression [WhenClause] <COLON> =>||
    |
    <CASE> Pattern [WhenClause] <COLON>
 ;
@@ -2141,7 +2150,7 @@ PrimaryPattern :
    // These next three options are a bit ugly.
    => CastExpression // Maybe there is a better way but I don't see it.
    |
-   => ParenthesizedPattern
+   ParenthesizedPattern =>||
    |
    NameofExpression
    |
@@ -2151,9 +2160,9 @@ PrimaryPattern :
    |
    VarPattern
    |
-   =>TypePattern
+   TypePattern =>||
    |
-   =>PositionalPattern
+   PositionalPattern =>||
    |
    //Which should it be here?
    ShiftExpression
@@ -2184,7 +2193,7 @@ TypePattern :
    (
       Type
       [
-         SCAN {getToken(0) instanceof NODE_PACKAGE.PrimitiveType}#
+         SCAN 2 {getToken(0) instanceof NODE_PACKAGE.PrimitiveType}#
          => <DOT> <IDENTIFIER>
       ]
       {
@@ -2225,7 +2234,7 @@ TypePattern :
 RelationalPattern : (<GT>|<GE>|<LE>|<LT>) RelationalExpression ;
 
 PositionalPattern :
-    [=>NonTupleType]
+    [NonTupleType =>||]
     <LPAREN>
     [SubPatterns]
     <RPAREN>
@@ -2234,12 +2243,12 @@ PositionalPattern :
 ;
 
 SubPatterns :
-   [=> QualifiedIdentifier <COLON>]
+   [QualifiedIdentifier <COLON> =>||]
    Pattern
    (
       SCAN 2
       <COMMA>
-      [=> QualifiedIdentifier <COLON>]
+      [QualifiedIdentifier <COLON> =>||]
       Pattern
    )*
 ;
