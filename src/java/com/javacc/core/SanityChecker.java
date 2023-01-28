@@ -292,20 +292,11 @@ public class SanityChecker {
         //Let's jump out here, I guess.
         if (grammar.getErrorCount() >0) return;
 
-        /*
-         * The following code performs a tree walk on all regular expressions
-         * attaching links to "RegexpRef"s. Error messages are given if
-         * undeclared names are used, or if "RegexpRefs" refer to private
-         * regular expressions or to regular expressions of any kind other than
-         * TOKEN. In addition, this loop also removes top level RegexpRefs
-         * from "rexprlist". 
-         */
-
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
             if (grammar.getExtraTokens().containsKey(label)) continue;
             RegularExpression referenced = grammar.getNamedToken(label);
-            if (referenced == null) {// && !ref.getLabel().equals("EOF")) {
+            if (referenced == null) {
                 grammar.addError(ref,  "Undefined lexical token name \"" + label + "\".");
             } else if (ref.getTokenProduction() == null || !ref.getTokenProduction().isExplicit()) {
                 if (referenced.isPrivate()) {
@@ -315,6 +306,7 @@ public class SanityChecker {
                 } 
             } 
         }
+
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
             for (RegexpRef ref : tp.descendants(RegexpRef.class)) {
                 RegularExpression rexp = grammar.getNamedToken(ref.getLabel());

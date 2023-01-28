@@ -412,7 +412,9 @@ public class FilesGenerator {
     // only used for tree-building files (a bit kludgy)
     private Path getOutputFile(String nodeName) throws IOException {
         if (nodeName.equals(grammar.getBaseNodeClassName())) {
-            return grammar.getParserOutputDirectory().resolve(nodeName + ".java");
+            return grammar.getBaseNodeInParserPackage() ? 
+               grammar.getParserOutputDirectory().resolve(nodeName + ".java") :
+               grammar.getNodeOutputDirectory().resolve(nodeName + ".java");
         }
         String className = grammar.getNodeClassName(nodeName);
         //KLUDGE

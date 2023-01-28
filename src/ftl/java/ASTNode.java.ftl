@@ -44,6 +44,9 @@ package ${package};
 [/#if]
 [#if grammar.parserPackage?has_content && package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
+  [#if grammar.baseNodeInParserPackage]
+import ${grammar.parserPackage}.${grammar.baseNodeClassName};
+  [/#if]
 [/#if]
 
 [#if isInterface]
