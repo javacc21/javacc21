@@ -85,7 +85,7 @@ public class SyntaxConverter extends Node.Visitor {
                 buffer.append(t);
             }
         } 
-        else if (firstToken.previousCachedToken().getType() == MULTI_LINE_COMMENT) {
+        else if (firstToken.previousCachedToken() != null && firstToken.previousCachedToken().getType() == MULTI_LINE_COMMENT) {
             buffer.append("\n");
         }
         for (Setting setting : options.childrenOfType(Setting.class)) {
