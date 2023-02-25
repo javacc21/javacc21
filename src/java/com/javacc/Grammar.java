@@ -74,6 +74,7 @@ public class Grammar extends BaseNode {
     private CompilationUnit parserCode;
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
+    private boolean inSyntaxConverter;
 
     private List<TokenProduction> tokenProductions = new ArrayList<>();
 
@@ -132,6 +133,10 @@ public class Grammar extends BaseNode {
     public Grammar() {}
 
     public boolean isQuiet() {return quiet;}
+
+    public boolean isInSyntaxConverter() {return inSyntaxConverter;}
+
+    public void setInSyntaxConverter(boolean inSyntaxConverter) {this.inSyntaxConverter = inSyntaxConverter;}
 
     public String getCodeLang() { return codeLang; }
 
