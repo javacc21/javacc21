@@ -52,7 +52,7 @@ import freemarker.template.TemplateException;
 public final class Main {
 
     public static final String PROG_NAME = "JavaCC 21 Parser Generator";
-    public static final String URL = "Go to https://javacc.com for more information.";
+    public static final String URL = "Go to https://parsers.org for more information.";
     private static String manifestContent = "", jarFileName = "javacc.jar";
     private static Path jarPath;
     private static FileSystem fileSystem = FileSystems.getDefault();
@@ -98,7 +98,7 @@ public final class Main {
                     // If the current jarfile is less than an hour old, let's not bother.
                     return;
                 }
-                URL url = new URL("https://javacc.com/download/" + jarPath.getFileName());
+                URL url = new URL("https://parsers.org/download/" + jarPath.getFileName());
                 URLConnection connection = url.openConnection();
                 connection.setConnectTimeout(1000);
                 long lastUpdate = connection.getLastModified();

@@ -340,6 +340,7 @@ public class SyntaxConverter extends Node.Visitor {
             System.exit(-1);
         }
         Grammar grammar = new Grammar(path.getParent(), "java", 8, false, new HashMap<>());
+        grammar.setInSyntaxConverter(true);
         Node root = grammar.parse(path, false);
         SyntaxConverter converter = new SyntaxConverter(grammar);
         converter.buildData();

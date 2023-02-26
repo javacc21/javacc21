@@ -773,28 +773,28 @@ INJECT Identifier :
         if (image.equals("current_token")) {
             return "lastConsumedToken";
         }
-        if (image.equals("TOKEN_HOOK")) {
+        if (image.equals("TOKEN_HOOK") && !getGrammar().isInSyntaxConverter()) {
             if (tokenHookName ==null) {
                 String prefix = getGrammar().generateIdentifierPrefix("tokenHook");
                 tokenHookName = getGrammar().generateUniqueIdentifier(prefix, this);
             }
             return tokenHookName;
         }
-        if (image.equals("RESET_TOKEN_HOOK")) {
+        if (image.equals("RESET_TOKEN_HOOK") && !getGrammar().isInSyntaxConverter()) {
             if (resetTokenHookName == null) {
                 String prefix = getGrammar().generateIdentifierPrefix("resetTokenHook");
                 resetTokenHookName = getGrammar().generateUniqueIdentifier(prefix, this);
             }
             return resetTokenHookName;
         }
-        if (image.equals("OPEN_NODE_HOOK")) {
+        if (image.equals("OPEN_NODE_HOOK") && !getGrammar().isInSyntaxConverter()) {
             if (openHookName == null) {
                 String prefix = getGrammar().generateIdentifierPrefix("openNodeHook");
                 openHookName = getGrammar().generateUniqueIdentifier(prefix, this);
             }
             return openHookName;
         }
-        if (image.equals("CLOSE_NODE_HOOK")) {
+        if (image.equals("CLOSE_NODE_HOOK") && !getGrammar().isInSyntaxConverter()) {
             if (closeHookName == null) {
                 String prefix = getGrammar().generateIdentifierPrefix("closeNodeHook");
                 closeHookName = getGrammar().generateUniqueIdentifier(prefix, this);
@@ -1183,12 +1183,7 @@ JavacodeProduction :
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" 
-  (
-      SCAN \BNFProduction => 
-      (Name|"abstract"|"interface"|"void"|{})
-      |
-      Name
-  )
+  [ Name|"abstract"|"interface"|"void" ]
   [
        "("
           [
@@ -1198,6 +1193,31 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
           Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
        ")"
   ]
+;
+
+InlineTreeNodeDescriptor #TreeBuildingAnnotation :
+  [<BACKSLASH>] <HASH> Name
+  (
+    SCAN ~("(") => {}
+    |
+    "(" (">" | ">=" | "<" | "<=" | "+" | "-") =>||
+    {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}
+    [Expression {CURRENT_NODE.setCondition((Expression) peekNode());}] 
+    ")"
+    |
+    "("
+    ASSERT ~(ExpansionSequence "|") //A bit kludgy, but we treat this case specially for principle of least surprise.
+    Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
+    ")"
+    // If any of the following tokens are after the closing parenthesesis, this must
+    // be an expansion (or the code is just invalid)  
+    ASSERT ~(<STAR>|<PLUS>|<HOOK>|<HASH>) 
+    =>||
+    |
+    SCAN "(" ExpansionChoice ")" => {}
+    |
+    "(" FAIL "Expecting either an expression or an expansion here."
+ )
 ;
 
 INJECT TreeBuildingAnnotation :
@@ -1811,7 +1831,7 @@ Expansion ExpansionUnit :
  )
  [
      SCAN 1 ~\...\Lookahead => 
-    tba=TreeNodeDescriptor
+    tba=InlineTreeNodeDescriptor
  ]
  {
         result.setTreeNodeBehavior(tba);
