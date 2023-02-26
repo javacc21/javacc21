@@ -1375,7 +1375,7 @@ TokenManagerDecls :
     ClassOrInterfaceBody
 ;
 
-RegexpSpec(String tokenClassName) #RegexpSpec :
+RegexpSpec(String tokenClassName)# :
 {
     RegularExpression regexp;
     boolean isPrivate = false;
@@ -1390,9 +1390,9 @@ RegexpSpec(String tokenClassName) #RegexpSpec :
     <IDENTIFIER> {image = lastConsumedToken.getImage();}
     ":"
   ]
-  RegexpChoice {regexp = (RegularExpression) peekNode();} 
-  <GT>
+  RegexpChoice 
   {
+      regexp = (RegularExpression) peekNode();
       if (regexp instanceof RegexpRef) {
         RegexpSequence seq = new RegexpSequence();
         seq.addChild(regexp);
@@ -1403,6 +1403,7 @@ RegexpSpec(String tokenClassName) #RegexpSpec :
       regexp.setGeneratedClassName(image);
       regexp.setPrivate(isPrivate); 
   }
+  <GT>
  )
  {
       if (tokenClassName != null) {
