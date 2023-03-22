@@ -1,5 +1,9 @@
 <project name="javacc21" default="compile" basedir=".">
-    <tstamp>
+
+	<taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties"
+	    classpath="lib/checkstyle-10.6.0-all.jar"/>
+
+	<tstamp>
         <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
     </tstamp>
 
@@ -224,4 +228,14 @@
       <arg line="-u csharp_tests.py"/>
     </exec>
   </target>
+
+    <target name="checkstyle" depends="compile">
+        <checkstyle config="lib/checkstyle-checker.xml" failOnViolation="false">
+            <fileset dir="." includes="**/*.java"/>
+            <formatter type="xml" toFile="build/checkstyle_errors.xml"/>
+            <formatter type="sarif" toFile="build/checkstyle_errors.sarif"/>
+        </checkstyle>
+        <xslt in="build/checkstyle_errors.xml" out="report/checkstyle_report.html"
+              style="lib/checkstyle-noframes-severity-sorted.xsl"/>
+    </target>
 </project>
