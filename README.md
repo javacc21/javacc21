@@ -10,7 +10,7 @@ The text on the remainder of this page has been edited to reflect the name chang
 
 # ~~JavaCC 21~~ CongoCC
 
-~~JavaCC 21~ CongoCC is a continuation of development on JavaCC, which was, in turn, on the JavaCC codebase that was open-sourced by Sun Microsystems in mid 2003. It is currently the most advanced version of JavaCC. (*By far.*) It has many feature enhancements (with more to come soon) and also generates much more modern, readable Java code.
+~~JavaCC 21~~ CongoCC is a continuation of development on JavaCC, which was, in turn, on the JavaCC codebase that was open-sourced by Sun Microsystems in mid 2003. It is currently the most advanced version of JavaCC. (*By far.*) It has many feature enhancements (with more to come soon) and also generates much more modern, readable Java code.
 
 The overall history of this project is rather entangled and anybody interested can read [a more detailed history here](https://wiki.parsers.org/doku.php?id=ancient_history). This branch of development was originally released under the name FreeCC in 2008. 
 
@@ -50,7 +50,7 @@ Cumbersome aspects of the legacy `LOOKAHEAD` construct have been streamlined. Se
 
      LOOKAHEAD(Foo() Bar() Baz()) Foo() Bar() Baz()
 
-in ~~JavaCC 21~ CongoCC, you can write:
+in ~~JavaCC 21~~ CongoCC, you can write:
 
      Foo Bar Baz =>||
 
