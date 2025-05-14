@@ -265,6 +265,7 @@ public class SyntaxConverter extends Node.Visitor {
     void visit(Delimiter delim) {
         Node parent = delim.getParent();
         if (delim.getType() == LBRACE && (parent instanceof BNFProduction || parent instanceof TokenProduction)) {
+            if (delim.previousCachedToken().getType() == SINGLE_LINE_COMMENT) return;
             if (Character.isWhitespace(buffer.charAt(buffer.length()-1))) buffer.setLength(buffer.length()-1);
             return;
         }
